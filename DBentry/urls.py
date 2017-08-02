@@ -2,9 +2,6 @@ from django.conf.urls import url,  include
 
 from .views import *
 
-#TODO: remove ac/jahr -- nobody needs autocomplete for four digits
-AUSGABE_JAHR_LST = [i[1] for i in ausgabe_jahr.YEAR_CHOICES]
-
 autocomplete_patterns = [
     url(r'^ausgabe/$',      ACBase.as_view(model = ausgabe),                                    name = 'acausgabe'), 
     url(r'^autor/$',        ACBase.as_view(model = autor),                                      name = 'acautor'), 
@@ -15,7 +12,6 @@ autocomplete_patterns = [
     url(r'^geber/$',        ACBase.as_view(model = geber, create_field = 'name'),               name = 'acgeber'), 
     url(r'^genre/$',        ACBase.as_view(model = genre, create_field='genre'),                name = 'acgenre'),
     url(r'^instrument/$',   ACBase.as_view(model = instrument,  create_field = 'instrument'),   name = 'acinstrument'),
-    url(r'^jahr/$',         ACList.as_view(lst = AUSGABE_JAHR_LST),                             name = 'acjahr'), 
     url(r'^lagerort/$',     ACBase.as_view(model = lagerort),                                   name = 'aclagerort'),  
     url(r'^land/$',         ACBase.as_view(model = land, create_field = 'land_name'),           name = 'acland'),
     url(r'^magazin/$',      ACBase.as_view(model = magazin,  create_field = 'magazin_name'),    name = 'acmagazin'),

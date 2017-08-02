@@ -21,7 +21,6 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             
             # Ausgaben
             'magazin' : autocomplete.ModelSelect2(url='acmagazin'),
-            'jahr' : autocomplete.ListSelect2(url='acjahr'), 
             
             # Band
             'musiker' : autocomplete.ModelSelect2(url='acmusiker'),

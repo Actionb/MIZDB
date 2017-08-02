@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.utils import IntegrityError
 
 from .constants import *
@@ -649,8 +650,9 @@ class ausgabe(ShowModel):
         return duplicate_list
                         
 class ausgabe_jahr(ShowModel):
-    YEAR_CHOICES = [(y,str(y)) for y in range (datetime.datetime.now().year,1899,-1)]
-    jahr = models.IntegerField('Jahr', choices = YEAR_CHOICES)
+    JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
+    
+    jahr = models.IntegerField('Jahr', validators = JAHR_VALIDATORS, default = CUR_JAHR)
     ausgabe = models.ForeignKey('ausgabe')
     class Meta:
         verbose_name = 'Jahr'

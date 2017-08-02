@@ -45,7 +45,7 @@ def the_difference():
     
     for difset in [xdy, ydx]:
         for id in difset:
-            for id_set in ts: #TODO: <- where's gd?
+            for id_set in ts: #NOTE: <- where's gd?
                 if id in id_set:
                     printme(id_set)
                     print()
