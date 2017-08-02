@@ -8,7 +8,9 @@ from .utils import concat_m2m, concat_limit, merge as merge_util
 from .managers import AusgabeQuerySet, MIZQuerySet
 
 # Create your models here.
-
+#TODO: models/m2m change or remove unique_together of m2m-tables to avoid form errors
+# let the form save and THEN remove duplicate entries
+# OR: delete m2m instances first, then save the new ones?
 
 class ShowModel(models.Model):
     
@@ -373,18 +375,22 @@ class ausgabe(ShowModel):
     
     def save(self, *args, **kwargs):
         super(ausgabe, self).save(*args, **kwargs)
+        
+        # Use e_datum data to populate month and year sets
         if self.e_datum:
             if self.e_datum.year not in self.ausgabe_jahr_set.values_list('jahr', flat=True):
                 self.ausgabe_jahr_set.create(jahr=self.e_datum.year)
             if self.e_datum.month not in self.ausgabe_monat_set.values_list('monat_id', flat=True):
-                #NOTE: this actually raised an IntegrityError (UNIQUE Constraints), not quite sure how yet...
+                #NOTE: this actually raised an IntegrityError (UNIQUE Constraints)
+                # self.ausgabe_monat_set will be empty but creating a new set instance will still fail
+                # need to find out how to reliably reproduce this
                 try:
                     self.ausgabe_monat_set.create(monat_id=self.e_datum.month)
-                except Exception as e:
-                    print('e_datum.month', self.e_datum.month)
-                    print('set', self.ausgabe_monat_set.values_list('monat_id', flat=True))
+                except IntegrityError:
+                    pass
     
     def __str__(self):
+        #TODO: make this method less ugly?
         info = str(self.info)
         if len(info)>LIST_DISPLAY_MAX_LEN:
             info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
@@ -643,7 +649,6 @@ class ausgabe(ShowModel):
                     loop_qs = loop_qs.exclude(pk__in=dupe_set)
                 print("~"*20, end="\n\n", file=f)
         return duplicate_list
- 
                         
 class ausgabe_jahr(ShowModel):
     YEAR_CHOICES = [(y,str(y)) for y in range (datetime.datetime.now().year,1899,-1)]
@@ -729,6 +734,10 @@ class magazin(ShowModel):
         return str(self.magazin_name)
 
     def bulk(self, zbestand = True, details = [], dupe_all_sets = False, n_like_m = True, jg = False):
+        """
+            For creating lots of new issues via Terminal input
+        """
+        
         while True:
             print("="*20, end="\n\n\n")
             to_create = []
@@ -1362,7 +1371,6 @@ class lagerort(ShowModel):
         
         
 class bestand(ShowModel):
-    # NOTE: keep auto-generated 'id' field for consistency, but implement a signatur field (either unique=True or UUID) for external use
     signatur = models.AutoField(primary_key=True)
     lagerort = models.ForeignKey('lagerort')
     provenienz = models.ForeignKey('provenienz',  blank = True, null = True)
