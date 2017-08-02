@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html lang="de-DE" >
+<head>
+<title>Ausgabe ändern | Django-Systemverwaltung</title>
+<link rel="stylesheet" type="text/css" href="/static/admin/css/base.css" />
+<link rel="stylesheet" type="text/css" href="/static/admin/css/forms.css" />
+
+</head>
+<body>
+<table>
+<tr>
+	<th>META</th>
+	<th>VALUE</th>
+</tr>
+{% for i in request.META.items %}
+	<tr>
+	<td> {{i.0}}</td>
+	<td> {{i.1}}</td>
+	</tr>
+{% endfor %}
+</table>
+<input type="submit"></input>
+</body>

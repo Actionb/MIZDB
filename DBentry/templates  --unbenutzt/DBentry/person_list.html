@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Personen</h2>
+    <table>
+        {% for person in person_list %}
+	<tr>
+            <td>{{ person }}</td><td>{{ person.herkunft }}</td>
+	</tr>
+        {% endfor %}
+    </table>
+{% endblock %}

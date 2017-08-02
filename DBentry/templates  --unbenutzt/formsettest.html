@@ -1,0 +1,13 @@
+{% extends "admin/base_site.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+<form class="uniForm" method="POST">
+{% crispy form.anum %}
+{% crispy form %}
+</form>
+<style>
+.asteriskField {
+	background-color:red;
+}
+</style>
+{% endblock content %}

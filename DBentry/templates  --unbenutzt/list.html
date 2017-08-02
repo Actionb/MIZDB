@@ -1,0 +1,7 @@
+
+{% for a in object_list %}
+
+	{% for fld in fields %}
+		<li> {{a}} --- {% eval("{}.{}".format(a,fld)) %}</li>
+	{% endfor %}
+{% endfor %}

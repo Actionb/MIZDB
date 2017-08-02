@@ -1,0 +1,1506 @@
+Added musiker Arthur Brown, Vorname: Arthur Wilton, Nachname: Brown.
+Added musiker Joey Brown, Vorname: Joey, Nachname: Brown.
+Added musiker Hank Roberts, Vorname: Hank, Nachname: Roberts.
+Added musiker Eva Bem, Vorname: Eva, Nachname: Bem.
+Added musiker Peter Tosh, Vorname: Peter, Nachname: Tosh.
+Added musiker John Foxx, Vorname: John, Nachname: Foxx.
+Added musiker Sonny Rollins, Vorname: Sonny, Nachname: Rollins.
+Added musiker Little Axe, Vorname: Skip, Nachname: McDonald.
+Added musiker Arto Lindsay, Vorname: Arto, Nachname: Lindsay.
+Added musiker Marisa Monte, Vorname: Marisa, Nachname: Monte.
+Added musiker Mari Boine, Vorname: Mari, Nachname: Boine.
+Added musiker Andreas Dorau, Vorname: Andreas, Nachname: Dorau.
+Added musiker Cesaria Evora, Vorname: Cesaria, Nachname: Evora.
+Added musiker Mat Maneri, Vorname: Mat, Nachname: Maneri.
+Added musiker Markus, Vorname: None, Nachname: unbekannt.
+Added musiker Dewey Redmam, Vorname: Dewey, Nachname: Redmam.
+Added musiker Pino Minafra, Vorname: Pino, Nachname: Minafra.
+Added musiker Harald Haerter, Vorname: Harald, Nachname: Haerter.
+Added musiker Jimmy Scott, Vorname: Jimmy, Nachname: Scott.
+Added musiker Meira Asher, Vorname: Meira, Nachname: Asher.
+Added musiker Mikhail Alperin, Vorname: Mikhail, Nachname: Alperin.
+Added musiker Charlie Hunter, Vorname: Charlie, Nachname: Hunter.
+Added musiker John Mayall, Vorname: John, Nachname: Mayall.
+Added musiker Archie Shepp, Vorname: Archie, Nachname: Shepp.
+Added musiker Billy Idol, Vorname: William Michael Albert, Nachname: Broad.
+Added musiker Branford Marsalis, Vorname: Branford, Nachname: Marsalis.
+Added musiker Michel Petrucciani, Vorname: Michel, Nachname: Petrucciani.
+Added musiker Steve Baker, Vorname: Steve, Nachname: Baker.
+Added musiker Brendan Benson, Vorname: Brendan, Nachname: Benson.
+Added musiker Sarah Slean, Vorname: Sarah, Nachname: Slean.
+Added musiker Katia Labeque, Vorname: Katia, Nachname: Labeque.
+Added musiker Hannibal Marvin Peterson, Vorname: Hannibal Marvin, Nachname: Peterson.
+Added musiker Alan Kaufman, Vorname: Alan, Nachname: Kaufman.
+Added musiker Simon Phillips, Vorname: Simon, Nachname: Phillips.
+Added musiker Joelle Leandre, Vorname: Joelle, Nachname: Leandre.
+Added musiker Steve Coleman, Vorname: Steve, Nachname: Coleman.
+Added musiker Cassandra Wilson, Vorname: Cassandra, Nachname: Wilson.
+Added musiker Jean Paul Bourelly, Vorname: Jean Paul, Nachname: Bourelly.
+Added musiker Courtney Pine, Vorname: Courtney, Nachname: Pine.
+Added musiker Miharu Koshi, Vorname: Miharu, Nachname: Koshi.
+Added musiker Amina Claudine Myers, Vorname: Amina Claudine, Nachname: Myers.
+Added musiker Angélique Kidjo, Vorname: Angélique, Nachname: Kidjo.
+Added musiker Georgio Gaslini, Vorname: Georgio, Nachname: Gaslini.
+Added musiker Iva Bittova, Vorname: Iva, Nachname: Bittova.
+Added musiker Salif Keita, Vorname: Salif, Nachname: Keita.
+Added musiker Ravi Coltrane, Vorname: Ravi, Nachname: Coltrane.
+Added musiker Roy Ayers, Vorname: Roy, Nachname: Ayers.
+Added musiker Alexander von Schlippenbach, Vorname: Alexander, Nachname: von Schlippenbach.
+Added musiker Egberto Gismonti, Vorname: Egberto, Nachname: Gismonti.
+Added musiker Jörg Stanko, Vorname: Jörg, Nachname: Stanko.
+Added musiker Paco de Lucía, Vorname: Paco, Nachname: de Lucía.
+Added musiker Joa Zawinul, Vorname: Joa, Nachname: Zawinul.
+Added musiker Sam Rivers, Vorname: Sam, Nachname: Rivers.
+Added musiker Paul Williams, Vorname: Paul, Nachname: Williams.
+Added musiker Horace Silver, Vorname: Horace, Nachname: Silver.
+Added musiker Franz Abraham, Vorname: Franz, Nachname: Abraham.
+Added musiker David Shea, Vorname: David, Nachname: Shea.
+Added musiker James Chance, Vorname: James, Nachname: Chance.
+Added musiker Brian Eno, Vorname: Brian, Nachname: Eno.
+Added musiker Haruomi Hosono, Vorname: Haruomi, Nachname: Hosono.
+Added musiker Max Roach, Vorname: Max, Nachname: Roach.
+Added musiker Gary Bartz, Vorname: Gary, Nachname: Bartz.
+Added musiker Maria Joao, Vorname: Maria, Nachname: Joao.
+Added musiker Franz Koglmann, Vorname: Franz, Nachname: Koglmann.
+Added musiker Lyle Mays, Vorname: Lyle, Nachname: Mays.
+Added musiker John Butcher, Vorname: John, Nachname: Butcher.
+Added musiker Odetta, Vorname: Odetta, Nachname: Holmes.
+Added musiker Falco, Vorname: None, Nachname: unbekannt.
+Added musiker Andy Fraser, Vorname: Andy, Nachname: Fraser.
+Added musiker Eddy Grant, Vorname: Eddy, Nachname: Grant.
+Added musiker Mike Oldfield, Vorname: Mike, Nachname: Oldfield.
+Added musiker Steven Van Zandt, Vorname: Steven, Nachname: Van Zandt.
+Added musiker Stevie Ray Vaughan, Vorname: Stevie Ray, Nachname: Vaughan.
+Added musiker Gary Moore, Vorname: Gary, Nachname: Moore.
+Added musiker Ozzy Osbourne, Vorname: John Michael, Nachname: Osbourne.
+Added musiker Ronnie James Dio, Vorname: Ronnie James, Nachname: Dio.
+Added musiker Konstantin Wecker, Vorname: Konstantin, Nachname: Wecker.
+Added musiker John Stewart, Vorname: John, Nachname: Stewart.
+Added musiker Huey Lewis, Vorname: Huey, Nachname: Lewis.
+Added musiker Russ Ballard, Vorname: Russ, Nachname: Ballard.
+Added musiker George Kranz, Vorname: George, Nachname: Kranz.
+Added musiker Crack Jack, Vorname: Crack, Nachname: Jack.
+Added musiker Klaus Lage, Vorname: Klaus, Nachname: Lage.
+Added musiker Herbert Grönemeyer, Vorname: Herbert Arthur Wiglev Clamor, Nachname: Grönemeyer.
+Added musiker Joan Jett, Vorname: Joan, Nachname: Jett.
+Added musiker Bolland, Vorname: None, Nachname: unbekannt.
+Added musiker Heinz Rudolf Kunze, Vorname: Heinz Rudolf, Nachname: Kunze.
+Added musiker Michael Schenker, Vorname: Michael, Nachname: Schenker.
+Added musiker Annabel Lamb, Vorname: Annabel, Nachname: Lamb.
+Added musiker Jean Michel Jarre, Vorname: Jean Michel, Nachname: Jarre.
+Added musiker Meat Loaf, Vorname: Michael Lee, Nachname: Aday.
+Added musiker Alison Moyet, Vorname: Alison, Nachname: Moyet.
+Added musiker Jonas Hellborg, Vorname: Jonas, Nachname: Hellborg.
+Added musiker Al Jarreau, Vorname: Al, Nachname: Jarreau.
+Added musiker Leonard Cohen, Vorname: Leonard, Nachname: Cohen.
+Added musiker Chris Slade, Vorname: Chris, Nachname: Slade.
+Added musiker John Martyn, Vorname: John, Nachname: Martyn.
+Added musiker Marius Müller-Westernhagen, Vorname: Marius, Nachname: Müller-Westernhagen.
+Added musiker Erdklang, Vorname: None, Nachname: unbekannt.
+Added musiker B. B. King, Vorname: Riley B., Nachname: King.
+Added musiker Gary Numan, Vorname: Gary, Nachname: Numan.
+Added musiker Philip Bailey, Vorname: Philip, Nachname: Bailey.
+Added musiker Richard Tandy, Vorname: Richard, Nachname: Tandy.
+Added musiker Howard Jones, Vorname: Howard, Nachname: Jones.
+Added musiker Bill Evans, Vorname: Bill, Nachname: Evans.
+Added musiker John Abercrombie, Vorname: John, Nachname: Abercrombie.
+Added musiker Joe Louis Walker, Vorname: Joe Louis, Nachname: Walker.
+Added musiker Chris Strachwitz, Vorname: Chris, Nachname: Strachwitz.
+Added musiker Don Byron, Vorname: Don, Nachname: Byron.
+Added musiker Marilyn Mazur, Vorname: Marilyn, Nachname: Mazur.
+Added musiker Jabu Khanyile, Vorname: Jabu, Nachname: Khanyile.
+Added musiker Bobby McFerrin, Vorname: Robert Keith, Nachname: McFerrin Jr..
+Added musiker Charles Lloyd, Vorname: Charles, Nachname: Lloyd.
+Added musiker Volker Kriegel, Vorname: Volker, Nachname: Kriegel.
+Added musiker Mars Williams, Vorname: Mars, Nachname: Williams.
+Added musiker Barbara Dennerlein, Vorname: Barbara, Nachname: Dennerlein.
+Added musiker Adam Holzman, Vorname: Adam, Nachname: Holzman.
+Added musiker Abdullah Ibrahim, Vorname: Abdullah, Nachname: Ibrahim.
+Added musiker Ginesa Otega, Vorname: Ginesa, Nachname: Otega.
+Added musiker Django Reinhardt, Vorname: Django, Nachname: Reinhardt.
+Added musiker Georgie Fame, Vorname: Georgie, Nachname: Fame.
+Added musiker DJ Olive, Vorname: Gregor, Nachname: Asch.
+Added musiker Steve Reich, Vorname: Steve, Nachname: Reich.
+Added musiker Coco Schumann, Vorname: Coco, Nachname: Schumann.
+Added musiker Robert Wyatt, Vorname: Robert, Nachname: Wyatt.
+Added musiker Dana Bryant, Vorname: Dana, Nachname: Bryant.
+Added musiker Dee Dee Bridgewater, Vorname: Denise Eileen, Nachname: Garrett.
+Added musiker Pee Wee Ellis, Vorname: Alfred, Nachname: Bryant.
+Added musiker Joe Henderson, Vorname: Joe, Nachname: Henderson.
+Added musiker Pat Metheny, Vorname: Pat, Nachname: Metheny.
+Added musiker Tomasz Stanko, Vorname: Tomasz, Nachname: Stanko.
+Added musiker Cecil McBee, Vorname: Cecil, Nachname: McBee.
+Added musiker Michael Daugherty, Vorname: Michael, Nachname: Daugherty.
+Added musiker Moondog, Vorname: Louis Thomas, Nachname: Hardin.
+Added musiker Hamid Baroudi, Vorname: Hamid, Nachname: Baroudi.
+Added musiker Marlui Miranda, Vorname: Marlui, Nachname: Miranda.
+Added musiker D`Gary, Vorname: Ernest, Nachname: Randrianasolo.
+Added musiker Taj Mahal, Vorname: Henry, Nachname: Saint Clair Fredericks.
+Added musiker John Surman, Vorname: John, Nachname: Surman.
+Added musiker Ellery Eskelin, Vorname: Ellery, Nachname: Eskelin.
+Added musiker Michael Schiefel, Vorname: Michael, Nachname: Schiefel.
+Added musiker Clementine, Vorname: Clementine, Nachname: Mitz.
+Added musiker Simon Stockhausen, Vorname: Simon, Nachname: Stockhausen.
+Added musiker Ronnie Laws, Vorname: Ronnie, Nachname: Laws.
+Added musiker Robert Lockwood junior, Vorname: Robert Lockwood, Nachname: junior.
+Added musiker Nils Petter Molvaer, Vorname: Nils Petter, Nachname: Molvaer.
+Added musiker Bill Frisell, Vorname: Bill, Nachname: Frisell.
+Added musiker Bella Fleck, Vorname: Bella, Nachname: Fleck.
+Added musiker Jasper van`t Hof, Vorname: Jasper, Nachname: van`t Hof.
+Added musiker Chris Karrer, Vorname: Chris, Nachname: Karrer.
+Added musiker Bob Ostertag, Vorname: Bob, Nachname: Ostertag.
+Added musiker Danilo Perez, Vorname: Danilo, Nachname: Perez.
+Added musiker Michael Formanek, Vorname: Michael, Nachname: Formanek.
+Added musiker Marc Johnson, Vorname: Marc, Nachname: Johnson.
+Added musiker Hound Dog Taylor, Vorname: Theodore Roosevelt, Nachname: Taylor.
+Added musiker Jim O’Rourke, Vorname: Jim, Nachname: O’Rourke.
+Added musiker Mark Hollis, Vorname: Mark, Nachname: Hollis.
+Added musiker Toshinori Kondō, Vorname: Toshinori, Nachname: Kondō.
+Added musiker Yasuaki Shimizu, Vorname: Yasuaki, Nachname: Shimizu.
+Added musiker Michael Nyman, Vorname: Michael, Nachname: Nyman.
+Added musiker Sylvie Courvoisier, Vorname: Sylvie, Nachname: Courvoisier.
+Added musiker Rene Pretschner, Vorname: Rene, Nachname: Pretschner.
+Added musiker Torsten de Winkel, Vorname: Torsten, Nachname: de Winkel.
+Added musiker Dave Holland, Vorname: Dave, Nachname: Holland.
+Added musiker Miroslav Vitouš, Vorname: Miroslav, Nachname: Vitouš.
+Added musiker John Scofield, Vorname: John, Nachname: Scofield.
+Added musiker Bernard Allison, Vorname: Bernard, Nachname: Allison.
+Added musiker Ryūichi Sakamoto, Vorname: Ryūichi, Nachname: Sakamoto.
+Added musiker Toshio Nakanishi, Vorname: Toshio, Nachname: Nakanishi.
+Added musiker Yoko Ono, Vorname: Yoko, Nachname: Ono.
+Added musiker Badi Assad, Vorname: Badi, Nachname: Assad.
+Added musiker Fernando Tarres, Vorname: Fernando, Nachname: Tarres.
+Added musiker Erik Truffaz, Vorname: Erik, Nachname: Truffaz.
+Added musiker Gianluigi Trovesi, Vorname: Gianluigi, Nachname: Trovesi.
+Added musiker Stan Getz, Vorname: Stan, Nachname: Getz.
+Added musiker Paul Baumann, Vorname: Paul, Nachname: Baumann.
+Added musiker Louis Sclavis, Vorname: Louis, Nachname: Sclavis.
+Added musiker Brian Auger, Vorname: Brian, Nachname: Auger.
+Added musiker Philip Glass, Vorname: Philip, Nachname: Glass.
+Added musiker Fats Domino, Vorname: Antoine, Nachname: Domino.
+Added musiker Jack Pohl, Vorname: Jack, Nachname: Pohl.
+Added musiker Dave Weckl, Vorname: Dave, Nachname: Weckl.
+Added musiker Junior Wells, Vorname: Junior, Nachname: Wells.
+Added musiker Tim Berne, Vorname: Tim, Nachname: Berne.
+Added musiker Mandy Patinkin, Vorname: Mandy, Nachname: Patinkin.
+Added musiker Toru Takemitsu, Vorname: Toru, Nachname: Takemitsu.
+Added musiker Dave Douglas, Vorname: Dave, Nachname: Douglas.
+Added musiker Jim Black, Vorname: Jim, Nachname: Black.
+Added musiker Greg Osby, Vorname: Greg, Nachname: Osby.
+Added musiker Michael Rodach, Vorname: Michael, Nachname: Rodach.
+Added musiker David Torn, Vorname: David, Nachname: Torn.
+Added musiker Bill Dixon, Vorname: Bill, Nachname: Dixon.
+Added musiker Ugonna Okegwo, Vorname: Ugonna, Nachname: Okegwo.
+Added musiker Noël Akchoté, Vorname: Noël, Nachname: Akchoté.
+Added musiker Mickey Spilllane, Vorname: Mickey, Nachname: Spilllane.
+Added musiker Kip Hanrahan, Vorname: Kip, Nachname: Hanrahan.
+Added musiker Dianne Reeves, Vorname: Dianne, Nachname: Reeves.
+Added musiker Towa Tai, Vorname: Towa, Nachname: Tai.
+Added musiker Al Di Meola, Vorname: Al, Nachname: Di Meola.
+Added musiker Don Cherry, Vorname: Don, Nachname: Cherry.
+Added musiker Ketil Bjørnstad, Vorname: Ketil, Nachname: Bjørnstad.
+Added musiker Mavis Staples, Vorname: Mavis, Nachname: Staples.
+Added musiker Holly Cole, Vorname: Holly, Nachname: Cole.
+Added musiker Lalo Schifrin, Vorname: Lalo, Nachname: Schifrin.
+Added musiker Albert Mangelsdorffs, Vorname: Albert, Nachname: Mangelsdorffs.
+Added musiker Wayne Shorter, Vorname: Wayne, Nachname: Shorter.
+Added musiker Phil Collins, Vorname: Phil, Nachname: Collins.
+Added musiker David Lindley, Vorname: David, Nachname: Lindley.
+Added musiker David Knopfler, Vorname: David, Nachname: Knopfler.
+Added musiker Lee Aaron, Vorname: Lee, Nachname: Aaron.
+Added musiker Trevor Horn, Vorname: Trevor, Nachname: Horn.
+Added musiker Reinhold Heil, Vorname: Reinhold, Nachname: Heil.
+Added musiker George Clinton, Vorname: George, Nachname: Clinton.
+Added musiker Anne Haigis, Vorname: Anne, Nachname: Haigis.
+Added musiker Klaus Doldinger, Vorname: Klaus, Nachname: Doldinger.
+Added musiker Herwig Mitteregger, Vorname: Herwig, Nachname: Mitteregger.
+Added musiker Shankar, Vorname: Ravi, Nachname: Shankar.
+Added musiker Ulla Meinecke, Vorname: Ulla, Nachname: Meinecke.
+Added musiker Robert Palmer, Vorname: Robert, Nachname: Palmer.
+Added musiker Cock Robin, Vorname: Cock, Nachname: Robin.
+Added musiker Edo Zanki, Vorname: Edo, Nachname: Zanki.
+Added musiker Feargal Sharkey, Vorname: Feargal, Nachname: Sharkey.
+Added musiker Vince Clarke, Vorname: Vince, Nachname: Clarke.
+Added musiker Mark King, Vorname: Mark, Nachname: King.
+Added musiker Frank Duval, Vorname: Frank, Nachname: Duval.
+Added musiker Nippy Noya, Vorname: Nippy, Nachname: Noya.
+Added musiker Tony MacAlpine, Vorname: Tony, Nachname: MacAlpine.
+Added musiker Chris Thompson, Vorname: Chris, Nachname: Thompson.
+Added musiker Eddie Van Halen, Vorname: Eddie, Nachname: Van Halen.
+Added musiker Terry Britten, Vorname: Terry, Nachname: Britten.
+Added musiker Rio Reiser, Vorname: Rio, Nachname: Reiser.
+Added musiker Bob Geldof, Vorname: Bob, Nachname: Geldof.
+Added musiker Herbie Hancock, Vorname: Herbie, Nachname: Hancock.
+Added musiker George Thorogood, Vorname: George, Nachname: Thorogood.
+Added musiker Roger Glover, Vorname: Roger, Nachname: Glover.
+Added musiker Eric Clapton, Vorname: Eric, Nachname: Clapton.
+Added musiker Eddie Money, Vorname: Eddie, Nachname: Money.
+Added musiker Alex Sadkin, Vorname: Alex, Nachname: Sadkin.
+Added musiker David Sanborn, Vorname: David, Nachname: Sanborn.
+Added musiker Carlos Santana, Vorname: Carlos, Nachname: Santana.
+Added musiker Ritchie Blackmore, Vorname: Ritchie, Nachname: Blackmore.
+Added musiker Stanisław Sojka, Vorname: Stanisław, Nachname: Sojka.
+Added musiker Elkie Brooks, Vorname: Elkie, Nachname: Brooks.
+Added musiker Tom Verlaine, Vorname: Tom, Nachname: Verlaine.
+Added musiker James Young, Vorname: James, Nachname: Young.
+Added musiker David Coverdale, Vorname: David, Nachname: Coverdale.
+Added musiker Franz Benton, Vorname: Franz, Nachname: Benton.
+Added musiker Jimi Hendrix, Vorname: Jimi, Nachname: Hendrix.
+Added musiker Stas Namin, Vorname: Stas, Nachname: Namin.
+Added musiker Colin Hodgkinson, Vorname: Colin, Nachname: Hodgkinson.
+Added musiker Alphonso Johnson, Vorname: Alphonso, Nachname: Johnson.
+Added musiker John Waite, Vorname: John, Nachname: Waite.
+Added musiker John Farnham, Vorname: John, Nachname: Farnham.
+Added musiker Johnny Clegg, Vorname: Johnny, Nachname: Clegg.
+Added musiker Kenny G, Vorname: Kenneth, Nachname: Gorelick.
+Added musiker T. Graham Brown, Vorname: Anthony Graham, Nachname: Brown.
+Added musiker Chris Isaak, Vorname: Chris, Nachname: Isaak.
+Added musiker Robert Cray, Vorname: Robert, Nachname: Cray.
+Added musiker Tom Kimmel, Vorname: Tom, Nachname: Kimmel.
+Added musiker Sammy Hagar, Vorname: Sammy, Nachname: Hagar.
+Added musiker Chris Kimsey, Vorname: Chris, Nachname: Kimsey.
+Added musiker Lizzie Borden, Vorname: Lizzie, Nachname: Borden.
+Added musiker Julian Cope, Vorname: Julian, Nachname: Cope.
+Added musiker Lloyd Cole, Vorname: Lloyd, Nachname: Cole.
+Added musiker Black, Vorname: None, Nachname: unbekannt.
+Added musiker Vera Brandes, Vorname: Vera, Nachname: Brandes.
+Added musiker Robbie Robertson, Vorname: Robbie, Nachname: Robertson.
+Added musiker Climie Fisher, Vorname: Climie, Nachname: Fisher.
+Added musiker Jerry Harrison, Vorname: Jerry, Nachname: Harrison.
+Added musiker Paul Carrack, Vorname: Paul, Nachname: Carrack.
+Added musiker Manu Katché, Vorname: Manu, Nachname: Katché.
+Added musiker Jeff Beck, Vorname: Jeff, Nachname: Beck.
+Added musiker Nicko McBrain, Vorname: Nicko, Nachname: McBrain.
+Added musiker Rick Springfield, Vorname: Rick, Nachname: Springfield.
+Added musiker Ted Nugent, Vorname: Ted, Nachname: Nugent.
+Added musiker Spike Edney, Vorname: Spike, Nachname: Edney.
+Added musiker Armin Rühl, Vorname: Armin, Nachname: Rühl.
+Added musiker Mike Herting, Vorname: Mike, Nachname: Herting.
+Added musiker Rocky Hill, Vorname: Rocky, Nachname: Hill.
+Added musiker Tracy Wormworth, Vorname: Tracy, Nachname: Wormworth.
+Added musiker Mark Knopfler, Vorname: Mark, Nachname: Knopfler.
+Added musiker Chad Wackerman, Vorname: Chad, Nachname: Wackerman.
+Added musiker Udo Lindenberg, Vorname: Udo, Nachname: Lindenberg.
+Added musiker Steve Vai, Vorname: Steve, Nachname: Vai.
+Added musiker Lars Ulrich, Vorname: Lars, Nachname: Ulrich.
+Added musiker Peter Maffay, Vorname: Peter, Nachname: Maffay.
+Added musiker Nina Hagen, Vorname: Nina, Nachname: Hagen.
+Added musiker Stuart Adamson, Vorname: Stuart, Nachname: Adamson.
+Added musiker Jeff Berlin, Vorname: Jeff, Nachname: Berlin.
+Added musiker Drafi Deutscher, Vorname: Drafi, Nachname: Deutscher.
+Added musiker Mario Cipollina, Vorname: Mario, Nachname: Cipollina.
+Added musiker Frank Gambale, Vorname: Frank, Nachname: Gambale.
+Added musiker Jon Lord, Vorname: Jon, Nachname: Lord.
+Added musiker Gary Husband, Vorname: Gary, Nachname: Husband.
+Added musiker Jeff Healey, Vorname: Jeff, Nachname: Healey.
+Added musiker Jim Capaldi, Vorname: Jim, Nachname: Capaldi.
+Added musiker Tom Whitlock, Vorname: Tom, Nachname: Whitlock.
+Added musiker Dan Reed Network, Vorname: Dan Reed, Nachname: Network.
+Added musiker Robbie Nevil, Vorname: Robbie, Nachname: Nevil.
+Added musiker Joshua Perahia, Vorname: Joshua, Nachname: Perahia.
+Added musiker Brian May, Vorname: Brian, Nachname: May.
+Added musiker Gary Wright, Vorname: Gary, Nachname: Wright.
+Added musiker John Molo, Vorname: John, Nachname: Molo.
+Added musiker Phillip Boa, Vorname: Phillip, Nachname: Boa.
+Added musiker Frank Ryan, Vorname: Frank, Nachname: Ryan.
+Added musiker Bertram Engel, Vorname: Bertram, Nachname: Engel.
+Added musiker Andy Summers, Vorname: Andy, Nachname: Summers.
+Added musiker Hellmut Hattler, Vorname: Hellmut, Nachname: Hattler.
+Added musiker Tico Torres, Vorname: Tico, Nachname: Torres.
+Added musiker Kitaro, Vorname: None, Nachname: unbekannt.
+Added musiker Bonnie Raitt, Vorname: Bonnie, Nachname: Raitt.
+Added musiker Fritz McIntyre, Vorname: Fritz, Nachname: McIntyre.
+Added musiker Paul McCartney, Vorname: Paul, Nachname: McCartney.
+Added musiker Stevie Wonder, Vorname: Stevie, Nachname: Wonder.
+Added musiker Wolf Hoffmann, Vorname: Wolf, Nachname: Hoffmann.
+Added musiker Chester Thompson, Vorname: Chester, Nachname: Thompson.
+Added musiker Tina Turner, Vorname: Tina, Nachname: Turner.
+Added musiker Elvis Costello, Vorname: Elvis, Nachname: Costello.
+Added musiker Reeves Gabrels, Vorname: Reeves, Nachname: Gabrels.
+Added musiker Steve Stevens, Vorname: Steve, Nachname: Stevens.
+Added musiker Cozy Powell, Vorname: Cozy, Nachname: Powell.
+Added musiker Billy Cobham, Vorname: Billy, Nachname: Cobham.
+Added musiker Grace Jones, Vorname: Grace, Nachname: Jones.
+Added musiker Chuck Berry, Vorname: Chuck, Nachname: Berry.
+Added musiker Laurie Anderson, Vorname: Laurie, Nachname: Anderson.
+Added musiker Ry Cooder, Vorname: Ry, Nachname: Cooder.
+Added musiker Joe Satriani, Vorname: Joe, Nachname: Satriani.
+Added musiker Ed Mann, Vorname: Ed, Nachname: Mann.
+Added musiker Thompson Twins, Vorname: Thompson, Nachname: Twins.
+Added musiker Westbam, Vorname: None, Nachname: unbekannt.
+Added musiker Janne Schaffer, Vorname: Janne, Nachname: Schaffer.
+Added musiker David Bryan, Vorname: David, Nachname: Bryan.
+Added musiker Mel Gaynor, Vorname: Mel, Nachname: Gaynor.
+Added musiker Jim Steinman, Vorname: Jim, Nachname: Steinman.
+Added musiker Keith Richards, Vorname: Keith, Nachname: Richards.
+Added musiker Mike Lindup, Vorname: Mike, Nachname: Lindup.
+Added musiker Billy Joel, Vorname: Billy, Nachname: Joel.
+Added musiker Robin Beck, Vorname: Robin, Nachname: Beck.
+Added musiker Nathan East, Vorname: Nathan, Nachname: East.
+Added musiker Joey Kramer, Vorname: Joey, Nachname: Kramer.
+Added musiker Robert Plant, Vorname: Robert, Nachname: Plant.
+Added musiker Bruce Dickinson, Vorname: Bruce, Nachname: Dickinson.
+Added musiker Marianne Faithfull, Vorname: Marianne, Nachname: Faithfull.
+Added musiker Frank Diez, Vorname: Frank, Nachname: Diez.
+Added musiker Chrissie Hynde, Vorname: Chrissie, Nachname: Hynde.
+Added musiker Dennis Chambers, Vorname: Dennis, Nachname: Chambers.
+Added musiker Hugh Padgham, Vorname: Hugh, Nachname: Padgham.
+Added musiker Inga Humpe, Vorname: Inga, Nachname: Humpe.
+Added musiker Carl Carlton, Vorname: Carl, Nachname: Carlton.
+Added musiker Michael Cretu, Vorname: Michael, Nachname: Cretu.
+Added musiker Wolfgang Niedecken, Vorname: Wolfgang, Nachname: Niedecken.
+Added musiker Janet Jackson, Vorname: Janet, Nachname: Jackson.
+Added musiker Alin Aime, Vorname: Alin, Nachname: Aime.
+Added musiker Sting, Vorname: None, Nachname: unbekannt.
+Added musiker David Lee Roth, Vorname: David Lee, Nachname: Roth.
+Added musiker Paul Simon, Vorname: Paul, Nachname: Simon.
+Added musiker Frank Nimsgern, Vorname: Frank, Nachname: Nimsgern.
+Added musiker James Earl, Vorname: James, Nachname: Earl.
+Added musiker Elton John, Vorname: Elton, Nachname: John.
+Added musiker Carl Palmer, Vorname: Carl, Nachname: Palmer.
+Added musiker Peter Gabriel, Vorname: Peter, Nachname: Gabriel.
+Added musiker Max Cavalera, Vorname: Max, Nachname: Cavalera.
+Added musiker Jerry Lee Lewis, Vorname: Jerry Lee, Nachname: Lewis.
+Added musiker Harold Faltermeyer, Vorname: Harold, Nachname: Faltermeyer.
+Added musiker Liberty De Vitto, Vorname: Liberty De, Nachname: Vitto.
+Added musiker Matt Sorum, Vorname: Matt, Nachname: Sorum.
+Added musiker George Harrison, Vorname: George, Nachname: Harrison.
+Added musiker McCoy Tyner, Vorname: McCoy, Nachname: Tyner.
+Added musiker Freddie Hubbard, Vorname: Freddie, Nachname: Hubbard.
+Added musiker Paul Bley, Vorname: Paul, Nachname: Bley.
+Added musiker Curt Cress, Vorname: Curt, Nachname: Cress.
+Added musiker Carla Bley, Vorname: Carla, Nachname: Bley.
+Added musiker Annie Whitehead, Vorname: Annie, Nachname: Whitehead.
+Added musiker Michael Gibbs, Vorname: Michael, Nachname: Gibbs.
+Added musiker Cher, Vorname: None, Nachname: unbekannt.
+Added musiker Art Blakey, Vorname: Art, Nachname: Blakey.
+Added musiker Elvin Jones, Vorname: Elvin, Nachname: Jones.
+Added musiker Theo Jörgensmann, Vorname: Theo, Nachname: Jörgensmann.
+Added musiker Eberhard Weber, Vorname: Eberhard, Nachname: Weber.
+Added musiker Mike Campbell, Vorname: Mike, Nachname: Campbell.
+Added musiker Peter Brötzmann, Vorname: Peter, Nachname: Brötzmann.
+Added musiker Toto Blanke, Vorname: Toto, Nachname: Blanke.
+Added musiker Hans Reichel, Vorname: Hans, Nachname: Reichel.
+Added musiker Clarence Öfwerman, Vorname: Clarence, Nachname: Öfwerman.
+Added musiker Axel Heilhecker, Vorname: Axel, Nachname: Heilhecker.
+Added musiker Billy Falcon, Vorname: Billy, Nachname: Falcon.
+Added musiker Burkhard Rogalla, Vorname: Burkhard, Nachname: Rogalla.
+Added musiker Martin Theurer, Vorname: Martin, Nachname: Theurer.
+Added musiker Lars Rudolph, Vorname: Lars, Nachname: Rudolph.
+Added musiker Volker Palma, Vorname: Volker, Nachname: Palma.
+Added musiker Dann Huff, Vorname: Dann, Nachname: Huff.
+Added musiker Paul Hubweber, Vorname: Paul, Nachname: Hubweber.
+Added musiker Uwe Ochsenknecht, Vorname: Uwe, Nachname: Ochsenknecht.
+Added musiker Heinz Linfert, Vorname: Heinz, Nachname: Linfert.
+Added musiker Uli Eisner, Vorname: Uli, Nachname: Eisner.
+Added musiker Wolfgang Engstfeld, Vorname: Wolfgang, Nachname: Engstfeld.
+Added musiker Michael Herr, Vorname: Michael, Nachname: Herr.
+Added musiker Helen Sachs, Vorname: Helen, Nachname: Sachs.
+Added musiker Chinchilla Green, Vorname: Chinchilla, Nachname: Green.
+Added musiker George Martin, Vorname: George, Nachname: Martin.
+Added musiker Pe Werner, Vorname: Pe, Nachname: Werner.
+Added musiker Albie Donnelly, Vorname: Albie, Nachname: Donnelly.
+Added musiker Glenn Frey, Vorname: Glenn, Nachname: Frey.
+Added musiker Stefon Harris, Vorname: Stefon, Nachname: Harris.
+Added musiker Richie Beirach, Vorname: Richie, Nachname: Beirach.
+Added musiker Ricky Lawson, Vorname: Ricky, Nachname: Lawson.
+Added musiker Duran Duran, Vorname: Duran, Nachname: Duran.
+Added musiker Omar Sosa, Vorname: Omar, Nachname: Sosa.
+Added musiker Jay Stapley, Vorname: Jay, Nachname: Stapley.
+Added musiker Geogie Fame, Vorname: Geogie, Nachname: Fame.
+Added musiker Neil Peart, Vorname: Neil, Nachname: Peart.
+Added musiker Robert Wolf, Vorname: Robert, Nachname: Wolf.
+Added musiker Gunter Hampel, Vorname: Gunter, Nachname: Hampel.
+Added musiker Geri Allen, Vorname: Geri, Nachname: Allen.
+Added musiker Marty Cook, Vorname: Marty, Nachname: Cook.
+Added musiker Jens Winther, Vorname: Jens, Nachname: Winther.
+Added musiker Monty Alexander, Vorname: Monty, Nachname: Alexander.
+Added musiker Brian Blade, Vorname: Brian, Nachname: Blade.
+Added musiker Lionel Hampton, Vorname: Lionel, Nachname: Hampton.
+Added musiker Don Felder, Vorname: Don, Nachname: Felder.
+Added musiker Dave Berry, Vorname: Dave, Nachname: Berry.
+Added musiker Bernd Homann, Vorname: Bernd, Nachname: Homann.
+Added musiker Jan Gillan, Vorname: Jan, Nachname: Gillan.
+Added musiker M. Ward, Vorname: M., Nachname: Ward.
+Added musiker Andreas Vollenweider, Vorname: Andreas, Nachname: Vollenweider.
+Added musiker Barzin, Vorname: None, Nachname: unbekannt.
+Added musiker Hildegard Knef, Vorname: Hildegard, Nachname: Knef.
+Added musiker Dean Martin, Vorname: Dean, Nachname: Martin.
+Added musiker Peter Katz, Vorname: Peter, Nachname: Katz.
+Added musiker Roy Orbison, Vorname: Roy, Nachname: Orbison.
+Added musiker Priscilla Ahn, Vorname: Priscilla, Nachname: Ahn.
+Added musiker Buddy Holly, Vorname: Buddy, Nachname: Holly.
+Added musiker Adam Ant, Vorname: Adam, Nachname: Ant.
+Added musiker Frank Zander, Vorname: Frank, Nachname: Zander.
+Added musiker Mathias Kellner, Vorname: Mathias, Nachname: Kellner.
+Added musiker Sinéad O’Connor, Vorname: Sinéad, Nachname: O’Connor.
+Added musiker Roman Wreden, Vorname: Roman, Nachname: Wreden.
+Added musiker Bruce Springsteen, Vorname: Bruce, Nachname: Springsteen.
+Added musiker Cyril Davies, Vorname: Cyril, Nachname: Davies.
+Added musiker Dirko Juchem, Vorname: Dirko, Nachname: Juchem.
+Added musiker Carola Grey, Vorname: Carola, Nachname: Grey.
+Added musiker Bob Seger, Vorname: Bob, Nachname: Seger.
+Added musiker Jackie Leven, Vorname: Jackie, Nachname: Leven.
+Added musiker John Zorn, Vorname: John, Nachname: Zorn.
+Added musiker Alfredo Rodriguez, Vorname: Alfredo, Nachname: Rodriguez.
+Added musiker Götz Wörner, Vorname: Götz, Nachname: Wörner.
+Added musiker Arturo Sandoval, Vorname: Arturo, Nachname: Sandoval.
+Added musiker Rubén Blades, Vorname: Rubén, Nachname: Blades.
+Added musiker Gabriel García Márques, Vorname: Gabriel García, Nachname: Márques.
+Added musiker Todd Wolfe, Vorname: Todd, Nachname: Wolfe.
+Added musiker Eddie Cochran, Vorname: Eddie, Nachname: Cochran.
+Added musiker Herman Frank, Vorname: Herman, Nachname: Frank.
+Added musiker Vince Taylor, Vorname: Vince, Nachname: Taylor.
+Added musiker Stephen Stills, Vorname: Stephen, Nachname: Stills.
+Added musiker Jeff Scott Soto, Vorname: Jeff Scott, Nachname: Soto.
+Added musiker Nick Lowe, Vorname: Nick, Nachname: Lowe.
+Added musiker Ja, Vorname: None, Nachname: unbekannt.
+Added musiker George Gershwin, Vorname: George, Nachname: Gershwin.
+Added musiker Stoppok, Vorname: None, Nachname: unbekannt.
+Added musiker Heiner Goebbels, Vorname: Heiner, Nachname: Goebbels.
+Added musiker Konrad Bauer, Vorname: Konrad, Nachname: Bauer.
+Added musiker Johannes Bauer, Vorname: Johannes, Nachname: Bauer.
+Added musiker Konrad Bauer, Vorname: Konrad, Nachname: Bauer.
+Added musiker Helmut Sachse, Vorname: Helmut, Nachname: Sachse.
+Added musiker Günter Sommer, Vorname: Günter, Nachname: Sommer.
+Added musiker Bernd Köppen, Vorname: Bernd, Nachname: Köppen.
+Added musiker Krzystof Zgraja, Vorname: Krzystof, Nachname: Zgraja.
+Added musiker Ernst-Ludwig Petrowsky, Vorname: Ernst-Ludwig, Nachname: Petrowsky.
+Added musiker Phil Minton, Vorname: Phil, Nachname: Minton.
+Added musiker Giancarlo Nicolai, Vorname: Giancarlo, Nachname: Nicolai.
+Added musiker Chris Hirson, Vorname: Chris, Nachname: Hirson.
+Added musiker Geoff Goodman, Vorname: Geoff, Nachname: Goodman.
+Added musiker Betty Carter, Vorname: Betty, Nachname: Carter.
+Added musiker JHA DOPPELT SIEHE Pharao Sanders??, Vorname: JHA DOPPELT SIEHE Pharao, Nachname: Sanders??.
+Added musiker Pharaoh Sanders, Vorname: Pharaoh, Nachname: Sanders.
+Added musiker Andy Sheppard, Vorname: Andy, Nachname: Sheppard.
+Added musiker James Blood Ulmer, Vorname: James Blood, Nachname: Ulmer.
+Added musiker Jane Relf, Vorname: Jane, Nachname: Relf.
+Added musiker Morrissey, Vorname: None, Nachname: unbekannt.
+Added musiker J. J. Cale, Vorname: J. J., Nachname: Cale.
+Added musiker Neal Casal, Vorname: Neal, Nachname: Casal.
+Added musiker Arthur Lee, Vorname: Arthur, Nachname: Lee.
+Added musiker Rick Derringer, Vorname: Rick, Nachname: Derringer.
+Added musiker Chris Kramer, Vorname: Chris, Nachname: Kramer.
+Added musiker Joe Bonamassa, Vorname: Joe, Nachname: Bonamassa.
+Added musiker Achim Reichel, Vorname: Achim, Nachname: Reichel.
+Added musiker Martin Turner, Vorname: Martin, Nachname: Turner.
+Added musiker Joanne Shaw Taylor, Vorname: Joanne Shaw, Nachname: Taylor.
+Added musiker Snowy White, Vorname: Snowy, Nachname: White.
+Added musiker William Elliott Whitmore, Vorname: William Elliott, Nachname: Whitmore.
+Added musiker Etta James, Vorname: Etta, Nachname: James.
+Added musiker Marvin Gaye, Vorname: Marvin, Nachname: Gaye.
+Added musiker Amos Garrett, Vorname: Amos, Nachname: Garrett.
+Added musiker Ramblin’ Jack Elliott, Vorname: Ramblin’ Jack, Nachname: Elliott.
+Added musiker Ernie K-Doe, Vorname: Ernie, Nachname: K-Doe.
+Added musiker Aynsley Lister, Vorname: Aynsley, Nachname: Lister.
+Added musiker Jo Ann Kelly, Vorname: Jo Ann, Nachname: Kelly.
+Added musiker Hank Ballard, Vorname: Hank, Nachname: Ballard.
+Added musiker Major Lance, Vorname: Major, Nachname: Lance.
+Added musiker John Németh, Vorname: John, Nachname: Németh.
+Added musiker Big Ed Sullivan, Vorname: Big Ed, Nachname: Sullivan.
+Added musiker Aretha Franklin, Vorname: Aretha, Nachname: Franklin.
+Added musiker Rory Block, Vorname: Rory, Nachname: Block.
+Added musiker Shemekia Copeland, Vorname: Shemekia, Nachname: Copeland.
+Added musiker Jimmy Bowskill, Vorname: Jimmy, Nachname: Bowskill.
+Added musiker Charlie Parker, Vorname: Charlie, Nachname: Parker.
+Added musiker John Lee Hooker, Vorname: John Lee, Nachname: Hooker.
+Added musiker Guy Davies, Vorname: Guy, Nachname: Davies.
+Added musiker Damon Fowler, Vorname: Damon, Nachname: Fowler.
+Added musiker Jean-Jacques Milteau, Vorname: Jean-Jacques, Nachname: Milteau.
+Added musiker Stu Goldberg, Vorname: Stu, Nachname: Goldberg.
+Added musiker Ida Sand, Vorname: Ida, Nachname: Sand.
+Added musiker Les Blank, Vorname: Les, Nachname: Blank.
+Added musiker Jan Hammer, Vorname: Jan, Nachname: Hammer.
+Added musiker Alphonse Mouzon, Vorname: Alphonse, Nachname: Mouzon.
+Added musiker Larry Coryell, Vorname: Larry, Nachname: Coryell.
+Added musiker Keith Tippett, Vorname: Keith, Nachname: Tippett.
+Added musiker Heike Makatsch, Vorname: Heike, Nachname: Makatsch.
+Added musiker Paquito D’Rivera, Vorname: Paquito, Nachname: D’Rivera.
+Added musiker Ella Fitzgerald, Vorname: Ella, Nachname: Fitzgerald.
+Added musiker Louis Armstrong, Vorname: Louis, Nachname: Armstrong.
+Added musiker Barry Hay, Vorname: Barry, Nachname: Hay.
+Added musiker Kevin Costner, Vorname: Kevin, Nachname: Costner.
+Added musiker Johnny Cash, Vorname: Johnny, Nachname: Cash.
+Added musiker Paul Lovens, Vorname: Paul, Nachname: Lovens.
+Added musiker James Yorkston, Vorname: James, Nachname: Yorkston.
+Added musiker Tommy Sands, Vorname: Tommy, Nachname: Sands.
+Added musiker Lay Low, Vorname: Lay, Nachname: Low.
+Added musiker Sara K., Vorname: Sara, Nachname: K..
+Added musiker Viola Kramer, Vorname: Viola, Nachname: Kramer.
+Added musiker Jimmy Campbell, Vorname: Jimmy, Nachname: Campbell.
+Added musiker Garrett List, Vorname: Garrett, Nachname: List.
+Added musiker Paul Mertens- Pavlowsky, Vorname: Paul Mertens-, Nachname: Pavlowsky.
+Added musiker Hank Williams, Vorname: Hank, Nachname: Williams.
+Added musiker Ray Smith, Vorname: Ray, Nachname: Smith.
+Added musiker Link Davis, Vorname: Link, Nachname: Davis.
+Added musiker Bonnie "Prince" Billy, Vorname: Bonnie "Prince", Nachname: Billy.
+Added musiker Patty Loveless, Vorname: Patty, Nachname: Loveless.
+Added musiker Stefanie Wagner, Vorname: Stefanie, Nachname: Wagner.
+Added musiker Jorma Kaukonen, Vorname: Jorma, Nachname: Kaukonen.
+Added musiker Cara Dillon, Vorname: Cara, Nachname: Dillon.
+Added musiker Tom Rush, Vorname: Tom, Nachname: Rush.
+Added musiker Wolter Wierbos, Vorname: Wolter, Nachname: Wierbos.
+Added musiker Paul Kemenade, Vorname: Paul, Nachname: Kemenade.
+Added musiker Daniel Humair, Vorname: Daniel, Nachname: Humair.
+Added musiker Helene Labbariere, Vorname: Helene, Nachname: Labbariere.
+Added musiker Sergej Kurjokhin, Vorname: Sergej, Nachname: Kurjokhin.
+Added musiker Vyacheslav Ganelin, Vorname: Vyacheslav, Nachname: Ganelin.
+Added musiker Herbert Henck, Vorname: Herbert, Nachname: Henck.
+Added musiker Gerry Mulligan, Vorname: Gerry, Nachname: Mulligan.
+Added musiker Smokey Robinson, Vorname: Smokey, Nachname: Robinson.
+Added musiker Sarah Vaughan, Vorname: Sarah, Nachname: Vaughan.
+Added musiker Otis Rush, Vorname: Otis, Nachname: Rush.
+Added musiker Sonny Stitt, Vorname: Sonny, Nachname: Stitt.
+Added musiker Walter Horton, Vorname: Walter, Nachname: Horton.
+Added musiker Zoot Sims, Vorname: Zoot, Nachname: Sims.
+Added musiker Miles Davis, Vorname: Miles, Nachname: Davis.
+Added musiker Hanns Dieter Hüsch, Vorname: Hanns Dieter, Nachname: Hüsch.
+Added musiker Eleni Mandell, Vorname: Eleni, Nachname: Mandell.
+Added musiker Gary Louris, Vorname: Gary, Nachname: Louris.
+Added musiker Alela Diane, Vorname: Alela, Nachname: Diane.
+Added musiker Carlo Little, Vorname: Carlo, Nachname: Little.
+Added musiker Sara Lov, Vorname: Sara, Nachname: Lov.
+Added musiker Neko Case, Vorname: Neko, Nachname: Case.
+Added musiker Tom Freund, Vorname: Tom, Nachname: Freund.
+Added musiker Frank Sinatra, Vorname: Frank, Nachname: Sinatra.
+Added musiker Steven Wilson, Vorname: Steven, Nachname: Wilson.
+Added musiker John Coltrane, Vorname: John, Nachname: Coltrane.
+Added musiker Iggy Pop, Vorname: Iggy, Nachname: Pop.
+Added musiker Katy Lied, Vorname: Katy, Nachname: Lied.
+Added musiker Kevin Rudolf, Vorname: Kevin, Nachname: Rudolf.
+Added musiker Jesus Alemany, Vorname: Jesus, Nachname: Alemany.
+Added musiker Shuggie Otis, Vorname: Shuggie, Nachname: Otis.
+Added musiker Joe Sachse, Vorname: Joe, Nachname: Sachse.
+Added musiker Bic Runga, Vorname: Bic, Nachname: Runga.
+Added musiker Herb Robertson, Vorname: Herb, Nachname: Robertson.
+Added musiker Jane Ira Bloom, Vorname: Jane Ira, Nachname: Bloom.
+Added musiker Fred Hersch, Vorname: Fred, Nachname: Hersch.
+Added musiker Jay Clayton, Vorname: Jay, Nachname: Clayton.
+Added musiker Jerry Granelli, Vorname: Jerry, Nachname: Granelli.
+Added musiker Jens Thomas, Vorname: Jens, Nachname: Thomas.
+Added musiker Annabelle Chvostek, Vorname: Annabelle, Nachname: Chvostek.
+Added musiker Sarah McQuaid, Vorname: Sarah, Nachname: McQuaid.
+Added musiker Willem Breuker, Vorname: Willem, Nachname: Breuker.
+Added musiker Bernd Alois Zimmermann, Vorname: Bernd Alois, Nachname: Zimmermann.
+Added musiker Charles Ives, Vorname: Charles, Nachname: Ives.
+Added musiker Peter Fessler, Vorname: Peter, Nachname: Fessler.
+Added musiker Francis Dreyfus, Vorname: Francis, Nachname: Dreyfus.
+Added musiker Andre Nendza, Vorname: Andre, Nachname: Nendza.
+Added musiker Barre Philipps, Vorname: Barre, Nachname: Philipps.
+Added musiker Carl Verheyen, Vorname: Carl, Nachname: Verheyen.
+Added musiker Dave Brubeck, Vorname: Dave, Nachname: Brubeck.
+Added musiker Per Gessle, Vorname: Per, Nachname: Gessle.
+Added musiker Albert Ayler, Vorname: Albert, Nachname: Ayler.
+Added musiker Tyran Pace, Vorname: Tyran, Nachname: Pace.
+Added musiker Brian Wilson, Vorname: Brian, Nachname: Wilson.
+Added musiker ^Jaz, Vorname: None, Nachname: unbekannt.
+Added musiker Günter Klatt, Vorname: Günter, Nachname: Klatt.
+Added musiker Jose Feliciano, Vorname: Jose, Nachname: Feliciano.
+Added musiker Long John Baldry, Vorname: Long John, Nachname: Baldry.
+Added musiker Clark Terry, Vorname: Clark, Nachname: Terry.
+Added musiker Urs Leimgruber, Vorname: Urs, Nachname: Leimgruber.
+Added musiker Alex Harvey, Vorname: Alex, Nachname: Harvey.
+Added musiker Joe Haider, Vorname: Joe, Nachname: Haider.
+Added musiker Peter Sarstedt, Vorname: Peter, Nachname: Sarstedt.
+Added musiker Charles Mingus, Vorname: Charles, Nachname: Mingus.
+Added musiker Bob Dylan, Vorname: Bob, Nachname: Dylan.
+Added musiker Hugo Egon Balder, Vorname: Hugo Egon, Nachname: Balder.
+Added musiker Steve Kuhn, Vorname: Steve, Nachname: Kuhn.
+Added musiker Jimmy Powell, Vorname: Jimmy, Nachname: Powell.
+Added musiker Jack DeJohnette, Vorname: Jack, Nachname: DeJohnette.
+Added musiker Pete York, Vorname: Pete, Nachname: York.
+Added musiker Geoff Whitehorn, Vorname: Geoff, Nachname: Whitehorn.
+Added musiker Siggi Schwarz, Vorname: Siggi, Nachname: Schwarz.
+Added musiker David Haynes, Vorname: David, Nachname: Haynes.
+Added musiker Raoul Walton, Vorname: Raoul, Nachname: Walton.
+Added musiker Rudi Buttas, Vorname: Rudi, Nachname: Buttas.
+Added musiker Michael Sadler, Vorname: Michael, Nachname: Sadler.
+Added musiker Gino Vannelli, Vorname: Gino, Nachname: Vannelli.
+Added musiker Steve Jordan, Vorname: Steve, Nachname: Jordan.
+Added musiker Lisa Doby, Vorname: Lisa, Nachname: Doby.
+Added musiker Amit Erez, Vorname: Amit, Nachname: Erez.
+Added musiker Marissa Nadler, Vorname: Marissa, Nachname: Nadler.
+Added musiker Mariah Carey, Vorname: Mariah, Nachname: Carey.
+Added musiker Kristin Asbjørnsen, Vorname: Kristin, Nachname: Asbjørnsen.
+Added musiker Brenda Lee, Vorname: Brenda, Nachname: Lee.
+Added musiker Lionel Richie, Vorname: Lionel, Nachname: Richie.
+Added musiker Gigliola Cinquetti, Vorname: Gigliola, Nachname: Cinquetti.
+Added musiker Paul Anka, Vorname: Paul, Nachname: Anka.
+Added musiker Adriano Celentano, Vorname: Adriano, Nachname: Celentano.
+Added musiker Elvis Presley, Vorname: Elvis, Nachname: Presley.
+Added musiker Duane Eddy, Vorname: Duane, Nachname: Eddy.
+Added musiker Gene Vincent, Vorname: Gene, Nachname: Vincent.
+Added musiker Peter Kowald, Vorname: Peter, Nachname: Kowald.
+Added musiker Abi Ofarim, Vorname: Abi, Nachname: Ofarim.
+Added musiker Jimmy Osmond, Vorname: Jimmy, Nachname: Osmond.
+Added musiker Marie Osmond, Vorname: Marie, Nachname: Osmond.
+Added musiker Ingo Bischof, Vorname: Ingo, Nachname: Bischof.
+Added musiker Gary U. S. Bonds, Vorname: Gary U. S., Nachname: Bonds.
+Added musiker Paul Vincent, Vorname: Paul, Nachname: Vincent.
+Added musiker Jeff Cannata, Vorname: Jeff, Nachname: Cannata.
+Added musiker Joe Cocker, Vorname: Joe, Nachname: Cocker.
+Added musiker Martin Harley, Vorname: Martin, Nachname: Harley.
+Added musiker Chris Knight, Vorname: Chris, Nachname: Knight.
+Added musiker Bob Mould, Vorname: Bob, Nachname: Mould.
+Added musiker Peter Doherty, Vorname: Peter, Nachname: Doherty.
+Added musiker Raoul van der Weide, Vorname: Raoul, Nachname: van der Weide.
+Added musiker Savoy Brown, Vorname: Savoy, Nachname: Brown.
+Added musiker Dizzy Gillespie, Vorname: Dizzy, Nachname: Gillespie.
+Added musiker Dirk Raulf, Vorname: Dirk, Nachname: Raulf.
+Added musiker Deke Leonard, Vorname: Deke, Nachname: Leonard.
+Added musiker Björk, Vorname: None, Nachname: unbekannt.
+Added musiker Steve Gibbons, Vorname: Steve, Nachname: Gibbons.
+Added musiker Ike Turner, Vorname: Ike, Nachname: Turner.
+Added musiker Duke Ellington, Vorname: Duke, Nachname: Ellington.
+Added musiker Rod Stewart, Vorname: Rod, Nachname: Stewart.
+Added musiker Joachim Ullrich, Vorname: Joachim, Nachname: Ullrich.
+Added musiker Count Basie, Vorname: Count, Nachname: Basie.
+Added musiker Pete Brown, Vorname: Pete, Nachname: Brown.
+Added musiker Roger Hanschel, Vorname: Roger, Nachname: Hanschel.
+Added musiker Jan Garbarek, Vorname: Jan, Nachname: Garbarek.
+Added musiker Paul Brett, Vorname: Paul, Nachname: Brett.
+Added musiker Dion DiMucci, Vorname: Dion, Nachname: DiMucci.
+Added musiker Roger McGuinn, Vorname: Roger, Nachname: McGuinn.
+Added musiker Tony Ashton, Vorname: Tony, Nachname: Ashton.
+Added musiker Lenny Kravitz, Vorname: Lenny, Nachname: Kravitz.
+Added musiker Bo Diddley, Vorname: Bo, Nachname: Diddley.
+Added musiker Stevie Nicks, Vorname: Stevie, Nachname: Nicks.
+Added musiker Ray Wilson, Vorname: Ray, Nachname: Wilson.
+Added musiker Willie Nile, Vorname: Willie, Nachname: Nile.
+Added musiker Neil Young, Vorname: Neil, Nachname: Young.
+Added musiker Steve Wynn, Vorname: Steve, Nachname: Wynn.
+Added musiker Mitch Ryder, Vorname: Mitch, Nachname: Ryder.
+Added musiker Leeroy Stagger, Vorname: Leeroy, Nachname: Stagger.
+Added musiker Roger Chapman, Vorname: Roger, Nachname: Chapman.
+Added musiker Vinnie Moore, Vorname: Vinnie, Nachname: Moore.
+Added musiker Markus Stockhausen, Vorname: Markus, Nachname: Stockhausen.
+Added musiker Eric Woolfson, Vorname: Eric, Nachname: Woolfson.
+Added musiker Rob Halford, Vorname: Rob, Nachname: Halford.
+Added musiker Robin Trower, Vorname: Robin, Nachname: Trower.
+Added musiker Frankie Lymon, Vorname: Frankie, Nachname: Lymon.
+Added musiker Kristeen Young, Vorname: Kristeen, Nachname: Young.
+Added musiker Tim Hinkley, Vorname: Tim, Nachname: Hinkley.
+Added musiker Chris Duarte, Vorname: Chris, Nachname: Duarte.
+Added musiker Kaye Ree, Vorname: Kaye, Nachname: Ree.
+Added musiker Billy Boy Arnold, Vorname: Billy Boy, Nachname: Arnold.
+Added musiker Bobby Jones, Vorname: Bobby, Nachname: Jones.
+Added musiker Joseph Beuys, Vorname: Joseph, Nachname: Beuys.
+Added musiker Elliott Sharp, Vorname: Elliott, Nachname: Sharp.
+Added musiker Peter Green, Vorname: Peter, Nachname: Green.
+Added musiker Herbie Goins, Vorname: Herbie, Nachname: Goins.
+Added musiker Chris Farlowe, Vorname: Chris, Nachname: Farlowe.
+Added musiker Omar Kent Dykes, Vorname: Omar Kent, Nachname: Dykes.
+Added musiker Paul Jones, Vorname: Paul, Nachname: Jones.
+Added musiker Jackie Lomax, Vorname: Jackie, Nachname: Lomax.
+Added musiker Eric Bibb, Vorname: Eric, Nachname: Bibb.
+Added musiker Big Daddy Wilson, Vorname: Big Daddy, Nachname: Wilson.
+Added musiker Eric Bell, Vorname: Eric, Nachname: Bell.
+Added musiker Phoebe Snow, Vorname: Phoebe, Nachname: Snow.
+Added musiker Rob Tognoni, Vorname: Rob, Nachname: Tognoni.
+Added musiker Duke Robillard, Vorname: Duke, Nachname: Robillard.
+Added musiker Chris Spedding, Vorname: Chris, Nachname: Spedding.
+Added musiker Patti LaBelle, Vorname: Patti, Nachname: LaBelle.
+Added musiker Dexter Gordon, Vorname: Dexter, Nachname: Gordon.
+Added musiker Hugh Masekela, Vorname: Hugh, Nachname: Masekela.
+Added musiker Tony Allen, Vorname: Tony, Nachname: Allen.
+Added musiker Houston Person, Vorname: Houston, Nachname: Person.
+Added musiker Wynton Marsalis, Vorname: Wynton, Nachname: Marsalis.
+Added musiker Kirk Lightsey, Vorname: Kirk, Nachname: Lightsey.
+Added musiker Candi Staton, Vorname: Candi, Nachname: Staton.
+Added musiker Melanie, Vorname: None, Nachname: unbekannt.
+Added musiker Madison Violet, Vorname: Madison, Nachname: Violet.
+Added musiker Michael "Pankow" Boehlke, Vorname: Michael "Pankow", Nachname: Boehlke.
+Added musiker Bruce Cockburn, Vorname: Bruce, Nachname: Cockburn.
+Added musiker Daniel Martin Moore, Vorname: Daniel Martin, Nachname: Moore.
+Added musiker Catherine MacLellan, Vorname: Catherine, Nachname: MacLellan.
+Added musiker Tom Newman, Vorname: Tom, Nachname: Newman.
+Added musiker Lyle Lovett, Vorname: Lyle, Nachname: Lovett.
+Added musiker Jeffrey Foucault, Vorname: Jeffrey, Nachname: Foucault.
+Added musiker Joe Brown, Vorname: Joe, Nachname: Brown.
+Added musiker Ricky Adam, Vorname: Ricky, Nachname: Adam.
+Added musiker David Munyon, Vorname: David, Nachname: Munyon.
+Added musiker Göran Gnaudschun, Vorname: Göran, Nachname: Gnaudschun.
+Added musiker Al Kooper, Vorname: Al, Nachname: Kooper.
+Added musiker Jim Ford, Vorname: Jim, Nachname: Ford.
+Added musiker Ben Webster, Vorname: Ben, Nachname: Webster.
+Added musiker Diana Ross, Vorname: Diana, Nachname: Ross.
+Added musiker Linda Ronstadt, Vorname: Linda, Nachname: Ronstadt.
+Added musiker Bob Daisley, Vorname: Bob, Nachname: Daisley.
+Added musiker Hendrik Schaper, Vorname: Hendrik, Nachname: Schaper.
+Added musiker Judith Owen, Vorname: Judith, Nachname: Owen.
+Added musiker Sarah Jane Morris, Vorname: Sarah Jane, Nachname: Morris.
+Added musiker Jah Wobble, Vorname: Jah, Nachname: Wobble.
+Added musiker Brendan Croskerry, Vorname: Brendan, Nachname: Croskerry.
+Added musiker Rodriguez, Vorname: None, Nachname: unbekannt.
+Added musiker Ricky Warwick, Vorname: Ricky, Nachname: Warwick.
+Added musiker Hugh Cornwell, Vorname: Hugh, Nachname: Cornwell.
+Added musiker Danny Schmidt, Vorname: Danny, Nachname: Schmidt.
+Added musiker Sonny Landreth, Vorname: Sonny, Nachname: Landreth.
+Added musiker Eric Lindell, Vorname: Eric, Nachname: Lindell.
+Added musiker David Rose, Vorname: David, Nachname: Rose.
+Added musiker Jaime Cuadra, Vorname: Jaime, Nachname: Cuadra.
+Added musiker Lisa Papineau, Vorname: Lisa, Nachname: Papineau.
+Added musiker Julie Doiron, Vorname: Julie, Nachname: Doiron.
+Added musiker Big John Bates, Vorname: Big John, Nachname: Bates.
+Added musiker Joan Baez, Vorname: Joan, Nachname: Baez.
+Added musiker A. J. Croce, Vorname: A. J., Nachname: Croce.
+Added musiker Deniece Williams, Vorname: Deniece, Nachname: Williams.
+Added musiker Greg Koch, Vorname: Greg, Nachname: Koch.
+Added musiker Derek Sherinian, Vorname: Derek, Nachname: Sherinian.
+Added musiker Patrick Wolf, Vorname: Patrick, Nachname: Wolf.
+Added musiker Julia Ostertag, Vorname: Julia, Nachname: Ostertag.
+Added musiker Milow, Vorname: None, Nachname: unbekannt.
+Added musiker Peter Howarth, Vorname: Peter, Nachname: Howarth.
+Added musiker Mick Jagger, Vorname: Mick, Nachname: Jagger.
+Added musiker Joe Perry, Vorname: Joe, Nachname: Perry.
+Added musiker Steven Tyler, Vorname: Steven, Nachname: Tyler.
+Added musiker Ron Wood, Vorname: Ron, Nachname: Wood.
+Added musiker Ian McLagan, Vorname: Ian, Nachname: McLagan.
+Added musiker James Taylor, Vorname: James, Nachname: Taylor.
+Added musiker John Lennon, Vorname: John, Nachname: Lennon.
+Added musiker Bob Marley, Vorname: Bob, Nachname: Marley.
+Added musiker Freddie Mercury, Vorname: Freddie, Nachname: Mercury.
+Added musiker Georg Bayer, Vorname: Georg, Nachname: Bayer.
+Added musiker Bruce Brookshire, Vorname: Bruce, Nachname: Brookshire.
+Added musiker Stefan Kossmann, Vorname: Stefan, Nachname: Kossmann.
+Added musiker Joy Division, Vorname: Joy, Nachname: Division.
+Added musiker Willy DeVille, Vorname: Willy, Nachname: DeVille.
+Added musiker Syd Barrett, Vorname: Syd, Nachname: Barrett.
+Added musiker Roger Waters, Vorname: Roger, Nachname: Waters.
+Added musiker David Gilmour, Vorname: David, Nachname: Gilmour.
+Added musiker Pete Quaife, Vorname: Pete, Nachname: Quaife.
+Added musiker Ringo Starr, Vorname: Ringo, Nachname: Starr.
+Added musiker Bill Wyman, Vorname: Bill, Nachname: Wyman.
+Added musiker Lynyrd Skynyrd, Vorname: Lynyrd, Nachname: Skynyrd.
+Added musiker Dysnea Boys, Vorname: Dysnea, Nachname: Boys.
+Added musiker Frank Zappa, Vorname: Frank, Nachname: Zappa.
+Added musiker Barbra Streisand, Vorname: Barbra, Nachname: Streisand.
+Added musiker Nick Garrie, Vorname: Nick, Nachname: Garrie.
+Added musiker Scott Matthew, Vorname: Scott, Nachname: Matthew.
+Added musiker Brian Jones, Vorname: Brian, Nachname: Jones.
+Added musiker Jürgen Drews, Vorname: Jürgen, Nachname: Drews.
+Added musiker Joe Lynn Turner, Vorname: Joe Lynn, Nachname: Turner.
+Added musiker Steve Miller, Vorname: Steve, Nachname: Miller.
+Added musiker Justin Hayward, Vorname: Justin, Nachname: Hayward.
+Added musiker David Grissom, Vorname: David, Nachname: Grissom.
+Added musiker Leslie Mandoki, Vorname: Leslie, Nachname: Mandoki.
+Added musiker Lucinda Williams, Vorname: Lucinda, Nachname: Williams.
+Added musiker Harry Gump, Vorname: Harry, Nachname: Gump.
+Added musiker Miller Anderson, Vorname: Miller, Nachname: Anderson.
+Added musiker Eilen Jewell, Vorname: Eilen, Nachname: Jewell.
+Added musiker Mickey Jupp, Vorname: Mickey, Nachname: Jupp.
+Added musiker John Sebastian, Vorname: John, Nachname: Sebastian.
+Added musiker Julie Driscoll, Vorname: Julie, Nachname: Driscoll.
+Added musiker Tony Banks, Vorname: Tony, Nachname: Banks.
+Added musiker Gerry Rafferty, Vorname: Gerry, Nachname: Rafferty.
+Added musiker Helen Schneider, Vorname: Helen, Nachname: Schneider.
+Added musiker Gwyn Ashton, Vorname: Gwyn, Nachname: Ashton.
+Added musiker John Platania, Vorname: John, Nachname: Platania.
+Added musiker Bobby Graham, Vorname: Bobby, Nachname: Graham.
+Added musiker Cy Curnin, Vorname: Cy, Nachname: Curnin.
+Added musiker Larry Campbell, Vorname: Larry, Nachname: Campbell.
+Added musiker Graham Bell, Vorname: Graham, Nachname: Bell.
+Added musiker Lita Ford, Vorname: Lita, Nachname: Ford.
+Added musiker Duffy Power, Vorname: Duffy, Nachname: Power.
+Added musiker Kris Kristofferson, Vorname: Kris, Nachname: Kristofferson.
+Added musiker Jean-Jacques Kravetz, Vorname: Jean-Jacques, Nachname: Kravetz.
+Added musiker Charlie Haden, Vorname: Charlie, Nachname: Haden.
+Added musiker Till Brönner, Vorname: Till, Nachname: Brönner.
+Added musiker Jasmin Tabatabai, Vorname: Jasmin, Nachname: Tabatabai.
+Added musiker Peter "Komisch" Lustig, Vorname: Peter "Komisch", Nachname: Lustig.
+Added musiker Lena Stoehrfaktor, Vorname: Lena, Nachname: Stoehrfaktor.
+Added musiker Vice Squad, Vorname: Vice, Nachname: Squad.
+Added musiker Jimmy Page, Vorname: Jimmy, Nachname: Page.
+Added musiker Bill Liesegang, Vorname: Bill, Nachname: Liesegang.
+Added musiker Doogie White, Vorname: Doogie, Nachname: White.
+Added musiker Steve Jones, Vorname: Steve, Nachname: Jones.
+Added musiker Michael Jackson, Vorname: Michael, Nachname: Jackson.
+Added musiker Mick Taylor, Vorname: Mick, Nachname: Taylor.
+Added musiker Alvin Lee, Vorname: Alvin, Nachname: Lee.
+Added musiker Keith Emerson, Vorname: Keith, Nachname: Emerson.
+Added musiker Barbara Clear, Vorname: Barbara, Nachname: Clear.
+Added musiker Nancy Sinatra, Vorname: Nancy, Nachname: Sinatra.
+Added musiker Joe Turner, Vorname: Joe, Nachname: Turner.
+Added musiker Mick Fleetwood, Vorname: Mick, Nachname: Fleetwood.
+Added musiker Lauren Evans, Vorname: Lauren, Nachname: Evans.
+Added musiker Dave Evans, Vorname: Dave, Nachname: Evans.
+Added musiker Neal Smith, Vorname: Neal, Nachname: Smith.
+Added musiker Ray Davies, Vorname: Ray, Nachname: Davies.
+Added musiker Robin Gibb, Vorname: Robin, Nachname: Gibb.
+Added musiker Katie Melua, Vorname: Katie, Nachname: Melua.
+Added musiker Cilla Black, Vorname: Cilla, Nachname: Black.
+Added musiker Barry Blue, Vorname: Barry, Nachname: Blue.
+Added musiker Dave Bartholomew, Vorname: Dave, Nachname: Bartholomew.
+Added musiker Sean Tyla, Vorname: Sean, Nachname: Tyla.
+Added musiker Woolly Wolstenholme, Vorname: Woolly, Nachname: Wolstenholme.
+Added musiker Shawn Phillips, Vorname: Shawn, Nachname: Phillips.
+Added musiker Julian Dawson, Vorname: Julian, Nachname: Dawson.
+Added musiker Gordon Giltrap, Vorname: Gordon, Nachname: Giltrap.
+Added musiker Oliver Wakeman, Vorname: Oliver, Nachname: Wakeman.
+Added musiker Todd Rundgren, Vorname: Todd, Nachname: Rundgren.
+Added musiker John Fogerty, Vorname: John, Nachname: Fogerty.
+Added musiker Johnny Winter, Vorname: Johnny, Nachname: Winter.
+Added musiker Bobby Whitlock, Vorname: Bobby, Nachname: Whitlock.
+Added musiker Patti Smith, Vorname: Patti, Nachname: Smith.
+Added musiker Jim James, Vorname: Jim, Nachname: James.
+Added musiker Tony Hatch, Vorname: Tony, Nachname: Hatch.
+Added musiker J.D. Souther, Vorname: J.D., Nachname: Souther.
+Added musiker Holly Knight, Vorname: Holly, Nachname: Knight.
+Added musiker Luke Morley, Vorname: Luke, Nachname: Morley.
+Added musiker Bobby Womack, Vorname: Bobby, Nachname: Womack.
+Added musiker Robert Johnson, Vorname: Robert, Nachname: Johnson.
+Added musiker Abi Wallenstein, Vorname: Abi, Nachname: Wallenstein.
+Added musiker Martin Röttger, Vorname: Martin, Nachname: Röttger.
+Added musiker Alice Cooper, Vorname: Alice, Nachname: Cooper.
+Added musiker Aidan Roberts, Vorname: Aidan, Nachname: Roberts.
+Added musiker Suzi Quatro, Vorname: Suzi, Nachname: Quatro.
+Added musiker George McCrae, Vorname: George, Nachname: McCrae.
+Added musiker David Bowie, Vorname: David, Nachname: Bowie.
+Added musiker Willie Nelson, Vorname: Willie, Nachname: Nelson.
+Added musiker Albert Hammond, Vorname: Albert, Nachname: Hammond.
+Added musiker Petula Clark, Vorname: Petula, Nachname: Clark.
+Added musiker Mike d'Abo, Vorname: Mike, Nachname: d'Abo.
+Added musiker Tony Sheridan, Vorname: Tony, Nachname: Sheridan.
+Added musiker Kevin Ayers, Vorname: Kevin, Nachname: Ayers.
+Added musiker Lynsey de Paul, Vorname: Lynsey, Nachname: de Paul.
+Added musiker Dave Edmunds, Vorname: Dave, Nachname: Edmunds.
+Added musiker Jeff Wayne, Vorname: Jeff, Nachname: Wayne.
+Added musiker Billy Cox, Vorname: Billy, Nachname: Cox.
+Added musiker Eddie Kramer, Vorname: Eddie, Nachname: Kramer.
+Added musiker Lewis Collins, Vorname: Lewis, Nachname: Collins.
+Added musiker Sonny Bono, Vorname: Sonny, Nachname: Bono.
+Added musiker Marek Lieberberg, Vorname: Marek, Nachname: Lieberberg.
+Added musiker David Aguilar, Vorname: David, Nachname: Aguilar.
+Added musiker Dieter Zembski, Vorname: Dieter, Nachname: Zembski.
+Added musiker Dana, Vorname: None, Nachname: unbekannt.
+Added musiker Walter Renneisen, Vorname: Walter, Nachname: Renneisen.
+Added musiker Joe Pesci, Vorname: Joe, Nachname: Pesci.
+Added musiker Peter Garrett, Vorname: Peter, Nachname: Garrett.
+Added musiker Tony Blair, Vorname: Tony, Nachname: Blair.
+Added musiker Screaming Lord Sutch, Vorname: Screaming Lord, Nachname: Sutch.
+Added musiker Allen Stone, Vorname: Allen, Nachname: Stone.
+Added musiker Gary Clark Jr., Vorname: Gary Clark, Nachname: Jr..
+Added musiker Andreas Kümmert, Vorname: Andreas, Nachname: Kümmert.
+Added musiker Emmylou Harris, Vorname: Emmylou, Nachname: Harris.
+Added musiker Rodney Crowell, Vorname: Rodney, Nachname: Crowell.
+Added musiker King Crimson, Vorname: King, Nachname: Crimson.
+Added musiker Richard Thompson, Vorname: Richard, Nachname: Thompson.
+Added musiker Paul Raymond, Vorname: Paul, Nachname: Raymond.
+Added musiker Devon Allman, Vorname: Devon, Nachname: Allman.
+Added musiker Maggie Reilly, Vorname: Maggie, Nachname: Reilly.
+Added musiker Franz K., Vorname: Franz, Nachname: K..
+Added musiker Paul Roland, Vorname: Paul, Nachname: Roland.
+Added musiker Ed Sheeran, Vorname: Ed, Nachname: Sheeran.
+Added musiker Peter Frampton, Vorname: Peter, Nachname: Frampton.
+Added musiker Lenny Breau, Vorname: Lenny, Nachname: Breau.
+Added musiker Sheila E, Vorname: Sheila, Nachname: E.
+Added musiker Larry Graham, Vorname: Larry, Nachname: Graham.
+Added musiker Magic Slim, Vorname: Magic, Nachname: Slim.
+Added musiker Lou Reed, Vorname: Lou, Nachname: Reed.
+Added musiker Chaka Khan, Vorname: Chaka, Nachname: Khan.
+Added musiker Big Bill Morganfield, Vorname: Big Bill, Nachname: Morganfield.
+Added musiker Mud Morganfield, Vorname: Mud, Nachname: Morganfield.
+Added musiker Stanley Dural Jr., Vorname: Stanley Dural, Nachname: Jr..
+Added musiker Chicago Bob Nelson, Vorname: Chicago Bob, Nachname: Nelson.
+Added musiker Roscoe Chenier, Vorname: Roscoe, Nachname: Chenier.
+Added musiker Chris Evans, Vorname: Chris, Nachname: Evans.
+Added musiker David Hanselmann, Vorname: David, Nachname: Hanselmann.
+Added musiker King King, Vorname: King, Nachname: King.
+Added musiker Ethan Johns, Vorname: Ethan, Nachname: Johns.
+Added musiker Luke Winslow-King, Vorname: Luke, Nachname: Winslow-King.
+Added musiker Sam Lee, Vorname: Sam, Nachname: Lee.
+Added musiker Giorgio Moroder, Vorname: Giorgio, Nachname: Moroder.
+Added musiker Memphis Minnie, Vorname: Memphis, Nachname: Minnie.
+Added musiker Tim Rose, Vorname: Tim, Nachname: Rose.
+Added musiker Dusty Springfield, Vorname: Dusty, Nachname: Springfield.
+Added musiker Warren Haynes, Vorname: Warren, Nachname: Haynes.
+Added musiker Ricky Martin, Vorname: Ricky, Nachname: Martin.
+Added musiker Christian Rannenberg, Vorname: Christian, Nachname: Rannenberg.
+Added musiker Jessy Martens, Vorname: Jessy, Nachname: Martens.
+Added musiker Chuck Leavell, Vorname: Chuck, Nachname: Leavell.
+Added musiker Gordon Beadle, Vorname: Gordon, Nachname: Beadle.
+Added musiker Jack Bruce, Vorname: Jack, Nachname: Bruce.
+Added musiker Randy Bachman, Vorname: Randy, Nachname: Bachman.
+Added musiker Gilbert O'Sullivan, Vorname: Gilbert, Nachname: O'Sullivan.
+Added musiker Sandie Shaw, Vorname: Sandie, Nachname: Shaw.
+Added musiker Neil Davidge, Vorname: Neil, Nachname: Davidge.
+Added musiker Richard Bargel, Vorname: Richard, Nachname: Bargel.
+Added musiker Carolin Fortenbacher, Vorname: Carolin, Nachname: Fortenbacher.
+Added musiker Jesper Munk, Vorname: Jesper, Nachname: Munk.
+Added musiker Donnie Munro, Vorname: Donnie, Nachname: Munro.
+Added musiker Tony Bennett, Vorname: Tony, Nachname: Bennett.
+Added musiker Wilko Johnson, Vorname: Wilko, Nachname: Johnson.
+Added musiker Randy Rhoads, Vorname: Randy, Nachname: Rhoads.
+Added musiker Josh Smith, Vorname: Josh, Nachname: Smith.
+Added musiker Chi Coltrane, Vorname: Chi, Nachname: Coltrane.
+Added musiker Christine McVie, Vorname: Christine, Nachname: McVie.
+Added musiker Arlen Roth, Vorname: Arlen, Nachname: Roth.
+Added musiker Paul Rodgers, Vorname: Paul, Nachname: Rodgers.
+Added musiker Kris Pohlmann, Vorname: Kris, Nachname: Pohlmann.
+Added musiker Irmin Schmidt, Vorname: Irmin, Nachname: Schmidt.
+Added musiker Sandy Wolfrum, Vorname: Sandy, Nachname: Wolfrum.
+Added musiker Ian Anderson, Vorname: Ian, Nachname: Anderson.
+Added musiker Robben Ford, Vorname: Robben, Nachname: Ford.
+Added musiker Ian Gillan, Vorname: Ian, Nachname: Gillan.
+Added musiker Cosimo Matassa, Vorname: Cosimo, Nachname: Matassa.
+Added musiker Holly Johnson, Vorname: Holly, Nachname: Johnson.
+Added musiker Chris Antonik, Vorname: Chris, Nachname: Antonik.
+Added musiker Rainer Oleak, Vorname: Rainer, Nachname: Oleak.
+Added musiker Aaron Neville, Vorname: Aaron, Nachname: Neville.
+Added musiker Björn Berge, Vorname: Björn, Nachname: Berge.
+Added musiker Arjan Van der linde, Vorname: Arjan Van der, Nachname: linde.
+Added musiker Mark Selby, Vorname: Mark, Nachname: Selby.
+Added musiker Paolo Conte, Vorname: Paolo, Nachname: Conte.
+Added musiker Sam Cooke, Vorname: Sam, Nachname: Cooke.
+Added musiker Nguyên Lê, Vorname: Nguyên, Nachname: Lê.
+Added musiker Lisa-Marie Fischer, Vorname: Lisa-Marie, Nachname: Fischer.
+Added musiker Shelly Bonet, Vorname: Shelly, Nachname: Bonet.
+Added musiker bots, Vorname: None, Nachname: unbekannt.
+Added musiker Chris de Burgh, Vorname: Chris, Nachname: de Burgh.
+Added musiker Inga Rumpf, Vorname: Inga, Nachname: Rumpf.
+Added musiker Danny Bryant, Vorname: Danny, Nachname: Bryant.
+Added musiker Walter Trout, Vorname: Walter, Nachname: Trout.
+Added musiker Mojo Makers, Vorname: Mojo, Nachname: Makers.
+Added musiker Christopher Cross, Vorname: Christopher, Nachname: Cross.
+Added musiker Buffy St. Marie, Vorname: Buffy St., Nachname: Marie.
+Added musiker Sally Barker, Vorname: Sally, Nachname: Barker.
+Added musiker Midge Ure, Vorname: Midge, Nachname: Ure.
+Added musiker Buddy Flett, Vorname: Buddy, Nachname: Flett.
+Added musiker Cajun Roosters, Vorname: Cajun, Nachname: Roosters.
+Added musiker Weird Al Yankovic, Vorname: Weird Al, Nachname: Yankovic.
+Added musiker John Illsley, Vorname: John, Nachname: Illsley.
+Added musiker Neil Diamond, Vorname: Neil, Nachname: Diamond.
+Added musiker Percy Sledge, Vorname: Percy, Nachname: Sledge.
+Added musiker Jim Croce, Vorname: Jim, Nachname: Croce.
+Added musiker Carl Perkins, Vorname: Carl, Nachname: Perkins.
+Added musiker Ann Peebles, Vorname: Ann, Nachname: Peebles.
+Added musiker Jesse Winchester, Vorname: Jesse, Nachname: Winchester.
+Added musiker Chips Moman, Vorname: Chips, Nachname: Moman.
+Added musiker Al Bell, Vorname: Al, Nachname: Bell.
+Added musiker Lil Hardin Armstrong, Vorname: Lil Hardin, Nachname: Armstrong.
+Added musiker Randy Brecker, Vorname: Randy, Nachname: Brecker.
+Added musiker Janis Joplin, Vorname: Janis, Nachname: Joplin.
+Added musiker Jimmy Cornett, Vorname: Jimmy, Nachname: Cornett.
+Added musiker Adam Cohen, Vorname: Adam, Nachname: Cohen.
+Added musiker Hank Shizzoe, Vorname: Hank, Nachname: Shizzoe.
+Added musiker Jim Stapley, Vorname: Jim, Nachname: Stapley.
+Added musiker Jackson C. Frank, Vorname: Jackson C., Nachname: Frank.
+Added musiker Leo Lyons, Vorname: Leo, Nachname: Lyons.
+Added musiker John Hiatt, Vorname: John, Nachname: Hiatt.
+Added musiker Bryan Ferry, Vorname: Bryan, Nachname: Ferry.
+Added musiker Rick Vito, Vorname: Rick, Nachname: Vito.
+Added musiker Joan Armatrading, Vorname: Joan, Nachname: Armatrading.
+Added musiker Chris Rea, Vorname: Chris, Nachname: Rea.
+Added musiker John Watts, Vorname: John, Nachname: Watts.
+Added musiker Dave Stewart, Vorname: Dave, Nachname: Stewart.
+Added musiker Gregg Allman, Vorname: Gregg, Nachname: Allman.
+Added musiker Bernie Marsden, Vorname: Bernie, Nachname: Marsden.
+Added musiker Jon Hiseman, Vorname: Jon, Nachname: Hiseman.
+Added musiker Dave Goodman, Vorname: Dave, Nachname: Goodman.
+Added musiker Tom Petty, Vorname: Tom, Nachname: Petty.
+Added musiker John Lydon, Vorname: John, Nachname: Lydon.
+Added musiker Muddy Waters, Vorname: Muddy, Nachname: Waters.
+Added musiker Charlie Musselwhite, Vorname: Charlie, Nachname: Musselwhite.
+Added musiker Glen Campbell, Vorname: Glen, Nachname: Campbell.
+Added musiker Felix Jaehn, Vorname: Felix, Nachname: Jaehn.
+Added musiker Ronnie Earl, Vorname: Ronnie, Nachname: Earl.
+Added musiker Tino Gonzales, Vorname: Tino, Nachname: Gonzales.
+Added musiker Keith Dunn, Vorname: Keith, Nachname: Dunn.
+Added musiker Oil Brown, Vorname: Oil, Nachname: Brown.
+Added musiker Mark Foster, Vorname: Mark, Nachname: Foster.
+Added musiker Chris Barber, Vorname: Chris, Nachname: Barber.
+Added musiker Suzanne Ciani, Vorname: Suzanne, Nachname: Ciani.
+Added musiker Marco Bailey, Vorname: Marco, Nachname: Bailey.
+Added musiker Adele, Vorname: None, Nachname: unbekannt.
+Added musiker Barry Gibb, Vorname: Barry, Nachname: Gibb.
+Added musiker Jenny Lee Lindberg, Vorname: Jenny Lee, Nachname: Lindberg.
+Added musiker John Maclean, Vorname: John, Nachname: Maclean.
+Added musiker Natalie Merchant, Vorname: Natalie, Nachname: Merchant.
+Added musiker Jeff Lynne, Vorname: Jeff, Nachname: Lynne.
+Added musiker Tom Jones, Vorname: Tom, Nachname: Jones.
+Added musiker Götz Alsmann, Vorname: Götz, Nachname: Alsmann.
+Added musiker Jean-Yves Ferri, Vorname: Jean-Yves, Nachname: Ferri.
+Added musiker Kenny Wayne Shepherd, Vorname: Kenny Wayne, Nachname: Shepherd.
+Added musiker Kat Baloun, Vorname: Kat, Nachname: Baloun.
+Added musiker Nina T. Davis, Vorname: Nina T., Nachname: Davis.
+Added musiker Meghan Remy, Vorname: Meghan, Nachname: Remy.
+Added musiker Blank When Zero, Vorname: Blank When, Nachname: Zero.
+Added musiker Khalif Wailin' Walter, Vorname: Khalif Wailin', Nachname: Walter.
+Added musiker Jonny Lang, Vorname: Jonny, Nachname: Lang.
+Added musiker Peter Urban, Vorname: Peter, Nachname: Urban.
+Added musiker Tyrone Vaughan, Vorname: Tyrone, Nachname: Vaughan.
+Added musiker Layla Zoe, Vorname: Layla, Nachname: Zoe.
+Added musiker Beth Hart, Vorname: Beth, Nachname: Hart.
+Added musiker Bob Brozman, Vorname: Bob, Nachname: Brozman.
+Added musiker Frank Ratliff, Vorname: Frank, Nachname: Ratliff.
+Added musiker Jimmy Dawkins, Vorname: Jimmy, Nachname: Dawkins.
+Added musiker Victor Wainwright, Vorname: Victor, Nachname: Wainwright.
+Added musiker Tami Neilson, Vorname: Tami, Nachname: Neilson.
+Added musiker Alejandra Ribera, Vorname: Alejandra, Nachname: Ribera.
+Added musiker Josh Ritter, Vorname: Josh, Nachname: Ritter.
+Added musiker Jamie Woon, Vorname: Jamie, Nachname: Woon.
+Added musiker Shawn Colvin, Vorname: Shawn, Nachname: Colvin.
+Added musiker Nicole Willis, Vorname: Nicole, Nachname: Willis.
+Added musiker Anna von Hausswolff, Vorname: Anna, Nachname: von Hausswolff.
+Added musiker Popa Chubby, Vorname: Popa, Nachname: Chubby.
+Added musiker Bill Wells, Vorname: Bill, Nachname: Wells.
+Added musiker Andy Scott, Vorname: Andy, Nachname: Scott.
+Added musiker Cyril Neville, Vorname: Cyril, Nachname: Neville.
+Added musiker Gary Glitter, Vorname: Gary, Nachname: Glitter.
+Added musiker James Hunter, Vorname: James, Nachname: Hunter.
+Added musiker Patricia Vonne, Vorname: Patricia, Nachname: Vonne.
+Added musiker Bob Margolin, Vorname: Bob, Nachname: Margolin.
+Added musiker Thorbjørn Risager, Vorname: Thorbjørn, Nachname: Risager.
+Added musiker Deitra Farr, Vorname: Deitra, Nachname: Farr.
+Added musiker Raphael Wressnig, Vorname: Raphael, Nachname: Wressnig.
+Added musiker Enrico Crivellaro, Vorname: Enrico, Nachname: Crivellaro.
+Added musiker Sax Gordon, Vorname: Sax, Nachname: Gordon.
+Added musiker Ana Popovic, Vorname: Ana, Nachname: Popovic.
+Added musiker Ellie Coulding, Vorname: Ellie, Nachname: Coulding.
+Added musiker Ronnie Baker Brooks, Vorname: Ronnie Baker, Nachname: Brooks.
+Added musiker Ryan McGarvey, Vorname: Ryan, Nachname: McGarvey.
+Added musiker Tommy Guerrero, Vorname: Tommy, Nachname: Guerrero.
+Added musiker Frenzal Rhomb, Vorname: Frenzal, Nachname: Rhomb.
+Added musiker Kathrin Aehnlich, Vorname: Kathrin, Nachname: Aehnlich.
+Added musiker Curtis Salgado, Vorname: Curtis, Nachname: Salgado.
+Added musiker Diät, Vorname: None, Nachname: unbekannt.
+Added musiker Dr. John, Vorname: Dr., Nachname: John.
+Added musiker Lee Clayton, Vorname: Lee, Nachname: Clayton.
+Added musiker Steve Winwood, Vorname: Steve, Nachname: Winwood.
+Added musiker Arlo Guthrie, Vorname: Arlo, Nachname: Guthrie.
+Added musiker Jono McCleery, Vorname: Jono, Nachname: McCleery.
+Added musiker Bernadette la hengst, Vorname: Bernadette la, Nachname: hengst.
+Added musiker Smokin' Joe Kubek, Vorname: Smokin' Joe, Nachname: Kubek.
+Added musiker Bnois King, Vorname: Bnois, Nachname: King.
+Added musiker Jimmy Johnson, Vorname: Jimmy, Nachname: Johnson.
+Added musiker Little Freddie King, Vorname: Little Freddie, Nachname: King.
+Added musiker Ben Harper, Vorname: Ben, Nachname: Harper.
+Added musiker Allen Toussaint, Vorname: Allen, Nachname: Toussaint.
+Added musiker Edie Brickell, Vorname: Edie, Nachname: Brickell.
+Added musiker Junior Mack, Vorname: Junior, Nachname: Mack.
+Added musiker David Philips, Vorname: David, Nachname: Philips.
+Added musiker Hans Theessink, Vorname: Hans, Nachname: Theessink.
+Added musiker Terry Evans, Vorname: Terry, Nachname: Evans.
+Added musiker Eric Johnson, Vorname: Eric, Nachname: Johnson.
+Added musiker Astrid Kirchherr, Vorname: Astrid, Nachname: Kirchherr.
+Added musiker Lilly Martin, Vorname: Lilly, Nachname: Martin.
+Added musiker Philipp Frankhauser, Vorname: Philipp, Nachname: Frankhauser.
+Added musiker Jeffrey Lewis, Vorname: Jeffrey, Nachname: Lewis.
+Added musiker Eddie Martin, Vorname: Eddie, Nachname: Martin.
+Added musiker Olaf Kübler, Vorname: Olaf, Nachname: Kübler.
+Added musiker Tanita Tikaram, Vorname: Tanita, Nachname: Tikaram.
+Added musiker Vieux Farka Toure, Vorname: Vieux Farka, Nachname: Toure.
+Added musiker Glenn Hughes, Vorname: Glenn, Nachname: Hughes.
+Added musiker Gentleman´s Dub Club, Vorname: Gentleman´s Dub, Nachname: Club.
+Added musiker C. J. Chenier, Vorname: C. J., Nachname: Chenier.
+Added musiker Nathan James, Vorname: Nathan, Nachname: James.
+Added musiker Merle Haggard, Vorname: Merle, Nachname: Haggard.
+Added musiker Will Varley, Vorname: Will, Nachname: Varley.
+Added musiker Ariel Sharratt, Vorname: Ariel, Nachname: Sharratt.
+Added musiker Angela Correa, Vorname: Angela, Nachname: Correa.
+Added musiker Carolyn Wonderland, Vorname: Carolyn, Nachname: Wonderland.
+Added musiker Adam Rubenstein, Vorname: Adam, Nachname: Rubenstein.
+Added musiker Doctor Ross, Vorname: Doctor, Nachname: Ross.
+Added musiker Philippe Ménard, Vorname: Philippe, Nachname: Ménard.
+Added musiker Half Moon Run, Vorname: Half Moon, Nachname: Run.
+Added musiker Stacie Collins, Vorname: Stacie, Nachname: Collins.
+Added musiker Barotti, Vorname: None, Nachname: unbekannt.
+Added musiker Newton Faulkner, Vorname: Newton, Nachname: Faulkner.
+Added musiker Van Morrison, Vorname: Van, Nachname: Morrison.
+Added musiker Kurt Cobain, Vorname: Kurt, Nachname: Cobain.
+Added musiker Nikki Hill, Vorname: Nikki, Nachname: Hill.
+Added musiker Jordan Zevon, Vorname: Jordan, Nachname: Zevon.
+Added musiker Rick Wakeman, Vorname: Rick, Nachname: Wakeman.
+Added musiker Randy Weston, Vorname: Randy, Nachname: Weston.
+Added musiker John Steel, Vorname: John, Nachname: Steel.
+Added musiker Otis Taylor, Vorname: Otis, Nachname: Taylor.
+Added musiker Fish, Vorname: None, Nachname: unbekannt.
+Added musiker Bert Jansch, Vorname: Bert, Nachname: Jansch.
+Added musiker Steven Adler, Vorname: Steven, Nachname: Adler.
+Added musiker Frankie Miller, Vorname: Frankie, Nachname: Miller.
+Added musiker Charles Pasi, Vorname: Charles, Nachname: Pasi.
+Added musiker Vasti Jackson, Vorname: Vasti, Nachname: Jackson.
+Added musiker Alexis Taylor, Vorname: Alexis, Nachname: Taylor.
+Added musiker Benoît David, Vorname: Benoît, Nachname: David.
+Added musiker Tracey Thorn, Vorname: Tracey, Nachname: Thorn.
+Added musiker Otis Redding, Vorname: Otis, Nachname: Redding.
+Added musiker Neil Finn, Vorname: Neil, Nachname: Finn.
+Added musiker Ed O'Brien, Vorname: Ed, Nachname: O'Brien.
+Added musiker Philip Selway, Vorname: Philip, Nachname: Selway.
+Added musiker Scott Weiland, Vorname: Scott, Nachname: Weiland.
+Added musiker Madonna, Vorname: None, Nachname: unbekannt.
+Added musiker Lurrie Bell, Vorname: Lurrie, Nachname: Bell.
+Added musiker Earl Thomas, Vorname: Earl, Nachname: Thomas.
+Added musiker Buddy Miller, Vorname: Buddy, Nachname: Miller.
+Added musiker Maurizio Pugno, Vorname: Maurizio, Nachname: Pugno.
+Added musiker Stan Bush, Vorname: Stan, Nachname: Bush.
+Added musiker Sam Burckhardt, Vorname: Sam, Nachname: Burckhardt.
+Added musiker Ray Charles, Vorname: Ray, Nachname: Charles.
+Added musiker Neal Black, Vorname: Neal, Nachname: Black.
+Added musiker Willi Resetarits, Vorname: Willi, Nachname: Resetarits.
+Added musiker Steve Gadd, Vorname: Steve, Nachname: Gadd.
+Added musiker Louie Bellson, Vorname: Louie, Nachname: Bellson.
+Added musiker Ed Thigpen, Vorname: Ed, Nachname: Thigpen.
+Added musiker Lenny White, Vorname: Lenny, Nachname: White.
+Added musiker Richard Tee, Vorname: Richard, Nachname: Tee.
+Added musiker Dolly Parton, Vorname: Dolly, Nachname: Parton.
+Added musiker Jakob Dylan, Vorname: Jakob, Nachname: Dylan.
+Added musiker Joe Henry, Vorname: Joe, Nachname: Henry.
+Added musiker Courtney Barnett, Vorname: Courtney, Nachname: Barnett.
+Added musiker Quincy Jones, Vorname: Quincy, Nachname: Jones.
+Added musiker Cliff Richard, Vorname: Cliff, Nachname: Richard.
+Added musiker Sven Regener, Vorname: Sven, Nachname: Regener.
+Added musiker Barry Manilow, Vorname: Barry, Nachname: Manilow.
+Added musiker Neal Morse, Vorname: Neal, Nachname: Morse.
+Added musiker Gordon Lightfoot, Vorname: Gordon, Nachname: Lightfoot.
+Added musiker Van Dyke Parks, Vorname: Van Dyke, Nachname: Parks.
+Added musiker Stuart Staples, Vorname: Stuart, Nachname: Staples.
+Added musiker Inara George, Vorname: Inara, Nachname: George.
+Added musiker Slash, Vorname: None, Nachname: unbekannt.
+Added musiker Neil Tennant, Vorname: Neil, Nachname: Tennant.
+Added musiker Devin Townsend, Vorname: Devin, Nachname: Townsend.
+Added musiker Sam Phillips, Vorname: Sam, Nachname: Phillips.
+Added musiker Brain Eno, Vorname: Brain, Nachname: Eno.
+Added musiker Richard Page, Vorname: Richard, Nachname: Page.
+Added musiker Kate Bush, Vorname: Kate, Nachname: Bush.
+Added musiker Lana Del Rey, Vorname: Lana Del, Nachname: Rey.
+Added musiker Jerry Leiber, Vorname: Jerry, Nachname: Leiber.
+Added musiker Mike Stoller, Vorname: Mike, Nachname: Stoller.
+Added musiker Jason Williamson, Vorname: Jason, Nachname: Williamson.
+Added musiker Peter Friestedt, Vorname: Peter, Nachname: Friestedt.
+Added musiker Lorde, Vorname: None, Nachname: unbekannt.
+Added musiker Nas, Vorname: None, Nachname: unbekannt.
+Added musiker St.Vincent, Vorname: None, Nachname: unbekannt.
+Added musiker Miley Cyrus, Vorname: Miley, Nachname: Cyrus.
+Added musiker Ezra Koenig, Vorname: Ezra, Nachname: Koenig.
+Added musiker Marcus Wiebusch, Vorname: Marcus, Nachname: Wiebusch.
+Added musiker Alex Conti, Vorname: Alex, Nachname: Conti.
+Added musiker Diplo, Vorname: None, Nachname: unbekannt.
+Added musiker Erykah Badu, Vorname: Erykah, Nachname: Badu.
+Added musiker Marc Bolan, Vorname: Marc, Nachname: Bolan.
+Added musiker Scott Fagan, Vorname: Scott, Nachname: Fagan.
+Added musiker Whitney Rose, Vorname: Whitney, Nachname: Rose.
+Added musiker Marla Glen, Vorname: Marla, Nachname: Glen.
+Added musiker Chris Norman, Vorname: Chris, Nachname: Norman.
+Added musiker Lady Gaga, Vorname: Lady, Nachname: Gaga.
+Added musiker Bobby Gillespie, Vorname: Bobby, Nachname: Gillespie.
+Added musiker Black Label Society, Vorname: Black Label, Nachname: Society.
+Added musiker Ashley Hutchings, Vorname: Ashley, Nachname: Hutchings.
+Added musiker Miike Snow, Vorname: Miike, Nachname: Snow.
+Added musiker Dave Dee, Vorname: Dave, Nachname: Dee.
+Added musiker Luka Bloom, Vorname: Luka, Nachname: Bloom.
+Added musiker Hugh Laurie, Vorname: Hugh, Nachname: Laurie.
+Added musiker Southside Johnny, Vorname: Southside, Nachname: Johnny.
+Added musiker Josh Homme, Vorname: Josh, Nachname: Homme.
+Added musiker Paul Kantner, Vorname: Paul, Nachname: Kantner.
+Added musiker Ken Hensley, Vorname: Ken, Nachname: Hensley.
+Added musiker Birdy, Vorname: None, Nachname: unbekannt.
+Added musiker Aurora, Vorname: None, Nachname: unbekannt.
+Added musiker Bob Young, Vorname: Bob, Nachname: Young.
+Added musiker Black Country Communion, Vorname: Black Country, Nachname: Communion.
+Added musiker Micky Moody, Vorname: Micky, Nachname: Moody.
+Added musiker Graham Nash, Vorname: Graham, Nachname: Nash.
+Added musiker Gordon Haskell, Vorname: Gordon, Nachname: Haskell.
+Added musiker Tom Waits, Vorname: Tom, Nachname: Waits.
+Added musiker Alice Phoebe Lou, Vorname: Alice Phoebe, Nachname: Lou.
+Added musiker Reinhard Fißler, Vorname: Reinhard, Nachname: Fißler.
+Added musiker Black Stone Cherry, Vorname: Black Stone, Nachname: Cherry.
+Added musiker Martin Molin, Vorname: Martin, Nachname: Molin.
+Added musiker Adam Green, Vorname: Adam, Nachname: Green.
+Added musiker Axel Rudi Pell, Vorname: Axel Rudi, Nachname: Pell.
+Added musiker Sturgill Simpson, Vorname: Sturgill, Nachname: Simpson.
+Added musiker Mickey Thomas, Vorname: Mickey, Nachname: Thomas.
+Added musiker Gilbert O’Sullivan, Vorname: Gilbert, Nachname: O’Sullivan.
+Added musiker Rory Gallagher, Vorname: Rory, Nachname: Gallagher.
+Added musiker Anohni, Vorname: None, Nachname: unbekannt.
+Added musiker Andrew Bird, Vorname: Andrew, Nachname: Bird.
+Added musiker Tony Iommi, Vorname: Tony, Nachname: Iommi.
+Added musiker Joe Volks, Vorname: Joe, Nachname: Volks.
+Added musiker Cat Stevens, Vorname: Cat, Nachname: Stevens.
+Added musiker Joe Walsh, Vorname: Joe, Nachname: Walsh.
+Added musiker David Cassidy, Vorname: David, Nachname: Cassidy.
+Added musiker Gramatik, Vorname: None, Nachname: unbekannt.
+Added musiker Mikael Rickfors, Vorname: Mikael, Nachname: Rickfors.
+Added musiker Phil Lynott, Vorname: Phil, Nachname: Lynott.
+Added musiker Mani Neumeier, Vorname: Mani, Nachname: Neumeier.
+Added musiker Michael Kiwanuka, Vorname: Michael, Nachname: Kiwanuka.
+Added musiker Drangsal, Vorname: None, Nachname: unbekannt.
+Added musiker Roger Cicero, Vorname: Roger, Nachname: Cicero.
+Added musiker Johnny Logan, Vorname: Johnny, Nachname: Logan.
+Added musiker Roland Bless, Vorname: Roland, Nachname: Bless.
+Added musiker Dirk Michaelis, Vorname: Dirk, Nachname: Michaelis.
+Added musiker Mads Eriksen, Vorname: Mads, Nachname: Eriksen.
+Added musiker Jimmy Cliff, Vorname: Jimmy, Nachname: Cliff.
+Added musiker Marcus Bonfanti, Vorname: Marcus, Nachname: Bonfanti.
+Added musiker Fredrika Stahl, Vorname: Fredrika, Nachname: Stahl.
+Added musiker Nelly Furtado, Vorname: Nelly, Nachname: Furtado.
+Added musiker Johnny Smith, Vorname: Johnny, Nachname: Smith.
+Added musiker Mitch Laddie, Vorname: Mitch, Nachname: Laddie.
+Added musiker Orianthi, Vorname: None, Nachname: unbekannt.
+Added musiker Daniel Lanois, Vorname: Daniel, Nachname: Lanois.
+Added musiker Alan Simon, Vorname: Alan, Nachname: Simon.
+Added musiker Ray Thomas, Vorname: Ray, Nachname: Thomas.
+Added musiker Dave Lee Travis, Vorname: Dave Lee, Nachname: Travis.
+Added musiker Uschi Nerke, Vorname: Uschi, Nachname: Nerke.
+Added musiker John Kay, Vorname: John, Nachname: Kay.
+Added musiker Owen Pallett, Vorname: Owen, Nachname: Pallett.
+Added musiker Manfred Sexauer, Vorname: Manfred, Nachname: Sexauer.
+Added musiker Brinsley Schwarz, Vorname: Brinsley, Nachname: Schwarz.
+Added musiker Andy Newman, Vorname: Andy, Nachname: Newman.
+Added musiker Leon Haywood, Vorname: Leon, Nachname: Haywood.
+Added musiker Phife Dawg, Vorname: Phife, Nachname: Dawg.
+Added musiker Gato Barbieri, Vorname: Gato, Nachname: Barbieri.
+Added musiker Clueso, Vorname: None, Nachname: unbekannt.
+Added musiker Max Decharne, Vorname: Max, Nachname: Decharne.
+Added musiker Senor Coconut, Vorname: Senor, Nachname: Coconut.
+Added musiker Pharrell Williams, Vorname: Pharrell, Nachname: Williams.
+Added musiker Brother Dege, Vorname: Brother, Nachname: Dege.
+Added musiker Jarekus Singleton, Vorname: Jarekus, Nachname: Singleton.
+Added musiker Preston Shannon, Vorname: Preston, Nachname: Shannon.
+Added musiker Wanda King, Vorname: Wanda, Nachname: King.
+Added musiker Innes Sibun, Vorname: Innes, Nachname: Sibun.
+Added musiker Wolf People, Vorname: Wolf, Nachname: People.
+Added musiker Roddy Frame, Vorname: Roddy, Nachname: Frame.
+Added musiker Hollies Brown, Vorname: Hollies, Nachname: Brown.
+Added musiker Sugaray Rayford, Vorname: Sugaray, Nachname: Rayford.
+Added musiker Sam Riley, Vorname: Sam, Nachname: Riley.
+Added musiker Jools Holland, Vorname: Jools, Nachname: Holland.
+Added musiker Steve Earle, Vorname: Steve, Nachname: Earle.
+Added musiker Robert Belfour, Vorname: Robert, Nachname: Belfour.
+Added musiker David Maxwell, Vorname: David, Nachname: Maxwell.
+Added musiker Michael Gira, Vorname: Michael, Nachname: Gira.
+Added musiker Harrison Kennedy, Vorname: Harrison, Nachname: Kennedy.
+Added musiker Benny Turner, Vorname: Benny, Nachname: Turner.
+Added musiker Martin Kippenberger, Vorname: Martin, Nachname: Kippenberger.
+Added musiker Sharon Van Etten, Vorname: Sharon Van, Nachname: Etten.
+Added musiker Vinny Appice, Vorname: Vinny, Nachname: Appice.
+Added musiker Carmine Appice, Vorname: Carmine, Nachname: Appice.
+Added musiker Jeff Jensen, Vorname: Jeff, Nachname: Jensen.
+Added musiker Rebekka Bakken, Vorname: Rebekka, Nachname: Bakken.
+Added musiker Nino Ernst Mandl, Vorname: Nino Ernst, Nachname: Mandl.
+Added musiker T-Bone Walker, Vorname: T-Bone, Nachname: Walker.
+Added musiker Slim Harpo, Vorname: Slim, Nachname: Harpo.
+Added musiker Laura Veirs, Vorname: Laura, Nachname: Veirs.
+Added musiker Tiger Lou, Vorname: Tiger, Nachname: Lou.
+Added musiker Clarence Clemons, Vorname: Clarence, Nachname: Clemons.
+Added musiker Amy Winehouse, Vorname: Amy, Nachname: Winehouse.
+Added musiker Fiona Apple, Vorname: Fiona, Nachname: Apple.
+Added musiker Robbie Williams, Vorname: Robbie, Nachname: Williams.
+Added musiker Martha Wainwright, Vorname: Martha, Nachname: Wainwright.
+Added musiker David Berman, Vorname: David, Nachname: Berman.
+Added musiker Christian Kellermanns, Vorname: Christian, Nachname: Kellermanns.
+Added musiker Ryan Adams, Vorname: Ryan, Nachname: Adams.
+Added musiker Christian Kellersmann, Vorname: Christian, Nachname: Kellersmann.
+Added musiker John Cale, Vorname: John, Nachname: Cale.
+Added musiker Keith Jarrett, Vorname: Keith, Nachname: Jarrett.
+Added musiker Stephen Malkmus, Vorname: Stephen, Nachname: Malkmus.
+Added musiker Mark E. Smith, Vorname: Mark E., Nachname: Smith.
+Added musiker Jeb Loy Nichols, Vorname: Jeb Loy, Nachname: Nichols.
+Added musiker Tori Amos, Vorname: Tori, Nachname: Amos.
+Added musiker Ben Frost, Vorname: Ben, Nachname: Frost.
+Added musiker Franz Ferdinand, Vorname: Franz, Nachname: Ferdinand.
+Added musiker Camille, Vorname: None, Nachname: unbekannt.
+Added musiker Richard Hawley, Vorname: Richard, Nachname: Hawley.
+Added musiker Leela James, Vorname: Leela, Nachname: James.
+Added musiker George Duke, Vorname: George, Nachname: Duke.
+Added musiker Francis Rossi, Vorname: Francis, Nachname: Rossi.
+Added musiker Wolfgang Michels, Vorname: Wolfgang, Nachname: Michels.
+Added musiker Steff Porzel, Vorname: Steff, Nachname: Porzel.
+Added musiker Nada Surf, Vorname: Nada, Nachname: Surf.
+Added musiker Paul Weller, Vorname: Paul, Nachname: Weller.
+Added musiker Caro Josee, Vorname: Caro, Nachname: Josee.
+Added musiker Snoop Dogg, Vorname: Snoop, Nachname: Dogg.
+Added musiker Devendra Banhart, Vorname: Devendra, Nachname: Banhart.
+Added musiker Sheryl Crow, Vorname: Sheryl, Nachname: Crow.
+Added musiker Bonnie Billy, Vorname: Bonnie, Nachname: Billy.
+Added musiker Matt Sweeney, Vorname: Matt, Nachname: Sweeney.
+Added musiker Julia Hummer, Vorname: Julia, Nachname: Hummer.
+Added musiker Jens Friebe, Vorname: Jens, Nachname: Friebe.
+Added musiker Jörg Buttgereit, Vorname: Jörg, Nachname: Buttgereit.
+Added musiker Tim Buckley, Vorname: Tim, Nachname: Buckley.
+Added musiker Sido, Vorname: None, Nachname: unbekannt.
+Added musiker Bushido, Vorname: None, Nachname: unbekannt.
+Added musiker Fler, Vorname: None, Nachname: unbekannt.
+Added musiker Brian Setzer, Vorname: Brian, Nachname: Setzer.
+Added musiker Chris Hillman, Vorname: Chris, Nachname: Hillman.
+Added musiker Neal Schon, Vorname: Neal, Nachname: Schon.
+Added musiker Jim Cregan, Vorname: Jim, Nachname: Cregan.
+Added musiker Daniel Powter, Vorname: Daniel, Nachname: Powter.
+Added musiker John Verity, Vorname: John, Nachname: Verity.
+Added musiker Gavin DeGraw, Vorname: Gavin, Nachname: DeGraw.
+Added musiker Brent Hinds, Vorname: Brent, Nachname: Hinds.
+Added musiker Leslie West, Vorname: Leslie, Nachname: West.
+Added musiker Black Water Rising, Vorname: Black Water, Nachname: Rising.
+Added musiker Joe Jackson, Vorname: Joe, Nachname: Jackson.
+Added musiker Jeff Tweedy, Vorname: Jeff, Nachname: Tweedy.
+Added musiker Bill Callahan, Vorname: Bill, Nachname: Callahan.
+Added musiker Michelle Shocked, Vorname: Michelle, Nachname: Shocked.
+Added musiker Bernard Macmahon, Vorname: Bernard, Nachname: Macmahon.
+Added musiker Damien Dempsey, Vorname: Damien, Nachname: Dempsey.
+Added musiker Aimee Mann, Vorname: Aimee, Nachname: Mann.
+Added musiker Laura Cantrell, Vorname: Laura, Nachname: Cantrell.
+Added musiker Rob Thomas, Vorname: Rob, Nachname: Thomas.
+Added musiker Paul Armfield, Vorname: Paul, Nachname: Armfield.
+Added musiker Maria McKee, Vorname: Maria, Nachname: McKee.
+Added musiker Steve Hackett, Vorname: Steve, Nachname: Hackett.
+Added musiker Pete Seeger, Vorname: Pete, Nachname: Seeger.
+Added musiker Jeffrey Lee Pierce, Vorname: Jeffrey Lee, Nachname: Pierce.
+Added musiker Alex Diehl, Vorname: Alex, Nachname: Diehl.
+Added musiker Don McLean, Vorname: Don, Nachname: McLean.
+Added musiker Jack Johnson, Vorname: Jack, Nachname: Johnson.
+Added musiker Ben Folds, Vorname: Ben, Nachname: Folds.
+Added musiker Rufus Wainwright, Vorname: Rufus, Nachname: Wainwright.
+Added musiker James Blunt, Vorname: James, Nachname: Blunt.
+Added musiker Joanna Newsom, Vorname: Joanna, Nachname: Newsom.
+Added musiker Alasdair Roberts, Vorname: Alasdair, Nachname: Roberts.
+Added musiker M.I.A., Vorname: None, Nachname: unbekannt.
+Added musiker Maceo Parker, Vorname: Maceo, Nachname: Parker.
+Added musiker Jackson Browne, Vorname: Jackson, Nachname: Browne.
+Added musiker Mungo Jerry, Vorname: Mungo, Nachname: Jerry.
+Added musiker Joss Stone, Vorname: Joss, Nachname: Stone.
+Added musiker George Lynch, Vorname: George, Nachname: Lynch.
+Added musiker Bosse, Vorname: None, Nachname: unbekannt.
+Added musiker Gretchen Peters, Vorname: Gretchen, Nachname: Peters.
+Added musiker Graham Parker, Vorname: Graham, Nachname: Parker.
+Added musiker Boz Scaggs, Vorname: Boz, Nachname: Scaggs.
+Added musiker John Wetton, Vorname: John, Nachname: Wetton.
+Added musiker Rick Parfitt, Vorname: Rick, Nachname: Parfitt.
+Added musiker Gianna Nannini, Vorname: Gianna, Nachname: Nannini.
+Added musiker Patrice, Vorname: None, Nachname: unbekannt.
+Added musiker Rosie Ledet, Vorname: Rosie, Nachname: Ledet.
+Added musiker Kermit Ruffins, Vorname: Kermit, Nachname: Ruffins.
+Added musiker Florian Horwath, Vorname: Florian, Nachname: Horwath.
+Added musiker Doug Aldrich, Vorname: Doug, Nachname: Aldrich.
+Added musiker Phil Manzanera, Vorname: Phil, Nachname: Manzanera.
+Added musiker Florian Horwarth, Vorname: Florian, Nachname: Horwarth.
+Added musiker Funny Van Dannen, Vorname: Funny Van, Nachname: Dannen.
+Added musiker Zakk Wylde, Vorname: Zakk, Nachname: Wylde.
+Added musiker Solomon Burke, Vorname: Solomon, Nachname: Burke.
+Added musiker Craig Ross, Vorname: Craig, Nachname: Ross.
+Added musiker Amos Lee, Vorname: Amos, Nachname: Lee.
+Added musiker John Legend, Vorname: John, Nachname: Legend.
+Added musiker Josh Rouse, Vorname: Josh, Nachname: Rouse.
+Added musiker Imelda May, Vorname: Imelda, Nachname: May.
+Added musiker Marilyn Manson, Vorname: Marilyn, Nachname: Manson.
+Added musiker Dave Kelly, Vorname: Dave, Nachname: Kelly.
+Added musiker Gary Fletcher, Vorname: Gary, Nachname: Fletcher.
+Added musiker Roger Hodgson, Vorname: Roger, Nachname: Hodgson.
+Added musiker Graham Gouldman, Vorname: Graham, Nachname: Gouldman.
+Added musiker Stefan Gwildis, Vorname: Stefan, Nachname: Gwildis.
+Added musiker Rivers Cuomo, Vorname: Rivers, Nachname: Cuomo.
+Added musiker Woody Guthrie, Vorname: Woody, Nachname: Guthrie.
+Added musiker Doyle Bramhall II, Vorname: Doyle Bramhall, Nachname: II.
+Added musiker Ernie Isley, Vorname: Ernie, Nachname: Isley.
+Added musiker Stefan Waggershausen, Vorname: Stefan, Nachname: Waggershausen.
+Added musiker Henrik Freischlader, Vorname: Henrik, Nachname: Freischlader.
+Added musiker Bert McCracken, Vorname: Bert, Nachname: McCracken.
+Added musiker Ian Broudie, Vorname: Ian, Nachname: Broudie.
+Added musiker Julian Sas, Vorname: Julian, Nachname: Sas.
+Added musiker Oli Brown, Vorname: Oli, Nachname: Brown.
+Added musiker Gram Parsons, Vorname: Gram, Nachname: Parsons.
+Added musiker Matt Ward, Vorname: Matt, Nachname: Ward.
+Added musiker David Gedge, Vorname: David, Nachname: Gedge.
+Added musiker Darlene Love, Vorname: Darlene, Nachname: Love.
+Added musiker James McCartney, Vorname: James, Nachname: McCartney.
+Added musiker Carole King, Vorname: Carole, Nachname: King.
+Added musiker Fatboy Slim, Vorname: Fatboy, Nachname: Slim.
+Added musiker Jermaine Jackson, Vorname: Jermaine, Nachname: Jackson.
+Added musiker Dion, Vorname: None, Nachname: unbekannt.
+Added musiker Celine Dion, Vorname: Celine, Nachname: Dion.
+Added musiker Pinetop Perkins, Vorname: Pinetop, Nachname: Perkins.
+Added musiker Hubert Sumlin, Vorname: Hubert, Nachname: Sumlin.
+Added musiker Doro, Vorname: None, Nachname: unbekannt.
+Added musiker Haiducii, Vorname: None, Nachname: unbekannt.
+Added musiker Frankee, Vorname: None, Nachname: unbekannt.
+Added musiker Sam Moore, Vorname: Sam, Nachname: Moore.
+Added musiker Bobby Vee, Vorname: Bobby, Nachname: Vee.
+Added musiker Little Richard, Vorname: Little, Nachname: Richard.
+Added musiker Ginger Baker, Vorname: Ginger, Nachname: Baker.
+Added musiker Charlie Daniels, Vorname: Charlie, Nachname: Daniels.
+Added musiker Ernest Tubb, Vorname: Ernest, Nachname: Tubb.
+Added musiker Black Francis, Vorname: Black, Nachname: Francis.
+Added musiker Robyn Hitchcock, Vorname: Robyn, Nachname: Hitchcock.
+Added musiker Kevin Coyne, Vorname: Kevin, Nachname: Coyne.
+Added musiker Shelby Lynne, Vorname: Shelby, Nachname: Lynne.
+Added musiker Peter Wolf, Vorname: Peter, Nachname: Wolf.
+Added musiker Brett Michael, Vorname: Brett, Nachname: Michael.
+Added musiker John Mellencamp, Vorname: John, Nachname: Mellencamp.
+Added musiker Ian Moore, Vorname: Ian, Nachname: Moore.
+Added musiker Graham Coxon, Vorname: Graham, Nachname: Coxon.
+Added musiker Kevin Stringfellow, Vorname: Kevin, Nachname: Stringfellow.
+Added musiker Conor Oberst, Vorname: Conor, Nachname: Oberst.
+Added musiker Lisa Stansfield, Vorname: Lisa, Nachname: Stansfield.
+Added musiker Cass McCombs, Vorname: Cass, Nachname: McCombs.
+Added musiker Richie Arndt, Vorname: Richie, Nachname: Arndt.
+Added musiker Kellie Rucker, Vorname: Kellie, Nachname: Rucker.
+Added musiker Mick Clarke, Vorname: Mick, Nachname: Clarke.
+Added musiker Jimmy Reed, Vorname: Jimmy, Nachname: Reed.
+Added musiker Jon Allen, Vorname: Jon, Nachname: Allen.
+Added musiker Janet Robin, Vorname: Janet, Nachname: Robin.
+Added musiker Meena Cryle, Vorname: Meena, Nachname: Cryle.
+Added musiker John Miles, Vorname: John, Nachname: Miles.
+Added musiker Coco Montoya, Vorname: Coco, Nachname: Montoya.
+Added musiker Gloria Jones, Vorname: Gloria, Nachname: Jones.
+Added musiker Jonathan Lethem, Vorname: Jonathan, Nachname: Lethem.
+Added musiker Rosanne Cash, Vorname: Rosanne, Nachname: Cash.
+Added musiker Ben Taylor, Vorname: Ben, Nachname: Taylor.
+Added musiker Oliver Stone, Vorname: Oliver, Nachname: Stone.
+Added musiker Michael Winterbottom, Vorname: Michael, Nachname: Winterbottom.
+Added musiker Jim Avignon, Vorname: Jim, Nachname: Avignon.
+Added musiker Rickie Lee Jones, Vorname: Rickie Lee, Nachname: Jones.
+Added musiker Delbert McClinton, Vorname: Delbert, Nachname: McClinton.
+Added musiker Jon Dee Graham, Vorname: Jon Dee, Nachname: Graham.
+Added musiker Elliott Murphy, Vorname: Elliott, Nachname: Murphy.
+Added musiker Ax Genrich, Vorname: Ax, Nachname: Genrich.
+Added musiker Jon Mark, Vorname: Jon, Nachname: Mark.
+Added musiker Astrid  Vits, Vorname: Astrid, Nachname: Vits.
+Added musiker Astrid Vits, Vorname: Astrid, Nachname: Vits.
+Added musiker Trevor Rabin, Vorname: Trevor, Nachname: Rabin.
+Added musiker Susan James, Vorname: Susan, Nachname: James.
+Added musiker Missincat, Vorname: None, Nachname: unbekannt.
+Added musiker Wolf Maahn, Vorname: Wolf, Nachname: Maahn.
+Added musiker Martin Kesici, Vorname: Martin, Nachname: Kesici.
+Added musiker Janove Ottesen, Vorname: Janove, Nachname: Ottesen.
+Added musiker Beck Hansen, Vorname: Beck, Nachname: Hansen.
+Added musiker Bette Midler, Vorname: Bette, Nachname: Midler.
+Added musiker Steve Martin, Vorname: Steve, Nachname: Martin.
+Added musiker Bruce Hornsby, Vorname: Bruce, Nachname: Hornsby.
+Added musiker Leon Russell, Vorname: Leon, Nachname: Russell.
+Added musiker Chris Stamey, Vorname: Chris, Nachname: Stamey.
+Added musiker John Peel, Vorname: John, Nachname: Peel.
+Added musiker Martin Dean, Vorname: Martin, Nachname: Dean.
+Added musiker Hunter S. Thompson, Vorname: Hunter S., Nachname: Thompson.
+Added musiker Huck Blues, Vorname: Huck, Nachname: Blues.
+Added musiker Oile Lachpansen, Vorname: Oile, Nachname: Lachpansen.
+Added musiker Johnny Amok, Vorname: Johnny, Nachname: Amok.
+Added musiker KT Tunstall, Vorname: KT, Nachname: Tunstall.
+Added musiker Raphael Saadiq, Vorname: Raphael, Nachname: Saadiq.
+Added musiker Ani DiFranco, Vorname: Ani, Nachname: DiFranco.
+Added musiker Ingrid Michaelson, Vorname: Ingrid, Nachname: Michaelson.
+Added musiker Patty Griffin, Vorname: Patty, Nachname: Griffin.
+Added musiker Roxy Epoxy, Vorname: Roxy, Nachname: Epoxy.
+Added musiker Klaus Voormann, Vorname: Klaus, Nachname: Voormann.
+Added musiker Casador, Vorname: None, Nachname: unbekannt.
+Added musiker Quentin Lagonza, Vorname: Quentin, Nachname: Lagonza.
+Added musiker Winston George, Vorname: Winston, Nachname: George.
+Added musiker Chicken Diamond, Vorname: Chicken, Nachname: Diamond.
+Added musiker Nic Armstrong, Vorname: Nic, Nachname: Armstrong.
+Added musiker Paul Westerberg, Vorname: Paul, Nachname: Westerberg.
+Added musiker Jared Hart, Vorname: Jared, Nachname: Hart.
+Added musiker Matze Rossi, Vorname: Matze, Nachname: Rossi.
+Added musiker Shania Twain, Vorname: Shania, Nachname: Twain.
+Added musiker Julia Neigel, Vorname: Julia, Nachname: Neigel.
+Added musiker Eberhard Schoener, Vorname: Eberhard, Nachname: Schoener.
+Added musiker Andrew Loog Oldham, Vorname: Andrew Loog, Nachname: Oldham.
+Added musiker  Laura Marling, Vorname: Laura, Nachname: Marling.
+Added musiker Neal Diamond, Vorname: Neal, Nachname: Diamond.
+Added musiker Boy George, Vorname: Boy, Nachname: George.
+Added musiker Kid Creole, Vorname: Thomas August, Nachname: Darnell Browder.
+Added musiker Ronnie Lane, Vorname: Ronnie, Nachname: Lane.
+Added musiker Guy Stevens, Vorname: Guy, Nachname: Stevens.
+Added musiker Todd Sharpville, Vorname: Todd, Nachname: Sharpville.
+Added musiker Joo Kraus, Vorname: Joo, Nachname: Kraus.
+Added musiker David Celia, Vorname: David, Nachname: Celia.
+Added musiker Jackie O., Vorname: Jacqueline Ellen, Nachname: Henderson.
+Added musiker James Apollo, Vorname: James, Nachname: Apollo.
