@@ -21,7 +21,7 @@ class ModelBase(admin.ModelAdmin):
         super(ModelBase, self).__init__(*args, **kwargs)
         self.form = makeForm(model = self.model)
         if not self.search_fields:
-            self.search_fields = self.get_search_fields(request=kwargs['request'] if 'request' in kwargs.keys() else None)
+            self.search_fields = list(self.model.get_search_fields())
         
     search_fields_redirect = dict()
     flds_to_group = []
@@ -93,13 +93,10 @@ class ModelBase(admin.ModelAdmin):
         # Overriden to allow search by keywords (seite=75,magazin=Good Times)
         
         def search_term_to_list(self, x, SEP=SEARCH_SEG_SEP):
-            # x = search_term = 'seite=75,magazin=Good Times'
             # constants: SEARCH_SEG_SEP = ',' ; SEARCH_TERM_SEP = '='
             
             xlist = [i.strip().split(SEARCH_TERM_SEP) for i in x.split(SEP)]
-            #xlist = [[search_field,search_item],] = [['seite','75'],['magazin','Good Times']]
             
-            #rslt = dict()
             rslt = []
             for i in xlist:
                 if len(i)==1:
@@ -120,19 +117,18 @@ class ModelBase(admin.ModelAdmin):
                     
                 if field_lookup != '__icontains':
                     search_field = search_field[1:]
+                    
                 # Resolve the search_field into a query-able term, found in either self.search_fields or self.search_fields_redirect
-                resolved_search_field = self.resolve_search_field(search_field)    #TODO: separate field_lookup from search_field first?
+                resolved_search_field = self.resolve_search_field(search_field)
                 if resolved_search_field:
                     if callable(resolved_search_field):
                         # the search_field points to a callable function, we will need to remember the original search_field for
-                        # queryset prefixing
-                        #NOTE: what about the field lookup?
+                        # queryset prefixing. We do not need the field_lookup value, since, currently, the callable may apply a specific
+                        # field_lookup of its own.
                         i[1] = search_field + '@' + i[1]
                         rslt.append((resolved_search_field, i[1]))
-                        #rslt[resolved_search_field] = i[1]
                     else:
                         rslt.append((resolved_search_field+field_lookup, i[1]))
-                        #rslt[resolved_search_field+field_lookup] = i[1]
             return rslt
         
         if not self.search_fields:
@@ -141,7 +137,7 @@ class ModelBase(admin.ModelAdmin):
         if search_term.find("=")!=-1:
             search_list = search_term_to_list(self, search_term)
             if search_list:
-                for k, v in search_list:#search_dict.items()
+                for k, v in search_list:
                     if callable(k):
                         # key is a callable like strquery that would return a list of q items to filter with
                         # search_term_to_dict has changed the value into a string of format 'prefix@value'
