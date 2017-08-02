@@ -5,22 +5,12 @@ from django.utils.html import format_html
 
 from .models import *
 from .constants import M2M_LIST_MAX_LEN
-    
-def concat_m2m(values, width = 50,  sep = ', ', z = 0):
-    #TODO: remove this function. concat_limit does the same
-    """ Concat and limit (to len width) values (from a m2m relation) """
-    if not values:
-        return ''
-    rslt = str(values[0]).zfill(z)
-    for c, i in enumerate(values[1:], 1):
-        if len(rslt) + len(str(i))<width:
-            rslt += sep + str(i).zfill(z)
-        else:
-            rslt += sep + "[...]"
-            break
-    return rslt
+
     
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
+    """
+        Joins string values of iterable 'values' up to a length of 'width'.
+    """
     if not values:
         return ''
     rslt = str(values[0]).zfill(z)

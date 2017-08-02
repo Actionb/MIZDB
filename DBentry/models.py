@@ -4,7 +4,7 @@ from django.db.utils import IntegrityError
 
 from .constants import *
 from .m2m import *
-from .utils import concat_m2m, concat_limit, merge as merge_util
+from .utils import concat_limit, merge as merge_util
 from .managers import AusgabeQuerySet, MIZQuerySet
 
 # Create your models here.
@@ -169,11 +169,11 @@ class person(ShowModel):
         ordering = ['nachname', 'vorname', 'herkunft']
     
     def autoren_string(self):
-        return concat_m2m(self.autor_set.all())
+        return concat_limit(self.autor_set.all())
     autoren_string.short_description = 'Als Autoren'
     
     def musiker_string(self):
-        return concat_m2m(self.musiker_set.all())
+        return concat_limit(self.musiker_set.all())
     musiker_string.short_description = 'Als Musiker'
   
     @classmethod
@@ -205,11 +205,11 @@ class musiker(ShowModel):
         ordering = ['kuenstler_name', 'person']
         
     def genre_string(self):
-        return concat_m2m(self.genre.all())
+        return concat_limit(self.genre.all())
     genre_string.short_description = 'Genres'
         
     def band_string(self):
-        return concat_m2m(self.band_set.all())
+        return concat_limit(self.band_set.all())
     band_string.short_description = 'Bands'
 class musiker_alias(alias_base):
     parent = models.ForeignKey('musiker')
@@ -224,7 +224,7 @@ class genre(ShowModel):
         ordering = ['genre']
         
     def alias_string(self):
-        return concat_m2m(self.genre_alias_set.all())
+        return concat_limit(self.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
 class genre_alias(alias_base):
     parent = models.ForeignKey('genre')
@@ -248,15 +248,15 @@ class band(ShowModel):
         verbose_name_plural = 'Bands'
         
     def genre_string(self):
-        return concat_m2m(self.genre.all())
+        return concat_limit(self.genre.all())
     genre_string.short_description = 'Genres'
         
     def musiker_string(self):
-        return concat_m2m(self.musiker.all())
+        return concat_limit(self.musiker.all())
     musiker_string.short_description = 'Mitglieder'
     
     def alias_string(self):
-        return concat_m2m(self.band_alias_set.all())
+        return concat_limit(self.band_alias_set.all())
     alias_string.short_description = 'Aliase'
 class band_alias(alias_base):
     parent = models.ForeignKey('band')
@@ -281,7 +281,7 @@ class autor(ShowModel):
             return str(self.person)
             
     def magazin_string(self):
-        return concat_m2m(self.magazin.all())
+        return concat_limit(self.magazin.all())
     magazin_string.short_description = 'Magazin(e)'
     
     @classmethod
@@ -342,17 +342,17 @@ class ausgabe(ShowModel):
     jahre.short_description = 'Jahre'
     
     def num_string(self):
-        return concat_m2m(self.ausgabe_num_set.all())
+        return concat_limit(self.ausgabe_num_set.all())
     num_string.short_description = 'Nummer'
     
     def lnum_string(self):
-        return concat_m2m(self.ausgabe_lnum_set.all())
+        return concat_limit(self.ausgabe_lnum_set.all())
     lnum_string.short_description = 'lfd. Nummer'
     
     def monat_string(self):
         try:
             if self.ausgabe_monat_set.exists():
-                return concat_m2m([v for v in self.ausgabe_monat_set.values_list('monat__abk', flat=True)])
+                return concat_limit([v for v in self.ausgabe_monat_set.values_list('monat__abk', flat=True)])
         except:
             return 'Woops'
     monat_string.short_description = 'Monate'
@@ -415,10 +415,10 @@ class ausgabe(ShowModel):
                 if merkmal == 'lnum':
                     if jahre != "n.A.":
                         jahre = " ({})".format(jahre)
-                        return concat_m2m(set.all(), sep = "/") + jahre
+                        return concat_limit(set.all(), sep = "/") + jahre
                     else:
-                        return concat_m2m(set.all(), sep = "/")
-                return "{0}-{1}".format(jahre, concat_m2m(set.all(), sep = "/", z=2))
+                        return concat_limit(set.all(), sep = "/")
+                return "{0}-{1}".format(jahre, concat_limit(set.all(), sep = "/", z=2))
                 
         num = "/".join([str(i.num).zfill(2) for i in self.ausgabe_num_set.all()])
         monate = "/".join([i.monat.abk for i in self.ausgabe_monat_set.all()])
@@ -1124,7 +1124,7 @@ class artikel(ShowModel):
     artikel_magazin.short_description = 'Magazin'
     
     def schlagwort_string(self):
-        return concat_m2m(self.schlagwort.all())
+        return concat_limit(self.schlagwort.all())
     schlagwort_string.short_description = 'Schlagwörter'
         
 
