@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.utils import OperationalError
 
-from .utils import print_tabular
+from .printer import *
 
 class MIZQuerySet(models.QuerySet):
     
