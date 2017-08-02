@@ -6,11 +6,9 @@ from django.utils.html import format_html
 from .models import *
 from .helper import *
 from .constants import *
+from .forms import *
 from .utils import link_list
 from .filters import RelatedOnlyDropdownFilter
-
-from dal import autocomplete
-from .autocomplete.forms import *
 
 from django_admin_listfilter_dropdown.filters import DropdownFilter, RelatedDropdownFilter
 
