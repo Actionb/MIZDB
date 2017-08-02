@@ -7,9 +7,7 @@ class MIZQuerySet(models.QuerySet):
     
     def has_duplicate(self, original):
         #TODO: WIP
-        if self.count()<2:
-            return False
-        original = original or self.first()
+        pass
 
     def values_all(self, flds, ids = None):
         qs = self

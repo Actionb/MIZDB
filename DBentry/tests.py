@@ -56,7 +56,7 @@ def the_difference():
     
 
 def timestuff():
-    
+    #NOTE: KEEP THIS!!
     ids = ausgabe.objects.values_list('id','magazin_id')
     num_by_id,  num_by_num = create_val_dict(ausgabe_num.objects, 'ausgabe_id', 'num')
     lnum_by_id, lnum_by_lnum = create_val_dict(ausgabe_lnum.objects, 'ausgabe_id', 'lnum')
@@ -90,82 +90,6 @@ def timestuff():
                                     candidates_per_id[id].add(candidate_id)
     cset = set([tuple(v) for v in candidates_per_id.values() if len(v)>1])
     return cset
-#                    for val in dict_by_id[id]:
-#                        if len(dict_by_val[val])>1:
-#                            for candidate_id in dict_by_val[val]:
-#                                if mag_id in mags_by_ausg[candidate_id]:
-#                                    if not id in candidates_per_id:
-#                                        candidates_per_id[id] = set()
-#                                    candidates_per_id[id].add(candidate_id)
-#                                else:
-#                                    pass
-    
-#    for id, mag_id in ids:
-#        for dict_by_id, dict_by_val in [(num_by_id, num_by_num), (lnum_by_id, lnum_by_lnum), (monat_by_id, monat_by_monat)]:
-#            if id in dict_by_id:
-#                for val in dict_by_id[id]:      #e.g. get all nums of id
-#                    if val in dict_by_val and len(dict_by_val[val])>1:
-#                        for candidate_id in dict_by_val[val]:
-#                            if candidate_id!= id and mags_by_ausg[candidate_id] == mag_id:
-#                                if not id in candidates_per_id:
-#                                    candidates_per_id[id] = set()
-#                                candidates_per_id[id].add(candidate_id)
-##                                try:
-##                                    candidates_per_id[id].add(candidate_id)
-##                                except AttributeError:
-##                                    candidates_per_id[id] = set()
-##                                    candidates_per_id[id].add(candidate_id)
-    #return candidates_per_id
-                    
-                
-def timegd1():
-    func = ausgabe.get_duplicates
-    for mag in ['Trust', 'Jazzpodium']:
-        qs = ausgabe.objects.filter(magazin__magazin_name=mag)
-        wrapped = wrapper(func, qs)
-        print('Timing {}1'.format(mag))
-        print(timeit.timeit(wrapped, number=1))
-        print('~'*20)
-    
-    
-def timegd2():
-    func = ausgabe.get_duplicates2
-    for mag in ['Trust', 'Jazzpodium']:
-        qs = ausgabe.objects.filter(magazin__magazin_name=mag)
-        wrapped = wrapper(func, qs)
-        print('Timing {}2'.format(mag))
-        print(timeit.timeit(wrapped, number=1))
-        print('~'*20)
-        
-def timegd3():
-    func = ausgabe.get_duplicates3
-    for mag in ['Trust', 'Jazzpodium']:
-        qs = ausgabe.objects.filter(magazin__magazin_name=mag)
-        wrapped = wrapper(func, qs)
-        print('Timing {}2'.format(mag))
-        print(timeit.timeit(wrapped, number=1))
-        print('~'*20)
 
-
-# DEBUG Printing
-
-def print_request(request, file=None):
-    file = file or open('print_request.txt', 'w')
-    def printf(txt):
-        print(txt, file=file)
-    for i in dir(request):
-        if i == "__dict__":
-            continue
-        printf("~"*20)
-        printf(i)
-        printf(getattr(request, i, None))
-        printf("")
-    printf("\n\n DICT:")
-    for k, v in request.__dict__.items():
-        printf("~"*20)
-        printf(k)
-        printf(v)
-        printf("")
-        
 if __name__ == '__main__':
     pass

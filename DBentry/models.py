@@ -88,14 +88,6 @@ class ShowModel(models.Model):
                 rslt += [s for s in search_fields if s.find(fld)!=-1]
         return rslt
         
-#    @classmethod
-#    def reverse_search_field(cls, field_name):
-#        if '__' in field_name:
-#            fld, rel_fld_name = (field_name.split('__'))
-#        else:
-#            fld = rel_fld_name = field_name
-#        return fld, rel_fld_name
-        
     @classmethod
     def merge(cls, original_pk, dupes, verbose=True):
         return merge_util(cls, original_pk, dupes, verbose)
@@ -324,8 +316,6 @@ class ausgabe(ShowModel):
     info = models.TextField(max_length = 200, blank = True)
     sonderausgabe = models.BooleanField(default=False)
     
-    #TODO: add ISSN-kuerzel-nr? 
-    # RELIX magazin num != ISSN
     exclude = [info]
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
                     'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
@@ -339,7 +329,7 @@ class ausgabe(ShowModel):
     class Meta:
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
-        ordering = ['magazin']#, '-sonderausgabe']
+        ordering = ['magazin']
         
     def anz_artikel(self):
         return self.artikel_set.count()
@@ -347,7 +337,6 @@ class ausgabe(ShowModel):
     
     def jahre(self):
         return concat_limit(self.ausgabe_jahr_set.all())
-        #return ", ".join([str(j) for j in self.ausgabe_jahr_set.all()])
     jahre.short_description = 'Jahre'
     
     def num_string(self):
@@ -560,15 +549,10 @@ class ausgabe(ShowModel):
                 if match:
                     print("Duplicate found! ID: ", id, file=f)
                     dupe_set = set([id]+[dupe_id for dupe_id in id_qs.values_list(pk_name, flat = True)])
-#                    dupes_found += len(dupe_set)
-#                    duplicate_ids.update(dupe_set)
-#                    #duplicate_ids += list(dupe_set)
                     
-                    # Hooray for list comprehension
                     duplicate_list.append(dupe_set)
                     
                     # adjust loop_qs to exclude all known duplicates
-                    #loop_qs = loop_qs.exclude(pk__in=duplicate_list[-1])
                     loop_qs = loop_qs.exclude(pk__in=dupe_set)
                     
                 print("~"*20, end="\n\n", file=f)
@@ -1149,7 +1133,7 @@ class buch(ShowModel):
     sprache = models.ForeignKey('sprache', related_name = 'buchsprache', null = True, blank = True)
     sprache_orig = models.ForeignKey('sprache', related_name = 'buchspracheorig',  verbose_name = 'Sprache (Original)', null = True, blank = True)
     ubersetzer  = models.CharField('Übersetzer', **CF_ARGS_B)
-    #edition = models.CharField(**CF_ARGS_B, choices = EDITION_CHOICES, blank = True)
+    #NYI: edition = models.CharField(**CF_ARGS_B, choices = EDITION_CHOICES, blank = True)
     EAN = models.CharField(**CF_ARGS_B)
     ISBN = models.CharField(**CF_ARGS_B)
     LCCN = models.CharField(**CF_ARGS_B)
@@ -1301,7 +1285,7 @@ class veranstaltung(ShowModel):
     genre = models.ManyToManyField('genre',  through = m2m_veranstaltung_genre)
     person = models.ManyToManyField('person', verbose_name = 'Teilnehmer (Personen)', through = m2m_veranstaltung_person)
     band = models.ManyToManyField('band', verbose_name = 'Teilnehmer (Bands)',  through = m2m_veranstaltung_band)
-    #NIY: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
+    #NYI: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
     
     primary_fields = ['name']
     

@@ -92,10 +92,6 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             'beschreibung'  : Textarea(attrs=ATTRS_TEXTAREA), 
             'info'          : Textarea(attrs=ATTRS_TEXTAREA), 
             
-#            # Musiker-Auswahl in Person
-#            personmusiker : {
-#                
-#            }
             
 }
 

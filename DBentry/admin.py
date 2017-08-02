@@ -11,8 +11,8 @@ from .filters import RelatedOnlyDropdownFilter
 
 from dal import autocomplete
 from .autocomplete.forms import *
+
 from django_admin_listfilter_dropdown.filters import DropdownFilter, RelatedDropdownFilter
-#from django.contrib.admin.filters import RelatedOnlyFieldListFilter
 
 
 class ModelBase(admin.ModelAdmin):

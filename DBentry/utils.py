@@ -7,6 +7,7 @@ from .models import *
 from .constants import M2M_LIST_MAX_LEN
     
 def concat_m2m(values, width = 50,  sep = ', ', z = 0):
+    #TODO: remove this function. concat_limit does the same
     """ Concat and limit (to len width) values (from a m2m relation) """
     if not values:
         return ''
@@ -162,6 +163,7 @@ def merge(cls, original_pk, dupes, verbose=True):
     return True
     
 def print_tabular(to_print, columns = [], default_col_width=6):
+    #TODO: move to printer.py
     from itertools import chain
     if isinstance(to_print, dict):
         to_print = [to_print]
