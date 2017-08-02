@@ -652,7 +652,7 @@ class ausgabe(ShowModel):
 class ausgabe_jahr(ShowModel):
     JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
     
-    jahr = models.IntegerField('Jahr', validators = JAHR_VALIDATORS, default = CUR_JAHR)
+    jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS, default = CUR_JAHR)
     ausgabe = models.ForeignKey('ausgabe')
     class Meta:
         verbose_name = 'Jahr'
