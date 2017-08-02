@@ -192,7 +192,6 @@ def split_name(name):
     n = name.strip().split()[-1]
     if suffix:
         n = n + " " + suffix
-    # NOTE: <3? Bisschen viel --- gibt ja schließlich viele Nachnamen mit <3 Buchstaben
     if len(n)<3:
         # ... and v: ? For if the nachname is just weird, but still a proper name (since it has a proper vorname, too)
         if n.endswith('.') or len(n)==1:

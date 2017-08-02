@@ -390,20 +390,16 @@ class ausgabe(ShowModel):
                     pass
     
     def __str__(self):
-        #TODO: make this method less ugly?
-        info = str(self.info)
-        if len(info)>LIST_DISPLAY_MAX_LEN:
-            info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
+        info = concat_limit(str(self.info).split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
         if self.sonderausgabe and self.info:
             return info
-        rslt = ""
-        if self.ausgabe_jahr_set.exists():
-            jahre = "/".join([jahr[2:] if i else jahr for i, jahr in enumerate([str(j.jahr) for j in self.ausgabe_jahr_set.all()])])
-        elif self.jahrgang:
-            jahre = "Vol.{}".format(str(self.jahrgang))
-        else:
-            jahre = "n.A."
-            
+        jahre = concat_limit([jahr[2:] if i else jahr for i, jahr in enumerate([str(j.jahr) for j in self.ausgabe_jahr_set.all()])], sep="/")
+        if not jahre:
+            if self.jahrgang:
+                jahre = "Jg.{}".format(str(self.jahrgang))
+            else:
+                jahre = "k.A." #oder '(Jahr?)'
+          
         if self.magazin.ausgaben_merkmal:
             merkmal = self.magazin.ausgaben_merkmal
             if merkmal == 'e_datum':
@@ -413,32 +409,34 @@ class ausgabe(ShowModel):
                 if merkmal == 'monat':
                     return "{0}-{1}".format(jahre,"/".join([str(m.monat.abk) for m in set.all()]))
                 if merkmal == 'lnum':
-                    if jahre != "n.A.":
+                    if jahre != "k.A.":
                         jahre = " ({})".format(jahre)
                         return concat_limit(set.all(), sep = "/") + jahre
                     else:
                         return concat_limit(set.all(), sep = "/")
                 return "{0}-{1}".format(jahre, concat_limit(set.all(), sep = "/", z=2))
                 
-        num = "/".join([str(i.num).zfill(2) for i in self.ausgabe_num_set.all()])
-        monate = "/".join([i.monat.abk for i in self.ausgabe_monat_set.all()])
-        lnum = "/".join([str(i.lnum).zfill(2) for i in self.ausgabe_lnum_set.all()])
+        num = concat_limit(self.ausgabe_num_set.all(), sep="/", z=2)
         if num:
-            rslt = "{0}-{1}".format(jahre, num)
-        elif monate:
-            rslt = "{0}-{1}".format(jahre, monate)
-        elif lnum:
-            if jahre == "n.A.":
-                rslt = lnum
+            return "{0}-{1}".format(jahre, num)
+            
+        monate = concat_limit(self.ausgabe_monat_set.all(), sep="/")
+        if monate:
+            return "{0}-{1}".format(jahre, monate)
+            
+        lnum = concat_limit(self.ausgabe_lnum_set.all(), sep="/", z=2)
+        if lnum:
+            if jahre == "k.A.":
+                return lnum
             else:
-                rslt = "{0} ({1})".format(lnum, jahre)
-        elif self.e_datum:
-            rslt = str(self.e_datum)
+                return "{0} ({1})".format(lnum, jahre)
+                
+        if self.e_datum:
+            return str(self.e_datum)
         elif self.info:
-            rslt = info
+            return info
         else:
-            rslt = "Keine Angaben zu dieser Ausgabe!"
-        return rslt
+            return "Keine Angaben zu dieser Ausgabe!"
     
     @classmethod
     def strquery(cls, search_term, prefix = ''):
@@ -1349,7 +1347,7 @@ class lagerort(ShowModel):
     raum = models.CharField(**CF_ARGS_B)
     regal = models.CharField(**CF_ARGS_B)
     
-    signatur = models.CharField(**CF_ARGS_B) # NOTE: use?
+    signatur = models.CharField(**CF_ARGS_B) # NOTE: use? maybe for human-readable shorthand?
     class Meta:
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
