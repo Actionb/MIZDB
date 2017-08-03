@@ -33,15 +33,12 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'dal', 
     'dal_select2',
-    #'grappelli',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'crispy_forms', 
-    'bootstrap3', 
     'django_admin_listfilter_dropdown',
     'DBentry.apps.DbentryConfig', 
 ]
