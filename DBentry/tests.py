@@ -5,6 +5,7 @@ import re
 import timeit
 import itertools
 
+# timeit wrapper for lazy people
 def wrapper(func, *args, **kwargs):
     def wrapped():
         return func(*args, **kwargs)
@@ -14,15 +15,8 @@ def time(func, nr=1, *args, **kwargs):
     print('Timing {}...'.format(func.__name__))
     print(timeit.timeit(wrapper(func, *args, **kwargs), number=nr))
     print()
-# Create your tests here.
     
-def print_test():
-    m = magazin.objects.get(pk=51)
-    qs= m.ausgabe_set.filter(ausgabe_jahr__jahr=1998)
-    qs = qs.filter(ausgabe_num__num=1)
-    qs.print_qs()
-
-
+# Create your tests here.
 def the_difference():
     def printme(id_set):
         for id in id_set:
@@ -50,11 +44,7 @@ def the_difference():
                     printme(id_set)
                     print()
         print("-"*10)
-                
-    
-    
-    
-
+        
 def timestuff():
     #NOTE: KEEP THIS!!
     ids = ausgabe.objects.values_list('id','magazin_id')

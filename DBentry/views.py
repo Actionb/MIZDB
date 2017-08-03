@@ -13,6 +13,7 @@ from dal import autocomplete
 
 
 # AUTOCOMPLETE VIEWS
+# TODO: rework this, it's a bit derpy and quite old
 class ACBase(autocomplete.Select2QuerySetView):
     flds = None
     
