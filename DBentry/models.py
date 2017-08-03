@@ -908,7 +908,7 @@ class artikel(ShowModel):
     
     ausgabe = models.ForeignKey('ausgabe',  on_delete=models.PROTECT)
     schlagzeile = models.CharField(**CF_ARGS)
-    seite = models.IntegerField()
+    seite = models.IntegerField() #TODO: PositiveSmallIntegerField
     seitenumfang = models.CharField(max_length = 3, blank = True,  choices = SU_CHOICES,  default = '')
     zusammenfassung = models.TextField(blank = True)
     info = models.TextField(blank = True)
