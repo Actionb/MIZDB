@@ -25,7 +25,7 @@ SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'db/db.sqlite3'),
     }
 }
 
