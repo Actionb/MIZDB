@@ -46,3 +46,7 @@ M2M_LIST_MAX_LEN = 50
 
 # list_display max len
 LIST_DISPLAY_MAX_LEN = int(M2M_LIST_MAX_LEN/2)
+
+CUR_JAHR = datetime.datetime.now().year
+MAX_JAHR = CUR_JAHR
+MIN_JAHR = 1899

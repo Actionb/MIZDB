@@ -5,21 +5,12 @@ from django.utils.html import format_html
 
 from .models import *
 from .constants import M2M_LIST_MAX_LEN
-    
-def concat_m2m(values, width = 50,  sep = ', ', z = 0):
-    """ Concat and limit (to len width) values (from a m2m relation) """
-    if not values:
-        return ''
-    rslt = str(values[0]).zfill(z)
-    for c, i in enumerate(values[1:], 1):
-        if len(rslt) + len(str(i))<width:
-            rslt += sep + str(i).zfill(z)
-        else:
-            rslt += sep + "[...]"
-            break
-    return rslt
+
     
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
+    """
+        Joins string values of iterable 'values' up to a length of 'width'.
+    """
     if not values:
         return ''
     rslt = str(values[0]).zfill(z)
@@ -160,50 +151,6 @@ def merge(cls, original_pk, dupes, verbose=True):
             print(e)
         
     return True
-    
-def print_tabular(to_print, columns = [], default_col_width=6):
-    from itertools import chain
-    if isinstance(to_print, dict):
-        to_print = [to_print]
-    if any(not isinstance(row, dict) for row in to_print):
-        print("Printing requires an iterable of dicts.")
-        raise
-    
-    column_ordering = columns[:] or list(set(chain(*[row.keys() for row in to_print])))
-    # Allow column_ordering to consist of tuple/list with alias and key/name: (column_name,column_alias)
-    for i, column in enumerate(column_ordering):
-        if isinstance(column, tuple) and column[1]:
-            continue
-        else:
-            column_ordering[i] = (column,column)
-    
-    # delete keys not existing in to_print.keys
-    for key, alias in column_ordering:
-        if any(key not in row.keys() for row in to_print):
-            column_ordering.remove((key, alias))
-    max_item_len = {}
-    for row in to_print:
-        for key, alias in column_ordering:
-            try:
-                len_v = len(str(row[key]))
-            except:
-                len_v = default_col_width
-            max_item_len[key] = max(len_v, len(alias))+2
-            
-    header_string = ""
-    for key, alias in column_ordering:
-        header_string += "|" + alias.center(max_item_len[key]) + "|"
-    print(header_string)
-    print("="*len(header_string))
-    for row in to_print:
-        for key, alias in column_ordering:
-            try:
-                print("|"+str(row[key]).center(max_item_len[key])+"|", end="")
-            except:
-                print("column_ordering:", column_ordering)
-                print("row.keys", row.keys())
-        print()
-    print()
 
 class Concat(Aggregate):
     # supports COUNT(distinct field)
@@ -245,7 +192,6 @@ def split_name(name):
     n = name.strip().split()[-1]
     if suffix:
         n = n + " " + suffix
-    # NOTE: <3? Bisschen viel --- gibt ja schließlich viele Nachnamen mit <3 Buchstaben
     if len(n)<3:
         # ... and v: ? For if the nachname is just weird, but still a proper name (since it has a proper vorname, too)
         if n.endswith('.') or len(n)==1:

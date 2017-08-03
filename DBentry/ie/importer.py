@@ -7,12 +7,7 @@ from data_importer.importers import XMLImporter
 from DBentry.models import *
 
 from .reader import MIZReader
-   
-DBentry_fields = {
-#bundesland : get_main_fields(bundesland), 
-#land : get_main_fields(land), 
-}    
-
+    
  
 #TODO: INSPECT CHOICES!!! --> benutze vllt nicht get_field(x).choices sondern ein lokales Array
 #TODO: FKEYS--> suche nach ID fails: suche nach cleaned_data **values ohne ID
@@ -440,30 +435,6 @@ class MIZImporter(XMLImporter):
                     else:
                         self.skipped['duplicate'].append((values_noid, 'Duplicate in distinct set'))
             self._cleaned_data = post_cleaned.copy()
-            
-            
-            
-#            
-#            for row, values in self._cleaned_data:
-#                # TODO: use dict.count()!!! set([x for x in values if values.count(x) > 1]) --> needs dicts without IDs though
-##                if any(v.find('unbekannt')!=-1 for v in values.values()):
-##                    continue
-#                values_noid = {k:v for k, v in values.items() if k not in ['id','original_id']}
-#                if values_noid:
-#                    match = False
-#                    for r, v in post_cleaned:
-#                        #Exclude ID from comparison
-#                        v_noid = {k:v for k, v in v.items() if k not in ['id','original_id']}
-#                        if(v_noid==values_noid):
-#                            match = True
-#                            self.skipped['duplicate'].append(((values_noid, v_noid), 'Duplicate in distinct set'))
-#                            break
-#                    if not match:
-#                        post_cleaned.append((row, values))
-#                else:
-#                    if values:
-#                        post_cleaned.append((row, values))
-#            self._cleaned_data = post_cleaned
     
     def save(self, instance=None, bulk_create = True):
         """
@@ -518,11 +489,6 @@ class MIZImporter(XMLImporter):
                                 break
             
             if bulk_create:
-#                for row, data in self.cleaned_data:
-#                    # Stop saving twice on accident
-#                    if self.model.objects.filter(**data).exists():
-#                        print("Record already exists: {}".format(data), file=self.file)
-#                        continue
                 records = [instance(**data) for row, data in self.cleaned_data]
                 self.model.objects.bulk_create(records)
                 records_saved = len(records)
@@ -617,11 +583,6 @@ def lookup_choice(value, choice_field):
     print(value)
     return value
 
-def get_musiker():
-    # NOTE: Sinn?
-    a = MIZImporter(source='artist')
-    vornamen, nachnamen = get_namen()
-    return a.search(to_find = list(vornamen)+list(nachnamen))
     
 def get_bands():
     a = MIZImporter(source='artist')
@@ -635,18 +596,3 @@ def get_bands():
             
 if __name__ == '__main__':
     pass
-
-#                name_dict = {k:v for k, v in values.items() if k=='vorname' or k=='nachname'}
-#                pfiltered = person.objects.filter(**name_dict)
-#                if pfiltered.exists():
-#                    p = pfiltered[0]
-#                    if pfiltered.count() > 1:
-#                        # Try to use the original_id to find the correct person
-#                        if 'original_id' in values.keys():
-#                            if pfiltered.filter(original_id=values['original_id']).exists():
-#                                pfiltered = pfiltered.filter(original_id=values['original_id'])
-#                                p = pfiltered[0]
-#                        # Still more than one person fits the names, narrow filtering down with herkunft_id
-#                        if pfiltered.count() > 1 and 'herkunft_id' in values.keys():
-#                            if pfiltered.filter(herkunft=values['herkunft_id']).exists():
-#                                p = pfiltered.filter(herkunft=values['herkunft_id'])[0]

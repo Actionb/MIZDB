@@ -1,14 +1,17 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.utils import IntegrityError
 
 from .constants import *
 from .m2m import *
-from .utils import concat_m2m, concat_limit, merge as merge_util
+from .utils import concat_limit, merge as merge_util
 from .managers import AusgabeQuerySet, MIZQuerySet
 
 # Create your models here.
-
+#TODO: models/m2m change or remove unique_together of m2m-tables to avoid form errors
+# let the form save and THEN remove duplicate entries
+# OR: delete m2m instances first, then save the new ones?
 
 class ShowModel(models.Model):
     
@@ -87,14 +90,6 @@ class ShowModel(models.Model):
             elif any(s.find(fld)!=-1 for s in search_fields):
                 rslt += [s for s in search_fields if s.find(fld)!=-1]
         return rslt
-        
-#    @classmethod
-#    def reverse_search_field(cls, field_name):
-#        if '__' in field_name:
-#            fld, rel_fld_name = (field_name.split('__'))
-#        else:
-#            fld = rel_fld_name = field_name
-#        return fld, rel_fld_name
         
     @classmethod
     def merge(cls, original_pk, dupes, verbose=True):
@@ -175,11 +170,11 @@ class person(ShowModel):
         ordering = ['nachname', 'vorname', 'herkunft']
     
     def autoren_string(self):
-        return concat_m2m(self.autor_set.all())
+        return concat_limit(self.autor_set.all())
     autoren_string.short_description = 'Als Autoren'
     
     def musiker_string(self):
-        return concat_m2m(self.musiker_set.all())
+        return concat_limit(self.musiker_set.all())
     musiker_string.short_description = 'Als Musiker'
   
     @classmethod
@@ -211,11 +206,11 @@ class musiker(ShowModel):
         ordering = ['kuenstler_name', 'person']
         
     def genre_string(self):
-        return concat_m2m(self.genre.all())
+        return concat_limit(self.genre.all())
     genre_string.short_description = 'Genres'
         
     def band_string(self):
-        return concat_m2m(self.band_set.all())
+        return concat_limit(self.band_set.all())
     band_string.short_description = 'Bands'
 class musiker_alias(alias_base):
     parent = models.ForeignKey('musiker')
@@ -230,7 +225,7 @@ class genre(ShowModel):
         ordering = ['genre']
         
     def alias_string(self):
-        return concat_m2m(self.genre_alias_set.all())
+        return concat_limit(self.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
 class genre_alias(alias_base):
     parent = models.ForeignKey('genre')
@@ -254,15 +249,15 @@ class band(ShowModel):
         verbose_name_plural = 'Bands'
         
     def genre_string(self):
-        return concat_m2m(self.genre.all())
+        return concat_limit(self.genre.all())
     genre_string.short_description = 'Genres'
         
     def musiker_string(self):
-        return concat_m2m(self.musiker.all())
+        return concat_limit(self.musiker.all())
     musiker_string.short_description = 'Mitglieder'
     
     def alias_string(self):
-        return concat_m2m(self.band_alias_set.all())
+        return concat_limit(self.band_alias_set.all())
     alias_string.short_description = 'Aliase'
 class band_alias(alias_base):
     parent = models.ForeignKey('band')
@@ -287,7 +282,7 @@ class autor(ShowModel):
             return str(self.person)
             
     def magazin_string(self):
-        return concat_m2m(self.magazin.all())
+        return concat_limit(self.magazin.all())
     magazin_string.short_description = 'Magazin(e)'
     
     @classmethod
@@ -324,8 +319,6 @@ class ausgabe(ShowModel):
     info = models.TextField(max_length = 200, blank = True)
     sonderausgabe = models.BooleanField(default=False)
     
-    #TODO: add ISSN-kuerzel-nr? 
-    # RELIX magazin num != ISSN
     exclude = [info]
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
                     'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
@@ -339,7 +332,7 @@ class ausgabe(ShowModel):
     class Meta:
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
-        ordering = ['magazin']#, '-sonderausgabe']
+        ordering = ['magazin']
         
     def anz_artikel(self):
         return self.artikel_set.count()
@@ -347,21 +340,20 @@ class ausgabe(ShowModel):
     
     def jahre(self):
         return concat_limit(self.ausgabe_jahr_set.all())
-        #return ", ".join([str(j) for j in self.ausgabe_jahr_set.all()])
     jahre.short_description = 'Jahre'
     
     def num_string(self):
-        return concat_m2m(self.ausgabe_num_set.all())
+        return concat_limit(self.ausgabe_num_set.all())
     num_string.short_description = 'Nummer'
     
     def lnum_string(self):
-        return concat_m2m(self.ausgabe_lnum_set.all())
+        return concat_limit(self.ausgabe_lnum_set.all())
     lnum_string.short_description = 'lfd. Nummer'
     
     def monat_string(self):
         try:
             if self.ausgabe_monat_set.exists():
-                return concat_m2m([v for v in self.ausgabe_monat_set.values_list('monat__abk', flat=True)])
+                return concat_limit([v for v in self.ausgabe_monat_set.values_list('monat__abk', flat=True)])
         except:
             return 'Woops'
     monat_string.short_description = 'Monate'
@@ -384,31 +376,31 @@ class ausgabe(ShowModel):
     
     def save(self, *args, **kwargs):
         super(ausgabe, self).save(*args, **kwargs)
+        
+        # Use e_datum data to populate month and year sets
         if self.e_datum:
             if self.e_datum.year not in self.ausgabe_jahr_set.values_list('jahr', flat=True):
                 self.ausgabe_jahr_set.create(jahr=self.e_datum.year)
             if self.e_datum.month not in self.ausgabe_monat_set.values_list('monat_id', flat=True):
-                #NOTE: this actually raised an IntegrityError (UNIQUE Constraints), not quite sure how yet...
+                #NOTE: this actually raised an IntegrityError (UNIQUE Constraints)
+                # self.ausgabe_monat_set will be empty but creating a new set instance will still fail
+                # need to find out how to reliably reproduce this
                 try:
                     self.ausgabe_monat_set.create(monat_id=self.e_datum.month)
-                except Exception as e:
-                    print('e_datum.month', self.e_datum.month)
-                    print('set', self.ausgabe_monat_set.values_list('monat_id', flat=True))
+                except IntegrityError:
+                    pass
     
     def __str__(self):
-        info = str(self.info)
-        if len(info)>LIST_DISPLAY_MAX_LEN:
-            info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
+        info = concat_limit(str(self.info).split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
         if self.sonderausgabe and self.info:
             return info
-        rslt = ""
-        if self.ausgabe_jahr_set.exists():
-            jahre = "/".join([jahr[2:] if i else jahr for i, jahr in enumerate([str(j.jahr) for j in self.ausgabe_jahr_set.all()])])
-        elif self.jahrgang:
-            jahre = "Vol.{}".format(str(self.jahrgang))
-        else:
-            jahre = "n.A."
-            
+        jahre = concat_limit([jahr[2:] if i else jahr for i, jahr in enumerate([str(j.jahr) for j in self.ausgabe_jahr_set.all()])], sep="/")
+        if not jahre:
+            if self.jahrgang:
+                jahre = "Jg.{}".format(str(self.jahrgang))
+            else:
+                jahre = "k.A." #oder '(Jahr?)'
+          
         if self.magazin.ausgaben_merkmal:
             merkmal = self.magazin.ausgaben_merkmal
             if merkmal == 'e_datum':
@@ -418,32 +410,34 @@ class ausgabe(ShowModel):
                 if merkmal == 'monat':
                     return "{0}-{1}".format(jahre,"/".join([str(m.monat.abk) for m in set.all()]))
                 if merkmal == 'lnum':
-                    if jahre != "n.A.":
+                    if jahre != "k.A.":
                         jahre = " ({})".format(jahre)
-                        return concat_m2m(set.all(), sep = "/") + jahre
+                        return concat_limit(set.all(), sep = "/") + jahre
                     else:
-                        return concat_m2m(set.all(), sep = "/")
-                return "{0}-{1}".format(jahre, concat_m2m(set.all(), sep = "/", z=2))
+                        return concat_limit(set.all(), sep = "/")
+                return "{0}-{1}".format(jahre, concat_limit(set.all(), sep = "/", z=2))
                 
-        num = "/".join([str(i.num).zfill(2) for i in self.ausgabe_num_set.all()])
-        monate = "/".join([i.monat.abk for i in self.ausgabe_monat_set.all()])
-        lnum = "/".join([str(i.lnum).zfill(2) for i in self.ausgabe_lnum_set.all()])
+        num = concat_limit(self.ausgabe_num_set.all(), sep="/", z=2)
         if num:
-            rslt = "{0}-{1}".format(jahre, num)
-        elif monate:
-            rslt = "{0}-{1}".format(jahre, monate)
-        elif lnum:
-            if jahre == "n.A.":
-                rslt = lnum
+            return "{0}-{1}".format(jahre, num)
+            
+        monate = concat_limit(self.ausgabe_monat_set.all(), sep="/")
+        if monate:
+            return "{0}-{1}".format(jahre, monate)
+            
+        lnum = concat_limit(self.ausgabe_lnum_set.all(), sep="/", z=2)
+        if lnum:
+            if jahre == "k.A.":
+                return lnum
             else:
-                rslt = "{0} ({1})".format(lnum, jahre)
-        elif self.e_datum:
-            rslt = str(self.e_datum)
+                return "{0} ({1})".format(lnum, jahre)
+                
+        if self.e_datum:
+            return str(self.e_datum)
         elif self.info:
-            rslt = info
+            return info
         else:
-            rslt = "Keine Angaben zu dieser Ausgabe!"
-        return rslt
+            return "Keine Angaben zu dieser Ausgabe!"
     
     @classmethod
     def strquery(cls, search_term, prefix = ''):
@@ -474,196 +468,10 @@ class ausgabe(ShowModel):
             rslt.append([qobject])
         return rslt
         
-        
-    @classmethod
-    def get_duplicates(cls, qs = None, flds = None):
-        qs = qs or ausgabe.objects
-        pk_name = qs.model._meta.pk.name
-        flds = flds or ausgabe.dupe_fields
-        duplicate_list = []
-        
-        f = open('ausgaben_duplicates.txt', 'w')
-        
-        # Don't bother with known special issues
-        qs = qs.exclude(sonderausgabe=True)
-          
-        # Get list of magazin ids used by all issues
-        mag_ids = qs.values_list('magazin', flat = True).distinct()
-        c = 0
-        total_ids = qs.count()
-        for mag_id in mag_ids:
-            loop_qs = qs.filter(magazin_id=mag_id)
-            # Get ids of issues from this magazine
-            issue_ids = loop_qs.values_list(pk_name, flat = True).distinct()
-            for id in issue_ids:
-                c += 1
-                if total_ids > 500:
-                    if float(c)%float(total_ids/5)<1:
-                        print("{}%".format(str(int((c/total_ids)*100))), loop_qs.count())
-                
-                # Check if id has not been filtered out beforehand due to being a duplicate
-                # (id is already in a set of known duplicates)
-
-                found_already = False
-                for dupe_set in duplicate_list:
-                    if id in dupe_set:
-                        found_already = True
-                        break
-                if found_already:
-                    continue
-                
-                # eliminate some issues that just cannot match due to different years
-                id_qs = loop_qs.exclude(pk=id)
-                for year in ausgabe_jahr.objects.filter(ausgabe_id=id).values_list('jahr', flat = True).distinct():
-                    id_qs = id_qs.filter(ausgabe_jahr__jahr=year)
-                    
-                if not id_qs.exists():
-                    continue
-                print('Testing id: ', id, file=f)
-                
-                match = False
-                # Next, keep adding filters to narrow down possible duplicates, starting with nums
-                if ausgabe_num.objects.filter(ausgabe_id=id).exists() and 'ausgabe_num__num' in flds:
-                    print("Testing nums.", file=f)
-                    for num in ausgabe_num.objects.filter(ausgabe_id=id).values_list('num', flat = True):
-                        id_qs = id_qs.filter(ausgabe_num__num=num)
-                    if not id_qs.exists():
-                        print('Num(s) dont match.', file=f)
-                        print("~"*20, end="\n\n", file=f)
-                        continue
-                    else:
-                        match = True
-                    
-                if ausgabe_lnum.objects.filter(ausgabe_id=id).exists() and 'ausgabe_lnum__lnum' in flds:
-                    print("Testing lnums.", file=f)
-                    for lnum in ausgabe_lnum.objects.filter(ausgabe_id=id).values_list('lnum', flat = True):
-                        id_qs = id_qs.filter(ausgabe_lnum__lnum=lnum)
-                    if not id_qs.exists():
-                        print('Lnum(s) dont match.', file=f)
-                        print("~"*20, end="\n\n", file=f)
-                        continue
-                    else:
-                        match = True
-                    
-                if ausgabe_monat.objects.filter(ausgabe_id=id).exists() and 'ausgabe_monat__monat' in flds:
-                    print("Testing months.", file=f)
-                    for monat in ausgabe_monat.objects.filter(ausgabe_id=id).values_list('monat', flat = True):
-                        id_qs = id_qs.filter(ausgabe_monat__monat=monat) 
-                    if not id_qs.exists():
-                        print('Month(s) dont match.', file=f)
-                        print("~"*20, end="\n\n", file=f)
-                        continue
-                    else:
-                        match = True
-                        
-                #TODO: check for e_datum
-                if match:
-                    print("Duplicate found! ID: ", id, file=f)
-                    dupe_set = set([id]+[dupe_id for dupe_id in id_qs.values_list(pk_name, flat = True)])
-#                    dupes_found += len(dupe_set)
-#                    duplicate_ids.update(dupe_set)
-#                    #duplicate_ids += list(dupe_set)
-                    
-                    # Hooray for list comprehension
-                    duplicate_list.append(dupe_set)
-                    
-                    # adjust loop_qs to exclude all known duplicates
-                    #loop_qs = loop_qs.exclude(pk__in=duplicate_list[-1])
-                    loop_qs = loop_qs.exclude(pk__in=dupe_set)
-                    
-                print("~"*20, end="\n\n", file=f)
-        return duplicate_list
-        
-    @classmethod
-    def get_duplicates2(cls, qs = None, flds = None):
-        qs = qs or ausgabe.objects
-        pk_name = qs.model._meta.pk.name
-        flds = flds or ausgabe.dupe_fields
-        duplicate_list = []
-        
-        f = open('ausgaben_duplicates.txt', 'w')
-        
-        # Don't bother with known special issues
-        qs = qs.exclude(sonderausgabe=True)
-        
-        c = 0
-        total_ids = qs.count()
-        for mag_id in magazin.objects.values_list('id', flat = True):
-            loop_qs = qs.filter(magazin_id=mag_id)
-            for id in loop_qs.values_list(pk_name, flat = True):
-                c += 1
-                if total_ids > 500:
-                    if float(c)%float(total_ids/5)<1:
-                        print("{}%".format(str(int((c/total_ids)*100))), loop_qs.count())
-                
-                # Check if id has not been filtered out beforehand due to being a duplicate
-                # (id is already in a set of known duplicates)
-
-                found_already = False
-                for dupe_set in duplicate_list:
-                    if id in dupe_set:
-                        found_already = True
-                        break
-                if found_already:
-                    continue
-                
-                # eliminate some issues that just cannot match due to different years
-                id_qs = loop_qs.exclude(pk=id)
-                for year in ausgabe_jahr.objects.filter(ausgabe_id=id).values_list('jahr', flat = True):
-                    id_qs = id_qs.filter(ausgabe_jahr__jahr=year)
-                    
-                if not id_qs.exists():
-                    continue
-                print('Testing id: ', id, file=f)
-                
-                match = False
-                # Next, keep adding filters to narrow down possible duplicates, starting with nums
-                if ausgabe_num.objects.filter(ausgabe_id=id).exists() and 'ausgabe_num__num' in flds:
-                    print("Testing nums.", file=f)
-                    for num in ausgabe_num.objects.filter(ausgabe_id=id).values_list('num', flat = True):
-                        id_qs = id_qs.filter(ausgabe_num__num=num)
-                    if not id_qs.exists():
-                        print('Num(s) dont match.', file=f)
-                        print("~"*20, end="\n\n", file=f)
-                        continue
-                    else:
-                        match = True
-                    
-                if ausgabe_lnum.objects.filter(ausgabe_id=id).exists() and 'ausgabe_lnum__lnum' in flds:
-                    print("Testing lnums.", file=f)
-                    for lnum in ausgabe_lnum.objects.filter(ausgabe_id=id).values_list('lnum', flat = True):
-                        id_qs = id_qs.filter(ausgabe_lnum__lnum=lnum)
-                    if not id_qs.exists():
-                        print('Lnum(s) dont match.', file=f)
-                        print("~"*20, end="\n\n", file=f)
-                        continue
-                    else:
-                        match = True
-                    
-                if ausgabe_monat.objects.filter(ausgabe_id=id).exists() and 'ausgabe_monat__monat' in flds:
-                    print("Testing months.", file=f)
-                    for monat in ausgabe_monat.objects.filter(ausgabe_id=id).values_list('monat', flat = True):
-                        id_qs = id_qs.filter(ausgabe_monat__monat=monat) 
-                    if not id_qs.exists():
-                        print('Month(s) dont match.', file=f)
-                        print("~"*20, end="\n\n", file=f)
-                        continue
-                    else:
-                        match = True
-                        
-                #TODO: check for e_datum
-                if match:
-                    print("Duplicate found! ID: ", id, file=f)
-                    dupe_set = set([id]+[dupe_id for dupe_id in id_qs.values_list(pk_name, flat = True)])
-                    duplicate_list.append(dupe_set)
-                    loop_qs = loop_qs.exclude(pk__in=dupe_set)
-                print("~"*20, end="\n\n", file=f)
-        return duplicate_list
- 
-                        
 class ausgabe_jahr(ShowModel):
-    YEAR_CHOICES = [(y,str(y)) for y in range (datetime.datetime.now().year,1899,-1)]
-    jahr = models.IntegerField('Jahr', choices = YEAR_CHOICES)
+    JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
+    
+    jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS, default = CUR_JAHR)
     ausgabe = models.ForeignKey('ausgabe')
     class Meta:
         verbose_name = 'Jahr'
@@ -745,6 +553,10 @@ class magazin(ShowModel):
         return str(self.magazin_name)
 
     def bulk(self, zbestand = True, details = [], dupe_all_sets = False, n_like_m = True, jg = False):
+        """
+            For creating lots of new issues via Terminal input
+        """
+        
         while True:
             print("="*20, end="\n\n\n")
             to_create = []
@@ -886,7 +698,7 @@ class magazin(ShowModel):
                     for value in v:
                         if value:
                             qs = qs.filter(**{x:value})
-                        #TODO: write a 'matches_X' function
+                        #NOTE: write a 'matches_X' function, filtering is not the best way for finding duplicates
                 if qs.exists():
                     if not dupe_all:
                         print("Ausgabe existiert möglicherweise bereits:")#, [(k, v) for k, v in ausgabe_dict.items()])
@@ -1131,7 +943,7 @@ class artikel(ShowModel):
     artikel_magazin.short_description = 'Magazin'
     
     def schlagwort_string(self):
-        return concat_m2m(self.schlagwort.all())
+        return concat_limit(self.schlagwort.all())
     schlagwort_string.short_description = 'Schlagwörter'
         
 
@@ -1149,7 +961,7 @@ class buch(ShowModel):
     sprache = models.ForeignKey('sprache', related_name = 'buchsprache', null = True, blank = True)
     sprache_orig = models.ForeignKey('sprache', related_name = 'buchspracheorig',  verbose_name = 'Sprache (Original)', null = True, blank = True)
     ubersetzer  = models.CharField('Übersetzer', **CF_ARGS_B)
-    #edition = models.CharField(**CF_ARGS_B, choices = EDITION_CHOICES, blank = True)
+    #NYI: edition = models.CharField(**CF_ARGS_B, choices = EDITION_CHOICES, blank = True)
     EAN = models.CharField(**CF_ARGS_B)
     ISBN = models.CharField(**CF_ARGS_B)
     LCCN = models.CharField(**CF_ARGS_B)
@@ -1301,7 +1113,7 @@ class veranstaltung(ShowModel):
     genre = models.ManyToManyField('genre',  through = m2m_veranstaltung_genre)
     person = models.ManyToManyField('person', verbose_name = 'Teilnehmer (Personen)', through = m2m_veranstaltung_person)
     band = models.ManyToManyField('band', verbose_name = 'Teilnehmer (Bands)',  through = m2m_veranstaltung_band)
-    #NIY: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
+    #NYI: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
     
     primary_fields = ['name']
     
@@ -1356,7 +1168,7 @@ class lagerort(ShowModel):
     raum = models.CharField(**CF_ARGS_B)
     regal = models.CharField(**CF_ARGS_B)
     
-    signatur = models.CharField(**CF_ARGS_B) # NOTE: use?
+    signatur = models.CharField(**CF_ARGS_B) # NOTE: use? maybe for human-readable shorthand?
     class Meta:
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
@@ -1378,7 +1190,6 @@ class lagerort(ShowModel):
         
         
 class bestand(ShowModel):
-    # NOTE: keep auto-generated 'id' field for consistency, but implement a signatur field (either unique=True or UUID) for external use
     signatur = models.AutoField(primary_key=True)
     lagerort = models.ForeignKey('lagerort')
     provenienz = models.ForeignKey('provenienz',  blank = True, null = True)

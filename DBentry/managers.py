@@ -1,15 +1,13 @@
 from django.db import models
 from django.db.utils import OperationalError
 
-from .utils import print_tabular
+from .printer import *
 
 class MIZQuerySet(models.QuerySet):
     
     def has_duplicate(self, original):
         #TODO: WIP
-        if self.count()<2:
-            return False
-        original = original or self.first()
+        pass
 
     def values_all(self, flds, ids = None):
         qs = self
