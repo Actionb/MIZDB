@@ -1,6 +1,5 @@
 # Do not delete this
 
-#*.sqlite3
+*.sqlite3
 
 *.pyc
-static/
