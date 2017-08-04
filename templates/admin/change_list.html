@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_urls static admin_list %}
+{% load i18n admin_urls static admin_list asf_tag%}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -74,7 +74,7 @@
       </div>
       {% endblock %}
 <!-- ADMIN SEARCH FORM --->
-      {% block search %}{% search_form cl %}{% endblock %}
+      {% block search %}{% advanced_search_form cl %}{% endblock %}
       {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
       <form id="changelist-form" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
       {% if cl.formset %}

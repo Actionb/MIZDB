@@ -288,9 +288,14 @@ class AusgabenAdmin(ModelBase):
                             'nummer' : 'ausgabe_num__num', 
                             'lfd' : 'ausgabe_lnum__lnum', 
                             }
-                            
+                        
     actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
-
+    advanced_search_form = {
+        'gtelt':['ausgabe_jahr__jahr'], 
+        'selects':['magazin__magazin_name'], 
+        'simple':['sonderausgabe']
+        
+    }
     
     def get_queryset(self, request):
         from django.db.models import Min, Max
@@ -309,7 +314,7 @@ class AusgabenAdmin(ModelBase):
             filtering_done = True
         else:
             for k, v in request.GET.items():
-                if k in ['q', '_changelist_filters']:
+                if k in ['q', '_changelist_filters', 'e']:
                     continue
                 qs_filtered = qs_filtered.filter(**{k:v})
                 filtering_done = True
