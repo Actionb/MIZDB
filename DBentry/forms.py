@@ -89,7 +89,8 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             
 }
 
-def makeForm(model = None):
+def makeForm(model, fields = []):
+    fields_param = fields or '__all__'
     import sys
     modelname = model._meta.model_name
     thismodule = sys.modules[__name__]
@@ -102,7 +103,7 @@ def makeForm(model = None):
     widget_list =  WIDGETS
     if model in WIDGETS:
         widget_list = WIDGETS[model]
-    return modelform_factory(model = model, fields = '__all__', widgets = widget_list) 
+    return modelform_factory(model = model, fields = fields_param, widgets = widget_list) 
     
 class ArtikelForm(forms.ModelForm):
         
