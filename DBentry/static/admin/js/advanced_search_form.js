@@ -1,10 +1,11 @@
+$(document).ready(function(){
 var $ = django.jQuery;
 $('form#adv-changelist-search').submit(function() {
 
     $(".inp-gte").each(
         function() {
             if($(this).val()!="") {
-                if($(this).next().val()=="") {
+                if($(this).parent().parent().children().eq(3).children().first().val()=="") {
                     name_len = $(this).attr('name').length;
                     $(this).attr('name', $(this).attr('name').slice(0,name_len-5));
                     $(this).next().attr('name','');
@@ -30,4 +31,9 @@ $('form#adv-changelist-search').submit(function() {
     );
 });
 
+$(".hide-adv-sf").click(function(){
+    $("#adv-sf").toggle();
 
+});
+
+});

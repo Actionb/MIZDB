@@ -12,7 +12,7 @@
     display: table;
 }
 
-#changelist-filter-col {
+.changelist-filter-col {
     width: 200px;
     float: left;
 }

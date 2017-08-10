@@ -1,44 +1,91 @@
 {% load i18n static %}
 
 {% if cl.search_fields %}
-<div id="toolbar"><form id="adv-changelist-search" method="get">
-<div><!-- DIV needed for valid HTML -->
+<div id="toolbar">
+    <form id="adv-changelist-search" method="get">
+        <div>
+        <!-- ADVANCED SEARCH FORM -->
+            <span>
+            <a class="hide-adv-sf" style="float: right;">(Zeigen/Ausblenden)</a>
+            <h2 class="hide-adv-sf">Suchoptionen</h2>
+            </span>
+            <div id="adv-sf" class="collapse" style=
+                                                    {% if show_result_count %}
+                                                        "display: none;"
+                                                    {% else %}
+                                                        "display: block;"
+                                                    {% endif %}>
+            <fieldset id="adv-sf-select">
+            {{ asf.ac_form.as_div }}
+            {% for s in asf.selects %}
+                <span>
+                
+                <div><label>{{s.label}}:</label> </div>
+               
+                <div><select name="{{s.query_string}}">
+                {% for choice in s.choices %}
+                    <option value="{{choice.pk}}" {% if choice.selected %} selected {% endif %}>{{choice.display}}</option>
+                {% endfor %}
+                </select></div>
+                
+                </span>
+            {% endfor %}
+            </fieldset>
+            
+            <fieldset id="adv-sf-gtelt">
+            {% for pair in asf.gtelt %}
+                <span>
+                    <div><label>{{pair.label}}:</label></div>
+                    <div>
+                        <input class="inp-gte" type="number" name="{{pair.gte_query_string}}" value="{{pair.gte_val}}"/>
+                    </div>
+                    <div class="asf-gtelt-label">
+                        <label for="inp-lt-{{pair.lt_query_string}}" id="lt-label"> _ </label>
+                    </div>
+                    <div class="asf-gtelt-input">
+                        <input class="inp-lt" id="inp-lt-{{pair.lt_query_string}}" type="number" 
+                            name="{{pair.lt_query_string}}" value="{{pair.lt_val}}"/>
+                    </div>
+                </span>
+            {% endfor %}
+            </fieldset>
+            
+            <fieldset id="adv-sf-simple">
+            {% for i in asf.simple %}
+                <span>
+                <div><label>{{i.label}}:</label></div>
+                {% if i.bool %}
+                    <div><input type="checkbox" name="{{i.query_string}}" value="True" {% if i.val %} checked {% endif %}/></div>
+                {% else %}
+                    <div><input type="text" name="{{i.query_string}}" value="{{i.val}}"/></div>
+                {% endif %}
+                </span>
+            {% endfor %}
+            </fieldset>
+            </div>
+            
+            <fieldset id="search-input">
+                <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+                <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
 
-{% for s in asf.selects %}
-    <label>{{s.label}}</label>
-    <select name="{{s.query_string}}">
-    {% for choice in s.choices %}
-        <option value="{{choice.pk}}" {% if choice.selected %} selected {% endif %}>{{choice.display}}</option>
-    {% endfor %}
-    </select>
-{% endfor %}
 
-{% for pair in asf.gtelt %}
-    <label>{{pair.label}}</label>
-    <input class="inp-gte" type="number" name="{{pair.gte_query_string}}" value="{{pair.gte_val}}"/> - 
-    <input class="inp-lt" type="number" name="{{pair.lt_query_string}}" value="{{pair.lt_val}}"/>
-{% endfor %}
-
-{% for i in asf.simple %}
-    <label>{{i.label}}</label>
-    {% if i.bool %}
-        <input type="checkbox" name="{{i.query_string}}" value="True" {% if i.val %} checked {% endif %}/>
-    {% else %}
-        <input type="text" name="{{i.query_string}}" value="{{i.val}}"/>
-    {% endif %}
-{% endfor %}
-
-<label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
-<input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
-
-
-<input type="submit" value="{% trans 'Search' %}" />
-<a href="">{% trans 'Reset' %}</a>
-{% if show_result_count %}
-    <span class="small quiet">{% blocktrans count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %} (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">{% if cl.show_full_result_count %}{% blocktrans with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktrans %}{% else %}{% trans "Show all" %}{% endif %}</a>)</span>
-{% endif %}
-
+                <input type="submit" value="{% trans 'Search' %}" />
+                <span class="small quiet">
+                    {% blocktrans count counter=cl.result_count %}{{ counter }} result {% plural %}{{ counter }} results{% endblocktrans %} 
+                    (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">
+                        {% if cl.show_full_result_count %}
+                            {% blocktrans %}{{ full_count }} total {% endblocktrans %}
+                        {% else %}
+                            {% trans "Show all" %}
+                        {% endif %}
+                    </a>)
+                    </span>
+            </fieldset>
+        </div>
+    </form>
 </div>
-</form></div>
-{% endif %}
 <script type="text/javascript" src="/static/admin/js/advanced_search_form.js"></script>
+{{ asf.ac_form.media }}
+
+
+{% endif %}

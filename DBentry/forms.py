@@ -126,3 +126,37 @@ class ArtikelForm(forms.ModelForm):
             kwargs['initial'] = initial
         super(ArtikelForm, self).__init__(*args, **kwargs)
         
+class AdvSFForm(forms.Form):
+    
+    def as_div(self):
+        "Returns this form rendered as HTML <div>s."
+        return self._html_output(
+            normal_row="""
+            <span>
+            <div>%(label)s</div>
+            <div>%(field)s%(help_text)s</div>
+            </span>
+            """, 
+            error_row='%s',
+            row_ender='</div>',
+            help_text_html=' <span class="helptext">%s</span>',
+            errors_on_separate_row=True)
+            
+class AdvSFAusgabe(AdvSFForm):
+    magazin = forms.ModelChoiceField(required = False, 
+                                    queryset = magazin.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
+                                    )
+
+    
+class AdvSFArtikel(AdvSFForm):
+    ausgabe__magazin = forms.ModelChoiceField(required = False, 
+                                    label = "Magazin", 
+                                    queryset = magazin.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
+                                    )
+    ausgabe = forms.ModelChoiceField(required = False, 
+                                    queryset = ausgabe.objects.all(), 
+                                    widget = autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin'], 
+                                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})
+                                    )

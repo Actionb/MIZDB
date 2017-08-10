@@ -27,7 +27,13 @@ autocomplete_patterns = [
     url(r'^verlag/$',       ACBase.as_view(model = verlag, create_field='verlag_name'),         name = 'acverlag'), 
 ]
 
+# A place for the evil twins of the previous ac patterns that want to create objects although they are not allowed to
+# (on advanced search forms)
+autocomplete_patterns_nocreate = [
+    url(r'^magazin_nocreate/$',      ACBase.as_view(model = magazin),                           name = 'acmagazin_nocreate'),
+]
 
 urlpatterns = [
     url(r'ac/', include(autocomplete_patterns)),
+    url(r'ac/', include(autocomplete_patterns_nocreate))
 ]

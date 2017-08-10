@@ -1,0 +1,49 @@
+#adv-changelist-search fieldset {
+    padding-top: 5px;
+}
+
+#adv-changelist-search label:not(#lt-label) {
+    vertical-align: sub;
+}
+
+#adv-changelist-search fieldset div {
+    margin-bottom: 5px;
+    float: left;
+    box-sizing: border-box;
+}
+
+#adv-changelist-search fieldset span div:first-child {
+    width: 15%;
+}
+
+
+#adv-changelist-search fieldset span div select {
+    width: 30%;
+}
+
+#adv-changelist-search fieldset span .asf-gtelt-input {
+    width: 51%;
+}
+
+#adv-changelist-search fieldset span .asf-gtelt-label {
+    /* this is the div for the label containing the dash ' - ' */
+    width: 5%;
+    text-align: center;
+}
+
+#adv-changelist-search fieldset span div:last-child:not(.asf-gtelt-input) {
+    width: 85%;
+}
+.hide-adv-sf { 
+    margin: 0;
+    padding: 8px;
+    font-weight: 400;
+    font-size: 13px;
+    text-align: center;
+    background: #79aec8;
+    color: #fff;
+}
+.hide-adv-sf:hover {
+    /*color: #036;*/
+    cursor: pointer;
+}

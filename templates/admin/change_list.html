@@ -2,22 +2,24 @@
 {% load i18n admin_urls static admin_list asf_tag%}
 
 {% block extrastyle %}
+<!-- Extrastyle -->
   {{ block.super }}
-  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}" />
   {% if cl.formset %}
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />
   {% endif %}
   {% if cl.formset or action_form %}
     <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
   {% endif %}
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/filter_top.css" %}?{% now 'U' %}" />
-    {# {% static "admin/css/filter_top.css?{% now "U" %}" %} #}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/filter_top.css' %}?{% now 'U' %}" />
+     <link rel="stylesheet" type="text/css" href="{% static 'admin/css/advanced_search_form.css' %}" /> 
   {{ media.css }}
   {% if not actions_on_top and not actions_on_bottom %}
     <style>
       #changelist table thead th:first-child {width: inherit}
     </style>
   {% endif %}
+<!-- Extrastyle end -->
 {% endblock %}
 
 {% block extrahead %}
@@ -64,18 +66,22 @@
     <div class="module" id="changelist">
 <!-- ADMIN FILTERS --->
       {% block filters %}
+      {% if not cl.model_admin.has_adv_sf %}
       <div id="changelist-filter">
         <h2>{% trans 'Filter' %}</h2>
         {% for spec in cl.filter_specs %}
-            <div id="changelist-filter-col">
+            <div class="changelist-filter-col">
                 {% admin_list_filter cl spec %}
             </div>
         {% endfor %}
       </div>
+      {% endif %}
       {% endblock %}
 <!-- ADMIN SEARCH FORM --->
       {% block search %}{% advanced_search_form cl %}{% endblock %}
+      
       {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
+      
       <form id="changelist-form" method="post"{% if cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
       {% if cl.formset %}
         <div>{{ cl.formset.management_form }}</div>
@@ -91,3 +97,4 @@
     </div>
   </div>
 {% endblock %}
+

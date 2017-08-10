@@ -1,4 +1,3 @@
-#
 
 from django.template import Library
 from django.contrib.admin.utils import get_fields_from_path
@@ -12,22 +11,35 @@ def advanced_search_form(cl):
     model_admin = cl.model_admin
     model = cl.model
     params = cl.params
+    full_count = cl.model_admin.model._meta.default_manager.count()
+    
     asf_dict = getattr(model_admin, 'advanced_search_form', None)
-    asf = dict(selects=[], gtelt=[], simple=[])
+    # See if we can add a form with autocomplete functionality:
+    #TODO: use something more generic
+    import DBentry.forms
+    form_name = 'AdvSF' + model._meta.model_name.capitalize()
+    form = getattr(DBentry.forms, form_name, None)
+    form_initial = {}
+    form_fields = form.base_fields if form else {}
+    if form:
+        form = form(initial=params)
+    asf = dict(selects=[], gtelt=[], simple=[], ac_form=form)
     if asf_dict:
         for item in asf_dict.get('selects', []):
-            field = get_fields_from_path(model, item)[0]
-            field_choices = field.get_choices() #returns tuple(pk,name)
-            choices = []
-            for pk, name in field_choices:
-                choices.append(dict(pk=pk, display=name, selected=params.get(field.attname, 0)==str(pk)))
-            
-            asf['selects'].append( dict(
-                    label               = get_fields_from_path(model, item)[-1].verbose_name, 
-                    query_string        = field.attname, 
-                    choices             = choices, 
+            if not item in form_fields:
+                # Ignore items that are already being handled by the form
+                field = get_fields_from_path(model, item)[0]
+                field_choices = field.get_choices() 
+                choices = []
+                for pk, name in field_choices:
+                    choices.append(dict(pk=pk, display=name, selected=params.get(field.attname, 0)==str(pk)))
+                    
+                asf['selects'].append( dict(
+                        label               = get_fields_from_path(model, item)[-1].verbose_name, 
+                        query_string        = field.attname, 
+                        choices             = choices, 
+                    )
                 )
-            )
                 
         for item in asf_dict.get('gtelt', []):
             asf['gtelt'].append( dict(
@@ -47,10 +59,10 @@ def advanced_search_form(cl):
                     bool                = isinstance(field, BooleanField)
                 )
             )
-            
     return {
         'asf' : asf, 
         'cl': cl,
-        'show_result_count': cl.result_count != cl.full_result_count,
+        'full_count' : full_count, 
+        'show_result_count': full_count == cl.result_count,
         'search_var': SEARCH_VAR
     }
