@@ -317,7 +317,7 @@ class ausgabe(ShowModel):
     e_datum = models.DateField('Erschienen am', null = True,  blank = True)
     jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True)
     info = models.TextField(max_length = 200, blank = True)
-    sonderausgabe = models.BooleanField(default=False)
+    sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
     
     exclude = [info]
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
@@ -908,7 +908,7 @@ class artikel(ShowModel):
     
     ausgabe = models.ForeignKey('ausgabe',  on_delete=models.PROTECT)
     schlagzeile = models.CharField(**CF_ARGS)
-    seite = models.IntegerField() #TODO: PositiveSmallIntegerField
+    seite = models.IntegerField(verbose_name="Seite") #TODO: PositiveSmallIntegerField
     seitenumfang = models.CharField(max_length = 3, blank = True,  choices = SU_CHOICES,  default = '')
     zusammenfassung = models.TextField(blank = True)
     info = models.TextField(blank = True)
