@@ -17,12 +17,15 @@ class ModelBase(admin.ModelAdmin):
     
     def __init__(self, *args, **kwargs):
         super(ModelBase, self).__init__(*args, **kwargs)
-        self.form = makeForm(model = self.model)
+        self.form = makeForm(self.model)
         if not self.search_fields:
             self.search_fields = list(self.model.get_search_fields())
         
     search_fields_redirect = dict()
     flds_to_group = []
+    
+    def has_adv_sf(self):
+        return getattr(self, 'advanced_search_form', False)
     
     def get_exclude(self, request, obj = None):
         self.exclude = super(ModelBase, self).get_exclude(request, obj)
@@ -64,6 +67,10 @@ class ModelBase(admin.ModelAdmin):
         return list(self.model.get_search_fields())
         
     def lookup_allowed(self, key, value):
+        if self.has_adv_sf():
+            for list in self.has_adv_sf().values():
+                if key in list:
+                    return True
         if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
             return True
         return super(ModelBase, self).lookup_allowed(key, value)
@@ -291,8 +298,8 @@ class AusgabenAdmin(ModelBase):
                         
     actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
     advanced_search_form = {
-        'gtelt':['ausgabe_jahr__jahr'], 
-        'selects':['magazin__magazin_name'], 
+        'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
+        'selects':['status'], 
         'simple':['sonderausgabe']
         
     }
@@ -519,13 +526,18 @@ class ArtikelAdmin(ModelBase):
     flds_to_group = [('ausgabe','magazin', 1),('seite', 'seitenumfang'),]
     
     list_display = ['__str__', 'seite', 'schlagwort_string','ausgabe','artikel_magazin']
-    #search_fields = ['schlagzeile', 'ausgabe__ausgabe_jahr__jahr', 'seite', 'ausgabe__magazin__magazin_name']
     list_filter = [('ausgabe__magazin__magazin_name', DropdownFilter), ('ausgabe__ausgabe_jahr__jahr',DropdownFilter)]
     list_display_links = ['__str__', 'seite', 'ausgabe']
     search_fields_redirect = {  'ausgabe' : ausgabe.strquery, 
                                 'autor' : autor.strquery, 
                                 'magazin' : 'ausgabe__magazin__magazin_name', 
                                 }
+                                
+    advanced_search_form = {
+        'gtelt':['seite', ], 
+        'selects':['ausgabe__magazin'], 
+        'simple':[], 
+    }
     
 
     def get_queryset(self, request):
