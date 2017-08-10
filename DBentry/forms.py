@@ -28,8 +28,7 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             # Bestand
             bestand : {
                 'ausgabe' : autocomplete.ModelSelect2(url = 'acausgabe'), 
-                'buch' : autocomplete.ModelSelect2(url='acbuch'), 
-                #'geber' : autocomplete.ModelSelect2(url='acgeber'), 
+                'buch' : autocomplete.ModelSelect2(url='acbuch'),  
                 'lagerort' :  autocomplete.ModelSelect2(url='aclagerort'), 
                 'provenienz' : autocomplete.ModelSelect2(url='acprov'), 
             }, 
@@ -71,17 +70,12 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             'spielort' : autocomplete.ModelSelect2(url='acspielort'), 
             'sitz' : autocomplete.ModelSelect2(url='acort'),
             
-            # Person
-#            person : {
-#            }, 
-            
             # Prov/Lagerort
             'lagerort' : autocomplete.ModelSelect2(url='aclagerort'), 
             provenienz : {
                 'geber' : autocomplete.ModelSelect2(url='acgeber'), 
             }, 
             'provenienz' : autocomplete.ModelSelect2(url='acprov'), 
-            #'geber' : autocomplete.ModelSelect2(url='acgeber'), 
             
             # Schlagworte
             schlagwort : {

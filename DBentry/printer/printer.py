@@ -7,8 +7,8 @@ def print_tabular(to_print, columns = [], default_col_width=6):
     if isinstance(to_print, dict):
         to_print = [to_print]
     if any(not isinstance(row, dict) for row in to_print):
-        print("Printing requires an iterable of dicts.")
-        raise
+        print ("Printing requires an iterable of dicts.")
+        return
     
     column_ordering = columns[:] or list(set(chain(*[row.keys() for row in to_print])))
     # Allow column_ordering to consist of tuple/list with alias and key/name: (column_name,column_alias)
