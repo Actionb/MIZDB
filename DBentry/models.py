@@ -30,6 +30,10 @@ class ShowModel(models.Model):
             
     def __str__(self):
         return self._show()
+    
+#    @classmethod
+#    def get_ordering(cls):
+#        return cls._meta.ordering
         
     @classmethod
     def get_duplicates(cls):
@@ -247,6 +251,7 @@ class band(ShowModel):
     class Meta:
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
+        ordering = ['band_name']
         
     def genre_string(self):
         return concat_limit(self.genre.all())
@@ -268,6 +273,7 @@ class autor(ShowModel):
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
+    #primary_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
     class Meta:
@@ -332,7 +338,11 @@ class ausgabe(ShowModel):
     class Meta:
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
-        ordering = ['magazin']
+        ordering = ['magazin', 'ausgabe_jahr__jahr']#, 'ausgabe_lnum__lnum', 'ausgabe_monat__monat', 'ausgabe_num__num']
+    
+#    @classmethod
+#    def get_ordering(cls):
+#        return ['magazin', 'ausgabe_jahr__jahr']#, 'ausgabe_lnum__lnum', 'ausgabe_monat__monat', 'ausgabe_num__num']
         
     def anz_artikel(self):
         return self.artikel_set.count()
@@ -913,8 +923,8 @@ class artikel(ShowModel):
     zusammenfassung = models.TextField(blank = True)
     info = models.TextField(blank = True)
     
-    genre = models.ManyToManyField('genre', through = m2m_artikel_genre)
-    schlagwort = models.ManyToManyField('schlagwort', through = m2m_artikel_schlagwort)
+    genre = models.ManyToManyField('genre', through = m2m_artikel_genre, verbose_name='Genre')
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_artikel_schlagwort, verbose_name='Schlagwort')
     person = models.ManyToManyField('person', through = m2m_artikel_person)
     autor = models.ManyToManyField('autor', through = m2m_artikel_autor)
     band = models.ManyToManyField('band', through = m2m_artikel_band)

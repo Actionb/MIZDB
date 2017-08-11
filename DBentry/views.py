@@ -57,6 +57,7 @@ class ACBase(autocomplete.Select2QuerySetView):
     def get_queryset(self):
         # TODO: exception fld in self.flds not in self.model._meta.get_fields hä??
         qs = self.model.objects.all()
+        ordering = self.model._meta.ordering
         if not self.flds:
             self.flds = self.get_primary_fields()
         if self.forwarded:
@@ -95,7 +96,7 @@ class ACBase(autocomplete.Select2QuerySetView):
                     for fld in self.flds:
                         qobjects |= Q((fld+"__icontains", q))
                     qs = qs.filter(qobjects).distinct()
-        return qs
+        return qs.order_by(*ordering)
         
 class ACProv(ACBase):
     
