@@ -147,6 +147,8 @@ class AdvSFAusgabe(AdvSFForm):
                                     queryset = magazin.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
                                     )
+                                    
+    e_datum = forms.DateField(required = False, label="Erscheinungsdatum")
 
     
 class AdvSFArtikel(AdvSFForm):

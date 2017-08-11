@@ -69,6 +69,19 @@ class AusgabeQuerySet(MIZQuerySet):
             
             last_year = year
             
+    def filter(self, *args, **kwargs):
+        if 'e_datum' in kwargs:
+            from django.core.exceptions import ValidationError
+            try:
+                return super(AusgabeQuerySet, self).filter(*args, **kwargs)
+            except ValidationError:
+                from datetime import datetime
+                v = kwargs.get('e_datum', None)
+                v = datetime.strptime(v, "%d.%m.%Y").date()
+                kwargs['e_datum'] = v
+        return super(AusgabeQuerySet, self).filter(*args, **kwargs)
+            
+            
     def print_qs(self):
         qs = self
         flds = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat']

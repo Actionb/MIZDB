@@ -300,9 +300,10 @@ class AusgabenAdmin(ModelBase):
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
         'selects':['status'], 
-        'simple':['sonderausgabe']
+        'simple':['sonderausgabe', 'jahrgang', 'e_datum']
         
     }
+    crosslinks = [(artikel, 'ausgabe')]
     
     def get_queryset(self, request):
         from django.db.models import Min, Max
@@ -535,7 +536,7 @@ class ArtikelAdmin(ModelBase):
                                 
     advanced_search_form = {
         'gtelt':['seite', ], 
-        'selects':['ausgabe__magazin'], 
+        'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre'], 
         'simple':[], 
     }
     
