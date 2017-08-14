@@ -148,7 +148,6 @@ class AdvSFAusgabe(AdvSFForm):
                                     widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
                                     )
                                     
-    e_datum = forms.DateField(required = False, label="Erscheinungsdatum")
 
     
 class AdvSFArtikel(AdvSFForm):
@@ -162,3 +161,16 @@ class AdvSFArtikel(AdvSFForm):
                                     widget = autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin'], 
                                                 attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})
                                     )
+                                    
+    schlagwort = forms.ModelChoiceField(required = False, 
+                                    label = "Schlagwort", 
+                                    queryset = schlagwort.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acschlagwort_nocreate'), 
+                                    )
+                                    
+    genre = forms.ModelChoiceField(required = False, 
+                                    label = "Genre", 
+                                    queryset = genre.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acgenre_nocreate'), 
+                                    )
+                        
