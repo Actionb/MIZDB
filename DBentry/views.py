@@ -96,6 +96,9 @@ class ACBase(autocomplete.Select2QuerySetView):
                     for fld in self.flds:
                         qobjects |= Q((fld+"__icontains", q))
                     qs = qs.filter(qobjects).distinct()
+        if self.model == ausgabe:
+            qs = qs.resultbased_ordering()
+            return qs
         return qs.order_by(*ordering)
         
 class ACProv(ACBase):

@@ -321,7 +321,7 @@ class ausgabe(ShowModel):
     magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
     e_datum = models.DateField('Erschienen am', null = True,  blank = True)
-    jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True)
+    jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True, verbose_name = "Jahrgang")
     info = models.TextField(max_length = 200, blank = True)
     sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
     
@@ -333,16 +333,10 @@ class ausgabe(ShowModel):
                     'ausgabe_monat__monat__monat', 'e_datum']
     
     objects = AusgabeQuerySet.as_manager()
-    
-    
     class Meta:
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
-        ordering = ['magazin', 'ausgabe_jahr__jahr']#, 'ausgabe_lnum__lnum', 'ausgabe_monat__monat', 'ausgabe_num__num']
-    
-#    @classmethod
-#    def get_ordering(cls):
-#        return ['magazin', 'ausgabe_jahr__jahr']#, 'ausgabe_lnum__lnum', 'ausgabe_monat__monat', 'ausgabe_num__num']
+        ordering = ['magazin', 'jahrgang']
         
     def anz_artikel(self):
         return self.artikel_set.count()

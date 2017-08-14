@@ -55,7 +55,7 @@ def advanced_search_form(cl):
             asf['simple'].append( dict(
                     label               = field.verbose_name,
                     query_string        = item, 
-                    val                 = item in params, 
+                    val                 = params.get(item, ''), 
                     bool                = isinstance(field, BooleanField)
                 )
             )

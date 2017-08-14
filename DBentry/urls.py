@@ -30,7 +30,9 @@ autocomplete_patterns = [
 # A place for the evil twins of the previous ac patterns that want to create objects although they are not allowed to
 # (on advanced search forms)
 autocomplete_patterns_nocreate = [
+    url(r'^genre_nocreate/$',      ACBase.as_view(model = genre),                           name = 'acgenre_nocreate'),
     url(r'^magazin_nocreate/$',      ACBase.as_view(model = magazin),                           name = 'acmagazin_nocreate'),
+    url(r'^schlagwort_nocreate/$',   ACBase.as_view(model = schlagwort),                        name = 'acschlagwort_nocreate'),
 ]
 
 urlpatterns = [
