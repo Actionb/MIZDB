@@ -425,7 +425,7 @@ class ausgabe(ShowModel):
         if num:
             return "{0}-{1}".format(jahre, num)
             
-        monate = concat_limit(self.ausgabe_monat_set.all(), sep="/")
+        monate = concat_limit(self.ausgabe_monat_set.values_list('monat__abk', flat=True), sep="/")
         if monate:
             return "{0}-{1}".format(jahre, monate)
             
