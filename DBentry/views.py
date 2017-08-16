@@ -57,13 +57,33 @@ class ACBase(autocomplete.Select2QuerySetView):
     def get_queryset(self):
         # TODO: exception fld in self.flds not in self.model._meta.get_fields hä??
         qs = self.model.objects.all()
+        ordering = self.model._meta.ordering
         if not self.flds:
             self.flds = self.get_primary_fields()
         if self.forwarded:
+            from django.contrib.admin.utils import get_fields_from_path
             qobjects = Q()
-            for f in self.forwarded:
-                if self.forwarded.get(f, 0):   
-                    qobjects |= Q((f, self.forwarded.get(f, 0)))
+            for k, v in self.forwarded.items():
+                #TODO: make a custom widget to allow setting of its 'name' html attribute so we don't have to do this:
+                # html attribute name == form field name; meaning in order to use dal in search forms we have to call the
+                # form field after a queryable field. But the ac widget's model fields may be different than the form fields
+                # 
+                while True:
+                    # Reducing k in hopes of getting something useful
+                    if k:
+                        try:
+                            # Test to see if k can be used to build a query
+                            get_fields_from_path(self.model, k)
+                            break
+                        except:
+                            # Slice off the first bit
+                            k = "__".join(k.split("__")[1:])
+                    else:
+                        break
+                if k and v:
+                    qobjects |= Q((k,v))
+#                if self.forwarded.get(f, 0):   
+#                    qobjects |= Q((f, self.forwarded.get(f, 0)))
             if qobjects.children:
                 qs = qs.filter(qobjects)                        # NOTE: Oder ver-UND-en? qs.filter().filter()...?
             else:
@@ -76,7 +96,10 @@ class ACBase(autocomplete.Select2QuerySetView):
                     for fld in self.flds:
                         qobjects |= Q((fld+"__icontains", q))
                     qs = qs.filter(qobjects).distinct()
-        return qs
+        if self.model == ausgabe:
+            qs = qs.resultbased_ordering()
+            return qs
+        return qs.order_by(*ordering)
         
 class ACProv(ACBase):
     

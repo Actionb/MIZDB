@@ -17,12 +17,16 @@ class ModelBase(admin.ModelAdmin):
     
     def __init__(self, *args, **kwargs):
         super(ModelBase, self).__init__(*args, **kwargs)
-        self.form = makeForm(model = self.model)
+        self.form = makeForm(self.model)
         if not self.search_fields:
             self.search_fields = list(self.model.get_search_fields())
         
     search_fields_redirect = dict()
     flds_to_group = []
+    crosslinks = []
+    
+    def has_adv_sf(self):
+        return getattr(self, 'advanced_search_form', False)
     
     def get_exclude(self, request, obj = None):
         self.exclude = super(ModelBase, self).get_exclude(request, obj)
@@ -63,7 +67,49 @@ class ModelBase(admin.ModelAdmin):
             return self.search_fields
         return list(self.model.get_search_fields())
         
+    def add_crosslinks(self, object_id):
+        return {}
+        # THE GENERIC WAY
+        # WIP
+        from django.contrib.admin.utils import reverse
+        from django.db.models.fields.reverse_related import ManyToOneRel
+        from django.db.models.fields.related import ManyToManyField
+        new_extra = {}
+        new_extra['crosslinks'] = []
+        #rels = {i.related_model for i in self.model.get_m2mfields() if not isinstance(i, ManyToManyField)}
+        inlmdls = {i.model for i in self.inlines}
+#        rel_objs = {rel.related_model for rel in self.model.get_m2mfields() if isinstance(rel, ManyToOneRel)}
+#        rel_objs = rel_objs - inlmdls
+#        #print(rels - inlmdls)
+        
+        for rel in self.model.get_m2mfields():
+            if isinstance(rel, ManyToOneRel) and rel.related_model not in [i.model for i in self.inlines]:
+                    # We're only interested in reverse relations
+                    # forward relations are returned of type django.db.models.fields.related.ManyToManyField and
+                    # those are already being handled by the inlines
+                model = rel.related_model
+                fld_name = rel.remote_field.name
+                try:
+                    link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
+                                    + "?" + fld_name + "=" + object_id
+                except:
+                    continue
+                count = model._default_manager.filter(**{fld_name:object_id}).count()
+                
+                label = model._meta.verbose_name_plural + "({})".format(count)
+                new_extra['crosslinks'].append( dict(link=link, label=label) )
+        return new_extra
+    
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        new_extra = extra_context or {}
+        new_extra.update(self.add_crosslinks(object_id))
+        return super(ModelBase, self).change_view(request, object_id, form_url, extra_context   )
+        
     def lookup_allowed(self, key, value):
+        if self.has_adv_sf():
+            for list in self.has_adv_sf().values():
+                if key in list:
+                    return True
         if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
             return True
         return super(ModelBase, self).lookup_allowed(key, value)
@@ -257,6 +303,56 @@ class BestandListFilter(admin.SimpleListFilter):
         if self.value()=='ndubl':
             return queryset.exclude(bestand__lagerort_id=DUPLETTEN_ID)
 
+from django.contrib.admin.views.main import ChangeList, ORDER_VAR
+class AusgabenChangeList(ChangeList):
+
+    def get_queryset(self, request):
+        """ Copy pasted from original ChangeList to switch around ordering and filtering"""
+        # First, we collect all the declared list filters.
+        (self.filter_specs, self.has_filters, remaining_lookup_params,
+         filters_use_distinct) = self.get_filters(request)
+
+        # Then, we let every list filter modify the queryset to its liking.
+        qs = self.root_queryset
+        for filter_spec in self.filter_specs:
+            new_qs = filter_spec.queryset(request, qs)
+            if new_qs is not None:
+                qs = new_qs
+
+        try:
+            # Finally, we apply the remaining lookup parameters from the query
+            # string (i.e. those that haven't already been processed by the
+            # filters).
+            qs = qs.filter(**remaining_lookup_params)
+        except (SuspiciousOperation, ImproperlyConfigured):
+            # Allow certain types of errors to be re-raised as-is so that the
+            # caller can treat them in a special way.
+            raise
+        except Exception as e:
+            # Every other error is caught with a naked except, because we don't
+            # have any other way of validating lookup parameters. They might be
+            # invalid if the keyword arguments are incorrect, or if the values
+            # are not in the correct type, so we might get FieldError,
+            # ValueError, ValidationError, or ?.
+            raise IncorrectLookupParameters(e)
+
+        if not qs.query.select_related:
+            qs = self.apply_select_related(qs)
+            
+        # Apply search results
+        qs, search_use_distinct = self.model_admin.get_search_results(request, qs, self.query)
+       
+        qs = qs.resultbased_ordering()
+        # Set ordering.
+        ordering = self.get_ordering(request, qs)
+        qs = qs.order_by(*ordering)
+        
+        # Remove duplicates from results, if necessary
+        if filters_use_distinct | search_use_distinct:
+            return qs.distinct()
+        else:
+            return qs
+    
 @admin.register(ausgabe)
 class AusgabenAdmin(ModelBase):
     class NumInLine(TabModelBase):
@@ -278,7 +374,7 @@ class AusgabenAdmin(ModelBase):
     flds_to_group = [('status', 'sonderausgabe')]
     
     list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahre', 'jahrgang', 
-                        'magazin','e_datum', 'zbestand' , 'dbestand') #,'anz_artikel'
+                        'magazin','e_datum','anz_artikel') 
     search_fields = ['magazin__magazin_name', 'status', 'e_datum', 
         'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr','ausgabe_monat__monat__monat']
     list_filter = [('magazin__magazin_name', DropdownFilter),('ausgabe_jahr__jahr', DropdownFilter), 'status',BestandListFilter, ]#('bestand__lagerort', BestandListFilter)]
@@ -288,67 +384,18 @@ class AusgabenAdmin(ModelBase):
                             'nummer' : 'ausgabe_num__num', 
                             'lfd' : 'ausgabe_lnum__lnum', 
                             }
-                            
-    actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
-
-    
-    def get_queryset(self, request):
-        from django.db.models import Min, Max
-
-        qs = super(AusgabenAdmin, self).get_queryset(request)
-        if not qs.exists():
-            return qs
-            
-        # Do some filtering!
-        qs_filtered = qs
-        filtering_done = False
-        if 'q' in request.GET and request.GET['q']:
-            # too bad that get_search_results happens after 
-            # django.contrib.admin.views.main.get_queryset(), we're doing the same work twice here
-            qs_filtered, use_distinct = self.get_search_results(request, qs, request.GET['q']) 
-            filtering_done = True
-        else:
-            for k, v in request.GET.items():
-                if k in ['q', '_changelist_filters']:
-                    continue
-                qs_filtered = qs_filtered.filter(**{k:v})
-                filtering_done = True
-                
-        # Determine best order for ordering by counting what ausgabe detail appears the most in the queryset
-        ordered_details = ['num', 'lnum', 'monat', '-sonderausgabe']           # default ordering
                         
-        qs = qs_filtered.annotate(
-                jahr = Max('ausgabe_jahr__jahr'), 
-                num = Min('ausgabe_num__num'), 
-                lnum = Min('ausgabe_lnum__lnum'), 
-                monat = Min('ausgabe_monat__monat_id'), 
-                )
-        
-        # See if we are looking at issues of a single magazine
-        # If so, use the ausgaben_merkmal property of that magazine
-        mag_id = qs_filtered.values_list('magazin_id', flat = True).distinct()
-        if mag_id.count()==1:
-            merkmal = magazin.objects.get(pk=mag_id.first()).ausgaben_merkmal
-            if merkmal:
-                if merkmal in ordered_details:
-                    ordered_details.remove(merkmal)
-                qs = qs.order_by('jahr', merkmal,*ordered_details)
-                return qs
-        if filtering_done:
-            # Only try to find a better ordering if we are not working on the entire ausgabe queryset 
-            # (that is: if filtering has been done)
-            temp = []
-            for ausg_detail, detail_name in [(ausgabe_num, 'num'), (ausgabe_lnum, 'lnum'), (ausgabe_monat, 'monat')]:
-                c = ausg_detail.objects.filter(ausgabe__in=qs_filtered).values('ausgabe_id').distinct().count()
-                temp.append((c, detail_name))
-            temp.sort(reverse=True)
-            ordered_details = [i[1] for i in temp] + ['sonderausgabe']
-            qs = qs.order_by('jahr', *ordered_details)
-            return qs
-
-        qs = qs.order_by('jahr', *ordered_details)
-        return qs
-        
+    actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
+    advanced_search_form = {
+        'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
+        'selects':['status'], 
+        'simple':['jahrgang', 'sonderausgabe']
+    }
+    crosslinks = [(artikel, 'ausgabe')]
+    
+    def get_changelist(self, request, **kwargs):
+        return AusgabenChangeList
+       
     # ACTIONS
     def add_duplicate(self, request, queryset):
         try:
@@ -436,7 +483,6 @@ class AusgabenAdmin(ModelBase):
             jg = queryset.first().jahrgang
         mag = magazin.objects.get(pk=mag_id)
         mag.ausgabe_set.bulk_add_jg(jg)
-            
         
     # Have the right magazin selected in change_form
     def get_changeform_initial_data(self, request):
@@ -480,6 +526,7 @@ class AutorAdmin(ModelBase):
     search_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     search_fields_redirect = {'vorname':'person__vorname', 'nachname':'person__nachname'}
 
+    crosslinks = [(artikel, 'autor'), (buch, 'autor')]
     
 @admin.register(artikel)
 class ArtikelAdmin(ModelBase):  
@@ -514,14 +561,18 @@ class ArtikelAdmin(ModelBase):
     flds_to_group = [('ausgabe','magazin', 1),('seite', 'seitenumfang'),]
     
     list_display = ['__str__', 'seite', 'schlagwort_string','ausgabe','artikel_magazin']
-    #search_fields = ['schlagzeile', 'ausgabe__ausgabe_jahr__jahr', 'seite', 'ausgabe__magazin__magazin_name']
     list_filter = [('ausgabe__magazin__magazin_name', DropdownFilter), ('ausgabe__ausgabe_jahr__jahr',DropdownFilter)]
-    list_display_links = ['__str__', 'seite', 'ausgabe']
+    list_display_links = ['__str__', 'seite']
     search_fields_redirect = {  'ausgabe' : ausgabe.strquery, 
                                 'autor' : autor.strquery, 
                                 'magazin' : 'ausgabe__magazin__magazin_name', 
                                 }
-    
+                                
+    advanced_search_form = {
+        'gtelt':['seite', ], 
+        'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre'], 
+        'simple':[], 
+    }  
 
     def get_queryset(self, request):
         from django.db.models import Min
@@ -531,8 +582,7 @@ class ArtikelAdmin(ModelBase):
                 nums = Min('ausgabe__ausgabe_num__num'), 
                 lnums = Min('ausgabe__ausgabe_lnum__lnum'), 
                 monate = Min('ausgabe__ausgabe_monat__monat_id'), 
-                magazine = Min('ausgabe__magazin'), 
-                ).order_by('jahre', 'nums', 'lnums', 'monate', 'magazine', 'seite')
+                ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite')
         return qs
         
     def get_changeform_initial_data(self, request):
@@ -575,6 +625,7 @@ class BandAdmin(ModelBase):
     list_display = ['band_name', 'genre_string','herkunft', 'musiker_string']
     list_filter = [('genre__genre', DropdownFilter), ('herkunft__land', RelatedOnlyDropdownFilter)]
 
+    crosslinks = [(artikel, 'band'), (veranstaltung, 'band')]
 @admin.register(bildmaterial)
 class BildmaterialAdmin(ModelBase):
     class BestandInLine(BestandModelBase):
@@ -605,6 +656,8 @@ class GenreAdmin(ModelBase):
     inlines = [AliasInLine]
     search_fields = ['genre', 'ober_id__genre', 'genre_alias__alias']
     list_display = ['genre', 'alias_string']
+    crosslinks = [(musiker, 'genre'), (band, 'genre'), (artikel, 'genre'), (veranstaltung, 'genre'), (magazin, 'genre')]
+    
 
 @admin.register(magazin)
 class MagazinAdmin(ModelBase):
@@ -644,6 +697,8 @@ class MusikerAdmin(ModelBase):
     list_display = ['kuenstler_name', 'genre_string', 'band_string']
     search_fields = ['kuenstler_name', 'genre__genre', 'band__band_name']
     
+    #advanced_search_form = {'selects':['band']}
+    crosslinks = [(artikel, 'musiker')]
     
 @admin.register(person)
 class PersonAdmin(ModelBase):
@@ -741,6 +796,6 @@ class ProvAdmin(ModelBase):
     #list_display= ['geber', 'typ']
     
 # Register your models here.
-admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, m2m_band_genre ])
+admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache,  ])
 
 #admin.site.register(monat)

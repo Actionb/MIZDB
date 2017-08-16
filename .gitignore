@@ -1,5 +1,17 @@
 # Do not delete this
 
-#*.sqlite3
+*.sqlite3
 
 *.pyc
+
+db/
+
+DBentry/stuff\.py
+
+ac-media\.txt
+
+print_request\.txt
+
+templates/admin/advanced_search_form_cols\.html
+
+DBentry/static/admin/css/advanced_search_form_cols\.css

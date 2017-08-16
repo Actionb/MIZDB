@@ -25,7 +25,7 @@ SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.178.56']
 
 
 # Application definition
@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 INSTALLED_APPS = [
     'dal', 
     'dal_select2',
+    'DBentry.apps.DbentryConfig', 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_admin_listfilter_dropdown',
-    'DBentry.apps.DbentryConfig', 
 ]
 
 MIDDLEWARE = [

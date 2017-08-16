@@ -69,6 +69,50 @@ class AusgabeQuerySet(MIZQuerySet):
             
             last_year = year
             
+    def filter(self, *args, **kwargs):
+        #TODO: redo this properly
+        if 'e_datum' in kwargs:
+            from django.core.exceptions import ValidationError
+            try:
+                return super(AusgabeQuerySet, self).filter(*args, **kwargs)
+            except ValidationError:
+                from datetime import datetime
+                v = kwargs.get('e_datum', None)
+                v = datetime.strptime(v, "%d.%m.%Y").date()
+                kwargs['e_datum'] = v
+        return super(AusgabeQuerySet, self).filter(*args, **kwargs)
+       
+    def resultbased_ordering(self):
+        if not self.query.where.children:
+            # Only try to find a better ordering if we are not working on the entire ausgabe queryset 
+            # (that is: if filtering has been done)
+            return self
+        from django.db.models import Min, Max
+        self = self.annotate(
+                jahr = Min('ausgabe_jahr__jahr'), 
+                num = Min('ausgabe_num__num'), 
+                lnum = Min('ausgabe_lnum__lnum'), 
+                monat = Min('ausgabe_monat__monat_id'), 
+                )
+        temp = []
+        from .models import magazin, ausgabe_num, ausgabe_lnum, ausgabe_monat
+        for ausg_detail, detail_name in [(ausgabe_num, 'num'), (ausgabe_lnum, 'lnum')]:
+            c = ausg_detail.objects.filter(ausgabe__in=self).values('ausgabe_id').distinct().count()
+            temp.append((c, detail_name))
+        temp.append(    (self.filter(e_datum__isnull=False).values('e_datum').count(), 'e_datum')   )
+        temp.sort(reverse=True)
+        ordering = [i[1] for i in temp]
+        
+        mag_ids = self.values_list('magazin_id', flat = True).distinct()
+        if mag_ids.count()==1:
+            merkmal = magazin.objects.get(pk=mag_ids.first()).ausgaben_merkmal
+            if merkmal:
+                if merkmal in ordering:
+                    ordering.remove(merkmal)
+                ordering.insert(0, merkmal)
+        ordering = ['jahr'] + ordering + ['monat', 'sonderausgabe']
+        return self.order_by(*ordering)
+        
     def print_qs(self):
         qs = self
         flds = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat']

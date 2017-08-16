@@ -28,8 +28,7 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             # Bestand
             bestand : {
                 'ausgabe' : autocomplete.ModelSelect2(url = 'acausgabe'), 
-                'buch' : autocomplete.ModelSelect2(url='acbuch'), 
-                #'geber' : autocomplete.ModelSelect2(url='acgeber'), 
+                'buch' : autocomplete.ModelSelect2(url='acbuch'),  
                 'lagerort' :  autocomplete.ModelSelect2(url='aclagerort'), 
                 'provenienz' : autocomplete.ModelSelect2(url='acprov'), 
             }, 
@@ -71,17 +70,12 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             'spielort' : autocomplete.ModelSelect2(url='acspielort'), 
             'sitz' : autocomplete.ModelSelect2(url='acort'),
             
-            # Person
-#            person : {
-#            }, 
-            
             # Prov/Lagerort
             'lagerort' : autocomplete.ModelSelect2(url='aclagerort'), 
             provenienz : {
                 'geber' : autocomplete.ModelSelect2(url='acgeber'), 
             }, 
             'provenienz' : autocomplete.ModelSelect2(url='acprov'), 
-            #'geber' : autocomplete.ModelSelect2(url='acgeber'), 
             
             # Schlagworte
             schlagwort : {
@@ -95,7 +89,8 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             
 }
 
-def makeForm(model = None):
+def makeForm(model, fields = []):
+    fields_param = fields or '__all__'
     import sys
     modelname = model._meta.model_name
     thismodule = sys.modules[__name__]
@@ -108,7 +103,7 @@ def makeForm(model = None):
     widget_list =  WIDGETS
     if model in WIDGETS:
         widget_list = WIDGETS[model]
-    return modelform_factory(model = model, fields = '__all__', widgets = widget_list) 
+    return modelform_factory(model = model, fields = fields_param, widgets = widget_list) 
     
 class ArtikelForm(forms.ModelForm):
         
@@ -131,3 +126,51 @@ class ArtikelForm(forms.ModelForm):
             kwargs['initial'] = initial
         super(ArtikelForm, self).__init__(*args, **kwargs)
         
+class AdvSFForm(forms.Form):
+    
+    def as_div(self):
+        "Returns this form rendered as HTML <div>s."
+        return self._html_output(
+            normal_row="""
+            <span>
+            <div>%(label)s</div>
+            <div>%(field)s%(help_text)s</div>
+            </span>
+            """, 
+            error_row='%s',
+            row_ender='</div>',
+            help_text_html=' <span class="helptext">%s</span>',
+            errors_on_separate_row=True)
+            
+class AdvSFAusgabe(AdvSFForm):
+    magazin = forms.ModelChoiceField(required = False, 
+                                    queryset = magazin.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
+                                    )
+                                    
+
+    
+class AdvSFArtikel(AdvSFForm):
+    ausgabe__magazin = forms.ModelChoiceField(required = False, 
+                                    label = "Magazin", 
+                                    queryset = magazin.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
+                                    )
+    ausgabe = forms.ModelChoiceField(required = False, 
+                                    queryset = ausgabe.objects.all(), 
+                                    widget = autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin'], 
+                                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})
+                                    )
+                                    
+    schlagwort = forms.ModelChoiceField(required = False, 
+                                    label = "Schlagwort", 
+                                    queryset = schlagwort.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acschlagwort_nocreate'), 
+                                    )
+                                    
+    genre = forms.ModelChoiceField(required = False, 
+                                    label = "Genre", 
+                                    queryset = genre.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acgenre_nocreate'), 
+                                    )
+                        
