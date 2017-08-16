@@ -24,6 +24,7 @@ class ModelBase(admin.ModelAdmin):
     search_fields_redirect = dict()
     flds_to_group = []
     crosslinks = []
+    gogglebtns = []
     
     def has_adv_sf(self):
         return getattr(self, 'advanced_search_form', False)
@@ -626,6 +627,7 @@ class BandAdmin(ModelBase):
     list_filter = [('genre__genre', DropdownFilter), ('herkunft__land', RelatedOnlyDropdownFilter)]
 
     crosslinks = [(artikel, 'band'), (veranstaltung, 'band')]
+    googlebtns = ['band_name']
 @admin.register(bildmaterial)
 class BildmaterialAdmin(ModelBase):
     class BestandInLine(BestandModelBase):
@@ -699,6 +701,7 @@ class MusikerAdmin(ModelBase):
     
     #advanced_search_form = {'selects':['band']}
     crosslinks = [(artikel, 'musiker')]
+    googlebtns = ['kuenstler_name']
     
 @admin.register(person)
 class PersonAdmin(ModelBase):
