@@ -273,7 +273,7 @@ class autor(ShowModel):
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
-    #primary_fields = ['person__vorname', 'person__nachname', 'kuerzel']
+    primary_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
     class Meta:
