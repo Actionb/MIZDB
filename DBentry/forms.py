@@ -174,3 +174,67 @@ class AdvSFArtikel(AdvSFForm):
                                     widget = autocomplete.ModelSelect2(url='acgenre_nocreate'), 
                                     )
                         
+
+class AdvSFBand(AdvSFForm):
+    
+    musiker = forms.ModelChoiceField(required = False, 
+                                    label = "Mitglied", 
+                                    queryset = musiker.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acmusiker'), 
+                                    )
+                                    
+    genre = forms.ModelChoiceField(required = False, 
+                                    label = "Genre", 
+                                    queryset = genre.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acgenre_nocreate'), 
+                                    )
+                                    
+    herkunft__land = forms.ModelChoiceField(required = False, 
+                                    label = "Herkunftsland", 
+                                    queryset = land.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acland_nocreate'), 
+                                    )
+                                    
+    herkunft = forms.ModelChoiceField(required = False, 
+                                    label = "Herkunftsort", 
+                                    queryset = ort.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acort', forward=['herkunft__land']), 
+                                    )
+                                    
+class AdvSFMusiker(AdvSFForm):
+        
+    person = forms.ModelChoiceField(required = False, 
+                                    label = "Person", 
+                                    queryset = person.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acperson'), 
+                                    )  
+    
+    genre = forms.ModelChoiceField(required = False, 
+                                    label = "Genre", 
+                                    queryset = genre.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acgenre_nocreate'), 
+                                    )   
+    
+    band = forms.ModelChoiceField(required = False, 
+                                    label = "Mitglied in Band", 
+                                    queryset = band.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acband_nocreate'), 
+                                    )   
+    
+    instrument = forms.ModelChoiceField(required = False, 
+                                    label = "Instrument", 
+                                    queryset = instrument.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acinstrument_nocreate'), 
+                                    )  
+                                    
+    person__herkunft__land = forms.ModelChoiceField(required = False, 
+                                    label = "Herkunftsland", 
+                                    queryset = land.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acland_nocreate'), 
+                                    )
+                                    
+    person__herkunft = forms.ModelChoiceField(required = False, 
+                                    label = "Herkunftsort", 
+                                    queryset = ort.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acort', forward=['person__herkunft__land']), 
+                                    )
