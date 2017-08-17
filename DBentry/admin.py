@@ -150,7 +150,7 @@ class ModelBase(admin.ModelAdmin):
     gogglebtns = []
     
     def has_adv_sf(self):
-        return getattr(self, 'advanced_search_form', False)
+        return len(getattr(self, 'advanced_search_form', []))>0
     
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
@@ -234,7 +234,7 @@ class ModelBase(admin.ModelAdmin):
         
     def lookup_allowed(self, key, value):
         if self.has_adv_sf():
-            for list in self.has_adv_sf().values():
+            for list in getattr(self, 'advanced_search_form').values():
                 if key in list:
                     return True
         if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
@@ -465,7 +465,7 @@ class AusgabenAdmin(ModelBase):
     actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
-        'selects':['status'], 
+        'selects':['magazin','status'], 
         'simple':['jahrgang', 'sonderausgabe']
     }
     crosslinks = [(artikel, 'ausgabe')]
@@ -698,10 +698,15 @@ class BandAdmin(ModelBase):
     exclude = ['genre', 'musiker']
     
     list_display = ['band_name', 'genre_string','herkunft', 'musiker_string']
-    list_filter = [('genre__genre', DropdownFilter), ('herkunft__land', RelatedOnlyDropdownFilter)]
+    #list_filter = [('genre__genre', DropdownFilter), ('herkunft__land', RelatedOnlyDropdownFilter)]
 
     crosslinks = [(artikel, 'band'), (veranstaltung, 'band')]
     googlebtns = ['band_name']
+    
+    advanced_search_form = {
+        'selects' : ['musiker', 'genre', 'herkunft__land', 'herkunft']
+    }
+    
 @admin.register(bildmaterial)
 class BildmaterialAdmin(ModelBase):
     class BestandInLine(BestandModelBase):
@@ -768,14 +773,20 @@ class MusikerAdmin(ModelBase):
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
     inlines = [AliasInLine, GenreInLine, BandInLine, InstrInLine]
+    readonly_fields = ['herkunft_string']
+    fields = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
     exclude = ('ist_mitglied', 'instrument', 'genre')
     
-    list_display = ['kuenstler_name', 'genre_string', 'band_string']
+    list_display = ['kuenstler_name', 'genre_string', 'band_string', 'herkunft_string']
     search_fields = ['kuenstler_name', 'genre__genre', 'band__band_name']
     
-    #advanced_search_form = {'selects':['band']}
     crosslinks = [(artikel, 'musiker')]
     googlebtns = ['kuenstler_name']
+    
+    advanced_search_form = {
+        'selects' : ['person', 'genre', 'band', 
+                'instrument','person__herkunft__land', 'person__herkunft']
+    }
     
 @admin.register(person)
 class PersonAdmin(ModelBase):

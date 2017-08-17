@@ -209,13 +209,19 @@ class musiker(ShowModel):
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name', 'person']
         
-    def genre_string(self):
-        return concat_limit(self.genre.all())
-    genre_string.short_description = 'Genres'
-        
     def band_string(self):
         return concat_limit(self.band_set.all())
     band_string.short_description = 'Bands'
+    
+    def genre_string(self):
+        return concat_limit(self.genre.all())
+    genre_string.short_description = 'Genres'
+    
+    def herkunft_string(self):
+        if self.person:
+            return str(self.person.herkunft)
+    herkunft_string.short_description = 'Herkunft'
+        
 class musiker_alias(alias_base):
     parent = models.ForeignKey('musiker')
     
