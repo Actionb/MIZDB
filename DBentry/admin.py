@@ -68,8 +68,13 @@ class MIZChangeList(ChangeList):
             for key, value in lookup_params.items():
                 if key in self.model_admin.search_fields_redirect:
                     qobject = models.Q()
-                    for redirect in self.model_admin.search_fields_redirect.get(key, []):
-                    #TODO: if callable etc
+                    if key in self.model_admin.search_fields_redirect:
+                        redirects = self.model_admin.search_fields_redirect.get(key, [])
+                        if not isinstance(redirects, (list, tuple)):
+                            redirects = [redirects]
+                    for redirect in redirects:
+                        if callable(redirect):
+                            continue
                         qobject |= models.Q( (redirect, prepare_lookup_value(redirect, value)) )
                         use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, redirect)
                     remaining_lookup_params[key] = qobject
@@ -262,7 +267,9 @@ class ModelBase(admin.ModelAdmin):
             
     def get_search_results(self, request, queryset, search_term):
         # Overriden to allow search by keywords (seite=75,magazin=Good Times)
-        
+        #TODO: unfuck this mess
+        qs, use_distinct = super(ModelBase, self).get_search_results(request, queryset, search_term)
+        return qs, use_distinct 
         def search_term_to_list(self, x, SEP=SEARCH_SEG_SEP):
             # constants: SEARCH_SEG_SEP = ',' ; SEARCH_TERM_SEP = '='
             
@@ -283,23 +290,33 @@ class ModelBase(admin.ModelAdmin):
                     field_lookup = '__gt'
                 elif search_field.startswith('<'):
                     field_lookup = '__lt'
-                else:
+                elif search_field.startswith('@'):
                     field_lookup = '__icontains'
+                else:
+                    field_lookup = ''
                     
-                if field_lookup != '__icontains':
+                if field_lookup:
                     search_field = search_field[1:]
                     
                 # Resolve the search_field into a query-able term, found in either self.search_fields or self.search_fields_redirect
-                resolved_search_field = self.resolve_search_field(search_field)
-                if resolved_search_field:
-                    if callable(resolved_search_field):
-                        # the search_field points to a callable function, we will need to remember the original search_field for
-                        # queryset prefixing. We do not need the field_lookup value, since, currently, the callable may apply a specific
-                        # field_lookup of its own.
-                        i[1] = search_field + '@' + i[1]
-                        rslt.append((resolved_search_field, i[1]))
-                    else:
-                        rslt.append((resolved_search_field+field_lookup, i[1]))
+                resolved_search_fields = self.resolve_search_field(search_field)
+                if resolved_search_fields:
+                    qobject = models.Q()
+                    if not isinstance(resolved_search_fields, list):
+                        resolved_search_fields = [resolved_search_fields]
+                    for resolved_search_field in resolved_search_fields:
+                        if callable(resolved_search_field):
+                            # the search_field points to a callable function, we will need to remember the original search_field for
+                            # queryset prefixing. We do not need the field_lookup value, since, currently, the callable may apply a specific
+                            # field_lookup of its own.
+                            i[1] = search_field + '@' + i[1]
+                            rslt.append((resolved_search_field, i[1]))
+                            #continue
+                        else:
+                            # make q object of all fields but the callables
+                            qobject |= models.Q((resolved_search_field+field_lookup, i[1]))
+                            #rslt.append((resolved_search_field+field_lookup, i[1]))
+                    rslt.append(qobject)
             return rslt
         
         if not self.search_fields:
@@ -308,24 +325,30 @@ class ModelBase(admin.ModelAdmin):
         if search_term.find("=")!=-1:
             search_list = search_term_to_list(self, search_term)
             if search_list:
-                for k, v in search_list:
-                    if callable(k):
-                        # key is a callable like strquery that would return a list of q items to filter with
-                        # search_term_to_dict has changed the value into a string of format 'prefix@value'
-                        prefix, value = (v.split('@'))
-                        v = k(search_term=value, prefix=prefix+"__")
-                        if v:
-                            for q in v:
-                                try:
-                                    queryset = queryset.filter(*q)
-                                except ValueError:
-                                    continue
+                for item in search_list:
+                    # item is either a tuple consisting of ('field','value') or a q-object
+                    if isinstance(item, tuple):
+                        k, v = item
+                        if callable(k):
+                            # key is a callable like strquery that would return a list of q items to filter with
+                            # search_term_to_dict has changed the value into a string of format 'prefix@value'
+                            prefix, value = (v.split('@'))
+                            v = k(search_term=value, prefix=prefix+"__")
+                            if v:
+                                for q in v:
+                                    try:
+                                        queryset = queryset.filter(*q)
+                                    except ValueError:
+                                        continue
+                        else:
+                            qitem = models.Q( **{k:v} )
+                            try:
+                                queryset = queryset.filter(qitem)
+                            except ValueError:
+                                continue
                     else:
-                        qitem = models.Q( **{k:v} )
-                        try:
-                            queryset = queryset.filter(qitem)
-                        except ValueError:
-                            continue
+                        # It's a q-object!
+                        queryset = queryset.filter(item)
                 qs = queryset
         if not qs.exists():
             # Query returned no results.
@@ -637,8 +660,7 @@ class ArtikelAdmin(ModelBase):
     list_display = ['__str__', 'seite', 'schlagwort_string','ausgabe','artikel_magazin']
     list_filter = [('ausgabe__magazin__magazin_name', DropdownFilter), ('ausgabe__ausgabe_jahr__jahr',DropdownFilter)]
     list_display_links = ['__str__', 'seite']
-    search_fields_redirect = {  'ausgabe' : ausgabe.strquery, 
-                                'autor' : autor.strquery, 
+    search_fields_redirect = { 
                                 'magazin' : 'ausgabe__magazin__magazin_name',
                                 'genre' : ['genre', 'musiker__genre', 'band__genre']
                                 }
