@@ -13,34 +13,36 @@ def advanced_search_form(cl):
     params = cl.params
     full_count = cl.model_admin.model._meta.default_manager.count()
     
-    asf_dict = getattr(model_admin, 'advanced_search_form', None)
+    asf_dict = getattr(model_admin, 'advanced_search_form', {})
+
     # See if we can add a form with autocomplete functionality:
-    #TODO: use something more generic
-    import DBentry.forms
-    form_name = 'AdvSF' + model._meta.model_name.capitalize()
-    form = getattr(DBentry.forms, form_name, None)
+    from DBentry.advsfforms import advSF_factory
+    form = advSF_factory(model_admin)
+    
     form_initial = {}
     form_fields = form.base_fields if form else {}
     if form:
         form = form(initial=params)
+        # Get the right order down ... the factory constructor jumbled it up
+        form.order_fields(asf_dict.get('selects',None))
     asf = dict(selects=[], gtelt=[], simple=[], ac_form=form)
     if asf_dict:
         for item in asf_dict.get('selects', []):
-            if not item in form_fields:
+            if item in form_fields:
                 # Ignore items that are already being handled by the form
-                field = get_fields_from_path(model, item)[0]
-                field_choices = field.get_choices() 
-                choices = []
-                for pk, name in field_choices:
-                    choices.append(dict(pk=pk, display=name, selected=params.get(field.attname, 0)==str(pk)))
-                    
-                asf['selects'].append( dict(
-                        label               = get_fields_from_path(model, item)[-1].verbose_name, 
-                        query_string        = field.attname, 
-                        choices             = choices, 
-                    )
+                continue
+            field = get_fields_from_path(model, item)[0]
+            field_choices = field.get_choices() 
+            choices = []
+            for pk, name in field_choices:
+                choices.append(dict(pk=pk, display=name, selected=params.get(field.attname, 0)==str(pk)))
+            asf['selects'].append( dict(
+                    label               = get_fields_from_path(model, item)[-1].verbose_name, 
+                    query_string        = field.attname, 
+                    choices             = choices, 
                 )
-                
+            )
+            
         for item in asf_dict.get('gtelt', []):
             asf['gtelt'].append( dict(
                     label               = get_fields_from_path(model, item)[-1].verbose_name, 
