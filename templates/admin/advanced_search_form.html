@@ -5,6 +5,7 @@
     <form id="adv-changelist-search" method="get">
         <div>
         <!-- ADVANCED SEARCH FORM -->
+            {% if cl.model_admin.has_adv_sf %}
             <span>
             <a class="hide-adv-sf" style="float: right;">(Zeigen/Ausblenden)</a>
             <h2 class="hide-adv-sf">Suchoptionen</h2>
@@ -63,7 +64,7 @@
             {% endfor %}
             </fieldset>
             </div>
-            
+            {% endif %}
             <fieldset id="search-input">
                 <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
                 <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
