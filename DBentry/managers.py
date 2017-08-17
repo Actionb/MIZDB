@@ -24,6 +24,9 @@ class MIZQuerySet(models.QuerySet):
             #yield object_values
             rslt.append(object_values)
         return rslt
+        
+    def resultbased_ordering(self):
+        return self
     
     def create_val_dict(self, key, value, tuplfy=True):
         qs = self
