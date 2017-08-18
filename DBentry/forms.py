@@ -121,9 +121,26 @@ class ArtikelForm(forms.ModelForm):
         }
         
     def __init__(self, *args, **kwargs):
-        if 'instance' in kwargs and hasattr(kwargs['instance'], 'artikel_magazin'):
-            initial = {'magazin' : kwargs['instance'].artikel_magazin()}
-            kwargs['initial'] = initial
+        initial = dict()
+        if not 'initial' in kwargs:
+            kwargs['initial'] = dict()
+        if 'instance' in kwargs:
+            # Form is bound to a specific instance
+            if  hasattr(kwargs['instance'], 'artikel_magazin'):
+                # Set the right magazine for the instance's change_form
+                initial = {'magazin' : kwargs['instance'].artikel_magazin()}
+        else:
+            # Add-Form
+            if '_changelist_filters' in kwargs['initial']:
+                d = kwargs['initial']['_changelist_filters']
+                # initial contains the _changelist_filters dict created by the search form/search term
+                initial['ausgabe'] = d.get('ausgabe', None)
+                if initial['ausgabe']:
+                    initial['magazin'] = ausgabe.objects.get(pk=initial['ausgabe']).magazin
+                else:
+                    initial['magazin'] = d.get('ausgabe__magazin', None)
+                initial['seite'] = d.get('seite', None)
+        kwargs['initial'].update(initial)
         super(ArtikelForm, self).__init__(*args, **kwargs)
         
 class AdvSFForm(forms.Form):
