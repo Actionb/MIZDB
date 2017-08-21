@@ -3,12 +3,15 @@ from django.db import models
 
 class m2mBase(models.Model):
                 
+    exclude = []
     def _show(self):
-        if len(self._meta.fields)<3:
-            return str(self.pk)
-        fld1 = self._meta.fields[1]
-        fld2 = self._meta.fields[2]
-        return "{} ({})".format(str(getattr(self, fld1.name)), str(getattr(self, fld2.name)))
+        try:
+            data = []
+            for ff in self.get_foreignfields(True):
+                data.append(str(getattr(self, ff)))
+            return "{} ({})".format(*data)
+        except:
+            return str(self.pk) if self.pk else "NOT YET SAVED"
     
     def __str__(self):
         return self._show()
@@ -185,7 +188,7 @@ class m2m_band_musiker(m2mBase):
         db_table = 'DBentry_band_musiker'
         verbose_name = 'Band-Mitglied'
         verbose_name_plural = 'Band-Mitglieder'
-    
+        
                                                 # BANDS
                                                 
 class m2m_artikel_band(m2mBase):
