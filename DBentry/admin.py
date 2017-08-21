@@ -679,10 +679,11 @@ class ArtikelAdmin(ModelBase):
                 nums = Min('ausgabe__ausgabe_num__num'), 
                 lnums = Min('ausgabe__ausgabe_lnum__lnum'), 
                 monate = Min('ausgabe__ausgabe_monat__monat_id'), 
-                ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite')
+                ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
         
     def get_changeform_initial_data(self, request):
+        #TODO: brauchen wir das noch?
         initial = super(ArtikelAdmin, self).get_changeform_initial_data(request)
         if '_changelist_filters' not in initial.keys():
             return initial
