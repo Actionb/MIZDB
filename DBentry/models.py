@@ -218,8 +218,10 @@ class musiker(ShowModel):
     genre_string.short_description = 'Genres'
     
     def herkunft_string(self):
-        if self.person:
+        if self.person and self.person.herkunft:
             return str(self.person.herkunft)
+        else:
+            return '---'
     herkunft_string.short_description = 'Herkunft'
         
 class musiker_alias(alias_base):
