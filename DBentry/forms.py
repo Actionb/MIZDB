@@ -89,6 +89,21 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             
 }
 
+class FormBase(forms.ModelForm):
+    
+    def validate_unique(self):
+        """
+        Calls the instance's validate_unique() method and updates the form's
+        validation errors if any were raised.
+        """
+        exclude = self._get_validation_exclusions()
+        try:
+            self.instance.validate_unique(exclude=exclude)
+        except ValidationError as e:
+            # Ignore non-unique entries in the same set
+            self.cleaned_data['DELETE']=True
+            self._update_errors(e)
+
 def makeForm(model, fields = []):
     fields_param = fields or '__all__'
     import sys
@@ -103,8 +118,10 @@ def makeForm(model, fields = []):
     widget_list =  WIDGETS
     if model in WIDGETS:
         widget_list = WIDGETS[model]
-    return modelform_factory(model = model, fields = fields_param, widgets = widget_list) 
+    return modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
     
+
+
 class ArtikelForm(forms.ModelForm):
         
     magazin = forms.ModelChoiceField(required = False, 
