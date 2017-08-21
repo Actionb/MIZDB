@@ -15,7 +15,7 @@ autocomplete_patterns = [
     url(r'^lagerort/$',     ACBase.as_view(model = lagerort),                                   name = 'aclagerort'),  
     url(r'^land/$',         ACBase.as_view(model = land, create_field = 'land_name'),           name = 'acland'),
     url(r'^magazin/$',      ACBase.as_view(model = magazin,  create_field = 'magazin_name'),    name = 'acmagazin'),
-    url(r'^musiker/$',      ACBase.as_view(model = musiker),                                    name = 'acmusiker'),
+    url(r'^musiker/$',      ACBase.as_view(model = musiker, create_field = 'kuenstler_name'),   name = 'acmusiker'),
     url(r'^ort/$',          ACBase.as_view(model = ort),                                        name = 'acort'), 
     url(r'^person/$',       ACBase.as_view(model = person),                                     name = 'acperson'), 
     url(r'^prov/$',         ACProv.as_view(model = provenienz),                                 name = 'acprov'),  
@@ -33,8 +33,9 @@ autocomplete_patterns_nocreate = [
     url(r'^band_nocreate/$',            ACBase.as_view(model = band),                           name = 'acband_nocreate'),
     url(r'^genre_nocreate/$',           ACBase.as_view(model = genre),                          name = 'acgenre_nocreate'), 
     url(r'^instrument_nocreate/$',      ACBase.as_view(model = instrument),                     name = 'acinstrument_nocreate'),
-    url(r'^land_nocreate/$',            ACBase.as_view(model = land),                           name = 'acland_nocreate'),
     url(r'^magazin_nocreate/$',         ACBase.as_view(model = magazin),                        name = 'acmagazin_nocreate'),
+    url(r'^musiker_nocreate/$',         ACBase.as_view(model = musiker),                        name = 'acmusiker_nocreate'),
+    url(r'^land_nocreate/$',            ACBase.as_view(model = land),                           name = 'acland_nocreate'),
     url(r'^schlagwort_nocreate/$',      ACBase.as_view(model = schlagwort),                     name = 'acschlagwort_nocreate'),
 ]
 
