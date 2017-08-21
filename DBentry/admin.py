@@ -667,7 +667,7 @@ class ArtikelAdmin(ModelBase):
                                 
     advanced_search_form = {
         'gtelt':['seite', ], 
-        'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre'], 
+        'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
         'simple':[], 
     }  
 
