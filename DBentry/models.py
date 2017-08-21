@@ -949,7 +949,12 @@ class artikel(ShowModel):
             return str(self.zusammenfassung)
         else:
             return 'Keine Schlagzeile gegeben!'
-            
+    
+    def zusammenfassung_string(self):
+        if not self.zusammenfassung:
+            return ''
+        return concat_limit(self.zusammenfassung.split(), sep=" ")
+    
     def artikel_magazin(self):
         return self.ausgabe.magazin
     artikel_magazin.short_description = 'Magazin'
@@ -957,6 +962,10 @@ class artikel(ShowModel):
     def schlagwort_string(self):
         return concat_limit(self.schlagwort.all())
     schlagwort_string.short_description = 'Schlagwörter'
+    
+    def kuenstler_string(self):
+        return concat_limit(list(self.band.all()) + list(self.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
         
 
 class buch(ShowModel):

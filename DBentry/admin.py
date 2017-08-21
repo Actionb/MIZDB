@@ -657,7 +657,7 @@ class ArtikelAdmin(ModelBase):
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
     flds_to_group = [('ausgabe','magazin', 1),('seite', 'seitenumfang'),]
     
-    list_display = ['__str__', 'seite', 'schlagwort_string','ausgabe','artikel_magazin']
+    list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string','ausgabe','artikel_magazin', 'kuenstler_string']
     list_filter = [('ausgabe__magazin__magazin_name', DropdownFilter), ('ausgabe__ausgabe_jahr__jahr',DropdownFilter)]
     list_display_links = ['__str__', 'seite']
     search_fields_redirect = { 
