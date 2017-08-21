@@ -56,7 +56,7 @@ FORMFIELDS = {
                                     ), 
                                     
     'musiker' : forms.ModelChoiceField(required = False, 
-                                    label = "Mitglied", 
+                                    label = "Musiker", 
                                     queryset = musiker.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acmusiker_nocreate'), 
                                     ), 
