@@ -841,7 +841,7 @@ class verlag(ShowModel):
     sitz = models.ForeignKey('ort',  null = True,  blank = True, on_delete = models.SET_NULL)
     class Meta:
         verbose_name = 'Verlag'
-        verbose_name_plural = 'Verläge'
+        verbose_name_plural = 'Verlage'
         ordering = ['verlag_name', 'sitz']
 
 
@@ -937,11 +937,14 @@ class artikel(ShowModel):
     
     #exclude = [seite, seitenumfang, zusammenfassung, info]
     primary_fields = ['schlagzeile']
-    #search_fields = ['schlagzeile']
+    
+    search_fields = {'schlagzeile', 'zusammenfassung', 'seite', 'seitenumfang', 'info'}
+
     
     class Meta:
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
+        ordering = ['seite','ausgabe','pk']
     def __str__(self):
         if self.schlagzeile:
             return str(self.schlagzeile)
