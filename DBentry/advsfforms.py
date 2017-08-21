@@ -13,8 +13,14 @@ FORMFIELDS = {
                                                 attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})
                                     ), 
                                     
+    'autor' : forms.ModelChoiceField(required = False, 
+                                    label = "Autor", 
+                                    queryset = autor.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acautor'), 
+                                    ), 
+                                    
     'band' : forms.ModelChoiceField(required = False, 
-                                    label = "Mitglied in Band", 
+                                    label = "Band", 
                                     queryset = band.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acband_nocreate'), 
                                     ), 
@@ -52,7 +58,7 @@ FORMFIELDS = {
     'musiker' : forms.ModelChoiceField(required = False, 
                                     label = "Mitglied", 
                                     queryset = musiker.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acmusiker'), 
+                                    widget = autocomplete.ModelSelect2(url='acmusiker_nocreate'), 
                                     ), 
                                     
     'person' : forms.ModelChoiceField(required = False, 
