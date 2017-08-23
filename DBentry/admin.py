@@ -87,6 +87,7 @@ class ModelBase(admin.ModelAdmin):
         # Build relations
         for relation_name in getattr(self, 'crosslinks', []):
             path = get_fields_from_path(self.model, relation_name)
+            #NOTE: path[0] or path[-1]?
             model = path[0].related_model
             fld_name = path[0].remote_field.name
             if model in inlmdls:
@@ -518,8 +519,6 @@ class ArtikelAdmin(ModelBase):
     class BandInLine(TabModelBase):
         model = artikel.band.through
         verbose_model = band
-        fields = ['band', band.genre_string]
-        readonly_fields = [band.genre_string]
     class OrtInLine(TabModelBase):
         model = artikel.ort.through
         verbose_model = ort
@@ -589,7 +588,7 @@ class BandAdmin(ModelBase):
         model = band.genre.through
     class MusikerInLine(TabModelBase):
         model = band.musiker.through
-        verbose_model = musiker
+        #verbose_model = musiker
     class AliasInLine(AliasTabBase):
         model = band_alias
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
@@ -601,7 +600,8 @@ class BandAdmin(ModelBase):
     googlebtns = ['band_name']
     
     advanced_search_form = {
-        'selects' : ['musiker', 'genre', 'herkunft__land', 'herkunft']
+        'selects' : ['musiker', 'genre', 'herkunft__land', 'herkunft'], 
+        'labels' : {'musiker':'Mitglied','herkunft__land':'Herkunftsland', 'herkunft':'Herkunftsort'}
     }
     
 @admin.register(bildmaterial)
@@ -649,6 +649,11 @@ class MagazinAdmin(ModelBase):
     list_filter = [('ort__land', RelatedOnlyDropdownFilter), ]
     crosslinks = ['ausgabe']
     
+    advanced_search_form = {
+        'selects' : ['ort__land'], 
+        'labels' : {'ort__land':'Herausgabeland'}
+    }
+    
 
 @admin.register(memorabilien)
 class MemoAdmin(ModelBase):
@@ -683,7 +688,8 @@ class MusikerAdmin(ModelBase):
     
     advanced_search_form = {
         'selects' : ['person', 'genre', 'band', 
-                'instrument','person__herkunft__land', 'person__herkunft']
+                'instrument','person__herkunft__land', 'person__herkunft'], 
+        'labels' : {'person__herkunft__land':'Herkunftsland'}
     }
     
 @admin.register(person)
@@ -698,8 +704,7 @@ class PersonAdmin(ModelBase):
     
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
-    readonly_fields = ['autoren_string', 'musiker_string']
-    fields = ['vorname', 'nachname', 'herkunft', 'beschreibung','autoren_string', 'musiker_string']
+    fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
     crosslinks = ['artikel', 'autor', 'musiker']
     
 @admin.register(schlagwort)
@@ -737,12 +742,14 @@ class VeranstaltungAdmin(ModelBase):
     
 @admin.register(verlag)
 class VerlagAdmin(ModelBase):
-    def magazine(self, obj):
-        return ", ".join([i.magazin_name for i in obj.magazin_set.all()])
-        
-    readonly_fields = ['magazine']
+    list_display = ['verlag_name', 'sitz']
     search_fields = ['verlag_name', 'sitz__land__land_name', 'sitz__stadt']
+    advanced_search_form = {
+        'selects' : ['sitz'], 
+        'labels' : {'sitz':'Sitz'}
+    }
     crosslinks = ['magazin']
+    
         
 @admin.register(video)
 class VideoAdmin(ModelBase):
@@ -761,6 +768,7 @@ class BlandAdmin(ModelBase):
 @admin.register(land)
 class LandAdmin(ModelBase):
     search_fields = ['id', 'land_name', 'code']
+    crosslinks = ['ort']
     
 @admin.register(kreis)
 class KreisAdmin(ModelBase):
@@ -774,7 +782,12 @@ class OrtAdmin(ModelBase):
     list_display = ['stadt', 'bland', 'land']
     list_filter = [('land', RelatedDropdownFilter), ('bland', RelatedDropdownFilter)]
     list_display_links = list_display
-
+    
+    advanced_search_form = {
+        'selects' : ['land', 'bland']
+    }
+    crosslinks = ['person', 'band', 'magazin', 'verlag', 'artikel', 'spielort', 'veranstaltung']
+    
 @admin.register(bestand)
 class BestandAdmin(ModelBase):
     pass
