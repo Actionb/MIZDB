@@ -200,42 +200,38 @@ class ModelBase(admin.ModelAdmin):
         return list(self.model.get_search_fields())
         
     def add_crosslinks(self, object_id):
-        return {}
-        # THE GENERIC WAY
-        # WIP
         from django.contrib.admin.utils import reverse
         from django.db.models.fields.reverse_related import ManyToOneRel
         from django.db.models.fields.related import ManyToManyField
+        from django.contrib.admin.utils import get_fields_from_path
         new_extra = {}
         new_extra['crosslinks'] = []
-        #rels = {i.related_model for i in self.model.get_m2mfields() if not isinstance(i, ManyToManyField)}
-        inlmdls = {i.model for i in self.inlines}
-#        rel_objs = {rel.related_model for rel in self.model.get_m2mfields() if isinstance(rel, ManyToOneRel)}
-#        rel_objs = rel_objs - inlmdls
-#        #print(rels - inlmdls)
         
-        for rel in self.model.get_m2mfields():
-            if isinstance(rel, ManyToOneRel) and rel.related_model not in [i.model for i in self.inlines]:
-                    # We're only interested in reverse relations
-                    # forward relations are returned of type django.db.models.fields.related.ManyToManyField and
-                    # those are already being handled by the inlines
-                model = rel.related_model
-                fld_name = rel.remote_field.name
-                try:
-                    link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
-                                    + "?" + fld_name + "=" + object_id
-                except:
-                    continue
-                count = model._default_manager.filter(**{fld_name:object_id}).count()
-                
-                label = model._meta.verbose_name_plural + "({})".format(count)
-                new_extra['crosslinks'].append( dict(link=link, label=label) )
+        inlmdls = {i.model for i in self.inlines}
+        # Build relations
+        for relation_name in getattr(self, 'crosslinks', []):
+            path = get_fields_from_path(self.model, relation_name)
+            model = path[0].related_model
+            fld_name = path[0].remote_field.name
+            if model in inlmdls:
+                continue
+            try:
+                link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
+                                + "?" + fld_name + "=" + object_id
+            except Exception as e:
+                print(e)
+                continue
+            count = model._default_manager.filter(**{fld_name:object_id}).count()
+            
+            label = model._meta.verbose_name_plural + "({})".format(count)
+            new_extra['crosslinks'].append( dict(link=link, label=label) )
+        
         return new_extra
     
     def change_view(self, request, object_id, form_url='', extra_context=None):
         new_extra = extra_context or {}
         new_extra.update(self.add_crosslinks(object_id))
-        return super(ModelBase, self).change_view(request, object_id, form_url, extra_context   )
+        return super(ModelBase, self).change_view(request, object_id, form_url, new_extra   )
         
     def lookup_allowed(self, key, value):
         if self.has_adv_sf():
@@ -491,7 +487,7 @@ class AusgabenAdmin(ModelBase):
         'selects':['magazin','status'], 
         'simple':['jahrgang', 'sonderausgabe']
     }
-    crosslinks = [(artikel, 'ausgabe')]
+    crosslinks = ['artikel']
        
     # ACTIONS
     def add_duplicate(self, request, queryset):
@@ -623,7 +619,7 @@ class AutorAdmin(ModelBase):
     search_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     search_fields_redirect = {'vorname':'person__vorname', 'nachname':'person__nachname'}
 
-    crosslinks = [(artikel, 'autor'), (buch, 'autor')]
+    crosslinks = ['artikel', 'buch']
     
 @admin.register(artikel)
 class ArtikelAdmin(ModelBase):  
@@ -721,9 +717,8 @@ class BandAdmin(ModelBase):
     exclude = ['genre', 'musiker']
     
     list_display = ['band_name', 'genre_string','herkunft', 'musiker_string']
-    #list_filter = [('genre__genre', DropdownFilter), ('herkunft__land', RelatedOnlyDropdownFilter)]
 
-    crosslinks = [(artikel, 'band'), (veranstaltung, 'band')]
+    crosslinks = ['artikel', 'veranstaltung']
     googlebtns = ['band_name']
     
     advanced_search_form = {
@@ -760,7 +755,7 @@ class GenreAdmin(ModelBase):
     inlines = [AliasInLine]
     search_fields = ['genre', 'ober_id__genre', 'genre_alias__alias']
     list_display = ['genre', 'alias_string']
-    crosslinks = [(musiker, 'genre'), (band, 'genre'), (artikel, 'genre'), (veranstaltung, 'genre'), (magazin, 'genre')]
+    crosslinks = ['artikel', 'band', 'magazin', 'musiker', 'veranstaltung']
     
 
 @admin.register(magazin)
@@ -773,6 +768,7 @@ class MagazinAdmin(ModelBase):
     
     list_display = ('__str__','beschreibung','anz_ausgaben', 'ort')
     list_filter = [('ort__land', RelatedOnlyDropdownFilter), ]
+    crosslinks = ['ausgabe']
     
 
 @admin.register(memorabilien)
@@ -803,7 +799,7 @@ class MusikerAdmin(ModelBase):
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'herkunft_string']
     search_fields = ['kuenstler_name', 'genre__genre', 'band__band_name']
     
-    crosslinks = [(artikel, 'musiker')]
+    crosslinks = ['artikel']
     googlebtns = ['kuenstler_name']
     
     advanced_search_form = {
@@ -825,6 +821,7 @@ class PersonAdmin(ModelBase):
     list_display_links =['vorname','nachname']
     readonly_fields = ['autoren_string', 'musiker_string']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung','autoren_string', 'musiker_string']
+    crosslinks = ['artikel', 'autor', 'musiker']
     
 @admin.register(schlagwort)
 class SchlagwortTab(ModelBase):
@@ -833,6 +830,7 @@ class SchlagwortTab(ModelBase):
         extra = 1
     inlines = [AliasInLine]
     search_fields = ['schlagwort', 'ober_id__schlagwort', 'schlagwort_alias__alias']
+    crosslinks = ['artikel']
     
 @admin.register(spielort)
 class SpielortAdmin(ModelBase):
@@ -865,6 +863,7 @@ class VerlagAdmin(ModelBase):
         
     readonly_fields = ['magazine']
     search_fields = ['verlag_name', 'sitz__land__land_name', 'sitz__stadt']
+    crosslinks = ['magazin']
         
 @admin.register(video)
 class VideoAdmin(ModelBase):

@@ -1,0 +1,8 @@
+{% if change and crosslinks %}
+<div class="module">
+<h2>Verwandte Objekte</h2>
+{% for crosslink in crosslinks %}
+<a href="{{crosslink.link}}" style="padding:10px;vertical-align:-5px;" target="_blank">{{crosslink.label}}</a>
+{% endfor %}
+</div>
+{% endif %}
