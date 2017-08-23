@@ -127,12 +127,14 @@ class ArtikelForm(forms.ModelForm):
     magazin = forms.ModelChoiceField(required = False, 
                                     queryset = magazin.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acmagazin'))
+                                    
     class Meta:
         model = artikel
         fields = '__all__'
         widgets = {
                 'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
                     attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}), 
+                'schlagzeile'       : Textarea(attrs={'rows':2, 'cols':90}), 
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }

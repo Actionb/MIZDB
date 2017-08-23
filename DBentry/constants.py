@@ -26,7 +26,7 @@ YF_ARGS = {
 }
 
 # attrs specifications for TextArea Formfield
-ATTRS_TEXTAREA = {'rows': 3,'cols': 40}
+ATTRS_TEXTAREA = {'rows': 3,'cols': 90}
 
 
 # Admin-Site search_term constants 
