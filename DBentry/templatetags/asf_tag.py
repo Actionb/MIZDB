@@ -14,10 +14,10 @@ def advanced_search_form(cl):
     full_count = cl.model_admin.model._meta.default_manager.count()
     
     asf_dict = getattr(model_admin, 'advanced_search_form', {})
-
+    
     # See if we can add a form with autocomplete functionality:
     from DBentry.advsfforms import advSF_factory
-    form = advSF_factory(model_admin)
+    form = advSF_factory(model_admin, labels=asf_dict.get('labels', {}))
     
     form_initial = {}
     form_fields = form.base_fields if form else {}
@@ -32,6 +32,8 @@ def advanced_search_form(cl):
                 # Ignore items that are already being handled by the form
                 continue
             field = get_fields_from_path(model, item)[0]
+            #TODO: use field.get_choices(limit_choices_to={'pk__in':some_set}) to limit choices (duh)
+            #Maybe do this in autocomplete views?
             field_choices = field.get_choices() 
             choices = []
             for pk, name in field_choices:

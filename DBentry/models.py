@@ -26,7 +26,10 @@ class ShowModel(models.Model):
         for fld in self.get_basefields():
             if getattr(self, fld.name):
                 rslt +=  "{} ".format(str(getattr(self, fld.name)))
-        return rslt.strip()
+        if rslt:
+            return rslt.strip()
+        else:
+            return "---"
             
     def __str__(self):
         return self._show()

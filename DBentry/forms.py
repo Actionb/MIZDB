@@ -91,6 +91,8 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
 
 class FormBase(forms.ModelForm):
     
+    #TODO: __init__ set initial values from _changelist_filters
+    
     def validate_unique(self):
         """
         Calls the instance's validate_unique() method and updates the form's
