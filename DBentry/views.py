@@ -5,17 +5,16 @@ from django.db.models.fields import AutoField, related
 from django.db.models import Q
 from django.views.decorators.http import require_http_methods
 from django.utils.translation import ugettext as _
+from django.contrib.admin.utils import get_fields_from_path
 
 from .models import *
 
 from dal import autocomplete
 # Create your views here
 
-
 # AUTOCOMPLETE VIEWS
-# TODO: rework this, it's a bit derpy and quite old
 class ACBase(autocomplete.Select2QuerySetView):
-    flds = None
+    _flds = None
     
     def has_create_field(self):
         if self.create_field:
@@ -40,28 +39,28 @@ class ACBase(autocomplete.Select2QuerySetView):
             }]
         return create_option
         
-    def get_primary_fields(self):
-        return self.flds or self.model.get_primary_fields()
-#        #NOTE: check if get_basefields() etc could be used
-#        opts = self.model._meta
-#        flds = []
-#        for fld in opts.get_fields():
-#            if fld.name != 'id':
-#                if not fld.related_model:   # isinstance(ManyToOne,related.RelatedField) =True, self-linking ober not in opts.related_objects 
-#                    flds.append(fld.name)
-#                elif include_alias and fld.name.endswith('_alias'):
-#                    flds.append(fld.name+'__alias')
-#                
-#        return flds
+    @property
+    def flds(self):
+        if not self._flds:
+            self._flds = self.model.get_primary_fields()
+            # Check if all flds in self.flds are of the model
+            for i, fld in enumerate(self._flds):
+                try:
+                    flds = get_fields_from_path(self.model, fld)
+                    if flds[0].model == self.model:
+                        # All is good, let's continue with the next field
+                        continue
+                except:
+                    pass
+                # Either get_fields_from_path threw an error or the field is not of the model
+                del self._flds[i]
+        return self._flds
         
     def get_queryset(self):
-        # TODO: exception fld in self.flds not in self.model._meta.get_fields hä??
         qs = self.model.objects.all()
         ordering = self.model._meta.ordering
-        if not self.flds:
-            self.flds = self.get_primary_fields()
+                
         if self.forwarded:
-            from django.contrib.admin.utils import get_fields_from_path
             qobjects = Q()
             for k, v in self.forwarded.items():
                 #TODO: make a custom widget to allow setting of its 'name' html attribute so we don't have to do this:
@@ -82,24 +81,63 @@ class ACBase(autocomplete.Select2QuerySetView):
                         break
                 if k and v:
                     qobjects |= Q((k,v))
-#                if self.forwarded.get(f, 0):   
-#                    qobjects |= Q((f, self.forwarded.get(f, 0)))
             if qobjects.children:
-                qs = qs.filter(qobjects)                        # NOTE: Oder ver-UND-en? qs.filter().filter()...?
+                qs = qs.filter(qobjects)                        
             else:
+                # Return empty queryset as the forwarded items did not contribute to filtering the queryset
                 return self.model.objects.none()
+                
+        # Ordering
+        if self.model == ausgabe:
+            qs = qs.resultbased_ordering()
+        else:
+            qs = qs.order_by(*ordering)
+            
         if self.q:
             if self.flds:
-                # NOTE: should we even split at spaces?
+                exact_match_qs = qs
+                startsw_qs = qs
+                
+                try:
+                    qobjects = Q()
+                    for fld in self.flds:
+                        qobjects |= Q((fld, self.q))
+                    exact_match_qs = qs.filter(qobjects).distinct()
+                except:
+                    pass
+                
+                try:
+                    # __istartswith might be invalid lookup! --> then what about icontains?
+                    qobjects = Q()
+                    for fld in self.flds:
+                        qobjects |= Q((fld+'__istartswith', self.q))
+                    startsw_qs = qs.exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
+                except:
+                    pass 
+                    
+                # should we even split at spaces? Yes we should! Names for example:
+                # searching surname, prename should return results of format prename, surname!
                 for q in self.q.split():
                     qobjects = Q()
                     for fld in self.flds:
                         qobjects |= Q((fld+"__icontains", q))
-                    qs = qs.filter(qobjects).distinct()
-        if self.model == ausgabe:
-            qs = qs.resultbased_ordering()
-            return qs
-        return qs.order_by(*ordering)
+                    qs = qs.exclude(pk__in=startsw_qs).filter(qobjects).distinct()
+                    
+                return list(exact_match_qs)+list(startsw_qs)+list(qs)
+                    
+        return qs
+    
+    def has_add_permission(self, request):
+        # Overwritten since get_queryset() may return a list now too...
+        """Return True if the user has the permission to add a model."""
+        if not request.user.is_authenticated():
+            return False
+
+        #opts = self.get_queryset().model._meta
+        from django.contrib.auth import get_permission_codename
+        opts = self.model._meta
+        codename = get_permission_codename('add', opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
         
 class ACProv(ACBase):
     
@@ -109,10 +147,5 @@ class ACProv(ACBase):
     def create_object(self, text):
         return provenienz.objects.create(geber=geber.objects.create(name=text))
         
-class ACList(autocomplete.Select2ListView):
-    lst = None
-    def get_list(self):
-        return self.lst
-  
         
 
