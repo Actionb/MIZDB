@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import modelform_factory, Textarea
+from django.contrib.admin.utils import get_fields_from_path
 
 from .models import *
 from .constants import *
@@ -7,70 +8,84 @@ from .constants import *
 from dal import autocomplete
 
 FORMFIELDS = {
-    'ausgabe' : forms.ModelChoiceField(required = False, 
+    'ausgabe' : dict(required = False, 
+                                    label = 'Ausgabe', 
                                     queryset = ausgabe.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin'], 
-                                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})
+                                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}), 
                                     ), 
                                     
-    'autor' : forms.ModelChoiceField(required = False, 
+    'autor' : dict(required = False, 
                                     label = "Autor", 
                                     queryset = autor.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acautor'), 
                                     ), 
                                     
-    'band' : forms.ModelChoiceField(required = False, 
+    'band' : dict(required = False, 
                                     label = "Band", 
                                     queryset = band.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acband_nocreate'), 
                                     ), 
                                     
-    'genre' : forms.ModelChoiceField(required = False, 
+    'bland' : dict(required = False, 
+                                    label = "Bundesland", 
+                                    queryset = bundesland.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acbland', forward=['land'], 
+                                                attrs = {'data-placeholder': 'Bitte zuerst ein Land auswählen!'}),
+                                    ), 
+                                    
+    'genre' : dict(required = False, 
                                     label = "Genre", 
                                     queryset = genre.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acgenre_nocreate'), 
                                     ),
                                     
-    'herkunft' : forms.ModelChoiceField(required = False, 
+    'herkunft' : dict(required = False, 
                                         label = "Herkunftsort", 
-                                        queryset = ort.objects.all(),  
+                                        queryset = ort.objects.all(),  #NOTE: ['person__herkunft__land'] BAD IDEA?
                                         widget = autocomplete.ModelSelect2(url='acort', forward=['person__herkunft__land']), 
                                         ), 
                                         
-    'instrument' : forms.ModelChoiceField(required = False, 
+    'instrument' : dict(required = False, 
                                     label = "Instrument", 
                                     queryset = instrument.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acinstrument_nocreate'), 
                                     ), 
                                      
-    'land' : forms.ModelChoiceField(required = False, 
-                                    label = "Herkunftsland", 
+    'land' : dict(required = False, 
+                                    label = "Land", 
                                     queryset = land.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acland_nocreate'), 
                                     ),
                                     
-    'magazin' : forms.ModelChoiceField(required = False, 
+    'magazin' : dict(required = False, 
                                     label = "Magazin", 
                                     queryset = magazin.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acmagazin_nocreate'), 
                                     ), 
                                     
-    'musiker' : forms.ModelChoiceField(required = False, 
+    'musiker' : dict(required = False, 
                                     label = "Musiker", 
                                     queryset = musiker.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acmusiker_nocreate'), 
                                     ), 
                                     
-    'person' : forms.ModelChoiceField(required = False, 
+    'ort' : dict(required = False, 
+                                        label = "Ort", 
+                                        queryset = ort.objects.all(),  
+                                        widget = autocomplete.ModelSelect2(url='acort'), 
+                                        ), 
+                                    
+    'person' : dict(required = False, 
                                     label = "Person", 
                                     queryset = person.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acperson'), 
                                     ),  
                                     
-    'schlagwort' : forms.ModelChoiceField(required = False, 
+    'schlagwort' : dict(required = False, 
                                     label = "Schlagwort", 
                                     queryset = schlagwort.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acschlagwort_nocreate'), 
+                                    widget = autocomplete.ModelSelect2(url='acschlagwort_nocreate'),
                                     ), 
                                     
 }
@@ -90,17 +105,28 @@ class AdvSFForm(forms.Form):
             help_text_html=' <span class="helptext">%s</span>',
             errors_on_separate_row=True)
     
-def advSF_factory(model_admin):
+def advSF_factory(model_admin, labels = {}, formfield_class = {}):
     model = model_admin.model
-    opts = model_admin.opts
-    from collections import OrderedDict
-    attrs = OrderedDict()
+    attrs = {}
     
-    asf_dict = getattr(model_admin, 'advanced_search_form', dict())
+    asf_dict = getattr(model_admin, 'advanced_search_form', {})
     from itertools import chain
     formfield_names = [i for i in chain(*asf_dict.values())]
     for formfield_name in formfield_names:
         fld_name = formfield_name.split("__")[-1]
+        if not fld_name in FORMFIELDS:
+            # Usually the name of the fld is related to its related model (a field related to 'land' is called 'land')
+            # but sometimes, I am smart and name the field differently ('sitz' of verlag refers to land)
+            try:
+                fld_name = get_fields_from_path(model, formfield_name)[-1].related_model._meta.model_name
+            except:
+                continue
         if fld_name in FORMFIELDS:
-            attrs[formfield_name] = FORMFIELDS[fld_name]
+            formfield_opts = FORMFIELDS[fld_name].copy()
+            if formfield_name in labels:
+                formfield_opts['label'] = labels[formfield_name]
+            if formfield_name in formfield_class:
+                attrs[formfield_name] = formfield_class[formfield_name](**formfield_opts)
+            else:
+                attrs[formfield_name] = forms.ModelChoiceField(**formfield_opts)
     return type('AdvSF'+model.__name__, (AdvSFForm, ), attrs )
