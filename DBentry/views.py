@@ -104,8 +104,9 @@ class ACBase(autocomplete.Select2QuerySetView):
                         qobjects |= Q((fld, self.q))
                     exact_match_qs = qs.filter(qobjects).distinct()
                 except:
-                    pass
-                
+                    # invalid lookup/ValidationError (for date fields)
+                    exact_match_qs = qs.none()
+                    
                 try:
                     # __istartswith might be invalid lookup! --> then what about icontains?
                     qobjects = Q()
@@ -113,7 +114,7 @@ class ACBase(autocomplete.Select2QuerySetView):
                         qobjects |= Q((fld+'__istartswith', self.q))
                     startsw_qs = qs.exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
                 except:
-                    pass 
+                    startsw_qs = qs.none()
                     
                 # should we even split at spaces? Yes we should! Names for example:
                 # searching surname, prename should return results of format prename, surname!
