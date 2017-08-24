@@ -121,7 +121,7 @@ class ACBase(autocomplete.Select2QuerySetView):
                     qobjects = Q()
                     for fld in self.flds:
                         qobjects |= Q((fld+"__icontains", q))
-                    qs = qs.exclude(pk__in=startsw_qs).filter(qobjects).distinct()
+                    qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
                     
                 return list(exact_match_qs)+list(startsw_qs)+list(qs)
                     
