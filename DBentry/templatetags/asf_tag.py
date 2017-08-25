@@ -70,3 +70,12 @@ def advanced_search_form(cl):
         'show_result_count': full_count == cl.result_count,
         'search_var': SEARCH_VAR
     }
+    
+@register.filter
+def tabindex(value, index):
+    """
+    Add a tabindex attribute to the widget for a bound field.
+    Credit for idea to: Gareth Reese (stackoverflow)
+    """
+    value.field.widget.attrs['tabindex'] = index
+    return value

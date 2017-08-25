@@ -30,10 +30,10 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.178.56']
 
 # Application definition
 
-INSTALLED_APPS = [
+INSTALLED_APPS = [ 
+    'DBentry.apps.DbentryConfig',
     'dal', 
     'dal_select2',
-    'DBentry.apps.DbentryConfig', 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
