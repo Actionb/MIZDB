@@ -47,11 +47,12 @@ class ACBase(autocomplete.Select2QuerySetView):
             for i, fld in enumerate(self._flds):
                 try:
                     flds = get_fields_from_path(self.model, fld)
+                except:
+                    pass
+                else:
                     if flds[0].model == self.model:
                         # All is good, let's continue with the next field
                         continue
-                except:
-                    pass
                 # Either get_fields_from_path threw an error or the field is not of the model
                 del self._flds[i]
         return self._flds
