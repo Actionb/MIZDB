@@ -106,125 +106,14 @@ class ModelBase(admin.ModelAdmin):
         
     def lookup_allowed(self, key, value):
         if self.has_adv_sf():
+            # allow lookups defined in advanced_search_form
             for list in getattr(self, 'advanced_search_form').values():
                 if key in list:
                     return True
         if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
+            # allow lookups defined in list_filter
             return True
         return super(ModelBase, self).lookup_allowed(key, value)
-            
-    def resolve_search_field(self, field_name):
-        search_fields = self.get_search_fields()
-        
-        if field_name[0] in ['^', '*', '<', '>']:
-            field_name = field_name[1:]
-        
-        # Check for the field_name in redirects first
-        if field_name in self.search_fields_redirect:
-            return self.search_fields_redirect[field_name]
-            
-        # Next,try to find a full match in search_fields
-        elif field_name in search_fields:
-            return field_name
-                
-        # Lastly, try to find parts of it in search_fields
-        elif any(s.find(field_name)!=-1 for s in search_fields):
-            return [s for s in search_fields if s.find(field_name)!=-1][0]
-
-            
-    def get_search_results(self, request, queryset, search_term):
-        # Overriden to allow search by keywords (seite=75,magazin=Good Times)
-        #TODO: unfuck this mess
-        qs, use_distinct = super(ModelBase, self).get_search_results(request, queryset, search_term)
-        return qs, use_distinct 
-        def search_term_to_list(self, x, SEP=SEARCH_SEG_SEP):
-            # constants: SEARCH_SEG_SEP = ',' ; SEARCH_TERM_SEP = '='
-            
-            xlist = [i.strip().split(SEARCH_TERM_SEP) for i in x.split(SEP)]
-            
-            rslt = []
-            for i in xlist:
-                if len(i)==1:
-                    continue
-                
-                search_field = i[0].lower()
-                # Check if the search_field is prefixed with a hint for field lookups
-                if search_field.startswith('^'):
-                    field_lookup = '__istartswith'
-                elif search_field.startswith('*'):
-                    field_lookup = '__iexact'
-                elif search_field.startswith('>'):
-                    field_lookup = '__gt'
-                elif search_field.startswith('<'):
-                    field_lookup = '__lt'
-                elif search_field.startswith('@'):
-                    field_lookup = '__icontains'
-                else:
-                    field_lookup = ''
-                    
-                if field_lookup:
-                    search_field = search_field[1:]
-                    
-                # Resolve the search_field into a query-able term, found in either self.search_fields or self.search_fields_redirect
-                resolved_search_fields = self.resolve_search_field(search_field)
-                if resolved_search_fields:
-                    qobject = models.Q()
-                    if not isinstance(resolved_search_fields, list):
-                        resolved_search_fields = [resolved_search_fields]
-                    for resolved_search_field in resolved_search_fields:
-                        if callable(resolved_search_field):
-                            # the search_field points to a callable function, we will need to remember the original search_field for
-                            # queryset prefixing. We do not need the field_lookup value, since, currently, the callable may apply a specific
-                            # field_lookup of its own.
-                            i[1] = search_field + '@' + i[1]
-                            rslt.append((resolved_search_field, i[1]))
-                            #continue
-                        else:
-                            # make q object of all fields but the callables
-                            qobject |= models.Q((resolved_search_field+field_lookup, i[1]))
-                            #rslt.append((resolved_search_field+field_lookup, i[1]))
-                    rslt.append(qobject)
-            return rslt
-        
-        if not self.search_fields:
-            self.search_fields = self.get_search_fields(request)
-        qs, use_distinct = super(ModelBase, self).get_search_results(request, queryset, search_term)
-        if search_term.find("=")!=-1:
-            search_list = search_term_to_list(self, search_term)
-            if search_list:
-                for item in search_list:
-                    # item is either a tuple consisting of ('field','value') or a q-object
-                    if isinstance(item, tuple):
-                        k, v = item
-                        if callable(k):
-                            # key is a callable like strquery that would return a list of q items to filter with
-                            # search_term_to_dict has changed the value into a string of format 'prefix@value'
-                            prefix, value = (v.split('@'))
-                            v = k(search_term=value, prefix=prefix+"__")
-                            if v:
-                                for q in v:
-                                    try:
-                                        queryset = queryset.filter(*q)
-                                    except ValueError:
-                                        continue
-                        else:
-                            qitem = models.Q( **{k:v} )
-                            try:
-                                queryset = queryset.filter(qitem)
-                            except ValueError:
-                                continue
-                    else:
-                        # It's a q-object!
-                        queryset = queryset.filter(item)
-                qs = queryset
-        if not qs.exists():
-            # Query returned no results.
-            # Maybe the User was searching for a __str__ string of an object
-            try:
-                qs = self.model.strquery_as_queryset(search_term)
-            except:
-                pass
-        return qs, use_distinct  
         
     def get_changeform_initial_data(self, request):
         """ Turn _changelist_filters string into a useable dict of field_path:value """
