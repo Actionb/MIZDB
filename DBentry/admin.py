@@ -11,10 +11,6 @@ from .constants import *
 from .forms import *
 from .utils import link_list
 
-#TODO: brauchen wir die zwei noch?
-from .filters import RelatedOnlyDropdownFilter
-from django_admin_listfilter_dropdown.filters import DropdownFilter, RelatedDropdownFilter
-
 from .changelist import MIZChangeList
 
 from django.contrib.admin.options import *
@@ -351,7 +347,6 @@ class AusgabenAdmin(ModelBase):
                         'magazin','e_datum','anz_artikel', 'status') 
     search_fields = ['magazin__magazin_name', 'status', 'e_datum', 
         'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr','ausgabe_monat__monat__monat']
-    list_filter = [('magazin__magazin_name', DropdownFilter),('ausgabe_jahr__jahr', DropdownFilter), 'status',BestandListFilter, ]#('bestand__lagerort', BestandListFilter)]
     search_fields_redirect = { 
                             'bearbeitungsstatus' : 'status',
                             'nr' : 'ausgabe_num__num', 
@@ -532,7 +527,6 @@ class ArtikelAdmin(ModelBase):
     flds_to_group = [('ausgabe','magazin', 1),('seite', 'seitenumfang'),]
     
     list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string','ausgabe','artikel_magazin', 'kuenstler_string']
-    list_filter = [('ausgabe__magazin__magazin_name', DropdownFilter), ('ausgabe__ausgabe_jahr__jahr',DropdownFilter)]
     list_display_links = ['__str__', 'seite']
     search_fields_redirect = { 
                                 'magazin' : 'ausgabe__magazin__magazin_name',
@@ -649,7 +643,6 @@ class MagazinAdmin(ModelBase):
     exclude = ['genre']
     
     list_display = ('__str__','beschreibung','anz_ausgaben', 'ort')
-    list_filter = [('ort__land', RelatedOnlyDropdownFilter), ]
     crosslinks = ['ausgabe']
     
     advanced_search_form = {
@@ -767,7 +760,9 @@ class VideoAdmin(ModelBase):
 class BlandAdmin(ModelBase):
     search_fields = ['id', 'bland_name', 'code', 'land__land_name']
     list_display = ['bland_name', 'code', 'land']
-    list_filter = [('land', RelatedOnlyDropdownFilter)]
+    advanced_search_form = {
+        'selects' : ['ort__land'], 
+    }
     
 @admin.register(land)
 class LandAdmin(ModelBase):
@@ -784,7 +779,6 @@ class OrtAdmin(ModelBase):
     
     search_fields = ['stadt', 'land__land_name', 'bland__bland_name']
     list_display = ['stadt', 'bland', 'land']
-    list_filter = [('land', RelatedDropdownFilter), ('bland', RelatedDropdownFilter)]
     list_display_links = list_display
     
     advanced_search_form = {
