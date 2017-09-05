@@ -1186,7 +1186,10 @@ class provenienz(ShowModel):
         return "{0} ({1})".format(str(self.geber.name), str(self.typ))
 class geber(ShowModel):
     name = models.CharField(default = 'unbekannt', **CF_ARGS)
-        
+    
+    class Meta:
+        verbose_name = 'Geber'
+        verbose_name_plural = 'Geber'
         
 class lagerort(ShowModel):
     ort = models.CharField(**CF_ARGS)
@@ -1229,13 +1232,33 @@ class bestand(ShowModel):
     technik = models.ForeignKey('technik', blank = True, null = True)
     video = models.ForeignKey('video', blank = True, null = True)
     
-    
     class Meta:
         verbose_name = 'Bestand'
         verbose_name_plural = 'Bestände'
+        ordering = ['pk']
 
     def __str__(self):
         return str(self.lagerort)
+        
+    def bestand_objekt(self):
+        #TODO: WIP create a template just for bestand changeform so we can display the object in question as a link
+        art = self.bestand_art(as_field = True)
+        objekt = art.value_from_object(self)
+        
+        
+    def ausgabe_magazin(self):
+        if self.ausgabe:
+            return str(self.ausgabe.magazin)
+    ausgabe_magazin.short_description = "Magazin"
+        
+    def bestand_art(self, as_field = False):
+        for fld in bestand.get_foreignfields():
+            if fld.name not in ['lagerort', 'provenienz']:
+                if fld.value_from_object(self):
+                    if as_field:
+                        return fld
+                    return fld.related_model._meta.verbose_name
+    bestand_art.short_description = "Bestand-Art"
 
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)
