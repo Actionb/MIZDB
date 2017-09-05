@@ -90,7 +90,6 @@ class ModelBase(admin.ModelAdmin):
                 link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
                                 + "?" + fld_name + "=" + object_id
             except Exception as e:
-                print(e)
                 continue
             count = model._default_manager.filter(**{fld_name:object_id}).count()
             
@@ -614,7 +613,9 @@ class OrtAdmin(ModelBase):
     
 @admin.register(bestand)
 class BestandAdmin(ModelBase):
-    pass
+    readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
+    list_display = ['signatur', 'bestand_art', 'lagerort','provenienz']
+    flds_to_group = [('ausgabe', 'ausgabe_magazin')]
     
 @admin.register(provenienz)
 class ProvAdmin(ModelBase):   
