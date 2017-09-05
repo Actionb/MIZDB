@@ -544,6 +544,7 @@ class ArtikelAdmin(ModelBase):
         'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
         'simple':[], 
     }  
+    save_on_top = True
 
     def get_queryset(self, request):
         from django.db.models import Min
@@ -591,6 +592,7 @@ class BandAdmin(ModelBase):
         #verbose_model = musiker
     class AliasInLine(AliasTabBase):
         model = band_alias
+    save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
     exclude = ['genre', 'musiker']
     
@@ -617,6 +619,7 @@ class BuchAdmin(ModelBase):
         verbose_model = autor
     class BestandInLine(BestandModelBase):
         pass
+    save_on_top = True
     inlines = [AutorInLine, BestandInLine]
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
     exclude = ['autor']
@@ -675,6 +678,7 @@ class MusikerAdmin(ModelBase):
         model = musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
+    save_on_top = True
     inlines = [AliasInLine, GenreInLine, BandInLine, InstrInLine]
     readonly_fields = ['herkunft_string']
     fields = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
