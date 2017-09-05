@@ -1,5 +1,4 @@
 from django import forms
-from django.forms import modelform_factory, Textarea
 from django.contrib.admin.utils import get_fields_from_path
 
 from .models import *
