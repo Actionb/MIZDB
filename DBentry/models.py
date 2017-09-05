@@ -9,9 +9,6 @@ from .utils import concat_limit, merge as merge_util
 from .managers import AusgabeQuerySet, MIZQuerySet
 
 # Create your models here.
-#TODO: models/m2m change or remove unique_together of m2m-tables to avoid form errors
-# let the form save and THEN remove duplicate entries
-# OR: delete m2m instances first, then save the new ones?
 
 class ShowModel(models.Model):
     
@@ -400,6 +397,7 @@ class ausgabe(ShowModel):
                 #NOTE: this actually raised an IntegrityError (UNIQUE Constraints)
                 # self.ausgabe_monat_set will be empty but creating a new set instance will still fail
                 # need to find out how to reliably reproduce this
+                # Maybe this was fixed by overriding validate_unique in FormBase?
                 try:
                     self.ausgabe_monat_set.create(monat_id=self.e_datum.month)
                 except IntegrityError:
