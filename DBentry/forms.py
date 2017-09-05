@@ -91,7 +91,42 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
 
 class FormBase(forms.ModelForm):
     
-    #TODO: __init__ set initial values from _changelist_filters
+    def __init__(self, *args, **kwargs):
+        # the change_form's initial data is being cleaned and provided by the method ModelBase.get_changeform_initial_data
+        if 'initial' not in kwargs:
+            kwargs['initial'] = {}
+        initial = kwargs['initial'].copy()
+        
+        # since the ModelBase does not know what the formfields of its change_form are called, we may need to compare the
+        # keys given in initial to the fields of the form in order to find a match
+        fld_names = set(self.base_fields.keys())
+        
+        for k, v in initial.items():
+            if k in fld_names:
+                # This particular item in initial has a definitive match to a formfield
+                fld_names.remove(k)
+                continue
+            
+            # k might be a field_path, e.g. ausgabe__magazin
+            for fld_name in fld_names:
+                if fld_name == k.split('__')[-1]:
+                    kwargs['initial'][fld_name] = v
+                    break
+                    
+            # Remove all the field names that have already been matched, so we do not override the match with a  
+            # partial match in name in subsequent loops
+            fld_names = fld_names.difference(kwargs['initial'].keys())
+            
+            # Try to find a partial match in name, last resort
+            for fld_name in fld_names:
+                if fld_name in k:
+                    kwargs['initial'][fld_name] = v 
+                    break
+                    
+            fld_names = fld_names.difference(kwargs['initial'].keys())
+        super(FormBase, self).__init__(*args, **kwargs)
+                
+            
     
     def validate_unique(self):
         """
@@ -124,7 +159,7 @@ def makeForm(model, fields = []):
     
 
 
-class ArtikelForm(forms.ModelForm):
+class ArtikelForm(FormBase):
         
     magazin = forms.ModelChoiceField(required = False, 
                                     queryset = magazin.objects.all(),  
@@ -140,26 +175,3 @@ class ArtikelForm(forms.ModelForm):
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
-        
-    def __init__(self, *args, **kwargs):
-        initial = dict()
-        if not 'initial' in kwargs:
-            kwargs['initial'] = dict()
-        if 'instance' in kwargs:
-            # Form is bound to a specific instance
-            if  hasattr(kwargs['instance'], 'artikel_magazin'):
-                # Set the right magazine for the instance's change_form
-                initial = {'magazin' : kwargs['instance'].artikel_magazin()}
-        else:
-            # Add-Form
-            if '_changelist_filters' in kwargs['initial']:
-                d = kwargs['initial']['_changelist_filters']
-                # initial contains the _changelist_filters dict created by the search form/search term
-                initial['ausgabe'] = d.get('ausgabe', None)
-                if initial['ausgabe']:
-                    initial['magazin'] = ausgabe.objects.get(pk=initial['ausgabe']).magazin
-                else:
-                    initial['magazin'] = d.get('ausgabe__magazin', None)
-                initial['seite'] = d.get('seite', None)
-        kwargs['initial'].update(initial)
-        super(ArtikelForm, self).__init__(*args, **kwargs)

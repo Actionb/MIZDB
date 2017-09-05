@@ -229,33 +229,28 @@ class ModelBase(admin.ModelAdmin):
         return qs, use_distinct  
         
     def get_changeform_initial_data(self, request):
-        #TODO: brauchen wir das noch?
-        """ Turn the mess of _changelist_filters of safe and unsafe http bits into a useable dict of field_path:value
-            Subclasses are supposed to refine this further to provide initial data."""
+        """ Turn _changelist_filters string into a useable dict of field_path:value """
         from django.utils.http import unquote
         initial = super(ModelBase, self).get_changeform_initial_data(request)
         if '_changelist_filters' not in initial.keys() or not initial['_changelist_filters']:
             return initial
-        clfilter = initial['_changelist_filters']
-        
-        clfilter = clfilter.replace('&', SEARCH_SEG_SEP)
-        clfilter = unquote(clfilter)
-        
+            
+        # At this point, _changelist_filters is a string of format:
+        # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
         filter_dict = {}
-        for part in clfilter.split(SEARCH_SEG_SEP):
+        for part in initial['_changelist_filters'].split('&'):
             if part and SEARCH_TERM_SEP in part:
                 if part.startswith("q="):
-                    part = part[2:]
+                    # This part is a string typed into the searchbar, ignore it
+                    continue
                 try:
                     k, v = part.split(SEARCH_TERM_SEP)
                 except ValueError:
                     continue
                 if k not in initial.keys():
-                    filter_dict[k] = unquote(v).replace('+', ' ')
-        # Maybe keep string _changelist_filters in the initial dict?    
-        initial['_changelist_filters'] = filter_dict
+                    filter_dict[k] = v
+        initial.update(filter_dict)
         return initial
-
 
     def merge_records(self, request, queryset):
         if queryset.count() == 1:
@@ -449,36 +444,6 @@ class AusgabenAdmin(ModelBase):
             jg = queryset.first().jahrgang
         mag = magazin.objects.get(pk=mag_id)
         mag.ausgabe_set.bulk_add_jg(jg)
-        
-    # Have the right magazin selected in change_form
-    def get_changeform_initial_data(self, request):
-        #'ausgabe_jahr__jahr=1959&magazin__magazin_name=Backstreets&q=num%3D12'
-        initial = super(AusgabenAdmin, self).get_changeform_initial_data(request)
-        if '_changelist_filters' not in initial.keys():
-            return initial
-        filter_dict = initial['_changelist_filters']
-        mag = None
-        for key in filter_dict.keys():
-            if key.find('magazin') != -1:
-                mag = filter_dict[key]
-                break
-        if mag:
-            if mag.isnumeric():
-                try:
-                    mag_instance = magazin.objects.get(pk=mag)
-                except:
-                    pass
-                else:
-                    initial['magazin'] = mag_instance
-            else:
-                try:
-                    mag_instance = magazin.objects.get(magazin_name__icontains=mag)
-                except:
-                    pass
-                else:
-                    initial['magazin'] = mag_instance
-        return initial
-                
     
 @admin.register(autor)
 class AutorAdmin(ModelBase):
@@ -551,32 +516,6 @@ class ArtikelAdmin(ModelBase):
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
         
-    def get_changeform_initial_data(self, request):
-        #TODO: brauchen wir das noch?
-        initial = super(ArtikelAdmin, self).get_changeform_initial_data(request)
-        if '_changelist_filters' not in initial.keys():
-            return initial
-        filter_dict = initial['_changelist_filters']
-        if 'magazin' in filter_dict.keys() or 'ausgabe__magazin__magazin_name' in filter_dict.keys():
-            if 'ausgabe__magazin__magazin_name' in filter_dict.keys():
-                v = filter_dict['ausgabe__magazin__magazin_name']
-            else:
-                v = filter_dict['magazin']
-            try:
-                v = magazin.objects.get(magazin_name=v)
-            except:
-                return initial
-            else:
-                initial['magazin'] = v
-        if 'ausgabe' in filter_dict.keys() and 'magazin' in initial.keys() and initial['magazin']:
-            v = filter_dict['ausgabe']
-            mag = initial['magazin']
-            qs = ausgabe.strquery_as_queryset(search_term = v, queryset = ausgabe.objects.filter(magazin=mag))
-            if qs.count()==1:
-                initial['ausgabe'] = qs[0]
-        return initial
-                
-
 @admin.register(band)    
 class BandAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
