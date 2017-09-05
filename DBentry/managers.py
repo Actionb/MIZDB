@@ -73,15 +73,23 @@ class AusgabeQuerySet(MIZQuerySet):
             last_year = year
             
     def filter(self, *args, **kwargs):
-        #TODO: redo this properly
+        # Overridden, to better deal with poorly formatted e_datum values
         if 'e_datum' in kwargs:
             from django.core.exceptions import ValidationError
             try:
                 return super(AusgabeQuerySet, self).filter(*args, **kwargs)
             except ValidationError:
                 from datetime import datetime
-                v = kwargs.get('e_datum', None)
-                v = datetime.strptime(v, "%d.%m.%Y").date()
+                v = kwargs.get('e_datum', '')
+                for possible_formatting in ["%d.%m.%Y", "%d.%m.%y","%Y.%m.%d", "%Y-%m-%d", "%y-%m-%d"]: 
+                    # See if the value given for e_datum fits any of the possible formats
+                    try:
+                        v = datetime.strptime(v, possible_formatting).date()
+                    except ValueError:
+                        continue
+                    break
+                # If we couldn't 'fix' the e_datum value, the queryset still contains the faulty value
+                # and upon calling super, will raise an exception
                 kwargs['e_datum'] = v
         return super(AusgabeQuerySet, self).filter(*args, **kwargs)
        
