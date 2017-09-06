@@ -115,7 +115,9 @@ class ModelBase(admin.ModelAdmin):
         return super(ModelBase, self).lookup_allowed(key, value)
         
     def get_changeform_initial_data(self, request):
-        """ Turn _changelist_filters string into a useable dict of field_path:value """
+        """ Turn _changelist_filters string into a useable dict of field_path:value
+            so we can fill some formfields with initial values later on. 
+            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. """
         from django.utils.http import unquote
         initial = super(ModelBase, self).get_changeform_initial_data(request)
         if '_changelist_filters' not in initial.keys() or not initial['_changelist_filters']:

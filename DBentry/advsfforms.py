@@ -105,12 +105,14 @@ class AdvSFForm(forms.Form):
             errors_on_separate_row=True)
     
 def advSF_factory(model_admin, labels = {}, formfield_class = {}):
+    #TODO: allow overriding some attrs (label) of formfields not present in FORMFIELDS
+    # e.g. those formfields that are not going to be DAL and just simply default selects
     model = model_admin.model
     attrs = {}
     
     asf_dict = getattr(model_admin, 'advanced_search_form', {})
     from itertools import chain
-    formfield_names = [i for i in chain(*asf_dict.values())]
+    formfield_names = [i for i in chain(*asf_dict.values())] #NOTE: shouldnt we exclude the asf_dict labels from the chain?
     for formfield_name in formfield_names:
         fld_name = formfield_name.split("__")[-1]
         if not fld_name in FORMFIELDS:

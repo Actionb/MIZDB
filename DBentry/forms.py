@@ -92,7 +92,7 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
 class FormBase(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
-        # the change_form's initial data is being cleaned and provided by the method ModelBase.get_changeform_initial_data
+        # the change_form's (for add forms) initial data is being cleaned and provided by the method ModelBase.get_changeform_initial_data
         if 'initial' not in kwargs:
             kwargs['initial'] = {}
         initial = kwargs['initial'].copy()
