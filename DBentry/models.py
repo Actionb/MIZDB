@@ -958,6 +958,7 @@ class artikel(ShowModel):
         if not self.zusammenfassung:
             return ''
         return concat_limit(self.zusammenfassung.split(), sep=" ")
+    zusammenfassung_string.short_description = 'Zusammenfassung'
     
     def artikel_magazin(self):
         return self.ausgabe.magazin
