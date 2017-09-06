@@ -175,3 +175,12 @@ class ArtikelForm(FormBase):
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
+    
+    def __init__(self, *args, **kwargs):
+        # Set the right initial magazin for change forms (kwargs come with an instance)
+        # super.__init__ takes care of setting initials for add forms
+        if 'instance' in kwargs:
+            if 'initial' not in kwargs:
+                kwargs['initial'] = {}
+            kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
+        super(ArtikelForm, self).__init__(*args, **kwargs)
