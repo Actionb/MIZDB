@@ -179,7 +179,7 @@ class ArtikelForm(FormBase):
     def __init__(self, *args, **kwargs):
         # Set the right initial magazin for change forms (kwargs come with an instance)
         # super.__init__ takes care of setting initials for add forms
-        if 'instance' in kwargs:
+        if 'instance' in kwargs and kwargs['instance']:
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
             kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
