@@ -183,9 +183,30 @@ class SchlagwortModelBase(TabModelBase):
     
 @admin.register(audio)
 class AudioAdmin(ModelBase):
+    class GenreInLine(GenreModelBase):
+        model = audio.genre.through
+        extra = 1
+    class SchlInLine(SchlagwortModelBase):
+        model = audio.schlagwort.through
+        extra = 1
+    class PersonInLine(TabModelBase):
+        model = audio.person.through
+        verbose_model = person
+    class MusikerInLine(TabModelBase):
+        model = audio.musiker.through
+        verbose_model = musiker
+    class BandInLine(TabModelBase):
+        model = audio.band.through
+        verbose_model = band
+    class SpielortInLine(TabModelBase):
+        model = audio.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(TabModelBase):
+        model = audio.veranstaltung.through
+        verbose_model = veranstaltung
     class BestandInLine(BestandModelBase):
         pass
-    infields = [BestandInLine]
+    inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
 
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
@@ -577,9 +598,30 @@ class VerlagAdmin(ModelBase):
         
 @admin.register(video)
 class VideoAdmin(ModelBase):
+    class GenreInLine(GenreModelBase):
+        model = video.genre.through
+        extra = 1
+    class SchlInLine(SchlagwortModelBase):
+        model = video.schlagwort.through
+        extra = 1
+    class PersonInLine(TabModelBase):
+        model = video.person.through
+        verbose_model = person
+    class MusikerInLine(TabModelBase):
+        model = video.musiker.through
+        verbose_model = musiker
+    class BandInLine(TabModelBase):
+        model = video.band.through
+        verbose_model = band
+    class SpielortInLine(TabModelBase):
+        model = video.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(TabModelBase):
+        model = video.veranstaltung.through
+        verbose_model = veranstaltung
     class BestandInLine(BestandModelBase):
         pass
-    infields = [BestandInLine]
+    inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
         
 # ======================================================== Orte ========================================================
 
