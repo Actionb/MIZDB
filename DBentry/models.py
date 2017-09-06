@@ -1019,13 +1019,24 @@ class instrument_alias(alias_base):
         
 class audio(ShowModel):
     titel = models.CharField(**CF_ARGS)
+    #datum = models.DateField()
+    
     tracks = models.IntegerField()
     laufzeit = models.DurationField()
     festplatte = models.CharField(**CF_ARGS_B)
     quelle = models.CharField(**CF_ARGS_B)
     sender = models.ForeignKey('sender',  blank = True,  null = True)
     
+    band = models.ManyToManyField('band', through = m2m_audio_band)
+    genre = models.ManyToManyField('genre', through = m2m_audio_genre)
+    musiker = models.ManyToManyField('musiker', through = m2m_audio_musiker)
+    person = models.ManyToManyField('person', through = m2m_audio_person)
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_audio_schlagwort)
+    spielort = models.ManyToManyField('spielort', through = m2m_audio_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_audio_veranstaltung)
     primary_fields = ['titel']
+    
+    
     
     class Meta:
         verbose_name = 'Audio Material'
@@ -1158,6 +1169,14 @@ class video(ShowModel):
     festplatte = models.CharField(**CF_ARGS_B)
     quelle = models.CharField(**CF_ARGS_B)
     sender = models.ForeignKey('sender')
+    
+    band = models.ManyToManyField('band', through = m2m_video_band)
+    genre = models.ManyToManyField('genre', through = m2m_video_genre)
+    musiker = models.ManyToManyField('musiker', through = m2m_video_musiker)
+    person = models.ManyToManyField('person', through = m2m_video_person)
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_video_schlagwort)
+    spielort = models.ManyToManyField('spielort', through = m2m_video_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_video_veranstaltung)
     
     primary_fields = ['titel']
     
