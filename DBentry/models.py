@@ -1223,7 +1223,6 @@ class bestand(ShowModel):
     lagerort = models.ForeignKey('lagerort')
     provenienz = models.ForeignKey('provenienz',  blank = True, null = True)
     
-    
     audio = models.ForeignKey('audio', blank = True, null = True)
     ausgabe = models.ForeignKey('ausgabe', blank = True, null = True)
     bildmaterial = models.ForeignKey('bildmaterial', blank = True, null = True)
@@ -1232,7 +1231,13 @@ class bestand(ShowModel):
     memorabilien = models.ForeignKey('memorabilien', blank = True, null = True)
     technik = models.ForeignKey('technik', blank = True, null = True)
     video = models.ForeignKey('video', blank = True, null = True)
-    
+        
+    BESTAND_CHOICES = [
+        ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),  
+        ('buch', 'Buch'),  ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'), 
+        ('technik', 'Technik'), ('video', 'Video'), 
+    ]      
+    bestand_art = models.CharField('Bestand-Art', max_length = 20, choices = BESTAND_CHOICES, blank = False, default = 'ausgabe')
     class Meta:
         verbose_name = 'Bestand'
         verbose_name_plural = 'Bestände'
@@ -1246,20 +1251,18 @@ class bestand(ShowModel):
         art = self.bestand_art(as_field = True)
         objekt = art.value_from_object(self)
         
-        
     def ausgabe_magazin(self):
         if self.ausgabe:
             return str(self.ausgabe.magazin)
     ausgabe_magazin.short_description = "Magazin"
-        
-    def bestand_art(self, as_field = False):
-        for fld in bestand.get_foreignfields():
-            if fld.name not in ['lagerort', 'provenienz']:
-                if fld.value_from_object(self):
-                    if as_field:
-                        return fld
-                    return fld.related_model._meta.verbose_name
-    bestand_art.short_description = "Bestand-Art"
+    
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        # Find the correct Bestand-Art
+        for fld_name, choice in self.BESTAND_CHOICES:
+            if getattr(self, fld_name):
+                self.bestand_art = fld_name
+        super(bestand, self).save(force_insert, force_update, using, update_fields)
 
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)

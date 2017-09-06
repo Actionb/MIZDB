@@ -615,16 +615,18 @@ class OrtAdmin(ModelBase):
     
 @admin.register(bestand)
 class BestandAdmin(ModelBase):
-    readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
+    #readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
     list_display = ['signatur', 'bestand_art', 'lagerort','provenienz']
-    flds_to_group = [('ausgabe', 'ausgabe_magazin')]
+    #flds_to_group = [('ausgabe', 'ausgabe_magazin')]
+    
+    advanced_search_form = {
+        'selects' : ['bestand_art', 'lagerort'], 
+    }
     
 @admin.register(provenienz)
 class ProvAdmin(ModelBase):   
     pass
-    #list_display= ['geber', 'typ']
     
 # Register your models here.
 admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache,  ])
 
-#admin.site.register(monat)
