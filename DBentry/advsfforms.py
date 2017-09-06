@@ -50,6 +50,12 @@ FORMFIELDS = {
                                     queryset = instrument.objects.all(),  
                                     widget = autocomplete.ModelSelect2(url='acinstrument_nocreate'), 
                                     ), 
+    
+    'lagerort' : dict(required = False, 
+                                    label = "Lagerort", 
+                                    queryset = lagerort.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='aclagerort'), 
+                                    ),
                                      
     'land' : dict(required = False, 
                                     label = "Land", 
