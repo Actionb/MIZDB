@@ -6,6 +6,11 @@
 {{ inline_admin_formset.formset.management_form }}
 <fieldset class="module {{ inline_admin_formset.classes }}">
    <h2>{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+   
+    {% if inline_admin_formset.description %}
+        <div class="description">{{ inline_admin_formset.description|safe }}</div>
+    {% endif %}
+    
    {{ inline_admin_formset.formset.non_form_errors }}
    <table>
      <thead><tr>

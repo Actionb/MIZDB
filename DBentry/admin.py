@@ -139,6 +139,13 @@ class ModelBase(admin.ModelAdmin):
                     filter_dict[k] = v
         initial.update(filter_dict)
         return initial
+        
+    def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
+        # Add a description to each formset
+        inline_admin_formsets = super(ModelBase, self).get_inline_formsets(request, formsets, inline_instances, obj)
+        for formset in inline_admin_formsets:
+            formset.description = getattr(formset.opts, 'description', '')
+        return inline_admin_formsets
 
     def merge_records(self, request, queryset):
         if queryset.count() == 1:
