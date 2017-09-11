@@ -187,6 +187,18 @@ class SchlagwortModelBase(TabModelBase):
     verbose_name = schlagwort._meta.verbose_name
     verbose_name_plural = schlagwort._meta.verbose_name_plural
     
+class DateiInLine(TabModelBase):
+    model = m2m_datei_quelle
+    verbose_model = datei
+    fields = ['datei']
+    
+class QuelleInLine(admin.StackedInline):
+    original = False
+    extra = 0
+    model = m2m_datei_quelle
+    form = makeForm(m2m_datei_quelle)
+    description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
+
     
 @admin.register(audio)
 class AudioAdmin(ModelBase):
@@ -213,7 +225,7 @@ class AudioAdmin(ModelBase):
         verbose_model = veranstaltung
     class BestandInLine(BestandModelBase):
         pass
-    inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
+    inlines = [DateiInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
 
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
@@ -675,7 +687,36 @@ class BestandAdmin(ModelBase):
 @admin.register(provenienz)
 class ProvAdmin(ModelBase):   
     pass
-    
-# Register your models here.
-admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache,  ])
+      
+@admin.register(datei)
+class DateiAdmin(ModelBase):
+    class GenreInLine(GenreModelBase):
+        model = datei.genre.through
+        extra = 1
+    class SchlInLine(SchlagwortModelBase):
+        model = datei.schlagwort.through
+        extra = 1
+    class PersonInLine(TabModelBase):
+        model = datei.person.through
+        verbose_model = person
+    class MusikerInLine(TabModelBase):
+        model = datei.musiker.through
+        verbose_model = musiker
+        filter_horizontal = ['instrument']
+    class BandInLine(TabModelBase):
+        model = datei.band.through
+        verbose_model = band
+    class SpielortInLine(TabModelBase):
+        model = datei.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(TabModelBase):
+        model = datei.veranstaltung.through
+        verbose_model = veranstaltung
+    inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
+    fieldsets = [
+        (None, { 'fields': ['titel', 'media_typ', 'datei_media', 'datei_pfad', 'provenienz']}),
+        ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'datum', 'quelle', 'sender', 'bemerkungen']}),  
+    ]
 
+# Register your models here.
+admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache ])
