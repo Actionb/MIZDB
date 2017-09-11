@@ -1006,7 +1006,7 @@ class buch(ShowModel):
 
 class instrument(ShowModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
-    kuerzel = models.CharField(**CF_ARGS_B)
+    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS_B)
     
     primary_fields = ['instrument', 'kuerzel']
     
@@ -1019,7 +1019,7 @@ class instrument_alias(alias_base):
         
 class audio(ShowModel):
     titel = models.CharField(**CF_ARGS)
-    #datum = models.DateField()
+    datum = models.DateField()
     
     tracks = models.IntegerField()
     laufzeit = models.DurationField()
