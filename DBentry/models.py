@@ -1283,5 +1283,42 @@ class bestand(ShowModel):
                 self.bestand_art = fld_name
         super(bestand, self).save(force_insert, force_update, using, update_fields)
 
+    
+class datei(ShowModel):
+    
+    MEDIA_TYP_CHOICES = [('audio', 'Audio'), ('video', 'Video'), ('bild', 'Bild'), ('text', 'Text'), ('sonstige', 'Sonstige')]
+    
+    titel = models.CharField(**CF_ARGS)
+    media_typ = models.CharField(choices = MEDIA_TYP_CHOICES, verbose_name = 'Media Typ', default = 'audio', **CF_ARGS)
+    datei_media = models.FileField(verbose_name = 'Datei', blank = True,  null = True,
+            help_text = "Datei auf Datenbank-Server hoch- bzw herunterladen.") #Datei Media Server
+    datei_pfad = models.CharField(verbose_name = 'Datei-Pfad', 
+            help_text = "Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner.", **CF_ARGS_B)
+    provenienz = models.ForeignKey('provenienz', on_delete = models.SET_NULL, blank = True, null = True)
+    
+    # Allgemeine Beschreibung
+    beschreibung = models.TextField(blank = True)
+    datum = models.DateField(blank = True, null = True) #NOTE: Wird das nicht durch Veranstaltung abgedeckt?
+    bemerkungen = models.TextField(blank = True)
+    quelle = models.CharField(help_text = "z.B. Broadcast, Live, etc.", **CF_ARGS_B) # z.B. Broadcast, Live, etc.
+    sender = models.ForeignKey('sender', on_delete = models.SET_NULL, blank = True,  null = True)
+    
+    # Relationen
+    genre = models.ManyToManyField('genre', through = m2m_datei_genre)
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_datei_schlagwort)
+    person = models.ManyToManyField('person', through = m2m_datei_person)
+    band = models.ManyToManyField('band', through = m2m_datei_band)
+    musiker = models.ManyToManyField('musiker', through = m2m_datei_musiker)
+    ort = models.ManyToManyField('ort', through = m2m_datei_ort)
+    spielort = models.ManyToManyField('spielort', through = m2m_datei_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_datei_veranstaltung)
+    
+    class Meta:
+        verbose_name = 'Datei'
+        verbose_name_plural = 'Dateien'
+        
+    def __str__(self):
+        return str(self.titel)
+
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)

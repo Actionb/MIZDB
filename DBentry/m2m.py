@@ -354,3 +354,107 @@ class m2m_autor_magazin(m2mBase):
         verbose_name = 'Autor-Magazin'
         verbose_name_plural = 'Autor-Magazine'
     
+
+                                                # DATEI RELATIONEN
+    
+class m2m_datei_genre(m2mBase):
+    datei = models.ForeignKey('datei')
+    genre = models.ForeignKey('genre')
+    class Meta:
+        unique_together = ('datei', 'genre')
+        db_table = 'DBentry_datei_genre'
+        verbose_name = 'Datei-Genre'
+        verbose_name_plural = 'Datei-Genres'  
+        
+class m2m_datei_schlagwort(m2mBase):
+    datei = models.ForeignKey('datei')
+    schlagwort = models.ForeignKey('schlagwort')
+    class Meta:
+        unique_together = ('datei', 'schlagwort')
+        db_table = 'DBentry_datei_schlagwort'
+        verbose_name = 'Datei-Schlagwort'
+        verbose_name_plural = 'Datei-Schlagwörter'
+        
+class m2m_datei_person(m2mBase):
+    datei = models.ForeignKey('datei')
+    person = models.ForeignKey('person')
+    class Meta:
+        unique_together = ('datei', 'person')
+        db_table = 'DBentry_datei_person'
+        verbose_name = 'Datei-Person'
+        verbose_name_plural = 'Datei-Personen'
+        
+class m2m_datei_band(m2mBase):
+    datei = models.ForeignKey('datei')
+    band = models.ForeignKey('band')
+    class Meta:
+        unique_together = ('datei', 'band')
+        db_table = 'DBentry_datei_band'
+        verbose_name = 'Datei-Band'
+        verbose_name_plural = 'Datei-Bands'
+        
+class m2m_datei_musiker(m2mBase):
+    datei = models.ForeignKey('datei')
+    musiker = models.ForeignKey('musiker')
+    instrument = models.ManyToManyField('instrument', verbose_name = 'Instrumente')
+    class Meta:
+        unique_together = ('datei', 'musiker')
+        db_table = 'DBentry_datei_musiker'
+        verbose_name = 'Datei-Musiker'
+        verbose_name_plural = 'Datei-Musiker'
+        
+class m2m_datei_ort(m2mBase):
+    datei = models.ForeignKey('datei')
+    ort = models.ForeignKey('ort')
+    class Meta:
+        unique_together = ('datei', 'ort')
+        db_table = 'DBentry_datei_ort'
+        verbose_name = 'Datei-Ort'
+        verbose_name_plural = 'Datei-Orte'
+        
+class m2m_datei_spielort(m2mBase):
+    datei = models.ForeignKey('datei')
+    spielort = models.ForeignKey('spielort')
+    class Meta:
+        unique_together = ('datei', 'spielort')
+        db_table = 'DBentry_datei_spielort'
+        verbose_name = 'Datei-Spielort'
+        verbose_name_plural = 'Datei-Spielorte'
+        
+class m2m_datei_veranstaltung(m2mBase):
+    datei = models.ForeignKey('datei')
+    veranstaltung = models.ForeignKey('veranstaltung')
+    class Meta:
+        unique_together = ('datei', 'veranstaltung')
+        db_table = 'DBentry_datei_veranstaltung'
+        verbose_name = 'Datei-Veranstaltung'
+        verbose_name_plural = 'Datei-Veranstaltungen'
+        
+class m2m_datei_quelle(m2mBase):
+    datei = models.ForeignKey('datei')
+    audio = models.ForeignKey('audio', on_delete = models.SET_NULL, blank = True, null = True)
+    bildmaterial = models.ForeignKey('bildmaterial', on_delete = models.SET_NULL, blank = True, null = True)
+    buch = models.ForeignKey('buch', on_delete = models.SET_NULL, blank = True, null = True)
+    dokument = models.ForeignKey('dokument', on_delete = models.SET_NULL, blank = True, null = True)
+    memorabilien = models.ForeignKey('memorabilien', on_delete = models.SET_NULL, blank = True, null = True)
+    video = models.ForeignKey('video', on_delete = models.SET_NULL, blank = True, null = True)
+    class Meta:
+        db_table = 'DBentry_datei_quelle'
+        verbose_name = 'Datei-Quelle'
+        verbose_name_plural = 'Datei-Quellen'
+        
+    def get_quelle_art(self, as_field = True):
+        for fld in m2m_datei_quelle.get_foreignfields():
+            if fld.name != 'datei' and fld.value_from_object(self):
+                if as_field:
+                    return fld
+                else:
+                    return fld.name
+        return ''
+        
+    def __str__(self):
+        art = self.get_quelle_art()
+        if art:
+            return '{} ({})'.format(str(getattr(self, art.name)), art.related_model._meta.verbose_name)
+        else:
+            return super(m2m_datei_quelle, self).__str__()
