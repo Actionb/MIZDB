@@ -1019,7 +1019,7 @@ class instrument_alias(alias_base):
         
 class audio(ShowModel):
     titel = models.CharField(**CF_ARGS)
-    datum = models.DateField()
+    datum = models.DateField(blank = True,  null = True)
     
     tracks = models.IntegerField()
     laufzeit = models.DurationField()
