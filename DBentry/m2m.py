@@ -149,7 +149,52 @@ class m2m_artikel_ort(m2mBase):
         db_table = 'DBentry_artikel_ort'
         verbose_name = 'Artikel-Ort'
         verbose_name_plural = 'Artikel-Orte'
-    
+                                                
+class m2m_bildmaterial_ort(m2mBase):
+    bildmaterial = models.ForeignKey('bildmaterial', models.PROTECT)
+    ort = models.ForeignKey('ort', models.PROTECT)
+    class Meta:
+        unique_together = ('bildmaterial', 'ort')
+        db_table = 'DBentry_bildmaterial_ort'
+        verbose_name = 'Bildmaterial-Ort'
+        verbose_name_plural = 'Bildmaterial-Orte'
+                                                
+class m2m_buch_ort(m2mBase):
+    buch = models.ForeignKey('buch', models.PROTECT)
+    ort = models.ForeignKey('ort', models.PROTECT)
+    class Meta:
+        unique_together = ('buch', 'ort')
+        db_table = 'DBentry_buch_ort'
+        verbose_name = 'buch-Ort'
+        verbose_name_plural = 'buch-Orte'
+                                                
+class m2m_dokument_ort(m2mBase):
+    dokument = models.ForeignKey('dokument', models.PROTECT)
+    ort = models.ForeignKey('ort', models.PROTECT)
+    class Meta:
+        unique_together = ('dokument', 'ort')
+        db_table = 'DBentry_dokument_ort'
+        verbose_name = 'dokument-Ort'
+        verbose_name_plural = 'dokument-Orte'
+                                                
+class m2m_memorabilien_ort(m2mBase):
+    memorabilien = models.ForeignKey('memorabilien', models.PROTECT)
+    ort = models.ForeignKey('ort', models.PROTECT)
+    class Meta:
+        unique_together = ('memorabilien', 'ort')
+        db_table = 'DBentry_memorabilien_ort'
+        verbose_name = 'memorabilien-Ort'
+        verbose_name_plural = 'memorabilien-Orte'
+                                                
+class m2m_video_ort(m2mBase):
+    video = models.ForeignKey('video', models.PROTECT)
+    ort = models.ForeignKey('ort', models.PROTECT)
+    class Meta:
+        unique_together = ('video', 'ort')
+        db_table = 'DBentry_video_ort'
+        verbose_name = 'Video-Ort'
+        verbose_name_plural = 'Video-Orte'
+        
                                                 # SPIELORTE
         
 class m2m_audio_spielort(m2mBase):
