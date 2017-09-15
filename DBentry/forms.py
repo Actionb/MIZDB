@@ -98,7 +98,10 @@ WIDGETS = {
             
             #WIP
 #            'format' : autocomplete.ModelSelect2(url='acformat'), 
-#            'plattenfirma' : autocomplete.ModelSelect2(url='aclabel'), 
+            'plattenfirma' : autocomplete.ModelSelect2(url='aclabel'), 
+            'format_typ' : autocomplete.ModelSelect2(url='acformat_typ'), 
+            'format_size' : autocomplete.ModelSelect2(url='acformat_size'), 
+            'noise_red' : autocomplete.ModelSelect2(url='acnoisered'), 
             
 }
 
