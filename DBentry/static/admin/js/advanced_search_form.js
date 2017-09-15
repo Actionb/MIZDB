@@ -33,7 +33,7 @@ $('form#adv-changelist-search').submit(function() {
 
 $(".hide-adv-sf").click(function(){
     $("#adv-sf").toggle();
-
 });
+
 
 });

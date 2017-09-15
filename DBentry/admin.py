@@ -96,11 +96,17 @@ class ModelBase(admin.ModelAdmin):
             new_extra['crosslinks'].append( dict(link=link, label=label) )
         
         return new_extra
+        
+    def add_view(self, request, form_url='', extra_context=None):
+        new_extra = extra_context or {}
+        new_extra['collapse_all'] = self.collapse_all
+        return self.changeform_view(request, None, form_url, new_extra)
     
     def change_view(self, request, object_id, form_url='', extra_context=None):
         new_extra = extra_context or {}
         new_extra.update(self.add_crosslinks(object_id))
-        return super(ModelBase, self).change_view(request, object_id, form_url, new_extra   )
+        new_extra['collapse_all'] = self.collapse_all
+        return super(ModelBase, self).change_view(request, object_id, form_url, new_extra)
         
     def lookup_allowed(self, key, value):
         if self.has_adv_sf():
