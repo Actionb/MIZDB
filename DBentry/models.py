@@ -1006,7 +1006,7 @@ class buch(ShowModel):
 
 class instrument(ShowModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
-    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS_B)
+    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS)
     
     primary_fields = ['instrument', 'kuerzel']
     
