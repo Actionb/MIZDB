@@ -61,7 +61,7 @@ class ShowModel(models.Model):
             return cls.get_basefields(as_string=True)
     
     @classmethod
-    def get_search_fields(cls, foreign=True, m2m=True, reevaluate=False):
+    def get_search_fields(cls, foreign=False, m2m=False, reevaluate=False):
         if cls.search_fields and not reevaluate:
             return cls.search_fields
         rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True))
@@ -75,6 +75,7 @@ class ShowModel(models.Model):
                     rslt.add("{}__{}".format(fld.name, rel_fld))
         return rslt
     
+    # TODO: scrap this
     @classmethod
     def resolve_search_fields(cls, fieldlist):
         search_fields = cls.get_search_fields()
@@ -250,6 +251,7 @@ class band(ShowModel):
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
     beschreibung = models.TextField(blank = True)
     
+    primary_fields = ['band_name']
     exclude = [beschreibung]
     dupe_fields = ['band_name', 'herkunft_id']
 #    search_fields = ['band_name', 'herkunft__stadt', 'herkunft__land__land_name',

@@ -17,13 +17,12 @@ class ModelBase(admin.ModelAdmin):
     def __init__(self, *args, **kwargs):
         super(ModelBase, self).__init__(*args, **kwargs)
         self.form = makeForm(self.model)
-        if not self.search_fields:
-            self.search_fields = list(self.model.get_search_fields())
         
     search_fields_redirect = dict()
     flds_to_group = []
     crosslinks = []
     gogglebtns = []
+    collapse_all = False
     
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
@@ -489,6 +488,7 @@ class BandAdmin(ModelBase):
         #verbose_model = musiker
     class AliasInLine(AliasTabBase):
         model = band_alias
+    search_fields = ['band_name']
     save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
     exclude = ['genre', 'musiker']
