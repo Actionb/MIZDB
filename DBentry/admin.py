@@ -167,7 +167,7 @@ class TabModelBase(admin.TabularInline):
     original = False
     verbose_model = None
     extra = 1
-    #classes = ['collapse']
+    classes = ['collapse']
     def __init__(self, *args, **kwargs):
         super(TabModelBase, self).__init__(*args, **kwargs)
         self.form = makeForm(model = self.model)
@@ -179,7 +179,7 @@ class StackModelBase(admin.StackedInline):
     original = False
     verbose_model = None
     extra = 1
-    #classes = ['collapse']
+    classes = ['collapse']
     def __init__(self, *args, **kwargs):
         super(StackModelBase, self).__init__(*args, **kwargs)
         self.form = makeForm(model = self.model)
