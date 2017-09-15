@@ -204,29 +204,33 @@ class DateiInLine(TabModelBase):
     model = m2m_datei_quelle
     verbose_model = datei
     fields = ['datei']
-    
-class QuelleInLine(admin.StackedInline):
-    original = False
+
+class QuelleInLine(StackModelBase):
     extra = 0
     model = m2m_datei_quelle
-    form = makeForm(m2m_datei_quelle)
     description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
+    
+
 
     
 @admin.register(audio)
 class AudioAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = audio.genre.through
-        extra = 1
     class SchlInLine(SchlagwortModelBase):
         model = audio.schlagwort.through
-        extra = 1
     class PersonInLine(TabModelBase):
         model = audio.person.through
         verbose_model = person
-    class MusikerInLine(TabModelBase):
+    class MusikerInLine(StackModelBase):
         model = audio.musiker.through
         verbose_model = musiker
+        extra = 0
+        filter_horizontal = ['instrument']
+        fieldsets = [
+            (None, {'fields' : ['musiker']}), 
+            ("Instrumente", {'fields' : ['instrument'], 'classes' : ['collapse', 'collapsed']}), 
+        ]
     class BandInLine(TabModelBase):
         model = audio.band.through
         verbose_model = band
@@ -236,9 +240,30 @@ class AudioAdmin(ModelBase):
     class VeranstaltungInLine(TabModelBase):
         model = audio.veranstaltung.through
         verbose_model = veranstaltung
-    class BestandInLine(BestandModelBase):
-        pass
-    inlines = [DateiInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
+    class FormatInLine(StackModelBase):
+        model = Format
+        extra = 0
+        filter_horizontal = ['tag']
+        fieldsets = [
+            (None, {'fields' : ['anzahl', 'format_typ', 'format_size', 'catalog_nr', 'tape', 'channel', 'noise_red']}), 
+            ('Tags', {'fields' : ['tag'], 'classes' : ['collapse', 'collapsed']}), 
+            ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
+        ]
+    class OrtInLine(TabModelBase):
+        model = audio.ort.through
+        verbose_model = ort
+    class PlattenInLine(TabModelBase):
+        model = audio.plattenfirma.through
+        verbose_model = plattenfirma
+    inlines = [PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine, GenreInLine, SchlInLine, 
+            VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine]
+    fieldsets = [
+        (None, {'fields' : ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender']}), 
+        ('Discogs', {'fields' : ['release_id', 'discogs_url'], 'classes' : ['collapse', 'collapsed']}), 
+        ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']})
+    ]
+    save_on_top = True
+    collapse_all = True
 
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
@@ -716,6 +741,9 @@ class DateiAdmin(ModelBase):
         (None, { 'fields': ['titel', 'media_typ', 'datei_media', 'datei_pfad', 'provenienz']}),
         ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'datum', 'quelle', 'sender', 'bemerkungen']}),  
     ]
+    save_on_top = True
 
 # Register your models here.
 admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache ])
+
+admin.site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
