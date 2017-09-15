@@ -1284,7 +1284,7 @@ class bestand(ShowModel):
         
     def bestand_objekt(self):
         #TODO: WIP create a template just for bestand changeform so we can display the object in question as a link
-        art = self.bestand_art(as_field = True)
+        #art = self.bestand_art(as_field = True)
         objekt = art.value_from_object(self)
         
     def ausgabe_magazin(self):
