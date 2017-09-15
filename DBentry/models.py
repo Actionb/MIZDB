@@ -1028,13 +1028,13 @@ class audio(ShowModel):
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     sender = models.ForeignKey('sender',  blank = True,  null = True, help_text = 'Name des Radio-/Fernsehsenders')
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
-    plattenfirma = models.ManyToManyField('plattenfirma', through = m2m_audio_plattenfirma)
     
     release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)")      #discogs release id (discogs.com/release/1709793)
     discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True)
     
     bemerkungen = models.TextField(blank = True)
     
+    plattenfirma = models.ManyToManyField('plattenfirma', through = m2m_audio_plattenfirma)
     band = models.ManyToManyField('band', through = m2m_audio_band)
     genre = models.ManyToManyField('genre', through = m2m_audio_genre)
     musiker = models.ManyToManyField('musiker', through = m2m_audio_musiker)
@@ -1392,8 +1392,9 @@ class FormatTag(ShowModel):
         return str(self.tag)
         
     class Meta:
-        verbose_name = 'Tag'
-        verbose_name_plural = 'Tags'
+        ordering = ['tag']
+        verbose_name = 'Format-Tag'
+        verbose_name_plural = 'Format-Tags'
     
 class FormatSize(ShowModel):
     size = models.CharField(**CF_ARGS)
@@ -1404,6 +1405,11 @@ class FormatTyp(ShowModel):
 
 class plattenfirma(ShowModel):
     name = models.CharField(**CF_ARGS)
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Plattenfirma'
+        verbose_name_plural = 'Plattenfirmen'
 
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)
