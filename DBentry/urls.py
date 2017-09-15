@@ -49,7 +49,7 @@ wip = [
     url(r'^format_typ/$',   ACBase.as_view(model=FormatTyp, create_field = 'typ'),              name="acformat_typ"), 
     url(r'^format_size/$',  ACBase.as_view(model=FormatSize, create_field = 'size'),            name="acformat_size"),
     url(r'^noise_red/$',    ACBase.as_view(model=NoiseRed, create_field='verfahren'),           name="acnoisered"),  
-    url(r'^label/$',        ACBase.as_view(model=PlattenFirma, create_field='name'),            name="aclabel"), 
+    url(r'^label/$',        ACBase.as_view(model=plattenfirma, create_field='name'),            name="aclabel"), 
 ]
 
 autocomplete_patterns += wip
