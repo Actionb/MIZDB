@@ -200,3 +200,8 @@ def split_name(name):
             n = None
     return v, n
 
+def dict_to_tuple(d):
+    return [(k, v) for k, v in d]
+    
+def tuple_to_dict(t):
+    return {k:v for k, v in t}
