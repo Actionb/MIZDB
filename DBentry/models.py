@@ -1006,7 +1006,7 @@ class buch(ShowModel):
 
 class instrument(ShowModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
-    kuerzel = models.CharField(**CF_ARGS_B)
+    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS)
     
     primary_fields = ['instrument', 'kuerzel']
     
@@ -1019,13 +1019,32 @@ class instrument_alias(alias_base):
         
 class audio(ShowModel):
     titel = models.CharField(**CF_ARGS)
-    tracks = models.IntegerField()
-    laufzeit = models.DurationField()
-    festplatte = models.CharField(**CF_ARGS_B)
-    quelle = models.CharField(**CF_ARGS_B)
-    sender = models.ForeignKey('sender',  blank = True,  null = True)
+    
+    tracks = models.IntegerField(verbose_name = 'Anz. Tracks', blank = True, null = True)
+    laufzeit = models.DurationField(blank = True, null = True)
+    e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
+    quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
+    sender = models.ForeignKey('sender',  blank = True,  null = True, help_text = 'Name des Radio-/Fernsehsenders')
+    catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
+    plattenfirma = models.ManyToManyField('plattenfirma', through = m2m_audio_plattenfirma)
+    
+    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)")      #discogs release id (discogs.com/release/1709793)
+    discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True)
+    
+    bemerkungen = models.TextField(blank = True)
+    
+    band = models.ManyToManyField('band', through = m2m_audio_band)
+    genre = models.ManyToManyField('genre', through = m2m_audio_genre)
+    musiker = models.ManyToManyField('musiker', through = m2m_audio_musiker)
+    person = models.ManyToManyField('person', through = m2m_audio_person)
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_audio_schlagwort)
+    spielort = models.ManyToManyField('spielort', through = m2m_audio_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_audio_veranstaltung)
+    ort = models.ManyToManyField('ort', through = m2m_audio_ort)
+    
     
     primary_fields = ['titel']
+    
     
     class Meta:
         verbose_name = 'Audio Material'
@@ -1033,6 +1052,13 @@ class audio(ShowModel):
         
     def __str__(self):
         return str(self.titel)
+        
+    def save(self, *args, **kwargs):
+        if self.release_id:
+            self.discogs_url = "http://www.discogs.com/release/" + str(self.release_id)
+        else:
+            self.discogs_url = None
+        super(audio, self).save(*args, **kwargs)
     
     
 class bildmaterial(ShowModel):
@@ -1159,6 +1185,14 @@ class video(ShowModel):
     quelle = models.CharField(**CF_ARGS_B)
     sender = models.ForeignKey('sender')
     
+    band = models.ManyToManyField('band', through = m2m_video_band)
+    genre = models.ManyToManyField('genre', through = m2m_video_genre)
+    musiker = models.ManyToManyField('musiker', through = m2m_video_musiker)
+    person = models.ManyToManyField('person', through = m2m_video_person)
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_video_schlagwort)
+    spielort = models.ManyToManyField('spielort', through = m2m_video_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_video_veranstaltung)
+    
     primary_fields = ['titel']
     
     class Meta:
@@ -1263,6 +1297,111 @@ class bestand(ShowModel):
             if getattr(self, fld_name):
                 self.bestand_art = fld_name
         super(bestand, self).save(force_insert, force_update, using, update_fields)
+
+    
+class datei(ShowModel):
+    
+    MEDIA_TYP_CHOICES = [('audio', 'Audio'), ('video', 'Video'), ('bild', 'Bild'), ('text', 'Text'), ('sonstige', 'Sonstige')]
+    
+    titel = models.CharField(**CF_ARGS)
+    media_typ = models.CharField(choices = MEDIA_TYP_CHOICES, verbose_name = 'Media Typ', default = 'audio', **CF_ARGS)
+    datei_media = models.FileField(verbose_name = 'Datei', blank = True,  null = True,
+            help_text = "Datei auf Datenbank-Server hoch- bzw herunterladen.") #Datei Media Server
+    datei_pfad = models.CharField(verbose_name = 'Datei-Pfad', 
+            help_text = "Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner.", **CF_ARGS_B)
+    provenienz = models.ForeignKey('provenienz', on_delete = models.SET_NULL, blank = True, null = True)
+    
+    # Allgemeine Beschreibung
+    beschreibung = models.TextField(blank = True)
+    datum = models.DateField(blank = True, null = True) #NOTE: Wird das nicht durch Veranstaltung abgedeckt?
+    bemerkungen = models.TextField(blank = True)
+    quelle = models.CharField(help_text = "z.B. Broadcast, Live, etc.", **CF_ARGS_B) # z.B. Broadcast, Live, etc.
+    sender = models.ForeignKey('sender', on_delete = models.SET_NULL, blank = True,  null = True)
+    
+    # Relationen
+    genre = models.ManyToManyField('genre', through = m2m_datei_genre)
+    schlagwort = models.ManyToManyField('schlagwort', through = m2m_datei_schlagwort)
+    person = models.ManyToManyField('person', through = m2m_datei_person)
+    band = models.ManyToManyField('band', through = m2m_datei_band)
+    musiker = models.ManyToManyField('musiker', through = m2m_datei_musiker)
+    ort = models.ManyToManyField('ort', through = m2m_datei_ort)
+    spielort = models.ManyToManyField('spielort', through = m2m_datei_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_datei_veranstaltung)
+    
+    class Meta:
+        verbose_name = 'Datei'
+        verbose_name_plural = 'Dateien'
+        
+    def __str__(self):
+        return str(self.titel)
+
+  
+class Format(ShowModel):
+    CHANNEL_CHOICES = [('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quadraphonic', 'Quadraphonic'), 
+                        ('Ambisonic', 'Ambisonic'), ('Multichannel', 'Multichannel')]
+    
+    format_name = models.CharField(editable = False, **CF_ARGS_B)
+    anzahl = models.PositiveSmallIntegerField(default = 1)
+    format_typ = models.ForeignKey('FormatTyp', verbose_name = 'Format Typ')
+    format_size = models.ForeignKey('FormatSize', verbose_name = 'Format Größe', help_text = 'LP, 12", Mini-Disc, etc.', blank = True,  null = True)
+    catalog_nr = models.CharField(verbose_name = "Katalog Nummer", **CF_ARGS_B) 
+    tape = models.CharField(**CF_ARGS_B)
+    
+    channel = models.CharField(choices = CHANNEL_CHOICES, **CF_ARGS_B)
+    noise_red = models.ForeignKey('NoiseRed', verbose_name = 'Noise Reduction', on_delete = models.SET_NULL, blank = True, null = True)
+    tag = models.ManyToManyField('FormatTag', verbose_name = 'Tags', blank = True) 
+    audio = models.ForeignKey('audio')
+    
+    bemerkungen = models.TextField(blank = True)
+    
+    class Meta:
+        verbose_name = 'Format'
+        verbose_name_plural = 'Formate'
+        
+    def get_name(self):
+        format_string = "{qty}{format}{tags}{channel}"
+        return format_string.format(**{
+            'qty' : str(self.anzahl)+'x' if self.anzahl > 1 else '', 
+            'format' : str(self.format_size) if self.format_size else str(self.format_typ), 
+            'tags' : ", " + concat_limit(self.tag.all()) if self.tag.exists() else '', 
+            'channel' : ", " + self.channel if self.channel else ''
+        }).strip()
+                
+    def __str__(self):
+        if self.format_name:
+            return self.format_name
+        else: 
+            return self.get_name()
+        
+    def save(self, *args, **kwargs):
+        if self.pk:
+            # Change name whenever we update an instance
+            self.format_name = self.get_name()    
+        super(Format, self).save(*args, **kwargs)
+        
+class NoiseRed(ShowModel):
+    verfahren = models.CharField(**CF_ARGS)
+
+class FormatTag(ShowModel):
+    tag = models.CharField(**CF_ARGS)
+    abk = models.CharField(verbose_name = 'Abkürzung', **CF_ARGS_B)
+    
+    def __str__(self):
+        return str(self.tag)
+        
+    class Meta:
+        verbose_name = 'Tag'
+        verbose_name_plural = 'Tags'
+    
+class FormatSize(ShowModel):
+    size = models.CharField(**CF_ARGS)
+    
+class FormatTyp(ShowModel):
+    """ Art des Formats (Vinyl, DVD, Cassette, etc) """
+    typ = models.CharField(**CF_ARGS)
+
+class plattenfirma(ShowModel):
+    name = models.CharField(**CF_ARGS)
 
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)

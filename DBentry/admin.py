@@ -139,6 +139,13 @@ class ModelBase(admin.ModelAdmin):
                     filter_dict[k] = v
         initial.update(filter_dict)
         return initial
+        
+    def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
+        # Add a description to each formset
+        inline_admin_formsets = super(ModelBase, self).get_inline_formsets(request, formsets, inline_instances, obj)
+        for formset in inline_admin_formsets:
+            formset.description = getattr(formset.opts, 'description', '')
+        return inline_admin_formsets
 
     def merge_records(self, request, queryset):
         if queryset.count() == 1:
@@ -155,8 +162,21 @@ class TabModelBase(admin.TabularInline):
     original = False
     verbose_model = None
     extra = 1
+    #classes = ['collapse']
     def __init__(self, *args, **kwargs):
         super(TabModelBase, self).__init__(*args, **kwargs)
+        self.form = makeForm(model = self.model)
+        if self.verbose_model:
+            self.verbose_name = self.verbose_model._meta.verbose_name
+            self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
+            
+class StackModelBase(admin.StackedInline):
+    original = False
+    verbose_model = None
+    extra = 1
+    #classes = ['collapse']
+    def __init__(self, *args, **kwargs):
+        super(StackModelBase, self).__init__(*args, **kwargs)
         self.form = makeForm(model = self.model)
         if self.verbose_model:
             self.verbose_name = self.verbose_model._meta.verbose_name
@@ -165,7 +185,7 @@ class TabModelBase(admin.TabularInline):
 class AliasTabBase(TabModelBase):
     verbose_name_plural = 'Alias'
     
-class BestandModelBase(TabModelBase):
+class BestandInLine(TabModelBase):
     model = bestand
     readonly_fields = ['signatur']
     fields = ['signatur', 'lagerort', 'provenienz']
@@ -173,19 +193,79 @@ class BestandModelBase(TabModelBase):
     verbose_name_plural = bestand._meta.verbose_name_plural
     
 class GenreModelBase(TabModelBase):
+    extra = 1
     verbose_name = genre._meta.verbose_name
     verbose_name_plural = genre._meta.verbose_name_plural
     
 class SchlagwortModelBase(TabModelBase):
+    extra = 1
     verbose_name = schlagwort._meta.verbose_name
     verbose_name_plural = schlagwort._meta.verbose_name_plural
     
+class DateiInLine(TabModelBase):
+    model = m2m_datei_quelle
+    verbose_model = datei
+    fields = ['datei']
+
+class QuelleInLine(StackModelBase):
+    extra = 0
+    model = m2m_datei_quelle
+    description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
+    
+
+
     
 @admin.register(audio)
 class AudioAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
-    infields = [BestandInLine]
+    class GenreInLine(GenreModelBase):
+        model = audio.genre.through
+    class SchlInLine(SchlagwortModelBase):
+        model = audio.schlagwort.through
+    class PersonInLine(TabModelBase):
+        model = audio.person.through
+        verbose_model = person
+    class MusikerInLine(StackModelBase):
+        model = audio.musiker.through
+        verbose_model = musiker
+        extra = 0
+        filter_horizontal = ['instrument']
+        fieldsets = [
+            (None, {'fields' : ['musiker']}), 
+            ("Instrumente", {'fields' : ['instrument'], 'classes' : ['collapse', 'collapsed']}), 
+        ]
+    class BandInLine(TabModelBase):
+        model = audio.band.through
+        verbose_model = band
+    class SpielortInLine(TabModelBase):
+        model = audio.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(TabModelBase):
+        model = audio.veranstaltung.through
+        verbose_model = veranstaltung
+    class FormatInLine(StackModelBase):
+        model = Format
+        extra = 0
+        filter_horizontal = ['tag']
+        fieldsets = [
+            (None, {'fields' : ['anzahl', 'format_typ', 'format_size', 'catalog_nr', 'tape', 'channel', 'noise_red']}), 
+            ('Tags', {'fields' : ['tag'], 'classes' : ['collapse', 'collapsed']}), 
+            ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
+        ]
+    class OrtInLine(TabModelBase):
+        model = audio.ort.through
+        verbose_model = ort
+    class PlattenInLine(TabModelBase):
+        model = audio.plattenfirma.through
+        verbose_model = plattenfirma
+    inlines = [PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine, GenreInLine, SchlInLine, 
+            VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine]
+    fieldsets = [
+        (None, {'fields' : ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender']}), 
+        ('Discogs', {'fields' : ['release_id', 'discogs_url'], 'classes' : ['collapse', 'collapsed']}), 
+        ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']})
+    ]
+    save_on_top = True
+    collapse_all = True
 
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
@@ -221,8 +301,6 @@ class AusgabenAdmin(ModelBase):
         model = ausgabe_jahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
-    class BestandInLine(BestandModelBase):
-        pass
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine,  ]
     flds_to_group = [('status', 'sonderausgabe')]
     
@@ -351,10 +429,8 @@ class AutorAdmin(ModelBase):
 class ArtikelAdmin(ModelBase):  
     class GenreInLine(GenreModelBase):
         model = artikel.genre.through
-        extra = 1
     class SchlInLine(SchlagwortModelBase):
         model = artikel.schlagwort.through
-        extra = 1
     class PersonInLine(TabModelBase):
         model = artikel.person.through
         verbose_model = person
@@ -429,8 +505,6 @@ class BandAdmin(ModelBase):
     
 @admin.register(bildmaterial)
 class BildmaterialAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     pass
     
 @admin.register(buch)
@@ -438,8 +512,6 @@ class BuchAdmin(ModelBase):
     class AutorInLine(TabModelBase):
         model = buch.autor.through
         verbose_model = autor
-    class BestandInLine(BestandModelBase):
-        pass
     save_on_top = True
     inlines = [AutorInLine, BestandInLine]
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
@@ -447,8 +519,6 @@ class BuchAdmin(ModelBase):
     
 @admin.register(dokument)
 class DokumentAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     infields = [BestandInLine]
     
 @admin.register(genre)
@@ -480,8 +550,6 @@ class MagazinAdmin(ModelBase):
 
 @admin.register(memorabilien)
 class MemoAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     infields = [BestandInLine]
 
 @admin.register(musiker)
@@ -546,8 +614,6 @@ class SpielortAdmin(ModelBase):
     
 @admin.register(technik)
 class TechnikAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     infields = [BestandInLine]
 
 @admin.register(veranstaltung)
@@ -577,9 +643,26 @@ class VerlagAdmin(ModelBase):
         
 @admin.register(video)
 class VideoAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
-    infields = [BestandInLine]
+    class GenreInLine(GenreModelBase):
+        model = video.genre.through
+    class SchlInLine(SchlagwortModelBase):
+        model = video.schlagwort.through
+    class PersonInLine(TabModelBase):
+        model = video.person.through
+        verbose_model = person
+    class MusikerInLine(TabModelBase):
+        model = video.musiker.through
+        verbose_model = musiker
+    class BandInLine(TabModelBase):
+        model = video.band.through
+        verbose_model = band
+    class SpielortInLine(TabModelBase):
+        model = video.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(TabModelBase):
+        model = video.veranstaltung.through
+        verbose_model = veranstaltung
+    inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
         
 # ======================================================== Orte ========================================================
 
@@ -626,7 +709,37 @@ class BestandAdmin(ModelBase):
 @admin.register(provenienz)
 class ProvAdmin(ModelBase):   
     pass
-    
-# Register your models here.
-admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache,  ])
+      
+@admin.register(datei)
+class DateiAdmin(ModelBase):
+    class GenreInLine(GenreModelBase):
+        model = datei.genre.through
+    class SchlInLine(SchlagwortModelBase):
+        model = datei.schlagwort.through
+    class PersonInLine(TabModelBase):
+        model = datei.person.through
+        verbose_model = person
+    class MusikerInLine(StackModelBase):
+        model = datei.musiker.through
+        verbose_model = musiker
+        filter_horizontal = ['instrument']
+    class BandInLine(TabModelBase):
+        model = datei.band.through
+        verbose_model = band
+    class SpielortInLine(TabModelBase):
+        model = datei.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(TabModelBase):
+        model = datei.veranstaltung.through
+        verbose_model = veranstaltung
+    inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
+    fieldsets = [
+        (None, { 'fields': ['titel', 'media_typ', 'datei_media', 'datei_pfad', 'provenienz']}),
+        ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'datum', 'quelle', 'sender', 'bemerkungen']}),  
+    ]
+    save_on_top = True
 
+# Register your models here.
+admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache ])
+
+admin.site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])

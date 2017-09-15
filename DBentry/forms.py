@@ -1,15 +1,23 @@
 from django import forms
-from django.forms import modelform_factory, Textarea
+from django.forms import modelform_factory, Textarea, CheckboxSelectMultiple
 
 from .models import *
 from .constants import *
 
 from dal import autocomplete
 
-WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'), 
-            'genre' : autocomplete.ModelSelect2(url='acgenre'),  
-            'schlagwort' : autocomplete.ModelSelect2(url='acschlagwort'), 
-            'autor' : autocomplete.ModelSelect2(url='acautor'), 
+WIDGETS = {
+            'audio'         :   autocomplete.ModelSelect2(url='acaudio'),
+            'autor'         :   autocomplete.ModelSelect2(url='acautor'), 
+            'bildmaterial'  :   autocomplete.ModelSelect2(url='acbildmaterial'), 
+            'buch'          :   autocomplete.ModelSelect2(url='acbuch'), 
+            'datei'         :   autocomplete.ModelSelect2(url='acdatei'), 
+            'dokument'      :   autocomplete.ModelSelect2(url='acdokument'),  
+            'genre'         :   autocomplete.ModelSelect2(url='acgenre'),  
+            'memorabilien'  :   autocomplete.ModelSelect2(url='acmemorabilien'),
+            'person'        :   autocomplete.ModelSelect2(url='acperson'),
+            'schlagwort'    :   autocomplete.ModelSelect2(url='acschlagwort'),  
+            'video'         :   autocomplete.ModelSelect2(url='acvideo'),
             
             
             
@@ -22,8 +30,9 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
             # Ausgaben
             'magazin' : autocomplete.ModelSelect2(url='acmagazin'),
             
-            # Band
-            'musiker' : autocomplete.ModelSelect2(url='acmusiker'),
+            # Band 
+            #TODO: make this widget smaller, so the instruments fit properly... somehow
+            'musiker' : autocomplete.ModelSelect2(url='acmusiker', attrs={'width':'10%'}), 
             
             # Bestand
             bestand : {
@@ -82,10 +91,17 @@ WIDGETS = { 'person' : autocomplete.ModelSelect2(url='acperson'),
                 'ober' : autocomplete.ModelSelect2(url='acschlagwort'),  
             }, 
             # Sonstige 
-            'sender'        : autocomplete.ModelSelect2(url='acsender'), 
-            'beschreibung'  : Textarea(attrs=ATTRS_TEXTAREA), 
-            'info'          : Textarea(attrs=ATTRS_TEXTAREA), 
+            'sender'        :   autocomplete.ModelSelect2(url='acsender'),  
+            'bemerkungen'   :   Textarea(attrs=ATTRS_TEXTAREA), 
+            'beschreibung'  :   Textarea(attrs=ATTRS_TEXTAREA), 
+            'info'          :   Textarea(attrs=ATTRS_TEXTAREA), 
             
+            #WIP
+#            'format' : autocomplete.ModelSelect2(url='acformat'), 
+            'plattenfirma' : autocomplete.ModelSelect2(url='aclabel'), 
+            'format_typ' : autocomplete.ModelSelect2(url='acformat_typ'), 
+            'format_size' : autocomplete.ModelSelect2(url='acformat_size'), 
+            'noise_red' : autocomplete.ModelSelect2(url='acnoisered'), 
             
 }
 
