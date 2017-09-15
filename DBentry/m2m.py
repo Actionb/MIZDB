@@ -132,6 +132,15 @@ class m2m_video_schlagwort(m2mBase):
     
                                                 # ORTE
                                                 
+class m2m_audio_ort(m2mBase):
+    audio = models.ForeignKey('audio', models.PROTECT)
+    ort = models.ForeignKey('ort', models.PROTECT)
+    class Meta:
+        unique_together = ('audio', 'ort')
+        db_table = 'DBentry_audio_ort'
+        verbose_name = 'Audio-Ort'
+        verbose_name_plural = 'Audio-Orte'
+                                                
 class m2m_artikel_ort(m2mBase):
     artikel = models.ForeignKey('artikel', models.PROTECT)
     ort = models.ForeignKey('ort', models.PROTECT)
@@ -262,6 +271,7 @@ class m2m_buch_autor(m2mBase):
 class m2m_audio_musiker(m2mBase):
     audio = models.ForeignKey('audio', models.PROTECT)
     musiker = models.ForeignKey('musiker', models.PROTECT)
+    instrument = models.ManyToManyField('instrument', verbose_name = 'Instrumente', blank = True)
     class Meta:
         unique_together = ('audio', 'musiker')
         db_table = 'DBentry_audio_musiker'
@@ -396,12 +406,18 @@ class m2m_datei_band(m2mBase):
 class m2m_datei_musiker(m2mBase):
     datei = models.ForeignKey('datei')
     musiker = models.ForeignKey('musiker')
-    instrument = models.ManyToManyField('instrument', verbose_name = 'Instrumente')
+    instrument = models.ManyToManyField('instrument', verbose_name = 'Instrumente', blank = True)
     class Meta:
         unique_together = ('datei', 'musiker')
         db_table = 'DBentry_datei_musiker'
         verbose_name = 'Datei-Musiker'
         verbose_name_plural = 'Datei-Musiker'
+        
+    def __str__(self):
+        if self.instrument.exists():
+            instr = ",".join([str(i.kuerzel) for i in self.instrument.all()])
+            return "{} ({})".format(str(getattr(self, 'musiker')), instr)
+        return str(getattr(self, 'musiker'))
         
 class m2m_datei_ort(m2mBase):
     datei = models.ForeignKey('datei')
@@ -458,3 +474,11 @@ class m2m_datei_quelle(m2mBase):
             return '{} ({})'.format(str(getattr(self, art.name)), art.related_model._meta.verbose_name)
         else:
             return super(m2m_datei_quelle, self).__str__()
+
+class m2m_audio_plattenfirma(m2mBase):
+    audio = models.ForeignKey('audio')
+    plattenfirma = models.ForeignKey('plattenfirma')
+    class Meta:
+        db_table = 'DBentry_audio_plattenfirma'
+        verbose_name = 'Audio-Plattenfirma'
+        verbose_name_plural = 'Audio-Plattenfirmen'
