@@ -482,3 +482,12 @@ class m2m_audio_plattenfirma(m2mBase):
         db_table = 'DBentry_audio_plattenfirma'
         verbose_name = 'Audio-Plattenfirma'
         verbose_name_plural = 'Audio-Plattenfirmen'
+
+class m2m_audio_format(m2mBase):
+    audio = models.ForeignKey('audio')
+    format = models.ForeignKey('format')
+    class Meta:
+        unique_together = ('audio', 'format')
+        db_table = 'DBentry_audio_format'
+        verbose_name = 'Audio-Format'
+        verbose_name_plural = 'Audio-Formate'
