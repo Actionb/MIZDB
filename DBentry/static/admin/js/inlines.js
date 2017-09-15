@@ -65,6 +65,13 @@
                 row.removeClass(options.emptyCssClass)
                 .addClass(options.formCssClass)
                 .attr("id", options.prefix + "-" + nextIndex);
+                
+                //EDIT: remove collapsed class from the fieldset 
+                var fs = row.children("fieldset").first();
+                if(fs.hasClass('collapsed')){
+                    fs.removeClass('collapsed');
+                }
+                
                 if (row.is("tr")) {
                     // If the forms are laid out in table rows, insert
                     // the remove button into the last table cell:
