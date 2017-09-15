@@ -53,6 +53,8 @@ def split_MuBa():
     splitlog.close()
     musiker.write('ExportData/musiker.xml')
     bands.write('ExportData/bands.xml')
+
+    
     
 class MIZReader(object):
     
@@ -146,9 +148,9 @@ class MIZReader(object):
             'alias' : 'alias', 
             'ID' : 'parent_id'
         },
-        band.mitglieder.through : {
+        band.musiker.through : {
             'ID' : 'band_id', 
-            'mitglieder' : 'mitglieder', 
+            'mitglieder' : 'musiker', 
         }, 
         band.genre.through : {
             'artist_ID' : 'band_id', 
