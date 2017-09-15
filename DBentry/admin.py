@@ -193,10 +193,12 @@ class BestandInLine(TabModelBase):
     verbose_name_plural = bestand._meta.verbose_name_plural
     
 class GenreModelBase(TabModelBase):
+    extra = 1
     verbose_name = genre._meta.verbose_name
     verbose_name_plural = genre._meta.verbose_name_plural
     
 class SchlagwortModelBase(TabModelBase):
+    extra = 1
     verbose_name = schlagwort._meta.verbose_name
     verbose_name_plural = schlagwort._meta.verbose_name_plural
     
@@ -427,10 +429,8 @@ class AutorAdmin(ModelBase):
 class ArtikelAdmin(ModelBase):  
     class GenreInLine(GenreModelBase):
         model = artikel.genre.through
-        extra = 1
     class SchlInLine(SchlagwortModelBase):
         model = artikel.schlagwort.through
-        extra = 1
     class PersonInLine(TabModelBase):
         model = artikel.person.through
         verbose_model = person
@@ -645,10 +645,8 @@ class VerlagAdmin(ModelBase):
 class VideoAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = video.genre.through
-        extra = 1
     class SchlInLine(SchlagwortModelBase):
         model = video.schlagwort.through
-        extra = 1
     class PersonInLine(TabModelBase):
         model = video.person.through
         verbose_model = person
@@ -716,14 +714,12 @@ class ProvAdmin(ModelBase):
 class DateiAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = datei.genre.through
-        extra = 1
     class SchlInLine(SchlagwortModelBase):
         model = datei.schlagwort.through
-        extra = 1
     class PersonInLine(TabModelBase):
         model = datei.person.through
         verbose_model = person
-    class MusikerInLine(TabModelBase):
+    class MusikerInLine(StackModelBase):
         model = datei.musiker.through
         verbose_model = musiker
         filter_horizontal = ['instrument']
