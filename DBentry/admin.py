@@ -162,8 +162,21 @@ class TabModelBase(admin.TabularInline):
     original = False
     verbose_model = None
     extra = 1
+    #classes = ['collapse']
     def __init__(self, *args, **kwargs):
         super(TabModelBase, self).__init__(*args, **kwargs)
+        self.form = makeForm(model = self.model)
+        if self.verbose_model:
+            self.verbose_name = self.verbose_model._meta.verbose_name
+            self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
+            
+class StackModelBase(admin.StackedInline):
+    original = False
+    verbose_model = None
+    extra = 1
+    #classes = ['collapse']
+    def __init__(self, *args, **kwargs):
+        super(StackModelBase, self).__init__(*args, **kwargs)
         self.form = makeForm(model = self.model)
         if self.verbose_model:
             self.verbose_name = self.verbose_model._meta.verbose_name
@@ -172,7 +185,7 @@ class TabModelBase(admin.TabularInline):
 class AliasTabBase(TabModelBase):
     verbose_name_plural = 'Alias'
     
-class BestandModelBase(TabModelBase):
+class BestandInLine(TabModelBase):
     model = bestand
     readonly_fields = ['signatur']
     fields = ['signatur', 'lagerort', 'provenienz']
@@ -261,8 +274,6 @@ class AusgabenAdmin(ModelBase):
         model = ausgabe_jahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
-    class BestandInLine(BestandModelBase):
-        pass
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine,  ]
     flds_to_group = [('status', 'sonderausgabe')]
     
@@ -469,8 +480,6 @@ class BandAdmin(ModelBase):
     
 @admin.register(bildmaterial)
 class BildmaterialAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     pass
     
 @admin.register(buch)
@@ -478,8 +487,6 @@ class BuchAdmin(ModelBase):
     class AutorInLine(TabModelBase):
         model = buch.autor.through
         verbose_model = autor
-    class BestandInLine(BestandModelBase):
-        pass
     save_on_top = True
     inlines = [AutorInLine, BestandInLine]
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
@@ -487,8 +494,6 @@ class BuchAdmin(ModelBase):
     
 @admin.register(dokument)
 class DokumentAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     infields = [BestandInLine]
     
 @admin.register(genre)
@@ -520,8 +525,6 @@ class MagazinAdmin(ModelBase):
 
 @admin.register(memorabilien)
 class MemoAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     infields = [BestandInLine]
 
 @admin.register(musiker)
@@ -586,8 +589,6 @@ class SpielortAdmin(ModelBase):
     
 @admin.register(technik)
 class TechnikAdmin(ModelBase):
-    class BestandInLine(BestandModelBase):
-        pass
     infields = [BestandInLine]
 
 @admin.register(veranstaltung)
@@ -638,8 +639,6 @@ class VideoAdmin(ModelBase):
     class VeranstaltungInLine(TabModelBase):
         model = video.veranstaltung.through
         verbose_model = veranstaltung
-    class BestandInLine(BestandModelBase):
-        pass
     inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
         
 # ======================================================== Orte ========================================================
