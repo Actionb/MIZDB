@@ -205,3 +205,28 @@ def dict_to_tuple(d):
     
 def tuple_to_dict(t):
     return {k:v for k, v in t}
+
+def multisplit(values, seperators = []):
+    """Splits a string at each occurence of s in seperators."""
+    if len(seperators)==1:
+        return [i.strip() for i in values.split(seperators[0])]
+    rslt = []
+    last_sep = 0
+    for index, c in enumerate(values):
+        if c in seperators:
+            rslt.append(values[last_sep:index].strip())
+            last_sep = index+1
+    rslt.append(values[last_sep:].strip())
+    return rslt
+    
+def split_field(field_name, data, seperators = [',']):
+    """ Splits the content of data[field_name] according to seperators and merges the new values back into a list of dicts."""
+    if not data.get(field_name):
+        return [data]
+    rslt = []
+    data_rest = {k:v for k, v in data.items() if k != field_name}
+    for d in set(multisplit(data.get(field_name, ''), seperators)):
+        x = data_rest.copy()
+        x.update({field_name:d})
+        rslt.append(x)
+    return rslt
