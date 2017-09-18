@@ -6,7 +6,8 @@ from DBentry.utils import multisplit, split_field
 
 from .name_utils import *
 
-FILE_NAME = 'ImportData/miz-ruhr2.csv'
+FILE_NAME = '/home/philip/DB/Discogs Export/miz-ruhr2-collection-20170731-0402.csv'
+FILE_NAME_WIN = 'ImportData/miz-ruhr2.csv'
 MODELS_ALL = [audio, plattenfirma, musiker, band, Format, 
             audio.plattenfirma.through, audio.musiker.through, audio.band.through,
         ]
@@ -180,11 +181,28 @@ class X(DiscogsImporter):
         
     def _clean_field_basic(self, value):
         value = super(X, self)._clean_field_basic(value)
-        p = re.compile(r'.\(\d+\)') # Look for a whitespace followed by '(number)' -- OR r'.(\d).'?
+        p = re.compile(r'.\(\d+\)') # Look for a whitespace followed by '(number)' -- OR r'.(\d).'? TODO: . ANY CHARACTER!!
         return p.sub('', value)
     
     def clean_model_plattenfirma(self, data):
         return split_field('name', data, self.seps)
+        
+    def clean_model_format(self, data):
+        # incoming string might look like 7xLP,RE,Mono + 2x12",Album,Quad
+        # (\d+x: qty) (format_typ) (format_tag) (channel) + ...
+        rslt = []
+        for format_item in data.get('Format', '').split("+"):
+            # TODO: use re.split
+            if not format_item:
+                continue
+            if len(format_item.split("x"))>1: #TODO: BAD this would split stuff like "LP, RE, Thatxtag"!!
+                anzahl = format_item.split("x")[0].strip()
+                format_item = " ".join(format_item.split("x")[1:])
+            else:
+                anzahl = '1'
+            format_typ = format_item.split(",")[0].strip()
+            
+        return rslt
         
     def clean_model_musiker(self, data):
         rslt = []
