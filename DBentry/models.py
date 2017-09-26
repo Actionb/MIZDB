@@ -330,10 +330,12 @@ class ausgabe(ShowModel):
     STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen')]
     magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
-    e_datum = models.DateField('Erschienen am', null = True,  blank = True)
+    e_datum = models.DateField('Erscheinungsdatum', null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
     jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True, verbose_name = "Jahrgang")
     info = models.TextField(max_length = 200, blank = True)
     sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
+    
+    audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe)
     
     exclude = [info]
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',

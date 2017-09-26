@@ -536,3 +536,12 @@ class m2m_audio_format(m2mBase):
         db_table = 'DBentry_audio_format'
         verbose_name = 'Audio-Format'
         verbose_name_plural = 'Audio-Formate'
+        
+class m2m_audio_ausgabe(m2mBase):
+    audio = models.ForeignKey('audio')
+    ausgabe = models.ForeignKey('ausgabe')
+    class Meta:
+        unique_together = ('audio', 'ausgabe')
+        db_table = 'DBentry_audio_ausgabe'
+        verbose_name = 'Musik-Beilage'
+        verbose_name_plural = 'Musik-Beilagen'

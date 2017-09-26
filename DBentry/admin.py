@@ -306,7 +306,9 @@ class AusgabenAdmin(ModelBase):
         model = ausgabe_jahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
-    inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine,  ]
+    class AudioInLine(TabModelBase):
+        model = ausgabe.audio.through
+    inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     flds_to_group = [('status', 'sonderausgabe')]
     
     list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahre', 'jahrgang', 
