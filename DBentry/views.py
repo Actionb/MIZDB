@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from collections import OrderedDict
+
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 from django.db.models.fields import AutoField, related
@@ -8,6 +10,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.admin.utils import get_fields_from_path
 
 from .models import *
+from .forms import *
 
 from dal import autocomplete
 # Create your views here
@@ -149,5 +152,162 @@ class ACProv(ACBase):
     def create_object(self, text):
         return provenienz.objects.create(geber=geber.objects.create(name=text))
         
+from .admin import admin_site
+from django.views.generic import FormView, TemplateView, ListView
+class MIZAdminView(FormView):
+    form_class = None
+    template_name = None
+    
+    def dispatch(self, request, *args, **kwargs):
+        kwargs.update(admin_site.each_context(request))
+        return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # Default get method of ProcessFormView calls get_context_data withouth kwargs ... for whatever reason
+        #NOTE: what did we need this for again? Something to do with site_header, site_titel etc... I think
+        return self.render_to_response(self.get_context_data(**kwargs))
         
 
+class BulkBase(MIZAdminView):
+    template_name = 'admin/bulk.html'
+    form_class = None
+    save_redirect = ''
+    
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        form = self.form_class(request.POST)
+        if form.is_valid():
+                #TODO: has_changed check to avoid saving the wrong data
+            if '_preview' in request.POST: #not self.request.POST.get('preview')
+                context['preview_headers'], context['preview'] = self.build_preview(request, form)
+            if '_continue' in request.POST:
+                # Collect preview data, create instances
+                ids = self.save_data(request, form)
+                # Need to store the queryset of the newly created items in request.session for the Changelist view...
+                request.session['qs'] = dict(id__in=ids) if ids else None
+                return redirect(self.save_redirect)
+            if '_addanother' in request.POST:
+                old_form = form
+                form = self.form_class(self.next_initial_data(form))
+                form.is_valid()
+                context['preview_headers'], context['preview'] = self.build_preview(request, form)
+        context['form'] = form
+        return render(request, self.template_name, context = context)
+    
+    def next_initial_data(self, form):
+        return form.data
+    
+    def save_data(self, request, form):
+        return []
+        
+    def build_preview(self, request, form):
+        return 
+        
+    def instance_data(self, row):
+        #TODO: this is WIP
+        for fld_name in form.each_fields:
+            if fld_name in form.split_data:
+                continue
+                rslt[fld_name] = form.split_data.get(fld_name)
+            else:
+                rslt[fld_name] = form.cleaned_data.get(fld_name)
+        return rslt
+
+class BulkAusgabe(BulkBase):
+    form_class = BulkFormAusgabe
+    save_redirect = 'MIZAdmin:DBentry_ausgabe_changelist'
+    
+    def save_data(self, request, form):
+        ids = []
+        row_count = len(form.row_data)
+        
+        for row in form.row_data:
+            instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
+            if not instance.pk:
+                instance.save()
+            for fld_name in ['jahr', 'num', 'monat', 'lnum']:
+                set = getattr(instance, "ausgabe_{}_set".format(fld_name))
+                data = row.get(fld_name, None)
+                if data:
+                    if fld_name == 'monat':
+                        fld_name = 'monat_id'
+                    if isinstance(data, str) or isinstance(data, int):
+                        data = [data]
+                    for value in data:
+                        if value:
+                            try:
+                                set.create(**{fld_name:value})
+                            except Exception as e:
+                                # Let something else handle UNIQUE constraints violations
+                                #print(e, data)
+                                continue
+            # Audio
+            if 'audio' in row:
+                suffix = instance.__str__()
+                audio_data = dict(titel = 'Musik-Beilage: {}'.format(str(row.get('magazin')[0])) + " " + suffix, 
+                                                    quelle = 'Magazin', 
+                                                    e_jahr = row.get('jahr')[0], 
+                                                    )
+                if audio.objects.filter(**audio_data).exists():
+                    audio_instance = audio.objects.filter(**audio_data).first()
+                else:
+                    audio_instance = audio(**audio_data)
+                    audio_instance.save()
+                # set.add/ set.create didnt work for some fcking reason
+                ergh = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
+                ergh.save()
+                
+            # Bestand
+            instance.bestand_set.create(lagerort=row.get('lagerort')[0])
+            
+            ids.append(instance.pk)
+        return ids
+                
+    def next_initial_data(self, form):
+        data = form.data.copy()
+        # Increment jahr and jahrgang
+        #jahr_list = form.cleaned_data.get('jahr', '').split(', ')
+        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')])
+        if form.cleaned_data.get('jahrgang'):  
+            data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
+        return data
+            
+    def instance_data(self, row):
+        rslt = {}
+        rslt['jahrgang'] = row.get('jahrgang', None)
+        rslt['magazin'] = row.get('magazin')[0]
+        return rslt
+        
+    def build_preview(self, request, form):
+        from django.contrib.admin.utils import reverse
+        from django.utils.html import format_html
+        preview_data = []
+        
+        for row in form.row_data:
+            preview_row = OrderedDict()
+            for fld_name in form.field_order:
+                if fld_name == 'audio':
+                    if row.get(fld_name):
+                        img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
+                    else:
+                        img = format_html('<img alt="False" src="/static/admin/img/icon-no.svg">')
+                    preview_row[fld_name] = img
+                    continue
+                values_list = row.get(fld_name) or []
+                if len(values_list)==1:
+                    preview_row[fld_name] = values_list[0] or ''
+                else:
+                    preview_row[fld_name] = ", ".join(values_list)
+        
+            preview_row['Instanz'] = row.get('instance', '') or ''
+            if preview_row['Instanz']:
+                link = reverse("MIZAdmin:DBentry_ausgabe_change", args = [preview_row['Instanz'].pk])
+                label = str(preview_row['Instanz'])
+                img = format_html('<img alt="False" src="/static/admin/img/icon-alert.svg">')
+                preview_row['Instanz'] = format_html('{} <a href="{}" target="_blank">{}</a>', img, link, label)
+            preview_data.append(preview_row)
+            
+        headers = [
+            form.fields.get(fld_name).label or fld_name for fld_name in form.field_order
+            ] + ['Bereits vorhanden']
+        return headers, preview_data
