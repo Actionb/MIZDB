@@ -382,16 +382,6 @@ class BulkForm(forms.Form):
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
                     ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
                 ))
-      
-    def clean_lagerort(self):
-        if not self.cleaned_data['lagerort']:
-            self.cleaned_data['lagerort'] = lagerort.objects.get(pk=ZRAUM_ID)
-        return self.cleaned_data['lagerort']
-            
-    def clean_dublette(self):
-        if not self.cleaned_data['dublette']:
-            self.cleaned_data['dublette'] = lagerort.objects.get(pk=DUPLETTEN_ID)
-        return self.cleaned_data['dublette']
 
     @property
     def row_data(self):
@@ -443,7 +433,7 @@ class BulkForm(forms.Form):
             
 class BulkFormAusgabe(BulkForm):
     model = ausgabe
-    field_order = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'lagerort']
+    field_order = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort']
     at_least_one_required = ['num', 'monat', 'lnum']
     
     
@@ -458,17 +448,37 @@ class BulkFormAusgabe(BulkForm):
     monat = BulkField(label = 'Monate')
     lnum = BulkField(label = 'Laufende Nummer')
     
-    audio = forms.BooleanField(required = False, label = 'Musik Beilage:')
     lo = lagerort
+    audio = forms.BooleanField(required = False, label = 'Musik Beilage:')
+    audio_lagerort = forms.ModelChoiceField(required = False, 
+                                    label = 'Lagerort f. Musik Beilage', 
+                                    queryset = lo.objects.all(), 
+                                    widget = autocomplete.ModelSelect2(url='aclagerort'))
     lagerort = forms.ModelChoiceField(required = False, 
                                     queryset = lo.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'), 
-                                    initial = ZRAUM_ID)
+                                    initial = ZRAUM_ID, 
+                                    label = 'Lagerort f. Ausgaben')
     dublette = forms.ModelChoiceField(required = False, 
                                     queryset = lo.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'), 
                                     initial = DUPLETTEN_ID, 
                                     label = 'Lagerort f. Dubletten')
+                                    
+    def clean(self):
+        super(BulkFormAusgabe, self).clean()
+        if self.cleaned_data['audio'] and not self.cleaned_data['audio_lagerort']:
+            raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
+      
+    def clean_lagerort(self):
+        if not self.cleaned_data['lagerort']:
+            self.cleaned_data['lagerort'] = lagerort.objects.get(pk=ZRAUM_ID)
+        return self.cleaned_data['lagerort']
+            
+    def clean_dublette(self):
+        if not self.cleaned_data['dublette']:
+            self.cleaned_data['dublette'] = lagerort.objects.get(pk=DUPLETTEN_ID)
+        return self.cleaned_data['dublette']
     
     def row_data_lagerort(self, row):
         if self.lookup_instance(row).exists():
@@ -479,7 +489,7 @@ class BulkFormAusgabe(BulkForm):
         qs = self.cleaned_data.get('magazin').ausgabe_set
         
         for fld_name, row_data in row.items():
-            if fld_name in ['jahrgang', 'lagerort', 'magazin', 'audio']:
+            if fld_name in ['jahrgang', 'lagerort', 'magazin', 'audio', 'audio_lagerort']:
                 continue
             x = 'ausgabe_{}'.format(fld_name)
             x += '__{}'.format(fld_name if fld_name != 'monat' else 'monat_id')
