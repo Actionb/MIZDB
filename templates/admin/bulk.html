@@ -1,0 +1,80 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static %}
+
+{% block extrahead %}
+<!-- Extrahead -->
+{{ block.super }}
+<script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ form.media }}
+{% endblock extrahead %}
+
+{% block content %}
+
+
+<form method="post">
+<!-- Help Text -->
+<fieldset class="module aligned collapse collapsed">
+        <h2 class="fieldset-name collapsible">Hilfe</h2>
+        <div class="help_text">
+        {{form.help_text}}
+        </div>
+</fieldset>
+{% csrf_token %}
+{{ form.non_field_errors }}
+
+
+{% for fieldset in form %}
+  {% include "admin/includes/fieldset.html" %}
+{% endfor %}
+<input type="submit" value="Vorschau" name="_preview"/>
+
+
+
+
+{% block preview %}
+ {% if preview %}
+        <div class="preview module aligned">
+        <h2 class="fieldset-name">Vorschau</h2>
+        <table id="preview_list">
+            <thead>
+                <tr>
+                {% for header in preview_headers %}
+                    <th scope="col" class="column-{{ header.class_attrib }}">
+                       <div class="text"><span>{{ header|capfirst }}</span></div>
+                       <div class="clear"></div>
+                    </th>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in preview %}
+                    <tr class="{% cycle 'row1' 'row2' %}">
+                        {% for item in row.values %}
+                            <td>{{ item }}</td>
+                        {% endfor %}
+                    {% comment %}
+                    <td>
+                    {% if item=="True" %}
+                        <img alt="True" src="/static/admin/img/icon-yes.svg">
+                    {% else %}
+                        <img alt="False" src="/static/admin/img/icon-no.svg">
+                    {% endif %}
+                    </td>
+                    {% endcomment %}
+                    </tr>
+                {% endfor %}
+{% comment %}
+{% endcomment %}
+            </tbody>
+        </table>
+        </div>
+<input type="submit" value="Sichern (neue hinzufügen)" name="_addanother">
+<input type="submit" value="Sichern (Ausgaben bearbeiten)" name="_continue"> 
+ {% endif %}
+{% endblock preview %}
+</form>
+{% endblock content %}
+
+{% block footer %}
+{% endblock %}

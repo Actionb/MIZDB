@@ -77,6 +77,12 @@ class MIZChangeList(ChangeList):
         """ Copy pasted from original ChangeList to switch around ordering and filtering.
             Also allowed the usage of Q items to filter the queryset.
         """
+        # BulkViews redirect
+        if request.session.get('qs', {}):
+            qs = self.root_queryset.filter(**request.session.get('qs'))
+            del request.session['qs']
+            return qs
+        
         # First, we collect all the declared list filters.
         (self.filter_specs, self.has_filters, remaining_lookup_params,
          filters_use_distinct) = self.get_filters(request)
