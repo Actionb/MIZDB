@@ -188,6 +188,7 @@ class BulkBase(MIZAdminView):
                 return redirect(self.save_redirect)
             if '_addanother' in request.POST:
                 old_form = form
+                self.save_data(request, form)
                 form = self.form_class(self.next_initial_data(form))
                 form.is_valid()
                 context['preview_headers'], context['preview'] = self.build_preview(request, form)
@@ -246,8 +247,9 @@ class BulkAusgabe(BulkBase):
                 suffix = instance.__str__()
                 audio_data = dict(titel = 'Musik-Beilage: {}'.format(str(row.get('magazin')[0])) + " " + suffix, 
                                                     quelle = 'Magazin', 
-                                                    e_jahr = row.get('jahr')[0], 
+                                                    e_jahr = row.get('jahr')[0],
                                                     )
+                                                    
                 if audio.objects.filter(**audio_data).exists():
                     audio_instance = audio.objects.filter(**audio_data).first()
                 else:
@@ -256,6 +258,7 @@ class BulkAusgabe(BulkBase):
                 # set.add/ set.create didnt work for some fcking reason
                 ergh = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
                 ergh.save()
+                audio_instance.bestand_set.create(lagerort=form.cleaned_data.get('audio_lagerort'))
                 
             # Bestand
             instance.bestand_set.create(lagerort=row.get('lagerort')[0])
@@ -286,6 +289,8 @@ class BulkAusgabe(BulkBase):
         for row in form.row_data:
             preview_row = OrderedDict()
             for fld_name in form.field_order:
+                if not row.get(fld_name):
+                    continue
                 if fld_name == 'audio':
                     if row.get(fld_name):
                         img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
@@ -307,7 +312,15 @@ class BulkAusgabe(BulkBase):
                 preview_row['Instanz'] = format_html('{} <a href="{}" target="_blank">{}</a>', img, link, label)
             preview_data.append(preview_row)
             
-        headers = [
-            form.fields.get(fld_name).label or fld_name for fld_name in form.field_order
-            ] + ['Bereits vorhanden']
+        headers = []
+        for fld_name in form.field_order:
+            if not any(fld_name in row for row in preview_data):
+                continue
+            if fld_name == 'lagerort':
+                headers.append('Lagerort')
+            elif form.fields.get(fld_name).label:
+                headers.append(form.fields.get(fld_name).label.strip(":"))
+            else:
+                headers.append(fld_name)
+        headers += ['Bereits vorhanden']
         return headers, preview_data
