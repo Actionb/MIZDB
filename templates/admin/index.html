@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n admin_urls static %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}" />{% endblock %}
 
@@ -56,7 +56,7 @@
   <h2>Admin Tools</h2>
     <ul class="actionlist">
       <li class="changelink">
-        <a href="/admin/bulk_ausgabe/">Ausgaben Erstellung</a>
+        <a href="{% url 'MIZAdmin:bulk_ausgabe' %}">Ausgaben Erstellung</a>
       </li>
     </ul>
 </div>

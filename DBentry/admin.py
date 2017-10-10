@@ -22,7 +22,7 @@ class MIZAdminSite(AdminSite):
         from .views import BulkAusgabe
         urls = super(MIZAdminSite, self).get_urls()
         urls = [
-            url(r'^bulk_ausgabe/$', self.admin_view(BulkAusgabe.as_view())), 
+            url(r'^bulk_ausgabe/$', self.admin_view(BulkAusgabe.as_view()), name='bulk_ausgabe'), 
         ] + urls
         return urls
 admin_site = MIZAdminSite(name='MIZAdmin')
