@@ -97,3 +97,22 @@ fieldset.module fieldset .fieldset-name {
     background: lightcyan none repeat scroll 0 0;
     color:#447e9b;
 }*/
+
+.aligned .vCheckboxLabel {
+    /* Actually swaps a Checkbox with its Label */
+    display: block;
+    float: left;
+    line-height: 1;
+    padding: 4px 10px 0 0;
+    width: 160px;
+    word-wrap: break-word;
+}
+
+
+.preview {
+    padding-top: 30px;
+}
+
+div .help_text {
+    padding: 10px;
+}
