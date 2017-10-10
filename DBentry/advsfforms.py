@@ -41,8 +41,8 @@ FORMFIELDS = {
                                     
     'herkunft' : dict(required = False, 
                                         label = "Herkunftsort", 
-                                        queryset = ort.objects.all(),  #NOTE: ['person__herkunft__land'] BAD IDEA?
-                                        widget = autocomplete.ModelSelect2(url='acort', forward=['person__herkunft__land']), 
+                                        queryset = ort.objects.all(), 
+                                        widget = autocomplete.ModelSelect2(url='acort'), 
                                         ), 
                                         
     'instrument' : dict(required = False, 

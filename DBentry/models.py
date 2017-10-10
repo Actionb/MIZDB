@@ -64,7 +64,7 @@ class ShowModel(models.Model):
     def get_search_fields(cls, foreign=False, m2m=False, reevaluate=False):
         if cls.search_fields and not reevaluate:
             return cls.search_fields
-        rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True))
+        rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True)) #NOTE: one as_string and one not?
         if foreign:
             for fld in cls.get_foreignfields():
                 for rel_fld in fld.related_model.get_primary_fields():
