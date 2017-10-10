@@ -515,7 +515,7 @@ class BandAdmin(ModelBase):
         #verbose_model = musiker
     class AliasInLine(AliasTabBase):
         model = band_alias
-    search_fields = ['band_name']
+    search_fields = ['band_name', 'beschreibung', 'band_alias__alias']
     save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
     exclude = ['genre', 'musiker']
@@ -600,7 +600,7 @@ class MusikerAdmin(ModelBase):
     exclude = ('ist_mitglied', 'instrument', 'genre')
     
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'herkunft_string']
-    search_fields = ['kuenstler_name', 'genre__genre', 'band__band_name']
+    search_fields = ['kuenstler_name', 'musiker_alias__alias']
     
     crosslinks = ['artikel']
     googlebtns = ['kuenstler_name']
