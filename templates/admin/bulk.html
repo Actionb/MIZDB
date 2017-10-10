@@ -14,12 +14,13 @@
 
 <form method="post">
 <!-- Help Text -->
+        {% include "admin/includes/help_text.html" %}
+        {% comment %}
 <fieldset class="module aligned collapse collapsed">
         <h2 class="fieldset-name collapsible">Hilfe</h2>
         <div class="help_text">
-        {{form.help_text}}
         </div>
-</fieldset>
+</fieldset> {% endcomment %}
 {% csrf_token %}
 {{ form.non_field_errors }}
 

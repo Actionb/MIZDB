@@ -220,7 +220,7 @@ def validate_bulkfield(value):
             
 class BulkField(forms.CharField):
     
-    allowed_chars = [',', '/', '%', '-', '*']
+    allowed_chars = [',', '/', '-', '*']
     
     
     def __init__(self, required=False, allowed_chars=None, 
@@ -315,10 +315,10 @@ class BulkForm(forms.Form):
     each_fields = set() # data of these fields are part of every row
     at_least_one_required = [] # at least one of these fields needs to be filled out
     
-    help_text = "BEEP BOOP"
+    help_text = ''
     
     fieldsets = [
-        (None, {'fields':[]}), 
+        ('Angaben dieser Felder werden jedem Datensatz zugewiesen', {'fields':[]}), 
         ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), 
     ]
     
@@ -469,6 +469,63 @@ class BulkFormAusgabe(BulkForm):
                                     widget = autocomplete.ModelSelect2(url='aclagerort'), 
                                     initial = DUPLETTEN_ID, 
                                     label = 'Lagerort f. Dubletten')
+                                    
+    help_text = """Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
+                Erlaubte Zeichen:
+                <ul>
+                    <li>',' (Trennzeichen)</li>
+                    <li>'-' (von bis)</li>
+                    <li>'/' (einfache Gruppierung)</li>
+                    <li>'*' (mehrfache Gruppierung)</li>
+                </ul>
+                Monate als Ziffern.
+    """
+    
+    from django.utils.html import format_html
+    help_text = {
+        'head' : """Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
+                    Dabei gilt die Regel, dass allen Ausgaben dasselbe Jahr und denselben Jahrgang zugewiesen werden. Es ist also nicht möglich, mehrere 'Jahrgänge' auf einmal einzugeben.
+                    Liegt allen Ausgaben eine Musik-CD, o.ä. bei, setze den Haken bei dem Feld 'Musik-Beilage'. Ein Datensatz entsprechend dem Titel "Musik-Beilage: <Name des Magazins> <Name der Ausgabe>" wird dann in der Audiotabelle erstellt und mit der jeweiligen Ausgabe verknüpft.
+                    
+                    Mit den Auswahlfeldern zu Lagerort und Dublettenlagerort kann festgelegt werden, wo diese Ausgaben (und eventuelle Dubletten) gelagert werden.
+                    Sollte eine der im Formular angegebenen Ausgaben bereits einen Bestand in der Datenbank haben, so wird automatisch ein Dublettenbestand hinzugefügt und die vorhandene Ausgabe erscheint im Vorschau-Bereich 'Bereits vorhanden'. Bitte kontrolliert die Korrektheit eurer Angaben, sollte dies der Fall sein.
+                    
+                    Monate bitte als Nummern angeben und Leerzeichen vermeiden!
+                    
+                    In der Vorschau könnt ihr die resultierenden Ausgaben eurer Angaben überprüfen.
+                    WICHTIG: Es wird abgespeichert was in dem Formular steht, nicht was in der Vorschau gezeigt wird! Erstellt ihr eine Vorschau zu einer Reihe von Angaben und ändert dann die Angaben wieder, werden die gespeicherten Ausgaben NICHT der Vorschau entsprechen.
+                    Es ist also am besten, immer erst eine Vorschau nach jeder Änderung zu erstellen und danach abzuspeichern!
+                    
+                    Erlaubte Zeichen: """, 
+                    
+        'list_items' : [
+                (' "," (Trennzeichen)' ,  'Ein Komma trennt einzelne Gruppierungen von Angaben voneinander: 1,3,6-8 = 1,3,6,7,8'), 
+                (' "-" (von bis)' ,  'Das Minus-Zeichen stellt eine Reihe von Angaben dar: 1-4 = 1,2,3,4'), 
+                (' "/" (einfache Gruppierung)' , 'Das Slash-Zeichen weist einer einzelnen Ausgabe mehrere Angaben zu: 1,3,6/7 = 1,3,6 UND 7'), 
+                (' "*" (mehrfache Gruppierung)' , 'Das Sternchen erlaubt Zuweisung mehrerer Angaben zu einer Reihe (Kombination von "-" und "/"): 1-4*2 = 1/2, 3/4 oder 1-6*3 = 1/2/3, 4/5/6'), 
+            ], 
+            
+        'foot' : """
+        Beispiele:
+        Eine Ausgabe mit der Nummer 6 und den Monaten April und Mai:
+        Nummer-Feld: 6
+        Monat-Feld: 4/5
+        
+        Zwei Ausgaben mit den laufenden Nummern 253 und 255:
+        Laufende Nummer: 253, 255
+        
+        Drei Ausgaben mit Nummern 3 bis 5 und Monaten Januar/Februar und März/April und Mai/Juni:
+        Nummer: 3-5 (oder natürlich auch 3,4,5)
+        Monat: 1-6*2 (oder auch 1/2, 3/4, 5/6)
+        
+        Ein ganzer Jahrgang von 11 Ausgaben mit Monaten Jan bis Dez, wobei im Juli und August eine zwei-monatige Ausgabe erschienen ist:
+        Monat: 1-6, 7/8, 9-12 (oder auch 1,2,3,4,5,6,7/8,9,10,11,12)
+        
+        Eine jahresübergreifende Ausgabe mit dem Monat Dezember im Jahre 2000 und dem Monat Januar im Jahre 2001:
+        Jahr: 2000,2001 (oder 2000/2001 oder 00,01 oder 00/01)
+        Monat: 12/1
+        """
+    }
     
     def row_data_lagerort(self, row):
         if self.lookup_instance(row).exists():
