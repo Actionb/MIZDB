@@ -528,6 +528,7 @@ class m2m_audio_plattenfirma(m2mBase):
         verbose_name = 'Audio-Plattenfirma'
         verbose_name_plural = 'Audio-Plattenfirmen'
 
+#TODO: delete this, it is not used by either audio or Format
 class m2m_audio_format(m2mBase):
     audio = models.ForeignKey('audio')
     format = models.ForeignKey('format')

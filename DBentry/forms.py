@@ -305,8 +305,20 @@ class BulkJahrField(BulkField):
     def to_list(self, value):
         temp, item_count = super(BulkJahrField, self).to_list(value)
         return temp, 0
+        
+class MIZAdminForm(forms.Form):
+    class Media:
+        css = {
+            'all' : ('admin/css/forms.css', )
+        }
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'admin/js/vendor/jquery/jquery%s.js' % extra,
+            'admin/js/jquery.init.js',
+            'admin/js/collapse%s.js' % extra,
+        ]
 
-class BulkForm(forms.Form):
+class BulkForm(MIZAdminForm):
     
     model = None
     total_count = 0
@@ -335,17 +347,6 @@ class BulkForm(forms.Form):
         self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name not in self.at_least_one_required]
         self.fieldsets[1][1]['fields'] = self.at_least_one_required
         
-
-    class Media:
-        css = {
-            'all' : ('admin/css/forms.css', )
-        }
-        extra = '' if settings.DEBUG else '.min'
-        js = [
-            'admin/js/vendor/jquery/jquery%s.js' % extra,
-            'admin/js/jquery.init.js',
-            'admin/js/collapse%s.js' % extra,
-        ]
             
     @property
     def media(self):

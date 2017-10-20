@@ -1,0 +1,41 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static %}
+
+{% block extrahead %}
+{{block.super}}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{form.media}}
+{% endblock extrahead %}
+
+{% block content %}
+<form method="post">
+{% csrf_token %}
+<fieldset class="module aligned collapse collapsed">
+<h2 class="fieldset-name collapsible">Rest List ({{rest_list.total_form_count}} Objekte)</h2>
+{% for form in rest_list %}
+    {{form.as_table}}
+    <br />
+{% endfor %}
+</fieldset>
+
+
+<fieldset class="module aligned collapse collapsed">
+<h2 class="fieldset-name collapsible">Musiker List ({{musiker_list.total_form_count}} Objekte)</h2>
+{% for form in musiker_list %}
+    {{form.as_table}}
+    <br />
+{% endfor %}
+</fieldset>
+
+
+<fieldset class="module aligned collapse collapsed">
+<h2 class="fieldset-name collapsible">Band List ({{band_list.total_form_count}} Objekte)</h2>
+{% for form in band_list %}
+    {{form.as_table}}
+    <br />
+{% endfor %}
+</fieldset>
+
+<input type="submit" value="Weiter" name="_continue_bom"/>
+</form>
+{% endblock content %}

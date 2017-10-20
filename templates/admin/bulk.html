@@ -54,15 +54,6 @@
                         {% for item in row.values %}
                             <td>{{ item }}</td>
                         {% endfor %}
-                    {% comment %}
-                    <td>
-                    {% if item=="True" %}
-                        <img alt="True" src="/static/admin/img/icon-yes.svg">
-                    {% else %}
-                        <img alt="False" src="/static/admin/img/icon-no.svg">
-                    {% endif %}
-                    </td>
-                    {% endcomment %}
                     </tr>
                 {% endfor %}
 {% comment %}

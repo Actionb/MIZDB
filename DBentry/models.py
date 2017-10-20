@@ -1363,13 +1363,16 @@ class Format(ShowModel):
         verbose_name_plural = 'Formate'
         
     def get_name(self):
-        format_string = "{qty}{format}{tags}{channel}"
-        return format_string.format(**{
-            'qty' : str(self.anzahl)+'x' if self.anzahl > 1 else '', 
-            'format' : str(self.format_size) if self.format_size else str(self.format_typ), 
-            'tags' : ", " + concat_limit(self.tag.all()) if self.tag.exists() else '', 
-            'channel' : ", " + self.channel if self.channel else ''
-        }).strip()
+        try:
+            format_string = "{qty}{format}{tags}{channel}"
+            return format_string.format(**{
+                'qty' : str(self.anzahl)+'x' if self.anzahl > 1 else '', 
+                'format' : str(self.format_size) if self.format_size else str(self.format_typ), 
+                'tags' : ", " + concat_limit(self.tag.all()) if self.tag.exists() else '', 
+                'channel' : ", " + self.channel if self.channel else ''
+            }).strip()
+        except:
+            return str(self.format_size)
                 
     def __str__(self):
         if self.format_name:
@@ -1379,7 +1382,7 @@ class Format(ShowModel):
         
     def save(self, *args, **kwargs):
         if self.pk:
-            # Change name whenever we update an instance
+            # Update name whenever we update an instance
             self.format_name = self.get_name()    
         super(Format, self).save(*args, **kwargs)
         

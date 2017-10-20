@@ -6,8 +6,7 @@ from DBentry.utils import multisplit, split_field
 
 from .name_utils import *
 
-FILE_NAME = '/home/philip/DB/Discogs Export/miz-ruhr2-collection-20170731-0402.csv'
-FILE_NAME_WIN = 'ImportData/miz-ruhr2.csv'
+
 MODELS_ALL = [audio, plattenfirma, musiker, band, Format, 
             audio.plattenfirma.through, audio.musiker.through, audio.band.through,
         ]
@@ -69,19 +68,18 @@ class BaseImporter(object):
     
     existing_release_ids = set()
             
-    def __init__(self, models, file_path = None, file = None, seperators = [','], release_id_map = {}, ignore_existing = True):
-        if not isinstance(models, (list, tuple)):
-            self.models = [models]
-        else:
+    def __init__(self, models = None, file_path = None, file = None, seperators = [','], 
+                    release_id_map = {}, ignore_existing = True):
+        if models:
             self.models = models
-        if not isinstance(seperators, (list, tuple)):
-            self.seps = [seperators]
         else:
-            self.seps = seperators
+            self.models = set()            
+            for x in self.release_id_map.values():
+                for model in x.keys():
+                    self.models.add(model)
+        self.seps = seperators
             
-        self.file_path = file_path or FILE_NAME
-        self.file = file
-        self.reader = DiscogsReader(file_path = self.file_path, file = self.file)
+        self.reader = DiscogsReader(file_path = file_path, file = file)
         self._cleaned_data = {}
         self.release_id_map = release_id_map
         if ignore_existing:
@@ -305,15 +303,91 @@ class DiscogsImporter(BaseImporter):
             rslt.append(d)
         return rslt
         
-class FullImporter(DiscogsImporter):
+class FullImporter(object):
         
     def __init__(self, file):
         models = [audio, Format, FormatTyp, FormatSize, NoiseRed, FormatTag, plattenfirma, audio.plattenfirma.through]
-        super(FullImporter, self).__init__(models, file=file)
+        self.file = file
+        #super(FullImporter, self).__init__(models, file=file)
         
-def test_reader(model = audio):
-    return DiscogsReader(model, open('/home/philip/DB/Discogs Export/miz-ruhr2-collection-20170731-0402.csv'))
-
-def test_muba():
-    d = [i['Artist'] for i in DiscogsReader().read()]
-    return split_MuBa(d)
+    def import_all(self):
+        i = DiscogsImporter(models = [audio], file=self.file)
+        i.save()
+        
+        i = DiscogsImporter(models = [plattenfirma], file=self.file)
+        i.save()
+        
+        
+class ModelContainer(object):
+    
+    def __init__(self, model, parent_container = None, key = 'release_id'):
+        self.model = model
+        self.rel = ''
+        self.parent_container = parent_container
+        self.related_containers = [] # Needed for iterating down/recursively up the relations
+        self.key = key
+        if self.parent_container:
+            self.parent_container.related_containers.append(self)
+        self.data = []
+        self._key_id_map = {}
+        
+    @property
+    def key_id_map(self):
+        if not self._key_id_map:
+            # Build release_id_map if any children look up the release_id
+            for d in self.data:
+                for rid in d[self.key]:
+                    self._key_id_map[rid] = d
+        return self._key_id_map
+        
+        
+def save():
+    records = []
+    for d in mc.data:
+        instance_data = {k:v for k, v in d.items() if k not in [mc.key, 'instance']}
+        instance = mc.model(**instance_data)
+        records.append(instance)
+        
+    mc.model.objects.bulk_create(records)
+    if mc.parent:
+        for d in mc.data:
+            instance_data = {k:v for k, v in d.items() if k not in [mc.key, 'instance']}
+            d['instance'] = mc.model.objects.filter(**instance_data).first()
+            child_instance = d['instance']
+            for rid in d[self.key]:
+                parent_data = parent.key_id_map[rid]
+                parent_instance = parent_data['instance']
+                
+                if self.rel.many_to_many:
+                    # Not going to rely on ManyRelatedManagers since those cannot deal with intermediary m2m models
+                    target_model = self.rel.through
+                    manager = target_model._default_manager
+                    source_field_name = self.rel.field.m2m_field_name()
+                    target_field_name = self.rel.field.m2m_reverse_field_name()
+                    if target_model._m
+                    
+                    manager.bulk_create([target_model(**{source_field_name:, target_field_name:})])
+                else:
+                    set_name = self.rel.get_accessor_name()
+                    # Get the RelatedManager for the reverse ManyToOne Relation 
+                    # The manager can be accessed through the accessor_name from the parent_instance OR the child_instance
+                    # but not both (obviously, the 'forward' bit of the relation does not have/need a manager)
+                    manager = getattr(parent_instance, set_name, None) or getattr(child_instance, set_name)
+                    if manager.instance == parent_instance: # NOTE: does this ONLY compare pk's? 
+                        manager.add(child_instance)
+                    else:
+                        manager.add(parent_instance)
+                    
+                    
+                if is_foreign_key:
+                    if hasattr(parent_instance, self.related_set):
+                        # ForeignKey field is on the parent's side (child has m2m to parent)
+                        set = getattr(parent_instance, self.m2m_set_name)
+                        set.add(d['instance'])
+                    else:
+                        # ForeignKey field is on the child's side (parent has m2m to child)
+                        set = getattr(d['instance'], self.m2m_set_name)
+                        set.add(parent_instance)
+                else:
+                    set.bulk_create()
+        

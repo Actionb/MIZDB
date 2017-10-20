@@ -165,13 +165,13 @@ class MIZAdminView(FormView):
     def get(self, request, *args, **kwargs):
         # Default get method of ProcessFormView calls get_context_data withouth kwargs ... for whatever reason
         #NOTE: what did we need this for again? Something to do with site_header, site_titel etc... I think
-        return self.render_to_response(self.get_context_data(**kwargs))
+        return render(request, self.template_name, context = self.get_context_data(**kwargs))
         
 
 class BulkBase(MIZAdminView):
     template_name = 'admin/bulk.html'
     form_class = None
-    save_redirect = ''
+    save_redirect = '' #TODO: use success_url since there is already 'support' for it in the generic views
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)

@@ -129,3 +129,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
+# Override maximum number of post parameters to allow handling of user input during imports
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000

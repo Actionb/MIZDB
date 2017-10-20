@@ -83,3 +83,21 @@ def timestuff():
 
 if __name__ == '__main__':
     pass
+
+
+
+def bulk_lookup():
+    instruments = [instrument(instrument=str(i)) for i in range(100)]
+    instrument.objects.bulk_create(instruments)
+    ids = [ instrument.objects.filter(instrument=str(i)).first().pk for i in range(100)]
+    return ids
+    
+def save():
+    ids = []
+    for i in range(100):
+        instance = instrument(instrument=str(i))
+        instance.save()
+        ids.append(instance.pk)
+    return ids
+    
+    

@@ -24,6 +24,11 @@ class MIZAdminSite(AdminSite):
         urls = [
             url(r'^bulk_ausgabe/$', self.admin_view(BulkAusgabe.as_view()), name='bulk_ausgabe'), 
         ] + urls
+        
+        from .ie.urls import import_urls
+        for u in import_urls:
+            u.callback = self.admin_view(u.callback)
+            urls.insert(0, u)
         return urls
 admin_site = MIZAdminSite(name='MIZAdmin')
 #
