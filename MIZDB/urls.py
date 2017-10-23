@@ -23,7 +23,7 @@ from django.conf.urls.static import static
 from DBentry.admin import admin_site
 urlpatterns = [
     url(r'^mizdb/', include('DBentry.urls')), 
-    url(r'^defaultadmin/', admin.site.urls),
+    url(r'^admin/', admin.site.urls),
     url(r'^admin/', admin_site.urls), 
 ]
 
