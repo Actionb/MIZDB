@@ -3,7 +3,7 @@ import re
 
 from DBentry.views import MIZAdminView
 from .forms import *
-from .discogs import *
+from .again import *
 from django.shortcuts import render, redirect
 from django.views.generic import FormView, TemplateView, ListView
 
@@ -40,45 +40,76 @@ class ImportSelectView(MIZAdminView):
             from io import TextIOWrapper
             file = TextIOWrapper(request.FILES['import_file'], encoding=request.encoding)
             
-#            from django.core.files.storage import FileSystemStorage
-#            fs = FileSystemStorage()
-#            filename = fs.save(file.name, file)
-#            uploaded_file_url = fs.url(filename)
+            models = [audio, Format, FormatTag, FormatTyp, FormatSize, musiker, band, plattenfirma]
+            relations = [Format.audio.field.rel, Format.tag.rel, Format.format_typ.field.rel, Format.format_size.field.rel, audio.plattenfirma.rel]
             
-#            context['file_url'] = uploaded_file_url
-            # TODO: fetch importer_class from request.POST
-            importer_class = FullImporter
-            importer = importer_class([musiker, band], file=file)
-            importer.cleaned_data
+            relations += [audio.band.rel, audio.musiker.rel]
+            relation_importer = RelationImport(relations, file=file)
+            importer = relation_importer.importer
             
+            # Remove band,musiker again 
+            del importer.cleaned_data[band]
+            del importer.cleaned_data[musiker]
+            
+            relation_importer.read()
+            relation_importer.save()
+            
+#            relation_importer = RelationImport([audio.band.rel, audio.musiker.rel], file=file, ignore_existing=False)
+#            importer = relation_importer.importer
+#            relation_importer.read()
             
             if 'check_bom' in request.POST or importer.rest_list:
+                request.session['audio_cleaned_data'] = importer.cleaned_data[audio] # Need this in the second stage
                 for prefix in ['rest_list', 'musiker_list', 'band_list']:
-                    data_list = getattr(self.importer, prefix)
+                    data_list = getattr(importer, prefix)
                     initial_data = self.get_initial_data(data_list, prefix = prefix, is_musiker = 'musiker' in prefix, is_band = 'band' in prefix)
                     context[prefix] = MBFormSet(initial_data, prefix = prefix)
             
-            #return ImportSelectView.as_view({'file':file})(request)
-                return render(request, 'admin/import/band_or_musiker.html', context = context)   
-        if '_continue_bom' in request.POST:
-            release_id_map = self.build_release_id_map(request.POST)
-#            with open('release_id_map.txt', 'w') as f:
-#                for release_id, models in release_id_map.items():
-#                    print("release_id:", release_id, file=f)
-#                    for model, names in models.items():
-#                        print(model._meta.model_name+":", ", ".join(names), file=f)
-#                    print("="*20, end="\n\n", file=f)
+                return render(request, 'admin/import/band_or_musiker.html', context = context)
+                
+            #relation_importer.save()
             
-            # We are done with this step
-#                f = open('request_post.txt', 'w')
-#                for k, v in request.POST.items():
-#                    print(k + ":", file=f)
-#                    print(v, file=f)
-#                    print("="*20, end="\n\n", file=f)
-#                f.close()
-            #self.importer_class([musiker, band], file=file, release_id_map=release_id_map)
-            #print(self.importer.cleaned_data[musiker])
             return render(request, self.template_name, context = context)
+        if '_continue_bom' in request.POST:
+            relation_importer = RelationImport([audio.band.rel, audio.musiker.rel, audio.person.rel])
+            relation_importer.mcs[audio].data = request.session['audio_cleaned_data']
+            relation_importer.mcs[musiker].data, relation_importer.mcs[band].data, relation_importer.mcs[person].data = self.build_bom_data(request.POST)
+            relation_importer.data_read = True
+            relation_importer.save()
+            return render(request, self.template_name, context = context)
+            
+    def build_bom_data(self, post_data):
+        forms_done = set()
+        musiker_data = []
+        band_data = []
+        person_data = []
+        for k, v in post_data.items():
+            regex = re.search(r'-(\d+)-', k)
+            if regex is None:
+                # Caught a non-form post item
+                continue
+            form_nr = regex.group(1)
+            if form_nr in forms_done:
+                continue
+            forms_done.add(form_nr)
+            prefix = k[:regex.start()]
+            field_name = k[regex.end():]
+            is_musiker = v if field_name == 'is_musiker' else post_data.get(prefix + '-' + form_nr + '-is_musiker', False)
+            is_band = v if field_name == 'is_band' else post_data.get(prefix + '-' + form_nr + '-is_band', False)
+            is_person = v if field_name == 'is_person' else post_data.get(prefix + '-' + form_nr + '-is_person', False)
+            name = v if field_name == 'name' else post_data.get(prefix + '-' + form_nr + '-name')
+            release_ids = v.split(", ") if field_name == 'release_ids' else post_data.get(prefix + '-' + form_nr + '-release_ids').split(", ")
+            
+            if is_musiker:
+                musiker_data.append({'kuenstler_name':name, 'release_id':release_ids})
+            if is_band:
+                band_data.append({'band_name':name, 'release_id':release_ids})
+            if is_person:
+                name = name.split()
+                nachname = name.pop(-1)
+                vorname = " ".join(name)
+                person_data.append({'vorname':vorname, 'nachname':nachname, 'release_id':release_ids})
+        return musiker_data, band_data, person_data
             
     def build_release_id_map(self, post_data):
         release_id_map = {}
