@@ -13,6 +13,9 @@ from .changelist import MIZChangeList
 
 
 from django.contrib.admin import AdminSite
+
+admin.site.site_header = 'MIZDB'
+
 class MIZAdminSite(AdminSite):
     site_header = 'MIZDB'
     
@@ -769,7 +772,7 @@ class DateiAdmin(ModelBase):
 
 # Register your models here.
 
-admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache ])
+admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, plattenfirma ])
 
 admin.site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
 
