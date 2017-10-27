@@ -176,6 +176,7 @@ class BulkBase(MIZAdminView):
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         form = self.form_class(request.POST)
+        
         if form.is_valid():
                 #TODO: has_changed check to avoid saving the wrong data
             if '_preview' in request.POST: #not self.request.POST.get('preview')
@@ -216,7 +217,7 @@ class BulkBase(MIZAdminView):
 
 class BulkAusgabe(BulkBase):
     form_class = BulkFormAusgabe
-    save_redirect = 'MIZAdmin:DBentry_ausgabe_changelist'
+    save_redirect = 'admin:DBentry_ausgabe_changelist'
     
     def save_data(self, request, form):
         ids = []
@@ -258,10 +259,16 @@ class BulkAusgabe(BulkBase):
                 # set.add/ set.create didnt work for some fcking reason
                 ergh = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
                 ergh.save()
-                audio_instance.bestand_set.create(lagerort=form.cleaned_data.get('audio_lagerort'))
+                bestand_data = dict(lagerort=form.cleaned_data.get('audio_lagerort'))
+                if 'provenienz' in row:
+                    bestand_data['provenienz'] = row.get('provenienz')
+                audio_instance.bestand_set.create(**bestand_data)
                 
             # Bestand
-            instance.bestand_set.create(lagerort=row.get('lagerort')[0])
+            bestand_data = dict(lagerort=row.get('lagerort'))
+            if 'provenienz' in row:
+                bestand_data['provenienz'] = row.get('provenienz')
+            instance.bestand_set.create(**bestand_data)
             
             ids.append(instance.pk)
         return ids
@@ -269,7 +276,6 @@ class BulkAusgabe(BulkBase):
     def next_initial_data(self, form):
         data = form.data.copy()
         # Increment jahr and jahrgang
-        #jahr_list = form.cleaned_data.get('jahr', '').split(', ')
         data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')])
         if form.cleaned_data.get('jahrgang'):  
             data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
@@ -278,7 +284,9 @@ class BulkAusgabe(BulkBase):
     def instance_data(self, row):
         rslt = {}
         rslt['jahrgang'] = row.get('jahrgang', None)
-        rslt['magazin'] = row.get('magazin')[0]
+        rslt['magazin'] = row.get('magazin')
+        rslt['info'] = row.get('info', '')
+        rslt['status'] = row.get('status')
         return rslt
         
     def build_preview(self, request, form):
@@ -288,7 +296,7 @@ class BulkAusgabe(BulkBase):
         
         for row in form.row_data:
             preview_row = OrderedDict()
-            for fld_name in form.field_order:
+            for fld_name in form.preview_fields:
                 if not row.get(fld_name):
                     continue
                 if fld_name == 'audio':
@@ -299,22 +307,26 @@ class BulkAusgabe(BulkBase):
                     preview_row[fld_name] = img
                     continue
                 values_list = row.get(fld_name) or []
-                if len(values_list)==1:
-                    preview_row[fld_name] = values_list[0] or ''
+                if isinstance(values_list, list):
+                    if len(values_list)==1:
+                        preview_row[fld_name] = values_list[0] or ''
+                    else:
+                        preview_row[fld_name] = ", ".join(values_list)
                 else:
-                    preview_row[fld_name] = ", ".join(values_list)
+                    preview_row[fld_name] = values_list or ''
         
             preview_row['Instanz'] = row.get('instance', '') or ''
             if preview_row['Instanz']:
-                link = reverse("MIZAdmin:DBentry_ausgabe_change", args = [preview_row['Instanz'].pk])
+                link = reverse("admin:DBentry_ausgabe_change", args = [preview_row['Instanz'].pk])
                 label = str(preview_row['Instanz'])
                 img = format_html('<img alt="False" src="/static/admin/img/icon-alert.svg">')
                 preview_row['Instanz'] = format_html('{} <a href="{}" target="_blank">{}</a>', img, link, label)
             preview_data.append(preview_row)
             
         headers = []
-        for fld_name in form.field_order:
+        for fld_name in form.preview_fields:
             if not any(fld_name in row for row in preview_data):
+                # Do not include headers for fields that are not in the preview_data
                 continue
             if fld_name == 'lagerort':
                 headers.append('Lagerort')

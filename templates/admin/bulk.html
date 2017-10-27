@@ -11,27 +11,17 @@
 
 {% block content %}
 
-
 <form method="post">
 <!-- Help Text -->
-        {% include "admin/includes/help_text.html" %}
-        {% comment %}
-<fieldset class="module aligned collapse collapsed">
-        <h2 class="fieldset-name collapsible">Hilfe</h2>
-        <div class="help_text">
-        </div>
-</fieldset> {% endcomment %}
+{% include "admin/includes/help_text.html" %}
+
 {% csrf_token %}
 {{ form.non_field_errors }}
-
 
 {% for fieldset in form %}
   {% include "admin/includes/fieldset.html" %}
 {% endfor %}
 <input type="submit" value="Vorschau" name="_preview"/>
-
-
-
 
 {% block preview %}
  {% if preview %}
@@ -56,8 +46,6 @@
                         {% endfor %}
                     </tr>
                 {% endfor %}
-{% comment %}
-{% endcomment %}
             </tbody>
         </table>
         </div>

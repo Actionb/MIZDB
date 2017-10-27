@@ -17,7 +17,7 @@ class ShowModel(models.Model):
     primary_fields = []         #fields that have the highest priority for searching and must always be included
     dupe_fields = []            #fields to determine duplicates with
     objects = MIZQuerySet.as_manager()
-            
+    
     def _show(self):
         rslt = ""
         for fld in self.get_basefields():
@@ -30,10 +30,6 @@ class ShowModel(models.Model):
             
     def __str__(self):
         return self._show()
-    
-#    @classmethod
-#    def get_ordering(cls):
-#        return cls._meta.ordering
         
     @classmethod
     def get_duplicates(cls):
@@ -52,6 +48,10 @@ class ShowModel(models.Model):
     @classmethod
     def get_m2mfields(cls, as_string=False):
         return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i in cls.exclude] 
+        
+    @classmethod
+    def get_required_fields(cls, as_string=False):
+        return [i.name if as_string else i for i in cls._meta.fields if not i.auto_created and not i.has_default() and i.blank == False]
     
     @classmethod
     def get_primary_fields(cls, reevaluate=False):
@@ -1341,8 +1341,8 @@ class datei(ShowModel):
 
   
 class Format(ShowModel):
-    CHANNEL_CHOICES = [('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quadraphonic', 'Quadraphonic'), 
-                        ('Ambisonic', 'Ambisonic'), ('Multichannel', 'Multichannel')]
+    CHANNEL_CHOICES = [('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quad', 'Quadraphonic'), 
+                        ('Ambi', 'Ambisonic'), ('Multi', 'Multichannel')]
     
     format_name = models.CharField(editable = False, **CF_ARGS_B)
     anzahl = models.PositiveSmallIntegerField(default = 1)

@@ -201,7 +201,7 @@ def split_name(name):
     return v, n
 
 def dict_to_tuple(d):
-    return [(k, v) for k, v in d]
+    return tuple((k, v) for k, v in d.items())
     
 def tuple_to_dict(t):
     return {k:v for k, v in t}
@@ -225,8 +225,28 @@ def split_field(field_name, data, seperators = [',']):
         return [data]
     rslt = []
     data_rest = {k:v for k, v in data.items() if k != field_name}
-    for d in set(multisplit(data.get(field_name, ''), seperators)):
+    for d in set(recmultisplit(data.get(field_name, ''), seperators)):
         x = data_rest.copy()
         x.update({field_name:d})
         rslt.append(x)
+    return rslt
+    
+
+def recmultisplit(values, seperators = []):
+    """Splits a string at each occurence of s in seperators."""
+    if len(seperators)==1:
+        return [i.strip() for i in values.split(seperators[0])]
+    rslt = []
+    seps = seperators[:]
+    sep = seps.pop()
+    
+    for x in values.split(sep):
+        rslt += recmultisplit(x, seps)
+#    
+#    last_sep = 0
+#    for index, c in enumerate(values):
+#        if c in seperators:
+#            rslt.append(values[last_sep:index].strip())
+#            last_sep = index+1
+#    rslt.append(values[last_sep:].strip())
     return rslt

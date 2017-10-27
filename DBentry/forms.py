@@ -390,8 +390,8 @@ class BulkForm(MIZAdminForm):
         if not self._row_data or self.has_changed():
             from collections import OrderedDict
             for c in range(self.total_count):
-                row = OrderedDict()
-                for fld_name in self.field_order:
+                row = {}
+                for fld_name in self.fields:
                     if fld_name in self.split_data:
                         if fld_name in self.each_fields:
                             # all items of this list are part of this row
@@ -402,9 +402,6 @@ class BulkForm(MIZAdminForm):
                     else:
                         item = self.cleaned_data.get(fld_name)
                     if item:
-                        if not isinstance(item, list):
-                            # Force items to be a list, since we're checking for len(item) in the view..
-                            item = [item]
                         row[fld_name] = item
                 row['instance'] = self.lookup_instance(row).first()
                 if row['instance']:
@@ -413,9 +410,9 @@ class BulkForm(MIZAdminForm):
                         continue
                     #TODO: Replace row_data with the data of the instance?
                     
-                    row['lagerort'] = [self.cleaned_data['dublette']]
+                    row['lagerort'] = self.cleaned_data['dublette']
                 else:
-                    row['lagerort'] = [self.cleaned_data['lagerort']]
+                    row['lagerort'] = self.cleaned_data['lagerort']
                     
                 self._row_data.append(row)
         return self._row_data
@@ -434,7 +431,8 @@ class BulkForm(MIZAdminForm):
             
 class BulkFormAusgabe(BulkForm):
     model = ausgabe
-    field_order = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort']
+    field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'info', 'audio', 'audio_lagerort', 'lagerort', 'dublette', 'provenienz']
+    preview_fields = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort']
     at_least_one_required = ['num', 'monat', 'lnum']
     
     
@@ -465,6 +463,14 @@ class BulkFormAusgabe(BulkForm):
                                     widget = autocomplete.ModelSelect2(url='aclagerort'), 
                                     initial = DUPLETTEN_ID, 
                                     label = 'Lagerort f. Dubletten')
+    provenienz = forms.ModelChoiceField(required = False, 
+                                    queryset = provenienz.objects.all(), 
+                                    widget = autocomplete.ModelSelect2(url='acprov'))    
+    info = forms.CharField(required = False, widget = Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
+    
+    status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus')
+    
+    
                                     
     def clean(self):
         super(BulkFormAusgabe, self).clean()
@@ -536,7 +542,7 @@ class BulkFormAusgabe(BulkForm):
         qs = self.cleaned_data.get('magazin').ausgabe_set
         
         for fld_name, row_data in row.items():
-            if fld_name in ['jahrgang', 'lagerort', 'magazin', 'audio', 'audio_lagerort']:
+            if not fld_name in ['jahr', 'num', 'monat', 'lnum']:
                 continue
             x = 'ausgabe_{}'.format(fld_name)
             x += '__{}'.format(fld_name if fld_name != 'monat' else 'monat_id')
