@@ -11,29 +11,20 @@
 <form method="post">
 {% csrf_token %}
 <fieldset class="module aligned collapse collapsed">
-<h2 class="fieldset-name collapsible">Rest List ({{rest_list.total_form_count}} Objekte)</h2>
-{% for form in rest_list %}
-    {{form.as_table}}
-    <br />
-{% endfor %}
+<h2 class="fieldset-name collapsible">Rest Liste ({{rest_list.total_form_count}} Objekte)</h2>
+{% include "admin/includes/formset_table.html" with formset=rest_list %}
 </fieldset>
 
 
 <fieldset class="module aligned collapse collapsed">
-<h2 class="fieldset-name collapsible">Musiker List ({{musiker_list.total_form_count}} Objekte)</h2>
-{% for form in musiker_list %}
-    {{form.as_table}}
-    <br />
-{% endfor %}
+<h2 class="fieldset-name collapsible">Musiker Liste ({{musiker_list.total_form_count}} Objekte)</h2>
+{% include "admin/includes/formset_table.html" with formset=musiker_list %}
 </fieldset>
 
 
 <fieldset class="module aligned collapse collapsed">
-<h2 class="fieldset-name collapsible">Band List ({{band_list.total_form_count}} Objekte)</h2>
-{% for form in band_list %}
-    {{form.as_table}}
-    <br />
-{% endfor %}
+<h2 class="fieldset-name collapsible">Band Liste ({{band_list.total_form_count}} Objekte)</h2>
+{% include "admin/includes/formset_table.html" with formset=band_list %}
 </fieldset>
 
 <input type="submit" value="Weiter" name="_continue_bom"/>

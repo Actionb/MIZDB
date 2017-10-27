@@ -96,7 +96,7 @@ class MBForm(MIZAdminForm):
     is_musiker = forms.BooleanField(label = 'Ist Musiker', required=False)
     is_band = forms.BooleanField(label = 'Ist Band', required=False)
     is_person = forms.BooleanField(label = 'Ist Person', required=False)
-    delete = forms.BooleanField(label = 'Löschen', required=False)
+    #delete = forms.BooleanField(label = 'Löschen', required=False)
     
 #    def __init__(self, *args, **kwargs):
 #        super(MBForm, self).__init__(data=kwargs.get('data', None) or kwargs.get('initial', None))
@@ -119,4 +119,4 @@ class MBForm(MIZAdminForm):
 #            # More than one checkbox or no checkbox was ticked
 #            raise ValidationError('Bee')
     
-MBFormSet = forms.formset_factory(MBForm, extra=0)
+MBFormSet = forms.formset_factory(MBForm, extra=0, can_delete=True)

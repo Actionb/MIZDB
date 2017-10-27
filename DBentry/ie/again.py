@@ -43,6 +43,23 @@ tag_dict = {
     
 }
 
+def save_order(mc_list):
+    if len(mc_list)==1:
+        if mc.parent:
+            return [mc, mc.parent]
+        else:
+            return [mc]
+    order = []
+    for mc in mc_list:
+        if mc.parent:
+            if mc.rel.many_to_many:
+                pass
+            else:
+                # MC is child with a ForeignKey on parent pointing at it
+                pass
+    
+    return order
+
 def tokenize_format(format_item):
     anzahl = '1'
     channel = ''
@@ -119,16 +136,16 @@ class DiscogsReader(object):
             else:
                 yield row
                 
-    def print_rows(self, row_number = -1):
+    def print_rows(self, row_number = -1, to_file = None):
         for c, row in enumerate(self.read(), 2):
             if c == row_number:
                 break
-            print(row)
+            print(row, file=to_file)
             
     def print_row(self, row_number = -1):
         for c, row in enumerate(self.read(), 2):
             if c == row_number:
-                print(row)
+                print(row, file=to_file)
                 break
                 
 class BaseImporter(object):
@@ -251,7 +268,7 @@ class BaseImporter(object):
     
     def clean_row(self, data, model):
         for k, v in data.items():
-            field_clean_func = getattr(self, 'clean_field_{}_{}'.format(k, model._meta.model_name.lower()), self._clean_field_basic)
+            field_clean_func = getattr(self, 'clean_field_{}_{}'.format(model._meta.model_name.lower(), k), self._clean_field_basic)
             if callable(field_clean_func):
                 data[k] = field_clean_func(v)
         model_clean_func = getattr(self, 'clean_model_{}'.format(model._meta.model_name.lower()), None)
@@ -264,6 +281,10 @@ class BaseImporter(object):
         if isinstance(value, str):
             return value.strip()
         return value
+        
+    def clean_field_audio_e_jahr(self, value):
+        if value == '0':
+            return None
         
     def save(self):
         from django.core.exceptions import FieldDoesNotExist
@@ -288,9 +309,6 @@ class BaseImporter(object):
                     record.save()
                     
             print("saved {} records of model {}".format(len(records_new), model._meta.model_name))
-            
-    def save_related(self):
-        pass
             
     def extract_data(self, models):
         extract = {}
@@ -400,6 +418,7 @@ class RelationImport(object):
     def __init__(self, relations, importer_class = DiscogsImporter, file = None, key = 'release_id', ignore_existing = True):
         mcs = {}
         models = set()
+        self._save_order = []
         for relation in relations:
             parent = relation.related_model
             child = relation.model
@@ -421,21 +440,27 @@ class RelationImport(object):
         if file:
             self.importer = importer_class(models, ignore_existing = ignore_existing, file=file)
         self.mcs = mcs
+        self.models = models
+        self.relations = relations
         self.data_read = False
-     
+        
     def read(self):
         if self.importer:
-            cleaned_data = self.importer.cleaned_data.copy()
+            from copy import deepcopy
+            cleaned_data = deepcopy(self.importer.cleaned_data)
             for model, mc in self.mcs.items():
-                mc.data = cleaned_data.get(model, []).copy()
+                mc.data = cleaned_data.get(model, [])
             self.data_read = True
         
     def save(self):
         if self.data_read:
             for mc in self.mcs.values():
-                mc.save()
-            for mc in self.mcs.values():
-                mc.save_related()
+                if not mc.saved:
+                    mc.save()
+                if not mc.saved_m2m:
+                    mc.save_m2m()
+#            for mc in self.mcs.values():
+#                mc.save_related()
         
 class ModelContainer(object):
     
@@ -451,7 +476,13 @@ class ModelContainer(object):
         self._key_id_map = {}
         
         self.saved = False
-        self.saved_related = False if self.parent else True
+        self.saved_m2m = False if self.parent else True
+        
+    def get_save_order(self):
+        if self.parent:
+            return [self, self.parent]
+        else:
+            return [self]
         
     def set_parent(self, parent_container):
         if self.parent_container:
@@ -463,6 +494,8 @@ class ModelContainer(object):
         
     @property
     def key_id_map(self):
+#        if not self.saved:
+#            self.save()
         if not self._key_id_map:
             # Build release_id_map if any children look up the key (release_id)
             for d in self.data:
@@ -474,17 +507,22 @@ class ModelContainer(object):
     def instances(self):
         if self.saved:
             for i in self.key_id_map.values():
-                yield i
+                yield i['instance']
 #            for d in self.data:
 #                if 'instance' in d:
 #                    yield d['instance']
                     
         
-    def get_instance_data(self, data):
-        # TODO: save this in data?
-        # NOTE: the data returned is insufficient to distinguish Format objects:
-        # most of those only have anzahl and channel data, and beyond that rely heavily on related objects 
+    def get_instance_data(self, data, key):
         instance_data = {k:v for k, v in data.items() if k in self.model.get_basefields(True)}
+        
+        # Add ForeignKey data to the instance_data
+        for mc in self.related_containers:
+            if mc.rel.many_to_many == False:
+                if not mc.saved:
+                    mc.save()
+                instance_data[mc.rel.field.name] = mc.key_id_map[key]['instance']
+        
         if self.key in instance_data:
             # Special case: self.model == audio: key (here: release_id) is part of the audio model - but it lives as a list in data
             instance_data[self.key] = instance_data[self.key][0]
@@ -492,38 +530,27 @@ class ModelContainer(object):
         
         
     def save(self):
-        #TODO: this shit only works if no foreign key fields are required...
         with transaction.atomic():
             for d in self.data:
-                for k in d[self.key]:
-                    # create an instance PER key PER data item
-                    instance_data = self.get_instance_data(d)
+                if not self.rel:
+                    for k in d[self.key]:
+                        # create an instance PER key PER data item
+                        instance_data = self.get_instance_data(d, k)
+                        instance = self.model(**instance_data)
+                        instance.save()
+                        new_d = d.copy()
+                        new_d['instance'] = instance
+                        self.key_id_map[k] = new_d
+                else:
+                    # create an instance per data item
+                    instance_data = self.get_instance_data(d, 0)
                     instance = None
-                    if self.model != Format and self.model.objects.filter(**instance_data).count()==1:
-                        # TODO: snowflake Format needs to be dealt with, instance_data contains too little information to distinguish
-                        # similiar Format objects from each other. 
+                    if self.model.objects.filter(**instance_data).count()==1:
                         instance = self.model.objects.filter(**instance_data).first()
                     if not instance:
                         instance = self.model(**instance_data)
                         instance.save()
-                    #d['instance'] = instance
-                    self.key_id_map[k] = instance
-#        for d in self.data:
-#            instance_data = self.get_instance_data(d)
-#            if self.model.objects.filter(**instance_data).exists():
-#                continue
-#            instance = self.model(**instance_data)
-#            records.append(instance)
-#            
-#        self.model.objects.bulk_create(records)
-#        
-#        if self.related_containers:
-#            # Find instances again so children can look them up easily
-#            for d in self.data:
-#                instance_data = self.get_instance_data(d)
-#                d['instance'] = self.model.objects.filter(**instance_data).first() # Format: .filter(audio__isnull=True)
-#                #d['instance'] = self.model.objects.get(**instance_data)
-                
+                    d['instance'] = instance
         self.saved = True
 #    
 #    def save_related(self):
@@ -587,64 +614,107 @@ class ModelContainer(object):
 #        self.saved_related = True
 
     
-    def save_related(self):
-        if self.parent: # and self.parent.saved
+    def save_m2m(self):
+        records = []
+        if self.saved and self.parent and self.rel.many_to_many:
             if not self.parent.saved:
                 self.parent.save()
+            target_model = self.rel.through
+            manager = target_model._default_manager
+            source_field_name = self.rel.field.m2m_field_name() # name of 'source' ForeignKey Field on the through model
+            target_field_name = self.rel.field.m2m_reverse_field_name()
+        
+            parent_is_source = target_model._meta.get_field(source_field_name).related_model == self.parent.model
             for d in self.data:
-                records = []
+                child_instance = d['instance']
                 for k in d[self.key]:
-    #                if 'instance' not in d:
-    #                    print(d)
-    #                    instance_data = self.get_instance_data(d)
-    #                    #d['instance'] = self.model.objects.filter(**instance_data).first()
-    #                    #d['instance'] = self.model.objects.get(**instance_data)
-                    child_instance = self.key_id_map[k]
-                        
-                    if self.rel.many_to_many:
-                        # Not going to rely on ManyRelatedManagers since those cannot deal with intermediary m2m models
-                        target_model = self.rel.through
-                        manager = target_model._default_manager
-                        source_field_name = self.rel.field.m2m_field_name() # name of 'source' ForeignKey Field on the through model
-                        target_field_name = self.rel.field.m2m_reverse_field_name()
-                        
-                        
-                        
-                        # ManyToManyField can be on either side of the through model (or even both sides) 
-                        parent_is_source = target_model._meta.get_field(source_field_name).related_model == self.parent.model
-    #                    for k in d[self.key]:
-    #                        #parent_data = self.parent.key_id_map[k]
-                        parent_instance = self.parent.key_id_map[k]#parent_data['instance']
-                        if parent_is_source:
-                            source_instance = parent_instance
-                            target_instance = child_instance
-                        else:
-                            source_instance = child_instance
-                            target_instance = parent_instance
-                            
-                        if manager.filter(**{source_field_name: source_instance, target_field_name: target_instance}).exists():
-                            # Avoiding UNIQUE Constraints violations
-                            continue
-                        records.append(target_model(**{source_field_name: source_instance, target_field_name: target_instance})) 
-
+                    #child_instance = self.key_id_map[k]['instance']
+                    parent_instance = self.parent.key_id_map[k]['instance']
+                    
+                    if parent_is_source:
+                        source_instance = parent_instance
+                        target_instance = child_instance
                     else:
-                        # child_instance (self) is at the reverse end (m2m connections defined by values in d[self.key]) of the ForeignKey
-                        # parent_instance.model contains the ForeignKey
-                        # use child_instance.RelatedManager to add relations
-                        set_name = self.rel.get_accessor_name()
-                        manager = getattr(child_instance, set_name)
-                        for k in d[self.key]:
-                            #parent_data = self.parent.key_id_map[k]
-                            parent_instance = self.parent.key_id_map[k]#parent_data['instance']
-                            manager.add(parent_instance)
-                if records:
-                    try:
-                        manager.bulk_create(records)
-                    except:
-                        for record in records:
-                            try:
-                                record.save()
-                            except:
-                                print(record)
-                                print(manager.all())
-        self.saved_related = True
+                        source_instance = child_instance
+                        target_instance = parent_instance
+                        
+                    m2m_instance_data = {source_field_name: source_instance, target_field_name: target_instance}
+                    if manager.filter(**m2m_instance_data).exists():
+                        # Avoiding UNIQUE Constraints violations
+                        continue
+                    records.append(target_model(**m2m_instance_data)) 
+                    
+            manager.bulk_create(records)
+#            try:
+#                manager.bulk_create(records)
+#            except:
+#                for record in records:
+#                    try:
+#                        record.save()
+#                    except:
+#                        print(getattr(record, source_field_name))
+#                        print(getattr(record, target_field_name))
+            
+        self.saved_m2m = True
+
+        return records
+    
+#        if self.parent: # and self.parent.saved
+#            if not self.parent.saved:
+#                self.parent.save()
+#            for d in self.data:
+#                records = []
+#                for k in d[self.key]:
+#    #                if 'instance' not in d:
+#    #                    print(d)
+#    #                    instance_data = self.get_instance_data(d)
+#    #                    #d['instance'] = self.model.objects.filter(**instance_data).first()
+#    #                    #d['instance'] = self.model.objects.get(**instance_data)
+#                    child_instance = self.key_id_map[k]
+#                        
+#                    if self.rel.many_to_many:
+#                        # Not going to rely on ManyRelatedManagers since those cannot deal with intermediary m2m models
+#                        target_model = self.rel.through
+#                        manager = target_model._default_manager
+#                        source_field_name = self.rel.field.m2m_field_name() # name of 'source' ForeignKey Field on the through model
+#                        target_field_name = self.rel.field.m2m_reverse_field_name()
+#                        
+#                        
+#                        
+#                        # ManyToManyField can be on either side of the through model (or even both sides) 
+#                        parent_is_source = target_model._meta.get_field(source_field_name).related_model == self.parent.model
+#    #                    for k in d[self.key]:
+#    #                        #parent_data = self.parent.key_id_map[k]
+#                        parent_instance = self.parent.key_id_map[k]#parent_data['instance']
+#                        if parent_is_source:
+#                            source_instance = parent_instance
+#                            target_instance = child_instance
+#                        else:
+#                            source_instance = child_instance
+#                            target_instance = parent_instance
+#                            
+#                        if manager.filter(**{source_field_name: source_instance, target_field_name: target_instance}).exists():
+#                            # Avoiding UNIQUE Constraints violations
+#                            continue
+#                        records.append(target_model(**{source_field_name: source_instance, target_field_name: target_instance})) 
+#
+#                    else:
+#                        # child_instance (self) is at the reverse end (m2m connections defined by values in d[self.key]) of the ForeignKey
+#                        # parent_instance.model contains the ForeignKey
+#                        # use child_instance.RelatedManager to add relations
+#                        set_name = self.rel.get_accessor_name()
+#                        manager = getattr(child_instance, set_name)
+#                        for k in d[self.key]:
+#                            #parent_data = self.parent.key_id_map[k]
+#                            parent_instance = self.parent.key_id_map[k]#parent_data['instance']
+#                            manager.add(parent_instance)
+#                if records:
+#                    try:
+#                        manager.bulk_create(records)
+#                    except:
+#                        for record in records:
+#                            try:
+#                                record.save()
+#                            except:
+#                                print(record)
+#                                print(manager.all())

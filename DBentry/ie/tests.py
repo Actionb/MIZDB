@@ -12,11 +12,13 @@ def test_muba():
     return split_MuBa(d)
 
 from .again import *
+from .argh import DiscogsImporter
 
 relations = [Format.audio.field.rel, Format.tag.rel, Format.format_typ.field.rel, Format.format_size.field.rel, 
             audio.musiker.rel, audio.band.rel, audio.plattenfirma.rel
 ]
-
+MODELS_ALL = [audio, plattenfirma, musiker, band, Format, FormatTag, FormatTyp, FormatSize
+        ]
 
 def test():
     s = Stuff([audio.band.field.rel])
@@ -28,11 +30,9 @@ def test():
 mb_importer = DiscogsImporter([musiker, band], file_path=FILE_NAME)
 
 def test_importer():
-    i = DiscogsImporter([musiker,band],file_path=FILE_NAME)
+    i = DiscogsImporter(MODELS_ALL,file_path=FILE_NAME, ignore_existing=False)
     c = i.cleaned_data
-    james = [d for d in c[musiker] if d['kuenstler_name']=='James Last']
-
-    return i, c, james
+    return i, c
     
 def test_relation():
     r = RelationImport([audio.band.rel, audio.musiker.rel], file=open(FILE_NAME))

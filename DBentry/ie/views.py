@@ -35,31 +35,34 @@ class ImportSelectView(MIZAdminView):
         return MBFormSet(self.get_initial_data())
     
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
+        context = self.get_context_data(**kwargs)            
+        relations = [Format.audio.field.rel, Format.tag.rel, Format.format_typ.field.rel, Format.format_size.field.rel, audio.plattenfirma.rel]
+        relations += [audio.band.rel, audio.musiker.rel]
         if '_continue_select' in request.POST:
             from io import TextIOWrapper
             file = TextIOWrapper(request.FILES['import_file'], encoding=request.encoding)
             
             models = [audio, Format, FormatTag, FormatTyp, FormatSize, musiker, band, plattenfirma]
             relations = [Format.audio.field.rel, Format.tag.rel, Format.format_typ.field.rel, Format.format_size.field.rel, audio.plattenfirma.rel]
-            
             relations += [audio.band.rel, audio.musiker.rel]
+            
             relation_importer = RelationImport(relations, file=file)
             importer = relation_importer.importer
             
             # Remove band,musiker again 
-            del importer.cleaned_data[band]
-            del importer.cleaned_data[musiker]
-            
+#            del importer.cleaned_data[band]
+#            del importer.cleaned_data[musiker]
+#            
             relation_importer.read()
-            relation_importer.save()
+            #relation_importer.save()
             
 #            relation_importer = RelationImport([audio.band.rel, audio.musiker.rel], file=file, ignore_existing=False)
 #            importer = relation_importer.importer
 #            relation_importer.read()
             
             if 'check_bom' in request.POST or importer.rest_list:
-                request.session['audio_cleaned_data'] = importer.cleaned_data[audio] # Need this in the second stage
+                for model, mc in relation_importer.mcs.items():
+                    request.session[model._meta.model_name + '_cleaned_data'] = mc.data
                 for prefix in ['rest_list', 'musiker_list', 'band_list']:
                     data_list = getattr(importer, prefix)
                     initial_data = self.get_initial_data(data_list, prefix = prefix, is_musiker = 'musiker' in prefix, is_band = 'band' in prefix)
@@ -67,16 +70,34 @@ class ImportSelectView(MIZAdminView):
             
                 return render(request, 'admin/import/band_or_musiker.html', context = context)
                 
-            #relation_importer.save()
+            relation_importer.save()
             
             return render(request, self.template_name, context = context)
         if '_continue_bom' in request.POST:
-            relation_importer = RelationImport([audio.band.rel, audio.musiker.rel, audio.person.rel])
-            relation_importer.mcs[audio].data = request.session['audio_cleaned_data']
-            relation_importer.mcs[musiker].data, relation_importer.mcs[band].data, relation_importer.mcs[person].data = self.build_bom_data(request.POST)
-            relation_importer.data_read = True
-            relation_importer.save()
-            return render(request, self.template_name, context = context)
+            
+            ffs = [MBFormSet(request.POST, prefix=prefix) for prefix in ['rest_list', 'musiker_list', 'band_list']]
+            
+#            for i, prefix in enumerate(['rest_list', 'musiker_list', 'band_list']):
+#                print(prefix)
+#                print('is_valid', ffs[i].is_valid())
+#                print('errors', ffs[i].errors)
+        
+            if all(fs.is_valid() for fs in ffs):
+                relations.append(audio.person.rel)
+                relation_importer = RelationImport(relations)
+                for model, mc in relation_importer.mcs.items():
+                    mc.data = request.session.get(model._meta.model_name + '_cleaned_data')            
+                
+                relation_importer.mcs[musiker].data, relation_importer.mcs[band].data, relation_importer.mcs[person].data = self.build_bom_data(request.POST)
+
+                relation_importer.data_read = True
+                relation_importer.save()
+                return render(request, self.template_name, context = context)
+            else:
+                # TODO: get the 'updated' version of these prefix lists
+                context.update({prefix:ffs[i] for i, prefix in enumerate(['rest_list', 'musiker_list', 'band_list'])})
+                print('rest_list' in context)
+                return render(request, 'admin/import/band_or_musiker.html', context = context)
             
     def build_bom_data(self, post_data):
         forms_done = set()
