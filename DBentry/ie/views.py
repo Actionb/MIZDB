@@ -3,7 +3,8 @@ import re
 
 from DBentry.views import MIZAdminView
 from .forms import *
-from .again import *
+from .relational import *
+from DBentry.utils import split_name
 from django.shortcuts import render, redirect
 from django.views.generic import FormView, TemplateView, ListView
 
@@ -11,11 +12,7 @@ class ImportSelectView(MIZAdminView):
     form_class = ImportSelectForm
     template_name = 'admin/import/import_select.html'
     success_url = 'MIZAdmin:band_or_musiker'
-    
-#    def __init__(self, file=None, *args, **kwargs):
-#        super(ImportSelectView, self).__init__(*args, **kwargs)
-#        self.file = file
-#        
+        
     def get_initial_data(self, data_list, prefix = 'form', is_band = False, is_musiker = False):
         initial_data = {
             prefix + '-TOTAL_FORMS': str(len(data_list)), 
@@ -48,22 +45,14 @@ class ImportSelectView(MIZAdminView):
             
             relation_importer = RelationImport(relations, file=file)
             importer = relation_importer.importer
-            
-            # Remove band,musiker again 
-#            del importer.cleaned_data[band]
-#            del importer.cleaned_data[musiker]
-#            
+             
             relation_importer.read()
-            #relation_importer.save()
-            
-#            relation_importer = RelationImport([audio.band.rel, audio.musiker.rel], file=file, ignore_existing=False)
-#            importer = relation_importer.importer
-#            relation_importer.read()
             
             if 'check_bom' in request.POST or importer.rest_list:
                 for model, mc in relation_importer.mcs.items():
                     request.session[model._meta.model_name + '_cleaned_data'] = mc.data
                 for prefix in ['rest_list', 'musiker_list', 'band_list']:
+                    
                     data_list = getattr(importer, prefix)
                     initial_data = self.get_initial_data(data_list, prefix = prefix, is_musiker = 'musiker' in prefix, is_band = 'band' in prefix)
                     context[prefix] = MBFormSet(initial_data, prefix = prefix)
@@ -77,11 +66,6 @@ class ImportSelectView(MIZAdminView):
             
             ffs = [MBFormSet(request.POST, prefix=prefix) for prefix in ['rest_list', 'musiker_list', 'band_list']]
             
-#            for i, prefix in enumerate(['rest_list', 'musiker_list', 'band_list']):
-#                print(prefix)
-#                print('is_valid', ffs[i].is_valid())
-#                print('errors', ffs[i].errors)
-        
             if all(fs.is_valid() for fs in ffs):
                 relations.append(audio.person.rel)
                 relation_importer = RelationImport(relations)
@@ -89,16 +73,19 @@ class ImportSelectView(MIZAdminView):
                     mc.data = request.session.get(model._meta.model_name + '_cleaned_data')            
                 
                 relation_importer.mcs[musiker].data, relation_importer.mcs[band].data, relation_importer.mcs[person].data = self.build_bom_data(request.POST)
-
                 relation_importer.data_read = True
                 relation_importer.save()
+                for model, mc in relation_importer.mcs.items():
+                    try:
+                        del request.session[model._meta.model_name + '_cleaned_data']
+                    except:
+                        continue
                 return render(request, self.template_name, context = context)
             else:
                 # TODO: get the 'updated' version of these prefix lists
                 context.update({prefix:ffs[i] for i, prefix in enumerate(['rest_list', 'musiker_list', 'band_list'])})
-                print('rest_list' in context)
                 return render(request, 'admin/import/band_or_musiker.html', context = context)
-            
+                
     def build_bom_data(self, post_data):
         forms_done = set()
         musiker_data = []
@@ -110,10 +97,10 @@ class ImportSelectView(MIZAdminView):
                 # Caught a non-form post item
                 continue
             form_nr = regex.group(1)
-            if form_nr in forms_done:
-                continue
-            forms_done.add(form_nr)
             prefix = k[:regex.start()]
+            if (prefix, form_nr) in forms_done:
+                continue
+            forms_done.add((prefix, form_nr))
             field_name = k[regex.end():]
             is_musiker = v if field_name == 'is_musiker' else post_data.get(prefix + '-' + form_nr + '-is_musiker', False)
             is_band = v if field_name == 'is_band' else post_data.get(prefix + '-' + form_nr + '-is_band', False)
@@ -126,9 +113,11 @@ class ImportSelectView(MIZAdminView):
             if is_band:
                 band_data.append({'band_name':name, 'release_id':release_ids})
             if is_person:
-                name = name.split()
-                nachname = name.pop(-1)
-                vorname = " ".join(name)
+#                #TODO: use utils.get_namen()?
+#                name = name.split()
+#                nachname = name.pop(-1)
+#                vorname = " ".join(name)
+                vorname, nachname = split_name(name)
                 person_data.append({'vorname':vorname, 'nachname':nachname, 'release_id':release_ids})
         return musiker_data, band_data, person_data
             
@@ -162,47 +151,3 @@ class ImportSelectView(MIZAdminView):
                         release_id_map[release_id][model].append(name)
         return release_id_map
     
-class MBImportView(TemplateView):
-    form_class = None
-    template_name = 'admin/import/band_or_musiker.html'
-    importer = None
-    
-    def __init__(self, importer = None, *args, **kwargs):
-        super(MBImportView, self).__init__(*args, **kwargs)
-        self.importer = importer
-        self.importer.cleaned_data
-        
-    def get_context_data(self, **kwargs):
-        context = super(MBImportView, self).get_context_data(**kwargs)
-        context['importer'] = self.importer
-        return context
-        
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        
-        if '_continue_bom' in request.POST:
-            # We are done with this step
-            rest_list = MBFormSet(request.POST, request.FILES, prefix='rest_list')
-            if rest_list.is_valid():
-                pass
-            f = open('request_post.txt', 'w')
-            for k, v in request.POST.items():
-                print(k + ":", file=f)
-                print(v, file=f)
-                print("="*20, end="\n\n", file=f)
-#            f.close()
-#            with open('rest_list.txt', 'w') as f:
-#                for k, v in 
-            return render(request, self.template_name, context = context)
-        else:
-#            initial = [dict(release_id=", ".join(release_ids), name=item) for item, release_ids in self.importer.rest_list.items()]
-#            context['rest_list'] = MBFormSet(initial = initial, prefix='rest_list')
-            
-            initial = [dict(release_id=", ".join(release_ids), name=item, is_musiker=True) for item, release_ids in self.importer.musiker_list.items()]
-            context['musiker_list'] = MBFormSet(initial = initial)
-#            
-#            initial = [dict(release_id=", ".join(release_ids), name=item, is_band=True) for item, release_ids in self.importer.band_list.items()]
-#            context['band_list'] = MBFormSet(initial = initial)
-#        
-            return render(request, self.template_name, context = context)
-        

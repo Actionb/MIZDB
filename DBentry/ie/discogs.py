@@ -1,91 +1,100 @@
-import csv
-import re
+#
 
 from DBentry.models import *
-from DBentry.utils import multisplit, split_field
+from DBentry.utils import multisplit, split_field, tuple_to_dict, dict_to_tuple
 
 from .name_utils import *
+from .reader import CSVReader
 
-FILE_NAME = '/home/philip/DB/Discogs Export/miz-ruhr2-collection-20170731-0402.csv'
-FILE_NAME_WIN = 'ImportData/miz-ruhr2.csv'
-MODELS_ALL = [audio, plattenfirma, musiker, band, Format, 
-            audio.plattenfirma.through, audio.musiker.through, audio.band.through,
-        ]
-
-tag_dict = {
-    audio : {
-        'Title' : 'titel', 
-        'Released' : 'e_jahr', 
-        'Catalog#' : 'catalog_nr',
-    }, 
-    plattenfirma : {
-        'Label' : 'name', 
-    }, 
-    musiker : {
-        'Artist' : 'kuenstler_name', 
-    }, 
-    band : {
-        'Artist' : 'band_name', 
-    }, 
-    Format : {
-        'Format' : 'Format', 
-    }
-}
-
-class DiscogsReader(object):
+db_tags = FormatTag.objects.values_list('abk', flat=True)
+def tokenize_format(format_item):
+    anzahl = '1'
+    channel = ''
+    format_typ = 'Vinyl'
+    format_size = 'LP'
+    format_tags = []
     
-    def __init__(self, file_path = None, file = None, tags = {}, reader = csv.DictReader):
-        self.file = file or open(file_path if file_path else FILE_NAME)
-        self.reader = reader
+    if format_item:
+        if 'x' in format_item and format_item.split('x')[0].strip().isnumeric(): 
+            anzahl = format_item.split('x')[0].strip()
+            format_item = " ".join(format_item.split('x')[1:])
+            
+        format_items = [i.strip()  for i in format_item.split(",")]
+        format_size = format_items.pop(0)
         
-        if isinstance(tags, (list, tuple)):
-            tags = {tags[0]:tags[0]}
-        if isinstance(tags, str):
-            tags = {tags:tags}
-        self.tags = tags
-        
-    def get_reader(self):
-        self.file.seek(0)
-        return self.reader(self.file)
-    
-    def read(self):
-        for row in self.get_reader():
-            if self.tags:
-                return_row = {}
-                for k, v in row.items():
-                    if k in self.tags:
-                        return_row[self.tags[k]] = v
-                yield return_row
+        format_tags = []
+        choices = [i[0] for i in Format.CHANNEL_CHOICES]
+        for item in format_items:
+            if item in choices:
+                channel = item
             else:
-                yield row
-                
-    def print_reader(self, row_number = 0):
-        for c, row in enumerate(self.read()):
-            if row_number and c == row_number:
-                break
-            print(row)
-                
-class BaseImporter(object):
+                if item in db_tags:
+                    format_tags.append(item)
     
+    return anzahl, channel, format_typ, format_size, format_tags
+    
+        
+def clean_format_related(data, model):
+        # incoming string might look like 7xLP,RE,Mono + 2x12",Album,Quad
+        # (\d+x: qty) (format_typ) (format_tag) (channel) + ...
+    rslt = []
+    for format_item in data.get('Format', '').split("+"):
+        anzahl, channel, format_typ, format_size, format_tags = tokenize_format(format_item)
+        token_dict = dict(anzahl=anzahl, channel=channel, typ=format_typ, size=format_size)
+        if model == FormatTag:
+            for abk in format_tags:
+                rslt.append(dict(abk=abk))
+        elif model == FormatSize:
+            rslt.append(dict(size=format_size))
+        elif model == FormatTyp:
+            rslt.append(dict(typ=format_typ))
+        else:
+            rslt.append(dict(anzahl=anzahl, channel=channel))
+    return rslt
+
+class DiscogsImporter(object):
+        
+    tag_dict = {
+        audio : {
+            'Title' : 'titel', 
+            'Released' : 'e_jahr', 
+            'Catalog#' : 'catalog_nr',
+        }, 
+        plattenfirma : {
+            'Label' : 'name', 
+        }, 
+        musiker : {
+            'Artist' : 'kuenstler_name', 
+        }, 
+        band : {
+            'Artist' : 'band_name', 
+        }, 
+        Format : {
+            'Format' : 'Format', 
+        }, 
+        FormatTag : {
+            'Format' : 'Format',
+        }, 
+        FormatSize : {
+            'Format' : 'Format',
+        }, 
+        FormatTyp : {
+            'Format' : 'Format',
+        }, 
+        
+    }
+        
+    musiker_list, band_list, rest_list = ({}, {}, {})
     existing_release_ids = set()
             
-    def __init__(self, models, file_path = None, file = None, seperators = [','], release_id_map = {}, ignore_existing = True):
-        if not isinstance(models, (list, tuple)):
-            self.models = [models]
-        else:
-            self.models = models
-        if not isinstance(seperators, (list, tuple)):
-            self.seps = [seperators]
-        else:
-            self.seps = seperators
+    def __init__(self, models, file_path = None, file = None, seperators = [',', ' / ', ' - ', ' · '], ignore_existing = True):
+        self.models = models
+        self.seps = seperators
             
-        self.file_path = file_path or FILE_NAME
-        self.file = file
-        self.reader = DiscogsReader(file_path = self.file_path, file = self.file)
+        self.reader = CSVReader(file_path = file_path, file = file)
         self._cleaned_data = {}
-        self.release_id_map = release_id_map
         if ignore_existing:
-            self.existing_release_ids = set([id for id in audio.objects.values_list('release_id', flat = True) if id])
+            self.existing_release_ids = set([str(id) for id in audio.objects.values_list('release_id', flat = True) if id])
             
     def read_file(self):
         for c, row in enumerate(self.reader.read(), 2):
@@ -95,69 +104,55 @@ class BaseImporter(object):
     def cleaned_data(self):
         if not self._cleaned_data:
             self._cleaned_data = {}
-            map_models = []
-            if self.release_id_map:
-                #{<release_id>:{<model>:[<names>]}}
-                release_id, model_dict = self.release_id_map.copy().popitem()
-                map_models = model_dict.keys()
             if self.models:
                 for model in self.models:
+                    data_seen = {} # Maps seen data to the index of that data in self._cleaned_data[model]
                     if not model in self._cleaned_data:
                         self._cleaned_data[model] = []
-                    if model in map_models:
-                        # Do these later right from the release_id_map
-                        continue
-                    for row_number,  data in self.read_file():
+                    for row_number, data in self.read_file():
+                        release_id = data.get('release_id')
+                        if release_id in self.existing_release_ids:
+                            continue
                         for processed_data in self.process_row(data, model):
                             if processed_data:
-                                self._cleaned_data[model].append(processed_data)
-            self.include_id_map()
+                                data_tuple = dict_to_tuple(processed_data)
+                                
+                                if data_tuple in data_seen:
+                                    if release_id not in self._cleaned_data[model][data_seen[data_tuple]]['release_id']:
+                                        self._cleaned_data[model][data_seen[data_tuple]]['release_id'].append(release_id)
+                                else:
+                                    processed_data['release_id'] = [release_id]
+                                    index = len(self._cleaned_data[model])
+                                    data_seen[data_tuple] = index
+                                    self._cleaned_data[model].append(processed_data)
         return self._cleaned_data
         
-    def include_id_map(self):
-        if self.release_id_map:
-            # Reset cleaned data when using this function from outside cleaned_data()
-            for models in self.release_id_map.values():
-                for model in models:
-                    self._cleaned_data[model] = []
-            #{<release_id>:{<model>:[<names>]}}
-            for release_id, models in self.release_id_map.items():
-                for model, names in models.items():
-                    if model == person:
-                        dict_list = []
-                        for name in names:
-                            last_space = name.find(" ", -1)
-                            vorname = name[:last_space]
-                            nachname = name[last_space+1:]
-                            dict_list.append({'release_id':release_id, 'vorname':vorname, 'nachname':nachname})
-                    else:
-                        field_name = tag_dict.get(model).get('Artist')
-                        dict_list = [{'release_id':release_id, field_name:name} for name in names]
-                    self.cleaned_data[model].append(dict_list)
-        
     def process_row(self, row_data, model):
-        tags = tag_dict.get(model, {})
+        tags = self.tag_dict.get(model, {})
         data = {tags.get(k, k):v for k, v in row_data.items() if k in tags or k == 'release_id'}
-        
-        if int(data.get('release_id', 0)) in self.existing_release_ids:
-            return []
             
         data = self.clean_row(data, model)
-        
-        # TODO: add release_id if not present in data
         
         # A single read row might be split up into a list of data-sets by the model_clean_func if it exists
         if data and not isinstance(data, (list, tuple)):
             data = [data]
         
+        # Strip release_id 
+        for d in data:
+            # Not all clean_row funcs keep the release_id, hence the try-catch
+            try:
+                del d['release_id']
+            except:
+                pass
+        
         return data
     
     def clean_row(self, data, model):
         for k, v in data.items():
-            field_clean_func = getattr(self, 'clean_field_{}_{}'.format(k, model._meta.model_name), self._clean_field_basic)
+            field_clean_func = getattr(self, 'clean_field_{}_{}'.format(model._meta.model_name.lower(), k), self._clean_field_basic)
             if callable(field_clean_func):
                 data[k] = field_clean_func(v)
-        model_clean_func = getattr(self, 'clean_model_{}'.format(model._meta.model_name), None)
+        model_clean_func = getattr(self, 'clean_model_{}'.format(model._meta.model_name.lower()), None)
         if callable(model_clean_func):
             # model_clean_func WILL return a list(data)!!
             return model_clean_func(data)
@@ -166,92 +161,27 @@ class BaseImporter(object):
     def _clean_field_basic(self, value):
         if isinstance(value, str):
             return value.strip()
-        return value
-        
-    def save(self):
-        from django.core.exceptions import FieldDoesNotExist
-        for model, rows in self.cleaned_data.items():
-            records_total = []
-            records_new = []
-            data_seen = []
-            for row_data in rows:
-                if model.objects.filter(**row_data).exists():
-                    record = model.objects.filter(**row_data).first()
-                else:
-                    record = model(**row_data)
-                    if not row_data in data_seen:
-                        records_new.append(record)
-                data_seen.append(row_data)
-                records_total.append((record, row_data))
-            
-            try:
-                model.objects.bulk_create(records_new)
-            except:
-                for record in records_new:
-                    record.save()
-                    
-            print("saved {} records of model {}".format(len(records_new), model._meta.model_name))
-            
-    def save_related(self):
-        pass
-            
-    def extract_data(self, models):
-        extract = {}
-        for model in models:
-            if model in self.models:
-                extract[model] = self.cleaned_data.get(model)
-        return extract
-            
-class DiscogsImporter(BaseImporter):
-    
-    
-    musiker_list, band_list, rest_list = ({}, {}, {})
-    
-    
-    def __init__(self, *args, **kwargs):
-        super(DiscogsImporter, self).__init__(*args, **kwargs)
-        self.seps += ['/', '-', '·']    
-        
-    def _clean_field_basic(self, value):
-        value = super(DiscogsImporter, self)._clean_field_basic(value)
         p = re.compile(r'.\(\d+\)') # Look for a whitespace followed by '(number)' -- OR r'.(\d).'? TODO: . ANY CHARACTER!!
         return p.sub('', value)
-    
+        
+    def clean_field_audio_e_jahr(self, value):
+        if value == '0':
+            return None
+            
     def clean_model_plattenfirma(self, data):
         return split_field('name', data, self.seps)
         
+    def clean_model_formatsize(self, data):
+        return clean_format_related(data, FormatSize)
+        
+    def clean_model_formattyp(self, data):
+        return clean_format_related(data, FormatTyp)
+        
     def clean_model_format(self, data):
-        #TODO: FINISH IT!!
-        # incoming string might look like 7xLP,RE,Mono + 2x12",Album,Quad
-        # (\d+x: qty) (format_typ) (format_tag) (channel) + ...
-        rslt = []
-        release_id = data.get('release_id', '0')
-        for format_item in data.get('Format', '').split("+"):
-            # TODO: use re.split
-            if not format_item:
-                continue
-            
-            if 'x' in format_item and format_item.split('x')[0].strip().isnumeric(): 
-                anzahl = format_item.split('x')[0].strip()
-                format_item = " ".join(format_item.split('x')[1:])
-            else:
-                anzahl = '1'
-                
-            format_items = [i.strip()  for i in format_item.split(",")]
-            format_typ = format_items.pop(0)
-            
-            channel = ''
-            format_tags = []
-            choices = [i[0] for i in Format.CHANNEL_CHOICES]
-            for item in format_items:
-                if item in choices:
-                    channel = item
-                else:
-                    format_tag.append(item)
-                    
-            
-            rslt.append(dict(release_id=release_id, Format=format_item))
-        return rslt
+        return clean_format_related(data, Format)
+        
+    def clean_model_formattag(self, data):
+        return clean_format_related(data, FormatTag)
         
     def clean_model_musiker(self, data):
         rslt = []
@@ -304,16 +234,4 @@ class DiscogsImporter(BaseImporter):
                     continue
             rslt.append(d)
         return rslt
-        
-class FullImporter(DiscogsImporter):
-        
-    def __init__(self, file):
-        models = [audio, Format, FormatTyp, FormatSize, NoiseRed, FormatTag, plattenfirma, audio.plattenfirma.through]
-        super(FullImporter, self).__init__(models, file=file)
-        
-def test_reader(model = audio):
-    return DiscogsReader(model, open('/home/philip/DB/Discogs Export/miz-ruhr2-collection-20170731-0402.csv'))
-
-def test_muba():
-    d = [i['Artist'] for i in DiscogsReader().read()]
-    return split_MuBa(d)
+            
