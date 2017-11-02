@@ -37,7 +37,7 @@ class ImportSelectView(MIZAdminView):
         relations += [audio.band.rel, audio.musiker.rel]
         if '_continue_select' in request.POST:
             from io import TextIOWrapper
-            file = TextIOWrapper(request.FILES['import_file'], encoding=request.encoding)
+            file = TextIOWrapper(request.FILES['import_file'], encoding='utf-8')
             
             models = [audio, Format, FormatTag, FormatTyp, FormatSize, musiker, band, plattenfirma]
             relations = [Format.audio.field.rel, Format.tag.rel, Format.format_typ.field.rel, Format.format_size.field.rel, audio.plattenfirma.rel]
