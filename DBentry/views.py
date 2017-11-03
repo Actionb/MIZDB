@@ -8,9 +8,11 @@ from django.db.models import Q
 from django.views.decorators.http import require_http_methods
 from django.utils.translation import ugettext as _
 from django.contrib.admin.utils import get_fields_from_path
+from django.utils.html import format_html
 
 from .models import *
 from .forms import *
+from .utils import link_list
 
 from dal import autocomplete
 # Create your views here
@@ -163,36 +165,41 @@ class MIZAdminView(FormView):
         return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        # Default get method of ProcessFormView calls get_context_data withouth kwargs ... for whatever reason
-        #NOTE: what did we need this for again? Something to do with site_header, site_titel etc... I think
+        # Default get method of ProcessFormView calls get_context_data withouth kwargs (site_header, site_titel, etc.) 
+        # which we want on all our views
         return render(request, self.template_name, context = self.get_context_data(**kwargs))
         
 
 class BulkBase(MIZAdminView):
     template_name = 'admin/bulk.html'
     form_class = None
-    save_redirect = '' #TODO: use success_url since there is already 'support' for it in the generic views
+    success_url = ''
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        form = self.form_class(request.POST)
+        form = self.form_class(request.POST, initial=request.session.get('old_form_data', {}))
         
         if form.is_valid():
-                #TODO: has_changed check to avoid saving the wrong data
-            if '_preview' in request.POST: #not self.request.POST.get('preview')
+            if form.has_changed():
+                if not '_preview' in request.POST:
+                    messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
                 context['preview_headers'], context['preview'] = self.build_preview(request, form)
-            if '_continue' in request.POST:
-                # Collect preview data, create instances
-                ids = self.save_data(request, form)
-                # Need to store the queryset of the newly created items in request.session for the Changelist view...
-                request.session['qs'] = dict(id__in=ids) if ids else None
-                return redirect(self.save_redirect)
-            if '_addanother' in request.POST:
-                old_form = form
-                self.save_data(request, form)
-                form = self.form_class(self.next_initial_data(form))
-                form.is_valid()
-                context['preview_headers'], context['preview'] = self.build_preview(request, form)
+            else:
+                if '_continue' in request.POST and not form.has_changed():
+                    # Collect preview data, create instances
+                    ids, instances = self.save_data(request, form)
+                    # Need to store the queryset of the newly created items in request.session for the Changelist view
+                    request.session['qs'] = dict(id__in=ids) if ids else None
+                    return redirect(self.success_url)
+                if '_addanother' in request.POST and not form.has_changed():
+                    old_form = form
+                    ids, instances = self.save_data(request, form)
+                    obj_list = link_list(request, instances)
+                    messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
+                    form = self.form_class(self.next_initial_data(form))
+                    form.is_valid()
+                    context['preview_headers'], context['preview'] = self.build_preview(request, form)
+        request.session['old_form_data'] = form.data
         context['form'] = form
         return render(request, self.template_name, context = context)
     
@@ -206,6 +213,7 @@ class BulkBase(MIZAdminView):
         return 
         
     def instance_data(self, row):
+        return {}
         #TODO: this is WIP
         for fld_name in form.each_fields:
             if fld_name in form.split_data:
@@ -217,16 +225,18 @@ class BulkBase(MIZAdminView):
 
 class BulkAusgabe(BulkBase):
     form_class = BulkFormAusgabe
-    save_redirect = 'admin:DBentry_ausgabe_changelist'
+    success_url = 'admin:DBentry_ausgabe_changelist'
     
     def save_data(self, request, form):
         ids = []
+        instances = []
         row_count = len(form.row_data)
         
         for row in form.row_data:
             instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
             if not instance.pk:
                 instance.save()
+            instances.append(instance)
             for fld_name in ['jahr', 'num', 'monat', 'lnum']:
                 set = getattr(instance, "ausgabe_{}_set".format(fld_name))
                 data = row.get(fld_name, None)
@@ -271,7 +281,7 @@ class BulkAusgabe(BulkBase):
             instance.bestand_set.create(**bestand_data)
             
             ids.append(instance.pk)
-        return ids
+        return ids, instances
                 
     def next_initial_data(self, form):
         data = form.data.copy()
