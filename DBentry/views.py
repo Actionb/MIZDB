@@ -47,7 +47,7 @@ class ACBase(autocomplete.Select2QuerySetView):
     @property
     def flds(self):
         if not self._flds:
-            self._flds = self.model.get_primary_fields()
+            self._flds = self.model.get_search_fields()
             # Check if all flds in self.flds are of the model
             for i, fld in enumerate(self._flds):
                 try:

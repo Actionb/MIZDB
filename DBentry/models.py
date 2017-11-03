@@ -12,8 +12,8 @@ from .managers import AusgabeQuerySet, MIZQuerySet
 
 class ShowModel(models.Model):
     
-    exclude = []                #fields to exclude from searches
-    search_fields = []          #custom list of search fields, ignores get_search_fields()
+    exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches
+    search_fields = []          #custom list of search fields, largely used for specifying related fields
     primary_fields = []         #fields that have the highest priority for searching and must always be included
     dupe_fields = []            #fields to determine duplicates with
     objects = MIZQuerySet.as_manager()
@@ -39,15 +39,15 @@ class ShowModel(models.Model):
     @classmethod
     def get_basefields(cls, as_string=False):
         return [i.name if as_string else i for i in cls._meta.fields
-            if i != cls._meta.pk and not i.is_relation and not i in cls.exclude]
+            if i != cls._meta.pk and not i.is_relation and not i.name in cls.exclude]
         
     @classmethod
     def get_foreignfields(cls, as_string=False):
-        return [i.name if as_string else i for i in cls._meta.fields if isinstance(i, models.ForeignKey) and not i in cls.exclude]
+        return [i.name if as_string else i for i in cls._meta.fields if isinstance(i, models.ForeignKey) and not i.name in cls.exclude]
         
     @classmethod
     def get_m2mfields(cls, as_string=False):
-        return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i in cls.exclude] 
+        return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i.name in cls.exclude] 
         
     @classmethod
     def get_required_fields(cls, as_string=False):
@@ -61,17 +61,16 @@ class ShowModel(models.Model):
             return cls.get_basefields(as_string=True)
     
     @classmethod
-    def get_search_fields(cls, foreign=False, m2m=False, reevaluate=False):
-        if cls.search_fields and not reevaluate:
-            return cls.search_fields
-        rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True)) #NOTE: one as_string and one not?
+    def get_search_fields(cls, foreign=False, m2m=False):
+        #rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True)) #NOTE: one as_string and one not? <-- primary_fields always returns strings
+        rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
         if foreign:
             for fld in cls.get_foreignfields():
-                for rel_fld in fld.related_model.get_primary_fields():
+                for rel_fld in fld.related_model.get_search_fields():
                     rslt.add("{}__{}".format(fld.name, rel_fld))
         if m2m:
             for fld in cls.get_m2mfields():
-                for rel_fld in fld.related_model.get_primary_fields():
+                for rel_fld in fld.related_model.get_search_fields():
                     rslt.add("{}__{}".format(fld.name, rel_fld))
         return rslt
     
@@ -167,8 +166,6 @@ class person(ShowModel):
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
     beschreibung = models.TextField(blank = True)
     
-    exclude = [beschreibung]
-    
     class Meta:
         verbose_name = 'Person'
         verbose_name_plural = 'Personen'
@@ -201,9 +198,9 @@ class musiker(ShowModel):
     instrument = models.ManyToManyField('instrument',  through = m2m_musiker_instrument)
     beschreibung = models.TextField(blank = True)
     
-    exclude = [beschreibung]
+    search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
     dupe_fields = ['kuenstler_name', 'person']
-    primary_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
+    #primary_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
     
     class Meta:
         verbose_name = 'Musiker'
@@ -232,6 +229,7 @@ class musiker_alias(alias_base):
 class genre(ShowModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
+    
     class Meta:
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
@@ -240,6 +238,7 @@ class genre(ShowModel):
     def alias_string(self):
         return concat_limit(self.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
+    
 class genre_alias(alias_base):
     parent = models.ForeignKey('genre')
         
@@ -250,12 +249,9 @@ class band(ShowModel):
     genre = models.ManyToManyField('genre',  through = m2m_band_genre)
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
     beschreibung = models.TextField(blank = True)
-    
-    primary_fields = ['band_name']
-    exclude = [beschreibung]
+
     dupe_fields = ['band_name', 'herkunft_id']
-#    search_fields = ['band_name', 'herkunft__stadt', 'herkunft__land__land_name',
-#                    'band_alias__alias', 'genre__genre', 'musiker__kuenstler_name']
+    search_fields = ['band_alias__alias', 'musiker__kuenstler_name']
 
     
     class Meta:
@@ -283,7 +279,7 @@ class autor(ShowModel):
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
-    primary_fields = ['person__vorname', 'person__nachname', 'kuerzel']
+    search_fields = ['person__vorname', 'person__nachname']
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
     class Meta:
@@ -337,12 +333,11 @@ class ausgabe(ShowModel):
     
     audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe)
     
-    exclude = [info]
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
                     'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
                     
-    primary_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
-                    'ausgabe_monat__monat__monat', 'e_datum']
+    search_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
+                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']
     
     objects = AusgabeQuerySet.as_manager()
     class Meta:

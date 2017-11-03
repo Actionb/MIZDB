@@ -68,7 +68,7 @@ class ModelBase(admin.ModelAdmin):
     def get_search_fields(self, request=None):
         if self.search_fields:
             return self.search_fields
-        return list(self.model.get_search_fields())
+        return self.model.search_fields
         
     def add_crosslinks(self, object_id):
         from django.contrib.admin.utils import reverse
@@ -493,7 +493,7 @@ class BandAdmin(ModelBase):
         #verbose_model = musiker
     class AliasInLine(AliasTabBase):
         model = band_alias
-    search_fields = ['band_name', 'beschreibung', 'band_alias__alias']
+    #search_fields = ['band_name', 'beschreibung', 'band_alias__alias']
     save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
     exclude = ['genre', 'musiker']
