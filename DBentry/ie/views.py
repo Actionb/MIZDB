@@ -24,11 +24,6 @@ class ImportSelectView(MIZAdminView):
             initial_data[prefix + '-' + str(c) + '-is_band'] = is_band
             initial_data[prefix + '-' + str(c) + '-is_musiker'] = is_musiker
         return initial_data
-        
-    def get_formset(self, prefix):
-        if not hasattr(self.importer, prefix):
-            return MBFormSet(extra=0)
-        return MBFormSet(self.get_initial_data())
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)            
@@ -112,41 +107,7 @@ class ImportSelectView(MIZAdminView):
             if is_band:
                 band_data.append({'band_name':name, 'release_id':release_ids})
             if is_person:
-#                #TODO: use utils.get_namen()?
-#                name = name.split()
-#                nachname = name.pop(-1)
-#                vorname = " ".join(name)
                 vorname, nachname = split_name(name)
                 person_data.append({'vorname':vorname, 'nachname':nachname, 'release_id':release_ids})
         return musiker_data, band_data, person_data
-            
-    def build_release_id_map(self, post_data):
-        release_id_map = {}
-        forms_done = set()
-        for k, v in post_data.items():
-            regex = re.search(r'-(\d+)-', k)
-            if regex is None:
-                # Caught a non-form post item
-                continue
-            form_nr = regex.group(1)
-            if form_nr in forms_done:
-                continue
-            forms_done.add(form_nr)
-            prefix = k[:regex.start()]
-            field_name = k[regex.end():]
-            is_musiker = v if field_name == 'is_musiker' else post_data.get(prefix + '-' + form_nr + '-is_musiker', False)
-            is_band = v if field_name == 'is_band' else post_data.get(prefix + '-' + form_nr + '-is_band', False)
-            is_person = v if field_name == 'is_person' else post_data.get(prefix + '-' + form_nr + '-is_person', False)
-            name = v if field_name == 'name' else post_data.get(prefix + '-' + form_nr + '-name')
-            release_ids = v.split(", ") if field_name == 'release_ids' else post_data.get(prefix + '-' + form_nr + '-release_ids').split(", ")
-            
-            for release_id in release_ids:
-                if release_id not in release_id_map:
-                    release_id_map[release_id] = {}
-                for boolean, model in [(is_musiker, musiker), (is_band, band), (is_person, person)]:
-                    if model not in release_id_map[release_id]:
-                        release_id_map[release_id][model] = []
-                    if boolean:
-                        release_id_map[release_id][model].append(name)
-        return release_id_map
     
