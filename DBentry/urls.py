@@ -58,3 +58,7 @@ urlpatterns = [
     url(r'ac/', include(autocomplete_patterns)),
     url(r'ac/', include(autocomplete_patterns_nocreate))
 ]
+
+admin_tools_urls = [
+    url(r'^bulk_ausgabe/$', BulkAusgabe.as_view(), name='bulk_ausgabe'), 
+]

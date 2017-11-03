@@ -16,16 +16,22 @@ Including another URLconf
 from django.conf.urls import url,  include
 from django.contrib import admin
 
+from itertools import chain
+
+from DBentry.ie.urls import import_urls
+from DBentry.urls import admin_tools_urls
+urls = admin.site.urls[0]
+for u in chain(import_urls, admin_tools_urls):
+    u.callback = admin.site.admin_view(u.callback)
+    urls.insert(0, u)
+
+urlpatterns = [
+    url(r'^mizdb/', include('DBentry.urls')), # includes the autocomplete-patterns
+    url(r'^admin/', (urls, admin.site.urls[1], admin.site.urls[2])),
+]
 
 from django.conf import settings
 from django.conf.urls.static import static
-
-from DBentry.admin import admin_site
-urlpatterns = [
-    url(r'^mizdb/', include('DBentry.urls')), 
-    url(r'^admin/', admin.site.urls),
-    url(r'^admin/', admin_site.urls), 
-]
 
 if settings.DEBUG:
     urlpatterns += static(prefix = settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

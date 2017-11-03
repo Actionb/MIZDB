@@ -11,28 +11,7 @@ from .utils import link_list
 
 from .changelist import MIZChangeList
 
-
-from django.contrib.admin import AdminSite
-
 admin.site.site_header = 'MIZDB'
-
-class MIZAdminSite(AdminSite):
-    site_header = 'MIZDB'
-    
-    def get_urls(self):
-        from django.conf.urls import url, include
-        from .views import BulkAusgabe
-        urls = super(MIZAdminSite, self).get_urls()
-        urls = [
-            url(r'^bulk_ausgabe/$', self.admin_view(BulkAusgabe.as_view()), name='bulk_ausgabe'), 
-        ] + urls
-        
-        from .ie.urls import import_urls
-        for u in import_urls:
-            u.callback = self.admin_view(u.callback)
-            urls.insert(0, u)
-        return urls
-admin_site = MIZAdminSite(name='MIZAdmin')
 
 from django.contrib.admin.options import *
 class ModelBase(admin.ModelAdmin):
@@ -761,8 +740,3 @@ class DateiAdmin(ModelBase):
 admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, plattenfirma ])
 
 admin.site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
-
-from django.contrib.auth.models import Group, User
-from django.contrib.auth.admin import GroupAdmin, UserAdmin
-admin_site.register(Group, GroupAdmin)
-admin_site.register(User, UserAdmin)

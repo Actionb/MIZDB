@@ -152,14 +152,14 @@ class ACProv(ACBase):
     def create_object(self, text):
         return provenienz.objects.create(geber=geber.objects.create(name=text))
         
-from .admin import admin_site
+from django.contrib import admin
 from django.views.generic import FormView, TemplateView, ListView
 class MIZAdminView(FormView):
     form_class = None
     template_name = None
     
     def dispatch(self, request, *args, **kwargs):
-        kwargs.update(admin_site.each_context(request))
+        kwargs.update(admin.site.each_context(request))
         return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):

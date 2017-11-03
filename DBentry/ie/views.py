@@ -11,7 +11,6 @@ from django.views.generic import FormView, TemplateView, ListView
 class ImportSelectView(MIZAdminView):
     form_class = ImportSelectForm
     template_name = 'admin/import/import_select.html'
-    success_url = 'MIZAdmin:band_or_musiker'
         
     def get_initial_data(self, data_list, prefix = 'form', is_band = False, is_musiker = False):
         initial_data = {
