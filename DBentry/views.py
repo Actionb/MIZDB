@@ -62,43 +62,11 @@ class ACBase(autocomplete.Select2QuerySetView):
                 del self._flds[i]
         return self._flds
         
-    def get_queryset(self):
-        qs = self.model.objects.all()
-        ordering = self.model._meta.ordering
-                
-        if self.forwarded:
-            qobjects = Q()
-            for k, v in self.forwarded.items():
-                #TODO: make a custom widget to allow setting of its 'name' html attribute so we don't have to do this:
-                # html attribute name == form field name; meaning in order to use dal in search forms we have to call the
-                # form field after a queryable field. But the ac widget's model fields may be different than the form fields
-                # 
-                while True:
-                    # Reducing k in hopes of getting something useful
-                    if k:
-                        try:
-                            # Test to see if k can be used to build a query
-                            get_fields_from_path(self.model, k)
-                            break
-                        except:
-                            # Slice off the first bit
-                            k = "__".join(k.split("__")[1:])
-                    else:
-                        break
-                if k and v:
-                    qobjects |= Q((k,v))
-            if qobjects.children:
-                qs = qs.filter(qobjects)                        
-            else:
-                # Return empty queryset as the forwarded items did not contribute to filtering the queryset
-                return self.model.objects.none()
-                
-        # Ordering
-        if self.model == ausgabe:
-            qs = qs.resultbased_ordering()
-        else:
-            qs = qs.order_by(*ordering)
-            
+    def do_ordering(self, qs):
+        return qs.order_by(*self.model._meta.ordering)
+        
+    def apply_q(self, qs):
+        # NOTE: distinct() at every step? performance issue?
         if self.q:
             if self.flds:
                 exact_match_qs = qs
@@ -129,18 +97,51 @@ class ACBase(autocomplete.Select2QuerySetView):
                     for fld in self.flds:
                         qobjects |= Q((fld+"__icontains", q))
                     qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
-                    
                 return list(exact_match_qs)+list(startsw_qs)+list(qs)
-                    
+        return qs
+        
+    def get_queryset(self):
+        qs = self.model.objects.all()
+        #ordering = self.model._meta.ordering
+        
+        if self.forwarded:
+            qobjects = Q()
+            for k, v in self.forwarded.items():
+                #TODO: make a custom widget to allow setting of its 'name' html attribute so we don't have to do this:
+                # html attribute name == form field name; meaning in order to use dal in search forms we have to call the
+                # form field after a queryable field. But the ac widget's model fields may be different than the form fields
+                # 
+                while True:
+                    # Reducing k in hopes of getting something useful
+                    if k:
+                        try:
+                            # Test to see if k can be used to build a query
+                            get_fields_from_path(self.model, k)
+                            break
+                        except:
+                            # Slice off the first bit
+                            k = "__".join(k.split("__")[1:])
+                    else:
+                        break
+                if k and v:
+                    qobjects |= Q((k,v))
+            if qobjects.children:
+                qs = qs.filter(qobjects)                        
+            else:
+                # Return empty queryset as the forwarded items did not contribute to filtering the queryset
+                return self.model.objects.none()
+        qs = self.do_ordering(qs)
+        qs = self.apply_q(qs)
         return qs
     
     def has_add_permission(self, request):
-        # Overwritten since get_queryset() may return a list now too...
+        # Overwritten since get_queryset() may return a list (of exact matches, startswith matches and contains matches) now too.
+        # Plus, autocomplete views have a model attribute anyhow. This avoids doing anything expensive in get_queryset.
         """Return True if the user has the permission to add a model."""
         if not request.user.is_authenticated():
             return False
 
-        #opts = self.get_queryset().model._meta
+        #opts = self.get_queryset().model._meta <--- Overwritten
         from django.contrib.auth import get_permission_codename
         opts = self.model._meta
         codename = get_permission_codename('add', opts)
@@ -148,14 +149,35 @@ class ACBase(autocomplete.Select2QuerySetView):
         
 class ACProv(ACBase):
     
+    model = provenienz
+    
     def has_create_field(self):
         return True
         
     def create_object(self, text):
         return provenienz.objects.create(geber=geber.objects.create(name=text))
         
+class ACAusgabe(ACBase):
+    
+    model = ausgabe
+    
+    def do_ordering(self, qs):
+        return qs.resultbased_ordering()
+    
+    def apply_q(self, qs):
+        if self.q:
+            qitems = ausgabe.strquery(self.q)
+            if qitems:
+                # strquery returned something useful
+                for q in qitems:
+                    qs = qs.filter(*q)
+            else:
+                qs = super(ACAusgabe, self).apply_q(qs)
+        return qs
+                
 from django.contrib import admin
-from django.views.generic import FormView, TemplateView, ListView
+from django.contrib import messages
+from django.views.generic import FormView
 class MIZAdminView(FormView):
     form_class = None
     template_name = None

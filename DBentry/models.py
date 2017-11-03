@@ -454,10 +454,22 @@ class ausgabe(ShowModel):
     
     @classmethod
     def strquery(cls, search_term, prefix = ''):
-        try:
-            jahre, details = (search_term.split("-"))
-        except:
-            return None
+        is_num = False
+        rslt = []
+        if "-" in search_term: # nr oder monat: 2001-13
+            try:
+                jahre, details = (search_term.split("-"))
+            except:
+                return []
+            is_num = True
+        elif re.search(r'.\((.+)\)', search_term): # lfd nr: 13 (2001)
+            try:
+                details, jahre = re.search(r'(.*)\((.+)\)', search_term).groups()
+            except:
+                return []
+        else:
+            return []
+            
         jahre_prefix = jahre[:2]
         ajahre = []
         for j in jahre.split("/"):
@@ -466,15 +478,19 @@ class ausgabe(ShowModel):
                     j = '2000'
                 else:
                     j = jahre_prefix+j
-            ajahre.append(j)
-        details = [d for d in details.split("/")]
+            ajahre.append(j.strip())
+        details = [d.strip() for d in details.split("/")]
         
         rslt = [ [models.Q( (prefix+'ausgabe_jahr__jahr__iexact', j))]  for j in ajahre ]
         for d in details:
             qobject = models.Q()
             if d.isnumeric():
-                for fld in ['ausgabe_num__num', 'ausgabe_lnum__lnum']:
-                    qobject |= models.Q( (prefix+fld, d) )
+                if is_num:
+                    qobject |= models.Q( (prefix+'ausgabe_num__num', d) )
+                else:
+                    qobject |= models.Q( (prefix+'ausgabe_lnum__lnum', d) )
+#                for fld in ['ausgabe_num__num', 'ausgabe_lnum__lnum']:
+#                    qobject |= models.Q( (prefix+fld, d) )
             else:
                 for fld in ['ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']:
                     qobject |= models.Q( (prefix+fld, d) )

@@ -4,7 +4,7 @@ from .views import *
 
 autocomplete_patterns = [
     url(r'^audio/$',        ACBase.as_view(model = audio, create_field = 'titel'),              name="acaudio"), 
-    url(r'^ausgabe/$',      ACBase.as_view(model = ausgabe),                                    name = 'acausgabe'), 
+    url(r'^ausgabe/$',      ACAusgabe.as_view(),                                                name = 'acausgabe'), 
     url(r'^autor/$',        ACBase.as_view(model = autor),                                      name = 'acautor'), 
     url(r'^band/$',         ACBase.as_view(model = band, create_field='band_name'),             name = 'acband'),
     url(r'^bildmaterial/$', ACBase.as_view(model = bildmaterial),                               name="acbildmaterial"),
@@ -23,7 +23,7 @@ autocomplete_patterns = [
     url(r'^musiker/$',      ACBase.as_view(model = musiker, create_field = 'kuenstler_name'),   name = 'acmusiker'),
     url(r'^ort/$',          ACBase.as_view(model = ort),                                        name = 'acort'), 
     url(r'^person/$',       ACBase.as_view(model = person),                                     name = 'acperson'), 
-    url(r'^prov/$',         ACProv.as_view(model = provenienz),                                 name = 'acprov'),  
+    url(r'^prov/$',         ACProv.as_view(),                                                   name = 'acprov'),  
     url(r'^schlagwort/$',   ACBase.as_view(model = schlagwort, create_field = 'schlagwort'),    name = 'acschlagwort'),
     url(r'^sender/$',       ACBase.as_view(model = sender,  create_field = 'name'),             name = 'acsender'), 
     url(r'^spielort/$',     ACBase.as_view(model = spielort),                                   name = 'acspielort'), 
