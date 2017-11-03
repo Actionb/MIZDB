@@ -120,7 +120,9 @@ class ModelBase(admin.ModelAdmin):
     def get_changeform_initial_data(self, request):
         """ Turn _changelist_filters string into a useable dict of field_path:value
             so we can fill some formfields with initial values later on. 
-            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. """
+            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. 
+            Primarily used for setting ausgabe/magazin for Artikel add-views.
+        """
         from django.utils.http import unquote
         initial = super(ModelBase, self).get_changeform_initial_data(request)
         if '_changelist_filters' not in initial.keys() or not initial['_changelist_filters']:
@@ -151,6 +153,7 @@ class ModelBase(admin.ModelAdmin):
         return inline_admin_formsets
 
     def merge_records(self, request, queryset):
+        #TODO: WIP
         if queryset.count() == 1:
             self.message_user(request,'Bitte mindestens zwei Datensätze auswählen.', 'warning')
             return

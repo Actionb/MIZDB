@@ -389,6 +389,7 @@ class ausgabe(ShowModel):
         super(ausgabe, self).save(*args, **kwargs)
         
         # Use e_datum data to populate month and year sets
+        # Note that this can be done AFTER save() as these values are set through RelatedManagers
         if self.e_datum:
             if self.e_datum.year not in self.ausgabe_jahr_set.values_list('jahr', flat=True):
                 self.ausgabe_jahr_set.create(jahr=self.e_datum.year)
