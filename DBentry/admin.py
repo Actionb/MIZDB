@@ -103,13 +103,13 @@ class ModelBase(admin.ModelAdmin):
         # Build relations
         for relation_name in getattr(self, 'crosslinks', []):
             path = get_fields_from_path(self.model, relation_name)
-            #NOTE: path[0] or path[-1]?
+            #NOTE: path[0] or path[-1]? <--- get_fields_from_path should only ever return a one-item list
             model = path[0].related_model
             fld_name = path[0].remote_field.name
             if model in inlmdls:
                 continue
             try:
-                link = reverse("MIZAdmin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
+                link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
                                 + "?" + fld_name + "=" + object_id
             except Exception as e:
                 continue
@@ -294,6 +294,7 @@ class AudioAdmin(ModelBase):
     ]
     save_on_top = True
     collapse_all = True
+    crosslinks = ['ausgabe']
 
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
@@ -351,7 +352,7 @@ class AusgabenAdmin(ModelBase):
         'selects':['magazin','status'], 
         'simple':['jahrgang', 'sonderausgabe']
     }
-    crosslinks = ['artikel']
+    crosslinks = ['artikel', 'audio']
        
     # ACTIONS
     def add_duplicate(self, request, queryset):
@@ -526,7 +527,7 @@ class BandAdmin(ModelBase):
     
     list_display = ['band_name', 'genre_string','herkunft', 'musiker_string']
 
-    crosslinks = ['artikel', 'veranstaltung']
+    crosslinks = ['artikel', 'audio', 'veranstaltung']
     googlebtns = ['band_name']
     
     advanced_search_form = {
@@ -606,7 +607,7 @@ class MusikerAdmin(ModelBase):
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'herkunft_string']
     search_fields = ['kuenstler_name', 'musiker_alias__alias']
     
-    crosslinks = ['artikel']
+    crosslinks = ['artikel', 'audio']
     googlebtns = ['kuenstler_name']
     
     advanced_search_form = {
@@ -628,7 +629,7 @@ class PersonAdmin(ModelBase):
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
-    crosslinks = ['artikel', 'autor', 'musiker']
+    crosslinks = ['artikel', 'audio', 'autor', 'musiker']
     
 @admin.register(schlagwort, site=admin.site)
 class SchlagwortTab(ModelBase):
