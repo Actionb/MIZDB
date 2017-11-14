@@ -1,8 +1,9 @@
 from django import forms
-from django.forms import modelform_factory, Textarea, TextInput,  CheckboxSelectMultiple
+from django.forms import modelform_factory, inlineformset_factory, Textarea, TextInput,  CheckboxSelectMultiple
 from django.conf import settings
 from .models import *
 from .constants import *
+from .utils import *
 
 from dal import autocomplete
 
@@ -22,10 +23,8 @@ WIDGETS = {
             'schlagwort'    :   autocomplete.ModelSelect2(url='acschlagwort'),  
             'video'         :   autocomplete.ModelSelect2(url='acvideo'),
             
-            
-            
             # Artikel
-            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe'), 
+            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin']), 
             
             # Audio
             'sender' : autocomplete.ModelSelect2(url='acsender'), 
@@ -34,8 +33,7 @@ WIDGETS = {
             'magazin' : autocomplete.ModelSelect2(url='acmagazin'),
             
             # Band 
-            #TODO: make this widget smaller, so the instruments fit properly... somehow
-            'musiker' : autocomplete.ModelSelect2(url='acmusiker', attrs={'width':'10%'}), 
+            'musiker' : autocomplete.ModelSelect2(url='acmusiker'), 
             
             # Bestand
             bestand : {
@@ -177,6 +175,24 @@ def makeForm(model, fields = []):
     return modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
     
 
+class InLineAusgabeForm(FormBase):
+        
+    magazin = forms.ModelChoiceField(required = False,
+                                    label = "Magazin", 
+                                    queryset = magazin.objects.all(),  
+                                    widget = autocomplete.ModelSelect2(url='acmagazin'))
+    class Meta:
+        widgets = {'ausgabe': autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
+                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})}
+                                    
+    def __init__(self, *args, **kwargs):
+        if 'instance' in kwargs and kwargs['instance']:
+            if 'initial' not in kwargs:
+                kwargs['initial'] = {}
+            kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
+        super(InLineAusgabeForm, self).__init__(*args, **kwargs)
+        
+
 
 class ArtikelForm(FormBase):
         
@@ -204,19 +220,6 @@ class ArtikelForm(FormBase):
             kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
         super(ArtikelForm, self).__init__(*args, **kwargs)
 
-bulkfield_allowed_chars = [',', '/', '%'] 
-#TODO: use built-in REGEX validator?
-def validate_bulkfield(value):
-    """ Validator for the input fields of a Bulk Form.
-        Checks if there any unallowed characters in the value (String).
-    """
-    for char in value:
-        if not char.isnumeric() and not char in bulkfield_allowed_chars:
-            from django.utils.translation import ugettext_lazy as _
-            print('ValidationError')
-            raise ValidationError(
-                _('Unerlaubte Zeichen gefunden: Bitte nur Ziffern oder "," oder "/" oder "%" benutzen.')
-            )
             
 class BulkField(forms.CharField):
     
@@ -321,9 +324,6 @@ class MIZAdminForm(forms.Form):
 class BulkForm(MIZAdminForm):
     
     model = None
-    total_count = 0
-    split_data = {} 
-    _row_data = []
     each_fields = set() # data of these fields are part of every row
     at_least_one_required = [] # at least one of these fields needs to be filled out
     
@@ -337,6 +337,9 @@ class BulkForm(MIZAdminForm):
     def __init__(self, *args, **kwargs):
         super(BulkForm, self).__init__(*args, **kwargs)
         self.each_fields = set(kwargs.get('each_fields', []))
+        self._row_data = []
+        self.total_count = 0
+        self.split_data = {} 
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BulkField):
                 if isinstance(fld, BulkJahrField):
@@ -383,7 +386,6 @@ class BulkForm(MIZAdminForm):
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
                     ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
                 ))
-
     @property
     def row_data(self):
         # NOTE: this doesn't verify that the form has been cleaned and that split_data is populated..
@@ -403,16 +405,29 @@ class BulkForm(MIZAdminForm):
                         item = self.cleaned_data.get(fld_name)
                     if item:
                         row[fld_name] = item
-                row['instance'] = self.lookup_instance(row).first()
-                if row['instance']:
-                    #two (or more) rows might be related to a single already existing instance
-                    if any(row['instance']==other_row['instance'] for other_row in self._row_data):
-                        continue
-                    #TODO: Replace row_data with the data of the instance?
+                        
+                qs = self.lookup_instance(row)
+                row['lagerort'] = self.cleaned_data['lagerort']
+                if qs.count()==0:
+                    # No ausgabe fits the parameters: we are creating a new one
                     
+                    # See if this row (in its exact form) has already appeared in _row_data
+                    # We do not want to create multiple objects with the same data,
+                    # instead we will mark this row as a duplicate of the first matching row found
+                    # By checking for row == row_dict we avoid 'nesting' duplicates.
+                    for row_dict in self._row_data:
+                        if row == row_dict:
+                            row['lagerort'] = self.cleaned_data['dublette']
+                            row['dupe_of'] = row_dict
+                            break
+                elif qs.count()==1:
+                    # A single object fitting the parameters already exists: this row represents a duplicate of that object.
+                    
+                    row['instance'] = qs.first()
                     row['lagerort'] = self.cleaned_data['dublette']
                 else:
-                    row['lagerort'] = self.cleaned_data['lagerort']
+                    # lookup_instance returned multiple instances/objects
+                    row['multiples'] = qs
                     
                 self._row_data.append(row)
         return self._row_data
@@ -434,6 +449,7 @@ class BulkFormAusgabe(BulkForm):
     field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'info', 'audio', 'audio_lagerort', 'lagerort', 'dublette', 'provenienz']
     preview_fields = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort']
     at_least_one_required = ['num', 'monat', 'lnum']
+    multiple_instances_error_msg = "Es wurden mehrere passende Ausgaben gefunden. Es kann immer nur eine bereits bestehende Ausgabe verändert werden."
     
     
     magazin = forms.ModelChoiceField(required = True, 
@@ -469,8 +485,6 @@ class BulkFormAusgabe(BulkForm):
     info = forms.CharField(required = False, widget = Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
     
     status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus')
-    
-    
                                     
     def clean(self):
         super(BulkFormAusgabe, self).clean()
@@ -551,8 +565,6 @@ class BulkFormAusgabe(BulkForm):
             for value in row_data:
                 if value:
                     qs = qs.filter(**{x:value})
-        if qs.count()>1:
-            print("WARNING : multiple results found for: {}".format(row))
         return qs
         
 test_data = dict(magazin=tmag.pk, jahr='10,11', num='1-10*3', monat='1,2,3,4', audio=True, lagerort = ZRAUM_ID)
