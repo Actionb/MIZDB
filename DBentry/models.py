@@ -62,7 +62,6 @@ class ShowModel(models.Model):
     
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
-        #rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True)) #NOTE: one as_string and one not? <-- primary_fields always returns strings
         rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
         if foreign:
             for fld in cls.get_foreignfields():
@@ -72,27 +71,6 @@ class ShowModel(models.Model):
             for fld in cls.get_m2mfields():
                 for rel_fld in fld.related_model.get_search_fields():
                     rslt.add("{}__{}".format(fld.name, rel_fld))
-        return rslt
-    
-    # TODO: scrap this
-    @classmethod
-    def resolve_search_fields(cls, fieldlist):
-        search_fields = cls.get_search_fields()
-        rslt = []
-        # Wrangle fieldlist into being a list of string field names
-        if isinstance(fieldlist, str):
-            fieldlist = [fieldlist]
-        for fld in fieldlist:
-            if fld in cls._meta.get_fields():
-                fld = fld.name
-                
-        for fld in fieldlist:
-            # Try for an exact match:
-            if fld in search_fields:
-                rslt.append(search_fields[search_fields.index(fld)])
-            # Lastly, try to find parts of it in search_fields:
-            elif any(s.find(fld)!=-1 for s in search_fields):
-                rslt += [s for s in search_fields if s.find(fld)!=-1]
         return rslt
         
     @classmethod
