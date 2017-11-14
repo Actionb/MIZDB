@@ -68,7 +68,7 @@ class ModelBase(admin.ModelAdmin):
     def get_search_fields(self, request=None):
         if self.search_fields:
             return self.search_fields
-        return self.model.search_fields
+        return self.model.get_search_fields()
         
     def add_crosslinks(self, object_id):
         from django.contrib.admin.utils import reverse
@@ -218,6 +218,19 @@ class QuelleInLine(StackModelBase):
     model = m2m_datei_quelle
     description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
     
+class AusgabeInLineBase(admin.TabularInline):
+    model = None
+    fields = ['magazin', 'ausgabe']
+    original = False
+    extra = 1
+    classes = ['collapse']
+    def __init__(self, *args, **kwargs):
+        super(AusgabeInLineBase, self).__init__(*args, **kwargs)
+        self.form = InLineAusgabeForm
+        self.verbose_name = ausgabe._meta.verbose_name
+        self.verbose_name_plural = ausgabe._meta.verbose_name_plural
+    
+    
 
 
     
@@ -263,12 +276,14 @@ class AudioAdmin(ModelBase):
     class PlattenInLine(TabModelBase):
         model = audio.plattenfirma.through
         verbose_model = plattenfirma
+    class AusgabeInLine(AusgabeInLineBase):
+        model = ausgabe.audio.through
     inlines = [PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine, GenreInLine, SchlInLine, 
-            VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine]
+            VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine, AusgabeInLine]
     fieldsets = [
         (None, {'fields' : ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender']}), 
         ('Discogs', {'fields' : ['release_id', 'discogs_url'], 'classes' : ['collapse', 'collapsed']}), 
-        ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']})
+        ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
     ]
     save_on_top = True
     collapse_all = True
