@@ -166,6 +166,11 @@ class ACAusgabe(ACBase):
     
     def apply_q(self, qs):
         if self.q:
+            if self.forwarded:
+                str_dict = {i:i.__str__() for i in qs}
+                filtered = [k for k, v in str_dict.items() if self.q in v]
+                if filtered:
+                    return filtered
             qitems = ausgabe.strquery(self.q)
             if qitems:
                 # strquery returned something useful
