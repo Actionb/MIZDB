@@ -2,9 +2,8 @@ from django.db.utils import IntegrityError
 from django.db.models import Aggregate
 from django.utils.http import urlquote
 from django.utils.html import format_html
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
-from .models import *
 from .constants import M2M_LIST_MAX_LEN
 
     

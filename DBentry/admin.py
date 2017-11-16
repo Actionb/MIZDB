@@ -4,9 +4,7 @@ from django.utils.html import format_html
 from django.contrib.admin.utils import get_fields_from_path
 
 from .models import *
-from .helper import *
-from .constants import *
-from .forms import *
+from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
 
 from .changelist import MIZChangeList
@@ -229,11 +227,8 @@ class AusgabeInLineBase(admin.TabularInline):
         self.form = InLineAusgabeForm
         self.verbose_name = ausgabe._meta.verbose_name
         self.verbose_name_plural = ausgabe._meta.verbose_name_plural
-    
-    
-
-
-    
+        
+        
 @admin.register(audio, site=admin.site)
 class AudioAdmin(ModelBase):
     class GenreInLine(GenreModelBase):

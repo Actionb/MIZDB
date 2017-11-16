@@ -1,14 +1,14 @@
 from django import forms
-from django.forms import modelform_factory, inlineformset_factory, Textarea, TextInput,  CheckboxSelectMultiple
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+
 from .models import *
-from .constants import *
-from .utils import *
+from .constants import ATTRS_TEXTAREA, ZRAUM_ID, DUPLETTEN_ID
+from .widgets import wrap_dal_widget
 
 from dal import autocomplete
 
-
-from django.utils.translation import ugettext_lazy as _
+Textarea = forms.Textarea
 
 WIDGETS = {
             'audio'         :   autocomplete.ModelSelect2(url='acaudio'),

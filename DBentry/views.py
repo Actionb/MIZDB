@@ -9,9 +9,9 @@ from django.views.decorators.http import require_http_methods
 from django.utils.translation import ugettext as _
 from django.contrib.admin.utils import get_fields_from_path
 from django.utils.html import format_html
+from django.urls import reverse, resolve
 
 from .models import *
-from .forms import *
 from .utils import link_list
 
 from dal import autocomplete
@@ -254,8 +254,9 @@ class MIZAdminView(FormView):
 #            else:
 #                rslt[fld_name] = form.cleaned_data.get(fld_name)
 #        return rslt
-
+from DBentry.forms import BulkFormAusgabe
 class BulkAusgabe(MIZAdminView):
+    
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
@@ -278,7 +279,6 @@ class BulkAusgabe(MIZAdminView):
                 if '_addanother' in request.POST and not form.has_changed():
                     old_form = form
                     ids, created, updated = self.save_data(request, form)
-                    from django.core.urlresolvers import reverse
                     if created:
                         obj_list = link_list(request, created, path = "admin:DBentry_ausgabe_change")
                         messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
@@ -398,8 +398,6 @@ class BulkAusgabe(MIZAdminView):
         return rslt
         
     def build_preview(self, request, form):
-        from django.contrib.admin.utils import reverse
-        from django.utils.html import format_html
         preview_data = []
         headers = []
         preview_fields = []
