@@ -28,6 +28,19 @@ class ModelBase(admin.ModelAdmin):
     
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
+        
+    def get_form(self, request, obj=None, **kwargs):
+        # Wrap all the things
+        # We cannot do this in the form.__init__ since an add form without initial values never gets initialized - 
+        # meaning we do not get any related widget stuff
+        form = super(ModelBase, self).get_form(request, obj, **kwargs)
+        from dal import autocomplete
+        from .widgets import wrap_dal_widget
+        for fld in form.declared_fields.values():
+            # NOTE: this is going to eventually blow up..
+            if isinstance(fld.widget, autocomplete.ModelSelect2):
+                fld.widget = wrap_dal_widget(fld.widget)
+        return form
     
     def get_exclude(self, request, obj = None):
         self.exclude = super(ModelBase, self).get_exclude(request, obj)

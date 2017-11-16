@@ -141,9 +141,7 @@ class FormBase(forms.ModelForm):
                     break
                     
             fld_names = fld_names.difference(kwargs['initial'].keys())
-        super(FormBase, self).__init__(*args, **kwargs)
-                
-            
+        super(FormBase, self).__init__(*args, **kwargs)            
     
     def validate_unique(self):
         """
@@ -172,18 +170,18 @@ def makeForm(model, fields = []):
     widget_list =  WIDGETS
     if model in WIDGETS:
         widget_list = WIDGETS[model]
-    return modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
+    return forms.modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
     
-
 class InLineAusgabeForm(FormBase):
         
     magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
-                                    queryset = magazin.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acmagazin'))
+                                    queryset = magazin.objects.all(), 
+                                    widget = wrap_dal_widget(autocomplete.ModelSelect2(url='acmagazin'))) # need to wrap it here, this form goes through inlineformset_factory, etc. and is never really initialized
     class Meta:
         widgets = {'ausgabe': autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
-                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'})}
+                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),
+                                    }
                                     
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs and kwargs['instance']:
@@ -310,6 +308,14 @@ class BulkJahrField(BulkField):
         return temp, 0
         
 class MIZAdminForm(forms.Form):
+    
+    def __init__(self, *args, **kwargs):
+        super(MIZAdminForm, self).__init__(*args, **kwargs)
+        for fld in self.base_fields.values():
+            if isinstance(fld.widget, autocomplete.ModelSelect2):
+                fld.widget = wrap_dal_widget(fld.widget)
+        
+        
     class Media:
         css = {
             'all' : ('admin/css/forms.css', )
