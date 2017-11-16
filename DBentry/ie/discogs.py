@@ -1,7 +1,7 @@
 #
 
 from DBentry.models import *
-from DBentry.utils import multisplit, split_field, tuple_to_dict, dict_to_tuple
+from DBentry.utils import split_field, dict_to_tuple
 
 from .name_utils import *
 from .reader import CSVReader

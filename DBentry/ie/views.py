@@ -1,12 +1,10 @@
-#
 import re
 
 from DBentry.views import MIZAdminView
-from .forms import *
-from .relational import *
+from .forms import ImportSelectForm
+from .relational import RelationImport
 from DBentry.utils import split_name
 from django.shortcuts import render, redirect
-from django.views.generic import FormView, TemplateView, ListView
 
 class ImportSelectView(MIZAdminView):
     form_class = ImportSelectForm
