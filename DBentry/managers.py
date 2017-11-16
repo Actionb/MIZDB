@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.utils import OperationalError
 
-from .printer import *
+from .printer.printer import *
 
 class MIZQuerySet(models.QuerySet):
     
@@ -16,12 +16,12 @@ class MIZQuerySet(models.QuerySet):
         if isinstance(flds, str):
             flds = [f.strip() for f in flds.split(",")]
         for id in base_ids:
-            object_values = {'id':id}
+            object_values = {'pk':id}
             obj = qs.filter(pk=id)
             for fld in flds:
                 values = [i for i in obj.values_list(fld, flat = True)]
                 object_values[fld] = values
-            #yield object_values
+            yield object_values
             rslt.append(object_values)
         return rslt
         
