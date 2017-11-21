@@ -12,8 +12,8 @@ from .managers import AusgabeQuerySet, MIZQuerySet
 
 class ShowModel(models.Model):
     
-    exclude = []                #fields to exclude from searches
-    search_fields = []          #custom list of search fields, ignores get_search_fields()
+    exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches
+    search_fields = []          #custom list of search fields, largely used for specifying related fields
     primary_fields = []         #fields that have the highest priority for searching and must always be included
     dupe_fields = []            #fields to determine duplicates with
     objects = MIZQuerySet.as_manager()
@@ -39,15 +39,15 @@ class ShowModel(models.Model):
     @classmethod
     def get_basefields(cls, as_string=False):
         return [i.name if as_string else i for i in cls._meta.fields
-            if i != cls._meta.pk and not i.is_relation and not i in cls.exclude]
+            if i != cls._meta.pk and not i.is_relation and not i.name in cls.exclude]
         
     @classmethod
     def get_foreignfields(cls, as_string=False):
-        return [i.name if as_string else i for i in cls._meta.fields if isinstance(i, models.ForeignKey) and not i in cls.exclude]
+        return [i.name if as_string else i for i in cls._meta.fields if isinstance(i, models.ForeignKey) and not i.name in cls.exclude]
         
     @classmethod
     def get_m2mfields(cls, as_string=False):
-        return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i in cls.exclude] 
+        return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i.name in cls.exclude] 
         
     @classmethod
     def get_required_fields(cls, as_string=False):
@@ -61,39 +61,16 @@ class ShowModel(models.Model):
             return cls.get_basefields(as_string=True)
     
     @classmethod
-    def get_search_fields(cls, foreign=False, m2m=False, reevaluate=False):
-        if cls.search_fields and not reevaluate:
-            return cls.search_fields
-        rslt = set(cls.get_primary_fields() + cls.get_basefields(as_string=True)) #NOTE: one as_string and one not?
+    def get_search_fields(cls, foreign=False, m2m=False):
+        rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
         if foreign:
             for fld in cls.get_foreignfields():
-                for rel_fld in fld.related_model.get_primary_fields():
+                for rel_fld in fld.related_model.get_search_fields():
                     rslt.add("{}__{}".format(fld.name, rel_fld))
         if m2m:
             for fld in cls.get_m2mfields():
-                for rel_fld in fld.related_model.get_primary_fields():
+                for rel_fld in fld.related_model.get_search_fields():
                     rslt.add("{}__{}".format(fld.name, rel_fld))
-        return rslt
-    
-    # TODO: scrap this
-    @classmethod
-    def resolve_search_fields(cls, fieldlist):
-        search_fields = cls.get_search_fields()
-        rslt = []
-        # Wrangle fieldlist into being a list of string field names
-        if isinstance(fieldlist, str):
-            fieldlist = [fieldlist]
-        for fld in fieldlist:
-            if fld in cls._meta.get_fields():
-                fld = fld.name
-                
-        for fld in fieldlist:
-            # Try for an exact match:
-            if fld in search_fields:
-                rslt.append(search_fields[search_fields.index(fld)])
-            # Lastly, try to find parts of it in search_fields:
-            elif any(s.find(fld)!=-1 for s in search_fields):
-                rslt += [s for s in search_fields if s.find(fld)!=-1]
         return rslt
         
     @classmethod
@@ -167,8 +144,6 @@ class person(ShowModel):
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
     beschreibung = models.TextField(blank = True)
     
-    exclude = [beschreibung]
-    
     class Meta:
         verbose_name = 'Person'
         verbose_name_plural = 'Personen'
@@ -201,9 +176,9 @@ class musiker(ShowModel):
     instrument = models.ManyToManyField('instrument',  through = m2m_musiker_instrument)
     beschreibung = models.TextField(blank = True)
     
-    exclude = [beschreibung]
+    search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
     dupe_fields = ['kuenstler_name', 'person']
-    primary_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
+    #primary_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
     
     class Meta:
         verbose_name = 'Musiker'
@@ -232,6 +207,7 @@ class musiker_alias(alias_base):
 class genre(ShowModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
+    
     class Meta:
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
@@ -240,6 +216,7 @@ class genre(ShowModel):
     def alias_string(self):
         return concat_limit(self.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
+    
 class genre_alias(alias_base):
     parent = models.ForeignKey('genre')
         
@@ -250,12 +227,9 @@ class band(ShowModel):
     genre = models.ManyToManyField('genre',  through = m2m_band_genre)
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
     beschreibung = models.TextField(blank = True)
-    
-    primary_fields = ['band_name']
-    exclude = [beschreibung]
+
     dupe_fields = ['band_name', 'herkunft_id']
-#    search_fields = ['band_name', 'herkunft__stadt', 'herkunft__land__land_name',
-#                    'band_alias__alias', 'genre__genre', 'musiker__kuenstler_name']
+    search_fields = ['band_alias__alias', 'musiker__kuenstler_name']
 
     
     class Meta:
@@ -283,7 +257,7 @@ class autor(ShowModel):
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
-    primary_fields = ['person__vorname', 'person__nachname', 'kuerzel']
+    search_fields = ['person__vorname', 'person__nachname']
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
     class Meta:
@@ -337,12 +311,11 @@ class ausgabe(ShowModel):
     
     audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe)
     
-    exclude = [info]
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
                     'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
                     
-    primary_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
-                    'ausgabe_monat__monat__monat', 'e_datum']
+    search_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
+                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']
     
     objects = AusgabeQuerySet.as_manager()
     class Meta:
@@ -394,6 +367,7 @@ class ausgabe(ShowModel):
         super(ausgabe, self).save(*args, **kwargs)
         
         # Use e_datum data to populate month and year sets
+        # Note that this can be done AFTER save() as these values are set through RelatedManagers
         if self.e_datum:
             if self.e_datum.year not in self.ausgabe_jahr_set.values_list('jahr', flat=True):
                 self.ausgabe_jahr_set.create(jahr=self.e_datum.year)
@@ -458,10 +432,22 @@ class ausgabe(ShowModel):
     
     @classmethod
     def strquery(cls, search_term, prefix = ''):
-        try:
-            jahre, details = (search_term.split("-"))
-        except:
-            return None
+        is_num = False
+        rslt = []
+        if "-" in search_term: # nr oder monat: 2001-13
+            try:
+                jahre, details = (search_term.split("-"))
+            except:
+                return []
+            is_num = True
+        elif re.search(r'.\((.+)\)', search_term): # lfd nr: 13 (2001)
+            try:
+                details, jahre = re.search(r'(.*)\((.+)\)', search_term).groups()
+            except:
+                return []
+        else:
+            return []
+            
         jahre_prefix = jahre[:2]
         ajahre = []
         for j in jahre.split("/"):
@@ -470,15 +456,19 @@ class ausgabe(ShowModel):
                     j = '2000'
                 else:
                     j = jahre_prefix+j
-            ajahre.append(j)
-        details = [d for d in details.split("/")]
+            ajahre.append(j.strip())
+        details = [d.strip() for d in details.split("/")]
         
         rslt = [ [models.Q( (prefix+'ausgabe_jahr__jahr__iexact', j))]  for j in ajahre ]
         for d in details:
             qobject = models.Q()
             if d.isnumeric():
-                for fld in ['ausgabe_num__num', 'ausgabe_lnum__lnum']:
-                    qobject |= models.Q( (prefix+fld, d) )
+                if is_num:
+                    qobject |= models.Q( (prefix+'ausgabe_num__num', d) )
+                else:
+                    qobject |= models.Q( (prefix+'ausgabe_lnum__lnum', d) )
+#                for fld in ['ausgabe_num__num', 'ausgabe_lnum__lnum']:
+#                    qobject |= models.Q( (prefix+fld, d) )
             else:
                 for fld in ['ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']:
                     qobject |= models.Q( (prefix+fld, d) )
@@ -1063,6 +1053,14 @@ class audio(ShowModel):
         else:
             self.discogs_url = None
         super(audio, self).save(*args, **kwargs)
+        
+    def kuenstler_string(self):
+        return concat_limit(list(self.band.all()) + list(self.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
+    
+    def formate_string(self):
+        return concat_limit(list(self.format_set.all()))
+    formate_string.short_description = 'Format'
     
     
 class bildmaterial(ShowModel):
@@ -1372,7 +1370,10 @@ class Format(ShowModel):
                 'channel' : ", " + self.channel if self.channel else ''
             }).strip()
         except:
-            return str(self.format_size)
+            try:
+                return str(self.format_size)
+            except:
+                return '---'
                 
     def __str__(self):
         if self.format_name:
@@ -1400,10 +1401,10 @@ class FormatTag(ShowModel):
         ordering = ['tag']
         verbose_name = 'Format-Tag'
         verbose_name_plural = 'Format-Tags'
-    
+        
 class FormatSize(ShowModel):
     size = models.CharField(**CF_ARGS)
-    
+            
 class FormatTyp(ShowModel):
     """ Art des Formats (Vinyl, DVD, Cassette, etc) """
     typ = models.CharField(**CF_ARGS)

@@ -1,8 +1,7 @@
 #
 from django.conf.urls import url
-from .views import *
+from .views import ImportSelectView
 
-import_urls = [
+urlpatterns = [
         url(r'^discogs_import/$',ImportSelectView.as_view(), name='import_select'),
     ]
-

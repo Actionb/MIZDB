@@ -15,17 +15,16 @@ Including another URLconf
 """
 from django.conf.urls import url,  include
 from django.contrib import admin
+from DBentry.admin import miz_site
 
+urlpatterns = [
+    url(r'^mizdb/', include('DBentry.urls')), # fallback?
+    url(r'^admin/', miz_site.urls), 
+    url(r'^admin/', include('DBentry.urls'))
+]
 
 from django.conf import settings
 from django.conf.urls.static import static
-
-from DBentry.admin import admin_site
-urlpatterns = [
-    url(r'^mizdb/', include('DBentry.urls')), 
-    url(r'^admin/', admin.site.urls),
-    url(r'^admin/', admin_site.urls), 
-]
 
 if settings.DEBUG:
     urlpatterns += static(prefix = settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

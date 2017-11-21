@@ -2,8 +2,8 @@ from django.db.utils import IntegrityError
 from django.db.models import Aggregate
 from django.utils.http import urlquote
 from django.utils.html import format_html
+from django.urls import reverse
 
-from .models import *
 from .constants import M2M_LIST_MAX_LEN
 
     
@@ -22,10 +22,18 @@ def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
             break
     return rslt
 
-def link_list(request, obj_list,  SEP = ", "):
+def link_list(request, obj_list,  SEP = ", ", path = None):
     """ Returns a string with html links to the objects in obj_list separated by SEP.
         Used in ModelAdmin
     """
+    obj_list_strings = []
+    for obj in obj_list:
+        if path:
+            obj_path = reverse(path, args = [obj.pk])
+        else:
+            obj_path = request.path + str(obj.pk)
+        obj_list_strings.append(format_html('<a href="{}">{}</a>', urlquote(obj_path), force_text(obj)))
+    return format_html(SEP.join(obj_list_strings))
     try:
         obj_list_string = SEP.join([
                     format_html('<a href="{}">{}</a>',
@@ -242,11 +250,4 @@ def recmultisplit(values, seperators = []):
     
     for x in values.split(sep):
         rslt += recmultisplit(x, seps)
-#    
-#    last_sep = 0
-#    for index, c in enumerate(values):
-#        if c in seperators:
-#            rslt.append(values[last_sep:index].strip())
-#            last_sep = index+1
-#    rslt.append(values[last_sep:].strip())
-    return rslt
+    return rslt        

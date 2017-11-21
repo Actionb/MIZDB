@@ -31,7 +31,7 @@ def advanced_search_form(cl):
             if item in form_fields:
                 # Ignore items that are already being handled by the form
                 continue
-            field = get_fields_from_path(model, item)[0]
+            field = get_fields_from_path(model, item)[-1]
             #TODO: use field.get_choices(limit_choices_to={'pk__in':some_set}) to limit choices (duh)
             #Maybe do this in autocomplete views?
             field_choices = field.get_choices() 
@@ -39,7 +39,7 @@ def advanced_search_form(cl):
             for pk, name in field_choices:
                 choices.append(dict(pk=pk, display=name, selected=params.get(field.attname, 0)==str(pk)))
             asf['selects'].append( dict(
-                    label               = get_fields_from_path(model, item)[-1].verbose_name, 
+                    label               = field.verbose_name,  #get_fields_from_path(model, item)[-1].verbose_name, 
                     query_string        = field.attname, 
                     choices             = choices, 
                 )

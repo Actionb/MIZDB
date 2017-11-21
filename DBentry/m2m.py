@@ -26,7 +26,10 @@ class m2mBase(models.Model):
         
     @classmethod
     def get_primary_fields(cls, as_string=False):
-        return cls.get_basefields(as_string=True)
+        return cls.get_basefields(as_string=True) # NOTE: as_string = True? What about the parameter value?
+    @classmethod
+    def get_search_fields(cls, as_string=False):
+        return cls.get_basefields(as_string=as_string)
         
     @classmethod
     def get_m2mfields(cls, as_string=True):

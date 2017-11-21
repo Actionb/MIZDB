@@ -52,17 +52,7 @@
 {% block sidebar %}
 <div id="content-related">
 
-<div class="module">
-  <h2>Admin Tools</h2>
-    <ul class="actionlist">
-      <li class="changelink">
-        <a href="{% url 'MIZAdmin:bulk_ausgabe' %}">Ausgaben Erstellung</a>
-        <a href="{% url 'MIZAdmin:import_select' %}">Discogs Import</a>
-      </li>
-    </ul>
-</div>
-
-
+{% include "admin/includes/indextools.html" %}
 
     <div class="module" id="recent-actions-module">
         <h2>{% trans 'Recent actions' %}</h2>
