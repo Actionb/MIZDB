@@ -1,14 +1,21 @@
 import re
 
 from DBentry.views import MIZAdminView
-from .forms import ImportSelectForm
+from .forms import ImportSelectForm, MBFormSet
 from .relational import RelationImport
 from DBentry.utils import split_name
+from DBentry.models import *
 from django.shortcuts import render, redirect
 
 class ImportSelectView(MIZAdminView):
     form_class = ImportSelectForm
     template_name = 'admin/import/import_select.html'
+    url_name = 'import_select'
+    index_label = 'Discogs Import'
+    
+    @classmethod
+    def has_permission(cls, request):
+        return request.user.is_superuser
         
     def get_initial_data(self, data_list, prefix = 'form', is_band = False, is_musiker = False):
         initial_data = {
@@ -109,3 +116,5 @@ class ImportSelectView(MIZAdminView):
                 person_data.append({'vorname':vorname, 'nachname':nachname, 'release_id':release_ids})
         return musiker_data, band_data, person_data
     
+from DBentry.admin import miz_site
+miz_site.register_tool(ImportSelectView)

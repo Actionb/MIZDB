@@ -24,7 +24,14 @@ class MIZAdminView(FormView):
     form_class = None
     template_name = None
     
+    @classmethod
+    def has_permission(cls, request):
+        return request.user.is_staff or request.user.is_superuser
+    
     def dispatch(self, request, *args, **kwargs):
+        if not self.has_permission(request):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
         kwargs.update(admin.site.each_context(request))
         return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
 
@@ -33,70 +40,14 @@ class MIZAdminView(FormView):
         # which we want on all our views
         return render(request, self.template_name, context = self.get_context_data(**kwargs))
         
-#
-#class BulkBase(MIZAdminView):
-#    template_name = 'admin/bulk.html'
-#    form_class = None
-#    success_url = ''
-#    
-#    def post(self, request, *args, **kwargs):
-#        context = self.get_context_data(**kwargs)
-#        form = self.form_class(request.POST, initial=request.session.get('old_form_data', {}))
-#        if form.is_valid():
-#            if form.has_changed() or '_preview' in request.POST:
-#                if not '_preview' in request.POST:
-#                    messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
-#                context['preview_headers'], context['preview'] = self.build_preview(request, form)
-#            else:
-#                if '_continue' in request.POST and not form.has_changed():
-#                    # Collect preview data, create instances
-#                    ids, instances = self.save_data(request, form)
-#                    # Need to store the queryset of the newly created items in request.session for the Changelist view
-#                    request.session['qs'] = dict(id__in=ids) if ids else None
-#                    return redirect(self.success_url)
-#                if '_addanother' in request.POST and not form.has_changed():
-#                    old_form = form
-#                    ids, created, updated = self.save_data(request, form)
-#                    from django.core.urlresolvers import reverse
-#                    if created:
-#                        obj_list = link_list(request, created, path = "admin:DBentry_ausgabe_change")
-#                        messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
-#                    if updated:
-#                        obj_list = link_list(request, updated, path = "admin:DBentry_ausgabe_change")
-#                        messages.success(request, format_html('Dubletten hinzugefügt: {}'.format(obj_list)))
-#                    
-#                    form = self.form_class(self.next_initial_data(form))
-#                    form.is_valid()
-#                    context['preview_headers'], context['preview'] = self.build_preview(request, form)
-#        request.session['old_form_data'] = form.data
-#        context['form'] = form
-#        return render(request, self.template_name, context = context)
-#    
-#    def next_initial_data(self, form):
-#        return form.data
-#    
-#    def save_data(self, request, form):
-#        return []
-#        
-#    def build_preview(self, request, form):
-#        return 
-#        
-#    def instance_data(self, row):
-#        return {}
-#        #TODO: this is WIP
-#        for fld_name in form.each_fields:
-#            if fld_name in form.split_data:
-#                continue
-#                rslt[fld_name] = form.split_data.get(fld_name)
-#            else:
-#                rslt[fld_name] = form.cleaned_data.get(fld_name)
-#        return rslt
 from DBentry.forms import BulkFormAusgabe
 class BulkAusgabe(MIZAdminView):
     
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
+    url_name = 'bulk_ausgabe'
+    index_label = 'Ausgaben Erstellung'
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -303,3 +254,6 @@ class BulkAusgabe(MIZAdminView):
         if row_error:
             headers += ['Bemerkung']
         return headers, preview_data
+
+from .admin import miz_site
+miz_site.register_tool(BulkAusgabe)
