@@ -134,7 +134,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         """Return True if the user has the permission to add a model."""
         if not request.user.is_authenticated():
             return False
-
+        
         #opts = self.get_queryset().model._meta <--- Overwritten
         from django.contrib.auth import get_permission_codename
         opts = self.model._meta
