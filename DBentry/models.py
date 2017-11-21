@@ -1053,6 +1053,14 @@ class audio(ShowModel):
         else:
             self.discogs_url = None
         super(audio, self).save(*args, **kwargs)
+        
+    def kuenstler_string(self):
+        return concat_limit(list(self.band.all()) + list(self.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
+    
+    def formate_string(self):
+        return concat_limit(list(self.format_set.all()))
+    formate_string.short_description = 'Format'
     
     
 class bildmaterial(ShowModel):
@@ -1362,7 +1370,10 @@ class Format(ShowModel):
                 'channel' : ", " + self.channel if self.channel else ''
             }).strip()
         except:
-            return str(self.format_size)
+            try:
+                return str(self.format_size)
+            except:
+                return '---'
                 
     def __str__(self):
         if self.format_name:
@@ -1390,10 +1401,10 @@ class FormatTag(ShowModel):
         ordering = ['tag']
         verbose_name = 'Format-Tag'
         verbose_name_plural = 'Format-Tags'
-    
+        
 class FormatSize(ShowModel):
     size = models.CharField(**CF_ARGS)
-    
+            
 class FormatTyp(ShowModel):
     """ Art des Formats (Vinyl, DVD, Cassette, etc) """
     typ = models.CharField(**CF_ARGS)

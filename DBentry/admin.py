@@ -314,8 +314,16 @@ class AudioAdmin(ModelBase):
         ('Discogs', {'fields' : ['release_id', 'discogs_url'], 'classes' : ['collapse', 'collapsed']}), 
         ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
     ]
+    list_display = ['__str__', 'formate_string', 'kuenstler_string']
     save_on_top = True
     collapse_all = True
+    
+    advanced_search_form = {
+        'selects' : ['musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma', 
+                        'format__format_size', 'format__format_typ', 'format__tag'], 
+        'simple' : ['release_id'], 
+        'labels' : {'format__tag':'Tags'}, 
+    }
     
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
