@@ -66,10 +66,9 @@ urlpatterns = [
 
 def patterns_by_model(model):
     """ Filters a given list of (autocomplete) patterns by model."""
-    # NOTE: this won't return a url for model == provenienz since that url's view_func is ACProv (no model in initkwargs)
     rslt = []
     for pattern_list in urlpatterns:
         for pattern in pattern_list.url_patterns:
-            if model == pattern.callback.view_initkwargs.get('model', None):
+            if pattern.callback.view_class.model == model or pattern.callback.view_initkwargs.get('model', None) == model:
                 rslt.append(pattern)
     return rslt
