@@ -250,11 +250,4 @@ def recmultisplit(values, seperators = []):
     
     for x in values.split(sep):
         rslt += recmultisplit(x, seps)
-#    
-#    last_sep = 0
-#    for index, c in enumerate(values):
-#        if c in seperators:
-#            rslt.append(values[last_sep:index].strip())
-#            last_sep = index+1
-#    rslt.append(values[last_sep:].strip())
-    return rslt
+    return rslt        

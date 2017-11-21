@@ -398,7 +398,7 @@ import csv
 class CSVReader(object):
     
     def __init__(self, file_path = None, file = None, tags = {}, reader = csv.DictReader):
-        self.file = file or open(file_path if file_path else FILE_NAME) #TODO: FILE_NAME isn't here
+        self.file = file or open(file_path) 
         self.reader = reader
         
         if isinstance(tags, (list, tuple)):

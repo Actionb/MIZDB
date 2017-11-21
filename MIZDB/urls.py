@@ -15,19 +15,12 @@ Including another URLconf
 """
 from django.conf.urls import url,  include
 from django.contrib import admin
-
-from itertools import chain
-
-from DBentry.ie.urls import import_urls
-from DBentry.urls import admin_tools_urls
-urls = admin.site.urls[0]
-for u in chain(import_urls, admin_tools_urls):
-    u.callback = admin.site.admin_view(u.callback)
-    urls.insert(0, u)
+from DBentry.admin import miz_site
 
 urlpatterns = [
-    url(r'^mizdb/', include('DBentry.urls')), # includes the autocomplete-patterns
-    url(r'^admin/', (urls, admin.site.urls[1], admin.site.urls[2])),
+    url(r'^mizdb/', include('DBentry.urls')), # fallback?
+    url(r'^admin/', miz_site.urls), 
+    url(r'^admin/', include('DBentry.urls'))
 ]
 
 from django.conf import settings
