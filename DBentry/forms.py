@@ -391,53 +391,7 @@ class BulkForm(MIZAdminForm):
         if all(len(self.split_data.get(fld_name, []))==0 for fld_name in self.at_least_one_required):
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
                     ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
-                ))
-    @property
-    def row_data(self):
-        # NOTE: this doesn't verify that the form has been cleaned and that split_data is populated..
-        if not self._row_data or self.has_changed():
-            from collections import OrderedDict
-            for c in range(self.total_count):
-                row = {}
-                for fld_name in self.fields:
-                    if fld_name in self.split_data:
-                        if fld_name in self.each_fields:
-                            # all items of this list are part of this row
-                            item = self.split_data.get(fld_name)
-                        else:
-                            # only one item of this list needs to be part of this row
-                            item = self.split_data.get(fld_name)[c]
-                    else:
-                        item = self.cleaned_data.get(fld_name)
-                    if item:
-                        row[fld_name] = item
-                        
-                qs = self.lookup_instance(row)
-                row['lagerort'] = self.cleaned_data['lagerort']
-                if qs.count()==0:
-                    # No ausgabe fits the parameters: we are creating a new one
-                    
-                    # See if this row (in its exact form) has already appeared in _row_data
-                    # We do not want to create multiple objects with the same data,
-                    # instead we will mark this row as a duplicate of the first matching row found
-                    # By checking for row == row_dict we avoid 'nesting' duplicates.
-                    for row_dict in self._row_data:
-                        if row == row_dict:
-                            row['lagerort'] = self.cleaned_data['dublette']
-                            row['dupe_of'] = row_dict
-                            break
-                elif qs.count()==1:
-                    # A single object fitting the parameters already exists: this row represents a duplicate of that object.
-                    
-                    row['instance'] = qs.first()
-                    row['lagerort'] = self.cleaned_data['dublette']
-                else:
-                    # lookup_instance returned multiple instances/objects
-                    row['multiples'] = qs
-                    
-                self._row_data.append(row)
-        return self._row_data
-        
+                ))        
     
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
@@ -572,6 +526,52 @@ class BulkFormAusgabe(BulkForm):
                 if value:
                     qs = qs.filter(**{x:value})
         return qs
+        
+    @property
+    def row_data(self):
+        # NOTE: this doesn't verify that the form has been cleaned and that split_data is populated..
+        if not self._row_data or self.has_changed():
+            from collections import OrderedDict
+            for c in range(self.total_count):
+                row = {}
+                for fld_name in self.fields:
+                    if fld_name in self.split_data:
+                        if fld_name in self.each_fields:
+                            # all items of this list are part of this row
+                            item = self.split_data.get(fld_name)
+                        else:
+                            # only one item of this list needs to be part of this row
+                            item = self.split_data.get(fld_name)[c]
+                    else:
+                        item = self.cleaned_data.get(fld_name)
+                    if item:
+                        row[fld_name] = item
+                        
+                qs = self.lookup_instance(row)
+                row['lagerort'] = self.cleaned_data['lagerort']
+                if qs.count()==0:
+                    # No ausgabe fits the parameters: we are creating a new one
+                    
+                    # See if this row (in its exact form) has already appeared in _row_data
+                    # We do not want to create multiple objects with the same data,
+                    # instead we will mark this row as a duplicate of the first matching row found
+                    # By checking for row == row_dict we avoid 'nesting' duplicates.
+                    for row_dict in self._row_data:
+                        if row == row_dict:
+                            row['lagerort'] = self.cleaned_data['dublette']
+                            row['dupe_of'] = row_dict
+                            break
+                elif qs.count()==1:
+                    # A single object fitting the parameters already exists: this row represents a duplicate of that object.
+                    
+                    row['instance'] = qs.first()
+                    row['lagerort'] = self.cleaned_data['dublette']
+                else:
+                    # lookup_instance returned multiple instances/objects
+                    row['multiples'] = qs
+                    
+                self._row_data.append(row)
+        return self._row_data
         
 test_data = dict(magazin=tmag.pk, jahr='10,11', num='1-10*3', monat='1,2,3,4', audio=True, lagerort = ZRAUM_ID)
 test_form = BulkFormAusgabe(test_data)
