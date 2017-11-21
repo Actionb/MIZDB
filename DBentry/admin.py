@@ -3,15 +3,36 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.contrib.admin.utils import get_fields_from_path
 
+from collections import OrderedDict
+
 from .models import *
 from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
 
 from .changelist import MIZChangeList
 
-admin.site.site_header = 'MIZDB'
+class MIZAdminSite(admin.AdminSite):
+    from django.views.decorators.cache import never_cache
+    site_header = 'MIZDB'
+    
+    tools = []
+    
+    def register_tool(self, view):
+        self.tools.append(view)
+    
+    @never_cache
+    def index(self, request, extra_context=None):        
+        extra_context = extra_context or {}
+        for tool in self.tools:
+            if tool.has_permission(request):
+                if not 'admintools' in extra_context:
+                    extra_context['admintools'] = {}
+                extra_context['admintools'][tool.url_name] = tool.index_label
+        extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items()))
+        return super(MIZAdminSite, self).index(request, extra_context)
+        
+miz_site = MIZAdminSite()
 
-from django.contrib.admin.options import *
 class ModelBase(admin.ModelAdmin):
     
     def __init__(self, *args, **kwargs):
@@ -242,7 +263,7 @@ class AusgabeInLineBase(admin.TabularInline):
         self.verbose_name_plural = ausgabe._meta.verbose_name_plural
         
         
-@admin.register(audio, site=admin.site)
+@admin.register(audio, site=miz_site)
 class AudioAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = audio.genre.through
@@ -315,7 +336,7 @@ class BestandListFilter(admin.SimpleListFilter):
         if self.value()=='ndubl':
             return queryset.exclude(bestand__lagerort_id=DUPLETTEN_ID)
 
-@admin.register(ausgabe, site=admin.site)
+@admin.register(ausgabe, site=miz_site)
 class AusgabenAdmin(ModelBase):
     class NumInLine(TabModelBase):
         model = ausgabe_num
@@ -442,7 +463,7 @@ class AusgabenAdmin(ModelBase):
         mag = magazin.objects.get(pk=mag_id)
         mag.ausgabe_set.bulk_add_jg(jg)
     
-@admin.register(autor, site=admin.site)
+@admin.register(autor, site=miz_site)
 class AutorAdmin(ModelBase):
     class MagazinInLine(TabModelBase):
         model = autor.magazin.through
@@ -455,7 +476,7 @@ class AutorAdmin(ModelBase):
     search_fields_redirect = {'vorname':'person__vorname', 'nachname':'person__nachname'}
 
     
-@admin.register(artikel, site=admin.site)
+@admin.register(artikel, site=miz_site)
 class ArtikelAdmin(ModelBase):  
     class GenreInLine(GenreModelBase):
         model = artikel.genre.through
@@ -510,7 +531,7 @@ class ArtikelAdmin(ModelBase):
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
         
-@admin.register(band, site=admin.site)    
+@admin.register(band, site=miz_site)    
 class BandAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = band.genre.through
@@ -533,11 +554,11 @@ class BandAdmin(ModelBase):
         'labels' : {'musiker':'Mitglied','herkunft__land':'Herkunftsland', 'herkunft':'Herkunftsort'}
     }
     
-@admin.register(bildmaterial, site=admin.site)
+@admin.register(bildmaterial, site=miz_site)
 class BildmaterialAdmin(ModelBase):
     pass
     
-@admin.register(buch, site=admin.site)
+@admin.register(buch, site=miz_site)
 class BuchAdmin(ModelBase):
     class AutorInLine(TabModelBase):
         model = buch.autor.through
@@ -547,11 +568,11 @@ class BuchAdmin(ModelBase):
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
     exclude = ['autor']
     
-@admin.register(dokument, site=admin.site)
+@admin.register(dokument, site=miz_site)
 class DokumentAdmin(ModelBase):
     infields = [BestandInLine]
     
-@admin.register(genre, site=admin.site)
+@admin.register(genre, site=miz_site)
 class GenreAdmin(ModelBase):
     class AliasInLine(AliasTabBase):
         model = genre_alias
@@ -560,7 +581,7 @@ class GenreAdmin(ModelBase):
     list_display = ['genre', 'alias_string']
     
 
-@admin.register(magazin, site=admin.site)
+@admin.register(magazin, site=miz_site)
 class MagazinAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = magazin.genre.through
@@ -576,11 +597,11 @@ class MagazinAdmin(ModelBase):
     }
     
 
-@admin.register(memorabilien, site=admin.site)
+@admin.register(memorabilien, site=miz_site)
 class MemoAdmin(ModelBase):
     infields = [BestandInLine]
 
-@admin.register(musiker, site=admin.site)
+@admin.register(musiker, site=miz_site)
 class MusikerAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = musiker.genre.through
@@ -611,7 +632,7 @@ class MusikerAdmin(ModelBase):
         'labels' : {'person__herkunft__land':'Herkunftsland'}
     }
     
-@admin.register(person, site=admin.site)
+@admin.register(person, site=miz_site)
 class PersonAdmin(ModelBase):
     def Ist_Musiker(self, obj):
         return obj.musiker_set.exists()
@@ -625,7 +646,7 @@ class PersonAdmin(ModelBase):
     list_display_links =['vorname','nachname']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
     
-@admin.register(schlagwort, site=admin.site)
+@admin.register(schlagwort, site=miz_site)
 class SchlagwortTab(ModelBase):
     class AliasInLine(AliasTabBase):
         model = schlagwort_alias
@@ -633,15 +654,15 @@ class SchlagwortTab(ModelBase):
     inlines = [AliasInLine]
     search_fields = ['schlagwort', 'ober_id__schlagwort', 'schlagwort_alias__alias']
     
-@admin.register(spielort, site=admin.site)
+@admin.register(spielort, site=miz_site)
 class SpielortAdmin(ModelBase):
     pass
     
-@admin.register(technik, site=admin.site)
+@admin.register(technik, site=miz_site)
 class TechnikAdmin(ModelBase):
     infields = [BestandInLine]
 
-@admin.register(veranstaltung, site=admin.site)
+@admin.register(veranstaltung, site=miz_site)
 class VeranstaltungAdmin(ModelBase):
     pass
 #    class GenreInLine(GenreModelBase):
@@ -655,7 +676,7 @@ class VeranstaltungAdmin(ModelBase):
 #    inlines=[GenreInLine, BandInLine, PersonInLine]
 #    exclude = ['genre', 'band', 'person']
     
-@admin.register(verlag, site=admin.site)
+@admin.register(verlag, site=miz_site)
 class VerlagAdmin(ModelBase):
     list_display = ['verlag_name', 'sitz']
     search_fields = ['verlag_name', 'sitz__land__land_name', 'sitz__stadt']
@@ -665,7 +686,7 @@ class VerlagAdmin(ModelBase):
     }
     
         
-@admin.register(video, site=admin.site)
+@admin.register(video, site=miz_site)
 class VideoAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = video.genre.through
@@ -690,7 +711,7 @@ class VideoAdmin(ModelBase):
         
 # ======================================================== Orte ========================================================
 
-@admin.register(bundesland, site=admin.site)
+@admin.register(bundesland, site=miz_site)
 class BlandAdmin(ModelBase):
     search_fields = ['id', 'bland_name', 'code', 'land__land_name']
     list_display = ['bland_name', 'code', 'land']
@@ -698,15 +719,15 @@ class BlandAdmin(ModelBase):
         'selects' : ['ort__land'], 
     }
     
-@admin.register(land, site=admin.site)
+@admin.register(land, site=miz_site)
 class LandAdmin(ModelBase):
     search_fields = ['id', 'land_name', 'code']
     
-@admin.register(kreis, site=admin.site)
+@admin.register(kreis, site=miz_site)
 class KreisAdmin(ModelBase):
     pass
     
-@admin.register(ort, site=admin.site)
+@admin.register(ort, site=miz_site)
 class OrtAdmin(ModelBase):
     fields = ['stadt', 'land', 'bland']
     
@@ -718,7 +739,7 @@ class OrtAdmin(ModelBase):
         'selects' : ['land', 'bland']
     }
     
-@admin.register(bestand, site=admin.site)
+@admin.register(bestand, site=miz_site)
 class BestandAdmin(ModelBase):
     #readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
     list_display = ['signatur', 'bestand_art', 'lagerort','provenienz']
@@ -728,11 +749,11 @@ class BestandAdmin(ModelBase):
         'selects' : ['bestand_art', 'lagerort'], 
     }
     
-@admin.register(provenienz, site=admin.site)
+@admin.register(provenienz, site=miz_site)
 class ProvAdmin(ModelBase):   
     pass
       
-@admin.register(datei, site=admin.site)
+@admin.register(datei, site=miz_site)
 class DateiAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = datei.genre.through
@@ -763,6 +784,10 @@ class DateiAdmin(ModelBase):
 
 # Register your models here.
 
-admin.site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, plattenfirma ])
+miz_site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, plattenfirma ])
 
-admin.site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
+miz_site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+miz_site.register(Group, GroupAdmin)
+miz_site.register(User, UserAdmin)
