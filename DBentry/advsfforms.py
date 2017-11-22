@@ -13,22 +13,6 @@ FORWARDABLE = {
     'bland' : 'land', 
 }
 
-FORMFIELDS = {
-    'ausgabe' : dict(required = False, 
-                                    label = 'Ausgabe', 
-                                    queryset = ausgabe.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
-                                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}), 
-                                    ), 
-                                    
-    'bland' : dict(required = False, 
-                                    label = "Bundesland", 
-                                    queryset = bundesland.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acbland', forward=['land'], 
-                                                attrs = {'data-placeholder': 'Bitte zuerst ein Land auswählen!'}),
-                                    ), 
-                                    
-}
 class AdvSFForm(forms.Form):            
     
     def get_initial_for_field(self, field, field_name):
@@ -38,7 +22,7 @@ class AdvSFForm(forms.Form):
         """
         # By default, value would be set via self.initial.get - if initial is a MultiValueDict, we want to set it to the entire list though
         # This could also be fixed by:
-        # - always taking field.initial before field_name
+        # - always taking field.initial before field_name: get(field.initial, field_name)
         # - moving everything out of initial into fields.initial during __init__
         # - by not providing initial to __init__ and manually assigning fields.initial after creation
         # NOTE: all kinds of forms may benefit from this, as long as they are using some form of SelectMultiple
