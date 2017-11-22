@@ -325,6 +325,7 @@ class AudioAdmin(ModelBase):
         'labels' : {'format__tag':'Tags'}, 
     }
     
+    
 class BestandListFilter(admin.SimpleListFilter):
     title = "Bestand vorhanden"
     parameter_name = "bestand"
@@ -483,6 +484,9 @@ class AutorAdmin(ModelBase):
     search_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     search_fields_redirect = {'vorname':'person__vorname', 'nachname':'person__nachname'}
 
+    advanced_search_form = {
+        'selects' : ['magazin']
+    }
     
 @admin.register(artikel, site=miz_site)
 class ArtikelAdmin(ModelBase):  
@@ -654,6 +658,10 @@ class PersonAdmin(ModelBase):
     list_display_links =['vorname','nachname']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
     
+    advanced_search_form = {
+        'selects' : ['herkunft', 'herkunft__land', 'herkunft__bland']
+    }
+    
 @admin.register(schlagwort, site=miz_site)
 class SchlagwortTab(ModelBase):
     class AliasInLine(AliasTabBase):
@@ -689,7 +697,7 @@ class VerlagAdmin(ModelBase):
     list_display = ['verlag_name', 'sitz']
     search_fields = ['verlag_name', 'sitz__land__land_name', 'sitz__stadt']
     advanced_search_form = {
-        'selects' : ['sitz'], 
+        'selects' : ['sitz','sitz__land', 'sitz__bland'], 
         'labels' : {'sitz':'Sitz'}
     }
     
