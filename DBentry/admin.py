@@ -41,8 +41,9 @@ class ModelBase(admin.ModelAdmin):
         
     search_fields_redirect = dict()
     flds_to_group = []
-    gogglebtns = []
-    collapse_all = False
+    googlebtns = []
+    collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
+    hint = ''                               # A hint displayed at the top of the form 
     
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
@@ -55,7 +56,6 @@ class ModelBase(admin.ModelAdmin):
         # We cannot do this in the form.__init__ since an add form without initial values never gets initialized - 
         # meaning we do not get any related widget stuff
         form = super(ModelBase, self).get_form(request, obj, **kwargs)
-        from dal import autocomplete
         from DBentry.ac.widgets import wrap_dal_widget
         for fld in form.declared_fields.values():
             widget = fld.widget
@@ -130,15 +130,28 @@ class ModelBase(admin.ModelAdmin):
                 new_extra['crosslinks'].append( dict(link=link, label=label) )
         return new_extra
         
-    def add_view(self, request, form_url='', extra_context=None):
+    @property
+    def media(self):
+        media = super(ModelBase, self).media
+        if self.googlebtns:
+            media.add_js(['admin/js/utils.js'])
+        return media
+        
+    def add_extra_context(self, extra_context = None, object_id = None):
         new_extra = extra_context or {}
+        if object_id:
+            new_extra.update(self.add_crosslinks(object_id))
         new_extra['collapse_all'] = self.collapse_all
+        new_extra['hint'] = self.hint
+        new_extra['googlebtns'] = self.googlebtns
+        return new_extra
+        
+    def add_view(self, request, form_url='', extra_context=None):
+        new_extra = self.add_extra_context(extra_context)
         return self.changeform_view(request, None, form_url, new_extra)
     
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        new_extra = extra_context or {}
-        new_extra.update(self.add_crosslinks(object_id))
-        new_extra['collapse_all'] = self.collapse_all
+        new_extra = self.add_extra_context(extra_context, object_id)
         return super(ModelBase, self).change_view(request, object_id, form_url, new_extra)
         
     def lookup_allowed(self, key, value):
@@ -796,12 +809,14 @@ class DateiAdmin(ModelBase):
         verbose_model = veranstaltung
     inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
     fieldsets = [
-        (None, { 'fields': ['titel', 'media_typ', 'datei_media', 'datei_pfad', 'provenienz']}),
+        (None, { 'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
         ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'datum', 'quelle', 'sender', 'bemerkungen']}),  
     ]
     save_on_top = True
+    hint = 'Diese Seite ist noch nicht vollständig fertig gestellt. Bitte noch nicht benutzen.'
 
 # Register your models here.
+
 
 miz_site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, plattenfirma ])
 

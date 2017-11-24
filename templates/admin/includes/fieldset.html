@@ -33,7 +33,7 @@
                     {% if field.field.help_text %}
                         <div class="help">{{ field.field.help_text|safe }}</div>
                     {% endif %}
-                    {% if field.field.name in adminform.model_admin.googlebtns %}
+                    {% if field.field.name in googlebtns %}
                      <button id="btn-google-me" type="button" onclick="googleMe( '{{field.field.name}}' )">Google Me!</button> 
                     {% endif %}
                 </div>
@@ -41,14 +41,4 @@
         </div>
     {% endfor %}
 </fieldset>
-<script>
-googleMe = function(p){
-	var ele_name = "id_".concat(p);
-    var val = document.getElementById(ele_name).value;
-    val = val.replace(/ /g,"+");
-    var url = "https://www.google.de/search?q=".concat(val);
-   	if(val){
-    	window.open(url,"_blank");
-    }
-};
-</script>
+
