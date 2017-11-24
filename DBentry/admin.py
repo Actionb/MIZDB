@@ -813,12 +813,16 @@ class DateiAdmin(ModelBase):
         ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'datum', 'quelle', 'sender', 'bemerkungen']}),  
     ]
     save_on_top = True
+    collapse_all = True
     hint = 'Diese Seite ist noch nicht vollständig fertig gestellt. Bitte noch nicht benutzen.'
+    
+@admin.register(instrument, site=miz_site)
+class InstrumentAdmin(ModelBase):
+    list_display = ['instrument', 'kuerzel']
 
 # Register your models here.
 
-
-miz_site.register([buch_serie, monat, instrument, lagerort, geber, sender, sprache, plattenfirma ])
+miz_site.register([buch_serie, monat, lagerort, geber, sender, sprache, plattenfirma])
 
 miz_site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
 from django.contrib.auth.models import Group, User

@@ -70,6 +70,9 @@ WIDGETS = {
             'instrument' : autocomplete.ModelSelect2(url='acinstrument'),
             'band' : autocomplete.ModelSelect2(url='acband'), 
             
+            # Instrument -- register an empty dict of widgets for this model so as to not try to use 'instrument' dal widget for a simple charfield
+            instrument : {}, 
+            
             # Orte
             'herkunft' : autocomplete.ModelSelect2(url='acort'), 
             'ort' : autocomplete.ModelSelect2(url='acort'), 

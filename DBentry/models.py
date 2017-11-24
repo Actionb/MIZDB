@@ -813,23 +813,6 @@ class magazin(ShowModel):
                     print(instance_string, 'gelöscht!')
             if inp == 'q':
                 return
-            
-        
-class status(ShowModel):
-    STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen')]
-    status = models.CharField('Bearbeitungsstatus', **CF_ARGS)
-    class Meta:
-        ordering = None
-    
-    
-class turnus(ShowModel):
-    TURNUS_CHOICES = [('u', 'unbekannt'), 
-        ('t','täglich'), ('w','wöchentlich'), ('2w','zwei-wöchentlich'), ('m','monatlich'), ('2m','zwei-monatlich'), 
-        ('q','quartalsweise'), ('hj','halbjährlich'), ('j','jährlich')]
-    turnus = models.CharField('Turnus', **CF_ARGS)
-    class Meta:
-        ordering = None
-    
     
 class verlag(ShowModel):
     verlag_name = models.CharField('verlag', **CF_ARGS)
@@ -991,6 +974,7 @@ class buch(ShowModel):
     primary_fields = ['titel']
     
     class Meta:
+        ordering = ['titel']
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
         
@@ -1004,7 +988,11 @@ class instrument(ShowModel):
     
     primary_fields = ['instrument', 'kuerzel']
     
+    def __str__(self):
+        return str(self.instrument) + " ({})".format(str(self.kuerzel)) if self.kuerzel else str(self.instrument)
+    
     class Meta:
+        ordering = ['instrument', 'kuerzel']
         verbose_name = 'Instrument'
         verbose_name_plural = 'Instrumente'
 class instrument_alias(alias_base):
@@ -1041,6 +1029,7 @@ class audio(ShowModel):
     
     
     class Meta:
+        ordering = ['titel']
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
         
@@ -1069,6 +1058,7 @@ class bildmaterial(ShowModel):
     primary_fields = ['titel']
     
     class Meta:
+        ordering = ['titel']
         verbose_name = 'Bild Material'
         verbose_name_plural = 'Bild Materialien'
         
@@ -1079,6 +1069,7 @@ class buch_serie(ShowModel):
     primary_fields = ['serie']
     
     class Meta:
+        ordering = ['serie']
         verbose_name = 'Buchserie'
         verbose_name_plural = 'Buchserien'
         
@@ -1089,6 +1080,7 @@ class dokument(ShowModel):
     primary_fields = ['titel']
     
     class Meta:
+        ordering = ['titel']
         verbose_name = 'Dokument'
         verbose_name_plural = 'Dokumente'
     
@@ -1098,6 +1090,7 @@ class kreis(ShowModel):
     bland = models.ForeignKey('bundesland')
     
     class Meta:
+        ordering = ['name', 'bland']
         verbose_name = 'Kreis'
         verbose_name_plural = 'Kreise'
         
@@ -1216,6 +1209,7 @@ class provenienz(ShowModel):
     primary_fields = ['geber__name']
     
     class Meta:
+        ordering = ['geber', 'typ']
         verbose_name = 'Provenienz'
         verbose_name_plural = 'Provenienzen'
         
@@ -1225,6 +1219,7 @@ class geber(ShowModel):
     name = models.CharField(default = 'unbekannt', **CF_ARGS)
     
     class Meta:
+        ordering = ['name']
         verbose_name = 'Geber'
         verbose_name_plural = 'Geber'
         
@@ -1389,6 +1384,11 @@ class Format(ShowModel):
         
 class NoiseRed(ShowModel):
     verfahren = models.CharField(**CF_ARGS)
+    
+    class Meta:
+        ordering = ['verfahren']
+        verbose_name = 'Noise Reduction Verfahren'
+        verbose_name_plural = 'Noise Reduction Verfahren'
 
 class FormatTag(ShowModel):
     tag = models.CharField(**CF_ARGS)
@@ -1404,10 +1404,20 @@ class FormatTag(ShowModel):
         
 class FormatSize(ShowModel):
     size = models.CharField(**CF_ARGS)
+    
+    class Meta:
+        ordering = ['size']
+        verbose_name = 'Format-Größe'
+        verbose_name_plural = 'Format-Größen'
             
 class FormatTyp(ShowModel):
     """ Art des Formats (Vinyl, DVD, Cassette, etc) """
     typ = models.CharField(**CF_ARGS)
+    
+    class Meta:
+        ordering = ['typ']
+        verbose_name = 'Format-Typ'
+        verbose_name_plural = 'Format-Typen'
 
 class plattenfirma(ShowModel):
     name = models.CharField(**CF_ARGS)
@@ -1420,8 +1430,17 @@ class plattenfirma(ShowModel):
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)
 
-#from django.contrib.auth.models import User
+# from django.conf import settings --> settings.AUTH_USER_MODEL
 class Favoriten(models.Model):
-    user = models.ForeignKey('auth.User', editable = False)
-    fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten: Genre', blank = True)
-    fav_schl = models.ManyToManyField('schlagwort', verbose_name = 'Favoriten: Schlagworte', blank = True)
+    user = models.OneToOneField('auth.User', editable = False)
+    fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten Genre', blank = True)
+    fav_schl = models.ManyToManyField('schlagwort', verbose_name = 'Favoriten Schlagworte', blank = True)
+    
+    def __str__(self):
+        return 'Favoriten von {}'.format(self.user)
+    
+    def get_favorites(self, model = None):
+        rslt = {fld.related_model:getattr(self, fld.name).all() for fld in Favoriten._meta.many_to_many}
+        if model:
+            return rslt.get(model, Favoriten.objects.none())
+        return rslt
