@@ -15,6 +15,10 @@ class MIZAdminSite(admin.AdminSite):
     from django.views.decorators.cache import never_cache
     site_header = 'MIZDB'
     
+    wip = [bildmaterial, buch, dokument, memorabilien, video]
+    main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 
+                    person, schlagwort, video]
+    
     tools = []
     
     def register_tool(self, view):
@@ -29,7 +33,36 @@ class MIZAdminSite(admin.AdminSite):
                     extra_context['admintools'] = {}
                 extra_context['admintools'][tool.url_name] = tool.index_label
         extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items()))
-        return super(MIZAdminSite, self).index(request, extra_context)
+        
+        response = super(MIZAdminSite, self).index(request, extra_context)
+        app_list = response.context_data['app_list']
+        index = None
+        try:
+            index = next(i for (i, d) in enumerate(app_list) if d['app_label'] == 'DBentry')
+        except:
+            return response
+        
+        if index:
+            DBentry_dict = app_list.pop(index)
+            print(DBentry_dict.keys())
+            model_list = DBentry_dict.pop('models')
+        
+            DBentry_main = DBentry_dict.copy()
+            DBentry_main['name'] = 'Hauptkategorien'
+            DBentry_main['models'] = [] # or deepcopy DBentry_dict
+            DBentry_side = DBentry_dict.copy()
+            DBentry_side['name'] = 'Nebenkategorien'
+            DBentry_side['models'] = []
+            
+            main_models = [m._meta.model_name for m in self.main_models if not m in self.wip]
+            for m in model_list:
+                if m.get('object_name', '') in main_models:
+                    DBentry_main['models'].append(m)
+                else:
+                    DBentry_side['models'].append(m)
+            app_list.extend([DBentry_main, DBentry_side])
+            response.context_data['app_list'] = app_list
+        return response
         
 miz_site = MIZAdminSite()
 
