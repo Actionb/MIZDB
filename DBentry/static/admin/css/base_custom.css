@@ -116,3 +116,7 @@ fieldset.module fieldset .fieldset-name {
 div .help_text {
     padding: 10px;
 }
+
+.description {
+    padding: 5px 0 5px 12px;
+}
