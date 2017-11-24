@@ -16,7 +16,7 @@ autocomplete_patterns = [
     url(r'^dokument/$',     ACBase.as_view(model = dokument),                                   name = "acdokument"),  
     url(r'^format_size/$',  ACBase.as_view(model = FormatSize, create_field = 'size'),          name = "acformat_size"),
     url(r'^format_typ/$',   ACBase.as_view(model = FormatTyp, create_field = 'typ'),            name = "acformat_typ"), 
-    url(r'format_tag/$',    ACBase.as_view(model = FormatTag),                                  name = 'acformat_tag'),  
+    url(r'^format_tag/$',    ACBase.as_view(model = FormatTag),                                  name = 'acformat_tag'),  
     url(r'^geber/$',        ACBase.as_view(model = geber, create_field = 'name'),               name = 'acgeber'), 
     url(r'^genre/$',        ACBase.as_view(model = genre, create_field='genre'),                name = 'acgenre'),
     url(r'^instrument/$',   ACBase.as_view(model = instrument,  create_field = 'instrument'),   name = 'acinstrument'),
@@ -36,7 +36,7 @@ autocomplete_patterns = [
     url(r'^sprache/$',      ACBase.as_view(model = sprache),                                    name = 'acsprache'),
     url(r'^veranstaltung/$',ACBase.as_view(model = veranstaltung),                              name = 'acveranstaltung'), 
     url(r'^verlag/$',       ACBase.as_view(model = verlag, create_field='verlag_name'),         name = 'acverlag'), 
-    url(r'video/$',         ACBase.as_view(model = video),                                      name = "acvideo"), 
+    url(r'^video/$',         ACBase.as_view(model = video),                                      name = "acvideo"), 
 ]
 
 # A place for the evil twins of the previous ac patterns that want to create objects although they are not allowed to

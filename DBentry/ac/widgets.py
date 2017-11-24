@@ -53,6 +53,27 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         return context
         
 def wrap_dal_widget(widget, remote_field_name = 'id'):
+    # Using django.urls.resolve would result in a circular import when it tries to import MIZDB.urlconf (when trying to make BulkFormAusgabe)
+    # we're coming from DBentry.forms -> MIZDB.urlconf -> DBentry.ie.urls -> DBentry.ie.views -> DBentry.ie.forms -> DBentry.forms
+    # Accessing widget.url calls reverse() with the root conf for the app (MIZDB.urlconf), resulting in another circular import.
+    # NOTE: resolve_lazy()???!
+    from DBentry.ac.urls import autocomplete_patterns
+    from django.urls import RegexURLResolver
+    from dal import autocomplete
+    if not isinstance(widget, autocomplete.ModelSelect2) or not hasattr(widget, '_url'):
+        return widget
+    resolver = RegexURLResolver(r'', autocomplete_patterns)
+    path = resolver.reverse(widget._url)
+    resolver_match = resolver.resolve(path)
+    if resolver_match:
+        match_view = resolver_match.func.view_class
+        initkwargs = resolver_match.func.view_initkwargs
+        related_model = match_view.model or initkwargs.get('model', None)
+        if related_model:
+            return EasyWidgetWrapper(widget, related_model, remote_field_name)
+            
+    return widget
+    from django.urls import RegexURLResolver
     from DBentry.ac.urls import autocomplete_patterns
     matching_pattern = None
     for pattern in autocomplete_patterns:
@@ -68,15 +89,3 @@ def wrap_dal_widget(widget, remote_field_name = 'id'):
     return widget
             
             
-    # Using django.urls.resolve would result in a circular import when it tries to import MIZDB.urlconf (when trying to make BulkFormAusgabe)
-    # we're coming from DBentry.forms -> MIZDB.urlconf -> DBentry.ie.urls -> DBentry.ie.views -> DBentry.ie.forms -> DBentry.forms
-    from django.urls import resolve
-    resolver_match = resolve(widget.url)
-    if resolver_match:
-        match_view = resolver_match.func.view_class
-        initkwargs = resolver_match.func.view_initkwargs
-        related_model = match_view.model or initkwargs.get('model', None)
-        if related_model:
-            return EasyWidgetWrapper(widget, related_model, remote_field_name)
-            
-    return widget

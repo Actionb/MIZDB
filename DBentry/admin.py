@@ -56,11 +56,14 @@ class ModelBase(admin.ModelAdmin):
         # meaning we do not get any related widget stuff
         form = super(ModelBase, self).get_form(request, obj, **kwargs)
         from dal import autocomplete
-        from .widgets import wrap_dal_widget
+        from DBentry.ac.widgets import wrap_dal_widget
         for fld in form.declared_fields.values():
-            # NOTE: this is going to eventually blow up..
-            if isinstance(fld.widget, autocomplete.ModelSelect2):
-                fld.widget = wrap_dal_widget(fld.widget)
+            widget = fld.widget
+            try:
+                widget = wrap_dal_widget(fld.widget)
+            except:
+                continue
+            fld.widget = widget
         return form
     
     def get_exclude(self, request, obj = None):
