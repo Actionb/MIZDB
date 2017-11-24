@@ -1307,7 +1307,7 @@ class datei(ShowModel):
     
     titel = models.CharField(**CF_ARGS)
     media_typ = models.CharField(choices = MEDIA_TYP_CHOICES, verbose_name = 'Media Typ', default = 'audio', **CF_ARGS)
-    datei_media = models.FileField(verbose_name = 'Datei', blank = True,  null = True,
+    datei_media = models.FileField(verbose_name = 'Datei', blank = True,  null = True, editable = False, 
             help_text = "Datei auf Datenbank-Server hoch- bzw herunterladen.") #Datei Media Server
     datei_pfad = models.CharField(verbose_name = 'Datei-Pfad', 
             help_text = "Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner.", **CF_ARGS_B)
