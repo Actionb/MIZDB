@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from .models import *
 from .constants import ATTRS_TEXTAREA, ZRAUM_ID, DUPLETTEN_ID
-from .widgets import wrap_dal_widget
+from DBentry.ac.widgets import wrap_dal_widget
 
 from dal import autocomplete
 
@@ -575,3 +575,37 @@ class BulkFormAusgabe(BulkForm):
         
 test_data = dict(magazin=tmag.pk, jahr='10,11', num='1-10*3', monat='1,2,3,4', audio=True, lagerort = ZRAUM_ID)
 test_form = BulkFormAusgabe(test_data)
+
+from django.contrib.admin.widgets import FilteredSelectMultiple
+class FavoritenForm(forms.ModelForm):
+    class Meta:
+        model = Favoriten
+        fields = '__all__'
+        widgets = {
+            'fav_genres'    :   FilteredSelectMultiple('Genres', False), 
+            'fav_schl'      :   FilteredSelectMultiple('Schlagworte', False),
+        }
+
+    class Media:
+        extend = False # A call to super().media would put the Select*.js before the jquery.js files
+        css = {
+            'all' : ('admin/css/forms.css', )
+        }
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'admin/js/vendor/jquery/jquery%s.js' % extra,
+            'admin/js/jquery.init.js',
+            'admin/js/collapse%s.js' % extra,
+            'admin/js/core.js', 
+            "admin/js/SelectBox.js", 
+            "admin/js/SelectFilter2.js", 
+        ]
+    def __iter__(self):
+        fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
+            
+        from django.contrib.admin.helpers import Fieldset
+        for name, options in fieldsets:
+            yield Fieldset(
+                self, name,
+                **options
+            )

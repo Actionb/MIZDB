@@ -1419,3 +1419,9 @@ class plattenfirma(ShowModel):
 
 # Testmagazin for... testing
 tmag = magazin.objects.get(pk=326)
+
+#from django.contrib.auth.models import User
+class Favoriten(models.Model):
+    user = models.ForeignKey('auth.User', editable = False)
+    fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten: Genre', blank = True)
+    fav_schl = models.ManyToManyField('schlagwort', verbose_name = 'Favoriten: Schlagworte', blank = True)

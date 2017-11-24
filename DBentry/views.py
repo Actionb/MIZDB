@@ -13,13 +13,16 @@ from django.urls import reverse, resolve
 
 from .models import *
 from .utils import link_list
+from DBentry.forms import BulkFormAusgabe, FavoritenForm
+from .admin import miz_site
 
 from dal import autocomplete
 # Create your views here
 
 from django.contrib import admin
 from django.contrib import messages
-from django.views.generic import FormView
+from django.views.generic import FormView, UpdateView
+
 class MIZAdminView(FormView):
     form_class = None
     template_name = None
@@ -32,15 +35,49 @@ class MIZAdminView(FormView):
         if not self.has_permission(request):
             from django.core.exceptions import PermissionDenied
             raise PermissionDenied
-        kwargs.update(admin.site.each_context(request))
         return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, *args, **kwargs):
-        # Default get method of ProcessFormView calls get_context_data withouth kwargs (site_header, site_titel, etc.) 
-        # which we want on all our views
-        return render(request, self.template_name, context = self.get_context_data(**kwargs))
+    
+    
+    def get_context_data(self, **kwargs):
+        kwargs = super(MIZAdminView, self).get_context_data(**kwargs)
+        kwargs.update(miz_site.each_context(self.request))
+        return kwargs
         
-from DBentry.forms import BulkFormAusgabe
+class FavoritenView(UpdateView):
+    form_class = FavoritenForm
+    template_name = 'admin/favorites.html'
+    model = Favoriten
+    
+    url_name = 'favoriten'
+    index_label = 'Favoriten Verwaltung'
+    success_url = ''
+    
+    @classmethod
+    def has_permission(cls, request):
+        return request.user.is_staff
+        
+    def get_context_data(self, **kwargs):
+        kwargs = super(FavoritenView, self).get_context_data(**kwargs)
+        kwargs.update(miz_site.each_context(self.request))
+        return kwargs
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.has_permission(request):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        return super(FavoritenView, self).dispatch(request, *args, **kwargs)
+        
+    def get_success_url(self):
+        # Redirect back onto this site
+        return self.success_url
+    
+    def get_object(self):
+        object = Favoriten.objects.filter(user=self.request.user).first()
+        if not object:
+            object = Favoriten(user=self.request.user)
+            object.save()
+        return object        
+        
 class BulkAusgabe(MIZAdminView):
     
     template_name = 'admin/bulk.html'
@@ -255,5 +292,5 @@ class BulkAusgabe(MIZAdminView):
             headers += ['Bemerkung']
         return headers, preview_data
 
-from .admin import miz_site
 miz_site.register_tool(BulkAusgabe)
+miz_site.register_tool(FavoritenView)
