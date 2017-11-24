@@ -1,5 +1,5 @@
 from dal import autocomplete
-from DBentry.models import provenienz, ausgabe, geber
+from DBentry.models import provenienz, ausgabe, geber, Favoriten
 from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.contrib.admin.utils import get_fields_from_path
@@ -92,6 +92,13 @@ class ACBase(autocomplete.Select2QuerySetView):
                         qobjects |= Q((fld+"__icontains", q))
                     qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
                 return list(exact_match_qs)+list(startsw_qs)+list(qs)
+        else:
+            # Fetch favorites if available
+            try:
+                fav_config = Favoriten.objects.get(user=self.request.user)
+            except:
+                return qs
+            qs = list(fav_config.get_favorites(self.model)) + list(qs)
         return qs
         
     def get_queryset(self):
