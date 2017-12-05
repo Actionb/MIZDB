@@ -3,8 +3,10 @@ from django.db.models import Aggregate
 from django.utils.http import urlquote
 from django.utils.html import format_html
 from django.urls import reverse
+from django.utils.encoding import force_text
 
 from .constants import M2M_LIST_MAX_LEN
+from functools import partial
 
     
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
