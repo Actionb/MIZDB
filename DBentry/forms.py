@@ -7,6 +7,7 @@ from .constants import ATTRS_TEXTAREA, ZRAUM_ID, DUPLETTEN_ID
 from DBentry.ac.widgets import wrap_dal_widget
 
 from dal import autocomplete
+from django.utils.functional import cached_property
 
 Textarea = forms.Textarea
 
@@ -311,6 +312,7 @@ class BulkJahrField(BulkField):
         return temp, 0
         
 class MIZAdminForm(forms.Form):
+    """ Basic form that looks and feels like a django admin form."""
     
     def __init__(self, *args, **kwargs):
         super(MIZAdminForm, self).__init__(*args, **kwargs)
@@ -318,17 +320,63 @@ class MIZAdminForm(forms.Form):
             if isinstance(fld.widget, autocomplete.ModelSelect2):
                 fld.widget = wrap_dal_widget(fld.widget)
         
-        
     class Media:
         css = {
             'all' : ('admin/css/forms.css', )
         }
+    
+    def __iter__(self):
+        fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
+            
+        from django.contrib.admin.helpers import Fieldset
+        for name, options in fieldsets:
+            yield Fieldset(
+                self, name,
+                **options
+            )
+        
+    @property
+    def media(self):
+        media = super(MIZAdminForm, self).media
+        for fieldset in self.__iter__():
+            # Add collapse.js if necessary
+            media += fieldset.media         # Fieldset Media, since forms.Form checks self.fields instead of self.__iter__
+        # Ensure jquery is loaded first
         extra = '' if settings.DEBUG else '.min'
-        js = [
-            'admin/js/vendor/jquery/jquery%s.js' % extra,
-            'admin/js/jquery.init.js',
-            'admin/js/collapse%s.js' % extra,
-        ]
+        media._js.insert(0, 'admin/js/jquery.init.js')
+        media._js.insert(0, 'admin/js/vendor/jquery/jquery%s.js' % extra)
+        return media
+        
+    @cached_property
+    def changed_data(self):
+        data = []
+        for name, field in self.fields.items():
+            prefixed_name = self.add_prefix(name)
+            data_value = field.widget.value_from_datadict(self.data, self.files, prefixed_name)
+            if not field.show_hidden_initial:
+                # Use the BoundField's initial as this is the value passed to
+                # the widget.
+                initial_value = self[name].initial
+                try:
+                    # Convert the initial_value to the field's type
+                    # If field is an IntegerField and has initial of type str, field.has_changed will return false
+                    initial_value = field.to_python(initial_value)
+                except:
+                    pass
+            else:
+                initial_prefixed_name = self.add_initial_prefix(name)
+                hidden_widget = field.hidden_widget()
+                try:
+                    initial_value = field.to_python(hidden_widget.value_from_datadict(
+                        self.data, self.files, initial_prefixed_name))
+                except ValidationError:
+                    # Always assume data has changed if validation fails.
+                    data.append(name)
+                    continue
+            if field.has_changed(initial_value, data_value):
+                data.append(name)
+        return data
+
 
 class BulkForm(MIZAdminForm):
     
@@ -342,6 +390,7 @@ class BulkForm(MIZAdminForm):
         ('Angaben dieser Felder werden jedem Datensatz zugewiesen', {'fields':[]}), 
         ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), 
     ]
+    
     
     def __init__(self, *args, **kwargs):
         super(BulkForm, self).__init__(*args, **kwargs)
@@ -358,14 +407,6 @@ class BulkForm(MIZAdminForm):
                 self.each_fields.add(fld_name)
         self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name not in self.at_least_one_required]
         self.fieldsets[1][1]['fields'] = self.at_least_one_required
-        
-            
-    @property
-    def media(self):
-        media = super(BulkForm, self).media # Base + Widget Media
-        for fieldset in self.__iter__():
-            media += fieldset.media         # Fieldset Media
-        return media
         
     def has_changed(self):
         """
@@ -394,17 +435,7 @@ class BulkForm(MIZAdminForm):
         if all(len(self.split_data.get(fld_name, []))==0 for fld_name in self.at_least_one_required):
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
                     ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
-                ))        
-    
-    def __iter__(self):
-        fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
-            
-        from django.contrib.admin.helpers import Fieldset
-        for name, options in fieldsets:
-            yield Fieldset(
-                self, name,
-                **options
-            )
+                ))     
             
             
 class BulkFormAusgabe(BulkForm):
@@ -580,7 +611,7 @@ test_data = dict(magazin=tmag.pk, jahr='10,11', num='1-10*3', monat='1,2,3,4', a
 test_form = BulkFormAusgabe(test_data)
 
 from django.contrib.admin.widgets import FilteredSelectMultiple
-class FavoritenForm(forms.ModelForm):
+class FavoritenForm(MIZAdminForm, forms.ModelForm):
     class Meta:
         model = Favoriten
         fields = '__all__'
@@ -588,27 +619,3 @@ class FavoritenForm(forms.ModelForm):
             'fav_genres'    :   FilteredSelectMultiple('Genres', False), 
             'fav_schl'      :   FilteredSelectMultiple('Schlagworte', False),
         }
-
-    class Media:
-        extend = False # A call to super().media would put the Select*.js before the jquery.js files
-        css = {
-            'all' : ('admin/css/forms.css', )
-        }
-        extra = '' if settings.DEBUG else '.min'
-        js = [
-            'admin/js/vendor/jquery/jquery%s.js' % extra,
-            'admin/js/jquery.init.js',
-            'admin/js/collapse%s.js' % extra,
-            'admin/js/core.js', 
-            "admin/js/SelectBox.js", 
-            "admin/js/SelectFilter2.js", 
-        ]
-    def __iter__(self):
-        fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
-            
-        from django.contrib.admin.helpers import Fieldset
-        for name, options in fieldsets:
-            yield Fieldset(
-                self, name,
-                **options
-            )
