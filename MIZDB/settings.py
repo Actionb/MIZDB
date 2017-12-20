@@ -25,7 +25,7 @@ SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv', 'testserver']
 
 
 # Application definition
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_admin_listfilter_dropdown',
+    'formtools', 
 ]
 
 MIDDLEWARE = [
