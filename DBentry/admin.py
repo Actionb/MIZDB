@@ -1,15 +1,17 @@
-from django.contrib import admin, messages
-
-from django.utils.html import format_html
-from django.contrib.admin.utils import get_fields_from_path
 
 from collections import OrderedDict
+
+from django.contrib import admin, messages
+from django.utils.html import format_html
+from django.urls import reverse, resolve
+from django.shortcuts import redirect  
 
 from .models import *
 from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
-
 from .changelist import MIZChangeList
+
+MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
 
 class MIZAdminSite(admin.AdminSite):
     from django.views.decorators.cache import never_cache
@@ -23,9 +25,15 @@ class MIZAdminSite(admin.AdminSite):
     
     def register_tool(self, view):
         self.tools.append(view)
+        
+    def app_index(self, request, app_label, extra_context=None):
+        if app_label == 'DBentry':
+            # Redirect to the 'tidied' up index page of the main page
+            return self.index(request, extra_context)
+        return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
     
     @never_cache
-    def index(self, request, extra_context=None):        
+    def index(self, request, extra_context=None): 
         extra_context = extra_context or {}
         for tool in self.tools:
             if tool.has_permission(request):
@@ -44,7 +52,6 @@ class MIZAdminSite(admin.AdminSite):
         
         if index:
             DBentry_dict = app_list.pop(index)
-            print(DBentry_dict.keys())
             model_list = DBentry_dict.pop('models')
         
             DBentry_main = DBentry_dict.copy()
@@ -77,6 +84,7 @@ class ModelBase(admin.ModelAdmin):
     googlebtns = []
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
+    actions = ['merge_records']
     
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
@@ -139,13 +147,12 @@ class ModelBase(admin.ModelAdmin):
         return self.model.get_search_fields()
         
     def add_crosslinks(self, object_id):
-        from django.contrib.admin.utils import reverse
         new_extra = {}
         new_extra['crosslinks'] = []
         
         inlmdls = {i.model for i in self.inlines}
         for rel in self.opts.related_objects:
-            if rel.many_to_many:
+            if rel.many_to_many or rel.one_to_many:
                 model = rel.related_model
                 fld_name = rel.remote_field.name
                 if model in inlmdls:
@@ -232,16 +239,19 @@ class ModelBase(admin.ModelAdmin):
         for formset in inline_admin_formsets:
             formset.description = getattr(formset.opts, 'description', '')
         return inline_admin_formsets
+        
+    def merge_allowed(self, request, queryset):
+        """ Hook for checks on merging. """
+        return True
 
     def merge_records(self, request, queryset):
-        #TODO: WIP
-        if queryset.count() == 1:
-            self.message_user(request,'Bitte mindestens zwei Datensätze auswählen.', 'warning')
+        if queryset.count()==1:
+            self.message_user(request,'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen', 'warning')
             return
-        original_pk = queryset.first().pk
-        queryset = queryset.exclude(pk=original_pk)
-        duplicates = [i.pk for i in queryset]
-        queryset.model.merge(original_pk, duplicates, verbose = False)
+        if not self.merge_allowed(request, queryset):
+            return
+        request.session['merge'] = {'qs_ids': list(queryset.values_list('pk', flat=True)), 'success_url' : request.get_full_path()}
+        return redirect(reverse('merge', kwargs=dict(model_name=self.opts.model_name)))
     merge_records.short_description = 'Datensätze zusammenfügen'
     
 
@@ -431,7 +441,6 @@ class AusgabenAdmin(ModelBase):
         'selects':['magazin','status'], 
         'simple':['jahrgang', 'sonderausgabe']
     }
-    
        
     # ACTIONS
     def add_duplicate(self, request, queryset):
@@ -520,6 +529,14 @@ class AusgabenAdmin(ModelBase):
             jg = queryset.first().jahrgang
         mag = magazin.objects.get(pk=mag_id)
         mag.ausgabe_set.bulk_add_jg(jg)
+        
+    def merge_allowed(self, request, queryset):
+        #TODO: allow merging of non-sonderausgaben with sonderausgaben?
+        if queryset.values_list('magazin').distinct().count()>1:
+            # User is trying to merge ausgaben from different magazines
+            self.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, magazin._meta.verbose_name_plural, 'n'), 'error')
+            return False
+        return True
     
 @admin.register(autor, site=miz_site)
 class AutorAdmin(ModelBase):
@@ -580,6 +597,7 @@ class ArtikelAdmin(ModelBase):
         'simple':[], 
     }  
     save_on_top = True
+    actions = ['merge_records']
 
     def get_queryset(self, request):
         from django.db.models import Min
@@ -591,6 +609,13 @@ class ArtikelAdmin(ModelBase):
                 monate = Min('ausgabe__ausgabe_monat__monat_id'), 
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
+        
+    def merge_allowed(self, request, queryset):
+        if queryset.values('ausgabe').distinct().count()>1:
+            # User is trying to merge artikel from different ausgaben
+            self.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')
+            return False
+        return True
         
 @admin.register(band, site=miz_site)    
 class BandAdmin(ModelBase):

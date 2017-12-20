@@ -26,6 +26,9 @@ class AdvSFForm(forms.Form):
         # - moving everything out of initial into fields.initial during __init__
         # - by not providing initial to __init__ and manually assigning fields.initial after creation
         # NOTE: all kinds of forms may benefit from this, as long as they are using some form of SelectMultiple
+        if field_name.endswith('magazin') and 'ausgabe' in self.initial:
+            return ausgabe.objects.get(pk=self.initial.get('ausgabe')).magazin
+        
         if isinstance(self.initial, MultiValueDict):
             value = self.initial.getlist(field_name, field.initial)
         else:
