@@ -4,10 +4,44 @@ from django.utils.http import urlquote
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.encoding import force_text
+from django.db import transaction
 
 from .constants import M2M_LIST_MAX_LEN
 from functools import partial
 
+
+
+def merge_records(original, qs, update_data = {}, expand_original = True):
+    """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
+        Returns the updated original.
+    """
+    qs = qs.exclude(pk=original.pk)
+    original_qs = original._meta.model.objects.filter(pk=original.pk)
+    if expand_original:
+        if not update_data:
+            updateable_fields = original.get_updateable_fields()
+            for other_record_valdict in qs.values(*updateable_fields):
+                for k, v in other_record_valdict.items():
+                    if v and k not in update_data:
+                        update_data[k] = v
+
+        original_qs.update(**update_data)
+    
+    from django.db.utils import IntegrityError
+    for rel in original._meta.related_objects:
+        related_model = rel.field.model
+        val_list = qs.values_list(rel.field.target_field.name)
+        # These are the objects of the related_model that will be deleted after the merge
+        # See if there are any values that the original does not have 
+        update_qs = related_model.objects.filter(**{ rel.field.name + '__in' : val_list })
+        try:
+            with transaction.atomic():
+                getattr(original, rel.get_accessor_name()).add(*update_qs)
+        except IntegrityError:
+            # Ignore UNIQUE CONSTRAINT violations
+            continue
+    qs.delete()
+    return original_qs.first(), update_data
     
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     """
@@ -82,85 +116,6 @@ def create_val_dict(qs, key, value, tuplfy=True):
                 dict_by_val[v] = set()
                 dict_by_val[v].add(k)
     return dict_by_key, dict_by_val
-
-    
-def merge(cls, original_pk, dupes, verbose=True):
-    if not isinstance(dupes, list):
-        dupes = [dupes]
-        
-    if len(dupes)<1:
-        return
-    
-    # Cleanup dupe list
-    ids = set([d.pk if isinstance(d, cls) else d for d in dupes])
-    if isinstance(original_pk, cls):
-        original_pk = original_pk.pk
-    original = cls.objects.filter(pk=original_pk)
-    if original.count()!=1:
-        return
-    o_valdict = original.values()[0]                
-            
-    for id in ids:
-        record = cls.objects.filter(pk=id)
-        if record.count()!=1:
-            # something went very wrong
-            print("WOOPS: id = ", id)
-            continue
-        if verbose:
-            # TODO: remove duplicate fields in val_fields
-            # TODO: print a nice a comparison of values
-            val_fields = [fld.name for fld in cls._meta.fields] + getattr(cls, 'dupe_fields', [])
-            print("\n"+"~"*20)
-            print('Merging')
-            print(original.values(*val_fields))
-            print('with')
-            print(record.values(*val_fields))
-            inp = input("proceed? [y/n/q]: ")
-            if inp == 'q':
-                print("Aborting...")
-                return False
-            elif inp != 'y':
-                continue
-        
-        # Expand original dict by values only found in duplicate, prefer original values if present
-        for k, v in record.values()[0].items():
-            # Duplicate has key that the original doesn't
-            if k not in o_valdict.keys():
-                o_valdict[k] = v
-            # Duplicate has key that the original also has, but the original value is None
-            elif k in o_valdict.keys() and not o_valdict[k]:
-                o_valdict[k] = v
-        # Update original queryset val dict
-        try:
-            original.update(**o_valdict)
-        except Exception as e:
-            print(e)
-            raise e
-            
-        # Adjust values for related objects
-        for rel in cls._meta.related_objects:
-            # NOTE: zwischen m_to_o,o_to_m und m_to_m unterscheiden?
-            # differentiate between ManyToManyField and ManyToXRelations
-            if hasattr(rel, 'through'):
-                # AAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH!!!!
-                model = rel.through
-                field = rel.field.m2m_reverse_field_name()
-            else:
-                model = rel.related_model
-                field = rel.field.attname
-            qs = model.objects.filter(**{field:id})
-            if qs.exists():
-                try:
-                    qs.update(**{rel.field.attname:original_pk})
-                except IntegrityError:
-                    # TODO: account for UNIQUE CONSTRAINTS errors
-                    continue
-        try:
-            record[0].delete()          # deleting via model delete()
-        except Exception as e:
-            print(e)
-        
-    return True
 
 class Concat(Aggregate):
     # supports COUNT(distinct field)
@@ -252,4 +207,19 @@ def recmultisplit(values, seperators = []):
     
     for x in values.split(sep):
         rslt += recmultisplit(x, seps)
-    return rslt        
+    return rslt    
+
+def instance_to_dict():    
+    pass
+    
+def print_list(a_list, file=None):
+    printf = partial(print, file=file)
+    for i in a_list:
+        printf(i)
+        
+def print_dict(a_dict, file=None):
+    printf = partial(print, file=file)
+    for k, v in a_dict.items():
+        printf(str(k)+":")
+        printf(v)
+        printf("~"*20)
