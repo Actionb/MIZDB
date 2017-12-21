@@ -84,7 +84,7 @@ class ModelBase(admin.ModelAdmin):
     googlebtns = []
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
-    actions = ['merge_records']
+    #actions = ['merge_records']
     
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
@@ -436,7 +436,7 @@ class AusgabenAdmin(ModelBase):
                             }
                         
     #actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
-    actions = ['merge_records']
+    #actions = ['merge_records']
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
         'selects':['magazin','status'], 
@@ -598,7 +598,7 @@ class ArtikelAdmin(ModelBase):
         'simple':[], 
     }  
     save_on_top = True
-    actions = ['merge_records']
+    #actions = ['merge_records']
 
     def get_queryset(self, request):
         from django.db.models import Min
