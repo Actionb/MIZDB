@@ -435,7 +435,8 @@ class AusgabenAdmin(ModelBase):
                             'lfd' : 'ausgabe_lnum__lnum', 
                             }
                         
-    actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
+    #actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
+    actions = ['merge_records']
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
         'selects':['magazin','status'], 
