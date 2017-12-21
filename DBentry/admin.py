@@ -49,8 +49,8 @@ class MIZAdminSite(admin.AdminSite):
             index = next(i for (i, d) in enumerate(app_list) if d['app_label'] == 'DBentry')
         except:
             return response
-        
-        if index:
+            
+        if index is not None:
             DBentry_dict = app_list.pop(index)
             model_list = DBentry_dict.pop('models')
         
