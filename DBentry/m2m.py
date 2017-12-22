@@ -35,6 +35,18 @@ class m2mBase(models.Model):
     def get_m2mfields(cls, as_string=True):
         return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i in cls.exclude] 
         
+    @classmethod
+    def get_required_fields(cls, as_string=False):
+        rslt = []
+        for fld in cls._meta.fields:
+            if not fld.auto_created and fld.blank == False:
+                if not fld.has_default() or fld.get_default() is None:
+                    if as_string:
+                        rslt.append(fld.name)
+                    else:
+                        rslt.append(fld)
+        return rslt
+        
     class Meta:
         abstract = True
         

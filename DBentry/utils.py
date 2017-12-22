@@ -11,36 +11,61 @@ from functools import partial
 
 
 
-def merge_records(original, qs, update_data = {}, expand_original = True):
+def merge_records(original, qs, update_data = None, expand_original = True):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.
     """
     qs = qs.exclude(pk=original.pk)
     original_qs = original._meta.model.objects.filter(pk=original.pk)
-    if expand_original:
-        if not update_data:
-            updateable_fields = original.get_updateable_fields()
-            for other_record_valdict in qs.values(*updateable_fields):
-                for k, v in other_record_valdict.items():
-                    if v and k not in update_data:
-                        update_data[k] = v
-
-        original_qs.update(**update_data)
-    
-    from django.db.utils import IntegrityError
-    for rel in original._meta.related_objects:
-        related_model = rel.field.model
-        val_list = qs.values_list(rel.field.target_field.name)
-        # These are the objects of the related_model that will be deleted after the merge
-        # See if there are any values that the original does not have 
-        update_qs = related_model.objects.filter(**{ rel.field.name + '__in' : val_list })
-        try:
-            with transaction.atomic():
-                getattr(original, rel.get_accessor_name()).add(*update_qs)
-        except IntegrityError:
-            # Ignore UNIQUE CONSTRAINT violations
-            continue
-    qs.delete()
+    with transaction.atomic():
+        if expand_original:
+            if update_data is None:
+                update_data = {} # Avoid mutable default arguments shenanigans
+                updateable_fields = original.get_updateable_fields()
+                for other_record_valdict in qs.values(*updateable_fields):
+                    for k, v in other_record_valdict.items():
+                        if v and k not in update_data:
+                            update_data[k] = v
+                            
+            original_qs.update(**update_data)
+            
+        for rel in original._meta.related_objects:
+            related_model = rel.field.model
+            val_list = qs.values_list(rel.field.target_field.name)
+            # These are the objects of the related_model that will be deleted after the merge
+            # See if there are any values that the original does not have 
+            related_qs = related_model.objects.filter(**{ rel.field.name + '__in' : val_list })
+            
+            if rel.many_to_many:
+                m2m_model = rel.through
+                pk_name = m2m_model._meta.pk.name
+                if rel.to == original._meta.model: #m2m_model._meta.get_field(rel.field.m2m_field_name()).model == original._meta.model
+                    # rel points from original to related_model (ManyToManyField is on original)
+                    to_original_field_name = rel.field.m2m_reverse_field_name()
+                    to_related_field_name = rel.field.m2m_field_name()
+                else:
+                    # rel points from related_model to original (ManyToManyField is on related_model)
+                    to_original_field_name = rel.field.m2m_field_name()
+                    to_related_field_name = rel.field.m2m_reverse_field_name()
+                to_update = m2m_model.objects.filter(**{to_related_field_name+'__in':related_qs}).values_list(pk_name, flat=True)
+                
+                for id in to_update:
+                    loop_qs = m2m_model.objects.filter(pk=id)
+                    try:
+                        with transaction.atomic():
+                            loop_qs.update(**{to_original_field_name:original})
+                    except IntegrityError:
+                        # Ignore UNIQUE CONSTRAINT violations
+                        pass
+            else:
+                for i in related_qs:
+                    try:
+                        with transaction.atomic():
+                            getattr(original, rel.get_accessor_name()).add(i)
+                    except IntegrityError:
+                        # Ignore UNIQUE CONSTRAINT violations
+                        pass
+        qs.delete()
     return original_qs.first(), update_data
     
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):

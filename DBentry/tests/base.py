@@ -5,6 +5,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 
 from DBentry.models import *
+from .data import DataFactory
 
 class TestCaseUserMixin(object):
     
@@ -22,18 +23,27 @@ class SuperUserTestCase(TestCase):
         
     def setUp(self):
         self.client.force_login(self.user)
-
+        
+class TestBase(TestCase):
     
-class TestMergingBase(TestCase):
+    model = None
+    creator = DataFactory()
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_data = cls.creator.create_data(cls.model)
+        
+
+class TestMergingBase(TestBase):
     
     @classmethod
     def setUpTestData(cls):
         super(TestMergingBase, cls).setUpTestData()
-        cls.data_source(cls)
-        cls.original = cls.instance_list[0]
-        cls.merge_record1 = cls.instance_list[1]
-        cls.merge_record2 = cls.instance_list[2]
-        cls.merge_records = [cls.merge_record1, cls.merge_record2]
+        cls.original = cls.test_data.pop(0)
+        cls.merge_records = []
+        for c, merge_record in enumerate(cls.test_data, 1):
+            setattr(cls, 'merge_record' + str(c), merge_record)
+            cls.merge_records.append(merge_record)
         
     def setUp(self):
         self.original.refresh_from_db()
@@ -107,3 +117,4 @@ class TestMergingBase(TestCase):
             if unseen_qs.exists():
                 # NEW related objects were added
                 raise AssertionError('Unexpected additional {} relation-changes occurred: {}'.format(str(unseen_qs.count()), str(unseen_qs)))
+

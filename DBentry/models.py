@@ -18,6 +18,7 @@ class ShowModel(models.Model):
     def _show(self):
         rslt = ""
         for fld in self.get_basefields():
+            #TODO: this is a bit outdated perhaps.
             if getattr(self, fld.name):
                 rslt +=  "{} ".format(str(getattr(self, fld.name)))
         if rslt:
@@ -57,6 +58,15 @@ class ShowModel(models.Model):
         
     @classmethod
     def get_required_fields(cls, as_string=False):
+        rslt = []
+        for fld in cls._meta.fields:
+            if not fld.auto_created and fld.blank == False:
+                if not fld.has_default() or fld.get_default() is None:
+                    if as_string:
+                        rslt.append(fld.name)
+                    else:
+                        rslt.append(fld)
+        return rslt
         return [i.name if as_string else i for i in cls._meta.fields if not i.auto_created and not i.has_default() and i.blank == False]
     
     @classmethod
@@ -129,7 +139,7 @@ class ShowModel(models.Model):
         abstract = True
         
 class alias_base(ShowModel):
-    alias = models.CharField('Alias', max_length = 100,  default = None)
+    alias = models.CharField('Alias', max_length = 100)
     parent = None
     class Meta:
         verbose_name = 'Alias'
@@ -487,21 +497,23 @@ class ausgabe_jahr(ShowModel):
         ordering = ['jahr']
         
 class ausgabe_num(ShowModel):
-    num = models.IntegerField('Nummer', default = None)
+    num = models.IntegerField('Nummer')
+    kuerzel = models.CharField(**CF_ARGS_B)
     ausgabe = models.ForeignKey('ausgabe')
     class Meta:
         verbose_name = 'Nummer'
         verbose_name_plural = 'Ausgabennummer'
-        unique_together = ('num', 'ausgabe')
+        unique_together = ('num', 'ausgabe', 'kuerzel')
         ordering = ['num']
         
 class ausgabe_lnum(ShowModel):
-    lnum = models.IntegerField('Lfd. Nummer', default = None)
+    lnum = models.IntegerField('Lfd. Nummer')
+    kuerzel = models.CharField(**CF_ARGS_B)
     ausgabe = models.ForeignKey('ausgabe')
     class Meta:
         verbose_name = 'lfd. Nummer'
         verbose_name_plural = 'Laufende Nummer'
-        unique_together = ('lnum', 'ausgabe')
+        unique_together = ('lnum', 'ausgabe', 'kuerzel')
         ordering = ['lnum']
         
 class ausgabe_monat(ShowModel):
