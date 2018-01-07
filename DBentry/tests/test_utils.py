@@ -4,6 +4,9 @@ from .data import *
 from DBentry import utils
 
 class BasicMergeTestMixin(object):
+    #TODO:
+    # test behaviour when merge cannot be completed due to an internal exception
+    # test genre,schlagwort for self relations
 
     def test_merge_records_expand(self):
         # A merge with expanding the original's values
@@ -20,9 +23,6 @@ class BasicMergeTestMixin(object):
         self.assertRestDeleted()
 
 class TestMergingAusgabe(TestMergingBase): 
-    #TODO:
-    # test behaviour when merge cannot be completed due to an internal exception
-    # test genre,schlagwort for self relations
     
     model = ausgabe
     
@@ -116,5 +116,15 @@ class TestMergingMagazin(TestMergingBase, BasicMergeTestMixin):
 class TestMergingPerson(TestMergingBase, BasicMergeTestMixin):
     model = person
     
-
+class TestConcatLimit(SimpleTestCase):
+    
+    def test_concat_limit(self):
+        t = ['2020', '2021', '2024']
+        self.assertEqual(utils.concat_limit([]), '')
+        self.assertEqual(utils.concat_limit(t), '2020, 2021, 2024')
+        self.assertEqual(utils.concat_limit(t, width = 1), '2020, [...]')
+        self.assertEqual(utils.concat_limit(t, width = 1, z = 6), '002020, [...]')
+        
+    
+    
         

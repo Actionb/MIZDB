@@ -1,3 +1,5 @@
+import random
+
 from django.db.models import fields
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
@@ -100,41 +102,66 @@ class DataFactory(object):
         'TimeField' : '20:20', 
         
     }
+    
+    def get_value(self, fld):
+        value = None
+        t = fld.get_internal_type()
+        if t in ('CharField', 'TextField'):
+            value = 'Test-{}'.format(random.randrange(100))
+        elif t in ('NullBooleanField', 'BooleanField'):
+            value = random.choice([True, False])
+        elif t in ('PositiveSmallIntegerField', 'SmallIntegerField', 'IntegerField', 'BigIntegerField', 'DurationField'):
+            value = random.randrange(100)
+        elif t in ('DateField', 'DateTimeField'):
+            value = "{y}-{m}-{d}".format(
+                y  = random.randrange(1900, 2017), 
+                m = random.randrange(1, 12), 
+                d = random.randrange(1, 30))
+        elif t in ('TimeField'):
+            value = "{h}:{m}".format(h = random.randrange(1, 23), m = random.randrange(1, 59))
+        else:
+            raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
+        return value
 
     
     _created = []
         
     def create_obj(self, model, create_new = False):
+        #TODO: a cached instance of a model object may point to  an already deleted DB object
         attr_name = '_' + model._meta.model_name
         obj = getattr(self, attr_name, None)
-        if not create_new and not obj is None and obj.pk:
-            return obj
-        obj_dict = {}
-        for fld in model.get_required_fields():
-            if fld.is_relation:
-                rel_attr_name = '_' + fld.related_model._meta.model_name
-                req_obj = getattr(self, rel_attr_name, None)
-                if req_obj is None or req_obj.pk is None:
-                    req_obj = self.create_obj(fld.related_model)
-            else:
-                if fld.has_default() and fld.get_default() is not None:
-                    req_obj = fld.get_default()
-                elif fld.get_internal_type() in self.defaults:
-                    req_obj = self.defaults[fld.get_internal_type()]
+#        if not create_new and not obj is None and obj.pk or :
+#            return obj
+        if create_new or obj is None or obj.pk is None:
+            if not hasattr(model, 'get_required_fields'):
+                # Auto-created through table (e.g. Favoriten)
+                return None
+            obj_dict = {}
+            for fld in model.get_required_fields():
+                if fld.is_relation:
+                    rel_attr_name = '_' + fld.related_model._meta.model_name
+                    req_obj = getattr(self, rel_attr_name, None)
+                    if req_obj is None or req_obj.pk is None:
+                        req_obj = self.create_obj(fld.related_model)
                 else:
-                    # ehhh
-                    print("WARNING: no default for field-type:", fld.get_internal_type())
-                    req_obj = None
-            obj_dict[fld.name] = req_obj
-        try:
-            with transaction.atomic():
-                obj = model.objects.create(**obj_dict)
-        except IntegrityError:
-            # Tried to create a duplicate of an unique object
+                    req_obj = self.get_value(fld)
+#                    if fld.has_default() and fld.get_default() is not None:
+#                        req_obj = fld.get_default()
+#                    elif fld.get_internal_type() in self.defaults:
+#                        req_obj = self.defaults[fld.get_internal_type()]
+#                    else:
+#                        raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
+                obj_dict[fld.name] = req_obj
+            try:
                 with transaction.atomic():
-                    obj = model.objects.get(**obj_dict)
-        self._created.append(obj)
-        setattr(self, attr_name, obj)
+                    obj = model.objects.create(**obj_dict)
+            except IntegrityError:
+                # Tried to create a duplicate of an unique object
+                # TODO: add a random bit to obj_dict to make it unique
+                    with transaction.atomic():
+                        obj = model.objects.get(**obj_dict)
+            self._created.append(obj)
+            setattr(self, attr_name, obj)
         return obj
         
     def add_relations(self, instance_list):
@@ -147,17 +174,16 @@ class DataFactory(object):
                 if related_model in self.exclude:
                     continue
                 for instance in instance_list:
-                    setattr(self, '_' + instance._meta.model_name, instance)
-                    rel_obj = self.create_obj(related_model, create_new = True)
-        return instance_list
+                    setattr(self, '_' + instance._meta.model_name, instance) # Set cached instance to the instance we are currently working on to assign relations to it
+                    self.create_obj(related_model, create_new = True)
         
     def create_data(self, model, count=3, add_relations = True):
         instance_list = []
         for c in range(count):
-            obj = self.create_obj(model, True)
+            obj = self.create_obj(model, create_new = True)
             instance_list.append(obj)
         if add_relations:
-            instance_list = self.add_relations(instance_list)
+            self.add_relations(instance_list)
         return instance_list
         
     def delete_object(self, obj):
@@ -174,10 +200,9 @@ class DataFactory(object):
                 pass
         
     def destroy(self):
-        for obj in self._created:
+        while True:
+            if len(self._created) == 0:
+                break
+            obj = self._created.pop()
             self.delete_object(obj)
             
-        self._created = [o for o in self._created if not o is None]
-#        while self._created:
-#            obj = self._created.pop()
-#            self.delete_object(obj)

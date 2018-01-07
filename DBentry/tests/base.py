@@ -1,7 +1,7 @@
-from unittest import expectedFailure
+from unittest import expectedFailure, skip
 from itertools import chain
 
-from django.test import TestCase, Client
+from django.test import TestCase, SimpleTestCase, Client
 from django.contrib.auth.models import User
 
 from DBentry.models import *
@@ -18,38 +18,43 @@ class SuperUserTestCase(TestCase):
     
     @classmethod
     def setUpTestData(cls):
+        super(SuperUserTestCase, cls).setUpTestData()
         cls.client = Client()
         cls.user = User.objects.create_superuser(username='testuser', email='testtest@test.test', password='test1234')
         
     def setUp(self):
+        super(SuperUserTestCase, self).setUp()
         self.client.force_login(self.user)
         
 class TestBase(TestCase):
     
     model = None
-    creator = DataFactory()
     
     @classmethod
     def setUpTestData(cls):
-        cls.test_data = cls.creator.create_data(cls.model)
+        cls.test_data = DataFactory().create_data(cls.model,  add_relations = True)
         
-
+    def setUp(self):
+        for obj in self.test_data:
+            obj.refresh_from_db()
+        
 class TestMergingBase(TestBase):
     
     @classmethod
     def setUpTestData(cls):
         super(TestMergingBase, cls).setUpTestData()
-        cls.original = cls.test_data.pop(0)
+        cls.original = cls.test_data[0]
         cls.merge_records = []
-        for c, merge_record in enumerate(cls.test_data, 1):
+        for c, merge_record in enumerate(cls.test_data[1:], 1):
             setattr(cls, 'merge_record' + str(c), merge_record)
             cls.merge_records.append(merge_record)
         
     def setUp(self):
-        self.original.refresh_from_db()
-        for merge_record in self.merge_records:
-            merge_record.refresh_from_db()
-        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records]
+        super(TestMergingBase, self).setUp()
+#        self.original.refresh_from_db()
+#        for merge_record in self.merge_records:
+#            merge_record.refresh_from_db()
+        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records] #TODO: needed in self?
         self.qs = self.model.objects.filter(pk__in=self.ids)
         
         # These are the related objects (as val_dicts) that are affected by the merge and should end up being related to original
