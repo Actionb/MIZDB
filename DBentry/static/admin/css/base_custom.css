@@ -79,6 +79,13 @@ fieldset.collapsed h3 * {
     display:none;
 }
 
+fieldset.collapsed h2, fieldset.collapsed {
+    display: block;
+}
+
+fieldset.collapsed * {
+    display: none;
+}
 
 fieldset div[class^="inline-related"] {
     /* Allows padding etc of forms of stacked formsets */
