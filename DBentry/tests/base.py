@@ -3,28 +3,12 @@ from itertools import chain
 
 from django.test import TestCase, SimpleTestCase, Client
 from django.contrib.auth.models import User
+from django.urls import reverse,resolve
+from django.contrib.messages import get_messages
 
 from DBentry.models import *
+from DBentry.constants import *
 from .data import DataFactory
-
-class TestCaseUserMixin(object):
-    
-    @classmethod
-    def setUpTestUser(cls):
-        cls.client = Client()
-        cls.user = User.objects.create_superuser(username='testuser', email='testtest@test.test', password='test1234')
-        
-class SuperUserTestCase(TestCase):
-    
-    @classmethod
-    def setUpTestData(cls):
-        super(SuperUserTestCase, cls).setUpTestData()
-        cls.client = Client()
-        cls.user = User.objects.create_superuser(username='testuser', email='testtest@test.test', password='test1234')
-        
-    def setUp(self):
-        super(SuperUserTestCase, self).setUp()
-        self.client.force_login(self.user)
         
 class TestBase(TestCase):
     
@@ -32,11 +16,26 @@ class TestBase(TestCase):
     
     @classmethod
     def setUpTestData(cls):
-        cls.test_data = DataFactory().create_data(cls.model,  add_relations = True)
+        if cls.model:
+            cls.test_data = DataFactory().create_data(cls.model,  add_relations = True)
         
     def setUp(self):
         for obj in self.test_data:
             obj.refresh_from_db()
+            
+class UserTestCase(TestCase):
+    
+    @classmethod
+    def setUpTestData(cls):
+        super(UserTestCase, cls).setUpTestData()
+        cls.super_user = User.objects.create_superuser(username='superuser', email='testtest@test.test', password='test1234')
+        cls.staff_user = User.objects.create_user(username='staff', password='Stuff', is_staff = True)
+        cls.noperms_user = User.objects.create_user(username='Beep', password='Boop')
+        cls.users = [cls.super_user, cls.staff_user, cls.noperms_user]
+        
+    def setUp(self):
+        super(UserTestCase, self).setUp()
+        self.client.force_login(self.super_user) # super_user logged in by default
         
 class TestMergingBase(TestBase):
     

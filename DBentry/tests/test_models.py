@@ -374,19 +374,13 @@ class TestModelAudio(TestModelsBase):
         self.assertEqual(self.qs_obj1.first().kuenstler_string(), 'Testband, Alice Tester')
         
     def test_formate_string(self):
-        ft = FormatTyp.objects.create(typ='TestTyp')
+        ft = FormatTyp.objects.create(typ='TestTyp1')
         Format.objects.create(format_name='Testformat1', format_typ=ft, audio=self.obj1)
+        ft = FormatTyp.objects.create(typ='TestTyp2')
         Format.objects.create(format_name='Testformat2', format_typ=ft, audio=self.obj1)
-#        
-#        f = DataFactory().create_obj(Format, create_new = True)
-#        f.format_name = 'Testformat1'
-#        f.audio = self.obj1
-#        f.save()
-#        f = DataFactory().create_obj(Format, create_new = True)
-#        f.format_name = 'Testformat2'
-#        f.audio = self.obj1
-#        f.save()
-        self.assertEqual(self.qs_obj1.first().formate_string(), 'Testformat1, Testformat2')
+        # format_name is a non-editable field (compiled of the Format's properties), its use is mainly for autocomplete searches
+        # any format_name set manually should be overriden by Format.get_name()
+        self.assertEqual(self.qs_obj1.first().formate_string(), 'TestTyp1, TestTyp2')
         
 class TestModelProvenienz(TestModelsBase):
     
@@ -435,8 +429,11 @@ class TestModelFormat(TestModelsBase):
         cls.obj2 = Format.objects.create(format_typ=ft, audio=a)
         cls.obj3 = Format.objects.create(format_typ=ft, audio=a, format_size=fs)
         cls.obj4 = Format.objects.create(format_typ=ft, audio=a, format_size=fs, anzahl=2, channel='Stereo')
-        cls.obj4.tag.add(t)
-        cls.test_data = [cls.obj1, cls.obj2]
+        cls.obj4.tag.add(t) #NOTE: this doesn't update obj4.format_name!!
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
+        
+        # Create an unsaved, prepared instance for the save test
+        cls.obj5 = Format(format_typ=ft, audio=a, format_size=fs)
         
     def test_get_name(self):
         self.assertEqual(self.obj2.get_name(), 'TestTyp')
@@ -444,13 +441,17 @@ class TestModelFormat(TestModelsBase):
         self.assertEqual(self.obj4.get_name(), '2xLP, Compilation, Stereo')
         
     def test_str(self):
-        self.assertEqual(self.obj1.__str__(), 'Testformat1')
+        # format_name is a non-editable field (compiled of the Format's properties), its use is mainly for autocomplete searches
+        # any format_name set manually should be overriden by Format.get_name()
+        self.assertEqual(self.obj1.__str__(), 'TestTyp')
         self.assertEqual(self.obj2.__str__(), 'TestTyp')
         self.assertEqual(self.obj3.__str__(), 'LP')
         self.assertEqual(self.obj4.__str__(), '2xLP, Compilation, Stereo')
         
     def test_save(self):
-        pass
+        self.assertEqual(self.obj5.format_name, '')
+        self.obj5.save()
+        self.assertEqual(self.obj5.format_name, self.obj5.get_name())
         
 class TestModelFormatTag(TestModelsBase):
     

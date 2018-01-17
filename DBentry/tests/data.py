@@ -116,7 +116,7 @@ class DataFactory(object):
             value = "{y}-{m}-{d}".format(
                 y  = random.randrange(1900, 2017), 
                 m = random.randrange(1, 12), 
-                d = random.randrange(1, 30))
+                d = random.randrange(1, 28))
         elif t in ('TimeField'):
             value = "{h}:{m}".format(h = random.randrange(1, 23), m = random.randrange(1, 59))
         else:
@@ -128,6 +128,7 @@ class DataFactory(object):
         
     def create_obj(self, model, create_new = False):
         #TODO: a cached instance of a model object may point to  an already deleted DB object
+        #TODO: this doesn't respect field limitations like max_length!!
         attr_name = '_' + model._meta.model_name
         obj = getattr(self, attr_name, None)
 #        if not create_new and not obj is None and obj.pk or :
