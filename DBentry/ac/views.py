@@ -48,7 +48,7 @@ class ACBase(autocomplete.Select2QuerySetView):
                         continue
                 # Either get_fields_from_path threw an error or the field is not of the model
                 try:
-                    del self._flds[i]
+                    del self._flds[fld]
                 except:
                     try:
                         self._flds.remove(i)
@@ -100,6 +100,12 @@ class ACBase(autocomplete.Select2QuerySetView):
                 return qs
             qs = list(fav_config.get_favorites(self.model)) + list(qs)
         return qs
+        
+    def create_object(self, text):
+#        # Edited: Accounting for get_queryset() returning lists
+#        """Create an object given a text."""
+#        return self.get_queryset().create(**{self.create_field: text})
+        return self.model.objects.create(**{self.create_field: text})
         
     def get_queryset(self):
         qs = self.model.objects.all()
