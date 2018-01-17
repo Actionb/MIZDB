@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
 from DBentry.views import MIZAdminView
 from DBentry.admin import miz_site
@@ -34,6 +35,9 @@ class BulkAusgabe(MIZAdminView, views.generic.FormView):
         form = self.form_class(request.POST, initial=request.session.get('old_form_data', {}))
         if form.is_valid():
             if form.has_changed() or '_preview' in request.POST:
+                # This will also force a preview if form initial is empty 
+                # as form.has_changed will be True (NOTE: research on this)
+                # (empty because it's the very first form the user gets served)
                 if not '_preview' in request.POST:
                     messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
                 context['preview_headers'], context['preview'] = self.build_preview(request, form)
@@ -61,7 +65,10 @@ class BulkAusgabe(MIZAdminView, views.generic.FormView):
         context['form'] = form
         return render(request, self.template_name, context = context)
     
+    @transaction.atomic()
     def save_data(self, request, form):
+        #TODO: request param not needed
+        #TODO: update instance attributes (jahrgang,etc.)?
         ids = []
         created = []
         updated = []
@@ -102,6 +109,8 @@ class BulkAusgabe(MIZAdminView, views.generic.FormView):
                 created.append(instance)
             else:
                 updated.append(instance)
+            
+            # Create and/or update sets
             for fld_name in ['jahr', 'num', 'monat', 'lnum']:
                 set = getattr(instance, "ausgabe_{}_set".format(fld_name))
                 data = row.get(fld_name, None)
@@ -113,7 +122,8 @@ class BulkAusgabe(MIZAdminView, views.generic.FormView):
                     for value in data:
                         if value:
                             try:
-                                set.create(**{fld_name:value})
+                                with transaction.atomic():
+                                    set.create(**{fld_name:value})
                             except Exception as e:
                                 # Let something else handle UNIQUE constraints violations
                                 #print(e, data)
@@ -121,7 +131,7 @@ class BulkAusgabe(MIZAdminView, views.generic.FormView):
             # Audio
             if 'audio' in row:
                 suffix = instance.__str__()
-                audio_data = dict(titel = 'Musik-Beilage: {}'.format(str(row.get('magazin')[0])) + " " + suffix, 
+                audio_data = dict(titel = 'Musik-Beilage: {}'.format(str(row.get('magazin'))) + " " + suffix, 
                                                     quelle = 'Magazin', 
                                                     e_jahr = row.get('jahr')[0],
                                                     )

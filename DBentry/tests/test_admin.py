@@ -272,7 +272,7 @@ class TestAdminGenre(BaseTestAdmins):
     
 class TestAdminSchlagwort(BaseTestAdmins):
     
-    model_admin_class = SchlagwortTab
+    model_admin_class = SchlagwortAdmin
     model = schlagwort
     
     def test_get_search_fields(self):
@@ -477,6 +477,20 @@ class TestChangeList(BaseTestAdmins):
     def test_init(self):
         cl = self.get_cl()
         self.assertTrue(hasattr(cl, 'request'))
+    
+    @expectedFailure
+    def test_init_pagevar(self):
+        # show that MIZChangeList can handle the PAGE_VAR
+        request = self.get_request(path=self.changelist_path, data={'p':['1']})
+        with self.assertRaises(IncorrectLookupParameters):
+            MIZChangeList(request, **self.init_data.copy())
+    
+    @expectedFailure
+    def test_init_errorvar(self):
+        # show that MIZChangeList can handle the ERROR_FLAG
+        request = self.get_request(path=self.changelist_path, data={'e':['1']})
+        with self.assertRaises(IncorrectLookupParameters):
+            MIZChangeList(request, **self.init_data.copy())
     
     def test_get_filters(self):
         request_data = dict(genre = [1, 2])

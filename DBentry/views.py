@@ -31,12 +31,14 @@ class MIZAdminView(views.View):
         return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
     
     def get_context_data(self, *args, **kwargs):
-        kwargs = super(MIZAdminView, self).get_context_data(**kwargs)
+        if 'view' not in kwargs:
+            kwargs['view'] = self
         # Add admin site context
         kwargs.update(miz_site.each_context(self.request))
         # Add custom context data for the submit button
         kwargs['submit_value'] = self.submit_value
         kwargs['submit_name'] = self.submit_name
+        kwargs['is_popup'] = '_popup' in self.request.GET
         return kwargs
         
 class FavoritenView(MIZAdminView, views.generic.UpdateView):
@@ -74,4 +76,3 @@ class DynamicChoiceFormMixin(object):
     
     def get_form_choices(self, form):
         pass
-    

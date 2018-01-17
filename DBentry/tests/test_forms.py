@@ -266,6 +266,7 @@ class TestBulkFormAusgabe(BaseTestForm):
         self.assertTrue('dublette' in form.cleaned_data)
         self.assertEqual(form.cleaned_data.get('dublette', None), self.dublette)
         
+    @skip('deprecated')
     def test_row_data_lagerort(self):
         form = self.get_valid_form()
         lo = form.row_data_lagerort(form.row_data[0])

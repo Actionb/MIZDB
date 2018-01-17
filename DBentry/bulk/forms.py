@@ -14,7 +14,7 @@ class BulkForm(MIZAdminForm):
     
     model = None
     each_fields = set() # data of these fields are part of every row
-    at_least_one_required = [] # at least one of these fields needs to be filled out
+    at_least_one_required = [] # at least one of these (BULK!)fields needs to be filled out
     
     help_text = ''
     #TODO: add help text to fieldsets, remember to also update the template for this
@@ -25,11 +25,12 @@ class BulkForm(MIZAdminForm):
     
     
     def __init__(self, *args, **kwargs):
-        super(BulkForm, self).__init__(*args, **kwargs)
-        self.each_fields = set(kwargs.get('each_fields', []))
+        self.each_fields = set(kwargs.pop('each_fields', [])) 
         self._row_data = []
         self.total_count = 0
         self.split_data = {} 
+        
+        super(BulkForm, self).__init__(*args, **kwargs)
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BulkField):
                 if isinstance(fld, BulkJahrField):
@@ -172,11 +173,6 @@ class BulkFormAusgabe(BulkForm):
         Monat: 12/1
         """
     }
-    
-    def row_data_lagerort(self, row):
-        if self.lookup_instance(row).exists():
-            return lagerort.objects.get(pk=DUPLETTEN_ID)
-        return lagerort.objects.get(pk=ZRAUM_ID)
         
     def lookup_instance(self, row):
         qs = self.cleaned_data.get('magazin').ausgabe_set

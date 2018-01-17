@@ -448,6 +448,10 @@ class TestModelFormat(TestModelsBase):
         self.assertEqual(self.obj3.__str__(), 'LP')
         self.assertEqual(self.obj4.__str__(), '2xLP, Compilation, Stereo')
         
+        # Test if __str__() returns based off of up-to-date data
+        self.obj4.channel = None 
+        self.assertEqual(self.obj4.__str__(), '2xLP, Compilation')
+        
     def test_save(self):
         self.assertEqual(self.obj5.format_name, '')
         self.obj5.save()

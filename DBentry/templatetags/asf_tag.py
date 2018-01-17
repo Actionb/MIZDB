@@ -10,7 +10,8 @@ register = Library()
 def advanced_search_form(cl):
     model_admin = cl.model_admin
     model = cl.model
-    params = cl.params
+    params = cl.request.GET.copy()
+    
     full_count = cl.model_admin.model._meta.default_manager.count()
     
     asf_dict = getattr(model_admin, 'advanced_search_form', {})

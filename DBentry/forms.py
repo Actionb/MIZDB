@@ -128,6 +128,7 @@ class FormBase(forms.ModelForm):
         # keys given in initial to the fields of the form in order to find a match
         fld_names = set(self.base_fields.keys())
         
+        # Populate initial
         for k, v in initial.items():
             if k in fld_names:
                 # This particular item in initial has a definitive match to a formfield
@@ -183,6 +184,7 @@ def makeForm(model, fields = []):
     return forms.modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
     
 class InLineAusgabeForm(FormBase):
+    # NOTE: modelform_factory (called by InLineModelAdmin.get_formset) creates the Meta class attribute model
         
     magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
@@ -220,6 +222,7 @@ class ArtikelForm(FormBase):
         }
     
     def __init__(self, *args, **kwargs):
+        #TODO: ArtikelForm and InLineAusgabeForm share this!
         # Set the right initial magazin for change forms (kwargs come with an instance)
         # super.__init__ takes care of setting initials for add forms
         if 'instance' in kwargs and kwargs['instance']:

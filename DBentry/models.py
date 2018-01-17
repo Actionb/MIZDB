@@ -902,6 +902,10 @@ class schlagwort(ShowModel):
     def num_artikel(self):
         return self.artikel_set.count()
         
+    def alias_string(self):
+        return concat_limit(self.schlagwort_alias_set.all())
+    alias_string.short_description = 'Aliase'
+        
 class schlagwort_alias(alias_base):
     parent = models.ForeignKey('schlagwort')
         
@@ -1370,31 +1374,28 @@ class Format(ShowModel):
         verbose_name_plural = 'Formate'
         
     def get_name(self):
-        try:
-            format_string = "{qty}{format}{tags}{channel}"
-            return format_string.format(**{
-                'qty' : str(self.anzahl)+'x' if self.anzahl > 1 else '', 
-                'format' : str(self.format_size) if self.format_size else str(self.format_typ), 
-                'tags' : ", " + concat_limit(self.tag.all()) if self.tag.exists() else '', 
-                'channel' : ", " + self.channel if self.channel else ''
-            }).strip()
-        except:
-            try:
-                return str(self.format_size)
-            except:
-                return '---'
+        format_string = "{qty}{format}{tags}{channel}"
+        return format_string.format(**{
+            'qty' : str(self.anzahl)+'x' if self.anzahl > 1 else '', 
+            'format' : str(self.format_size) if self.format_size else str(self.format_typ), 
+            'tags' : ", " + concat_limit(self.tag.all()) if self.pk and self.tag.exists() else '', 
+            'channel' : ", " + self.channel if self.channel else ''
+        }).strip()
                 
     def __str__(self):
-        if self.format_name:
-            return self.format_name
-        else: 
-            return self.get_name()
+        # This might be super slow
+        # update format_name whenever a change is detected
+        old_val = self.format_name
+        self.format_name = self.get_name()
+        if old_val != self.format_name:
+            Format.objects.filter(pk=self.pk).update(format_name=self.format_name)
+        return self.format_name
         
     def save(self, *args, **kwargs):
-        if self.pk:
-            # Update name whenever we update an instance
-            self.format_name = self.get_name()    
         super(Format, self).save(*args, **kwargs)
+        self.refresh_from_db()
+        self.format_name = self.get_name() 
+        Format.objects.filter(pk=self.pk).update(format_name=self.format_name)
         
 class NoiseRed(ShowModel):
     verfahren = models.CharField(**CF_ARGS)

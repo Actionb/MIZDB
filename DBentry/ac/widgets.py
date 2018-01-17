@@ -73,19 +73,3 @@ def wrap_dal_widget(widget, remote_field_name = 'id'):
             return EasyWidgetWrapper(widget, related_model, remote_field_name)
             
     return widget
-    from django.urls import RegexURLResolver
-    from DBentry.ac.urls import autocomplete_patterns
-    matching_pattern = None
-    for pattern in autocomplete_patterns:
-        if pattern.name == widget._url:
-            matching_pattern = pattern
-            break
-    if matching_pattern:
-        match_view = matching_pattern.callback.view_class
-        initkwargs = matching_pattern.callback.view_initkwargs
-        related_model = match_view.model or initkwargs.get('model', None)
-        if related_model:
-            return EasyWidgetWrapper(widget, related_model, remote_field_name)
-    return widget
-            
-            

@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.urls import reverse, resolve
 from django.shortcuts import redirect  
+from django.apps import apps 
 
 from .models import *
 from .forms import makeForm, InLineAusgabeForm
@@ -40,7 +41,8 @@ class MIZAdminSite(admin.AdminSite):
                 if not 'admintools' in extra_context:
                     extra_context['admintools'] = {}
                 extra_context['admintools'][tool.url_name] = tool.index_label
-        extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items()))
+        if extra_context.get('admintools', False):
+            extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items()))
         
         response = super(MIZAdminSite, self).index(request, extra_context)
         app_list = response.context_data['app_list']
@@ -70,8 +72,18 @@ class MIZAdminSite(admin.AdminSite):
             app_list.extend([DBentry_main, DBentry_side])
             response.context_data['app_list'] = app_list
         return response
+
+    def get_admin_model(self, model):
+        if isinstance(model, str):
+            model_name = model.split('.')[-1]
+            try:
+                model = apps.get_model('DBentry', model_name)
+            except LookupError:
+                return None
+        return self._registry.get(model, None)
         
 miz_site = MIZAdminSite()
+
 
 class ModelBase(admin.ModelAdmin):
     
@@ -162,11 +174,11 @@ class ModelBase(admin.ModelAdmin):
                     continue
                 try:
                     link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
-                                    + "?" + fld_name + "=" + object_id
+                                    + "?" + fld_name + "=" + str(object_id)
                 except Exception as e:
                     # No reverse match found
                     continue
-                label = model._meta.verbose_name_plural + " ({})".format(count)
+                label = model._meta.verbose_name_plural + " ({})".format(str(count))
                 new_extra['crosslinks'].append( dict(link=link, label=label) )
         return new_extra
         
@@ -218,6 +230,8 @@ class ModelBase(admin.ModelAdmin):
             
         # At this point, _changelist_filters is a string of format:
         # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
+        # SEARCH_TERM_SEP: '='
+        # SEARCH_SEG_SEP: ','
         filter_dict = {}
         for part in initial['_changelist_filters'].split('&'):
             if part and SEARCH_TERM_SEP in part:
@@ -738,7 +752,8 @@ class PersonAdmin(ModelBase):
     }
     
 @admin.register(schlagwort, site=miz_site)
-class SchlagwortTab(ModelBase):
+class SchlagwortAdmin(ModelBase):
+    #TODO: rename this class! AHHH!
     class AliasInLine(AliasTabBase):
         model = schlagwort_alias
         extra = 1
