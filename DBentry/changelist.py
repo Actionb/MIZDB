@@ -10,11 +10,26 @@ class MIZChangeList(ChangeList):
         super(MIZChangeList, self).__init__(request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
                  list_per_page, list_max_show_all, list_editable, model_admin)
+        # Save the request (in its QueryDict form) so asf_tag.advanced_search_form(cl) can access it
         self.request = request
-        self.params = MultiValueDict(request.GET)
+        
+    def get_filters_params(self, params=None):
+        """
+        Returns all params except IGNORED_PARAMS
+        """
+        lookup_params = super(MIZChangeList, self).get_filters_params(params)
+        # super() does not remove PAGE_VAR and ERROR_FLAG from lookup_params as these are not in IGNORED_PARAMS
+        # lookup_params originally defaults to self.params, which already has had PAGE_VAR/ERROR_FLAG removed during init.
+        # We are now passing in request.GET instead (to preserve QueryDict functionality), and thus must remove these params again
+        # or they will raise an exception in get_queryset.
+        if PAGE_VAR in lookup_params:
+            del lookup_params[PAGE_VAR]
+        if ERROR_FLAG in lookup_params:
+            del lookup_params[ERROR_FLAG]
+        return lookup_params
     
     def get_filters(self, request):
-        # pass request.GET in to get a QueryDict(MultiValueDict) back, this way we can catch multiple values for the same key 
+        # pass request.GET to get_filters_params to get a QueryDict(MultiValueDict) back, this way we can catch multiple values for the same key 
         # which is needed in Advanced Search Form SelectMultiple cases 
         lookup_params = self.get_filters_params(request.GET)
         use_distinct = False
@@ -72,7 +87,7 @@ class MIZChangeList(ChangeList):
             for key, value_list in lookup_params.lists():
                 for value in value_list:
                 
-                    #NOTE: isn't this outdated with AdvSF?
+                    #NOTE: isn't this outdated with AdvSF? apparently not: artikel is still using this to recover genres related to musiker/band
                     if key in self.model_admin.search_fields_redirect:
                         qobject = models.Q()
                         if key in self.model_admin.search_fields_redirect:
@@ -84,7 +99,8 @@ class MIZChangeList(ChangeList):
                                 continue
                             qobject |= models.Q( (redirect, prepare_lookup_value(redirect, value)) )
                             use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, redirect)
-                        remaining_lookup_params[key] = qobject
+                        # Keep in mind, remaining_lookup_params is a MultiValueDict - so assigning an object to key always wraps it in a list
+                        remaining_lookup_params[key] = qobject 
                     else:
                         remaining_lookup_params.appendlist(key, prepare_lookup_value(key, value))
                         #remaining_lookup_params[key] = prepare_lookup_value(key, value)
@@ -121,8 +137,12 @@ class MIZChangeList(ChangeList):
             if isinstance(remaining_lookup_params, MultiValueDict):
                 for key, value_list in remaining_lookup_params.lists():
                     for value in value_list:
-                        qs = qs.filter(**{key:value})
+                        if isinstance(value, models.Q):
+                            qs = qs.filter(value)
+                        else:
+                            qs = qs.filter(**{key:value})
             else:
+                # NOTE isn't remaining_lookup_params always a MultiValueDict?
                 for k, v in remaining_lookup_params.items():
                     if isinstance(v, models.Q):
                         qs = qs.filter(v)
