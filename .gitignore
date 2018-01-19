@@ -29,3 +29,5 @@ DBentry/migrations/backup/
 htmlcov/
 
 static/
+
+DBentry/snippets/

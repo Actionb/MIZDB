@@ -61,7 +61,7 @@ class ShowModel(models.Model):
         rslt = []
         for fld in cls._meta.fields:
             if not fld.auto_created and fld.blank == False:
-                if not fld.has_default() or fld.get_default() is None:
+                if not fld.has_default() or fld.get_default() is None: #NOTE: NOT fld.get_default() is None??
                     if as_string:
                         rslt.append(fld.name)
                     else:
@@ -71,6 +71,7 @@ class ShowModel(models.Model):
     
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
+        #TODO: check if all cls.search_fields are of this model
         rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
         if foreign:
             for fld in cls.get_foreignfields():
@@ -403,6 +404,7 @@ class ausgabe(ShowModel):
                 jahre = "k.A." #oder '(Jahr?)'
           
         if self.magazin.ausgaben_merkmal:
+        #TODO: not have this return str(None) if ausgaben_merkmal is set but the user does not provide a value
             merkmal = self.magazin.ausgaben_merkmal
             if merkmal == 'e_datum':
                 return str(self.e_datum)
@@ -477,8 +479,6 @@ class ausgabe(ShowModel):
                     qobject |= models.Q( (prefix+'ausgabe_num__num', d) )
                 else:
                     qobject |= models.Q( (prefix+'ausgabe_lnum__lnum', d) )
-#                for fld in ['ausgabe_num__num', 'ausgabe_lnum__lnum']:
-#                    qobject |= models.Q( (prefix+fld, d) )
             else:
                 for fld in ['ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']:
                     qobject |= models.Q( (prefix+fld, d) )

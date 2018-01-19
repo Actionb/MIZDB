@@ -118,6 +118,7 @@ class MergeViewWizarded(MIZSessionWizardView):
     def dispatch(self, request, *args, **kwargs): 
         # Set self.model, etc. now - dispatch is the next method after as_view() in which self.kwargs is set  
         # (self.kwargs does not yet exist during initilization) 
+        #TODO: move this to somewhere else?
         self.model = apps.get_model('DBentry', self.kwargs.get('model_name')) 
         self.opts = self.model._meta 
         self.ids = self.request.session.get('merge').get('qs_ids') 
