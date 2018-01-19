@@ -6,6 +6,7 @@ from django.utils.html import format_html
 from django.urls import reverse, resolve
 from django.shortcuts import redirect  
 from django.apps import apps 
+from django.contrib.auth import get_permission_codename
 
 from .models import *
 from .forms import makeForm, InLineAusgabeForm
@@ -95,13 +96,32 @@ class ModelBase(admin.ModelAdmin):
     googlebtns = []
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
-    #actions = ['merge_records']
+    actions = ['merge_records']
     
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
     
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
+        
+    def get_actions(self, request):
+        # Show actions based on user permissions
+        actions = super(ModelBase, self).get_actions(request)
+        perm_mapping = {
+            # action_name : permission_codename
+            'delete_selected' : 'delete', 
+            'merge_records' : 'merge', 
+        }
+        from django.core.exceptions import ImproperlyConfigured
+        for action in actions:
+            try:
+                perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(perm_mapping[action], self.opts))
+            except KeyError:
+                raise ImproperlyConfigured('Permission Codename for action {} not found in permission mapping.'.format(action))
+            else:
+                if not request.user.has_perm(perm):
+                    del actions[action]
+        return actions
         
     def get_form(self, request, obj=None, **kwargs):
         # Wrap all the things
