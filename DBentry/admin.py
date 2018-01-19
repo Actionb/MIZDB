@@ -36,13 +36,12 @@ class MIZAdminSite(admin.AdminSite):
     @never_cache
     def index(self, request, extra_context=None): 
         extra_context = extra_context or {}
+        extra_context['admintools'] = {}
         for tool in self.tools:
-            if tool.has_permission(request):
-                if not 'admintools' in extra_context:
-                    extra_context['admintools'] = {}
+            if tool.show_on_index_page(request):
                 extra_context['admintools'][tool.url_name] = tool.index_label
-        if extra_context.get('admintools', False):
-            extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items()))
+        # Sort by index_label, not by url_name
+        extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
         
         response = super(MIZAdminSite, self).index(request, extra_context)
         app_list = response.context_data['app_list']
