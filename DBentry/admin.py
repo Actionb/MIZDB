@@ -69,7 +69,12 @@ class MIZAdminSite(admin.AdminSite):
                     DBentry_main['models'].append(m)
                 else:
                     DBentry_side['models'].append(m)
-            app_list.extend([DBentry_main, DBentry_side])
+                    
+            if DBentry_main['models']:
+                app_list.extend([DBentry_main])
+            if DBentry_side['models']:
+                app_list.extend([DBentry_side])
+                
             response.context_data['app_list'] = app_list
         return response
 
