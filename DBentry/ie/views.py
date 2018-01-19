@@ -1,21 +1,22 @@
 import re
 
-from DBentry.views import MIZAdminView
+from DBentry.views import MIZAdminToolView
 from .forms import ImportSelectForm, MBFormSet
 from .relational import RelationImport
 from DBentry.utils import split_name
 from DBentry.models import *
 from django.shortcuts import render, redirect
+from django import views
 
-class ImportSelectView(MIZAdminView):
+class ImportSelectView(MIZAdminToolView, views.generic.FormView):
     form_class = ImportSelectForm
     template_name = 'admin/import/import_select.html'
     url_name = 'import_select'
     index_label = 'Discogs Import'
     
-    @classmethod
-    def has_permission(cls, request):
-        return request.user.is_superuser
+    @staticmethod 
+    def show_on_index_page(request): 
+        return request.user.is_superuser 
         
     def get_initial_data(self, data_list, prefix = 'form', is_band = False, is_musiker = False):
         initial_data = {
