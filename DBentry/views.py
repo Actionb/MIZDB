@@ -6,11 +6,14 @@ from django.http import HttpResponse
 
 from django.contrib import admin, messages
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth import get_permission_codename
+from django.utils.functional import cached_property
 
 from .models import *
-from .utils import link_list
-from DBentry.forms import FavoritenForm
+from .utils import link_list, model_from_string
+from .forms import FavoritenForm
 from .admin import miz_site
+from .constants import PERM_DENIED_MSG
 
 from dal import autocomplete
 from formtools.wizard.views import SessionWizardView
@@ -33,14 +36,52 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
     """
     A mixin that enables permission restricted views.
     """
+    permission_denied_message = PERM_DENIED_MSG
+    raise_exception = True
+    _permissions_required = []
+    
+    @cached_property
+    def permissions_required(self):
+        permissions_required = []
+        for perm_tuple in self._permissions_required:
+            model = None
+            if isinstance(perm_tuple, str):
+                perm_code = perm_tuple
+            elif len(perm_tuple)==1:
+                perm_code = perm_tuple[0]
+            else:
+                perm_code, model = perm_tuple
+                if isinstance(model, str):
+                    model = model_from_string(model)
+            if model is None:
+                if hasattr(self, 'opts'):
+                    opts = getattr(self, 'opts')
+                elif hasattr(self, 'model'):
+                    opts = getattr(self, 'model')._meta
+                else:
+                    from django.core.exceptions import ImproperlyConfigured
+                    raise ImproperlyConfigured("No model/opts set for permission code '{}'. ".format(perm_code)+\
+                        "To explicitly set required permissions, create a list of permission codenames as an attribute named 'permissions_required'."
+                        )
+            else:
+                opts = model._meta
+            perm = '{}.{}'.format(opts.app_label, get_permission_codename(perm_code, opts))
+            permissions_required.append(perm)
+        return permissions_required
     
     def permission_test(self):
         """
         The test function that the user has to pass for contrib.auth's UserPassesTestMixin to access the view.
         Default permission level is: is_staff
         """
-        return self.request.user.is_staff
-    
+        if self.permissions_required:
+            for perm in self.permissions_required:
+                if not self.request.user.has_perm(perm):
+                    return False
+            return True
+        else:
+            return self.request.user.is_staff
+        
     def test_func(self):
         """
         Redirect the test for UserPassesTestMixin to a more aptly named function.
@@ -65,7 +106,7 @@ class MIZAdminToolView(MIZAdminPermissionMixin, views.generic.TemplateView):
         return request.user.is_staff
     
     def get_context_data(self, *args, **kwargs):
-        kwargs = super(MIZAdminViewMixin, self).get_context_data(*args, **kwargs)
+        kwargs = super(MIZAdminToolView, self).get_context_data(*args, **kwargs)
         # Add custom context data for the submit button
         kwargs['submit_value'] = self.submit_value
         kwargs['submit_name'] = self.submit_name
@@ -106,3 +147,18 @@ class DynamicChoiceFormMixin(object):
     
     def get_form_choices(self, form):
         pass
+    
+# views for the django default handlers
+def MIZ_permission_denied_view(request, exception, template_name='admin/403.html'):
+    from django.template import TemplateDoesNotExist, loader
+    from django import http
+    try:
+        template = loader.get_template(template_name)
+    except TemplateDoesNotExist:
+        return http.HttpResponseForbidden('<h1>403 Forbidden</h1>', content_type='text/html')
+    
+    from django.template.response import TemplateResponse
+    context = {'exception' : str(exception) if str(exception) else PERM_DENIED_MSG}
+    context.update(miz_site.each_context(request))
+    context['is_popup'] = '_popup' in request.GET 
+    return TemplateResponse(request, template_name, context=context)

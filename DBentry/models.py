@@ -333,6 +333,10 @@ class ausgabe(ShowModel):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
         ordering = ['magazin', 'jahrgang']
+        permissions = [
+            ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'), 
+            ('alter_data_ausgabe', 'Aktion: Daten verändern.')
+        ]
         
     def anz_artikel(self):
         return self.artikel_set.count()
@@ -996,6 +1000,9 @@ class buch(ShowModel):
         ordering = ['titel']
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
+        permissions = [
+            ('alter_bestand_buch', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     def __str__(self):
         return str(self.titel)
@@ -1051,6 +1058,9 @@ class audio(ShowModel):
         ordering = ['titel']
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
+        permissions = [
+            ('alter_bestand_audio', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     def __str__(self):
         return str(self.titel)
@@ -1080,6 +1090,9 @@ class bildmaterial(ShowModel):
         ordering = ['titel']
         verbose_name = 'Bild Material'
         verbose_name_plural = 'Bild Materialien'
+        permissions = [
+            ('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
         
 class buch_serie(ShowModel):
@@ -1102,6 +1115,9 @@ class dokument(ShowModel):
         ordering = ['titel']
         verbose_name = 'Dokument'
         verbose_name_plural = 'Dokumente'
+        permissions = [
+            ('alter_bestand_dokument', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
     
     
 class kreis(ShowModel):
@@ -1123,6 +1139,9 @@ class memorabilien(ShowModel):
         verbose_name = 'Memorabilia'
         verbose_name_plural = 'Memorabilien'
         ordering = ['titel']
+        permissions = [
+            ('alter_bestand_memorabilien', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
         
 class sender(ShowModel):
@@ -1168,6 +1187,9 @@ class technik(ShowModel):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'
         ordering = ['titel']
+        permissions = [
+            ('alter_bestand_technik', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     
 class veranstaltung(ShowModel):
@@ -1213,6 +1235,9 @@ class video(ShowModel):
         verbose_name = 'Video Material'
         verbose_name_plural = 'Video Materialien'
         ordering = ['titel']
+        permissions = [
+            ('alter_bestand_video', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     
 class provenienz(ShowModel):

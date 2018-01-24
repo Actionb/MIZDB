@@ -12,6 +12,7 @@ from .models import *
 from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
 from .changelist import MIZChangeList
+from .actions import merge_records
 
 MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
 
@@ -101,7 +102,7 @@ class ModelBase(admin.ModelAdmin):
     googlebtns = []
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
-    actions = ['merge_records']
+    actions = [merge_records]
     
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
@@ -111,21 +112,22 @@ class ModelBase(admin.ModelAdmin):
         
     def get_actions(self, request):
         # Show actions based on user permissions
-        actions = super(ModelBase, self).get_actions(request)
-        perm_mapping = {
-            # action_name : permission_codename
-            'delete_selected' : 'delete', 
-            'merge_records' : 'merge', 
-        }
-        from django.core.exceptions import ImproperlyConfigured
-        for action in actions:
-            try:
-                perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(perm_mapping[action], self.opts))
-            except KeyError:
-                raise ImproperlyConfigured('Permission Codename for action {} not found in permission mapping.'.format(action))
+        actions = super(ModelBase, self).get_actions(request) #= OrderedDict( (name, (func, name, desc)) )
+        
+        for func, name, desc in actions.values():
+            if name == 'delete_selected':
+                perm_required = 'delete' # the builtin action delete_selected is set by the admin site
             else:
-                if not request.user.has_perm(perm):
-                    del actions[action]
+                perm_required = getattr(func, 'perm_required', False)
+            if perm_required:
+                perm_passed = False
+                if callable(perm_required):
+                    perm_passed = perm_required(self, request)
+                else:
+                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(perm_required, self.opts))
+                    perm_passed = request.user.has_perm(perm)
+                if not perm_passed:
+                    del actions[name]
         return actions
         
     def get_form(self, request, obj=None, **kwargs):
@@ -281,16 +283,6 @@ class ModelBase(admin.ModelAdmin):
     def merge_allowed(self, request, queryset):
         """ Hook for checks on merging. """
         return True
-
-    def merge_records(self, request, queryset):
-        if queryset.count()==1:
-            self.message_user(request,'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen', 'warning')
-            return
-        if not self.merge_allowed(request, queryset):
-            return
-        request.session['merge'] = {'qs_ids': list(queryset.values_list('pk', flat=True)), 'success_url' : request.get_full_path()}
-        return redirect(reverse('merge', kwargs=dict(model_name=self.opts.model_name)))
-    merge_records.short_description = 'Datensätze zusammenfügen'
     
 
 class TabModelBase(admin.TabularInline):
@@ -498,6 +490,7 @@ class AusgabenAdmin(ModelBase):
             msg_text = "Dublette(n) zu diesen {} Ausgaben hinzugefügt: {}".format(len(dupe_list), obj_links)
             self.message_user(request, format_html(msg_text))
     add_duplicate.short_description = 'Dubletten-Bestand hinzufügen'
+    add_duplicate.perm_required = 'alter_bestand_ausgabe'
     
     def add_bestand(self, request, queryset):
         try:
@@ -542,6 +535,7 @@ class AusgabenAdmin(ModelBase):
                     msg_text = "{} Dubletten hinzugefügt: {}".format(len(dupe_list), obj_links)
                     self.message_user(request, format_html(msg_text))
     add_bestand.short_description = 'Zeitschriftenraum-Bestand hinzufügen'
+    add_duplicate.perm_required = 'alter_bestand_ausgabe'
         
     def num_to_lnum(self, request, queryset):
         to_create = []

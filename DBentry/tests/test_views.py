@@ -30,11 +30,11 @@ class BaseTestView(UserTestCase):
     view_class = None
     path = ''
     
-    def view(self, request=None, args=None, kwargs=None):
+    def view(self, request=None, args=None, kwargs=None, **initkwargs):
         self.view_class.request = request
         self.view_class.args = args
         self.view_class.kwargs = kwargs
-        return self.view_class()
+        return self.view_class(**initkwargs)
         
     def post_request(self, path='', data={}, user=None):
         self.client.force_login(user or self.super_user)
@@ -61,29 +61,60 @@ class BaseFormViewMixin(object):
         return form
         
 
-class TestMIZAdminView(BaseTestView):
+class TestMIZAdminToolView(BaseTestView):
+    # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin
     
-    view_class = MIZAdminView
+    view_class = MIZAdminToolView
     
-    def test_has_permission(self):
+    def test_permission_test_only_staff_required(self):
+        # basic test for user.is_staff as MIZAdminToolView does not set any required permissions
         request = self.get_request(user=self.noperms_user)
-        self.assertFalse(self.view().has_permission(request))
+        self.assertFalse(self.view(request).permission_test())
+        self.assertFalse(self.view_class.show_on_index_page(request))
         
         request = self.get_request(user=self.staff_user)
-        self.assertTrue(self.view().has_permission(request))
+        self.assertTrue(self.view(request).permission_test())
+        self.assertTrue(self.view_class.show_on_index_page(request))
         
         request = self.get_request()
-        self.assertTrue(self.view().has_permission(request))
+        self.assertTrue(self.view(request).permission_test())
+        self.assertTrue(self.view_class.show_on_index_page(request))
         
-    def test_dispatch(self):
+    def test_permission_test_with_explicit_permreq(self):
+        # setting MIZAdminToolView.permission_required 
+        # none of the users actually have any permissions set other than is_staff/is_superuser
+        perm = ['beepboop']
         request = self.get_request(user=self.noperms_user)
-        with self.assertRaises(PermissionDenied):
-            self.view().dispatch(request)
+        view = self.view(request, permissions_required=perm)
+        self.assertFalse(view.permission_test())
+        
+        request = self.get_request(user=self.staff_user)
+        view = self.view(request, permissions_required=perm)
+        self.assertFalse(view.permission_test())
         
         request = self.get_request()
-        response = self.view().dispatch(request)
-        self.assertIsNotNone(response)
-        #self.assertEqual(response.status_code, 200)
+        view = self.view(request, permissions_required=perm)
+        self.assertTrue(view.permission_test())
+        
+    def test_permissions_required_cached_prop(self):
+        # setting MIZAdminToolView._permission_required, forcing the cached_property permission_required
+        perm = ['perm1', ('perm2', ), ('perm3', ausgabe), ('perm4', 'ausgabe')]
+        expected = ['DBentry.perm1_ausgabe', 'DBentry.perm2_ausgabe', 'DBentry.perm3_ausgabe', 'DBentry.perm4_ausgabe']
+        # opts set on view
+        view = self.view(self.get_request(), _permissions_required=perm)
+        view.opts = ausgabe._meta
+        self.assertEqual(view.permissions_required, expected)        
+        
+        # model set on view
+        view = self.view(self.get_request(), _permissions_required=perm)
+        view.model = ausgabe
+        self.assertEqual(view.permissions_required, expected)      
+        
+        # no opts/model set on view => ImproperlyConfigured exception
+        view = self.view(self.get_request(), _permissions_required=perm)
+        from django.core.exceptions import ImproperlyConfigured
+        with self.assertRaises(ImproperlyConfigured):
+            view.permissions_required
         
     def test_get_context_data(self):
         request = self.get_request()
@@ -107,7 +138,10 @@ class TestFavoritenView(BaseTestView):
     def test_get_object(self):
         request = self.get_request()
         view = self.view(request)
-        self.assertEqual(view.get_object().user, self.super_user)
+        self.assertFalse(view.model.objects.filter(user=request.user).exists())
+        self.assertEqual(view.get_object().user, self.super_user) # user has no Favoriten yet, create an entry in Favoriten
+        self.assertTrue(view.model.objects.filter(user=request.user).exists())
+        self.assertEqual(view.get_object().user, self.super_user) # direct access to Favoriten via queryset
     
 class TestMIZSessionWizardView(BaseTestView):
     

@@ -106,6 +106,13 @@ def link_list(request, obj_list,  SEP = ", ", path = None):
         print("WARNING : Failed to create link_list.")
         return SEP.join([force_text(obj) for obj in obj_list])
     return format_html(obj_list_string)
+    
+def model_from_string(model_name):
+    from django.apps import apps 
+    try:
+        return apps.get_model('DBentry', model_name)
+    except LookupError:
+        return None
 
 def swap_dict(d):
     rslt = {}

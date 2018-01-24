@@ -81,6 +81,7 @@ class MergeViewWizarded(MIZSessionWizardView):
     } 
      
     _updates = {} 
+    _permissions_required = ['merge']
      
     @property 
     def updates(self): 

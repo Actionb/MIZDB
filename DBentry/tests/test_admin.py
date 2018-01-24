@@ -52,6 +52,9 @@ class TestModelBase(BaseTestAdmins):
     model = artikel
     test_data_count = 3
     
+    def test_get_actions(self): #TODO:
+        pass
+    
     def test_has_adv_sf(self):
         self.assertTrue(self.model_admin.has_adv_sf())  
         
@@ -151,56 +154,18 @@ class TestModelBase(BaseTestAdmins):
         self.assertFalse(self.model_admin.merge_allowed(request, qs))
         expected_message = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'.format('Artikel', 'Ausgaben', '')
         messages = [str(msg) for msg in get_messages(request)]
-        self.assertTrue(expected_message in messages)
-        
-    def test_merge_records_low_count(self):
-        # qs.count() == 1
-        qs = self.model.objects.filter(pk=self.obj1.pk)
-        request = self.get_request()
-        self.model_admin.merge_records(request, qs)
-        expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen'
-        messages = [str(msg) for msg in get_messages(request)]
-        self.assertTrue(expected_message in messages)
-        
-    def test_merge_records_not_allowed(self):
-        # qs.count() > 1 with different ausgaben => merge not allowed
-        the_new_guy = DataFactory().create_obj(artikel, create_new = True)
-        qs = self.model.objects.all()
-        request = self.get_request()
-        response = self.model_admin.merge_records(request, qs)
-        self.assertEqual(response, None)
-    
-    def test_merge_records_success(self):
-        # qs.count() >1 with same ausgabe
-        qs = self.model.objects.all()
-        request = self.get_request()
-        response = self.model_admin.merge_records(request, qs)
-        self.assertIsNotNone(response)
-        self.assertTrue('merge' in request.session)
-        self.assertEqual(response.status_code, 302) # 302 for redirect        
+        self.assertTrue(expected_message in messages) 
 
 class TestAdminAusgabe(BaseTestAdmins):
     
     model_admin_class = AusgabenAdmin
     model = ausgabe
     test_data_count = 2
-    
+
     def test_get_search_fields(self):
         expected = ['magazin__magazin_name', 'status', 'e_datum', 
         'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr','ausgabe_monat__monat__monat']
         self.assertEqual(self.model_admin.get_search_fields(), expected)
-        
-    def test_action_add_duplicate(self):
-        pass
-        
-    def test_action_add_bestand(self):
-        pass
-    
-    def test_action_num_to_lnum(self):
-        pass
-        
-    def test_action_bulk_jg(self):
-        pass
         
     def test_merge_allowed(self):
         qs = self.model.objects.all()
@@ -544,3 +509,67 @@ class TestChangeList(BaseTestAdmins):
         
         with self.assertRaises(IncorrectLookupParameters):
             cl.get_queryset(request)
+
+
+# TEST ACTIONS
+from DBentry.actions import merge_records
+
+class TestAdminActionsArtikel(BaseTestAdmins):
+    
+    model_admin_class = ArtikelAdmin
+    model = artikel
+    test_data_count = 3
+        
+    def test_merge_records_low_count(self):
+        # qs.count() == 1
+        qs = self.model.objects.filter(pk=self.obj1.pk)
+        request = self.get_request()
+        #self.model_admin.merge_records(request, qs) --> before moving actions into actions.py
+        merge_records(self.model_admin, request, qs)
+        expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen'
+        messages = [str(msg) for msg in get_messages(request)]
+        self.assertTrue(expected_message in messages)
+        
+    def test_merge_records_not_allowed(self):
+        # qs.count() > 1 with different ausgaben => merge not allowed
+        the_new_guy = DataFactory().create_obj(artikel, create_new = True)
+        qs = self.model.objects.all()
+        request = self.get_request()
+        #response = self.model_admin.merge_records(request, qs) --> before moving actions into actions.py
+        response = merge_records(self.model_admin, request, qs)
+        self.assertEqual(response, None)
+    
+    def test_merge_records_success(self):
+        # qs.count() >1 with same ausgabe
+        qs = self.model.objects.all()
+        request = self.get_request()
+        #response = self.model_admin.merge_records(request, qs) --> before moving actions into actions.py
+        response = merge_records(self.model_admin, request, qs)
+        self.assertIsNotNone(response)
+        self.assertTrue('merge' in request.session)
+        self.assertEqual(response.status_code, 302) # 302 for redirect       
+
+class TestAdminActionsAusgabe(BaseTestAdmins):
+    
+    model_admin_class = AusgabenAdmin
+    model = ausgabe
+    test_data_count = 2
+    
+    @classmethod
+    def setUpTestData(cls):
+        super(TestAdminActionsAusgabe, cls).setUpTestData()
+        # TODO: set up permissions for users ('merge',etc.)
+        
+    def test_action_add_duplicate(self):
+        pass
+        
+    def test_action_add_bestand(self):
+        pass
+    
+    def test_action_num_to_lnum(self):
+        pass
+        
+    def test_action_bulk_jg(self):
+        pass
+        
+        

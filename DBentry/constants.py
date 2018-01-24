@@ -50,3 +50,5 @@ LIST_DISPLAY_MAX_LEN = int(M2M_LIST_MAX_LEN/2)
 CUR_JAHR = datetime.datetime.now().year
 MAX_JAHR = CUR_JAHR+1
 MIN_JAHR = 1899
+
+PERM_DENIED_MSG = 'Sie haben nicht die erforderliche Berechtigung diese Seite zu sehen.'

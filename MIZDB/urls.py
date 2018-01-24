@@ -28,3 +28,5 @@ from django.conf.urls.static import static
 
 if settings.DEBUG:
     urlpatterns += static(prefix = settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler403 = 'DBentry.views.MIZ_permission_denied_view'

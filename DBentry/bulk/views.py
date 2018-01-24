@@ -24,8 +24,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
     url_name = 'bulk_ausgabe'
     index_label = 'Ausgaben Erstellung'
     
-    def permission_test(self):
-        return self.request.user.is_superuser
+    _permissions_required = [('add', 'ausgabe')]
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
