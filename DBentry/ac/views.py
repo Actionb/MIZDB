@@ -5,6 +5,20 @@ from django.utils.translation import ugettext as _
 from django.contrib.admin.utils import get_fields_from_path
 # Create your views here
 
+def log_addition(request, object):
+    from django.contrib.admin.options import get_content_type_for_model
+    from django.contrib.admin.models import LogEntry, ADDITION
+    from django.utils.encoding import force_text
+    return LogEntry.objects.log_action(
+        user_id=request.user.pk,
+        content_type_id=get_content_type_for_model(object).pk,
+        object_id=object.pk,
+        object_repr=force_text(object),
+        action_flag=ADDITION,
+        change_message='[{"added": {}}]',
+    )
+    
+
 # AUTOCOMPLETE VIEWS
 class ACBase(autocomplete.Select2QuerySetView):
     _flds = None
@@ -102,10 +116,11 @@ class ACBase(autocomplete.Select2QuerySetView):
         return qs
         
     def create_object(self, text):
-#        # Edited: Accounting for get_queryset() returning lists
-#        """Create an object given a text."""
-#        return self.get_queryset().create(**{self.create_field: text})
-        return self.model.objects.create(**{self.create_field: text})
+        """Create an object given a text."""
+        object = self.model.objects.create(**{self.create_field: text})
+        if object and self.request:
+            log_addition(self.request, object)
+        return object
         
     def get_queryset(self):
         qs = self.model.objects.all()
@@ -162,7 +177,10 @@ class ACProv(ACBase):
         return True
         
     def create_object(self, text):
-        return provenienz.objects.create(geber=geber.objects.create(name=text))
+        object = provenienz.objects.create(geber=geber.objects.create(name=text))
+        if object and self.request:
+            log_addition(self.request, object)
+        return object
         
 class ACAusgabe(ACBase):
     

@@ -321,6 +321,21 @@ class TestACBase(BaseTestACView):
         v.create_field = ''
         self.assertFalse(v.has_create_field())
         
+    def test_create_object_no_log_entry(self):
+        # no request set on view, no log entry should be created
+        obj = self.view().create_object('Beep')
+        from django.contrib.admin.models import LogEntry
+        qs = LogEntry.objects.filter(object_id=obj.pk)
+        self.assertFalse(qs.exists())
+        
+    def test_create_object_with_log_entry(self):
+        # request set on view, log entry should be created
+        request = self.get_request()
+        obj = self.view(request).create_object('Boop')
+        from django.contrib.admin.models import LogEntry
+        qs = LogEntry.objects.filter(object_id=obj.pk)
+        self.assertTrue(qs.exists())
+        
     def test_get_create_option(self):
         request = self.get_request()
         create_option = self.view(request).get_create_option(context={}, q='Beep')
@@ -407,9 +422,21 @@ class TestACProv(BaseTestACView):
     def test_has_create_field(self):
         self.assertTrue(self.view().has_create_field())
         
-    def test_create_object(self):
+    def test_create_object_no_log_entry(self):
         obj = self.view().create_object('Beep')
         self.assertEqual(obj.geber.name, 'Beep')
+        from django.contrib.admin.models import LogEntry
+        qs = LogEntry.objects.filter(object_id=obj.pk)
+        self.assertFalse(qs.exists())
+        
+        
+    def test_create_object_with_log_entry(self):
+        request = self.get_request()
+        obj = self.view(request).create_object('Beep')
+        from django.contrib.admin.models import LogEntry
+        qs = LogEntry.objects.filter(object_id=obj.pk)
+        self.assertTrue(qs.exists())
+        
         
 class TestACAusgabe(BaseTestACView):
     
@@ -489,3 +516,20 @@ class TestACAusgabe(BaseTestACView):
         view = self.view(q=self.obj_jahrg.__str__())
         expected_qs = list(self.qs.filter(pk=self.obj_jahrg.pk))
         self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        
+class TestPermissionDeniedView(TestCase):
+    
+    def test_MIZ_permission_denied_view_missing_template(self):
+        response = MIZ_permission_denied_view(None, None, template_name='beepboop')
+        from django import http
+        self.assertTrue(isinstance(response, http.HttpResponseForbidden))
+    
+    def test_MIZ_permission_denied_view(self):
+        from django.core.exceptions import PermissionDenied
+        exception = PermissionDenied('Exception Text')
+        request = self.client.get('').wsgi_request
+        response = MIZ_permission_denied_view(request, exception)
+        self.assertTrue('exception' in response.context_data)
+        self.assertEqual(response.context_data['exception'], 'Exception Text')
+        
+        self.assertTrue('is_popup' in response.context_data)
