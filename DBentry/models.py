@@ -138,11 +138,12 @@ class ShowModel(models.Model):
     
     class Meta:
         abstract = True
+        default_permissions = ('add', 'change', 'delete', 'merge')
         
 class alias_base(ShowModel):
     alias = models.CharField('Alias', max_length = 100)
     parent = None
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Alias'
         verbose_name = 'Alias'
         abstract = True
@@ -155,7 +156,7 @@ class person(ShowModel):
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
     beschreibung = models.TextField(blank = True)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Person'
         verbose_name_plural = 'Personen'
         ordering = ['nachname', 'vorname', 'herkunft']
@@ -190,7 +191,7 @@ class musiker(ShowModel):
     search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
     dupe_fields = ['kuenstler_name', 'person']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name', 'person']
@@ -218,7 +219,7 @@ class genre(ShowModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
@@ -242,7 +243,7 @@ class band(ShowModel):
     search_fields = ['band_alias__alias', 'musiker__kuenstler_name']
 
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
@@ -270,7 +271,7 @@ class autor(ShowModel):
     search_fields = ['person__vorname', 'person__nachname']
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Autor'
         verbose_name_plural = 'Autoren'
         ordering = ['person__vorname', 'person__nachname']
@@ -328,10 +329,14 @@ class ausgabe(ShowModel):
                     'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']
     
     objects = AusgabeQuerySet.as_manager()
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
         ordering = ['magazin', 'jahrgang']
+        permissions = [
+            ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'), 
+            ('alter_data_ausgabe', 'Aktion: Daten verändern.')
+        ]
         
     def anz_artikel(self):
         return self.artikel_set.count()
@@ -490,7 +495,7 @@ class ausgabe_jahr(ShowModel):
     
     jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS)#, default = CUR_JAHR)
     ausgabe = models.ForeignKey('ausgabe')
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Jahr'
         verbose_name_plural = 'Jahre'
         unique_together = ('jahr', 'ausgabe')
@@ -500,7 +505,7 @@ class ausgabe_num(ShowModel):
     num = models.IntegerField('Nummer')
     kuerzel = models.CharField(**CF_ARGS_B)
     ausgabe = models.ForeignKey('ausgabe')
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Nummer'
         verbose_name_plural = 'Ausgabennummer'
         unique_together = ('num', 'ausgabe', 'kuerzel')
@@ -510,7 +515,7 @@ class ausgabe_lnum(ShowModel):
     lnum = models.IntegerField('Lfd. Nummer')
     kuerzel = models.CharField(**CF_ARGS_B)
     ausgabe = models.ForeignKey('ausgabe')
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'lfd. Nummer'
         verbose_name_plural = 'Laufende Nummer'
         unique_together = ('lnum', 'ausgabe', 'kuerzel')
@@ -519,7 +524,7 @@ class ausgabe_lnum(ShowModel):
 class ausgabe_monat(ShowModel):
     ausgabe = models.ForeignKey('ausgabe')
     monat = models.ForeignKey('monat')
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
         unique_together = ('ausgabe', 'monat')
@@ -531,7 +536,7 @@ class ausgabe_monat(ShowModel):
 class monat(ShowModel):
     monat = models.CharField('Monat', **CF_ARGS)
     abk = models.CharField('Abk',  **CF_ARGS)
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
         ordering = ['id']
@@ -562,7 +567,7 @@ class magazin(ShowModel):
         return self.ausgabe_set.count()
     anz_ausgaben.short_description = 'Anz. Ausgaben'
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Magazin'
         verbose_name_plural = 'Magazine'
         ordering = ['magazin_name']
@@ -828,7 +833,7 @@ class magazin(ShowModel):
 class verlag(ShowModel):
     verlag_name = models.CharField('verlag', **CF_ARGS)
     sitz = models.ForeignKey('ort',  null = True,  blank = True, on_delete = models.SET_NULL)
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Verlag'
         verbose_name_plural = 'Verlage'
         ordering = ['verlag_name', 'sitz']
@@ -841,7 +846,7 @@ class ort(ShowModel):
     
     search_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Ort'
         verbose_name_plural = 'Orte'
         unique_together = ('stadt', 'bland', 'land')
@@ -869,7 +874,7 @@ class bundesland(ShowModel):
     
     search_fields = ['bland_name', 'code']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Bundesland'
         verbose_name_plural = 'Bundesländer'
         unique_together = ('bland_name', 'land')
@@ -882,7 +887,7 @@ class land(ShowModel):
     
     search_fields = ['land_name', 'code']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
@@ -894,7 +899,7 @@ class schlagwort(ShowModel):
     schlagwort = models.CharField( max_length = 100,  unique = True)
     ober = models.ForeignKey('self', related_name = 'oberschl', verbose_name = 'Oberbegriff', null = True,  blank = True)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
@@ -937,7 +942,7 @@ class artikel(ShowModel):
     search_fields = {'schlagzeile', 'zusammenfassung', 'seite', 'seitenumfang', 'info'}
 
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
         ordering = ['seite','ausgabe','pk']
@@ -991,10 +996,13 @@ class buch(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['titel']
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
+        permissions = [
+            ('alter_bestand_buch', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     def __str__(self):
         return str(self.titel)
@@ -1009,7 +1017,7 @@ class instrument(ShowModel):
     def __str__(self):
         return str(self.instrument) + " ({})".format(str(self.kuerzel)) if self.kuerzel else str(self.instrument)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['instrument', 'kuerzel']
         verbose_name = 'Instrument'
         verbose_name_plural = 'Instrumente'
@@ -1046,10 +1054,13 @@ class audio(ShowModel):
     search_fields = ['titel']
     
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['titel']
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
+        permissions = [
+            ('alter_bestand_audio', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     def __str__(self):
         return str(self.titel)
@@ -1075,10 +1086,13 @@ class bildmaterial(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['titel']
         verbose_name = 'Bild Material'
         verbose_name_plural = 'Bild Materialien'
+        permissions = [
+            ('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
         
 class buch_serie(ShowModel):
@@ -1086,7 +1100,7 @@ class buch_serie(ShowModel):
     
     search_fields = ['serie']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['serie']
         verbose_name = 'Buchserie'
         verbose_name_plural = 'Buchserien'
@@ -1097,17 +1111,20 @@ class dokument(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['titel']
         verbose_name = 'Dokument'
         verbose_name_plural = 'Dokumente'
+        permissions = [
+            ('alter_bestand_dokument', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
     
     
 class kreis(ShowModel):
     name = models.CharField(**CF_ARGS)
     bland = models.ForeignKey('bundesland')
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['name', 'bland']
         verbose_name = 'Kreis'
         verbose_name_plural = 'Kreise'
@@ -1118,16 +1135,19 @@ class memorabilien(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Memorabilia'
         verbose_name_plural = 'Memorabilien'
         ordering = ['titel']
+        permissions = [
+            ('alter_bestand_memorabilien', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
         
 class sender(ShowModel):
     name = models.CharField(**CF_ARGS)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Sender'
         verbose_name_plural = 'Sender'
         ordering = ['name']
@@ -1141,7 +1161,7 @@ class spielort(ShowModel):
     
     search_fields = ['name']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name']
@@ -1153,7 +1173,7 @@ class sprache(ShowModel):
     sprache = models.CharField(**CF_ARGS)
     abk = models.CharField(max_length = 3)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Sprache'
         verbose_name_plural = 'Sprachen'
         ordering = ['sprache']
@@ -1163,10 +1183,13 @@ class technik(ShowModel):
     
     search_fields = ['name']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'
         ordering = ['titel']
+        permissions = [
+            ('alter_bestand_technik', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     
 class veranstaltung(ShowModel):
@@ -1182,7 +1205,7 @@ class veranstaltung(ShowModel):
     
     search_fields = ['name']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'spielort', 'ort', 'datum']
@@ -1208,10 +1231,13 @@ class video(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Video Material'
         verbose_name_plural = 'Video Materialien'
         ordering = ['titel']
+        permissions = [
+            ('alter_bestand_video', 'Aktion: Bestand/Dublette hinzufügen.'), 
+        ]
         
     
 class provenienz(ShowModel):
@@ -1226,7 +1252,7 @@ class provenienz(ShowModel):
     
     search_fields = ['geber__name']
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['geber', 'typ']
         verbose_name = 'Provenienz'
         verbose_name_plural = 'Provenienzen'
@@ -1236,7 +1262,7 @@ class provenienz(ShowModel):
 class geber(ShowModel):
     name = models.CharField(default = 'unbekannt', **CF_ARGS)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['name']
         verbose_name = 'Geber'
         verbose_name_plural = 'Geber'
@@ -1247,7 +1273,7 @@ class lagerort(ShowModel):
     regal = models.CharField(**CF_ARGS_B)
     
     signatur = models.CharField(**CF_ARGS_B) # NOTE: use? maybe for human-readable shorthand?
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
         ordering = ['ort']
@@ -1287,7 +1313,7 @@ class bestand(ShowModel):
         ('technik', 'Technik'), ('video', 'Video'), 
     ]      
     bestand_art = models.CharField('Bestand-Art', max_length = 20, choices = BESTAND_CHOICES, blank = False, default = 'ausgabe')
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Bestand'
         verbose_name_plural = 'Bestände'
         ordering = ['pk']
@@ -1343,7 +1369,7 @@ class datei(ShowModel):
     spielort = models.ManyToManyField('spielort', through = m2m_datei_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_datei_veranstaltung)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Datei'
         verbose_name_plural = 'Dateien'
         
@@ -1369,7 +1395,7 @@ class Format(ShowModel):
     
     bemerkungen = models.TextField(blank = True)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         verbose_name = 'Format'
         verbose_name_plural = 'Formate'
         
@@ -1400,7 +1426,7 @@ class Format(ShowModel):
 class NoiseRed(ShowModel):
     verfahren = models.CharField(**CF_ARGS)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['verfahren']
         verbose_name = 'Noise Reduction Verfahren'
         verbose_name_plural = 'Noise Reduction Verfahren'
@@ -1412,7 +1438,7 @@ class FormatTag(ShowModel):
     def __str__(self):
         return str(self.tag)
         
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['tag']
         verbose_name = 'Format-Tag'
         verbose_name_plural = 'Format-Tags'
@@ -1420,7 +1446,7 @@ class FormatTag(ShowModel):
 class FormatSize(ShowModel):
     size = models.CharField(**CF_ARGS)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['size']
         verbose_name = 'Format-Größe'
         verbose_name_plural = 'Format-Größen'
@@ -1429,7 +1455,7 @@ class FormatTyp(ShowModel):
     """ Art des Formats (Vinyl, DVD, Cassette, etc) """
     typ = models.CharField(**CF_ARGS)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['typ']
         verbose_name = 'Format-Typ'
         verbose_name_plural = 'Format-Typen'
@@ -1437,7 +1463,7 @@ class FormatTyp(ShowModel):
 class plattenfirma(ShowModel):
     name = models.CharField(**CF_ARGS)
     
-    class Meta:
+    class Meta(ShowModel.Meta):
         ordering = ['name']
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'

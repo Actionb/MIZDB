@@ -1,28 +1,28 @@
-
+from django import views
 from django.shortcuts import render, redirect 
 from django.http import HttpResponse 
  
 from django.urls import reverse_lazy, reverse 
 from django.db.models import Count 
 from django.apps import apps 
-from django.views.generic import FormView 
  
 from itertools import chain 
  
-from DBentry.views import MIZAdminView, MIZSessionWizardView 
+from DBentry.views import MIZAdminToolView, MIZSessionWizardView 
 from DBentry.admin import miz_site 
 from DBentry.models import * 
  
 from .forms import * 
+
  
-class MaintView(MIZAdminView): 
+class MaintView(MIZAdminToolView): 
     url_name = 'maint_main' 
     index_label = 'Wartung' 
     template_name = 'admin/basic.html' 
     success_url = reverse_lazy('admin:index') 
-     
-    @classmethod 
-    def has_permission(cls, request): 
+    
+    @staticmethod 
+    def show_on_index_page(request): 
         return request.user.is_superuser 
      
      
@@ -81,6 +81,7 @@ class MergeViewWizarded(MIZSessionWizardView):
     } 
      
     _updates = {} 
+    _permissions_required = ['merge']
      
     @property 
     def updates(self): 

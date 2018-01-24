@@ -5,43 +5,114 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 from django.contrib import admin, messages
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth import get_permission_codename
+from django.utils.functional import cached_property
 
 from .models import *
-from .utils import link_list
-from DBentry.forms import FavoritenForm
+from .utils import link_list, model_from_string
+from .forms import FavoritenForm
 from .admin import miz_site
+from .constants import PERM_DENIED_MSG
 
 from dal import autocomplete
 from formtools.wizard.views import SessionWizardView
 
-class MIZAdminView(views.View):
+class MIZAdminMixin(object):
+    """
+    A mixin that provides an admin 'look and feel' to custom views by adding admin_site specific context (each_context).
+    """
+    admin_site = miz_site
+    
+    def get_context_data(self, *args, **kwargs):
+        kwargs = super(MIZAdminMixin, self).get_context_data(*args, **kwargs)
+        # Add admin site context
+        kwargs.update(self.admin_site.each_context(self.request))
+        # Enable popups behaviour for custom views
+        kwargs['is_popup'] = '_popup' in self.request.GET
+        return kwargs
+        
+class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
+    """
+    A mixin that enables permission restricted views.
+    """
+    permission_denied_message = PERM_DENIED_MSG
+    raise_exception = True
+    _permissions_required = []
+    
+    @cached_property
+    def permissions_required(self):
+        permissions_required = []
+        for perm_tuple in self._permissions_required:
+            model = None
+            if isinstance(perm_tuple, str):
+                perm_code = perm_tuple
+            elif len(perm_tuple)==1:
+                perm_code = perm_tuple[0]
+            else:
+                perm_code, model = perm_tuple
+                if isinstance(model, str):
+                    model = model_from_string(model)
+            if model is None:
+                if hasattr(self, 'opts'):
+                    opts = getattr(self, 'opts')
+                elif hasattr(self, 'model'):
+                    opts = getattr(self, 'model')._meta
+                else:
+                    from django.core.exceptions import ImproperlyConfigured
+                    raise ImproperlyConfigured("No model/opts set for permission code '{}'. ".format(perm_code)+\
+                        "To explicitly set required permissions, create a list of permission codenames as an attribute named 'permissions_required'."
+                        )
+            else:
+                opts = model._meta
+            perm = '{}.{}'.format(opts.app_label, get_permission_codename(perm_code, opts))
+            permissions_required.append(perm)
+        return permissions_required
+    
+    def permission_test(self):
+        """
+        The test function that the user has to pass for contrib.auth's UserPassesTestMixin to access the view.
+        Default permission level is: is_staff
+        """
+        if self.permissions_required:
+            for perm in self.permissions_required:
+                if not self.request.user.has_perm(perm):
+                    return False
+            return True
+        else:
+            return self.request.user.is_staff
+        
+    def test_func(self):
+        """
+        Redirect the test for UserPassesTestMixin to a more aptly named function.
+        """
+        return self.permission_test()
+        
+class MIZAdminToolView(MIZAdminPermissionMixin, views.generic.TemplateView):
+    """
+    The base view for all 'Admin Tools'. 
+    """
+    
     template_name = 'admin/basic.html'
     submit_value = 'Ok'
     submit_name = '_ok'
     
-    @classmethod
-    def has_permission(cls, request):
+    @staticmethod
+    def show_on_index_page(request):
+        """
+        If the current user does not have required permissions, the view link will not be displayed on the index page.
+        """
         # Default permission level: is_staff
         return request.user.is_staff
     
-    def dispatch(self, request, *args, **kwargs):
-        if not self.has_permission(request):
-            raise PermissionDenied
-        return super(MIZAdminView, self).dispatch(request, *args, **kwargs)
-    
     def get_context_data(self, *args, **kwargs):
-        if 'view' not in kwargs:
-            kwargs['view'] = self
-        # Add admin site context
-        kwargs.update(miz_site.each_context(self.request))
+        kwargs = super(MIZAdminToolView, self).get_context_data(*args, **kwargs)
         # Add custom context data for the submit button
         kwargs['submit_value'] = self.submit_value
         kwargs['submit_name'] = self.submit_name
-        kwargs['is_popup'] = '_popup' in self.request.GET
         return kwargs
         
-class FavoritenView(MIZAdminView, views.generic.UpdateView):
+class FavoritenView(MIZAdminToolView, views.generic.UpdateView):
     form_class = FavoritenForm
     template_name = 'admin/favorites.html'
     model = Favoriten
@@ -64,7 +135,7 @@ class FavoritenView(MIZAdminView, views.generic.UpdateView):
 
 miz_site.register_tool(FavoritenView)
 
-class MIZSessionWizardView(MIZAdminView, SessionWizardView):
+class MIZSessionWizardView(MIZAdminPermissionMixin, SessionWizardView):
     
     def get_context_data(self, form = None, *args, **kwargs):
         # SessionWizardView takes form as first positional argument, while MIZAdminView (and any other view) takes it as a kwarg.
@@ -76,3 +147,18 @@ class DynamicChoiceFormMixin(object):
     
     def get_form_choices(self, form):
         pass
+    
+# views for the django default handlers
+def MIZ_permission_denied_view(request, exception, template_name='admin/403.html'):
+    from django.template import TemplateDoesNotExist, loader
+    from django import http
+    try:
+        template = loader.get_template(template_name)
+    except TemplateDoesNotExist:
+        return http.HttpResponseForbidden('<h1>403 Forbidden</h1>', content_type='text/html')
+    
+    from django.template.response import TemplateResponse
+    context = {'exception' : str(exception) if str(exception) else PERM_DENIED_MSG}
+    context.update(miz_site.each_context(request))
+    context['is_popup'] = '_popup' in request.GET 
+    return TemplateResponse(request, template_name, context=context)

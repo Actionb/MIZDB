@@ -10,19 +10,21 @@ from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from DBentry.views import MIZAdminView
+from DBentry.views import MIZAdminToolView
 from DBentry.admin import miz_site
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio, m2m_audio_ausgabe
 from .forms import BulkFormAusgabe
         
-class BulkAusgabe(MIZAdminView, views.generic.FormView):
+class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
     
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
     url_name = 'bulk_ausgabe'
     index_label = 'Ausgaben Erstellung'
+    
+    _permissions_required = [('add', 'ausgabe')]
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
