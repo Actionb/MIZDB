@@ -1,0 +1,58 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    {{ media }}
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} action-confirmation {% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {% trans 'Alter multiple objects' %}
+</div>
+{% endblock %}
+
+{% block content %}
+    <p>{% blocktrans %}Are you sure you want to delete the selected {{ objects_name }}? All of the following objects and their related items will be deleted:{% endblocktrans %}</p>
+    
+    {% comment %} Only need this to display what is going to be deleted. 
+                The only action deleting objects would be 'merge', which has it's own view/template
+    {% if model_count %}
+    {% block object_summary %}
+        {% include "admin/includes/object_delete_summary.html" %}
+    {% endblock object_summary %}
+    {% endif %}
+    {% endcomment %}
+    
+    {% block object_details %}
+        <h2>{% trans "Objects" %}</h2>
+        {% for affected_object in affected_objects %}
+            <ul>{{ affected_object|unordered_list }}</ul>
+        {% endfor %}
+    {% endblock object_details %}
+    
+    {% block confirmation_form %}
+    
+        <form method="post">{% csrf_token %}
+            {% block selection_form %}
+                {% if form %}
+                    {{form}}
+                {% endif %}
+            {% endblock selection_form %}
+    
+            <div>
+                {% for obj in queryset %}
+                    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
+                {% endfor %}
+                <input type="hidden" name="action" value="{{action_name}}" />
+                <input type="submit" name="action_confirmed" value="{% trans "Yes, I'm sure" %}" />
+                <input type="submit" name="action_aborted" value="{% trans "No, take me back" %}" />
+            </div>
+        </form>
+    {% endblock confirmation_form %}
+{% endblock content %}

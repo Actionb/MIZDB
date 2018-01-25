@@ -127,3 +127,27 @@ div .help_text {
 .description {
     padding: 5px 0 5px 12px;
 }
+
+/*
+* — ACTION CONFIRMATION —
+*/
+.action-confirmation form input[type="submit"][name="action_confirmed"] {
+    background: #ba2121 none repeat scroll 0 0;
+}
+.action-confirmation form input[type="submit"][name="action_confirmed"]:active,
+.action-confirmation form input[type="submit"][name="action_confirmed"]:focus,
+.action-confirmation form input[type="submit"][name="action_confirmed"]:hover {
+    background: #a41515 none repeat scroll 0 0;
+}
+.action-confirmation form input[type="submit"][name="action_aborted"] {
+    background: #ddd none repeat scroll 0 0;
+    color: #333;
+    display: inline-block;
+    line-height: 15px;
+    margin: 0 0 0 10px;
+}
+.action-confirmation form input[type="submit"][name="action_aborted"]:active,
+.action-confirmation form input[type="submit"][name="action_aborted"]:focus,
+.action-confirmation form input[type="submit"][name="action_aborted"]:hover {
+    background: #ccc none repeat scroll 0 0;
+}
