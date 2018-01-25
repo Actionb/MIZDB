@@ -41,17 +41,19 @@ class ModelBase(admin.ModelAdmin):
         # Show actions based on user permissions
         actions = super(ModelBase, self).get_actions(request) #= OrderedDict( (name, (func, name, desc)) )
         
+        #TODO: use ActionConfirmationView + MIZAdminPermissionMixin permission_test() to unify all the things?
         for func, name, desc in actions.values():
             if name == 'delete_selected':
-                perm_required = 'delete' # the builtin action delete_selected is set by the admin site
+                perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
             else:
                 perm_required = getattr(func, 'perm_required', False)
-            if perm_required:
+            
+            for p in perm_required:
                 perm_passed = False
-                if callable(perm_required):
-                    perm_passed = perm_required(self, request)
+                if callable(p):
+                    perm_passed = p(self, request)
                 else:
-                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(perm_required, self.opts))
+                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(p, self.opts))
                     perm_passed = request.user.has_perm(perm)
                 if not perm_passed:
                     del actions[name]
@@ -417,7 +419,7 @@ class AusgabenAdmin(ModelBase):
             msg_text = "Dublette(n) zu diesen {} Ausgaben hinzugefügt: {}".format(len(dupe_list), obj_links)
             self.message_user(request, format_html(msg_text))
     add_duplicate.short_description = 'Dubletten-Bestand hinzufügen'
-    add_duplicate.perm_required = 'alter_bestand_ausgabe'
+    add_duplicate.perm_required = ['alter_bestand']
     
     def add_bestand(self, request, queryset):
         try:
@@ -462,35 +464,12 @@ class AusgabenAdmin(ModelBase):
                     msg_text = "{} Dubletten hinzugefügt: {}".format(len(dupe_list), obj_links)
                     self.message_user(request, format_html(msg_text))
     add_bestand.short_description = 'Zeitschriftenraum-Bestand hinzufügen'
-    add_duplicate.perm_required = 'alter_bestand_ausgabe'
+    add_duplicate.perm_required = ['alter_bestand']
         
-    def num_to_lnum(self, request, queryset):
-        to_create = []
-        for instance in queryset:
-            for num in instance.ausgabe_num_set.values_list('num', flat = True):
-                to_create.append(ausgabe_lnum(ausgabe=instance, lnum=num)) #**{'ausgabe':instance, 'lnum':num}
-            instance.ausgabe_num_set.all().delete()
-            instance.ausgabe_lnum_set.all().delete()
-        ausgabe_lnum.objects.bulk_create(to_create)
-        
-    def add_birgit(self, request, queryset):
-        birgit = provenienz.objects.get(pk=6)
-        for instance in queryset:
-            instance.bestand_set.update(provenienz=birgit)
-            
-    def bulk_jg(self, request, queryset):
-        mag_id = queryset.values_list('magazin_id',  flat = True)
-        if mag_id.count() != 1:
-            msg_text = "Aktion abgebrochen: Ausgaben-Liste enthält mehr als ein Magazin."
-            self.message_user(request, msg_text, 'error')
-            return
-        jg = 1
-        if queryset.first().jahrgang:
-            jg = queryset.first().jahrgang
-        mag = magazin.objects.get(pk=mag_id)
-        mag.ausgabe_set.bulk_add_jg(jg)
+
         
     def merge_allowed(self, request, queryset):
+        #TODO: move this to actions.py
         #TODO: allow merging of non-sonderausgaben with sonderausgaben?
         if queryset.values_list('magazin').distinct().count()>1:
             # User is trying to merge ausgaben from different magazines
