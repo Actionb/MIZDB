@@ -18,6 +18,26 @@ from .constants import PERM_DENIED_MSG
 from dal import autocomplete
 from formtools.wizard.views import SessionWizardView
 
+class OptionalFormView(views.generic.FormView):
+    
+    def get_form(self, form_class=None):
+        if self.get_form_class() is None:
+            # Form has become optional
+            return None
+        return super(OptionalFormView, self).get_form(form_class)
+        
+    def form_optional(self):
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form is None or form.is_valid():
+            # form is not given (because it's optional) OR form is given and is valid
+            return self.form_valid(form)
+        else:
+            # back to FormView's form_invalid(): return self.render_to_response(self.get_context_data(form=form))
+            return self.form_invalid(form)
+
 class MIZAdminMixin(object):
     """
     A mixin that provides an admin 'look and feel' to custom views by adding admin_site specific context (each_context).
