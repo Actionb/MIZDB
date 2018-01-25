@@ -12,7 +12,7 @@ from django.utils.functional import cached_property
 from .models import *
 from .utils import link_list, model_from_string
 from .forms import FavoritenForm
-from .admin import miz_site
+from .sites import miz_site
 from .constants import PERM_DENIED_MSG
 
 from dal import autocomplete

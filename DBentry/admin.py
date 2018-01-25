@@ -4,8 +4,7 @@ from collections import OrderedDict
 from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.urls import reverse, resolve
-from django.shortcuts import redirect  
-from django.apps import apps 
+from django.shortcuts import redirect
 from django.contrib.auth import get_permission_codename
 
 from .models import *
@@ -14,81 +13,9 @@ from .utils import link_list
 from .changelist import MIZChangeList
 from .actions import merge_records
 
+from .sites import miz_site
+
 MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
-
-class MIZAdminSite(admin.AdminSite):
-    from django.views.decorators.cache import never_cache
-    site_header = 'MIZDB'
-    
-    wip = [bildmaterial, buch, dokument, memorabilien, video]
-    main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 
-                    person, schlagwort, video]
-    
-    tools = []
-    
-    def register_tool(self, view):
-        self.tools.append(view)
-        
-    def app_index(self, request, app_label, extra_context=None):
-        if app_label == 'DBentry':
-            # Redirect to the 'tidied' up index page of the main page
-            return self.index(request, extra_context)
-        return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
-    
-    @never_cache
-    def index(self, request, extra_context=None): 
-        extra_context = extra_context or {}
-        extra_context['admintools'] = {}
-        for tool in self.tools:
-            if tool.show_on_index_page(request):
-                extra_context['admintools'][tool.url_name] = tool.index_label
-        # Sort by index_label, not by url_name
-        extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
-        
-        response = super(MIZAdminSite, self).index(request, extra_context)
-        app_list = response.context_data['app_list']
-        index = None
-        try:
-            index = next(i for (i, d) in enumerate(app_list) if d['app_label'] == 'DBentry')
-        except:
-            return response
-            
-        if index is not None:
-            DBentry_dict = app_list.pop(index)
-            model_list = DBentry_dict.pop('models')
-        
-            DBentry_main = DBentry_dict.copy()
-            DBentry_main['name'] = 'Hauptkategorien'
-            DBentry_main['models'] = [] # or deepcopy DBentry_dict
-            DBentry_side = DBentry_dict.copy()
-            DBentry_side['name'] = 'Nebenkategorien'
-            DBentry_side['models'] = []
-            
-            main_models = [m._meta.model_name for m in self.main_models if not m in self.wip]
-            for m in model_list:
-                if m.get('object_name', '') in main_models:
-                    DBentry_main['models'].append(m)
-                else:
-                    DBentry_side['models'].append(m)
-                    
-            if DBentry_main['models']:
-                app_list.extend([DBentry_main])
-            if DBentry_side['models']:
-                app_list.extend([DBentry_side])
-                
-            response.context_data['app_list'] = app_list
-        return response
-
-    def get_admin_model(self, model):
-        if isinstance(model, str):
-            model_name = model.split('.')[-1]
-            try:
-                model = apps.get_model('DBentry', model_name)
-            except LookupError:
-                return None
-        return self._registry.get(model, None)
-        
-miz_site = MIZAdminSite()
 
 
 class ModelBase(admin.ModelAdmin):

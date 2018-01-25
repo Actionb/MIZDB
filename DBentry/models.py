@@ -1485,3 +1485,9 @@ class Favoriten(models.Model): #NOTE: why not inherit from ShowModel?
         if model:
             return rslt.get(model, Favoriten.objects.none())
         return rslt
+    
+wip_models = [bildmaterial, buch, dokument, memorabilien, video]
+main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 
+                person, schlagwort, video]
+# filter out wip models 
+main_models = [m._meta.model_name for m in main_models if not m in wip_models]

@@ -4,6 +4,7 @@ from django.utils.http import unquote
 from .base import *
 
 from DBentry.admin import *
+from DBentry.sites import miz_site, MIZAdminSite
 
 class BaseTestAdmins(UserTestCase):
     
