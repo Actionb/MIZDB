@@ -13,13 +13,21 @@
 <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
 &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
 &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-&rsaquo; {% trans 'Alter multiple objects' %}
+&rsaquo; {% trans 'Change multiple objects' %}
 </div>
 {% endblock %}
+{% comment %}
+{% endcomment %}
 
 {% block content %}
-    <p>{% blocktrans %}Are you sure you want to delete the selected {{ objects_name }}? All of the following objects and their related items will be deleted:{% endblocktrans %}</p>
-    
+    <p>
+        {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
+        
+        {% if requires_deletion %}
+            {% blocktrans %}All of the following objects and their related items will be deleted:{% endblocktrans %}
+        {% endif %}
+    </p>
+        
     {% comment %} Only need this to display what is going to be deleted. 
                 The only action deleting objects would be 'merge', which has it's own view/template
     {% if model_count %}
@@ -29,21 +37,26 @@
     {% endif %}
     {% endcomment %}
     
-    {% block object_details %}
-        <h2>{% trans "Objects" %}</h2>
-        {% for affected_object in affected_objects %}
-            <ul>{{ affected_object|unordered_list }}</ul>
-        {% endfor %}
-    {% endblock object_details %}
     
     {% block confirmation_form %}
     
         <form method="post">{% csrf_token %}
             {% block selection_form %}
                 {% if form %}
-                    {{form}}
+                    
+                    {% for fieldset in form %}
+                      {% include "admin/includes/fieldset.html" %}
+                    {% endfor %}
+                    
+                    {% comment %}{{form.as_p}}{% endcomment %}
                 {% endif %}
             {% endblock selection_form %}
+    {% block object_details %}
+        <h2>{% trans "Objects" %}</h2>
+        {% for affected_object in affected_objects %}
+            <ul>{{ affected_object|unordered_list }}</ul>
+        {% endfor %}
+    {% endblock object_details %}
     
             <div>
                 {% for obj in queryset %}
