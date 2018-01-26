@@ -1,30 +1,20 @@
 
-from django.utils.translation import ugettext as _, ugettext_lazy
-from django.shortcuts import redirect  
-from django.urls import reverse
+from django.utils.translation import ugettext as _
+from django.utils.encoding import force_text
 
-from .views import MIZAdminMixin, OptionalFormView
-
-def merge_records(model_admin, request, queryset):
-    if queryset.count()==1:
-        model_admin.message_user(request,'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen', 'warning')
-        return
-    if not model_admin.merge_allowed(request, queryset):
-        return
-    request.session['merge'] = {'qs_ids': list(queryset.values_list('pk', flat=True)), 'success_url' : request.get_full_path()}
-    return redirect(reverse('merge', kwargs=dict(model_name=model_admin.opts.model_name)))
-merge_records.short_description = ugettext_lazy("Merge selected %(verbose_name_plural)s")#'Datensätze zusammenfügen'
-merge_records.perm_required = ['merge']
+from DBentry.views import MIZAdminMixin, OptionalFormView
+from .forms import makeSelectionForm
 
 class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
     #TODO: text stuff
-    #TODO: put in an actual form for user input
     
     template_name = 'admin/action_confirmation.html'
     queryset = None
     model_admin = None
     opts = None
     action_name = None
+    
+    fields = None # these are the model fields that should be displayed in the 'selection form'
     
     def __init__(self, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
@@ -34,6 +24,12 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
             self.action_name = self.__class__.__name__
         self.opts = self.model_admin.opts
         super(ActionConfirmationView, self).__init__(*args, **kwargs)
+        
+    def get_form_class(self):
+        if self.fields and not self.form_class: 
+            # default to the makeForm factory function if there is no form_class given
+            return makeSelectionForm(self.model_admin.model, fields=self.fields)
+        return super(ActionConfirmationView, self).get_form_class()
         
     def form_valid(self, form):
         # OptionalFormView returns this when either the (optional) form is not given or the form is valid.
@@ -53,15 +49,21 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
         #TODO: link_list this // NestedObjects stuff -> needs to show relevant data (jg,bestand,etc.)
         objs = []
         for obj in self.queryset:
-            objs.append([str(obj)])
+            objs.append(str(obj))
         return objs
     
     def post(self, request, *args, **kwargs):
         if request.POST.get('action_confirmed', False):
-            # User has confirmed the action  --- OptionalFormView will figure out the correct response to give.
+            # User has confirmed the action  --- OptionalFormView will figure out the correct response to give:
+            # if a form is not present: perform the action without additional (form) data
+            # if a form is present and valid: perform the action with form data
+            # if a form is present and invalid: show the confirmation page again
             return super(ActionConfirmationView, self).post(request, *args, **kwargs)
         elif request.POST.get('action_aborted', False):
             # User aborted the action, redirect back to the changelist
+            # In the django builtin delete_selected_confirmation this was handled via javascript -> window.history.back()
+            # Which would not work if back() took you back to an earlier 'instance' of this view, 
+            # as we're using POST exclusively and you cannot back into a POSTED page.
             return None
         else:
             if self.action_allowed():
@@ -79,6 +81,10 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
         else:
             objects_name = force_text(self.opts.verbose_name_plural)
         
+        media = self.model_admin.media
+        if self.get_form():
+            media += self.get_form().media
+        
         from django.contrib.admin import helpers
         context.update(
             dict(
@@ -88,28 +94,11 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
                 affected_objects        =   self.compile_affected_objects(), 
                 opts                    =   self.opts,
                 action_checkbox_name    =   helpers.ACTION_CHECKBOX_NAME,
-                media                   =   self.model_admin.media, #TODO: form.media?
-                action_name             =   self.action_name, # see below (line contrib.admin.options:1255)
+                media                   =   media,
+                action_name             =   self.action_name, # see below
             )
         )
-        #NOTE: having to specify action_name so the view does not magically (looking at you javascript) redirect to 
-        # the deletion_confirmation template/view... 
-        # if the action_name is the reason the view finds its way back into the 'right' post method (i.e. here NOT in deletion_confirmation)
-        # does that mean I need a view per action anyway - making CBVs useless for this?
+        context.update(**kwargs)
+        # action_name is a context variable that will be used on the template to tell django to direct back here
+        # (through response_action (line contrib.admin.options:1255))
         return context
-        
-class BulkJahrgang(ActionConfirmationView):
-    
-    short_description = 'Jahrgang hinzufügen'
-    perm_required = ['change']
-    
-    def action_allowed(self):
-        if self.queryset.values('magazin_id').distinct().count() != 1:
-            msg_text = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin."
-            self.model_admin.message_user(self.request, msg_text, 'error')
-            return False
-        return True
-    
-    def perform_action(self, form_cleaned_data):
-        self.queryset.order_by().update(jahrgang=form_cleaned_data['jahrgang'])
-
