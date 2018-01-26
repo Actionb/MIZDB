@@ -46,7 +46,7 @@ class ModelBase(admin.ModelAdmin):
             if name == 'delete_selected':
                 perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
             else:
-                perm_required = getattr(func, 'perm_required', False)
+                perm_required = getattr(func, 'perm_required', [])
             
             for p in perm_required:
                 perm_passed = False
