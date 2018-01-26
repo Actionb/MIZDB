@@ -22,7 +22,7 @@ class BasicMergeTestMixin(object):
         self.assertRelatedChanges()
         self.assertRestDeleted()
 
-class TestMergingAusgabe(TestMergingBase): 
+class TestMergingAusgabe(MergingTestCase): 
     
     model = ausgabe
     
@@ -86,34 +86,34 @@ class TestMergingAusgabe(TestMergingBase):
             if not bestand_item in new_original.bestand_set.all():
                 raise AssertionError('Bestand {} not found in new original.'.format(str(bestand_item)))
                 
-class TestMergingOrt(TestMergingBase, BasicMergeTestMixin):
+class TestMergingOrt(MergingTestCase, BasicMergeTestMixin):
     model = ort
     
-class TestMergingArtikel(TestMergingBase, BasicMergeTestMixin):
+class TestMergingArtikel(MergingTestCase, BasicMergeTestMixin):
     model = artikel
     
-class TestMergingBand(TestMergingBase, BasicMergeTestMixin):
+class TestMergingBand(MergingTestCase, BasicMergeTestMixin):
     model = band
 
-class TestMergingMusiker(TestMergingBase, BasicMergeTestMixin):
+class TestMergingMusiker(MergingTestCase, BasicMergeTestMixin):
     model = musiker
     
-class TestMergingAudio(TestMergingBase, BasicMergeTestMixin):
+class TestMergingAudio(MergingTestCase, BasicMergeTestMixin):
     model = audio
     
-class TestMergingAutor(TestMergingBase, BasicMergeTestMixin):
+class TestMergingAutor(MergingTestCase, BasicMergeTestMixin):
     model = autor
     
-class TestMergingGenre(TestMergingBase, BasicMergeTestMixin):
+class TestMergingGenre(MergingTestCase, BasicMergeTestMixin):
     model = genre
     
-class TestMergingSchlagwort(TestMergingBase, BasicMergeTestMixin):
+class TestMergingSchlagwort(MergingTestCase, BasicMergeTestMixin):
     model = schlagwort
     
-class TestMergingMagazin(TestMergingBase, BasicMergeTestMixin):
+class TestMergingMagazin(MergingTestCase, BasicMergeTestMixin):
     model = magazin
     
-class TestMergingPerson(TestMergingBase, BasicMergeTestMixin):
+class TestMergingPerson(MergingTestCase, BasicMergeTestMixin):
     model = person
     
 class TestConcatLimit(SimpleTestCase):

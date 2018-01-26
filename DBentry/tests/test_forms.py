@@ -3,37 +3,7 @@ from .base import *
 from DBentry.forms import *
 from DBentry.bulk.forms import *
 
-class BaseTestForm(TestCase):
-    
-    form_class = None
-    valid_data = {}
-    
-    def get_form(self, kwargs = {}):
-        return self.form_class(**kwargs)
-        
-    def get_valid_form(self):
-        form = self.form_class(data=self.valid_data)
-        form.is_valid()
-        return form
-            
-class BaseTestModelForm(BaseTestForm):
-    
-    model = None
-    fields = None
-    data_count = 1
-    add_relations = False
-    test_data = []
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.test_data = DataFactory().create_data(cls.model, count=cls.data_count, add_relations = cls.add_relations)
-        for c, obj in enumerate(cls.test_data, 1):
-            setattr(cls, 'obj'+str(c), obj)
-    
-    def get_form(self, kwargs={}):
-        return forms.modelform_factory(self.model, form=self.form_class, fields=self.fields)(**kwargs)
-        
-class TestFormBase(BaseTestModelForm):
+class TestFormBase(ModelFormTestCase):
     
     form_class = FormBase
     model = land
@@ -46,37 +16,37 @@ class TestFormBase(BaseTestModelForm):
     def test_init(self):
         # initial in kwargs
         kwargs = {'initial' : {'land_name':'Dschland'}}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertEqual(form.initial.get('land_name'),'Dschland')
         
         # test populating initial with not quite correct field names
         
         # as field path
         kwargs = {'initial' : {'xyz__land_name':'Dschland'}}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertEqual(form.initial.get('land_name'),'Dschland')
         
         # as partial match
         kwargs = {'initial' : {'abcland_namexyz':'Dschland'}}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertEqual(form.initial.get('land_name'),'Dschland')
 
     def test_validate_unique(self):
         kwargs = {'instance':self.obj1, 'data' : dict(land_name=self.obj1.land_name, code=self.obj1.code)}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertTrue(form.is_valid())
         self.assertFalse(form.errors)
         
         # attempt to create a duplicate of a unique
         kwargs = {'data' : dict(land_name=self.obj1.land_name, code=self.obj1.code)}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertFalse(form.is_valid())
         self.assertTrue(form.errors)
         # validate_unique should now set the DELETE flag in cleaned_data
         form.validate_unique()
         self.assertEqual(form.cleaned_data.get('DELETE', False), True) 
         
-class TestInLineAusgabeForm(BaseTestModelForm):
+class TestInLineAusgabeForm(ModelFormTestCase):
     
     form_class = InLineAusgabeForm
     model = ausgabe.audio.through
@@ -90,11 +60,11 @@ class TestInLineAusgabeForm(BaseTestModelForm):
     def test_init(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance':self.obj1}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertEqual(form.instance, self.obj1)
         self.assertEqual(form.initial.get('magazin'), self.mag)
         
-class TestArtikelForm(BaseTestModelForm):
+class TestArtikelForm(ModelFormTestCase):
     
     form_class = InLineAusgabeForm
     model = ausgabe.audio.through
@@ -108,15 +78,17 @@ class TestArtikelForm(BaseTestModelForm):
     def test_init(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance':self.obj1}
-        form = self.get_form(kwargs=kwargs)
+        form = self.get_form(**kwargs)
         self.assertEqual(form.instance, self.obj1)
         self.assertEqual(form.initial.get('magazin'), self.mag)
 
-class TestMIZAdminForm(BaseTestForm):
+class DummyForm(MIZAdminForm):
+    some_int = forms.IntegerField()
+    wrap_me = forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin'))
     
-    form_class = MIZAdminForm
-    form_class.base_fields['some_int'] = forms.IntegerField()
-    form_class.base_fields['wrap_me'] = forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin'))
+class TestMIZAdminForm(FormTestCase):
+    
+    form_class = DummyForm
     
     def test_init(self):
         form = self.get_form()
@@ -146,14 +118,14 @@ class TestMIZAdminForm(BaseTestForm):
         
     def test_changed_data_prop(self):
         kwargs = dict(data=dict(some_int='10'), initial=dict(some_int='10'))
-        form = self.get_form(kwargs)
+        form = self.get_form(**kwargs)
         self.assertFalse(form.changed_data)
         
         kwargs = dict(data=dict(some_int='11'), initial=dict(some_int='10'))
-        form = self.get_form(kwargs)
+        form = self.get_form(**kwargs)
         self.assertTrue(form.changed_data)
         
-class TestBulkForm(BaseTestForm):
+class TestBulkForm(FormTestCase):
     
     form_class = BulkForm
     form_class.model = ausgabe
@@ -164,8 +136,7 @@ class TestBulkForm(BaseTestForm):
     
     def test_init(self):
         # Test init taking the given each_fields parameter
-        kwargs = dict(each_fields=['some_fld'])
-        form = self.get_form(kwargs)
+        form = self.get_form(each_fields=['some_fld'])
         self.assertEqual(sorted(form.each_fields), ['req_fld', 'some_fld'])
         
         # See if the fieldsets were set up properly
@@ -173,15 +144,16 @@ class TestBulkForm(BaseTestForm):
         self.assertEqual(sorted(form.fieldsets[1][1]['fields']), ['req_fld']) # at_least_one_required
         
     def test_has_changed(self):
-        kwargs = dict(data={'req_fld':'2001'}, initial={'req_fld':'2000'})
-        form = self.get_form(kwargs)
+        data = {'req_fld':'2001'}
+        initial = {'req_fld':'2000'}
+        form = self.get_form(data=data, initial=initial)
         self.assertTrue(form.has_changed())
         self.assertFalse(form._row_data) # _row_data should be empty if anything about the form data has changed
         
     def test_clean_errors(self):        
         # total_count != item_count => error message
-        kwargs = dict(data={'some_bulkfield':'1,2', 'req_fld' : '2000'})
-        form = self.get_form(kwargs)
+        data = {'some_bulkfield':'1,2', 'req_fld' : '2000'}
+        form = self.get_form(data=data)
         form.is_valid()
         form.total_count = 1 # clean() expects total_count to be zero at the beginning
         try:
@@ -190,8 +162,8 @@ class TestBulkForm(BaseTestForm):
             self.assertEqual(e.message[:16],'Ungleiche Anzahl')
             
         # not all fields in at_least_one_required have data => error message
-        kwargs = dict(data={'some_bulkfield':'1,2'})
-        form = self.get_form(kwargs)
+        data = {'some_bulkfield':'1,2'}
+        form = self.get_form(data=data)
         form.is_valid()
         try:
             form.clean()
@@ -199,8 +171,8 @@ class TestBulkForm(BaseTestForm):
             self.assertEqual(e.message[:16],'Bitte mindestens')
             
     def test_clean(self):
-        kwargs = dict(data={'some_bulkfield':'1,2', 'req_fld' : '2000'})
-        form = self.get_form(kwargs)
+        data ={ 'some_bulkfield':'1,2', 'req_fld' : '2000'}
+        form = self.get_form(data=data)
         form.is_valid()
         # check if split_data was populated correctly
         self.assertTrue('some_bulkfield' in form.split_data)
@@ -208,7 +180,7 @@ class TestBulkForm(BaseTestForm):
         self.assertTrue('req_fld' in form.split_data)
         self.assertEqual(sorted(form.split_data.get('req_fld')), ['2000'])
         
-class TestBulkFormAusgabe(BaseTestForm):
+class TestBulkFormAusgabe(FormTestCase):
     
     form_class = BulkFormAusgabe
     
@@ -247,11 +219,11 @@ class TestBulkFormAusgabe(BaseTestForm):
         )
     
     def test_clean(self):
+        #TODO: what was I trying to do here?
         # audio == True v audio_lagerort == False => 'Bitte einen Lagerort für die Musik Beilage angeben.'
         data = self.valid_data.copy()
         data['audio'] = True
-        kwargs = dict(data=data)
-        form = self.get_form(kwargs)
+        form = self.get_form(data=data)
         form.is_valid()
         
     def test_clean_lagerort(self):
@@ -315,12 +287,12 @@ class TestBulkFormAusgabe(BaseTestForm):
         self.assertEqual(row_data[3], row_data[4]['dupe_of'])
         
         
-class TestDynamicChoiceForm(BaseTestForm):
+class TestDynamicChoiceForm(FormTestCase):
     
     def test_init(self):
         pass
     
-class TestDynamicChoiceFormSet(BaseTestForm):
+class TestDynamicChoiceFormSet(FormTestCase):
     
     def test_get_form_kwargs(self):
         pass

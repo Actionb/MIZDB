@@ -8,15 +8,8 @@ from DBentry.ie.views import *
 from DBentry.ac.views import *
 from DBentry.bulk.views import *
 
-
-def setup_view(view, request=None, args=None, kwargs=None):
-    # return view class 
-    view.request = request
-    view.args = args
-    view.kwargs = kwargs
-    return view
-    
 def setup_wizard_view(view, request, *args, **kwargs):
+    #TODO: this looks WRONG
     view.request = request
     for k, v in view.get_initkwargs().items():
         setattr(view, k, v)
@@ -25,43 +18,7 @@ def setup_wizard_view(view, request, *args, **kwargs):
     view.dispatch(request, **view.kwargs) # WizardView sets a couple of attributes during dispatch (steps,storage,...)
     return view
 
-class BaseTestView(UserTestCase):
-    
-    view_class = None
-    path = ''
-    
-    def view(self, request=None, args=None, kwargs=None, **initkwargs):
-        self.view_class.request = request
-        self.view_class.args = args
-        self.view_class.kwargs = kwargs
-        return self.view_class(**initkwargs)
-        
-    def post_request(self, path='', data={}, user=None):
-        self.client.force_login(user or self.super_user)
-        return self.client.post(path or self.path, data).wsgi_request
-    
-    def get_request(self, path='', data={}, user=None):
-        self.client.force_login(user or self.super_user)
-        return self.client.get(path or self.path, data).wsgi_request
-        
-class BaseFormViewMixin(object):
-    
-    form_class = None
-    
-    def get_form(self, data = None, files = None, initial = None):
-        if hasattr(self, 'valid_data'):
-            data = getattr(self, 'valid_data', {}).copy()
-        if getattr(self, 'view_class', None) is not None:
-            if getattr(self.view_class, 'form_class', None) is not None:
-                form_class = self.view_class.form_class
-            else:
-                form_class = self.form_class
-        form = form_class(data=data, files=files, initial=initial)
-        form.is_valid()
-        return form
-        
-
-class TestMIZAdminToolView(BaseTestView):
+class TestMIZAdminToolView(ViewTestCase):
     # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin
     
     view_class = MIZAdminToolView
@@ -126,7 +83,7 @@ class TestMIZAdminToolView(BaseTestView):
         context_data = self.view(request).get_context_data()
         self.assertEqual(context_data.get('is_popup', False), True)
     
-class TestFavoritenView(BaseTestView):
+class TestFavoritenView(ViewTestCase):
     
     view_class = FavoritenView
     
@@ -143,7 +100,7 @@ class TestFavoritenView(BaseTestView):
         self.assertTrue(view.model.objects.filter(user=request.user).exists())
         self.assertEqual(view.get_object().user, self.super_user) # direct access to Favoriten via queryset
     
-class TestMIZSessionWizardView(BaseTestView):
+class TestMIZSessionWizardView(ViewTestCase):
     
     view_class = MIZSessionWizardView
     
@@ -152,7 +109,7 @@ class TestMIZSessionWizardView(BaseTestView):
         pass
     
 #DBentry.bulk
-class TestBulkAusgabe(BaseTestView, BaseFormViewMixin):
+class TestBulkAusgabe(ViewTestCase, CreateFormViewMixin):
     
     view_class = BulkAusgabe
     path = reverse('bulk_ausgabe')
@@ -248,14 +205,14 @@ class TestBulkAusgabe(BaseTestView, BaseFormViewMixin):
         self.assertEqual(response.status_code, 200)
         
     def test_save_data_updated(self):
-        form = self.get_form()
+        form = self.get_valid_form()
         request = self.post_request()
         self.assertFalse(self.updated.audio.exists())
         ids, created, updated = self.view(request).save_data(request, form)
         self.assertTrue(self.updated.audio.exists())
         
     def test_save_data_created(self):
-        form = self.get_form()
+        form = self.get_valid_form()
         request = self.post_request()
         ids, created, updated = self.view(request).save_data(request, form)
         
@@ -271,7 +228,7 @@ class TestBulkAusgabe(BaseTestView, BaseFormViewMixin):
         
         
     def test_next_initial_data(self):
-        form = self.get_form()
+        form = self.get_valid_form()
         next_data = self.view().next_initial_data(form)
         self.assertEqual(next_data.get('jahrgang', 0), 12)
         self.assertEqual(next_data.get('jahr', ''), '2002, 2003')
@@ -282,21 +239,8 @@ class TestBulkAusgabe(BaseTestView, BaseFormViewMixin):
         
     def build_preview(self):
         pass
-
-#DBentry.ac.views
-class BaseTestACView(BaseTestView):
     
-    model = None
-    create_field = None
-    
-    def view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
-        self.view_class.model = model or self.model
-        self.view_class.create_field = create_field or self.create_field
-        self.view_class.forwarded = forwarded or {}
-        self.view_class.q = q or ''
-        return super(BaseTestACView, self).view(request, args, kwargs)
-    
-class TestACBase(BaseTestACView):
+class TestACBase(ACViewTestCase):
     
     view_class = ACBase
     path = reverse('acband')
@@ -413,7 +357,7 @@ class TestACBase(BaseTestACView):
         # Seems I cannot log out? Assertion fails. Need to be NOT authenticated, i.e. AnonymousUser
         #self.assertFalse(self.view().has_add_permission(request)) 
         
-class TestACProv(BaseTestACView):
+class TestACProv(ACViewTestCase):
     
     view_class = ACProv
     path = reverse('acprov')
@@ -438,7 +382,7 @@ class TestACProv(BaseTestACView):
         self.assertTrue(qs.exists())
         
         
-class TestACAusgabe(BaseTestACView):
+class TestACAusgabe(ACViewTestCase):
     
     view_class = ACAusgabe
     path = reverse('acausgabe')
