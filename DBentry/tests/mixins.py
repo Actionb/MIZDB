@@ -11,7 +11,8 @@ class TestDataMixin(object):
     @classmethod
     def setUpTestData(cls):
         super(TestDataMixin, cls).setUpTestData()
-        cls.test_data = DataFactory().create_data(cls.model, count=cls.test_data_count, add_relations = cls.add_relations)
+        if cls.test_data_count:
+            cls.test_data = DataFactory().create_data(cls.model, count=cls.test_data_count, add_relations = cls.add_relations)
         for c, obj in enumerate(cls.test_data, 1):
             setattr(cls, 'obj' + str(c), obj)
         

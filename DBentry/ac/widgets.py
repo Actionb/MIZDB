@@ -58,12 +58,15 @@ def wrap_dal_widget(widget, remote_field_name = 'id'):
     # Accessing widget.url calls reverse() with the root conf for the app (MIZDB.urlconf), resulting in another circular import.
     # NOTE: resolve_lazy()???!
     from DBentry.ac.urls import autocomplete_patterns
-    from django.urls import RegexURLResolver
+    from django.urls import RegexURLResolver, NoReverseMatch
     from dal import autocomplete
     if not isinstance(widget, autocomplete.ModelSelect2) or not hasattr(widget, '_url'):
         return widget
     resolver = RegexURLResolver(r'', autocomplete_patterns)
-    path = resolver.reverse(widget._url)
+    try:
+        path = resolver.reverse(widget._url)
+    except NoReverseMatch:
+        return widget
     resolver_match = resolver.resolve(path)
     if resolver_match:
         match_view = resolver_match.func.view_class

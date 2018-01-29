@@ -1,7 +1,9 @@
 
 from django.utils.translation import ugettext as _
 from django.utils.encoding import force_text
+from django.contrib.admin.utils import get_fields_from_path
 
+from DBentry.utils import get_obj_link
 from DBentry.views import MIZAdminMixin, OptionalFormView
 from .forms import makeSelectionForm
 
@@ -14,7 +16,9 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
     opts = None
     action_name = None
     
-    fields = None # these are the model fields that should be displayed in the 'selection form'
+    fields = [] # these are the model fields that should be displayed in the 'selection form'
+    help_texts = {}
+    labels = {}
     
     def __init__(self, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
@@ -28,7 +32,8 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
     def get_form_class(self):
         if self.fields and not self.form_class: 
             # default to the makeForm factory function if there is no form_class given
-            return makeSelectionForm(self.model_admin.model, fields=self.fields)
+            #return makeSelectionForm(self.model_admin.model, fields=self.fields)
+            return makeSelectionForm(self.model_admin.model, fields=self.fields, labels=self.labels, help_texts=self.help_texts)
         return super(ActionConfirmationView, self).get_form_class()
         
     def form_valid(self, form):
@@ -46,10 +51,30 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
         raise NotImplementedError('Subclasses must implement this method.')
         
     def compile_affected_objects(self):
-        #TODO: link_list this // NestedObjects stuff -> needs to show relevant data (jg,bestand,etc.)
+        
+        def linkify(obj, opts):
+            return get_obj_link(obj, opts, self.request.user, self.model_admin.admin_site)
+        
         objs = []
         for obj in self.queryset:
-            objs.append(str(obj))
+            sub_list = [linkify(obj, self.opts)]
+            if self.fields:
+                flds = []
+                for field_path in self.fields:
+                    field = get_fields_from_path(self.opts.model, field_path)[0]
+                    if field.is_relation:
+                        related_pks = self.queryset.filter(pk=obj.pk).values_list(field.name, flat=True)
+                        for pk in related_pks:
+                            if pk: # values() will also gather None values
+                                related_obj = field.related_model.objects.get(pk=pk)
+                                flds.append(linkify(related_obj, field.related_model._meta))
+                    else:
+                        value = getattr(obj, field.name)
+                        if value is None:
+                            continue
+                        flds.append("{}: {}".format(field.verbose_name, str(value)))
+                    sub_list.append(flds)
+            objs.append(sub_list)
         return objs
     
     def post(self, request, *args, **kwargs):

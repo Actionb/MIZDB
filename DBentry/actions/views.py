@@ -1,9 +1,14 @@
+
+from django.db import transaction
+
 from .base import ActionConfirmationView
+from .forms import BulkAddBestandForm
     
 class BulkEditJahrgang(ActionConfirmationView):
     
     short_description = 'Jahrgang hinzufügen'
     perm_required = ['change']
+    action_name = 'bulk_jg'
     
     fields = ['jahrgang']
     
@@ -15,6 +20,28 @@ class BulkEditJahrgang(ActionConfirmationView):
         return True
     
     def perform_action(self, form_cleaned_data):
-        #TODO: this is only a placeholder
-        if form_cleaned_data:
-            self.queryset.order_by().update(jahrgang=form_cleaned_data['jahrgang'])
+        qs = self.queryset.order_by().all()
+        jg = form_cleaned_data['jahrgang']
+        years_in_qs = qs.values_list('ausgabe_jahr__jahr', flat = True).exclude(ausgabe_jahr__jahr=None).order_by('ausgabe_jahr__jahr').distinct()
+        previous_year = years_in_qs.first()
+        with transaction.atomic():
+            for year in years_in_qs:
+                jg += year - previous_year
+                loop_qs = qs.filter(ausgabe_jahr__jahr=year)
+                loop_qs.update(jahrgang=jg)
+                # Do not update the same issue twice (e.g. issues with two years)
+                qs = qs.exclude(ausgabe_jahr__jahr=year)
+                previous_year = year
+                
+                
+class BulkAddBestand(ActionConfirmationView):
+    
+    short_description = 'Bestand hinzufügen'
+    perm_required = ['change']
+    action_name = 'add_bestand'
+    
+    form_class = BulkAddBestandForm
+    fields = ['bestand']
+    
+    def perform_action(self, form_cleaned_data):
+        pass

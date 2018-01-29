@@ -1,10 +1,14 @@
 
 from collections import OrderedDict
 
+from django import forms
 from django.contrib.admin.utils import get_fields_from_path
 from django.urls import reverse
 
+from dal import autocomplete
+
 from DBentry.forms import MIZAdminForm, WIDGETS
+from DBentry.models import lagerort
 
 def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_classes = {}):
     attrs = OrderedDict()
@@ -14,15 +18,15 @@ def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_cla
         
         if field.is_relation:
             field = field.get_path_info()[-1].join_field
-            model = field.model
             formfield_opts['queryset'] = field.related_model._default_manager
-            if model in WIDGETS:
-                widget_dict = WIDGETS[model]
+            if field.model in WIDGETS:
+                widget_dict = WIDGETS[field.model]
             else:
                 widget_dict = WIDGETS
             if field.name in widget_dict:
                 widget = widget_dict.get(field.name)
                 # remove create_options, if possible
+                #TODO: keep this? Wouldn't we want to allow people to add/change the important data?
                 try:
                     reverse(widget._url+'_nocreate')
                 except:
@@ -38,3 +42,14 @@ def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_cla
             attrs[field_path] = field.formfield(**formfield_opts)
     return type('SelectionForm', (MIZAdminForm, ), attrs )
     
+class BulkAddBestandForm(MIZAdminForm):
+    
+    bestand = forms.ModelChoiceField(required = True,
+                                    label = "Lagerort (Bestand)", 
+                                    queryset = lagerort.objects.all(), 
+                                    widget = autocomplete.ModelSelect2(url='aclagerort'))
+    dublette = forms.ModelChoiceField(required = True,
+                                    label = "Lagerort (Dublette)", 
+                                    queryset = lagerort.objects.all(), 
+                                    widget = autocomplete.ModelSelect2(url='aclagerort'))
+                                

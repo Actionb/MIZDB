@@ -30,7 +30,6 @@ class TestActionConfirmationView(ActionViewTestCase):
         # 1. view.fields set and no view.form_class set => makeSelectionForm should make a form (so: a MIZAdminForm)
         view = self.view()
         view.fields = ['band_name']
-        form_class = view.get_form_class()
         self.assertTrue(issubclass(view.get_form_class(), MIZAdminForm))
         
     def test_get_form_class_fields_and_form_class(self):
@@ -45,11 +44,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.view()
         self.assertEqual(view.get_form_class(), None)
         
-#    def test_perform_action_not_implemented(self):
-#        # this base class has not implemented the perform_action method
-#        view = self.view()
-#        with self.assertRaises(NotImplementedError):
-#            view.perform_action()
+    def test_perform_action_not_implemented(self):
+        # this base class has not implemented the perform_action method
+        view = self.view()
+        with self.assertRaises(NotImplementedError):
+            view.perform_action()
             
     def test_action_allowed(self):
         # defaults to True
@@ -57,8 +56,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertTrue(view.action_allowed())
     
     def test_compile_affected_objects(self):
-        view = self.view()
-        self.assertEqual(view.compile_affected_objects(), [str(self.obj1)])
+        request = self.get_request()
+        view = self.view(request=request)
+        from DBentry.utils import get_obj_link #obj, opts, user, admin_site
+        expected = [[get_obj_link(self.obj1, view.opts, request.user, view.model_admin.admin_site)]]
+        self.assertEqual(view.compile_affected_objects(), expected)
         
     def test_get_context_data_one_item(self):
         request = self.get_request()
@@ -67,7 +69,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertEqual(context['objects_name'], self.model_admin.opts.verbose_name)
         
     def test_get_context_data_multiple_items(self):
-        new_guy = self.model.objects.create(band_name='Testband')
+        self.model.objects.create(band_name='Testband')
         queryset = self.model.objects.all()
         
         request = self.get_request()
@@ -80,26 +82,46 @@ class TestBulkEditJahrgang(ActionViewTestCase):
     view_class = BulkEditJahrgang
     model = ausgabe
     model_admin_class = AusgabenAdmin
-    test_data_count = 2
     
+    @classmethod
+    def setUpTestData(cls):
+        mag = magazin.objects.create(magazin_name='Testmagazin')
+        cls.obj1 = ausgabe.objects.create(magazin=mag)
+        cls.obj1.ausgabe_jahr_set.create(jahr=2000)
+        
+        cls.obj2 = ausgabe.objects.create(magazin=mag)
+        cls.obj2.ausgabe_jahr_set.create(jahr=2001)
+        
+        cls.obj3 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Bad'))
+        cls.obj3.ausgabe_jahr_set.create(jahr=2001)
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        
+        super(TestBulkEditJahrgang, cls).setUpTestData()
+    
+    def setUp(self):
+        super(TestBulkEditJahrgang, self).setUp()
+        # set self.queryset to objects 1 and 2 as these are compliant with the view's checks
+        self.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
+        
+        
     def test_action_allowed(self):
         # the DataFactory assigns both ausgaben the same magazin
         self.assertTrue(self.view().action_allowed())
         
     def test_action_allowed_multi_magazine(self):
-        # the DataFactory assigns both ausgaben the same magazin, need to mess that up first
-        self.obj2.magazin = magazin.objects.create(magazin_name='Bad')
-        self.obj2.save()
-        
         request = self.get_request()
-        view = self.view(request, queryset=self.model.objects.all())
+        view = self.view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
         self.assertFalse(view.action_allowed())
         expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin." 
         self.assertMessageSent(request, expected_message)
         
     def test_form_valid(self):
-        view = self.view()
-        self.assertIsNone(view.form_valid(form=None))
+        request = self.post_request(data={'action_confirmed':True, 'jahrgang':1})
+        view = self.view(request)
+        form = view.get_form()
+        form.full_clean()
+        self.assertIsNone(view.form_valid(form))
         
     def test_get_context_data_with_form(self):
         #TODO: how to compare media objects?
@@ -135,16 +157,13 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         self.assertEqual(response.__class__, TemplateResponse)
     
     def test_post_action_not_allowed(self):
-        self.obj2.magazin = magazin.objects.create(magazin_name='Bad')
-        self.obj2.save()
-        
         request = self.get_request()
-        view = self.view(request, queryset=self.model.objects.all())
+        view = self.view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
         response = view.post(request)
         self.assertIsNone(response)
         
-    def test_perform_action(self):
+    def test_perform_action(self):      
         view = self.view()
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
-        self.assertEqual(new_jg, [31416, 31416])
+        self.assertEqual(new_jg, [31416, 31417])

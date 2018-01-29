@@ -11,7 +11,7 @@ from .models import *
 from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
 from .changelist import MIZChangeList
-from .actions import merge_records, bulk_jg
+from .actions import merge_records, bulk_jg, add_bestand
 
 from .sites import miz_site
 
@@ -212,8 +212,7 @@ class ModelBase(admin.ModelAdmin):
     def merge_allowed(self, request, queryset):
         """ Hook for checks on merging. """
         return True
-    
-
+        
 class TabModelBase(admin.TabularInline):
     original = False
     verbose_model = None
@@ -394,7 +393,7 @@ class AusgabenAdmin(ModelBase):
                             'lfd' : 'ausgabe_lnum__lnum', 
                             }
                             
-    actions = [bulk_jg]
+    actions = [bulk_jg, add_bestand]
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
         'selects':['magazin','status'], 

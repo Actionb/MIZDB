@@ -1,15 +1,21 @@
-from django.db.utils import IntegrityError
-from django.db.models import Aggregate
-from django.utils.http import urlquote
-from django.utils.html import format_html
-from django.urls import reverse
-from django.utils.encoding import force_text
-from django.db import transaction
-
-from .constants import M2M_LIST_MAX_LEN
+import re
 from functools import partial
 
+from django.db import transaction
+from django.db.utils import IntegrityError
+from django.db.models import Aggregate
 
+from django.utils.http import urlquote
+from django.utils.html import format_html
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
+
+from django.urls import reverse, NoReverseMatch
+
+from django.contrib.admin.utils import quote
+from django.contrib.auth import get_permission_codename
+
+from .constants import M2M_LIST_MAX_LEN
 
 def merge_records(original, qs, update_data = None, expand_original = True):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
@@ -255,3 +261,29 @@ def print_dict(a_dict, file=None):
         printf(str(k)+":")
         printf(v)
         printf("~"*20)
+        
+def get_obj_link(obj, opts, user, admin_site):
+    
+    no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
+                               force_text(obj))
+
+    try:
+        admin_url = reverse('%s:%s_%s_change'
+                            % (admin_site.name,
+                               opts.app_label,
+                               opts.model_name),
+                            None, (quote(obj._get_pk_val()),))
+    except NoReverseMatch:
+        # Change url doesn't exist -- don't display link to edit
+        return no_edit_link
+
+    p = '%s.%s' % (opts.app_label,
+                   get_permission_codename('change', opts))
+    if not user.has_perm(p):
+        return no_edit_link
+    # Display a link to the admin page.
+    return format_html('{}: <a href="{}">{}</a>',
+                       capfirst(opts.verbose_name),
+                       admin_url,
+                       obj)
+    
