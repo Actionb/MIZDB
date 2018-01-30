@@ -66,6 +66,8 @@ def wrap_dal_widget(widget, remote_field_name = 'id'):
     try:
         path = resolver.reverse(widget._url)
     except NoReverseMatch:
+        # It is possible we were trying to wrap a widget with a 'nocreate' url
+        # -- obviously we do not want to wrap this widget then
         return widget
     resolver_match = resolver.resolve(path)
     if resolver_match:
