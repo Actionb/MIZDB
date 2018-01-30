@@ -20,6 +20,8 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
     help_texts = {}
     labels = {}
     
+    view_helptext = ''
+    
     def __init__(self, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
         self.queryset = kwargs.pop('queryset')
@@ -35,6 +37,22 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
             #return makeSelectionForm(self.model_admin.model, fields=self.fields)
             return makeSelectionForm(self.model_admin.model, fields=self.fields, labels=self.labels, help_texts=self.help_texts)
         return super(ActionConfirmationView, self).get_form_class()
+
+    def get_form_kwargs(self):
+        """
+        Returns the keyword arguments for instantiating the form.
+        """
+        kwargs = {
+            'initial': self.get_initial(),
+            'prefix': self.get_prefix(),
+        }
+
+        if self.request.method in ('POST', 'PUT') and 'action_confirmed' in self.request.POST:
+            kwargs.update({
+                'data': self.request.POST,
+                'files': self.request.FILES,
+            })
+        return kwargs
         
     def form_valid(self, form):
         # OptionalFormView returns this when either the (optional) form is not given or the form is valid.
@@ -73,7 +91,7 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
                         if value is None:
                             continue
                         flds.append("{}: {}".format(field.verbose_name, str(value)))
-                    sub_list.append(flds)
+                sub_list.append(flds)
             objs.append(sub_list)
         return objs
     
@@ -109,7 +127,7 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
         media = self.model_admin.media
         if self.get_form():
             media += self.get_form().media
-        
+            
         from django.contrib.admin import helpers
         context.update(
             dict(
@@ -121,9 +139,12 @@ class ActionConfirmationView(MIZAdminMixin, OptionalFormView):
                 action_checkbox_name    =   helpers.ACTION_CHECKBOX_NAME,
                 media                   =   media,
                 action_name             =   self.action_name, # see below
+                view_helptext           =   self.view_helptext, 
             )
         )
         context.update(**kwargs)
         # action_name is a context variable that will be used on the template to tell django to direct back here
         # (through response_action (line contrib.admin.options:1255))
         return context
+
+              

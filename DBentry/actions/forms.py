@@ -42,6 +42,7 @@ def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_cla
             attrs[field_path] = field.formfield(**formfield_opts)
     return type('SelectionForm', (MIZAdminForm, ), attrs )
     
+    
 class BulkAddBestandForm(MIZAdminForm):
     
     bestand = forms.ModelChoiceField(required = True,
@@ -52,4 +53,3 @@ class BulkAddBestandForm(MIZAdminForm):
                                     label = "Lagerort (Dublette)", 
                                     queryset = lagerort.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'))
-                                

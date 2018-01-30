@@ -5,6 +5,7 @@ from DBentry.admin import BandAdmin, AusgabenAdmin
 from DBentry.actions.base import *
 from DBentry.actions.views import *
 from DBentry.forms import MIZAdminForm, forms
+from DBentry.utils import get_obj_link #obj, opts, user, admin_site
 
 class TestActionConfirmationView(ActionViewTestCase):
     
@@ -58,7 +59,6 @@ class TestActionConfirmationView(ActionViewTestCase):
     def test_compile_affected_objects(self):
         request = self.get_request()
         view = self.view(request=request)
-        from DBentry.utils import get_obj_link #obj, opts, user, admin_site
         expected = [[get_obj_link(self.obj1, view.opts, request.user, view.model_admin.admin_site)]]
         self.assertEqual(view.compile_affected_objects(), expected)
         
@@ -92,10 +92,12 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         cls.obj2 = ausgabe.objects.create(magazin=mag)
         cls.obj2.ausgabe_jahr_set.create(jahr=2001)
         
-        cls.obj3 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Bad'))
+        cls.obj3 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Bad'), jahrgang=20)
         cls.obj3.ausgabe_jahr_set.create(jahr=2001)
         
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        cls.obj4 = ausgabe.objects.create(magazin=mag)
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
         
         super(TestBulkEditJahrgang, cls).setUpTestData()
     
@@ -115,6 +117,23 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         self.assertFalse(view.action_allowed())
         expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin." 
         self.assertMessageSent(request, expected_message)
+        
+    def test_compile_affected_objects(self):
+        # obj1 has no jahrgang, obj3 does --> only obj3's jahrgang should show up on the result
+        # result 0 0 => obj1
+        # result 1 0 => obj3
+        # result 1 1 => obj3.jahrgang
+        request = self.get_request()
+        
+        view = self.view(request, queryset=self.qs_obj1)
+        result = view.compile_affected_objects()
+        expected = []
+        self.assertEqual(result[0][1], expected)
+        
+        view = self.view(request, queryset=self.qs_obj3)
+        result = view.compile_affected_objects()
+        expected = ["Jahrgang: 20"]
+        self.assertEqual(result[0][1], expected)
         
     def test_form_valid(self):
         request = self.post_request(data={'action_confirmed':True, 'jahrgang':1})
@@ -167,3 +186,111 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416, 31417])
+        
+    def test_perform_action_no_years(self):    
+        # obj4 has no years assigned, perform_action should assign it the value given by the 'form'
+        view = self.view(queryset=self.qs_obj4)
+        view.perform_action({'jahrgang':31416})
+        new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
+        self.assertEqual(new_jg, [31416])
+        
+class TestBulkAddBestand(ActionViewTestCase):
+    
+    view_class = BulkAddBestand
+    model = ausgabe
+    model_admin_class = AusgabenAdmin
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.bestand_lagerort = lagerort.objects.create(pk=6, ort='Bestand') # ZRAUM_ID constant = 6
+        cls.dubletten_lagerort = lagerort.objects.create(pk=5, ort='Dublette') # DUPLETTEN_ID constant = 5
+        mag = magazin.objects.create(magazin_name='Testmagazin')
+        
+        cls.obj1 = ausgabe.objects.create(magazin=mag)
+        
+        cls.obj2 = ausgabe.objects.create(magazin=mag)
+        cls.obj2.bestand_set.create(lagerort=cls.bestand_lagerort)
+        
+        cls.obj3 = ausgabe.objects.create(magazin=mag)
+        cls.obj3.bestand_set.create(lagerort=cls.dubletten_lagerort)
+        
+        cls.obj4 = ausgabe.objects.create(magazin=mag)
+        cls.obj4.bestand_set.create(lagerort=cls.bestand_lagerort)
+        cls.obj4.bestand_set.create(lagerort=cls.dubletten_lagerort)
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
+        
+        super(TestBulkAddBestand, cls).setUpTestData()
+    
+    def test_compile_affected_objects_obj1(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj1)
+        obj_link = get_obj_link(self.obj1, view.opts, request.user, view.model_admin.admin_site)
+        related_links = []
+        expected = [[obj_link, related_links]]
+        self.assertEqual(view.compile_affected_objects(), expected)
+    
+    def test_compile_affected_objects_obj2(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj2)
+        obj_link = get_obj_link(self.obj2, view.opts, request.user, view.model_admin.admin_site)
+        related_links = [
+            get_obj_link(obj, bestand._meta, request.user, view.model_admin.admin_site)
+            for obj in self.obj2.bestand_set.all()
+        ]
+        expected = [[obj_link, related_links]]
+        self.assertEqual(view.compile_affected_objects(), expected)
+    
+    def test_compile_affected_objects_obj3(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj3)
+        obj_link = get_obj_link(self.obj3, view.opts, request.user, view.model_admin.admin_site)
+        related_links = [
+            get_obj_link(obj, bestand._meta, request.user, view.model_admin.admin_site)
+            for obj in self.obj3.bestand_set.all()
+        ]
+        expected = [[obj_link, related_links]]
+        self.assertEqual(view.compile_affected_objects(), expected)
+        
+    def test_compile_affected_objects_obj4(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj4)
+        obj_link = get_obj_link(self.obj4, view.opts, request.user, view.model_admin.admin_site)
+        related_links = [
+            get_obj_link(obj, bestand._meta, request.user, view.model_admin.admin_site)
+            for obj in self.obj4.bestand_set.all()
+        ]
+        expected = [[obj_link, related_links]]
+        self.assertEqual(view.compile_affected_objects(), expected)
+        
+    def test_perform_action_obj1(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj1)
+        view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
+        new_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.bestand_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        
+    def test_perform_action_obj2(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj2)
+        view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
+        new_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        
+    def test_perform_action_obj3(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj3)
+        view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
+        new_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        
+    def test_perform_action_obj4(self):
+        request = self.get_request()
+        view = self.view(request=request, queryset=self.qs_obj4)
+        view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
+        new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
+        self.assertEqual(new_bestand, expected)

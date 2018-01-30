@@ -139,15 +139,15 @@ div .help_text {
 .action-confirmation form input[type="submit"][name="action_confirmed"]:hover {
     background: #a41515 none repeat scroll 0 0;
 }
-.action-confirmation form input[type="submit"][name="action_aborted"] {
+
+.action-confirmation form .cancel-link {
     background: #ddd none repeat scroll 0 0;
+    border-radius: 4px;
     color: #333;
     display: inline-block;
+    height: 15px;
     line-height: 15px;
     margin: 0 0 0 10px;
-}
-.action-confirmation form input[type="submit"][name="action_aborted"]:active,
-.action-confirmation form input[type="submit"][name="action_aborted"]:focus,
-.action-confirmation form input[type="submit"][name="action_aborted"]:hover {
-    background: #ccc none repeat scroll 0 0;
+    padding: 10px 15px;
+    vertical-align: middle;
 }

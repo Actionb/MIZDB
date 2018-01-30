@@ -1,10 +1,12 @@
 {% extends "admin/base_site.html" %}
-{% load i18n l10n admin_urls static %}
+{% load i18n l10n admin_urls %}
 
+{% comment %}{% endcomment %}
 {% block extrahead %}
     {{ block.super }}
     {{ media }}
 {% endblock %}
+
 
 {% block bodyclass %}{{ block.super }} action-confirmation {% endblock %}
 
@@ -16,47 +18,31 @@
 &rsaquo; {% trans 'Change multiple objects' %}
 </div>
 {% endblock %}
-{% comment %}
-{% endcomment %}
 
 {% block content %}
-    <p>
-        {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
-        
-        {% if requires_deletion %}
-            {% blocktrans %}All of the following objects and their related items will be deleted:{% endblocktrans %}
-        {% endif %}
-    </p>
-        
-    {% comment %} Only need this to display what is going to be deleted. 
-                The only action deleting objects would be 'merge', which has it's own view/template
-    {% if model_count %}
-    {% block object_summary %}
-        {% include "admin/includes/object_delete_summary.html" %}
-    {% endblock object_summary %}
+    {% if view_helptext %}
+        <p> {{view_helptext|linebreaks}} </p>
     {% endif %}
-    {% endcomment %}
-    
-    
     {% block confirmation_form %}
     
         <form method="post">{% csrf_token %}
             {% block selection_form %}
                 {% if form %}
-                    
                     {% for fieldset in form %}
                       {% include "admin/includes/fieldset.html" %}
                     {% endfor %}
-                    
-                    {% comment %}{{form.as_p}}{% endcomment %}
                 {% endif %}
             {% endblock selection_form %}
-    {% block object_details %}
-        <h2>{% trans "Objects" %}</h2>
-        {% for affected_object in affected_objects %}
-            <ul>{{ affected_object|unordered_list }}</ul>
-        {% endfor %}
-    {% endblock object_details %}
+            
+            <p>
+                {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
+            </p>
+            {% block object_details %}
+                <h2>{% trans "Objects" %}</h2>
+                {% for affected_object in affected_objects %}
+                    <ul>{{ affected_object|unordered_list }}</ul>
+                {% endfor %}
+            {% endblock object_details %}
     
             <div>
                 {% for obj in queryset %}
@@ -64,7 +50,7 @@
                 {% endfor %}
                 <input type="hidden" name="action" value="{{action_name}}" />
                 <input type="submit" name="action_confirmed" value="{% trans "Yes, I'm sure" %}" />
-                <input type="submit" name="action_aborted" value="{% trans "No, take me back" %}" />
+                <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
             </div>
         </form>
     {% endblock confirmation_form %}
