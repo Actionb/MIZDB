@@ -112,6 +112,23 @@ def link_list(request, obj_list,  SEP = ", ", path = None):
         print("WARNING : Failed to create link_list.")
         return SEP.join([force_text(obj) for obj in obj_list])
     return format_html(obj_list_string)
+#    def format_callback(obj):
+#        has_admin = obj.__class__ in admin_site._registry
+#        opts = obj._meta
+#
+#        no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
+#                                   force_text(obj))
+#
+#        if has_admin:
+#            try:
+#                admin_url = reverse('%s:%s_%s_change'
+#                                    % (admin_site.name,
+#                                       opts.app_label,
+#                                       opts.model_name),
+#                                    None, (quote(obj._get_pk_val()),))
+#            except NoReverseMatch:
+#                # Change url doesn't exist -- don't display link to edit
+#                return no_edit_link
     
 def model_from_string(model_name):
     from django.apps import apps 

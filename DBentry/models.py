@@ -320,7 +320,7 @@ class ausgabe(ShowModel):
     info = models.TextField(max_length = 200, blank = True)
     sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
     
-    audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe)
+    audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe, blank = True)
     
     dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
                     'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']

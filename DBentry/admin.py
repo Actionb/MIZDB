@@ -211,6 +211,7 @@ class ModelBase(admin.ModelAdmin):
         
     def merge_allowed(self, request, queryset):
         """ Hook for checks on merging. """
+        #TODO: move this to actions.py
         return True
         
 class TabModelBase(admin.TabularInline):
@@ -548,6 +549,7 @@ class ArtikelAdmin(ModelBase):
         return qs
         
     def merge_allowed(self, request, queryset):
+        #TODO: move this to actions.py
         if queryset.values('ausgabe').distinct().count()>1:
             # User is trying to merge artikel from different ausgaben
             self.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')
