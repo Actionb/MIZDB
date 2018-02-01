@@ -3,6 +3,7 @@
 
 {% comment %}{% endcomment %}
 {% block extrahead %}
+<!-- Extrahead -->
     {{ block.super }}
     {{ media }}
 {% endblock %}
@@ -11,12 +12,12 @@
 {% block bodyclass %}{{ block.super }} action-confirmation {% endblock %}
 
 {% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
-&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-&rsaquo; {% trans 'Change multiple objects' %}
-</div>
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+        &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+        &rsaquo; {% trans 'Change multiple objects' %}
+    </div>
 {% endblock %}
 
 {% block content %}

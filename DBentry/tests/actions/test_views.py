@@ -1,6 +1,8 @@
 from .base import *
 
-from DBentry.admin import BandAdmin, AusgabenAdmin
+from django.contrib.admin import helpers
+
+from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin
 
 from DBentry.actions.base import *
 from DBentry.actions.views import *
@@ -159,12 +161,6 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         view = self.view(request)
         response = view.post(request)
         self.assertIsNone(response)
-        
-    def test_post_action_aborted(self):
-        request = self.post_request(data={'action_aborted':True})
-        view = self.view(request)
-        response = view.post(request)
-        self.assertIsNone(response)
     
     def test_post_show_confirmation_page(self):
         # get an ACTUAL response
@@ -175,10 +171,11 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         from django.template.response import TemplateResponse
         self.assertEqual(response.__class__, TemplateResponse)
     
-    def test_post_action_not_allowed(self):
-        request = self.get_request()
-        view = self.view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
-        response = view.post(request)
+    def test_dispatch_action_not_allowed(self):
+        # Two different magazines
+        request = self.post_request()
+        view = self.view(request, queryset=self.model.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk]))
+        response = view.dispatch(request)
         self.assertIsNone(response)
         
     def test_perform_action(self):      
@@ -294,3 +291,186 @@ class TestBulkAddBestand(ActionViewTestCase):
         new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
         self.assertEqual(new_bestand, expected)
+
+class TestMergeViewWizardedAusgabe(ActionViewTestCase): 
+    
+    view_class = MergeViewWizarded
+    model = ausgabe
+    model_admin_class = AusgabenAdmin
+    
+    @classmethod
+    def setUpTestData(cls):
+        mag = magazin.objects.create(magazin_name='Testmagazin')
+        cls.obj1 = ausgabe.objects.create(magazin=mag)
+        cls.obj1.ausgabe_jahr_set.create(jahr=2000)
+        
+        cls.obj2 = ausgabe.objects.create(magazin=mag, jahrgang = 1)
+        cls.obj2.ausgabe_jahr_set.create(jahr=2001)
+        
+        cls.obj3 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Bad'), jahrgang=20)
+        cls.obj3.ausgabe_jahr_set.create(jahr=2001)
+        
+        cls.obj4 = ausgabe.objects.create(magazin=mag, jahrgang = 2)
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
+        
+        super(TestMergeViewWizardedAusgabe, cls).setUpTestData()
+        
+    def test_action_allowed(self):
+        queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
+        view = self.view(queryset=queryset)
+        self.assertTrue(view.action_allowed())
+    
+    def test_action_allowed_low_qs_count(self):
+        request = self.post_request()
+        view = self.view(request=request, queryset=self.qs_obj1)
+        self.assertFalse(view.action_allowed())
+        expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.'
+        self.assertMessageSent(request, expected_message)
+        
+    def test_action_allowed_different_magazin(self):
+        request = self.post_request()
+        view = self.view(request=request, queryset=self.queryset)
+        self.assertFalse(view.action_allowed())
+        expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+        self.assertMessageSent(request, expected_message)
+        
+    def test_post_action_not_allowed(self):
+        # If the action is not allowed, post should REDIRECT us back to the changelist
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj3.pk]}
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.changelist_path)
+        expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+        self.assertMessageSent(response.wsgi_request, expected_message)
+        
+    def test_post_first_visit(self):
+        # post should return the first form of the Wizard
+        # Cannot *really* test this here: we need a response from the RequestFactory to check the context (to check the right form_class).
+        # To get that we would need to call self.client.post(model_admin.changelist,{action:action_name}), which would route through
+        # ModelAdmin.changelist first, then ModelAdmin.response_action, then DBentry.actions.actions, and THEN DBentry.actions.views.MergeViewWizarded.post()
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/basic_wizard.html')
+        self.assertIsInstance(response.context_data.get('form'), MergeFormSelectPrimary)
+        self.assertIsInstance(response.context.get('wizard').get('form'), MergeFormSelectPrimary)
+        
+    def test_post_first_form_invalid(self):
+        # post should not continue
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
+        management_form = {'current_step':0}
+        request_data.update(management_form)
+        form_data = {'original':None}
+        request_data.update(form_data)
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.context_data.get('form'), MergeFormSelectPrimary)
+        self.assertIsInstance(response.context.get('wizard').get('form'), MergeFormSelectPrimary)
+        
+    def test_post_merge_conflict(self):
+        # post should return the form that handles merge conflicts
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
+        management_form = {'merge_view_wizarded-current_step':0}
+        request_data.update(management_form)
+        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        request_data.update(form_data)
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsInstance(response.context_data.get('form'), MergeConflictsFormSet)
+        self.assertIsInstance(response.context.get('wizard').get('form'), MergeConflictsFormSet)
+        
+    def test_post_merge_conflict_success(self):
+        # merge_conflicts have been resolved, post should REDIRECT (through response_action) us back to the changelist
+        
+        # Step 0
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
+        management_form = {'merge_view_wizarded-current_step':0}
+        request_data.update(management_form)
+        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        request_data.update(form_data)
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        
+        # Step 1
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
+        management_form = {
+            'merge_view_wizarded-current_step':1, 
+            '1-INITIAL_FORMS':'0', 
+            '1-MAX_NUM_FORMS':'', 
+            '1-MIN_NUM_FORMS':'', 
+            '1-TOTAL_FORMS':'1',                 
+        }
+        request_data.update(management_form)
+        form_data = {
+            '1-0-verbose_fld_name':'Jahrgang', 
+            '1-0-original_fld_name':'jahrgang', 
+            '1-0-posvals':0, 
+        }
+        request_data.update(form_data)
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.changelist_path)
+        
+    def test_post_first_form_valid_and_no_merge_conflict(self):
+        # post should return us back to the changelist
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
+        management_form = {'merge_view_wizarded-current_step':0}
+        request_data.update(management_form)
+        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        request_data.update(form_data)
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.changelist_path)
+        
+    def test_merge_not_updating_fields_it_should_not(self):
+        # Check that the whole process does *NOT* change already present data of the selected primary/original object 
+        # spice up obj1 so we can verify that a merge has happened
+        self.qs_obj1.update(info='I really should not be here.')
+        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
+        management_form = {'merge_view_wizarded-current_step':0}
+        request_data.update(management_form)
+        # select obj2 (or obj4) here as original as it already has a value for jahrgang (our only 'source' of conflict)
+        form_data = {'0-original':self.obj2.pk, '0-expand_o':True}
+        request_data.update(form_data)
+        
+        response = self.client.post(self.changelist_path, data=request_data)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, self.changelist_path)
+        
+        self.obj2.refresh_from_db()
+        self.assertEqual(self.obj2.jahrgang, 1)
+        self.assertEqual(self.obj2.info, 'I really should not be here.')
+      
+
+class TestMergeViewWizardedArtikel(ActionViewTestCase): 
+    
+    view_class = MergeViewWizarded
+    model = artikel
+    model_admin_class = ArtikelAdmin
+    
+    @classmethod
+    def setUpTestData(cls):
+        ausg1 = DataFactory().create_obj(ausgabe, create_new = True)
+        ausg2 = DataFactory().create_obj(ausgabe, create_new = True)
+        cls.obj1 = artikel.objects.create(ausgabe=ausg1, schlagzeile='Beep', seite=1)
+        
+        cls.obj2 = artikel.objects.create(ausgabe=ausg2, schlagzeile='Boop', seite=2)
+        
+        cls.test_data = [cls.obj1, cls.obj2]
+        
+        super(TestMergeViewWizardedArtikel, cls).setUpTestData()
+        
+    def test_action_allowed_different_magazin(self):
+        request = self.post_request()
+        view = self.view(request=request, queryset=self.queryset)
+        self.assertFalse(view.action_allowed())
+        expected_message = 'Die ausgewählten Artikel gehören zu unterschiedlichen Ausgaben.'
+        self.assertMessageSent(request, expected_message)

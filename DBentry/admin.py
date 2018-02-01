@@ -11,7 +11,7 @@ from .models import *
 from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
 from .changelist import MIZChangeList
-from .actions import merge_records, bulk_jg, add_bestand
+from .actions import *
 
 from .sites import miz_site
 

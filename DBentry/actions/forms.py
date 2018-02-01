@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from dal import autocomplete
 
-from DBentry.forms import MIZAdminForm, WIDGETS
+from DBentry.forms import MIZAdminForm, DynamicChoiceForm, WIDGETS
 from DBentry.models import lagerort
 
 def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_classes = {}):
@@ -53,3 +53,15 @@ class BulkAddBestandForm(MIZAdminForm):
                                     label = "Lagerort (Dublette)", 
                                     queryset = lagerort.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'))
+
+
+class MergeFormSelectPrimary(DynamicChoiceForm, MIZAdminForm): #NOTE: why is this a DynamicChoiceForm?
+    original = forms.ChoiceField(choices = [], label = 'Primären Datensatz auswählen', widget = forms.RadioSelect()) 
+    expand_o = forms.BooleanField(required = False, label = 'Primären Datensatz erweitern', initial=True) 
+     
+class MergeFormHandleConflicts(DynamicChoiceForm, MIZAdminForm): 
+    original_fld_name = forms.CharField(required=False, widget=forms.HiddenInput()) # Stores the name of the field 
+    verbose_fld_name = forms.CharField(label = 'Original-Feld', widget=forms.TextInput(attrs={'readonly':'readonly'})) # Displays the verbose name of the field 
+    posvals = forms.ChoiceField(choices = [], label = 'Mögliche Werte', widget = forms.RadioSelect()) 
+    
+MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)     
