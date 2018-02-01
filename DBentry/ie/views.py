@@ -117,5 +117,4 @@ class ImportSelectView(MIZAdminToolView, views.generic.FormView):
                 person_data.append({'vorname':vorname, 'nachname':nachname, 'release_id':release_ids})
         return musiker_data, band_data, person_data
     
-from DBentry.admin import miz_site
-miz_site.register_tool(ImportSelectView)
+ImportSelectView.admin_site.register_tool(ImportSelectView)

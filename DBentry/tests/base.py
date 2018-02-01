@@ -3,26 +3,20 @@ from itertools import chain
 
 from django.test import TestCase, SimpleTestCase, Client
 from django.contrib.auth.models import User
-from django.urls import reverse,resolve
+from django.urls import reverse
 from django.contrib.messages import get_messages
+from django.utils.http import unquote
+from django import forms
 
 from DBentry.models import *
 from DBentry.constants import *
-from .data import DataFactory
-        
-class TestBase(TestCase):
-    
-    model = None
-    
-    @classmethod
-    def setUpTestData(cls):
-        if cls.model:
-            cls.test_data = DataFactory().create_data(cls.model,  add_relations = True)
-        
-    def setUp(self):
-        for obj in self.test_data:
-            obj.refresh_from_db()
-            
+from DBentry.sites import miz_site
+
+from .mixins import *
+
+class ModelTestCase(TestDataMixin, TestCase):
+    pass
+         
 class UserTestCase(TestCase):
     
     @classmethod
@@ -36,12 +30,104 @@ class UserTestCase(TestCase):
     def setUp(self):
         super(UserTestCase, self).setUp()
         self.client.force_login(self.super_user) # super_user logged in by default
+
+class RequestTestCase(UserTestCase):
+    
+    path = ''
+    
+    def post_request(self, path=None, data=None, user=None):
+        self.client.force_login(user or self.super_user)
+        return self.client.post(path or self.path, data).wsgi_request
+    
+    def get_request(self, path=None, data=None, user=None):
+        self.client.force_login(user or self.super_user)
+        return self.client.get(path or self.path, data).wsgi_request
+    
+class ViewTestCase(RequestTestCase, CreateViewMixin):
+        pass
         
-class TestMergingBase(TestBase):
+class AdminTestCase(TestDataMixin, RequestTestCase):
+    
+    admin_site = miz_site
+    model_admin_class = None
+    
+    changelist_path = ''
+    change_path = ''
+    add_path = ''
     
     @classmethod
     def setUpTestData(cls):
-        super(TestMergingBase, cls).setUpTestData()
+        super(AdminTestCase, cls).setUpTestData()
+            
+        if not cls.changelist_path:
+            cls.changelist_path = reverse('admin:DBentry_{}_changelist'.format(cls.model._meta.model_name))
+        if not cls.change_path:
+            cls.change_path = unquote(reverse('admin:DBentry_{}_change'.format(cls.model._meta.model_name), args=['{pk}']))
+        if not cls.add_path:
+            cls.add_path = reverse('admin:DBentry_{}_add'.format(cls.model._meta.model_name))
+    
+    def setUp(self):
+        super(AdminTestCase, self).setUp()
+        self.model_admin = self.model_admin_class(self.model, self.admin_site)
+        
+    def assertMessageSent(self, request, expected_message):
+        messages = [str(msg) for msg in get_messages(request)]
+        self.assertTrue(expected_message in messages) 
+        
+class ActionTestCase(AdminTestCase):
+    
+    action = None
+    
+    def get_action_func(self):
+        # the 'action' attribute can be either a name or a callable
+        for a in self.model_admin.actions:
+            func, name, desc = self.model_admin.get_action(a)
+            if name == self.action or func == self.action:
+                return func
+    
+    def setUp(self):
+        super(ActionTestCase, self).setUp()
+        self.action_func = self.get_action_func()
+
+class ACViewTestCase(ViewTestCase):
+    
+    model = None
+    create_field = None
+    
+    def view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
+        #DBentry.ac.views behave slightly different in their as_view() method
+        self.view_class.model = model or self.model
+        self.view_class.create_field = create_field or self.create_field
+        self.view_class.forwarded = forwarded or {}
+        self.view_class.q = q or ''
+        return super(ACViewTestCase, self).view(request, args, kwargs)
+
+##############################################################################################################
+# TEST_FORMS TEST CASES
+##############################################################################################################
+class FormTestCase(TestCase, CreateFormMixin):
+    pass
+            
+class ModelFormTestCase(TestDataMixin, FormTestCase):
+    
+    fields = None
+    test_data_count = 1
+    add_relations = False
+    
+    def get_form(self, **kwargs):
+        return forms.modelform_factory(self.model, form=self.form_class, fields=self.fields)(**kwargs)
+        
+
+##############################################################################################################
+# TEST_UTILS TEST CASES
+##############################################################################################################
+class MergingTestCase(TestDataMixin, TestCase):
+    
+    test_data_count = 3
+    
+    @classmethod
+    def setUpTestData(cls):
+        super(MergingTestCase, cls).setUpTestData()
         cls.original = cls.test_data[0]
         cls.merge_records = []
         for c, merge_record in enumerate(cls.test_data[1:], 1):
@@ -49,11 +135,8 @@ class TestMergingBase(TestBase):
             cls.merge_records.append(merge_record)
         
     def setUp(self):
-        super(TestMergingBase, self).setUp()
-#        self.original.refresh_from_db()
-#        for merge_record in self.merge_records:
-#            merge_record.refresh_from_db()
-        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records] #TODO: needed in self?
+        super(MergingTestCase, self).setUp()
+        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records] #TODO: needed in self? huh?!
         self.qs = self.model.objects.filter(pk__in=self.ids)
         
         # These are the related objects (as val_dicts) that are affected by the merge and should end up being related to original
@@ -66,7 +149,7 @@ class TestMergingBase(TestBase):
             # These are the fields that *should* retain their values
             preserved_fields = [fld.name for fld in related_model._meta.concrete_fields if fld != rel.field]
             self.related_imprints[rel] = update_qs.values(*preserved_fields)
-        
+            
     def assertRestDeleted(self):
         """ Assert whether the other records were deleted after the merge. """
         qs = self.qs.exclude(pk=self.original.pk)
@@ -121,4 +204,3 @@ class TestMergingBase(TestBase):
             if unseen_qs.exists():
                 # NEW related objects were added
                 raise AssertionError('Unexpected additional {} relation-changes occurred: {}'.format(str(unseen_qs.count()), str(unseen_qs)))
-

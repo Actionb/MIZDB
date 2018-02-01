@@ -4,91 +4,18 @@ from collections import OrderedDict
 from django.contrib import admin, messages
 from django.utils.html import format_html
 from django.urls import reverse, resolve
-from django.shortcuts import redirect  
-from django.apps import apps 
+from django.shortcuts import redirect
 from django.contrib.auth import get_permission_codename
 
 from .models import *
 from .forms import makeForm, InLineAusgabeForm
 from .utils import link_list
 from .changelist import MIZChangeList
-from .actions import merge_records
+from .actions import *
+
+from .sites import miz_site
 
 MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
-
-class MIZAdminSite(admin.AdminSite):
-    from django.views.decorators.cache import never_cache
-    site_header = 'MIZDB'
-    
-    wip = [bildmaterial, buch, dokument, memorabilien, video]
-    main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 
-                    person, schlagwort, video]
-    
-    tools = []
-    
-    def register_tool(self, view):
-        self.tools.append(view)
-        
-    def app_index(self, request, app_label, extra_context=None):
-        if app_label == 'DBentry':
-            # Redirect to the 'tidied' up index page of the main page
-            return self.index(request, extra_context)
-        return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
-    
-    @never_cache
-    def index(self, request, extra_context=None): 
-        extra_context = extra_context or {}
-        extra_context['admintools'] = {}
-        for tool in self.tools:
-            if tool.show_on_index_page(request):
-                extra_context['admintools'][tool.url_name] = tool.index_label
-        # Sort by index_label, not by url_name
-        extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
-        
-        response = super(MIZAdminSite, self).index(request, extra_context)
-        app_list = response.context_data['app_list']
-        index = None
-        try:
-            index = next(i for (i, d) in enumerate(app_list) if d['app_label'] == 'DBentry')
-        except:
-            return response
-            
-        if index is not None:
-            DBentry_dict = app_list.pop(index)
-            model_list = DBentry_dict.pop('models')
-        
-            DBentry_main = DBentry_dict.copy()
-            DBentry_main['name'] = 'Hauptkategorien'
-            DBentry_main['models'] = [] # or deepcopy DBentry_dict
-            DBentry_side = DBentry_dict.copy()
-            DBentry_side['name'] = 'Nebenkategorien'
-            DBentry_side['models'] = []
-            
-            main_models = [m._meta.model_name for m in self.main_models if not m in self.wip]
-            for m in model_list:
-                if m.get('object_name', '') in main_models:
-                    DBentry_main['models'].append(m)
-                else:
-                    DBentry_side['models'].append(m)
-                    
-            if DBentry_main['models']:
-                app_list.extend([DBentry_main])
-            if DBentry_side['models']:
-                app_list.extend([DBentry_side])
-                
-            response.context_data['app_list'] = app_list
-        return response
-
-    def get_admin_model(self, model):
-        if isinstance(model, str):
-            model_name = model.split('.')[-1]
-            try:
-                model = apps.get_model('DBentry', model_name)
-            except LookupError:
-                return None
-        return self._registry.get(model, None)
-        
-miz_site = MIZAdminSite()
 
 
 class ModelBase(admin.ModelAdmin):
@@ -103,7 +30,7 @@ class ModelBase(admin.ModelAdmin):
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
     actions = [merge_records]
-    
+
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
     
@@ -114,17 +41,19 @@ class ModelBase(admin.ModelAdmin):
         # Show actions based on user permissions
         actions = super(ModelBase, self).get_actions(request) #= OrderedDict( (name, (func, name, desc)) )
         
+        #TODO: use ActionConfirmationView + MIZAdminPermissionMixin permission_test() to unify all the things?
         for func, name, desc in actions.values():
             if name == 'delete_selected':
-                perm_required = 'delete' # the builtin action delete_selected is set by the admin site
+                perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
             else:
-                perm_required = getattr(func, 'perm_required', False)
-            if perm_required:
+                perm_required = getattr(func, 'perm_required', [])
+            
+            for p in perm_required:
                 perm_passed = False
-                if callable(perm_required):
-                    perm_passed = perm_required(self, request)
+                if callable(p):
+                    perm_passed = p(self, request)
                 else:
-                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(perm_required, self.opts))
+                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(p, self.opts))
                     perm_passed = request.user.has_perm(perm)
                 if not perm_passed:
                     del actions[name]
@@ -282,9 +211,9 @@ class ModelBase(admin.ModelAdmin):
         
     def merge_allowed(self, request, queryset):
         """ Hook for checks on merging. """
+        #TODO: move this to actions.py
         return True
-    
-
+        
 class TabModelBase(admin.TabularInline):
     original = False
     verbose_model = None
@@ -464,9 +393,8 @@ class AusgabenAdmin(ModelBase):
                             'nummer' : 'ausgabe_num__num', 
                             'lfd' : 'ausgabe_lnum__lnum', 
                             }
-                        
-    #actions = ['add_duplicate', 'add_bestand', 'merge_records', 'num_to_lnum', 'add_birgit', 'bulk_jg']
-    #actions = ['merge_records']
+                            
+    actions = [bulk_jg, add_bestand]
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
         'selects':['magazin','status'], 
@@ -490,7 +418,7 @@ class AusgabenAdmin(ModelBase):
             msg_text = "Dublette(n) zu diesen {} Ausgaben hinzugefügt: {}".format(len(dupe_list), obj_links)
             self.message_user(request, format_html(msg_text))
     add_duplicate.short_description = 'Dubletten-Bestand hinzufügen'
-    add_duplicate.perm_required = 'alter_bestand_ausgabe'
+    add_duplicate.perm_required = ['alter_bestand']
     
     def add_bestand(self, request, queryset):
         try:
@@ -535,35 +463,12 @@ class AusgabenAdmin(ModelBase):
                     msg_text = "{} Dubletten hinzugefügt: {}".format(len(dupe_list), obj_links)
                     self.message_user(request, format_html(msg_text))
     add_bestand.short_description = 'Zeitschriftenraum-Bestand hinzufügen'
-    add_duplicate.perm_required = 'alter_bestand_ausgabe'
+    add_duplicate.perm_required = ['alter_bestand']
         
-    def num_to_lnum(self, request, queryset):
-        to_create = []
-        for instance in queryset:
-            for num in instance.ausgabe_num_set.values_list('num', flat = True):
-                to_create.append(ausgabe_lnum(ausgabe=instance, lnum=num)) #**{'ausgabe':instance, 'lnum':num}
-            instance.ausgabe_num_set.all().delete()
-            instance.ausgabe_lnum_set.all().delete()
-        ausgabe_lnum.objects.bulk_create(to_create)
-        
-    def add_birgit(self, request, queryset):
-        birgit = provenienz.objects.get(pk=6)
-        for instance in queryset:
-            instance.bestand_set.update(provenienz=birgit)
-            
-    def bulk_jg(self, request, queryset):
-        mag_id = queryset.values_list('magazin_id',  flat = True)
-        if mag_id.count() != 1:
-            msg_text = "Aktion abgebrochen: Ausgaben-Liste enthält mehr als ein Magazin."
-            self.message_user(request, msg_text, 'error')
-            return
-        jg = 1
-        if queryset.first().jahrgang:
-            jg = queryset.first().jahrgang
-        mag = magazin.objects.get(pk=mag_id)
-        mag.ausgabe_set.bulk_add_jg(jg)
+
         
     def merge_allowed(self, request, queryset):
+        #TODO: move this to actions.py
         #TODO: allow merging of non-sonderausgaben with sonderausgaben?
         if queryset.values_list('magazin').distinct().count()>1:
             # User is trying to merge ausgaben from different magazines
@@ -644,6 +549,7 @@ class ArtikelAdmin(ModelBase):
         return qs
         
     def merge_allowed(self, request, queryset):
+        #TODO: move this to actions.py
         if queryset.values('ausgabe').distinct().count()>1:
             # User is trying to merge artikel from different ausgaben
             self.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')

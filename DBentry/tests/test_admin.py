@@ -1,52 +1,11 @@
-from django.urls import reverse, resolve
-from django.utils.http import unquote
+from django.urls import resolve
 
 from .base import *
 
 from DBentry.admin import *
+from DBentry.sites import MIZAdminSite
 
-class BaseTestAdmins(UserTestCase):
-    
-    admin_site = miz_site
-    model_admin_class = None
-    model = None
-    test_data_count = 0
-    
-    changelist_path = ''
-    change_path = ''
-    add_path = ''
-    
-    @classmethod
-    def setUpTestData(cls):
-        super(BaseTestAdmins, cls).setUpTestData()
-        cls.model_admin = cls.model_admin_class(cls.model, cls.admin_site)
-        
-        cls.test_data = DataFactory().create_data(cls.model, count=cls.test_data_count, add_relations = True)
-        for c, obj in enumerate(cls.test_data, 1):
-            setattr(cls, 'obj' + str(c), obj)
-            
-        if not cls.changelist_path:
-            cls.changelist_path = reverse('admin:DBentry_{}_changelist'.format(cls.model._meta.model_name))
-        if not cls.change_path:
-            cls.change_path = unquote(reverse('admin:DBentry_{}_change'.format(cls.model._meta.model_name), args=['{pk}']))
-        if not cls.add_path:
-            cls.add_path = reverse('admin:DBentry_{}_add'.format(cls.model._meta.model_name))
-    
-    def setUp(self):
-        super(BaseTestAdmins, self).setUp()
-        self.model_admin = self.model_admin_class(self.model, self.admin_site)
-        for obj in self.test_data:
-            obj.refresh_from_db()
-            
-    def post_request(self, path='', data={}, user=None):
-        self.client.force_login(user or self.super_user)
-        return self.client.post(path, data).wsgi_request
-    
-    def get_request(self, path='', data={}, user=None):
-        self.client.force_login(user or self.super_user)
-        return self.client.get(path, data).wsgi_request
-        
-class TestModelBase(BaseTestAdmins):
+class TestModelBase(AdminTestCase):
     
     model_admin_class = ArtikelAdmin
     model = artikel
@@ -156,7 +115,7 @@ class TestModelBase(BaseTestAdmins):
         messages = [str(msg) for msg in get_messages(request)]
         self.assertTrue(expected_message in messages) 
 
-class TestAdminAusgabe(BaseTestAdmins):
+class TestAdminAusgabe(AdminTestCase):
     
     model_admin_class = AusgabenAdmin
     model = ausgabe
@@ -182,7 +141,7 @@ class TestAdminAusgabe(BaseTestAdmins):
         self.assertTrue(expected_message in messages)
         
 
-class TestAdminPerson(BaseTestAdmins):
+class TestAdminPerson(AdminTestCase):
     
     model_admin_class = PersonAdmin
     model = person
@@ -199,7 +158,7 @@ class TestAdminPerson(BaseTestAdmins):
         self.obj1.autor_set.all().delete()
         self.assertFalse(self.model_admin.Ist_Autor(self.obj1))
         
-class TestAdminMusiker(BaseTestAdmins):
+class TestAdminMusiker(AdminTestCase):
     
     model_admin_class = MusikerAdmin
     model = musiker
@@ -224,7 +183,7 @@ class TestAdminMusiker(BaseTestAdmins):
         extra = self.model_admin.add_extra_context(object_id=self.obj1.pk)
         self.assertTrue('crosslinks' in extra)
         
-class TestAdminGenre(BaseTestAdmins):
+class TestAdminGenre(AdminTestCase):
     
     model_admin_class = GenreAdmin
     model = genre
@@ -235,7 +194,7 @@ class TestAdminGenre(BaseTestAdmins):
         
     #TODO: ober?
     
-class TestAdminSchlagwort(BaseTestAdmins):
+class TestAdminSchlagwort(AdminTestCase):
     
     model_admin_class = SchlagwortAdmin
     model = schlagwort
@@ -246,7 +205,7 @@ class TestAdminSchlagwort(BaseTestAdmins):
         
     #TODO: ober?
     
-class TestAdminBand(BaseTestAdmins):
+class TestAdminBand(AdminTestCase):
     
     model_admin_class = BandAdmin
     model = band
@@ -258,7 +217,7 @@ class TestAdminBand(BaseTestAdmins):
     def test_get_search_fields(self):
         self.assertTrue('band_alias__alias' in self.model_admin.get_search_fields())
 
-class TestAdminAutor(BaseTestAdmins):
+class TestAdminAutor(AdminTestCase):
     
     model_admin_class = AutorAdmin
     model = autor
@@ -267,7 +226,7 @@ class TestAdminAutor(BaseTestAdmins):
         expected = ['person__vorname', 'person__nachname', 'kuerzel']
         self.assertEqual(self.model_admin.get_search_fields(), expected)
         
-class TestAdminOrt(BaseTestAdmins):
+class TestAdminOrt(AdminTestCase):
     
     model_admin_class = OrtAdmin   
     model = ort
@@ -276,7 +235,7 @@ class TestAdminOrt(BaseTestAdmins):
         expected = ['stadt', 'land__land_name', 'bland__bland_name']
         self.assertEqual(self.model_admin.get_search_fields(), expected)
         
-class TestAdminLand(BaseTestAdmins):
+class TestAdminLand(AdminTestCase):
     
     model_admin_class = LandAdmin
     model = land
@@ -288,7 +247,7 @@ class TestAdminLand(BaseTestAdmins):
         self.assertEqual(self.model_admin.get_search_fields(), expected)
         self.assertTrue('land_alias__alias' in self.model_admin.get_search_fields())
         
-class TestAdminBundesland(BaseTestAdmins):
+class TestAdminBundesland(AdminTestCase):
     
     model_admin_class = BlandAdmin
     model = bundesland
@@ -297,7 +256,7 @@ class TestAdminBundesland(BaseTestAdmins):
         expected = ['id', 'bland_name', 'code', 'land__land_name']
         self.assertEqual(self.model_admin.get_search_fields(), expected)
         
-class TestAdminInstrument(BaseTestAdmins):
+class TestAdminInstrument(AdminTestCase):
     
     model_admin_class = InstrumentAdmin
     model = instrument
@@ -307,13 +266,13 @@ class TestAdminInstrument(BaseTestAdmins):
     def test_get_search_fields(self):
         self.assertTrue('instrument_alias__alias' in self.model_admin.get_search_fields())
     
-class TestAdminAudio(BaseTestAdmins):
+class TestAdminAudio(AdminTestCase):
     
     model_admin_class = AudioAdmin
     model = audio
     
 @skip('SenderAdmin not yet implemented')
-class TestAdminSender(BaseTestAdmins):
+class TestAdminSender(AdminTestCase):
     
     model_admin_class = None # TODO: add 'SenderAdmin'
     model = sender
@@ -321,7 +280,7 @@ class TestAdminSender(BaseTestAdmins):
     def test_get_search_fields(self):
         self.assertTrue('sender_alias__alias' in self.model_admin.get_search_fields())
     
-class TestAdminSpielort(BaseTestAdmins):
+class TestAdminSpielort(AdminTestCase):
     
     model_admin_class = SpielortAdmin
     model = spielort
@@ -331,7 +290,7 @@ class TestAdminSpielort(BaseTestAdmins):
     def test_get_search_fields(self):
         self.assertTrue('spielort_alias__alias' in self.model_admin.get_search_fields())
         
-class TestAdminVeranstaltung(BaseTestAdmins):
+class TestAdminVeranstaltung(AdminTestCase):
     
     model_admin_class = VeranstaltungAdmin
     model = veranstaltung
@@ -341,7 +300,7 @@ class TestAdminVeranstaltung(BaseTestAdmins):
     def test_get_search_fields(self):
         self.assertTrue('veranstaltung_alias__alias' in self.model_admin.get_search_fields())
         
-class TestAdminProvenienz(BaseTestAdmins):
+class TestAdminProvenienz(AdminTestCase):
     
     model_admin_class = ProvAdmin
     model = provenienz
@@ -359,12 +318,12 @@ class TestAdminProvenienz(BaseTestAdmins):
         
     #TODO: search_fields
     
-class TestAdminLagerort(BaseTestAdmins):
+class TestAdminLagerort(AdminTestCase):
     
     model_admin_class = None
     model = lagerort
     
-class TestAdminFormat(BaseTestAdmins):
+class TestAdminFormat(AdminTestCase):
     
     model_admin_class = None
     model = Format
@@ -408,7 +367,7 @@ class TestAdminSite(UserTestCase):
         
 # ChangeList uses ModelAdmin attributes, so test this last
 from DBentry.changelist import *
-class TestChangeList(BaseTestAdmins):
+class TestChangeList(AdminTestCase):
     
     model_admin_class = ArtikelAdmin
     model = artikel
@@ -509,67 +468,3 @@ class TestChangeList(BaseTestAdmins):
         
         with self.assertRaises(IncorrectLookupParameters):
             cl.get_queryset(request)
-
-
-# TEST ACTIONS
-from DBentry.actions import merge_records
-
-class TestAdminActionsArtikel(BaseTestAdmins):
-    
-    model_admin_class = ArtikelAdmin
-    model = artikel
-    test_data_count = 3
-        
-    def test_merge_records_low_count(self):
-        # qs.count() == 1
-        qs = self.model.objects.filter(pk=self.obj1.pk)
-        request = self.get_request()
-        #self.model_admin.merge_records(request, qs) --> before moving actions into actions.py
-        merge_records(self.model_admin, request, qs)
-        expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen'
-        messages = [str(msg) for msg in get_messages(request)]
-        self.assertTrue(expected_message in messages)
-        
-    def test_merge_records_not_allowed(self):
-        # qs.count() > 1 with different ausgaben => merge not allowed
-        the_new_guy = DataFactory().create_obj(artikel, create_new = True)
-        qs = self.model.objects.all()
-        request = self.get_request()
-        #response = self.model_admin.merge_records(request, qs) --> before moving actions into actions.py
-        response = merge_records(self.model_admin, request, qs)
-        self.assertEqual(response, None)
-    
-    def test_merge_records_success(self):
-        # qs.count() >1 with same ausgabe
-        qs = self.model.objects.all()
-        request = self.get_request()
-        #response = self.model_admin.merge_records(request, qs) --> before moving actions into actions.py
-        response = merge_records(self.model_admin, request, qs)
-        self.assertIsNotNone(response)
-        self.assertTrue('merge' in request.session)
-        self.assertEqual(response.status_code, 302) # 302 for redirect       
-
-class TestAdminActionsAusgabe(BaseTestAdmins):
-    
-    model_admin_class = AusgabenAdmin
-    model = ausgabe
-    test_data_count = 2
-    
-    @classmethod
-    def setUpTestData(cls):
-        super(TestAdminActionsAusgabe, cls).setUpTestData()
-        # TODO: set up permissions for users ('merge',etc.)
-        
-    def test_action_add_duplicate(self):
-        pass
-        
-    def test_action_add_bestand(self):
-        pass
-    
-    def test_action_num_to_lnum(self):
-        pass
-        
-    def test_action_bulk_jg(self):
-        pass
-        
-        

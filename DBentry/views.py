@@ -12,11 +12,31 @@ from django.utils.functional import cached_property
 from .models import *
 from .utils import link_list, model_from_string
 from .forms import FavoritenForm
-from .admin import miz_site
+from .sites import miz_site
 from .constants import PERM_DENIED_MSG
 
 from dal import autocomplete
 from formtools.wizard.views import SessionWizardView
+
+class OptionalFormView(views.generic.FormView):
+    
+    def get_form(self, form_class=None):
+        if self.get_form_class() is None:
+            # Form has become optional
+            return None
+        return super(OptionalFormView, self).get_form(form_class)
+        
+    def form_optional(self):
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form is None or form.is_valid():
+            # form is not given (because it's optional) OR form is given and is valid
+            return self.form_valid(form)
+        else:
+            # back to FormView's form_invalid(): return self.render_to_response(self.get_context_data(form=form))
+            return self.form_invalid(form)
 
 class MIZAdminMixin(object):
     """
@@ -135,13 +155,31 @@ class FavoritenView(MIZAdminToolView, views.generic.UpdateView):
 
 miz_site.register_tool(FavoritenView)
 
-class MIZSessionWizardView(MIZAdminPermissionMixin, SessionWizardView):
+class FixedSessionWizardView(SessionWizardView):
     
     def get_context_data(self, form = None, *args, **kwargs):
-        # SessionWizardView takes form as first positional argument, while MIZAdminView (and any other view) takes it as a kwarg.
+        # SessionWizardView takes form as first positional argument, while MIZAdminView (and any other view) takes it as an (optional) kwarg.
         # Ensure form ends up in **kwargs for super
         form = form or kwargs.get('form', None)
-        return super(MIZSessionWizardView, self).get_context_data(form=form, *args, **kwargs)
+        return super(FixedSessionWizardView, self).get_context_data(form=form, *args, **kwargs)
+         
+    def get_form(self, step=None, data=None, files=None): 
+        """ Here the bit of WizardView.get_form that causes problems:
+            kwargs = self.get_form_kwargs(step)
+            kwargs.update({
+                'data': data,
+                'files': files,
+                'prefix': self.get_form_prefix(step, form_class),
+                'initial': self.get_form_initial(step),
+            })
+            If data=None/{} and we prepare kwargs['data'] (for example) in get_form_kwargs, the following update on kwargs overwrites anything we have done.
+        """ 
+        if step is None: 
+            step = self.steps.current 
+        kwargs = self.get_form_kwargs(step)
+        data = data or kwargs.get('data', None)
+        files = files or kwargs.get('files', None)
+        return super(FixedSessionWizardView, self).get_form(step, data, files) 
         
 class DynamicChoiceFormMixin(object):
     

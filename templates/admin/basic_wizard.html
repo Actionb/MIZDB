@@ -1,48 +1,62 @@
 {% extends 'admin/base_site.html' %}
-{% load i18n static %}
+{% load i18n l10n static admin_urls %}
 
 
 {% block extrahead %}
 <!-- Extrahead -->
-{{ block.super }}
-<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script> 
-{{ wizard.form.media }}
+    {{ block.super }}
+    {{media}}
 {% endblock extrahead %}
 
+{% block bodyclass %}{{ block.super }} action-confirmation {% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+        &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+        &rsaquo; {% trans 'Merge objects' %}
+    </div>
+{% endblock %}
 
 {% block content %}
-<form method="post" enctype="multipart/form-data">
-{% if wizard.steps.prev %}
-<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="button">{% trans "first step" %}</button>
-<button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="button">{% trans "prev step" %}</button>
-{% endif %}
 
-{% csrf_token %}
-{{ wizard.management_form }}
-{{ wizard.form.non_field_errors }}
+    <form method="post" enctype="multipart/form-data">
+        {% if wizard.steps.prev %}
+            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="button">{% trans "first step" %}</button>
+            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="button">{% trans "prev step" %}</button>
+        {% endif %}
 
-{% if wizard.form.forms %}
-    {{ wizard.form.management_form }}
-    {% for form in wizard.form.forms %}
-        {{ form.as_p }}
-    {% endfor %}
-    {% comment %}
-    {% include "admin/includes/formset_table.html" with formset=wizard.form %}
-    
-    
-    {{ wizard.form.management_form }}
-    {% for form in wizard.form.forms %}
-        {% for fieldset in form %}
+    {% csrf_token %}
+    {{ wizard.management_form }}
+    {{ wizard.form.non_field_errors }}
+
+    {% if wizard.form.forms %}
+        {{ wizard.form.management_form }}
+        {% for form in wizard.form.forms %}
+            {{ form.as_p }}
+        {% endfor %}
+        {% comment %}
+        {% include "admin/includes/formset_table.html" with formset=wizard.form %}
+        
+        
+        {{ wizard.form.management_form }}
+        {% for form in wizard.form.forms %}
+            {% for fieldset in form %}
+              {% include "admin/includes/fieldset.html" %}
+            {% endfor %}
+        {% endfor %}
+        {% endcomment %}
+    {% else %}
+        {% for fieldset in wizard.form %}
           {% include "admin/includes/fieldset.html" %}
         {% endfor %}
-    {% endfor %}
-    {% endcomment %}
-{% else %}
-    {% for fieldset in wizard.form %}
-      {% include "admin/includes/fieldset.html" %}
-    {% endfor %}
-{% endif %}
-
-<input type="submit" name="submit" value="{% trans "submit" %}" />
-</form>
+    {% endif %}
+                {% for obj in queryset %}
+                    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
+                {% endfor %}
+    <input type="hidden" name="action" value="{{action_name}}" />
+    <input type="submit" name="action_confirmed" value="{% trans "Continue" %}" />
+    <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
+    </form>
 {% endblock content %}

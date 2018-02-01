@@ -11,7 +11,6 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from DBentry.views import MIZAdminToolView
-from DBentry.admin import miz_site
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio, m2m_audio_ausgabe
 from .forms import BulkFormAusgabe
@@ -246,4 +245,4 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
             headers += ['Bemerkung']
         return headers, preview_data
 
-miz_site.register_tool(BulkAusgabe)
+BulkAusgabe.admin_site.register_tool(BulkAusgabe)
