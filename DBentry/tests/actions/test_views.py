@@ -90,6 +90,7 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         mag = magazin.objects.create(magazin_name='Testmagazin')
         cls.obj1 = ausgabe.objects.create(magazin=mag)
         cls.obj1.ausgabe_jahr_set.create(jahr=2000)
+        cls.obj1.ausgabe_jahr_set.create(jahr=2001)
         
         cls.obj2 = ausgabe.objects.create(magazin=mag)
         cls.obj2.ausgabe_jahr_set.create(jahr=2001)
@@ -121,20 +122,21 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         self.assertMessageSent(request, expected_message)
         
     def test_compile_affected_objects(self):
-        # obj1 has no jahrgang, obj3 does --> only obj3's jahrgang should show up on the result
         # result 0 0 => obj1
+        # result 0 1 => obj1.affected_fields
         # result 1 0 => obj3
-        # result 1 1 => obj3.jahrgang
+        # result 1 1 => obj3.affected_fields
+        # affected_fields for this view: ['jahrgang','ausgabe_jahr__jahr']
         request = self.get_request()
         
         view = self.view(request, queryset=self.qs_obj1)
         result = view.compile_affected_objects()
-        expected = []
+        expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
         
         view = self.view(request, queryset=self.qs_obj3)
         result = view.compile_affected_objects()
-        expected = ["Jahrgang: 20"]
+        expected = ["Jahrgang: 20", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
         
     def test_form_valid(self):
@@ -190,6 +192,12 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
+        
+    def test_perform_action_jahrgang_zero(self):      
+        view = self.view()
+        view.perform_action({'jahrgang':0})
+        new_jg = list(self.queryset.values_list('jahrgang', flat=True))
+        self.assertEqual(new_jg, [None, None])
         
 class TestBulkAddBestand(ActionViewTestCase):
     
@@ -291,6 +299,15 @@ class TestBulkAddBestand(ActionViewTestCase):
         new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
         self.assertEqual(new_bestand, expected)
+        
+    def test_get_initial(self):
+        view = self.view()
+        initial = view.get_initial()
+        
+        self.assertTrue('bestand' in initial)
+        self.assertEqual(initial.get('bestand'), self.bestand_lagerort)
+        self.assertTrue('dublette' in initial)
+        self.assertEqual(initial.get('dublette'), self.dubletten_lagerort)
 
 class TestMergeViewWizardedAusgabe(ActionViewTestCase): 
     
@@ -354,7 +371,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         
         response = self.client.post(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.templates[0].name, 'admin/basic_wizard.html')
+        self.assertEqual(response.templates[0].name, 'admin/action_confirmation_wizard.html')
         self.assertIsInstance(response.context_data.get('form'), MergeFormSelectPrimary)
         self.assertIsInstance(response.context.get('wizard').get('form'), MergeFormSelectPrimary)
         
