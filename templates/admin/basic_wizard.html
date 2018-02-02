@@ -20,43 +20,51 @@
 {% endblock %}
 
 {% block content %}
-
-    <form method="post" enctype="multipart/form-data">
-        {% if wizard.steps.prev %}
-            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="button">{% trans "first step" %}</button>
-            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="button">{% trans "prev step" %}</button>
+        {% if view_helptext %}
+            <p> {{view_helptext|linebreaks}} </p>
         {% endif %}
 
-    {% csrf_token %}
-    {{ wizard.management_form }}
-    {{ wizard.form.non_field_errors }}
+    <form method="post" enctype="multipart/form-data">
+        
+        {% if wizard.steps.prev %}
+            {% if wizard.steps.prev != wizard.steps.first %}
+                <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}" class="button">{% trans "first step" %}</button>
+            {% endif %}
+            <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="button">{% trans "prev step" %}</button>
+        {% endif %}
+        
 
-    {% if wizard.form.forms %}
-        {{ wizard.form.management_form }}
-        {% for form in wizard.form.forms %}
-            {{ form.as_p }}
-        {% endfor %}
-        {% comment %}
-        {% include "admin/includes/formset_table.html" with formset=wizard.form %}
-        
-        
-        {{ wizard.form.management_form }}
-        {% for form in wizard.form.forms %}
-            {% for fieldset in form %}
+        {% csrf_token %}
+        {{ wizard.management_form }}
+        {{ wizard.form.non_field_errors }}
+
+        {% if wizard.form.forms %}
+            {{ wizard.form.management_form }}
+            {% comment %}
+            {% for form in wizard.form.forms %}
+                {{ form.as_p }}
+            {% endfor %}
+            {% include "admin/includes/formset_table.html" with formset=wizard.form %}
+            
+            {% endcomment %}
+            
+            {% for form in wizard.form.forms %}
+                {% for fieldset in form %}
+                  {% include "admin/includes/fieldset.html" %}
+                {% endfor %}
+            {% endfor %}
+        {% else %}
+            {% for fieldset in wizard.form %}
               {% include "admin/includes/fieldset.html" %}
             {% endfor %}
+        {% endif %}
+        
+        {% for obj in queryset %}
+            <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
         {% endfor %}
-        {% endcomment %}
-    {% else %}
-        {% for fieldset in wizard.form %}
-          {% include "admin/includes/fieldset.html" %}
-        {% endfor %}
-    {% endif %}
-                {% for obj in queryset %}
-                    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
-                {% endfor %}
-    <input type="hidden" name="action" value="{{action_name}}" />
-    <input type="submit" name="action_confirmed" value="{% trans "Continue" %}" />
-    <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
+        
+        <input type="hidden" name="action" value="{{action_name}}" />
+        <input type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="{% trans "Continue" %}" />
+        <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
     </form>
 {% endblock content %}

@@ -70,24 +70,25 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
         super(AdminTestCase, self).setUp()
         self.model_admin = self.model_admin_class(self.model, self.admin_site)
         
+    def get_action_func(self, action_name):
+        for action in self.model_admin.actions: 
+            func, name, desc = self.model_admin.get_action(action) 
+            if name == self.action:
+                return func 
+        
+    def call_action(self, action_name, objs, data=[]):
+        from django.db.models.query import QuerySet
+        if isinstance(objs, QuerySet):
+            objs = objs.values_list('pk', flat=True)
+        from django.contrib.admin import helpers    
+        request_data = {'action':action_name, helpers.ACTION_CHECKBOX_NAME : objs}
+        for other_dict in data:
+            request_data.update(other_dict)
+        return self.client.post(self.changelist_path, data=request_data)
+        
     def assertMessageSent(self, request, expected_message):
         messages = [str(msg) for msg in get_messages(request)]
         self.assertTrue(expected_message in messages) 
-        
-class ActionTestCase(AdminTestCase):
-    
-    action = None
-    
-    def get_action_func(self):
-        # the 'action' attribute can be either a name or a callable
-        for a in self.model_admin.actions:
-            func, name, desc = self.model_admin.get_action(a)
-            if name == self.action or func == self.action:
-                return func
-    
-    def setUp(self):
-        super(ActionTestCase, self).setUp()
-        self.action_func = self.get_action_func()
 
 class ACViewTestCase(ViewTestCase):
     
@@ -136,7 +137,7 @@ class MergingTestCase(TestDataMixin, TestCase):
         
     def setUp(self):
         super(MergingTestCase, self).setUp()
-        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records] #TODO: needed in self? huh?!
+        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records]
         self.qs = self.model.objects.filter(pk__in=self.ids)
         
         # These are the related objects (as val_dicts) that are affected by the merge and should end up being related to original

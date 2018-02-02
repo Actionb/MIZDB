@@ -67,4 +67,3 @@ class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
             return self.view_class.form_class
         else:
             return super(CreateFormViewMixin, self).get_form_class()
-            

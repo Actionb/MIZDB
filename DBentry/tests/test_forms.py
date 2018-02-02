@@ -95,8 +95,8 @@ class TestMIZAdminForm(FormTestCase):
         # everything wrapped?
         from DBentry.ac.widgets import EasyWidgetWrapper
         form = self.get_form()
-        self.assertIsInstance(self.form_class.base_fields['wrap_me'].widget, EasyWidgetWrapper)
-        self.assertNotIsInstance(self.form_class.base_fields['some_int'].widget, EasyWidgetWrapper)
+        self.assertIsInstance(form.fields['wrap_me'].widget, EasyWidgetWrapper)
+        self.assertNotIsInstance(form.fields['some_int'].widget, EasyWidgetWrapper)
         
         # make sure RelatedObjectLookups was added to Medja.js
         self.assertTrue('admin/js/admin/RelatedObjectLookups.js' in form.Media.js)
@@ -104,8 +104,10 @@ class TestMIZAdminForm(FormTestCase):
     def test_iter(self):
         form = self.get_form()
         from django.contrib.admin.helpers import Fieldset 
+        from DBentry.helper import MIZFieldset
         for fs in form:
             self.assertIsInstance(fs, Fieldset)
+            self.assertIsInstance(fs, MIZFieldset)
             
     def test_media_prop(self):
         # Make sure jquery loaded in the right order

@@ -131,12 +131,12 @@ div .help_text {
 /*
 * — ACTION CONFIRMATION —
 */
-.action-confirmation form input[type="submit"][name="action_confirmed"] {
+.action-confirmation form input[type="submit"][name^="action_confirmed"] {
     background: #ba2121 none repeat scroll 0 0;
 }
-.action-confirmation form input[type="submit"][name="action_confirmed"]:active,
-.action-confirmation form input[type="submit"][name="action_confirmed"]:focus,
-.action-confirmation form input[type="submit"][name="action_confirmed"]:hover {
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:active,
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:focus,
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:hover {
     background: #a41515 none repeat scroll 0 0;
 }
 
@@ -150,4 +150,12 @@ div .help_text {
     margin: 0 0 0 10px;
     padding: 10px 15px;
     vertical-align: middle;
+}
+
+.aligned .form-row input[type="radio"]{
+    margin-bottom: 5px;
+}
+
+button[name="wizard_goto_step"]{
+    padding: 10px 15px;
 }

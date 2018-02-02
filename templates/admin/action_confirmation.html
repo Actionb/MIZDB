@@ -16,14 +16,17 @@
         <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
         &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
         &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
-        &rsaquo; {% trans 'Change multiple objects' %}
+        &rsaquo; {{breadcrumbs_title}}
     </div>
 {% endblock %}
 
 {% block content %}
-    {% if view_helptext %}
-        <p> {{view_helptext|linebreaks}} </p>
-    {% endif %}
+    {% block view_helptext %}
+        {% if view_helptext %}
+            <p> {{view_helptext|linebreaks}} </p>
+        {% endif %}
+    {% endblock view_helptext %}
+    
     {% block confirmation_form %}
     
         <form method="post">{% csrf_token %}
@@ -44,9 +47,13 @@
                     <ul>{{ affected_object|unordered_list }}</ul>
                 {% endfor %}
             {% endblock object_details %}
-    
+            
+            {% if non_reversible_warning %}
+                <p> {{non_reversible_warning}}</p>
+            {% endif %}
+            
             <div>
-                {% for obj in queryset %}
+                {% for obj in queryset %} 
                     <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
                 {% endfor %}
                 <input type="hidden" name="action" value="{{action_name}}" />

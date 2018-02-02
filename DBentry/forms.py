@@ -238,7 +238,7 @@ class MIZAdminForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(MIZAdminForm, self).__init__(*args, **kwargs)
         wrapped = False
-        for fld in self.base_fields.values():
+        for fld in self.fields.values():
             if isinstance(fld.widget, autocomplete.ModelSelect2):
                 fld.widget = wrap_dal_widget(fld.widget)
                 wrapped = True
@@ -254,9 +254,9 @@ class MIZAdminForm(forms.Form):
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
             
-        from django.contrib.admin.helpers import Fieldset
-        for name, options in fieldsets:
-            yield Fieldset(
+        from .helper import MIZFieldset
+        for name, options in fieldsets:  
+            yield MIZFieldset(
                 self, name,
                 **options
             )
