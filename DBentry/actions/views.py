@@ -1,30 +1,34 @@
 
 from django.db import transaction
 from django.utils.html import format_html
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.contrib.admin.utils import get_fields_from_path
-from django.urls import reverse_lazy
-
-from .base import ActionConfirmationView, WizardConfirmationView
-from .forms import forms, BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet
 
 from DBentry.utils import link_list, merge_records
 from DBentry.models import *
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
+
+from .base import ActionConfirmationView, WizardConfirmationView
+from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet
+
     
 class BulkEditJahrgang(ActionConfirmationView):
     
-    short_description = 'Jahrgang hinzufügen'
+    short_description = _("Add issue volume")
     perm_required = ['change']
     action_name = 'bulk_jg'
+    
+    affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
     
     initial = {'jahrgang':1}
     fields = ['jahrgang']
     help_texts = {'jahrgang':'Wählen sie den Jahrgang für das erste Jahr.'}
     
-    #TODO: FUCK GRAMMATIK
     view_helptext = """ Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
                         Dabei wird das früheste Jahr in der Auswahl als Startpunkt aufgefasst und der Wert für den Jahrgang für jedes weitere Jahr entsprechend hochgezählt.
-                        Den Ausgaben, die keine Jahresangaben besitzen, wird nur der von Ihnen unten gewählte Wert für Jahrgang zugewiesen.
+                        Für Ausgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), wird nur der eingegebene Wert für den Jahrgang benutzt.
+                        Wird als Jahrgang 0 eingegeben, werden die Angaben für Jahrgänge der ausgewählten Ausgaben gelöscht.
+                        Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
     """
     
     def action_allowed(self):
@@ -37,37 +41,46 @@ class BulkEditJahrgang(ActionConfirmationView):
     def perform_action(self, form_cleaned_data):
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
-        
-        years_in_qs = qs.values_list('ausgabe_jahr__jahr', flat = True).exclude(ausgabe_jahr__jahr=None).order_by('ausgabe_jahr__jahr').distinct()
-        previous_year = years_in_qs.first()
-        with transaction.atomic():
-            # Update all the objects that do not have a year
-            qs.filter(ausgabe_jahr__jahr=None).update(jahrgang=jg)
-            
-            # Update all the objects that do have a year, and increment the jahrgang accordingly
-            for year in years_in_qs:
-                jg += year - previous_year
-                loop_qs = qs.filter(ausgabe_jahr__jahr=year)
-                loop_qs.update(jahrgang=jg)
-                # Do not update the same issue twice (e.g. issues with two years)
-                qs = qs.exclude(ausgabe_jahr__jahr=year)
-                previous_year = year
+        if jg == 0:
+            # User entered 0 for jahrgang. Delete jahrgang data from the selected ausgaben.
+            qs.update(jahrgang=None)
+        else:
+            years_in_qs = qs.values_list('ausgabe_jahr__jahr', flat = True).exclude(ausgabe_jahr__jahr=None).order_by('ausgabe_jahr__jahr').distinct()
+            previous_year = years_in_qs.first()
+            with transaction.atomic():            
+                # Update all the objects that do not have a year
+                qs.filter(ausgabe_jahr__jahr=None).update(jahrgang=jg)
+                
+                # Update all the objects that do have a year, and increment the jahrgang accordingly
+                for year in years_in_qs:
+                    jg += year - previous_year
+                    loop_qs = qs.filter(ausgabe_jahr__jahr=year)
+                    loop_qs.update(jahrgang=jg)
+                    # Do not update the same issue twice (e.g. issues with two years)
+                    qs = qs.exclude(ausgabe_jahr__jahr=year)
+                    previous_year = year
                 
                 
 class BulkAddBestand(ActionConfirmationView):
-    
-    short_description = 'Bestand hinzufügen'
+
+    short_description = _("Alter stock")
     perm_required = ['alter_bestand']
     action_name = 'add_bestand'
     
+    affected_fields = ['bestand']
+    
     form_class = BulkAddBestandForm
-    fields = ['bestand']
-    #TODO: make initials dependent of the view's model
-    initial = {'bestand' : lagerort.objects.get(pk=ZRAUM_ID), 'dublette' : lagerort.objects.get(pk=DUPLETTEN_ID)}
     
     view_helptext = """ Sie können hier Bestände für die ausgewählten Objekte hinzufügen.
                         Besitzt ein Objekt bereits einen Bestand in der ersten Kategorie ('Lagerort (Bestand)'), so wird stattdessen diesem Objekt ein Bestand in der zweiten Kategorie ('Lagerort (Dublette)') hinzugefügt.
     """
+    
+    def get_initial(self):
+        # get initial values for bestand and dublette based on the view's model
+        initial = super().get_initial()
+        if self.model == ausgabe:
+            initial = {'bestand' : lagerort.objects.get(pk=ZRAUM_ID), 'dublette' : lagerort.objects.get(pk=DUPLETTEN_ID)}
+        return initial
        
     def perform_action(self, form_cleaned_data):
         
@@ -104,13 +117,36 @@ class BulkAddBestand(ActionConfirmationView):
                 self.model_admin.message_user(self.request, format_html(msg_text))
  
 class MergeViewWizarded(WizardConfirmationView): 
+    
+    short_description = ugettext_lazy("Merge selected %(verbose_name_plural)s")
+    perm_required = ['merge']
+    action_name = 'merge_records'
      
     form_list = [MergeFormSelectPrimary, MergeConflictsFormSet] 
-    template_name = 'admin/basic_wizard.html' 
      
-    action_name = 'merge_records'
     _updates = {} 
-    _permissions_required = ['merge']
+    
+    #TODO: translation
+    step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
+        Danach werden die sekundären Datensätze GELÖSCHT.
+    """
+    #TODO: include this bit in the ACTUAL help page for this action:
+    #    Fehlen dem primären Datensatz Grunddaten und wird unten bei der entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
+    #   Bereits bestehende Grunddaten des primären Datensatzes werden NICHT überschrieben.
+    
+    step2_helptext = """Für die Erweiterung der Grunddaten des primären Datensatzes stehen widersprüchliche Möglichkeiten zur Verfügung.
+        Bitte wählen Sie jeweils eine der Möglichkeiten, die für den primären Datensatz übernommen werden sollen.
+    """
+    
+    view_helptext = {
+        '0':step1_helptext, 
+        '1':step2_helptext, 
+    }
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['title'] = ugettext_lazy('Merge objects step: {}'.format(str(int(self.steps.current)+1)))
+        return context
     
     def action_allowed(self):
         model = self.opts.model
@@ -205,7 +241,7 @@ class MergeViewWizarded(WizardConfirmationView):
                     # We do not care about values with len <= 1 as these do not cause merge conflicts (see process_step) 
                     data.update({ 
                         add_prefix('original_fld_name') : fld_name,  
-                        add_prefix('verbose_fld_name') : self.opts.get_field(fld_name).verbose_name,  
+                        add_prefix('verbose_fld_name') : self.opts.get_field(fld_name).verbose_name.capitalize(),  
                     })
                     choices.update({ add_prefix('posvals') : [(c, v) for c, v in enumerate(values)]}) 
                     total_forms += 1

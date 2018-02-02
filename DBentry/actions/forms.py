@@ -42,7 +42,6 @@ def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_cla
             attrs[field_path] = field.formfield(**formfield_opts)
     return type('SelectionForm', (MIZAdminForm, ), attrs )
     
-    
 class BulkAddBestandForm(MIZAdminForm):
     
     bestand = forms.ModelChoiceField(required = True,
@@ -55,13 +54,18 @@ class BulkAddBestandForm(MIZAdminForm):
                                     widget = autocomplete.ModelSelect2(url='aclagerort'))
 
 
-class MergeFormSelectPrimary(DynamicChoiceForm, MIZAdminForm): #NOTE: why is this a DynamicChoiceForm?
-    original = forms.ChoiceField(choices = [], label = 'Primären Datensatz auswählen', widget = forms.RadioSelect()) 
-    expand_o = forms.BooleanField(required = False, label = 'Primären Datensatz erweitern', initial=True) 
+class MergeFormSelectPrimary(DynamicChoiceForm, MIZAdminForm):
+    original = forms.ChoiceField(choices = [], label = 'Primären Datensatz auswählen', widget = forms.RadioSelect(), help_text = "Bitten wählen Sie den Datensatz, dem die verwandten Objekte der anderen Datensätze angehängt werden sollen.") 
+    expand_o = forms.BooleanField(required = False, label = 'Primären Datensatz erweitern', initial=True, help_text = "Sollen fehlende Grunddaten des primäre Datensatzes um in anderen Datensätzen vorhandenen Daten erweitert werden?") 
      
 class MergeFormHandleConflicts(DynamicChoiceForm, MIZAdminForm): 
     original_fld_name = forms.CharField(required=False, widget=forms.HiddenInput()) # Stores the name of the field 
-    verbose_fld_name = forms.CharField(label = 'Original-Feld', widget=forms.TextInput(attrs={'readonly':'readonly'})) # Displays the verbose name of the field 
+    verbose_fld_name = forms.CharField(required=False, widget=forms.HiddenInput())# Stores the verbose name of the field 
     posvals = forms.ChoiceField(choices = [], label = 'Mögliche Werte', widget = forms.RadioSelect()) 
     
-MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)     
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.data.get(self.add_prefix('verbose_fld_name')):
+            self.fields['posvals'].label = 'Mögliche Werte für {}:'.format(self.data.get(self.add_prefix('verbose_fld_name')))
+            
+MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)    
