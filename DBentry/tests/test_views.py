@@ -99,15 +99,7 @@ class TestFavoritenView(ViewTestCase):
         self.assertEqual(view.get_object().user, self.super_user) # user has no Favoriten yet, create an entry in Favoriten
         self.assertTrue(view.model.objects.filter(user=request.user).exists())
         self.assertEqual(view.get_object().user, self.super_user) # direct access to Favoriten via queryset
-    
-class TestMIZSessionWizardView(ViewTestCase):
-    
-    view_class = MIZSessionWizardView
-    
-    def test_get_context_data(self):
-        # what even is there to test?
-        pass
-    
+        
 #DBentry.bulk
 class TestBulkAusgabe(ViewTestCase, CreateFormViewMixin):
     
