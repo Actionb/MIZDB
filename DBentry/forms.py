@@ -254,9 +254,9 @@ class MIZAdminForm(forms.Form):
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
             
-        from django.contrib.admin.helpers import Fieldset
-        for name, options in fieldsets:
-            yield Fieldset(
+        from .helper import MIZFieldset
+        for name, options in fieldsets:  
+            yield MIZFieldset(
                 self, name,
                 **options
             )
