@@ -238,7 +238,7 @@ class MIZAdminForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(MIZAdminForm, self).__init__(*args, **kwargs)
         wrapped = False
-        for fld in self.base_fields.values():
+        for fld in self.fields.values():
             if isinstance(fld.widget, autocomplete.ModelSelect2):
                 fld.widget = wrap_dal_widget(fld.widget)
                 wrapped = True
