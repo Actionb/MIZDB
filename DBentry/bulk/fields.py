@@ -102,7 +102,7 @@ class BulkJahrField(BulkField):
         for item in value.replace('/', ',').split(','):
             item = item.strip()
             if len(item)==2:
-                if int(item) <= 17:
+                if int(item) <= 17: #TODO current_year + 1 instead of 17?
                     item = '20' + item
                 else:
                     item = '19' + item

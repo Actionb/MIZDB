@@ -94,7 +94,15 @@ class RequestTestCase(UserTestCase):
     def assertMessageSent(self, request, expected_message):
         messages = [str(msg) for msg in get_messages(request)]
         error_msg = "Message {} not found in messages: {}".format(expected_message,  [m[:len(expected_message)+5] + "[...]" for m in messages])
-        self.assertTrue(any(m.startswith(expected_message) for m in messages), error_msg)
+        if not any(m.startswith(expected_message) for m in messages):
+            raise AssertionError(error_msg)
+        #self.assertTrue(any(m.startswith(expected_message) for m in messages), error_msg)
+        
+    def assertMessageNotSent(self, request, expected_message):
+        messages = [str(msg) for msg in get_messages(request)]
+        error_msg = "Message {} found in messages: {}".format(expected_message,  [m[:len(expected_message)+5] + "[...]" for m in messages])
+        if any(m.startswith(expected_message) for m in messages):
+            raise AssertionError(error_msg)
     
 class ViewTestCase(RequestTestCase, CreateViewMixin):
         pass

@@ -9,49 +9,52 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.utils import IntegrityError
 
 from DBentry.views import MIZAdminToolView
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio, m2m_audio_ausgabe
 from .forms import BulkFormAusgabe
-        
+#TODO: LogEntry for creation
 class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
     
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe'
-    index_label = 'Ausgaben Erstellung'
+    url_name = 'bulk_ausgabe' #TODO: remove this?
+    index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
     
     _permissions_required = [('add', 'ausgabe')]
     
+    def get_initial(self):
+        # If there was a form 'before' the current one, its data will serve as initial values 
+        # This way, we can track changes to the form the user has made.
+        return self.request.session.get('old_form_data', {})
+    
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        #NOTE: request.POST is a QueryDict, meaning every value in it is a LIST
-        # If we are giving lists to the form as data, it will automatically unpack the list and not be a problem
-        # HOWEVER, has_changed will return false since it compares lists with the items of the unpacked list
-        # ... or does it?
-        #form_data = {k:v for k, v in request.POST.items()}
-        #form = self.form_class(form_data, initial=request.session.get('old_form_data', {})) 
-        form = self.form_class(request.POST, initial=request.session.get('old_form_data', {}))
+        form = self.get_form()
+        
         if form.is_valid():
             if form.has_changed() or '_preview' in request.POST:
-                # This will also force a preview if form initial is empty 
-                # as form.has_changed will be True (NOTE: research on this)
-                # (empty because it's the very first form the user gets served)
+                # the form's data differs from initial -- or the user has requested a preview
                 if not '_preview' in request.POST:
+                    # the form has changed and the user did not request a preview, complain about it
                     messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
                 context['preview_headers'], context['preview'] = self.build_preview(request, form)
             else:
-                if '_continue' in request.POST and not form.has_changed():
-                    # Collect preview data, create instances
-                    ids, instances, updated = self.save_data(request, form)
-                    # Need to store the queryset of the newly created items in request.session for the Changelist view
+                if '_continue' in request.POST:
+                    # save the data and redirect back to the changelist
+                    ids, instances, updated = self.save_data(form)
+                    # Need to store the ids of the newly created items in request.session so the changelist can filter for them
                     request.session['qs'] = dict(id__in=ids) if ids else None
                     return redirect(self.success_url) #TODO: make this open in a popup/new tab
-                if '_addanother' in request.POST and not form.has_changed():
+                    
+                if '_addanother' in request.POST:   
+                    # save the data, notify the user about changes and prepare the next view
                     old_form = form
-                    ids, created, updated = self.save_data(request, form)
+                    ids, created, updated = self.save_data(form)
+                    
                     if created:
                         obj_list = link_list(request, created, path = "admin:DBentry_ausgabe_change")
                         messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
@@ -59,23 +62,28 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                         obj_list = link_list(request, updated, path = "admin:DBentry_ausgabe_change")
                         messages.success(request, format_html('Dubletten hinzugefügt: {}'.format(obj_list)))
                     
+                    # Prepare the form for the next view
                     form = self.form_class(self.next_initial_data(form))
+                    # clean it
                     form.is_valid()
+                    # and add the preview
                     context['preview_headers'], context['preview'] = self.build_preview(request, form)
+                    # Add the 'next' form for the next view to render
+                    context['form'] = form
+                    
+        # Provide the next form with initial so we can track data changes within the form
         request.session['old_form_data'] = form.data
-        context['form'] = form
-        return render(request, self.template_name, context = context)
+        return self.render_to_response(context)
     
     @transaction.atomic()
-    def save_data(self, request, form):
-        #TODO: request param not needed
+    def save_data(self, form):
         #TODO: update instance attributes (jahrgang,etc.)?
-        ids = []
-        created = []
-        updated = []
+        ids = [] # contains the pks of instances either created or updated by save_data
+        created = [] # contains instances of objects that were newly created by save_data
+        updated = [] # contains instances that were existed before save_data and were updated by it
         
-        original = []
-        dupes = []
+        original = [] # any unique row or the first row in a set of equal rows 
+        dupes = [] # rows in this list are a duplicate of a row in originals, no new objects will be created for duplicate rows, but a 'dubletten' bestand will be added to their originals
         # Split row_data into rows of duplicates and originals, so we save the originals before any duplicates
         # This assumes row_data does not contain any nested duplicates
         # Also filter out rows that resulted in multiple matching existing instances
@@ -87,28 +95,23 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
             else:
                 original.append(row)
                 
-        
         for row in chain(original, dupes):
             if 'dupe_of' in row:
-                instance = row['dupe_of'].get('instance', None)
-                if not instance or not instance.pk:
-                    # NOTE: can this still happpen?
-                    raise ValidationError("Hol mal den Philip!")
-                    continue
-                bestand_data = dict(lagerort=row.get('lagerort'))
+                instance = row['dupe_of']['instance'] # this cannot fail, since we've saved all original instances before
+                bestand_data = dict(lagerort=row.get('lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
                 if 'provenienz' in row['dupe_of']:
+                    # Also add the provenienz of the original to this object's bestand
                     bestand_data['provenienz'] = row.get('provenienz')
                 instance.bestand_set.create(**bestand_data)
-                row['instance'] = instance
-                updated.append(instance)
-                ids.append(instance.pk)
                 continue
             
             instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
             if not instance.pk:
+                # this is a new instance, mark it as such
                 instance.save()
                 created.append(instance)
             else:
+                # this instance already existed, mark it as updated
                 updated.append(instance)
             
             # Create and/or update sets
@@ -118,16 +121,15 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if data:
                     if fld_name == 'monat':
                         fld_name = 'monat_id'
-                    if isinstance(data, str) or isinstance(data, int):
+                    if not isinstance(data, (list, tuple)):
                         data = [data]
                     for value in data:
                         if value:
                             try:
                                 with transaction.atomic():
                                     set.create(**{fld_name:value})
-                            except Exception as e:
-                                # Let something else handle UNIQUE constraints violations
-                                #print(e, data)
+                            except IntegrityError as e: 
+                                # ignore UNIQUE constraints violations
                                 continue
             # Audio
             if 'audio' in row:
@@ -142,11 +144,16 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 else:
                     audio_instance = audio(**audio_data)
                     audio_instance.save()
-                m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
-                m2m_instance.save()
+                    
+                if not m2m_audio_ausgabe.objects.filter(ausgabe=instance, audio=audio_instance).exists():
+                    # UNIQUE constraints violations avoided
+                    m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
+                    m2m_instance.save()
+                    
                 bestand_data = dict(lagerort=form.cleaned_data.get('audio_lagerort'))
                 if 'provenienz' in row:
                     bestand_data['provenienz'] = row.get('provenienz')
+                    
                 audio_instance.bestand_set.create(**bestand_data)
                 
             # Bestand
@@ -160,9 +167,10 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
         return ids, created, updated
                 
     def next_initial_data(self, form):
+        # Using form.cleaned_data would insert model instances into the data we are going to save in request.session... and model instances are not JSON serializable
         data = form.data.copy()
         # Increment jahr and jahrgang
-        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')])
+        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')]) 
         if form.cleaned_data.get('jahrgang'):  
             data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
         return data
@@ -189,11 +197,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if not fld_name in row:
                     continue
                 if fld_name == 'audio':
-                    if row.get(fld_name):
-                        img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
-                    else:
-                        # NOTE: this never happens...
-                        img = format_html('<img alt="False" src="/static/admin/img/icon-no.svg">')
+                    img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
                     preview_row[fld_name] = img
                 else:
                     values_list = row.get(fld_name) or []
