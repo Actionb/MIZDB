@@ -14,10 +14,58 @@ from DBentry.sites import miz_site
 
 from .mixins import *
 
-class ModelTestCase(TestDataMixin, TestCase):
+class MyTestCase(TestCase):
+    
+    def assertDictKeysEqual(self, d1, d2):
+        t = "dict keys missing from {d}: {key_diff}"
+        msg = ''
+        key_diff = set(d1.keys()) - set(d2.keys())
+        if key_diff:
+            msg = t.format(d='d2', key_diff=str(key_diff))
+        
+        key_diff = set(d2.keys()) - set(d1.keys())
+        if key_diff:
+            if msg:
+                msg += '\n'
+            msg +=  t.format(d='d1', key_diff=str(key_diff))
+        if msg:
+            raise AssertionError(msg)
+    
+    def assertDictsEqual(self, dict1, dict2, msg=''):
+        from django.http.request import QueryDict
+        d1 = dict1.copy()
+        d2 = dict2.copy()
+        if isinstance(d1, QueryDict) and not isinstance(d2, QueryDict) or isinstance(d2, QueryDict) and not isinstance(d1, QueryDict):
+            for d in [d1, d2]:
+                # forcefully convert QueryDicts
+                try:
+                    d = d.dict()
+                except:
+                    continue
+        self.assertDictKeysEqual(d1, d2)
+        
+        t = "dict values differ for key {k}: \n{v1} \n!=\n{v2}\n\n\n"
+        msg = ''
+        for k, v in d1.items():
+            v1 = v
+            v2 = d2.get(k)
+            if isinstance(v1, dict) and isinstance(v2, dict):
+                try:
+                    self.assertDictsEqual(v1, v2)
+                except AssertionError as e:
+                    msg += "subdicts for key {k} differ: {msg}\n\n\n".format(k=k, msg=e.args[0])
+            else:
+                v1 = str(v1)
+                v2 = str(v2)
+                if v1 != v2:
+                    msg += t.format(k=k, v1=v1, v2=v2)
+        if msg:
+            raise AssertionError(msg)
+            
+class DataTestCase(TestDataMixin, MyTestCase):
     pass
          
-class UserTestCase(TestCase):
+class UserTestCase(MyTestCase):
     
     @classmethod
     def setUpTestData(cls):
@@ -42,6 +90,11 @@ class RequestTestCase(UserTestCase):
     def get_request(self, path=None, data=None, user=None):
         self.client.force_login(user or self.super_user)
         return self.client.get(path or self.path, data).wsgi_request
+        
+    def assertMessageSent(self, request, expected_message):
+        messages = [str(msg) for msg in get_messages(request)]
+        error_msg = "Message {} not found in messages: {}".format(expected_message,  [m[:len(expected_message)+5] + "[...]" for m in messages])
+        self.assertTrue(any(m.startswith(expected_message) for m in messages), error_msg)
     
 class ViewTestCase(RequestTestCase, CreateViewMixin):
         pass
@@ -86,9 +139,6 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
             request_data.update(other_dict)
         return self.client.post(self.changelist_path, data=request_data)
         
-    def assertMessageSent(self, request, expected_message):
-        messages = [str(msg) for msg in get_messages(request)]
-        self.assertTrue(expected_message in messages) 
 
 class ACViewTestCase(ViewTestCase):
     
@@ -106,8 +156,15 @@ class ACViewTestCase(ViewTestCase):
 ##############################################################################################################
 # TEST_FORMS TEST CASES
 ##############################################################################################################
-class FormTestCase(TestCase, CreateFormMixin):
-    pass
+class FormTestCase(MyTestCase, CreateFormMixin):
+    
+    def assertFormValid(self, form):
+        if not form.is_valid():
+            raise AssertionError('Form invalid. Form errors: {}'.format([(k,v) for k,v in form.errors.items()]))
+            
+    def assertFormInvalid(self, form):
+        if form.is_valid():
+            raise AssertionError('Form valid when expected to be invalid')
             
 class ModelFormTestCase(TestDataMixin, FormTestCase):
     
@@ -122,7 +179,7 @@ class ModelFormTestCase(TestDataMixin, FormTestCase):
 ##############################################################################################################
 # TEST_UTILS TEST CASES
 ##############################################################################################################
-class MergingTestCase(TestDataMixin, TestCase):
+class MergingTestCase(TestDataMixin, MyTestCase):
     
     test_data_count = 3
     

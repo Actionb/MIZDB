@@ -1,6 +1,6 @@
 from .base import *
         
-class TestModelAusgabe(ModelTestCase):
+class TestModelAusgabe(DataTestCase):
     
     model = ausgabe
    
@@ -131,7 +131,7 @@ class TestModelAusgabe(ModelTestCase):
         self.assertQuerysetEqual(self.obj2.ausgabe_jahr_set.values_list('jahr', flat = True), ['2020', '2021'], ordered = False)
         self.assertQuerysetEqual(self.obj2.ausgabe_monat_set.values_list('monat__abk', flat = True), ['Dez', 'Nov'], ordered = False, transform = str)
 
-class TestModelPerson(ModelTestCase):
+class TestModelPerson(DataTestCase):
     
     model = person
     
@@ -154,7 +154,7 @@ class TestModelPerson(ModelTestCase):
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Alice Tester')
         
-class TestModelMusiker(ModelTestCase):
+class TestModelMusiker(DataTestCase):
     
     model = musiker
     
@@ -184,7 +184,7 @@ class TestModelMusiker(ModelTestCase):
         self.qs_obj1.update(person=p)
         self.assertEqual(self.model.objects.filter(pk=self.obj1.pk).first().herkunft_string(), 'Dortmund, TE')
         
-class TestModelGenre(ModelTestCase):
+class TestModelGenre(DataTestCase):
     
     model = genre
     
@@ -198,7 +198,7 @@ class TestModelGenre(ModelTestCase):
         genre_alias.objects.create(alias='Alias2', parent=self.obj1)
         self.assertEqual(self.model.objects.filter(pk=self.obj1.pk).first().alias_string(), 'Alias1, Alias2')
         
-class TestModelSchlagwort(ModelTestCase):
+class TestModelSchlagwort(DataTestCase):
     
     model = schlagwort
     
@@ -217,7 +217,7 @@ class TestModelSchlagwort(ModelTestCase):
         schlagwort_alias.objects.create(alias='Alias2', parent=self.obj1)
         self.assertEqual(self.model.objects.filter(pk=self.obj1.pk).first().alias_string(), 'Alias1, Alias2')
         
-class TestModelBand(ModelTestCase):
+class TestModelBand(DataTestCase):
     
     model = band
     
@@ -245,7 +245,7 @@ class TestModelBand(ModelTestCase):
         self.model.musiker.through.objects.create(musiker=m2, band=self.obj1)
         self.assertEqual(self.model.objects.filter(pk=self.obj1.pk).first().musiker_string(), 'Testkuenstler1, Testkuenstler2')
         
-class TestModelAutor(ModelTestCase):
+class TestModelAutor(DataTestCase):
     
     model = autor
     
@@ -265,7 +265,7 @@ class TestModelAutor(ModelTestCase):
         self.model.magazin.through.objects.create(magazin=magazin.objects.create(magazin_name='Testmagazin2'), autor=self.obj1)
         self.assertEqual(self.qs_obj1.first().magazin_string(), 'Testmagazin1, Testmagazin2')
         
-class TestModelArtikel(ModelTestCase):
+class TestModelArtikel(DataTestCase):
     
     model = artikel
     
@@ -305,7 +305,7 @@ class TestModelArtikel(ModelTestCase):
         self.model.band.through.objects.create(band=b, artikel=self.obj1)
         self.assertEqual(self.qs_obj1.first().kuenstler_string(), 'Testband, Alice Tester')
         
-class TestModelInstrument(ModelTestCase):
+class TestModelInstrument(DataTestCase):
     
     model = instrument
     
@@ -319,7 +319,7 @@ class TestModelInstrument(ModelTestCase):
         self.qs_obj1.update(kuerzel='')
         self.assertEqual(self.qs_obj1.first().__str__(), 'Posaune')
         
-class TestModelMagazin(ModelTestCase):
+class TestModelMagazin(DataTestCase):
     
     model = magazin
     
@@ -336,7 +336,7 @@ class TestModelMagazin(ModelTestCase):
         ausgabe.objects.create(magazin=self.obj1)
         self.assertEqual(self.qs_obj1.first().anz_ausgaben(), 1)
         
-class TestModelAudio(ModelTestCase):
+class TestModelAudio(DataTestCase):
     
     model = audio
     
@@ -371,7 +371,7 @@ class TestModelAudio(ModelTestCase):
         # any format_name set manually should be overriden by Format.get_name()
         self.assertEqual(self.qs_obj1.first().formate_string(), 'TestTyp1, TestTyp2')
         
-class TestModelProvenienz(ModelTestCase):
+class TestModelProvenienz(DataTestCase):
     
     model = provenienz
     
@@ -384,7 +384,7 @@ class TestModelProvenienz(ModelTestCase):
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'TestGeber (Fund)')
         
-class TestModelLagerort(ModelTestCase):
+class TestModelLagerort(DataTestCase):
     
     model = lagerort
     
@@ -404,7 +404,7 @@ class TestModelLagerort(ModelTestCase):
         self.assertEqual(self.obj4.__str__(), 'Testregal (Testort)')
         self.assertEqual(self.obj5.__str__(), 'Testraum-Testregal (Testort)')
         
-class TestModelFormat(ModelTestCase):
+class TestModelFormat(DataTestCase):
     
     model = Format
     
@@ -446,7 +446,7 @@ class TestModelFormat(ModelTestCase):
         self.obj5.save()
         self.assertEqual(self.obj5.format_name, self.obj5.get_name())
         
-class TestModelFormatTag(ModelTestCase):
+class TestModelFormatTag(DataTestCase):
     
     model = FormatTag
     
@@ -458,7 +458,7 @@ class TestModelFormatTag(ModelTestCase):
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Test')
     
-class TestModelOrt(ModelTestCase):
+class TestModelOrt(DataTestCase):
     
     model = ort
     
@@ -478,7 +478,7 @@ class TestModelOrt(ModelTestCase):
         self.assertEqual(self.obj3.__str__(), 'Testbland, TE')
         self.assertEqual(self.obj4.__str__(), 'Testort2, TE-BL')
         
-class TestModelDatei(ModelTestCase):
+class TestModelDatei(DataTestCase):
     
     model = datei
     
