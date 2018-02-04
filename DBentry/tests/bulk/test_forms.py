@@ -177,7 +177,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         expected = ['num', 'monat', 'lnum']
         self.assertEqual(fs['fields'], expected)
     
-    def test_clean(self):
+    def test_clean_errors_audio_but_no_audio_lagerort(self):
         # audio == True & audio_lagerort == False => 'Bitte einen Lagerort für die Musik Beilage angeben.'
         data = self.valid_data.copy()
         del data['audio_lagerort']
@@ -189,6 +189,26 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             form.clean()
         self.assertEqual(e.exception.args[0], 'Bitte einen Lagerort für die Musik Beilage angeben.')
         self.assertTrue('Bitte einen Lagerort für die Musik Beilage angeben.' in form.errors.get('__all__'))
+        
+    def test_clean_errors_uneven_item_count(self):        
+        # total_count != item_count => error message
+        data = self.valid_data.copy()
+        data['monat'] = '1'
+        form = self.get_form(data=data)
+        form.is_valid()
+        #form.total_count = 1 # clean() expects total_count to be zero at the beginning
+        with self.assertRaises(ValidationError) as e:
+            form.clean()
+        self.assertTrue(e.exception.message.startswith('Ungleiche Anzahl'))
+
+    def test_clean_errors_required_missing(self):   
+        # not all fields in at_least_one_required have data => error message
+        data = {}
+        form = self.get_form(data=data)
+        form.is_valid()
+        with self.assertRaises(ValidationError) as e:
+            form.clean()
+        self.assertTrue(e.exception.message.startswith('Bitte mindestens'))
         
     def test_lookup_instance_no_result(self):
         # row['num'] == 2 => qs.exists() else !qs.exists()

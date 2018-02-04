@@ -70,12 +70,13 @@ class BulkForm(MIZAdminForm):
         """
         Populate split_data with data from BulkFields and raises errors if an unequal amount of data or missing required data is encountered.
         """
+        cleaned_data = super().clean()
         errors = False
         self.split_data = {}
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BulkField):
                 # Retrieve the split up data and the amount of objects that are expected to be created with that data
-                list_data, item_count = fld.to_list(self.cleaned_data.get(fld_name))
+                list_data, item_count = fld.to_list(cleaned_data.get(fld_name))
                 # If the field belongs to the each_fields group, we should ignore the item_count it is returning as its data is used for every object we are about to create
                 if not fld_name in self.each_fields and item_count and self.total_count and item_count != self.total_count:
                     # This field's data exists and is meant to be split up into individual items, but the amount of items differs from the previously determined total_count
@@ -94,7 +95,7 @@ class BulkForm(MIZAdminForm):
         if errors:
             raise ValidationError('Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
         for fld_name in self.at_least_one_required:
-            if not self.cleaned_data[fld_name] in self.fields[fld_name].empty_values:
+            if not cleaned_data[fld_name] in self.fields[fld_name].empty_values:
                 # If any of the fields in at_least_one_required contain data, we're good
                 break
         else:
@@ -102,7 +103,7 @@ class BulkForm(MIZAdminForm):
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
                     ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
                 ))   
-            
+        return cleaned_data
             
 class BulkFormAusgabe(BulkForm):
     
@@ -147,10 +148,15 @@ class BulkFormAusgabe(BulkForm):
     status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus')
                              
     def clean(self):
-        super(BulkFormAusgabe, self).clean()
-        # If the user wishes to add audio data to the objects they are creating, they MUST also define a lagerort for the audio
-        if self.cleaned_data['audio'] and not self.cleaned_data['audio_lagerort']:
-            raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
+        try:
+            cleaned_data = super(BulkFormAusgabe, self).clean()
+        except ValidationError as e:
+            raise e
+        else:
+            # If the user wishes to add audio data to the objects they are creating, they MUST also define a lagerort for the audio
+            if cleaned_data.get('audio') and not cleaned_data.get('audio_lagerort'):
+                raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
+            return cleaned_data
     
     help_text = {
         'head' : """Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
@@ -257,7 +263,7 @@ class BulkFormAusgabe(BulkForm):
                         row['instance'] = qs.first()
                         row['lagerort'] = self.cleaned_data['dublette']
                     else:
-                        # lookup_instance returned multiple instances/objects
+                        # lookup_instance returned multiple instances/objects, this row will be ignored from now on
                         row['multiples'] = qs
                         
                     self._row_data.append(row)

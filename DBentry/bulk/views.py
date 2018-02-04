@@ -45,7 +45,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
             else:
                 if '_continue' in request.POST:
                     # save the data and redirect back to the changelist
-                    ids, instances, updated = self.save_data(request, form)
+                    ids, instances, updated = self.save_data(form)
                     # Need to store the ids of the newly created items in request.session so the changelist can filter for them
                     request.session['qs'] = dict(id__in=ids) if ids else None
                     return redirect(self.success_url) #TODO: make this open in a popup/new tab
@@ -53,7 +53,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if '_addanother' in request.POST:   
                     # save the data, notify the user about changes and prepare the next view
                     old_form = form
-                    ids, created, updated = self.save_data(request, form)
+                    ids, created, updated = self.save_data(form)
                     
                     if created:
                         obj_list = link_list(request, created, path = "admin:DBentry_ausgabe_change")
@@ -76,10 +76,9 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
         return self.render_to_response(context)
     
     @transaction.atomic()
-    def save_data(self, request, form):
-        #TODO: request param not needed
+    def save_data(self, form):
         #TODO: update instance attributes (jahrgang,etc.)?
-        ids = [] # contains the pls of instances either created or updated by save_data
+        ids = [] # contains the pks of instances either created or updated by save_data
         created = [] # contains instances of objects that were newly created by save_data
         updated = [] # contains instances that were existed before save_data and were updated by it
         
@@ -98,25 +97,21 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 
         for row in chain(original, dupes):
             if 'dupe_of' in row:
-                instance = row['dupe_of'].get('instance', None)
-                if not instance or not instance.pk:
-                    # NOTE: can this still happpen?
-                    raise ValidationError("Hol mal den Philip!")
-                    continue
-                bestand_data = dict(lagerort=row.get('lagerort'))
+                instance = row['dupe_of']['instance'] # this cannot fail, since we've saved all original instances before
+                bestand_data = dict(lagerort=row.get('lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
                 if 'provenienz' in row['dupe_of']:
+                    # Also add the provenienz of the original to this object's bestand
                     bestand_data['provenienz'] = row.get('provenienz')
                 instance.bestand_set.create(**bestand_data)
-                #row['instance'] = instance
-                #updated.append(instance)
-                #ids.append(instance.pk)
                 continue
             
             instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
             if not instance.pk:
+                # this is a new instance, mark it as such
                 instance.save()
                 created.append(instance)
             else:
+                # this instance already existed, mark it as updated
                 updated.append(instance)
             
             # Create and/or update sets
@@ -126,7 +121,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if data:
                     if fld_name == 'monat':
                         fld_name = 'monat_id'
-                    if isinstance(data, str) or isinstance(data, int):
+                    if not isinstance(data, (list, tuple)):
                         data = [data]
                     for value in data:
                         if value:
@@ -134,8 +129,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                                 with transaction.atomic():
                                     set.create(**{fld_name:value})
                             except IntegrityError as e: 
-                                # Let something else handle UNIQUE constraints violations
-                                #print(e, data)
+                                # ignore UNIQUE constraints violations
                                 continue
             # Audio
             if 'audio' in row:
@@ -152,6 +146,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                     audio_instance.save()
                     
                 if not m2m_audio_ausgabe.objects.filter(ausgabe=instance, audio=audio_instance).exists():
+                    # UNIQUE constraints violations avoided
                     m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
                     m2m_instance.save()
                     
@@ -172,10 +167,10 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
         return ids, created, updated
                 
     def next_initial_data(self, form):
-        #TODO: form.cleaned_data??
+        # Using form.cleaned_data would insert model instances into the data we are going to save in request.session... and model instances are not JSON serializable
         data = form.data.copy()
         # Increment jahr and jahrgang
-        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')])
+        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')]) 
         if form.cleaned_data.get('jahrgang'):  
             data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
         return data
@@ -202,11 +197,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if not fld_name in row:
                     continue
                 if fld_name == 'audio':
-                    if row.get(fld_name):
-                        img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
-                    else:
-                        # NOTE: this never happens...
-                        img = format_html('<img alt="False" src="/static/admin/img/icon-no.svg">')
+                    img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
                     preview_row[fld_name] = img
                 else:
                     values_list = row.get(fld_name) or []

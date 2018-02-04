@@ -128,7 +128,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertEqual(len(before_save_ids), 3)
         self.assertEqual(before_save_ids, [self.updated.pk, self.multi1.pk, self.multi2.pk])
         
-        ids_of_altered_objects, created, updated = view.save_data(request, form)
+        ids_of_altered_objects, created, updated = view.save_data(form)
         
         # for num 1 and 5 the database already had objects, make sure they are still there
         for pk in before_save_ids:
@@ -152,7 +152,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # NIY:
         # self.assertIsNone(self.updated.jahrgang)
         
-        ids, created, updated = self.view(request).save_data(request, form)
+        ids, created, updated = self.view(request).save_data(form)
         
         self.assertTrue(self.updated.audio.exists())
         # NIY:
@@ -171,7 +171,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         
         form = self.get_valid_form()
         request = self.post_request()
-        ids, created, updated = self.view(request).save_data(request, form)
+        ids, created, updated = self.view(request).save_data(form)
         
         # for the data num = '1,2,3,4,4,5' we expect to have created three new objects for num 2, 3 and 4. 
         self.assertEqual(len(created), 3)
