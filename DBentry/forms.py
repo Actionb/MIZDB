@@ -182,17 +182,21 @@ def makeForm(model, fields = []):
     if model in WIDGETS:
         widget_list = WIDGETS[model]
     return forms.modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
-    
-class InLineAusgabeForm(FormBase):
-    # NOTE: modelform_factory (called by InLineModelAdmin.get_formset) creates the Meta class attribute model
-        
+
+class AusgabeMagazinFieldForm(FormBase):
+    """
+    In order to limit search results, forward ausgabe search results to a ModelChoiceField for the model magazin.
+    Useable by any ModelForm that uses a relation to ausgabe.
+    Any form that inherits AusgabeMagazinFieldMixin.Meta and declares widgets in its inner Meta, must also redeclare the widget for ausgabe.
+    As such, it is not very useful to inherit the Meta.    (Python inheritance rules apply)
+    """
     magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
                                     queryset = magazin.objects.all(), 
-                                    widget = wrap_dal_widget(autocomplete.ModelSelect2(url='acmagazin'))) # need to wrap it here, this form goes through inlineformset_factory, etc. and is never really initialized
+                                    widget = wrap_dal_widget(autocomplete.ModelSelect2(url='acmagazin'))) 
     class Meta:
         widgets = {'ausgabe': autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
-                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),
+                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählena!'}),
                                     }
                                     
     def __init__(self, *args, **kwargs):
@@ -200,16 +204,14 @@ class InLineAusgabeForm(FormBase):
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
             kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
-        super(InLineAusgabeForm, self).__init__(*args, **kwargs)
-        
+        super(AusgabeMagazinFieldForm, self).__init__(*args, **kwargs)
 
+class InLineAusgabeForm(AusgabeMagazinFieldForm):
+    # modelform_factory (called by InLineModelAdmin.get_formset) creates the Meta class attribute model, so no bad mojo for not declaring it in a Meta class
+    # this ModelForm is used as for a ModelAdmin inline formset. Its Meta class will be inherited from its parent (modelform_factory:521).
+    pass  
 
-class ArtikelForm(FormBase):
-        
-    magazin = forms.ModelChoiceField(required = False, 
-                                    queryset = magazin.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acmagazin'))
-                                    
+class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
         model = artikel
         fields = '__all__'
@@ -220,17 +222,6 @@ class ArtikelForm(FormBase):
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
-    
-    def __init__(self, *args, **kwargs):
-        #TODO: ArtikelForm and InLineAusgabeForm share this!
-        # Set the right initial magazin for change forms (kwargs come with an instance)
-        # super.__init__ takes care of setting initials for add forms
-        if 'instance' in kwargs and kwargs['instance']:
-            if 'initial' not in kwargs:
-                kwargs['initial'] = {}
-            kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
-        super(ArtikelForm, self).__init__(*args, **kwargs)
-
         
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
