@@ -275,8 +275,8 @@ class AusgabeInLineBase(admin.TabularInline):
     extra = 1
     classes = ['collapse']
     def __init__(self, *args, **kwargs):
-        super(AusgabeInLineBase, self).__init__(*args, **kwargs)
         self.form = InLineAusgabeForm
+        super(AusgabeInLineBase, self).__init__(*args, **kwargs)
         self.verbose_name = ausgabe._meta.verbose_name
         self.verbose_name_plural = ausgabe._meta.verbose_name_plural
         

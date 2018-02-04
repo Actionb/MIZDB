@@ -102,7 +102,6 @@ WIDGETS = {
                 'ober' : autocomplete.ModelSelect2(url='acschlagwort'),  
             }, 
             # Sonstige 
-            'sender'        :   autocomplete.ModelSelect2(url='acsender'),  
             'bemerkungen'   :   Textarea(attrs=ATTRS_TEXTAREA), 
             'beschreibung'  :   Textarea(attrs=ATTRS_TEXTAREA), 
             'info'          :   Textarea(attrs=ATTRS_TEXTAREA), 
