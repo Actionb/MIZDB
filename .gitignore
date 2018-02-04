@@ -28,3 +28,5 @@ htmlcov/
 static/
 
 DBentry/snippets/
+
+db/
