@@ -42,6 +42,7 @@ class CreateFormMixin(object):
     """
     
     form_class = None
+    dummy_fields = {}
     valid_data = {}
     
     def get_form_class(self):
@@ -54,8 +55,12 @@ class CreateFormMixin(object):
     def get_valid_form(self):
         form = self.get_form(data=self.valid_data.copy())
         if self.valid_data and not form.is_valid():
-            raise Exception('self.valid_data did not contain valid data!')
+            raise Exception('self.valid_data did not contain valid data! form errors: {}'.format([(k,v) for k,v in form.errors.items()]))
         return form
+    
+    def get_dummy_form(self, fields=None, **form_initkwargs):
+        fields = fields or self.dummy_fields
+        return type('DummyForm', (self.form_class, ), fields.copy())(**form_initkwargs)
         
 class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
     """
