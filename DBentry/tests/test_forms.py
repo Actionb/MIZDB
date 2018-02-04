@@ -8,24 +8,28 @@ class TestFormBase(ModelFormTestCase):
     form_class = FormBase
     model = land
     fields = ['land_name', 'code']
+    test_data_count = 0
     
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = land.objects.create(land_name='Deutschland', code='DE')
+        super().setUpTestData()
         
     def test_init(self):
         # initial in kwargs
         kwargs = {'initial' : {'land_name':'Dschland'}}
         form = self.get_form(**kwargs)
         self.assertEqual(form.initial.get('land_name'),'Dschland')
-        
-        # test populating initial with not quite correct field names
-        
+       
+    def test_init_partial_correct_fieldpath(self):
+        # test populating initial with not quite correct field names 
         # as field path
         kwargs = {'initial' : {'xyz__land_name':'Dschland'}}
         form = self.get_form(**kwargs)
         self.assertEqual(form.initial.get('land_name'),'Dschland')
         
+    def test_init_partial_correct_fieldname(self):
+        # test populating initial with not quite correct field names 
         # as partial match
         kwargs = {'initial' : {'abcland_namexyz':'Dschland'}}
         form = self.get_form(**kwargs)
@@ -50,51 +54,67 @@ class TestInLineAusgabeForm(ModelFormTestCase):
     
     form_class = InLineAusgabeForm
     model = ausgabe.audio.through
-    fields = model.get_required_fields(as_string=True) #['magazin', 'ausgabe', 'audio']
-    
-    @classmethod
-    def setUpTestData(cls):
-        super(TestInLineAusgabeForm, cls).setUpTestData()
-        cls.mag = cls.obj1.ausgabe.magazin # all objects should have the same magazin
+    fields = ['ausgabe']
         
-    def test_init(self):
+    def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance':self.obj1}
         form = self.get_form(**kwargs)
         self.assertEqual(form.instance, self.obj1)
-        self.assertEqual(form.initial.get('magazin'), self.mag)
+        self.assertEqual(form.initial.get('magazin'), self.obj1.ausgabe.magazin)
+        
+    def test_form_widgets(self):
+        form = self.get_form()
+        self.assertTrue('ausgabe' in form.fields)
+        self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
+        self.assertTrue('magazin' in form.fields)
+        from DBentry.ac.widgets import EasyWidgetWrapper
+        self.assertIsInstance(form.fields['magazin'].widget, EasyWidgetWrapper)
         
 class TestArtikelForm(ModelFormTestCase):
     
-    form_class = InLineAusgabeForm
-    model = ausgabe.audio.through
-    fields = model.get_required_fields(as_string=True) #['ausgabe', 'schlagzeile', 'seite']
+    form_class = ArtikelForm
+    model = artikel
+    fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'info']
     
-    @classmethod
-    def setUpTestData(cls):
-        super(TestArtikelForm, cls).setUpTestData()
-        cls.mag = cls.obj1.ausgabe.magazin # all objects should have the same magazin
-    
-    def test_init(self):
+    def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance':self.obj1}
         form = self.get_form(**kwargs)
         self.assertEqual(form.instance, self.obj1)
-        self.assertEqual(form.initial.get('magazin'), self.mag)
-
-class DummyForm(MIZAdminForm):
-    some_int = forms.IntegerField()
-    wrap_me = forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin'))
-    
+        self.assertEqual(form.initial.get('magazin'), self.obj1.ausgabe.magazin)
+        
+    def test_form_widgets(self):
+        form = self.get_form()
+        
+        self.assertTrue('schlagzeile' in form.fields)
+        w = form.fields['schlagzeile'].widget
+        self.assertIsInstance(w, forms.Textarea)
+        self.assertEqual(w.attrs['rows'], 2)
+        self.assertEqual(w.attrs['cols'], 90)
+        
+        self.assertTrue('zusammenfassung' in form.fields)
+        self.assertIsInstance(form.fields['zusammenfassung'].widget, forms.Textarea)
+        self.assertTrue('info' in form.fields)
+        self.assertIsInstance(form.fields['info'].widget, forms.Textarea)
+        self.assertTrue('ausgabe' in form.fields)
+        self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
+        self.assertTrue('magazin' in form.fields)
+        from DBentry.ac.widgets import EasyWidgetWrapper
+        self.assertIsInstance(form.fields['magazin'].widget, EasyWidgetWrapper)
+        
 class TestMIZAdminForm(FormTestCase):
     
-    form_class = DummyForm
+    form_class = MIZAdminForm
+    dummy_fields = {
+        'some_int' : forms.IntegerField(), 
+        'wrap_me' : forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin')), 
+    }
     
     def test_init(self):
-        form = self.get_form()
         # everything wrapped?
         from DBentry.ac.widgets import EasyWidgetWrapper
-        form = self.get_form()
+        form = self.get_dummy_form()
         self.assertIsInstance(form.fields['wrap_me'].widget, EasyWidgetWrapper)
         self.assertNotIsInstance(form.fields['some_int'].widget, EasyWidgetWrapper)
         
@@ -102,7 +122,7 @@ class TestMIZAdminForm(FormTestCase):
         self.assertTrue('admin/js/admin/RelatedObjectLookups.js' in form.Media.js)
         
     def test_iter(self):
-        form = self.get_form()
+        form = self.get_dummy_form()
         from django.contrib.admin.helpers import Fieldset 
         from DBentry.helper import MIZFieldset
         for fs in form:
@@ -111,20 +131,21 @@ class TestMIZAdminForm(FormTestCase):
             
     def test_media_prop(self):
         # Make sure jquery loaded in the right order
-        media = self.get_form().media
+        media = self.get_dummy_form().media
         extra = '' if settings.DEBUG else '.min' 
         self.assertTrue('admin/js/jquery.init.js' in media._js)
         self.assertTrue('admin/js/vendor/jquery/jquery%s.js' % extra in media._js)
         self.assertEqual(media._js.index('admin/js/vendor/jquery/jquery%s.js' % extra), 0)
         self.assertEqual(media._js.index('admin/js/jquery.init.js'), 1)
         
-    def test_changed_data_prop(self):
+    def test_changed_data_prop_no_change(self):
         kwargs = dict(data=dict(some_int='10'), initial=dict(some_int='10'))
-        form = self.get_form(**kwargs)
+        form = self.get_dummy_form(**kwargs)
         self.assertFalse(form.changed_data)
         
+    def test_changed_data_prop_change(self):
         kwargs = dict(data=dict(some_int='11'), initial=dict(some_int='10'))
-        form = self.get_form(**kwargs)
+        form = self.get_dummy_form(**kwargs)
         self.assertTrue(form.changed_data)
         
 class TestBulkForm(FormTestCase):
