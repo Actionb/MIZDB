@@ -15,44 +15,46 @@ from DBentry.views import MIZAdminToolView
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio, m2m_audio_ausgabe
 from .forms import BulkFormAusgabe
-        
+#TODO: LogEntry for creation
 class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
     
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe'
-    index_label = 'Ausgaben Erstellung'
+    url_name = 'bulk_ausgabe' #TODO: remove this?
+    index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
     
     _permissions_required = [('add', 'ausgabe')]
     
+    def get_initial(self):
+        # If there was a form 'before' the current one, its data will serve as initial values 
+        # This way, we can track changes to the form the user has made.
+        return self.request.session.get('old_form_data', {})
+    
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        #NOTE: request.POST is a QueryDict, meaning every value in it is a LIST
-        # If we are giving lists to the form as data, it will automatically unpack the list and not be a problem
-        # HOWEVER, has_changed will return false since it compares lists with the items of the unpacked list
-        # ... or does it?
-        #form_data = {k:v for k, v in request.POST.items()}
-        #form = self.form_class(form_data, initial=request.session.get('old_form_data', {})) 
-        form = self.form_class(request.POST, initial=request.session.get('old_form_data', {})) #TODO: wtf is THIS doing HERE?
+        form = self.get_form()
+        
         if form.is_valid():
             if form.has_changed() or '_preview' in request.POST:
-                # This will also force a preview if form initial is empty 
-                # as form.has_changed will be True (NOTE: research on this)
-                # (empty because it's the very first form the user gets served)
+                # the form's data differs from initial -- or the user has requested a preview
                 if not '_preview' in request.POST:
+                    # the form has changed and the user did not request a preview, complain about it
                     messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
                 context['preview_headers'], context['preview'] = self.build_preview(request, form)
             else:
-                if '_continue' in request.POST and not form.has_changed():
-                    # Collect preview data, create instances
+                if '_continue' in request.POST:
+                    # save the data and redirect back to the changelist
                     ids, instances, updated = self.save_data(request, form)
-                    # Need to store the queryset of the newly created items in request.session for the Changelist view
+                    # Need to store the ids of the newly created items in request.session so the changelist can filter for them
                     request.session['qs'] = dict(id__in=ids) if ids else None
                     return redirect(self.success_url) #TODO: make this open in a popup/new tab
-                if '_addanother' in request.POST and not form.has_changed():                    
+                    
+                if '_addanother' in request.POST:   
+                    # save the data, notify the user about changes and prepare the next view
                     old_form = form
                     ids, created, updated = self.save_data(request, form)
+                    
                     if created:
                         obj_list = link_list(request, created, path = "admin:DBentry_ausgabe_change")
                         messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
@@ -60,15 +62,20 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                         obj_list = link_list(request, updated, path = "admin:DBentry_ausgabe_change")
                         messages.success(request, format_html('Dubletten hinzugefügt: {}'.format(obj_list)))
                     
+                    # Prepare the form for the next view
                     form = self.form_class(self.next_initial_data(form))
+                    # clean it
                     form.is_valid()
+                    # and add the preview
                     context['preview_headers'], context['preview'] = self.build_preview(request, form)
+                    # Add the 'next' form for the next view to render
+                    context['form'] = form
+                    
+        # Provide the next form with initial so we can track data changes within the form
         request.session['old_form_data'] = form.data
-        context['form'] = form
         return self.render_to_response(context)
-        return render(request, self.template_name, context = context)
     
-    #@transaction.atomic()
+    @transaction.atomic()
     def save_data(self, request, form):
         #TODO: request param not needed
         #TODO: update instance attributes (jahrgang,etc.)?
