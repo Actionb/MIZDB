@@ -1,45 +1,60 @@
 
-from django.utils.html import format_html
 from django.core.exceptions import ValidationError
+
+from dal import autocomplete
 
 from DBentry.forms import MIZAdminForm
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from .fields import *
 
-from dal import autocomplete
-
-
 class BulkForm(MIZAdminForm):
     
     model = None
-    each_fields = set() # data of these fields are part of every row
-    at_least_one_required = [] # at least one of these (BULK!)fields needs to be filled out
+    each_fields = set() # data of these fields are part of every row/created object
+    at_least_one_required = [] # at least one of these fields needs to be filled out, takes priority over each_fields in regards to in which fieldset the fields will end up in
     
+
     help_text = ''
     #TODO: add help text to fieldsets, remember to also update the template for this
     fieldsets = [
         ('Angaben dieser Felder werden jedem Datensatz zugewiesen', {'fields':[]}), 
         ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), 
+        (None, {'fields':[]}), 
     ]
     
-    
     def __init__(self, *args, **kwargs):
-        self.each_fields = set(kwargs.pop('each_fields', [])) 
-        self._row_data = []
-        self.total_count = 0
-        self.split_data = {} 
+        # Combine declared at_least_one_required/each_fields with those passed in and remove duplicate entries
+        self.at_least_one_required = set(list(self.at_least_one_required) + list(kwargs.pop('at_least_one_required', [])) )
+        self.each_fields = set(list(self.each_fields) + list(kwargs.pop('each_fields', [])) )
+        self._row_data = [] # this needs to be here in init or row_data will magically inherit data from previous instances?!
+        self.total_count = 0 # the total count of objects to be created
+        self.split_data = {} # a dictionary of field names : split up values according to BulkField.to_list
         
         super(BulkForm, self).__init__(*args, **kwargs)
+        # For lazy people: walk through the fields and add any non-BulkField to the each_fields list and any BulkFields to the at_least_one_required list
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BulkField):
                 if isinstance(fld, BulkJahrField):
+                    # Of the BulkFields only BulkJahrField should be used in an each_field role
                     self.each_fields.add(fld_name)
-                continue
             else:
                 self.each_fields.add(fld_name)
-        self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name not in self.at_least_one_required]
-        self.fieldsets[1][1]['fields'] = self.at_least_one_required
+                
+        # Remove any fields from self.each_fields that are both in each_fields and at_least_one_required, as each_fields and at_least_one_required should be mutually exclusive
+        self.each_fields = self.each_fields - (self.each_fields & self.at_least_one_required)
+        # Find the fields that live neither in each_fields nor at_least_one_required (which can ONLY be regular BulkField fields at this point)
+        # TODO: find a home for them!
+        homeless_fields = set(self.fields.keys()) - self.each_fields - self.at_least_one_required
+                
+        # Add the fields to the fieldsets, according to the order given by .fields (and thus given by field_order if available)
+        self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.each_fields]
+        self.fieldsets[1][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.at_least_one_required]
+        self.fieldsets[2][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in homeless_fields]
+        
+    @property
+    def row_data(self):
+        return self._row_data
         
     def has_changed(self):
         """
@@ -52,33 +67,50 @@ class BulkForm(MIZAdminForm):
         return has_changed
         
     def clean(self):
+        """
+        Populate split_data with data from BulkFields and raises errors if an unequal amount of data or missing required data is encountered.
+        """
         errors = False
         self.split_data = {}
         for fld_name, fld in self.fields.items():
-            if hasattr(fld, 'to_list'):
+            if isinstance(fld, BulkField):
+                # Retrieve the split up data and the amount of objects that are expected to be created with that data
                 list_data, item_count = fld.to_list(self.cleaned_data.get(fld_name))
-                if item_count and self.total_count and item_count != self.total_count:
+                # If the field belongs to the each_fields group, we should ignore the item_count it is returning as its data is used for every object we are about to create
+                if not fld_name in self.each_fields and item_count and self.total_count and item_count != self.total_count:
+                    # This field's data exists and is meant to be split up into individual items, but the amount of items differs from the previously determined total_count
                     errors = True
                 else:
+                    # Either:
+                    # - the field is an each_field
+                    # - its item_count is zero
+                    # - no total_count has yet been determined (meaning this is the first field encountered that contains list_data)
                     if list_data:
                         self.split_data[fld_name]=list_data
                     if item_count and not fld_name in self.each_fields:
+                        # The item_count is not zero,  total_count IS zero (not yet calculated) and the field is eligible (by virtue of being a non-each_fields BulkField) to set the total_count
+                        # All subsequent BulkField's item_counts in the iteration have to match this field's item_count (or be zero) or we cannot define the exact number of objects to create
                         self.total_count = item_count
         if errors:
             raise ValidationError('Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
-        if all(len(self.split_data.get(fld_name, []))==0 for fld_name in self.at_least_one_required):
+        for fld_name in self.at_least_one_required:
+            if not self.cleaned_data[fld_name] in self.fields[fld_name].empty_values:
+                # If any of the fields in at_least_one_required contain data, we're good
+                break
+        else:
+            # otherwise mark the form as invalid
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
                     ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
-                ))     
+                ))   
             
             
 class BulkFormAusgabe(BulkForm):
+    
     model = ausgabe
     field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'info', 'audio', 'audio_lagerort', 'lagerort', 'dublette', 'provenienz']
     preview_fields = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort']
     at_least_one_required = ['num', 'monat', 'lnum']
     multiple_instances_error_msg = "Es wurden mehrere passende Ausgaben gefunden. Es kann immer nur eine bereits bestehende Ausgabe verändert werden."
-    
     
     magazin = forms.ModelChoiceField(required = True, 
                                     queryset = magazin.objects.all(),  
@@ -97,12 +129,12 @@ class BulkFormAusgabe(BulkForm):
                                     label = 'Lagerort f. Musik Beilage', 
                                     queryset = lo.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'))
-    lagerort = forms.ModelChoiceField(required = False, 
+    lagerort = forms.ModelChoiceField(required = True, 
                                     queryset = lo.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'), 
                                     initial = ZRAUM_ID, 
                                     label = 'Lagerort f. Ausgaben')
-    dublette = forms.ModelChoiceField(required = False, 
+    dublette = forms.ModelChoiceField(required = True, 
                                     queryset = lo.objects.all(), 
                                     widget = autocomplete.ModelSelect2(url='aclagerort'), 
                                     initial = DUPLETTEN_ID, 
@@ -116,18 +148,9 @@ class BulkFormAusgabe(BulkForm):
                              
     def clean(self):
         super(BulkFormAusgabe, self).clean()
+        # If the user wishes to add audio data to the objects they are creating, they MUST also define a lagerort for the audio
         if self.cleaned_data['audio'] and not self.cleaned_data['audio_lagerort']:
             raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
-      
-    def clean_lagerort(self):
-        if not self.cleaned_data['lagerort']:
-            self.cleaned_data['lagerort'] = lagerort.objects.get(pk=ZRAUM_ID)
-        return self.cleaned_data['lagerort']
-            
-    def clean_dublette(self):
-        if not self.cleaned_data['dublette']:
-            self.cleaned_data['dublette'] = lagerort.objects.get(pk=DUPLETTEN_ID)
-        return self.cleaned_data['dublette']
     
     help_text = {
         'head' : """Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
@@ -175,61 +198,67 @@ class BulkFormAusgabe(BulkForm):
     }
         
     def lookup_instance(self, row):
+        """
+        For given data of a row, apply queryset filtering to find a matching instance.
+        """
         qs = self.cleaned_data.get('magazin').ausgabe_set
         
-        for fld_name, row_data in row.items():
-            if not fld_name in ['jahr', 'num', 'monat', 'lnum']:
-                continue
-            x = 'ausgabe_{}'.format(fld_name)
-            x += '__{}'.format(fld_name if fld_name != 'monat' else 'monat_id')
+        for fld_name, field_path in [
+            ('jahr', 'ausgabe_jahr__jahr'), 
+            ('num', 'ausgabe_num__num'), 
+            ('lnum', 'ausgabe_lnum__lnum'), 
+            ('monat', 'ausgabe_monat__monat_id')]:
+            row_data = row.get(fld_name, [])
             if isinstance(row_data, str):
                 row_data = [row_data]
             for value in row_data:
                 if value:
-                    qs = qs.filter(**{x:value})                
+                    qs = qs.filter(**{field_path:value})
         return qs
         
     @property
     def row_data(self):
-        # NOTE: this doesn't verify that the form has been cleaned and that split_data is populated..
-        if not self._row_data or self.has_changed():
-            for c in range(self.total_count):
-                row = {}
-                for fld_name, fld in self.fields.items():
-                    if fld_name in self.split_data:
-                        if fld_name in self.each_fields:
-                            # all items of this list are part of this row
-                            item = self.split_data.get(fld_name)
+        if self.is_valid():
+        # form is valid, split_data has been populated in clean()
+            if self.has_changed() or not self._row_data:
+                for c in range(self.total_count):
+                    row = {}
+                    for fld_name, fld in self.fields.items():
+                        if fld_name in self.split_data:
+                            # this field is a BulkField
+                            if fld_name in self.each_fields:
+                                # all items of this list are part of this row
+                                item = self.split_data.get(fld_name)
+                            else:
+                                # only one item of this list needs to be part of this row
+                                item = self.split_data.get(fld_name)[c]
                         else:
-                            # only one item of this list needs to be part of this row
-                            item = self.split_data.get(fld_name)[c]
-                    else:
-                        item = self.cleaned_data.get(fld_name)
-                    if item:
-                        row[fld_name] = item
+                            item = self.cleaned_data.get(fld_name)
+                        if item:
+                            row[fld_name] = item
+                            
+                    qs = self.lookup_instance(row)
+                    row['lagerort'] = self.cleaned_data['lagerort']
+                    if qs.count()==0:
+                        # No ausgabe fits the parameters: we are creating a new one
                         
-                qs = self.lookup_instance(row)
-                row['lagerort'] = self.cleaned_data['lagerort']
-                if qs.count()==0:
-                    # No ausgabe fits the parameters: we are creating a new one
-                    
-                    # See if this row (in its exact form) has already appeared in _row_data
-                    # We do not want to create multiple objects with the same data,
-                    # instead we will mark this row as a duplicate of the first matching row found
-                    # By checking for row == row_dict we avoid 'nesting' duplicates.
-                    for row_dict in self._row_data:
-                        if row == row_dict:
-                            row['lagerort'] = self.cleaned_data['dublette']
-                            row['dupe_of'] = row_dict
-                            break
-                elif qs.count()==1:
-                    # A single object fitting the parameters already exists: this row represents a duplicate of that object.
-                    
-                    row['instance'] = qs.first()
-                    row['lagerort'] = self.cleaned_data['dublette']
-                else:
-                    # lookup_instance returned multiple instances/objects
-                    row['multiples'] = qs
-                    
-                self._row_data.append(row)
+                        # See if this row (in its exact form) has already appeared in _row_data
+                        # We do not want to create multiple objects with the same data,
+                        # instead we will mark this row as a duplicate of the first matching row found
+                        # By checking for row == row_dict we avoid 'nesting' duplicates.
+                        for row_dict in self._row_data:
+                            if row == row_dict:
+                                row['lagerort'] = self.cleaned_data['dublette']
+                                row['dupe_of'] = row_dict
+                                break
+                    elif qs.count()==1:
+                        # A single object fitting the parameters already exists: this row represents a duplicate of that object.
+                        
+                        row['instance'] = qs.first()
+                        row['lagerort'] = self.cleaned_data['dublette']
+                    else:
+                        # lookup_instance returned multiple instances/objects
+                        row['multiples'] = qs
+                        
+                    self._row_data.append(row)
         return self._row_data

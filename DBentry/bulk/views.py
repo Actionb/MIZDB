@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.utils import IntegrityError
 
 from DBentry.views import MIZAdminToolView
 from DBentry.utils import link_list
@@ -33,7 +34,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
         # ... or does it?
         #form_data = {k:v for k, v in request.POST.items()}
         #form = self.form_class(form_data, initial=request.session.get('old_form_data', {})) 
-        form = self.form_class(request.POST, initial=request.session.get('old_form_data', {}))
+        form = self.form_class(request.POST, initial=request.session.get('old_form_data', {})) #TODO: wtf is THIS doing HERE?
         if form.is_valid():
             if form.has_changed() or '_preview' in request.POST:
                 # This will also force a preview if form initial is empty 
@@ -49,7 +50,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                     # Need to store the queryset of the newly created items in request.session for the Changelist view
                     request.session['qs'] = dict(id__in=ids) if ids else None
                     return redirect(self.success_url) #TODO: make this open in a popup/new tab
-                if '_addanother' in request.POST and not form.has_changed():
+                if '_addanother' in request.POST and not form.has_changed():                    
                     old_form = form
                     ids, created, updated = self.save_data(request, form)
                     if created:
@@ -64,18 +65,19 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                     context['preview_headers'], context['preview'] = self.build_preview(request, form)
         request.session['old_form_data'] = form.data
         context['form'] = form
+        return self.render_to_response(context)
         return render(request, self.template_name, context = context)
     
-    @transaction.atomic()
+    #@transaction.atomic()
     def save_data(self, request, form):
         #TODO: request param not needed
         #TODO: update instance attributes (jahrgang,etc.)?
-        ids = []
-        created = []
-        updated = []
+        ids = [] # contains the pls of instances either created or updated by save_data
+        created = [] # contains instances of objects that were newly created by save_data
+        updated = [] # contains instances that were existed before save_data and were updated by it
         
-        original = []
-        dupes = []
+        original = [] # any unique row or the first row in a set of equal rows 
+        dupes = [] # rows in this list are a duplicate of a row in originals, no new objects will be created for duplicate rows, but a 'dubletten' bestand will be added to their originals
         # Split row_data into rows of duplicates and originals, so we save the originals before any duplicates
         # This assumes row_data does not contain any nested duplicates
         # Also filter out rows that resulted in multiple matching existing instances
@@ -87,7 +89,6 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
             else:
                 original.append(row)
                 
-        
         for row in chain(original, dupes):
             if 'dupe_of' in row:
                 instance = row['dupe_of'].get('instance', None)
@@ -99,9 +100,9 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if 'provenienz' in row['dupe_of']:
                     bestand_data['provenienz'] = row.get('provenienz')
                 instance.bestand_set.create(**bestand_data)
-                row['instance'] = instance
-                updated.append(instance)
-                ids.append(instance.pk)
+                #row['instance'] = instance
+                #updated.append(instance)
+                #ids.append(instance.pk)
                 continue
             
             instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
@@ -125,7 +126,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                             try:
                                 with transaction.atomic():
                                     set.create(**{fld_name:value})
-                            except Exception as e:
+                            except IntegrityError as e: 
                                 # Let something else handle UNIQUE constraints violations
                                 #print(e, data)
                                 continue
@@ -142,11 +143,15 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 else:
                     audio_instance = audio(**audio_data)
                     audio_instance.save()
-                m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
-                m2m_instance.save()
+                    
+                if not m2m_audio_ausgabe.objects.filter(ausgabe=instance, audio=audio_instance).exists():
+                    m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
+                    m2m_instance.save()
+                    
                 bestand_data = dict(lagerort=form.cleaned_data.get('audio_lagerort'))
                 if 'provenienz' in row:
                     bestand_data['provenienz'] = row.get('provenienz')
+                    
                 audio_instance.bestand_set.create(**bestand_data)
                 
             # Bestand
@@ -160,6 +165,7 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
         return ids, created, updated
                 
     def next_initial_data(self, form):
+        #TODO: form.cleaned_data??
         data = form.data.copy()
         # Increment jahr and jahrgang
         data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')])
