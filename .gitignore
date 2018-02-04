@@ -4,8 +4,6 @@
 
 *.pyc
 
-db/
-
 DBentry/stuff\.py
 
 ac-media\.txt
