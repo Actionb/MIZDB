@@ -1,10 +1,7 @@
 # Do not delete this
 
-*.sqlite3
 
 *.pyc
-
-db/
 
 DBentry/stuff\.py
 
@@ -17,3 +14,19 @@ templates/admin/advanced_search_form_cols\.html
 DBentry/static/admin/css/advanced_search_form_cols\.css
 
 media/
+
+
+
+DBentry/migrations/backup/
+
+\.coveragerc
+
+\.coverage
+
+htmlcov/
+
+static/
+
+DBentry/snippets/
+
+db/

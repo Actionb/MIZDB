@@ -10,15 +10,7 @@
         <div class="form-row{% if line.fields|length_is:'1' and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
             {% if line.fields|length_is:'1' %}{{ line.errors }}{% endif %}
             {% for field in line %}
-                <div{% if not line.fields|length_is:'1' %}
-                        class="field-box
-                            {% if field.field.name %} 
-                                field-{{ field.field.name }}
-                            {% endif %}
-                                {% if not field.is_readonly and field.errors %} errors {% endif %}
-                                {% if field.field.is_hidden %} hidden{% endif %}"
-                        {% elif field.is_checkbox %} class="checkbox-row"
-                        {% endif %}>
+            <div{% if not line.fields|length_is:'1' %} class="field-box{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% if not field.is_readonly and field.errors %} errors{% endif %}{% if field.field.is_hidden %} hidden{% endif %}"{% elif field.is_checkbox %} class="checkbox-row"{% endif %}>
                     {% if not line.fields|length_is:'1' and not field.is_readonly %}{{ field.errors }}{% endif %}
                     {% if field.is_checkbox %}
                         {{ field.field }}{{ field.label_tag }}
@@ -33,7 +25,7 @@
                     {% if field.field.help_text %}
                         <div class="help">{{ field.field.help_text|safe }}</div>
                     {% endif %}
-                    {% if field.field.name in adminform.model_admin.googlebtns %}
+                    {% if field.field.name in googlebtns %}
                      <button id="btn-google-me" type="button" onclick="googleMe( '{{field.field.name}}' )">Google Me!</button> 
                     {% endif %}
                 </div>
@@ -41,14 +33,4 @@
         </div>
     {% endfor %}
 </fieldset>
-<script>
-googleMe = function(p){
-	var ele_name = "id_".concat(p);
-    var val = document.getElementById(ele_name).value;
-    val = val.replace(/ /g,"+");
-    var url = "https://www.google.de/search?q=".concat(val);
-   	if(val){
-    	window.open(url,"_blank");
-    }
-};
-</script>
+

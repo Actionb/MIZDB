@@ -1,0 +1,20 @@
+
+<fieldset class="module aligned collapse collapsed">
+        <h2 class="fieldset-name collapsible">Hilfe</h2>
+        <div class="help_text">
+        {% if form.help_text.head %}
+            {{form.help_text.head|linebreaks}}
+        {% endif %}
+        {% if form.help_text.list_items %}
+            <ul>
+            {% for item,desc in form.help_text.list_items%}
+                <li style="list-style-type:square;">{{item}}</li>
+                {{desc|linebreaks}}
+            {% endfor %}
+            </ul>
+        {% endif %}
+        {% if form.help_text.foot %}
+            {{form.help_text.foot|linebreaks}}
+        {% endif %}
+        </div>
+</fieldset>

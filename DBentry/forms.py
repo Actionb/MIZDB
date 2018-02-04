@@ -1,13 +1,21 @@
 from django import forms
-from django.forms import modelform_factory, Textarea, TextInput,  CheckboxSelectMultiple
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
+from django.utils.functional import cached_property
+from django.core.exceptions import ValidationError
+from django.contrib.admin.widgets import FilteredSelectMultiple
+
+# Needed for DynamicChoiceForm
+from django.db.models.query import QuerySet
+from django.db.models.manager import BaseManager
+
 from .models import *
-from .constants import *
+from .constants import ATTRS_TEXTAREA
+from DBentry.ac.widgets import wrap_dal_widget
 
 from dal import autocomplete
 
-
-from django.utils.translation import ugettext_lazy as _
+Textarea = forms.Textarea
 
 WIDGETS = {
             'audio'         :   autocomplete.ModelSelect2(url='acaudio'),
@@ -22,10 +30,8 @@ WIDGETS = {
             'schlagwort'    :   autocomplete.ModelSelect2(url='acschlagwort'),  
             'video'         :   autocomplete.ModelSelect2(url='acvideo'),
             
-            
-            
             # Artikel
-            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe'), 
+            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin']), 
             
             # Audio
             'sender' : autocomplete.ModelSelect2(url='acsender'), 
@@ -34,8 +40,7 @@ WIDGETS = {
             'magazin' : autocomplete.ModelSelect2(url='acmagazin'),
             
             # Band 
-            #TODO: make this widget smaller, so the instruments fit properly... somehow
-            'musiker' : autocomplete.ModelSelect2(url='acmusiker', attrs={'width':'10%'}), 
+            'musiker' : autocomplete.ModelSelect2(url='acmusiker'), 
             
             # Bestand
             bestand : {
@@ -71,6 +76,9 @@ WIDGETS = {
             # Musiker
             'instrument' : autocomplete.ModelSelect2(url='acinstrument'),
             'band' : autocomplete.ModelSelect2(url='acband'), 
+            
+            # Instrument -- register an empty dict of widgets for this model so as to not try to use 'instrument' dal widget for a simple charfield
+            instrument : {}, 
             
             # Orte
             'herkunft' : autocomplete.ModelSelect2(url='acort'), 
@@ -120,6 +128,7 @@ class FormBase(forms.ModelForm):
         # keys given in initial to the fields of the form in order to find a match
         fld_names = set(self.base_fields.keys())
         
+        # Populate initial
         for k, v in initial.items():
             if k in fld_names:
                 # This particular item in initial has a definitive match to a formfield
@@ -143,9 +152,7 @@ class FormBase(forms.ModelForm):
                     break
                     
             fld_names = fld_names.difference(kwargs['initial'].keys())
-        super(FormBase, self).__init__(*args, **kwargs)
-                
-            
+        super(FormBase, self).__init__(*args, **kwargs)            
     
     def validate_unique(self):
         """
@@ -174,8 +181,27 @@ def makeForm(model, fields = []):
     widget_list =  WIDGETS
     if model in WIDGETS:
         widget_list = WIDGETS[model]
-    return modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
+    return forms.modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
     
+class InLineAusgabeForm(FormBase):
+    # NOTE: modelform_factory (called by InLineModelAdmin.get_formset) creates the Meta class attribute model
+        
+    magazin = forms.ModelChoiceField(required = False,
+                                    label = "Magazin", 
+                                    queryset = magazin.objects.all(), 
+                                    widget = wrap_dal_widget(autocomplete.ModelSelect2(url='acmagazin'))) # need to wrap it here, this form goes through inlineformset_factory, etc. and is never really initialized
+    class Meta:
+        widgets = {'ausgabe': autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
+                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),
+                                    }
+                                    
+    def __init__(self, *args, **kwargs):
+        if 'instance' in kwargs and kwargs['instance']:
+            if 'initial' not in kwargs:
+                kwargs['initial'] = {}
+            kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
+        super(InLineAusgabeForm, self).__init__(*args, **kwargs)
+        
 
 
 class ArtikelForm(FormBase):
@@ -196,6 +222,7 @@ class ArtikelForm(FormBase):
         }
     
     def __init__(self, *args, **kwargs):
+        #TODO: ArtikelForm and InLineAusgabeForm share this!
         # Set the right initial magazin for change forms (kwargs come with an instance)
         # super.__init__ takes care of setting initials for add forms
         if 'instance' in kwargs and kwargs['instance']:
@@ -204,303 +231,140 @@ class ArtikelForm(FormBase):
             kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
         super(ArtikelForm, self).__init__(*args, **kwargs)
 
-bulkfield_allowed_chars = [',', '/', '%'] 
-#TODO: use built-in REGEX validator?
-def validate_bulkfield(value):
-    """ Validator for the input fields of a Bulk Form.
-        Checks if there any unallowed characters in the value (String).
-    """
-    for char in value:
-        if not char.isnumeric() and not char in bulkfield_allowed_chars:
-            from django.utils.translation import ugettext_lazy as _
-            print('ValidationError')
-            raise ValidationError(
-                _('Unerlaubte Zeichen gefunden: Bitte nur Ziffern oder "," oder "/" oder "%" benutzen.')
-            )
-            
-class BulkField(forms.CharField):
-    
-    allowed_chars = [',', '/', '%', '-', '*']
-    
-    
-    def __init__(self, required=False, allowed_chars=None, 
-                #validators=[validate_bulkfield], 
-                *args, **kwargs):
-        super(BulkField, self).__init__(required=required,  *args, **kwargs)
-        self.allowed_chars = allowed_chars or self.allowed_chars
-        msg_text = 'Unerlaubte Zeichen gefunden: Bitte nur Ziffern'
-        msg_text += ' oder ' if self.allowed_chars else ''
-        msg_text += ' oder '.join(['"'+s+'"' for s in self.allowed_chars]) + ' benutzen.'
-        self.error_messages['invalid'] = _(msg_text)
         
-    def widget_attrs(self, widget):
-        attrs = super(BulkField, self).widget_attrs(widget)
-        attrs['style'] = 'width:350px;'
-        return attrs
-        
-    def validate(self, value):
-        super(BulkField, self).validate(self)
-        for char in value:
-            if not char.isspace() and not char.isnumeric() and not char in self.allowed_chars:
-                raise ValidationError(self.error_messages['invalid'], code='invalid')
-                print('ValidationError')
-                raise ValidationError(
-                    _('Unerlaubte Zeichen gefunden: Bitte nur Ziffern oder "," oder "/" oder "%" benutzen.')
-                )
-        
-    def clean(self, value):
-        value = super(BulkField, self).clean(value)
-        value = value.strip()
-        if value and value[-1] in self.allowed_chars:
-            # Strip accidental last delimiter
-            value = value[:-1]
-        return value
-        
-    def to_list(self, value):
-        if not value:
-            return [], 0
-        temp = []
-        item_count = 0
-        for item in value.split(','):
-            item = item.strip()
-            if item:
-                if item.count('-')==1:
-                    if item.count("*") == 1:
-                        item,  multi = item.split("*")
-                        multi = int(multi)
-                    else:
-                        multi = 1
-                    s, e = (int(i) for i in item.split("-"))
-                    
-                    for i in range(s, e+1, multi):
-                        temp.append([str(i+j) for j in range(multi)])
-                        item_count += 1
-                elif '/' in item:
-                    temp.append([i for i in item.split('/') if i])
-                    item_count += 1
-                else:
-                    temp.append(item)
-                    item_count += 1
-        return temp, item_count
-        
-class BulkJahrField(BulkField):
-    
-    allowed_chars = [',', '/']
-    
-    def clean(self, value):
-        # Normalize Jahr values into years seperated by commas only
-        # Also correct the year if year is a shorthand
-        value = super(BulkJahrField, self).clean(value)
-        clean_values = []
-        for item in value.replace('/', ',').split(','):
-            item = item.strip()
-            if len(item)==2:
-                if int(item) <= 17:
-                    item = '20' + item
-                else:
-                    item = '19' + item
-            clean_values.append(item)
-        return ','.join(clean_values)
-        
-    def to_list(self, value):
-        temp, item_count = super(BulkJahrField, self).to_list(value)
-        return temp, 0
-
-class BulkForm(forms.Form):
-    
-    model = None
-    total_count = 0
-    split_data = {} 
-    _row_data = []
-    each_fields = set() # data of these fields are part of every row
-    at_least_one_required = [] # at least one of these fields needs to be filled out
-    
-    help_text = "BEEP BOOP"
-    
-    fieldsets = [
-        (None, {'fields':[]}), 
-        ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), 
-    ]
+class MIZAdminForm(forms.Form):
+    """ Basic form that looks and feels like a django admin form."""
     
     def __init__(self, *args, **kwargs):
-        super(BulkForm, self).__init__(*args, **kwargs)
-        self.each_fields = set(kwargs.get('each_fields', []))
-        for fld_name, fld in self.fields.items():
-            if isinstance(fld, BulkField):
-                if isinstance(fld, BulkJahrField):
-                    self.each_fields.add(fld_name)
-                continue
-            else:
-                self.each_fields.add(fld_name)
-        self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name not in self.at_least_one_required]
-        self.fieldsets[1][1]['fields'] = self.at_least_one_required
+        super(MIZAdminForm, self).__init__(*args, **kwargs)
+        wrapped = False
+        for fld in self.fields.values():
+            if isinstance(fld.widget, autocomplete.ModelSelect2):
+                fld.widget = wrap_dal_widget(fld.widget)
+                wrapped = True
+        if wrapped and 'admin/js/admin/RelatedObjectLookups.js' not in self.Media.js:
+            self.Media.js.append('admin/js/admin/RelatedObjectLookups.js')
         
-
     class Media:
         css = {
             'all' : ('admin/css/forms.css', )
         }
-        extra = '' if settings.DEBUG else '.min'
-        js = [
-            'admin/js/vendor/jquery/jquery%s.js' % extra,
-            'admin/js/jquery.init.js',
-            'admin/js/collapse%s.js' % extra,
-        ]
-            
-    @property
-    def media(self):
-        media = super(BulkForm, self).media # Base + Widget Media
-        for fieldset in self.__iter__():
-            media += fieldset.media         # Fieldset Media
-        return media
-        
-    def has_changed(self):
-        """
-        Returns True if data differs from initial.
-        """
-        has_changed = bool(self.changed_data)
-        if has_changed:
-            self._row_data = []
-        return has_changed
-        
-    def clean(self):
-        errors = False
-        self.split_data = {}
-        for fld_name, fld in self.fields.items():
-            if hasattr(fld, 'to_list'):
-                list_data, item_count = fld.to_list(self.cleaned_data.get(fld_name))
-                if item_count and self.total_count and item_count != self.total_count:
-                    errors = True
-                else:
-                    if list_data:
-                        self.split_data[fld_name]=list_data
-                    if item_count and not fld_name in self.each_fields:
-                        self.total_count = item_count
-        if errors:
-            raise ValidationError('Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
-        if all(len(self.split_data.get(fld_name, []))==0 for fld_name in self.at_least_one_required):
-            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
-                    ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
-                ))
-
-    @property
-    def row_data(self):
-        # NOTE: this doesn't verify that the form has been cleaned and that split_data is populated..
-        if not self._row_data or self.has_changed():
-            from collections import OrderedDict
-            for c in range(self.total_count):
-                row = OrderedDict()
-                for fld_name in self.field_order:
-                    if fld_name in self.split_data:
-                        if fld_name in self.each_fields:
-                            # all items of this list are part of this row
-                            item = self.split_data.get(fld_name)
-                        else:
-                            # only one item of this list needs to be part of this row
-                            item = self.split_data.get(fld_name)[c]
-                    else:
-                        item = self.cleaned_data.get(fld_name)
-                    if item:
-                        if not isinstance(item, list):
-                            # Force items to be a list, since we're checking for len(item) in the view..
-                            item = [item]
-                        row[fld_name] = item
-                row['instance'] = self.lookup_instance(row).first()
-                if row['instance']:
-                    #two (or more) rows might be related to a single already existing instance
-                    if any(row['instance']==other_row['instance'] for other_row in self._row_data):
-                        continue
-                    #TODO: Replace row_data with the data of the instance?
-                    
-                    row['lagerort'] = [self.cleaned_data['dublette']]
-                else:
-                    row['lagerort'] = [self.cleaned_data['lagerort']]
-                    
-                self._row_data.append(row)
-        return self._row_data
-        
+        js = ['admin/js/collapse.js']
     
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
             
-        from django.contrib.admin.helpers import Fieldset
-        for name, options in fieldsets:
-            yield Fieldset(
+        from .helper import MIZFieldset
+        for name, options in fieldsets:  
+            yield MIZFieldset(
                 self, name,
                 **options
             )
-            
-            
-class BulkFormAusgabe(BulkForm):
-    model = ausgabe
-    field_order = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort']
-    at_least_one_required = ['num', 'monat', 'lnum']
-    
-    
-    magazin = forms.ModelChoiceField(required = True, 
-                                    queryset = magazin.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acmagazin'))
-                                    
-    jahrgang = forms.IntegerField(required = False, min_value = 1) 
-    
-    jahr = BulkJahrField(required = True, label = 'Jahr')
-    num = BulkField(label = 'Nummer')
-    monat = BulkField(label = 'Monate')
-    lnum = BulkField(label = 'Laufende Nummer')
-    
-    lo = lagerort
-    audio = forms.BooleanField(required = False, label = 'Musik Beilage:')
-    audio_lagerort = forms.ModelChoiceField(required = False, 
-                                    label = 'Lagerort f. Musik Beilage', 
-                                    queryset = lo.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='aclagerort'))
-    lagerort = forms.ModelChoiceField(required = False, 
-                                    queryset = lo.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='aclagerort'), 
-                                    initial = ZRAUM_ID, 
-                                    label = 'Lagerort f. Ausgaben')
-    dublette = forms.ModelChoiceField(required = False, 
-                                    queryset = lo.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='aclagerort'), 
-                                    initial = DUPLETTEN_ID, 
-                                    label = 'Lagerort f. Dubletten')
-                                    
-    def clean(self):
-        super(BulkFormAusgabe, self).clean()
-        if self.cleaned_data['audio'] and not self.cleaned_data['audio_lagerort']:
-            raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
-      
-    def clean_lagerort(self):
-        if not self.cleaned_data['lagerort']:
-            self.cleaned_data['lagerort'] = lagerort.objects.get(pk=ZRAUM_ID)
-        return self.cleaned_data['lagerort']
-            
-    def clean_dublette(self):
-        if not self.cleaned_data['dublette']:
-            self.cleaned_data['dublette'] = lagerort.objects.get(pk=DUPLETTEN_ID)
-        return self.cleaned_data['dublette']
-    
-    def row_data_lagerort(self, row):
-        if self.lookup_instance(row).exists():
-            return lagerort.objects.get(pk=DUPLETTEN_ID)
-        return lagerort.objects.get(pk=ZRAUM_ID)
         
-    def lookup_instance(self, row):
-        qs = self.cleaned_data.get('magazin').ausgabe_set
+    @property
+    def media(self):
+        media = super(MIZAdminForm, self).media
+        for fieldset in self.__iter__():
+            # Add collapse.js if necessary
+            media += fieldset.media         # Fieldset Media, since forms.Form checks self.fields instead of self.__iter__
+        # Ensure jquery is loaded first
+        extra = '' if settings.DEBUG else '.min'
+        media._js.insert(0, 'admin/js/jquery.init.js')
+        media._js.insert(0, 'admin/js/vendor/jquery/jquery%s.js' % extra)
+        return media
         
-        for fld_name, row_data in row.items():
-            if fld_name in ['jahrgang', 'lagerort', 'magazin', 'audio', 'audio_lagerort']:
-                continue
-            x = 'ausgabe_{}'.format(fld_name)
-            x += '__{}'.format(fld_name if fld_name != 'monat' else 'monat_id')
-            if isinstance(row_data, str):
-                row_data = [row_data]
-            for value in row_data:
-                if value:
-                    qs = qs.filter(**{x:value})
-        if qs.count()>1:
-            print("WARNING : multiple results found for: {}".format(row))
-        return qs
+    @cached_property
+    def changed_data(self):
+        data = []
+        for name, field in self.fields.items():
+            prefixed_name = self.add_prefix(name)
+            data_value = field.widget.value_from_datadict(self.data, self.files, prefixed_name)
+            if not field.show_hidden_initial:
+                # Use the BoundField's initial as this is the value passed to
+                # the widget.
+                initial_value = self[name].initial
+                try:
+                    # Convert the initial_value to the field's type
+                    # If field is an IntegerField and has initial of type str, field.has_changed will return false
+                    initial_value = field.to_python(initial_value)
+                except:
+                    pass
+            else:
+                initial_prefixed_name = self.add_initial_prefix(name)
+                hidden_widget = field.hidden_widget()
+                try:
+                    initial_value = field.to_python(hidden_widget.value_from_datadict(
+                        self.data, self.files, initial_prefixed_name))
+                except ValidationError:
+                    # Always assume data has changed if validation fails.
+                    data.append(name)
+                    continue
+            if field.has_changed(initial_value, data_value):
+                data.append(name)
+        return data
+                    
+class DynamicChoiceForm(forms.Form):
+    """ A form that dynamically sets choices for ChoiceFields from keyword arguments provided. 
+        Accepts lists and querysets (as well as Manager instances).
+        If a ChoiceField's name is not represented in kwargs, the form will try to set that field's choices to a 'qs' or 'queryset' keyword argument.
+    """
+    
+    def __init__(self, *args, **kwargs):
+        choice_dict = kwargs.pop('choices', {})
+        super(DynamicChoiceForm, self).__init__(*args, **kwargs)
+        for fld_name, fld in self.fields.items():
+            if isinstance(fld, forms.ChoiceField) and not fld.choices:
+                if not isinstance(choice_dict, dict):
+                    # choice_dict is a list, there is only one choice for any ChoiceFields
+                    choices = choice_dict
+                else:
+                    choices = choice_dict.get(self.add_prefix(fld_name), [])
+                    
+                if isinstance(choices, BaseManager):
+                    choices = choices.all()
+                if isinstance(choices, QuerySet):
+                    choices = [(i.pk, i.__str__()) for i in choices]
+                    
+                if isinstance(choices, dict):
+                    choices = [(k, v) for k, v in choices.items()]
+                if not isinstance(choices, (list, tuple)):
+                    choices = list(choices)
+                
+                new_choices = []
+                for i in choices:
+                    try:
+                        k = str(i[0])
+                        v = str(i[1])
+                    except IndexError:
+                        # i is an iterable with len < 2)
+                        k = v = str(i[0])
+                    except TypeError:
+                        # i is not an iterable
+                        k = v = str(i)
+                    new_choices.append( (k, v) )
+                choices = new_choices
+                fld.choices = choices
+                
+class DynamicChoiceFormSet(forms.formsets.BaseFormSet):
+    #NOTE: probably not needed anymore
+    
+    def get_form_kwargs(self, index):
+        if index is None:
+            return super(DynamicChoiceFormSet, self).get_form_kwargs(index)
+        form_kwargs = {}
+        for fld_name, fld in self.form.base_fields.items():
+            # DynamicChoiceForm expects kwargs in the format prefix+fld_name to set that field's choices to
+            kwarg_name = self.add_prefix(index) + '-' + fld_name
+            if kwarg_name in self.form_kwargs:
+                form_kwargs[kwarg_name] = self.form_kwargs.get(kwarg_name) #NOTE .copy()?
+        return form_kwargs
         
-test_data = dict(magazin=tmag.pk, jahr='10,11', num='1-10*3', monat='1,2,3,4', audio=True, lagerort = ZRAUM_ID)
-test_form = BulkFormAusgabe(test_data)
+
+class FavoritenForm(MIZAdminForm, forms.ModelForm):
+    class Meta:
+        model = Favoriten
+        fields = '__all__'
+        widgets = {
+            'fav_genres'    :   FilteredSelectMultiple('Genres', False), 
+            'fav_schl'      :   FilteredSelectMultiple('Schlagworte', False),
+        }

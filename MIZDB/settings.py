@@ -25,7 +25,7 @@ SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.178.56']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv', 'testserver']
 
 
 # Application definition
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_admin_listfilter_dropdown',
+    'formtools', 
 ]
 
 MIDDLEWARE = [
@@ -129,3 +130,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 MEDIA_URL = '/media/'
+
+# Override maximum number of post parameters to allow handling of user input during imports
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000

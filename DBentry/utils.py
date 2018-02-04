@@ -1,11 +1,78 @@
+import re
+from functools import partial
+
+from django.db import transaction
 from django.db.utils import IntegrityError
 from django.db.models import Aggregate
+
 from django.utils.http import urlquote
 from django.utils.html import format_html
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
 
-from .models import *
+from django.urls import reverse, NoReverseMatch
+
+from django.contrib.admin.utils import quote
+from django.contrib.auth import get_permission_codename
+
 from .constants import M2M_LIST_MAX_LEN
 
+def merge_records(original, qs, update_data = None, expand_original = True):
+    """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
+        Returns the updated original.
+    """
+    qs = qs.exclude(pk=original.pk)
+    original_qs = original._meta.model.objects.filter(pk=original.pk)
+    with transaction.atomic():
+        if expand_original:
+            if update_data is None:
+                update_data = {} # Avoid mutable default arguments shenanigans
+                updateable_fields = original.get_updateable_fields()
+                for other_record_valdict in qs.values(*updateable_fields):
+                    for k, v in other_record_valdict.items():
+                        if v and k not in update_data:
+                            update_data[k] = v
+                            
+            original_qs.update(**update_data)
+            
+        for rel in original._meta.related_objects:
+            related_model = rel.field.model
+            val_list = qs.values_list(rel.field.target_field.name)
+            # These are the objects of the related_model that will be deleted after the merge
+            # See if there are any values that the original does not have 
+            related_qs = related_model.objects.filter(**{ rel.field.name + '__in' : val_list })
+            
+            if rel.many_to_many:
+                m2m_model = rel.through
+                pk_name = m2m_model._meta.pk.name
+                if rel.to == original._meta.model: #m2m_model._meta.get_field(rel.field.m2m_field_name()).model == original._meta.model
+                    # rel points from original to related_model (ManyToManyField is on original)
+                    to_original_field_name = rel.field.m2m_reverse_field_name()
+                    to_related_field_name = rel.field.m2m_field_name()
+                else:
+                    # rel points from related_model to original (ManyToManyField is on related_model)
+                    to_original_field_name = rel.field.m2m_field_name()
+                    to_related_field_name = rel.field.m2m_reverse_field_name()
+                to_update = m2m_model.objects.filter(**{to_related_field_name+'__in':related_qs}).values_list(pk_name, flat=True)
+                
+                for id in to_update:
+                    loop_qs = m2m_model.objects.filter(pk=id)
+                    try:
+                        with transaction.atomic():
+                            loop_qs.update(**{to_original_field_name:original})
+                    except IntegrityError:
+                        # Ignore UNIQUE CONSTRAINT violations
+                        pass
+            else:
+                for i in related_qs:
+                    try:
+                        with transaction.atomic():
+                            getattr(original, rel.get_accessor_name()).add(i)
+                    except IntegrityError:
+                        # Ignore UNIQUE CONSTRAINT violations
+                        pass
+        qs.delete()
+    return original_qs.first(), update_data
     
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     """
@@ -22,10 +89,18 @@ def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
             break
     return rslt
 
-def link_list(request, obj_list,  SEP = ", "):
+def link_list(request, obj_list,  SEP = ", ", path = None):
     """ Returns a string with html links to the objects in obj_list separated by SEP.
         Used in ModelAdmin
     """
+    obj_list_strings = []
+    for obj in obj_list:
+        if path:
+            obj_path = reverse(path, args = [obj.pk])
+        else:
+            obj_path = request.path + str(obj.pk)
+        obj_list_strings.append(format_html('<a href="{}">{}</a>', urlquote(obj_path), force_text(obj)))
+    return format_html(SEP.join(obj_list_strings))
     try:
         obj_list_string = SEP.join([
                     format_html('<a href="{}">{}</a>',
@@ -37,6 +112,30 @@ def link_list(request, obj_list,  SEP = ", "):
         print("WARNING : Failed to create link_list.")
         return SEP.join([force_text(obj) for obj in obj_list])
     return format_html(obj_list_string)
+#    def format_callback(obj):
+#        has_admin = obj.__class__ in admin_site._registry
+#        opts = obj._meta
+#
+#        no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
+#                                   force_text(obj))
+#
+#        if has_admin:
+#            try:
+#                admin_url = reverse('%s:%s_%s_change'
+#                                    % (admin_site.name,
+#                                       opts.app_label,
+#                                       opts.model_name),
+#                                    None, (quote(obj._get_pk_val()),))
+#            except NoReverseMatch:
+#                # Change url doesn't exist -- don't display link to edit
+#                return no_edit_link
+    
+def model_from_string(model_name):
+    from django.apps import apps 
+    try:
+        return apps.get_model('DBentry', model_name)
+    except LookupError:
+        return None
 
 def swap_dict(d):
     rslt = {}
@@ -72,85 +171,6 @@ def create_val_dict(qs, key, value, tuplfy=True):
                 dict_by_val[v] = set()
                 dict_by_val[v].add(k)
     return dict_by_key, dict_by_val
-
-    
-def merge(cls, original_pk, dupes, verbose=True):
-    if not isinstance(dupes, list):
-        dupes = [dupes]
-        
-    if len(dupes)<1:
-        return
-    
-    # Cleanup dupe list
-    ids = set([d.pk if isinstance(d, cls) else d for d in dupes])
-    if isinstance(original_pk, cls):
-        original_pk = original_pk.pk
-    original = cls.objects.filter(pk=original_pk)
-    if original.count()!=1:
-        return
-    o_valdict = original.values()[0]                
-            
-    for id in ids:
-        record = cls.objects.filter(pk=id)
-        if record.count()!=1:
-            # something went very wrong
-            print("WOOPS: id = ", id)
-            continue
-        if verbose:
-            # TODO: remove duplicate fields in val_fields
-            # TODO: print a nice a comparison of values
-            val_fields = [fld.name for fld in cls._meta.fields] + getattr(cls, 'dupe_fields', [])
-            print("\n"+"~"*20)
-            print('Merging')
-            print(original.values(*val_fields))
-            print('with')
-            print(record.values(*val_fields))
-            inp = input("proceed? [y/n/q]: ")
-            if inp == 'q':
-                print("Aborting...")
-                return False
-            elif inp != 'y':
-                continue
-        
-        # Expand original dict by values only found in duplicate, prefer original values if present
-        for k, v in record.values()[0].items():
-            # Duplicate has key that the original doesn't
-            if k not in o_valdict.keys():
-                o_valdict[k] = v
-            # Duplicate has key that the original also has, but the original value is None
-            elif k in o_valdict.keys() and not o_valdict[k]:
-                o_valdict[k] = v
-        # Update original queryset val dict
-        try:
-            original.update(**o_valdict)
-        except Exception as e:
-            print(e)
-            raise e
-            
-        # Adjust values for related objects
-        for rel in cls._meta.related_objects:
-            # NOTE: zwischen m_to_o,o_to_m und m_to_m unterscheiden?
-            # differentiate between ManyToManyField and ManyToXRelations
-            if hasattr(rel, 'through'):
-                # AAAAAAAAAAAAAAAHHHHHHHHHHHHHHHHH!!!!
-                model = rel.through
-                field = rel.field.m2m_reverse_field_name()
-            else:
-                model = rel.related_model
-                field = rel.field.attname
-            qs = model.objects.filter(**{field:id})
-            if qs.exists():
-                try:
-                    qs.update(**{rel.field.attname:original_pk})
-                except IntegrityError:
-                    # TODO: account for UNIQUE CONSTRAINTS errors
-                    continue
-        try:
-            record[0].delete()          # deleting via model delete()
-        except Exception as e:
-            print(e)
-        
-    return True
 
 class Concat(Aggregate):
     # supports COUNT(distinct field)
@@ -201,7 +221,7 @@ def split_name(name):
     return v, n
 
 def dict_to_tuple(d):
-    return [(k, v) for k, v in d]
+    return tuple((k, v) for k, v in d.items())
     
 def tuple_to_dict(t):
     return {k:v for k, v in t}
@@ -225,8 +245,62 @@ def split_field(field_name, data, seperators = [',']):
         return [data]
     rslt = []
     data_rest = {k:v for k, v in data.items() if k != field_name}
-    for d in set(multisplit(data.get(field_name, ''), seperators)):
+    for d in set(recmultisplit(data.get(field_name, ''), seperators)):
         x = data_rest.copy()
         x.update({field_name:d})
         rslt.append(x)
     return rslt
+    
+
+def recmultisplit(values, seperators = []):
+    """Splits a string at each occurence of s in seperators."""
+    if len(seperators)==1:
+        return [i.strip() for i in values.split(seperators[0])]
+    rslt = []
+    seps = seperators[:]
+    sep = seps.pop()
+    
+    for x in values.split(sep):
+        rslt += recmultisplit(x, seps)
+    return rslt    
+
+def instance_to_dict():    
+    pass
+    
+def print_list(a_list, file=None):
+    printf = partial(print, file=file)
+    for i in a_list:
+        printf(i)
+        
+def print_dict(a_dict, file=None):
+    printf = partial(print, file=file)
+    for k, v in a_dict.items():
+        printf(str(k)+":")
+        printf(v)
+        printf("~"*20)
+        
+def get_obj_link(obj, opts, user, admin_site):
+    
+    no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
+                               force_text(obj))
+
+    try:
+        admin_url = reverse('%s:%s_%s_change'
+                            % (admin_site.name,
+                               opts.app_label,
+                               opts.model_name),
+                            None, (quote(obj._get_pk_val()),))
+    except NoReverseMatch:
+        # Change url doesn't exist -- don't display link to edit
+        return no_edit_link
+
+    p = '%s.%s' % (opts.app_label,
+                   get_permission_codename('change', opts))
+    if not user.has_perm(p):
+        return no_edit_link
+    # Display a link to the admin page.
+    return format_html('{}: <a href="{}">{}</a>',
+                       capfirst(opts.verbose_name),
+                       admin_url,
+                       obj)
+    

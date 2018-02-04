@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n static %}
+{% load i18n admin_urls static %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "admin/css/dashboard.css" %}" />{% endblock %}
 
@@ -52,16 +52,7 @@
 {% block sidebar %}
 <div id="content-related">
 
-<div class="module">
-  <h2>Admin Tools</h2>
-    <ul class="actionlist">
-      <li class="changelink">
-        <a href="/admin/bulk_ausgabe/">Ausgaben Erstellung</a>
-      </li>
-    </ul>
-</div>
-
-
+{% include "admin/includes/indextools.html" %}
 
     <div class="module" id="recent-actions-module">
         <h2>{% trans 'Recent actions' %}</h2>

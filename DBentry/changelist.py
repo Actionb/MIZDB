@@ -1,16 +1,47 @@
 
 from django.contrib.admin.views.main import *
+from django.utils.datastructures import MultiValueDict
 
 class MIZChangeList(ChangeList):
     
+    def __init__(self, request, model, list_display, list_display_links,
+                 list_filter, date_hierarchy, search_fields, list_select_related,
+                 list_per_page, list_max_show_all, list_editable, model_admin):
+        super(MIZChangeList, self).__init__(request, model, list_display, list_display_links,
+                 list_filter, date_hierarchy, search_fields, list_select_related,
+                 list_per_page, list_max_show_all, list_editable, model_admin)
+        # Save the request (in its QueryDict form) so asf_tag.advanced_search_form(cl) can access it
+        self.request = request
+        
+    def get_filters_params(self, params=None):
+        """
+        Returns all params except IGNORED_PARAMS
+        """
+        lookup_params = super(MIZChangeList, self).get_filters_params(params)
+        # super() does not remove PAGE_VAR and ERROR_FLAG from lookup_params as these are not in IGNORED_PARAMS
+        # lookup_params originally defaults to self.params, which already has had PAGE_VAR/ERROR_FLAG removed during init.
+        # We are now passing in request.GET instead (to preserve QueryDict functionality), and thus must remove these params again
+        # or they will raise an exception in get_queryset.
+        if PAGE_VAR in lookup_params:
+            del lookup_params[PAGE_VAR]
+        if ERROR_FLAG in lookup_params:
+            del lookup_params[ERROR_FLAG]
+        return lookup_params
+    
     def get_filters(self, request):
-        lookup_params = self.get_filters_params()
+        # pass request.GET to get_filters_params to get a QueryDict(MultiValueDict) back, this way we can catch multiple values for the same key 
+        # which is needed in Advanced Search Form SelectMultiple cases 
+        lookup_params = self.get_filters_params(request.GET)
         use_distinct = False
-
-        for key, value in lookup_params.items():
-            if not self.model_admin.lookup_allowed(key, value):
-                raise DisallowedModelAdminLookup("Filtering by %s not allowed" % key)
-
+        
+        if not lookup_params:
+            return [], False, {}, use_distinct
+            
+        for key, value_list in lookup_params.lists():
+            for value in value_list:
+                if not self.model_admin.lookup_allowed(key, value):
+                    raise DisallowedModelAdminLookup("Filtering by %s not allowed" % key)
+            
         filter_specs = []
         if self.list_filter:
             for list_filter in self.list_filter:
@@ -51,23 +82,29 @@ class MIZChangeList(ChangeList):
         # fields and to determine if at least one of them needs distinct(). If
         # the lookup parameters aren't real fields, then bail out.
         try:
-            remaining_lookup_params = dict()
-            for key, value in lookup_params.items():
-                if key in self.model_admin.search_fields_redirect:
-                    qobject = models.Q()
+            # NOTE: if we are not using any list_filter, remaining_lookup_params is equal to lookup_params SANS prepare_lookup_value!
+            remaining_lookup_params = MultiValueDict()
+            for key, value_list in lookup_params.lists():
+                for value in value_list:
+                
+                    #NOTE: isn't this outdated with AdvSF? apparently not: artikel is still using this to recover genres related to musiker/band
                     if key in self.model_admin.search_fields_redirect:
-                        redirects = self.model_admin.search_fields_redirect.get(key, [])
-                        if not isinstance(redirects, (list, tuple)):
-                            redirects = [redirects]
-                    for redirect in redirects:
-                        if callable(redirect):
-                            continue
-                        qobject |= models.Q( (redirect, prepare_lookup_value(redirect, value)) )
-                        use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, redirect)
-                    remaining_lookup_params[key] = qobject
-                else:
-                    remaining_lookup_params[key] = prepare_lookup_value(key, value)
-                    use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
+                        qobject = models.Q()
+                        if key in self.model_admin.search_fields_redirect:
+                            redirects = self.model_admin.search_fields_redirect.get(key, []) 
+                            if not isinstance(redirects, (list, tuple)):
+                                redirects = [redirects]
+                        for redirect in redirects:
+                            if callable(redirect):
+                                continue
+                            qobject |= models.Q( (redirect, prepare_lookup_value(redirect, value)) )
+                            use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, redirect)
+                        # Keep in mind, remaining_lookup_params is a MultiValueDict - so assigning an object to key always wraps it in a list
+                        remaining_lookup_params[key] = qobject 
+                    else:
+                        remaining_lookup_params.appendlist(key, prepare_lookup_value(key, value))
+                        #remaining_lookup_params[key] = prepare_lookup_value(key, value)
+                        use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
             return filter_specs, bool(filter_specs), remaining_lookup_params, use_distinct
         except FieldDoesNotExist as e:
             six.reraise(IncorrectLookupParameters, IncorrectLookupParameters(e), sys.exc_info()[2])
@@ -93,17 +130,25 @@ class MIZChangeList(ChangeList):
             new_qs = filter_spec.queryset(request, qs)
             if new_qs is not None:
                 qs = new_qs
-
         try:
             # Finally, we apply the remaining lookup parameters from the query
             # string (i.e. those that haven't already been processed by the
             # filters).
-            for k, v in remaining_lookup_params.items():
-                if isinstance(v, models.Q):
-                    qs = qs.filter(v)
-                else:
-                    qs = qs.filter(**{k:v})
-            
+            if isinstance(remaining_lookup_params, MultiValueDict):
+                for key, value_list in remaining_lookup_params.lists():
+                    for value in value_list:
+                        if isinstance(value, models.Q):
+                            qs = qs.filter(value)
+                        else:
+                            qs = qs.filter(**{key:value})
+            else:
+                # NOTE isn't remaining_lookup_params always a MultiValueDict?
+                for k, v in remaining_lookup_params.items():
+                    if isinstance(v, models.Q):
+                        qs = qs.filter(v)
+                    else:
+                        qs = qs.filter(**{k:v})
+                
         except (SuspiciousOperation, ImproperlyConfigured) as e:
             # Allow certain types of errors to be re-raised as-is so that the
             # caller can treat them in a special way.

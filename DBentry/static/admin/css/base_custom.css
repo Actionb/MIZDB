@@ -79,6 +79,13 @@ fieldset.collapsed h3 * {
     display:none;
 }
 
+fieldset.collapsed h2, fieldset.collapsed {
+    display: block;
+}
+
+fieldset.collapsed * {
+    display: none;
+}
 
 fieldset div[class^="inline-related"] {
     /* Allows padding etc of forms of stacked formsets */
@@ -96,7 +103,7 @@ fieldset div[class^="inline-related"] {
 fieldset.module fieldset .fieldset-name {
     background: lightcyan none repeat scroll 0 0;
     color:#447e9b;
-}*/
+}
 
 .aligned .vCheckboxLabel {
     /* Actually swaps a Checkbox with its Label */
@@ -107,7 +114,7 @@ fieldset.module fieldset .fieldset-name {
     width: 160px;
     word-wrap: break-word;
 }
-
+*/
 
 .preview {
     padding-top: 30px;
@@ -115,4 +122,40 @@ fieldset.module fieldset .fieldset-name {
 
 div .help_text {
     padding: 10px;
+}
+
+.description {
+    padding: 5px 0 5px 12px;
+}
+
+/*
+* — ACTION CONFIRMATION —
+*/
+.action-confirmation form input[type="submit"][name^="action_confirmed"] {
+    background: #ba2121 none repeat scroll 0 0;
+}
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:active,
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:focus,
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:hover {
+    background: #a41515 none repeat scroll 0 0;
+}
+
+.action-confirmation form .cancel-link {
+    background: #ddd none repeat scroll 0 0;
+    border-radius: 4px;
+    color: #333;
+    display: inline-block;
+    height: 15px;
+    line-height: 15px;
+    margin: 0 0 0 10px;
+    padding: 10px 15px;
+    vertical-align: middle;
+}
+
+.aligned .form-row input[type="radio"]{
+    margin-bottom: 5px;
+}
+
+button[name="wizard_goto_step"]{
+    padding: 10px 15px;
 }

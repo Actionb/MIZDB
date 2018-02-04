@@ -392,3 +392,46 @@ class MIZReader(object):
             else:
                 return None
         return tag
+        
+
+import csv
+class CSVReader(object):
+    
+    def __init__(self, file_path = None, file = None, tags = {}, reader = csv.DictReader):
+        self.file = file or open(file_path) 
+        self.reader = reader
+        
+        if isinstance(tags, (list, tuple)):
+            tags = {tags[0]:tags[0]}
+        if isinstance(tags, str):
+            tags = {tags:tags}
+        self.tags = tags
+        
+    def get_reader(self):
+        self.file.seek(0)
+        return self.reader(self.file)
+    
+    def read(self):
+        for row in self.get_reader():
+            if self.tags:
+                return_row = {}
+                for k, v in row.items():
+                    if k in self.tags:
+                        return_row[self.tags[k]] = v
+                yield return_row
+            else:
+                yield row
+                
+    def print_rows(self, row_number = 0, to_file = None):
+        for c, row in enumerate(self.read(), 2):
+            if c == row_number:
+                break
+            print(row, file=to_file)
+            
+    def print_row(self, row_number = 0, to_file = None):
+        if not row_number:
+            return
+        for c, row in enumerate(self.read(), 2):
+            if c == row_number:
+                print(row, file=to_file)
+                break

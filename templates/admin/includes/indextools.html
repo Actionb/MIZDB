@@ -1,0 +1,13 @@
+{% if admintools %}
+<div class="module">
+  <h2>Admin Tools</h2>
+    <ul class="actionlist">
+        {% for tool_url,tool_label in admintools.items %}
+          <li class="changelink">
+            <a href="{% url tool_url %}">{{tool_label}}</a>
+          </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
