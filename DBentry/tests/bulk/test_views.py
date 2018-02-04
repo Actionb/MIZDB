@@ -277,6 +277,7 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         complain_data = self.valid_data.copy()
         complain_data['jahrgang'] = '12'
         
+        #TODO: move this from the story into TestBulkAusgabe
         # The form still has to be valid and the form needs to notice it has changed
         complain_form = BulkAusgabe.form_class(data=complain_data, initial=first_preview_initial)
         self.assertTrue(complain_form.has_changed())
@@ -305,3 +306,69 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         # The user should have gotten some messages about the operation
         self.assertMessageSent(first_add_request, "Ausgaben erstellt:")
         self.assertMessageSent(first_add_request, "Dubletten hinzugefügt:")
+        
+        # The user press add_another again with incremented data
+        second_add_data = first_add_response.context['form'].data.copy() # next_initial_data
+        second_add_data['_addanother'] = True
+                
+        second_add_response = self.client.post(self.path, data=second_add_data)
+        second_add_request = second_add_response.wsgi_request
+        self.assertEqual(second_add_response.status_code, 200)
+        
+        # The view should contain the preview updated with the changes
+        self.assertTrue('preview_headers' in second_add_response.context)
+        self.assertTrue('preview' in second_add_response.context)
+        for row in second_add_response.context['preview']:
+            self.assertEqual(str(row['jahrgang']), '14')
+        
+        # As every object should have been newly created, the user only gets one message
+        self.assertMessageSent(second_add_request, "Ausgaben erstellt:")
+        self.assertMessageNotSent(second_add_request, "Dubletten hinzugefügt:")
+        
+        # Let's assume the session data contain the values of the old form gets 'lost' -- maybe it expired because the user went to drink a coffee
+        self.session['old_form_data'] = {}
+        self.session.save()
+        
+        missing_old_data_data = second_add_response.context['form'].data.copy()
+        missing_old_data_data['_addanother'] = True
+        
+        missing_old_data_response = self.client.post(self.path, data=missing_old_data_data)
+        missing_old_data_request = missing_old_data_response.wsgi_request
+        self.assertEqual(missing_old_data_response.status_code, 200)
+        
+        # The user should be prompted about changes and preview should be displayed
+        expected_message = 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.'
+        self.assertMessageSent(missing_old_data_request, expected_message)
+        
+        # The view should contain the same preview as second_add_response
+        self.assertTrue('preview_headers' in missing_old_data_response.context)
+        self.assertTrue('preview' in missing_old_data_response.context)
+        for row in missing_old_data_response.context['preview']:
+            self.assertEqual(str(row['jahrgang']), '14')
+            
+        # The user puts in new data and presses preview
+        continue_data = self.valid_data.copy()
+        continue_data['num'] = ''
+        continue_data['monat'] = ['1']
+        continue_data['jahr'] = ['2018']
+        continue_data['jahrgang'] = ''
+        continue_data['_preview'] = True
+        
+        continue_preview_response = self.client.post(self.path, data=continue_data)
+        continue_preview_request = continue_preview_response.wsgi_request
+        self.assertEqual(continue_preview_response.status_code, 200)
+        self.assertMessageNotSent(continue_preview_request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
+        self.assertTrue('preview_headers' in continue_preview_response.context)
+        self.assertTrue('preview' in continue_preview_response.context)
+        
+        # The user presses _continue and leaves the view successfully
+        del continue_data['_preview']
+        continue_data['_continue'] = True
+        continue_response = self.client.post(self.path, data=continue_data)
+        continue_request = continue_response.wsgi_request
+        
+        self.assertTrue('qs' in continue_request.session)
+        self.assertEqual(continue_response.status_code, 302) # 302 for redirect
+        self.assertEqual(continue_response.url, reverse("admin:DBentry_ausgabe_changelist"))
+        
+        
