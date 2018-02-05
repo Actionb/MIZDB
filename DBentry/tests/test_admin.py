@@ -187,23 +187,70 @@ class TestAdminGenre(AdminTestCase):
     
     model_admin_class = GenreAdmin
     model = genre
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = genre.objects.create(genre='Topobject')
+        cls.obj2 = genre.objects.create(genre='Subobject', ober=cls.obj1)
+        cls.obj2.genre_alias_set.create(alias='ASubobjectLias')
+        
+        cls.test_data = [cls.obj1, cls.obj2]
+        
+        super(TestAdminGenre, cls).setUpTestData()
         
     def test_get_search_fields(self):
-        expected = ['genre', 'ober_id__genre', 'genre_alias__alias']
-        self.assertEqual(self.model_admin.get_search_fields(), expected)
+        expected = sorted({'genre', 'obergenre__genre', 'genre_alias__alias'})
+        self.assertEqual(sorted(self.model_admin.get_search_fields()), expected)
         
-    #TODO: ober?
+    def test_search_finds_alias(self):
+        # check if an object can be found via its alias
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='ASubobjectLias')
+        self.assertTrue(self.obj2 in result)
+        
+    def test_search_for_sub_finds_top(self):
+        # check if a search for a subobject finds its topobject
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
+        self.assertTrue(self.obj1 in result)
+        
+    def test_search_for_sub_alias_finds_top(self):
+        # check if a search for a subobject's alias also finds its topobject
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='ASubobjectLias')
+        self.assertTrue(self.obj1 in result)
+        
     
 class TestAdminSchlagwort(AdminTestCase):
     
     model_admin_class = SchlagwortAdmin
     model = schlagwort
     
-    def test_get_search_fields(self):
-        expected = ['schlagwort', 'ober_id__schlagwort', 'schlagwort_alias__alias']
-        self.assertEqual(self.model_admin.get_search_fields(), expected)
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = schlagwort.objects.create(schlagwort='Topobject')
+        cls.obj2 = schlagwort.objects.create(schlagwort='Subobject', ober=cls.obj1)
+        cls.obj2.schlagwort_alias_set.create(alias='ASubobjectLias')
         
-    #TODO: ober?
+        cls.test_data = [cls.obj1, cls.obj2]
+        
+        super(TestAdminSchlagwort, cls).setUpTestData()
+    
+    def test_get_search_fields(self):
+        expected = sorted({'schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias'})
+        self.assertEqual(sorted(self.model_admin.get_search_fields()), expected)
+        
+    def test_search_finds_alias(self):
+        # check if an object can be found via its alias
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='ASubobjectLias')
+        self.assertTrue(self.obj2 in result)
+        
+    def test_search_for_sub_finds_top(self):
+        # check if a search for a subobject finds its topobject
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
+        self.assertTrue(self.obj1 in result)
+        
+    def test_search_for_sub_alias_finds_top(self):
+        # check if a search for a subobject's alias also finds its topobject
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='ASubobjectLias')
+        self.assertTrue(self.obj1 in result)
     
 class TestAdminBand(AdminTestCase):
     
