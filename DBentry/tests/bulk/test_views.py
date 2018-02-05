@@ -65,9 +65,6 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
     
     def test_post_has_changed_message(self):
         # form.has_changed ( data != initial) :
-        # => message 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
-#        self.session['old_form_data'] = {'jahr':'2001'} #effectively changing form.initial
-#        self.session.save()
         response = self.client.post(self.path, data=self.valid_data)
         expected_message = 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.'
         self.assertMessageSent(response.wsgi_request, expected_message)
@@ -88,7 +85,6 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         data['_continue'] = True
         self.session['old_form_data'] = data.copy() # so the form 'has not changed'
         self.session.save()
-        #preview_response = self.client.post(self.path, data=data, follow=False) # get the 'preview' response
         response = self.client.post(self.path, data=data, follow=False) # get the '_continue' response
         self.assertTrue('_continue' in response.wsgi_request.POST)
         self.assertTrue('qs' in response.wsgi_request.session)
@@ -276,13 +272,7 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         # User changes data without refreshing the preview, complain about it
         complain_data = self.valid_data.copy()
         complain_data['jahrgang'] = '12'
-        
-        #TODO: move this from the story into TestBulkAusgabe
-        # The form still has to be valid and the form needs to notice it has changed
-        complain_form = BulkAusgabe.form_class(data=complain_data, initial=first_preview_initial)
-        self.assertTrue(complain_form.has_changed())
-        self.assertTrue(complain_form.is_valid())
-        
+                
         complain_response = self.client.post(self.path, data=complain_data)
         complain_request = complain_response.wsgi_request
         self.assertEqual(complain_response.status_code, 200)
@@ -370,5 +360,4 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         self.assertTrue('qs' in continue_request.session)
         self.assertEqual(continue_response.status_code, 302) # 302 for redirect
         self.assertEqual(continue_response.url, reverse("admin:DBentry_ausgabe_changelist"))
-        
         
