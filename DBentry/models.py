@@ -219,10 +219,15 @@ class genre(ShowModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
     
+    search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
+    
     class Meta(ShowModel.Meta):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
+        
+    def ober_string(self):
+        return self.ober if self.ober else ''
         
     def alias_string(self):
         return concat_limit(self.genre_alias_set.all())
@@ -899,10 +904,15 @@ class schlagwort(ShowModel):
     schlagwort = models.CharField( max_length = 100,  unique = True)
     ober = models.ForeignKey('self', related_name = 'oberschl', verbose_name = 'Oberbegriff', null = True,  blank = True)
     
+    search_fields = ['schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias']
+    
     class Meta(ShowModel.Meta):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
+        
+    def ober_string(self):
+        return self.ober if self.ober else ''
         
     def num_artikel(self):
         return self.artikel_set.count()

@@ -602,9 +602,20 @@ class GenreAdmin(ModelBase):
     class AliasInLine(AliasTabBase):
         model = genre_alias
     inlines = [AliasInLine]
-    search_fields = ['genre', 'ober_id__genre', 'genre_alias__alias']
-    list_display = ['genre', 'alias_string']
+    list_display = ['genre', 'alias_string', 'ober_string']
     
+    #TODO: dont keep this
+    def get_search_results(self, request, queryset, search_term):
+        if not search_term:
+            # dont do this crap without a search term, django will explode
+            return super(GenreAdmin, self).get_search_results(request, queryset, search_term)
+        pre_result, use_distinct = super(GenreAdmin, self).get_search_results(request, queryset, search_term)
+        
+        q = models.Q()
+        for r in pre_result:
+            q |= models.Q(('obergenre__genre', r.genre))
+            q |= models.Q(('pk', r.pk))
+        return queryset.filter(q), use_distinct
 
 @admin.register(magazin, site=miz_site)
 class MagazinAdmin(ModelBase):
@@ -682,7 +693,7 @@ class SchlagwortAdmin(ModelBase):
         model = schlagwort_alias
         extra = 1
     inlines = [AliasInLine]
-    search_fields = ['schlagwort', 'ober_id__schlagwort', 'schlagwort_alias__alias']
+    list_display = ['schlagwort', 'alias_string', 'ober_string']
     
 @admin.register(spielort, site=miz_site)
 class SpielortAdmin(ModelBase):
