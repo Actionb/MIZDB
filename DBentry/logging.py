@@ -126,3 +126,11 @@ class LoggingMixin(object):
             log = self.log_change(obj, fields)
             logs.append(log)
         return logs
+
+def get_logger(request):
+    """
+    Helper function to offer LoggingMixin's functionality to non-views.
+    """
+    l = LoggingMixin()
+    l.request = request
+    return l

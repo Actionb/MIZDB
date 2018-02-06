@@ -102,4 +102,12 @@ class TestLoggingMixin(ViewTestCase):
         for l in logs:
             self.assertEqual(l.get_change_message(), '')
             self.assertEqual(l.action_flag, DELETION)
+            
+    def test_get_logger(self):
+        request = self.get_request()
+        logger = get_logger(request)
+        self.assertEqual(logger.request, request)
+        l = logger.log_change(self.obj1, ['band_name'])
+        self.assertEqual(l.get_change_message(), 'Band_name geändert.')
+        self.assertEqual(l.action_flag, CHANGE)
         
