@@ -211,7 +211,7 @@ class musiker(BaseModel):
             return '---'
     herkunft_string.short_description = 'Herkunft'
         
-class musiker_alias(alias_base):
+class musiker_alias(BaseAliasModel):
     parent = models.ForeignKey('musiker')
     
     
@@ -233,7 +233,7 @@ class genre(BaseModel):
         return concat_limit(self.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
     
-class genre_alias(alias_base):
+class genre_alias(BaseAliasModel):
     parent = models.ForeignKey('genre')
         
         
@@ -264,7 +264,7 @@ class band(BaseModel):
     def alias_string(self):
         return concat_limit(self.band_alias_set.all())
     alias_string.short_description = 'Aliase'
-class band_alias(alias_base):
+class band_alias(BaseAliasModel):
     parent = models.ForeignKey('band')
     
     
@@ -895,7 +895,7 @@ class land(BaseModel):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
-class land_alias(alias_base):
+class land_alias(BaseAliasModel):
     parent = models.ForeignKey('land')
 
         
@@ -920,7 +920,7 @@ class schlagwort(BaseModel):
         return concat_limit(self.schlagwort_alias_set.all())
     alias_string.short_description = 'Aliase'
         
-class schlagwort_alias(alias_base):
+class schlagwort_alias(BaseAliasModel):
     parent = models.ForeignKey('schlagwort')
         
         
@@ -1030,7 +1030,7 @@ class instrument(BaseModel):
         ordering = ['instrument', 'kuerzel']
         verbose_name = 'Instrument'
         verbose_name_plural = 'Instrumente'
-class instrument_alias(alias_base):
+class instrument_alias(BaseAliasModel):
     parent = models.ForeignKey('instrument')
         
         
@@ -1160,7 +1160,7 @@ class sender(BaseModel):
         verbose_name = 'Sender'
         verbose_name_plural = 'Sender'
         ordering = ['name']
-class sender_alias(alias_base):
+class sender_alias(BaseAliasModel):
     parent = models.ForeignKey('sender')
     
     
@@ -1174,7 +1174,7 @@ class spielort(BaseModel):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name']
-class spielort_alias(alias_base):
+class spielort_alias(BaseAliasModel):
     parent = models.ForeignKey('spielort')
     
     
@@ -1218,7 +1218,7 @@ class veranstaltung(BaseModel):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'spielort', 'ort', 'datum']
-class veranstaltung_alias(alias_base):
+class veranstaltung_alias(BaseAliasModel):
     parent = models.ForeignKey('veranstaltung')
 
 
