@@ -150,13 +150,13 @@ class alias_base(ShowModel):
 
 # app models
 
-class person(ShowModel):
+class person(BaseModel):
     vorname = models.CharField(**CF_ARGS_B)
     nachname = models.CharField(default = 'unbekannt', **CF_ARGS)
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
     beschreibung = models.TextField(blank = True)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Person'
         verbose_name_plural = 'Personen'
         ordering = ['nachname', 'vorname', 'herkunft']
@@ -181,7 +181,7 @@ class person(ShowModel):
         return qitems_list
 
     
-class musiker(ShowModel): 
+class musiker(BaseModel): 
     kuenstler_name = models.CharField('Künstlername', **CF_ARGS)
     person = models.ForeignKey(person, null = True, blank = True)
     genre = models.ManyToManyField('genre',  through = m2m_musiker_genre)
@@ -191,7 +191,7 @@ class musiker(ShowModel):
     search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
     dupe_fields = ['kuenstler_name', 'person']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name', 'person']
@@ -215,13 +215,13 @@ class musiker_alias(alias_base):
     parent = models.ForeignKey('musiker')
     
     
-class genre(ShowModel):
+class genre(BaseModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
     
     search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
@@ -237,7 +237,7 @@ class genre_alias(alias_base):
     parent = models.ForeignKey('genre')
         
         
-class band(ShowModel):
+class band(BaseModel):
     band_name = models.CharField('Bandname', **CF_ARGS)
     herkunft = models.ForeignKey('ort', models.PROTECT, null = True,  blank = True)
     genre = models.ManyToManyField('genre',  through = m2m_band_genre)
@@ -248,7 +248,7 @@ class band(ShowModel):
     search_fields = ['band_alias__alias', 'musiker__kuenstler_name']
 
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
@@ -268,7 +268,7 @@ class band_alias(alias_base):
     parent = models.ForeignKey('band')
     
     
-class autor(ShowModel):
+class autor(BaseModel):
     kuerzel = models.CharField('Kürzel', **CF_ARGS_B)
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
@@ -276,7 +276,7 @@ class autor(ShowModel):
     search_fields = ['person__vorname', 'person__nachname']
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Autor'
         verbose_name_plural = 'Autoren'
         ordering = ['person__vorname', 'person__nachname']
@@ -495,41 +495,41 @@ class ausgabe(ShowModel):
             rslt.append([qobject])
         return rslt
         
-class ausgabe_jahr(ShowModel):
+class ausgabe_jahr(BaseModel):
     JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
     
     jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS)#, default = CUR_JAHR)
     ausgabe = models.ForeignKey('ausgabe')
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Jahr'
         verbose_name_plural = 'Jahre'
         unique_together = ('jahr', 'ausgabe')
         ordering = ['jahr']
         
-class ausgabe_num(ShowModel):
+class ausgabe_num(BaseModel):
     num = models.IntegerField('Nummer')
     kuerzel = models.CharField(**CF_ARGS_B)
     ausgabe = models.ForeignKey('ausgabe')
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Nummer'
         verbose_name_plural = 'Ausgabennummer'
         unique_together = ('num', 'ausgabe', 'kuerzel')
         ordering = ['num']
         
-class ausgabe_lnum(ShowModel):
+class ausgabe_lnum(BaseModel):
     lnum = models.IntegerField('Lfd. Nummer')
     kuerzel = models.CharField(**CF_ARGS_B)
     ausgabe = models.ForeignKey('ausgabe')
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'lfd. Nummer'
         verbose_name_plural = 'Laufende Nummer'
         unique_together = ('lnum', 'ausgabe', 'kuerzel')
         ordering = ['lnum']
         
-class ausgabe_monat(ShowModel):
+class ausgabe_monat(BaseModel):
     ausgabe = models.ForeignKey('ausgabe')
     monat = models.ForeignKey('monat')
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
         unique_together = ('ausgabe', 'monat')
@@ -537,17 +537,16 @@ class ausgabe_monat(ShowModel):
         
     search_fields = ['monat__monat', 'monat__abk']
     
-    
-class monat(ShowModel):
+class monat(BaseModel):
     monat = models.CharField('Monat', **CF_ARGS)
     abk = models.CharField('Abk',  **CF_ARGS)
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
         ordering = ['id']
         
         
-class magazin(ShowModel):
+class magazin(BaseModel):
     TURNUS_CHOICES = [('u', 'unbekannt'), 
         ('t','täglich'), ('w','wöchentlich'), ('w2','zwei-wöchentlich'), ('m','monatlich'), ('m2','zwei-monatlich'), 
         ('q','quartalsweise'), ('hj','halbjährlich'), ('j','jährlich')]
@@ -572,7 +571,7 @@ class magazin(ShowModel):
         return self.ausgabe_set.count()
     anz_ausgaben.short_description = 'Anz. Ausgaben'
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Magazin'
         verbose_name_plural = 'Magazine'
         ordering = ['magazin_name']
@@ -835,23 +834,23 @@ class magazin(ShowModel):
             if inp == 'q':
                 return
     
-class verlag(ShowModel):
+class verlag(BaseModel):
     verlag_name = models.CharField('verlag', **CF_ARGS)
     sitz = models.ForeignKey('ort',  null = True,  blank = True, on_delete = models.SET_NULL)
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
         verbose_name_plural = 'Verlage'
         ordering = ['verlag_name', 'sitz']
 
 
-class ort(ShowModel):
+class ort(BaseModel):
     stadt = models.CharField(**CF_ARGS_B)
     bland = models.ForeignKey('bundesland', verbose_name = 'Bundesland',  null = True,  blank = True, on_delete = models.PROTECT)
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Ort'
         verbose_name_plural = 'Orte'
         unique_together = ('stadt', 'bland', 'land')
@@ -872,27 +871,27 @@ class ort(ShowModel):
                 return str(self.land.land_name)
             
         
-class bundesland(ShowModel):
+class bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', **CF_ARGS)
     code = models.CharField(max_length = 4,  unique = False)
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['bland_name', 'code']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Bundesland'
         verbose_name_plural = 'Bundesländer'
         unique_together = ('bland_name', 'land')
         ordering = ['land', 'bland_name']                
         
         
-class land(ShowModel):
+class land(BaseModel):
     land_name = models.CharField('Land', max_length = 100,  unique = True)
     code = models.CharField(max_length = 4,  unique = True)
     
     search_fields = ['land_name', 'code']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
@@ -900,13 +899,13 @@ class land_alias(alias_base):
     parent = models.ForeignKey('land')
 
         
-class schlagwort(ShowModel):
+class schlagwort(BaseModel):
     schlagwort = models.CharField( max_length = 100,  unique = True)
     ober = models.ForeignKey('self', related_name = 'oberschl', verbose_name = 'Oberbegriff', null = True,  blank = True)
     
     search_fields = ['schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
@@ -925,7 +924,7 @@ class schlagwort_alias(alias_base):
     parent = models.ForeignKey('schlagwort')
         
         
-class artikel(ShowModel):
+class artikel(BaseModel):
     F = 'f'
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
@@ -952,7 +951,7 @@ class artikel(ShowModel):
     search_fields = {'schlagzeile', 'zusammenfassung', 'seite', 'seitenumfang', 'info'}
 
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
         ordering = ['seite','ausgabe','pk']
@@ -983,7 +982,7 @@ class artikel(ShowModel):
     kuenstler_string.short_description = 'Künstler'
         
 
-class buch(ShowModel):
+class buch(BaseModel):
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
     jahr = models.PositiveIntegerField(**YF_ARGS)
@@ -1006,7 +1005,7 @@ class buch(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['titel']
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
@@ -1018,7 +1017,7 @@ class buch(ShowModel):
         return str(self.titel)
     
 
-class instrument(ShowModel):
+class instrument(BaseModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
     kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS)
     
@@ -1027,7 +1026,7 @@ class instrument(ShowModel):
     def __str__(self):
         return str(self.instrument) + " ({})".format(str(self.kuerzel)) if self.kuerzel else str(self.instrument)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['instrument', 'kuerzel']
         verbose_name = 'Instrument'
         verbose_name_plural = 'Instrumente'
@@ -1035,7 +1034,7 @@ class instrument_alias(alias_base):
     parent = models.ForeignKey('instrument')
         
         
-class audio(ShowModel):
+class audio(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     tracks = models.IntegerField(verbose_name = 'Anz. Tracks', blank = True, null = True)
@@ -1064,7 +1063,7 @@ class audio(ShowModel):
     search_fields = ['titel']
     
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['titel']
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
@@ -1091,12 +1090,12 @@ class audio(ShowModel):
     formate_string.short_description = 'Format'
     
     
-class bildmaterial(ShowModel):
+class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['titel']
         verbose_name = 'Bild Material'
         verbose_name_plural = 'Bild Materialien'
@@ -1105,23 +1104,23 @@ class bildmaterial(ShowModel):
         ]
         
         
-class buch_serie(ShowModel):
+class buch_serie(BaseModel):
     serie = models.CharField(**CF_ARGS)
     
     search_fields = ['serie']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['serie']
         verbose_name = 'Buchserie'
         verbose_name_plural = 'Buchserien'
         
         
-class dokument(ShowModel):
+class dokument(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['titel']
         verbose_name = 'Dokument'
         verbose_name_plural = 'Dokumente'
@@ -1130,22 +1129,22 @@ class dokument(ShowModel):
         ]
     
     
-class kreis(ShowModel):
+class kreis(BaseModel):
     name = models.CharField(**CF_ARGS)
     bland = models.ForeignKey('bundesland')
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['name', 'bland']
         verbose_name = 'Kreis'
         verbose_name_plural = 'Kreise'
         
         
-class memorabilien(ShowModel):
+class memorabilien(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Memorabilia'
         verbose_name_plural = 'Memorabilien'
         ordering = ['titel']
@@ -1154,10 +1153,10 @@ class memorabilien(ShowModel):
         ]
         
         
-class sender(ShowModel):
+class sender(BaseModel):
     name = models.CharField(**CF_ARGS)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Sender'
         verbose_name_plural = 'Sender'
         ordering = ['name']
@@ -1165,13 +1164,13 @@ class sender_alias(alias_base):
     parent = models.ForeignKey('sender')
     
     
-class spielort(ShowModel):
+class spielort(BaseModel):
     name = models.CharField(**CF_ARGS)
     ort = models.ForeignKey('ort')
     
     search_fields = ['name']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name']
@@ -1179,21 +1178,21 @@ class spielort_alias(alias_base):
     parent = models.ForeignKey('spielort')
     
     
-class sprache(ShowModel):
+class sprache(BaseModel):
     sprache = models.CharField(**CF_ARGS)
     abk = models.CharField(max_length = 3)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Sprache'
         verbose_name_plural = 'Sprachen'
         ordering = ['sprache']
     
-class technik(ShowModel):
+class technik(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['name']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'
         ordering = ['titel']
@@ -1202,7 +1201,7 @@ class technik(ShowModel):
         ]
         
     
-class veranstaltung(ShowModel):
+class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
     datum = models.DateField()
     spielort = models.ForeignKey('spielort')
@@ -1215,7 +1214,7 @@ class veranstaltung(ShowModel):
     
     search_fields = ['name']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'spielort', 'ort', 'datum']
@@ -1223,7 +1222,7 @@ class veranstaltung_alias(alias_base):
     parent = models.ForeignKey('veranstaltung')
 
 
-class video(ShowModel):
+class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
     tracks = models.IntegerField()
     laufzeit = models.TimeField()
@@ -1241,7 +1240,7 @@ class video(ShowModel):
     
     search_fields = ['titel']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
         verbose_name_plural = 'Video Materialien'
         ordering = ['titel']
@@ -1250,7 +1249,7 @@ class video(ShowModel):
         ]
         
     
-class provenienz(ShowModel):
+class provenienz(BaseModel):
     SCHENK = 'Schenkung'
     SPENDE = 'Spende'
     FUND = 'Fund'
@@ -1262,28 +1261,28 @@ class provenienz(ShowModel):
     
     search_fields = ['geber__name']
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['geber', 'typ']
         verbose_name = 'Provenienz'
         verbose_name_plural = 'Provenienzen'
         
     def __str__(self):
         return "{0} ({1})".format(str(self.geber.name), str(self.typ))
-class geber(ShowModel):
+class geber(BaseModel):
     name = models.CharField(default = 'unbekannt', **CF_ARGS)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['name']
         verbose_name = 'Geber'
         verbose_name_plural = 'Geber'
         
-class lagerort(ShowModel):
+class lagerort(BaseModel):
     ort = models.CharField(**CF_ARGS)
     raum = models.CharField(**CF_ARGS_B)
     regal = models.CharField(**CF_ARGS_B)
     
     signatur = models.CharField(**CF_ARGS_B) # NOTE: use? maybe for human-readable shorthand?
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
         ordering = ['ort']
@@ -1303,7 +1302,7 @@ class lagerort(ShowModel):
         return rslt.format(raum=self.raum, regal=self.regal, ort=self.ort)
         
         
-class bestand(ShowModel):
+class bestand(BaseModel):
     signatur = models.AutoField(primary_key=True)
     lagerort = models.ForeignKey('lagerort')
     provenienz = models.ForeignKey('provenienz',  blank = True, null = True)
@@ -1323,7 +1322,7 @@ class bestand(ShowModel):
         ('technik', 'Technik'), ('video', 'Video'), 
     ]      
     bestand_art = models.CharField('Bestand-Art', max_length = 20, choices = BESTAND_CHOICES, blank = False, default = 'ausgabe')
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
         verbose_name_plural = 'Bestände'
         ordering = ['pk']
@@ -1350,7 +1349,7 @@ class bestand(ShowModel):
         super(bestand, self).save(force_insert, force_update, using, update_fields)
 
     
-class datei(ShowModel):
+class datei(BaseModel):
     
     MEDIA_TYP_CHOICES = [('audio', 'Audio'), ('video', 'Video'), ('bild', 'Bild'), ('text', 'Text'), ('sonstige', 'Sonstige')]
     
@@ -1379,7 +1378,7 @@ class datei(ShowModel):
     spielort = models.ManyToManyField('spielort', through = m2m_datei_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_datei_veranstaltung)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Datei'
         verbose_name_plural = 'Dateien'
         
@@ -1387,7 +1386,7 @@ class datei(ShowModel):
         return str(self.titel)
 
   
-class Format(ShowModel):
+class Format(BaseModel):
     CHANNEL_CHOICES = [('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quad', 'Quadraphonic'), 
                         ('Ambi', 'Ambisonic'), ('Multi', 'Multichannel')]
     
@@ -1405,7 +1404,7 @@ class Format(ShowModel):
     
     bemerkungen = models.TextField(blank = True)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         verbose_name = 'Format'
         verbose_name_plural = 'Formate'
         
@@ -1433,47 +1432,47 @@ class Format(ShowModel):
         self.format_name = self.get_name() 
         Format.objects.filter(pk=self.pk).update(format_name=self.format_name)
         
-class NoiseRed(ShowModel):
+class NoiseRed(BaseModel):
     verfahren = models.CharField(**CF_ARGS)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['verfahren']
         verbose_name = 'Noise Reduction Verfahren'
         verbose_name_plural = 'Noise Reduction Verfahren'
 
-class FormatTag(ShowModel):
+class FormatTag(BaseModel):
     tag = models.CharField(**CF_ARGS)
     abk = models.CharField(verbose_name = 'Abkürzung', **CF_ARGS_B)
     
     def __str__(self):
         return str(self.tag)
         
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['tag']
         verbose_name = 'Format-Tag'
         verbose_name_plural = 'Format-Tags'
         
-class FormatSize(ShowModel):
+class FormatSize(BaseModel):
     size = models.CharField(**CF_ARGS)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['size']
         verbose_name = 'Format-Größe'
         verbose_name_plural = 'Format-Größen'
             
-class FormatTyp(ShowModel):
+class FormatTyp(BaseModel):
     """ Art des Formats (Vinyl, DVD, Cassette, etc) """
     typ = models.CharField(**CF_ARGS)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['typ']
         verbose_name = 'Format-Typ'
         verbose_name_plural = 'Format-Typen'
 
-class plattenfirma(ShowModel):
+class plattenfirma(BaseModel):
     name = models.CharField(**CF_ARGS)
     
-    class Meta(ShowModel.Meta):
+    class Meta(BaseModel.Meta):
         ordering = ['name']
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'
@@ -1482,7 +1481,7 @@ class plattenfirma(ShowModel):
 tmag = magazin.objects.get(pk=326)
 
 # from django.conf import settings --> settings.AUTH_USER_MODEL
-class Favoriten(models.Model): #NOTE: why not inherit from ShowModel?
+class Favoriten(models.Model): #NOTE: why not inherit from BaseModel?
     user = models.OneToOneField('auth.User', editable = False)
     fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten Genre', blank = True)
     fav_schl = models.ManyToManyField('schlagwort', verbose_name = 'Favoriten Schlagworte', blank = True)
