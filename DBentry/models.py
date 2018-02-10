@@ -1,7 +1,9 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.utils import IntegrityError
+from django.utils.functional import cached_property
 
+from .base.models import BaseModel, ComputedNameModel, BaseAliasModel
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
@@ -316,8 +318,10 @@ class autor(BaseModel):
             return qitems_list
             
             
-class ausgabe(ShowModel):
+class ausgabe(ComputedNameModel):
     STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen')]
+    _name = models.CharField(max_length=200, editable=False, default="Keine Angaben zu dieser Ausgabe!")
+    _changed_flag = models.BooleanField(editable=False, default=False)
     magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
     e_datum = models.DateField('Erscheinungsdatum', null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
@@ -334,7 +338,7 @@ class ausgabe(ShowModel):
                     'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']
     
     objects = AusgabeQuerySet.as_manager()
-    class Meta(ShowModel.Meta):
+    class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
         ordering = ['magazin', 'jahrgang']
@@ -384,12 +388,15 @@ class ausgabe(ShowModel):
     dbestand.boolean = True
     
     def save(self, *args, **kwargs):
-        super(ausgabe, self).save(*args, **kwargs)
+        pre_save_datum = self.e_datum
+        super(ausgabe, self).save(*args, **kwargs) #TODO: super().save(update=False, *args, **kwargs) to delay the update 
         
         # Use e_datum data to populate month and year sets
         # Note that this can be done AFTER save() as these values are set through RelatedManagers
-        self.refresh_from_db()
-        if self.e_datum:
+        self.refresh_from_db(fields=['e_datum'])
+        if self.e_datum != pre_save_datum:
+            #NOTE: if we have set ausgabe_jahr from data gathered from e_datum in a previous save, and e_datum changes... ausgabe_jahr will still contain the old's e_datum data
+            #print("ausgabe: updating e_datum") #TODO: write test for this
             if self.e_datum.year not in self.ausgabe_jahr_set.values_list('jahr', flat=True):
                 self.ausgabe_jahr_set.create(jahr=self.e_datum.year)
             if self.e_datum.month not in self.ausgabe_monat_set.values_list('monat_id', flat=True):
@@ -400,9 +407,86 @@ class ausgabe(ShowModel):
                 try:
                     self.ausgabe_monat_set.create(monat_id=self.e_datum.month)
                 except IntegrityError:
+                    # UNIQUE constraint violation, ignore
                     pass
+        # parameters that make up the name may have changed, update name accordingly
+        #print("Entering update_name() from save()...")
+        self.update_name(force_update = True)
+        
+    def refresh_from_db(self, using=None, fields=None):
+        #print('refreshing fields', fields)
+        super().refresh_from_db(using, fields)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        #print("Entering update_name() from init()...")
+        self.update_name()
+            
+               
+    def update_name(self, force_update = False):
+        """
+        Updates the _name, if necessary (or if forced to).
+        If the name was updated or the instance's _changed_flag is True, the _changed_flag is reset to False.
+        
+        Deferring the _name field will avoid an update, unless force_update is True.
+        """
+        deferred = self.get_deferred_fields()
+        name_updated = False
+        
+        if not self.pk or '_name' in deferred and not force_update:
+            #TODO: or rather when ANY fields are in deferred? This would stop stop updating entirely when using .only()
+            #TODO: self.pk == None and force_update == True: raise an exception to warn the user that the object cannot be accessed via querysets if it hasnt been stored to the database
+            # Abort the update if:
+            # - this instance has not yet been saved to the database or 
+            # - the _name field is no actually part of the instance AND 
+            # - an update is not forced
+            msg = "Updating name aborted: "
+            if not self.pk:
+                msg += "self.pk is None "
+            if '_name' in deferred:
+                msg += "_name is deferred "
+            if not force_update:
+                msg += "update is not forced "
+            #print(msg)
+            return name_updated
+
+        if not '_changed_flag' in deferred:
+            # _changed_flag was not deferred, self has access to it without calling refresh_from_db -- no need to hit the database
+            changed_flag = self._changed_flag
+        else:
+            # avoid calling refresh_from_db by fetching the value directly from the database
+            changed_flag = self.__class__.objects.values_list('_changed_flag', flat = True).get(pk = self.pk)
+        #print("Change flag is: ", changed_flag)
+        if force_update or changed_flag:
+            #print("Attempting update...")
+            # an update was scheduled or forced for this instance
+            current_name = self.get_name()
+            
+            fields_to_refresh = []
+            
+            if self._name != current_name:
+                #print("Name needs updating: ", self._name, "!=", current_name)
+                # the name needs updating
+                self.__class__.objects.filter(pk=self.pk).update(_name= current_name)
+                self._name = current_name
+                name_updated = True
+            #else:
+                #print("Name did not need updating: ", self._name, "==", current_name)
+                
+            if changed_flag:
+                # We have checked whether or not the name needs updating; the changed_flag must be reset
+                self.__class__.objects.filter(pk=self.pk).update(_changed_flag=False)
+                self._changed_flag = False
+        #print("Name was updated: ", name_updated, end="\n\n")
+        return name_updated
     
     def __str__(self):
+        return self._name
+                    
+    def get_name(self, **name_data):
+        if not self.pk:
+            return "Keine Angaben zu dieser Ausgabe!"
+        #print('ausgabe: getting name')
         info = concat_limit(str(self.info).split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
         if self.sonderausgabe and self.info:
             return info
