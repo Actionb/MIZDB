@@ -512,7 +512,7 @@ class TestComputedNameModel(DataTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        print("\nCREATING INSTANCES\n")
+        #print("\nCREATING INSTANCES\n")
         cls.mag = DataFactory().create_obj(magazin)
         monat.objects.create(id=12, monat='Dezember', abk ='Dez')
         cls.obj1 = ausgabe(magazin=cls.mag)
@@ -522,12 +522,28 @@ class TestComputedNameModel(DataTestCase):
         cls.obj2.save()
         
         cls.test_data = [cls.obj1, cls.obj2]
-        print("CREATING INSTANCES DONE\n")
+        #print("CREATING INSTANCES DONE\n")
         
     def setUp(self):
-        print("\nTEST SETUP\n")
+        #print("\nTEST SETUP\n")
         super().setUp()
-        print("TEST SETUP DONE\n")
+        #print("TEST SETUP DONE\n")
+        
+    def test_get_basefields(self):
+        # _name and _changed_flag should appear in get_basefields
+        self.assertFalse('_name' in self.model.get_basefields(True))
+        self.assertFalse('_changed_flag' in self.model.get_basefields(True))
+        
+    def test_get_search_fields(self):
+        # _name should be used in searches, that's the whole point of this endeavour
+        self.assertTrue('_name' in self.model.get_search_fields())
+        self.assertFalse('_changed_flag' in self.model.get_search_fields())
+            
+    def test_get_updateable_fields(self):
+        # _name and _changed_flag should not appear in get_updateable_fields even if empty/default value
+        obj = ausgabe(magazin=self.mag)
+        self.assertFalse('_name' in obj.get_updateable_fields())
+        self.assertFalse('_changed_flag' in obj.get_updateable_fields())
         
     def test_name_default(self):
         self.assertEqual(str(self.obj1), self.default)

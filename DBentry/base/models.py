@@ -5,8 +5,8 @@ from django.utils.functional import cached_property
 from DBentry.managers import AusgabeQuerySet, MIZQuerySet        
 
 class BaseModel(models.Model):  
-    
-    exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches
+    #TODO: Meta.attribute/property/get_exclude_fields? Right now, every class that defines exclude overwrites this base list -- which may not be such a bad thing
+    exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches 
     search_fields = []          # related fields to be included in searches
     
     objects = MIZQuerySet.as_manager()
@@ -33,7 +33,7 @@ class BaseModel(models.Model):
         from inspect import isclass
         if isclass(self):
             # The user may inadvertently call qs() when working on the class level. This should be avoided, as the user may EXPECT a filtered queryset.
-            raise AttributeError("Calling qs() from class level is prohibited. Use model.objects instead.")
+            raise AttributeError("Calling qs() from class level is prohibited. Use {}.objects instead.".format(self.__name__))
         else:
             return self._meta.model.objects.filter(pk=self.pk)
     
@@ -96,12 +96,12 @@ class BaseModel(models.Model):
         
     def get_updateable_fields(obj):
         """
-        Returns the obj's fields that are empty or have their default value.
+        Returns the obj's fields (as their names) that are empty or have their default value.
         Used by merge_records.
         """
         rslt = []
         for fld in obj._meta.get_fields():
-            if fld.concrete:
+            if fld.concrete and not fld.name.startswith('_'): # exclude 'private' fields
                 value = fld.value_from_object(obj)
                 if value in fld.empty_values:
                     # This field's value is 'empty' in some form or other
@@ -136,7 +136,7 @@ class BaseM2MModel(BaseModel):
             data.append(str(getattr(self, ff)))
         return "{} ({})".format(*data)
             
-    class Meta:
+    class Meta(BaseModel.Meta):
         abstract = True
         
 class BaseAliasModel(BaseModel):
@@ -146,7 +146,7 @@ class BaseAliasModel(BaseModel):
     alias = models.CharField('Alias', max_length = 100)
     parent = None   # the field that will hold the ForeignKey
     
-    class Meta:
+    class Meta(BaseModel.Meta):
         verbose_name = 'Alias'
         verbose_name = 'Alias'
         abstract = True
@@ -155,6 +155,8 @@ class ComputedNameModel(BaseModel):
 
     _name = models.CharField(max_length=200, editable=False, default=gettext_lazy("No data."))
     _changed_flag = models.BooleanField(editable=False, default=False)
+    
+    exclude = ['_name', '_changed_flag', 'info', 'beschreibung', 'bemerkungen']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -166,6 +168,13 @@ class ComputedNameModel(BaseModel):
         # parameters that make up the name may have changed, update name accordingly
         if update:
             self.update_name(force_update = True)
+    
+    @classmethod
+    def get_search_fields(cls, foreign=False, m2m=False):
+        # Include _name in the search_fields
+        search_fields = super().get_search_fields(foreign, m2m)
+        search_fields.add('_name')
+        return search_fields
         
     def update_name(self, force_update = False):
         """
@@ -221,5 +230,5 @@ class ComputedNameModel(BaseModel):
     def __str__(self):
         return self._name
                     
-    class Meta:
+    class Meta(BaseModel.Meta):
         abstract = True
