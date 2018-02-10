@@ -163,7 +163,7 @@ class ComputedNameModel(BaseModel):
         # An up-to-date name _may_ be expected upon initialization.
         self.update_name()
              
-    def save(self, update = False, *args, **kwargs):
+    def save(self, update = True, *args, **kwargs):
         super().save(*args, **kwargs)
         # parameters that make up the name may have changed, update name accordingly
         if update:

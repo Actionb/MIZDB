@@ -206,7 +206,7 @@ class ausgabe(ComputedNameModel):
         
     def save(self, *args, **kwargs):
         pre_save_datum = self.e_datum
-        super(ausgabe, self).save(*args, **kwargs) #TODO: super().save(update=False, *args, **kwargs) to delay the update 
+        super(ausgabe, self).save(update = False, *args, **kwargs)
         
         # Use e_datum data to populate month and year sets
         # Note that this can be done AFTER save() as these values are set through RelatedManagers
