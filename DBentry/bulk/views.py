@@ -138,6 +138,10 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                                 continue
                             else:
                                 self.log_addition(instance, o)
+            
+            # all the necessary data to construct a proper name should be included now, update the name
+            instance.update_name(force_update=True)
+                
             # Audio
             if 'audio' in row:
                 suffix = instance.__str__()
@@ -154,7 +158,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                     self.log_addition(audio_instance)
                     
                 if not m2m_audio_ausgabe.objects.filter(ausgabe=instance, audio=audio_instance).exists():
-                    # UNIQUE constraints violations avoided
+                    # avoid UNIQUE constraints violations
                     m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
                     m2m_instance.save()
                     self.log_addition(instance, m2m_instance)
