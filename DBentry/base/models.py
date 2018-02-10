@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
+from django.utils.functional import cached_property
 
 from DBentry.managers import AusgabeQuerySet, MIZQuerySet        
 
@@ -10,19 +11,19 @@ class BaseModel(models.Model):
     
     objects = MIZQuerySet.as_manager()
     
+    @cached_property
     def _show(self):
         rslt = ""
-        for fld in self.get_basefields():
-            #TODO: this is a bit outdated perhaps.
-            if getattr(self, fld.name):
-                rslt +=  "{} ".format(str(getattr(self, fld.name)))
+        for fld_name in self.get_basefields(as_string = True):
+            if getattr(self, fld_name, False):
+                rslt +=  "{} ".format(str(getattr(self, fld_name)))
         if rslt:
             return rslt.strip()
         else:
             return "---"
             
     def __str__(self):
-        return self._show()
+        return self._show
         
     def qs(self):
         """
@@ -124,13 +125,28 @@ class BaseModel(models.Model):
         abstract = True
         default_permissions = ('add', 'change', 'delete', 'merge')
         
-class alias_base(BaseModel):
+class BaseM2MModel(BaseModel):
+    """
+    Base class for models that implement an intermediary through table.
+    """
+    
+    def _show(self):
+        data = []
+        for ff in self.get_foreignfields(True):
+            data.append(str(getattr(self, ff)))
+        return "{} ({})".format(*data)
+            
+    class Meta:
+        abstract = True
+        
+class BaseAliasModel(BaseModel):
     """
     Base class for any model that implements a ManyToOne 'alias' relation using the `parent` field. 
     """
     alias = models.CharField('Alias', max_length = 100)
-    parent = None
-    class Meta(BaseModel.Meta):
+    parent = None   # the field that will hold the ForeignKey
+    
+    class Meta:
         verbose_name = 'Alias'
         verbose_name = 'Alias'
         abstract = True
@@ -142,7 +158,7 @@ class ComputedNameModel(BaseModel):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # An up-to-date name is expected upon initialization.
+        # An up-to-date name _may_ be expected upon initialization.
         self.update_name()
              
     def save(self, update = False, *args, **kwargs):
@@ -179,8 +195,10 @@ class ComputedNameModel(BaseModel):
             
         if force_update or changed_flag:
             # an update was scheduled or forced for this instance
-            #TODO: fetch the data necessary to construct a name from database if deferred and pass it to get_name
-            current_name = self.get_name()
+            
+            # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
+            name_data = dict(*self.qs.values(*deferred)) if deferred else {}
+            current_name = self.get_name(**name_data)
             
             fields_to_refresh = []
             
@@ -197,7 +215,7 @@ class ComputedNameModel(BaseModel):
                 
         return name_updated
         
-    def get_name(self):
+    def get_name(self, **kwargs):
         raise NotImplementedError('Subclasses must implement this method.')
     
     def __str__(self):
