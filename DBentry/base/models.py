@@ -206,7 +206,7 @@ class ComputedNameModel(BaseModel):
             # an update was scheduled or forced for this instance
             
             # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
-            name_data = dict(*self.qs.values(*deferred)) if deferred else {}
+            name_data = dict(*self.qs().values(*deferred)) if deferred else {}
             current_name = self.get_name(**name_data)
             
             fields_to_refresh = []
