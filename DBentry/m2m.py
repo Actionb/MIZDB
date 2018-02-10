@@ -2,56 +2,6 @@
 from django.db import models
 from .base.models import BaseM2MModel
 
-class m2mBase(models.Model):
-                
-    exclude = []
-    def _show(self):
-        try:
-            data = []
-            for ff in self.get_foreignfields(True):
-                data.append(str(getattr(self, ff)))
-            return "{} ({})".format(*data)
-        except:
-            return str(self.pk) if self.pk else "NOT YET SAVED"
-    
-    def __str__(self):
-        return self._show()
-    
-    @classmethod
-    def get_basefields(cls, as_string=False):
-        return [i.name if as_string else i for i in cls._meta.fields if i != cls._meta.pk and not i.is_relation and not i in cls.exclude]
-        
-    @classmethod
-    def get_foreignfields(cls, as_string=False):
-        return [i.name if as_string else i for i in cls._meta.fields if isinstance(i, models.ForeignKey) and not i in cls.exclude]
-        
-    @classmethod
-    def get_primary_fields(cls, as_string=False):
-        return cls.get_basefields(as_string=True) # NOTE: as_string = True? What about the parameter value?
-    @classmethod
-    def get_search_fields(cls, as_string=False):
-        return cls.get_basefields(as_string=as_string)
-        
-    @classmethod
-    def get_m2mfields(cls, as_string=True):
-        return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i in cls.exclude] 
-        
-    @classmethod
-    def get_required_fields(cls, as_string=False):
-        rslt = []
-        for fld in cls._meta.fields:
-            if not fld.auto_created and fld.blank == False:
-                if not fld.has_default() or fld.get_default() is None:
-                    if as_string:
-                        rslt.append(fld.name)
-                    else:
-                        rslt.append(fld)
-        return rslt
-        
-    class Meta:
-        abstract = True
-        
-
 # ================================= #
 ##              AUDIO
 # ================================= #
