@@ -87,7 +87,7 @@ class MyTestCase(TestCase):
         """
         expected = [value for v in values_list]
         self.assertEqual(values_list, expected, msg)  # delivers more useful information on failure than self.assertTrue(all(v==value for v in values_list))
-            
+      
 class DataTestCase(TestDataMixin, MyTestCase):
     
     # django's assertQuerysetEqual will transform the queryset's values according to function given by parameter `transform` (assertQuerysetEqual requires hashable objects).
