@@ -7,7 +7,7 @@ from .base.models import BaseModel, ComputedNameModel, BaseAliasModel
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
-from .managers import AusgabeQuerySet
+from .managers import AusgabeQuerySet, CNQuerySet
 
 class person(BaseModel):
     vorname = models.CharField(**CF_ARGS_B)
@@ -229,6 +229,7 @@ class ausgabe(ComputedNameModel):
         self.update_name(force_update = True)
         
     def get_name(self, **name_data):
+        #TODO: use the name_data, Luke
         if not self.pk:
             return "Keine Angaben zu dieser Ausgabe!"
         #print('ausgabe: getting name')

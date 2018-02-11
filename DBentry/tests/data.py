@@ -6,55 +6,6 @@ from django.db.models.deletion import ProtectedError
 
 from DBentry.models import *
 
-def ausgabe_data():
-    model = ausgabe
-    instance_list = []
-    tmag = magazin.objects.create(magazin_name='Testmagazin')
-    lo1 = lagerort.objects.create(ort='TestLagerOrt')
-    lo2 = lagerort.objects.create(ort='TestLagerOrt2')
-    prov = provenienz.objects.create(geber=geber.objects.create(name='TestCase'))
-    
-    obj1 = ausgabe(magazin=tmag)
-    obj1.save()
-    obj1.ausgabe_jahr_set.create(jahr=2000)
-    obj1.ausgabe_num_set.create(num=1)
-    obj1.bestand_set.create(lagerort=lo1, provenienz = prov)
-    instance_list.append(obj1)
-    
-    obj2 = ausgabe(magazin=tmag, info='Testmerge')
-    obj2.save()
-    obj2.ausgabe_jahr_set.create(jahr=2000)
-    obj2.ausgabe_num_set.create(num=2)
-    obj2.bestand_set.create(lagerort=lo1)
-    obj2.bestand_set.create(lagerort=lo2, provenienz = prov)
-    instance_list.append(obj2)
-    
-    obj3 = ausgabe(magazin=tmag)
-    obj3.save()
-    obj3.ausgabe_jahr_set.create(jahr=2000)
-    obj3.ausgabe_num_set.create(num=3)
-    obj3.bestand_set.create(lagerort=lo2)
-    instance_list.append(obj3)
-    
-    return model, instance_list
-    
-def ort_data():
-    model = ort
-    instance_list = []
-    test_magazin = magazin.objects.create(magazin_name='Testmagazin')
-    test_ausgabe = ausgabe.objects.create(magazin=test_magazin)
-    test_artikel = artikel.objects.create(schlagzeile='MERGE ME',seite=1,ausgabe=test_ausgabe)
-    test_land = land.objects.create(land_name='Testland')
-    
-    obj1 = ort.objects.create(land=test_land, stadt='Stockholm')
-    instance_list.append(obj1)
-    
-    obj2 = ort.objects.create(land=test_land, stadt='Stockholm')
-    artikel.ort.through.objects.create(ort=obj2, artikel=test_artikel)
-    instance_list.append(obj2)
-    
-    return model, instance_list
-        
 class DataFactory(object):
 # Available internal types : db types
 #{
@@ -206,4 +157,67 @@ class DataFactory(object):
                 break
             obj = self._created.pop()
             self.delete_object(obj)
-            
+
+def ausgabe_data_simple(cls):
+    cls.model = ausgabe
+    cls.mag = magazin.objects.create(magazin_name='Testmagazin')
+    cls.obj1 = cls.model.objects.create(magazin=cls.mag)
+    cls.monat = monat.objects.create(pk=12, monat='Dezember', abk='Dez')
+    
+    cls.obj2 = cls.model.objects.create(magazin=cls.mag)
+    cls.obj2.ausgabe_jahr_set.create(jahr=2000)
+    cls.obj2.ausgabe_num_set.create(num=12)
+    cls.obj2.ausgabe_lnum_set.create(lnum=12)
+    cls.obj2.ausgabe_monat_set.create(monat_id=12)
+    
+    cls.test_data = [cls.obj1, cls.obj2]
+
+def ausgabe_data():
+    model = ausgabe
+    instance_list = []
+    tmag = magazin.objects.create(magazin_name='Testmagazin')
+    lo1 = lagerort.objects.create(ort='TestLagerOrt')
+    lo2 = lagerort.objects.create(ort='TestLagerOrt2')
+    prov = provenienz.objects.create(geber=geber.objects.create(name='TestCase'))
+    
+    obj1 = ausgabe(magazin=tmag)
+    obj1.save()
+    obj1.ausgabe_jahr_set.create(jahr=2000)
+    obj1.ausgabe_num_set.create(num=1)
+    obj1.bestand_set.create(lagerort=lo1, provenienz = prov)
+    instance_list.append(obj1)
+    
+    obj2 = ausgabe(magazin=tmag, info='Testmerge')
+    obj2.save()
+    obj2.ausgabe_jahr_set.create(jahr=2000)
+    obj2.ausgabe_num_set.create(num=2)
+    obj2.bestand_set.create(lagerort=lo1)
+    obj2.bestand_set.create(lagerort=lo2, provenienz = prov)
+    instance_list.append(obj2)
+    
+    obj3 = ausgabe(magazin=tmag)
+    obj3.save()
+    obj3.ausgabe_jahr_set.create(jahr=2000)
+    obj3.ausgabe_num_set.create(num=3)
+    obj3.bestand_set.create(lagerort=lo2)
+    instance_list.append(obj3)
+    
+    return model, instance_list
+    
+def ort_data():
+    model = ort
+    instance_list = []
+    test_magazin = magazin.objects.create(magazin_name='Testmagazin')
+    test_ausgabe = ausgabe.objects.create(magazin=test_magazin)
+    test_artikel = artikel.objects.create(schlagzeile='MERGE ME',seite=1,ausgabe=test_ausgabe)
+    test_land = land.objects.create(land_name='Testland')
+    
+    obj1 = ort.objects.create(land=test_land, stadt='Stockholm')
+    instance_list.append(obj1)
+    
+    obj2 = ort.objects.create(land=test_land, stadt='Stockholm')
+    artikel.ort.through.objects.create(ort=obj2, artikel=test_artikel)
+    instance_list.append(obj2)
+    
+    return model, instance_list
+        

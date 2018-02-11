@@ -2,8 +2,7 @@
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.utils.encoding import force_text
 
-from .data import DataFactory
-        
+from .data import DataFactory, ausgabe_data_simple
 
 class TestDataMixin(object):
     
@@ -98,6 +97,14 @@ class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
             return self.view_class.form_class
         else:
             return super(CreateFormViewMixin, self).get_form_class()
+            
+class AusgabeSimpleDataMixin(TestDataMixin):
+    
+    @classmethod
+    def setUpTestData(cls):
+        ausgabe_data_simple(cls)        
+        super().setUpTestData()
+        
 
 class LoggingTestMixin(object):
     """

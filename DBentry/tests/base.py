@@ -77,9 +77,70 @@ class MyTestCase(TestCase):
                     msg += t.format(k=k, v1=v1, v2=v2)
         if msg:
             raise AssertionError(msg)
+    
+    def assertListEqualSorted(self, list1, list2, msg=None):
+        self.assertListEqual(sorted(list1), sorted(list2), msg)
+            
+    def assertAllValues(self, values_list, value, msg=None):
+        """
+        Assert that `value` is equal to any item of `values_list`.
+        """
+        expected = [value for v in values_list]
+        self.assertEqual(values_list, expected, msg)  # delivers more useful information on failure than self.assertTrue(all(v==value for v in values_list))
             
 class DataTestCase(TestDataMixin, MyTestCase):
-    pass
+    
+    # django's assertQuerysetEqual will transform the queryset's values according to function given by parameter `transform` (assertQuerysetEqual requires hashable objects).
+    # This would end up converting dicts/tuples from queryset.values()/.values_list() into strings.
+    # Obviously, this is not what we want, if we want to make comparing queryset.values()/.values_list() simple to use.
+    # We could pass transform = lambda d: tuple(*d.items()) to assertQuerysetEqual, but that would require transforming `values` as well.
+    
+    def assertQSEqual(self, queryset, values, transform=str, ordered=False, msg=None):
+        # Reconfiguration of the default parameters to values we use most in tests: reduces clutter
+        # - the __str__ method is heavily used in our app, more than repr
+        # - the tests usually do not care about the order of values
+        if not isinstance(values, (list, tuple)):
+            values = [values]
+        self.assertQuerysetEqual(queryset, values, transform, ordered, msg)
+        
+    def assertQSValues(self, queryset, fields, values, msg=None):
+        if isinstance(fields, str):
+            fields = [fields]
+        if not isinstance(values, (list, tuple)):
+            # A list of tuples of (field, value) is expected.
+            values = list(zip(fields, [values]*len(fields)))
+            
+        # Still call queryset.values(), but convert the results from a list of dicts to a list of tuples for easier comparison.
+        qs_list = [tuple(*i.items()) for i in queryset.values(*fields)]
+        self.assertListEqualSorted(qs_list, values, msg)
+        
+    def assertAllQSValues(self, queryset, fields, value, msg=None):
+        from collections import Iterable
+        if isinstance(fields, str):
+            fields = [fields]
+        if isinstance(value, str) or not isinstance(value, Iterable):
+            if len(fields)==1:
+                value = (fields, value)
+            else:
+                raise TypeError("argument value must be an iterable")
+                
+        expected = [value] * queryset.count() if queryset.count() else [value]  # an empty queryset should assert as not equal to [value] and not as equal to [] 
+        self.assertQSValues(queryset, fields, expected, msg)
+        
+    def assertQSValuesList(self, queryset, fields, values, msg=None):
+        if isinstance(fields, str):
+            fields = [fields]
+        if not isinstance(values, (list, tuple)):
+            values = [values]
+        values_list = list(queryset.values_list(*fields, flat=len(fields)==1))
+        self.assertListEqualSorted(values_list, values, msg)
+        
+    def assertAllQSValuesList(self, queryset, fields, value, transform=str, ordered=False, msg=None):
+        if isinstance(fields, str):
+            fields = [fields]
+        expected = [value] * queryset.count() if queryset.count() else [value]  # an empty queryset should assert as not equal to [value] and not as equal to [] 
+        self.assertQSValuesList(queryset, fields, expected, msg)
+        
          
 class UserTestCase(MyTestCase):
     
@@ -251,6 +312,9 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
                         raise AssertionError(
                             'Expected change did not occur: value of field {} did not change. Expected possible values: {}'.format(
                                 fld_name, str(expected_values)))
+            elif fld_name.startswith('_'):
+                # A private field (possibly from ComputedNameModel). We cannot ascertain (or rather: should not need to worry about) whether this field's value should have changed or not.
+                continue
             else:
                 # No change expected since this field is not in updateable_fields
                 old_value = getattr(self.original, fld_name)

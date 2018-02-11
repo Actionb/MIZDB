@@ -54,8 +54,40 @@ class MIZQuerySet(models.QuerySet):
                     dict_by_val[v] = set()
                     dict_by_val[v].add(k)
         return dict_by_key, dict_by_val
+        
+class CNQuerySet(MIZQuerySet):
+    
+    def bulk_create(self, objs, batch_size=None):
+        # Set the _changed_flag on the objects to be created
+        for obj in objs:
+            obj._changed_flag = True
+        return super().bulk_create(objs, batch_size)
+    
+    def update(self, **kwargs):
+        # it is save to assume that a name update will be required after this update
+        # if _changed_flag is not already part of the update, add it with the value True
+        if '_changed_flag' not in kwargs:
+           kwargs['_changed_flag'] = True 
+        return super().update(**kwargs)
+    update.alters_data = True
+    
+    def _try_update_name(self, fields):
+        # Make sure we always return an up-to-date name. This assumes that the _changed_flag was set correctly on any objects that need updating!
+        #TODO: in order to satisfy the appeal of values/values_list by NOT instantiating a (full) model object, this name update needs to be done with queryset data/methods only.
+        if '_name' in fields:
+            update_required = self.filter(_changed_flag=True)
+            for obj in update_required:
+                obj.update_name()
+    
+    def values(self, *fields, **expressions):
+        self._try_update_name(fields)
+        return super().values(*fields, **expressions)
+        
+    def values_list(self, *fields, **kwargs):
+        self._try_update_name(fields)
+        return super().values_list(*fields, **kwargs)
 
-class AusgabeQuerySet(MIZQuerySet):
+class AusgabeQuerySet(CNQuerySet):
     def bulk_add_jg(self, jg = 1):
         qs = self
         years = qs.values_list('ausgabe_jahr__jahr', flat = True).order_by('ausgabe_jahr__jahr').distinct()
@@ -73,6 +105,7 @@ class AusgabeQuerySet(MIZQuerySet):
             last_year = year
             
     def filter(self, *args, **kwargs):
+        #TODO: the possible formats belong in the settings file, not in here!
         # Overridden, to better deal with poorly formatted e_datum values
         if 'e_datum' in kwargs:
             from django.core.exceptions import ValidationError
@@ -139,3 +172,5 @@ class AusgabeQuerySet(MIZQuerySet):
                 columns.remove((fld, alias))
         print_tabular(obj_values, columns)
         
+    
+    
