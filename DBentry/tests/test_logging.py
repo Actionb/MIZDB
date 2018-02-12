@@ -24,6 +24,37 @@ class TestLoggingMixin(ViewTestCase):
         
         super().setUpTestData()
         
+    def test_log_add_add(self):
+        rel = ort.band_set.rel
+        
+        view = self.view(self.get_request())
+        logs = view.log_add(self.ort, rel, self.obj2)
+        self.assertEqual(logs[0].get_change_message(), 'Band „Testband“ hinzugefügt.')
+        self.assertEqual(logs[0].action_flag, ADDITION)
+        self.assertEqual(logs[1].get_change_message(), 'Herkunft geändert.')
+        self.assertEqual(logs[1].action_flag, CHANGE)
+        
+    def test_log_add_change(self):
+        rel = ort.band_set.rel
+        
+        view = self.view(self.get_request())
+        logs = view.log_add(self.ort, rel, self.obj2)
+        self.assertEqual(logs[1].get_change_message(), 'Herkunft geändert.')
+        self.assertEqual(logs[1].action_flag, CHANGE)
+        
+    def test_log_addition(self):
+        view = self.view(self.get_request())
+        l = view.log_addition(self.obj1)
+        self.assertEqual(l.get_change_message(), ugettext('Added.'))
+        self.assertEqual(l.action_flag, ADDITION)
+        
+    def test_log_addition_m2m(self):
+        view = self.view(self.get_request())
+        l = view.log_addition(self.obj1, self.m2m)
+        expected = ugettext('Added {name} "{object}".').format(name=self.m2m._meta.verbose_name, object = force_text(self.m2m))
+        self.assertEqual(l.get_change_message(), expected)
+        self.assertEqual(l.action_flag, ADDITION)
+        
     def test_log_change(self):
         view = self.view(self.get_request())
         l = view.log_change(self.obj1, ['band_name'])
@@ -47,19 +78,21 @@ class TestLoggingMixin(ViewTestCase):
                 fields='Genre', name=self.m2m._meta.verbose_name, object = force_text(self.m2m))
         self.assertEqual(l.get_change_message(), expected)
         self.assertEqual(l.action_flag, CHANGE)
+    
+    def test_log_delete(self):
+        qs = self.model.objects.all()
         
-    def test_log_addition(self):
         view = self.view(self.get_request())
-        l = view.log_addition(self.obj1)
-        self.assertEqual(l.get_change_message(), ugettext('Added.'))
-        self.assertEqual(l.action_flag, ADDITION)
+        logs = view.log_delete(qs)
+        for l in logs:
+            self.assertEqual(l.get_change_message(), '')
+            self.assertEqual(l.action_flag, DELETION)
         
-    def test_log_addition_m2m(self):
+    def test_log_deletion(self):
         view = self.view(self.get_request())
-        l = view.log_addition(self.obj1, self.m2m)
-        expected = ugettext('Added {name} "{object}".').format(name=self.m2m._meta.verbose_name, object = force_text(self.m2m))
-        self.assertEqual(l.get_change_message(), expected)
-        self.assertEqual(l.action_flag, ADDITION)
+        l = view.log_deletion(self.obj1)
+        self.assertEqual(l.get_change_message(), '')
+        self.assertEqual(l.action_flag, DELETION)
         
     def test_log_update(self):
         view = self.view(self.get_request())
@@ -72,37 +105,6 @@ class TestLoggingMixin(ViewTestCase):
             self.assertEqual(l.get_change_message(), expected)
             self.assertEqual(l.action_flag, CHANGE)
             
-    def test_log_add_field(self):
-        field = self.model._meta.get_field('herkunft')
-        
-        view = self.view(self.get_request())
-        l = view.log_add(self.obj1, field)
-        self.assertEqual(l.get_change_message(), 'Herkunft geändert.')
-        self.assertEqual(l.action_flag, CHANGE)
-        
-    def test_log_add_rel(self):
-        rel = ort.band_set.rel
-        
-        view = self.view(self.get_request())
-        l = view.log_add(self.obj1, rel)
-        self.assertEqual(l.get_change_message(), 'Herkunft geändert.')
-        self.assertEqual(l.action_flag, CHANGE)
-        
-    def test_log_deletion(self):
-        view = self.view(self.get_request())
-        l = view.log_deletion(self.obj1)
-        self.assertEqual(l.get_change_message(), '')
-        self.assertEqual(l.action_flag, DELETION)
-    
-    def test_log_delete(self):
-        qs = self.model.objects.all()
-        
-        view = self.view(self.get_request())
-        logs = view.log_delete(qs)
-        for l in logs:
-            self.assertEqual(l.get_change_message(), '')
-            self.assertEqual(l.action_flag, DELETION)
-            
     def test_get_logger(self):
         request = self.get_request()
         logger = get_logger(request)
@@ -111,3 +113,28 @@ class TestLoggingMixin(ViewTestCase):
         self.assertEqual(l.get_change_message(), 'Band_name geändert.')
         self.assertEqual(l.action_flag, CHANGE)
         
+    def test_get_logger_addition_fails_silently(self):
+        logger = get_logger(None)
+        with self.assertNotRaises(AttributeError):
+            l = logger.log_addition(self.obj1)
+        self.assertIsNone(l)
+        
+    def test_get_logger_change_fails_silently(self):
+        logger = get_logger(None)
+        with self.assertNotRaises(AttributeError):
+            l = logger.log_change(self.obj1, ['band_name'])
+        self.assertIsNone(l)
+        
+    def test_get_logger_deletion_fails_silently(self):
+        logger = get_logger(None)
+        with self.assertNotRaises(AttributeError):
+            l = logger.log_deletion(self.obj1)
+        self.assertIsNone(l)
+        
+    def test_get_logger_fails_loudly(self):
+        # Should raise errors if they're not AttributeError, f.ex. a TypeError for missing arguments
+        logger = get_logger(None)
+        with self.assertRaises(TypeError):
+            l = logger.log_deletion()
+        
+

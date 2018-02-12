@@ -7,9 +7,9 @@ from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin
 from DBentry.actions.base import *
 from DBentry.actions.views import *
 from DBentry.forms import MIZAdminForm, forms
-from DBentry.utils import get_obj_link #obj, opts, user, admin_site
+from DBentry.utils import get_obj_link # parameters: obj, opts, user, admin_site
 
-class TestActionConfirmationView(ActionViewTestCase):
+class TestActionConfirmationView(ActionViewTestCase, LoggingTestMixin):
     
     view_class = ActionConfirmationView
     model = band
@@ -78,8 +78,8 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.view(request=request, queryset=queryset)
         context = view.get_context_data()
         self.assertEqual(context['objects_name'], self.model_admin.opts.verbose_name_plural)
-        
-class TestBulkEditJahrgang(ActionViewTestCase):
+       
+class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     
     view_class = BulkEditJahrgang
     model = ausgabe
@@ -180,26 +180,34 @@ class TestBulkEditJahrgang(ActionViewTestCase):
         response = view.dispatch(request)
         self.assertIsNone(response)
         
+    @tag('logging')
     def test_perform_action(self):      
         view = self.view()
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416, 31417])
+        for obj in self.queryset.all():
+            self.assertLoggedChange(obj, 'jahrgang')
         
+    @tag('logging')
     def test_perform_action_no_years(self):    
         # obj4 has no years assigned, perform_action should assign it the value given by the 'form'
         view = self.view(queryset=self.qs_obj4)
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
+        self.assertLoggedChange(self.obj4, 'jahrgang')
         
+    @tag('logging')
     def test_perform_action_jahrgang_zero(self):      
         view = self.view()
         view.perform_action({'jahrgang':0})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [None, None])
-        
-class TestBulkAddBestand(ActionViewTestCase):
+        for obj in self.queryset.all():
+            self.assertLoggedChange(obj, 'jahrgang')
+   
+class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     view_class = BulkAddBestand
     model = ausgabe
@@ -267,38 +275,82 @@ class TestBulkAddBestand(ActionViewTestCase):
         ]
         expected = [[obj_link, related_links]]
         self.assertEqual(view.compile_affected_objects(), expected)
-        
+       
+    @tag('logging')      
     def test_perform_action_obj1(self):
+        # obj1 has no bestand at all; this should add a 'bestand' bestand (hurrr) 
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj1)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         new_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk]
         self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj1, self.bestand_lagerort)
         
+    @tag('logging') 
     def test_perform_action_obj2(self):
+        # obj2 has one 'bestand' bestand; this should add a dublette
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj2)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         new_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
         self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj2, self.dubletten_lagerort)
         
+    @tag('logging') 
     def test_perform_action_obj3(self):
+        # obj3 has one dubletten bestand; this should add a bestand 
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj3)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         new_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
         expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
         self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj3, self.bestand_lagerort)
         
+    @tag('logging') 
     def test_perform_action_obj4(self):
+        # obj4 has both bestand and dubletten bestand; this should add a dublette
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj4)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
         self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj4, self.bestand_lagerort)
+        self.assertLoggedAddition(self.obj4, self.dubletten_lagerort)
+        
+    @tag('logging') 
+    def test_perform_action(self):
+        request = self.get_request()
+        view = self.view(request=request)
+        view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
+        
+        # obj1
+        new_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.bestand_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj1, self.bestand_lagerort)
+        
+        # obj2
+        new_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj2, self.dubletten_lagerort)
+        
+        # obj3
+        new_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj3, self.bestand_lagerort)
+        
+        # obj4
+        new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
+        expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
+        self.assertEqual(new_bestand, expected)
+        self.assertLoggedAddition(self.obj4, self.bestand_lagerort)
+        self.assertLoggedAddition(self.obj4, self.dubletten_lagerort)
         
     def test_get_initial(self):
         view = self.view()
