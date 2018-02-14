@@ -1,8 +1,8 @@
 # Test the custom assertions
-
+import contextlib
 import unittest
 
-class X(object):
+class TestMyTestCase(unittest.TestCase):
     
     def assertDictKeysEqual(self, d1, d2):
         t = "dict keys missing from {d}: {key_diff}"
@@ -41,11 +41,29 @@ class X(object):
                     msg += t.format(k=k, v1=v1, v2=v2)
         if msg:
             raise AssertionError(msg)
-
-class TestMyTestCase(unittest.TestCase):
+            
+    @contextlib.contextmanager
+    def assertNotRaises(self, exceptions):
+        # assert that the body does NOT raise one of the passed exceptions.
+        raised = None
+        try:
+            yield
+        except Exception as e:
+            raised = e
+            
+        if raised and issubclass(raised.__class__, exceptions):
+            self.fail("{} raised.".format(raised.__class__.__name__))
+    
+    def test_assertNotRaises(self):
+        d = {'a':1}
+        with self.assertNotRaises(TypeError):
+            d['b']
+        with self.assertRaises(AssertionError):
+            with self.assertNotRaises(KeyError):
+                    d['b']
     
     def test_dictkeys(self):
-        func = X().assertDictKeysEqual
+        func = self.assertDictKeysEqual
         d1 = dict(a=1)
         d2 = dict(a=2)
         func(d1, d2)
@@ -72,7 +90,7 @@ class TestMyTestCase(unittest.TestCase):
             func(d1, d2)
         
     def test_dicts(self):
-        func = X().assertDictsEqual
+        func = self.assertDictsEqual
         d1 = dict(a=1)
         d2 = dict(a=1)
         func(d1, d2)
@@ -99,7 +117,6 @@ class TestMyTestCase(unittest.TestCase):
         d2 = dict(a={'b':2})
         with self.assertRaises(AssertionError) as e:
             func(d1, d2)
-    
 
 if __name__ == '__main__':
     unittest.main()

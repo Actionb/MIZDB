@@ -362,6 +362,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         self.assertEqual(initial.get('dublette'), self.dubletten_lagerort)
 
 class TestMergeViewWizardedAusgabe(ActionViewTestCase): 
+    # Note that tests concerning logging for this view are done on test_utils.merge_records directly.
     
     view_class = MergeViewWizarded
     model = ausgabe
