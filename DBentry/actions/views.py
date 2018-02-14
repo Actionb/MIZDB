@@ -28,7 +28,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     view_helptext = """ Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
                         Dabei wird das früheste Jahr in der Auswahl als Startpunkt aufgefasst und der Wert für den Jahrgang für jedes weitere Jahr entsprechend hochgezählt.
                         Für Ausgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), wird nur der eingegebene Wert für den Jahrgang benutzt.
-                        Wird als Jahrgang 0 eingegeben, werden die Angaben für Jahrgänge der ausgewählten Ausgaben gelöscht.
+                        Wird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge der ausgewählten Ausgaben gelöscht.
                         Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
     """
     

@@ -159,7 +159,12 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # only 'updated' should be in the list 
         self.assertEqual(updated, [self.updated])
         # Assert that the update was logged properly
-        self.assertLoggedAddition(self.updated, self.updated.audio.first())
+        a = self.updated.audio.first()
+        m2m_instance = ausgabe.audio.through.objects.get(ausgabe=self.updated, audio=a)
+        self.assertLoggedAddition(a)
+        self.assertLoggedAddition(a, a.bestand_set.first())
+        self.assertLoggedAddition(self.updated, m2m_instance)
+        self.assertLoggedAddition(a, m2m_instance)
         
     @tag('logging')
     def test_save_data_created(self):
@@ -219,7 +224,19 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
             expected_num+=1
         
         # Assert that the creation of the objects was logged properly
-        self.assertLoggedAddition(created)
+        for instance in created:
+            self.assertLoggedAddition(instance)
+            for j in instance.ausgabe_jahr_set.all():
+                self.assertLoggedAddition(instance, j)
+            for n in instance.ausgabe_num_set.all():
+                self.assertLoggedAddition(instance, n)
+            a = instance.audio.first()
+            m2m = ausgabe.audio.through.objects.get(ausgabe=instance, audio=a)
+            self.assertLoggedAddition(instance, m2m)
+            self.assertLoggedAddition(a, m2m)
+            self.assertLoggedAddition(a, a.bestand_set.first())
+            for b in instance.bestand_set.all():
+                self.assertLoggedAddition(instance, b)
         
     def test_next_initial_data(self):
         form = self.get_valid_form()

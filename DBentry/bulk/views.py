@@ -14,9 +14,10 @@ from django.db.utils import IntegrityError
 from DBentry.views import MIZAdminToolView
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio, m2m_audio_ausgabe
+from DBentry.logging import LoggingMixin
 from .forms import BulkFormAusgabe
-#TODO: LogEntry for creation
-class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
+
+class BulkAusgabe(MIZAdminToolView, views.generic.FormView, LoggingMixin):
     
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
@@ -102,13 +103,15 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 if 'provenienz' in row['dupe_of']:
                     # Also add the provenienz of the original to this object's bestand
                     bestand_data['provenienz'] = row.get('provenienz')
-                instance.bestand_set.create(**bestand_data)
+                b = instance.bestand_set.create(**bestand_data)
+                self.log_addition(instance, b)
                 continue
             
             instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
             if not instance.pk:
                 # this is a new instance, mark it as such
                 instance.save()
+                self.log_addition(instance)
                 created.append(instance)
             else:
                 # this instance already existed, mark it as updated
@@ -127,10 +130,12 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                         if value:
                             try:
                                 with transaction.atomic():
-                                    set.create(**{fld_name:value})
+                                    o = set.create(**{fld_name:value})
                             except IntegrityError as e: 
                                 # ignore UNIQUE constraints violations
                                 continue
+                            else:
+                                self.log_addition(instance, o)
             # Audio
             if 'audio' in row:
                 suffix = instance.__str__()
@@ -144,23 +149,28 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView):
                 else:
                     audio_instance = audio(**audio_data)
                     audio_instance.save()
+                    self.log_addition(audio_instance)
                     
                 if not m2m_audio_ausgabe.objects.filter(ausgabe=instance, audio=audio_instance).exists():
                     # UNIQUE constraints violations avoided
                     m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
                     m2m_instance.save()
+                    self.log_addition(instance, m2m_instance)
+                    self.log_addition(audio_instance, m2m_instance)
                     
                 bestand_data = dict(lagerort=form.cleaned_data.get('audio_lagerort'))
                 if 'provenienz' in row:
                     bestand_data['provenienz'] = row.get('provenienz')
                     
-                audio_instance.bestand_set.create(**bestand_data)
+                b = audio_instance.bestand_set.create(**bestand_data)
+                self.log_addition(audio_instance, b)
                 
             # Bestand
             bestand_data = dict(lagerort=row.get('lagerort'))
             if 'provenienz' in row:
                 bestand_data['provenienz'] = row.get('provenienz')
-            instance.bestand_set.create(**bestand_data)
+            b = instance.bestand_set.create(**bestand_data)
+            self.log_addition(instance, b)
             
             row['instance'] = instance
             ids.append(instance.pk)

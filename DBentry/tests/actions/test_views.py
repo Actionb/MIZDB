@@ -181,8 +181,9 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.assertIsNone(response)
         
     @tag('logging')
-    def test_perform_action(self):      
-        view = self.view()
+    def test_perform_action(self): 
+        request = self.get_request()
+        view = self.view(request)
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416, 31417])
@@ -192,15 +193,17 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     @tag('logging')
     def test_perform_action_no_years(self):    
         # obj4 has no years assigned, perform_action should assign it the value given by the 'form'
-        view = self.view(queryset=self.qs_obj4)
+        request = self.get_request()
+        view = self.view(request, queryset=self.qs_obj4)
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
         self.assertLoggedChange(self.obj4, 'jahrgang')
         
     @tag('logging')
-    def test_perform_action_jahrgang_zero(self):      
-        view = self.view()
+    def test_perform_action_jahrgang_zero(self):   
+        request = self.get_request()   
+        view = self.view(request)
         view.perform_action({'jahrgang':0})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [None, None])
@@ -279,78 +282,113 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     @tag('logging')      
     def test_perform_action_obj1(self):
         # obj1 has no bestand at all; this should add a 'bestand' bestand (hurrr) 
+        old_bestand = list(self.obj1.bestand_set.values_list('pk', flat=True))
+        
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj1)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
-        new_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
+        
+        all_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj1, self.bestand_lagerort)
+        self.assertEqual(all_bestand, expected)
+        new_bestand = self.obj1.bestand_set.exclude(pk__in=old_bestand)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj1, new_bestand.first())
         
     @tag('logging') 
     def test_perform_action_obj2(self):
         # obj2 has one 'bestand' bestand; this should add a dublette
+        old_bestand = list(self.obj2.bestand_set.values_list('pk', flat=True))
+        
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj2)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
-        new_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
+        
+        all_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj2, self.dubletten_lagerort)
+        self.assertEqual(all_bestand, expected)
+        
+        new_bestand = self.obj2.bestand_set.exclude(pk__in=old_bestand)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj2, new_bestand.first())
         
     @tag('logging') 
     def test_perform_action_obj3(self):
         # obj3 has one dubletten bestand; this should add a bestand 
+        old_bestand = list(self.obj3.bestand_set.values_list('pk', flat=True))
+        
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj3)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
-        new_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
+        
+        all_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
         expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj3, self.bestand_lagerort)
+        self.assertEqual(all_bestand, expected)
+        
+        new_bestand = self.obj3.bestand_set.exclude(pk__in=old_bestand)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj3, new_bestand.first())
         
     @tag('logging') 
     def test_perform_action_obj4(self):
         # obj4 has both bestand and dubletten bestand; this should add a dublette
+        old_bestand = list(self.obj4.bestand_set.values_list('pk', flat=True))
+        
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj4)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
+        
         new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
         self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj4, self.bestand_lagerort)
-        self.assertLoggedAddition(self.obj4, self.dubletten_lagerort)
+        
+        new_bestand = self.obj4.bestand_set.exclude(pk__in=old_bestand)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj4, new_bestand.first())
         
     @tag('logging') 
     def test_perform_action(self):
+        # Record the bestand of the objects before the action
+        old_bestand1 = list(self.obj1.bestand_set.values_list('pk', flat=True))
+        old_bestand2 = list(self.obj2.bestand_set.values_list('pk', flat=True))
+        old_bestand3 = list(self.obj3.bestand_set.values_list('pk', flat=True))
+        old_bestand4 = list(self.obj4.bestand_set.values_list('pk', flat=True))
+        
         request = self.get_request()
         view = self.view(request=request)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         
         # obj1
-        new_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
+        all_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj1, self.bestand_lagerort)
+        self.assertEqual(all_bestand, expected)
+        new_bestand = self.obj1.bestand_set.exclude(pk__in=old_bestand1)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj1, new_bestand.first())
         
         # obj2
-        new_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
+        all_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj2, self.dubletten_lagerort)
+        self.assertEqual(all_bestand, expected)
+        new_bestand = self.obj2.bestand_set.exclude(pk__in=old_bestand2)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj2, new_bestand.first())
         
         # obj3
-        new_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
+        all_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
         expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj3, self.bestand_lagerort)
+        self.assertEqual(all_bestand, expected)
+        new_bestand = self.obj3.bestand_set.exclude(pk__in=old_bestand3)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj3, new_bestand.first())
         
         # obj4
-        new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
+        all_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
         expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk, self.dubletten_lagerort.pk]
-        self.assertEqual(new_bestand, expected)
-        self.assertLoggedAddition(self.obj4, self.bestand_lagerort)
-        self.assertLoggedAddition(self.obj4, self.dubletten_lagerort)
+        self.assertEqual(all_bestand, expected)
+        new_bestand = self.obj4.bestand_set.exclude(pk__in=old_bestand4)
+        self.assertEqual(new_bestand.count(), 1)
+        self.assertLoggedAddition(self.obj4, new_bestand.first())
         
     def test_get_initial(self):
         view = self.view()
