@@ -247,6 +247,7 @@ class TestAdminSchlagwort(AdminTestCase):
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
         self.assertTrue(self.obj1 in result)
         
+    @skip("This feature might not make it in.")
     def test_search_for_sub_alias_finds_top(self):
         # check if a search for a subobject's alias also finds its topobject
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='ASubobjectLias')

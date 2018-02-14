@@ -1,5 +1,6 @@
 
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.utils.encoding import force_text
 
 from .data import DataFactory
         
@@ -86,7 +87,7 @@ class LoggingTestMixin(object):
         from django.contrib.admin.options import get_content_type_for_model
         
         if not LogEntry.objects.exists():
-            return AssertionError("LogEntry table is empty!")
+            raise AssertionError("LogEntry table is empty!")
         
         unlogged = []
         if not isinstance(objects, (list, tuple, set)):
@@ -160,7 +161,7 @@ class LoggingTestMixin(object):
         Assert that `object` has a LogEntry with action_flag == ADDITION.
         """
         # Do not overwrite any change_message filter_params (f.ex. change_message__contains) already set through kwargs
-        if any(not k.startswith('change_message') for k in kwargs):
+        if not any(k.startswith('change_message') for k in kwargs):
             msg = {"added": {}}
             if related_obj:
                 msg['added'].update({
@@ -175,7 +176,7 @@ class LoggingTestMixin(object):
         Assert that `object` has a LogEntry with action_flag == CHANGE.
         """
         # Do not overwrite any change_message filter_params (f.ex. change_message__contains) already set through kwargs
-        if any(not k.startswith('change_message') for k in kwargs):            
+        if not any(k.startswith('change_message') for k in kwargs):            
             if fields:
                 if isinstance(fields, str):
                     fields = [fields]
