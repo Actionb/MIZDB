@@ -166,8 +166,10 @@ class FormBase(forms.ModelForm):
             self.cleaned_data['DELETE']=True
             self._update_errors(e)
 
-def makeForm(model, fields = []):
+def makeForm(model, fields = [], form_class = None):
     fields_param = fields or '__all__'
+    form_class = form_class or FormBase
+    
     import sys
     modelname = model._meta.model_name
     thismodule = sys.modules[__name__]
@@ -175,12 +177,12 @@ def makeForm(model, fields = []):
     #Check if a proper Form already exists:
     if hasattr(thismodule, formname):
         return getattr(thismodule, formname)
-    
+       
     #Otherwise use modelform_factory to create a generic Form with custom widgets
     widget_list =  WIDGETS
     if model in WIDGETS:
         widget_list = WIDGETS[model]
-    return forms.modelform_factory(model = model, form=FormBase, fields = fields_param, widgets = widget_list) 
+    return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widget_list) 
 
 class AusgabeMagazinFieldForm(FormBase):
     """

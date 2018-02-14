@@ -68,7 +68,7 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
             continue
         field = rel_or_field.get_path_info()[-1].join_field
         formfield_opts = dict(required = False, help_text = '', empty_label = None)
-        formfield_opts['label'] = labels.get(field_path, None) or field.verbose_name.capitalize()
+        formfield_opts['label'] = labels.get(field_path, None) or field.verbose_name.capitalize() #TODO: field may be a ManyToOneRel which does not have the verbose_name attribute
         formfield_opts['queryset'] = field.related_model._default_manager
         
         url = ''

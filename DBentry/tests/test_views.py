@@ -1,5 +1,4 @@
-from django.urls import reverse, resolve
-
+from django import forms
 from .base import *
 
 from DBentry.views import *
@@ -16,6 +15,32 @@ def setup_wizard_view(view, request, *args, **kwargs):
     view.kwargs = kwargs
     view.dispatch(request, **view.kwargs) # WizardView sets a couple of attributes during dispatch (steps,storage,...)
     return view
+    
+class TestOptionalFormView(ViewTestCase):
+    
+    view_class = OptionalFormView
+    form_class = forms.Form
+    
+    def test_get_form(self):
+        # OptionalFormView should return a form of the given form_class
+        view = self.view(request=self.get_request(), form_class=self.form_class)
+        self.assertIsInstance(view.get_form(), forms.Form)
+        
+    def test_get_form_no_formclass(self):
+        # If no form_class is set (i.e. the form is optional), get_form() should return None
+        view = self.view()
+        self.assertIsNone(view.get_form())
+        
+        # Pass a dummy form_class to get_form(), it should still prioritize being optional
+        self.assertIsNone(view.get_form(self.form_class))
+        
+    def test_post_form_is_none(self):
+        # Test that the post method acknowledges the optional form
+        request = self.post_request()
+        view = self.view(request, success_url='Test')
+        response = view.post(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, 'Test')
 
 class TestMIZAdminToolView(ViewTestCase):
     # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin

@@ -121,6 +121,9 @@ class AusgabeQuerySet(MIZQuerySet):
                 if merkmal in ordering:
                     ordering.remove(merkmal)
                 ordering.insert(0, merkmal)
+         #NOTE: using these annotations caused an exception in BulkConfirmationView when updating its queryset
+         # had to reset its order_by
+         # maybe something isn't quite loading from inside a view?
         ordering = ['jahr'] + ordering + ['monat', 'sonderausgabe']
         return self.order_by(*ordering)
         

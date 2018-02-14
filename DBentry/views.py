@@ -25,9 +25,6 @@ class OptionalFormView(views.generic.FormView):
             # Form has become optional
             return None
         return super(OptionalFormView, self).get_form(form_class)
-        
-    def form_optional(self):
-        raise NotImplementedError('Subclasses must implement this method.')
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
