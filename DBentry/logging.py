@@ -52,12 +52,23 @@ def log_deletion(request, object, object_repr):
         object_repr=object_repr,
         action_flag=DELETION,
     )
+    
+def fail_silently(func):
+    def wrap(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except AttributeError:
+            return None
+    return wrap
+    
 
 class LoggingMixin(object):
+    #TODO: log_change should also log the old value
     """
     A mixin for views to log changes to model objects.
     """
-        
+    
+    @fail_silently
     def log_addition(self, obj, related_obj=None):
         """
         Logging of the creation of a single model instance or, if related_obj is given, logging of adding a M2M relation. 
@@ -70,6 +81,7 @@ class LoggingMixin(object):
             })
         return log_addition(self.request, obj, [msg])
     
+    @fail_silently
     def log_change(self, obj, fields, related_obj=None):
         """
         Logging of the change(s) to a model instance or, if related_obj is given, of change(s) to a M2M relation. 
@@ -86,25 +98,23 @@ class LoggingMixin(object):
             })
         return log_change(self.request, obj, [msg])
         
+    @fail_silently
     def log_deletion(self, obj):
         """
         Logging the deletion of an object.
         """
         return log_deletion(self.request, obj, obj.__repr__())
-        
-    def log_add(self, obj, rel_or_field):
+      
+    def log_add(self, obj, rel, related_obj):
         """
-        Logging of adding via related_managers.add().
-        obj is the instance of the model defining the ForeignKey in the relation.
-        rel_or_field can either be the relation or the ForeignKey field.
+        Logging of adding via related_managers.add(): obj.reverse_related_manager.add(related_obj).
+        We want to log the addition of a related_obj on the target of the relation 
+        and the change of the field of related_obj on the source of the relation.
         """
-        from django.db.models.fields.reverse_related import ForeignObjectRel
-        fields = []
-        if isinstance(rel_or_field, ForeignObjectRel):
-            fields.append(rel_or_field.field.name)
-        else:
-            fields.append(rel_or_field.name)
-        return self.log_change(obj, fields)
+        logs = []
+        logs.append(self.log_addition(obj, related_obj)) #TODO: is this even necessary? ausgabe.bestand_set: the ausgabe history should contain additions
+        logs.append(self.log_change(related_obj, rel.field.name))
+        return logs
         
     def log_delete(self, queryset):
         """
@@ -122,7 +132,10 @@ class LoggingMixin(object):
         """
         logs = []
         for obj in queryset:
-            fields = list(update_data.keys())
+            if isinstance(update_data, dict):
+                fields = list(update_data.keys())
+            else:
+                fields = update_data
             log = self.log_change(obj, fields)
             logs.append(log)
         return logs
@@ -130,6 +143,7 @@ class LoggingMixin(object):
 def get_logger(request):
     """
     Helper function to offer LoggingMixin's functionality to non-views.
+    If request is None, all the log_X methods will fail silently.
     """
     l = LoggingMixin()
     l.request = request

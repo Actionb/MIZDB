@@ -2,7 +2,8 @@ from ..base import *
 
 from DBentry.bulk.views import *
 
-class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin):
+class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
+    #TODO: implement logging tests
     
     model = ausgabe
     path = reverse('bulk_ausgabe')
@@ -137,6 +138,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # the pks of any object that was created/updated are stored in ids_of_altered_objects, comparing them (+ our unalted objects) with the after_save_ids
         self.assertEqual(sorted(ids_of_altered_objects + [self.multi1.pk, self.multi2.pk]), sorted(after_save_ids))
         
+    @tag('logging')
     def test_save_data_updated(self):
         # check that the object called 'updated' has had an audio record added to it
         # NIY: check that the object called 'updated' has had an audio record  and a jahrgang value added to it
@@ -156,7 +158,10 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         
         # only 'updated' should be in the list 
         self.assertEqual(updated, [self.updated])
+        # Assert that the update was logged properly
+        self.assertLoggedAddition(self.updated, self.updated.audio.first())
         
+    @tag('logging')
     def test_save_data_created(self):
         # Check the newly created instances
         
@@ -212,6 +217,9 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
             self.assertEqual(instance.status, 'unb')
             
             expected_num+=1
+        
+        # Assert that the creation of the objects was logged properly
+        self.assertLoggedAddition(created)
         
     def test_next_initial_data(self):
         form = self.get_valid_form()

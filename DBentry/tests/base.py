@@ -1,7 +1,8 @@
 from unittest import expectedFailure, skip
 from itertools import chain
+import contextlib
 
-from django.test import TestCase, SimpleTestCase, Client
+from django.test import TestCase, SimpleTestCase, Client, tag
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.contrib.messages import get_messages
@@ -17,7 +18,19 @@ from DBentry.sites import miz_site
 from .mixins import *
 
 class MyTestCase(TestCase):
-    
+            
+    @contextlib.contextmanager
+    def assertNotRaises(self, exceptions):
+        # assert that the body does NOT raise one of the passed exceptions.
+        raised = None
+        try:
+            yield
+        except Exception as e:
+            raised = e
+            
+        if raised and issubclass(raised.__class__, exceptions):
+            self.fail("{} raised.".format(raised.__class__.__name__))
+        
     def assertDictKeysEqual(self, d1, d2):
         t = "dict keys missing from {d}: {key_diff}"
         msg = ''
@@ -189,7 +202,8 @@ class ModelFormTestCase(TestDataMixin, FormTestCase):
 ##############################################################################################################
 # TEST_UTILS TEST CASES
 ##############################################################################################################
-class MergingTestCase(TestDataMixin, MyTestCase):
+@tag('logging', 'merge')
+class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need a request object to create LogEntries 
     
     test_data_count = 3
     
@@ -204,13 +218,18 @@ class MergingTestCase(TestDataMixin, MyTestCase):
         
     def setUp(self):
         super(MergingTestCase, self).setUp()
+        self.request = self.get_request()
         self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records]
         self.qs = self.model.objects.filter(pk__in=self.ids)
+        
+        # These are the related objects (or rather: their primary keys) that belong to original
+        self.original_related_imprints = {}
         
         # These are the related objects (as val_dicts) that are affected by the merge and should end up being related to original
         self.related_imprints = {}
         for rel in self.model._meta.related_objects:
             related_model = rel.field.model
+            self.original_related_imprints[rel] = getattr(self.original, rel.get_accessor_name()).values_list('pk', flat=True)
             val_list = self.qs.values_list(rel.field.target_field.name) # Also include original's related objects!
             update_qs = related_model.objects.filter(**{ rel.field.name + '__in' : val_list })
             
@@ -223,11 +242,13 @@ class MergingTestCase(TestDataMixin, MyTestCase):
         qs = self.qs.exclude(pk=self.original.pk)
         if qs.exists():
             raise AssertionError('Merged records were not deleted: {}'.format(str(qs)))
+        self.assertLoggedDeletion(self.merge_records)
         
     def assertOriginalExpanded(self, expand_original = True):
         """ Assert whether the original's values were expanded by the merged records correctly. """
         #TODO: what about changes provoked by passing a custom update_data dict to utils.merge_records?
         updateable_fields = self.original.get_updateable_fields()
+        change_message_fields = set()
         for fld_name, value in self.qs.filter(pk=self.original.pk).values()[0].items():
             if expand_original and fld_name in updateable_fields:
                 # Change possible, but ONLY if any other of the merged records have values for these fields
@@ -235,6 +256,7 @@ class MergingTestCase(TestDataMixin, MyTestCase):
                 if any(fld_name not in other_updateable_fields
                         for other_updateable_fields
                         in [merge_record.get_updateable_fields() for merge_record in self.merge_records]):
+                    change_message_fields.add(fld_name)
                     expected_values = [getattr(merge_record, fld_name) for merge_record in self.merge_records]
                     if value not in expected_values:
                         raise AssertionError(
@@ -247,16 +269,20 @@ class MergingTestCase(TestDataMixin, MyTestCase):
                     # A value has changed although it shouldn't have changed
                     raise AssertionError('Unexpected change with expand_original = {}: value of field {} changed from {} to {}.'.format(
                         str(expand_original), fld_name, str(old_value), str(value)))
+        if expand_original:
+            self.assertLoggedChange(self.original, fields=change_message_fields)
         
     def assertRelatedChanges(self):
+        """ Assert that the original is now related to all object that were related to the merge_records. """
+        added_rel_object = set()
         for rel, related_valdicts in self.related_imprints.items():
             related_model = rel.field.model
             pk_name = related_model._meta.pk.name
-            related_valdict_seen = []
+            related_valdict_seen = [] #NOTE: this is not used for anything
             qs = getattr(self.original,rel.get_accessor_name()) 
             unseen_qs = qs.all()
             for related_valdict in related_valdicts:
-                rel_pk = related_valdict.pop(pk_name)
+                rel_pk = related_valdict.get(pk_name)
                 related_valdict_seen.append(related_valdict)
                 unseen_qs = unseen_qs.exclude(**related_valdict)
                 if not qs.filter(pk=rel_pk).exists(): 
@@ -268,7 +294,16 @@ class MergingTestCase(TestDataMixin, MyTestCase):
                     elif c>1:
                         # Multiple equivalent objects were found
                         raise AssertionError('Multiple ({}) occurrences for related object {}:{} found.'.format(str(c), related_model._meta.model_name, str(rel_pk)))
+                    else:
+                        added_rel_object.add((rel, qs.get(**related_valdict)))
+                else:
+                    added_rel_object.add((rel, qs.get(pk=rel_pk)))
                 
             if unseen_qs.exists():
                 # NEW related objects were added
                 raise AssertionError('Unexpected additional {} relation-changes occurred: {}'.format(str(unseen_qs.count()), str(unseen_qs)))
+        for rel, related_obj in added_rel_object:
+            # Exempt related objects that were already related to original from the log assertions
+            if related_obj.pk not in self.original_related_imprints[rel]:
+                self.assertLoggedAddition(self.original, related_obj)
+                self.assertLoggedChange(related_obj, rel.field.name)

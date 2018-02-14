@@ -16,11 +16,13 @@ from django.contrib.admin.utils import quote
 from django.contrib.auth import get_permission_codename
 
 from .constants import M2M_LIST_MAX_LEN
+from .logging import get_logger
 
-def merge_records(original, qs, update_data = None, expand_original = True):
+def merge_records(original, qs, update_data = None, expand_original = True, request = None):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.
     """
+    logger = get_logger(request)
     qs = qs.exclude(pk=original.pk)
     original_qs = original._meta.model.objects.filter(pk=original.pk)
     with transaction.atomic():
@@ -34,6 +36,7 @@ def merge_records(original, qs, update_data = None, expand_original = True):
                             update_data[k] = v
                             
             original_qs.update(**update_data)
+            logger.log_update(original_qs, update_data)
             
         for rel in original._meta.related_objects:
             related_model = rel.field.model
@@ -63,6 +66,8 @@ def merge_records(original, qs, update_data = None, expand_original = True):
                     except IntegrityError:
                         # Ignore UNIQUE CONSTRAINT violations
                         pass
+                    else:
+                        logger.log_update(loop_qs, to_original_field_name)
             else:
                 for i in related_qs:
                     try:
@@ -71,6 +76,10 @@ def merge_records(original, qs, update_data = None, expand_original = True):
                     except IntegrityError:
                         # Ignore UNIQUE CONSTRAINT violations
                         pass
+                    else:
+                        logger.log_add(original, rel, i)
+                        
+        logger.log_delete(qs)
         qs.delete()
     return original_qs.first(), update_data
     

@@ -7,12 +7,13 @@ from django.contrib.admin.utils import get_fields_from_path
 from DBentry.utils import link_list, merge_records
 from DBentry.models import *
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
+from DBentry.logging import LoggingMixin
 
 from .base import ActionConfirmationView, WizardConfirmationView
 from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet
 
     
-class BulkEditJahrgang(ActionConfirmationView):
+class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
     short_description = _("Add issue volume")
     perm_required = ['change']
@@ -59,9 +60,10 @@ class BulkEditJahrgang(ActionConfirmationView):
                     # Do not update the same issue twice (e.g. issues with two years)
                     qs = qs.exclude(ausgabe_jahr__jahr=year)
                     previous_year = year
+        self.log_update(self.queryset, 'jahrgang')
                 
                 
-class BulkAddBestand(ActionConfirmationView):
+class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     short_description = _("Alter stock")
     perm_required = ['alter_bestand']
@@ -103,14 +105,20 @@ class BulkAddBestand(ActionConfirmationView):
                 
         with transaction.atomic():
             if bestand_list:
-                bestand.objects.bulk_create(bestand_list)
+                for obj in bestand_list:
+                    obj.save()
+                    self.log_addition(getattr(obj, fkey.name), obj)
+                #bestand.objects.bulk_create(bestand_list)
                 obj_links = link_list(self.request, [getattr(z, fkey.name) for z in bestand_list])
                 format_dict.update({'lagerort': str(bestand_lagerort), 'count':len(bestand_list), 'obj_links': obj_links})
                 msg_text = base_msg.format(**format_dict)
                 self.model_admin.message_user(self.request, format_html(msg_text))
             
             if dubletten_list:
-                bestand.objects.bulk_create(dubletten_list)
+                for obj in dubletten_list:
+                    obj.save()
+                    self.log_addition(getattr(obj, fkey.name), obj)
+                #bestand.objects.bulk_create(dubletten_list)
                 obj_links = link_list(self.request, [getattr(z, fkey.name) for z in dubletten_list])
                 format_dict.update({'lagerort': str(dupletten_lagerort), 'count':len(dubletten_list), 'obj_links': obj_links})
                 msg_text = base_msg.format(**format_dict)
@@ -276,5 +284,5 @@ class MergeViewWizarded(WizardConfirmationView):
                         update_data[fld_name] = value 
         original_pk = self.get_cleaned_data_for_step('0').get('original', 0) 
         original = self.opts.model.objects.get(pk=original_pk) 
-        merge_records(original, self.queryset, update_data, expand) 
+        merge_records(original, self.queryset, update_data, expand, request=self.request) 
          
