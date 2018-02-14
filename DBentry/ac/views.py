@@ -30,7 +30,6 @@ class ACBase(autocomplete.Select2QuerySetView):
     
     def get_create_option(self, context, q):
         """Form the correct create_option to append to results. IN GERMAN!"""
-        #TODO: correctly use the django translation
         create_option = []
         display_create_option = False
         if self.has_create_field() and q:
@@ -41,7 +40,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         if display_create_option and self.has_add_permission(self.request):
             create_option = [{
                 'id': q,
-                'text': _('Erstelle "%(new_value)s"') % {'new_value': q},
+                'text': _('Create "%(new_value)s"') % {'new_value': q},
                 'create_id': True,
             }]
         return create_option
