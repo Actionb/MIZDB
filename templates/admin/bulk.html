@@ -49,8 +49,8 @@
             </tbody>
         </table>
         </div>
-<input type="submit" value="Sichern (neue hinzufügen)" name="_addanother">
-<input type="submit" value="Sichern (Ausgaben bearbeiten)" name="_continue"> 
+<input type="submit" value="{% trans 'Save and create more' %}" name="_addanother">
+<input type="submit" value="{% blocktrans with name=opts.verbose_name_plural %}Save and edit created {{ name }}{% endblocktrans %}" name="_continue"> 
  {% endif %}
 {% endblock preview %}
 </form>

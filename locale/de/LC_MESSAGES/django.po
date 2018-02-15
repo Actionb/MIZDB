@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-02-14 13:51+0100\n"
+"POT-Creation-Date: 2018-02-15 12:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,50 +25,32 @@ msgstr "Erstelle \"%(new_value)s\""
 
 #: DBentry/actions/base.py:14
 msgid "Warning: This action is NOT reversible!"
-msgstr ""
+msgstr "Warnung: Diese Aktion ist NICHT umkehrbar!"
 
 #: DBentry/actions/views.py:18
 msgid "Add issue volume"
-msgstr ""
+msgstr "Jahrgang hinzufügen"
 
 #: DBentry/actions/views.py:68
 msgid "Alter stock"
-msgstr ""
+msgstr "Bestand hinzufügen"
 
-#: DBentry/actions/views.py:129 DBentry/snippets/actions.py:21
+#: DBentry/actions/views.py:129
 #, python-format
 msgid "Merge selected %(verbose_name_plural)s"
-msgstr ""
+msgstr "%(verbose_name_plural)s zusammenfügen"
 
 #: DBentry/actions/views.py:156
-msgid "Merge objects step: {}"
-msgstr ""
-
-#: DBentry/snippets/actions.py:141
-msgid "Are you sure?"
-msgstr ""
-
-#: DBentry/tests/test_logging.py:48
-msgid "Added."
-msgstr ""
-
-#: DBentry/tests/test_logging.py:54
-#, python-brace-format
-msgid "Added {name} \"{object}\"."
-msgstr ""
-
-#: DBentry/tests/test_logging.py:77
-#, python-brace-format
-msgid "Changed {fields} for {name} \"{object}\"."
-msgstr ""
+msgid "Merge objects: step {}"
+msgstr "Datensätze zusammenfügen: Schritt {}"
 
 #: templates/admin/403.html:4
 msgid "Permission denied"
-msgstr ""
+msgstr "Zugriff verweigert"
 
 #: templates/admin/403.html:8
 msgid "Admin: permission denied."
-msgstr ""
+msgstr "Admin: Zugriff verweigert."
 
 #: templates/admin/action_confirmation.html:16 templates/admin/base.html:64
 #: templates/admin/basic_wizard.html:15 templates/admin/change_form.html:24
@@ -80,6 +62,7 @@ msgstr ""
 #, python-format
 msgid "Are you sure you want to change the selected %(objects_name)s? "
 msgstr ""
+"Sind Sie sicher, dass Sie die ausgewählten %(objects_name)s verändern wollen?"
 
 #: templates/admin/action_confirmation.html:45
 msgid "Objects"
@@ -112,6 +95,10 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
+#: templates/admin/advanced_search_form.html:10
+msgid "Search options"
+msgstr "Suchoptionen"
+
 #: templates/admin/advanced_search_form.html:72
 #: templates/admin/search_form.html:7
 msgid "Search"
@@ -121,13 +108,13 @@ msgstr ""
 #, python-format
 msgid "%(counter)s result "
 msgid_plural "%(counter)s results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(counter)s Ergebnis"
+msgstr[1] "%(counter)s Ergebnisse"
 
 #: templates/admin/advanced_search_form.html:77
 #, python-format
 msgid "%(full_count)s total "
-msgstr ""
+msgstr "%(full_count)s insgesamt"
 
 #: templates/admin/advanced_search_form.html:79
 #: templates/admin/search_form.html:9
@@ -161,6 +148,15 @@ msgstr ""
 #: templates/admin/basic_wizard.html:18
 msgid "Merge objects"
 msgstr ""
+
+#: templates/admin/bulk.html:52
+msgid "Save and create more"
+msgstr "Sichern und mehr erstellen"
+
+#: templates/admin/bulk.html:53
+#, python-format
+msgid "Save and edit created %(name)s"
+msgstr "Sichern und erstellte %(name)s bearbeiten"
 
 #: templates/admin/change_form.html:27 templates/admin/change_list.html:53
 #: templates/admin/change_list.html:110
@@ -197,6 +193,10 @@ msgstr ""
 msgid "Delete?"
 msgstr ""
 
+#: templates/admin/favorites.html:21
+msgid "Save"
+msgstr ""
+
 #: templates/admin/index.html:20
 #, python-format
 msgid "Models in the %(name)s application"
@@ -230,13 +230,13 @@ msgstr ""
 #, python-format
 msgid "%(counter)s result"
 msgid_plural "%(counter)s results"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(counter)s Ergebnis"
+msgstr[1] "%(counter)s Ergebnisse"
 
 #: templates/admin/search_form.html:9
 #, python-format
 msgid "%(full_result_count)s total"
-msgstr ""
+msgstr "%(full_result_count)s insgesamt"
 
 #: templates/formtools/form.html:6
 msgid "Please correct the following errors"
@@ -266,3 +266,6 @@ msgstr ""
 #: templates/formtools/wizard/wizard_form.html:19
 msgid "submit"
 msgstr ""
+
+#~ msgid "Are you sure?"
+#~ msgstr "Sind Sie sicher?"

@@ -258,5 +258,8 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView, LoggingMixin):
         if row_error:
             headers += ['Bemerkung']
         return headers, preview_data
+        
+    def get_context_data(self, *args, **kwargs):
+        return super().get_context_data(opts=ausgabe._meta)
 
 BulkAusgabe.admin_site.register_tool(BulkAusgabe)

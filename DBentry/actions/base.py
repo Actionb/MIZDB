@@ -1,5 +1,5 @@
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext, gettext_lazy
 from django.utils.encoding import force_text
 from django.contrib.admin.utils import get_fields_from_path
 
@@ -11,7 +11,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
     
     title = '' # the title that is shown both in the template and in the browser
     breadcrumbs_title = ''
-    non_reversible_warning = _("Warning: This action is NOT reversible!")
+    non_reversible_warning = gettext_lazy("Warning: This action is NOT reversible!")
     action_reversible = False # if this action performs an operation that is not easily reversed, be as annoying as possible to wake the user up
     
     queryset = None
@@ -56,10 +56,15 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if hasattr(self, 'get_form') and self.get_form():
             media += self.get_form().media
             
+        title = self.title or getattr(self, 'short_description', '')
+        breadcrumbs_title = self.breadcrumbs_title or getattr(self, 'short_description', '')
+        title = title % {'verbose_name_plural':self.opts.verbose_name_plural}
+        breadcrumbs_title = breadcrumbs_title % {'verbose_name_plural':self.opts.verbose_name_plural}
+        
         from django.contrib.admin import helpers
         context.update(
             dict(
-                title                   =   self.title or getattr(self, 'short_description', ''),
+                title                   =   title,
                 objects_name            =   objects_name,
                 queryset                =   self.queryset,
                 opts                    =   self.opts,
@@ -68,7 +73,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
                 action_name             =   self.action_name, # action_name is a context variable that will be used on the template to tell django to direct back here (through response_action (line contrib.admin.options:1255))
                 view_helptext           =   self.view_helptext, 
                 non_reversible_warning  =   self.non_reversible_warning if not self.action_reversible else '', 
-                breadcrumbs_title       =   self.breadcrumbs_title or getattr(self, 'short_description', ''), 
+                breadcrumbs_title       =   breadcrumbs_title, 
             )
         )
         context.update(**kwargs)
