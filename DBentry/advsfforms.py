@@ -66,13 +66,24 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
         if not rel_or_field.is_relation:
             # Let the template/the tag deal with the non-relation (choice) selects
             continue
-        field = rel_or_field.get_path_info()[-1].join_field
+        
+        if rel_or_field.one_to_many:
+            # This is a ManyToOneRel defining a 'reverse' relation:
+            field = rel_or_field.remote_field # the ForeignKey field
+            # The ForeignKey's related_model points back to *this* model, we need the relation's related_model
+            related_model = rel_or_field.related_model 
+            label = related_model._meta.verbose_name.capitalize()
+        else:
+            field = rel_or_field.get_path_info()[-1].join_field
+            related_model = field.related_model
+            label = field.verbose_name.capitalize()
+            
         formfield_opts = dict(required = False, help_text = '', empty_label = None)
-        formfield_opts['label'] = labels.get(field_path, None) or field.verbose_name.capitalize() #TODO: field may be a ManyToOneRel which does not have the verbose_name attribute
-        formfield_opts['queryset'] = field.related_model._default_manager
+        formfield_opts['label'] = labels.get(field_path, None) or label
+        formfield_opts['queryset'] = related_model.objects
         
         url = ''
-        for pattern in patterns_by_model(field.related_model):
+        for pattern in patterns_by_model(related_model):
             if 'create_field' not in pattern.callback.view_initkwargs:
                 url = pattern.name
                 break
