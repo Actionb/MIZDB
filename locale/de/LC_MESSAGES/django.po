@@ -1,0 +1,271 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-02-15 12:12+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: DBentry/ac/views.py:43
+#, python-format
+msgid "Create \"%(new_value)s\""
+msgstr "Erstelle \"%(new_value)s\""
+
+#: DBentry/actions/base.py:14
+msgid "Warning: This action is NOT reversible!"
+msgstr "Warnung: Diese Aktion ist NICHT umkehrbar!"
+
+#: DBentry/actions/views.py:18
+msgid "Add issue volume"
+msgstr "Jahrgang hinzufügen"
+
+#: DBentry/actions/views.py:68
+msgid "Alter stock"
+msgstr "Bestand hinzufügen"
+
+#: DBentry/actions/views.py:129
+#, python-format
+msgid "Merge selected %(verbose_name_plural)s"
+msgstr "%(verbose_name_plural)s zusammenfügen"
+
+#: DBentry/actions/views.py:156
+msgid "Merge objects: step {}"
+msgstr "Datensätze zusammenfügen: Schritt {}"
+
+#: templates/admin/403.html:4
+msgid "Permission denied"
+msgstr "Zugriff verweigert"
+
+#: templates/admin/403.html:8
+msgid "Admin: permission denied."
+msgstr "Admin: Zugriff verweigert."
+
+#: templates/admin/action_confirmation.html:16 templates/admin/base.html:64
+#: templates/admin/basic_wizard.html:15 templates/admin/change_form.html:24
+#: templates/admin/change_list.html:35
+msgid "Home"
+msgstr ""
+
+#: templates/admin/action_confirmation.html:42
+#, python-format
+msgid "Are you sure you want to change the selected %(objects_name)s? "
+msgstr ""
+"Sind Sie sicher, dass Sie die ausgewählten %(objects_name)s verändern wollen?"
+
+#: templates/admin/action_confirmation.html:45
+msgid "Objects"
+msgstr ""
+
+#: templates/admin/action_confirmation.html:60
+msgid "Yes, I'm sure"
+msgstr ""
+
+#: templates/admin/action_confirmation.html:61
+#: templates/admin/action_confirmation_wizard.html:42
+#: templates/admin/basic_wizard.html:69
+msgid "No, take me back"
+msgstr ""
+
+#: templates/admin/action_confirmation_wizard.html:9
+#: templates/admin/basic_wizard.html:31
+#: templates/formtools/wizard/wizard_form.html:16
+msgid "first step"
+msgstr ""
+
+#: templates/admin/action_confirmation_wizard.html:11
+#: templates/admin/basic_wizard.html:33
+#: templates/formtools/wizard/wizard_form.html:17
+msgid "prev step"
+msgstr ""
+
+#: templates/admin/action_confirmation_wizard.html:41
+#: templates/admin/basic_wizard.html:68
+msgid "Continue"
+msgstr ""
+
+#: templates/admin/advanced_search_form.html:10
+msgid "Search options"
+msgstr "Suchoptionen"
+
+#: templates/admin/advanced_search_form.html:72
+#: templates/admin/search_form.html:7
+msgid "Search"
+msgstr ""
+
+#: templates/admin/advanced_search_form.html:74
+#, python-format
+msgid "%(counter)s result "
+msgid_plural "%(counter)s results"
+msgstr[0] "%(counter)s Ergebnis"
+msgstr[1] "%(counter)s Ergebnisse"
+
+#: templates/admin/advanced_search_form.html:77
+#, python-format
+msgid "%(full_count)s total "
+msgstr "%(full_count)s insgesamt"
+
+#: templates/admin/advanced_search_form.html:79
+#: templates/admin/search_form.html:9
+msgid "Show all"
+msgstr ""
+
+#: templates/admin/base.html:38
+msgid "Welcome,"
+msgstr ""
+
+#: templates/admin/base.html:43
+msgid "View site"
+msgstr ""
+
+#: templates/admin/base.html:48
+msgid "Documentation"
+msgstr ""
+
+#: templates/admin/base.html:52
+msgid "Change password"
+msgstr ""
+
+#: templates/admin/base.html:54
+msgid "Log out"
+msgstr ""
+
+#: templates/admin/base_site.html:3
+msgid "Django site admin"
+msgstr ""
+
+#: templates/admin/basic_wizard.html:18
+msgid "Merge objects"
+msgstr ""
+
+#: templates/admin/bulk.html:52
+msgid "Save and create more"
+msgstr "Sichern und mehr erstellen"
+
+#: templates/admin/bulk.html:53
+#, python-format
+msgid "Save and edit created %(name)s"
+msgstr "Sichern und erstellte %(name)s bearbeiten"
+
+#: templates/admin/change_form.html:27 templates/admin/change_list.html:53
+#: templates/admin/change_list.html:110
+#, python-format
+msgid "Add %(name)s"
+msgstr ""
+
+#: templates/admin/change_form.html:45
+msgid "History"
+msgstr ""
+
+#: templates/admin/change_form.html:47
+#: templates/admin/edit_inline/stacked.html:34
+msgid "View on site"
+msgstr ""
+
+#: templates/admin/change_form.html:61 templates/admin/change_list.html:62
+msgid "Please correct the error below."
+msgstr ""
+
+#: templates/admin/change_form.html:61 templates/admin/change_list.html:62
+msgid "Please correct the errors below."
+msgstr ""
+
+#: templates/admin/change_list.html:71
+msgid "Filter"
+msgstr ""
+
+#: templates/admin/edit_inline/stacked.html:27 templates/admin/index.html:37
+msgid "Change"
+msgstr ""
+
+#: templates/admin/edit_inline/tabular.html:24
+msgid "Delete?"
+msgstr ""
+
+#: templates/admin/favorites.html:21
+msgid "Save"
+msgstr ""
+
+#: templates/admin/index.html:20
+#, python-format
+msgid "Models in the %(name)s application"
+msgstr ""
+
+#: templates/admin/index.html:31
+msgid "Add"
+msgstr ""
+
+#: templates/admin/index.html:47
+msgid "You don't have permission to edit anything."
+msgstr ""
+
+#: templates/admin/index.html:58
+msgid "Recent actions"
+msgstr ""
+
+#: templates/admin/index.html:59
+msgid "My actions"
+msgstr ""
+
+#: templates/admin/index.html:63
+msgid "None available"
+msgstr ""
+
+#: templates/admin/index.html:77
+msgid "Unknown content"
+msgstr ""
+
+#: templates/admin/search_form.html:9
+#, python-format
+msgid "%(counter)s result"
+msgid_plural "%(counter)s results"
+msgstr[0] "%(counter)s Ergebnis"
+msgstr[1] "%(counter)s Ergebnisse"
+
+#: templates/admin/search_form.html:9
+#, python-format
+msgid "%(full_result_count)s total"
+msgstr "%(full_result_count)s insgesamt"
+
+#: templates/formtools/form.html:6
+msgid "Please correct the following errors"
+msgstr ""
+
+#: templates/formtools/form.html:6 templates/formtools/preview.html:24
+msgid "Submit"
+msgstr ""
+
+#: templates/formtools/form.html:13 templates/formtools/preview.html:34
+msgid "Preview"
+msgstr ""
+
+#: templates/formtools/preview.html:6
+msgid "Preview your submission"
+msgstr ""
+
+#: templates/formtools/preview.html:17
+#, python-format
+msgid "Security hash: %(hash_value)s"
+msgstr ""
+
+#: templates/formtools/preview.html:27
+msgid "Or edit it again"
+msgstr ""
+
+#: templates/formtools/wizard/wizard_form.html:19
+msgid "submit"
+msgstr ""
+
+#~ msgid "Are you sure?"
+#~ msgstr "Sind Sie sicher?"

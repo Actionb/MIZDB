@@ -1,7 +1,7 @@
 
 from django.db import transaction
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
 
 from DBentry.utils import link_list, merge_records
@@ -15,7 +15,7 @@ from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFor
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
-    short_description = _("Add issue volume")
+    short_description = gettext_lazy("Add issue volume")
     perm_required = ['change']
     action_name = 'bulk_jg'
     
@@ -65,7 +65,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
                 
 class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
-    short_description = _("Alter stock")
+    short_description = gettext_lazy("Alter stock")
     perm_required = ['alter_bestand']
     action_name = 'add_bestand'
     
@@ -126,7 +126,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
  
 class MergeViewWizarded(WizardConfirmationView): 
     
-    short_description = ugettext_lazy("Merge selected %(verbose_name_plural)s")
+    short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
     perm_required = ['merge']
     action_name = 'merge_records'
      
@@ -153,7 +153,7 @@ class MergeViewWizarded(WizardConfirmationView):
     
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['title'] = ugettext_lazy('Merge objects step: {}'.format(str(int(self.steps.current)+1)))
+        context['title'] = gettext('Merge objects: step {}').format(str(int(self.steps.current)+1))
         return context
     
     def action_allowed(self):
