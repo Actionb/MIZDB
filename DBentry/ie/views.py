@@ -1,14 +1,16 @@
 import re
 
-from DBentry.views import MIZAdminToolView
+from DBentry.views import MIZAdminToolViewMixin
 from .forms import ImportSelectForm, MBFormSet
 from .relational import RelationImport
-from DBentry.utils import split_name
+from .name_utils import split_name
 from DBentry.models import *
 from django.shortcuts import render, redirect
 from django import views
+from DBentry.sites import register_tool
 
-class ImportSelectView(MIZAdminToolView, views.generic.FormView):
+@register_tool
+class ImportSelectView(MIZAdminToolViewMixin, views.generic.FormView):
     form_class = ImportSelectForm
     template_name = 'admin/import/import_select.html'
     url_name = 'import_select'
@@ -116,5 +118,3 @@ class ImportSelectView(MIZAdminToolView, views.generic.FormView):
                 vorname, nachname = split_name(name)
                 person_data.append({'vorname':vorname, 'nachname':nachname, 'release_id':release_ids})
         return musiker_data, band_data, person_data
-    
-ImportSelectView.admin_site.register_tool(ImportSelectView)

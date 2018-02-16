@@ -12,7 +12,7 @@ from django.utils.functional import cached_property
 from .models import *
 from .utils import link_list, model_from_string
 from .forms import FavoritenForm
-from .sites import miz_site
+from .sites import miz_site, register_tool
 from .constants import PERM_DENIED_MSG
 
 from dal import autocomplete
@@ -57,10 +57,11 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
     raise_exception = True
     _permissions_required = []
     
-    @cached_property
-    def permissions_required(self):
+    #@cached_property
+    @classmethod
+    def get_permissions_required(cls):
         permissions_required = []
-        for perm_tuple in self._permissions_required:
+        for perm_tuple in cls._permissions_required:
             model = None
             if isinstance(perm_tuple, str):
                 perm_code = perm_tuple
@@ -71,10 +72,10 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
                 if isinstance(model, str):
                     model = model_from_string(model)
             if model is None:
-                if hasattr(self, 'opts'):
-                    opts = getattr(self, 'opts')
-                elif hasattr(self, 'model'):
-                    opts = getattr(self, 'model')._meta
+                if hasattr(cls, 'opts'):
+                    opts = getattr(cls, 'opts')
+                elif hasattr(cls, 'model'):
+                    opts = getattr(cls, 'model')._meta
                 else:
                     from django.core.exceptions import ImproperlyConfigured
                     raise ImproperlyConfigured("No model/opts set for permission code '{}'. ".format(perm_code)+\
@@ -86,56 +87,52 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
             permissions_required.append(perm)
         return permissions_required
     
-    def permission_test(self):
+    @classmethod
+    def permission_test(cls, request):
         """
         The test function that the user has to pass for contrib.auth's UserPassesTestMixin to access the view.
         Default permission level is: is_staff
         """
-        if self.permissions_required:
-            for perm in self.permissions_required:
-                if not self.request.user.has_perm(perm):
+        permissions_required = cls.get_permissions_required()
+        if permissions_required:
+            for perm in permissions_required:
+                if not request.user.has_perm(perm):
                     return False
             return True
         else:
-            return self.request.user.is_staff
+            return request.user.is_staff
         
     def test_func(self):
         """
         Redirect the test for UserPassesTestMixin to a more aptly named function.
         """
-        return self.permission_test()
+        return self.permission_test(self.request)
         
-class MIZAdminToolView(MIZAdminPermissionMixin, views.generic.TemplateView):
+class MIZAdminToolViewMixin(MIZAdminPermissionMixin):
     """
-    The base view for all 'Admin Tools'. 
+    The base mixin for all 'Admin Tools'. 
     """
     
     template_name = 'admin/basic.html'
-    submit_value = 'Ok'
-    submit_name = '_ok'
     
     @staticmethod
     def show_on_index_page(request):
         """
-        If the current user does not have required permissions, the view link will not be displayed on the index page.
+        Returns whether or not link to this view should be displayed on the index page.
+        This will be overriden by permission_test() of MIZAdminPermissionMixin, if specific permissions are required.
         """
-        # Default permission level: is_staff
         return request.user.is_staff
-    
-    def get_context_data(self, *args, **kwargs):
-        kwargs = super(MIZAdminToolView, self).get_context_data(*args, **kwargs)
-        # Add custom context data for the submit button
-        kwargs['submit_value'] = self.submit_value
-        kwargs['submit_name'] = self.submit_name
-        return kwargs
-        
-class FavoritenView(MIZAdminToolView, views.generic.UpdateView):
+
+@register_tool
+class FavoritenView(MIZAdminToolViewMixin, views.generic.UpdateView):
     form_class = FavoritenForm
     template_name = 'admin/favorites.html'
     model = Favoriten
     
     url_name = 'favoriten'
     index_label = 'Favoriten Verwaltung'
+    
+    _permissions_required = [('add', 'Favoriten'), ('change', 'Favoriten'), ('delete', 'Favoriten')]
         
     def get_success_url(self):
         # Redirect back onto this site
@@ -149,9 +146,8 @@ class FavoritenView(MIZAdminToolView, views.generic.UpdateView):
             object = Favoriten(user=self.request.user)
             object.save()
         return object        
-
-miz_site.register_tool(FavoritenView)
-
+        
+        
 class FixedSessionWizardView(SessionWizardView):
     
     def get_context_data(self, form = None, *args, **kwargs):

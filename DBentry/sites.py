@@ -26,7 +26,7 @@ class MIZAdminSite(admin.AdminSite):
         extra_context = extra_context or {}
         extra_context['admintools'] = {}
         for tool in self.tools:
-            if tool.show_on_index_page(request):
+            if tool.show_on_index_page(request) and tool.permission_test(request):
                 extra_context['admintools'][tool.url_name] = tool.index_label
         # Sort by index_label, not by url_name
         extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
@@ -74,3 +74,14 @@ class MIZAdminSite(admin.AdminSite):
         return self._registry.get(model, None)
         
 miz_site = MIZAdminSite()
+
+def register_tool(tool_view):
+    from DBentry.views import MIZAdminToolViewMixin
+    
+    if not issubclass(tool_view, MIZAdminToolViewMixin):
+        raise ValueError('Wrapped class must subclass MIZAdminToolView.')
+
+    miz_site.register_tool(tool_view)
+    
+    return tool_view
+    

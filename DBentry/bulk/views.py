@@ -11,18 +11,20 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import IntegrityError
 
-from DBentry.views import MIZAdminToolView
+from DBentry.views import MIZAdminToolViewMixin
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio, m2m_audio_ausgabe
 from DBentry.logging import LoggingMixin
+from DBentry.sites import register_tool
 from .forms import BulkFormAusgabe
 
-class BulkAusgabe(MIZAdminToolView, views.generic.FormView, LoggingMixin):
+@register_tool
+class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
     
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe' #TODO: remove this?
+    url_name = 'bulk_ausgabe' #TODO: remove this? NOPE! Used in the admin_site.index
     index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
     
     _permissions_required = [('add', 'ausgabe')]
@@ -261,5 +263,3 @@ class BulkAusgabe(MIZAdminToolView, views.generic.FormView, LoggingMixin):
         
     def get_context_data(self, *args, **kwargs):
         return super().get_context_data(opts=ausgabe._meta)
-
-BulkAusgabe.admin_site.register_tool(BulkAusgabe)

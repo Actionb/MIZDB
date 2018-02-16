@@ -8,13 +8,14 @@ from django.apps import apps
  
 from itertools import chain 
  
-from DBentry.views import MIZAdminToolView 
+from DBentry.views import MIZAdminToolViewMixin 
 from DBentry.models import * 
+from DBentry.sites import register_tool
  
 from .forms import * 
 
  
-class MaintView(MIZAdminToolView): 
+class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
     url_name = 'maint_main' 
     index_label = 'Wartung' 
     template_name = 'admin/basic.html' 
@@ -37,8 +38,6 @@ class UnusedObjectsView(MaintView):
         qs = model.objects.annotate(num_a=Count('artikel')).filter(num_a__lte=lte) 
         request.session['qs'] = dict(id__in=list(qs.values_list('pk', flat=True))) 
         return redirect(url) 
-         
-UnusedObjectsView.admin_site.register_tool(MaintView) 
  
 def has_change_conflict(wizard): 
     cleaned_data = wizard.get_cleaned_data_for_step('0') or {} 

@@ -1,6 +1,7 @@
 from unittest import expectedFailure, skip
 from itertools import chain
 import contextlib
+import re
 
 from django.test import TestCase, SimpleTestCase, Client, tag
 from django.contrib.auth.models import User
@@ -118,6 +119,7 @@ class RequestTestCase(UserTestCase):
         error_msg = "Message {} found in messages: {}".format(expected_message,  [m[:len(expected_message)+5] + "[...]" for m in messages])
         if any(m.startswith(expected_message) for m in messages):
             raise AssertionError(error_msg)
+        
     
 class ViewTestCase(RequestTestCase, CreateViewMixin):
         pass

@@ -25,7 +25,7 @@ class TestDataMixin(object):
         super(TestDataMixin, self).setUp()
         for c, obj in enumerate(self.test_data, 1):
             obj.refresh_from_db()
-            setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk)) #NOTE: or in setUpTestData?
+            setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk))
         self.queryset = self.model.objects.all()
         
 class CreateViewMixin(object):
@@ -35,11 +35,32 @@ class CreateViewMixin(object):
     
     view_class = None
     
+    def test_view_available(self):
+        if hasattr(self, 'path') and self.path:
+            response = self.client.get(self.path)
+            self.assertEqual(response.status_code, 200)
+            
+    def test_view_forbidden(self):
+        if hasattr(self, 'path') and self.path:
+            self.client.force_login(self.noperms_user)
+            response = self.client.get(self.path)
+            self.assertTemplateUsed(response, 'admin/403.html')
+    
     def view(self, request=None, args=None, kwargs=None, **initkwargs):
         self.view_class.request = request
         self.view_class.args = args
         self.view_class.kwargs = kwargs
         return self.view_class(**initkwargs)
+        
+    def get_dummy_view_class(self, bases=None, attrs=None):
+        attrs = attrs or getattr(self, 'view_attrs', {})
+        bases = bases or getattr(self, 'view_bases', ())
+        if not isinstance(bases, (list, tuple)):
+            bases = (bases, )
+        return type("DummyView", bases, attrs)
+        
+    def get_dummy_view(self, bases=None, attrs=None, **initkwargs):
+        return self.get_dummy_view_class(bases, attrs)(**initkwargs)
 
 class CreateFormMixin(object):
     """
