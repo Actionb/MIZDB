@@ -3,19 +3,7 @@
 
 *.pyc
 
-DBentry/stuff\.py
-
-ac-media\.txt
-
-print_request\.txt
-
-templates/admin/advanced_search_form_cols\.html
-
-DBentry/static/admin/css/advanced_search_form_cols\.css
-
 media/
-
-
 
 DBentry/migrations/backup/
 
