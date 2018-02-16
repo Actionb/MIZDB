@@ -115,6 +115,10 @@ class TestMergingMagazin(MergingTestCase, BasicMergeTestMixin):
     
 class TestMergingPerson(MergingTestCase, BasicMergeTestMixin):
     model = person
+
+##############################################################################################################
+# concat_limit
+##############################################################################################################
     
 class TestConcatLimit(SimpleTestCase):
     
@@ -124,7 +128,46 @@ class TestConcatLimit(SimpleTestCase):
         self.assertEqual(utils.concat_limit(t), '2020, 2021, 2024')
         self.assertEqual(utils.concat_limit(t, width = 1), '2020, [...]')
         self.assertEqual(utils.concat_limit(t, width = 1, z = 6), '002020, [...]')
+
+##############################################################################################################
+# get_obj_link & link_list
+##############################################################################################################       
+class TestUtilsLinks(TestDataMixin, RequestTestCase):
+    
+    model = band
+    test_data_count = 3
+    opts = band._meta
+    
+    def test_get_obj_link_noperms(self):
+        # Users without change permission should not get an edit link
+        link = utils.get_obj_link(self.obj1, self.noperms_user)
+        self.assertEqual(link, "{}: {}".format(self.opts.verbose_name, force_text(self.obj1)))
+    
+    def test_get_obj_link_noreversematch(self):
+        # If there is no reverse match, no link should be displayed
+        # get_obj_link uses the site_name argument to get the app's namespace
+        from django.urls import NoReverseMatch
+        with self.assertNotRaises(NoReverseMatch):
+            link = utils.get_obj_link(self.obj1, self.super_user, site_name='BEEP BOOP')
+        self.assertEqual(link, "{}: {}".format(self.opts.verbose_name, force_text(self.obj1)))
+    
+    def test_get_obj_link(self):
+        link = utils.get_obj_link(self.obj1, self.super_user)
+        url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
+        expected = '{}: <a href="{}">{}</a>'.format('Band', url, force_text(self.obj1))
+        self.assertEqual(link, expected)
         
-    
-    
+        link = utils.get_obj_link(self.obj1, self.super_user, include_name=False)
+        url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
+        expected = '<a href="{}">{}</a>'.format(url, force_text(self.obj1))
+        self.assertEqual(link, expected)
+        
+    def test_link_list(self):
+        expected_url = 'href="/admin/DBentry/band/{}/change/"'
+        expected_name = ">{}</a>"
+        request = self.get_request()
+        links = utils.link_list(request, self.test_data).split(", ")
+        for c, obj in enumerate(self.test_data):
+            self.assertIn(expected_url.format(obj.pk), links[c])
+            self.assertIn(expected_name.format(str(obj)), links[c])
         

@@ -184,3 +184,39 @@ def split_MuBa(name_list):
             rest.append(name)
             print("rest")
     return musiker, bands, rest
+    
+def split_name(name):
+    """ Splits a full name into pre- and surname while accounting for certain name-specific keywords like 'von' or 'van de'
+        or 'Senior', etc.
+    """
+    kwds = [r'\bvan\b', r'\bvan.der\b', r'\bvan.de\b', r'\bde\b', r'\bvon\b',r'\bvan.den\b'
+            r'\bSt\.?', r'\bSaint\b', r'\bde.la\b', r'\bla\b'] 
+    jrsr = [r'\bJunior\b', r'\bJr\.?', r'\bSenior\b', r'\bSr\.?',  r'\bIII\.?', r'\bII\.?'] #r'\b.I.'
+    for w in kwds:
+        p = re.compile(w, re.IGNORECASE)
+        sep = re.search(p, name)
+        if sep:
+            
+            sep = sep.start()
+            v = name[:sep].strip()
+            n = name[sep:].strip()
+            return v, n
+    suffix = None
+    for w in jrsr:
+        p = re.compile(w, re.IGNORECASE)
+        sep = re.search(p, name)
+        if sep:
+            suffix = name[sep.start():sep.end()]
+            name = name[:sep.start()]+name[sep.end():]
+    v = " ".join(name.strip().split()[:-1]).strip()
+    n = name.strip().split()[-1]
+    if suffix:
+        n = n + " " + suffix
+    if len(n)<3:
+        # ... and v: ? For if the nachname is just weird, but still a proper name (since it has a proper vorname, too)
+        if n.endswith('.') or len(n)==1:
+            # Bsp: Mark G. --> not a proper name
+            v = None
+            n = None
+    return v, n
+    

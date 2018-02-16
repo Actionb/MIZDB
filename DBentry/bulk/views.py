@@ -59,10 +59,10 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                     ids, created, updated = self.save_data(form)
                     
                     if created:
-                        obj_list = link_list(request, created, path = "admin:DBentry_ausgabe_change")
+                        obj_list = link_list(request, created)
                         messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
                     if updated:
-                        obj_list = link_list(request, updated, path = "admin:DBentry_ausgabe_change")
+                        obj_list = link_list(request, updated)
                         messages.success(request, format_html('Dubletten hinzugefügt: {}'.format(obj_list)))
                     
                     # Prepare the form for the next view

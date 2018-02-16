@@ -1,10 +1,17 @@
 #
 
 from DBentry.models import *
-from DBentry.utils import split_field, dict_to_tuple
+from DBentry.utils import split_field
 
 from .name_utils import *
 from .reader import CSVReader
+
+def dict_to_tuple(d):
+    return tuple((k, v) for k, v in d.items())
+    
+def tuple_to_dict(t):
+    return {k:v for k, v in t}
+
 
 db_tags = FormatTag.objects.values_list('abk', flat=True)
 def tokenize_format(format_item):
