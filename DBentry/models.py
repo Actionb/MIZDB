@@ -175,7 +175,6 @@ class autor(BaseModel):
             
 class ausgabe(ComputedNameModel):
     STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen')]
-    _name_default = "Keine Angaben zu dieser Ausgabe!"
     
     magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
@@ -284,7 +283,7 @@ class ausgabe(ComputedNameModel):
             return "{}-{}".format(jahre, monate)
         if info:
             return info
-        return cls._name_default
+        return cls._name_default % {'verbose_name':cls._meta.verbose_name}
                 
     def anz_artikel(self):
         return self.artikel_set.count()

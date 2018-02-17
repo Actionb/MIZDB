@@ -229,7 +229,7 @@ class ComputedNameModel(BaseModel):
         raise NotImplementedError('Subclasses must implement this method.')
     
     def __str__(self):
-        return self._name
+        return self._name % {'verbose_name':self._meta.verbose_name}
                     
     class Meta(BaseModel.Meta):
         abstract = True

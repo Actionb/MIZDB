@@ -567,7 +567,7 @@ class TestModelBase(DataTestCase):
 class TestComputedNameModel(DataTestCase):
     
     model = ausgabe
-    default = "Keine Angaben zu dieser Ausgabe!"
+    default = ausgabe._name_default % {'verbose_name':ausgabe._meta.verbose_name}
     
     @classmethod
     def setUpTestData(cls):
@@ -605,7 +605,7 @@ class TestComputedNameModel(DataTestCase):
         self.assertFalse('_changed_flag' in obj.get_updateable_fields())
         
     def test_name_default(self):
-        self.assertEqual(str(self.obj1), self.model._name_default)
+        self.assertEqual(str(self.obj1), self.default)
         
     def test_update_name_notexplodes_on_no_pk_and_forced(self):
         # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
@@ -633,7 +633,7 @@ class TestComputedNameModel(DataTestCase):
         self.obj2._name = 'Beep'
         self.obj2._changed_flag = True
         self.assertTrue(self.obj2.update_name())
-        self.assertEqual(self.obj2._name, self.model._name_default)
+        self.assertEqual(self.obj2._name, self.default)
         
     def test_update_name_resets_change_flag(self):
         # The _changed_flag should always be set to False after an update was executed
@@ -756,7 +756,7 @@ class TestAusgabeGetName(DataTestCase):
             
         def test_get_name_no_data(self):
             self.qs_obj2.update(info='')
-            self.assertStrEqual(self.obj2, "Keine Angaben zu dieser Ausgabe!")
+            self.assertStrEqual(self.obj2, ausgabe._name_default % {'verbose_name':ausgabe._meta.verbose_name})
             
         def test_get_name_magazin_merkmal(self):
             mag_qs = magazin.objects.filter(pk=self.mag.pk)
