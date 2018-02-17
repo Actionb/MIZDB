@@ -170,4 +170,24 @@ class TestUtilsLinks(TestDataMixin, RequestTestCase):
         for c, obj in enumerate(self.test_data):
             self.assertIn(expected_url.format(obj.pk), links[c])
             self.assertIn(expected_name.format(str(obj)), links[c])
-        
+
+##############################################################################################################
+# get_relations_between_models
+##############################################################################################################    
+class TestGetRelationsBetweenModels(SimpleTestCase):
+    
+    def test_many_to_one(self):
+        from DBentry.models import ausgabe, magazin
+        expected = (ausgabe._meta.get_field('magazin'), magazin._meta.get_field('ausgabe'))
+        self.assertEqual((utils.get_relations_between_models(ausgabe, magazin)), expected)
+        self.assertEqual((utils.get_relations_between_models(magazin, ausgabe)), expected)
+        self.assertEqual((utils.get_relations_between_models('ausgabe', 'magazin')), expected)
+        self.assertEqual((utils.get_relations_between_models('magazin', 'ausgabe')), expected)
+    
+    def test_many_to_many(self):
+        from DBentry.models import Format, FormatTag
+        expected = (Format._meta.get_field('tag'), FormatTag._meta.get_field('format'))
+        self.assertEqual((utils.get_relations_between_models(Format, FormatTag)), expected)
+        self.assertEqual((utils.get_relations_between_models(FormatTag, Format)), expected)
+        self.assertEqual((utils.get_relations_between_models('Format', 'FormatTag')), expected)
+        self.assertEqual((utils.get_relations_between_models('FormatTag', 'Format')), expected)

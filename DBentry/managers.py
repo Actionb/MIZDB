@@ -1,28 +1,61 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.utils import OperationalError
 
 from .printer.printer import *
 
 class MIZQuerySet(models.QuerySet):
-    
-    def has_duplicate(self, original):
-        #TODO: WIP
-        pass
-
-    def values_all(self, flds, ids = None):
-        qs = self
-        base_ids = ids or qs.values_list(qs.model._meta.pk.name, flat = True)               # all ids
-        rslt = []
-        if isinstance(flds, str):
-            flds = [f.strip() for f in flds.split(",")]
-        for id in base_ids:
-            object_values = {'pk':id}
-            obj = qs.filter(pk=id)
-            for fld in flds:
-                values = [i for i in obj.values_list(fld, flat = True)]
-                object_values[fld] = values
-            yield object_values
-            rslt.append(object_values)
+        
+    def values_dict(self, *flds, include_empty = False, **expressions):
+        """
+        An extension of QuerySet.values(). 
+        
+            For a pizza with two toppings and two sizes:
+            values('pk', 'pizza__topping', 'pizza__size'): 
+                    [ 
+                        {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'}, 
+                        {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},
+                        {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},
+                        {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'},
+                    ]
+                    
+            values_dict('pk','pizza__topping', 'pizza__size'):
+                    {
+                        '1' : {'pizza__topping' : ['Onions', 'Bacon' ], 'pizza__size': ['Tiny', 'God']},
+                    }   
+        """
+        # pk_name is the variable that will refer to this query's primary key values.
+        pk_name = self.model._meta.pk.name
+        
+        # Make sure the query includes the model's primary key values as we require it to build the result out of.
+        # If flds is None, the query targets all the model's fields.
+        if flds:
+            if 'pk' in flds:
+                pk_name = 'pk'
+            elif pk_name in flds:
+                pass
+            else:
+                # insert a 'pk' field rather than the model's pk.name; 'pk' is universal
+                flds = list(flds)
+                flds.append('pk')
+                pk_name = 'pk'
+                
+        rslt = {}
+        for val_dict in self.values(*flds, **expressions):
+            id = val_dict.pop(pk_name)
+            if id in rslt:
+                d = rslt.get(id)
+            else:
+                d = {}
+                rslt[id] = d
+            for k, v in val_dict.items(): 
+                if not include_empty and v in [None, '', [], (), {}]:
+                    continue
+                if k not in d:
+                    d[k] = [v]
+                elif v in d.get(k):
+                    continue
+                else:
+                    d.get(k).append(v)
         return rslt
         
     def resultbased_ordering(self):
@@ -54,8 +87,87 @@ class MIZQuerySet(models.QuerySet):
                     dict_by_val[v] = set()
                     dict_by_val[v].add(k)
         return dict_by_key, dict_by_val
+        
+class CNQuerySet(MIZQuerySet):
+    
+    _updated = False
+    
+    def bulk_create(self, objs, batch_size=None):
+        # Set the _changed_flag on the objects to be created
+        for obj in objs:
+            obj._changed_flag = True
+        return super().bulk_create(objs, batch_size)
+        
+    def defer(self, *fields):
+        if '_name' not in fields:
+            self._update_names()
+        return super().defer(*fields)
+        
+    def filter(self, *args, **kwargs):
+        if any(k.startswith('_name')  for k in kwargs):
+            self._update_names()
+        return super().filter(*args, **kwargs)
+        
+    @property
+    def updated(self):
+        """
+        If the names haven't yet been updated, check if they *should* be updated.
+        If _name is deferred OR _name is not in the fields to be loaded, do not attempt an update.
+        Likewise if self._fields is not None and does not contain _name.
+        """
+        if not self._updated:
+            # query.deferred_loading: 
+            # A tuple that is a set of model field names and either True, if these
+            # are the fields to defer, or False if these are the only fields to
+            # load.
+            deferred, fields_are_deferred = self.query.deferred_loading
+            if fields_are_deferred:
+                if '_name' not in deferred:
+                    # We're good to try, _name was not defer()'ed
+                    return False
+            else:
+                if '_name' in deferred:
+                    # We're good to try, _name was only()'ed
+                    return False
+            if self._fields is not None and '_name' not in self._fields:
+                # We haven't called values/values_list (with _name as a field)
+                return False
+            return True
+        return self._updated
+        
+    def only(self, *fields):
+        if '_name' in fields:
+            self._update_names()
+        return super().only(*fields)
+    
+    def update(self, **kwargs):
+        # it is save to assume that a name update will be required after this update
+        # if _changed_flag is not already part of the update, add it with the value True
+        if '_changed_flag' not in kwargs:
+           kwargs['_changed_flag'] = True
+        return super().update(**kwargs)
+    update.alters_data = True
+    
+    def values(self, *fields, **expressions):
+        if '_name' in fields:
+            self._update_names()
+        return super().values(*fields, **expressions)
+        
+    def values_list(self, *fields, **kwargs):
+        if '_name' in fields:
+            self._update_names()
+        return super().values_list(*fields, **kwargs)
+                
+    def _update_names(self):
+        if self.query.can_filter() and self.filter(_changed_flag=True).exists():    
+            with transaction.atomic():
+                for pk, val_dict in self.filter(_changed_flag=True).values_dict(*self.model.name_composing_fields).items():
+                    new_name = self.model._get_name(**val_dict)
+                    self.filter(pk=pk).update(_name=new_name, _changed_flag=False)
+        self._updated = True
+    _update_names.alters_data = True
 
-class AusgabeQuerySet(MIZQuerySet):
+class AusgabeQuerySet(CNQuerySet):
     def bulk_add_jg(self, jg = 1):
         qs = self
         years = qs.values_list('ausgabe_jahr__jahr', flat = True).order_by('ausgabe_jahr__jahr').distinct()
@@ -73,6 +185,7 @@ class AusgabeQuerySet(MIZQuerySet):
             last_year = year
             
     def filter(self, *args, **kwargs):
+        #TODO: the possible formats belong in the settings file, not in here!
         # Overridden, to better deal with poorly formatted e_datum values
         if 'e_datum' in kwargs:
             from django.core.exceptions import ValidationError
@@ -139,3 +252,5 @@ class AusgabeQuerySet(MIZQuerySet):
                 columns.remove((fld, alias))
         print_tabular(obj_values, columns)
         
+    
+    
