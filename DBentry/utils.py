@@ -166,3 +166,33 @@ def recmultisplit(values, separators = []):
     for x in values.split(sep):
         rslt += recmultisplit(x, seps)
     return rslt   
+         
+def get_relations_between_models(model1, model2): 
+    """ 
+    Returns the field and the relation object that connects model1 and model2. 
+    """ 
+    if isinstance(model1, str): 
+        model1 = model_from_string(model1) 
+    if isinstance(model2, str): 
+        model2 = model_from_string(model2) 
+     
+    field = None # the concrete field declaring the relation 
+    rel = None # the reverse relation 
+    for fld in model1._meta.get_fields(): 
+        if fld.is_relation and fld.related_model == model2: 
+            if fld.concrete: 
+                field = fld 
+            else: 
+                rel = fld 
+            break 
+                 
+    for fld in model2._meta.get_fields(): 
+        if fld.is_relation and fld.related_model == model1: 
+            if fld.concrete: 
+                field = fld 
+            else: 
+                rel = fld 
+            break 
+     
+    return field, rel 
+                     
