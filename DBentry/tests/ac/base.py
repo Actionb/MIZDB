@@ -1,5 +1,6 @@
 from ..base import *
 
+@tag("dal")
 class ACViewTestCase(ViewTestCase, LoggingTestMixin):
     
     model = None
@@ -12,3 +13,4 @@ class ACViewTestCase(ViewTestCase, LoggingTestMixin):
         self.view_class.forwarded = forwarded or {}
         self.view_class.q = q or ''
         return super(ACViewTestCase, self).view(request, args, kwargs)
+        

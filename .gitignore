@@ -20,3 +20,5 @@ DBentry/snippets/
 db/
 
 docs/
+
+DBentry/tests/timed/timed_test_getname\.txt

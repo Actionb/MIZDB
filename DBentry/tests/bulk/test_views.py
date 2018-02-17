@@ -64,6 +64,17 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
     
     view_class = BulkAusgabe
     
+    def test_view_available(self):
+        if hasattr(self, 'path') and self.path:
+            response = self.client.get(self.path)
+            self.assertEqual(response.status_code, 200)
+            
+    def test_view_forbidden(self):
+        if hasattr(self, 'path') and self.path:
+            self.client.force_login(self.noperms_user)
+            response = self.client.get(self.path)
+            self.assertTemplateUsed(response, 'admin/403.html')
+    
     def test_post_has_changed_message(self):
         # form.has_changed ( data != initial) :
         response = self.client.post(self.path, data=self.valid_data)

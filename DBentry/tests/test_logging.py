@@ -45,13 +45,13 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_addition(self):
         view = self.view(self.get_request())
         l = view.log_addition(self.obj1)
-        self.assertEqual(l.get_change_message(), ugettext('Added.'))
+        self.assertEqual(l.get_change_message(), gettext('Added.'))
         self.assertEqual(l.action_flag, ADDITION)
         
     def test_log_addition_m2m(self):
         view = self.view(self.get_request())
         l = view.log_addition(self.obj1, self.m2m)
-        expected = ugettext('Added {name} "{object}".').format(name=self.m2m._meta.verbose_name, object = force_text(self.m2m))
+        expected = gettext('Added {name} "{object}".').format(name=self.m2m._meta.verbose_name, object = force_text(self.m2m))
         self.assertEqual(l.get_change_message(), expected)
         self.assertEqual(l.action_flag, ADDITION)
         

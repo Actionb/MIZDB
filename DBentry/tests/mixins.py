@@ -34,17 +34,6 @@ class CreateViewMixin(object):
     
     view_class = None
     
-    def test_view_available(self):
-        if hasattr(self, 'path') and self.path:
-            response = self.client.get(self.path)
-            self.assertEqual(response.status_code, 200)
-            
-    def test_view_forbidden(self):
-        if hasattr(self, 'path') and self.path:
-            self.client.force_login(self.noperms_user)
-            response = self.client.get(self.path)
-            self.assertTemplateUsed(response, 'admin/403.html')
-    
     def view(self, request=None, args=None, kwargs=None, **initkwargs):
         self.view_class.request = request
         self.view_class.args = args

@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
-from django.utils.functional import cached_property
 
 from DBentry.managers import AusgabeQuerySet, MIZQuerySet        
 
@@ -11,7 +10,6 @@ class BaseModel(models.Model):
     
     objects = MIZQuerySet.as_manager()
     
-    @cached_property
     def _show(self):
         rslt = ""
         for fld_name in self.get_basefields(as_string = True):
@@ -23,7 +21,7 @@ class BaseModel(models.Model):
             return "---"
             
     def __str__(self):
-        return self._show
+        return self._show()
         
     def qs(self):
         """
