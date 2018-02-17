@@ -175,9 +175,8 @@ class autor(BaseModel):
             
 class ausgabe(ComputedNameModel):
     STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen')]
+    _name_default = "Keine Angaben zu dieser Ausgabe!"
     
-    _name = models.CharField(max_length=200, editable=False, default="Keine Angaben zu dieser Ausgabe!")
-    _changed_flag = models.BooleanField(editable=False, default=False)
     magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
     e_datum = models.DateField('Erscheinungsdatum', null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
@@ -285,7 +284,7 @@ class ausgabe(ComputedNameModel):
             return "{}-{}".format(jahre, monate)
         if info:
             return info
-        return "Keine Angaben zu dieser Ausgabe!"
+        return cls._name_default
                 
     def anz_artikel(self):
         return self.artikel_set.count()

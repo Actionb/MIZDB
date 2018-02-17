@@ -149,8 +149,9 @@ class BaseAliasModel(BaseModel):
         abstract = True
 
 class ComputedNameModel(BaseModel):   
-
-    _name = models.CharField(max_length=200, editable=False, default=gettext_lazy("No data."))
+    _name_default = gettext_lazy("No data for %(verbose_name)s.")
+    
+    _name = models.CharField(max_length=200, editable=False, default=_name_default)
     _changed_flag = models.BooleanField(editable=False, default=False)
     
     name_composing_fields = []
