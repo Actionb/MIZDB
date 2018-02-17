@@ -270,7 +270,7 @@ class TestModelAutor(DataTestCase):
         cls.test_data = [cls.obj1]
         
     def test_str(self):
-        self.assertEqual(self.obj1.__str__(), 'Alice Tester') #NOTE: or test for self.obj1.person.__str__()?
+        self.assertEqual(self.obj1.__str__(), 'Alice Tester')
         self.model.objects.filter(pk=self.obj1.pk).update(kuerzel='TK')
         self.assertEqual(self.qs_obj1.first().__str__(), 'Alice Tester (TK)')
         
@@ -503,8 +503,67 @@ class TestModelDatei(DataTestCase):
     
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Test')
+
+class TestModelBase(DataTestCase):
+    
+    model = artikel
+    add_relations = True
+    test_data_count = 1
+    
+    def test_qs(self):
+        from django.db import models
+        self.assertIsInstance(self.obj1.qs(), models.QuerySet)
+        self.assertEqual(self.obj1.qs().count(), 1)
+        self.assertListEqualSorted(self.obj1.qs(), self.queryset.filter(pk=self.obj1.pk))
         
+    def test_qs_exception(self):
+        with self.assertRaises(AttributeError):
+            self.model.qs(self.model)
         
+    def test_get_basefields(self):
+        self.assertListEqualSorted(self.model.get_basefields(True), ['schlagzeile', 'seite', 'seitenumfang', 'zusammenfassung'])
+        
+    def test_get_foreignfields(self):
+        self.assertListEqualSorted(self.model.get_foreignfields(True), ['ausgabe'])
+        
+    def test_get_m2mfields(self):
+        expected = [
+            'm2m_artikel_autor', 'm2m_artikel_band', 'm2m_artikel_genre', 'm2m_artikel_musiker', 'm2m_artikel_ort', 
+            'm2m_artikel_person', 'm2m_artikel_schlagwort', 'm2m_artikel_spielort', 'm2m_artikel_veranstaltung', 'genre', 
+            'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung'
+        ]
+        self.assertListEqualSorted(self.model.get_m2mfields(True), expected)
+        
+    def test_get_required_fields(self):
+        self.assertListEqualSorted(self.model.get_required_fields(True), ['ausgabe', 'schlagzeile', 'seite'])
+        
+    def test_get_search_fields(self):
+        expected = [
+            'ausgabe__ausgabe_lnum__lnum', 'ausgabe__ausgabe_num__num', 'ausgabe__jahrgang', 
+            'ausgabe__ausgabe_monat__monat__monat', 'seitenumfang', 'ausgabe__sonderausgabe', 
+            'zusammenfassung', 'ausgabe__status', 'schlagzeile', 'seite', 'ausgabe__e_datum', 
+            'ausgabe__ausgabe_jahr__jahr', 'ausgabe__ausgabe_monat__monat__abk', 'ausgabe___name', 'info'
+        ]
+        self.assertListEqualSorted(self.model.get_search_fields(True), expected)
+        
+    def test_get_updateable_fields(self):
+        # The DataFactory provided an instance with only the required fields filled out
+        self.assertEqual(self.obj1.get_updateable_fields(), ['seitenumfang', 'zusammenfassung', 'info'])
+        
+        self.obj1.seitenumfang = 'f'
+        self.obj1.info = 'Beep'
+        self.assertListEqualSorted(self.obj1.get_updateable_fields(), ['zusammenfassung'])
+        self.obj1.zusammenfassung = 'Boop'
+        self.assertListEqualSorted(self.obj1.get_updateable_fields(), [])
+    
+    def test_get_updateable_fields_not_ignores_default(self):
+        # get_updateable_fields should include fields that have their default value
+        # artikel has no 'useful' defaults to test with
+        obj = person(vorname='Alice') # nachname has default 
+        obj.save()
+        self.assertListEqualSorted(obj.get_updateable_fields(), ['beschreibung','nachname','herkunft'])
+   
+@tag("cn")    
 class TestComputedNameModel(DataTestCase):
     
     model = ausgabe
@@ -512,7 +571,6 @@ class TestComputedNameModel(DataTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        #print("\nCREATING INSTANCES\n")
         cls.mag = DataFactory().create_obj(magazin)
         monat.objects.create(id=12, monat='Dezember', abk ='Dez')
         cls.obj1 = ausgabe(magazin=cls.mag)
@@ -522,15 +580,16 @@ class TestComputedNameModel(DataTestCase):
         cls.obj2.save()
         
         cls.test_data = [cls.obj1, cls.obj2]
-        #print("CREATING INSTANCES DONE\n")
         
-    def setUp(self):
-        #print("\nTEST SETUP\n")
-        super().setUp()
-        #print("TEST SETUP DONE\n")
+    def test_init(self):
+        # The name should be updated upon init
+        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        obj = self.qs_obj1.first()
+        self.assertFalse(obj._changed_flag)
+        self.assertEqual(obj._name,  "Testinfo")
         
     def test_get_basefields(self):
-        # _name and _changed_flag should appear in get_basefields
+        # _name and _changed_flag should not appear in get_basefields
         self.assertFalse('_name' in self.model.get_basefields(True))
         self.assertFalse('_changed_flag' in self.model.get_basefields(True))
         
@@ -547,6 +606,11 @@ class TestComputedNameModel(DataTestCase):
         
     def test_name_default(self):
         self.assertEqual(str(self.obj1), self.default)
+        
+    def test_update_name_notexplodes_on_no_pk_and_forced(self):
+        # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
+        obj = ausgabe(magazin=self.mag)
+        self.assertFalse(obj.update_name(force_update = True))
         
     def test_update_name_aborts_on_no_pk(self):
         # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
@@ -578,7 +642,7 @@ class TestComputedNameModel(DataTestCase):
         self.assertTrue(self.obj2.update_name())
         self.assertFalse(self.obj2._changed_flag)
         
-    def test_update_name_only_resets_change_flag_when_no_changes_happened(self):
+    def test_update_name__always_resets_change_flag(self):
         # Even if the _name does not need changing, the _changed_flag should still be set to False
         self.qs_obj1.update(_changed_flag=True)
         self.assertFalse(self.obj1.update_name())
@@ -589,52 +653,144 @@ class TestComputedNameModel(DataTestCase):
         self.qs_obj1.update(_name='Beep')
         self.assertFalse(self.obj1.update_name())
         
-    def test_update_name_forces_update_with_data_from_instance(self):
-        # An update should be executed if force_update is True; even if the _changed_flag is False --- from instance attributes
-        self.obj1.info = 'Testinfo'
-        self.obj1.sonderausgabe = True
-        self.assertTrue(self.obj1.update_name(force_update=True))
-    
-    @skip("Not yet implemented.")
-    def test_update_name_forces_update_with_data_from_database(self):
-        # An update should be executed if force_update is True; even if the _changed_flag is False --- and the newest data should be fetched from the database
-        #NYI: requires update_name retrieving the data from the database and passing it to get_name
-        self.qs_obj1.update(info='Testinfo', sonderausgabe=True)
-        self.assertTrue(self.obj1.update_name(force_update=True))
-        
     def test_save_forces_update(self):
         # save() should update the name even if _changed_flag is False
         self.obj2.info = 'Testinfo'
         self.obj2.sonderausgabe = True
         self.obj2._changed_flag = False
         self.obj2.save()
-        self.assertEqual(self.qs_obj2.values_list('_name', flat=True).first(), "Testinfo")
+        self.assertQSValuesList(self.qs_obj2, '_name', "Testinfo")
         self.assertEqual(self.obj2._name, "Testinfo")
         self.assertEqual(str(self.obj2), "Testinfo")
+
+@tag("cn")       
+class TestAusgabeGetName(DataTestCase):
         
-    def test_name_not_updated_on_deferred_queries(self):
-        # Avoid updating the name when running queries where the name is not required: the changed flag should stay True
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
-        obj = self.qs_obj1.only('id').first()
-        self.assertTrue(self.qs_obj1.values_list('_changed_flag').first())
+        model = ausgabe
+        f = ausgabe._get_name
+        fields = ausgabe.name_composing_fields
         
-        #NOTE: this test is a bit useless, it never instantiates a model object
-        id = self.qs_obj1.values_list('id', flat=True).first()
-        self.assertTrue(self.qs_obj1.values_list('_changed_flag').first())
-        
-    def test_name_updated_when_querrying_for_it_deferring(self):
-        # Deliver an up-to-date name when asking for it
-        # .only() is used to limit the amount of fields the object is instantiated with, one still wants the instance though (as opposed to using values_list/values).
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
-        obj = self.qs_obj1.only('_name').first()
-        self.assertEqual(self.qs_obj1.values_list('_name', flat=True).first(), "Testinfo")
-        self.assertEqual(obj._name, "Testinfo")
-        self.assertEqual(str(obj), "Testinfo")
-        
-    @skip("Not yet implemented.")
-    def test_name_updated_when_querrying_for_it_values(self):
-        # Deliver an up-to-date name when asking for it
-        #NYI: requires rewriting the manager
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
-        name = self.qs_obj1.values_list('_name', flat=True).first()
-        self.assertEqual(name, "Testinfo")
+        @classmethod
+        def setUpTestData(cls):
+            cls.mag = magazin.objects.create(magazin_name='Testmagazin')
+            cls.obj1 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=True)
+            
+            cls.obj2 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=False)
+            
+            cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
+            cls.obj3.ausgabe_jahr_set.create(jahr=2000)
+            cls.obj3.ausgabe_jahr_set.create(jahr=2001)
+            cls.obj3.ausgabe_num_set.create(num=1)
+            cls.obj3.ausgabe_num_set.create(num=2)
+            
+            cls.obj4 = ausgabe.objects.create(magazin=cls.mag)
+            cls.obj4.ausgabe_jahr_set.create(jahr=2000)
+            cls.obj4.ausgabe_jahr_set.create(jahr=2001)
+            cls.obj4.ausgabe_lnum_set.create(lnum=1)
+            cls.obj4.ausgabe_lnum_set.create(lnum=2)
+            
+            cls.obj5 = ausgabe.objects.create(magazin=cls.mag)
+            cls.obj5.ausgabe_jahr_set.create(jahr=2000)
+            cls.obj5.ausgabe_jahr_set.create(jahr=2001)
+            cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(pk=1, monat='Januar', abk='Jan'))
+            cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(pk=2, monat='Februar', abk='Feb'))
+            
+            cls.obj6 = ausgabe.objects.create(magazin=cls.mag, e_datum='2000-01-01') 
+            
+            cls.obj7 = cls.model.objects.create(magazin=cls.mag, e_datum='2000-01-01')
+            cls.obj7.ausgabe_num_set.create(num=12)
+            cls.obj7.ausgabe_lnum_set.create(lnum=12)
+            
+            cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5, cls.obj6, cls.obj7]
+            
+            super().setUpTestData()
+            
+        def assertStrEqual(self, obj, expected):
+            d = self.queryset.filter(pk=obj.pk).values_dict(*self.fields).get(obj.pk)
+            self.assertEqual(ausgabe._get_name(**d), expected)
+            
+        def test_get_name_info_sonderausgabe(self):
+            self.assertStrEqual(self.obj1, 'Snowflake')
+            
+        def test_get_name_info(self):
+            self.assertStrEqual(self.obj2, 'Snowflake')
+            
+        def test_get_name_num(self):
+            self.assertStrEqual(self.obj3, '2000/01-01/02')
+            
+        def test_get_name_lnum(self):
+            self.assertStrEqual(self.obj4, '01/02 (2000/01)')
+            
+        def test_get_name_monat(self):
+            self.assertStrEqual(self.obj5, '2000/01-Jan/Feb')
+            
+        def test_get_name_edatum(self):
+            self.assertStrEqual(self.obj6, '2000-01-01')
+            
+        def test_get_name_num_no_year(self):
+            self.obj3.ausgabe_jahr_set.all().delete()
+            self.assertStrEqual(self.obj3, 'k.A.-01/02')
+            
+        def test_get_name_lnum_no_year(self):
+            self.obj4.ausgabe_jahr_set.all().delete()
+            self.assertStrEqual(self.obj4, '01/02')
+            
+        def test_get_name_monat_no_year(self):
+            self.obj5.ausgabe_jahr_set.all().delete()
+            self.assertStrEqual(self.obj5, 'k.A.-Jan/Feb')
+            
+        def test_get_name_num_jahrgang(self):
+            self.obj3.ausgabe_jahr_set.all().delete()
+            self.qs_obj3.update(jahrgang=1)
+            self.assertStrEqual(self.obj3, 'Jg. 1-01/02')
+            
+        def test_get_name_lnum_jahrgang(self):
+            self.obj4.ausgabe_jahr_set.all().delete()
+            self.qs_obj4.update(jahrgang=1)
+            self.assertStrEqual(self.obj4, '01/02 (Jg. 1)')
+            
+        def test_get_name_monat_jahrgang(self):
+            self.obj5.ausgabe_jahr_set.all().delete()
+            self.qs_obj5.update(jahrgang=1)
+            self.assertStrEqual(self.obj5, 'Jg. 1-Jan/Feb')
+            
+        def test_get_name_no_data(self):
+            self.qs_obj2.update(info='')
+            self.assertStrEqual(self.obj2, "Keine Angaben zu dieser Ausgabe!")
+            
+        def test_get_name_magazin_merkmal(self):
+            mag_qs = magazin.objects.filter(pk=self.mag.pk)
+            self.assertStrEqual(self.obj7, '2000-12')
+            
+            mag_qs.update(ausgaben_merkmal='e_datum')
+            self.assertStrEqual(self.obj7, '2000-01-01')
+            mag_qs.update(ausgaben_merkmal='monat')
+            self.assertStrEqual(self.obj7, '2000-Jan')
+            mag_qs.update(ausgaben_merkmal='lnum')
+            self.assertStrEqual(self.obj7, '12 (2000)')
+            mag_qs.update(ausgaben_merkmal='num')
+            self.assertStrEqual(self.obj7, '2000-12')
+            
+            self.obj7.ausgabe_jahr_set.all().delete()
+            
+            mag_qs.update(ausgaben_merkmal='e_datum')
+            self.assertStrEqual(self.obj7, '2000-01-01')
+            mag_qs.update(ausgaben_merkmal='monat')
+            self.assertStrEqual(self.obj7, 'k.A.-Jan')
+            mag_qs.update(ausgaben_merkmal='lnum')
+            self.assertStrEqual(self.obj7, '12')
+            mag_qs.update(ausgaben_merkmal='num')
+            self.assertStrEqual(self.obj7, 'k.A.-12')
+            
+            self.qs_obj7.update(jahrgang=1)
+            
+            mag_qs.update(ausgaben_merkmal='e_datum')
+            self.assertStrEqual(self.obj7, '2000-01-01')
+            mag_qs.update(ausgaben_merkmal='monat')
+            self.assertStrEqual(self.obj7, 'Jg. 1-Jan')
+            mag_qs.update(ausgaben_merkmal='lnum')
+            self.assertStrEqual(self.obj7, '12 (Jg. 1)')
+            mag_qs.update(ausgaben_merkmal='num')
+            self.assertStrEqual(self.obj7, 'Jg. 1-12')
+            
+            

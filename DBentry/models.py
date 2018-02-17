@@ -228,60 +228,65 @@ class ausgabe(ComputedNameModel):
         # parameters that make up the name may have changed, update name accordingly
         self.update_name(force_update = True)
         
-    def get_name(self, **name_data):
-        #TODO: use the name_data, Luke
-        if not self.pk:
-            return "Keine Angaben zu dieser Ausgabe!"
-        #print('ausgabe: getting name')
-        info = concat_limit(str(self.info).split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
-        if self.sonderausgabe and self.info:
-            return info
-        jahre = concat_limit([jahr[2:] if i else jahr for i, jahr in enumerate([str(j.jahr) for j in self.ausgabe_jahr_set.all()])], sep="/")
-        if not jahre:
-            if self.jahrgang:
-                jahre = "Jg.{}".format(str(self.jahrgang))
-            else:
-                jahre = "k.A." #oder '(Jahr?)'
-          
-        if self.magazin.ausgaben_merkmal:
-        #TODO: not have this return str(None) if ausgaben_merkmal is set but the user does not provide a value
-            merkmal = self.magazin.ausgaben_merkmal
-            if merkmal == 'e_datum' and self.e_datum:
-                return str(self.e_datum)
-            set = getattr(self, 'ausgabe_{}_set'.format(merkmal))
-            if set.exists():
-                if merkmal == 'monat':
-                    return "{0}-{1}".format(jahre,"/".join([str(m.monat.abk) for m in set.all()]))
-                if merkmal == 'lnum':
-                    if jahre != "k.A.":
-                        jahre = " ({})".format(jahre)
-                        return concat_limit(set.all(), sep = "/") + jahre
-                    else:
-                        return concat_limit(set.all(), sep = "/")
-                return "{0}-{1}".format(jahre, concat_limit(set.all(), sep = "/", z=2))
-                
-        num = concat_limit(self.ausgabe_num_set.all(), sep="/", z=2)
-        if num:
-            return "{0}-{1}".format(jahre, num)
-            
-        monate = concat_limit(self.ausgabe_monat_set.values_list('monat__abk', flat=True), sep="/")
-        if monate:
-            return "{0}-{1}".format(jahre, monate)
-            
-        lnum = concat_limit(self.ausgabe_lnum_set.all(), sep="/", z=2)
-        if lnum:
-            if jahre == "k.A.":
-                return lnum
-            else:
-                return "{0} ({1})".format(lnum, jahre)
-                
-        if self.e_datum:
-            return str(self.e_datum)
-        elif self.info:
-            return info
-        else:
-            return "Keine Angaben zu dieser Ausgabe!"
+    name_composing_fields = [
+        'info', 'sonderausgabe', 'e_datum', 'jahrgang', 
+        'magazin__ausgaben_merkmal', 'ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat__abk'
+    ]
         
+    @classmethod
+    def _get_name(cls, **data):
+        # data provided by values_dict: { key: [value1, value2, ...], ... }
+        #TODO: write a method that cleans and flattens the data dict
+        info = data.get('info', [''])[0]
+        info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
+        if data.get('sonderausgabe', [False])[0] and info:
+            return info
+        
+        jahre = data.get('ausgabe_jahr__jahr', [])
+        jahre = [str(jahr)[2:] if i else str(jahr) for i, jahr in enumerate(jahre)]
+        jahre = concat_limit(jahre, sep="/")
+        jahrgang = data.get('jahrgang', [''])[0]
+        
+        if not jahre:
+            if jahrgang:
+                jahre = "Jg. {}".format(jahrgang)
+            else:
+                jahre = "k.A."
+                
+        e_datum = data.get('e_datum', [''])[0]
+        monate = concat_limit(data.get('ausgabe_monat__monat__abk', []), sep="/")
+        lnums = concat_limit(data.get('ausgabe_lnum__lnum', []), sep="/", z=2)
+        nums = concat_limit(data.get('ausgabe_num__num', []), sep="/", z=2)
+        merkmal = data.get('magazin__ausgaben_merkmal', [''])[0]
+        
+        if merkmal:
+            if  merkmal == 'e_datum' and e_datum:
+                return str(e_datum)
+            elif merkmal == 'monat' and monate:
+                return "{}-{}".format(jahre, monate)
+            elif merkmal == 'lnum' and lnums:
+                    if jahre == "k.A.":
+                        return lnums
+                    else:
+                        return "{} ({})".format(lnums, jahre)
+            elif nums:
+                return "{}-{}".format(jahre, nums)
+                
+        if nums:
+            return "{}-{}".format(jahre, nums)
+        if lnums:
+            if jahre == "k.A.":
+                return lnums
+            else:
+                return "{} ({})".format(lnums, jahre)
+        if e_datum:
+            return str(e_datum)
+        if monate:
+            return "{}-{}".format(jahre, monate)
+        if info:
+            return info
+        return "Keine Angaben zu dieser Ausgabe!"
+                
     def anz_artikel(self):
         return self.artikel_set.count()
     anz_artikel.short_description = 'Anz. Artikel'

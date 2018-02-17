@@ -171,6 +171,58 @@ def ausgabe_data_simple(cls):
     cls.obj2.ausgabe_monat_set.create(monat_id=12)
     
     cls.test_data = [cls.obj1, cls.obj2]
+    
+def ausgabe_data_str(cls):
+    cls.model = ausgabe
+    cls.mag = magazin.objects.create(magazin_name='Testmagazin')
+    cls.obj1 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=True)
+    
+    cls.obj2 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=False)
+    
+    cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
+    cls.obj3.ausgabe_jahr_set.create(jahr=2000)
+    cls.obj3.ausgabe_jahr_set.create(jahr=2001)
+    cls.obj3.ausgabe_num_set.create(num=1)
+    cls.obj3.ausgabe_num_set.create(num=2)
+    
+    cls.obj4 = ausgabe.objects.create(magazin=cls.mag)
+    cls.obj4.ausgabe_jahr_set.create(jahr=2000)
+    cls.obj4.ausgabe_jahr_set.create(jahr=2001)
+    cls.obj4.ausgabe_lnum_set.create(lnum=1)
+    cls.obj4.ausgabe_lnum_set.create(lnum=2)
+    
+    cls.obj5 = ausgabe.objects.create(magazin=cls.mag)
+    cls.obj5.ausgabe_jahr_set.create(jahr=2000)
+    cls.obj5.ausgabe_jahr_set.create(jahr=2001)
+    cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Januar', abk='Jan'))
+    cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Februar', abk='Feb'))
+    
+    cls.obj6 = ausgabe.objects.create(magazin=cls.mag, e_datum='2000-01-01') 
+    
+    cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5, cls.obj6]
+    
+    
+def band_data(cls):
+    cls.model = band
+    cls.obj1 = band.objects.create(band_name='Testband1')
+    cls.obj2 = band.objects.create(band_name='Testband2')
+    cls.obj3 = band.objects.create(band_name='Testband3')
+    
+    # m2o
+    cls.obj2.band_alias_set.create(alias='Coffee')
+    cls.obj3.band_alias_set.create(alias='Juice')
+    cls.obj3.band_alias_set.create(alias='Water')
+    
+    # m2m
+    genre1 = genre.objects.create(genre='Rock')
+    genre2 = genre.objects.create(genre='Jazz')
+    band.genre.through.objects.create(genre=genre1, band=cls.obj2)
+    band.genre.through.objects.create(genre=genre1, band=cls.obj3)
+    band.genre.through.objects.create(genre=genre2, band=cls.obj3)
+    
+    cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+    
+    
 
 def ausgabe_data():
     model = ausgabe

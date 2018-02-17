@@ -2,7 +2,7 @@
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.utils.encoding import force_text
 
-from .data import DataFactory, ausgabe_data_simple
+from .data import DataFactory, ausgabe_data_simple, band_data
 
 class TestDataMixin(object):
     
@@ -103,6 +103,13 @@ class AusgabeSimpleDataMixin(TestDataMixin):
     @classmethod
     def setUpTestData(cls):
         ausgabe_data_simple(cls)        
+        super().setUpTestData()
+        
+class BandDataMixin(TestDataMixin):
+    
+    @classmethod
+    def setUpTestData(cls):
+        band_data(cls)        
         super().setUpTestData()
         
 

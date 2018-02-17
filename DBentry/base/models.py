@@ -5,7 +5,7 @@ from django.utils.functional import cached_property
 from DBentry.managers import AusgabeQuerySet, MIZQuerySet        
 
 class BaseModel(models.Model):  
-    #TODO: Meta.attribute/property/get_exclude_fields? Right now, every class that defines exclude overwrites this base list -- which may not be such a bad thing
+    
     exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches 
     search_fields = []          # related fields to be included in searches
     
@@ -66,11 +66,11 @@ class BaseModel(models.Model):
         Returns the model's fields that are required.
         """
         #TODO: fld.null check?
-        #NOTE: Shouldn't it be: NOT fld.get_default() is None ??
         rslt = []
         for fld in cls._meta.fields:
             if not fld.auto_created and fld.blank == False:
                 if not fld.has_default() or fld.get_default() is None: 
+                    # fld either has no default or the default is None
                     if as_string:
                         rslt.append(fld.name)
                     else:
@@ -82,7 +82,6 @@ class BaseModel(models.Model):
         """
         Returns the model's fields that are used in admin, autocomplete and advanced search form searches.
         """
-        #TODO: check if all cls.search_fields are of this model
         rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
         if foreign:
             for fld in cls.get_foreignfields():
@@ -94,15 +93,15 @@ class BaseModel(models.Model):
                     rslt.add("{}__{}".format(fld.name, rel_fld))
         return rslt
         
-    def get_updateable_fields(obj):
+    def get_updateable_fields(self):
         """
-        Returns the obj's fields (as their names) that are empty or have their default value.
+        Returns the self's fields (as their names) that are empty or have their default value.
         Used by merge_records.
         """
         rslt = []
-        for fld in obj._meta.get_fields():
+        for fld in self._meta.get_fields():
             if fld.concrete and not fld.name.startswith('_'): # exclude 'private' fields
-                value = fld.value_from_object(obj)
+                value = fld.value_from_object(self)
                 if value in fld.empty_values:
                     # This field's value is 'empty' in some form or other
                     rslt.append(fld.name)
@@ -156,6 +155,8 @@ class ComputedNameModel(BaseModel):
     _name = models.CharField(max_length=200, editable=False, default=gettext_lazy("No data."))
     _changed_flag = models.BooleanField(editable=False, default=False)
     
+    name_composing_fields = []
+    
     exclude = ['_name', '_changed_flag', 'info', 'beschreibung', 'bemerkungen']
     
     def __init__(self, *args, **kwargs):
@@ -187,11 +188,9 @@ class ComputedNameModel(BaseModel):
         name_updated = False
         
         if not self.pk or '_name' in deferred and not force_update:
-            #TODO: or rather when ANY fields are in deferred? This would stop stop updating entirely when using .only()
-            #TODO: self.pk == None and force_update == True: raise an exception to warn the user that the object cannot be accessed via querysets if it hasnt been stored to the database
             # Abort the update if:
             # - this instance has not yet been saved to the database or 
-            # - the _name field is no actually part of the instance AND 
+            # - the _name field is not actually part of the instance AND 
             # - an update is not forced
             return name_updated
 
@@ -205,11 +204,13 @@ class ComputedNameModel(BaseModel):
         if force_update or changed_flag:
             # an update was scheduled or forced for this instance
             
+            if not self.name_composing_fields:
+                raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
             # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
-            name_data = dict(*self.qs().values(*deferred)) if deferred else {}
-            current_name = self.get_name(**name_data)
-            
-            fields_to_refresh = []
+            instance_data = {k:[v] for k, v in self.__dict__.items() if not k.startswith('_')}
+            name_data = self.qs().values_dict(* set(self.name_composing_fields).difference(self.__dict__) ).get(self.pk)
+            name_data.update(instance_data)
+            current_name = self._get_name(**name_data)
             
             if self._name != current_name:
                 # the name needs updating
@@ -223,8 +224,9 @@ class ComputedNameModel(BaseModel):
                 self._changed_flag = False
                 
         return name_updated
-        
-    def get_name(self, **kwargs):
+    
+    @classmethod
+    def _get_name(cls, **kwargs):
         raise NotImplementedError('Subclasses must implement this method.')
     
     def __str__(self):
