@@ -73,7 +73,19 @@ class DataFactory(object):
         else:
             raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
         return value
-
+    
+    def get_obj_dict(self, model):
+        obj_dict = {}
+        for fld in model.get_required_fields():
+            if fld.is_relation:
+                rel_attr_name = '_' + fld.related_model._meta.model_name
+                req_obj = getattr(self, rel_attr_name, None)
+                if req_obj is None or req_obj.pk is None:
+                    req_obj = self.create_obj(fld.related_model)
+            else:
+                req_obj = self.get_value(fld)
+            obj_dict[fld.name] = req_obj
+        return obj_dict
     
     _created = []
         
@@ -88,30 +100,34 @@ class DataFactory(object):
             if not hasattr(model, 'get_required_fields'):
                 # Auto-created through table (e.g. Favoriten)
                 return None
-            obj_dict = {}
-            for fld in model.get_required_fields():
-                if fld.is_relation:
-                    rel_attr_name = '_' + fld.related_model._meta.model_name
-                    req_obj = getattr(self, rel_attr_name, None)
-                    if req_obj is None or req_obj.pk is None:
-                        req_obj = self.create_obj(fld.related_model)
-                else:
-                    req_obj = self.get_value(fld)
-#                    if fld.has_default() and fld.get_default() is not None:
-#                        req_obj = fld.get_default()
-#                    elif fld.get_internal_type() in self.defaults:
-#                        req_obj = self.defaults[fld.get_internal_type()]
-#                    else:
-#                        raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
-                obj_dict[fld.name] = req_obj
-            try:
-                with transaction.atomic():
-                    obj = model.objects.create(**obj_dict)
-            except IntegrityError:
-                # Tried to create a duplicate of an unique object
-                # TODO: add a random bit to obj_dict to make it unique
+#            obj_dict = {}
+#            for fld in model.get_required_fields():
+#                if fld.is_relation:
+#                    rel_attr_name = '_' + fld.related_model._meta.model_name
+#                    req_obj = getattr(self, rel_attr_name, None)
+#                    if req_obj is None or req_obj.pk is None:
+#                        req_obj = self.create_obj(fld.related_model)
+#                else:
+#                    req_obj = self.get_value(fld)
+##                    if fld.has_default() and fld.get_default() is not None:
+##                        req_obj = fld.get_default()
+##                    elif fld.get_internal_type() in self.defaults:
+##                        req_obj = self.defaults[fld.get_internal_type()]
+##                    else:
+##                        raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
+#                obj_dict[fld.name] = req_obj
+            sanity = 10
+            while(sanity):
+                obj_dict = self.get_obj_dict(model)
+                try:
                     with transaction.atomic():
-                        obj = model.objects.get(**obj_dict)
+                        obj = model.objects.create(**obj_dict)
+                except IntegrityError:
+                    # Tried to create a duplicate of an unique object, try again with a new obj_dict
+                    sanity -=1
+                    continue
+                else:
+                    break
             self._created.append(obj)
             setattr(self, attr_name, obj)
         return obj

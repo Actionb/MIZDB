@@ -1,26 +1,16 @@
-from dal import autocomplete
-from DBentry.models import provenienz, ausgabe, geber, Favoriten
-from django.db.models import Q
-from django.utils.translation import ugettext as _
-from django.contrib.admin.utils import get_fields_from_path
-# Create your views here
 
-def log_addition(request, object):
-    from django.contrib.admin.options import get_content_type_for_model
-    from django.contrib.admin.models import LogEntry, ADDITION
-    from django.utils.encoding import force_text
-    return LogEntry.objects.log_action(
-        user_id=request.user.pk,
-        content_type_id=get_content_type_for_model(object).pk,
-        object_id=object.pk,
-        object_repr=force_text(object),
-        action_flag=ADDITION,
-        change_message='[{"added": {}}]',
-    )
-    
+from django.db.models import Q
+from django.utils.translation import gettext
+from django.contrib.admin.utils import get_fields_from_path
+
+from dal import autocomplete
+
+from DBentry.models import provenienz, ausgabe, geber, Favoriten
+from DBentry.logging import LoggingMixin
+# Create your views here    
 
 # AUTOCOMPLETE VIEWS
-class ACBase(autocomplete.Select2QuerySetView):
+class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     _flds = None
     
     def has_create_field(self):
@@ -29,7 +19,10 @@ class ACBase(autocomplete.Select2QuerySetView):
         return False
     
     def get_create_option(self, context, q):
-        """Form the correct create_option to append to results. IN GERMAN!"""
+        """Form the correct create_option to append to results."""
+        # Override:
+        # - to include a hook has_create_field() instead of just checking for if self.create_field (needed for ACProv)
+        # - to translate the create text
         create_option = []
         display_create_option = False
         if self.has_create_field() and q:
@@ -40,7 +33,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         if display_create_option and self.has_add_permission(self.request):
             create_option = [{
                 'id': q,
-                'text': _('Create "%(new_value)s"') % {'new_value': q},
+                'text': gettext('Create "%(new_value)s"') % {'new_value': q},
                 'create_id': True,
             }]
         return create_option
@@ -49,24 +42,6 @@ class ACBase(autocomplete.Select2QuerySetView):
     def flds(self):
         if not self._flds:
             self._flds = self.model.get_search_fields()
-            # Check if all flds in self.flds are of the model
-            for i, fld in enumerate(self._flds):
-                try:
-                    flds = get_fields_from_path(self.model, fld)
-                except:
-                    pass
-                else:
-                    if flds[0].model == self.model:
-                        # All is good, let's continue with the next field
-                        continue
-                # Either get_fields_from_path threw an error or the field is not of the model
-                try:
-                    del self._flds[fld]
-                except:
-                    try:
-                        self._flds.remove(i)
-                    except:
-                        continue
         return self._flds
         
     def do_ordering(self, qs):
@@ -116,9 +91,10 @@ class ACBase(autocomplete.Select2QuerySetView):
         
     def create_object(self, text):
         """Create an object given a text."""
+        # TODO: allow an **expression to create the object (ACProv) // let create_field be an expression?
         object = self.model.objects.create(**{self.create_field: text})
         if object and self.request:
-            log_addition(self.request, object)
+            self.log_addition(object)
         return object
         
     def get_queryset(self):
@@ -167,6 +143,16 @@ class ACBase(autocomplete.Select2QuerySetView):
         opts = self.model._meta
         codename = get_permission_codename('add', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
+    def get_result_value(self, result):
+        """Return the value of a result."""
+        #TODO: use values_list to reduce the overhead of creating instances
+        return str(result.pk)
+
+#    def get_result_label(self, result):
+#        """Return the label of a result."""
+#        #TODO: use values_list to reduce the overhead of creating instances
+#        return six.text_type(result)
         
 class ACProv(ACBase):
     
@@ -178,7 +164,7 @@ class ACProv(ACBase):
     def create_object(self, text):
         object = provenienz.objects.create(geber=geber.objects.create(name=text))
         if object and self.request:
-            log_addition(self.request, object)
+            self.log_addition(object)
         return object
         
 class ACAusgabe(ACBase):
