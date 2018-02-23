@@ -9,6 +9,8 @@ from .m2m import *
 from .utils import concat_limit
 from .managers import AusgabeQuerySet, CNQuerySet
 
+#TODO: fix search_fields order!
+
 class person(BaseModel):
     vorname = models.CharField(**CF_ARGS_B)
     nachname = models.CharField(default = 'unbekannt', **CF_ARGS)
@@ -103,7 +105,7 @@ class band(BaseModel):
     beschreibung = models.TextField(blank = True)
 
     dupe_fields = ['band_name', 'herkunft_id']
-    search_fields = ['band_alias__alias', 'musiker__kuenstler_name']
+    search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Band'

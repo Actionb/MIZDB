@@ -1,4 +1,5 @@
 import re
+import time
 
 from django.db import transaction
 from django.db.utils import IntegrityError
@@ -195,4 +196,31 @@ def get_relations_between_models(model1, model2):
             break 
      
     return field, rel 
-                     
+
+def timethis(func, *args, **kwargs):
+    ts = time.time()
+    r = func(*args, **kwargs)
+    te = time.time()
+    return te - ts
+    
+def num_queries(func=None, *args, **kwargs):
+    from django.test.utils import CaptureQueriesContext
+    from django.db import connections, DEFAULT_DB_ALIAS
+    using = kwargs.pop("using", DEFAULT_DB_ALIAS)
+    conn = connections[using]
+
+    context = CaptureQueriesContext(conn)
+    if func is None:
+        return context
+
+    with context as n:
+        func(*args, **kwargs)
+    return len(n)
+    
+def debug_queryfunc(func, *args, **kwargs):
+    with num_queries() as n:
+        t = timethis(func, *args, **kwargs)
+    n = len(n)
+    print("Time:", t)
+    print("Num. queries:", n)
+    return t, n

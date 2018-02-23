@@ -1,13 +1,13 @@
 from django.conf.urls import url,  include
 
-from .views import ACAusgabe, ACBase, ACProv
+from .views import ACAusgabe, ACBase, ACProv, ACAusgabe2, ACVDStrat
 from DBentry.models import *
 
 autocomplete_patterns = [
     url(r'^audio/$',        ACBase.as_view(model = audio, create_field = 'titel'),              name = "acaudio"), 
-    url(r'^ausgabe/$',      ACAusgabe.as_view(),                                                name = 'acausgabe'), 
+    url(r'^ausgabe/$',      ACAusgabe2.as_view(),                                                name = 'acausgabe'), 
     url(r'^autor/$',        ACBase.as_view(model = autor),                                      name = 'acautor'), 
-    url(r'^band/$',         ACBase.as_view(model = band, create_field='band_name'),             name = 'acband'),
+    url(r'^band/$',         ACVDStrat.as_view(model = band, create_field='band_name'),             name = 'acband'),
     url(r'^bildmaterial/$', ACBase.as_view(model = bildmaterial),                               name = "acbildmaterial"),
     url(r'^bland/$',        ACBase.as_view(model = bundesland),                                 name = 'acbland'),
     url(r'^buch/$',         ACBase.as_view(model = buch),                                       name = 'acbuch'), 
@@ -55,6 +55,7 @@ autocomplete_patterns_nocreate = [
 ]
 
 wip = [ 
+    url(r'^bandvd/$',         ACVDStrat.as_view(model = band, create_field='band_name'),             name = 'acband-vdstrat'),
 ]
 
 autocomplete_patterns += wip

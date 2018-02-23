@@ -58,11 +58,11 @@ class DataFactory(object):
         value = None
         t = fld.get_internal_type()
         if t in ('CharField', 'TextField'):
-            value = 'Test-{}'.format(random.randrange(100))
+            value = 'Test-{}'.format(random.randrange(10000))
         elif t in ('NullBooleanField', 'BooleanField'):
             value = random.choice([True, False])
         elif t in ('PositiveSmallIntegerField', 'SmallIntegerField', 'IntegerField', 'BigIntegerField', 'DurationField'):
-            value = random.randrange(100)
+            value = random.randrange(1000)
         elif t in ('DateField', 'DateTimeField'):
             value = "{y}-{m}-{d}".format(
                 y  = random.randrange(1900, 2017), 
@@ -289,3 +289,27 @@ def ort_data():
     
     return model, instance_list
         
+        
+def band_huge(cls, get_instances=False):
+    print("\n Creating test data...", end='')
+    cls.model = band
+    l = land.objects.create(land_name='Testland')
+    objects = [ort(pk=c, stadt='Test-{}'.format(c), land=l) for c in range(1, 5000)]
+    ort.objects.bulk_create(objects)
+    objects = [genre(pk=c, genre='Test-{}'.format(c)) for c in range(1, 5000)]
+    genre.objects.bulk_create(objects)
+    
+    objects = [band(pk=c, band_name='Test-{}'.format(c), herkunft_id=c) for c in range(1, 5000)]
+    band.objects.bulk_create(objects)
+    
+    objects = [musiker(pk=c, kuenstler_name='Test-{}'.format(c)) for c in range(1, 5000)]
+    musiker.objects.bulk_create(objects)
+    objects = [m2m_band_musiker(band_id=c, musiker_id=c) for c in range(1, 5000)]
+    m2m_band_musiker.objects.bulk_create(objects)
+    
+    objects = [band_alias(parent_id=c, alias='Test-{}'.format(5000-c)) for c in range(1, 5000)]
+    band_alias.objects.bulk_create(objects)
+    
+    print("...done.")
+    if get_instances:
+        cls.test_data = [band.objects.get(band_name='Test-{}'.format(c)) for c in range(1, 5000)]

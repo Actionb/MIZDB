@@ -5,7 +5,7 @@ from django.contrib.admin.utils import get_fields_from_path
 
 from dal import autocomplete
 
-from DBentry.models import provenienz, ausgabe, geber, Favoriten
+from DBentry.models import *
 from DBentry.logging import LoggingMixin
 # Create your views here    
 
@@ -27,7 +27,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         display_create_option = False
         if self.has_create_field() and q:
             page_obj = context.get('page_obj', None)
-            if page_obj is None or page_obj.number == 1:
+            if page_obj is None or not self.has_more(context):#or page_obj.number == 1:
                 display_create_option = True
 
         if display_create_option and self.has_add_permission(self.request):
@@ -81,6 +81,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
                     qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
                 return list(exact_match_qs)+list(startsw_qs)+list(qs)
         else:
+            #TODO: move this into a subclass
             # Fetch favorites if available
             try:
                 fav_config = Favoriten.objects.get(user=self.request.user)
@@ -143,16 +144,18 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         opts = self.model._meta
         codename = get_permission_codename('add', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
-
+    
     def get_result_value(self, result):
         """Return the value of a result."""
-        #TODO: use values_list to reduce the overhead of creating instances
+        if isinstance(result, (list, tuple)):
+            return result[0]
         return str(result.pk)
 
-#    def get_result_label(self, result):
-#        """Return the label of a result."""
-#        #TODO: use values_list to reduce the overhead of creating instances
-#        return six.text_type(result)
+    def get_result_label(self, result):
+        """Return the label of a result."""
+        if isinstance(result, (list, tuple)):
+            return result[1]
+        return str(result)
         
 class ACProv(ACBase):
     
@@ -173,20 +176,109 @@ class ACAusgabe(ACBase):
     
     def do_ordering(self, qs):
         return qs.resultbased_ordering()
+        
+class ACPrototype(ACBase):
+    
+    model = None
+    primary = []
+    suffix = {}
+    exact_match = False
+    _search_fields = []
+    
+    def get_create_option(self, context, q):
+        if self.exact_match:
+            # Don't show a create option when an exact match has been found.
+            return []
+        return super().get_create_option(context, q)
+    
+    def append_suffix(self, tuple_list, field, lookup=''):
+        if field + lookup in self.suffix:
+            return [
+                (pk, name + " ({})".format(self.suffix.get(field + lookup))) for pk, name in tuple_list
+            ]
+        elif field in self.suffix:
+            return [
+                (pk, name + " ({})".format(self.suffix.get(field))) for pk, name in tuple_list
+            ]
+        else:
+            return tuple_list
+    
+    @property
+    def search_fields(self):
+        if not self._search_fields:
+            self._search_fields = [fld for fld in self.model.get_search_fields() if fld not in self.primary]
+        return self._search_fields
+        
+    def get_namefield(self):
+        if hasattr(self, 'name_field') and self.name_field:
+            return self.name_field
+        if self.primary and self.primary[0]:
+            return self.primary[0]
+        raise AttributeError("No name_field declared.")
+        
+    def apply_q(self, qs):
+        print("View: Searching...")
+        qs = qs.values_list('pk', self.get_namefield())
+        rslt = []
+        ids_found = set()
+        
+        for search_field in self.primary:
+            search_results = qs.exclude(pk__in=ids_found).filter(**{search_field + '__iexact':self.q})
+            rslt.extend(self.append_suffix(search_results, search_field, '__iexact'))
+            ids_found.update(search_results.values_list('pk', flat=True))
+        self.exact_match = bool(ids_found)
+                    
+        for search_field in self.primary:
+            for lookup in ('__istartswith', '__icontains'):
+                search_results = qs.exclude(pk__in=ids_found).filter(**{search_field + lookup:self.q})
+                rslt.extend(self.append_suffix(search_results, search_field, lookup))
+                ids_found.update(search_results.values_list('pk', flat=True))
+        
+        for search_field in self.search_fields:
+            for lookup in ('__iexact', '__istartswith'):
+                search_results = qs.exclude(pk__in=ids_found).filter(**{search_field + lookup:self.q})
+                rslt.extend(self.append_suffix(search_results, search_field, lookup))
+                ids_found.update(search_results.values_list('pk', flat=True))
+                
+        weak_hits = []
+        
+        for search_field in self.search_fields:
+            search_results = qs.exclude(pk__in=ids_found).filter(**{search_field + '__icontains':self.q})
+            weak_hits.extend(self.append_suffix(search_results, search_field, '__icontains'))
+            ids_found.update(search_results.values_list('pk', flat=True))
+        if weak_hits:
+            #rslt.append((0, '--- schwache Treffer für "{}" ---'.format(self.q)))
+            rslt.append((0, '1234567890'*4))
+            rslt.extend(weak_hits)
+        return rslt
+      
+    
+class ACAusgabe2(ACPrototype):
+    #TODO: VDStrat this
+    
+    model = ausgabe
+    primary = ['_name']
+    suffix = {
+        'ausgabe_monat__monat__monat':'Monat', 
+        'sonderausgabe':'Sonderausgabe', 
+        'ausgabe_lnum__lnum':'Lnum', 
+        'e_datum':'E.datum', 
+        'status':'Status', 
+        'ausgabe_num__num':'Num', 
+        'jahrgang':'Jahrgang', 
+        'ausgabe_monat__monat__abk':'Monat Abk.', 
+        'ausgabe_jahr__jahr' : 'Jahr'
+        }
+        
+class ACVDStrat(ACPrototype):
+    
+    model = band
+    primary = ['band_name', 'band_alias__alias']
+    suffix = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
     
     def apply_q(self, qs):
-        if self.q:
-            if self.forwarded:
-                str_dict = {i:i.__str__() for i in qs}
-                filtered = [k for k, v in str_dict.items() if self.q in v]
-                if filtered:
-                    return filtered
-            qitems = ausgabe.strquery(self.q)
-            if qitems:
-                # strquery returned something useful
-                for q in qitems:
-                    qs = qs.filter(*q)
-            else:
-                qs = super(ACAusgabe, self).apply_q(qs)
-        return qs
-                
+        from DBentry.query import VDStrat
+        strat = VDStrat(qs, self.q, name_field='band_name', primary_fields = self.primary)
+        strat.suffix = self.suffix.copy()
+        rslt, self.exact_match = strat.search()
+        return rslt
