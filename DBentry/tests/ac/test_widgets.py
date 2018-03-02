@@ -41,8 +41,22 @@ class TestEasyWidgetWrapper(TestCase):
         self.info = (rel_opts.app_label, rel_opts.model_name) 
     
     def test_get_related_url(self):
+        #TODO: - /admin/DBentry/spielort/__fk__/change/
+        #?                 ^^ ----
+        #+ /admin/DBentry/ausgabe/__fk__/change/
+        # WTF?
+
+        form = ArtikelForm()
+        self.widget = wrap_dal_widget(form.fields['ausgabe'].widget)
+        rel_opts = self.widget.related_model._meta 
+        self.info = (rel_opts.app_label, rel_opts.model_name) 
         url = self.widget.get_related_url(self.info, 'change', '__fk__')
-        self.assertEqual(url, "/admin/DBentry/ausgabe/__fk__/change/")
+        print("\n form fields", form.fields)
+        print("form widget related_model", form.fields['ausgabe'].widget.choices.queryset.model._meta)
+        print("self.info", self.info)
+        print("self.widget", self.widget)
+        print("rel_opts", self.widget.related_model._meta)
+        self.assertEqual(url, "/admin/DBentry/ausgabe/__fk__/change/", msg='info: {}'.format(self.info))
         
         url = self.widget.get_related_url(self.info, 'add')
         self.assertEqual(url, "/admin/DBentry/ausgabe/add/")

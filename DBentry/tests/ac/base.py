@@ -44,7 +44,7 @@ class ACViewTestMethodMixin(object):
     def test_apply_q(self):
         # Test that an object can be found through any of its search_fields
         view = self.view()
-        search_fields = view.flds
+        search_fields = view.search_fields
         for search_field in search_fields:
             q = self.qs_obj1.values_list(search_field, flat=True).first()
             if q:
@@ -64,8 +64,8 @@ class ACViewTestMethodMixin(object):
         expected = self.queryset.values_list('pk', flat=True)
         self.assertListEqualSorted(qs, expected)
     
-    def test_flds_prop(self):
-        self.assertListEqualSorted(self.view().flds, self.model.get_search_fields())
+    def test_search_fields_prop(self):
+        self.assertListEqualSorted(self.view().search_fields, self.model.get_search_fields())
         
     def test_get_create_option(self):
         request = self.get_request()

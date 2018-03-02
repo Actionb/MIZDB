@@ -1,9 +1,16 @@
-from django.db import models, transaction
-from django.db.utils import OperationalError
 
-from .printer.printer import *
+from collections import OrderedDict
+
+from django.db import models, transaction
 
 class MIZQuerySet(models.QuerySet):
+    
+    def find(self, q, **kwargs):
+        #TODO: choose strategy
+        from .query import ValuesDictStrategy
+        strat = ValuesDictStrategy(self, **kwargs)
+        result, exact_match = strat.search(q)
+        return result
         
     def values_dict(self, *flds, include_empty = False, **expressions):
         """
@@ -39,7 +46,7 @@ class MIZQuerySet(models.QuerySet):
                 flds.append('pk')
                 pk_name = 'pk'
                 
-        rslt = {}
+        rslt = OrderedDict()
         for val_dict in self.values(*flds, **expressions):
             id = val_dict.pop(pk_name)
             if id in rslt:
@@ -91,6 +98,12 @@ class MIZQuerySet(models.QuerySet):
 class CNQuerySet(MIZQuerySet):
     
     _updated = False
+    
+    def find(self, q, **kwargs):
+        from .query import ValuesDictStrategy
+        strat = ValuesDictStrategy(self, **kwargs)
+        result, exact_match = strat.search(q)
+        return result
     
     def bulk_create(self, objs, batch_size=None):
         # Set the _changed_flag on the objects to be created

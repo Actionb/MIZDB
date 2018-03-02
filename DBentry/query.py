@@ -20,7 +20,7 @@ class BaseStrategy(object):
         self.pre_filter = pre_filter
         self._root_queryset = queryset
         self.ids_found = set()
-        self.suffix = suffix or {}
+        self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes')
         self.exact_match = False
         self.use_cache = use_cache
         if not self.use_cache:
@@ -105,7 +105,7 @@ class PrimaryFieldsStrategy(BaseStrategy):
     A search strategy that can separate 'useful' results from 'weak' results.
     """
     
-    primary_fields = []
+    primary_search_fields = []
     weak_hits_sep = gettext_lazy('weak hits for "{q}"')
     separator_width = 36 # Select2 result box is 36 digits wide
     
@@ -133,12 +133,14 @@ class PrimaryFieldsStrategy(BaseStrategy):
         return exact
         
     def _search(self, q):
+        #TODO: include 'startsw_search' in weak_hits for secondary_search_fields?
         rslt = []
         for search_field in self.primary_search_fields:
             rslt.extend(self.exact_search(search_field, q) + self.startsw_search(search_field, q) + self.contains_search(search_field, q))
         for search_field in self.secondary_search_fields:
             rslt.extend(self.exact_search(search_field, q) + self.startsw_search(search_field, q))
-            
+        
+        #TODO: do not include the separator if there haven't been any results yet?
         weak_hits = [(0, self.get_separator(q))]
         for search_field in self.secondary_search_fields:
             weak_hits.extend(self.contains_search(search_field, q))

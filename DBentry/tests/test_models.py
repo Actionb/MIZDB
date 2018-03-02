@@ -538,12 +538,7 @@ class TestModelBase(DataTestCase):
         self.assertListEqualSorted(self.model.get_required_fields(True), ['ausgabe', 'schlagzeile', 'seite'])
         
     def test_get_search_fields(self):
-        expected = [
-            'ausgabe__ausgabe_lnum__lnum', 'ausgabe__ausgabe_num__num', 'ausgabe__jahrgang', 
-            'ausgabe__ausgabe_monat__monat__monat', 'seitenumfang', 'ausgabe__sonderausgabe', 
-            'zusammenfassung', 'ausgabe__status', 'schlagzeile', 'seite', 'ausgabe__e_datum', 
-            'ausgabe__ausgabe_jahr__jahr', 'ausgabe__ausgabe_monat__monat__abk', 'ausgabe___name', 'info'
-        ]
+        expected = ['schlagzeile', 'zusammenfassung', 'info']
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
         
     def test_get_updateable_fields(self):

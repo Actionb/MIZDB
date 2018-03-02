@@ -143,6 +143,8 @@ def model_from_string(model_name):
         return apps.get_model('DBentry', model_name)
     except LookupError:
         return None
+#TODO: rename model_from_string to get_model_from_string
+get_model_from_string = model_from_string
 
 def split_field(field_name, data, separators = [',']):
     """ Splits the content of data[field_name] according to separators and merges the new values back into a list of dicts."""

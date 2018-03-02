@@ -11,7 +11,7 @@ from django.db.models.manager import BaseManager
 
 from .models import *
 from .constants import ATTRS_TEXTAREA
-from DBentry.ac.widgets import wrap_dal_widget
+from DBentry.ac.widgets import wrap_dal_widget, MIZModelSelect2
 
 from dal import autocomplete
 
@@ -31,7 +31,7 @@ WIDGETS = {
             'video'         :   autocomplete.ModelSelect2(url='acvideo'),
             
             # Artikel
-            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['ausgabe__magazin']), 
+            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin']), 
             
             # Audio
             'sender' : autocomplete.ModelSelect2(url='acsender'), 
@@ -52,7 +52,7 @@ WIDGETS = {
             
             # Buch
             buch : {
-                'verlag' : autocomplete.ModelSelect2(url='acverlag'), 
+                'verlag' : MIZModelSelect2(url='accapture', model_name='verlag', create_field='verlag_name'), 
                 'verlag_orig' : autocomplete.ModelSelect2(url='acverlag'), 
                 'sprache' : autocomplete.ModelSelect2(url='acsprache'), 
                 'sprache_orig' : autocomplete.ModelSelect2(url='acsprache'),
@@ -177,12 +177,16 @@ def makeForm(model, fields = [], form_class = None):
     #Check if a proper Form already exists:
     if hasattr(thismodule, formname):
         return getattr(thismodule, formname)
-       
-    #Otherwise use modelform_factory to create a generic Form with custom widgets
-    widget_list =  WIDGETS
-    if model in WIDGETS:
-        widget_list = WIDGETS[model]
+    from DBentry.ac.widgets import make_widget
+    widget_list = {}
+    for field in model.get_foreignfields():
+        widget_list[field.name] = make_widget(field.related_model._meta.model_name, wrap=False, create_field=field.related_model.create_field)
+#    #Otherwise use modelform_factory to create a generic Form with custom widgets
+#    widget_list =  WIDGETS
+#    if model in WIDGETS:
+#        widget_list = WIDGETS[model]
     return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widget_list) 
+
 
 class AusgabeMagazinFieldForm(FormBase):
     """
@@ -197,7 +201,7 @@ class AusgabeMagazinFieldForm(FormBase):
                                     widget = wrap_dal_widget(autocomplete.ModelSelect2(url='acmagazin'))) 
     class Meta:
         widgets = {'ausgabe': autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
-                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählena!'}),
+                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),
                                     }
                                     
     def __init__(self, *args, **kwargs):

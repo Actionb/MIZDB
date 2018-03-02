@@ -36,21 +36,18 @@ class StrategyTestCase(DataTestCase):
         
         super().setUpTestData()
         
-    def strat(self, queryset=None, search_fields = None, suffix = None, use_cache = False, pre_filter = True, **kwargs):
+    def append_suffix(self, strat, obj, search_field, lookup):
+        return strat.append_suffix(obj, search_field, lookup)
+        
+    def strat(self, queryset=None, search_fields = None, suffix = None, **kwargs):
         queryset = queryset or self.queryset
         search_fields = search_fields or self.search_fields
         suffix = suffix or self.suffix
-        return self.strat_class(queryset, search_fields=search_fields, suffix=suffix, use_cache = use_cache, pre_filter = pre_filter, **kwargs)
+        return self.strat_class(queryset, search_fields=search_fields, suffix=suffix, **kwargs)
 
 class TestBaseStrategy(StrategyTestCase):
     
     strat_class = BaseStrategy
-        
-    def strat(self, queryset=None, search_fields = None, suffix = None, use_cache = False, pre_filter = True):
-        queryset = queryset or self.queryset
-        search_fields = search_fields or self.search_fields
-        suffix = suffix or self.suffix
-        return self.strat_class(queryset, search_fields=search_fields, suffix=suffix, use_cache = use_cache, pre_filter = pre_filter)
     
     def test_get_queryset(self):
         q = 'Rose'
@@ -94,28 +91,28 @@ class TestBaseStrategy(StrategyTestCase):
         q = 'AC/DC'
         strat = self.strat()
         search_field = 'band_name'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.exact_search(search_field, q), expected)
         self.assertTrue(strat.exact_match)
         
         q = 'ACDC'
         strat = self.strat()
         search_field = 'band_alias__alias'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.exact_search(search_field, q), expected)
         self.assertTrue(strat.exact_match)
         
         q = 'Axl Rose'
         strat = self.strat()
         search_field = 'musiker__kuenstler_name'
-        expected = strat.append_suffix([self.obj1, self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.exact_search(search_field, q), expected)
         self.assertTrue(strat.exact_match)
         
         q = 'Axel Rose'
         strat = self.strat()
         search_field = 'musiker__musiker_alias__alias'
-        expected = strat.append_suffix([self.obj1, self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.exact_search(search_field, q), expected)
         self.assertTrue(strat.exact_match)
         
@@ -129,26 +126,25 @@ class TestBaseStrategy(StrategyTestCase):
         q = 'AC/'
         strat = self.strat()
         search_field = 'band_name'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
-        self.assertListEqualSorted(strat.startsw_search(search_field, q), expected)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
+        self.assertListEqualSorted(strat.startsw_search(search_field, q), expected, msg="strat: {}".format(strat))
         
-        #['band_name', 'band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
         q = 'ACD'
         strat = self.strat()
         search_field = 'band_alias__alias'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.startsw_search(search_field, q), expected)
         
         q = 'Axl'
         strat = self.strat()
         search_field = 'musiker__kuenstler_name'
-        expected = strat.append_suffix([self.obj1, self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.startsw_search(search_field, q), expected)
         
         q = 'Axel'
         strat = self.strat()
         search_field = 'musiker__musiker_alias__alias'
-        expected = strat.append_suffix([self.obj1, self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.startsw_search(search_field, q), expected)
         
     def test_contains_search(self):
@@ -161,26 +157,26 @@ class TestBaseStrategy(StrategyTestCase):
         q = 'C/D'
         strat = self.strat()
         search_field = 'band_name'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.contains_search(search_field, q), expected)
         
         #['band_name', 'band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
         q = 'CD'
         strat = self.strat()
         search_field = 'band_alias__alias'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.contains_search(search_field, q), expected)
         
         q = 'xl R'
         strat = self.strat()
         search_field = 'musiker__kuenstler_name'
-        expected = strat.append_suffix([self.obj1, self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.contains_search(search_field, q), expected)
         
         q = 'xel R'
         strat = self.strat()
         search_field = 'musiker__musiker_alias__alias'
-        expected = strat.append_suffix([self.obj1, self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj2], search_field, lookup)
         self.assertListEqualSorted(strat.contains_search(search_field, q), expected)
         
     def test_search(self):
@@ -219,13 +215,13 @@ class TestBaseStrategy(StrategyTestCase):
     def test_search_caching(self):
         pass
     
-class TestPrimStrategy(StrategyTestCase):
+class TestPrimStrategy(TestBaseStrategy):
     
     strat_class = PrimaryFieldsStrategy
     
-    def strat(self, primary_search_fields=None):
+    def strat(self, primary_search_fields=None, **kwargs):
         primary_search_fields = primary_search_fields or self.primary_search_fields
-        return super().strat(primary_search_fields=primary_search_fields)
+        return super().strat(primary_search_fields=primary_search_fields, **kwargs)
         
     def test_get_separator(self):
         q = 'Test'
@@ -272,69 +268,94 @@ class TestPrimStrategy(StrategyTestCase):
         # Exact primary field match first
         lookup = '__iexact'
         search_field = 'band_name'
-        expected = strat.append_suffix([rose_band], search_field, lookup)
+        expected = self.append_suffix(strat, [rose_band], search_field, lookup)
         self.assertEqual([search_results[0]], expected)
         
         # Primary startsw matches next
         lookup = '__istartswith'
         search_field = 'band_name'
-        expected = strat.append_suffix([self.obj4], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj4], search_field, lookup)
         self.assertEqual([search_results[1]], expected)
         
         # Then primary contains matches
         lookup = '__istartswith'
         search_field = 'band_name'
-        expected = strat.append_suffix([self.obj1, self.obj5], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj1, self.obj5], search_field, lookup)
         self.assertEqual(search_results[2:4], expected)
         
         lookup = '__istartswith'
         search_field = 'band_alias__alias'
-        expected = strat.append_suffix([self.obj6], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj6], search_field, lookup)
         self.assertEqual([search_results[4]], expected)
         
         # Then secondary exact_matches
         lookup = '__iexact'
         search_field = 'musiker__kuenstler_name'
-        expected = strat.append_suffix([some_other_band], search_field, lookup)
+        expected = self.append_suffix(strat, [some_other_band], search_field, lookup)
         self.assertEqual([search_results[5]], expected)
         
         # Then secondary startsw matches
         lookup = '__istartswith'
         search_field = 'musiker__kuenstler_name'
-        expected = strat.append_suffix([yet_another_band], search_field, lookup)
+        expected = self.append_suffix(strat, [yet_another_band], search_field, lookup)
         self.assertEqual([search_results[6]], expected)
         
         # Finally, weak hits --- a separator followed by secondary contains matches
         self.assertEqual(search_results[7], (0, strat.get_separator(q)))
         lookup = '__icontains'
         search_field = 'musiker__kuenstler_name'
-        expected = strat.append_suffix([self.obj2], search_field, lookup)
+        expected = self.append_suffix(strat, [self.obj2], search_field, lookup)
         self.assertEqual([search_results[8]], expected)
         
     
-class TestNameStrategy(StrategyTestCase):
+class TestNameStrategy(TestPrimStrategy):
     
     strat_class = NameFieldStrategy
     
-    def strat(self, name_field=None):
+    def strat(self, name_field=None, **kwargs):
         name_field = name_field or self.name_field
-        return super().strat(name_field=name_field, primary_search_fields=self.primary_search_fields)
+        return super().strat(name_field=name_field, **kwargs)#, primary_search_fields=self.primary_search_fields)
+        
+    def append_suffix(self, strat, obj, search_field, lookup):
+        tuple_list = [(o.pk, getattr(o, self.name_field)) for o in obj]
+        return strat.append_suffix(tuple_list, search_field, lookup)
+        
+    def test_init(self):
+        # Set name_field from primary_search_fields or seconary_search_fields
+        self.assertEqual(self.strat(name_field = '').name_field, 'band_name')
+        self.assertEqual(self.strat(primary_search_fields=[]).name_field, 'band_name')
         
     def test_append_suffix(self):
         # expects a list of tuples --- tuple_list, field, lookup=''
-        pass
+        expected = [(self.obj2.pk, 'AC/DC (Band-Alias)')]
+        self.assertEqual(self.strat().append_suffix(tuple_list=[(self.obj2.pk, 'AC/DC')], field='band_alias__alias'), expected)
     
-class TestVDStrategy(StrategyTestCase):
+class TestVDStrategy(TestNameStrategy):
     
     strat_class = ValuesDictStrategy
+    
+    def strat(self, values_dict=None, **kwargs):
+        strat = super().strat(**kwargs)
+        strat.values_dict = values_dict or self.queryset.values_dict(*self.search_fields) 
+        return strat
+        
+    def append_suffix(self, strat, obj, search_field, lookup):
+        rslt = []
+        for o in obj:
+            rslt.extend(strat.append_suffix(o.pk, getattr(o, self.name_field), search_field, lookup))
+        return rslt
         
     def test_append_suffix(self):
         # expects two arguments over the usual one --- pk, name, field, lookup=''
-        pass
+        expected = [(self.obj2.pk, 'AC/DC (Band-Alias)')]
+        self.assertEqual(self.strat().append_suffix(pk=self.obj2.pk, name='AC/DC', field='band_alias__alias'), expected)
     
-    def test_do_lookup(self):
-        pass
+#    def test_do_lookup(self):
+#        pass
         
     def test_search(self):
-        pass
-    
+        # Assert that the strategy's values_dict is reset 
+        strat = self.strat()
+        strat.values_dict = {1:'invalid'}
+        rslt = strat.search('rose')
+        self.assertTrue(len(rslt)>1)

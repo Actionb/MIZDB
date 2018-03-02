@@ -50,7 +50,7 @@ class TestModelBase(AdminTestCase):
         
     
     def test_get_search_fields(self):
-        expected = {'info', 'seitenumfang', 'zusammenfassung', 'seite', 'schlagzeile'}
+        expected = ['schlagzeile', 'zusammenfassung', 'info']
         self.assertEqual(self.model_admin.get_search_fields(), expected)
     
     def test_add_crosslinks(self):

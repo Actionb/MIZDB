@@ -593,6 +593,12 @@ class BuchAdmin(ModelBase):
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
     exclude = ['autor']
     
+    advanced_search_form = {
+        'selects' : ['verlag', 'sprache'], 
+        'simple' : [], 
+        'labels' : {}, 
+    }
+    
 @admin.register(dokument, site=miz_site)
 class DokumentAdmin(ModelBase):
     infields = [BestandInLine]

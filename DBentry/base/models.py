@@ -6,7 +6,19 @@ from DBentry.managers import AusgabeQuerySet, MIZQuerySet
 class BaseModel(models.Model):  
     
     exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches 
-    search_fields = []          # related fields to be included in searches
+    search_fields = []          # fields to be included in searches
+    
+    primary_search_fields = []  
+    # any search result from a search on a field that is in search_fields but not in primary_search_fields 
+    # will be flagged as a 'weak hit' (.find()/autocomplete: and thus be visually separated from the other results).
+    
+    search_fields_suffixes = {}
+    # A dictionary of search_fields and their suffixes that will be appended to search results 
+    # when using certain search strategies (queryset.find() or autocomplete views). 
+    # The suffixes will 'tell' the user why exactly they have found a particular result.
+    
+    create_field = None
+    # autocomplete create_field
     
     objects = MIZQuerySet.as_manager()
     
@@ -77,9 +89,16 @@ class BaseModel(models.Model):
     
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
+        #TODO: order matters! 
         """
-        Returns the model's fields that are used in admin, autocomplete and advanced search form searches.
+        Returns the model's fields that are used in admin, autocomplete and advanced search form(? really?) searches.
         """
+        rslt = cls.search_fields.copy()
+        for field in cls.get_basefields(as_string=True):
+            if field not in rslt:
+                rslt.append(field)
+        return rslt
+        return cls.search_fields
         rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
         if foreign:
             for fld in cls.get_foreignfields():
@@ -172,8 +191,9 @@ class ComputedNameModel(BaseModel):
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         # Include _name in the search_fields
+        #TODO: super() might return a list now
         search_fields = super().get_search_fields(foreign, m2m)
-        search_fields.add('_name')
+        search_fields.insert(0,'_name')
         return search_fields
         
     def update_name(self, force_update = False):

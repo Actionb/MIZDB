@@ -12,6 +12,7 @@ from .managers import AusgabeQuerySet, CNQuerySet
 #TODO: fix search_fields order!
 
 class person(BaseModel):
+    #TODO: ComputedNameModel + new strat attributes
     vorname = models.CharField(**CF_ARGS_B)
     nachname = models.CharField(default = 'unbekannt', **CF_ARGS)
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
@@ -50,6 +51,9 @@ class musiker(BaseModel):
     beschreibung = models.TextField(blank = True)
     
     search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
+    primary_search_fields = []
+    search_fields_suffixes = {'person__vorname':'Vorname', 'person__nachname':'Nachname', 'musiker_alias__alias':'Alias'}
+    
     dupe_fields = ['kuenstler_name', 'person']
     
     class Meta(BaseModel.Meta):
@@ -80,6 +84,8 @@ class genre(BaseModel):
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
     
     search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
+    primary_search_fields = ['genre']
+    search_fields_suffixes = {'obergenre__genre': 'Obergenre', 'genre_alias__alias': 'Alias'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
@@ -106,6 +112,8 @@ class band(BaseModel):
 
     dupe_fields = ['band_name', 'herkunft_id']
     search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
+    primary_search_fields = ['band_name', 'band_alias__alias']
+    search_fields_suffixes = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Band'
@@ -132,7 +140,10 @@ class autor(BaseModel):
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
-    search_fields = ['person__vorname', 'person__nachname']
+    search_fields = ['kuerzel', 'person__vorname', 'person__nachname']
+    primary_search_fields = []
+    search_fields_suffixes = {}
+    
     dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
     class Meta(BaseModel.Meta):
@@ -191,7 +202,18 @@ class ausgabe(ComputedNameModel):
                     'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
                     
     search_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
-                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']
+                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'info']
+    primary_search_fields = ['_name']
+    search_fields_suffixes = {
+        'ausgabe_monat__monat__monat':'Monat',
+        'ausgabe_lnum__lnum':'lfd. Num', 
+        'e_datum':'E.datum', 
+        'ausgabe_num__num':'Num', 
+        'jahrgang':'Jahrgang', 
+        'ausgabe_monat__monat__abk':'Monat Abk.', 
+        'ausgabe_jahr__jahr' : 'Jahr', 
+        'info' : 'Info-Text', 
+        }
     
     objects = AusgabeQuerySet.as_manager()
     
@@ -432,6 +454,7 @@ class monat(BaseModel):
         
         
 class magazin(BaseModel):
+    #TODO: remove either info or beschreibung
     TURNUS_CHOICES = [('u', 'unbekannt'), 
         ('t','täglich'), ('w','wöchentlich'), ('w2','zwei-wöchentlich'), ('m','monatlich'), ('m2','zwei-monatlich'), 
         ('q','quartalsweise'), ('hj','halbjährlich'), ('j','jährlich')]
@@ -451,6 +474,9 @@ class magazin(BaseModel):
     ort = models.ForeignKey('ort', null = True, blank = True, verbose_name = 'Hrsg.Ort', on_delete = models.SET_NULL)
     
     exclude = ['ausgaben_merkmal', 'info', 'magazin_url', 'turnus', 'erstausgabe']
+    search_fields = ['magazin_name']
+    primary_search_fields = []
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Magazin'
@@ -469,6 +495,8 @@ class verlag(BaseModel):
     verlag_name = models.CharField('verlag', **CF_ARGS)
     sitz = models.ForeignKey('ort',  null = True,  blank = True, on_delete = models.SET_NULL)
     
+    create_field = 'verlag_name'
+    
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
         verbose_name_plural = 'Verlage'
@@ -476,11 +504,19 @@ class verlag(BaseModel):
 
 
 class ort(BaseModel):
+    #TODO: *maybe* ComputedNameModel? Yes! Because 'stadt' is not necessarily set and ValuesDictStrat needs a name_field
     stadt = models.CharField(**CF_ARGS_B)
     bland = models.ForeignKey('bundesland', verbose_name = 'Bundesland',  null = True,  blank = True, on_delete = models.PROTECT)
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
+    primary_search_fields = []
+    search_fields_suffixes = {
+        'land__code' : 'Land-Code', 
+        'bland__code' : 'Bundesland-Code', 
+        'bland__bland_name' : 'Bundesland', 
+        'land_name' : 'Land'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Ort'
@@ -509,6 +545,10 @@ class bundesland(BaseModel):
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['bland_name', 'code']
+    primary_search_fields = []
+    search_fields_suffixes = {
+        'code':'Bundesland-Code'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Bundesland'
@@ -522,6 +562,10 @@ class land(BaseModel):
     code = models.CharField(max_length = 4,  unique = True)
     
     search_fields = ['land_name', 'code']
+    primary_search_fields = []
+    search_fields_suffixes = {
+        'code':'Land-Code'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Land'
@@ -536,6 +580,8 @@ class schlagwort(BaseModel):
     ober = models.ForeignKey('self', related_name = 'oberschl', verbose_name = 'Oberbegriff', null = True,  blank = True)
     
     search_fields = ['schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias']
+    primary_search_fields = []
+    search_fields_suffixes = {'oberschl__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias': 'Alias'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
@@ -579,7 +625,12 @@ class artikel(BaseModel):
     spielort = models.ManyToManyField('spielort', through = m2m_artikel_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_artikel_veranstaltung)
     
-    search_fields = {'schlagzeile', 'zusammenfassung', 'seite', 'seitenumfang', 'info'}
+    search_fields = ['schlagzeile', 'zusammenfassung', 'info']
+    primary_search_fields = ['schlagzeile']
+    search_fields_suffixes = {
+        'zusammenfassung' : 'Zusammenfassung', 
+        'info' : 'Info-Text'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
@@ -635,6 +686,8 @@ class buch(BaseModel):
     autor = models.ManyToManyField('autor',  through = m2m_buch_autor)
     
     search_fields = ['titel']
+    primary_search_fields = []
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -652,7 +705,12 @@ class instrument(BaseModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
     kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS)
     
-    search_fields = ['instrument', 'kuerzel']
+    search_fields = ['instrument', 'instrument_alias__alias', 'kuerzel']
+    primary_search_fields = ['instrument']
+    search_fields_suffixes = {
+        'instrument_alias__alias' : 'Alias', 
+        'kuerzel' : 'Kürzel'
+    }
     
     class Meta(BaseModel.Meta):
         ordering = ['instrument', 'kuerzel']
@@ -691,6 +749,8 @@ class audio(BaseModel):
     ort = models.ManyToManyField('ort', through = m2m_audio_ort)
     
     search_fields = ['titel']
+    primary_search_fields = []
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -794,10 +854,15 @@ class sender_alias(BaseAliasModel):
     
     
 class spielort(BaseModel):
+    #TODO: search for ort___name
     name = models.CharField(**CF_ARGS)
     ort = models.ForeignKey('ort')
     
-    search_fields = ['name']
+    search_fields = ['name', 'spielort_alias__alias']
+    primary_search_fields = ['name']
+    search_fields_suffixes = {
+        'spielort_alias__alias':'Alias', 
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -842,7 +907,11 @@ class veranstaltung(BaseModel):
     band = models.ManyToManyField('band', verbose_name = 'Teilnehmer (Bands)',  through = m2m_veranstaltung_band)
     #NYI: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
     
-    search_fields = ['name']
+    search_fields = ['name', 'veranstaltung_alias__alias']
+    primary_search_fields = []
+    search_fields_suffixes = {
+        'veranstaltung_alias__alias' : 'Alias', 
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
@@ -869,6 +938,8 @@ class video(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_video_veranstaltung)
     
     search_fields = ['titel']
+    primary_search_fields = []
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
