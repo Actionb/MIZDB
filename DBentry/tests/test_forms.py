@@ -110,7 +110,9 @@ class TestMIZAdminForm(FormTestCase):
         'wrap_me' : forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin')), 
     }
     
+    @expectedFailure
     def test_init(self):
+        # Wrapping is now done via make_widget
         # everything wrapped?
         from DBentry.ac.widgets import EasyWidgetWrapper
         form = self.get_dummy_form()

@@ -1,5 +1,6 @@
 import re
 import time
+from collections import Iterable
 
 from django.db import transaction
 from django.db.utils import IntegrityError
@@ -100,7 +101,6 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
                                force_text(obj))
-                        
 
     try:
         admin_url = reverse('%s:%s_%s_change'
@@ -226,3 +226,15 @@ def debug_queryfunc(func, *args, **kwargs):
     print("Time:", t)
     print("Num. queries:", n)
     return t, n
+    
+def flatten_dict(d, exclude=[]):
+    rslt = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            rslt[k] = flatten_dict(v, exclude)
+        elif k not in exclude and isinstance(v, Iterable) and not isinstance(v, str) and len(v)==1:
+            rslt[k] = v[0]
+        else:
+            rslt[k] = v
+    return rslt
+            

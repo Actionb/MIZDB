@@ -7,9 +7,11 @@ from DBentry.utils import get_model_from_string
 
 class WidgetCaptureMixin(object):
     
-    def __init__(self, *args, **kwargs):
-        self.model_name = kwargs.pop('model_name', None)
+    def __init__(self, model_name, *args, **kwargs):
+        self.model_name = model_name
         self.create_field = kwargs.pop('create_field', None)
+        if 'url' not in kwargs:
+            kwargs['url'] = 'accapture'
         super().__init__(*args, **kwargs)
     
     def _get_url(self):
@@ -38,14 +40,15 @@ class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multi
 
 class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
     
-    def __init__(self, widget, related_model, remote_field_name = 'id', can_add_related=True, can_change_related=True):
+    def __init__(self, widget, related_model, remote_field_name = 'id', 
+            can_add_related=True, can_change_related=True, can_delete_related=True):
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         self.choices = widget.choices
         self.widget = widget
         self.can_add_related = can_add_related
         self.can_change_related = can_change_related
-        self.can_delete_related = False
+        self.can_delete_related = can_delete_related
         self.related_model = related_model
         self.remote_field_name = remote_field_name
         
@@ -117,25 +120,39 @@ def wrap_dal_widget(widget, remote_field_name = 'id'):
 
 
     
-def make_widget(model_name, create_field=None, url='accapture', multiple=False, wrap=True, remote_field_name='id', **kwargs):
-    #TODO: What if we do not want a MIZModelSelect2* widget?
-    if isinstance(model_name, str):
-        model = get_model_from_string(model_name)
-    else:
-        # a model class was passed in 
-        model = model_name
+def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='id', can_add_related=True, **kwargs):
+    
+    widget_attrs = {}
+    model = kwargs.pop('model', None)
+    model_name = kwargs.pop('model_name', '')
+    if model and not model_name:
         model_name = model._meta.model_name
-        
-    widget_attrs = {'url':url, 'model_name':model_name}
-    if create_field:
-        widget_attrs['create_field'] = create_field
-    if multiple:
-        widget = MIZModelSelect2Multiple(**widget_attrs)
+    if model_name and not model:
+        model = get_model_from_string(model_name)
+    
+    if 'widget_class' in kwargs:
+        widget_class = kwargs.pop('widget_class')
     else:
-        widget = MIZModelSelect2(**widget_attrs)
+        if multiple:
+            widget_class = MIZModelSelect2Multiple
+        else:
+            widget_class = MIZModelSelect2
+        if model_name:
+            widget_attrs['model_name'] = model_name
+        else:
+            from django.core.exceptions import ImproperlyConfigured
+            raise ImproperlyConfigured("{} widget missing argument 'model_name'.".format(widget_class.__name__))
+        if 'create_field' not in kwargs and can_add_related and model:
+            kwargs['create_field'] = model.create_field
+    if issubclass(widget_class, (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)):
+        widget_attrs['url'] = url
+        
+    widget_attrs.update(kwargs)
+    widget = widget_class(**widget_attrs)
         
     if wrap and remote_field_name:
-        return EasyWidgetWrapper(widget, model, remote_field_name)
+        if model:
+            return EasyWidgetWrapper(widget, model, remote_field_name)
     return widget
         
         

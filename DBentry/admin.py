@@ -703,7 +703,7 @@ class SchlagwortAdmin(ModelBase):
     
 @admin.register(spielort, site=miz_site)
 class SpielortAdmin(ModelBase):
-    pass
+    list_display = ['name', 'ort']
     
 @admin.register(technik, site=miz_site)
 class TechnikAdmin(ModelBase):

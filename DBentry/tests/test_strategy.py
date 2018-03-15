@@ -68,7 +68,7 @@ class TestBaseStrategy(StrategyTestCase):
     def test_append_suffix(self):
         expected = [(self.obj2.pk,"AC/DC (Band-Alias)")]
         self.assertEqual(self.strat().append_suffix([self.obj2], 'band_alias__alias'), expected)
-        self.assertEqual(self.strat().append_suffix([self.obj2], 'not_in_suffixes'), [self.obj2]) #TODO: return value might change
+        self.assertEqual(self.strat().append_suffix([self.obj2], 'not_in_suffixes'), [(self.obj2.pk, 'AC/DC')])
         
     def test_do_lookup(self):
         q = 'Axel Rose'
@@ -342,16 +342,14 @@ class TestVDStrategy(TestNameStrategy):
     def append_suffix(self, strat, obj, search_field, lookup):
         rslt = []
         for o in obj:
-            rslt.extend(strat.append_suffix(o.pk, getattr(o, self.name_field), search_field, lookup))
+            rslt.append(strat.append_suffix(o.pk, getattr(o, self.name_field), search_field, lookup))
         return rslt
         
     def test_append_suffix(self):
         # expects two arguments over the usual one --- pk, name, field, lookup=''
-        expected = [(self.obj2.pk, 'AC/DC (Band-Alias)')]
+        # and returns a single tuple instead a list of tuples
+        expected = (self.obj2.pk, 'AC/DC (Band-Alias)')
         self.assertEqual(self.strat().append_suffix(pk=self.obj2.pk, name='AC/DC', field='band_alias__alias'), expected)
-    
-#    def test_do_lookup(self):
-#        pass
         
     def test_search(self):
         # Assert that the strategy's values_dict is reset 

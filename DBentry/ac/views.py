@@ -23,7 +23,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         # Override:
         # - to include a hook has_create_field() instead of just checking for if self.create_field (needed for ACProv)
         # - to translate the create text
-        # TODO: make this more dynamic by maybe checking for a parameter in request whether or not it is allowed to create
         create_option = []
         display_create_option = False
         if self.has_create_field() and q:
@@ -92,7 +91,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         return object
         
     def get_queryset(self):
-        print("self.request", self.request.GET)
         qs = self.model.objects.all()
         #ordering = self.model._meta.ordering
         
@@ -198,29 +196,46 @@ class ACFavoritenMixin(object):
     
     def apply_q(self, qs):
         if self.q:
-            qs = super().apply_qs(qs)
+            qs = super().apply_q(qs)
         else:
-            #TODO: move this into a subclass
             # Fetch favorites if available
             try:
                 fav_config = Favoriten.objects.get(user=self.request.user)
-            except:
+            except Favoriten.DoesNotExist:
                 return qs
-            qs = list(fav_config.get_favorites(self.model)) + list(qs)
+            # if there are no favorites for the model, an empty queryset will be returned by get_favorites
+            qs = list(fav_config.get_favorites(self.model)) + list(qs) 
         return qs
         
-class ACGenre(ACFavoritenMixin, ACVDStrat):
+class ACGenre(ACFavoritenMixin, ACBase):
     model = genre
 
-class ACSchlagwort(ACFavoritenMixin, ACVDStrat):
+class ACSchlagwort(ACFavoritenMixin, ACBase):
     model = schlagwort
     
 class ACCapture(ACBase):
     
     def dispatch(self, *args, **kwargs):
         model_name = kwargs.pop('model_name', '')
-        from DBentry.utils import model_from_string
-        print("model_name", model_name)
-        self.model = model_from_string(model_name)
+        from DBentry.utils import get_model_from_string
+        self.model = get_model_from_string(model_name)
         self.create_field = kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
+    
+    def apply_q(self, qs):
+        if self.q:
+            return qs.find(self.q)
+        else:
+            return qs
+        
+    def get_result_value(self, result):
+        """Return the value of a result."""
+        if isinstance(result, (list, tuple)):
+            return result[0]
+        return str(result.pk)
+
+    def get_result_label(self, result):
+        """Return the label of a result."""
+        if isinstance(result, (list, tuple)):
+            return result[1]
+        return str(result)

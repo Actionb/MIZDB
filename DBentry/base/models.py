@@ -1,24 +1,41 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from DBentry.managers import AusgabeQuerySet, MIZQuerySet        
+from DBentry.managers import MIZQuerySet, CNQuerySet
+
+#TODO: rework exclude attribute: use a method to also get the excluded fields from super()
 
 class BaseModel(models.Model):  
+    """
+    Attributes related to searching:
+    - exclude: field names to exclude from searches 
     
-    exclude = ['info', 'beschreibung', 'bemerkungen']                #field names to exclude from searches 
-    search_fields = []          # fields to be included in searches
+    - search_fields: field names to include in searches.
+    
+    - primary_search_fields: any search result from a search on a field that is in search_fields but not in primary_search_fields 
+        will be flagged as a 'weak hit' (.find()/autocomplete: and thus be visually separated from the other results). 
+    
+    - name_field: the name of the field that most accurately represents the record.
+        If set, only this field will be fetched (and its values modified by search_fields_suffixes if applicable) from the database
+        as search results.
+        
+    - search_fields_suffixes: a dictionary of search_fields and their suffixes that will be appended to search results 
+        when using certain search strategies (queryset.find() or autocomplete views). 
+        The suffixes will 'tell' the user why exactly they have found a particular result.
+        
+    - create_field: the name of the field for the dal autocomplete object creation
+    """
+    exclude = ['info', 'beschreibung', 'bemerkungen'] 
+    
+    search_fields = []
     
     primary_search_fields = []  
-    # any search result from a search on a field that is in search_fields but not in primary_search_fields 
-    # will be flagged as a 'weak hit' (.find()/autocomplete: and thus be visually separated from the other results).
+    
+    name_field = None
     
     search_fields_suffixes = {}
-    # A dictionary of search_fields and their suffixes that will be appended to search results 
-    # when using certain search strategies (queryset.find() or autocomplete views). 
-    # The suffixes will 'tell' the user why exactly they have found a particular result.
     
     create_field = None
-    # autocomplete create_field
     
     objects = MIZQuerySet.as_manager()
     
@@ -168,6 +185,20 @@ class BaseAliasModel(BaseModel):
         abstract = True
 
 class ComputedNameModel(BaseModel):   
+    """
+    Attributes related to the computed name:
+    - _name_default: the default value for the _name field.
+        If no name can be composed (missing data/new instance), this value will be used to display the object.
+    
+    - _name: the field that contains the 'name'. It's a step backwards in terms of database normalization in favour of
+        being able to search for a computed name easily and quickly without having to instantiate a model object.
+    
+    - _changed_flag: if True, a new name will be computed the next time the model object is instantiated.
+    
+    - name_composing_fields: the names of fields whose data make up the name. 
+        Values of these fields are retrieved from the database and passed to the _get_name method.
+    """
+    
     _name_default = gettext_lazy("No data for %(verbose_name)s.")
     
     _name = models.CharField(max_length=200, editable=False, default=_name_default)
@@ -176,6 +207,10 @@ class ComputedNameModel(BaseModel):
     name_composing_fields = []
     
     exclude = ['_name', '_changed_flag', 'info', 'beschreibung', 'bemerkungen']
+    
+    name_field = '_name'
+    
+    objects = CNQuerySet.as_manager()
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -225,10 +260,11 @@ class ComputedNameModel(BaseModel):
             
             if not self.name_composing_fields:
                 raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
-            # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
-            instance_data = {k:[v] for k, v in self.__dict__.items() if not k.startswith('_')}
-            name_data = self.qs().values_dict(* set(self.name_composing_fields).difference(self.__dict__) ).get(self.pk)
-            name_data.update(instance_data)
+#            # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
+#            instance_data = {k:[v] for k, v in self.__dict__.items() if not k.startswith('_')}
+#            name_data = self.qs().values_dict(* set(self.name_composing_fields).difference(self.__dict__), flatten=True ).get(self.pk)
+#            name_data.update(instance_data)
+            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk)
             current_name = self._get_name(**name_data)
             
             if self._name != current_name:

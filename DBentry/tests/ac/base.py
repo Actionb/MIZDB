@@ -5,8 +5,15 @@ from DBentry.ac.views import *
 @tag("dal")
 class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
     
+    path = 'accapture'
     model = None
     create_field = None
+    
+    def get_path(self):
+        reverse_kwargs = {'model_name':self.model._meta.model_name}
+        if getattr(self.model, 'create_field'):
+            reverse_kwargs['create_field'] = self.model.create_field
+        return reverse(self.path, kwargs=reverse_kwargs)
     
     def view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
         #DBentry.ac.views behave slightly different in their as_view() method

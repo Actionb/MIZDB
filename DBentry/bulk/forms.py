@@ -6,6 +6,7 @@ from dal import autocomplete
 from DBentry.forms import MIZAdminForm
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
+from DBentry.ac.widgets import make_widget
 from .fields import *
 
 class BulkForm(MIZAdminForm):
@@ -115,7 +116,7 @@ class BulkFormAusgabe(BulkForm):
     
     magazin = forms.ModelChoiceField(required = True, 
                                     queryset = magazin.objects.all(),  
-                                    widget = autocomplete.ModelSelect2(url='acmagazin'))
+                                    widget = make_widget(model_name='magazin', wrap=True))
                                     
     jahrgang = forms.IntegerField(required = False, min_value = 1) 
     
@@ -129,20 +130,20 @@ class BulkFormAusgabe(BulkForm):
     audio_lagerort = forms.ModelChoiceField(required = False, 
                                     label = 'Lagerort f. Musik Beilage', 
                                     queryset = lo.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='aclagerort'))
+                                    widget = make_widget(model_name='lagerort', wrap=True))
     lagerort = forms.ModelChoiceField(required = True, 
                                     queryset = lo.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='aclagerort'), 
+                                    widget = make_widget(model_name='lagerort', wrap=True), 
                                     initial = ZRAUM_ID, 
                                     label = 'Lagerort f. Ausgaben')
     dublette = forms.ModelChoiceField(required = True, 
                                     queryset = lo.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='aclagerort'), 
+                                    widget = make_widget(model_name='lagerort', wrap=True), 
                                     initial = DUPLETTEN_ID, 
                                     label = 'Lagerort f. Dubletten')
     provenienz = forms.ModelChoiceField(required = False, 
                                     queryset = provenienz.objects.all(), 
-                                    widget = autocomplete.ModelSelect2(url='acprov'))    
+                                    widget = make_widget(model_name='provenienz', wrap=True))    
     info = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
     
     status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus')

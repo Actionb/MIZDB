@@ -20,7 +20,7 @@ class BaseStrategy(object):
         self.pre_filter = pre_filter
         self._root_queryset = queryset
         self.ids_found = set()
-        self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes')
+        self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes', {})
         self.exact_match = False
         self.use_cache = use_cache
         if not self.use_cache:
@@ -37,25 +37,22 @@ class BaseStrategy(object):
         return self._root_queryset.all()
         
     def get_suffix(self, field, lookup=''):
-        #TODO: fetch suffix from the model if possible
         if field + lookup in self.suffix:
             return self.suffix.get(field + lookup)
         elif field in self.suffix:
             return self.suffix.get(field)
         else:
-            return None
+            return ""
     
     def append_suffix(self, instances, field, lookup=''):
         # Relying on model instance __str__ for the 'name' to append the suffix to
         suffix = self.get_suffix(field, lookup)
         
         if suffix:
-            return [
-                (o.pk, force_text(o) + " ({})".format(suffix)) for o in instances
+            suffix = " ({})".format(suffix)
+        return [
+                (o.pk, force_text(o) + suffix) for o in instances
             ]
-        else:
-            #TODO: return instances or (pk,__str__) tuples?
-            return instances
             
     def _do_lookup(self, lookup, search_field, q):
         qs = self.get_queryset(q)
@@ -113,7 +110,7 @@ class PrimaryFieldsStrategy(BaseStrategy):
         self.primary_search_fields = kwargs.pop('primary_search_fields', None) or getattr(queryset.model, 'primary_search_fields', None)
         super().__init__(queryset, *args, **kwargs)
         if not self.primary_search_fields:
-            self.primary_search_fields = self.search_fields
+            self.primary_search_fields = self.search_fields 
         elif isinstance(self.primary_search_fields, str):
             self.primary_search_fields = [self.primary_search_fields]
         
@@ -133,15 +130,17 @@ class PrimaryFieldsStrategy(BaseStrategy):
         return exact
         
     def _search(self, q):
-        #TODO: include 'startsw_search' in weak_hits for secondary_search_fields?
+        #NOTE: include 'startsw_search' in weak_hits for secondary_search_fields?
         rslt = []
         for search_field in self.primary_search_fields:
             rslt.extend(self.exact_search(search_field, q) + self.startsw_search(search_field, q) + self.contains_search(search_field, q))
         for search_field in self.secondary_search_fields:
             rslt.extend(self.exact_search(search_field, q) + self.startsw_search(search_field, q))
         
-        #TODO: do not include the separator if there haven't been any results yet?
-        weak_hits = [(0, self.get_separator(q))]
+        if len(rslt):
+            weak_hits = [(0, self.get_separator(q))]
+        else:
+            weak_hits = []
         for search_field in self.secondary_search_fields:
             weak_hits.extend(self.contains_search(search_field, q))
         if len(weak_hits)>1:
@@ -168,11 +167,10 @@ class NameFieldStrategy(PrimaryFieldsStrategy):
         suffix = self.get_suffix(field, lookup)
         
         if suffix:
-            return [
-                (pk, name + " ({})".format(suffix)) for pk, name in tuple_list
-            ]
-        else:
-            return tuple_list
+            suffix = " ({})".format(suffix)
+        return [
+            (pk, name + suffix) for pk, name in tuple_list
+        ]
     
 class ValuesDictStrategy(NameFieldStrategy):
     
@@ -180,9 +178,8 @@ class ValuesDictStrategy(NameFieldStrategy):
         suffix = self.get_suffix(field, lookup)
         
         if suffix:
-            return [(pk, name + " ({})".format(suffix))]
-        else:
-            return [(pk, name)]
+            suffix = " ({})".format(suffix)
+        return (pk, name + suffix)
         
     def _do_lookup(self, lookup, search_field, q):
         # values_dict is a dict of dicts of lists! {pk: {field:[values,...] ,...},... }
@@ -206,7 +203,7 @@ class ValuesDictStrategy(NameFieldStrategy):
                         if any(q.casefold() in str(s).casefold() for s in values_list):
                             match = True
                     if match:
-                        rslt.extend(self.append_suffix(pk, data_dict.get(self.name_field)[0], search_field, lookup))
+                        rslts.append(self.append_suffix(pk, data_dict.get(self.name_field)[0], search_field, lookup))
                         ids.add(pk)
                         self.values_dict.pop(pk)
             return ids, rslts

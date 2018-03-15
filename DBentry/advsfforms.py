@@ -5,9 +5,7 @@ from collections import OrderedDict
 
 from .models import *
 from .constants import *
-from DBentry.ac.widgets import MIZModelSelect2, MIZModelSelect2Multiple
-
-from dal import autocomplete
+from DBentry.ac.widgets import make_widget
 
 FORWARDABLE = {
     'ausgabe' : 'magazin', 
@@ -83,33 +81,20 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
         formfield_opts['label'] = labels.get(field_path, None) or label
         formfield_opts['queryset'] = related_model.objects
         
-        from django.urls import reverse
-        try:
-            url = reverse('accapture', kwargs={'model_name':related_model._meta.model_name})
-        except:
-            for pattern in patterns_by_model(related_model):
-                if 'create_field' not in pattern.callback.view_initkwargs:
-                    url = pattern.name
+        # Create an autocomplete widget
+        widget_opts = dict(url='accapture', model=related_model, multiple=rel_or_field.many_to_many, can_add_related=False)
+        if field.name in FORWARDABLE:
+            forward = ''
+            for other_field_path in asf_dict.get('selects', []):
+                if other_field_path.split('__')[-1] == FORWARDABLE[field.name]:
+                    forward = other_field_path
                     break
-        if url:
-            widget_opts = dict(url=url)
-            if field.name in FORWARDABLE:
-                forward = ''
-                for other_field_path in asf_dict.get('selects', []):
-                    if other_field_path.split('__')[-1] == FORWARDABLE[field.name]:
-                        forward = other_field_path
-                        break
-                if forward:
-                    widget_opts['forward'] = [forward]
-                    placeholder_txt = 'Bitte zuerst ein {} auswählen!'.format(get_fields_from_path(model, forward)[-1].get_path_info()[-1].join_field.verbose_name.capitalize())
-                    widget_opts['attrs'] = {'data-placeholder':placeholder_txt}
-            if rel_or_field.many_to_many:
-                formfield_opts['widget'] = MIZModelSelect2Multiple(**widget_opts)
-                #formfield_opts['widget'] = autocomplete.ModelSelect2Multiple(**widget_opts)
-            else:
-                formfield_opts['widget'] = MIZModelSelect2(**widget_opts)
-                #formfield_opts['widget'] = autocomplete.ModelSelect2(**widget_opts)
-                
+            if forward:
+                widget_opts['forward'] = [forward]
+                placeholder_txt = 'Bitte zuerst ein {} auswählen!'.format(get_fields_from_path(model, forward)[-1].get_path_info()[-1].join_field.verbose_name.capitalize())
+                widget_opts['attrs'] = {'data-placeholder':placeholder_txt}
+        formfield_opts['widget'] = make_widget(**widget_opts)
+                        
         if field_path in formfield_classes:
             attrs[field_path] = formfield_classes.get(field_path)(**formfield_opts)
         else:

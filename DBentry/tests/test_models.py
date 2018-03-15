@@ -404,15 +404,13 @@ class TestModelLagerort(DataTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = lagerort.objects.create(ort = 'Testort', signatur = '001')
         cls.obj2 = lagerort.objects.create(ort = 'Testort')
         cls.obj3 = lagerort.objects.create(ort = 'Testort', raum='Testraum')
         cls.obj4 = lagerort.objects.create(ort = 'Testort', regal='Testregal')
         cls.obj5 = lagerort.objects.create(ort = 'Testort', raum='Testraum', regal='Testregal')
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5]
+        cls.test_data = [cls.obj2, cls.obj3, cls.obj4, cls.obj5]
         
     def test_str(self):
-        self.assertEqual(self.obj1.__str__(), '001')
         self.assertEqual(self.obj2.__str__(), 'Testort')
         self.assertEqual(self.obj3.__str__(), 'Testraum (Testort)')
         self.assertEqual(self.obj4.__str__(), 'Testregal (Testort)')
@@ -538,7 +536,7 @@ class TestModelBase(DataTestCase):
         self.assertListEqualSorted(self.model.get_required_fields(True), ['ausgabe', 'schlagzeile', 'seite'])
         
     def test_get_search_fields(self):
-        expected = ['schlagzeile', 'zusammenfassung', 'info']
+        expected = ['schlagzeile', 'seite', 'seitenumfang', 'zusammenfassung', 'info']
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
         
     def test_get_updateable_fields(self):
@@ -701,7 +699,7 @@ class TestAusgabeGetName(DataTestCase):
             super().setUpTestData()
             
         def assertStrEqual(self, obj, expected):
-            d = self.queryset.filter(pk=obj.pk).values_dict(*self.fields).get(obj.pk)
+            d = self.queryset.filter(pk=obj.pk).values_dict(*self.fields, flatten=True).get(obj.pk)
             self.assertEqual(ausgabe._get_name(**d), expected)
             
         def test_get_name_info_sonderausgabe(self):

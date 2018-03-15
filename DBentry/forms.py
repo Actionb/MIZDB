@@ -11,7 +11,7 @@ from django.db.models.manager import BaseManager
 
 from .models import *
 from .constants import ATTRS_TEXTAREA
-from DBentry.ac.widgets import wrap_dal_widget, MIZModelSelect2
+from DBentry.ac.widgets import wrap_dal_widget, MIZModelSelect2, make_widget
 
 from dal import autocomplete
 
@@ -166,26 +166,33 @@ class FormBase(forms.ModelForm):
             self.cleaned_data['DELETE']=True
             self._update_errors(e)
 
-def makeForm(model, fields = [], form_class = None):
+def makeForm(model, fields = (), form_class = None):
     fields_param = fields or '__all__'
     form_class = form_class or FormBase
     
-    import sys
-    modelname = model._meta.model_name
-    thismodule = sys.modules[__name__]
-    formname = '{}Form'.format(str(modelname).capitalize())
     #Check if a proper Form already exists:
+    import sys
+    model_name = model._meta.model_name
+    thismodule = sys.modules[__name__]
+    formname = model_name.capitalize() + 'Form'
     if hasattr(thismodule, formname):
         return getattr(thismodule, formname)
-    from DBentry.ac.widgets import make_widget
-    widget_list = {}
+    
+    #Otherwise use modelform_factory to create a generic Form with custom dal widgets
+    widgets = {}
     for field in model.get_foreignfields():
-        widget_list[field.name] = make_widget(field.related_model._meta.model_name, wrap=False, create_field=field.related_model.create_field)
-#    #Otherwise use modelform_factory to create a generic Form with custom widgets
-#    widget_list =  WIDGETS
-#    if model in WIDGETS:
-#        widget_list = WIDGETS[model]
-    return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widget_list) 
+        if fields and field.name not in fields:
+            continue
+        widgets[field.name] = make_widget(
+            model_name = field.related_model._meta.model_name, 
+            create_field=field.related_model.create_field
+        )
+    #TODO: create a custom formfield/widget for Textarea
+    for field in model._meta.get_fields():
+        if isinstance(field, models.TextField):
+            widgets[field.name] = forms.Textarea(attrs=ATTRS_TEXTAREA)
+    # TODO: set a default for Favoriten widgets
+    return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widgets) 
 
 
 class AusgabeMagazinFieldForm(FormBase):
@@ -198,9 +205,10 @@ class AusgabeMagazinFieldForm(FormBase):
     magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
                                     queryset = magazin.objects.all(), 
-                                    widget = wrap_dal_widget(autocomplete.ModelSelect2(url='acmagazin'))) 
+                                    widget = make_widget(model=magazin, wrap=True) 
+                                    )
     class Meta:
-        widgets = {'ausgabe': autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
+        widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'], 
                                     attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),
                                     }
                                     
@@ -221,8 +229,8 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         model = artikel
         fields = '__all__'
         widgets = {
-                'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin'], 
-                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}), 
+                'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'], 
+                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),                
                 'schlagzeile'       : Textarea(attrs={'rows':2, 'cols':90}), 
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
@@ -242,10 +250,11 @@ class MIZAdminForm(forms.Form):
             self.Media.js.append('admin/js/admin/RelatedObjectLookups.js')
         
     class Media:
+        #TODO: have a look at contrib.admin.options.ModelAdmin.media
         css = {
             'all' : ('admin/css/forms.css', )
         }
-        js = ['admin/js/collapse.js']
+        js = ['admin/js/collapse.js', 'admin/js/admin/RelatedObjectLookups.js']
     
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])

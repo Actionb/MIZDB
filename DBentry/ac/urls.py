@@ -42,16 +42,16 @@ autocomplete_patterns = [
 # A place for the evil twins of the previous ac patterns that want to create objects although they are not allowed to
 # (on advanced search forms)
 autocomplete_patterns_nocreate = [
-    url(r'^band_nocreate/$',            ACBase.as_view(model = band),                           name = 'acband_nocreate'),
-    url(r'^genre_nocreate/$',           ACGenre.as_view(model = genre),                          name = 'acgenre_nocreate'), 
-    url(r'^format_size/$',              ACBase.as_view(model = FormatSize),                     name = "acformat_size_nocreate"),
-    url(r'^format_typ/$',               ACBase.as_view(model = FormatTyp),                      name = "acformat_typ"), 
-    url(r'^instrument_nocreate/$',      ACBase.as_view(model = instrument),                     name = 'acinstrument_nocreate'),
-    url(r'^magazin_nocreate/$',         ACBase.as_view(model = magazin),                        name = 'acmagazin_nocreate'),
-    url(r'^musiker_nocreate/$',         ACBase.as_view(model = musiker),                        name = 'acmusiker_nocreate'),
-    url(r'^land_nocreate/$',            ACBase.as_view(model = land),                           name = 'acland_nocreate'), 
-    url(r'^label_nocreate/$',                    ACBase.as_view(model = plattenfirma),                   name = 'aclabel_nocreate'), 
-    url(r'^schlagwort_nocreate/$',      ACBase.as_view(model = schlagwort),                     name = 'acschlagwort_nocreate'),
+#    url(r'^band_nocreate/$',            ACBase.as_view(model = band),                           name = 'acband_nocreate'),
+#    url(r'^genre_nocreate/$',           ACGenre.as_view(model = genre),                          name = 'acgenre_nocreate'), 
+#    url(r'^format_size/$',              ACBase.as_view(model = FormatSize),                     name = "acformat_size_nocreate"),
+#    url(r'^format_typ/$',               ACBase.as_view(model = FormatTyp),                      name = "acformat_typ"), 
+#    url(r'^instrument_nocreate/$',      ACBase.as_view(model = instrument),                     name = 'acinstrument_nocreate'),
+#    url(r'^magazin_nocreate/$',         ACBase.as_view(model = magazin),                        name = 'acmagazin_nocreate'),
+#    url(r'^musiker_nocreate/$',         ACBase.as_view(model = musiker),                        name = 'acmusiker_nocreate'),
+#    url(r'^land_nocreate/$',            ACBase.as_view(model = land),                           name = 'acland_nocreate'), 
+#    url(r'^label_nocreate/$',                    ACBase.as_view(model = plattenfirma),                   name = 'aclabel_nocreate'), 
+#    url(r'^schlagwort_nocreate/$',      ACBase.as_view(model = schlagwort),                     name = 'acschlagwort_nocreate'),
 ]
 from .views import ACCapture
 wip = [ 
