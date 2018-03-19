@@ -1,7 +1,8 @@
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.urls import reverse
+from django.utils.translation import gettext_lazy
 
-from dal import autocomplete
+from dal import autocomplete, forward
 
 from DBentry.utils import get_model_from_string
 
@@ -20,11 +21,13 @@ class WidgetCaptureMixin(object):
 
         if '/' in self._url:
             return self._url
+        
         reverse_kwargs = {}
-        if self.model_name:
-            reverse_kwargs['model_name'] = self.model_name
-        if self.create_field:
-            reverse_kwargs['create_field'] = self.create_field
+        if self._url == 'accapture':
+            if self.model_name:
+                reverse_kwargs['model_name'] = self.model_name
+            if self.create_field:
+                reverse_kwargs['create_field'] = self.create_field
         return reverse(self._url, kwargs=reverse_kwargs)
 
     def _set_url(self, url):
@@ -117,19 +120,20 @@ def wrap_dal_widget(widget, remote_field_name = 'id'):
             return EasyWidgetWrapper(widget, related_model, remote_field_name)
             
     return widget
-
-
+#TODO: translation
+#placeholder_template = gettext_lazy("Please select a %(verbose_name)s.")
+placeholder_template = "Bitte zuerst ein %(verbose_name)s auswählen!"
     
 def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='id', can_add_related=True, **kwargs):
-    
-    widget_attrs = {}
+    # Create a (default: MIZModelSelect2) widget
+    widget_opts = {}
     model = kwargs.pop('model', None)
     model_name = kwargs.pop('model_name', '')
     if model and not model_name:
         model_name = model._meta.model_name
     if model_name and not model:
         model = get_model_from_string(model_name)
-    
+
     if 'widget_class' in kwargs:
         widget_class = kwargs.pop('widget_class')
     else:
@@ -138,17 +142,43 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         else:
             widget_class = MIZModelSelect2
         if model_name:
-            widget_attrs['model_name'] = model_name
+            widget_opts['model_name'] = model_name
         else:
             from django.core.exceptions import ImproperlyConfigured
             raise ImproperlyConfigured("{} widget missing argument 'model_name'.".format(widget_class.__name__))
         if 'create_field' not in kwargs and can_add_related and model:
-            kwargs['create_field'] = model.create_field
+            widget_opts['create_field'] = model.create_field
     if issubclass(widget_class, (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)):
-        widget_attrs['url'] = url
+        widget_opts['url'] = url
         
-    widget_attrs.update(kwargs)
-    widget = widget_class(**widget_attrs)
+    widget_opts.update(kwargs)
+        
+    if 'forward' in widget_opts:
+        _forward = widget_opts.get('forward')
+        if not isinstance(_forward, (list, tuple)):
+            _forward = [_forward]
+        else:
+            _forward = list(_forward)
+        widget_opts['forward'] = []
+            
+        for forwarded in _forward:
+            if isinstance(forwarded, str):
+                dst = forwarded.split('__')[-1]
+                forwarded = forward.Field(src=forwarded, dst=dst)
+                widget_opts['forward'].append(forwarded)
+                
+            if 'attrs' in widget_opts:
+                attrs = widget_opts.get('attrs')
+            else:
+                widget_opts['attrs'] = {}
+                attrs = widget_opts['attrs']
+                
+            if 'data-placeholder' not in attrs:
+                # forward with no data-placeholder-text
+                forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.capitalize()
+                attrs['data-placeholder'] = placeholder_template % {'verbose_name':forwarded_verbose}
+            
+    widget = widget_class(**widget_opts)
         
     if wrap and remote_field_name:
         if model:

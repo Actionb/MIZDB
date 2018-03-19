@@ -3,7 +3,6 @@ from .base import *
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     
     view_class = ACBase
-    #path = reverse('acband')
     model = band
     create_field = 'band_name'
     test_data_count = 0
@@ -15,7 +14,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         m2m_band_genre.objects.create(band=cls.obj1, genre=cls.genre)
         cls.musiker = musiker.objects.create(kuenstler_name='Meehh')
         m2m_band_musiker.objects.create(band=cls.obj1, musiker=cls.musiker)
-        cls.obj2 = band.objects.create(band_name='aleboop')
+        cls.obj2 = band.objects.create(band_name='Aleboop')
         cls.obj3 = band.objects.create(band_name='notfound')
         cls.obj4 = band.objects.create(band_name='Boopband')
         
@@ -64,10 +63,10 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         # obj2 contains q
         self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4, self.obj2])
         
-        # all but obj3 contain 'oop', standard ordering should apply  as there are neither exact nor startswith matches
+        # all but obj3 contain 'oop', standard ordering should apply as there are neither exact nor startswith matches
         view.q = 'oop'
-        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj4, self.obj2, self.obj1]) #TODO: ordering is totally messed up?
-        
+        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj2, self.obj1, self.obj4])
+
         # only obj4 should appear
         view.q = 'Boopband'
         self.assertEqual(list(view.apply_q(self.queryset)), [self.obj4])
@@ -82,42 +81,16 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         # fake forwarded attribute
         request = self.get_request()
         view = self.view(request)
-        view.forwarded = {'genre':self.genre.pk, 'TROUBLES__musiker':self.musiker.pk}
+        view.forwarded = {'genre':self.genre.pk}
         
-        # get_queryset should filter out the problematic TROUBLES__musiker and '' forwards
+        # get_queryset should filter out the useless '' forward
         self.assertEqual(list(view.get_queryset()), [self.obj1])
         view.forwarded = {'':'ignore_me'}
         self.assertFalse(view.get_queryset().exists())
         
-class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
-    
-    view_class = ACProv
-    #path = reverse('acprov')
-    model = provenienz
-    
-    def test_has_create_field(self):
-        self.assertTrue(self.view().has_create_field())
-       
-    @tag('logging') 
-    def test_create_object_no_log_entry(self):
-        # no request set on view, no log entry should be created
-        obj = self.view().create_object('Beep')
-        self.assertEqual(obj.geber.name, 'Beep')
-        with self.assertRaises(AssertionError):
-            self.assertLoggedAddition(obj)
-        
-    @tag('logging')
-    def test_create_object_with_log_entry(self):
-        # request set on view, log entry should be created
-        request = self.get_request()
-        obj = self.view(request).create_object('Beep')
-        self.assertLoggedAddition(obj)
-        
 @skip("reworked")
 class TestACAusgabe(ACViewTestCase):
     
-    view_class = ACAusgabe
-    #path = reverse('acausgabe')
     model = ausgabe
     
     @classmethod
@@ -192,53 +165,41 @@ class TestACAusgabe(ACViewTestCase):
         view = self.view(q=self.obj_jahrg.__str__())
         expected_qs = list(self.qs.filter(pk=self.obj_jahrg.pk))
         self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+
         
+class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
+    model = provenienz
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
-    # ComputedNameModel
     model = person
-    #path = reverse('acperson')
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
-    # ComputedNameModel
     model = autor
-    #path = reverse('acautor')
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     model = musiker
-    #path = reverse('acmusiker')
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
     model = land
-    #path = reverse('acland')
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     model = instrument
-    #path = reverse('acinstrument')
 
 class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
     model = sender
-    #path = reverse('acsender')
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = spielort
-    #path = reverse('acspielort')
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     model = veranstaltung
-    #path = reverse('acveranstaltung')
     
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
     model = genre
-    view_class = ACGenre
-    #path = reverse('acgenre')
-    
-    def get_path(self):
-        return None
         
     def test_apply_q_favorites(self):
-        request = self.get_request(path='Beep boop')
+        request = self.get_request()
         view = self.view(request=request)
         
         result = view.apply_q(self.queryset)
@@ -258,14 +219,9 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         
     model = schlagwort
-    view_class = ACSchlagwort
-    #path = reverse('acschlagwort')
-    
-    def get_path(self):
-        return None
         
     def test_apply_q_favorites(self):
-        request = self.get_request(path='Beep boop')
+        request = self.get_request()
         view = self.view(request=request)
         
         result = view.apply_q(self.queryset)

@@ -531,7 +531,7 @@ class ArtikelAdmin(ModelBase):
                                 
     advanced_search_form = {
         'gtelt':['seite', ], 
-        'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
+        'selects':['ausgabe__magazin', ('ausgabe', 'ausgabe__magazin'), 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
         'simple':[], 
     }  
     save_on_top = True
@@ -689,7 +689,7 @@ class PersonAdmin(ModelBase):
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
     
     advanced_search_form = {
-        'selects' : ['herkunft', 'herkunft__land', 'herkunft__bland']
+        'selects' : ['herkunft', 'herkunft__land', ('herkunft__bland', 'herkunft__land')]
     }
     
 @admin.register(schlagwort, site=miz_site)

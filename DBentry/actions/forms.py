@@ -5,7 +5,7 @@ from django import forms
 from django.contrib.admin.utils import get_fields_from_path
 from django.urls import reverse
 
-from DBentry.forms import MIZAdminForm, DynamicChoiceForm, WIDGETS
+from DBentry.forms import MIZAdminForm, DynamicChoiceForm
 from DBentry.models import lagerort
 from DBentry.ac.widgets import make_widget
 
@@ -19,21 +19,6 @@ def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_cla
             field = field.get_path_info()[-1].join_field
             formfield_opts['queryset'] = field.related_model.objects
             formfield_opts['widget'] = make_widget(model=field.model, model_name=field.model._meta.model_name, wrap=True)
-#            if field.model in WIDGETS:
-#                widget_dict = WIDGETS[field.model]
-#            else:
-#                widget_dict = WIDGETS
-#            if field.name in widget_dict:
-#                widget = widget_dict.get(field.name)
-#                # remove create_options, if possible
-#                #TODO: keep this? Wouldn't we want to allow people to add/change the important data?
-#                try:
-#                    reverse(widget._url+'_nocreate')
-#                except:
-#                    pass
-#                else:
-#                    widget._url = widget._url+'_nocreate'
-#                formfield_opts['widget'] = widget
         
         formfield_opts['label'] = labels.get(field_path, field.verbose_name.capitalize())
         if field_path in formfield_classes:

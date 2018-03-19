@@ -7,12 +7,12 @@ from django.db import models
 """
 Search strategies:
 """
-
+#TODO: this cannot deal with name searches of format surname prename
 class BaseStrategy(object):
     
     _results = {}
     
-    def __init__(self, queryset, search_fields = None, suffix = None, use_cache = False, pre_filter = True):
+    def __init__(self, queryset, search_fields = None, suffix = None, use_suffix = True, use_cache = False, pre_filter = True):
         self.search_fields = search_fields or queryset.model.get_search_fields()
         if isinstance(self.search_fields, str):
             self.search_fields = [self.search_fields]
@@ -21,6 +21,7 @@ class BaseStrategy(object):
         self._root_queryset = queryset
         self.ids_found = set()
         self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes', {})
+        self.use_suffix = use_suffix
         self.exact_match = False
         self.use_cache = use_cache
         if not self.use_cache:
@@ -48,7 +49,7 @@ class BaseStrategy(object):
         # Relying on model instance __str__ for the 'name' to append the suffix to
         suffix = self.get_suffix(field, lookup)
         
-        if suffix:
+        if self.use_suffix and suffix:
             suffix = " ({})".format(suffix)
         return [
                 (o.pk, force_text(o) + suffix) for o in instances
@@ -166,7 +167,7 @@ class NameFieldStrategy(PrimaryFieldsStrategy):
     def append_suffix(self, tuple_list, field, lookup=''):
         suffix = self.get_suffix(field, lookup)
         
-        if suffix:
+        if self.use_suffix and suffix:
             suffix = " ({})".format(suffix)
         return [
             (pk, name + suffix) for pk, name in tuple_list
@@ -177,7 +178,7 @@ class ValuesDictStrategy(NameFieldStrategy):
     def append_suffix(self, pk, name, field, lookup=''):
         suffix = self.get_suffix(field, lookup)
         
-        if suffix:
+        if self.use_suffix and suffix:
             suffix = " ({})".format(suffix)
         return (pk, name + suffix)
         
@@ -218,41 +219,3 @@ class ValuesDictStrategy(NameFieldStrategy):
             q = str(q)
             self.values_dict = self.get_queryset(q).values_dict(*self.search_fields)
         return super().search(q)
-        
-def a():
-    from DBentry.models import ausgabe, tmag
-    primary = ['_name']
-    suffix = {
-        'ausgabe_monat__monat__monat':'Monat', 
-        'sonderausgabe':'Sonderausgabe', 
-        'ausgabe_lnum__lnum':'Lnum', 
-        'e_datum':'E.datum', 
-        'status':'Status', 
-        'ausgabe_num__num':'Num', 
-        'jahrgang':'Jahrgang', 
-        'ausgabe_monat__monat__abk':'Monat Abk.', 
-        'ausgabe_jahr__jahr' : 'Jahr'
-        }
-    return ValuesDictStrategy(tmag.ausgabe_set.all(), primary_search_fields=primary, suffix=suffix)
-    
-def b():
-    from DBentry.models import genre
-    search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
-    suffix = {'obergenre__genre':'Ober', 'genre_alias__alias':'Genre-Alias'}
-    return ValuesDictStrategy(genre.objects, search_fields=search_fields, suffix=suffix)
-        
-def get_vdstrat():
-    from DBentry.models import band
-    primary = ['band_name', 'band_alias__alias']
-    suffix = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
-    strat = ValuesDictStrategy(band.objects, name_field='band_name', primary_search_fields = primary, use_cache=False)
-    strat.suffix = suffix
-    return strat
-
-def get_strat():
-    from DBentry.models import band
-    primary = ['band_name', 'band_alias__alias']
-    suffix = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
-    strat = NameFieldStrategy(band.objects, name_field='band_name', primary_search_fields = primary, use_cache=False)
-    strat.suffix = suffix
-    return strat

@@ -7,11 +7,6 @@ from .models import *
 from .constants import *
 from DBentry.ac.widgets import make_widget
 
-FORWARDABLE = {
-    'ausgabe' : 'magazin', 
-    'bland' : 'land', 
-}
-
 class AdvSFForm(forms.Form):            
     
     def get_initial_for_field(self, field, field_name):
@@ -50,7 +45,6 @@ class AdvSFForm(forms.Form):
             help_text_html=' <span class="helptext">%s</span>',
             errors_on_separate_row=True)
     
-from DBentry.ac.urls import patterns_by_model
 def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
     """
     Handles the creation of all the autocomplete formfields.
@@ -60,6 +54,10 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
     
     asf_dict = getattr(model_admin, 'advanced_search_form', {})
     for field_path in asf_dict.get('selects', []):
+        if isinstance(field_path, (list, tuple)):
+            field_path, forward = field_path
+        else:
+            forward = []
         rel_or_field = get_fields_from_path(model, field_path)[-1]
 
         if not rel_or_field.is_relation:
@@ -83,16 +81,8 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
         
         # Create an autocomplete widget
         widget_opts = dict(url='accapture', model=related_model, multiple=rel_or_field.many_to_many, can_add_related=False)
-        if field.name in FORWARDABLE:
-            forward = ''
-            for other_field_path in asf_dict.get('selects', []):
-                if other_field_path.split('__')[-1] == FORWARDABLE[field.name]:
-                    forward = other_field_path
-                    break
-            if forward:
-                widget_opts['forward'] = [forward]
-                placeholder_txt = 'Bitte zuerst ein {} auswählen!'.format(get_fields_from_path(model, forward)[-1].get_path_info()[-1].join_field.verbose_name.capitalize())
-                widget_opts['attrs'] = {'data-placeholder':placeholder_txt}
+        if forward:
+            widget_opts['forward'] = forward
         formfield_opts['widget'] = make_widget(**widget_opts)
                         
         if field_path in formfield_classes:
@@ -100,64 +90,3 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
         else:
             attrs[field_path] = field.formfield(**formfield_opts)
     return type('AdvSF'+model.__name__, (AdvSFForm, ), attrs )
-#    
-#def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
-#    """
-#    Handles the creation of all the autocomplete formfields.
-#    """
-#    model = model_admin.model
-#    attrs = OrderedDict()
-#    
-#    asf_dict = getattr(model_admin, 'advanced_search_form', {})
-#    for field_path in asf_dict.get('selects', []):
-#        rel_or_field = get_fields_from_path(model, field_path)[-1]
-#
-#        if not rel_or_field.is_relation:
-#            # Let the template/the tag deal with the non-relation (choice) selects
-#            continue
-#        
-#        if rel_or_field.one_to_many:
-#            # This is a ManyToOneRel defining a 'reverse' relation:
-#            field = rel_or_field.remote_field # the ForeignKey field
-#            # The ForeignKey's related_model points back to *this* model, we need the relation's related_model
-#            related_model = rel_or_field.related_model 
-#            label = related_model._meta.verbose_name.capitalize()
-#        else:
-#            field = rel_or_field.get_path_info()[-1].join_field
-#            related_model = field.related_model
-#            label = field.verbose_name.capitalize()
-#            
-#        formfield_opts = dict(required = False, help_text = '', empty_label = None)
-#        formfield_opts['label'] = labels.get(field_path, None) or label
-#        formfield_opts['queryset'] = related_model.objects
-#        
-#        url = ''
-#        for pattern in patterns_by_model(related_model):
-#            if 'create_field' not in pattern.callback.view_initkwargs:
-#                url = pattern.name
-#                break
-#        if url:
-#            widget_opts = dict(url=url)
-#            if field.name in FORWARDABLE:
-#                forward = ''
-#                for other_field_path in asf_dict.get('selects', []):
-#                    if other_field_path.split('__')[-1] == FORWARDABLE[field.name]:
-#                        forward = other_field_path
-#                        break
-#                if forward:
-#                    widget_opts['forward'] = [forward]
-#                    placeholder_txt = 'Bitte zuerst ein {} auswählen!'.format(get_fields_from_path(model, forward)[-1].get_path_info()[-1].join_field.verbose_name.capitalize())
-#                    widget_opts['attrs'] = {'data-placeholder':placeholder_txt}
-#            if rel_or_field.many_to_many:
-#                #formfield_opts['widget'] = MIZModelSelect2Multiple(**widget_opts)
-#                formfield_opts['widget'] = autocomplete.ModelSelect2Multiple(**widget_opts)
-#            else:
-#                #formfield_opts['widget'] = MIZModelSelect2(**widget_opts)
-#                formfield_opts['widget'] = autocomplete.ModelSelect2(**widget_opts)
-#                
-#        if field_path in formfield_classes:
-#            attrs[field_path] = formfield_classes.get(field_path)(**formfield_opts)
-#        else:
-#            attrs[field_path] = field.formfield(**formfield_opts)
-#    return type('AdvSF'+model.__name__, (AdvSFForm, ), attrs )
-#    

@@ -84,7 +84,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         
     def create_object(self, text):
         """Create an object given a text."""
-        # TODO: allow an **expression to create the object (ACProv) // let create_field be an expression?
         object = self.model.objects.create(**{self.create_field: text})
         if object and self.request:
             self.log_addition(object)
@@ -92,38 +91,18 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         
     def get_queryset(self):
         qs = self.model.objects.all()
-        #ordering = self.model._meta.ordering
         
         if self.forwarded:
-            qobjects = Q()
-            for k, v in self.forwarded.items():
-                #TODO: make a custom widget to allow setting of its 'name' html attribute so we don't have to do this:
-                # html attribute name == form field name; meaning in order to use dal in search forms we have to call the
-                # form field after a queryable field. But the ac widget's model fields may be different from the form fields
-                # 
-                # NOTE: use a partial dal.forward.Field: 
-                # pf = partial(forward.Field,dst='magazin')
-                # widget.forward = [pf(src='whatever_field_name')]
-
-                while True:
-                    # Reducing k in hopes of getting something useful
-                    if k:
-                        try:
-                            # Test to see if k can be used to build a query
-                            get_fields_from_path(self.model, k)
-                            break
-                        except:
-                            # Slice off the first bit
-                            k = "__".join(k.split("__")[1:])
-                    else:
-                        break
-                if k and v:
-                    qobjects |= Q((k,v))
-            if qobjects.children:
-                qs = qs.filter(qobjects)                        
+            if any(k and v for k, v in self.forwarded.items()):
+                qobjects = Q()
+                for k, v in self.forwarded.items():
+                    if k and v:
+                        qobjects |= Q((k,v))
+                qs = qs.filter(qobjects) 
             else:
-                # Return empty queryset as the forwarded items did not contribute to filtering the queryset
+                # All forwarded values were None, return an empty queryset
                 return self.model.objects.none()
+                
         qs = self.do_ordering(qs)
         qs = self.apply_q(qs)
         return qs
@@ -141,78 +120,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         codename = get_permission_codename('add', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
     
-        
-class ACProv(ACBase):
-    
-    model = provenienz
-    
-    def has_create_field(self):
-        return True
-        
-    def create_object(self, text):
-        object = provenienz.objects.create(geber=geber.objects.create(name=text))
-        if object and self.request:
-            self.log_addition(object)
-        return object
-        
-class ACAusgabe(ACBase):
-    
-    model = ausgabe
-    
-    def do_ordering(self, qs):
-        return qs.resultbased_ordering()
-        
-class ACVDStrat(ACBase):
-    
-    exact_match = False
-    
-    def get_create_option(self, context, q):
-        if self.exact_match:
-            # Don't show a create option when an exact match has been found.
-            return []
-        return super().get_create_option(context, q)
-    
-    def apply_q(self, qs):
-        from DBentry.query import ValuesDictStrategy
-        rslt, self.exact_match = ValuesDictStrategy(qs).search(self.q)
-        return rslt
-        
-    def get_result_value(self, result):
-        """Return the value of a result."""
-        if isinstance(result, (list, tuple)):
-            return result[0]
-        return str(result.pk)
-
-    def get_result_label(self, result):
-        """Return the label of a result."""
-        if isinstance(result, (list, tuple)):
-            return result[1]
-        return str(result)
-        
-class ACFavoritenMixin(object):
-    """
-    A mixin that adds Favoriten to the top of the result queryset if no search term was given.
-    """
-    
-    def apply_q(self, qs):
-        if self.q:
-            qs = super().apply_q(qs)
-        else:
-            # Fetch favorites if available
-            try:
-                fav_config = Favoriten.objects.get(user=self.request.user)
-            except Favoriten.DoesNotExist:
-                return qs
-            # if there are no favorites for the model, an empty queryset will be returned by get_favorites
-            qs = list(fav_config.get_favorites(self.model)) + list(qs) 
-        return qs
-        
-class ACGenre(ACFavoritenMixin, ACBase):
-    model = genre
-
-class ACSchlagwort(ACFavoritenMixin, ACBase):
-    model = schlagwort
-    
 class ACCapture(ACBase):
     
     def dispatch(self, *args, **kwargs):
@@ -222,9 +129,17 @@ class ACCapture(ACBase):
         self.create_field = kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
     
-    def apply_q(self, qs):
+    def apply_q(self, qs, use_suffix=True):
         if self.q:
-            return qs.find(self.q)
+            return qs.find(self.q, use_suffix=use_suffix)
+        elif self.model in Favoriten.get_favorite_models():
+            # add Favoriten to the top of the result queryset if no search term was given.
+            try:
+                favorites = Favoriten.objects.get(user=self.request.user)
+            except Favoriten.DoesNotExist:
+                return qs
+            # if there are no favorites for the model, an empty queryset will be returned by get_favorites
+            return list(favorites.get_favorites(self.model)) + list(qs) 
         else:
             return qs
         

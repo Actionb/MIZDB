@@ -69,6 +69,7 @@ class MIZQuerySet(models.QuerySet):
                 else:
                     d.get(k).append(v)
         if flds and flatten:
+            #TODO: flatten with flds empty (all fields requested)
             # Do not flatten fields that represent a reverse relation, as a list is expected
             exclude = []
             for field_path in flds:

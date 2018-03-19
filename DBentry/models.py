@@ -61,6 +61,7 @@ class musiker(BaseModel):
     primary_search_fields = []
     name_field = 'kuenstler_name'
     search_fields_suffixes = {'person__vorname':'Vorname', 'person__nachname':'Nachname', 'musiker_alias__alias':'Alias'}
+    create_field = 'kuenstler_name'
     
     #dupe_fields = ['kuenstler_name', 'person']
     
@@ -123,8 +124,9 @@ class band(BaseModel):
     #dupe_fields = ['band_name', 'herkunft_id']
     search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
     primary_search_fields = ['band_name', 'band_alias__alias']
-    #name_field = 'band_name'
-    #search_fields_suffixes = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
+    name_field = 'band_name'
+    search_fields_suffixes = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
+    create_field = 'band_name'
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Band'
@@ -613,6 +615,7 @@ class schlagwort(BaseModel):
     primary_search_fields = []
     name_field = 'schlagwort'
     search_fields_suffixes = {'oberschl__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias': 'Alias'}
+    create_field = 'schlagwort'
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
@@ -736,7 +739,7 @@ class buch(BaseModel):
 
 class instrument(BaseModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
-    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS)
+    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS) #NOTE: optional?
     
     search_fields = ['instrument', 'instrument_alias__alias', 'kuerzel']
     primary_search_fields = ['instrument']
@@ -1248,6 +1251,10 @@ class Favoriten(models.Model): #NOTE: why not inherit from BaseModel?
         if model:
             return rslt.get(model, Favoriten.objects.none())
         return rslt
+        
+    @classmethod
+    def get_favorite_models(cls):
+        return [fld.related_model for fld in cls._meta.many_to_many]
     
 wip_models = [bildmaterial, buch, dokument, memorabilien, video]
 main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 

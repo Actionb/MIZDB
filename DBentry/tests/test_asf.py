@@ -5,6 +5,8 @@ from .base import *
 from DBentry.advsfforms import *
 from DBentry.admin import *
 
+from dal import forward
+
 class FactoryTestCaseMixin(object):
     
     admin_site = miz_site
@@ -85,7 +87,12 @@ class TestFactory(MyTestCase):
         model_admin = PersonAdmin(person, miz_site)
         form = advSF_factory(model_admin)()
         widget = form.fields['herkunft__bland'].widget
-        self.assertEqual(widget.forward, ['herkunft__land'])
+        forwarded = widget.forward[0]
+        expected = forward.Field(src='herkunft__land', dst='land')
+
+        self.assertIsInstance(forwarded, forward.Field)
+        self.assertEqual(forwarded.src, 'herkunft__land')
+        self.assertEqual(forwarded.dst, 'land')
         self.assertEqual(widget.attrs.get('data-placeholder', ''), 'Bitte zuerst ein Land auswählen!')
     
 class TestFactoryArtikel(FactoryTestCaseMixin,MyTestCase):

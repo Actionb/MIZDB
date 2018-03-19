@@ -15,105 +15,7 @@ from DBentry.ac.widgets import wrap_dal_widget, MIZModelSelect2, make_widget
 
 from dal import autocomplete
 
-Textarea = forms.Textarea
-
-WIDGETS = {
-            'audio'         :   autocomplete.ModelSelect2(url='acaudio'),
-            'autor'         :   autocomplete.ModelSelect2(url='acautor'), 
-            'bildmaterial'  :   autocomplete.ModelSelect2(url='acbildmaterial'), 
-            'buch'          :   autocomplete.ModelSelect2(url='acbuch'), 
-            'datei'         :   autocomplete.ModelSelect2(url='acdatei'), 
-            'dokument'      :   autocomplete.ModelSelect2(url='acdokument'),  
-            'genre'         :   autocomplete.ModelSelect2(url='acgenre'),  
-            'memorabilien'  :   autocomplete.ModelSelect2(url='acmemorabilien'),
-            'person'        :   autocomplete.ModelSelect2(url='acperson'),
-            'schlagwort'    :   autocomplete.ModelSelect2(url='acschlagwort'),  
-            'video'         :   autocomplete.ModelSelect2(url='acvideo'),
-            
-            # Artikel
-            'ausgabe' : autocomplete.ModelSelect2(url='acausgabe', forward = ['magazin']), 
-            
-            # Audio
-            'sender' : autocomplete.ModelSelect2(url='acsender'), 
-            
-            # Ausgaben
-            'magazin' : autocomplete.ModelSelect2(url='acmagazin'),
-            
-            # Band 
-            'musiker' : autocomplete.ModelSelect2(url='acmusiker'), 
-            
-            # Bestand
-            bestand : {
-                'ausgabe' : autocomplete.ModelSelect2(url = 'acausgabe'), 
-                'buch' : autocomplete.ModelSelect2(url='acbuch'),  
-                'lagerort' :  autocomplete.ModelSelect2(url='aclagerort'), 
-                'provenienz' : autocomplete.ModelSelect2(url='acprov'), 
-            }, 
-            
-            # Buch
-            buch : {
-                'verlag' : MIZModelSelect2(url='accapture', model_name='verlag', create_field='verlag_name'), 
-                'verlag_orig' : autocomplete.ModelSelect2(url='acverlag'), 
-                'sprache' : autocomplete.ModelSelect2(url='acsprache'), 
-                'sprache_orig' : autocomplete.ModelSelect2(url='acsprache'),
-                'buch_serie' : autocomplete.ModelSelect2(url='acbuchserie'),
-            }, 
-            
-            # Genre
-            genre : {
-                'ober' : autocomplete.ModelSelect2(url='acgenre'),
-            }, 
-            
-            # Magazin
-            magazin : {
-                'verlag' : autocomplete.ModelSelect2(url='acverlag'), 
-                'genre' : autocomplete.ModelSelect2Multiple(url='acgenre'), 
-                'ort' : autocomplete.ModelSelect2(url='acort'), 
-                'info' : Textarea(attrs=ATTRS_TEXTAREA),
-                'beschreibung' : Textarea(attrs=ATTRS_TEXTAREA),
-            }, 
-            
-            # Musiker
-            'instrument' : autocomplete.ModelSelect2(url='acinstrument'),
-            'band' : autocomplete.ModelSelect2(url='acband'), 
-            
-            # Instrument -- register an empty dict of widgets for this model so as to not try to use 'instrument' dal widget for a simple charfield
-            instrument : {}, 
-            
-            # Orte
-            'herkunft' : autocomplete.ModelSelect2(url='acort'), 
-            'ort' : autocomplete.ModelSelect2(url='acort'), 
-            'kreis' : autocomplete.ModelSelect2(url='ackreis'), 
-            'bland' : autocomplete.ModelSelect2(url='acbland', forward=['land'], attrs = {'data-placeholder': 'Bitte zuerst ein Land auswählen!'}), 
-            'land' : autocomplete.ModelSelect2(url='acland'), 
-            'veranstaltung' : autocomplete.ModelSelect2(url='acveranstaltung'), 
-            'spielort' : autocomplete.ModelSelect2(url='acspielort'), 
-            'sitz' : autocomplete.ModelSelect2(url='acort'),
-            
-            # Prov/Lagerort
-            'lagerort' : autocomplete.ModelSelect2(url='aclagerort'), 
-            provenienz : {
-                'geber' : autocomplete.ModelSelect2(url='acgeber'), 
-            }, 
-            'provenienz' : autocomplete.ModelSelect2(url='acprov'), 
-            
-            # Schlagworte
-            schlagwort : {
-                'ober' : autocomplete.ModelSelect2(url='acschlagwort'),  
-            }, 
-            # Sonstige 
-            'bemerkungen'   :   Textarea(attrs=ATTRS_TEXTAREA), 
-            'beschreibung'  :   Textarea(attrs=ATTRS_TEXTAREA), 
-            'info'          :   Textarea(attrs=ATTRS_TEXTAREA), 
-            
-            #WIP
-#            'format' : autocomplete.ModelSelect2(url='acformat'), 
-            'plattenfirma' : autocomplete.ModelSelect2(url='aclabel'), 
-            'format_typ' : autocomplete.ModelSelect2(url='acformat_typ'), 
-            'format_size' : autocomplete.ModelSelect2(url='acformat_size'), 
-            'noise_red' : autocomplete.ModelSelect2(url='acnoisered'), 
-            
-}
+Textarea = forms.Textarea           
 
 class FormBase(forms.ModelForm):
     
@@ -162,7 +64,7 @@ class FormBase(forms.ModelForm):
         try:
             self.instance.validate_unique(exclude=exclude)
         except ValidationError as e:
-            # Ignore non-unique entries in the same set
+            # Ignore non-unique entries in the same formset; see django.contrib.admin.options.InlineModelAdmin.get_formset.inner
             self.cleaned_data['DELETE']=True
             self._update_errors(e)
 
@@ -187,11 +89,9 @@ def makeForm(model, fields = (), form_class = None):
             model_name = field.related_model._meta.model_name, 
             create_field=field.related_model.create_field
         )
-    #TODO: create a custom formfield/widget for Textarea
     for field in model._meta.get_fields():
         if isinstance(field, models.TextField):
             widgets[field.name] = forms.Textarea(attrs=ATTRS_TEXTAREA)
-    # TODO: set a default for Favoriten widgets
     return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widgets) 
 
 
@@ -208,9 +108,7 @@ class AusgabeMagazinFieldForm(FormBase):
                                     widget = make_widget(model=magazin, wrap=True) 
                                     )
     class Meta:
-        widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'], 
-                                    attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),
-                                    }
+        widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'])}
                                     
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs and kwargs['instance']:
@@ -229,8 +127,7 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         model = artikel
         fields = '__all__'
         widgets = {
-                'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'], 
-                                attrs = {'data-placeholder': 'Bitte zuerst ein Magazin auswählen!'}),                
+                'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin']),               
                 'schlagzeile'       : Textarea(attrs={'rows':2, 'cols':90}), 
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 

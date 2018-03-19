@@ -29,6 +29,8 @@ def advanced_search_form(cl):
     asf = dict(selects=[], gtelt=[], simple=[], ac_form=form)
     if asf_dict:
         for item in asf_dict.get('selects', []):
+            if isinstance(item, (list, tuple)):
+                item, forward = item
             field = get_fields_from_path(model, item)[-1]
             if item in form_fields or getattr(field, 'name', None) in form_fields:
                 # Ignore items that are already being handled by the form
