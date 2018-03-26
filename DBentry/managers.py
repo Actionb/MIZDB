@@ -11,12 +11,12 @@ class MIZQuerySet(models.QuerySet):
     
     def find(self, q, **kwargs):
         # Find the best strategy to use:
-        if getattr(self.model, 'name_field'):
-            strat = ValuesDictStrategy
-        elif getattr(self.model, 'primary_search_fields'):
-            strat = PrimaryFieldsStrategy
+        if getattr(self.model, 'name_field', False):
+            strat = ValuesDictSearchQuery
+        elif getattr(self.model, 'primary_search_fields', False):
+            strat = PrimaryFieldsSearchQuery
         else:
-            strat = BaseStrategy
+            strat = BaseSearchQuery
         result, exact_match = strat(self, **kwargs).search(q)
         return result
         
@@ -116,8 +116,7 @@ class CNQuerySet(MIZQuerySet):
     _updated = False
     
     def find(self, q, **kwargs):
-        from .query import ValuesDictStrategy
-        strat = ValuesDictStrategy(self, **kwargs)
+        strat = ValuesDictSearchQuery(self, **kwargs)
         result, exact_match = strat.search(q)
         return result
     

@@ -4,37 +4,25 @@ from django.utils.translation import gettext_lazy
 
 from django.db import models
 
-"""
-Search strategies:
-"""
-#TODO: this cannot deal with name searches of format surname prename
-class BaseStrategy(object):
+def clean_string(s):
+    return str(s).strip().casefold()
+    
+class BaseSearchQuery(object):
     
     _results = {}
     
-    def __init__(self, queryset, search_fields = None, suffix = None, use_suffix = True, use_cache = False, pre_filter = True):
+    def __init__(self, queryset, search_fields = None, suffix = None, use_suffix = True, **kwargs):
         self.search_fields = search_fields or queryset.model.get_search_fields()
         if isinstance(self.search_fields, str):
             self.search_fields = [self.search_fields]
         self.search_fields = list(self.search_fields) # 'cast' into a list
-        self.pre_filter = pre_filter
         self._root_queryset = queryset
         self.ids_found = set()
         self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes', {})
         self.use_suffix = use_suffix
         self.exact_match = False
-        self.use_cache = use_cache
-        if not self.use_cache:
-            self._results = {}
     
     def get_queryset(self, q=None):
-        if q and self.pre_filter:
-            # Exclude any records that do not at least icontain q in any of the search_fields
-            #NOTE: this *should* help, but I am not actually convinced that it does
-            qobjects = models.Q()
-            for search_field in self.search_fields:
-                qobjects |= models.Q((search_field+'__icontains', q))
-            return self._root_queryset.filter(qobjects).distinct()
         return self._root_queryset.all()
         
     def get_suffix(self, field, lookup=''):
@@ -59,8 +47,9 @@ class BaseStrategy(object):
         qs = self.get_queryset(q)
         rslt = []
         search_results = qs.exclude(pk__in=self.ids_found).filter(**{search_field + lookup:q})
-        rslt.extend(self.append_suffix(search_results, search_field, lookup))
-        self.ids_found.update(search_results.values_list('pk', flat=True))
+        new_rslts = self.append_suffix(search_results, search_field, lookup)
+        self.ids_found.update([pk for pk, name in new_rslts])
+        rslt.extend(new_rslts)
         return rslt
         
     def exact_search(self, search_field, q):
@@ -75,20 +64,14 @@ class BaseStrategy(object):
     def contains_search(self, search_field, q=None):
         return self._do_lookup('__icontains', search_field, q)
         
-    def search(self, q=None):
+    def search(self, q):
         if not q:
             return self._root_queryset, False
-        q = str(q)
+        q = clean_string(q)
         
-        if q in self._results and self.use_cache:
-            print('Strategy: Fetching results from storage', len(self._results[q][0]), self.use_cache)
-            return self._results[q]
-            
         self.ids_found = set()
         self.exact_match = False
         rslt = self._search(q)
-        if self.use_cache:
-            self._results[q] = (rslt, self.exact_match)
         return rslt, self.exact_match
         
     def _search(self, q):
@@ -98,7 +81,7 @@ class BaseStrategy(object):
             rslt.extend(self.exact_search(search_field, q) + self.startsw_search(search_field, q) + self.contains_search(search_field, q))
         return rslt
 
-class PrimaryFieldsStrategy(BaseStrategy):
+class PrimaryFieldsSearchQuery(BaseSearchQuery):
     """
     A search strategy that can separate 'useful' results from 'weak' results.
     """
@@ -107,7 +90,8 @@ class PrimaryFieldsStrategy(BaseStrategy):
     weak_hits_sep = gettext_lazy('weak hits for "{q}"')
     separator_width = 36 # Select2 result box is 36 digits wide
     
-    def __init__(self, queryset, *args, **kwargs):
+    def __init__(self, queryset, use_separator = True, *args, **kwargs):
+        self.use_separator = use_separator
         self.primary_search_fields = kwargs.pop('primary_search_fields', None) or getattr(queryset.model, 'primary_search_fields', None)
         super().__init__(queryset, *args, **kwargs)
         if not self.primary_search_fields:
@@ -138,18 +122,18 @@ class PrimaryFieldsStrategy(BaseStrategy):
         for search_field in self.secondary_search_fields:
             rslt.extend(self.exact_search(search_field, q) + self.startsw_search(search_field, q))
         
-        if len(rslt):
+        if self.use_separator and len(rslt):
             weak_hits = [(0, self.get_separator(q))]
         else:
             weak_hits = []
         for search_field in self.secondary_search_fields:
             weak_hits.extend(self.contains_search(search_field, q))
-        if len(weak_hits)>1:
+        if len(weak_hits) > int(self.use_separator): # Will I burn in programmer hell for int(bool)?
             rslt.extend(weak_hits)
         return rslt
         
         
-class NameFieldStrategy(PrimaryFieldsStrategy):
+class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
     
     name_field = None
     
@@ -173,49 +157,53 @@ class NameFieldStrategy(PrimaryFieldsStrategy):
             (pk, name + suffix) for pk, name in tuple_list
         ]
     
-class ValuesDictStrategy(NameFieldStrategy):
+class ValuesDictSearchQuery(NameFieldSearchQuery):
     
-    def append_suffix(self, pk, name, field, lookup=''):
-        suffix = self.get_suffix(field, lookup)
-        
-        if self.use_suffix and suffix:
-            suffix = " ({})".format(suffix)
-        return (pk, name + suffix)
+    def get_queryset(self, q):
+        # To limit the length of values_dict, exclude any records that do not at least icontain q in any of the search_fields
+        qobjects = models.Q()
+        for search_field in self.search_fields:
+            for i in q.split():
+                qobjects |= models.Q((search_field+'__icontains', i))
+        return self._root_queryset.filter(qobjects)
         
     def _do_lookup(self, lookup, search_field, q):
         # values_dict is a dict of dicts of lists! {pk: {field:[values,...] ,...},... }
         rslt = []
         
-        def lookup_values(search_field):
-            ids = set()
-            rslts = []
-            
-            for pk, data_dict in self.values_dict.copy().items():
-                values_list = data_dict.get(search_field, None)
-                if values_list:
-                    match = False
-                    if lookup == '__iexact':
-                        if any(str(s) == q for s in values_list):
-                            match = True
-                    elif lookup == '__istartswith':
-                        if any(str(s).startswith(q) for s in values_list):
-                            match = True
-                    else:
-                        if any(q.casefold() in str(s).casefold() for s in values_list):
-                            match = True
-                    if match:
-                        rslts.append(self.append_suffix(pk, data_dict.get(self.name_field)[0], search_field, lookup))
-                        ids.add(pk)
-                        self.values_dict.pop(pk)
-            return ids, rslts
-        
-        ids_found, rslts = lookup_values(search_field)
-        rslt.extend(rslts)
-        self.ids_found.update(ids_found)
+        for pk, data_dict in self.values_dict.copy().items():
+            values_list = data_dict.get(search_field, None)
+            if values_list:
+                match = False
+                if lookup == '__iexact':
+                    if any(clean_string(s) == q for s in values_list):
+                        match = True
+                elif lookup == '__istartswith':
+                    if any(clean_string(s).startswith(q) for s in values_list):
+                        match = True
+                else:
+                    if any(q in clean_string(s) for s in values_list):
+                        match = True
+                if not match:
+                    # Scramble the order of q, if all bits of it can be found, accept the values_list as a match
+                    partial_match_count = 0
+                    for i in q.split():
+                        if lookup == '__iexact':
+                            if any(any(i == v for v in clean_string(value).split()) for value in values_list):
+                                partial_match_count += 1
+                        elif lookup == '__istartswith':
+                            if any(any(v.startswith(i) for v in clean_string(value).split()) for value in values_list):
+                                partial_match_count += 1
+                    if partial_match_count == len(q.split()):
+                        match = True
+                if match:
+                    rslt.extend(self.append_suffix([(pk, data_dict.get(self.name_field)[0])], search_field, lookup))
+                    self.ids_found.add(pk)
+                    self.values_dict.pop(pk)
         return rslt
         
     def search(self, q=None):
         if q:
-            q = str(q)
+            q = clean_string(str(q).replace(',', '')) # User might be searching as surname, prename
             self.values_dict = self.get_queryset(q).values_dict(*self.search_fields)
         return super().search(q)

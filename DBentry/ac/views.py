@@ -128,6 +128,23 @@ class ACCapture(ACBase):
         self.model = get_model_from_string(model_name)
         self.create_field = kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
+        
+    def get_queryset(self):
+        model_name = self.model._meta.model_name
+        cache = self.request.session.get('ac-cache', {})
+        if self.q in cache.get(model_name, {}):
+            return cache[model_name][self.q]
+        qs = super().get_queryset()
+        if self.q:
+            if not cache or model_name not in cache:
+                self.request.session['ac-cache'] = {model_name:{self.q:qs}}
+            elif model_name in cache:
+                cached = self.request.session['ac-cache'][model_name]
+                cached[self.q] = qs
+                self.request.session['ac-cache'] = {model_name:cached}
+            print(list(self.request.session.__dict__.keys()))
+            print(self.request.session.modified)
+        return qs
     
     def apply_q(self, qs, use_suffix=True):
         if self.q:
