@@ -58,11 +58,11 @@ class DataFactory(object):
         value = None
         t = fld.get_internal_type()
         if t in ('CharField', 'TextField'):
-            value = 'Test-{}'.format(random.randrange(100))
+            value = 'Test-{}'.format(random.randrange(10000))
         elif t in ('NullBooleanField', 'BooleanField'):
             value = random.choice([True, False])
         elif t in ('PositiveSmallIntegerField', 'SmallIntegerField', 'IntegerField', 'BigIntegerField', 'DurationField'):
-            value = random.randrange(100)
+            value = random.randrange(1000)
         elif t in ('DateField', 'DateTimeField'):
             value = "{y}-{m}-{d}".format(
                 y  = random.randrange(1900, 2017), 
@@ -73,7 +73,19 @@ class DataFactory(object):
         else:
             raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
         return value
-
+    
+    def get_obj_dict(self, model):
+        obj_dict = {}
+        for fld in model.get_required_fields():
+            if fld.is_relation:
+                rel_attr_name = '_' + fld.related_model._meta.model_name
+                req_obj = getattr(self, rel_attr_name, None)
+                if req_obj is None or req_obj.pk is None:
+                    req_obj = self.create_obj(fld.related_model)
+            else:
+                req_obj = self.get_value(fld)
+            obj_dict[fld.name] = req_obj
+        return obj_dict
     
     _created = []
         
@@ -88,30 +100,34 @@ class DataFactory(object):
             if not hasattr(model, 'get_required_fields'):
                 # Auto-created through table (e.g. Favoriten)
                 return None
-            obj_dict = {}
-            for fld in model.get_required_fields():
-                if fld.is_relation:
-                    rel_attr_name = '_' + fld.related_model._meta.model_name
-                    req_obj = getattr(self, rel_attr_name, None)
-                    if req_obj is None or req_obj.pk is None:
-                        req_obj = self.create_obj(fld.related_model)
-                else:
-                    req_obj = self.get_value(fld)
-#                    if fld.has_default() and fld.get_default() is not None:
-#                        req_obj = fld.get_default()
-#                    elif fld.get_internal_type() in self.defaults:
-#                        req_obj = self.defaults[fld.get_internal_type()]
-#                    else:
-#                        raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
-                obj_dict[fld.name] = req_obj
-            try:
-                with transaction.atomic():
-                    obj = model.objects.create(**obj_dict)
-            except IntegrityError:
-                # Tried to create a duplicate of an unique object
-                # TODO: add a random bit to obj_dict to make it unique
+#            obj_dict = {}
+#            for fld in model.get_required_fields():
+#                if fld.is_relation:
+#                    rel_attr_name = '_' + fld.related_model._meta.model_name
+#                    req_obj = getattr(self, rel_attr_name, None)
+#                    if req_obj is None or req_obj.pk is None:
+#                        req_obj = self.create_obj(fld.related_model)
+#                else:
+#                    req_obj = self.get_value(fld)
+##                    if fld.has_default() and fld.get_default() is not None:
+##                        req_obj = fld.get_default()
+##                    elif fld.get_internal_type() in self.defaults:
+##                        req_obj = self.defaults[fld.get_internal_type()]
+##                    else:
+##                        raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
+#                obj_dict[fld.name] = req_obj
+            sanity = 10
+            while(sanity):
+                obj_dict = self.get_obj_dict(model)
+                try:
                     with transaction.atomic():
-                        obj = model.objects.get(**obj_dict)
+                        obj = model.objects.create(**obj_dict)
+                except IntegrityError:
+                    # Tried to create a duplicate of an unique object, try again with a new obj_dict
+                    sanity -=1
+                    continue
+                else:
+                    break
             self._created.append(obj)
             setattr(self, attr_name, obj)
         return obj
@@ -273,3 +289,27 @@ def ort_data():
     
     return model, instance_list
         
+        
+def band_huge(cls, get_instances=False):
+    print("\n Creating test data...", end='')
+    cls.model = band
+    l = land.objects.create(land_name='Testland')
+    objects = [ort(pk=c, stadt='Test-{}'.format(c), land=l) for c in range(1, 5000)]
+    ort.objects.bulk_create(objects)
+    objects = [genre(pk=c, genre='Test-{}'.format(c)) for c in range(1, 5000)]
+    genre.objects.bulk_create(objects)
+    
+    objects = [band(pk=c, band_name='Test-{}'.format(c), herkunft_id=c) for c in range(1, 5000)]
+    band.objects.bulk_create(objects)
+    
+    objects = [musiker(pk=c, kuenstler_name='Test-{}'.format(c)) for c in range(1, 5000)]
+    musiker.objects.bulk_create(objects)
+    objects = [m2m_band_musiker(band_id=c, musiker_id=c) for c in range(1, 5000)]
+    m2m_band_musiker.objects.bulk_create(objects)
+    
+    objects = [band_alias(parent_id=c, alias='Test-{}'.format(5000-c)) for c in range(1, 5000)]
+    band_alias.objects.bulk_create(objects)
+    
+    print("...done.")
+    if get_instances:
+        cls.test_data = [band.objects.get(band_name='Test-{}'.format(c)) for c in range(1, 5000)]

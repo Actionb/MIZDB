@@ -1,26 +1,26 @@
 from .base import *
-
-from DBentry.ac.views import *
-
         
-class TestACBase(ACViewTestCase):
+class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     
     view_class = ACBase
-    path = reverse('acband')
     model = band
     create_field = 'band_name'
+    test_data_count = 0
 
     @classmethod
     def setUpTestData(cls):
-        super(TestACBase, cls).setUpTestData()
         cls.obj1 = band.objects.create(band_name='Boop')
         cls.genre = genre.objects.create(genre='Testgenre')
         m2m_band_genre.objects.create(band=cls.obj1, genre=cls.genre)
         cls.musiker = musiker.objects.create(kuenstler_name='Meehh')
         m2m_band_musiker.objects.create(band=cls.obj1, musiker=cls.musiker)
-        cls.obj2 = band.objects.create(band_name='leboop')
+        cls.obj2 = band.objects.create(band_name='Aleboop')
         cls.obj3 = band.objects.create(band_name='notfound')
         cls.obj4 = band.objects.create(band_name='Boopband')
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
+        
+        super(TestACBase, cls).setUpTestData()
     
     def test_has_create_field(self):
         v = self.view()
@@ -28,29 +28,13 @@ class TestACBase(ACViewTestCase):
         v.create_field = ''
         self.assertFalse(v.has_create_field())
         
-    @tag('logging')
-    def test_create_object_no_log_entry(self):
-        # no request set on view, no log entry should be created
-        obj = self.view().create_object('Beep')
-        with self.assertRaises(AssertionError):
-            self.assertLoggedAddition(obj)    
-        
-    @tag('logging')
-    def test_create_object_with_log_entry(self):
-        # request set on view, log entry should be created
-        request = self.get_request()
-        obj = self.view(request).create_object('Boop')
-        self.assertLoggedAddition(obj)   
-        
-    def test_get_create_option(self):
-        request = self.get_request()
-        create_option = self.view(request).get_create_option(context={}, q='Beep')
-        self.assertEqual(len(create_option), 1)
-        self.assertEqual(create_option[0].get('id'), 'Beep')
-        self.assertEqual(create_option[0].get('text'), 'Erstelle "Beep"') #TODO: translation
-        self.assertTrue(create_option[0].get('create_id'))
+    def test_has_add_permission(self):
+        # Test largely covered by test_get_create_option_no_perms
+        request = self.get_request(user=self.noperms_user)
+        self.assertFalse(self.view().has_add_permission(request)) 
         
     def test_get_create_option_no_create_field(self):
+        # No create option should be displayed if there is no create_field
         request = self.get_request()
         view = self.view(request)
         view.create_field = ''
@@ -58,104 +42,55 @@ class TestACBase(ACViewTestCase):
         self.assertEqual(create_option, [])
         
     def test_get_create_option_no_perms(self):
+        # No create option should be displayed if the user has no add permissions
         request = self.get_request(user=self.noperms_user)
         create_option = self.view(request).get_create_option(context={}, q='Beep')
         self.assertEqual(create_option, [])
-    
-    @skip('Needs to be reworked anyhow. Should default to model.get_search_fields')
-    def test_flds_prop(self):
-        # Check if flds removes fields that are not part of the model
-        #TODO: revisit this after the autocomplete overhaul
-        self.model.search_fields = ['beep']
-        self.assertFalse('beep' in self.view().flds)
         
-    def test_do_ordering(self):
-        # Test covered by test_get_queryset
-        pass
+    def test_get_create_option_more_pages(self):
+        # No create option should be displayed if there is more than one page to show
+        request = self.get_request()
+        view = self.view(request)
+        paginator, page_obj, queryset, is_paginated = view.paginate_queryset(self.queryset, 1)
+        create_option = view.get_create_option(context={'page_obj':page_obj}, q='Beep')
+        self.assertEqual(create_option, [])
         
     def test_apply_q(self):
-        #TODO: revisit this after the model refactor (assertQS methods) ... also wtf?
+        # Test the ordering of exact_match_qs, startswith_qs and then contains_qs
         view = self.view(q='Boop')
-        exact_match_qs = [self.obj1]
+        # obj1 is the only exact match
+        # obj4 starts with q
+        # obj2 contains q
+        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4, self.obj2])
         
-        startswith_qs = [self.obj1, self.obj4]
+        # all but obj3 contain 'oop', standard ordering should apply as there are neither exact nor startswith matches
+        view.q = 'oop'
+        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj2, self.obj1, self.obj4])
+
+        # only obj4 should appear
+        view.q = 'Boopband'
+        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj4])
         
-        contains_qs = [self.obj1, self.obj4, self.obj2]
-        
-        self.assertEqual(list(view.apply_q(self.model.objects.all())), contains_qs)
-        
-    def test_apply_q_favorites(self):
-        fav = Favoriten.objects.create(user=self.super_user)
-        fav.fav_genres.add(self.genre)
-        first_genre = genre.objects.create(genre='A')
-        request = self.get_request()
-        view = self.view(request=request, model=genre)
-        self.assertTrue(Favoriten.objects.filter(user=view.request.user).exists())
-        # self.genre will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
-        self.assertEqual(list(view.apply_q(genre.objects.all())), [self.genre, first_genre, self.genre])
-        
-    def test_get_queryset(self):
+    def test_get_queryset_with_q(self):
         request = self.get_request()
         view = self.view(request)
         view.q = 'notfound'
         self.assertEqual(list(view.get_queryset()), [self.obj3])
         
-    def test_get_queryset_no_q(self):
-        request = self.get_request()
-        view = self.view(request)
-        self.assertEqual(list(view.get_queryset()), [self.obj1, self.obj4, self.obj2, self.obj3])
-        
     def test_get_queryset_forwarded(self):
         # fake forwarded attribute
         request = self.get_request()
         view = self.view(request)
-        view.forwarded = {'genre':self.genre.pk, 'TROUBLES__musiker':self.musiker.pk}
+        view.forwarded = {'genre':self.genre.pk}
         
-        # get_queryset should filter out the problematic TROUBLES__musiker and '' forwards
+        # get_queryset should filter out the useless '' forward
         self.assertEqual(list(view.get_queryset()), [self.obj1])
         view.forwarded = {'':'ignore_me'}
         self.assertFalse(view.get_queryset().exists())
         
-    def test_has_add_permission(self):
-        # Test largely covered by test_get_create_option_no_perms
-        request = self.get_request(user=self.noperms_user)
-        self.assertFalse(self.view().has_add_permission(request)) 
-        
-class TestACProv(ACViewTestCase):
-    
-    view_class = ACProv
-    path = reverse('acprov')
-    model = provenienz
-    
-    def test_has_create_field(self):
-        self.assertTrue(self.view().has_create_field())
-       
-    @tag('logging') 
-    def test_create_object_no_log_entry(self):
-        # no request set on view, no log entry should be created
-        obj = self.view().create_object('Beep')
-        self.assertEqual(obj.geber.name, 'Beep')
-        with self.assertRaises(AssertionError):
-            self.assertLoggedAddition(obj)
-#        from django.contrib.admin.models import LogEntry
-#        qs = LogEntry.objects.filter(object_id=obj.pk)
-#        self.assertFalse(qs.exists())
-        
-    @tag('logging')
-    def test_create_object_with_log_entry(self):
-        # request set on view, log entry should be created
-        request = self.get_request()
-        obj = self.view(request).create_object('Beep')
-        self.assertLoggedAddition(obj)
-#        from django.contrib.admin.models import LogEntry
-#        qs = LogEntry.objects.filter(object_id=obj.pk)
-#        self.assertTrue(qs.exists())
-        
-        
+@skip("reworked")
 class TestACAusgabe(ACViewTestCase):
     
-    view_class = ACAusgabe
-    path = reverse('acausgabe')
     model = ausgabe
     
     @classmethod
@@ -230,4 +165,75 @@ class TestACAusgabe(ACViewTestCase):
         view = self.view(q=self.obj_jahrg.__str__())
         expected_qs = list(self.qs.filter(pk=self.obj_jahrg.pk))
         self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+
         
+class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
+    model = provenienz
+
+class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
+    model = person
+
+class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
+    model = autor
+
+class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
+    model = musiker
+
+class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
+    model = land
+
+class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
+    model = instrument
+
+class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
+    model = sender
+
+class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
+    model = spielort
+
+class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
+    model = veranstaltung
+    
+class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
+        
+    model = genre
+        
+    def test_apply_q_favorites(self):
+        request = self.get_request()
+        view = self.view(request=request)
+        
+        result = view.apply_q(self.queryset)
+        # If the user has no favorites, it should return the untouched queryset
+        self.assertEqual(list(result), list(self.queryset))
+        
+        # Create a favorite for the user 
+        fav = Favoriten.objects.create(user=request.user)
+        fav.fav_genres.add(self.obj1)
+        # Create an object that should be displayed as the first in the results following default ordering
+        first_object_in_ordering = self.model.objects.create(genre='A')
+        
+        # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
+        result = view.apply_q(self.model.objects.all())
+        self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
+        
+class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
+        
+    model = schlagwort
+        
+    def test_apply_q_favorites(self):
+        request = self.get_request()
+        view = self.view(request=request)
+        
+        result = view.apply_q(self.queryset)
+        # If the user has no favorites, it should return the untouched queryset
+        self.assertEqual(list(result), list(self.queryset))
+        
+        # Create a favorite for the user 
+        fav = Favoriten.objects.create(user=request.user)
+        fav.fav_schl.add(self.obj1)
+        # Create an object that should be displayed as the first in the results following default ordering
+        first_object_in_ordering = self.model.objects.create(schlagwort='A')
+        
+        # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
+        result = view.apply_q(self.model.objects.all())
+        self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))

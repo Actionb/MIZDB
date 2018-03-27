@@ -50,8 +50,8 @@ class TestModelBase(AdminTestCase):
         
     
     def test_get_search_fields(self):
-        expected = {'info', 'seitenumfang', 'zusammenfassung', 'seite', 'schlagzeile'}
-        self.assertEqual(self.model_admin.get_search_fields(), expected)
+        expected = ['schlagzeile', 'zusammenfassung', 'info', 'seite', 'seitenumfang']
+        self.assertListEqualSorted(self.model_admin.get_search_fields(), expected)
     
     def test_add_crosslinks(self):
         # artikel can't actually have any crosslinks

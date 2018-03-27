@@ -129,12 +129,12 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         If the action is aimed at the values of particular fields of the objects, present those values as a nested list.
         """
         
-        def linkify(obj, opts):
-            return get_obj_link(obj, opts, self.request.user, self.model_admin.admin_site)
+        def linkify(obj):
+            return get_obj_link(obj, self.request.user, self.model_admin.admin_site.name)
         
         objs = []
         for obj in self.queryset:
-            sub_list = [linkify(obj, self.opts)]
+            sub_list = [linkify(obj)]
             affected_fields = self.affected_fields or self.fields
             if affected_fields:
                 flds = []
@@ -145,7 +145,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
                         for pk in related_pks:
                             if pk: # values() will also gather None values
                                 related_obj = field.related_model.objects.get(pk=pk)
-                                flds.append(linkify(related_obj, field.related_model._meta))
+                                flds.append(linkify(related_obj))
                     else:
                         value = getattr(obj, field.name)
                         if value is None:

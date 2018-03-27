@@ -2,6 +2,8 @@ from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 
+#TODO: save user name instead of user pk
+
 def log_addition(request, object, message='[{"added": {}}]'):
     """
     from django.contrib.admin.options.ModelAdmin

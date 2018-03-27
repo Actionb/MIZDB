@@ -7,7 +7,7 @@ from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin
 from DBentry.actions.base import *
 from DBentry.actions.views import *
 from DBentry.forms import MIZAdminForm, forms
-from DBentry.utils import get_obj_link # parameters: obj, opts, user, admin_site
+from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
 
 class TestActionConfirmationView(ActionViewTestCase, LoggingTestMixin):
     
@@ -61,7 +61,7 @@ class TestActionConfirmationView(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects(self):
         request = self.get_request()
         view = self.view(request=request)
-        expected = [[get_obj_link(self.obj1, view.opts, request.user, view.model_admin.admin_site)]]
+        expected = [[get_obj_link(self.obj1, request.user)]]
         self.assertEqual(view.compile_affected_objects(), expected)
         
     def test_get_context_data_one_item(self):
@@ -241,7 +241,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects_obj1(self):
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj1)
-        obj_link = get_obj_link(self.obj1, view.opts, request.user, view.model_admin.admin_site)
+        obj_link = get_obj_link(self.obj1, request.user)
         related_links = []
         expected = [[obj_link, related_links]]
         self.assertEqual(view.compile_affected_objects(), expected)
@@ -249,9 +249,9 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects_obj2(self):
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj2)
-        obj_link = get_obj_link(self.obj2, view.opts, request.user, view.model_admin.admin_site)
+        obj_link = get_obj_link(self.obj2, request.user)
         related_links = [
-            get_obj_link(obj, bestand._meta, request.user, view.model_admin.admin_site)
+            get_obj_link(obj, request.user)
             for obj in self.obj2.bestand_set.all()
         ]
         expected = [[obj_link, related_links]]
@@ -260,9 +260,9 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects_obj3(self):
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj3)
-        obj_link = get_obj_link(self.obj3, view.opts, request.user, view.model_admin.admin_site)
+        obj_link = get_obj_link(self.obj3, request.user)
         related_links = [
-            get_obj_link(obj, bestand._meta, request.user, view.model_admin.admin_site)
+            get_obj_link(obj, request.user)
             for obj in self.obj3.bestand_set.all()
         ]
         expected = [[obj_link, related_links]]
@@ -271,9 +271,9 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects_obj4(self):
         request = self.get_request()
         view = self.view(request=request, queryset=self.qs_obj4)
-        obj_link = get_obj_link(self.obj4, view.opts, request.user, view.model_admin.admin_site)
+        obj_link = get_obj_link(self.obj4, request.user)
         related_links = [
-            get_obj_link(obj, bestand._meta, request.user, view.model_admin.admin_site)
+            get_obj_link(obj, request.user)
             for obj in self.obj4.bestand_set.all()
         ]
         expected = [[obj_link, related_links]]

@@ -1,11 +1,26 @@
-from django.db import models, transaction
-from django.db.utils import OperationalError
 
-from .printer.printer import *
+from collections import OrderedDict
+
+from django.db import models, transaction
+from django.contrib.admin.utils import get_fields_from_path
+
+from DBentry.utils import flatten_dict
+from DBentry.query import *
 
 class MIZQuerySet(models.QuerySet):
+    
+    def find(self, q, **kwargs):
+        # Find the best strategy to use:
+        if getattr(self.model, 'name_field', False):
+            strat = ValuesDictSearchQuery
+        elif getattr(self.model, 'primary_search_fields', False):
+            strat = PrimaryFieldsSearchQuery
+        else:
+            strat = BaseSearchQuery
+        result, exact_match = strat(self, **kwargs).search(q)
+        return result
         
-    def values_dict(self, *flds, include_empty = False, **expressions):
+    def values_dict(self, *flds, include_empty = False, flatten = False, **expressions):
         """
         An extension of QuerySet.values(). 
         
@@ -29,17 +44,14 @@ class MIZQuerySet(models.QuerySet):
         # Make sure the query includes the model's primary key values as we require it to build the result out of.
         # If flds is None, the query targets all the model's fields.
         if flds:
-            if 'pk' in flds:
-                pk_name = 'pk'
-            elif pk_name in flds:
-                pass
-            else:
-                # insert a 'pk' field rather than the model's pk.name; 'pk' is universal
-                flds = list(flds)
-                flds.append('pk')
-                pk_name = 'pk'
+            if not pk_name in flds:
+                if 'pk' in flds:
+                    pk_name = 'pk'
+                else:
+                    flds = list(flds)
+                    flds.append(pk_name)
                 
-        rslt = {}
+        rslt = OrderedDict()
         for val_dict in self.values(*flds, **expressions):
             id = val_dict.pop(pk_name)
             if id in rslt:
@@ -56,6 +68,17 @@ class MIZQuerySet(models.QuerySet):
                     continue
                 else:
                     d.get(k).append(v)
+        if flds and flatten:
+            #TODO: flatten with flds empty (all fields requested)
+            # Do not flatten fields that represent a reverse relation, as a list is expected
+            exclude = []
+            for field_path in flds:
+                if field_path == 'pk':
+                    continue
+                field = get_fields_from_path(self.model, field_path)[0]
+                if field.one_to_many or field.many_to_many:
+                    exclude.append(field_path)
+            return flatten_dict(rslt, exclude)
         return rslt
         
     def resultbased_ordering(self):
@@ -91,6 +114,11 @@ class MIZQuerySet(models.QuerySet):
 class CNQuerySet(MIZQuerySet):
     
     _updated = False
+    
+    def find(self, q, **kwargs):
+        strat = ValuesDictSearchQuery(self, **kwargs)
+        result, exact_match = strat.search(q)
+        return result
     
     def bulk_create(self, objs, batch_size=None):
         # Set the _changed_flag on the objects to be created
@@ -161,7 +189,7 @@ class CNQuerySet(MIZQuerySet):
     def _update_names(self):
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():    
             with transaction.atomic():
-                for pk, val_dict in self.filter(_changed_flag=True).values_dict(*self.model.name_composing_fields).items():
+                for pk, val_dict in self.filter(_changed_flag=True).values_dict(*self.model.name_composing_fields, flatten=True).items():
                     new_name = self.model._get_name(**val_dict)
                     self.filter(pk=pk).update(_name=new_name, _changed_flag=False)
         self._updated = True

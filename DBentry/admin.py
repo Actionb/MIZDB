@@ -531,7 +531,7 @@ class ArtikelAdmin(ModelBase):
                                 
     advanced_search_form = {
         'gtelt':['seite', ], 
-        'selects':['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
+        'selects':['ausgabe__magazin', ('ausgabe', 'ausgabe__magazin'), 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
         'simple':[], 
     }  
     save_on_top = True
@@ -592,6 +592,12 @@ class BuchAdmin(ModelBase):
     inlines = [AutorInLine, BestandInLine]
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
     exclude = ['autor']
+    
+    advanced_search_form = {
+        'selects' : ['verlag', 'sprache'], 
+        'simple' : [], 
+        'labels' : {}, 
+    }
     
 @admin.register(dokument, site=miz_site)
 class DokumentAdmin(ModelBase):
@@ -683,7 +689,7 @@ class PersonAdmin(ModelBase):
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
     
     advanced_search_form = {
-        'selects' : ['herkunft', 'herkunft__land', 'herkunft__bland']
+        'selects' : ['herkunft', 'herkunft__land', ('herkunft__bland', 'herkunft__land')]
     }
     
 @admin.register(schlagwort, site=miz_site)
@@ -697,7 +703,7 @@ class SchlagwortAdmin(ModelBase):
     
 @admin.register(spielort, site=miz_site)
 class SpielortAdmin(ModelBase):
-    pass
+    list_display = ['name', 'ort']
     
 @admin.register(technik, site=miz_site)
 class TechnikAdmin(ModelBase):

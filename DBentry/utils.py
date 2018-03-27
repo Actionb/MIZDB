@@ -1,4 +1,6 @@
 import re
+import time
+from collections import Iterable
 
 from django.db import transaction
 from django.db.utils import IntegrityError
@@ -99,7 +101,6 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
                                force_text(obj))
-                        
 
     try:
         admin_url = reverse('%s:%s_%s_change'
@@ -142,6 +143,8 @@ def model_from_string(model_name):
         return apps.get_model('DBentry', model_name)
     except LookupError:
         return None
+#TODO: rename model_from_string to get_model_from_string
+get_model_from_string = model_from_string
 
 def split_field(field_name, data, separators = [',']):
     """ Splits the content of data[field_name] according to separators and merges the new values back into a list of dicts."""
@@ -195,4 +198,43 @@ def get_relations_between_models(model1, model2):
             break 
      
     return field, rel 
-                     
+
+def timethis(func, *args, **kwargs):
+    ts = time.time()
+    r = func(*args, **kwargs)
+    te = time.time()
+    return te - ts
+    
+def num_queries(func=None, *args, **kwargs):
+    from django.test.utils import CaptureQueriesContext
+    from django.db import connections, DEFAULT_DB_ALIAS
+    using = kwargs.pop("using", DEFAULT_DB_ALIAS)
+    conn = connections[using]
+
+    context = CaptureQueriesContext(conn)
+    if func is None:
+        return context
+
+    with context as n:
+        func(*args, **kwargs)
+    return len(n)
+    
+def debug_queryfunc(func, *args, **kwargs):
+    with num_queries() as n:
+        t = timethis(func, *args, **kwargs)
+    n = len(n)
+    print("Time:", t)
+    print("Num. queries:", n)
+    return t, n
+    
+def flatten_dict(d, exclude=[]):
+    rslt = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            rslt[k] = flatten_dict(v, exclude)
+        elif k not in exclude and isinstance(v, Iterable) and not isinstance(v, str) and len(v)==1:
+            rslt[k] = v[0]
+        else:
+            rslt[k] = v
+    return rslt
+            

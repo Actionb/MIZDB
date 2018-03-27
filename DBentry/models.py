@@ -7,13 +7,19 @@ from .base.models import BaseModel, ComputedNameModel, BaseAliasModel
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
-from .managers import AusgabeQuerySet, CNQuerySet
+from .managers import AusgabeQuerySet
 
-class person(BaseModel):
+#TODO: fix search_fields order!
+#TODO: delete dupe_fields  
+
+class person(ComputedNameModel):
+    #TODO: ComputedNameModel + new strat attributes
     vorname = models.CharField(**CF_ARGS_B)
     nachname = models.CharField(default = 'unbekannt', **CF_ARGS)
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
     beschreibung = models.TextField(blank = True)
+    
+    name_composing_fields = ['vorname', 'nachname']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Person'
@@ -27,18 +33,22 @@ class person(BaseModel):
     def musiker_string(self):
         return concat_limit(self.musiker_set.all())
     musiker_string.short_description = 'Als Musiker'
-  
-    @classmethod
-    def strquery(cls, search_term, prefix = ''):
-        # search_term will be a name with vor and nachname, we need to split these up
-        qitems_list = []
-        for part in search_term.split():
-            qobject = models.Q()
-            # Get the basic list of qitems from super. Here: one qitem (list) per part in search_term
-            for qitem in super(person, cls).strquery(part, prefix):
-                qitems_list.append(qitem)
-        return qitems_list
     
+    @classmethod
+    def _get_name(self, **data):
+        return "{} {}".format(data.get('vorname', ''), data.get('nachname', '')).strip()
+        
+#    @classmethod
+#    def strquery(cls, search_term, prefix = ''):
+#        # search_term will be a name with vor and nachname, we need to split these up
+#        qitems_list = []
+#        for part in search_term.split():
+#            qobject = models.Q()
+#            # Get the basic list of qitems from super. Here: one qitem (list) per part in search_term
+#            for qitem in super(person, cls).strquery(part, prefix):
+#                qitems_list.append(qitem)
+#        return qitems_list
+#    
     
 class musiker(BaseModel): 
     kuenstler_name = models.CharField('Künstlername', **CF_ARGS)
@@ -48,7 +58,12 @@ class musiker(BaseModel):
     beschreibung = models.TextField(blank = True)
     
     search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
-    dupe_fields = ['kuenstler_name', 'person']
+    primary_search_fields = []
+    name_field = 'kuenstler_name'
+    search_fields_suffixes = {'person__vorname':'Vorname', 'person__nachname':'Nachname', 'musiker_alias__alias':'Alias'}
+    create_field = 'kuenstler_name'
+    
+    #dupe_fields = ['kuenstler_name', 'person']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Musiker'
@@ -78,6 +93,10 @@ class genre(BaseModel):
     ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
     
     search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
+    primary_search_fields = ['genre']
+    name_field = 'genre'
+    search_fields_suffixes = {'obergenre__genre': 'Obergenre', 'genre_alias__alias': 'Alias'}
+    create_field = 'genre'
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
@@ -102,8 +121,12 @@ class band(BaseModel):
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
     beschreibung = models.TextField(blank = True)
 
-    dupe_fields = ['band_name', 'herkunft_id']
-    search_fields = ['band_alias__alias', 'musiker__kuenstler_name']
+    #dupe_fields = ['band_name', 'herkunft_id']
+    search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
+    primary_search_fields = ['band_name', 'band_alias__alias']
+    name_field = 'band_name'
+    search_fields_suffixes = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
+    create_field = 'band_name'
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Band'
@@ -125,52 +148,61 @@ class band_alias(BaseAliasModel):
     parent = models.ForeignKey('band')
   
   
-class autor(BaseModel):
+class autor(ComputedNameModel):
     kuerzel = models.CharField('Kürzel', **CF_ARGS_B)
     person = models.ForeignKey('person', on_delete=models.PROTECT)
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
-    search_fields = ['person__vorname', 'person__nachname']
-    dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
+    name_composing_fields = ['person___name', 'kuerzel']
+    
+    search_fields = ['kuerzel', 'person__vorname', 'person__nachname']
+    primary_search_fields = []
+    search_fields_suffixes = {}
+    
+#    dupe_fields = ['person__vorname', 'person__nachname', 'kuerzel']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Autor'
         verbose_name_plural = 'Autoren'
         ordering = ['person__vorname', 'person__nachname']
-        
-    def __str__(self):
-        if self.kuerzel:
-            return "{0} ({1})".format(str(self.person), str(self.kuerzel))
-        else:
-            return str(self.person)
             
     def magazin_string(self):
         return concat_limit(self.magazin.all())
     magazin_string.short_description = 'Magazin(e)'
     
     @classmethod
-    def strquery(cls, search_term, prefix = ''):
-        pattern = re.compile(r'(?P<name>\w+.*\w*).+\((?P<kuerzel>\w+)\)') #-> groups: n:'name',k:'(kuerzel)' from 'name (kuerzel)'
-        regex = re.search(pattern, search_term)
-        # See if the user has used a pattern of "Vorname Nachname (Kuerzel)"
-        if regex:
-            sname = regex.group('name')
-            skuerzel = regex.group('kuerzel')
-            person_sq_list = []
-            # Unpack all q objects from the person.strquery search into a new list
-            for qitem_list in person.strquery(sname, prefix = prefix + 'person__'):
-                for q in qitem_list:
-                    person_sq_list.append(q)
-            return [person_sq_list, [models.Q( (prefix+'kuerzel', skuerzel) )]]
+    def _get_name(self, **data):
+        kuerzel = data.get('kuerzel', '')
+        person = data.get('person___name', '')
+        if kuerzel:
+            return "{} ({})".format(person, kuerzel)
         else:
-            # search_term will be a name with vor, nachname and possibly kuerzel, we need to split these up
-            qitems_list = []
-            for part in search_term.split():
-                qobject = models.Q()
-                # Get the basic list of qitems from super. Here: one qitem (list) per part in search_term
-                for qitem in super(autor, cls).strquery(part, prefix):
-                    qitems_list.append(qitem)
-            return qitems_list
+            return person
+            
+#TODO: delete me   
+#    @classmethod
+#    def strquery(cls, search_term, prefix = ''):
+#        pattern = re.compile(r'(?P<name>\w+.*\w*).+\((?P<kuerzel>\w+)\)') #-> groups: n:'name',k:'(kuerzel)' from 'name (kuerzel)'
+#        regex = re.search(pattern, search_term)
+#        # See if the user has used a pattern of "Vorname Nachname (Kuerzel)"
+#        if regex:
+#            sname = regex.group('name')
+#            skuerzel = regex.group('kuerzel')
+#            person_sq_list = []
+#            # Unpack all q objects from the person.strquery search into a new list
+#            for qitem_list in person.strquery(sname, prefix = prefix + 'person__'):
+#                for q in qitem_list:
+#                    person_sq_list.append(q)
+#            return [person_sq_list, [models.Q( (prefix+'kuerzel', skuerzel) )]]
+#        else:
+#            # search_term will be a name with vor, nachname and possibly kuerzel, we need to split these up
+#            qitems_list = []
+#            for part in search_term.split():
+#                qobject = models.Q()
+#                # Get the basic list of qitems from super. Here: one qitem (list) per part in search_term
+#                for qitem in super(autor, cls).strquery(part, prefix):
+#                    qitems_list.append(qitem)
+#            return qitems_list
             
             
 class ausgabe(ComputedNameModel):
@@ -185,11 +217,22 @@ class ausgabe(ComputedNameModel):
     
     audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe, blank = True)
     
-    dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
-                    'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
+#    dupe_fields = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum',
+#                    'ausgabe_monat__monat', 'e_datum', 'magazin', 'sonderausgabe']
                     
     search_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
-                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']
+                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'info']
+    primary_search_fields = ['_name']
+    search_fields_suffixes = {
+        'ausgabe_monat__monat__monat':'Monat',
+        'ausgabe_lnum__lnum':'lfd. Num', 
+        'e_datum':'E.datum', 
+        'ausgabe_num__num':'Num', 
+        'jahrgang':'Jahrgang', 
+        'ausgabe_monat__monat__abk':'Monat Abk.', 
+        'ausgabe_jahr__jahr' : 'Jahr', 
+        'info' : 'Info-Text', 
+        }
     
     objects = AusgabeQuerySet.as_manager()
     
@@ -234,16 +277,15 @@ class ausgabe(ComputedNameModel):
     @classmethod
     def _get_name(cls, **data):
         # data provided by values_dict: { key: [value1, value2, ...], ... }
-        #TODO: write a method that cleans and flattens the data dict
-        info = data.get('info', [''])[0]
+        info = data.get('info', '')
         info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
-        if data.get('sonderausgabe', [False])[0] and info:
+        if data.get('sonderausgabe', False) and info:
             return info
         
         jahre = data.get('ausgabe_jahr__jahr', [])
         jahre = [str(jahr)[2:] if i else str(jahr) for i, jahr in enumerate(jahre)]
         jahre = concat_limit(jahre, sep="/")
-        jahrgang = data.get('jahrgang', [''])[0]
+        jahrgang = data.get('jahrgang', '')
         
         if not jahre:
             if jahrgang:
@@ -251,11 +293,11 @@ class ausgabe(ComputedNameModel):
             else:
                 jahre = "k.A."
                 
-        e_datum = data.get('e_datum', [''])[0]
+        e_datum = data.get('e_datum', '')
         monate = concat_limit(data.get('ausgabe_monat__monat__abk', []), sep="/")
         lnums = concat_limit(data.get('ausgabe_lnum__lnum', []), sep="/", z=2)
         nums = concat_limit(data.get('ausgabe_num__num', []), sep="/", z=2)
-        merkmal = data.get('magazin__ausgaben_merkmal', [''])[0]
+        merkmal = data.get('magazin__ausgaben_merkmal', '')
         
         if merkmal:
             if  merkmal == 'e_datum' and e_datum:
@@ -324,49 +366,50 @@ class ausgabe(ComputedNameModel):
             return False
     dbestand.short_description = 'Bestand: Dublette'
     dbestand.boolean = True
-            
-    @classmethod
-    def strquery(cls, search_term, prefix = ''):
-        is_num = False
-        rslt = []
-        if "-" in search_term: # nr oder monat: 2001-13
-            try:
-                jahre, details = (search_term.split("-"))
-            except:
-                return []
-            is_num = True
-        elif re.search(r'.\((.+)\)', search_term): # lfd nr: 13 (2001)
-            try:
-                details, jahre = re.search(r'(.*)\((.+)\)', search_term).groups()
-            except:
-                return []
-        else:
-            return []
-            
-        jahre_prefix = jahre[:2]
-        ajahre = []
-        for j in jahre.split("/"):
-            if len(j)<4:
-                if j=='00':
-                    j = '2000'
-                else:
-                    j = jahre_prefix+j
-            ajahre.append(j.strip())
-        details = [d.strip() for d in details.split("/")]
-        
-        rslt = [ [models.Q( (prefix+'ausgabe_jahr__jahr__iexact', j))]  for j in ajahre ]
-        for d in details:
-            qobject = models.Q()
-            if d.isnumeric():
-                if is_num:
-                    qobject |= models.Q( (prefix+'ausgabe_num__num', d) )
-                else:
-                    qobject |= models.Q( (prefix+'ausgabe_lnum__lnum', d) )
-            else:
-                for fld in ['ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']:
-                    qobject |= models.Q( (prefix+fld, d) )
-            rslt.append([qobject])
-        return rslt
+    
+#TODO: delete me            
+#    @classmethod
+#    def strquery(cls, search_term, prefix = ''):
+#        is_num = False
+#        rslt = []
+#        if "-" in search_term: # nr oder monat: 2001-13
+#            try:
+#                jahre, details = (search_term.split("-"))
+#            except:
+#                return []
+#            is_num = True
+#        elif re.search(r'.\((.+)\)', search_term): # lfd nr: 13 (2001)
+#            try:
+#                details, jahre = re.search(r'(.*)\((.+)\)', search_term).groups()
+#            except:
+#                return []
+#        else:
+#            return []
+#            
+#        jahre_prefix = jahre[:2]
+#        ajahre = []
+#        for j in jahre.split("/"):
+#            if len(j)<4:
+#                if j=='00':
+#                    j = '2000'
+#                else:
+#                    j = jahre_prefix+j
+#            ajahre.append(j.strip())
+#        details = [d.strip() for d in details.split("/")]
+#        
+#        rslt = [ [models.Q( (prefix+'ausgabe_jahr__jahr__iexact', j))]  for j in ajahre ]
+#        for d in details:
+#            qobject = models.Q()
+#            if d.isnumeric():
+#                if is_num:
+#                    qobject |= models.Q( (prefix+'ausgabe_num__num', d) )
+#                else:
+#                    qobject |= models.Q( (prefix+'ausgabe_lnum__lnum', d) )
+#            else:
+#                for fld in ['ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk']:
+#                    qobject |= models.Q( (prefix+fld, d) )
+#            rslt.append([qobject])
+#        return rslt
         
         
 class ausgabe_jahr(BaseModel):
@@ -430,6 +473,7 @@ class monat(BaseModel):
         
         
 class magazin(BaseModel):
+    #TODO: remove either info or beschreibung
     TURNUS_CHOICES = [('u', 'unbekannt'), 
         ('t','täglich'), ('w','wöchentlich'), ('w2','zwei-wöchentlich'), ('m','monatlich'), ('m2','zwei-monatlich'), 
         ('q','quartalsweise'), ('hj','halbjährlich'), ('j','jährlich')]
@@ -448,7 +492,10 @@ class magazin(BaseModel):
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
     ort = models.ForeignKey('ort', null = True, blank = True, verbose_name = 'Hrsg.Ort', on_delete = models.SET_NULL)
     
-    exclude = ['ausgaben_merkmal', 'info', 'magazin_url', 'turnus', 'erstausgabe']
+    exclude = ['ausgaben_merkmal', 'info', 'magazin_url', 'turnus', 'erstausgabe', 'beschreibung']
+    search_fields = ['magazin_name']
+    name_field = 'magazin_name'
+    create_field = 'magazin_name'
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Magazin'
@@ -467,18 +514,31 @@ class verlag(BaseModel):
     verlag_name = models.CharField('verlag', **CF_ARGS)
     sitz = models.ForeignKey('ort',  null = True,  blank = True, on_delete = models.SET_NULL)
     
+    name_field = 'verlag_name'
+    create_field = 'verlag_name'
+    
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
         verbose_name_plural = 'Verlage'
         ordering = ['verlag_name', 'sitz']
 
 
-class ort(BaseModel):
+class ort(ComputedNameModel):
+    #TODO: ordering looks wrong in dal
     stadt = models.CharField(**CF_ARGS_B)
     bland = models.ForeignKey('bundesland', verbose_name = 'Bundesland',  null = True,  blank = True, on_delete = models.PROTECT)
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
+    primary_search_fields = []
+    search_fields_suffixes = {
+        'land__code' : 'Land-Code', 
+        'bland__code' : 'Bundesland-Code', 
+        'bland__bland_name' : 'Bundesland', 
+        'land_name' : 'Land'
+    }
+    
+    name_composing_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Ort'
@@ -486,19 +546,27 @@ class ort(BaseModel):
         unique_together = ('stadt', 'bland', 'land')
         ordering = ['land','bland', 'stadt']
         
-    def __str__(self):
-        codes = self.land.code
-        if self.bland:
-            if self.stadt:
-                codes += '-' + self.bland.code
-                return "{0}, {1}".format(self.stadt,  codes)
+    @classmethod
+    def _get_name(cls, **data):
+        stadt = data.get('stadt', '')
+        bundesland = data.get('bland__bland_name', '')
+        bundesland_code = data.get('bland__code', '')
+        land = data.get('land__land_name', '')
+        land_code = data.get('land__code', '')
+        
+        rslt_template = "{}, {}"
+        
+        if stadt:
+            if bundesland_code:
+                codes = land_code + '-' + bundesland_code
+                return rslt_template.format(stadt, codes)
             else:
-                return str(self.bland.bland_name) + ', ' + codes
+                return rslt_template.format(stadt, land_code)
         else:
-            if self.stadt:
-                return str(self.stadt) + ', ' + codes
+            if bundesland:
+                return rslt_template.format(bundesland, land_code)
             else:
-                return str(self.land.land_name)
+                return land
             
         
 class bundesland(BaseModel):
@@ -507,6 +575,11 @@ class bundesland(BaseModel):
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['bland_name', 'code']
+    primary_search_fields = []
+    name_field = 'bland_name'
+    search_fields_suffixes = {
+        'code':'Bundesland-Code'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Bundesland'
@@ -520,6 +593,11 @@ class land(BaseModel):
     code = models.CharField(max_length = 4,  unique = True)
     
     search_fields = ['land_name', 'code']
+    primary_search_fields = []
+    name_field = 'land_name'
+    search_fields_suffixes = {
+        'code':'Land-Code'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Land'
@@ -534,6 +612,10 @@ class schlagwort(BaseModel):
     ober = models.ForeignKey('self', related_name = 'oberschl', verbose_name = 'Oberbegriff', null = True,  blank = True)
     
     search_fields = ['schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias']
+    primary_search_fields = []
+    name_field = 'schlagwort'
+    search_fields_suffixes = {'oberschl__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias': 'Alias'}
+    create_field = 'schlagwort'
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
@@ -577,7 +659,13 @@ class artikel(BaseModel):
     spielort = models.ManyToManyField('spielort', through = m2m_artikel_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_artikel_veranstaltung)
     
-    search_fields = {'schlagzeile', 'zusammenfassung', 'seite', 'seitenumfang', 'info'}
+    search_fields = ['schlagzeile', 'zusammenfassung', 'info']
+    primary_search_fields = ['schlagzeile']
+    name_field = 'schlagzeile'
+    search_fields_suffixes = {
+        'zusammenfassung' : 'Zusammenfassung', 
+        'info' : 'Info-Text'
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
@@ -633,6 +721,9 @@ class buch(BaseModel):
     autor = models.ManyToManyField('autor',  through = m2m_buch_autor)
     
     search_fields = ['titel']
+    primary_search_fields = []
+    name_field = 'titel'
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -648,9 +739,15 @@ class buch(BaseModel):
 
 class instrument(BaseModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
-    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS)
+    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS) #NOTE: optional?
     
-    search_fields = ['instrument', 'kuerzel']
+    search_fields = ['instrument', 'instrument_alias__alias', 'kuerzel']
+    primary_search_fields = ['instrument']
+    name_field = 'instrument'
+    search_fields_suffixes = {
+        'instrument_alias__alias' : 'Alias', 
+        'kuerzel' : 'Kürzel'
+    }
     
     class Meta(BaseModel.Meta):
         ordering = ['instrument', 'kuerzel']
@@ -689,6 +786,9 @@ class audio(BaseModel):
     ort = models.ManyToManyField('ort', through = m2m_audio_ort)
     
     search_fields = ['titel']
+    primary_search_fields = []
+    name_field = 'titel'
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -721,6 +821,7 @@ class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
+    name_field = 'titel'
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -735,6 +836,7 @@ class buch_serie(BaseModel):
     serie = models.CharField(**CF_ARGS)
     
     search_fields = ['serie']
+    name_field = 'serie'
     
     class Meta(BaseModel.Meta):
         ordering = ['serie']
@@ -746,6 +848,7 @@ class dokument(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
+    name_field = 'titel'
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -770,6 +873,7 @@ class memorabilien(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
+    name_field = 'titel'
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Memorabilia'
@@ -783,6 +887,8 @@ class memorabilien(BaseModel):
 class sender(BaseModel):
     name = models.CharField(**CF_ARGS)
     
+    create_field = 'name'
+    
     class Meta(BaseModel.Meta):
         verbose_name = 'Sender'
         verbose_name_plural = 'Sender'
@@ -792,10 +898,15 @@ class sender_alias(BaseAliasModel):
     
     
 class spielort(BaseModel):
+    #TODO: search for ort___name
     name = models.CharField(**CF_ARGS)
     ort = models.ForeignKey('ort')
     
-    search_fields = ['name']
+    search_fields = ['name', 'spielort_alias__alias']
+    primary_search_fields = ['name']
+    search_fields_suffixes = {
+        'spielort_alias__alias':'Alias', 
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -840,7 +951,12 @@ class veranstaltung(BaseModel):
     band = models.ManyToManyField('band', verbose_name = 'Teilnehmer (Bands)',  through = m2m_veranstaltung_band)
     #NYI: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
     
-    search_fields = ['name']
+    search_fields = ['name', 'veranstaltung_alias__alias']
+    primary_search_fields = []
+    name_field = 'name'
+    search_fields_suffixes = {
+        'veranstaltung_alias__alias' : 'Alias', 
+    }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
@@ -867,6 +983,9 @@ class video(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_video_veranstaltung)
     
     search_fields = ['titel']
+    primary_search_fields = []
+    name_field = 'titel'
+    search_fields_suffixes = {}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
@@ -899,6 +1018,7 @@ class provenienz(BaseModel):
         
         
 class geber(BaseModel):
+    #TODO: merge with person?
     name = models.CharField(default = 'unbekannt', **CF_ARGS)
     
     class Meta(BaseModel.Meta):
@@ -906,31 +1026,33 @@ class geber(BaseModel):
         verbose_name = 'Geber'
         verbose_name_plural = 'Geber'
         
-class lagerort(BaseModel):
+class lagerort(ComputedNameModel):
     ort = models.CharField(**CF_ARGS)
     raum = models.CharField(**CF_ARGS_B)
     regal = models.CharField(**CF_ARGS_B)
     
-    signatur = models.CharField(**CF_ARGS_B) # NOTE: use? maybe for human-readable shorthand?
+    name_composing_fields = ['ort', 'raum', 'regal']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
         ordering = ['ort']
         
-    def __str__(self):
-        if self.signatur:
-            return str(self.signatur)
-        rslt = '{raum}-{regal} ({ort})'
-        if not str(self.raum) or not str(self.regal):
-            rslt = rslt.replace('-', '').strip()
-        if not str(self.raum):
-            rslt = rslt.replace('{raum}', '').strip()
-        if not str(self.regal):
-            rslt = rslt.replace('{regal}', '').strip()
-        if rslt.startswith('('):
-            rslt = rslt[1:-1]
-        return rslt.format(raum=self.raum, regal=self.regal, ort=self.ort)
+    @classmethod
+    def _get_name(cls, **data):
+        ort = data.get('ort')
+        raum = data.get('raum', '')
+        regal = data.get('regal', '')
+        
+        if raum:
+            if regal:
+                return "{}-{} ({})".format(raum, regal, ort)
+            else:
+                return "{} ({})".format(raum, ort)
+        elif regal:
+            return "{} ({})".format(regal, ort)
+        else:
+            return ort
         
         
 class bestand(BaseModel):
@@ -1009,6 +1131,8 @@ class datei(BaseModel):
     ort = models.ManyToManyField('ort', through = m2m_datei_ort)
     spielort = models.ManyToManyField('spielort', through = m2m_datei_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_datei_veranstaltung)
+    
+    name_field = 'titel'
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Datei'
@@ -1127,6 +1251,10 @@ class Favoriten(models.Model): #NOTE: why not inherit from BaseModel?
         if model:
             return rslt.get(model, Favoriten.objects.none())
         return rslt
+        
+    @classmethod
+    def get_favorite_models(cls):
+        return [fld.related_model for fld in cls._meta.many_to_many]
     
 wip_models = [bildmaterial, buch, dokument, memorabilien, video]
 main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 
