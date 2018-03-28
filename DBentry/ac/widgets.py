@@ -94,37 +94,10 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             )
         return context
         
-def wrap_dal_widget(widget, remote_field_name = 'id'):
-    # Using django.urls.resolve would result in a circular import when it tries to import MIZDB.urlconf (when trying to make BulkFormAusgabe)
-    # we're coming from DBentry.forms -> MIZDB.urlconf -> DBentry.ie.urls -> DBentry.ie.views -> DBentry.ie.forms -> DBentry.forms
-    # Accessing widget.url calls reverse() with the root conf for the app (MIZDB.urlconf), resulting in another circular import.
-    # NOTE: resolve_lazy()???!
-    from DBentry.ac.urls import autocomplete_patterns
-    from django.urls import RegexURLResolver, NoReverseMatch
-    from dal import autocomplete
-    if not isinstance(widget, autocomplete.ModelSelect2) or not hasattr(widget, '_url'):
-        return widget
-    resolver = RegexURLResolver(r'', autocomplete_patterns)
-    try:
-        path = resolver.reverse(widget._url)
-    except NoReverseMatch:
-        # It is possible we were trying to wrap a widget with a 'nocreate' url
-        # -- obviously we do not want to wrap this widget then
-        return widget
-    resolver_match = resolver.resolve(path)
-    if resolver_match:
-        match_view = resolver_match.func.view_class
-        initkwargs = resolver_match.func.view_initkwargs
-        related_model = match_view.model or initkwargs.get('model', None)
-        if related_model:
-            return EasyWidgetWrapper(widget, related_model, remote_field_name)
-            
-    return widget
-#TODO: translation
-#placeholder_template = gettext_lazy("Please select a %(verbose_name)s.")
-placeholder_template = "Bitte zuerst ein %(verbose_name)s auswählen!"
+placeholder_template = gettext_lazy("Please select a %(verbose_name)s first.")
     
-def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='id', can_add_related=True, **kwargs):
+def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='id', 
+        can_add_related=True, can_change_related=True, can_delete_related=True, **kwargs):
     # Create a (default: MIZModelSelect2) widget
     widget_opts = {}
     model = kwargs.pop('model', None)
@@ -182,7 +155,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         
     if wrap and remote_field_name:
         if model:
-            return EasyWidgetWrapper(widget, model, remote_field_name)
+            return EasyWidgetWrapper(widget, model, remote_field_name, can_add_related, can_change_related, can_delete_related)
     return widget
         
         

@@ -11,7 +11,7 @@ from django.db.models.manager import BaseManager
 
 from .models import *
 from .constants import ATTRS_TEXTAREA
-from DBentry.ac.widgets import wrap_dal_widget, MIZModelSelect2, make_widget
+from DBentry.ac.widgets import MIZModelSelect2, make_widget
 
 from dal import autocomplete
 
@@ -105,7 +105,7 @@ class AusgabeMagazinFieldForm(FormBase):
     magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
                                     queryset = magazin.objects.all(), 
-                                    widget = make_widget(model=magazin, wrap=True) 
+                                    widget = make_widget(model=magazin, wrap=True, can_delete_related=False) 
                                     )
     class Meta:
         widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'])}
@@ -135,16 +135,6 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
-    
-    def __init__(self, *args, **kwargs):
-        super(MIZAdminForm, self).__init__(*args, **kwargs)
-        wrapped = False
-        for fld in self.fields.values():
-            if isinstance(fld.widget, autocomplete.ModelSelect2):
-                fld.widget = wrap_dal_widget(fld.widget)
-                wrapped = True
-        if wrapped and 'admin/js/admin/RelatedObjectLookups.js' not in self.Media.js:
-            self.Media.js.append('admin/js/admin/RelatedObjectLookups.js')
         
     class Media:
         #TODO: have a look at contrib.admin.options.ModelAdmin.media

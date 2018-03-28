@@ -59,21 +59,6 @@ class ModelBase(admin.ModelAdmin):
                     del actions[name]
         return actions
         
-    def get_form(self, request, obj=None, **kwargs):
-        # Wrap all the things
-        # We cannot do this in the form.__init__ since an add form without initial values never gets initialized - 
-        # meaning we do not get any related widget stuff
-        form = super(ModelBase, self).get_form(request, obj, **kwargs)
-        from DBentry.ac.widgets import wrap_dal_widget
-        for fld in form.declared_fields.values():
-            widget = fld.widget
-            try:
-                widget = wrap_dal_widget(fld.widget)
-            except:
-                continue
-            fld.widget = widget
-        return form
-    
     def get_exclude(self, request, obj = None):
         self.exclude = super(ModelBase, self).get_exclude(request, obj)
         if self.exclude is None:

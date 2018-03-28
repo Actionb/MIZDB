@@ -109,18 +109,6 @@ class TestMIZAdminForm(FormTestCase):
         'some_int' : forms.IntegerField(), 
         'wrap_me' : forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin')), 
     }
-    
-    @expectedFailure
-    def test_init(self):
-        # Wrapping is now done via make_widget
-        # everything wrapped?
-        from DBentry.ac.widgets import EasyWidgetWrapper
-        form = self.get_dummy_form()
-        self.assertIsInstance(form.fields['wrap_me'].widget, EasyWidgetWrapper)
-        self.assertNotIsInstance(form.fields['some_int'].widget, EasyWidgetWrapper)
-        
-        # make sure RelatedObjectLookups was added to Medja.js
-        self.assertTrue('admin/js/admin/RelatedObjectLookups.js' in form.Media.js)
         
     def test_iter(self):
         form = self.get_dummy_form()
