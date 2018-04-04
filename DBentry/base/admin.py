@@ -2,16 +2,15 @@ from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.contrib.auth import get_permission_codename
 
+from DBentry.models import ausgabe, genre, schlagwort
 from DBentry.changelist import MIZChangeList
-from DBentry.forms import makeForm
-from DBentry.actions import *
+from DBentry.forms import makeForm, InLineAusgabeForm, FormBase
+from DBentry.actions import merge_records
 from DBentry.constants import SEARCH_TERM_SEP
 
 
 class MIZModelAdmin(admin.ModelAdmin):
     
-    form = None                             # None rather than BaseModelAdmin's default ModelForm, so we can use either 
-                                            # custom form classes or the new implicit default makeForm function
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
                                             # that matches a field in the group
     googlebtns = []                         # Fields in this list get a little button that redirect to a google search page
@@ -23,16 +22,17 @@ class MIZModelAdmin(admin.ModelAdmin):
         return len(getattr(self, 'advanced_search_form', []))>0
     
     def get_form(self, *args, **kwargs):
-        if self.form is None:
+        if not issubclass(self.form, FormBase):
+            # self.form is the default ModelForm, not good enough
             self.form = makeForm(self.model)
         return super().get_form(*args, **kwargs)
-    
+        
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
         
     def get_actions(self, request):
         # Show actions based on user permissions
-        actions = super(ModelBase, self).get_actions(request) # returns an OrderedDict( (name, (func, name, desc)) )
+        actions = super().get_actions(request) # returns an OrderedDict( (name, (func, name, desc)) )
         
         for func, name, desc in actions.values():
             if name == 'delete_selected':
@@ -52,18 +52,20 @@ class MIZModelAdmin(admin.ModelAdmin):
         return actions
         
     def get_exclude(self, request, obj = None):
-        # Exclude all fields that are a reverse relation to this model, as those are handled by inlines
-        self.exclude = super(ModelBase, self).get_exclude(request, obj)
+        # Exclude all m2m fields, as those are handled by inlines
+        # reverse related fields will be sorted out by the ModelForm (django.forms.models.fields_for_model)
+        self.exclude = super().get_exclude(request, obj)
         if self.exclude is None:
             self.exclude = []
+            reverse_rels = self.model.get_reverse_relations()
             for fld in self.opts.get_fields():
-                if self.model.get_reverse_relations():
+                if fld.concrete and fld.is_relation and fld.many_to_many:
                     self.exclude.append(fld.name)
         return self.exclude
     
     def get_fields(self, request, obj = None):
         if not self.fields:
-            self.fields = super(ModelBase, self).get_fields(request, obj)
+            self.fields = super().get_fields(request, obj)
             if self.flds_to_group:
                 self.fields = self.group_fields()
         return self.fields
@@ -101,6 +103,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             search_fields.append("=" + pk_name)
         else:
             search_fields.append("=" + pk_name)
+        return search_fields
         
     def add_crosslinks(self, object_id):
         """
@@ -127,7 +130,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         
     @property
     def media(self):
-        media = super(ModelBase, self).media
+        media = super().media
         if self.googlebtns:
             media.add_js(['admin/js/utils.js'])
         return media
@@ -147,7 +150,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     
     def change_view(self, request, object_id, form_url='', extra_context=None):
         new_extra = self.add_extra_context(extra_context, object_id)
-        return super(ModelBase, self).change_view(request, object_id, form_url, new_extra)
+        return super().change_view(request, object_id, form_url, new_extra)
         
     def lookup_allowed(self, key, value):
         if self.has_adv_sf():
@@ -158,7 +161,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
             # allow lookups defined in list_filter
             return True
-        return super(ModelBase, self).lookup_allowed(key, value)
+        return super().lookup_allowed(key, value)
         
     def get_changeform_initial_data(self, request):
         """ Turn _changelist_filters string into a useable dict of field_path:value
@@ -166,7 +169,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. 
             Primarily used for setting ausgabe/magazin for Artikel add-views.
         """
-        initial = super(ModelBase, self).get_changeform_initial_data(request)
+        initial = super().get_changeform_initial_data(request)
         if '_changelist_filters' not in initial.keys() or not initial['_changelist_filters']:
             return initial
             
@@ -190,15 +193,13 @@ class MIZModelAdmin(admin.ModelAdmin):
         
     def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
         # Add a description to each formset
-        inline_admin_formsets = super(ModelBase, self).get_inline_formsets(request, formsets, inline_instances, obj)
+        inline_admin_formsets = super().get_inline_formsets(request, formsets, inline_instances, obj)
         for formset in inline_admin_formsets:
             formset.description = getattr(formset.opts, 'description', '')
         return inline_admin_formsets
         
 class BaseInlineMixin(object):
     
-    form = None                             # None rather than BaseModelAdmin's default ModelForm, so we can use either 
-                                            # custom form classes or the new implicit default makeForm function
     original = False
     verbose_model = None
     extra = 1
@@ -210,7 +211,7 @@ class BaseInlineMixin(object):
             self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
     
     def get_formset(self, *args, **kwargs):
-        if self.form is None:
+        if not issubclass(self.form, FormBase):
             self.form = makeForm(self.model)
         return super().get_formset(*args, **kwargs)
         
@@ -224,11 +225,12 @@ class BaseAliasInline(BaseTabularInline):
     verbose_name_plural = 'Alias'
     
 class BaseGenreInline(BaseTabularInline):
-    extra = 1
-    verbose_name = genre._meta.verbose_name
-    verbose_name_plural = genre._meta.verbose_name_plural
+    verbose_model = genre
     
 class BaseSchlagwortInline(BaseTabularInline):
-    extra = 1
-    verbose_name = schlagwort._meta.verbose_name
-    verbose_name_plural = schlagwort._meta.verbose_name_plural
+    verbose_model = schlagwort
+    
+class BaseAusgabeInline(BaseTabularInline):
+    form = InLineAusgabeForm
+    verbose_model = ausgabe
+    fields = ['magazin', 'ausgabe']

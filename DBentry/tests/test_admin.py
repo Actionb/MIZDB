@@ -10,10 +10,16 @@ class AdminTestMethodsMixin(object):
     
     crosslinks_relations = None
     crosslinks_object = None
+    exclude_expected = None
+    fields_expected = None
     
     def test_get_exclude(self):
-        expected = []
+        expected = self.exclude_expected or []
         self.assertEqual(self.model_admin.get_exclude(None), expected)
+        
+    def test_get_fields(self):
+        expected = self.fields_expected or []
+        self.assertEqual(self.model_admin.get_fields(self.get_request()), expected)
     
     def test_get_form(self):
         # form should be a subclass of FormBase, unless another form class was explicitly set on the ModelAdmin
@@ -27,7 +33,6 @@ class AdminTestMethodsMixin(object):
         # search fields are declared with the models, the admin classes only add the exact =id lookup
         self.assertIn('=id', self.model_admin.get_search_fields())
     
-    @skip("NIY")
     def test_get_search_fields_extra_pk(self):
         # An extra 'pk' search field was added, it should be replaced by an '=id' lookup
         request = self.get_request()
@@ -35,7 +40,6 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(self.model_admin.get_search_fields(), ['=id'])
         
     def test_add_crosslinks(self):
-        # For now, musiker objects may have up to 5 related objects: artikel, audio, video, datei, band 
         if self.crosslinks_object is None and not self.test_data:
             return
         obj = self.crosslinks_object or self.test_data[0]
@@ -53,7 +57,7 @@ class AdminTestMethodsMixin(object):
                 url = reverse("admin:DBentry_{}_changelist".format(model_name)) \
                                         + "?" + fld_name + "=" + pk
                 label = rel.related_model._meta.verbose_name_plural + " ({})".format(str(count))
-                self.assertIn({'link':url, 'label':label}, links)
+                self.assertIn({'url':url, 'label':label}, links)
         else:
             self.assertEqual(len(links), 0)
 
@@ -62,27 +66,32 @@ class TestMIZModelAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = ArtikelAdmin
     model = artikel
     test_data_count = 3
+    exclude_expected = ['genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
+    fields_expected = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'info']
     
-    def test_get_actions(self): #TODO:
-        pass 
-    
+    def test_get_actions(self):
+        # No permissions: no actions
+        actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
+        self.assertEqual(len(actions), 0)
+        
+        # staff_user has no permissions, so let's give him permission to delete artikel
+        from django.contrib.auth.models import Permission
+        p = Permission.objects.get(codename='delete_artikel')
+        self.staff_user.user_permissions.add(p)
+        actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
+        self.assertEqual(len(actions), 1)
+        
+        # superuser has all permissions inherently
+        actions = self.model_admin.get_actions(self.get_request())
+        self.assertEqual(len(actions), 2)
+        
     def test_get_form(self):
         request = self.get_request(path=self.add_path)
         form = self.model_admin.get_form(request)
-        
-        
         # test if 'magazin' gets wrapped
         from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 
         self.assertIsInstance(form.declared_fields['magazin'].widget, RelatedFieldWidgetWrapper)
-        
-    def test_get_exclude(self):
-        expected = ['genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
-        
-    def test_get_fields(self):
-        expected = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'info']
-        self.assertEqual(self.model_admin.get_fields(self.get_request()), expected)
         
     def test_group_fields(self):
         request = self.get_request()
@@ -147,6 +156,8 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = AusgabenAdmin
     model = ausgabe
+    exclude_expected = ['audio']
+    fields_expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'info']
     
     crosslinks_relations = [ausgabe.artikel_set.rel]
    
@@ -173,10 +184,6 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         cls.test_data = [cls.obj1]
         
         super().setUpTestData()
-        
-    def test_get_exclude(self):
-        expected = ['audio']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
     
     def test_group_fields(self):        
         # AusgabenAdmin flds_to_group = [('status', 'sonderausgabe')]
@@ -206,6 +213,10 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = MagazinAdmin
     model = magazin
+    exclude_expected = ['genre']
+    fields_expected = ['magazin_name', 'info', 'erstausgabe', 'turnus', 'magazin_url', 'beschreibung', 'ausgaben_merkmal', 
+        'verlag', 'ort', 
+    ]
     
     crosslinks_relations = [magazin.ausgabe_set.rel]
     
@@ -217,10 +228,6 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
         cls.test_data = [cls.obj1]
         
         super().setUpTestData()
-    
-    def test_get_exclude(self):
-        expected = ['genre']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
         
     def test_anz_ausgaben(self):
         self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 1)
@@ -233,6 +240,7 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = PersonAdmin
     model = person
+    fields_expected = ['vorname', 'nachname', 'herkunft', 'beschreibung']
     
     crosslinks_relations = [person.autor_set.rel, person.musiker_set.rel]
     
@@ -260,6 +268,8 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = MusikerAdmin
     model = musiker
     test_data_count = 1
+    exclude_expected = ['genre', 'instrument']
+    fields_expected = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
     
     crosslinks_relations = [artikel.musiker.rel, audio.musiker.rel, video.musiker.rel, datei.musiker.rel, band.musiker.rel]
     
@@ -280,28 +290,6 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         musiker.genre.through.objects.create(genre=g2, musiker=cls.obj2)
         
         cls.test_data.append(cls.obj2)
-    
-    def test_get_exclude(self):
-        expected = ['genre', 'instrument']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
-    
-    def test_get_fields(self):
-        expected = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
-        self.assertEqual(self.model_admin.get_fields(self.get_request()), expected)
-        
-#    def test_add_crosslinks(self):
-#        # For now, musiker objects may have up to 5 related objects: artikel, audio, video, datei, band 
-#        pk = str(self.obj1.pk)
-#        links = self.model_admin.add_crosslinks(object_id=pk).get('crosslinks')
-#        self.assertEqual(len(links), 5)
-#        
-#        for rel in (artikel.musiker.rel, audio.musiker.rel, video.musiker.rel, datei.musiker.rel, band.musiker.rel):
-#            model_name = rel.related_model._meta.model_name
-#            fld_name = rel.remote_field.name
-#            url = reverse("admin:DBentry_{}_changelist".format(model_name)) \
-#                                    + "?" + fld_name + "=" + pk
-#            label = rel.related_model._meta.verbose_name_plural + " (1)"
-#            self.assertIn({'url':url, 'label':label}, links)
     
     def test_media_prop(self):
         self.assertTrue('admin/js/utils.js' in self.model_admin.media._js)
@@ -329,6 +317,7 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = GenreAdmin
     model = genre
     test_data_count = 1
+    fields_expected = ['genre', 'ober']
     
     crosslinks_relations = [band.genre.rel, musiker.genre.rel, magazin.genre.rel, artikel.genre.rel, audio.genre.rel, 
             veranstaltung.genre.rel, video.genre.rel, datei.genre.rel]
@@ -367,6 +356,7 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = SchlagwortAdmin
     model = schlagwort
     test_data_count = 1
+    fields_expected = ['schlagwort', 'ober']
     
     crosslinks_relations = [artikel.schlagwort.rel, audio.schlagwort.rel, video.schlagwort.rel, datei.schlagwort.rel]
     
@@ -401,6 +391,8 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = BandAdmin
     model = band
+    exclude_expected = ['genre', 'musiker']
+    fields_expected = ['band_name', 'herkunft', 'beschreibung']
     
     @classmethod
     def setUpTestData(cls):
@@ -421,10 +413,6 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
         cls.test_data = [cls.obj1]
         
         super().setUpTestData()
-    
-    def test_get_exclude(self):
-        expected = ['genre', 'musiker']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
         
     def test_alias_string(self):
         self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
@@ -439,6 +427,8 @@ class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = AutorAdmin
     model = autor
+    exclude_expected = ['magazin']
+    fields_expected = ['kuerzel', 'person']
     
     @classmethod
     def setUpTestData(cls):
@@ -450,10 +440,6 @@ class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
         cls.test_data = [cls.obj1]
         
         super().setUpTestData()
-    
-    def test_get_exclude(self):
-        expected = ['magazin']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
         
     def test_magazin_string(self):
         self.assertEqual(self.model_admin.magazin_string(self.obj1), 'Testmagazin1, Testmagazin2')
@@ -462,36 +448,43 @@ class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = OrtAdmin   
     model = ort
+    fields_expected = ['stadt', 'land', 'bland']
         
 class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = LandAdmin
     model = land
+    fields_expected = ['land_name', 'code']
         
 class TestAdminBundesland(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = BlandAdmin
     model = bundesland
+    fields_expected = ['bland_name', 'code', 'land']
         
 class TestAdminInstrument(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = InstrumentAdmin
     model = instrument
+    fields_expected = ['instrument', 'kuerzel']
     
 class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = AudioAdmin
     model = audio
-    
-    def test_get_exclude(self):
-        expected = ['plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung', 'ort']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
+    exclude_expected = ['plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung', 'ort']
+    # Note that AudioAdmin specifies a fieldsets attribute, overriding (and removing catalog_nr) the fields for the form that way
+    fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender', 'catalog_nr',
+        'release_id', 'discogs_url', 'bemerkungen', 
+    ]
     
 @skip('SenderAdmin not yet implemented')
 class TestAdminSender(AdminTestCase):
     
     model_admin_class = None # TODO: add 'SenderAdmin'
     model = sender
+    exclude_expected = []
+    fields_expected = []
     
     def test_get_search_fields(self):
         self.assertTrue('sender_alias__alias' in self.model_admin.get_search_fields())
@@ -500,20 +493,21 @@ class TestAdminSpielort(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = SpielortAdmin
     model = spielort
+    fields_expected = ['name', 'ort']
         
 class TestAdminVeranstaltung(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = VeranstaltungAdmin
     model = veranstaltung
-    
-    def test_get_exclude(self):
-        expected = ['genre', 'person', 'band']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
+    exclude_expected = ['genre', 'person', 'band']
+    fields_expected = ['name', 'datum', 'spielort', 'ort']
         
 class TestAdminProvenienz(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = ProvAdmin
     model = provenienz
+    fields_expected = ['geber', 'typ']
+    
     
     def test_has_adv_sf(self):
         self.assertFalse(self.model_admin.has_adv_sf())
@@ -522,9 +516,6 @@ class TestAdminProvenienz(AdminTestMethodsMixin, AdminTestCase):
         # NOTE: Errr... this ALWAYS returns True
         self.assertTrue(self.model_admin.lookup_allowed(key='BEEP BOOP', value=None))
 #        self.assertFalse(self.model_admin.lookup_allowed(key='beep_boop', value=None))  
-        
-    def test_merge_allowed(self):
-        self.assertEqual(self.model_admin.merge_allowed(None, None), True) # best test ever
     
 #class TestAdminLagerort(AdminTestMethodsMixin, AdminTestCase):
 #    
@@ -539,10 +530,11 @@ class TestAdminProvenienz(AdminTestMethodsMixin, AdminTestCase):
 class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = BuchAdmin
     model = buch
-    
-    def test_get_exclude(self):
-        expected = ['autor']
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
+    exclude_expected = ['autor']
+    fields_expected = ['titel', 'titel_orig', ('jahr', 'verlag'), ('jahr_orig', 'verlag_orig'), 
+            'ausgabe', 'auflage', 'buch_serie', 'buch_band', 
+            ('sprache', 'sprache_orig'), 'ubersetzer', ('EAN', 'ISBN'), 'LCCN'
+        ]
 
     def test_group_fields(self):        
         # BuchAdmin flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]

@@ -1,291 +1,44 @@
-
-from collections import OrderedDict
-
-from django.contrib import admin, messages
-from django.utils.html import format_html
-from django.urls import reverse, resolve
-from django.shortcuts import redirect
-from django.contrib.auth import get_permission_codename
+from django.contrib import admin
 
 from .models import *
-from .forms import makeForm, InLineAusgabeForm
-from .utils import link_list, concat_limit
-from .changelist import MIZChangeList
+from .base.admin import (
+    MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
+    BaseStackedInline, BaseTabularInline, 
+)
+from .forms import ArtikelForm
+from .utils import concat_limit
 from .actions import *
 
 from .sites import miz_site
 
-MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
-
-
-class ModelBase(admin.ModelAdmin):
-    
-    def __init__(self, *args, **kwargs):
-        super(ModelBase, self).__init__(*args, **kwargs)
-        self.form = makeForm(self.model)
-        
-    search_fields_redirect = dict()
-    flds_to_group = []
-    googlebtns = []
-    collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
-    hint = ''                               # A hint displayed at the top of the form 
-    actions = [merge_records]
-
-    def has_adv_sf(self):
-        return len(getattr(self, 'advanced_search_form', []))>0
-    
-    def get_changelist(self, request, **kwargs):
-        return MIZChangeList
-        
-    def get_actions(self, request):
-        # Show actions based on user permissions
-        actions = super(ModelBase, self).get_actions(request) #= OrderedDict( (name, (func, name, desc)) )
-        
-        #TODO: use ActionConfirmationView + MIZAdminPermissionMixin permission_test() to unify all the things?
-        for func, name, desc in actions.values():
-            if name == 'delete_selected':
-                perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
-            else:
-                perm_required = getattr(func, 'perm_required', [])
-            
-            for p in perm_required:
-                perm_passed = False
-                if callable(p):
-                    perm_passed = p(self, request)
-                else:
-                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(p, self.opts))
-                    perm_passed = request.user.has_perm(perm)
-                if not perm_passed:
-                    del actions[name]
-        return actions
-        
-    def get_exclude(self, request, obj = None):
-        #TODO: if not fld is reverse relation 
-        self.exclude = super(ModelBase, self).get_exclude(request, obj)
-        if self.exclude is None:
-            self.exclude = []
-            for fld in self.opts.get_fields():
-                if hasattr(fld, 'm2m_field_name'):
-                    self.exclude.append(fld.name)
-        return self.exclude
-    
-    def get_fields(self, request, obj = None):
-        if not self.fields:
-            self.fields = super(ModelBase, self).get_fields(request, obj)
-            if self.flds_to_group:
-                self.fields = self.group_fields()
-        return self.fields
-        
-    def group_fields(self):
-        if not self.fields:
-            return []
-        grouped_fields = self.fields
-        for tpl in self.flds_to_group:
-            # Find the correct spot to insert the tuple into:
-            # which would be the earliest occurence of any field of tuple in self.fields
-            indexes = [self.fields.index(i) for i in tpl if i in self.fields]
-            if not indexes:
-                # None of the fields in the tuple are actually in self.fields
-                continue
-            target_index = min(indexes)
-            grouped_fields[target_index] = tpl
-            indexes.remove(target_index)
-            # Remove all other fields of the tuple that are in self.fields
-            for i in indexes:
-                grouped_fields.pop(i)
-        return grouped_fields
-    
-    def get_search_fields(self, request=None):
-        search_fields = self.search_fields or list(self.model.get_search_fields())
-        # add __exact for pk lookups
-        pk_name = self.model._meta.pk.name
-        if "=" + pk_name in search_fields:
-            pass
-        elif pk_name in search_fields:
-            search_fields.remove(pk_name)
-            search_fields.append("=" + pk_name)
-        else:
-            search_fields.append("=" + pk_name)
-        return search_fields
-        
-    def add_crosslinks(self, object_id):
-        new_extra = {}
-        new_extra['crosslinks'] = []
-        
-        inlmdls = {i.model for i in self.inlines}
-        for rel in self.opts.related_objects:
-            if rel.many_to_many or rel.one_to_many:
-                model = rel.related_model
-                fld_name = rel.remote_field.name
-                if model in inlmdls:
-                    continue
-                count = model.objects.filter(**{fld_name:object_id}).count()
-                if not count:
-                    continue
-                try:
-                    link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
-                                    + "?" + fld_name + "=" + str(object_id)
-                except Exception as e:
-                    #TODO: proper exception class
-                    # No reverse match found
-                    continue
-                label = model._meta.verbose_name_plural + " ({})".format(str(count))
-                new_extra['crosslinks'].append( dict(link=link, label=label) )
-        return new_extra
-        
-    @property
-    def media(self):
-        media = super(ModelBase, self).media
-        if self.googlebtns:
-            media.add_js(['admin/js/utils.js'])
-        return media
-        
-    def add_extra_context(self, extra_context = None, object_id = None):
-        new_extra = extra_context or {}
-        if object_id:
-            new_extra.update(self.add_crosslinks(object_id))
-        new_extra['collapse_all'] = self.collapse_all
-        new_extra['hint'] = self.hint
-        new_extra['googlebtns'] = self.googlebtns
-        return new_extra
-        
-    def add_view(self, request, form_url='', extra_context=None):
-        new_extra = self.add_extra_context(extra_context)
-        return self.changeform_view(request, None, form_url, new_extra)
-    
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        new_extra = self.add_extra_context(extra_context, object_id)
-        return super(ModelBase, self).change_view(request, object_id, form_url, new_extra)
-        
-    def lookup_allowed(self, key, value):
-        if self.has_adv_sf():
-            # allow lookups defined in advanced_search_form
-            for list in getattr(self, 'advanced_search_form').values():
-                if key in list:
-                    return True
-        if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
-            # allow lookups defined in list_filter
-            return True
-        return super(ModelBase, self).lookup_allowed(key, value)
-        
-    def get_changeform_initial_data(self, request):
-        """ Turn _changelist_filters string into a useable dict of field_path:value
-            so we can fill some formfields with initial values later on. 
-            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. 
-            Primarily used for setting ausgabe/magazin for Artikel add-views.
-        """
-        from django.utils.http import unquote
-        initial = super(ModelBase, self).get_changeform_initial_data(request)
-        if '_changelist_filters' not in initial.keys() or not initial['_changelist_filters']:
-            return initial
-            
-        # At this point, _changelist_filters is a string of format:
-        # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
-        # SEARCH_TERM_SEP: '='
-        filter_dict = {}
-        for part in initial['_changelist_filters'].split('&'):
-            if part and SEARCH_TERM_SEP in part:
-                if part.startswith("q="):
-                    # This part is a string typed into the searchbar, ignore it
-                    continue
-                try:
-                    k, v = part.split(SEARCH_TERM_SEP)
-                except ValueError:
-                    continue
-                if k not in initial.keys():
-                    filter_dict[k] = v
-        initial.update(filter_dict)
-        return initial
-        
-    def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
-        # Add a description to each formset
-        inline_admin_formsets = super(ModelBase, self).get_inline_formsets(request, formsets, inline_instances, obj)
-        for formset in inline_admin_formsets:
-            formset.description = getattr(formset.opts, 'description', '')
-        return inline_admin_formsets
-        
-    def merge_allowed(self, request, queryset):
-        """ Hook for checks on merging. """
-        #TODO: move this to actions.py
-        return True
-        
-class TabModelBase(admin.TabularInline):
-    original = False
-    verbose_model = None
-    extra = 1
-    classes = ['collapse']
-    def __init__(self, *args, **kwargs):
-        super(TabModelBase, self).__init__(*args, **kwargs)
-        self.form = makeForm(model = self.model)
-        if self.verbose_model:
-            self.verbose_name = self.verbose_model._meta.verbose_name
-            self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
-            
-class StackModelBase(admin.StackedInline):
-    original = False
-    verbose_model = None
-    extra = 1
-    classes = ['collapse']
-    def __init__(self, *args, **kwargs):
-        super(StackModelBase, self).__init__(*args, **kwargs)
-        self.form = makeForm(model = self.model)
-        if self.verbose_model:
-            self.verbose_name = self.verbose_model._meta.verbose_name
-            self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
-
-class AliasTabBase(TabModelBase):
-    verbose_name_plural = 'Alias'
-    
-class BestandInLine(TabModelBase):
+class BestandInLine(BaseTabularInline):
     model = bestand
     readonly_fields = ['signatur']
     fields = ['signatur', 'lagerort', 'provenienz']
     verbose_name = bestand._meta.verbose_name
     verbose_name_plural = bestand._meta.verbose_name_plural
     
-class GenreModelBase(TabModelBase):
-    extra = 1
-    verbose_name = genre._meta.verbose_name
-    verbose_name_plural = genre._meta.verbose_name_plural
-    
-class SchlagwortModelBase(TabModelBase):
-    extra = 1
-    verbose_name = schlagwort._meta.verbose_name
-    verbose_name_plural = schlagwort._meta.verbose_name_plural
-    
-class DateiInLine(TabModelBase):
+class DateiInLine(BaseTabularInline):
     model = m2m_datei_quelle
     verbose_model = datei
     fields = ['datei']
 
-class QuelleInLine(StackModelBase):
+class QuelleInLine(BaseStackedInline):
     extra = 0
     model = m2m_datei_quelle
     description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
-    
-class AusgabeInLineBase(admin.TabularInline):
-    model = None
-    fields = ['magazin', 'ausgabe']
-    original = False
-    extra = 1
-    classes = ['collapse']
-    def __init__(self, *args, **kwargs):
-        self.form = InLineAusgabeForm
-        super(AusgabeInLineBase, self).__init__(*args, **kwargs)
-        self.verbose_name = ausgabe._meta.verbose_name
-        self.verbose_name_plural = ausgabe._meta.verbose_name_plural
         
         
 @admin.register(audio, site=miz_site)
-class AudioAdmin(ModelBase):
-    class GenreInLine(GenreModelBase):
+class AudioAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
         model = audio.genre.through
-    class SchlInLine(SchlagwortModelBase):
+    class SchlInLine(BaseSchlagwortInline):
         model = audio.schlagwort.through
-    class PersonInLine(TabModelBase):
+    class PersonInLine(BaseTabularInline):
         model = audio.person.through
         verbose_model = person
-    class MusikerInLine(StackModelBase):
+    class MusikerInLine(BaseStackedInline):
         model = audio.musiker.through
         verbose_model = musiker
         extra = 0
@@ -294,16 +47,16 @@ class AudioAdmin(ModelBase):
             (None, {'fields' : ['musiker']}), 
             ("Instrumente", {'fields' : ['instrument'], 'classes' : ['collapse', 'collapsed']}), 
         ]
-    class BandInLine(TabModelBase):
+    class BandInLine(BaseTabularInline):
         model = audio.band.through
         verbose_model = band
-    class SpielortInLine(TabModelBase):
+    class SpielortInLine(BaseTabularInline):
         model = audio.spielort.through
         verbose_model = spielort
-    class VeranstaltungInLine(TabModelBase):
+    class VeranstaltungInLine(BaseTabularInline):
         model = audio.veranstaltung.through
         verbose_model = veranstaltung
-    class FormatInLine(StackModelBase):
+    class FormatInLine(BaseStackedInline):
         model = Format
         extra = 0
         filter_horizontal = ['tag']
@@ -312,13 +65,13 @@ class AudioAdmin(ModelBase):
             ('Tags', {'fields' : ['tag'], 'classes' : ['collapse', 'collapsed']}), 
             ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
         ]
-    class OrtInLine(TabModelBase):
+    class OrtInLine(BaseTabularInline):
         model = audio.ort.through
         verbose_model = ort
-    class PlattenInLine(TabModelBase):
+    class PlattenInLine(BaseTabularInline):
         model = audio.plattenfirma.through
         verbose_model = plattenfirma
-    class AusgabeInLine(AusgabeInLineBase):
+    class AusgabeInLine(BaseAusgabeInline):
         model = ausgabe.audio.through
     inlines = [PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine, GenreInLine, SchlInLine, 
             VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine, AusgabeInLine]
@@ -338,42 +91,23 @@ class AudioAdmin(ModelBase):
         'labels' : {'format__tag':'Tags'}, 
     }
     
-    
-class BestandListFilter(admin.SimpleListFilter):
-    title = "Bestand vorhanden"
-    parameter_name = "bestand"
-    
-    def lookups(self, request, model_admin):
-        lks = [('zraum','Zeitschriftenraum'),('nzraum','nicht im Zeitschriftenraum'),
-                ('dubl', 'als Dublette'), ('ndubl', 'nicht als Dublette')]
-        return lks
-    
-    def queryset(self, request, queryset):
-        if self.value()=='zraum':
-            return queryset.filter(bestand__lagerort_id=ZRAUM_ID)
-        if self.value()=='dubl':
-            return queryset.filter(bestand__lagerort_id=DUPLETTEN_ID)
-        if self.value()=='nzraum':
-            return queryset.exclude(bestand__lagerort_id=ZRAUM_ID)
-        if self.value()=='ndubl':
-            return queryset.exclude(bestand__lagerort_id=DUPLETTEN_ID)
 
 @admin.register(ausgabe, site=miz_site)
-class AusgabenAdmin(ModelBase):
-    class NumInLine(TabModelBase):
+class AusgabenAdmin(MIZModelAdmin):
+    class NumInLine(BaseTabularInline):
         model = ausgabe_num
         extra = 0
-    class MonatInLine(TabModelBase):
+    class MonatInLine(BaseTabularInline):
         model = ausgabe_monat
         extra = 0
-    class LNumInLine(TabModelBase):
+    class LNumInLine(BaseTabularInline):
         model = ausgabe_lnum
         extra = 0
-    class JahrInLine(TabModelBase):
+    class JahrInLine(BaseTabularInline):
         model = ausgabe_jahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
-    class AudioInLine(TabModelBase):
+    class AudioInLine(BaseTabularInline):
         model = ausgabe.audio.through
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     flds_to_group = [('status', 'sonderausgabe')]
@@ -421,8 +155,8 @@ class AusgabenAdmin(ModelBase):
     
     
 @admin.register(autor, site=miz_site)
-class AutorAdmin(ModelBase):
-    class MagazinInLine(TabModelBase):
+class AutorAdmin(MIZModelAdmin):
+    class MagazinInLine(BaseTabularInline):
         model = autor.magazin.through
         extra = 1
     
@@ -439,32 +173,33 @@ class AutorAdmin(ModelBase):
     magazin_string.short_description = 'Magazin(e)'
     
 @admin.register(artikel, site=miz_site)
-class ArtikelAdmin(ModelBase):  
-    class GenreInLine(GenreModelBase):
+class ArtikelAdmin(MIZModelAdmin):  
+    class GenreInLine(BaseGenreInline):
         model = artikel.genre.through
-    class SchlInLine(SchlagwortModelBase):
+    class SchlInLine(BaseSchlagwortInline):
         model = artikel.schlagwort.through
-    class PersonInLine(TabModelBase):
+    class PersonInLine(BaseTabularInline):
         model = artikel.person.through
         verbose_model = person
-    class AutorInLine(TabModelBase):
+    class AutorInLine(BaseTabularInline):
         model = artikel.autor.through
         verbose_model = autor
-    class MusikerInLine(TabModelBase):
+    class MusikerInLine(BaseTabularInline):
         model = artikel.musiker.through
         verbose_model = musiker
-    class BandInLine(TabModelBase):
+    class BandInLine(BaseTabularInline):
         model = artikel.band.through
         verbose_model = band
-    class OrtInLine(TabModelBase):
+    class OrtInLine(BaseTabularInline):
         model = artikel.ort.through
         verbose_model = ort
-    class SpielortInLine(TabModelBase):
+    class SpielortInLine(BaseTabularInline):
         model = artikel.spielort.through
         verbose_model = spielort
-    class VeranstaltungInLine(TabModelBase):
+    class VeranstaltungInLine(BaseTabularInline):
         model = artikel.veranstaltung.through
         verbose_model = veranstaltung
+    form = ArtikelForm
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
     flds_to_group = [('magazin', 'ausgabe'),('seite', 'seitenumfang'),]
     
@@ -491,12 +226,12 @@ class ArtikelAdmin(ModelBase):
         return qs
         
 @admin.register(band, site=miz_site)    
-class BandAdmin(ModelBase):
-    class GenreInLine(GenreModelBase):
+class BandAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
         model = band.genre.through
-    class MusikerInLine(TabModelBase):
+    class MusikerInLine(BaseTabularInline):
         model = band.musiker.through
-    class AliasInLine(AliasTabBase):
+    class AliasInLine(BaseAliasInline):
         model = band_alias
     save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
@@ -523,12 +258,12 @@ class BandAdmin(ModelBase):
     alias_string.short_description = 'Aliase'
     
 @admin.register(bildmaterial, site=miz_site)
-class BildmaterialAdmin(ModelBase):
+class BildmaterialAdmin(MIZModelAdmin):
     pass
     
 @admin.register(buch, site=miz_site)
-class BuchAdmin(ModelBase):
-    class AutorInLine(TabModelBase):
+class BuchAdmin(MIZModelAdmin):
+    class AutorInLine(BaseTabularInline):
         model = buch.autor.through
         verbose_model = autor
     save_on_top = True
@@ -542,12 +277,12 @@ class BuchAdmin(ModelBase):
     }
     
 @admin.register(dokument, site=miz_site)
-class DokumentAdmin(ModelBase):
+class DokumentAdmin(MIZModelAdmin):
     infields = [BestandInLine]
     
 @admin.register(genre, site=miz_site)
-class GenreAdmin(ModelBase):
-    class AliasInLine(AliasTabBase):
+class GenreAdmin(MIZModelAdmin):
+    class AliasInLine(BaseAliasInline):
         model = genre_alias
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string', 'ober_string']
@@ -562,8 +297,8 @@ class GenreAdmin(ModelBase):
     
 
 @admin.register(magazin, site=miz_site)
-class MagazinAdmin(ModelBase):
-    class GenreInLine(GenreModelBase):
+class MagazinAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
         model = magazin.genre.through
         magazin.genre.through.verbose_name = ''
     inlines = [GenreInLine]
@@ -580,20 +315,20 @@ class MagazinAdmin(ModelBase):
     anz_ausgaben.short_description = 'Anz. Ausgaben'
 
 @admin.register(memorabilien, site=miz_site)
-class MemoAdmin(ModelBase):
+class MemoAdmin(MIZModelAdmin):
     inlines = [BestandInLine]
 
 @admin.register(musiker, site=miz_site)
-class MusikerAdmin(ModelBase):
-    class GenreInLine(GenreModelBase):
+class MusikerAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
         model = musiker.genre.through
-    class BandInLine(TabModelBase):
+    class BandInLine(BaseTabularInline):
         model = band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
-    class AliasInLine(AliasTabBase):
+    class AliasInLine(BaseAliasInline):
         model = musiker_alias
-    class InstrInLine(TabModelBase):
+    class InstrInLine(BaseTabularInline):
         model = musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
@@ -629,7 +364,7 @@ class MusikerAdmin(ModelBase):
     herkunft_string.short_description = 'Herkunft'
     
 @admin.register(person, site=miz_site)
-class PersonAdmin(ModelBase):
+class PersonAdmin(MIZModelAdmin):
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
@@ -647,8 +382,8 @@ class PersonAdmin(ModelBase):
     Ist_Autor.boolean = True
     
 @admin.register(schlagwort, site=miz_site)
-class SchlagwortAdmin(ModelBase):
-    class AliasInLine(AliasTabBase):
+class SchlagwortAdmin(MIZModelAdmin):
+    class AliasInLine(BaseAliasInline):
         model = schlagwort_alias
         extra = 1
     inlines = [AliasInLine]
@@ -663,30 +398,27 @@ class SchlagwortAdmin(ModelBase):
     alias_string.short_description = 'Aliase'
     
 @admin.register(spielort, site=miz_site)
-class SpielortAdmin(ModelBase):
+class SpielortAdmin(MIZModelAdmin):
     list_display = ['name', 'ort']
     
 @admin.register(technik, site=miz_site)
-class TechnikAdmin(ModelBase):
+class TechnikAdmin(MIZModelAdmin):
     inlines = [BestandInLine]
 
 @admin.register(veranstaltung, site=miz_site)
-class VeranstaltungAdmin(ModelBase):
-    #TODO: finish this
-    pass
-#    class GenreInLine(GenreModelBase):
-#        model = veranstaltung.genre.through
-#    class BandInLine(TabModelBase):
-#        model = veranstaltung.band.through
-#        verbose_model = band
-#    class PersonInLine(TabModelBase):
-#        model = veranstaltung.person.through
-#        verbose_model = person
-#    inlines=[GenreInLine, BandInLine, PersonInLine]
-#    exclude = ['genre', 'band', 'person']
+class VeranstaltungAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
+        model = veranstaltung.genre.through
+    class BandInLine(BaseTabularInline):
+        model = veranstaltung.band.through
+        verbose_model = band
+    class PersonInLine(BaseTabularInline):
+        model = veranstaltung.person.through
+        verbose_model = person
+    inlines=[GenreInLine, BandInLine, PersonInLine]
     
 @admin.register(verlag, site=miz_site)
-class VerlagAdmin(ModelBase):
+class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
     advanced_search_form = {
         'selects' : ['sitz','sitz__land', 'sitz__bland'], 
@@ -695,24 +427,24 @@ class VerlagAdmin(ModelBase):
     
         
 @admin.register(video, site=miz_site)
-class VideoAdmin(ModelBase):
-    class GenreInLine(GenreModelBase):
+class VideoAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
         model = video.genre.through
-    class SchlInLine(SchlagwortModelBase):
+    class SchlInLine(BaseSchlagwortInline):
         model = video.schlagwort.through
-    class PersonInLine(TabModelBase):
+    class PersonInLine(BaseTabularInline):
         model = video.person.through
         verbose_model = person
-    class MusikerInLine(TabModelBase):
+    class MusikerInLine(BaseTabularInline):
         model = video.musiker.through
         verbose_model = musiker
-    class BandInLine(TabModelBase):
+    class BandInLine(BaseTabularInline):
         model = video.band.through
         verbose_model = band
-    class SpielortInLine(TabModelBase):
+    class SpielortInLine(BaseTabularInline):
         model = video.spielort.through
         verbose_model = spielort
-    class VeranstaltungInLine(TabModelBase):
+    class VeranstaltungInLine(BaseTabularInline):
         model = video.veranstaltung.through
         verbose_model = veranstaltung
     inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
@@ -720,22 +452,22 @@ class VideoAdmin(ModelBase):
 # ======================================================== Orte ========================================================
 
 @admin.register(bundesland, site=miz_site)
-class BlandAdmin(ModelBase):
+class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
     advanced_search_form = {
         'selects' : ['ort__land'], 
     }
     
 @admin.register(land, site=miz_site)
-class LandAdmin(ModelBase):
+class LandAdmin(MIZModelAdmin):
     pass
     
 @admin.register(kreis, site=miz_site)
-class KreisAdmin(ModelBase):
+class KreisAdmin(MIZModelAdmin):
     pass
     
 @admin.register(ort, site=miz_site)
-class OrtAdmin(ModelBase):
+class OrtAdmin(MIZModelAdmin):
     fields = ['stadt', 'land', 'bland']
     
     list_display = ['stadt', 'bland', 'land']
@@ -746,7 +478,7 @@ class OrtAdmin(ModelBase):
     }
     
 @admin.register(bestand, site=miz_site)
-class BestandAdmin(ModelBase):
+class BestandAdmin(MIZModelAdmin):
     #readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
     list_display = ['signatur', 'bestand_art', 'lagerort','provenienz']
     #flds_to_group = [('ausgabe', 'ausgabe_magazin')]
@@ -756,29 +488,29 @@ class BestandAdmin(ModelBase):
     }
     
 @admin.register(provenienz, site=miz_site)
-class ProvAdmin(ModelBase):   
+class ProvAdmin(MIZModelAdmin):   
     pass
       
 @admin.register(datei, site=miz_site)
-class DateiAdmin(ModelBase):
-    class GenreInLine(GenreModelBase):
+class DateiAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
         model = datei.genre.through
-    class SchlInLine(SchlagwortModelBase):
+    class SchlInLine(BaseSchlagwortInline):
         model = datei.schlagwort.through
-    class PersonInLine(TabModelBase):
+    class PersonInLine(BaseTabularInline):
         model = datei.person.through
         verbose_model = person
-    class MusikerInLine(StackModelBase):
+    class MusikerInLine(BaseStackedInline):
         model = datei.musiker.through
         verbose_model = musiker
         filter_horizontal = ['instrument']
-    class BandInLine(TabModelBase):
+    class BandInLine(BaseTabularInline):
         model = datei.band.through
         verbose_model = band
-    class SpielortInLine(TabModelBase):
+    class SpielortInLine(BaseTabularInline):
         model = datei.spielort.through
         verbose_model = spielort
-    class VeranstaltungInLine(TabModelBase):
+    class VeranstaltungInLine(BaseTabularInline):
         model = datei.veranstaltung.through
         verbose_model = veranstaltung
     inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
@@ -791,7 +523,7 @@ class DateiAdmin(ModelBase):
     hint = 'Diese Seite ist noch nicht vollständig fertig gestellt. Bitte noch nicht benutzen.'
     
 @admin.register(instrument, site=miz_site)
-class InstrumentAdmin(ModelBase):
+class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
 
 # Register your models here.

@@ -86,25 +86,8 @@ class MIZChangeList(ChangeList):
             remaining_lookup_params = MultiValueDict()
             for key, value_list in lookup_params.lists():
                 for value in value_list:
-                
-                    #NOTE: isn't this outdated with AdvSF? apparently not: artikel is still using this to recover genres related to musiker/band
-                    if key in self.model_admin.search_fields_redirect:
-                        qobject = models.Q()
-                        if key in self.model_admin.search_fields_redirect:
-                            redirects = self.model_admin.search_fields_redirect.get(key, []) 
-                            if not isinstance(redirects, (list, tuple)):
-                                redirects = [redirects]
-                        for redirect in redirects:
-                            if callable(redirect):
-                                continue
-                            qobject |= models.Q( (redirect, prepare_lookup_value(redirect, value)) )
-                            use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, redirect)
-                        # Keep in mind, remaining_lookup_params is a MultiValueDict - so assigning an object to key always wraps it in a list
-                        remaining_lookup_params[key] = qobject 
-                    else:
-                        remaining_lookup_params.appendlist(key, prepare_lookup_value(key, value))
-                        #remaining_lookup_params[key] = prepare_lookup_value(key, value)
-                        use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
+                    remaining_lookup_params.appendlist(key, prepare_lookup_value(key, value))
+                    use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
             return filter_specs, bool(filter_specs), remaining_lookup_params, use_distinct
         except FieldDoesNotExist as e:
             six.reraise(IncorrectLookupParameters, IncorrectLookupParameters(e), sys.exc_info()[2])
