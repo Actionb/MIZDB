@@ -88,14 +88,14 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.forwarded = {'':'ignore_me'}
         self.assertFalse(view.get_queryset().exists())
         
-@skip("reworked")
 class TestACAusgabe(ACViewTestCase):
     
     model = ausgabe
+    view_class = ACCapture
+
     
     @classmethod
     def setUpTestData(cls):
-        super(TestACAusgabe, cls).setUpTestData()
         cls.mag = magazin.objects.create(magazin_name='Testmagazin')
         cls.obj_num = ausgabe.objects.create(magazin=cls.mag)
         cls.obj_num.ausgabe_jahr_set.create(jahr=2020)
@@ -114,6 +114,10 @@ class TestACAusgabe(ACViewTestCase):
         cls.obj_jahrg = ausgabe.objects.create(magazin=cls.mag, jahrgang=12)
         cls.obj_jahrg.ausgabe_num_set.create(num=13)
         
+        cls.test_data = [cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg]
+        
+        super(TestACAusgabe, cls).setUpTestData()
+        
     def setUp(self):
         super(TestACAusgabe, self).setUp()
         self.qs = self.model.objects.all()
@@ -123,48 +127,52 @@ class TestACAusgabe(ACViewTestCase):
         
     def test_apply_q_num(self):
         view = self.view(q=self.obj_num.__str__())
-        expected_qs = list(self.qs.filter(pk=self.obj_num.pk))
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_num.pk, force_text(self.obj_num))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
         self.obj_num.ausgabe_num_set.create(num=11)
+        self.obj_num.refresh_from_db()
         view = self.view(q=self.obj_num.__str__())
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_num.pk, force_text(self.obj_num))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
     def test_apply_q_lnum(self):
         view = self.view(q=self.obj_lnum.__str__())
-        expected_qs = list(self.qs.filter(pk=self.obj_lnum.pk))
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        #expected_qs = list(self.qs.filter(pk=self.obj_lnum.pk))
+        expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
         self.obj_lnum.ausgabe_lnum_set.create(lnum=11)
+        self.obj_lnum.refresh_from_db()
         view = self.view(q=self.obj_lnum.__str__())
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
     def test_apply_q_monat(self):
         view = self.view(q=self.obj_monat.__str__())
-        expected_qs = list(self.qs.filter(pk=self.obj_monat.pk))
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_monat.pk, force_text(self.obj_monat))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
         self.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb'))
+        self.obj_monat.refresh_from_db()
         view = self.view(q=self.obj_monat.__str__())
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_monat.pk, force_text(self.obj_monat))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
     def test_apply_q_sonderausgabe_forwarded(self):
         view = self.view(q=self.obj_sonder.__str__(), forwarded={'magazin':self.mag.pk})
-        expected_qs = list(self.qs.filter(pk=self.obj_sonder.pk))
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
-    #NOTE: ausgabe.strquery / apply_q does not work with sonderausgabe or jahrgang (yet)
-    @expectedFailure
     def test_apply_q_sonderausgabe(self):
         view = self.view(q=self.obj_sonder.__str__())
-        expected_qs = list(self.qs.filter(pk=self.obj_sonder.pk))
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
         
-    @expectedFailure
     def test_apply_q_jahrgang(self):
         view = self.view(q=self.obj_jahrg.__str__())
-        expected_qs = list(self.qs.filter(pk=self.obj_jahrg.pk))
-        self.assertEqual(list(view.apply_q(self.qs)), expected_qs)
+        expected = (self.obj_jahrg.pk, force_text(self.obj_jahrg))
+        self.assertIn(expected, list(view.apply_q(self.qs)))
 
         
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
