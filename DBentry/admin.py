@@ -9,7 +9,7 @@ from django.contrib.auth import get_permission_codename
 
 from .models import *
 from .forms import makeForm, InLineAusgabeForm
-from .utils import link_list
+from .utils import link_list, concat_limit
 from .changelist import MIZChangeList
 from .actions import *
 
@@ -60,6 +60,7 @@ class ModelBase(admin.ModelAdmin):
         return actions
         
     def get_exclude(self, request, obj = None):
+        #TODO: if not fld is reverse relation 
         self.exclude = super(ModelBase, self).get_exclude(request, obj)
         if self.exclude is None:
             self.exclude = []
@@ -74,29 +75,38 @@ class ModelBase(admin.ModelAdmin):
             if self.flds_to_group:
                 self.fields = self.group_fields()
         return self.fields
-    
+        
     def group_fields(self):
-        if self.fields is None:
-            return None
-        fields = self.fields
+        if not self.fields:
+            return []
+        grouped_fields = self.fields
         for tpl in self.flds_to_group:
-            try:
-                if tpl[0] in fields:
-                    if len(tpl)==3 and tpl[-1] == 1:
-                        # tuple has a third part which tells us which of the fields to group takes priority
-                        fields[ fields.index(tpl[0])] = (tpl[1], tpl[0])
-                    else:
-                        fields[ fields.index(tpl[0])] = (tpl[0], tpl[1])
-                if tpl[1] in fields:
-                        fields.remove(tpl[1])
-            except:
-                pass
-        return fields
+            # Find the correct spot to insert the tuple into:
+            # which would be the earliest occurence of any field of tuple in self.fields
+            indexes = [self.fields.index(i) for i in tpl if i in self.fields]
+            if not indexes:
+                # None of the fields in the tuple are actually in self.fields
+                continue
+            target_index = min(indexes)
+            grouped_fields[target_index] = tpl
+            indexes.remove(target_index)
+            # Remove all other fields of the tuple that are in self.fields
+            for i in indexes:
+                grouped_fields.pop(i)
+        return grouped_fields
     
     def get_search_fields(self, request=None):
-        if self.search_fields:
-            return self.search_fields
-        return self.model.get_search_fields()
+        search_fields = self.search_fields or list(self.model.get_search_fields())
+        # add __exact for pk lookups
+        pk_name = self.model._meta.pk.name
+        if "=" + pk_name in search_fields:
+            pass
+        elif pk_name in search_fields:
+            search_fields.remove(pk_name)
+            search_fields.append("=" + pk_name)
+        else:
+            search_fields.append("=" + pk_name)
+        return search_fields
         
     def add_crosslinks(self, object_id):
         new_extra = {}
@@ -109,13 +119,14 @@ class ModelBase(admin.ModelAdmin):
                 fld_name = rel.remote_field.name
                 if model in inlmdls:
                     continue
-                count = model._default_manager.filter(**{fld_name:object_id}).count()
+                count = model.objects.filter(**{fld_name:object_id}).count()
                 if not count:
                     continue
                 try:
                     link = reverse("admin:{}_{}_changelist".format(self.opts.app_label, model._meta.model_name)) \
                                     + "?" + fld_name + "=" + str(object_id)
                 except Exception as e:
+                    #TODO: proper exception class
                     # No reverse match found
                     continue
                 label = model._meta.verbose_name_plural + " ({})".format(str(count))
@@ -171,7 +182,6 @@ class ModelBase(admin.ModelAdmin):
         # At this point, _changelist_filters is a string of format:
         # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
         # SEARCH_TERM_SEP: '='
-        # SEARCH_SEG_SEP: ','
         filter_dict = {}
         for part in initial['_changelist_filters'].split('&'):
             if part and SEARCH_TERM_SEP in part:
@@ -368,16 +378,8 @@ class AusgabenAdmin(ModelBase):
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     flds_to_group = [('status', 'sonderausgabe')]
     
-    list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahre', 'jahrgang', 
+    list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahr_string', 'jahrgang', 
                         'magazin','e_datum','anz_artikel', 'status') 
-    search_fields = ['magazin__magazin_name', 'status', 'e_datum', 
-        'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr','ausgabe_monat__monat__monat']
-    search_fields_redirect = { 
-                            'bearbeitungsstatus' : 'status',
-                            'nr' : 'ausgabe_num__num', 
-                            'nummer' : 'ausgabe_num__num', 
-                            'lfd' : 'ausgabe_lnum__lnum', 
-                            }
                             
     actions = [bulk_jg, add_bestand]
     advanced_search_form = {
@@ -385,81 +387,38 @@ class AusgabenAdmin(ModelBase):
         'selects':['magazin','status'], 
         'simple':['jahrgang', 'sonderausgabe']
     }
-       
-    # ACTIONS
-    def add_duplicate(self, request, queryset):
-        try:
-            dupletten_lagerort = lagerort.objects.get(pk = DUPLETTEN_ID)
-        except:
-            self.message_user(request, "Konnte keine Dubletten hinzufügen. Lagerort nicht gefunden.", 'error')
-            return
-        dupe_list = [bestand(ausgabe=i, lagerort=dupletten_lagerort) for i in queryset]
-        try:
-            bestand.objects.bulk_create(dupe_list)
-        except:
-            self.message_user(request, "Konnte keine Dubletten hinzufügen: Interner Fehler.", 'warning')
-        else:
-            obj_links = link_list(request, [d.ausgabe for d in dupe_list])
-            msg_text = "Dublette(n) zu diesen {} Ausgaben hinzugefügt: {}".format(len(dupe_list), obj_links)
-            self.message_user(request, format_html(msg_text))
-    add_duplicate.short_description = 'Dubletten-Bestand hinzufügen'
-    add_duplicate.perm_required = ['alter_bestand']
+                
+    def anz_artikel(self, obj):
+        return obj.artikel_set.count()
+    anz_artikel.short_description = 'Anz. Artikel'
     
-    def add_bestand(self, request, queryset):
-        try:
-            zraum_lagerort = lagerort.objects.get(pk = ZRAUM_ID)
-        except:
-            self.message_user(request, "Konnte keinen Zeitschriftenraum-Bestand hinzufügen. Lagerort nicht gefunden.", 'error')
-            return
-        zraum_list = []
-        dupe_list = []
-        for instance in queryset:
-            if not bestand.objects.filter(ausgabe=instance, lagerort=zraum_lagerort).exists():
-                zraum_list.append(bestand(ausgabe=instance, lagerort=zraum_lagerort))
-            else:
-                try:
-                    dupletten_lagerort = lagerort.objects.get(pk = DUPLETTEN_ID)
-                except:
-                    continue
-                else:
-                    dupe_list.append(bestand(ausgabe=instance, lagerort=dupletten_lagerort))
-        
-        if len(zraum_list):
-            try: 
-                bestand.objects.bulk_create(zraum_list)
-            except:
-                self.message_user(request, "Konnte keinen Bestand hinzufügen: Interner Fehler.", 'warning')
-                return
-        obj_links = link_list(request, [z.ausgabe for z in zraum_list])
-        msg_text = "Zeitschriftenraum-Bestand zu diesen {} Ausgaben hinzugefügt: {}".format(len(zraum_list), obj_links)
-        self.message_user(request, format_html(msg_text))
-        if dupe_list:
-            obj_links = link_list(request, [d.ausgabe for d in dupe_list])
-            msg_text = 'Folgende {} Ausgaben hatten bereits einen Bestand im Zeitschriftenraum: {}'.format(
-                        len(dupe_list), obj_links
-                        )
-            self.message_user(request, format_html(msg_text), 'warning')
-            if AUTO_ASSIGN_DUPLICATE:
-                try:
-                    bestand.objects.bulk_create(dupe_list)
-                except:
-                    self.message_user(request, "Konnte keine Dubletten hinzufügen: Interner Fehler.", 'warning')
-                else:
-                    msg_text = "{} Dubletten hinzugefügt: {}".format(len(dupe_list), obj_links)
-                    self.message_user(request, format_html(msg_text))
-    add_bestand.short_description = 'Zeitschriftenraum-Bestand hinzufügen'
-    add_duplicate.perm_required = ['alter_bestand']
-        
-
-        
-    def merge_allowed(self, request, queryset):
-        #TODO: move this to actions.py
-        #TODO: allow merging of non-sonderausgaben with sonderausgaben?
-        if queryset.values_list('magazin').distinct().count()>1:
-            # User is trying to merge ausgaben from different magazines
-            self.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, magazin._meta.verbose_name_plural, 'n'), 'error')
-            return False
-        return True
+    def jahr_string(self, obj):
+        return concat_limit(obj.ausgabe_jahr_set.all())
+    jahr_string.short_description = 'Jahre'
+    
+    def num_string(self, obj):
+        return concat_limit(obj.ausgabe_num_set.all())
+    num_string.short_description = 'Nummer'
+    
+    def lnum_string(self, obj):
+        return concat_limit(obj.ausgabe_lnum_set.all())
+    lnum_string.short_description = 'lfd. Nummer'
+    
+    def monat_string(self, obj):
+        if obj.ausgabe_monat_set.exists():
+            return concat_limit(obj.ausgabe_monat_set.values_list('monat__abk', flat=True))
+    monat_string.short_description = 'Monate'
+    
+    def zbestand(self, obj):
+        return obj.bestand_set.filter(lagerort=lagerort.objects.filter(pk=ZRAUM_ID)).exists()
+    zbestand.short_description = 'Bestand: ZRaum'
+    zbestand.boolean = True
+    
+    def dbestand(self, obj):
+        return obj.bestand_set.filter(lagerort=lagerort.objects.filter(pk=DUPLETTEN_ID)).exists()
+    dbestand.short_description = 'Bestand: Dublette'
+    dbestand.boolean = True
+    
     
 @admin.register(autor, site=miz_site)
 class AutorAdmin(ModelBase):
@@ -470,12 +429,14 @@ class AutorAdmin(ModelBase):
     inlines = [MagazinInLine]
     
     list_display = ['__str__', 'magazin_string']
-    search_fields = ['person__vorname', 'person__nachname', 'kuerzel']
-    search_fields_redirect = {'vorname':'person__vorname', 'nachname':'person__nachname'}
 
     advanced_search_form = {
         'selects' : ['magazin']
     }
+            
+    def magazin_string(self, obj):
+        return concat_limit(obj.magazin.all())
+    magazin_string.short_description = 'Magazin(e)'
     
 @admin.register(artikel, site=miz_site)
 class ArtikelAdmin(ModelBase):  
@@ -505,14 +466,10 @@ class ArtikelAdmin(ModelBase):
         model = artikel.veranstaltung.through
         verbose_model = veranstaltung
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
-    flds_to_group = [('ausgabe','magazin', 1),('seite', 'seitenumfang'),]
+    flds_to_group = [('magazin', 'ausgabe'),('seite', 'seitenumfang'),]
     
     list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string','ausgabe','artikel_magazin', 'kuenstler_string']
     list_display_links = ['__str__', 'seite']
-    search_fields_redirect = { 
-                                'magazin' : 'ausgabe__magazin__magazin_name',
-                                'genre' : ['genre', 'musiker__genre', 'band__genre']
-                                }
                                 
     advanced_search_form = {
         'gtelt':['seite', ], 
@@ -520,9 +477,9 @@ class ArtikelAdmin(ModelBase):
         'simple':[], 
     }  
     save_on_top = True
-    #actions = ['merge_records']
 
     def get_queryset(self, request):
+        # NOTE: resultbased_ordering?
         from django.db.models import Min
         qs = super(ArtikelAdmin, self).get_queryset(request)
         qs = qs.annotate(
@@ -533,29 +490,18 @@ class ArtikelAdmin(ModelBase):
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
         
-    def merge_allowed(self, request, queryset):
-        #TODO: move this to actions.py
-        if queryset.values('ausgabe').distinct().count()>1:
-            # User is trying to merge artikel from different ausgaben
-            self.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')
-            return False
-        return True
-        
 @admin.register(band, site=miz_site)    
 class BandAdmin(ModelBase):
     class GenreInLine(GenreModelBase):
         model = band.genre.through
     class MusikerInLine(TabModelBase):
         model = band.musiker.through
-        #verbose_model = musiker
     class AliasInLine(AliasTabBase):
         model = band_alias
-    #search_fields = ['band_name', 'beschreibung', 'band_alias__alias']
     save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
-    exclude = ['genre', 'musiker']
     
-    list_display = ['band_name', 'genre_string','herkunft', 'musiker_string']
+    list_display = ['band_name', 'genre_string', 'herkunft', 'musiker_string']
 
     googlebtns = ['band_name']
     
@@ -563,6 +509,18 @@ class BandAdmin(ModelBase):
         'selects' : ['musiker', 'genre', 'herkunft__land', 'herkunft'], 
         'labels' : {'musiker':'Mitglied','herkunft__land':'Herkunftsland', 'herkunft':'Herkunftsort'}
     }
+        
+    def genre_string(self, obj):
+        return concat_limit(obj.genre.all())
+    genre_string.short_description = 'Genres'
+        
+    def musiker_string(self, obj):
+        return concat_limit(obj.musiker.all())
+    musiker_string.short_description = 'Mitglieder'
+    
+    def alias_string(self, obj):
+        return concat_limit(obj.band_alias_set.all())
+    alias_string.short_description = 'Aliase'
     
 @admin.register(bildmaterial, site=miz_site)
 class BildmaterialAdmin(ModelBase):
@@ -576,8 +534,7 @@ class BuchAdmin(ModelBase):
     save_on_top = True
     inlines = [AutorInLine, BestandInLine]
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
-    exclude = ['autor']
-    
+    search_fields = ['pk','titel']
     advanced_search_form = {
         'selects' : ['verlag', 'sprache'], 
         'simple' : [], 
@@ -594,19 +551,15 @@ class GenreAdmin(ModelBase):
         model = genre_alias
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string', 'ober_string']
-    
-    #TODO: dont keep this
-    def get_search_results(self, request, queryset, search_term):
-        if not search_term:
-            # dont do this crap without a search term, django will explode
-            return super(GenreAdmin, self).get_search_results(request, queryset, search_term)
-        pre_result, use_distinct = super(GenreAdmin, self).get_search_results(request, queryset, search_term)
         
-        q = models.Q()
-        for r in pre_result:
-            q |= models.Q(('obergenre__genre', r.genre))
-            q |= models.Q(('pk', r.pk))
-        return queryset.filter(q), use_distinct
+    def ober_string(self, obj):
+        return str(obj.ober) if obj.ober else ''
+    ober_string.short_description = 'Obergenre'
+        
+    def alias_string(self, obj):
+        return concat_limit(obj.genre_alias_set.all())
+    alias_string.short_description = 'Aliase'
+    
 
 @admin.register(magazin, site=miz_site)
 class MagazinAdmin(ModelBase):
@@ -614,7 +567,6 @@ class MagazinAdmin(ModelBase):
         model = magazin.genre.through
         magazin.genre.through.verbose_name = ''
     inlines = [GenreInLine]
-    exclude = ['genre']
     
     list_display = ('__str__','beschreibung','anz_ausgaben', 'ort')
     
@@ -622,11 +574,14 @@ class MagazinAdmin(ModelBase):
         'selects' : ['ort__land'], 
         'labels' : {'ort__land':'Herausgabeland'}
     }
-    
+        
+    def anz_ausgaben(self, obj):
+        return obj.ausgabe_set.count()
+    anz_ausgaben.short_description = 'Anz. Ausgaben'
 
 @admin.register(memorabilien, site=miz_site)
 class MemoAdmin(ModelBase):
-    infields = [BestandInLine]
+    inlines = [BestandInLine]
 
 @admin.register(musiker, site=miz_site)
 class MusikerAdmin(ModelBase):
@@ -642,14 +597,13 @@ class MusikerAdmin(ModelBase):
         model = musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
+    
     save_on_top = True
     inlines = [AliasInLine, GenreInLine, BandInLine, InstrInLine]
-    readonly_fields = ['herkunft_string']
+    readonly_fields = ['band_string', 'genre_string', 'herkunft_string']
     fields = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
-    exclude = ('ist_mitglied', 'instrument', 'genre')
     
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'herkunft_string']
-    search_fields = ['kuenstler_name', 'musiker_alias__alias']
     
     googlebtns = ['kuenstler_name']
     
@@ -658,17 +612,24 @@ class MusikerAdmin(ModelBase):
                 'instrument','person__herkunft__land', 'person__herkunft'], 
         'labels' : {'person__herkunft__land':'Herkunftsland'}
     }
+        
+    def band_string(self, obj):
+        return concat_limit(obj.band_set.all())
+    band_string.short_description = 'Bands'
+    
+    def genre_string(self, obj):
+        return concat_limit(obj.genre.all())
+    genre_string.short_description = 'Genres'
+    
+    def herkunft_string(self, obj):
+        if obj.person and obj.person.herkunft:
+            return str(obj.person.herkunft)
+        else:
+            return '---'
+    herkunft_string.short_description = 'Herkunft'
     
 @admin.register(person, site=miz_site)
 class PersonAdmin(ModelBase):
-    def Ist_Musiker(self, obj):
-        return obj.musiker_set.exists()
-    Ist_Musiker.boolean = True
-    
-    def Ist_Autor(self, obj):
-        return obj.autor_set.exists()
-    Ist_Autor.boolean = True
-    
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
@@ -677,14 +638,29 @@ class PersonAdmin(ModelBase):
         'selects' : ['herkunft', 'herkunft__land', ('herkunft__bland', 'herkunft__land')]
     }
     
+    def Ist_Musiker(self, obj):
+        return obj.musiker_set.exists()
+    Ist_Musiker.boolean = True
+    
+    def Ist_Autor(self, obj):
+        return obj.autor_set.exists()
+    Ist_Autor.boolean = True
+    
 @admin.register(schlagwort, site=miz_site)
 class SchlagwortAdmin(ModelBase):
-    #TODO: rename this class! AHHH!
     class AliasInLine(AliasTabBase):
         model = schlagwort_alias
         extra = 1
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string', 'ober_string']
+        
+    def ober_string(self, obj):
+        return str(obj.ober) if obj.ober else ''
+    ober_string.short_description = 'Oberbegriff'
+        
+    def alias_string(self, obj):
+        return concat_limit(obj.schlagwort_alias_set.all())
+    alias_string.short_description = 'Aliase'
     
 @admin.register(spielort, site=miz_site)
 class SpielortAdmin(ModelBase):
@@ -692,10 +668,11 @@ class SpielortAdmin(ModelBase):
     
 @admin.register(technik, site=miz_site)
 class TechnikAdmin(ModelBase):
-    infields = [BestandInLine]
+    inlines = [BestandInLine]
 
 @admin.register(veranstaltung, site=miz_site)
 class VeranstaltungAdmin(ModelBase):
+    #TODO: finish this
     pass
 #    class GenreInLine(GenreModelBase):
 #        model = veranstaltung.genre.through
@@ -711,7 +688,6 @@ class VeranstaltungAdmin(ModelBase):
 @admin.register(verlag, site=miz_site)
 class VerlagAdmin(ModelBase):
     list_display = ['verlag_name', 'sitz']
-    search_fields = ['verlag_name', 'sitz__land__land_name', 'sitz__stadt']
     advanced_search_form = {
         'selects' : ['sitz','sitz__land', 'sitz__bland'], 
         'labels' : {'sitz':'Sitz'}
@@ -745,7 +721,6 @@ class VideoAdmin(ModelBase):
 
 @admin.register(bundesland, site=miz_site)
 class BlandAdmin(ModelBase):
-    search_fields = ['id', 'bland_name', 'code', 'land__land_name']
     list_display = ['bland_name', 'code', 'land']
     advanced_search_form = {
         'selects' : ['ort__land'], 
@@ -753,7 +728,7 @@ class BlandAdmin(ModelBase):
     
 @admin.register(land, site=miz_site)
 class LandAdmin(ModelBase):
-    search_fields = ['id', 'land_name', 'code']
+    pass
     
 @admin.register(kreis, site=miz_site)
 class KreisAdmin(ModelBase):
@@ -763,7 +738,6 @@ class KreisAdmin(ModelBase):
 class OrtAdmin(ModelBase):
     fields = ['stadt', 'land', 'bland']
     
-    search_fields = ['stadt', 'land__land_name', 'bland__bland_name']
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
     

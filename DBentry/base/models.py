@@ -88,6 +88,14 @@ class BaseModel(models.Model):
         return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i.name in cls.exclude] 
         
     @classmethod
+    def get_reverse_relations(cls):
+        """
+        Returns all relation objects that represent a reverse relation to this model.
+        """
+        return [f for f in cls._meta.get_fields() if f.is_relation and not f.concrete]
+        
+        
+    @classmethod
     def get_required_fields(cls, as_string=False):
         """
         Returns the model's fields that are required.
@@ -107,6 +115,7 @@ class BaseModel(models.Model):
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         #TODO: order matters! 
+        #TODO: if cls.search_fields return search_fields
         """
         Returns the model's fields that are used in admin, autocomplete and advanced search form(? really?) searches.
         """
