@@ -54,9 +54,11 @@ class musiker_alias(BaseAliasModel):
     
 class genre(BaseModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
-    ober = models.ForeignKey('self', related_name = 'obergenre', verbose_name = 'Oberbegriff', null = True,  blank = True,  on_delete=models.SET_NULL)
     
     search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
+    ober = models.ForeignKey('self', related_name = 'sub_genres', verbose_name = 'Oberbegriff', 
+        null = True,  blank = True,  on_delete=models.SET_NULL, 
+    )
     primary_search_fields = ['genre']
     name_field = 'genre'
     search_fields_suffixes = {'obergenre__genre': 'Obergenre', 'genre_alias__alias': 'Alias'}
@@ -433,9 +435,9 @@ class land_alias(BaseAliasModel):
         
 class schlagwort(BaseModel):
     schlagwort = models.CharField( max_length = 100,  unique = True)
-    ober = models.ForeignKey('self', related_name = 'oberschl', verbose_name = 'Oberbegriff', null = True,  blank = True)
     
     search_fields = ['schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias']
+    ober = models.ForeignKey('self', related_name = 'unterbegriffe', verbose_name = 'Oberbegriff', null = True,  blank = True)
     primary_search_fields = []
     name_field = 'schlagwort'
     search_fields_suffixes = {'oberschl__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias': 'Alias'}
@@ -965,7 +967,6 @@ class datei(BaseModel):
     
     # Allgemeine Beschreibung
     beschreibung = models.TextField(blank = True)
-    datum = models.DateField(blank = True, null = True) #NOTE: Wird das nicht durch Veranstaltung abgedeckt?
     bemerkungen = models.TextField(blank = True)
     quelle = models.CharField(help_text = "z.B. Broadcast, Live, etc.", **CF_ARGS_B) # z.B. Broadcast, Live, etc.
     sender = models.ForeignKey('sender', on_delete = models.SET_NULL, blank = True,  null = True)
