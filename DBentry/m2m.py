@@ -207,58 +207,6 @@ class m2m_band_musiker(BaseM2MModel):
         db_table = 'DBentry_band_musiker'
         verbose_name = 'Band-Mitglied'
         verbose_name_plural = 'Band-Mitglieder'
-        
-    
-# ================================= #
-##              BILDMATERIAL
-# ================================= #
-                                                
-class m2m_bildmaterial_ort(BaseM2MModel):
-    bildmaterial = models.ForeignKey('bildmaterial')
-    ort = models.ForeignKey('ort')
-    class Meta:
-        unique_together = ('bildmaterial', 'ort')
-        db_table = 'DBentry_bildmaterial_ort'
-        verbose_name = 'Bildmaterial-Ort'
-        verbose_name_plural = 'Bildmaterial-Orte'
-        
-
-# ================================= #
-##              BUCH
-# ================================= #
-
-class m2m_buch_autor(BaseM2MModel):
-    buch = models.ForeignKey('buch')
-    autor = models.ForeignKey('autor')
-    class Meta:
-        unique_together = ('buch', 'autor')
-        db_table = 'DBentry_buch_autor'
-        verbose_name = 'Buch-Autor'
-        verbose_name_plural = 'Buch-Autoren'
-                                                
-class m2m_buch_ort(BaseM2MModel):
-    buch = models.ForeignKey('buch')
-    ort = models.ForeignKey('ort')
-    class Meta:
-        unique_together = ('buch', 'ort')
-        db_table = 'DBentry_buch_ort'
-        verbose_name = 'buch-Ort'
-        verbose_name_plural = 'buch-Orte'    
-        
-
-# ================================= #
-##              DOKUMENT
-# ================================= #
-        
-class m2m_dokument_ort(BaseM2MModel):
-    dokument = models.ForeignKey('dokument')
-    ort = models.ForeignKey('ort')
-    class Meta:
-        unique_together = ('dokument', 'ort')
-        db_table = 'DBentry_dokument_ort'
-        verbose_name = 'dokument-Ort'
-        verbose_name_plural = 'dokument-Orte'
-
 
 # ================================= #
 ##              MAGAZIN
@@ -281,21 +229,6 @@ class m2m_magazin_genre(BaseM2MModel):
         db_table = 'DBentry_magazin_genre'
         verbose_name = 'Magazin-Genre'
         verbose_name_plural = 'Magazin-Genres'
-                                                
-
-# ================================= #
-##              MEMORABILIEN
-# ================================= #
-                                                
-class m2m_memorabilien_ort(BaseM2MModel):
-    memorabilien = models.ForeignKey('memorabilien')
-    ort = models.ForeignKey('ort')
-    class Meta:
-        unique_together = ('memorabilien', 'ort')
-        db_table = 'DBentry_memorabilien_ort'
-        verbose_name = 'memorabilien-Ort'
-        verbose_name_plural = 'memorabilien-Orte'
-                                                
 
 # ================================= #
 ##              MUSIKER
@@ -319,62 +252,9 @@ class m2m_musiker_instrument(BaseM2MModel):
         verbose_name = 'Musiker-Instrument'
         verbose_name_plural = 'Musiker-Instrumente'
         
-
-# ================================= #
-##              VERANSTALTUNG
-# ================================= #
-    
-class m2m_veranstaltung_band(BaseM2MModel):
-    veranstaltung = models.ForeignKey('veranstaltung')
-    band = models.ForeignKey('band')
-    class Meta:
-        unique_together = ('veranstaltung', 'band')
-        db_table = 'DBentry_veranstaltung_band'
-        verbose_name = 'Veranstaltung-Band'
-        verbose_name_plural = 'Veranstaltung-Bands'
-                                                
-                                                
-class m2m_veranstaltung_person(BaseM2MModel):
-    veranstaltung = models.ForeignKey('veranstaltung')
-    person = models.ForeignKey('person')
-    class Meta:
-        unique_together = ('veranstaltung', 'person')
-        db_table = 'DBentry_veranstaltung_person'
-        verbose_name = 'Veranstaltung-Person'
-        verbose_name_plural = 'Veranstaltung-Personen'
-        
-class m2m_veranstaltung_genre(BaseM2MModel):
-    veranstaltung = models.ForeignKey('veranstaltung')
-    genre = models.ForeignKey('genre')
-    class Meta:
-        unique_together = ('veranstaltung', 'genre')
-        db_table = 'DBentry_veranstaltung_genre'
-        verbose_name = 'Veranstaltung-Genre'
-        verbose_name_plural = 'Veranstaltung-Genres'
-        
-
 # ================================= #
 ##              VIDEO
 # ================================= #
-        
-class m2m_video_band(BaseM2MModel):
-    video = models.ForeignKey('video')
-    band = models.ForeignKey('band')
-    class Meta:
-        unique_together = ('video', 'band')
-        db_table = 'DBentry_video_band'
-        verbose_name = 'Video-Band'
-        verbose_name_plural = 'Video-Bands'
-        
-class m2m_video_genre(BaseM2MModel):
-    video = models.ForeignKey('video')
-    genre = models.ForeignKey('genre')
-    class Meta:
-        unique_together = ('video', 'genre')
-        db_table = 'DBentry_video_genre'
-        verbose_name = 'Video-Genre'
-        verbose_name_plural = 'Video-Genres'
-                                                
 class m2m_video_musiker(BaseM2MModel):
     video = models.ForeignKey('video')
     musiker = models.ForeignKey('musiker')
@@ -383,74 +263,11 @@ class m2m_video_musiker(BaseM2MModel):
         db_table = 'DBentry_video_musiker'
         verbose_name = 'Video-Musiker'
         verbose_name_plural = 'Video-Musiker'
-                                                
-class m2m_video_ort(BaseM2MModel):
-    video = models.ForeignKey('video')
-    ort = models.ForeignKey('ort')
-    class Meta:
-        unique_together = ('video', 'ort')
-        db_table = 'DBentry_video_ort'
-        verbose_name = 'Video-Ort'
-        verbose_name_plural = 'Video-Orte'
-        
-class m2m_video_person(BaseM2MModel):
-    video = models.ForeignKey('video')
-    person = models.ForeignKey('person')
-    class Meta:
-        unique_together = ('video', 'person')
-        db_table = 'DBentry_video_person'
-        verbose_name = 'Video-Person'
-        verbose_name_plural = 'Video-Personen'
-        
-class m2m_video_spielort(BaseM2MModel):
-    video = models.ForeignKey('video')
-    spielort = models.ForeignKey('spielort')
-    class Meta:
-        unique_together = ('video', 'spielort')
-        db_table = 'DBentry_video_spielort'
-        verbose_name = 'Video-Spielort'
-        verbose_name_plural = 'Video-Spielorte'
-        
-class m2m_video_schlagwort(BaseM2MModel):
-    video = models.ForeignKey('video')
-    schlagwort = models.ForeignKey('schlagwort')
-    class Meta:
-        unique_together = ('video', 'schlagwort')
-        db_table = 'DBentry_video_schlagwort'
-        verbose_name = 'Video-Schlagwort'
-        verbose_name_plural = 'Video-Schlagwörter'
-        
-class m2m_video_veranstaltung(BaseM2MModel):
-    video = models.ForeignKey('video')
-    veranstaltung = models.ForeignKey('veranstaltung')
-    class Meta:
-        unique_together = ('video', 'veranstaltung')
-        db_table = 'DBentry_video_veranstaltung'
-        verbose_name = 'Video-Veranstaltung'
-        verbose_name_plural = 'Video-Veranstaltungen'
     
 
 # ================================= #
 ##              DATEI
 # ================================= #
-        
-class m2m_datei_band(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    band = models.ForeignKey('band')
-    class Meta:
-        unique_together = ('datei', 'band')
-        db_table = 'DBentry_datei_band'
-        verbose_name = 'Datei-Band'
-        verbose_name_plural = 'Datei-Bands'
-    
-class m2m_datei_genre(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    genre = models.ForeignKey('genre')
-    class Meta:
-        unique_together = ('datei', 'genre')
-        db_table = 'DBentry_datei_genre'
-        verbose_name = 'Datei-Genre'
-        verbose_name_plural = 'Datei-Genres'  
         
 class m2m_datei_musiker(BaseM2MModel):
     datei = models.ForeignKey('datei')
@@ -459,26 +276,7 @@ class m2m_datei_musiker(BaseM2MModel):
     class Meta:
         unique_together = ('datei', 'musiker')
         db_table = 'DBentry_datei_musiker'
-        verbose_name = 'Datei-Musiker'
-        verbose_name_plural = 'Datei-Musiker'
         
-class m2m_datei_ort(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    ort = models.ForeignKey('ort')
-    class Meta:
-        unique_together = ('datei', 'ort')
-        db_table = 'DBentry_datei_ort'
-        verbose_name = 'Datei-Ort'
-        verbose_name_plural = 'Datei-Orte'
-        
-class m2m_datei_person(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    person = models.ForeignKey('person')
-    class Meta:
-        unique_together = ('datei', 'person')
-        db_table = 'DBentry_datei_person'
-        verbose_name = 'Datei-Person'
-        verbose_name_plural = 'Datei-Personen'
         
 class m2m_datei_quelle(BaseM2MModel):
     datei = models.ForeignKey('datei')
@@ -508,36 +306,3 @@ class m2m_datei_quelle(BaseM2MModel):
             return '{} ({})'.format(str(getattr(self, art.name)), art.related_model._meta.verbose_name)
         else:
             return super(m2m_datei_quelle, self).__str__()
-        
-class m2m_datei_schlagwort(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    schlagwort = models.ForeignKey('schlagwort')
-    class Meta:
-        unique_together = ('datei', 'schlagwort')
-        db_table = 'DBentry_datei_schlagwort'
-        verbose_name = 'Datei-Schlagwort'
-        verbose_name_plural = 'Datei-Schlagwörter'
-        
-    def __str__(self):
-        if self.instrument.exists():
-            instr = ",".join([str(i.kuerzel) for i in self.instrument.all()])
-            return "{} ({})".format(str(getattr(self, 'musiker')), instr)
-        return str(getattr(self, 'musiker'))
-        
-class m2m_datei_spielort(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    spielort = models.ForeignKey('spielort')
-    class Meta:
-        unique_together = ('datei', 'spielort')
-        db_table = 'DBentry_datei_spielort'
-        verbose_name = 'Datei-Spielort'
-        verbose_name_plural = 'Datei-Spielorte'
-        
-class m2m_datei_veranstaltung(BaseM2MModel):
-    datei = models.ForeignKey('datei')
-    veranstaltung = models.ForeignKey('veranstaltung')
-    class Meta:
-        unique_together = ('datei', 'veranstaltung')
-        db_table = 'DBentry_datei_veranstaltung'
-        verbose_name = 'Datei-Veranstaltung'
-        verbose_name_plural = 'Datei-Veranstaltungen'
