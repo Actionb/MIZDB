@@ -216,6 +216,7 @@ class BaseInlineMixin(object):
     verbose_model = None
     extra = 1
     classes = ['collapse']
+    description = ''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.verbose_model:

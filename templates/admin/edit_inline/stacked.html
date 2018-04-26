@@ -9,8 +9,8 @@
         {{ inline_admin_formset.formset.management_form }}
         {{ inline_admin_formset.formset.non_form_errors }}
 
-        {% if inline_admin_formset.description %}
-            <div class="description">{{ inline_admin_formset.description|safe }}</div>
+        {% if inline_admin_formset.opts.description %}
+            <div class="description">{{ inline_admin_formset.opts.description|safe }}</div>
         {% endif %}
 
         {% for inline_admin_form in inline_admin_formset %}

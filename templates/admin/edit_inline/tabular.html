@@ -6,8 +6,8 @@
 {{ inline_admin_formset.formset.management_form }}
 <fieldset class="module {{ inline_admin_formset.classes }} {% if 'collapse' in inline_admin_formset.classes and inline_admin_formset.formset.initial_form_count == 0 and collapse_all %} collapsed {% endif %}">
    <h2 class="collapsible">{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
-        {% if inline_admin_formset.description %}
-            <div class="description">{{ inline_admin_formset.description|safe }}</div>
+        {% if inline_admin_formset.opts.description %}
+            <div class="description">{{ inline_admin_formset.opts.description|safe }}</div>
         {% endif %}
         
        {{ inline_admin_formset.formset.non_form_errors }}
