@@ -199,25 +199,10 @@ class CNQuerySet(MIZQuerySet):
     _update_names.alters_data = True
 
 class AusgabeQuerySet(CNQuerySet):
-    def bulk_add_jg(self, jg = 1):
-        qs = self
-        years = qs.values_list('ausgabe_jahr__jahr', flat = True).order_by('ausgabe_jahr__jahr').distinct()
-        last_year = years.first()
-        for year in years:
-            jg += year - last_year
-            loop_qs = qs.filter(ausgabe_jahr__jahr=year)
-            try:
-                loop_qs.update(jahrgang=jg)
-            except Exception as e:
-                raise e
-            # Do not update the same issue twice (e.g. issues with two years)
-            qs = qs.exclude(ausgabe_jahr__jahr=year)
-            
-            last_year = year
             
     def filter(self, *args, **kwargs):
-        #TODO: the possible formats belong in the settings file, not in here!
         # Overridden, to better deal with poorly formatted e_datum values
+        # django's way of validating inputs for querysets is done via django.utils.dateparse.py
         if 'e_datum' in kwargs:
             from django.core.exceptions import ValidationError
             try:
