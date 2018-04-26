@@ -531,6 +531,15 @@ class buch(BaseModel):
     
     
     search_fields = ['titel']
+    autor = models.ManyToManyField('autor')
+    genre = models.ManyToManyField('genre')
+    schlagwort = models.ManyToManyField('schlagwort')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
+    musiker = models.ManyToManyField('musiker')
+    ort = models.ManyToManyField('ort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     primary_search_fields = []
     name_field = 'titel'
     search_fields_suffixes = {}
@@ -631,6 +640,14 @@ class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
+    genre = models.ManyToManyField('genre')
+    schlagwort = models.ManyToManyField('schlagwort')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
+    musiker = models.ManyToManyField('musiker')
+    ort = models.ManyToManyField('ort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     name_field = 'titel'
     
     class Meta(BaseModel.Meta):
@@ -658,6 +675,14 @@ class dokument(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
+    genre = models.ManyToManyField('genre')
+    schlagwort = models.ManyToManyField('schlagwort')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
+    musiker = models.ManyToManyField('musiker')
+    ort = models.ManyToManyField('ort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     name_field = 'titel'
     
     class Meta(BaseModel.Meta):
@@ -683,6 +708,14 @@ class memorabilien(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['titel']
+    genre = models.ManyToManyField('genre')
+    schlagwort = models.ManyToManyField('schlagwort')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
+    musiker = models.ManyToManyField('musiker')
+    ort = models.ManyToManyField('ort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     name_field = 'titel'
     
     class Meta(BaseModel.Meta):
@@ -741,6 +774,14 @@ class technik(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     search_fields = ['name']
+    genre = models.ManyToManyField('genre')
+    schlagwort = models.ManyToManyField('schlagwort')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
+    musiker = models.ManyToManyField('musiker')
+    ort = models.ManyToManyField('ort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
@@ -756,7 +797,11 @@ class veranstaltung(BaseModel):
     datum = models.DateField()
     spielort = models.ForeignKey('spielort')
     
-    #TODO: NYI: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
+    genre = models.ManyToManyField('genre')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
+    schlagwort = models.ManyToManyField('schlagwort')
+    musiker = models.ManyToManyField('musiker')
     
     search_fields = ['name', 'veranstaltung_alias__alias']
     primary_search_fields = []
@@ -781,7 +826,13 @@ class video(BaseModel):
     quelle = models.CharField(**CF_ARGS_B)
     sender = models.ForeignKey('sender')
     
+    band = models.ManyToManyField('band')
+    genre = models.ManyToManyField('genre')
     musiker = models.ManyToManyField('musiker', through = m2m_video_musiker)
+    person = models.ManyToManyField('person')
+    schlagwort = models.ManyToManyField('schlagwort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     
     search_fields = ['titel']
     primary_search_fields = []
@@ -919,7 +970,14 @@ class datei(BaseModel):
     sender = models.ForeignKey('sender', on_delete = models.SET_NULL, blank = True,  null = True)
     
     # Relationen
+    genre = models.ManyToManyField('genre')
+    schlagwort = models.ManyToManyField('schlagwort')
+    person = models.ManyToManyField('person')
+    band = models.ManyToManyField('band')
     musiker = models.ManyToManyField('musiker', through = m2m_datei_musiker)
+    ort = models.ManyToManyField('ort')
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
     
     name_field = 'titel'
     
