@@ -3,9 +3,53 @@ from django.utils.translation import gettext_lazy
 
 from DBentry.managers import MIZQuerySet, CNQuerySet
 
-#TODO: rework exclude attribute: use a method to also get the excluded fields from super()
+def get_model_fields(model, base = True, foreign = True, m2m = True, exclude = (), primary_key = False):
+    rslt = []
+    for f in model._meta.get_fields():
+        if not f.concrete or f in exclude:
+            continue
+        if f.primary_key and not primary_key:
+            continue
+        if f.is_relation:
+            if f.many_to_many:
+                if m2m:
+                    rslt.append(f)
+            elif foreign:
+                rslt.append(f)
+        elif base:
+            rslt.append(f)
+    return rslt
+            
+def get_model_relations(model, forward = True, reverse = True):
+    m2m_models = set(
+        f.remote_field.through if f.concrete else f.through
+        for f in model._meta.get_fields() 
+        if f.many_to_many
+    )
+    rslt = set()
+    for f in model._meta.get_fields():
+        if not f.is_relation:
+            continue
+        if f.concrete:
+            if not forward:
+                # We do not want any relation fields that are declared on this model.
+                continue
+            rslt.add(f.remote_field) # add the actual RELATION, not the ForeignKey/ManyToMany field
+        else:
+            if not reverse:
+                # We do not want any reverse relations. 
+                continue
+            if f.one_to_many and f.related_model in m2m_models:
+                # This is a 'reverse' ForeignKey relation from an actual (i.e. not auto_created) m2m intermediary model to 'model'.
+                # The relation between the intermediary model and this 'model' was realized on *both* sides, hence 
+                # it shows up twice (as a ManyToOneRel and a ManyToManyRel).
+                # The ManyToManyRel contains all the information we need so we ignore the ManyToOneRel.
+                continue
+            rslt.add(f)
+    return list(rslt)
 
-class BaseModel(models.Model):  
+class BaseModel(models.Model):
+    #TODO: exclude attribute does not do what the description says, it excludes fields from the 'field collection' methods as well!
     """
     Attributes related to searching:
     - exclude: field names to exclude from searches 
