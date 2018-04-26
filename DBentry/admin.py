@@ -453,9 +453,15 @@ class VideoAdmin(MIZModelAdmin):
     class PersonInLine(BaseTabularInline):
         model = video.person.through
         verbose_model = person
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseStackedInline):
         model = video.musiker.through
         verbose_model = musiker
+        extra = 0
+        filter_horizontal = ['instrument']
+        fieldsets = [
+            (None, {'fields' : ['musiker']}), 
+            ("Instrumente", {'fields' : ['instrument'], 'classes' : ['collapse', 'collapsed']}), 
+        ]
     class BandInLine(BaseTabularInline):
         model = video.band.through
         verbose_model = band

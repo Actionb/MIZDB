@@ -4,6 +4,7 @@ from django.db.utils import IntegrityError
 from django.utils.functional import cached_property
 
 from .base.models import BaseModel, ComputedNameModel, BaseAliasModel
+from .fields import ISSNField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
@@ -118,9 +119,8 @@ class autor(ComputedNameModel):
             
             
 class ausgabe(ComputedNameModel):
-    STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen')]
-    
     magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
+    STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen'), ('kB', 'keine Bearbeitung vorgesehen')]
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
     e_datum = models.DateField('Erscheinungsdatum', null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
     jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True, verbose_name = "Jahrgang")
@@ -306,12 +306,13 @@ class magazin(BaseModel):
     
     magazin_name = models.CharField('Magazin', **CF_ARGS)
     info = models.TextField(blank = True)
-    erstausgabe = models.DateField(null = True,  blank = True)
+    erstausgabe = models.DateField(null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
     beschreibung = models.TextField(blank = True)
-    #NIY: fanzine = models.BooleanField()
     ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
+    fanzine = models.BooleanField(default = False)
+    issn = ISSNField(blank = True)
     
     verlag = models.ForeignKey('verlag', null = True,  blank = True, on_delete = models.PROTECT)
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
@@ -794,7 +795,7 @@ class technik(BaseModel):
     
 class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
-    datum = models.DateField()
+    datum = models.DateField(help_text = 'Format: tt.mm.jjjj')
     spielort = models.ForeignKey('spielort')
     
     genre = models.ManyToManyField('genre')

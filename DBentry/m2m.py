@@ -255,9 +255,11 @@ class m2m_musiker_instrument(BaseM2MModel):
 # ================================= #
 ##              VIDEO
 # ================================= #
+                                     
 class m2m_video_musiker(BaseM2MModel):
     video = models.ForeignKey('video')
     musiker = models.ForeignKey('musiker')
+    instrument = models.ManyToManyField('instrument', verbose_name = 'Instrumente', blank = True)
     class Meta:
         unique_together = ('video', 'musiker')
         db_table = 'DBentry_video_musiker'
@@ -276,7 +278,14 @@ class m2m_datei_musiker(BaseM2MModel):
     class Meta:
         unique_together = ('datei', 'musiker')
         db_table = 'DBentry_datei_musiker'
+        verbose_name = 'Musiker'
+        verbose_name_plural = 'Musiker'
         
+    def __str__(self):
+        if self.instrument.exists():
+            instr = ",".join([str(i.kuerzel) for i in self.instrument.all()])
+            return "{} ({})".format(str(getattr(self, 'musiker')), instr)
+        return str(getattr(self, 'musiker'))
         
 class m2m_datei_quelle(BaseM2MModel):
     datei = models.ForeignKey('datei')
