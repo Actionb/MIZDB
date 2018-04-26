@@ -103,6 +103,16 @@ class TestBulkForm(FormTestCase):
         self.assertTrue('req_fld' in form.split_data)
         self.assertEqual(sorted(form.split_data.get('req_fld')), ['2000'])
         self.assertFalse('some_fld' in form.split_data)
+    
+    @tag("bug")
+    def test_clean_handles_field_validation_errors(self):
+        # If a BulkField raises a ValidationError during the its cleaning process, the field's value is removed from cleaned_data.
+        # The form's clean method needs to be able to handle an expected, but missing, field in cleaned_data.
+        data ={ 'some_bulkfield':'ABC', 'req_fld' : '2000A', 'some_fld':'4,5'}
+        form = self.get_dummy_form(data=data)
+        with self.assertNotRaises(KeyError):
+            form.is_valid()
+        
         
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     

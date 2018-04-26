@@ -72,6 +72,15 @@ class BulkForm(MIZAdminForm):
         Populate split_data with data from BulkFields and raises errors if an unequal amount of data or missing required data is encountered.
         """
         cleaned_data = super().clean()
+        for fld_name in self.at_least_one_required:
+            if not cleaned_data.get(fld_name) in self.fields[fld_name].empty_values:
+                # If any of the fields in at_least_one_required contain valid data, we're good
+                break
+        else:
+            # otherwise mark the form as invalid
+            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
+                    ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
+                ))   
         errors = False
         self.split_data = {}
         for fld_name, fld in self.fields.items():
@@ -95,15 +104,6 @@ class BulkForm(MIZAdminForm):
                         self.total_count = item_count
         if errors:
             raise ValidationError('Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
-        for fld_name in self.at_least_one_required:
-            if not cleaned_data[fld_name] in self.fields[fld_name].empty_values:
-                # If any of the fields in at_least_one_required contain data, we're good
-                break
-        else:
-            # otherwise mark the form as invalid
-            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
-                    ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
-                ))   
         return cleaned_data
             
 class BulkFormAusgabe(BulkForm):
