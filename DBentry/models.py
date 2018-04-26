@@ -310,8 +310,8 @@ class magazin(BaseModel):
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
     beschreibung = models.TextField(blank = True)
-    ausgaben_merkmal = models.CharField(choices = MERKMAL_CHOICES, **CF_ARGS_B)
     #NIY: fanzine = models.BooleanField()
+    ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
     
     verlag = models.ForeignKey('verlag', null = True,  blank = True, on_delete = models.PROTECT)
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
@@ -756,7 +756,6 @@ class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
     datum = models.DateField()
     spielort = models.ForeignKey('spielort')
-    ort = models.ForeignKey('ort',  null = True,  blank = True) #NOTE: superflous?
     
     genre = models.ManyToManyField('genre',  through = m2m_veranstaltung_genre)
     person = models.ManyToManyField('person', verbose_name = 'Teilnehmer (Personen)', through = m2m_veranstaltung_person)
@@ -773,7 +772,7 @@ class veranstaltung(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
-        ordering = ['name', 'spielort', 'ort', 'datum']
+        ordering = ['name', 'spielort', 'datum']
 class veranstaltung_alias(BaseAliasModel):
     parent = models.ForeignKey('veranstaltung')
 
