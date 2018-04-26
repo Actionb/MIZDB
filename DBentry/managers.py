@@ -10,6 +10,9 @@ from DBentry.query import *
 class MIZQuerySet(models.QuerySet):
     
     def find(self, q, **kwargs):
+        """
+        Finds any occurence of the search term 'q' in the queryset, depending on the search strategy used.
+        """
         # Find the best strategy to use:
         if getattr(self.model, 'name_field', False):
             strat = ValuesDictSearchQuery

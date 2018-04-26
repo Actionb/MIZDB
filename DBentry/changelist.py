@@ -149,7 +149,7 @@ class MIZChangeList(ChangeList):
             
         # Apply search results
         qs, search_use_distinct = self.model_admin.get_search_results(request, qs, self.query)
-       
+        
         qs = qs.resultbased_ordering()
         # Set ordering.
         ordering = self.get_ordering(request, qs)

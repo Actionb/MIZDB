@@ -6,6 +6,9 @@ from django.db import models
 
     
 class BaseSearchQuery(object):
+    """
+    The basic search strategy. Search by exactness by search_field. 
+    """
     
     _results = {}
     
@@ -137,6 +140,9 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         
         
 class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
+    """
+    Limits the possible results to the values of the respective name_field.
+    """
     
     name_field = None
     
@@ -161,6 +167,9 @@ class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
         ]
     
 class ValuesDictSearchQuery(NameFieldSearchQuery):
+    """
+    Fetch all the relevant data first and then do a search in memory.
+    """
     
     def clean_string(self, s):
         # Remove all special characters from s

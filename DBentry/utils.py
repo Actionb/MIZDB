@@ -86,6 +86,7 @@ def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     """
         Joins string values of iterable 'values' up to a length of 'width'.
     """
+    #TODO: use django.utils.text.Truncate
     if not values:
         return ''
     rslt = str(values[0]).zfill(z)

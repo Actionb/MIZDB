@@ -142,8 +142,6 @@ class ACCapture(ACBase):
                 cached = self.request.session['ac-cache'][model_name]
                 cached[self.q] = qs
                 self.request.session['ac-cache'] = {model_name:cached}
-            print(list(self.request.session.__dict__.keys()))
-            print(self.request.session.modified)
         return qs
     
     def apply_q(self, qs, use_suffix=True):
