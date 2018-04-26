@@ -13,8 +13,11 @@ from .managers import AusgabeQuerySet
 class person(ComputedNameModel):
     vorname = models.CharField(**CF_ARGS_B)
     nachname = models.CharField(default = 'unbekannt', **CF_ARGS)
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Person')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     herkunft = models.ForeignKey('ort', null = True,  blank = True,  on_delete=models.PROTECT)
-    beschreibung = models.TextField(blank = True)
     
     name_composing_fields = ['vorname', 'nachname']
     
@@ -33,12 +36,16 @@ class person(ComputedNameModel):
         
 class musiker(BaseModel): 
     kuenstler_name = models.CharField('Künstlername', **CF_ARGS)
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Musikers')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     person = models.ForeignKey(person, null = True, blank = True)
+    
     genre = models.ManyToManyField('genre',  through = m2m_musiker_genre)
     instrument = models.ManyToManyField('instrument',  through = m2m_musiker_instrument)
-    beschreibung = models.TextField(blank = True)
     
-    search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias']
+    search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias', 'beschreibung']
     primary_search_fields = []
     name_field = 'kuenstler_name'
     search_fields_suffixes = {'person__vorname':'Vorname', 'person__nachname':'Nachname', 'musiker_alias__alias':'Alias'}
@@ -55,13 +62,14 @@ class musiker_alias(BaseAliasModel):
 class genre(BaseModel):
     genre = models.CharField('Genre', max_length = 100,   unique = True)
     
-    search_fields = ['genre', 'obergenre__genre', 'genre_alias__alias']
     ober = models.ForeignKey('self', related_name = 'sub_genres', verbose_name = 'Oberbegriff', 
         null = True,  blank = True,  on_delete=models.SET_NULL, 
     )
+    
+    search_fields = ['genre', 'ober__genre', 'sub_genres__genre', 'genre_alias__alias']
     primary_search_fields = ['genre']
     name_field = 'genre'
-    search_fields_suffixes = {'obergenre__genre': 'Obergenre', 'genre_alias__alias': 'Alias'}
+    search_fields_suffixes = {'ober__genre': 'Subgenre', 'sub_genres__genre' : 'Oberbegriff', 'genre_alias__alias': 'Alias'}
     create_field = 'genre'
     
     class Meta(BaseModel.Meta):
@@ -74,15 +82,24 @@ class genre_alias(BaseAliasModel):
         
 class band(BaseModel):
     band_name = models.CharField('Bandname', **CF_ARGS)
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Band')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     herkunft = models.ForeignKey('ort', models.PROTECT, null = True,  blank = True)
+    
     genre = models.ManyToManyField('genre',  through = m2m_band_genre)
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
-    beschreibung = models.TextField(blank = True)
 
-    search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias']
+    search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias', 'beschreibung']
     primary_search_fields = ['band_name', 'band_alias__alias']
     name_field = 'band_name'
-    search_fields_suffixes = {'band_alias__alias':'Band-Alias', 'musiker__kuenstler_name':'Band-Mitglied', 'musiker__musiker_alias__alias':'Mitglied-Alias'}
+    search_fields_suffixes = {
+        'band_alias__alias':'Band-Alias', 
+        'musiker__kuenstler_name':'Band-Mitglied', 
+        'musiker__musiker_alias__alias':'Mitglied-Alias', 
+        'beschreibung' : 'Beschreibung'
+    }
     create_field = 'band_name'
 
     class Meta(BaseModel.Meta):
@@ -95,14 +112,19 @@ class band_alias(BaseAliasModel):
   
 class autor(ComputedNameModel):
     kuerzel = models.CharField('Kürzel', **CF_ARGS_B)
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Autors')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     person = models.ForeignKey('person', on_delete=models.PROTECT)
+    
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
-    name_composing_fields = ['person___name', 'kuerzel']
-    
-    search_fields = ['kuerzel', 'person___name']
+    search_fields = ['kuerzel', 'person___name', 'beschreibung']
     primary_search_fields = []
-    search_fields_suffixes = {}
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
+    
+    name_composing_fields = ['person___name', 'kuerzel']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Autor'
@@ -121,18 +143,24 @@ class autor(ComputedNameModel):
             
             
 class ausgabe(ComputedNameModel):
-    magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
     STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen'), ('kB', 'keine Bearbeitung vorgesehen')]
+
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
     e_datum = models.DateField('Erscheinungsdatum', null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
     jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True, verbose_name = "Jahrgang")
-    info = models.TextField(max_length = 200, blank = True)
     sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
     
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Ausgabe')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
+    magazin = models.ForeignKey('magazin', verbose_name = 'Magazin', on_delete=models.PROTECT)
+    
     audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe, blank = True)
-                        
-    search_fields = ['ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
-                    'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'info']
+                 
+    search_fields = [
+        'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
+        'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'beschreibung'
+    ]
     primary_search_fields = ['_name']
     search_fields_suffixes = {
         'ausgabe_monat__monat__monat':'Monat',
@@ -142,8 +170,13 @@ class ausgabe(ComputedNameModel):
         'jahrgang':'Jahrgang', 
         'ausgabe_monat__monat__abk':'Monat Abk.', 
         'ausgabe_jahr__jahr' : 'Jahr', 
-        'info' : 'Info-Text', 
+        'beschreibung' : 'Beschreibung', 
         }
+        
+    name_composing_fields = [
+        'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang', 
+        'magazin__ausgaben_merkmal', 'ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat__abk'
+    ]   
     
     objects = AusgabeQuerySet.as_manager()
     
@@ -180,15 +213,10 @@ class ausgabe(ComputedNameModel):
         # parameters that make up the name may have changed, update name accordingly
         self.update_name(force_update = True)
         
-    name_composing_fields = [
-        'info', 'sonderausgabe', 'e_datum', 'jahrgang', 
-        'magazin__ausgaben_merkmal', 'ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat__abk'
-    ]
-        
     @classmethod
     def _get_name(cls, **data):
         # data provided by values_dict: { key: [value1, value2, ...], ... }
-        info = data.get('info', '')
+        info = data.get('beschreibung', '')
         info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
         if data.get('sonderausgabe', False) and info:
             return info
@@ -242,7 +270,8 @@ class ausgabe(ComputedNameModel):
 class ausgabe_jahr(BaseModel):
     JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
     
-    jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS)#, default = CUR_JAHR)
+    jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS)
+    
     ausgabe = models.ForeignKey('ausgabe')
     
     class Meta(BaseModel.Meta):
@@ -255,6 +284,7 @@ class ausgabe_jahr(BaseModel):
 class ausgabe_num(BaseModel):
     num = models.IntegerField('Nummer')
     kuerzel = models.CharField(**CF_ARGS_B)
+    
     ausgabe = models.ForeignKey('ausgabe')
     
     class Meta(BaseModel.Meta):
@@ -267,6 +297,7 @@ class ausgabe_num(BaseModel):
 class ausgabe_lnum(BaseModel):
     lnum = models.IntegerField('Lfd. Nummer')
     kuerzel = models.CharField(**CF_ARGS_B)
+    
     ausgabe = models.ForeignKey('ausgabe')
     
     class Meta(BaseModel.Meta):
@@ -300,29 +331,31 @@ class monat(BaseModel):
         
         
 class magazin(BaseModel):
-    #TODO: remove either info or beschreibung
     TURNUS_CHOICES = [('u', 'unbekannt'), 
         ('t','täglich'), ('w','wöchentlich'), ('w2','zwei-wöchentlich'), ('m','monatlich'), ('m2','zwei-monatlich'), 
         ('q','quartalsweise'), ('hj','halbjährlich'), ('j','jährlich')]
     MERKMAL_CHOICES = [('num', 'Nummer'), ('lnum', 'Lfd.Nummer'), ('monat', 'Monat'), ('e_datum', 'Ersch.Datum')]
     
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    info = models.TextField(blank = True)
     erstausgabe = models.DateField(null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
-    beschreibung = models.TextField(blank = True)
     ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
     fanzine = models.BooleanField(default = False)
     issn = ISSNField(blank = True)
     
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Magazines')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     verlag = models.ForeignKey('verlag', null = True,  blank = True, on_delete = models.PROTECT)
-    genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
     ort = models.ForeignKey('ort', null = True, blank = True, verbose_name = 'Hrsg.Ort', on_delete = models.SET_NULL)
     
-    exclude = ['ausgaben_merkmal', 'info', 'magazin_url', 'turnus', 'erstausgabe', 'beschreibung']
-    search_fields = ['magazin_name']
+    genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
+    
+    #exclude = ['ausgaben_merkmal', 'magazin_url', 'turnus', 'erstausgabe', 'beschreibung']
+    search_fields = ['magazin_name', 'beschreibung']
     name_field = 'magazin_name'
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     create_field = 'magazin_name'
     
     class Meta(BaseModel.Meta):
@@ -336,6 +369,7 @@ class magazin(BaseModel):
     
 class verlag(BaseModel):
     verlag_name = models.CharField('verlag', **CF_ARGS)
+    
     sitz = models.ForeignKey('ort',  null = True,  blank = True, on_delete = models.SET_NULL)
     
     search_fields = ['verlag_name', 'sitz___name', 'sitz__land__land_name', 'sitz__bland__bland_name']
@@ -349,8 +383,8 @@ class verlag(BaseModel):
 
 
 class ort(ComputedNameModel):
-    #TODO: ordering looks wrong in dal
     stadt = models.CharField(**CF_ARGS_B)
+    
     bland = models.ForeignKey('bundesland', verbose_name = 'Bundesland',  null = True,  blank = True, on_delete = models.PROTECT)
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
@@ -397,6 +431,7 @@ class ort(ComputedNameModel):
 class bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', **CF_ARGS)
     code = models.CharField(max_length = 4,  unique = False)
+    
     land = models.ForeignKey('land', verbose_name = 'Land', on_delete = models.PROTECT)
     
     search_fields = ['bland_name', 'code']
@@ -436,11 +471,12 @@ class land_alias(BaseAliasModel):
 class schlagwort(BaseModel):
     schlagwort = models.CharField( max_length = 100,  unique = True)
     
-    search_fields = ['schlagwort', 'oberschl__schlagwort', 'schlagwort_alias__alias']
     ober = models.ForeignKey('self', related_name = 'unterbegriffe', verbose_name = 'Oberbegriff', null = True,  blank = True)
+    
+    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'ober__schlagwort', 'schlagwort_alias__alias']
     primary_search_fields = []
     name_field = 'schlagwort'
-    search_fields_suffixes = {'oberschl__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias': 'Alias'}
+    search_fields_suffixes = {'unterbegriffe__schlagwort': 'Oberbegriff', 'ober__schlagwort' : 'Unterbegriff', 'schlagwort_alias__alias': 'Alias'}
     create_field = 'schlagwort'
     
     class Meta(BaseModel.Meta):
@@ -456,12 +492,15 @@ class artikel(BaseModel):
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
     
-    ausgabe = models.ForeignKey('ausgabe',  on_delete=models.PROTECT)
     schlagzeile = models.CharField(**CF_ARGS)
     seite = models.PositiveSmallIntegerField(verbose_name="Seite")
     seitenumfang = models.CharField(max_length = 3, blank = True,  choices = SU_CHOICES,  default = '')
     zusammenfassung = models.TextField(blank = True)
-    info = models.TextField(blank = True)
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Artikels')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
+    ausgabe = models.ForeignKey('ausgabe',  on_delete=models.PROTECT)
     
     genre = models.ManyToManyField('genre', through = m2m_artikel_genre, verbose_name='Genre')
     schlagwort = models.ManyToManyField('schlagwort', through = m2m_artikel_schlagwort, verbose_name='Schlagwort')
@@ -473,12 +512,12 @@ class artikel(BaseModel):
     spielort = models.ManyToManyField('spielort', through = m2m_artikel_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_artikel_veranstaltung)
     
-    search_fields = ['schlagzeile', 'zusammenfassung', 'info']
+    search_fields = ['schlagzeile', 'zusammenfassung', 'beschreibung']
     primary_search_fields = ['schlagzeile']
     name_field = 'schlagzeile'
     search_fields_suffixes = {
         'zusammenfassung' : 'Zusammenfassung', 
-        'info' : 'Info-Text'
+        'beschreibung' : 'Beschreibung'
     }
     
     class Meta(BaseModel.Meta):
@@ -518,22 +557,24 @@ class buch(BaseModel):
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
     jahr = models.PositiveIntegerField(**YF_ARGS)
     jahr_orig = models.PositiveIntegerField('Jahr (Original)',**YF_ARGS)
-    verlag = models.ForeignKey('verlag', related_name = 'buchverlag',  null = True,  blank = True)
-    verlag_orig = models.ForeignKey('verlag', related_name = 'buchverlagorig', verbose_name = 'Verlag (Original)', null = True,  blank = True)
     ausgabe = models.CharField(**CF_ARGS_B)
     auflage = models.CharField(**CF_ARGS_B)
-    buch_serie = models.ForeignKey('buch_serie', verbose_name = 'Buchserie', null = True, blank = True)
     buch_band = models.CharField('Buch Band', **CF_ARGS_B)
-    sprache = models.ForeignKey('sprache', related_name = 'buchsprache', null = True, blank = True)
-    sprache_orig = models.ForeignKey('sprache', related_name = 'buchspracheorig',  verbose_name = 'Sprache (Original)', null = True, blank = True)
     ubersetzer  = models.CharField('Übersetzer', **CF_ARGS_B)
-    #NYI: edition = models.CharField(**CF_ARGS_B, choices = EDITION_CHOICES, blank = True)
+    #edition = models.CharField(**CF_ARGS_B)
     EAN = models.CharField(**CF_ARGS_B)
     ISBN = models.CharField(**CF_ARGS_B)
     LCCN = models.CharField(**CF_ARGS_B)
     
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Buches')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    search_fields = ['titel']
+    buch_serie = models.ForeignKey('buch_serie', verbose_name = 'Buchserie', null = True, blank = True)
+    verlag = models.ForeignKey('verlag', related_name = 'buchverlag',  null = True,  blank = True)
+    verlag_orig = models.ForeignKey('verlag', related_name = 'buchverlagorig', verbose_name = 'Verlag (Original)', null = True,  blank = True)
+    sprache = models.ForeignKey('sprache', related_name = 'buchsprache', null = True, blank = True)
+    sprache_orig = models.ForeignKey('sprache', related_name = 'buchspracheorig',  verbose_name = 'Sprache (Original)', null = True, blank = True)
+    
     autor = models.ManyToManyField('autor')
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
@@ -543,9 +584,11 @@ class buch(BaseModel):
     ort = models.ManyToManyField('ort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
+    
+    search_fields = ['titel', 'beschreibung']
     primary_search_fields = []
     name_field = 'titel'
-    search_fields_suffixes = {}
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -561,7 +604,7 @@ class buch(BaseModel):
 
 class instrument(BaseModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
-    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS) #NOTE: optional?
+    kuerzel = models.CharField(verbose_name = 'Kürzel', **CF_ARGS) 
     
     search_fields = ['instrument', 'instrument_alias__alias', 'kuerzel']
     primary_search_fields = ['instrument']
@@ -589,13 +632,14 @@ class audio(BaseModel):
     laufzeit = models.DurationField(blank = True, null = True)
     e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
-    sender = models.ForeignKey('sender',  blank = True,  null = True, help_text = 'Name des Radio-/Fernsehsenders')
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
-    
     release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)")      #discogs release id (discogs.com/release/1709793)
     discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True)
     
-    bemerkungen = models.TextField(blank = True)
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Mediums')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
+    sender = models.ForeignKey('sender',  blank = True,  null = True, help_text = 'Name des Radio-/Fernsehsenders')
     
     plattenfirma = models.ManyToManyField('plattenfirma', through = m2m_audio_plattenfirma)
     band = models.ManyToManyField('band', through = m2m_audio_band)
@@ -607,10 +651,10 @@ class audio(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_audio_veranstaltung)
     ort = models.ManyToManyField('ort', through = m2m_audio_ort)
     
-    search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung']
     primary_search_fields = []
     name_field = 'titel'
-    search_fields_suffixes = {}
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -642,7 +686,9 @@ class audio(BaseModel):
 class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
-    search_fields = ['titel']
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -651,7 +697,11 @@ class bildmaterial(BaseModel):
     ort = models.ManyToManyField('ort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
+    
+    search_fields = ['titel', 'beschreibung']
+    primary_search_fields = []
     name_field = 'titel'
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -677,7 +727,9 @@ class buch_serie(BaseModel):
 class dokument(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
-    search_fields = ['titel']
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Dokumentes')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -686,7 +738,11 @@ class dokument(BaseModel):
     ort = models.ManyToManyField('ort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
+    
+    search_fields = ['titel', 'beschreibung']
+    primary_search_fields = []
     name_field = 'titel'
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -699,6 +755,7 @@ class dokument(BaseModel):
     
 class kreis(BaseModel):
     name = models.CharField(**CF_ARGS)
+    
     bland = models.ForeignKey('bundesland')
     
     class Meta(BaseModel.Meta):
@@ -710,7 +767,9 @@ class kreis(BaseModel):
 class memorabilien(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
-    search_fields = ['titel']
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Memorabiliums')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -719,7 +778,11 @@ class memorabilien(BaseModel):
     ort = models.ManyToManyField('ort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
+    
+    search_fields = ['titel', 'beschreibung']
+    primary_search_fields = []
     name_field = 'titel'
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Memorabilia'
@@ -745,6 +808,7 @@ class sender_alias(BaseAliasModel):
     
 class spielort(BaseModel):
     name = models.CharField(**CF_ARGS)
+    
     ort = models.ForeignKey('ort')
     
     search_fields = ['name', 'spielort_alias__alias', 'ort___name']
@@ -776,7 +840,9 @@ class sprache(BaseModel):
 class technik(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
-    search_fields = ['name']
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Technik')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -785,6 +851,11 @@ class technik(BaseModel):
     ort = models.ManyToManyField('ort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
+    
+    search_fields = ['titel', 'beschreibung']
+    primary_search_fields = []
+    name_field = 'titel'
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
@@ -798,6 +869,7 @@ class technik(BaseModel):
 class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
     datum = models.DateField(help_text = 'Format: tt.mm.jjjj')
+    
     spielort = models.ForeignKey('spielort')
     
     genre = models.ManyToManyField('genre')
@@ -827,6 +899,10 @@ class video(BaseModel):
     laufzeit = models.TimeField()
     festplatte = models.CharField(**CF_ARGS_B)
     quelle = models.CharField(**CF_ARGS_B)
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Mediums')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     sender = models.ForeignKey('sender')
     
     band = models.ManyToManyField('band')
@@ -837,10 +913,10 @@ class video(BaseModel):
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
     
-    search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung']
     primary_search_fields = []
     name_field = 'titel'
-    search_fields_suffixes = {}
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
@@ -858,8 +934,10 @@ class provenienz(BaseModel):
     LEIHG = 'Leihgabe'
     DAUERLEIHG = 'Dauerleihgabe'
     TYP_CHOICES = [(SCHENK, 'Schenkung'), (SPENDE, 'Spende'), (FUND,'Fund'), (LEIHG, 'Leihgabe'), (DAUERLEIHG,'Dauerleihgabe')]
-    geber = models.ForeignKey('geber')
+    
     typ = models.CharField('Art der Provenienz',  max_length = 100,  choices = TYP_CHOICES,  default = TYP_CHOICES[0][0])
+    
+    geber = models.ForeignKey('geber')
     
     search_fields = ['geber__name']
     
@@ -911,7 +989,14 @@ class lagerort(ComputedNameModel):
         
         
 class bestand(BaseModel):
+    BESTAND_CHOICES = [
+        ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),  
+        ('buch', 'Buch'),  ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'), 
+        ('technik', 'Technik'), ('video', 'Video'), 
+    ]  
     signatur = models.AutoField(primary_key=True)
+    bestand_art = models.CharField('Bestand-Art', max_length = 20, choices = BESTAND_CHOICES, blank = False, default = 'ausgabe')
+    
     lagerort = models.ForeignKey('lagerort')
     provenienz = models.ForeignKey('provenienz',  blank = True, null = True)
     
@@ -922,14 +1007,7 @@ class bestand(BaseModel):
     dokument = models.ForeignKey('dokument', blank = True, null = True)
     memorabilien = models.ForeignKey('memorabilien', blank = True, null = True)
     technik = models.ForeignKey('technik', blank = True, null = True)
-    video = models.ForeignKey('video', blank = True, null = True)
-        
-    BESTAND_CHOICES = [
-        ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),  
-        ('buch', 'Buch'),  ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'), 
-        ('technik', 'Technik'), ('video', 'Video'), 
-    ]      
-    bestand_art = models.CharField('Bestand-Art', max_length = 20, choices = BESTAND_CHOICES, blank = False, default = 'ausgabe')
+    video = models.ForeignKey('video', blank = True, null = True)    
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
@@ -963,13 +1041,14 @@ class datei(BaseModel):
             help_text = "Datei auf Datenbank-Server hoch- bzw herunterladen.") #Datei Media Server
     datei_pfad = models.CharField(verbose_name = 'Datei-Pfad', 
             help_text = "Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner.", **CF_ARGS_B)
-    provenienz = models.ForeignKey('provenienz', on_delete = models.SET_NULL, blank = True, null = True)
     
     # Allgemeine Beschreibung
-    beschreibung = models.TextField(blank = True)
-    bemerkungen = models.TextField(blank = True)
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Datei')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     quelle = models.CharField(help_text = "z.B. Broadcast, Live, etc.", **CF_ARGS_B) # z.B. Broadcast, Live, etc.
+    
     sender = models.ForeignKey('sender', on_delete = models.SET_NULL, blank = True,  null = True)
+    provenienz = models.ForeignKey('provenienz', on_delete = models.SET_NULL, blank = True, null = True)
     
     # Relationen
     genre = models.ManyToManyField('genre')
@@ -981,7 +1060,10 @@ class datei(BaseModel):
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
     
+    search_fields = ['titel', 'beschreibung']
+    primary_search_fields = []
     name_field = 'titel'
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Datei'
@@ -997,17 +1079,17 @@ class Format(BaseModel):
     
     format_name = models.CharField(editable = False, **CF_ARGS_B)
     anzahl = models.PositiveSmallIntegerField(default = 1)
-    format_typ = models.ForeignKey('FormatTyp', verbose_name = 'Format Typ')
-    format_size = models.ForeignKey('FormatSize', verbose_name = 'Format Größe', help_text = 'LP, 12", Mini-Disc, etc.', blank = True,  null = True)
     catalog_nr = models.CharField(verbose_name = "Katalog Nummer", **CF_ARGS_B) 
     tape = models.CharField(**CF_ARGS_B)
-    
     channel = models.CharField(choices = CHANNEL_CHOICES, **CF_ARGS_B)
-    noise_red = models.ForeignKey('NoiseRed', verbose_name = 'Noise Reduction', on_delete = models.SET_NULL, blank = True, null = True)
-    tag = models.ManyToManyField('FormatTag', verbose_name = 'Tags', blank = True) 
-    audio = models.ForeignKey('audio')
-    
     bemerkungen = models.TextField(blank = True)
+    
+    noise_red = models.ForeignKey('NoiseRed', verbose_name = 'Noise Reduction', on_delete = models.SET_NULL, blank = True, null = True)
+    audio = models.ForeignKey('audio')
+    format_typ = models.ForeignKey('FormatTyp', verbose_name = 'Format Typ')
+    format_size = models.ForeignKey('FormatSize', verbose_name = 'Format Größe', help_text = 'LP, 12", Mini-Disc, etc.', blank = True,  null = True)
+    
+    tag = models.ManyToManyField('FormatTag', verbose_name = 'Tags', blank = True) 
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Format'
@@ -1083,10 +1165,7 @@ class plattenfirma(BaseModel):
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'
 
-# Testmagazin for... testing
-tmag = magazin.objects.get(pk=326)
 
-# from django.conf import settings --> settings.AUTH_USER_MODEL
 class Favoriten(models.Model): #NOTE: why not inherit from BaseModel?
     user = models.OneToOneField('auth.User', editable = False)
     fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten Genre', blank = True)
@@ -1104,9 +1183,3 @@ class Favoriten(models.Model): #NOTE: why not inherit from BaseModel?
     @classmethod
     def get_favorite_models(cls):
         return [fld.related_model for fld in cls._meta.many_to_many]
-    
-wip_models = [bildmaterial, buch, dokument, memorabilien, video]
-main_models = [artikel, audio, ausgabe, autor, band, bildmaterial, buch, dokument, genre, magazin, memorabilien, musiker, 
-                person, schlagwort, video]
-# filter out wip models 
-main_models = [m._meta.model_name for m in main_models if not m in wip_models]
