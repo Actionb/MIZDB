@@ -73,6 +73,7 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = plattenfirma
     class AusgabeInLine(BaseAusgabeInline):
         model = ausgabe.audio.through
+    index_category = 'Archivgut'
     inlines = [PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine, GenreInLine, SchlInLine, 
             VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine, AusgabeInLine]
     fieldsets = [
@@ -111,6 +112,7 @@ class AusgabenAdmin(MIZModelAdmin):
         model = ausgabe.audio.through
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     flds_to_group = [('status', 'sonderausgabe')]
+    index_category = 'Archivgut'
     
     list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahr_string', 'jahrgang', 
                         'magazin','e_datum','anz_artikel', 'status') 
@@ -159,6 +161,7 @@ class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
         model = autor.magazin.through
         extra = 1
+    index_category = 'Stammdaten'
     
     inlines = [MagazinInLine]
     
@@ -202,6 +205,7 @@ class ArtikelAdmin(MIZModelAdmin):
     form = ArtikelForm
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
     flds_to_group = [('magazin', 'ausgabe'),('seite', 'seitenumfang'),]
+    index_category = 'Archivgut'
     
     list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string','ausgabe','artikel_magazin', 'kuenstler_string']
     list_display_links = ['__str__', 'seite']
@@ -235,6 +239,7 @@ class BandAdmin(MIZModelAdmin):
         model = band_alias
     save_on_top = True
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
+    index_category = 'Stammdaten'
     
     list_display = ['band_name', 'genre_string', 'herkunft', 'musiker_string']
 
@@ -259,7 +264,8 @@ class BandAdmin(MIZModelAdmin):
     
 @admin.register(bildmaterial, site=miz_site)
 class BildmaterialAdmin(MIZModelAdmin):
-    pass
+    superuser_only = True
+    index_category = 'Archivgut'
     
 @admin.register(buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
@@ -267,6 +273,7 @@ class BuchAdmin(MIZModelAdmin):
         model = buch.autor.through
         verbose_model = autor
     save_on_top = True
+    index_category = 'Archivgut'
     inlines = [AutorInLine, BestandInLine]
     flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
     search_fields = ['pk','titel']
@@ -278,12 +285,15 @@ class BuchAdmin(MIZModelAdmin):
     
 @admin.register(dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
+    superuser_only = True
+    index_category = 'Archivgut'
     infields = [BestandInLine]
     
 @admin.register(genre, site=miz_site)
 class GenreAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = genre_alias
+    index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string', 'ober_string']
         
@@ -303,6 +313,7 @@ class MagazinAdmin(MIZModelAdmin):
         magazin.genre.through.verbose_name = ''
     inlines = [GenreInLine]
     
+    index_category = 'Stammdaten'
     list_display = ('__str__','beschreibung','anz_ausgaben', 'ort')
     
     advanced_search_form = {
@@ -316,6 +327,8 @@ class MagazinAdmin(MIZModelAdmin):
 
 @admin.register(memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
+    superuser_only = True
+    index_category = 'Archivgut'
     inlines = [BestandInLine]
 
 @admin.register(musiker, site=miz_site)
@@ -332,6 +345,7 @@ class MusikerAdmin(MIZModelAdmin):
         model = musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
+    index_category = 'Stammdaten'
     
     save_on_top = True
     inlines = [AliasInLine, GenreInLine, BandInLine, InstrInLine]
@@ -365,6 +379,7 @@ class MusikerAdmin(MIZModelAdmin):
     
 @admin.register(person, site=miz_site)
 class PersonAdmin(MIZModelAdmin):
+    index_category = 'Stammdaten'
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
     fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
@@ -389,6 +404,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string', 'ober_string']
         
+    index_category = 'Stammdaten'
     def ober_string(self, obj):
         return str(obj.ober) if obj.ober else ''
     ober_string.short_description = 'Oberbegriff'
@@ -403,6 +419,8 @@ class SpielortAdmin(MIZModelAdmin):
     
 @admin.register(technik, site=miz_site)
 class TechnikAdmin(MIZModelAdmin):
+    superuser_only = True
+    index_category = 'Archivgut'
     inlines = [BestandInLine]
 
 @admin.register(veranstaltung, site=miz_site)
@@ -447,6 +465,8 @@ class VideoAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = video.veranstaltung.through
         verbose_model = veranstaltung
+    superuser_only = True
+    index_category = 'Archivgut'
     inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
         
 # ======================================================== Orte ========================================================
@@ -464,11 +484,12 @@ class LandAdmin(MIZModelAdmin):
     
 @admin.register(kreis, site=miz_site)
 class KreisAdmin(MIZModelAdmin):
-    pass
+    superuser_only = True
     
 @admin.register(ort, site=miz_site)
 class OrtAdmin(MIZModelAdmin):
     fields = ['stadt', 'land', 'bland']
+    index_category = 'Stammdaten'
     
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
@@ -483,14 +504,11 @@ class BestandAdmin(MIZModelAdmin):
     list_display = ['signatur', 'bestand_art', 'lagerort','provenienz']
     #flds_to_group = [('ausgabe', 'ausgabe_magazin')]
     
+    superuser_only = True
     advanced_search_form = {
         'selects' : ['bestand_art', 'lagerort'], 
     }
     
-@admin.register(provenienz, site=miz_site)
-class ProvAdmin(MIZModelAdmin):   
-    pass
-      
 @admin.register(datei, site=miz_site)
 class DateiAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
@@ -513,6 +531,8 @@ class DateiAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = datei.veranstaltung.through
         verbose_model = veranstaltung
+    superuser_only = True
+    index_category = 'Archivgut'
     inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
     fieldsets = [
         (None, { 'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
@@ -525,12 +545,15 @@ class DateiAdmin(MIZModelAdmin):
 @admin.register(instrument, site=miz_site)
 class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
+    
+@admin.register(
+    buch_serie, monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 
+    Format, FormatTag, FormatSize, FormatTyp, NoiseRed, 
+    site=miz_site
+)
+class HiddenFromIndex(MIZModelAdmin):
+    superuser_only = True
 
-# Register your models here.
-
-miz_site.register([buch_serie, monat, lagerort, geber, sender, sprache, plattenfirma])
-
-miz_site.register([Format, FormatTag, FormatSize, FormatTyp, NoiseRed])
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 miz_site.register(Group, GroupAdmin)

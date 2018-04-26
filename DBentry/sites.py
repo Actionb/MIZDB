@@ -5,8 +5,6 @@ from django.contrib import admin
 from django.apps import apps 
 from django.views.decorators.cache import never_cache
 
-from .models import wip_models, main_models
-
 class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
     
@@ -35,32 +33,34 @@ class MIZAdminSite(admin.AdminSite):
         app_list = response.context_data['app_list']
         index = None
         try:
-            index = next(i for (i, d) in enumerate(app_list) if d['app_label'] == 'DBentry')
-        except:
+            index = next(i for i, d in enumerate(app_list) if d['app_label'] == 'DBentry')
+        except StopIteration:
+            # No app with label 'DBentry' found
             return response
             
         if index is not None:
-            DBentry_dict = app_list.pop(index)
+            DBentry_dict = app_list.pop(index) # the dict containing data for the DBentry app with keys: {app_url,name,has_module_perms,models,app_label}
             model_list = DBentry_dict.pop('models')
-        
-            DBentry_main = DBentry_dict.copy()
-            DBentry_main['name'] = 'Hauptkategorien'
-            DBentry_main['models'] = [] # or deepcopy DBentry_dict
-            DBentry_side = DBentry_dict.copy()
-            DBentry_side['name'] = 'Nebenkategorien'
-            DBentry_side['models'] = []
+            categories = OrderedDict()
+            #TODO: translation
+            categories['Archivgut'] = []
+            categories['Stammdaten'] = []
+            categories['Sonstige'] = []
             
             for m in model_list:
-                if m.get('object_name', '') in main_models:
-                    DBentry_main['models'].append(m)
+                # m is a dict with keys {admin_url, name (i.e. the label), perms, object_name (i.e. the model name), add_url}
+                model_admin = self.get_admin_model(m.get('object_name'))
+                model_category = model_admin.get_index_category()
+                if model_category not in categories:
+                    categories['Sonstige'] = [m]
                 else:
-                    DBentry_side['models'].append(m)
+                    categories[model_category].append(m)
                     
-            if DBentry_main['models']:
-                app_list.extend([DBentry_main])
-            if DBentry_side['models']:
-                app_list.extend([DBentry_side])
-                
+            for category, models in categories.items():
+                new_fake_app = DBentry_dict.copy()
+                new_fake_app['name'] = category
+                new_fake_app['models'] = models
+                app_list.append(new_fake_app)
             response.context_data['app_list'] = app_list
         return response
 

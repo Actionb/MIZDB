@@ -17,6 +17,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
     actions = [merge_records]
+    index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
 
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
@@ -29,6 +30,10 @@ class MIZModelAdmin(admin.ModelAdmin):
         
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
+        
+    def get_index_category(self):
+        # Should technically be different apps..
+        return self.index_category
         
     def get_actions(self, request):
         # Show actions based on user permissions
@@ -197,6 +202,13 @@ class MIZModelAdmin(admin.ModelAdmin):
         for formset in inline_admin_formsets:
             formset.description = getattr(formset.opts, 'description', '')
         return inline_admin_formsets
+                
+    def has_module_permission(self, request):
+        if self.superuser_only:
+            # Hide the associated models from the index if the current user is not a superuser
+            return request.user.is_superuser
+        return True
+
         
 class BaseInlineMixin(object):
     
