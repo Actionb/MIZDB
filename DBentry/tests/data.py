@@ -191,9 +191,9 @@ def ausgabe_data_simple(cls):
 def ausgabe_data_str(cls):
     cls.model = ausgabe
     cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-    cls.obj1 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=True)
+    cls.obj1 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=True)
     
-    cls.obj2 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=False)
+    cls.obj2 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=False)
     
     cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
     cls.obj3.ausgabe_jahr_set.create(jahr=2000)
@@ -255,7 +255,7 @@ def ausgabe_data():
     obj1.bestand_set.create(lagerort=lo1, provenienz = prov)
     instance_list.append(obj1)
     
-    obj2 = ausgabe(magazin=tmag, info='Testmerge')
+    obj2 = ausgabe(magazin=tmag, beschreibung='Testmerge')
     obj2.save()
     obj2.ausgabe_jahr_set.create(jahr=2000)
     obj2.ausgabe_num_set.create(num=2)

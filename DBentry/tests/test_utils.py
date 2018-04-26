@@ -29,7 +29,7 @@ class TestMergingAusgabe(MergingTestCase):
     @classmethod
     def setUpTestData(cls):
         super(TestMergingAusgabe, cls).setUpTestData()
-        cls.merge_record1.info = 'Test'
+        cls.merge_record1.beschreibung = 'Test'
         cls.merge_record1.save()
             
     def test_merge_records_expand(self):
@@ -38,7 +38,7 @@ class TestMergingAusgabe(MergingTestCase):
         self.assertOriginalExpanded()
         self.assertRelatedChanges()
         self.assertRestDeleted()
-        self.assertEqual(new_original.info, self.merge_record1.info)
+        self.assertEqual(new_original.beschreibung, self.merge_record1.beschreibung)
         
     def test_merge_records_no_expand(self):
         # A merge without expanding the original's values
@@ -46,7 +46,7 @@ class TestMergingAusgabe(MergingTestCase):
         self.assertOriginalExpanded(expand_original = False)
         self.assertRelatedChanges()
         self.assertRestDeleted()
-        self.assertNotEqual(new_original.info, self.merge_record1.info)
+        self.assertNotEqual(new_original.beschreibung, self.merge_record1.beschreibung)
         
     @expectedFailure
     def test_merge_records_with_no_records_deleted(self):
@@ -58,7 +58,7 @@ class TestMergingAusgabe(MergingTestCase):
     def test_merge_records_with_unexpected_change(self):
         # Original was expanded by an unexpected value
         utils.merge_records(self.original, self.qs, expand_original = False, request=self.request)
-        self.qs.filter(pk=self.original.pk).update(info='This should not happen.')
+        self.qs.filter(pk=self.original.pk).update(beschreibung='This should not happen.')
         self.assertOriginalExpanded(expand_original = False)
         
     @expectedFailure

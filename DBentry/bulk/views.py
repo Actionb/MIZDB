@@ -195,7 +195,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         rslt = {}
         rslt['jahrgang'] = row.get('jahrgang', None)
         rslt['magazin'] = row.get('magazin')
-        rslt['info'] = row.get('info', '')
+        rslt['beschreibung'] = row.get('beschreibung', '')
         rslt['status'] = row.get('status')
         return rslt
         

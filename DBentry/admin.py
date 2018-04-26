@@ -79,7 +79,7 @@ class AudioAdmin(MIZModelAdmin):
     fieldsets = [
         (None, {'fields' : ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender']}), 
         ('Discogs', {'fields' : ['release_id', 'discogs_url'], 'classes' : ['collapse', 'collapsed']}), 
-        ('Bemerkungen', {'fields' : ['bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
+        ('Beschreibung & Bemerkungen', {'fields' : ['beschreibung', 'bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
     ]
     list_display = ['__str__', 'formate_string', 'kuenstler_string']
     save_on_top = True
@@ -118,6 +118,7 @@ class AusgabenAdmin(MIZModelAdmin):
                         'magazin','e_datum','anz_artikel', 'status') 
                             
     actions = [bulk_jg, add_bestand]
+    fields = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
     advanced_search_form = {
         'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
         'selects':['magazin','status'], 
@@ -209,6 +210,7 @@ class ArtikelAdmin(MIZModelAdmin):
     
     list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string','ausgabe','artikel_magazin', 'kuenstler_string']
     list_display_links = ['__str__', 'seite']
+    fields = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen']
                                 
     advanced_search_form = {
         'gtelt':['seite', ], 
@@ -294,6 +296,7 @@ class GenreAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = genre_alias
     index_category = 'Stammdaten'
+    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias']
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string', 'ober_string']
         
@@ -405,6 +408,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     list_display = ['schlagwort', 'alias_string', 'ober_string']
         
     index_category = 'Stammdaten'
+    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias']
     def ober_string(self, obj):
         return str(obj.ober) if obj.ober else ''
     ober_string.short_description = 'Oberbegriff'
@@ -542,7 +546,7 @@ class DateiAdmin(MIZModelAdmin):
     inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
     fieldsets = [
         (None, { 'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
-        ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'datum', 'quelle', 'sender', 'bemerkungen']}),  
+        ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'quelle', 'sender', 'bemerkungen']}),  
     ]
     save_on_top = True
     collapse_all = True

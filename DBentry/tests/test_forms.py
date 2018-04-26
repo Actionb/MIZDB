@@ -74,7 +74,7 @@ class TestArtikelForm(ModelFormTestCase):
     
     form_class = ArtikelForm
     model = artikel
-    fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'info']
+    fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen'] #NOTE: why not __all__?
     
     def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
@@ -94,8 +94,10 @@ class TestArtikelForm(ModelFormTestCase):
         
         self.assertTrue('zusammenfassung' in form.fields)
         self.assertIsInstance(form.fields['zusammenfassung'].widget, forms.Textarea)
-        self.assertTrue('info' in form.fields)
-        self.assertIsInstance(form.fields['info'].widget, forms.Textarea)
+        self.assertTrue('beschreibung' in form.fields)
+        self.assertIsInstance(form.fields['beschreibung'].widget, forms.Textarea)
+        self.assertTrue('bemerkungen' in form.fields)
+        self.assertIsInstance(form.fields['bemerkungen'].widget, forms.Textarea)
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
         self.assertTrue('magazin' in form.fields)

@@ -69,7 +69,7 @@ class BaseModel(models.Model):
         
     - create_field: the name of the field for the dal autocomplete object creation
     """
-    exclude = ['info', 'beschreibung', 'bemerkungen'] 
+    exclude = ['beschreibung', 'bemerkungen'] 
     
     search_fields = []
     
@@ -259,7 +259,7 @@ class ComputedNameModel(BaseModel):
     
     name_composing_fields = []
     
-    exclude = ['_name', '_changed_flag', 'info', 'beschreibung', 'bemerkungen']
+    exclude = ['_name', '_changed_flag', 'beschreibung', 'bemerkungen']
     
     name_field = '_name'
     

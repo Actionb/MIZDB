@@ -58,9 +58,9 @@ class TestMIZQuerySetAusgabe(DataTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.obj1 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=True)
+        cls.obj1 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=True)
         
-        cls.obj2 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=False)
+        cls.obj2 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=False)
         
         cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
         cls.obj3.ausgabe_jahr_set.create(jahr=2000)
@@ -88,21 +88,21 @@ class TestMIZQuerySetAusgabe(DataTestCase):
     
     def test_values_dict_obj1(self):
         expected = {self.obj1.pk :  {
-            'info': ['Snowflake'], 
+            'beschreibung': ['Snowflake'], 
             'sonderausgabe': [True], 
         }}
         self.assertDictsEqual(self.qs_obj1.values_dict(*self.fields), expected)
     
     def test_values_dict_obj2(self):
         expected = {self.obj2.pk :  {
-            'info': ['Snowflake'], 
+            'beschreibung': ['Snowflake'], 
             'sonderausgabe': [False], 
         }}
         self.assertDictsEqual(self.qs_obj2.values_dict(*self.fields), expected)
     
     def test_values_dict_obj2_include_empty(self):
         expected = {self.obj2.pk :  {
-            'info': ['Snowflake'], 
+            'beschreibung': ['Snowflake'], 
             'sonderausgabe': [False], 
             'e_datum': [None], 
             'jahrgang': [None], 
@@ -165,7 +165,7 @@ class TestCNQuerySet(AusgabeSimpleDataMixin, DataTestCase):
     def test_update_sets_changed_flag(self):
         # update() should change the _changed_flag if it is NOT part of the update 
         self.assertAllQSValuesList(self.queryset, '_changed_flag' , False)
-        self.queryset.update(info='Test')
+        self.queryset.update(beschreibung='Test')
         self.assertAllQSValuesList(self.queryset, '_changed_flag' , True)
         
     def test_update_not_sets_changed_flag(self):
@@ -176,54 +176,54 @@ class TestCNQuerySet(AusgabeSimpleDataMixin, DataTestCase):
         
     def test_bulk_create_sets_changed_flag(self):
         # in order to update the created instances' names on their next query/instantiation, bulk_create must include _changed_flag == True
-        new_obj = ausgabe(magazin=self.mag, info='My Unique Name', sonderausgabe=True)
+        new_obj = ausgabe(magazin=self.mag, beschreibung='My Unique Name', sonderausgabe=True)
         self.queryset.bulk_create([new_obj])
-        qs = self.queryset.filter(info='My Unique Name', sonderausgabe=True)
+        qs = self.queryset.filter(beschreibung='My Unique Name', sonderausgabe=True)
         self.assertAllQSValuesList(qs, '_changed_flag', True)
     
     def test_values_updates_name(self):
         # values('_name') should return an up-to-date name
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValues(self.qs_obj1, '_name', 'Testinfo')
         self.assertQSValues(self.qs_obj1, '_changed_flag', False)
         
     def test_values_not_updates_name(self):
         # values(!'_name') should NOT update the name => _changed_flag remains True
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValues(self.qs_obj1, '_changed_flag', True)
     
     def test_values_list_updates_name(self):
         # values_list('_name') should return an up-to-date name
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo')
         self.assertQSValuesList(self.qs_obj1, '_changed_flag', False)
         
     def test_values_list_not_updates_name(self):
         # values_list(!'_name') should NOT update the name => _changed_flag remains True
         obj1_name = self.obj1._name
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValuesList(self.qs_obj1, '_changed_flag', True)
 
     def test_only_updates_name(self):
         # only('_name')/defer(!'_name') should return an up-to-date name
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValuesList(self.qs_obj1.only('_name'), '_changed_flag', False)
         self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo')
         
-        self.qs_obj1.update(_changed_flag=True, info="Testinfo2")
+        self.qs_obj1.update(_changed_flag=True, beschreibung="Testinfo2")
         self.assertQSValuesList(self.qs_obj1.defer('id'), '_changed_flag', False)
         self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo2')
         
     def test_defer_not_updates_name(self):
         # defer('_name')/only(!'_name') should NOT return an up-to-date name => _changed_flag remains True
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValuesList(self.qs_obj1.defer('_name'), '_changed_flag', True)
         self.assertQSValuesList(self.qs_obj1.only('id'), '_changed_flag', True)
         
     def test_filter_updates_names(self):
         # Make sure that .filter() updates and then searches with the updated name
         self.assertFalse(self.qs_obj1.filter(_name='Testinfo').exists())
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertTrue(self.qs_obj1.filter(_name='Testinfo').exists())
         self.assertAllQSValuesList(self.qs_obj1, '_changed_flag' , False)
         self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo')

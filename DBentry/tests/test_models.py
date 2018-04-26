@@ -22,19 +22,19 @@ class TestModelAusgabe(DataTestCase):
         pass
         
     def test_str(self):
-        # 1. sonderausgabe + info
+        # 1. sonderausgabe + beschreibung
         # 2. !jahre + jahrgang/!jahrgang
         # 3. ausgaben_merkmal>e_datum>monat>lnum>?
-        # 4. num>monat>lnum>e_datum>info>k.A.
+        # 4. num>monat>lnum>e_datum>beschreibung>k.A.
         
         obj1_qs = ausgabe.objects.filter(pk=self.obj1.pk)
         self.assertEqual(obj1_qs.first().__str__(), "Keine Angaben zu Ausgabe.")
-        obj1_qs.update(info = 'Test-Info')
-        self.assertEqual(obj1_qs.first().__str__(), 'Test-Info') # only info
+        obj1_qs.update(beschreibung = 'Test-Info')
+        self.assertEqual(obj1_qs.first().__str__(), 'Test-Info') # only beschreibung
         obj1_qs.update(sonderausgabe = True)
-        self.assertEqual(obj1_qs.first().__str__(), 'Test-Info') # sonderausgabe + info
+        self.assertEqual(obj1_qs.first().__str__(), 'Test-Info') # sonderausgabe + beschreibung
         obj1_qs.update(jahrgang = '2')
-        self.assertEqual(obj1_qs.first().__str__(), 'Test-Info') # str should still prioritize info 
+        self.assertEqual(obj1_qs.first().__str__(), 'Test-Info') # str should still prioritize beschreibung 
         
         obj1_qs.update(sonderausgabe = False)
         # Test if jahrgang is used properly in place of jahre
@@ -484,25 +484,25 @@ class TestModelBase(DataTestCase):
         self.assertListEqualSorted(self.model.get_required_fields(True), ['ausgabe', 'schlagzeile', 'seite'])
         
     def test_get_search_fields(self):
-        expected = ['schlagzeile', 'seite', 'seitenumfang', 'zusammenfassung', 'info']
+        expected = ['schlagzeile', 'zusammenfassung', 'beschreibung']
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
         
     def test_get_updateable_fields(self):
         # The DataFactory provided an instance with only the required fields filled out
-        self.assertEqual(self.obj1.get_updateable_fields(), ['seitenumfang', 'zusammenfassung', 'info'])
+        self.assertEqual(self.obj1.get_updateable_fields(), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
         
         self.obj1.seitenumfang = 'f'
-        self.obj1.info = 'Beep'
-        self.assertListEqualSorted(self.obj1.get_updateable_fields(), ['zusammenfassung'])
+        self.obj1.beschreibung = 'Beep'
+        self.assertListEqualSorted(self.obj1.get_updateable_fields(), ['bemerkungen', 'zusammenfassung'])
         self.obj1.zusammenfassung = 'Boop'
-        self.assertListEqualSorted(self.obj1.get_updateable_fields(), [])
+        self.assertListEqualSorted(self.obj1.get_updateable_fields(), ['bemerkungen'])
     
     def test_get_updateable_fields_not_ignores_default(self):
         # get_updateable_fields should include fields that have their default value
         # artikel has no 'useful' defaults to test with
         obj = person(vorname='Alice') # nachname has default 
         obj.save()
-        self.assertListEqualSorted(obj.get_updateable_fields(), ['beschreibung','nachname','herkunft'])
+        self.assertListEqualSorted(obj.get_updateable_fields(), ['beschreibung','nachname','herkunft', 'bemerkungen'])
    
 @tag("cn")    
 class TestComputedNameModel(DataTestCase):
@@ -526,7 +526,7 @@ class TestComputedNameModel(DataTestCase):
         
     def test_init(self):
         # The name should be updated upon init
-        self.qs_obj1.update(_changed_flag=True, info='Testinfo', sonderausgabe=True)
+        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         obj = self.qs_obj1.first()
         self.assertFalse(obj._changed_flag)
         self.assertEqual(obj._name,  "Testinfo")
@@ -598,7 +598,7 @@ class TestComputedNameModel(DataTestCase):
         
     def test_save_forces_update(self):
         # save() should update the name even if _changed_flag is False
-        self.obj2.info = 'Testinfo'
+        self.obj2.beschreibung = 'Testinfo'
         self.obj2.sonderausgabe = True
         self.obj2._changed_flag = False
         self.obj2.save()
@@ -616,9 +616,9 @@ class TestAusgabeGetName(DataTestCase):
         @classmethod
         def setUpTestData(cls):
             cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-            cls.obj1 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=True)
+            cls.obj1 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=True)
             
-            cls.obj2 = ausgabe.objects.create(magazin=cls.mag, info='Snowflake', sonderausgabe=False)
+            cls.obj2 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=False)
             
             cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
             cls.obj3.ausgabe_jahr_set.create(jahr=2000)
@@ -698,7 +698,7 @@ class TestAusgabeGetName(DataTestCase):
             self.assertStrEqual(self.obj5, 'Jg. 1-Jan/Feb')
             
         def test_get_name_no_data(self):
-            self.qs_obj2.update(info='')
+            self.qs_obj2.update(beschreibung='')
             self.assertStrEqual(self.obj2, ausgabe._name_default % {'verbose_name':ausgabe._meta.verbose_name})
             
         def test_get_name_magazin_merkmal(self):

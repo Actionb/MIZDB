@@ -61,13 +61,18 @@ class AdminTestMethodsMixin(object):
         else:
             self.assertEqual(len(links), 0)
 
-class TestMIZModelAdmin(AdminTestMethodsMixin, AdminTestCase):
+class TestMIZModelAdmin(AdminTestCase):
     
-    model_admin_class = ArtikelAdmin
-    model = artikel
-    test_data_count = 3
-    exclude_expected = ['genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
-    fields_expected = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'info']
+    model_admin_class = DateiAdmin
+    model = datei
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = datei.objects.create(titel='Testdatei')
+        
+        cls.test_data = [cls.obj1]
+        
+        super().setUpTestData()
     
     def test_get_actions(self):
         # No permissions: no actions
@@ -76,41 +81,41 @@ class TestMIZModelAdmin(AdminTestMethodsMixin, AdminTestCase):
         
         # staff_user has no permissions, so let's give him permission to delete artikel
         from django.contrib.auth.models import Permission
-        p = Permission.objects.get(codename='delete_artikel')
+        p = Permission.objects.get(codename='delete_datei')
         self.staff_user.user_permissions.add(p)
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         self.assertEqual(len(actions), 1)
         
         # superuser has all permissions inherently
         actions = self.model_admin.get_actions(self.get_request())
-        self.assertEqual(len(actions), 2)
-        
-    def test_get_form(self):
-        request = self.get_request(path=self.add_path)
-        form = self.model_admin.get_form(request)
-        # test if 'magazin' gets wrapped
-        from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
-
-        self.assertIsInstance(form.declared_fields['magazin'].widget, RelatedFieldWidgetWrapper)
+        self.assertEqual(len(actions), 2)   
         
     def test_group_fields(self):
-        request = self.get_request()
-        fields = self.model_admin.get_fields(request) # sets model_admin.fields
         self.model_admin.fields = None
         self.assertEqual(self.model_admin.group_fields(), [])
         
-        # ArtikelAdmin flds_to_group = [('magazin', 'ausgabe'),('seite', 'seitenumfang'),]
-        expected = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'info']
-        self.model_admin.fields = fields
-        self.assertEqual(self.model_admin.group_fields(), expected)
+        self.model_admin.fields = ['seite', 'ausgabe', 'schlagzeile', 'zusammenfassung', 'seitenumfang']
+        self.model_admin.flds_to_group = [
+            ('magazin', 'ausgabe'), ('xyz', 'abc'), ('schlagzeile', 'zusammenfassung'), ('seitenumfang', 'zusammenfassung')
+        ]
+        grouped_fields = self.model_admin.group_fields()
         
-    def test_media_prop(self):
-        # nothing to test for artikel
-        pass
+        # group_fields() should have ignored the nonsensical second tuple
+        self.assertNotIn(('xyz', 'abc'), grouped_fields, msg='bad group was not removed')
         
+        # the first tuple is expected to have replaced the 'ausgabe' in fields
+        self.assertEqual(grouped_fields[1], ('magazin', 'ausgabe'))
+        self.assertNotIn('ausgabe', grouped_fields, msg='field was not replaced')
+        
+        # by inserting the third tuple, group_fields() should have also removed the now redundant fourth field 'zusammenfassung'
+        self.assertNotIn('zusammenfassung', grouped_fields, msg='redundant field not removed')
+        
+        # group_fields() must not add duplicate fields 
+        self.assertNotIn(('seitenumfang', 'zusammenfassung'), grouped_fields, msg='group_fields() must not add duplicate fields')
+                
     def test_add_extra_context(self):
-        # artikel can't actually have any crosslinks
-        extra = self.model_admin.add_extra_context() # no object_id passed in: add_crosslinks should not be called
+        # no object_id passed in: add_crosslinks should not be called
+        extra = self.model_admin.add_extra_context() 
         self.assertFalse('crosslinks' in extra)
     
     def test_add_view(self):
@@ -127,19 +132,9 @@ class TestMIZModelAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue('googlebtns' in response.context)
         self.assertTrue('crosslinks' in response.context)
         
-    def test_lookup_allowed(self):
-        # Errr... this ALWAYS returns True
-        self.assertTrue(self.model_admin.lookup_allowed(key='band', value=None))
-#        self.assertFalse(self.model_admin.lookup_allowed(key='beep_boop', value=None))
-        
     def test_get_changeform_initial_data_no_initial(self):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
-        
-    def test_get_changeform_initial_data_unimportant_initial(self):
-        initial = {'beep':'boop'}
-        request = self.get_request(data=initial)
-        self.assertEqual(self.model_admin.get_changeform_initial_data(request), initial)
         
     def test_get_changeform_initial_data_with_changelist_filters(self):
         initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
@@ -151,13 +146,29 @@ class TestMIZModelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_get_inline_formsets(self):
         # no test needed
         pass
+class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
+    
+    model_admin_class = ArtikelAdmin
+    model = artikel
+    exclude_expected = ['genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
+    fields_expected = [
+        ('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen'
+    ]
+    test_data_count = 1
+        
+    def test_get_changeform_initial_data_with_changelist_filters(self):
+        # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
+        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
+        request = self.get_request(data=initial)
+        cf_init_data = self.model_admin.get_changeform_initial_data(request)
+        self.assertEqual(cf_init_data.get('magazin'), '326')
 
 class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = AusgabenAdmin
     model = ausgabe
     exclude_expected = ['audio']
-    fields_expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'info']
+    fields_expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
     
     crosslinks_relations = [ausgabe.artikel_set.rel]
    
@@ -187,7 +198,7 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     
     def test_group_fields(self):        
         # AusgabenAdmin flds_to_group = [('status', 'sonderausgabe')]
-        expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'info']
+        expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
         request = self.get_request()
         fields = self.model_admin.get_fields(request)
         self.assertEqual(self.model_admin.group_fields(), expected)
@@ -214,8 +225,8 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = MagazinAdmin
     model = magazin
     exclude_expected = ['genre']
-    fields_expected = ['magazin_name', 'info', 'erstausgabe', 'turnus', 'magazin_url', 'beschreibung', 'ausgaben_merkmal', 
-        'verlag', 'ort', 
+    fields_expected = ['magazin_name', 'erstausgabe', 'turnus', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn', 
+        'beschreibung', 'bemerkungen', 'verlag', 'ort', 
     ]
     
     crosslinks_relations = [magazin.ausgabe_set.rel]
@@ -319,8 +330,12 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     fields_expected = ['genre', 'ober']
     
-    crosslinks_relations = [band.genre.rel, musiker.genre.rel, magazin.genre.rel, artikel.genre.rel, audio.genre.rel, 
-            veranstaltung.genre.rel, video.genre.rel, datei.genre.rel]
+    crosslinks_relations = [
+        genre.musiker_set.rel, genre.datei_set.rel, genre.audio_set.rel, 
+        genre.veranstaltung_set.rel, genre.bildmaterial_set.rel, genre.buch_set.rel, 
+        genre.memorabilien_set.rel, genre.magazin_set.rel, genre.artikel_set.rel, genre.technik_set.rel, 
+        genre.sub_genres.rel, genre.video_set.rel, genre.band_set.rel, genre.dokument_set.rel
+    ]
     
     @classmethod
     def setUpTestData(cls):
@@ -358,7 +373,12 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     fields_expected = ['schlagwort', 'ober']
     
-    crosslinks_relations = [artikel.schlagwort.rel, audio.schlagwort.rel, video.schlagwort.rel, datei.schlagwort.rel]
+    crosslinks_relations = [
+        schlagwort.memorabilien_set.rel, schlagwort.artikel_set.rel, schlagwort.technik_set.rel, 
+        schlagwort.datei_set.rel, schlagwort.video_set.rel, 
+        schlagwort.dokument_set.rel, schlagwort.bildmaterial_set.rel, schlagwort.veranstaltung_set.rel, 
+        schlagwort.unterbegriffe.rel, schlagwort.schlagwort_alias_set.rel, schlagwort.buch_set.rel, schlagwort.audio_set.rel
+    ]
     
     @classmethod
     def setUpTestData(cls):
@@ -392,7 +412,7 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = BandAdmin
     model = band
     exclude_expected = ['genre', 'musiker']
-    fields_expected = ['band_name', 'herkunft', 'beschreibung']
+    fields_expected = ['band_name', 'beschreibung', 'bemerkungen', 'herkunft']
     
     @classmethod
     def setUpTestData(cls):
@@ -428,7 +448,7 @@ class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = AutorAdmin
     model = autor
     exclude_expected = ['magazin']
-    fields_expected = ['kuerzel', 'person']
+    fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
     
     @classmethod
     def setUpTestData(cls):
@@ -449,24 +469,28 @@ class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = OrtAdmin   
     model = ort
     fields_expected = ['stadt', 'land', 'bland']
+    test_data_count = 1
         
 class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = LandAdmin
     model = land
     fields_expected = ['land_name', 'code']
+    test_data_count = 1
         
 class TestAdminBundesland(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = BlandAdmin
     model = bundesland
     fields_expected = ['bland_name', 'code', 'land']
+    test_data_count = 1
         
 class TestAdminInstrument(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = InstrumentAdmin
     model = instrument
     fields_expected = ['instrument', 'kuerzel']
+    test_data_count = 1
     
 class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     
@@ -474,67 +498,44 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     model = audio
     exclude_expected = ['plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung', 'ort']
     # Note that AudioAdmin specifies a fieldsets attribute, overriding (and removing catalog_nr) the fields for the form that way
-    fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender', 'catalog_nr',
-        'release_id', 'discogs_url', 'bemerkungen', 
+    fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
+        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'sender'
     ]
-    
-@skip('SenderAdmin not yet implemented')
-class TestAdminSender(AdminTestCase):
-    
-    model_admin_class = None # TODO: add 'SenderAdmin'
-    model = sender
-    exclude_expected = []
-    fields_expected = []
-    
-    def test_get_search_fields(self):
-        self.assertTrue('sender_alias__alias' in self.model_admin.get_search_fields())
+    test_data_count = 1
     
 class TestAdminSpielort(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = SpielortAdmin
     model = spielort
     fields_expected = ['name', 'ort']
+    crosslinks_relations = [
+        spielort.dokument_set.rel, spielort.spielort_alias_set.rel, spielort.m2m_audio_spielort_set.rel,
+        spielort.artikel_set.rel, spielort.buch_set.rel, spielort.bildmaterial_set.rel,
+        spielort.video_set.rel, spielort.datei_set.rel, spielort.veranstaltung_set.rel,
+        spielort.audio_set.rel, spielort.technik_set.rel, spielort.m2m_artikel_spielort_set.rel,
+        spielort.memorabilien_set.rel,
+        ]
+    test_data_count = 1
         
 class TestAdminVeranstaltung(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = VeranstaltungAdmin
     model = veranstaltung
-    exclude_expected = ['genre', 'person', 'band']
-    fields_expected = ['name', 'datum', 'spielort', 'ort']
-        
-class TestAdminProvenienz(AdminTestMethodsMixin, AdminTestCase):
-    
-    model_admin_class = ProvAdmin
-    model = provenienz
-    fields_expected = ['geber', 'typ']
-    
-    
-    def test_has_adv_sf(self):
-        self.assertFalse(self.model_admin.has_adv_sf())
-        
-    def test_lookup_allowed(self):
-        # NOTE: Errr... this ALWAYS returns True
-        self.assertTrue(self.model_admin.lookup_allowed(key='BEEP BOOP', value=None))
-#        self.assertFalse(self.model_admin.lookup_allowed(key='beep_boop', value=None))  
-    
-#class TestAdminLagerort(AdminTestMethodsMixin, AdminTestCase):
-#    
-#    model_admin_class = None
-#    model = lagerort
-#    
-#class TestAdminFormat(AdminTestMethodsMixin, AdminTestCase):
-#    
-#    model_admin_class = None
-#    model = Format
+    exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
+    fields_expected = ['name', 'datum', 'spielort']
+    test_data_count = 1
     
 class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = BuchAdmin
     model = buch
-    exclude_expected = ['autor']
+    exclude_expected = ['autor', 'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
     fields_expected = ['titel', 'titel_orig', ('jahr', 'verlag'), ('jahr_orig', 'verlag_orig'), 
-            'ausgabe', 'auflage', 'buch_serie', 'buch_band', 
-            ('sprache', 'sprache_orig'), 'ubersetzer', ('EAN', 'ISBN'), 'LCCN'
+            'ausgabe', 'auflage', 'buch_band', 
+            'ubersetzer', ('EAN', 'ISBN'), 'LCCN', 
+            'beschreibung', 'bemerkungen', 
+            'buch_serie', ('sprache', 'sprache_orig'), 
         ]
+    test_data_count = 1
 
     def test_group_fields(self):        
         # BuchAdmin flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
@@ -544,7 +545,7 @@ class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
         ]
         request = self.get_request()
         fields = self.model_admin.get_fields(request)
-        self.assertEqual(self.model_admin.group_fields(), expected)
+        self.assertEqual(self.model_admin.group_fields(), self.fields_expected)
         
     
 class TestAdminSite(UserTestCase):

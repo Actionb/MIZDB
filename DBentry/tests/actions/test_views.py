@@ -540,7 +540,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     def test_merge_not_updating_fields_it_should_not(self):
         # Check that the whole process does *NOT* change already present data of the selected primary/original object 
         # spice up obj1 so we can verify that a merge has happened
-        self.qs_obj1.update(info='I really should not be here.')
+        self.qs_obj1.update(beschreibung='I really should not be here.')
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
@@ -555,7 +555,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         
         self.obj2.refresh_from_db()
         self.assertEqual(self.obj2.jahrgang, 1)
-        self.assertEqual(self.obj2.info, 'I really should not be here.')
+        self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
       
 
 class TestMergeViewWizardedArtikel(ActionViewTestCase): 
