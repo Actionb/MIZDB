@@ -529,7 +529,6 @@ class buch(BaseModel):
     ISBN = models.CharField(**CF_ARGS_B)
     LCCN = models.CharField(**CF_ARGS_B)
     
-    autor = models.ManyToManyField('autor',  through = m2m_buch_autor)
     
     search_fields = ['titel']
     primary_search_fields = []
@@ -757,9 +756,6 @@ class veranstaltung(BaseModel):
     datum = models.DateField()
     spielort = models.ForeignKey('spielort')
     
-    genre = models.ManyToManyField('genre',  through = m2m_veranstaltung_genre)
-    person = models.ManyToManyField('person', verbose_name = 'Teilnehmer (Personen)', through = m2m_veranstaltung_person)
-    band = models.ManyToManyField('band', verbose_name = 'Teilnehmer (Bands)',  through = m2m_veranstaltung_band)
     #TODO: NYI: musiker = models.ManyToManyField('musiker', through = m2m_veranstaltung_musiker)#
     
     search_fields = ['name', 'veranstaltung_alias__alias']
@@ -785,13 +781,7 @@ class video(BaseModel):
     quelle = models.CharField(**CF_ARGS_B)
     sender = models.ForeignKey('sender')
     
-    band = models.ManyToManyField('band', through = m2m_video_band)
-    genre = models.ManyToManyField('genre', through = m2m_video_genre)
     musiker = models.ManyToManyField('musiker', through = m2m_video_musiker)
-    person = models.ManyToManyField('person', through = m2m_video_person)
-    schlagwort = models.ManyToManyField('schlagwort', through = m2m_video_schlagwort)
-    spielort = models.ManyToManyField('spielort', through = m2m_video_spielort)
-    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_video_veranstaltung)
     
     search_fields = ['titel']
     primary_search_fields = []
@@ -929,14 +919,7 @@ class datei(BaseModel):
     sender = models.ForeignKey('sender', on_delete = models.SET_NULL, blank = True,  null = True)
     
     # Relationen
-    genre = models.ManyToManyField('genre', through = m2m_datei_genre)
-    schlagwort = models.ManyToManyField('schlagwort', through = m2m_datei_schlagwort)
-    person = models.ManyToManyField('person', through = m2m_datei_person)
-    band = models.ManyToManyField('band', through = m2m_datei_band)
     musiker = models.ManyToManyField('musiker', through = m2m_datei_musiker)
-    ort = models.ManyToManyField('ort', through = m2m_datei_ort)
-    spielort = models.ManyToManyField('spielort', through = m2m_datei_spielort)
-    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_datei_veranstaltung)
     
     name_field = 'titel'
     
