@@ -17,7 +17,9 @@ class person(ComputedNameModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    herkunft = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True)
+    herkunft = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True, related_name = 'personen')
+    
+    orte = models.ManyToManyField('ort', blank = True)
     
     name_composing_fields = ['vorname', 'nachname']
     
@@ -44,6 +46,7 @@ class musiker(BaseModel):
     
     genre = models.ManyToManyField('genre',  through = m2m_musiker_genre)
     instrument = models.ManyToManyField('instrument',  through = m2m_musiker_instrument)
+    orte = models.ManyToManyField('ort', blank = True)
     
     search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias', 'beschreibung']
     primary_search_fields = []
@@ -86,10 +89,11 @@ class band(BaseModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    herkunft = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True)
+    herkunft = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True, related_name = 'bands')
     
     genre = models.ManyToManyField('genre',  through = m2m_band_genre)
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
+    orte = models.ManyToManyField('ort', blank = True)
 
     search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias', 'beschreibung']
     primary_search_fields = ['band_name', 'band_alias__alias']
@@ -119,6 +123,7 @@ class autor(ComputedNameModel):
     person = models.ForeignKey('person', models.PROTECT)
     
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
+    orte = models.ManyToManyField('ort', blank = True)
     
     search_fields = ['kuerzel', 'person___name', 'beschreibung']
     primary_search_fields = []
