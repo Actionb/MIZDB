@@ -318,10 +318,6 @@ class ComputedNameModel(BaseModel):
             
             if not self.name_composing_fields:
                 raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
-#            # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
-#            instance_data = {k:[v] for k, v in self.__dict__.items() if not k.startswith('_')}
-#            name_data = self.qs().values_dict(* set(self.name_composing_fields).difference(self.__dict__), flatten=True ).get(self.pk)
-#            name_data.update(instance_data)
             name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk)
             current_name = self._get_name(**name_data)
             
