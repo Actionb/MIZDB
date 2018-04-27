@@ -332,3 +332,4 @@ class ComputedNameModel(BaseModel):
                     
     class Meta(BaseModel.Meta):
         abstract = True
+        ordering = ['_name']

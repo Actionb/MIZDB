@@ -17,16 +17,13 @@ class person(ComputedNameModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    herkunft = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True, related_name = 'personen')
-    
     orte = models.ManyToManyField('ort', blank = True)
     
     name_composing_fields = ['vorname', 'nachname']
     
-    class Meta(BaseModel.Meta):
+    class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
         verbose_name_plural = 'Personen'
-        ordering = ['nachname', 'vorname', 'herkunft']
     
     @classmethod
     def _get_name(cls, **data):
@@ -89,8 +86,6 @@ class band(BaseModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    herkunft = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True, related_name = 'bands')
-    
     genre = models.ManyToManyField('genre',  through = m2m_band_genre)
     musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
     orte = models.ManyToManyField('ort', blank = True)
@@ -131,10 +126,9 @@ class autor(ComputedNameModel):
     
     name_composing_fields = ['person___name', 'kuerzel']
     
-    class Meta(BaseModel.Meta):
+    class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'
         verbose_name_plural = 'Autoren'
-        ordering = ['_name']
     
     @classmethod
     def _get_name(cls, **data):
@@ -188,7 +182,7 @@ class ausgabe(ComputedNameModel):
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
-        ordering = ['magazin', 'jahrgang']
+        ordering = ['magazin', 'jahrgang'] # TODO: revisit ordering
         permissions = [
             ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'), 
             ('alter_data_ausgabe', 'Aktion: Daten verändern.')
@@ -404,7 +398,7 @@ class ort(ComputedNameModel):
     
     name_composing_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
     
-    class Meta(BaseModel.Meta):
+    class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ort'
         verbose_name_plural = 'Orte'
         unique_together = ('stadt', 'bland', 'land')

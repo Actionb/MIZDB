@@ -243,7 +243,7 @@ class BandAdmin(MIZModelAdmin):
     inlines=[GenreInLine, AliasInLine, MusikerInLine]
     index_category = 'Stammdaten'
     
-    list_display = ['band_name', 'genre_string', 'herkunft', 'musiker_string']
+    list_display = ['band_name', 'genre_string', 'musiker_string']
 
     googlebtns = ['band_name']
     
@@ -361,8 +361,8 @@ class MusikerAdmin(MIZModelAdmin):
     
     advanced_search_form = {
         'selects' : ['person', 'genre', 'band', 
-                'instrument','person__herkunft__land', 'person__herkunft'], 
-        'labels' : {'person__herkunft__land':'Herkunftsland'}
+                'instrument','person__orte__land', 'person__orte'], 
+        'labels' : {'person__orte__land':'Herkunftsland'}
     }
         
     def band_string(self, obj):
@@ -374,6 +374,8 @@ class MusikerAdmin(MIZModelAdmin):
     genre_string.short_description = 'Genres'
     
     def herkunft_string(self, obj):
+        #TODO: 
+        return '---'
         if obj.person and obj.person.herkunft:
             return str(obj.person.herkunft)
         else:
@@ -385,10 +387,11 @@ class PersonAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
-    fields = ['vorname', 'nachname', 'herkunft', 'beschreibung']
+    
+    fields = ['vorname', 'nachname', 'beschreibung']
     
     advanced_search_form = {
-        'selects' : ['herkunft', 'herkunft__land', ('herkunft__bland', 'herkunft__land')]
+        'selects' : ['orte', 'orte__land', ('orte__bland', 'orte__land')]
     }
     
     def Ist_Musiker(self, obj):
