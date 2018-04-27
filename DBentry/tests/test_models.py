@@ -538,8 +538,12 @@ class TestComputedNameModel(DataTestCase):
         
     def test_get_search_fields(self):
         # _name should be used in searches, that's the whole point of this endeavour
-        self.assertTrue('_name' in self.model.get_search_fields())
-        self.assertFalse('_changed_flag' in self.model.get_search_fields())
+        self.assertIn('_name', self.model.get_search_fields())
+        self.assertNotIn('_changed_flag', self.model.get_search_fields())
+        
+        # _name should always be the first field in search_fields
+        self.model.search_fields += ['_name']
+        self.assertEqual(self.model.get_search_fields()[0], '_name')
             
     def test_get_updateable_fields(self):
         # _name and _changed_flag should not appear in get_updateable_fields even if empty/default value

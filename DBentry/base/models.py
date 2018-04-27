@@ -279,9 +279,14 @@ class ComputedNameModel(BaseModel):
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         # Include _name in the search_fields
-        #TODO: super() might return a list now
         search_fields = super().get_search_fields(foreign, m2m)
-        search_fields.insert(0,'_name')
+        if '_name' not in search_fields:
+            search_fields.insert(0,'_name')
+        else:
+            i = search_fields.index('_name')
+            if i != 0:
+                search_fields.pop(i)
+                search_fields.insert(0,'_name')
         return search_fields
         
     def update_name(self, force_update = False):
