@@ -3,7 +3,7 @@ from django.contrib import admin
 from .models import *
 from .base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
-    BaseStackedInline, BaseTabularInline, 
+    BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
 from .forms import ArtikelForm
 from .utils import concat_limit
@@ -239,17 +239,20 @@ class BandAdmin(MIZModelAdmin):
         model = band.musiker.through
     class AliasInLine(BaseAliasInline):
         model = band_alias
-    save_on_top = True
-    inlines=[GenreInLine, AliasInLine, MusikerInLine]
+    class OrtInLine(BaseOrtInLine):
+        model = band.orte.through
+        
     index_category = 'Stammdaten'
     
-    list_display = ['band_name', 'genre_string', 'musiker_string']
+    list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
 
+    inlines=[GenreInLine, OrtInLine, AliasInLine, MusikerInLine]
     googlebtns = ['band_name']
+    save_on_top = True
     
     advanced_search_form = {
-        'selects' : ['musiker', 'genre', 'herkunft__land', 'herkunft'], 
-        'labels' : {'musiker':'Mitglied','herkunft__land':'Herkunftsland', 'herkunft':'Herkunftsort'}
+        'selects' : ['musiker', 'genre', 'orte__land', 'orte'], 
+        'labels' : {'musiker':'Mitglied'}
     }
         
     def genre_string(self, obj):
@@ -263,6 +266,10 @@ class BandAdmin(MIZModelAdmin):
     def alias_string(self, obj):
         return concat_limit(obj.band_alias_set.all())
     alias_string.short_description = 'Aliase'
+    
+    def orte_string(self, obj):
+        return concat_limit(obj.orte.all())
+    orte_string.short_description = 'Orte'
     
 @admin.register(bildmaterial, site=miz_site)
 class BildmaterialAdmin(MIZModelAdmin):
@@ -348,21 +355,21 @@ class MusikerAdmin(MIZModelAdmin):
         model = musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
+    class OrtInLine(BaseOrtInLine):
+        model = musiker.orte.through
+        
     index_category = 'Stammdaten'
+        
+    list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
     
-    save_on_top = True
-    inlines = [AliasInLine, GenreInLine, BandInLine, InstrInLine]
-    readonly_fields = ['band_string', 'genre_string', 'herkunft_string']
-    fields = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
-    
-    list_display = ['kuenstler_name', 'genre_string', 'band_string', 'herkunft_string']
-    
+    inlines = [GenreInLine, OrtInLine, AliasInLine, BandInLine, InstrInLine]
+    fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     googlebtns = ['kuenstler_name']
+    save_on_top = True
     
     advanced_search_form = {
         'selects' : ['person', 'genre', 'band', 
                 'instrument','person__orte__land', 'person__orte'], 
-        'labels' : {'person__orte__land':'Herkunftsland'}
     }
         
     def band_string(self, obj):
@@ -373,18 +380,18 @@ class MusikerAdmin(MIZModelAdmin):
         return concat_limit(obj.genre.all())
     genre_string.short_description = 'Genres'
     
-    def herkunft_string(self, obj):
-        #TODO: 
-        return '---'
-        if obj.person and obj.person.herkunft:
-            return str(obj.person.herkunft)
-        else:
-            return '---'
-    herkunft_string.short_description = 'Herkunft'
+    def orte_string(self, obj):
+        return concat_limit(obj.orte.all())
+    orte_string.short_description = 'Orte'
     
 @admin.register(person, site=miz_site)
 class PersonAdmin(MIZModelAdmin):
+    class OrtInLine(BaseOrtInLine):
+        model = person.orte.through
+    inlines = [OrtInLine]
+    
     index_category = 'Stammdaten'
+    
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links =['vorname','nachname']
     
@@ -402,6 +409,9 @@ class PersonAdmin(MIZModelAdmin):
         return obj.autor_set.exists()
     Ist_Autor.boolean = True
     
+    def orte_string(self, obj):
+        return concat_limit(obj.orte.all())
+    orte_string.short_description = 'Orte'
 @admin.register(schlagwort, site=miz_site)
 class SchlagwortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):

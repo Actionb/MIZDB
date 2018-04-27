@@ -247,3 +247,9 @@ class BaseAusgabeInline(BaseTabularInline):
     form = InLineAusgabeForm
     verbose_model = ausgabe
     fields = ['magazin', 'ausgabe']
+    
+class BaseOrtInLine(BaseTabularInline):
+    verbose_name = 'Ort'
+    verbose_name_plural = 'Assoziierte Orte'
+    
+
