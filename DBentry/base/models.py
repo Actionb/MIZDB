@@ -158,26 +158,15 @@ class BaseModel(models.Model):
     
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
-        #TODO: order matters! 
-        #TODO: if cls.search_fields return search_fields
         """
         Returns the model's fields that are used in admin, autocomplete and advanced search form(? really?) searches.
         """
-        rslt = cls.search_fields.copy()
+        if cls.search_fields:
+            return cls.search_fields
+        rslt = []
         for field in cls.get_basefields(as_string=True):
             if field not in rslt:
                 rslt.append(field)
-        return rslt
-        return cls.search_fields
-        rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
-        if foreign:
-            for fld in cls.get_foreignfields():
-                for rel_fld in fld.related_model.get_search_fields():
-                    rslt.add("{}__{}".format(fld.name, rel_fld))
-        if m2m:
-            for fld in cls.get_m2mfields():
-                for rel_fld in fld.related_model.get_search_fields():
-                    rslt.add("{}__{}".format(fld.name, rel_fld))
         return rslt
         
     def get_updateable_fields(self):
