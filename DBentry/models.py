@@ -187,30 +187,6 @@ class ausgabe(ComputedNameModel):
             ('alter_data_ausgabe', 'Aktion: Daten verändern.')
         ]
         
-    def save(self, *args, **kwargs):
-        pre_save_datum = self.e_datum
-        super(ausgabe, self).save(update = False, *args, **kwargs)
-        
-        # Use e_datum data to populate month and year sets
-        # Note that this can be done AFTER save() as these values are set through RelatedManagers
-        self.refresh_from_db(fields=['e_datum'])
-        if self.e_datum != pre_save_datum:
-            #NOTE: if we have set ausgabe_jahr from data gathered from e_datum in a previous save, and e_datum changes... ausgabe_jahr will still contain the old's e_datum data
-            if self.e_datum.year not in self.ausgabe_jahr_set.values_list('jahr', flat=True):
-                self.ausgabe_jahr_set.create(jahr=self.e_datum.year)
-            if self.e_datum.month not in self.ausgabe_monat_set.values_list('monat_id', flat=True):
-                #NOTE: this actually raised an IntegrityError (UNIQUE Constraints)
-                # self.ausgabe_monat_set will be empty but creating a new set instance will still fail
-                # need to find out how to reliably reproduce this
-                # Maybe this was fixed by overriding validate_unique in FormBase?
-                try:
-                    self.ausgabe_monat_set.create(monat_id=self.e_datum.month)
-                except IntegrityError:
-                    # UNIQUE constraint violation, ignore
-                    pass
-        # parameters that make up the name may have changed, update name accordingly
-        self.update_name(force_update = True)
-        
     @classmethod
     def _get_name(cls, **data):
         # data provided by values_dict: { key: [value1, value2, ...], ... }
