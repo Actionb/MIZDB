@@ -28,9 +28,7 @@ class person(ComputedNameModel):
     @classmethod
     def _get_name(cls, **data):
         name = "{} {}".format(data.get('vorname', ''), data.get('nachname', '')).strip()
-        if name:
-            return name
-        return cls._name_default % {'verbose_name':cls._meta.verbose_name}
+        return name or cls._name_default % {'verbose_name':cls._meta.verbose_name}
         
         
 class musiker(BaseModel): 
@@ -131,13 +129,19 @@ class autor(ComputedNameModel):
     
     @classmethod
     def _get_name(cls, **data):
-        #TODO: revisit this after person refactor: include a check to ignore a default name for an 'unknown' person
         kuerzel = data.get('kuerzel', '')
-        person = data.get('person___name', '')
-        if kuerzel:
-            return "{} ({})".format(person, kuerzel)
+        person_name = data.get('person___name', '')
+        if person_name == person._name_default % {'verbose_name':person._meta.verbose_name} or person_name == 'unbekannt': 
+            # person_name is a default value ('unbekannt' used to be the default for person__nachname)
+            person_name = ''
+            
+        if person_name:
+            if kuerzel:
+                return "{} ({})".format(person_name, kuerzel)
+            else:
+                return person_name
         else:
-            return person
+            return kuerzel or cls._name_default % {'verbose_name':cls._meta.verbose_name}
             
             
 class ausgabe(ComputedNameModel):
@@ -190,10 +194,10 @@ class ausgabe(ComputedNameModel):
     @classmethod
     def _get_name(cls, **data):
         # data provided by values_dict: { key: [value1, value2, ...], ... }
-        info = data.get('beschreibung', '')
-        info = concat_limit(info.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
-        if data.get('sonderausgabe', False) and info:
-            return info
+        beschreibung = data.get('beschreibung', '')
+        beschreibung = concat_limit(beschreibung.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
+        if data.get('sonderausgabe', False) and beschreibung:
+            return beschreibung
         
         jahre = data.get('ausgabe_jahr__jahr', [])
         jahre = [str(jahr)[2:] if i else str(jahr) for i, jahr in enumerate(jahre)]
@@ -236,8 +240,8 @@ class ausgabe(ComputedNameModel):
             return str(e_datum)
         if monate:
             return "{}-{}".format(jahre, monate)
-        if info:
-            return info
+        if beschreibung:
+            return beschreibung
         return cls._name_default % {'verbose_name':cls._meta.verbose_name}
     
         
@@ -292,6 +296,9 @@ class ausgabe_monat(BaseModel):
         verbose_name_plural = 'Monate'
         unique_together = ('ausgabe', 'monat')
         ordering = ['monat']
+        
+    def __str__(self):
+        return self.monat.abk
     
     
 class monat(BaseModel):
@@ -302,6 +309,9 @@ class monat(BaseModel):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
         ordering = ['id']
+        
+    def __str__(self):
+        return self.monat
         
         
 class magazin(BaseModel):
@@ -863,6 +873,11 @@ class veranstaltung(BaseModel):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'spielort', 'datum']
+    
+    def __str__(self):
+        return "{} ({})".format(self.name, str(self.datum))
+        
+        
 class veranstaltung_alias(BaseAliasModel):
     parent = models.ForeignKey('veranstaltung', models.CASCADE)
 
