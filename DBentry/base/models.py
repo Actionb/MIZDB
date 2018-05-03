@@ -6,7 +6,7 @@ from DBentry.managers import MIZQuerySet, CNQuerySet
 def get_model_fields(model, base = True, foreign = True, m2m = True, exclude = (), primary_key = False):
     rslt = []
     for f in model._meta.get_fields():
-        if not f.concrete or f in exclude:
+        if not f.concrete or f.name in exclude:
             continue
         if f.primary_key and not primary_key:
             continue
