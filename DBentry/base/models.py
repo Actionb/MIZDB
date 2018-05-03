@@ -82,19 +82,14 @@ class BaseModel(models.Model):
     create_field = None
     
     objects = MIZQuerySet.as_manager()
-    
-    def _show(self):
-        rslt = ""
-        for fld_name in self.get_basefields(as_string = True):
-            if getattr(self, fld_name, False):
-                rslt +=  "{} ".format(str(getattr(self, fld_name)))
-        if rslt:
-            return rslt.strip()
-        else:
-            return "---"
             
     def __str__(self):
-        return self._show()
+        rslt = " ".join([
+            str(fld.value_from_object(self))
+            for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude)
+            if fld.value_from_object(self)
+        ])
+        return rslt.strip() or "---"
         
     def qs(self):
         """
