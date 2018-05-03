@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.contrib.messages import get_messages
 from django.utils.http import unquote
 from django.utils.encoding import force_text
-from django.utils.translation import gettext, gettext_lazy
+from django.utils.translation import gettext, gettext_lazy, override as translation_override
 from django import forms
 
 from DBentry.models import *
