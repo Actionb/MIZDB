@@ -118,7 +118,6 @@ class autor(ComputedNameModel):
     person = models.ForeignKey('person', models.PROTECT)
     
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
-    orte = models.ManyToManyField('ort', blank = True)
     
     search_fields = ['kuerzel', 'person___name', 'beschreibung']
     primary_search_fields = []
