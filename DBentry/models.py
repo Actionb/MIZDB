@@ -12,7 +12,7 @@ from .managers import AusgabeQuerySet
 
 class person(ComputedNameModel):
     vorname = models.CharField(**CF_ARGS_B)
-    nachname = models.CharField(default = 'unbekannt', **CF_ARGS)
+    nachname = models.CharField(**CF_ARGS)
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
