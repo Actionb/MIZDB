@@ -104,6 +104,36 @@ class TestArtikelForm(ModelFormTestCase):
         from DBentry.ac.widgets import EasyWidgetWrapper
         self.assertIsInstance(form.fields['magazin'].widget, EasyWidgetWrapper)
         
+class TestAutorForm(ModelFormTestCase):
+    form_class = AutorForm
+    fields = ['person', 'kuerzel']
+    model = autor
+    test_data_count = 0
+    
+    def test_clean(self):
+        # clean should raise a ValidationError if either kuerzel or person data is missing
+        p = person.objects.create(vorname='Alice', nachname='Tester')
+        
+        form = self.get_form(data={'beschreibung':'Boop'})
+        form.full_clean()
+        with self.assertRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'kuerzel':'Beep'})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'person':p.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'kuerzel':'Beep', 'person':p.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+        
 class TestMIZAdminForm(FormTestCase):
     
     form_class = MIZAdminForm
