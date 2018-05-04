@@ -371,7 +371,7 @@ class MusikerAdmin(MIZModelAdmin):
     
     advanced_search_form = {
         'selects' : ['person', 'genre', 'band', 
-                'instrument','person__orte__land', 'person__orte'], 
+                'instrument','orte__land', 'orte'], 
     }
         
     def band_string(self, obj):
