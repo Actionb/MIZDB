@@ -1062,11 +1062,10 @@ class datei(BaseModel):
         return str(self.titel)
 
   
-class Format(BaseModel):
+class Format(ComputedNameModel):
     CHANNEL_CHOICES = [('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quad', 'Quadraphonic'), 
                         ('Ambi', 'Ambisonic'), ('Multi', 'Multichannel')]
     
-    format_name = models.CharField(editable = False, **CF_ARGS_B)
     anzahl = models.PositiveSmallIntegerField(default = 1)
     catalog_nr = models.CharField(verbose_name = "Katalog Nummer", **CF_ARGS_B) 
     tape = models.CharField(**CF_ARGS_B)
@@ -1080,33 +1079,36 @@ class Format(BaseModel):
     
     tag = models.ManyToManyField('FormatTag', verbose_name = 'Tags', blank = True) 
     
+    name_composing_fields = [
+        'anzahl', 'format_size__size', 'format_typ__typ', 'tag__tag', 'channel', 
+    ]
+    
     class Meta(BaseModel.Meta):
         verbose_name = 'Format'
         verbose_name_plural = 'Formate'
         
-    def get_name(self):
-        format_string = "{qty}{format}{tags}{channel}"
-        return format_string.format(**{
-            'qty' : str(self.anzahl)+'x' if self.anzahl > 1 else '', 
-            'format' : str(self.format_size) if self.format_size else str(self.format_typ), 
-            'tags' : ", " + concat_limit(self.tag.all()) if self.pk and self.tag.exists() else '', 
-            'channel' : ", " + self.channel if self.channel else ''
-        }).strip()
-                
-    def __str__(self):
-        # This might be super slow
-        # update format_name whenever a change is detected
-        old_val = self.format_name
-        self.format_name = self.get_name()
-        if old_val != self.format_name:
-            Format.objects.filter(pk=self.pk).update(format_name=self.format_name)
-        return self.format_name
+    @classmethod
+    def _get_name(cls, **data):
+        if data.get('anzahl', 0) > 1:
+            qty = str(data.get('anzahl')) + 'x'
+        else:
+            qty = ''
         
-    def save(self, *args, **kwargs):
-        super(Format, self).save(*args, **kwargs)
-        self.refresh_from_db()
-        self.format_name = self.get_name() 
-        Format.objects.filter(pk=self.pk).update(format_name=self.format_name)
+        if data.get('format_size__size'):
+            format = str(data.get('format_size__size'))
+        else:
+            format = str(data.get('format_typ__typ'))
+            
+        if data.get('tag__tag'):
+            tags = ", " + concat_limit(sorted(data.get('tag__tag')))
+        else:
+            tags = ''
+            
+        if data.get('channel'):
+            channel = ", " + data.get('channel')
+        else:
+            channel = ''
+        return qty + format + tags + channel
         
 class NoiseRed(BaseModel):
     verfahren = models.CharField(**CF_ARGS)

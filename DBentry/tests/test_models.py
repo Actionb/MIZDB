@@ -494,49 +494,39 @@ class TestModelDokument(DataTestCase):
     pass
 
 class TestModelFormat(DataTestCase):
-    #TODO: revisit me!
+    
     model = Format
-
-    @classmethod
-    def setUpTestData(cls):
-        a = DataFactory().create_obj(audio)
-        ft = FormatTyp.objects.create(typ='TestTyp')
-        fs = FormatSize.objects.create(size='LP')
-        t = FormatTag.objects.create(tag='Compilation')
-        cls.obj1 = Format.objects.create(format_name='Testformat1', format_typ=ft, audio=a)
-        cls.obj2 = Format.objects.create(format_typ=ft, audio=a)
-        cls.obj3 = Format.objects.create(format_typ=ft, audio=a, format_size=fs)
-        cls.obj4 = Format.objects.create(format_typ=ft, audio=a, format_size=fs, anzahl=2, channel='Stereo')
-        cls.obj4.tag.add(t) #NOTE: this doesn't update obj4.format_name!!
-
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
-
-        # Create an unsaved, prepared instance for the save test
-        cls.obj5 = Format(format_typ=ft, audio=a, format_size=fs)
-
-        super().setUpTestData()
-
+    
     def test_get_name(self):
-        self.assertEqual(self.obj2.get_name(), 'TestTyp')
-        self.assertEqual(self.obj3.get_name(), 'LP')
-        self.assertEqual(self.obj4.get_name(), '2xLP, Compilation, Stereo')
-
-    def test_str(self):
-        # format_name is a non-editable field (compiled of the Format's properties), its use is mainly for autocomplete searches
-        # any format_name set manually should be overriden by Format.get_name()
-        self.assertEqual(self.obj1.__str__(), 'TestTyp')
-        self.assertEqual(self.obj2.__str__(), 'TestTyp')
-        self.assertEqual(self.obj3.__str__(), 'LP')
-        self.assertEqual(self.obj4.__str__(), '2xLP, Compilation, Stereo')
-
-        # Test if __str__() returns based off of up-to-date data
-        self.obj4.channel = None 
-        self.assertEqual(self.obj4.__str__(), '2xLP, Compilation')
-
-    def test_save(self):
-        self.assertEqual(self.obj5.format_name, '')
-        self.obj5.save()
-        self.assertEqual(self.obj5.format_name, self.obj5.get_name())
+        # format_typ only
+        name_data = {'format_typ__typ':'Vinyl'}
+        expected = 'Vinyl'
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_typ only')
+        
+        # format_size only
+        name_data = {'format_size__size':'LP'}
+        expected = 'LP'
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size only')
+        
+        # format_size + anzahl <= 1
+        name_data.update({'anzahl':1})
+        expected = 'LP'
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl <= 1')
+        
+        # format_size + anzahl 
+        name_data.update({'anzahl':2})
+        expected = '2xLP'
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl')
+        
+        # format_size + anzahl + channel
+        name_data.update({'channel':'Mono'})
+        expected = '2xLP, Mono'
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl + channel')
+        
+        # format_size + anzahl + channel + tags
+        name_data.update({'tag__tag':['Compilation', 'Album']})
+        expected = '2xLP, Album, Compilation, Mono'
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl + channel + tags')
         
 class TestModelFormatSize(DataTestCase):
     
