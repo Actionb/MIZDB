@@ -113,7 +113,7 @@ class autor(ComputedNameModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    person = models.ForeignKey('person', models.PROTECT)
+    person = models.ForeignKey('person', models.SET_NULL, null = True, blank = True)
     
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     

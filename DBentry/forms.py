@@ -133,6 +133,16 @@ class ArtikelForm(AusgabeMagazinFieldForm):
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
         
+class AutorForm(FormBase):
+    
+    def clean(self):
+        # The user has to fill out at least kuerzel or person
+        cleaned_data = super().clean()
+        if cleaned_data.get('kuerzel') or cleaned_data.get('person'):
+            return cleaned_data
+        else:
+            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: Kürzel, Person')
+        
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
         

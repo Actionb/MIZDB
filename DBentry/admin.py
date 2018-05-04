@@ -162,6 +162,8 @@ class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
         model = autor.magazin.through
         extra = 1
+    
+    form = AutorForm
     index_category = 'Stammdaten'
     
     inlines = [MagazinInLine]
