@@ -5,7 +5,7 @@ from .base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
     BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from .forms import ArtikelForm
+from .forms import ArtikelForm, AutorForm
 from .utils import concat_limit
 from .actions import *
 
