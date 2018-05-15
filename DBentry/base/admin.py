@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.contrib.auth import get_permission_codename
+from django.utils.translation import override as translation_override
+from django.utils.encoding import force_text
+from django.utils.text import capfirst
 
 from django import forms
 
@@ -231,6 +234,49 @@ class MIZModelAdmin(admin.ModelAdmin):
         initial.update(filter_dict)
         return initial
         
+    def construct_change_message(self, request, form, formsets, add=False):
+        """
+        Construct a JSON structure describing changes from a changed object.
+        Translations are deactivated so that strings are stored untranslated.
+        Translation happens later on LogEntry access.
+        """
+        #TODO: WIP
+        change_message = []
+        if add:
+            change_message.append({'added': {}})
+        elif form.changed_data:
+            change_message.append({'changed': {'fields': form.changed_data}})
+
+        if formsets:
+            with translation_override(None):
+                for formset in formsets:
+                    for added_object in formset.new_objects:
+                        change_message.append({'added': self._construct_m2m_change_message(added_object)})
+                    for changed_object, changed_fields in formset.changed_objects:
+                        msg = self._construct_m2m_change_message(changed_object)
+                        msg['fields'] = changed_fields
+                        change_message.append({'changed': msg})
+                    for deleted_object in formset.deleted_objects:
+                        change_message.append({'deleted': self._construct_m2m_change_message(deleted_object)})
+        return change_message
+        
+    def _construct_m2m_change_message(self, obj):
+        """
+        Construct a more useful change message for m2m objects of auto created models.
+        """
+        #TODO: WIP
+        if obj._meta.auto_created:
+            # An auto_created m2m through table only has two relation fields
+            relation_field = [fld for fld in obj._meta.get_fields() if fld.is_relation and fld.related_model != self.model][0]
+            return {
+                    'name': force_text(relation_field.related_model._meta.verbose_name),
+                    'object': force_text(getattr(obj, relation_field.name)),
+                }
+        else:
+            return {
+                    'name': force_text(obj._meta.verbose_name),
+                    'object': force_text(obj),
+                }
                 
     def has_module_permission(self, request):
         if self.superuser_only:
