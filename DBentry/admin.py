@@ -91,6 +91,14 @@ class AudioAdmin(MIZModelAdmin):
         'simple' : ['release_id'], 
         'labels' : {'format__tag':'Tags'}, 
     }
+        
+    def kuenstler_string(self, obj):
+        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
+    
+    def formate_string(self, obj):
+        return concat_limit(list(obj.format_set.all()))
+    formate_string.short_description = 'Format'
     
 
 @admin.register(ausgabe, site=miz_site)
@@ -232,6 +240,24 @@ class ArtikelAdmin(MIZModelAdmin):
                 monate = Min('ausgabe__ausgabe_monat__monat_id'), 
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
+        
+    def zusammenfassung_string(self, obj):
+        if not obj.zusammenfassung:
+            return ''
+        return concat_limit(obj.zusammenfassung.split(), sep=" ")
+    zusammenfassung_string.short_description = 'Zusammenfassung'
+    
+    def artikel_magazin(self, obj):
+        return obj.ausgabe.magazin
+    artikel_magazin.short_description = 'Magazin'
+    
+    def schlagwort_string(self, obj):
+        return concat_limit(obj.schlagwort.all())
+    schlagwort_string.short_description = 'Schlagwörter'
+    
+    def kuenstler_string(self, obj):
+        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
         
 @admin.register(band, site=miz_site)    
 class BandAdmin(MIZModelAdmin):

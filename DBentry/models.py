@@ -516,24 +516,6 @@ class artikel(BaseModel):
             return str(self.zusammenfassung)
         else:
             return 'Keine Schlagzeile gegeben!'
-    
-    def zusammenfassung_string(self):
-        if not self.zusammenfassung:
-            return ''
-        return concat_limit(self.zusammenfassung.split(), sep=" ")
-    zusammenfassung_string.short_description = 'Zusammenfassung'
-    
-    def artikel_magazin(self):
-        return self.ausgabe.magazin
-    artikel_magazin.short_description = 'Magazin'
-    
-    def schlagwort_string(self):
-        return concat_limit(self.schlagwort.all())
-    schlagwort_string.short_description = 'Schlagwörter'
-    
-    def kuenstler_string(self):
-        return concat_limit(list(self.band.all()) + list(self.musiker.all()))
-    kuenstler_string.short_description = 'Künstler'
         
 
 class buch(BaseModel):
@@ -657,14 +639,6 @@ class audio(BaseModel):
         else:
             self.discogs_url = None
         super(audio, self).save(*args, **kwargs)
-        
-    def kuenstler_string(self):
-        return concat_limit(list(self.band.all()) + list(self.musiker.all()))
-    kuenstler_string.short_description = 'Künstler'
-    
-    def formate_string(self):
-        return concat_limit(list(self.format_set.all()))
-    formate_string.short_description = 'Format'
     
     
 class bildmaterial(BaseModel):
