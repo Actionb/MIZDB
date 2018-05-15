@@ -242,10 +242,10 @@ class BaseM2MModel(BaseModel):
     Base class for models that implement an intermediary through table.
     """
     
-    def _show(self):
+    def __str__(self):
         data = []
-        for ff in self.get_foreignfields(True):
-            data.append(str(getattr(self, ff)))
+        for ff in get_model_fields(self._meta.model, base=False, foreign=True, m2m=False):
+            data.append(str(getattr(self, ff.name)))
         return "{} ({})".format(*data)
             
     class Meta(BaseModel.Meta):
