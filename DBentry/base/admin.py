@@ -18,6 +18,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     googlebtns = []                         # Fields in this list get a little button that redirect to a google search page
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
+    superuser_only = False                  # If true, only a superuser can interact with this ModelAdmin
     actions = [merge_records]
     
     formfield_overrides = {
