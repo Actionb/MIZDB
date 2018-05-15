@@ -74,7 +74,7 @@ class TestArtikelForm(ModelFormTestCase):
     
     form_class = ArtikelForm
     model = artikel
-    fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'info']
+    fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen'] #NOTE: why not __all__?
     
     def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
@@ -94,13 +94,45 @@ class TestArtikelForm(ModelFormTestCase):
         
         self.assertTrue('zusammenfassung' in form.fields)
         self.assertIsInstance(form.fields['zusammenfassung'].widget, forms.Textarea)
-        self.assertTrue('info' in form.fields)
-        self.assertIsInstance(form.fields['info'].widget, forms.Textarea)
+        self.assertTrue('beschreibung' in form.fields)
+        self.assertIsInstance(form.fields['beschreibung'].widget, forms.Textarea)
+        self.assertTrue('bemerkungen' in form.fields)
+        self.assertIsInstance(form.fields['bemerkungen'].widget, forms.Textarea)
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
         self.assertTrue('magazin' in form.fields)
         from DBentry.ac.widgets import EasyWidgetWrapper
         self.assertIsInstance(form.fields['magazin'].widget, EasyWidgetWrapper)
+        
+class TestAutorForm(ModelFormTestCase):
+    form_class = AutorForm
+    fields = ['person', 'kuerzel']
+    model = autor
+    test_data_count = 0
+    
+    def test_clean(self):
+        # clean should raise a ValidationError if either kuerzel or person data is missing
+        p = person.objects.create(vorname='Alice', nachname='Tester')
+        
+        form = self.get_form(data={'beschreibung':'Boop'})
+        form.full_clean()
+        with self.assertRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'kuerzel':'Beep'})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'person':p.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'kuerzel':'Beep', 'person':p.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
         
 class TestMIZAdminForm(FormTestCase):
     

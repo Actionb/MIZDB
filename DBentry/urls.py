@@ -7,7 +7,7 @@ from .bulk.views import BulkAusgabe
 admin_tools_urls = [
     url(r'^bulk_ausgabe/$', BulkAusgabe.as_view(), name='bulk_ausgabe'), 
     url(r'^favoriten/$', FavoritenView.as_view(), name='favoriten'), 
-    url(r'', include('DBentry.ie.urls'))
+    #url(r'', include('DBentry.ie.urls')) # excluded because DBentry.ie.name_utils does horrid things during import
 ]
 
 urlpatterns = [

@@ -109,7 +109,7 @@ class TestACAusgabe(ACViewTestCase):
         cls.obj_monat.ausgabe_jahr_set.create(jahr=2020)
         cls.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan'))
         
-        cls.obj_sonder = ausgabe.objects.create(magazin=cls.mag, sonderausgabe=True, info='Special Edition')
+        cls.obj_sonder = ausgabe.objects.create(magazin=cls.mag, sonderausgabe=True, beschreibung='Special Edition')
         
         cls.obj_jahrg = ausgabe.objects.create(magazin=cls.mag, jahrgang=12)
         cls.obj_jahrg.ausgabe_num_set.create(num=13)

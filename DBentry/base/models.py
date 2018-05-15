@@ -6,7 +6,7 @@ from DBentry.managers import MIZQuerySet, CNQuerySet
 def get_model_fields(model, base = True, foreign = True, m2m = True, exclude = (), primary_key = False):
     rslt = []
     for f in model._meta.get_fields():
-        if not f.concrete or f in exclude:
+        if not f.concrete or f.name in exclude:
             continue
         if f.primary_key and not primary_key:
             continue
@@ -26,15 +26,14 @@ def get_model_relations(model, forward = True, reverse = True):
         for f in model._meta.get_fields() 
         if f.many_to_many
     )
-    rslt = set()
-    for f in model._meta.get_fields():
-        if not f.is_relation:
-            continue
+    
+    relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
+    # ManyToManyRels can always be regarded as symmetrical (both 'forward' and 'reverse') and should always be included 
+    rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
+    for f in relation_fields:
         if f.concrete:
-            if not forward:
-                # We do not want any relation fields that are declared on this model.
-                continue
-            rslt.add(f.remote_field) # add the actual RELATION, not the ForeignKey/ManyToMany field
+            if forward:
+                rslt.add(f.remote_field) # add the actual RELATION, not the ForeignKey/ManyToMany field
         else:
             if not reverse:
                 # We do not want any reverse relations. 
@@ -47,7 +46,50 @@ def get_model_relations(model, forward = True, reverse = True):
                 continue
             rslt.add(f)
     return list(rslt)
-
+    
+def get_related_set(instance, rel):
+    model_class = instance._meta.model
+    if rel.many_to_many:
+        if rel.field.model == model_class:
+            attr = rel.field.name
+            #intermediary_field_name = rel.field.m2m_field_name()
+        else:
+            attr = rel.get_accessor_name()
+            #intermediary_field_name = rel.feld.m2m_reverse_field_name()
+        descriptor = getattr(model_class, attr)
+        #return rel.through.objects.filter(**{intermediary_field_name:instance})
+    else:
+        descriptor = getattr(rel.model, rel.get_accessor_name())
+    if isinstance(instance, model_class):
+        return descriptor.related_manager_cls(instance).all()
+    else:
+        return descriptor
+        
+def get_relation_info_to(model, rel):
+    """
+    Returns:
+    - the model that holds the related objects
+        (rel.through if many_to_many else rel.related_model)
+    - the field that realizes relation 'rel' towards direction 'model' 
+        (the field of the m2m table table pointing to model if many_to_many else the ForeignKey field i.e. rel.field)
+    """
+    if rel.many_to_many:
+        related_model = rel.through
+        m2m_field = rel.field
+        if m2m_field.model == model:
+            # The ManyToManyField is with model:
+            # the source accessor/field pointing back to model on the m2m table can be retrieved via m2m_field_name()
+            related_field = related_model._meta.get_field(m2m_field.m2m_field_name())
+        else:
+            # The ManyToManyField is with the *other* model:
+            # the related accessor/field pointing to model on the m2m table can be retrieved via m2m_reverse_field_name()
+            related_field = related_model._meta.get_field(m2m_field.m2m_reverse_field_name())
+    else:
+        related_model = rel.related_model
+        related_field = rel.field
+    return related_model, related_field
+    
+    
 class BaseModel(models.Model):
     #TODO: exclude attribute does not do what the description says, it excludes fields from the 'field collection' methods as well!
     """
@@ -69,7 +111,7 @@ class BaseModel(models.Model):
         
     - create_field: the name of the field for the dal autocomplete object creation
     """
-    exclude = ['info', 'beschreibung', 'bemerkungen'] 
+    exclude = ['beschreibung', 'bemerkungen'] 
     
     search_fields = []
     
@@ -82,19 +124,14 @@ class BaseModel(models.Model):
     create_field = None
     
     objects = MIZQuerySet.as_manager()
-    
-    def _show(self):
-        rslt = ""
-        for fld_name in self.get_basefields(as_string = True):
-            if getattr(self, fld_name, False):
-                rslt +=  "{} ".format(str(getattr(self, fld_name)))
-        if rslt:
-            return rslt.strip()
-        else:
-            return "---"
             
     def __str__(self):
-        return self._show()
+        rslt = " ".join([
+            str(fld.value_from_object(self))
+            for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude)
+            if fld.value_from_object(self)
+        ])
+        return rslt.strip() or "---"
         
     def qs(self):
         """
@@ -158,26 +195,15 @@ class BaseModel(models.Model):
     
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
-        #TODO: order matters! 
-        #TODO: if cls.search_fields return search_fields
         """
         Returns the model's fields that are used in admin, autocomplete and advanced search form(? really?) searches.
         """
-        rslt = cls.search_fields.copy()
+        if cls.search_fields:
+            return cls.search_fields
+        rslt = []
         for field in cls.get_basefields(as_string=True):
             if field not in rslt:
                 rslt.append(field)
-        return rslt
-        return cls.search_fields
-        rslt = set(list(cls.search_fields) + cls.get_basefields(as_string=True))
-        if foreign:
-            for fld in cls.get_foreignfields():
-                for rel_fld in fld.related_model.get_search_fields():
-                    rslt.add("{}__{}".format(fld.name, rel_fld))
-        if m2m:
-            for fld in cls.get_m2mfields():
-                for rel_fld in fld.related_model.get_search_fields():
-                    rslt.add("{}__{}".format(fld.name, rel_fld))
         return rslt
         
     def get_updateable_fields(self):
@@ -216,10 +242,10 @@ class BaseM2MModel(BaseModel):
     Base class for models that implement an intermediary through table.
     """
     
-    def _show(self):
+    def __str__(self):
         data = []
-        for ff in self.get_foreignfields(True):
-            data.append(str(getattr(self, ff)))
+        for ff in get_model_fields(self._meta.model, base=False, foreign=True, m2m=False):
+            data.append(str(getattr(self, ff.name)))
         return "{} ({})".format(*data)
             
     class Meta(BaseModel.Meta):
@@ -259,7 +285,7 @@ class ComputedNameModel(BaseModel):
     
     name_composing_fields = []
     
-    exclude = ['_name', '_changed_flag', 'info', 'beschreibung', 'bemerkungen']
+    exclude = ['_name', '_changed_flag', 'beschreibung', 'bemerkungen']
     
     name_field = '_name'
     
@@ -279,9 +305,14 @@ class ComputedNameModel(BaseModel):
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         # Include _name in the search_fields
-        #TODO: super() might return a list now
         search_fields = super().get_search_fields(foreign, m2m)
-        search_fields.insert(0,'_name')
+        if '_name' not in search_fields:
+            search_fields.insert(0,'_name')
+        else:
+            i = search_fields.index('_name')
+            if i != 0:
+                search_fields.pop(i)
+                search_fields.insert(0,'_name')
         return search_fields
         
     def update_name(self, force_update = False):
@@ -313,10 +344,6 @@ class ComputedNameModel(BaseModel):
             
             if not self.name_composing_fields:
                 raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
-#            # Pass data to construct a name to get_name. Fetch data from the database if any fields are deferred to avoid calls to refresh_from_db.
-#            instance_data = {k:[v] for k, v in self.__dict__.items() if not k.startswith('_')}
-#            name_data = self.qs().values_dict(* set(self.name_composing_fields).difference(self.__dict__), flatten=True ).get(self.pk)
-#            name_data.update(instance_data)
             name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk)
             current_name = self._get_name(**name_data)
             
@@ -342,3 +369,4 @@ class ComputedNameModel(BaseModel):
                     
     class Meta(BaseModel.Meta):
         abstract = True
+        ordering = ['_name']

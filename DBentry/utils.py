@@ -2,7 +2,7 @@ import re
 import time
 from collections import Iterable
 
-from django.db import transaction
+from django.db import transaction, models
 from django.db.utils import IntegrityError
 
 from django.utils.html import format_html
@@ -17,71 +17,101 @@ from django.contrib.auth import get_permission_codename
 from .constants import M2M_LIST_MAX_LEN
 from .logging import get_logger
 
+def is_protected(objs, using='default'):
+    collector = models.deletion.Collector(using='default')
+    try:
+        collector.collect(objs)
+    except models.ProtectedError as e:
+        return e
+
+
 def merge_records(original, qs, update_data = None, expand_original = True, request = None):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.
     """
+    #TODO: FIXME! Rework the unique_together bit.
+    from .base.models import get_model_relations, get_relation_info_to, get_model_fields
     logger = get_logger(request)
+    
     qs = qs.exclude(pk=original.pk)
-    original_qs = original._meta.model.objects.filter(pk=original.pk)
+    model = original._meta.model
+    original_qs = model.objects.filter(pk=original.pk)
     with transaction.atomic():
         if expand_original:
             if update_data is None:
                 update_data = {} # Avoid mutable default arguments shenanigans
-                updateable_fields = original.get_updateable_fields()
+                updateable_fields = original.get_updateable_fields() #TODO: model functions rework
                 for other_record_valdict in qs.values(*updateable_fields):
                     for k, v in other_record_valdict.items():
-                        if v and k not in update_data:
+                        if v and k not in update_data: #NOTE: why v AND k?
                             update_data[k] = v
-                            
+            
+            # Update the original object with the additional data and log the changes.
             original_qs.update(**update_data)
             logger.log_update(original_qs, update_data)
             
-        for rel in original._meta.related_objects:
-            related_model = rel.field.model
-            val_list = qs.values_list(rel.field.target_field.name)
-            # These are the objects of the related_model that will be deleted after the merge
-            # See if there are any values that the original does not have 
-            related_qs = related_model.objects.filter(**{ rel.field.name + '__in' : val_list })
+        for rel in get_model_relations(model, forward = False):
+            related_model, related_field = get_relation_info_to(model, rel)
+            # All the related objects that are going to be updated to be related to original
+            merger_related = related_model.objects.filter(**{related_field.name + '__in':qs})
+            qs_to_be_updated = merger_related.all()
+            if not qs_to_be_updated.exists():
+                continue
             
-            if rel.many_to_many:
-                m2m_model = rel.through
-                pk_name = m2m_model._meta.pk.name
-                if rel.to == original._meta.model: #m2m_model._meta.get_field(rel.field.m2m_field_name()).model == original._meta.model
-                    # rel points from original to related_model (ManyToManyField is on original)
-                    to_original_field_name = rel.field.m2m_reverse_field_name()
-                    to_related_field_name = rel.field.m2m_field_name()
-                else:
-                    # rel points from related_model to original (ManyToManyField is on related_model)
-                    to_original_field_name = rel.field.m2m_field_name()
-                    to_related_field_name = rel.field.m2m_reverse_field_name()
-                to_update = m2m_model.objects.filter(**{to_related_field_name+'__in':related_qs}).values_list(pk_name, flat=True)
+            # exclude all related objects that the original has already, avoiding IntegrityError due to UNIQUE CONSTRAINT violations
+            for unique_together in related_model._meta.unique_together:
+                #TODO: what about (related_field, some_other_field) unique_together?
+                # Nothing will get excluded from the qs with related_field = original as no objects in the qs are related to original yet.
+                for values in related_model.objects.filter(**{related_field.name:original}).values(*unique_together):
+                    qs_to_be_updated = qs_to_be_updated.exclude(**values)
+
                 
-                for id in to_update:
-                    loop_qs = m2m_model.objects.filter(pk=id)
+            
+            # The ids of the related objects that have been updated. By default this encompasses all objects in qs_to_be_updated.
+            # If an IntegrityError still occurs, this list is reevaluated.
+            updated_ids = list(qs_to_be_updated.values_list('pk', flat = True))
+            try:
+                with transaction.atomic():
+                    qs_to_be_updated.update(**{related_field.name:original})
+            except IntegrityError:
+                # I fucked up. An object that the original already has was left in qs_to_be_updated.
+                # Work through each object in qs_to_be_updated and do the update individually.
+                updated_ids = []
+                for id in qs_to_be_updated.values_list('pk', flat=True):
+                    loop_qs = related_model.objects.filter(pk=id)
                     try:
                         with transaction.atomic():
-                            loop_qs.update(**{to_original_field_name:original})
+                            loop_qs.update(**{related_field.name:original})
                     except IntegrityError:
                         # Ignore UNIQUE CONSTRAINT violations
                         pass
                     else:
-                        logger.log_update(loop_qs, to_original_field_name)
-            else:
-                for i in related_qs:
-                    try:
-                        with transaction.atomic():
-                            getattr(original, rel.get_accessor_name()).add(i)
-                    except IntegrityError:
-                        # Ignore UNIQUE CONSTRAINT violations
-                        pass
-                    else:
-                        logger.log_add(original, rel, i)
-                        
+                        updated_ids.append(id)
+            
+            # Log the changes
+            for id in updated_ids:
+                obj = related_model.objects.get(pk=id)
+                logger.log_addition(original, obj) # log the addition of a new related object for original
+                logger.log_change(obj, related_field.name, original) # log the change of the related object's relation field pointing towards original
+                
+            if rel.on_delete == models.PROTECT:
+                not_updated = merger_related.exclude(pk__in=updated_ids)
+                if not_updated.exists() and not is_protected(not_updated):
+                    # Some related objects could not be updated (probably because the original already has identical related objects)
+                    # delete the troublemakers?
+                    logger.log_delete(not_updated)
+                    not_updated.delete()
+                    
+        
+        protected = is_protected(qs)
+        if protected:
+            # Some objects were protected, abort the merge
+            raise protected
         logger.log_delete(qs)
+        # And delete them
         qs.delete()
     return original_qs.first(), update_data
-    
+
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     """
         Joins string values of iterable 'values' up to a length of 'width'.

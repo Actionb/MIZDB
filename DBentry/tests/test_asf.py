@@ -60,7 +60,7 @@ class TestFactory(MyTestCase):
         # AND later on it will call formfield() --  ManyToOneFields do not have that either!
         model_admin = PersonAdmin(person, miz_site)
         model_admin.advanced_search_form = {
-            'selects' : ['herkunft', 'herkunft__land', 'herkunft__bland', 'musiker']
+            'selects' : ['musiker']
         }
         
         with self.assertNotRaises(AttributeError):
@@ -76,24 +76,25 @@ class TestFactory(MyTestCase):
         # Sneak in a non-relation field into 'selects'.
         model_admin = PersonAdmin(person, miz_site)
         model_admin.advanced_search_form = {
-            'selects' : ['herkunft', 'beschreibung']
+            'selects' : ['orte', 'beschreibung']
         }
         form = advSF_factory(model_admin)()
         self.assertFalse('beschreibung' in form.fields)
-        self.assertTrue('herkunft' in form.fields)
-        
+        self.assertTrue('orte' in form.fields)
+    
+    @translation_override(language = None)
     def test_factory_applies_forward(self):
         # Test that forwarding is applied when possible (here: bland -> land)
         model_admin = PersonAdmin(person, miz_site)
         form = advSF_factory(model_admin)()
-        widget = form.fields['herkunft__bland'].widget
+        widget = form.fields['orte__bland'].widget
         forwarded = widget.forward[0]
-        expected = forward.Field(src='herkunft__land', dst='land')
+        expected = forward.Field(src='orte__land', dst='land')
 
         self.assertIsInstance(forwarded, forward.Field)
-        self.assertEqual(forwarded.src, 'herkunft__land')
+        self.assertEqual(forwarded.src, 'orte__land')
         self.assertEqual(forwarded.dst, 'land')
-        self.assertEqual(widget.attrs.get('data-placeholder', ''), 'Bitte zuerst ein Land auswählen!')
+        self.assertEqual(widget.attrs.get('data-placeholder', ''), 'Please select a Land first.')
     
 class TestFactoryArtikel(FactoryTestCaseMixin,MyTestCase):
     model = artikel
@@ -129,9 +130,9 @@ class TestFactoryAutor(FactoryTestCaseMixin,MyTestCase):
 class TestFactoryBand(FactoryTestCaseMixin,MyTestCase):
     model = band
     model_admin_class = BandAdmin
-    expected_fields = ['musiker', 'genre', 'herkunft__land', 'herkunft']
-    expected_labels = {'musiker':'Mitglied', 'genre':'Genre', 'herkunft__land':'Herkunftsland', 'herkunft':'Herkunftsort'}
-    expected_models = {'musiker': musiker, 'genre': genre, 'herkunft__land': land, 'herkunft': ort}
+    expected_fields = ['musiker', 'genre', 'orte__land', 'orte']
+    expected_labels = {'musiker':'Mitglied', 'genre':'Genre', 'orte__land':'Land', 'orte':'Ort'}
+    expected_models = {'musiker': musiker, 'genre': genre, 'orte__land': land, 'orte': ort}
     
 class TestFactoryMagazin(FactoryTestCaseMixin,MyTestCase):
     model = magazin
@@ -144,18 +145,18 @@ class TestFactoryMusiker(FactoryTestCaseMixin,MyTestCase):
     model = musiker
     model_admin_class = MusikerAdmin
     expected_fields = ['person', 'genre', 'band', 
-                'instrument','person__herkunft__land', 'person__herkunft']
+                'instrument','orte__land', 'orte']
     expected_labels = {'person':'Person', 'genre': 'Genre', 'band': 'Band', 
-                'instrument': 'Instrument','person__herkunft': 'Herkunft', 'person__herkunft__land':'Herkunftsland'}
+                'instrument': 'Instrument','orte': 'Ort', 'orte__land':'Land'}
     expected_models = {'person':person, 'genre':genre, 'band':band,'instrument': instrument,
-        'person__herkunft__land':land, 'person__herkunft':ort}
+        'orte__land':land, 'orte':ort}
             
 class TestFactoryPerson(FactoryTestCaseMixin,MyTestCase):
     model = person
     model_admin_class = PersonAdmin
-    expected_fields = ['herkunft', 'herkunft__land', 'herkunft__bland']
-    expected_labels = {'herkunft':'Herkunft', 'herkunft__land':'Land', 'herkunft__bland':'Bundesland'}
-    expected_models = {'herkunft': ort, 'herkunft__land': land, 'herkunft__bland': bundesland}
+    expected_fields = ['orte', 'orte__land', 'orte__bland']
+    expected_labels = {'orte':'Ort', 'orte__land':'Land', 'orte__bland':'Bundesland'}
+    expected_models = {'orte': ort, 'orte__land': land, 'orte__bland': bundesland}
     
 class TestFactoryVerlag(FactoryTestCaseMixin,MyTestCase):
     model = verlag

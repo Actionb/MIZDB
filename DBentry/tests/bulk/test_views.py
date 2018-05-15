@@ -55,7 +55,7 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
             lagerort        = self.zraum.pk,  
             dublette        = self.dublette.pk, 
             provenienz      = self.prov.pk, 
-            info            = '', 
+            beschreibung    = '', 
             status          = 'unb', 
             _debug          = False, 
         )
@@ -229,7 +229,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
                 self.assertEqual(instance.bestand_set.first().lagerort, self.zraum)
                 self.assertEqual(instance.bestand_set.first().provenienz, self.prov)
             
-            self.assertFalse(instance.info)
+            self.assertFalse(instance.beschreibung)
             self.assertEqual(instance.status, 'unb')
             
             expected_num+=1
@@ -376,6 +376,8 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         continue_data = self.valid_data.copy()
         continue_data['num'] = ''
         continue_data['monat'] = ['1']
+        # A saved monat record is required
+        monat.objects.create(pk=1, monat='Januar', abk='Jan')
         continue_data['jahr'] = ['2018']
         continue_data['jahrgang'] = ''
         continue_data['_preview'] = True
