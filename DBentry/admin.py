@@ -377,7 +377,7 @@ class GenreAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
         
     list_display = ['genre', 'alias_string', 'ober_string', 'sub_string']
-    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias']
+    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias'] # Removed the 'ober' field from search_fields (useful for dal searches, not so much on changelists)
     
     inlines = [AliasInLine]
         
@@ -504,7 +504,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
         
     list_display = ['schlagwort', 'alias_string', 'ober_string', 'sub_string']
-    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias']
+    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias'] # Removed the 'ober' field from search_fields (useful for dal searches, not so much on changelists)
     
     inlines = [AliasInLine]
     

@@ -4,11 +4,13 @@ from .base import *
 
 from DBentry.admin import *
 from DBentry.sites import MIZAdminSite
-from DBentry.forms import FormBase
+
+#TODO: LagerortAdmin (HiddenFromIndex) showed an empty Beschreibung & Bemerkungen fieldset
 
 class AdminTestMethodsMixin(object):
     
     crosslinks_relations = None
+    crosslinks_labels = {}
     crosslinks_object = None
     exclude_expected = None
     fields_expected = None
@@ -20,18 +22,30 @@ class AdminTestMethodsMixin(object):
     def test_get_fields(self):
         expected = self.fields_expected or []
         self.assertEqual(self.model_admin.get_fields(self.get_request()), expected)
-    
-    def test_get_form(self):
-        # form should be a subclass of FormBase, unless another form class was explicitly set on the ModelAdmin
-        form = self.model_admin.get_form(self.get_request())
-        self.assertTrue(issubclass(form, FormBase))
+        
+    def test_get_fieldsets(self):
+        # Test that commentary fields are put into their own little fieldset, unless the ModelAdmin class specifies fieldsets
+        fields = self.model_admin.get_fields(self.get_request())
+        if not self.model_admin_class.fieldsets and ('beschreibung' in fields or 'bemerkungen' in fields):
+            fieldsets  = self.model_admin.get_fieldsets(self.get_request())
+            self.assertIn('Beschreibung & Bemerkungen', [fieldset[0] for fieldset in fieldsets])
+            
+    def test_formfield_for_foreignkey(self):
+        # Test that every ForeignKey formfield gets a fancy select2 widget
+        from DBentry.ac.widgets import MIZModelSelect2
+        for fkey_field in self.model.get_foreignfields():
+            formfield = self.model_admin.formfield_for_foreignkey(fkey_field, self.get_request())
+            self.assertIsInstance(formfield.widget, MIZModelSelect2, msg=fkey_field.name)
         
     def test_get_changelist(self):
         self.assertEqual(self.model_admin.get_changelist(self.get_request()), MIZChangeList)
     
     def test_get_search_fields(self):
-        # search fields are declared with the models, the admin classes only add the exact =id lookup
+        # search fields are largely declared with the models, the admin classes only add the exact =id lookup
         self.assertIn('=id', self.model_admin.get_search_fields())
+        self.model_admin.search_fields = ['id']
+        self.assertIn('=id', self.model_admin.get_search_fields())
+        self.assertNotIn('id', self.model_admin.get_search_fields())
     
     def test_get_search_fields_extra_pk(self):
         # An extra 'pk' search field was added, it should be replaced by an '=id' lookup
@@ -39,6 +53,8 @@ class AdminTestMethodsMixin(object):
         self.model_admin.search_fields = ['pk']
         self.assertEqual(self.model_admin.get_search_fields(), ['=id'])
         
+    @skip("requires a rework of DataFactory.add_relations")
+    # DataFactory.add_relations only adds REQUIRED relations for ManyToOneRels - but those can show up as a crosslink as well!
     def test_add_crosslinks(self):
         if self.crosslinks_object is None and not self.test_data:
             return
@@ -52,14 +68,29 @@ class AdminTestMethodsMixin(object):
                 count = 1
                 if isinstance(rel, (list, tuple)):
                     rel, count = rel
+                    
                 model_name = rel.related_model._meta.model_name
                 fld_name = rel.remote_field.name
                 url = reverse("admin:DBentry_{}_changelist".format(model_name)) \
                                         + "?" + fld_name + "=" + pk
-                label = rel.related_model._meta.verbose_name_plural + " ({})".format(str(count))
+                                        
+                if model_name in self.crosslinks_labels:
+                    label = self.crosslinks_labels[model_name]
+                elif rel.related_name:
+                    from django.utils.text import capfirst
+                    label = " ".join(capfirst(s) for s in rel.related_name.replace('_', ' ').split())
+                else:
+                    label = rel.related_model._meta.verbose_name_plural
+                label += " ({})".format(str(count))
+                
                 self.assertIn({'url':url, 'label':label}, links)
         else:
-            self.assertEqual(len(links), 0)
+            self.assertEqual(len(links), 0, msg=links)
+        
+    def test_media_prop(self):
+        media = self.model_admin.media
+        if self.model_admin.googlebtns:
+            self.assertIn('admin/js/utils.js', media._js)
 
 class TestMIZModelAdmin(AdminTestCase):
     
@@ -123,7 +154,7 @@ class TestMIZModelAdmin(AdminTestCase):
         self.assertTrue('collapse_all' in response.context)
         self.assertTrue('hint' in response.context)
         self.assertTrue('googlebtns' in response.context)
-        self.assertFalse('crosslinks' in response.context) # no crosslinks allowed in add views
+        self.assertFalse('crosslinks' in response.context, msg='no crosslinks allowed in add views')
         
     def test_change_view(self):
         response = self.client.get(self.change_path.format(pk=self.obj1.pk))
@@ -143,9 +174,28 @@ class TestMIZModelAdmin(AdminTestCase):
         self.assertTrue('ausgabe__magazin' in cf_init_data)
         self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
         
-    def test_get_inline_formsets(self):
-        # no test needed
-        pass
+        # assert that the method can handle bad strings
+        request = self.get_request(data={'_changelist_filters':'thisisbad'})
+        with self.assertNotRaises(ValueError):
+            cf_init_data = self.model_admin.get_changeform_initial_data(request)
+            
+    def test_construct_m2m_change_message(self):
+        # auto created
+        obj = datei.band.through.objects.create(
+            band = band.objects.create(band_name='Testband'), 
+            datei = self.obj1
+        )
+        expected = {'name': 'Band', 'object': 'Testband'}
+        self.assertEqual(self.model_admin._construct_m2m_change_message(obj), expected)
+        
+        # not auto created
+        obj = datei.musiker.through.objects.create(
+            musiker = musiker.objects.create(kuenstler_name = 'Testmusiker'), 
+            datei = self.obj1
+        )
+        expected = {'name': 'Musiker', 'object': 'Testmusiker'}
+        self.assertEqual(self.model_admin._construct_m2m_change_message(obj), expected)
+        
 class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = ArtikelAdmin
@@ -154,7 +204,6 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = [
         ('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
-    test_data_count = 1
         
     def test_get_changeform_initial_data_with_changelist_filters(self):
         # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
@@ -391,12 +440,17 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     def test_search_finds_alias(self):
         # check if an object can be found via its alias
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertTrue(self.obj3 in result)
+        self.assertIn(self.obj3, result)
         
     def test_search_for_sub_finds_top(self):
         # check if a search for a subobject finds its topobject
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertTrue(self.obj2 in result)
+        self.assertIn(self.obj2, result)
+        
+    def test_search_for_top_not_finds_sub(self):
+        # check if a search for a topobject does not find its subobjects
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Topobject')
+        self.assertNotIn(self.obj3, result)
         
     def test_alias_string(self):
         self.assertEqual(self.model_admin.alias_string(self.obj3), 'Alias1, Alias2')
@@ -408,6 +462,14 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     def test_sub_string(self):
         self.assertEqual(self.model_admin.sub_string(self.obj2), 'Subobject')
         self.assertEqual(self.model_admin.sub_string(self.obj3), '')
+    
+    def test_get_search_fields(self):
+        # genre/schlagwort admin removes the search field that results in all subobjects of a topobject
+        # being present in a search for topobject.
+        # This would be useful for dal, but not for searches on the changelist
+        super().test_get_search_fields()
+        self.assertNotIn('ober__genre', self.model_admin.get_search_fields())
+        
     
 class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     
@@ -437,12 +499,17 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     def test_search_finds_alias(self):
         # check if an object can be found via its alias
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertTrue(self.obj3 in result)
+        self.assertIn(self.obj3, result)
         
     def test_search_for_sub_finds_top(self):
         # check if a search for a subobject finds its topobject
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertTrue(self.obj2 in result)
+        self.assertIn(self.obj2, result)
+        
+    def test_search_for_top_not_finds_sub(self):
+        # check if a search for a topobject does not find its subobjects
+        result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Topobject')
+        self.assertNotIn(self.obj3, result)
         
     def test_alias_string(self):
         self.assertEqual(self.model_admin.alias_string(self.obj3), 'Alias1, Alias2')
@@ -454,6 +521,13 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     def test_sub_string(self):
         self.assertEqual(self.model_admin.sub_string(self.obj2), 'Subobject')
         self.assertEqual(self.model_admin.sub_string(self.obj3), '')
+    
+    def test_get_search_fields(self):
+        # genre/schlagwort admin removes the search field that results in all subobjects of a topobject
+        # being present in a search for topobject.
+        # This would be useful for dal, but not for searches on the changelist
+        super().test_get_search_fields()
+        self.assertNotIn('ober__schlagwort', self.model_admin.get_search_fields())
     
 class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     
@@ -655,8 +729,9 @@ class TestAdminSite(UserTestCase):
         
         # check if there are two 'categories' (fake apps) for app DBentry (app_list was extended by two new app_dicts)
         app_names = [d.get('name','') for d in app_list]
-        self.assertTrue('Hauptkategorien' in app_names)
-        self.assertTrue('Nebenkategorien' in app_names)
+        self.assertTrue('Archivgut' in app_names)
+        self.assertTrue('Stammdaten' in app_names)
+        self.assertTrue('Sonstige' in app_names)
         
     def test_index_admintools(self):
         from DBentry.bulk.views import BulkAusgabe

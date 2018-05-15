@@ -14,26 +14,6 @@ class TestFormBase(ModelFormTestCase):
         cls.obj1 = land.objects.create(land_name='Deutschland', code='DE')
         super().setUpTestData()
         
-    def test_init(self):
-        # initial in kwargs
-        kwargs = {'initial' : {'land_name':'Dschland'}}
-        form = self.get_form(**kwargs)
-        self.assertEqual(form.initial.get('land_name'),'Dschland')
-       
-    def test_init_partial_correct_fieldpath(self):
-        # test populating initial with not quite correct field names 
-        # as field path
-        kwargs = {'initial' : {'xyz__land_name':'Dschland'}}
-        form = self.get_form(**kwargs)
-        self.assertEqual(form.initial.get('land_name'),'Dschland')
-        
-    def test_init_partial_correct_fieldname(self):
-        # test populating initial with not quite correct field names 
-        # as partial match
-        kwargs = {'initial' : {'abcland_namexyz':'Dschland'}}
-        form = self.get_form(**kwargs)
-        self.assertEqual(form.initial.get('land_name'),'Dschland')
-
     def test_validate_unique(self):
         kwargs = {'instance':self.obj1, 'data' : dict(land_name=self.obj1.land_name, code=self.obj1.code)}
         form = self.get_form(**kwargs)
