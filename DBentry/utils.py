@@ -2,7 +2,7 @@ import re
 import time
 from collections import Iterable
 
-from django.db import transaction
+from django.db import transaction, models
 from django.db.utils import IntegrityError
 
 from django.utils.html import format_html
@@ -16,6 +16,13 @@ from django.contrib.auth import get_permission_codename
 
 from .constants import M2M_LIST_MAX_LEN
 from .logging import get_logger
+
+def is_protected(objs, using='default'):
+    collector = models.deletion.Collector(using='default')
+    try:
+        collector.collect(objs)
+    except models.ProtectedError as e:
+        return e
 
 def merge_records(original, qs, update_data = None, expand_original = True, request = None):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
