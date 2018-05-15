@@ -35,7 +35,7 @@ class StdNumField(models.CharField):
     
 
 class ISBNField(StdNumField):
-    description = gettext_lazy('Stuff and things')
+    description = 'Cleaned and validated ISSN string: min length 10, max length 17 (13 digits + dashes/spaces).'
     
     min_length = 10 # ISBN-10
     max_length = 17 # 13 digits of ISBN-13 + four dashes/spaces
@@ -45,7 +45,7 @@ class ISBNField(StdNumField):
 
 class ISSNField(StdNumField):
     
-    description = gettext_lazy('Cleaned and validated ISSN string of length 8.')
+    description = 'Cleaned and validated ISSN string of length 8.'
     
     min_length = 7 # ISSN without dash/space and without the check digit: 1234567
     max_length = 9 # ISSN with dash/space and check digit: 1234-5679

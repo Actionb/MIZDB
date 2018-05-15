@@ -1,6 +1,5 @@
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.urls import reverse
-from django.utils.translation import gettext_lazy
 
 from dal import autocomplete, forward
 
@@ -94,7 +93,6 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             )
         return context
         
-placeholder_template = gettext_lazy("Please select a %(verbose_name)s first.")
     
 def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='id', 
         can_add_related=True, can_change_related=True, can_delete_related=True, **kwargs):
@@ -147,6 +145,11 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 attrs = widget_opts['attrs']
                 
             if 'data-placeholder' not in attrs:
+                #NOTE: cannot figure out how to translate the placeholder text
+                # the widget is created when django initializes, not when the view is called
+                # apparently that is too early for translations...
+                #NOTE: (verbose_name) == forward field's name?
+                placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
                 # forward with no data-placeholder-text
                 forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.capitalize()
                 attrs['data-placeholder'] = placeholder_template % {'verbose_name':forwarded_verbose}
