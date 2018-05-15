@@ -93,6 +93,20 @@ class MIZModelAdmin(admin.ModelAdmin):
             for i in indexes:
                 grouped_fields.pop(i)
         return grouped_fields
+        
+    def get_fieldsets(self, request, obj=None):
+        if self.fieldsets:
+            return self.fieldsets
+        fields = self.get_fields(request, obj).copy()
+        fieldsets = [(None, {'fields': fields})]
+        bb_fields = []
+        if 'beschreibung' in fields:
+            bb_fields.append(fields.pop(fields.index('beschreibung')))
+        if 'bemerkungen' in fields:
+            bb_fields.append(fields.pop(fields.index('bemerkungen')))
+        if bb_fields:
+            fieldsets.append(('Beschreibung & Bemerkungen', {'fields' : bb_fields, 'classes' : ['collapse', 'collapsed']}))
+        return fieldsets
     
     def get_search_fields(self, request=None):
         search_fields = self.search_fields or list(self.model.get_search_fields())
