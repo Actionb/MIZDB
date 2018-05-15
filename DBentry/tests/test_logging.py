@@ -31,7 +31,7 @@ class TestLoggingMixin(ViewTestCase):
         logs = view.log_add(self.ort, rel, self.obj2)
         self.assertEqual(logs[0].get_change_message(), 'Band „Testband“ hinzugefügt.')
         self.assertEqual(logs[0].action_flag, ADDITION)
-        self.assertEqual(logs[1].get_change_message(), 'Herkunft geändert.')
+        self.assertEqual(logs[1].get_change_message(), 'Orte geändert.')
         self.assertEqual(logs[1].action_flag, CHANGE)
         
     def test_log_add_change(self):
@@ -39,7 +39,7 @@ class TestLoggingMixin(ViewTestCase):
         
         view = self.view(self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
-        self.assertEqual(logs[1].get_change_message(), 'Herkunft geändert.')
+        self.assertEqual(logs[1].get_change_message(), 'Orte geändert.')
         self.assertEqual(logs[1].action_flag, CHANGE)
         
     def test_log_addition(self):
@@ -97,10 +97,9 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_update(self):
         view = self.view(self.get_request())
         qs = self.model.objects.all()
-        update_data = dict(beschreibung='No update.', herkunft=self.ort)
-        qs.update(**update_data)
+        update_data = dict(beschreibung='No update.', ort=self.ort)
         logs = view.log_update(qs, update_data)
-        expected = 'Beschreibung und herkunft geändert.' 
+        expected = 'Beschreibung und ort geändert.' 
         for l in logs:
             self.assertEqual(l.get_change_message(), expected)
             self.assertEqual(l.action_flag, CHANGE)

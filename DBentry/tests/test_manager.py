@@ -143,8 +143,6 @@ class TestMIZQuerySetAusgabe(DataTestCase):
         expected = {self.obj6.pk :  {
             'sonderausgabe': [False], 
             'e_datum': [datetime.date(2000, 1, 1)], 
-            'ausgabe_jahr__jahr': [2000], 
-            'ausgabe_monat__monat__abk': ['Jan']
         }}
         self.assertDictsEqual(self.qs_obj6.values_dict(*self.fields), expected)
         

@@ -163,6 +163,42 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
         cf_init_data = self.model_admin.get_changeform_initial_data(request)
         self.assertEqual(cf_init_data.get('magazin'), '326')
 
+    @classmethod
+    def setUpTestData(cls):
+        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
+        cls.ausg = ausgabe.objects.create(magazin=cls.mag)
+        cls.obj1 = artikel.objects.create(
+            ausgabe = cls.ausg, seite = 1, schlagzeile = 'Test!'
+        )
+        
+        s1 = schlagwort.objects.create(schlagwort = 'Testschlagwort1')
+        s2 = schlagwort.objects.create(schlagwort = 'Testschlagwort2')
+        artikel.schlagwort.through.objects.create(schlagwort = s1, artikel = cls.obj1)
+        artikel.schlagwort.through.objects.create(schlagwort = s2, artikel = cls.obj1)
+        
+        m = musiker.objects.create(kuenstler_name='Alice Tester')
+        b = band.objects.create(band_name='Testband')
+        artikel.musiker.through.objects.create(musiker=m, artikel=cls.obj1)
+        artikel.band.through.objects.create(band=b, artikel=cls.obj1)
+        
+        cls.test_data = [cls.obj1]
+        
+        super().setUpTestData()
+
+    def test_zusammenfassung_string(self):
+        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '')
+        self.obj1.zusammenfassung='Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), 'Dies ist eine Testzusammenfassung, die nicht [...]')
+
+    def test_artikel_magazin(self):
+        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag)
+
+    def test_schlagwort_string(self):
+        self.assertEqual(self.model_admin.schlagwort_string(self.obj1), 'Testschlagwort1, Testschlagwort2')
+
+    def test_kuenstler_string(self):
+        self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
+
 class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = AusgabenAdmin
@@ -251,7 +287,8 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = PersonAdmin
     model = person
-    fields_expected = ['vorname', 'nachname', 'herkunft', 'beschreibung']
+    exclude_expected = ['orte']
+    fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     
     crosslinks_relations = [person.autor_set.rel, person.musiker_set.rel]
     
@@ -279,10 +316,14 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = MusikerAdmin
     model = musiker
     test_data_count = 1
-    exclude_expected = ['genre', 'instrument']
-    fields_expected = ['kuenstler_name', ('person', 'herkunft_string'), 'beschreibung']
+    exclude_expected = ['genre', 'instrument', 'orte']
+    fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     
-    crosslinks_relations = [artikel.musiker.rel, audio.musiker.rel, video.musiker.rel, datei.musiker.rel, band.musiker.rel]
+    crosslinks_relations = [
+        dokument.musiker.rel, band.musiker.rel, artikel.musiker.rel, video.musiker.rel, bildmaterial.musiker.rel, 
+        technik.musiker.rel, veranstaltung.musiker.rel, memorabilien.musiker.rel, buch.musiker.rel, 
+        datei.musiker.rel, audio.musiker.rel, 
+    ]
     
     @classmethod
     def setUpTestData(cls):
@@ -315,13 +356,12 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
     def test_genre_string(self):
         self.assertEqual(self.model_admin.genre_string(self.obj2), 'Testgenre1, Testgenre2')
         
-    def test_herkunft_string(self):
-        self.assertEqual(self.model_admin.herkunft_string(self.obj2), '---')
+    def test_orte_string(self):
+        self.assertEqual(self.model_admin.orte_string(self.obj2), '')
         o = ort.objects.create(stadt='Dortmund', land=land.objects.create(land_name='Testland', code='TE'))
-        p = person.objects.create(vorname='Alice', nachname='Tester', herkunft=o)
-        self.qs_obj2.update(person=p)
+        self.obj2.orte.add(o)
         self.obj2.refresh_from_db()
-        self.assertEqual(self.model_admin.herkunft_string(self.obj2), 'Dortmund, TE')
+        self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, TE')
         
 class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     
@@ -365,6 +405,9 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.ober_string(self.obj2), '')
         self.assertEqual(self.model_admin.ober_string(self.obj3), 'Topobject')
         
+    def test_sub_string(self):
+        self.assertEqual(self.model_admin.sub_string(self.obj2), 'Subobject')
+        self.assertEqual(self.model_admin.sub_string(self.obj3), '')
     
 class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     
@@ -405,14 +448,19 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.alias_string(self.obj3), 'Alias1, Alias2')
         
     def test_ober_string(self):
+        self.assertEqual(self.model_admin.ober_string(self.obj2), '')
         self.assertEqual(self.model_admin.ober_string(self.obj3), 'Topobject')
+        
+    def test_sub_string(self):
+        self.assertEqual(self.model_admin.sub_string(self.obj2), 'Subobject')
+        self.assertEqual(self.model_admin.sub_string(self.obj3), '')
     
 class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = BandAdmin
     model = band
-    exclude_expected = ['genre', 'musiker']
-    fields_expected = ['band_name', 'beschreibung', 'bemerkungen', 'herkunft']
+    exclude_expected = ['genre', 'musiker', 'orte']
+    fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
     
     @classmethod
     def setUpTestData(cls):
@@ -470,6 +518,12 @@ class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
     model = ort
     fields_expected = ['stadt', 'land', 'bland']
     test_data_count = 1
+    crosslinks_relations = [
+        datei.ort.rel, buch.ort.rel, audio.ort.rel, ort.spielort_set.rel, ort.verlag_set.rel, ort.person_set.rel, 
+        bildmaterial.ort.rel, dokument.ort.rel, artikel.ort.rel, ort.magazin_set.rel, technik.ort.rel, 
+        ort.band_set.rel, memorabilien.ort.rel, 
+    ]
+    
         
 class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
     
@@ -477,6 +531,9 @@ class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
     model = land
     fields_expected = ['land_name', 'code']
     test_data_count = 1
+    crosslinks_relations = [
+        land.ort_set.rel, land.bundesland_set.rel, 
+    ]
         
 class TestAdminBundesland(AdminTestMethodsMixin, AdminTestCase):
     
@@ -484,6 +541,9 @@ class TestAdminBundesland(AdminTestMethodsMixin, AdminTestCase):
     model = bundesland
     fields_expected = ['bland_name', 'code', 'land']
     test_data_count = 1
+    crosslinks_relations = [
+        bundesland.kreis_set.rel, 
+    ]
         
 class TestAdminInstrument(AdminTestMethodsMixin, AdminTestCase):
     
@@ -491,6 +551,9 @@ class TestAdminInstrument(AdminTestMethodsMixin, AdminTestCase):
     model = instrument
     fields_expected = ['instrument', 'kuerzel']
     test_data_count = 1
+    crosslinks_relations = [
+        instrument.musiker_set.rel, 
+    ]
     
 class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     
@@ -501,7 +564,29 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
         'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'sender'
     ]
-    test_data_count = 1
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = audio.objects.create(titel='Testaudio')
+        cls.test_data = [cls.obj1]
+
+        super().setUpTestData()
+
+    def test_kuenstler_string(self):
+        m = musiker.objects.create(kuenstler_name='Alice Tester')
+        self.model.musiker.through.objects.create(musiker=m, audio=self.obj1)
+        b = band.objects.create(band_name='Testband')
+        self.model.band.through.objects.create(band=b, audio=self.obj1)
+        self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
+
+    def test_formate_string(self):
+        ft = FormatTyp.objects.create(typ='TestTyp1')
+        Format.objects.create(format_typ=ft, audio=self.obj1)
+        ft = FormatTyp.objects.create(typ='TestTyp2')
+        Format.objects.create(format_typ=ft, audio=self.obj1)
+        # format_name is a non-editable field (compiled of the Format's properties), its use is mainly for autocomplete searches
+        # any format_name set manually should be overriden by Format.get_name()
+        self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
     
 class TestAdminSpielort(AdminTestMethodsMixin, AdminTestCase):
     

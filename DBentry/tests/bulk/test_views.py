@@ -376,6 +376,8 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         continue_data = self.valid_data.copy()
         continue_data['num'] = ''
         continue_data['monat'] = ['1']
+        # A saved monat record is required
+        monat.objects.create(pk=1, monat='Januar', abk='Jan')
         continue_data['jahr'] = ['2018']
         continue_data['jahrgang'] = ''
         continue_data['_preview'] = True

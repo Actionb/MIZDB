@@ -1,5 +1,43 @@
 from .base import *
 
+class TestModelFunctions(TestCase):
+    
+    def test_get_model_relations(self):
+        # model video has the four kinds of relations:
+        # FK from bestand to video
+        # FK from video to sender
+        # ManyToMany auto created band <-> video
+        # ManyToMany intermediary musiker <-> video
+        model = video
+        rev_fk = bestand._meta.get_field('video').remote_field
+        fk = video._meta.get_field('sender').remote_field
+        m2m_inter = video.musiker.rel
+        m2m_auto = video.band.rel
+        
+        rels = get_model_relations(video)
+        self.assertIn(rev_fk, rels)
+        self.assertIn(fk, rels)
+        self.assertIn(m2m_inter, rels)
+        self.assertIn(m2m_auto, rels)
+        
+        rels = get_model_relations(video, reverse = False)
+        self.assertNotIn(rev_fk, rels)
+        self.assertIn(fk, rels)
+        self.assertIn(m2m_inter, rels)
+        self.assertIn(m2m_auto, rels)
+        
+        rels = get_model_relations(video, forward = False)
+        self.assertIn(rev_fk, rels)
+        self.assertNotIn(fk, rels)
+        self.assertIn(m2m_inter, rels)
+        self.assertIn(m2m_auto, rels)
+        
+        rels = get_model_relations(video, forward = False, reverse = False)
+        self.assertNotIn(rev_fk, rels)
+        self.assertNotIn(fk, rels)
+        self.assertIn(m2m_inter, rels)
+        self.assertIn(m2m_auto, rels)
+
 class TestModelBase(DataTestCase):
 
     model = artikel
@@ -185,37 +223,15 @@ class TestModelArtikel(DataTestCase):
     def setUpTestData(cls):
         cls.obj1 = DataFactory().create_obj(artikel)
         cls.test_data = [cls.obj1]
+        
+        super().setUpTestData()
 
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), str(self.obj1.schlagzeile))
-        self.qs_obj1.update(schlagzeile='')
-        self.assertEqual(self.qs_obj1.first().__str__(), 'Keine Schlagzeile gegeben!')
-        self.qs_obj1.update(zusammenfassung='Dies ist eine Testzusammenfassung, die nicht besonders lang ist.')
-        self.assertEqual(self.qs_obj1.first().__str__(), 'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.')
-
-    def test_zusammenfassung_string(self):
-        self.assertEqual(self.qs_obj1.first().zusammenfassung_string(), '')
-        self.qs_obj1.update(zusammenfassung='Dies ist eine Testzusammenfassung, die nicht besonders lang ist.')
-        self.assertEqual(self.qs_obj1.first().zusammenfassung_string(), 'Dies ist eine Testzusammenfassung, die nicht [...]')
-
-    def test_artikel_magazin(self):
-        m = magazin.objects.create(magazin_name='Testmagazin')
-        self.obj1.ausgabe.magazin = m
-        self.assertEqual(self.obj1.artikel_magazin(), m)
-
-    def test_schlagwort_string(self):
-        s1 = schlagwort.objects.create(schlagwort = 'Testschlagwort1')
-        self.model.schlagwort.through.objects.create(schlagwort = s1, artikel = self.obj1)
-        s2 = schlagwort.objects.create(schlagwort = 'Testschlagwort2')
-        self.model.schlagwort.through.objects.create(schlagwort = s2, artikel = self.obj1)
-        self.assertEqual(self.qs_obj1.first().schlagwort_string(), 'Testschlagwort1, Testschlagwort2')
-
-    def test_kuenstler_string(self):
-        m = musiker.objects.create(kuenstler_name='Alice Tester')
-        self.model.musiker.through.objects.create(musiker=m, artikel=self.obj1)
-        b = band.objects.create(band_name='Testband')
-        self.model.band.through.objects.create(band=b, artikel=self.obj1)
-        self.assertEqual(self.qs_obj1.first().kuenstler_string(), 'Testband, Alice Tester')
+        self.obj1.schlagzeile=''
+        self.assertEqual(self.obj1.__str__(), 'Keine Schlagzeile gegeben!')
+        self.obj1.zusammenfassung='Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+        self.assertEqual(self.obj1.__str__(), 'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.')
 
 class TestModelAudio(DataTestCase):
 
@@ -237,22 +253,6 @@ class TestModelAudio(DataTestCase):
         self.obj1.release_id = 1
         self.obj1.save()
         self.assertEqual(self.obj1.discogs_url, "http://www.discogs.com/release/1")
-
-    def test_kuenstler_string(self):
-        m = musiker.objects.create(kuenstler_name='Alice Tester')
-        self.model.musiker.through.objects.create(musiker=m, audio=self.obj1)
-        b = band.objects.create(band_name='Testband')
-        self.model.band.through.objects.create(band=b, audio=self.obj1)
-        self.assertEqual(self.qs_obj1.first().kuenstler_string(), 'Testband, Alice Tester')
-
-    def test_formate_string(self):
-        ft = FormatTyp.objects.create(typ='TestTyp1')
-        Format.objects.create(format_name='Testformat1', format_typ=ft, audio=self.obj1)
-        ft = FormatTyp.objects.create(typ='TestTyp2')
-        Format.objects.create(format_name='Testformat2', format_typ=ft, audio=self.obj1)
-        # format_name is a non-editable field (compiled of the Format's properties), its use is mainly for autocomplete searches
-        # any format_name set manually should be overriden by Format.get_name()
-        self.assertEqual(self.qs_obj1.first().formate_string(), 'TestTyp1, TestTyp2')
         
 class TestModelAusgabe(DataTestCase):
 
@@ -597,6 +597,11 @@ class TestModelLagerort(DataTestCase):
         expected = 'Testregal (Testort)'
         self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + regal')
         
+        # ort + regal + fach
+        name_data.update({'fach':'12'})
+        expected = "Testregal-12 (Testort)"
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + regal + fach')
+        
         # ort + raum
         name_data = {'ort':'Testort', 'raum':'Testraum'}
         expected = 'Testraum (Testort)'
@@ -606,6 +611,13 @@ class TestModelLagerort(DataTestCase):
         name_data.update({'regal':'Testregal'})
         expected = 'Testraum-Testregal (Testort)'
         self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + raum + regal')
+        
+        # ort + raum + regal + fach
+        name_data.update({'fach':'12'})
+        expected = "Testraum-Testregal-12 (Testort)"
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + raum + regal + fach')
+        
+        
         
 class TestModelLand(DataTestCase):
     
