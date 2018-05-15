@@ -122,7 +122,7 @@ class BulkFormAusgabe(BulkForm):
     
     jahr = BulkJahrField(required = True, label = 'Jahr')
     num = BulkField(label = 'Nummer')
-    monat = BulkField(label = 'Monate')
+    monat = BulkField(label = 'Monate') #FIXME: monat > 13
     lnum = BulkField(label = 'Laufende Nummer')
     
     lo = lagerort

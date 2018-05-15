@@ -3,6 +3,7 @@ from django.utils.encoding import force_text
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 
 #TODO: save user name instead of user pk
+#TODO: log_addition, log_change and log_deletion should fail silently, not the mixin methods?
 
 def log_addition(request, object, message='[{"added": {}}]'):
     """

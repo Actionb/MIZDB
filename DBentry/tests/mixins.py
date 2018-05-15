@@ -1,5 +1,5 @@
 
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.admin.models import LogEntry, ContentType, ADDITION, CHANGE, DELETION
 from django.utils.encoding import force_text
 
 from .data import DataFactory, ausgabe_data_simple, band_data
@@ -147,21 +147,22 @@ class LoggingTestMixin(object):
                 unlogged.append((obj, filter_params))
                 continue
             if qs.count()>1:
-                msg = "Could not verify uniqueness of LogEntry for object {object}.".format(object)
+                msg = "Could not verify uniqueness of LogEntry for object {object}.".format(object=object)
                 msg += "\nNumber of matching logs: {count}.".format(count = qs.count())
                 msg += "\nFilter parameters used: "
-                msg += "\n{}".format(sorted(filter_params.items()))
+                msg += "\n{}; {}".format(sorted(filter_params.items()), ContentType.objects.get_for_id(filter_params['content_type__pk']).model)
                 msg += "\nLogEntry values: "
                 for l in LogEntry.objects.order_by('pk').filter(**filter_params).values('pk', *list(filter_params)):
                     pk = l.pop('pk')
-                    msg += "\n{}: {}".format(str(pk), sorted(l.items()))
+                    ct_model = ContentType.objects.get_for_id(l['content_type__pk']).model
+                    msg += "\n{}: {}; {}".format(str(pk), sorted(l.items()), ct_model)
                 msg += "\nchange_messages: "
                 for l in LogEntry.objects.order_by('pk').filter(**filter_params):
                     msg += "\n{}: {}".format(str(l.pk), l.get_change_message())
                 msg += "\nCheck your test method or state of LogEntry table."
                 raise AssertionError(msg) 
         if unlogged:
-            msg = "LogEntry for {op} missing on objects: {unlogged_objects} ({model_name}).".format(
+            msg = "LogEntry for {op} missing on objects: {unlogged_objects}, model: ({model_name}).".format(
                 op = ['ADDITION', 'CHANGE', 'DELETION'][action_flag-1], 
                 unlogged_objects = [i[0] for i in unlogged], 
                 model_name = model._meta.model_name, 
@@ -169,11 +170,12 @@ class LoggingTestMixin(object):
             
             for obj, filter_params in unlogged:
                 msg += "\nFilter parameters used: "
-                msg += "\n{}".format(sorted(filter_params.items()))
+                msg += "\n{}; {}".format(sorted(filter_params.items()), ContentType.objects.get_for_id(filter_params['content_type__pk']).model)
                 msg += "\nLogEntry values: "
                 for l in LogEntry.objects.order_by('pk').values('pk', *list(filter_params)):
                     pk = l.pop('pk')
-                    msg += "\n{}: {}".format(str(pk), sorted(l.items()))
+                    ct_model = ContentType.objects.get_for_id(l['content_type__pk']).model
+                    msg += "\n{}: {}; {}".format(str(pk), sorted(l.items()), ct_model)
                 msg += "\nchange_messages: "
                 for l in LogEntry.objects.order_by('pk'):
                     msg += "\n{}: {}".format(str(l.pk), l.get_change_message())
