@@ -18,6 +18,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     googlebtns = []                         # Fields in this list get a little button that redirect to a google search page
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
+    crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
     superuser_only = False                  # If true, only a superuser can interact with this ModelAdmin
     actions = [merge_records]
     
@@ -131,11 +132,13 @@ class MIZModelAdmin(admin.ModelAdmin):
             search_fields.append("=" + pk_name)
         return search_fields
         
-    def add_crosslinks(self, object_id):
+    def add_crosslinks(self, object_id, labels=None):
+        #TODO: for audio this shows related ausgaben as crosslinks AND in an inline
         """
         Provides the template with data to create links to related objects.
         """
         new_extra = {'crosslinks':[]}
+        labels = labels or []
         
         inlmdls = {i.model for i in self.inlines}
         for rel in (r for r in self.model.get_reverse_relations() if r.related_model not in inlmdls):
@@ -150,7 +153,13 @@ class MIZModelAdmin(admin.ModelAdmin):
                                 + "?" + fld_name + "=" + str(object_id)
             except NoReverseMatch:
                 continue
-            label = opts.verbose_name_plural + " ({})".format(str(count))
+            if opts.model_name in labels:
+                label = labels[opts.model_name]
+            elif rel.related_name:
+                label = " ".join(capfirst(s) for s in rel.related_name.replace('_', ' ').split())
+            else:
+                label = opts.verbose_name_plural
+            label += " ({})".format(str(count))
             new_extra['crosslinks'].append( dict(url=url, label=label) )
         return new_extra
         
@@ -164,7 +173,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     def add_extra_context(self, extra_context = None, object_id = None):
         new_extra = extra_context or {}
         if object_id:
-            new_extra.update(self.add_crosslinks(object_id))
+            new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
         new_extra['hint'] = self.hint
         new_extra['googlebtns'] = self.googlebtns
