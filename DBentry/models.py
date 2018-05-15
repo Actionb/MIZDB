@@ -3,7 +3,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.utils import IntegrityError
 from django.utils.functional import cached_property
 
-from .base.models import BaseModel, ComputedNameModel, BaseAliasModel, get_model_fields, get_model_relations
+from .base.models import (
+    BaseModel, ComputedNameModel, BaseAliasModel, get_model_fields, get_model_relations, get_related_set, 
+    get_relation_info_to, 
+)
 from .fields import ISSNField
 from .constants import *
 from .m2m import *

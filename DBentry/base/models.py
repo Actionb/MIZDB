@@ -26,15 +26,14 @@ def get_model_relations(model, forward = True, reverse = True):
         for f in model._meta.get_fields() 
         if f.many_to_many
     )
-    rslt = set()
-    for f in model._meta.get_fields():
-        if not f.is_relation:
-            continue
+    
+    relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
+    # ManyToManyRels can always be regarded as symmetrical (both 'forward' and 'reverse') and should always be included 
+    rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
+    for f in relation_fields:
         if f.concrete:
-            if not forward:
-                # We do not want any relation fields that are declared on this model.
-                continue
-            rslt.add(f.remote_field) # add the actual RELATION, not the ForeignKey/ManyToMany field
+            if forward:
+                rslt.add(f.remote_field) # add the actual RELATION, not the ForeignKey/ManyToMany field
         else:
             if not reverse:
                 # We do not want any reverse relations. 
@@ -47,7 +46,50 @@ def get_model_relations(model, forward = True, reverse = True):
                 continue
             rslt.add(f)
     return list(rslt)
-
+    
+def get_related_set(instance, rel):
+    model_class = instance._meta.model
+    if rel.many_to_many:
+        if rel.field.model == model_class:
+            attr = rel.field.name
+            #intermediary_field_name = rel.field.m2m_field_name()
+        else:
+            attr = rel.get_accessor_name()
+            #intermediary_field_name = rel.feld.m2m_reverse_field_name()
+        descriptor = getattr(model_class, attr)
+        #return rel.through.objects.filter(**{intermediary_field_name:instance})
+    else:
+        descriptor = getattr(rel.model, rel.get_accessor_name())
+    if isinstance(instance, model_class):
+        return descriptor.related_manager_cls(instance).all()
+    else:
+        return descriptor
+        
+def get_relation_info_to(model, rel):
+    """
+    Returns:
+    - the model that holds the related objects
+        (rel.through if many_to_many else rel.related_model)
+    - the field that realizes relation 'rel' towards direction 'model' 
+        (the field of the m2m table table pointing to model if many_to_many else the ForeignKey field i.e. rel.field)
+    """
+    if rel.many_to_many:
+        related_model = rel.through
+        m2m_field = rel.field
+        if m2m_field.model == model:
+            # The ManyToManyField is with model:
+            # the source accessor/field pointing back to model on the m2m table can be retrieved via m2m_field_name()
+            related_field = related_model._meta.get_field(m2m_field.m2m_field_name())
+        else:
+            # The ManyToManyField is with the *other* model:
+            # the related accessor/field pointing to model on the m2m table can be retrieved via m2m_reverse_field_name()
+            related_field = related_model._meta.get_field(m2m_field.m2m_reverse_field_name())
+    else:
+        related_model = rel.related_model
+        related_field = rel.field
+    return related_model, related_field
+    
+    
 class BaseModel(models.Model):
     #TODO: exclude attribute does not do what the description says, it excludes fields from the 'field collection' methods as well!
     """
