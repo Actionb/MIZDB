@@ -228,7 +228,6 @@ class ArtikelAdmin(MIZModelAdmin):
     
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
     fields = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen']
-    #flds_to_group = [('magazin', 'ausgabe'),('seite', 'seitenumfang'),]
     save_on_top = True
                                 
     advanced_search_form = {
@@ -250,6 +249,16 @@ class ArtikelAdmin(MIZModelAdmin):
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
         
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        if 'magazin' in initial:
+            return initial
+        elif 'ausgabe__magazin' in initial:
+            initial['magazin'] = initial['ausgabe__magazin']
+        elif 'ausgabe' in initial:
+            initial['magazin'] = ausgabe.objects.get(pk=initial['ausgabe']).magazin
+        return initial
+    
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
             return ''
