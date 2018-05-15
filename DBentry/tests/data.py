@@ -36,7 +36,7 @@ class DataFactory(object):
 #'DecimalField': 'decimal', 
 #'DateTimeField': 'datetime'
 #}
-    exclude = [Favoriten]
+    exclude = [Favoriten.fav_genres.through, Favoriten.fav_schl.through]
 
     defaults = {
         'CharField' : 'Test', 
@@ -53,6 +53,8 @@ class DataFactory(object):
         'TimeField' : '20:20', 
         
     }
+    
+    _created = []
     
     def get_value(self, fld):
         value = None
@@ -76,20 +78,26 @@ class DataFactory(object):
     
     def get_obj_dict(self, model):
         obj_dict = {}
-        for fld in model.get_required_fields():
+        if model._meta.auto_created:
+            required_fields = [f for f in model._meta.get_fields() if f.is_relation]
+        else:
+            required_fields = model.get_required_fields()
+        for fld in required_fields:
             if fld.is_relation:
-                rel_attr_name = '_' + fld.related_model._meta.model_name
-                req_obj = getattr(self, rel_attr_name, None)
-                if req_obj is None or req_obj.pk is None:
-                    req_obj = self.create_obj(fld.related_model)
+                if fld.related_model == model:
+                    # a self relation
+                    req_obj = self.create_obj(fld.related_model, add_to_cache = False)
+                else:
+                    rel_attr_name = '_' + fld.related_model._meta.model_name
+                    req_obj = getattr(self, rel_attr_name, None)
+                    if req_obj is None or req_obj.pk is None:
+                        req_obj = self.create_obj(fld.related_model)
             else:
                 req_obj = self.get_value(fld)
             obj_dict[fld.name] = req_obj
         return obj_dict
-    
-    _created = []
         
-    def create_obj(self, model, create_new = False):
+    def create_obj(self, model, create_new = False, add_to_cache = True):
         #TODO: a cached instance of a model object may point to  an already deleted DB object
         #TODO: this doesn't respect field limitations like max_length!!
         attr_name = '_' + model._meta.model_name
@@ -97,25 +105,9 @@ class DataFactory(object):
 #        if not create_new and not obj is None and obj.pk or :
 #            return obj
         if create_new or obj is None or obj.pk is None:
-            if not hasattr(model, 'get_required_fields'):
-                # Auto-created through table (e.g. Favoriten)
-                return None
-#            obj_dict = {}
-#            for fld in model.get_required_fields():
-#                if fld.is_relation:
-#                    rel_attr_name = '_' + fld.related_model._meta.model_name
-#                    req_obj = getattr(self, rel_attr_name, None)
-#                    if req_obj is None or req_obj.pk is None:
-#                        req_obj = self.create_obj(fld.related_model)
-#                else:
-#                    req_obj = self.get_value(fld)
-##                    if fld.has_default() and fld.get_default() is not None:
-##                        req_obj = fld.get_default()
-##                    elif fld.get_internal_type() in self.defaults:
-##                        req_obj = self.defaults[fld.get_internal_type()]
-##                    else:
-##                        raise Exception("WARNING: no default for field-type:", fld.get_internal_type())
-#                obj_dict[fld.name] = req_obj
+#            if not hasattr(model, 'get_required_fields'):
+#                # Auto-created through table (e.g. Favoriten)
+#                return None
             sanity = 10
             while(sanity):
                 obj_dict = self.get_obj_dict(model)
@@ -129,21 +121,33 @@ class DataFactory(object):
                 else:
                     break
             self._created.append(obj)
-            setattr(self, attr_name, obj)
+            if add_to_cache:
+                setattr(self, attr_name, obj)
         return obj
         
     def add_relations(self, instance_list):
         if instance_list:
-            for rel in instance_list[-1]._meta.related_objects:
+            model = instance_list[0]._meta.model
+            for rel in get_model_relations(model, forward = False):
                 if rel.many_to_many:
                     related_model = rel.through
+#                elif rel.concrete:
+#                    if rel.related_model == model:
+#                        # a self relation
+#                        req_obj = self.create_obj(model, add_to_cache = False)
+#                    else:
+#                        # a concrete ForeignKey field, get_obj_dict() will have dealt with those
+#                        continue
                 else:
-                    related_model = rel.field.model
+                    # a reverse ForeignKey/ManyToOneRel
+                    related_model = rel.related_model
                 if related_model in self.exclude:
                     continue
                 for instance in instance_list:
                     setattr(self, '_' + instance._meta.model_name, instance) # Set cached instance to the instance we are currently working on to assign relations to it
-                    self.create_obj(related_model, create_new = True)
+                    obj = self.create_obj(related_model, create_new = True, add_to_cache = related_model != model)
+                    if related_model == model:
+                        getattr(instance, rel.get_accessor_name()).add(obj)
         
     def create_data(self, model, count=3, add_relations = True):
         instance_list = []
