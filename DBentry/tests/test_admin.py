@@ -524,6 +524,10 @@ class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
         ort.band_set.rel, memorabilien.ort.rel, 
     ]
     
+    def bland_forwarded(self):
+        f = self.model_admin.get_form(self.get_request())
+        self.assertEqual(f.base_fields['bland'].widget.widget.forward[0], ['land'])
+            
         
 class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
     

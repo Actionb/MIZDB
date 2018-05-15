@@ -8,6 +8,7 @@ from .base.admin import (
 from .forms import ArtikelForm, AutorForm
 from .utils import concat_limit
 from .actions import *
+from .ac.widgets import make_widget
 
 from .sites import miz_site
 
@@ -613,6 +614,11 @@ class OrtAdmin(MIZModelAdmin):
     advanced_search_form = {
         'selects' : ['land', 'bland']
     }
+            
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field == self.opts.get_field('bland'):
+            kwargs['widget'] = make_widget(model=db_field.related_model, forward=['land'])
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
     
 @admin.register(bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
