@@ -926,8 +926,10 @@ class lagerort(ComputedNameModel):
     ort = models.CharField(**CF_ARGS)
     raum = models.CharField(**CF_ARGS_B)
     regal = models.CharField(**CF_ARGS_B)
+    fach = models.CharField(**CF_ARGS_B)
+    ordner = models.CharField(**CF_ARGS_B)
     
-    name_composing_fields = ['ort', 'raum', 'regal']
+    name_composing_fields = ['ort', 'raum', 'regal', 'fach']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
@@ -939,13 +941,16 @@ class lagerort(ComputedNameModel):
         ort = data.get('ort')
         raum = data.get('raum', '')
         regal = data.get('regal', '')
+        fach = data.get('fach', '')
         
+        if regal and fach:
+            regal = "{}-{}".format(regal, fach)
         if raum:
             if regal:
-                return "{}-{} ({})".format(raum, regal, ort)
+                regal = "{}-{}".format(raum, regal)
             else:
                 return "{} ({})".format(raum, ort)
-        elif regal:
+        if regal:
             return "{} ({})".format(regal, ort)
         else:
             return ort
