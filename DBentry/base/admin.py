@@ -87,10 +87,14 @@ class MIZModelAdmin(admin.ModelAdmin):
         if not self.fields:
             return []
         grouped_fields = self.fields
+        fields_used = set()
         for tpl in self.flds_to_group:
             # Find the correct spot to insert the tuple into,
             # which would be the earliest occurence of any field of tuple in self.fields
-            indexes = [self.fields.index(i) for i in tpl if i in self.fields]
+            if any(f in fields_used for f in tpl):
+                # To avoid duplicate fields, ignore tuples that contain any field we have already grouped
+                continue
+            indexes = [self.fields.index(f) for f in tpl if f in self.fields]
             if not indexes:
                 # None of the fields in the tuple are actually in self.fields
                 continue
@@ -100,6 +104,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             # Remove all other fields of the tuple that are in self.fields
             for i in indexes:
                 grouped_fields.pop(i)
+            fields_used.update(tpl)
         return grouped_fields
         
     def get_fieldsets(self, request, obj=None):
@@ -167,7 +172,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     def media(self):
         media = super().media
         if self.googlebtns:
-            media.add_js(['admin/js/utils.js'])
+            media.add_js(['admin/js/utils.js']) # contains the googlebtns script
         return media
         
     def add_extra_context(self, extra_context = None, object_id = None):
@@ -205,7 +210,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             Primarily used for setting ausgabe/magazin for Artikel add-views.
         """
         initial = super().get_changeform_initial_data(request)
-        if '_changelist_filters' not in initial.keys() or not initial['_changelist_filters']:
+        if '_changelist_filters' not in initial or not initial['_changelist_filters']:
             return initial
             
         # At this point, _changelist_filters is a string of format:
@@ -221,17 +226,11 @@ class MIZModelAdmin(admin.ModelAdmin):
                     k, v = part.split(SEARCH_TERM_SEP)
                 except ValueError:
                     continue
-                if k not in initial.keys():
+                if k not in initial:
                     filter_dict[k] = v
         initial.update(filter_dict)
         return initial
         
-    def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
-        # Add a description to each formset
-        inline_admin_formsets = super().get_inline_formsets(request, formsets, inline_instances, obj)
-        for formset in inline_admin_formsets:
-            formset.description = getattr(formset.opts, 'description', '')
-        return inline_admin_formsets
                 
     def has_module_permission(self, request):
         if self.superuser_only:
