@@ -2,12 +2,14 @@ from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.contrib.auth import get_permission_codename
 
-from DBentry.models import ausgabe, genre, schlagwort
+from django import forms
+
+from DBentry.models import ausgabe, genre, schlagwort, models
 from DBentry.changelist import MIZChangeList
 from DBentry.forms import makeForm, InLineAusgabeForm, FormBase
 from DBentry.actions import merge_records
-from DBentry.constants import SEARCH_TERM_SEP
-
+from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
+from DBentry.ac.widgets import make_widget
 
 class MIZModelAdmin(admin.ModelAdmin):
     
@@ -17,16 +19,20 @@ class MIZModelAdmin(admin.ModelAdmin):
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form 
     actions = [merge_records]
+    
+    formfield_overrides = {
+        models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
+    }
+    
     index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
 
     def has_adv_sf(self):
         return len(getattr(self, 'advanced_search_form', []))>0
-    
-    def get_form(self, *args, **kwargs):
-        if not issubclass(self.form, FormBase):
-            # self.form is the default ModelForm, not good enough
-            self.form = makeForm(self.model)
-        return super().get_form(*args, **kwargs)
+            
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if 'widget' not in kwargs:
+            kwargs['widget'] = make_widget(model=db_field.related_model)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
         
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
@@ -230,17 +236,19 @@ class BaseInlineMixin(object):
     verbose_model = None
     extra = 1
     classes = ['collapse']
+    form = FormBase # For the validate_unique override
     description = ''
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.verbose_model:
             self.verbose_name = self.verbose_model._meta.verbose_name
             self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
-    
-    def get_formset(self, *args, **kwargs):
-        if not issubclass(self.form, FormBase):
-            self.form = makeForm(self.model)
-        return super().get_formset(*args, **kwargs)
+            
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if 'widget' not in kwargs:
+            kwargs['widget'] = make_widget(model=db_field.related_model)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
         
 class BaseTabularInline(BaseInlineMixin, admin.TabularInline):
     pass
