@@ -152,7 +152,7 @@ class ausgabe(ComputedNameModel):
 
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
     e_datum = models.DateField('Erscheinungsdatum', null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
-    jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True, verbose_name = "Jahrgang")
+    jahrgang = models.PositiveSmallIntegerField(null = True,  blank = True, verbose_name = "Jahrgang",  validators = [MinValueValidator(1)])
     sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Ausgabe')
