@@ -8,6 +8,7 @@ from django.utils.text import capfirst
 from django import forms
 
 from DBentry.models import ausgabe, genre, schlagwort, models
+from DBentry.base.models import ComputedNameModel
 from DBentry.changelist import MIZChangeList
 from DBentry.forms import makeForm, InLineAusgabeForm, FormBase
 from DBentry.actions import merge_records
@@ -283,6 +284,21 @@ class MIZModelAdmin(admin.ModelAdmin):
             # Hide the associated models from the index if the current user is not a superuser
             return request.user.is_superuser
         return True
+
+    def save_model(self, request, obj, form, change):
+        if isinstance(obj, ComputedNameModel):
+            # Delay the update of the _name until ModelAdmin._changeform_view has saved the related objects via save_related.
+            # This is to avoid update_name building a name with outdated related objects.
+            obj.save(update=False)
+        else:
+            super().save_model(request, obj, form, change)
+        
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        if isinstance(form.instance, ComputedNameModel):
+            # Update the instance's _name now. save_model was called earlier.
+            form.instance.update_name(force_update=True)
+                
 
         
 class BaseInlineMixin(object):
