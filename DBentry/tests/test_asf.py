@@ -94,7 +94,7 @@ class TestFactory(MyTestCase):
         self.assertIsInstance(forwarded, forward.Field)
         self.assertEqual(forwarded.src, 'orte__land')
         self.assertEqual(forwarded.dst, 'land')
-        self.assertEqual(widget.attrs.get('data-placeholder', ''), 'Please select a Land first.')
+        self.assertEqual(widget.attrs.get('data-placeholder', ''), 'Bitte zuerst Land auswählen.')
     
 class TestFactoryArtikel(FactoryTestCaseMixin,MyTestCase):
     model = artikel

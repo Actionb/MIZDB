@@ -3,18 +3,12 @@
 {% if cl.search_fields %}
 <div id="toolbar">
     <form id="adv-changelist-search" method="get">
-        <div>
+        <fieldset class="collapse {% if show_result_count %}collapsed{% endif %}">
         <!-- ADVANCED SEARCH FORM -->
-            {% if cl.model_admin.has_adv_sf %}
-            <span>
-            <h2 class="hide-adv-sf" title="Suchoptionen anzeigen/ausblenden">{% trans "Search options" %}</h2>
-            </span>
-            <div id="adv-sf" class="collapse" style=
-                                                    {% if show_result_count %}
-                                                        "display: none;"
-                                                    {% else %}
-                                                        "display: block;"
-                                                    {% endif %}>
+            {% if cl.model_admin.has_adv_sf %} {# Probably unnecessary? #}
+
+            <h2 class="collapsible">{% trans "Search options" %}</h2>
+
             <fieldset id="adv-sf-select">
             {{ asf.ac_form.as_div }}
             {% for s in asf.selects %}
@@ -62,29 +56,30 @@
                 </span>
             {% endfor %}
             </fieldset>
-            </div>
+            
             {% endif %}
-            <fieldset id="search-input">
-                <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
-                <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
+        </fieldset>
+        
+        <fieldset id="search-input">
+            <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
+            <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
 
 
-                <input type="submit" value="{% trans 'Search' %}" />
-                <span class="small quiet">
-                    {% blocktrans count counter=cl.result_count %}{{ counter }} result {% plural %}{{ counter }} results{% endblocktrans %} 
-                    (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">
-                        {% if cl.show_full_result_count %}
-                            {% blocktrans %}{{ full_count }} total {% endblocktrans %}
-                        {% else %}
-                            {% trans "Show all" %}
-                        {% endif %}
-                    </a>)
-                    </span>
-            </fieldset>
-        </div>
+            <input type="submit" value="{% trans 'Search' %}" />
+            <span class="small quiet">
+                {% blocktrans count counter=cl.result_count %}{{ counter }} result {% plural %}{{ counter }} results{% endblocktrans %} 
+                (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">
+                    {% if cl.show_full_result_count %}
+                        {% blocktrans %}{{ full_count }} total {% endblocktrans %}
+                    {% else %}
+                        {% trans "Show all" %}
+                    {% endif %}
+                </a>)
+                </span>
+        </fieldset>
+            
     </form>
 </div>
-<script type="text/javascript" src="{% static 'admin/js/advanced_search_form.js' %}"></script>
 
 {{asf.ac_form.media }}
 

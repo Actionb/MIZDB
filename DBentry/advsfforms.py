@@ -44,6 +44,9 @@ class AdvSFForm(forms.Form):
             row_ender='</div>',
             help_text_html=' <span class="helptext">%s</span>',
             errors_on_separate_row=True)
+            
+    class Media:
+        js = ['admin/js/collapse.js', 'admin/js/advanced_search_form.js']
     
 def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
     """
