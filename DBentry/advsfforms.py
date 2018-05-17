@@ -72,11 +72,11 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
             field = rel_or_field.remote_field # the ForeignKey field
             # The ForeignKey's related_model points back to *this* model, we need the relation's related_model
             related_model = rel_or_field.related_model 
-            label = related_model._meta.verbose_name.capitalize()
+            label = related_model._meta.verbose_name.title()
         else:
             field = rel_or_field.get_path_info()[-1].join_field
             related_model = field.related_model
-            label = field.verbose_name.capitalize()
+            label = field.verbose_name.title()
             
         formfield_opts = dict(required = False, help_text = '', empty_label = None)
         formfield_opts['label'] = labels.get(field_path, None) or label
