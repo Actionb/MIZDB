@@ -202,7 +202,7 @@ class ausgabe(ComputedNameModel):
         if data.get('sonderausgabe', False) and beschreibung:
             return beschreibung
         
-        jahre = data.get('ausgabe_jahr__jahr', [])
+        jahre = sorted(data.get('ausgabe_jahr__jahr', []))
         jahre = [str(jahr)[2:] if i else str(jahr) for i, jahr in enumerate(jahre)]
         jahre = concat_limit(jahre, sep="/")
         jahrgang = data.get('jahrgang', '')
@@ -214,9 +214,11 @@ class ausgabe(ComputedNameModel):
                 jahre = "k.A."
                 
         e_datum = data.get('e_datum', '')
-        monate = concat_limit(data.get('ausgabe_monat__monat__abk', []), sep="/")
-        lnums = concat_limit(data.get('ausgabe_lnum__lnum', []), sep="/", z=2)
-        nums = concat_limit(data.get('ausgabe_num__num', []), sep="/", z=2)
+        monat_ordering = dict(monat.objects.values_list('abk', 'ordinal'))
+        monate = sorted(data.get('ausgabe_monat__monat__abk', []), key = lambda abk: monat_ordering[abk])
+        monate = concat_limit(monate, sep="/")
+        lnums = concat_limit(sorted(data.get('ausgabe_lnum__lnum', [])), sep="/", z=2)
+        nums = concat_limit(sorted(data.get('ausgabe_num__num', [])), sep="/", z=2)
         merkmal = data.get('magazin__ausgaben_merkmal', '')
         
         if merkmal:
@@ -307,11 +309,12 @@ class ausgabe_monat(BaseModel):
 class monat(BaseModel):
     monat = models.CharField('Monat', **CF_ARGS)
     abk = models.CharField('Abk',  **CF_ARGS)
+    ordinal = models.PositiveSmallIntegerField(editable = False)
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
         verbose_name_plural = 'Monate'
-        ordering = ['id']
+        ordering = ['ordinal']
         
     def __str__(self):
         return self.monat
