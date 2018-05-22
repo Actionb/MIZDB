@@ -52,7 +52,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         # Show actions based on user permissions
         actions = super().get_actions(request) # returns an OrderedDict( (name, (func, name, desc)) )
         
-        for func, name, desc in actions.values():
+        for func, name, desc in actions.copy().values():
             if name == 'delete_selected':
                 perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
             else:
