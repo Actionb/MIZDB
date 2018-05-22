@@ -24,7 +24,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe' #TODO: remove this? NOPE! Used in the admin_site.index
+    url_name = 'bulk_ausgabe' # Used in the admin_site.index
     index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
     
     _permissions_required = [('add', 'ausgabe')]
@@ -33,6 +33,12 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         # If there was a form 'before' the current one, its data will serve as initial values 
         # This way, we can track changes to the form the user has made.
         return self.request.session.get('old_form_data', {})
+        
+    def get_success_url(self):
+        #TODO: do me!
+        from urllib.parse import urlencode
+        url = reverse(self.success_url) + '?' + urlencode(**data)
+        return url
     
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)

@@ -144,6 +144,8 @@ class MIZModelAdmin(admin.ModelAdmin):
         
     def add_crosslinks(self, object_id, labels=None):
         #TODO: for audio this shows related ausgaben as crosslinks AND in an inline
+        # ---> m2m_audio_ausgabe in inlmdls, but r.related_model == ausgabe
+        #TODO: use get_model_relations(model,forward=False)
         """
         Provides the template with data to create links to related objects.
         """
