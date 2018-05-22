@@ -214,8 +214,11 @@ class ausgabe(ComputedNameModel):
                 jahre = "k.A."
                 
         e_datum = data.get('e_datum', '')
-        monat_ordering = dict(monat.objects.values_list('abk', 'ordinal'))
-        monate = sorted(data.get('ausgabe_monat__monat__abk', []), key = lambda abk: monat_ordering[abk])
+        monat_ordering = ['Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
+        monate = sorted(
+            data.get('ausgabe_monat__monat__abk', []), 
+            key = lambda abk: monat_ordering.index(abk)+1 if abk in monat_ordering else 0
+        )
         monate = concat_limit(monate, sep="/")
         lnums = concat_limit(sorted(data.get('ausgabe_lnum__lnum', [])), sep="/", z=2)
         nums = concat_limit(sorted(data.get('ausgabe_num__num', [])), sep="/", z=2)
