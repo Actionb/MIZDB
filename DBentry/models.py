@@ -7,11 +7,11 @@ from .base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, get_model_fields, get_model_relations, get_related_set, 
     get_relation_info_to, 
 )
-from .fields import ISSNField
+from .fields import ISSNField, ISBNField, EANField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
-from .managers import AusgabeQuerySet
+from .managers import AusgabeQuerySet, BuchQuerySet
 
 class person(ComputedNameModel):
     vorname = models.CharField(**CF_ARGS_B)
@@ -527,26 +527,26 @@ class artikel(BaseModel):
 class buch(BaseModel):
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
+    seitenumfang = models.PositiveSmallIntegerField(blank = True, null = True)
     jahr = models.PositiveIntegerField(**YF_ARGS)
     jahr_orig = models.PositiveIntegerField('Jahr (Original)',**YF_ARGS)
-    ausgabe = models.CharField(**CF_ARGS_B)
     auflage = models.CharField(**CF_ARGS_B)
-    buch_band = models.CharField('Buch Band', **CF_ARGS_B)
-    ubersetzer  = models.CharField('Übersetzer', **CF_ARGS_B)
-    #edition = models.CharField(**CF_ARGS_B)
-    EAN = models.CharField(**CF_ARGS_B)
-    ISBN = models.CharField(**CF_ARGS_B)
-    LCCN = models.CharField(**CF_ARGS_B)
+    EAN = EANField(blank = True)
+    ISBN = ISBNField(blank = True)
+    is_buchband = models.BooleanField(default = False, verbose_name = 'Ist Buchband', help_text = 'Dieses Buch ist ein Buchband bestehend aus Aufsätzen.')
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Buches')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    buch_serie = models.ForeignKey('buch_serie', models.SET_NULL, verbose_name = 'Buchserie', null = True, blank = True)
+    schriftenreihe = models.ForeignKey('schriftenreihe', models.SET_NULL, null = True, blank = True)
+    buchband = models.ForeignKey(
+        'self', models.PROTECT, null = True,  blank = True, limit_choices_to = {'is_buchband':True}, 
+        related_name = 'buch_set', help_text = 'Der Buchband, der diesen Aufsatz enthält.'
+    )
     verlag = models.ForeignKey('verlag', models.SET_NULL, null = True,  blank = True)
-    verlag_orig = models.ForeignKey('verlag', models.SET_NULL, related_name = 'buch_orig_set', verbose_name = 'Verlag (Original)', null = True,  blank = True)
     sprache = models.ForeignKey('sprache', models.SET_NULL, null = True, blank = True)
-    sprache_orig = models.ForeignKey('sprache', models.SET_NULL, related_name = 'buch_orig_set', verbose_name = 'Sprache (Original)', null = True, blank = True)
     
+    herausgeber = models.ManyToManyField('Herausgeber')
     autor = models.ManyToManyField('autor')
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
@@ -557,10 +557,16 @@ class buch(BaseModel):
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
     
-    search_fields = ['titel', 'beschreibung']
+    search_fields = ['titel', 'beschreibung', 'ISBN', 'EAN']
     primary_search_fields = []
     name_field = 'titel'
-    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
+    search_fields_suffixes = {
+        'beschreibung' : 'Beschreibung', 
+        'ISBN' : 'ISBN', 
+        'EAN' : 'EAN', 
+    }
+    
+    objects = BuchQuerySet.as_manager()
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -572,7 +578,39 @@ class buch(BaseModel):
         
     def __str__(self):
         return str(self.titel)
+        
+class Herausgeber(ComputedNameModel):
+    person = models.ForeignKey('person', blank = True, null = True)
+    organisation = models.ForeignKey('Organisation', blank = True, null = True)
     
+    name_composing_fields = ['person___name', 'organisation__name']    
+    
+    class Meta(ComputedNameModel.Meta):
+        verbose_name = 'Herausgeber'
+        verbose_name_plural = 'Herausgeber'
+    
+    @classmethod
+    def _get_name(cls, **data):
+        person = data.get('person___name', '')
+        organisation = data.get('organisation__name', '')
+        if person:
+            if organisation:
+                return "{} ({})".format(person, organisation)
+            return person
+        return organisation
+    
+        
+class Organisation(BaseModel):
+    name = models.CharField(**CF_ARGS)
+    
+    name_field = 'name'
+    create_field = 'name'
+    
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Organisation'
+        verbose_name_plural = 'Organisationen'
+        
 
 class instrument(BaseModel):
     instrument = models.CharField(unique = True, **CF_ARGS)
@@ -675,17 +713,17 @@ class bildmaterial(BaseModel):
             ('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.'), 
         ]
         
-        
-class buch_serie(BaseModel):
-    serie = models.CharField(**CF_ARGS)
+class schriftenreihe(BaseModel):
+    name = models.CharField(**CF_ARGS)
     
-    search_fields = ['serie']
-    name_field = 'serie'
+    search_fields = ['name']
+    name_field = 'name'
+    create_field = 'name'
     
     class Meta(BaseModel.Meta):
-        ordering = ['serie']
-        verbose_name = 'Buchserie'
-        verbose_name_plural = 'Buchserien'
+        ordering = ['name']
+        verbose_name = 'Schriftenreihe'
+        verbose_name_plural = 'Schriftenreihen'
         
         
 class dokument(BaseModel):

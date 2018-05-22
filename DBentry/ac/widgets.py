@@ -104,7 +104,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         model_name = model._meta.model_name
     if model_name and not model:
         model = get_model_from_string(model_name)
-
+    
     if 'widget_class' in kwargs:
         widget_class = kwargs.pop('widget_class')
     else:

@@ -7,9 +7,8 @@ from dal import autocomplete
 
 from DBentry.models import *
 from DBentry.logging import LoggingMixin
-# Create your views here    
+from DBentry.utils import get_model_from_string
 
-# AUTOCOMPLETE VIEWS
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     _search_fields = None
     
@@ -90,7 +89,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         return object
         
     def get_queryset(self):
-        qs = self.model.objects.all()
+        qs = self.queryset or self.model.objects.all() #TODO: MultipleObjectMixin.get_queryset ?
         
         if self.forwarded:
             if any(k and v for k, v in self.forwarded.items()):
@@ -121,12 +120,13 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
     
 class ACCapture(ACBase):
+    create_field = None
     
     def dispatch(self, *args, **kwargs):
-        model_name = kwargs.pop('model_name', '')
-        from DBentry.utils import get_model_from_string
-        self.model = get_model_from_string(model_name)
-        self.create_field = kwargs.pop('create_field', None)
+        if not self.model:
+            model_name = kwargs.pop('model_name', '')
+            self.model = get_model_from_string(model_name)
+        self.create_field = self.create_field or kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
         
     def get_queryset(self):
@@ -169,3 +169,7 @@ class ACCapture(ACBase):
         if isinstance(result, (list, tuple)):
             return result[1]
         return str(result)
+        
+class ACBuchband(ACBase):
+    model = buch
+    queryset = buch.objects.filter(is_buchband=True)

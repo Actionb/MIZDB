@@ -1,4 +1,5 @@
-from stdnum import issn
+from stdnum import issn, isbn, ean
+from stdnum.util import clean
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext, gettext_lazy
@@ -21,8 +22,20 @@ class InvalidChecksum(StdValidationError):
 class InvalidComponent(StdValidationError):
     message = gettext_lazy("One of the parts of the number are invalid or unknown.")
 
-def _validate(std, number):
+def _add_check_digit(std, number, min_length):
+    number = std.compact(number)
+    if len(number) == min_length:
+        # User did not include the check digit
+        if number.isnumeric():
+            number += std.calc_check_digit(number)
+        else:
+            raise InvalidComponent()
+    return number
+
+def _validate(std, number, min_length=None):
     from stdnum import exceptions
+    if min_length:
+        number = _add_check_digit(std, number, min_length)
     try:
         std.validate(number)
     except exceptions.InvalidLength:
@@ -36,16 +49,19 @@ def _validate(std, number):
     return True
     
 def ISBNValidator(raw_isbn):
-    return True
+    raw_isbn = clean(raw_isbn, ' -').strip().upper()
+    if raw_isbn.isnumeric():
+        if len(raw_isbn) == 9:
+            raw_isbn += isbn._calc_isbn10_check_digit(raw_isbn)
+        elif len(raw_isbn) == 12:
+            raw_isbn += ean.calc_check_digit(raw_isbn)
+    return _validate(isbn, raw_isbn)
 
 def ISSNValidator(raw_issn):
-    raw_issn = issn.compact(raw_issn)
-    if len(raw_issn) == 7:
-        # User did not include the check digit
-        if raw_issn.isnumeric():
-            raw_issn += issn.calc_check_digit(raw_issn)
-        else:
-            raise InvalidChecksum()
-    return _validate(issn, raw_issn)
+    return _validate(issn, raw_issn, 7)
+    
+def EANValidator(raw_ean):
+    return _validate(ean, raw_ean, 7)
+    
         
         
