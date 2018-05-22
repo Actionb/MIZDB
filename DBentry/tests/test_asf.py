@@ -109,7 +109,7 @@ class TestFactoryAudio(FactoryTestCaseMixin,MyTestCase):
     expected_fields = ['musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma', 
                         'format__format_size', 'format__format_typ', 'format__tag']
     expected_labels = {'musiker': 'Musiker', 'band': 'Band', 'genre': 'Genre', 'spielort': 'Spielort', 'veranstaltung': 'Veranstaltung', 'plattenfirma': 'Plattenfirma', 
-                        'format__format_size': 'Format größe', 'format__format_typ': 'Format typ' , 'format__tag': 'Tags'}
+                        'format__format_size': 'Format Größe', 'format__format_typ': 'Format Typ' , 'format__tag': 'Tags'}
     expected_models = {'musiker': musiker, 'band': band, 'genre': genre, 'spielort': spielort, 'veranstaltung': veranstaltung, 'plattenfirma': plattenfirma, 
                         'format__format_size': FormatSize, 'format__format_typ': FormatTyp, 'format__tag': FormatTag}
     

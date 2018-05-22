@@ -103,7 +103,7 @@ class TestComputedNameModel(DataTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.mag = DataFactory().create_obj(magazin)
-        monat.objects.create(id=12, monat='Dezember', abk ='Dez')
+        monat.objects.create(id=12, monat='Dezember', abk ='Dez', ordinal = 12)
         cls.obj1 = ausgabe(magazin=cls.mag)
         cls.obj1.save()
 
@@ -264,6 +264,9 @@ class TestModelAusgabe(DataTestCase):
         # 2. !jahre + jahrgang/!jahrgang
         # 3. ausgaben_merkmal>e_datum>monat>lnum>?
         # 4. num>monat>lnum>e_datum>beschreibung>k.A.
+        
+        monat.objects.create(monat = 'Dezember', abk = 'Dez', ordinal = 12)
+        monat.objects.create(monat = 'Januar', abk = 'Jan', ordinal = 1)
 
         # sonderausgabe + beschreibung => beschreibung
         name_data = {'sonderausgabe':True, 'beschreibung':'Test-Info'}
@@ -381,6 +384,81 @@ class TestModelAusgabe(DataTestCase):
         expected = 'Woops!'
         self.assertEqual(ausgabe._get_name(**name_data), expected)
         
+        
+        # And now with multiples of related objects
+        # with jahr:
+        # monat
+        name_data = {'ausgabe_jahr__jahr':['2021', '2020'], 'ausgabe_monat__monat__abk':['Jan', 'Dez']}
+        expected = "2020/21-Jan/Dez"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat => monat')
+
+        # monat + e_datum + lnum => lnum
+        name_data.update({'ausgabe_lnum__lnum':['22', '21']})
+        expected = "21/22 (2020/21)"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
+
+        # monat + e_datum + lnum + num => num
+        name_data.update({'ausgabe_num__num':['21', '20']})
+        expected = "2020/21-20/21"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
+
+        # with jahrgang:
+        # monat
+        name_data = {'ausgabe_monat__monat__abk':['Jan', 'Dez'], 'jahrgang':'2'}
+        expected = "Jg. 2-Jan/Dez"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
+
+        # monat + e_datum + lnum => lnum
+        name_data.update({'ausgabe_lnum__lnum':['22', '21']})
+        expected = "21/22 (Jg. 2)"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
+
+        # monat + e_datum + lnum + num => num
+        name_data.update({'ausgabe_num__num':['21', '20']})
+        expected = "Jg. 2-20/21"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
+
+        # without jahr or jahrgang:
+        # monat
+        name_data = {'ausgabe_monat__monat__abk':['Jan', 'Dez']}
+        expected = "k.A.-Jan/Dez"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
+
+        # monat + e_datum + lnum => lnum
+        name_data.update({'ausgabe_lnum__lnum':['22', '21']})
+        expected = "21/22"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
+
+        # monat + e_datum + lnum + num => num
+        name_data.update({'ausgabe_num__num':['21', '20']})
+        expected = "k.A.-20/21"
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
+
+        # Tests with an ausgaben_merkmal override set
+        name_data = {
+            'ausgabe_jahr__jahr':['2021', '2020'], 
+            'ausgabe_monat__monat__abk':['Jan', 'Dez'], 
+            'ausgabe_lnum__lnum':['22', '21'], 
+            'ausgabe_num__num':['21', '20'], 
+        }
+
+        name_data.update({'magazin__ausgaben_merkmal':'monat'})
+        expected = '2020/21-Jan/Dez'
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: monat')
+
+        name_data.update({'magazin__ausgaben_merkmal':'num'})
+        expected = '2020/21-20/21'
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: num')
+
+        name_data.update({'magazin__ausgaben_merkmal':'lnum'})
+        expected = '21/22 (2020/21)'
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: lnum')
+
+        name_data.update({'ausgabe_jahr__jahr':[]})
+        expected = '21/22'
+        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
+        
+        
 class TestModelAusgabeJahr(DataTestCase):
     
     model = ausgabe_jahr
@@ -405,7 +483,7 @@ class TestModelAusgabeMonat(DataTestCase):
     
     def test_str(self):
         ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        monat_object = monat.objects.create(monat='Dezember', abk='Dez')
+        monat_object = monat.objects.create(monat='Dezember', abk='Dez', ordinal = 12)
         obj = self.model(monat=monat_object, ausgabe=ausgabe_object)
         self.assertEqual(str(obj), 'Dez')
         

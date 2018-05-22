@@ -8,7 +8,7 @@ class TestSignalsAusgabe(DataTestCase):
     def setUpTestData(cls):
         cls.mag = magazin.objects.create(magazin_name='Testmagazin')
         cls.obj1 = cls.model.objects.create(magazin=cls.mag)
-        cls.monat = monat.objects.create(pk=12, monat='Dezember', abk='Dez')
+        cls.monat = monat.objects.create(pk=12, monat='Dezember', abk='Dez', ordinal = 12)
         
         cls.obj2 = cls.model.objects.create(magazin=cls.mag)
         cls.obj2.ausgabe_jahr_set.create(jahr=2000)

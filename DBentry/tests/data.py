@@ -182,7 +182,7 @@ def ausgabe_data_simple(cls):
     cls.model = ausgabe
     cls.mag = magazin.objects.create(magazin_name='Testmagazin')
     cls.obj1 = cls.model.objects.create(magazin=cls.mag)
-    cls.monat = monat.objects.create(pk=12, monat='Dezember', abk='Dez')
+    cls.monat = monat.objects.create(pk=12, monat='Dezember', abk='Dez', ordinal = 12)
     
     cls.obj2 = cls.model.objects.create(magazin=cls.mag)
     cls.obj2.ausgabe_jahr_set.create(jahr=2000)
@@ -214,8 +214,8 @@ def ausgabe_data_str(cls):
     cls.obj5 = ausgabe.objects.create(magazin=cls.mag)
     cls.obj5.ausgabe_jahr_set.create(jahr=2000)
     cls.obj5.ausgabe_jahr_set.create(jahr=2001)
-    cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Januar', abk='Jan'))
-    cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Februar', abk='Feb'))
+    cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Januar', abk='Jan', ordinal = 1))
+    cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Februar', abk='Feb', ordinal = 2))
     
     cls.obj6 = ausgabe.objects.create(magazin=cls.mag, e_datum='2000-01-01') 
     

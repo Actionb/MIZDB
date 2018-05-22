@@ -274,8 +274,8 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1.ausgabe_lnum_set.create(lnum=11)
         cls.obj1.ausgabe_lnum_set.create(lnum=12)
         
-        cls.obj1.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan'))
-        cls.obj1.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb'))
+        cls.obj1.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan', ordinal = 1))
+        cls.obj1.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb', ordinal = 2))
         
         cls.test_data = [cls.obj1]
         
@@ -646,6 +646,8 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = audio.objects.create(titel='Testaudio')
+        ausg = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name = 'Beep'))
+        m2m_audio_ausgabe.objects.create(audio=cls.obj1, ausgabe=ausg)
         cls.test_data = [cls.obj1]
 
         super().setUpTestData()

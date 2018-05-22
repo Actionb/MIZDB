@@ -29,7 +29,7 @@ class TestLoggingMixin(ViewTestCase):
         
         view = self.view(self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
-        self.assertEqual(logs[0].get_change_message(), 'Band „Testband“ hinzugefügt.')
+        self.assertEqual(logs[0].get_change_message(), 'Band "Testband" hinzugefügt.')
         self.assertEqual(logs[0].action_flag, ADDITION)
         self.assertEqual(logs[1].get_change_message(), 'Orte geändert.')
         self.assertEqual(logs[1].action_flag, CHANGE)

@@ -211,6 +211,7 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
     
     query_class = PrimaryFieldsSearchQuery
         
+    @translation_override(language = None)
     def test_get_separator(self):
         q = 'Test'
         sep = self.make_query().get_separator(q)

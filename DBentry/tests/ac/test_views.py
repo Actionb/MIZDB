@@ -107,7 +107,7 @@ class TestACAusgabe(ACViewTestCase):
         
         cls.obj_monat = ausgabe.objects.create(magazin=cls.mag)
         cls.obj_monat.ausgabe_jahr_set.create(jahr=2020)
-        cls.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan'))
+        cls.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan', ordinal = 1))
         
         cls.obj_sonder = ausgabe.objects.create(magazin=cls.mag, sonderausgabe=True, beschreibung='Special Edition')
         
@@ -153,7 +153,7 @@ class TestACAusgabe(ACViewTestCase):
         expected = (self.obj_monat.pk, force_text(self.obj_monat))
         self.assertIn(expected, list(view.apply_q(self.qs)))
         
-        self.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb'))
+        self.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb', ordinal = 2))
         self.obj_monat.refresh_from_db()
         view = self.view(q=self.obj_monat.__str__())
         expected = (self.obj_monat.pk, force_text(self.obj_monat))
