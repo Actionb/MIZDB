@@ -356,7 +356,7 @@ class BuchAdmin(MIZModelAdmin):
     form = BuchForm
     index_category = 'Archivgut'
     
-    list_display = ['titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string', 'herausgeber_string']
+    list_display = ['titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string', 'herausgeber_string', 'schlagwort_string', 'genre_string']
     
     inlines = [
         HerausgeberInLine, AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, 
@@ -400,6 +400,14 @@ class BuchAdmin(MIZModelAdmin):
     def herausgeber_string(self, obj):
         return concat_limit(obj.herausgeber.all())
     herausgeber_string.short_description = 'Herausgeber'
+    
+    def schlagwort_string(self, obj):
+        return concat_limit(obj.schlagwort.all())
+    schlagwort_string.short_description = 'Schlagwörter'
+    
+    def genre_string(self, obj):
+        return concat_limit(obj.genre.all())
+    genre_string.short_description = 'Genres'
     
 @admin.register(dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
