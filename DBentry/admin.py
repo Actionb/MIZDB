@@ -5,7 +5,7 @@ from .base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
     BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from .forms import ArtikelForm, AutorForm
+from .forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm
 from .utils import concat_limit
 from .actions import *
 from .ac.widgets import make_widget
@@ -350,17 +350,56 @@ class BuchAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = buch.veranstaltung.through
         verbose_model = veranstaltung
+    class HerausgeberInLine(BaseTabularInline):
+        model = buch.herausgeber.through
+        verbose_model = Herausgeber
+    form = BuchForm
     index_category = 'Archivgut'
     
-    inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
-    flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
+    list_display = ['titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string', 'herausgeber_string']
+    
+    inlines = [
+        HerausgeberInLine, AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, 
+        SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
+    ]
+    collapse_all = True
     save_on_top = True
     
+    fieldsets = [
+        (None, {'fields': [
+            'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe', ('buchband', 'is_buchband'), 'verlag', 
+            'ISBN', 'EAN', 'sprache', 
+            ]
+        }), 
+        ('Original Angaben (bei Übersetzung)', {
+            'fields':['titel_orig', 'jahr_orig'], 
+            'description' : "Angaben zum Original eines übersetzten Buches.", 
+            'classes':['collapse','collapsed'], 
+            }
+        ),
+        ('Beschreibung & Bemerkungen', {'fields' : ['beschreibung', 'bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
+    ]
+    
     advanced_search_form = {
-        'selects' : ['verlag', 'sprache'], 
-        'simple' : [], 
-        'labels' : {}, 
+        'selects' : [
+            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person', 
+            'schriftenreihe', 'buchband', 'verlag', 'sprache', 
+        ], 
+        'simple' : ['jahr', 'ISBN', 'EAN'], 
+        'labels' : {'buchband': 'aus Buchband', 'jahr':'Jahr'}, 
     }
+    
+    crosslink_labels = {
+        'buch' : 'Aufsätze', 
+    }
+    
+    def autoren_string(self, obj):
+        return concat_limit(obj.autor.all())
+    autoren_string.short_description = 'Autoren'
+    
+    def herausgeber_string(self, obj):
+        return concat_limit(obj.herausgeber.all())
+    herausgeber_string.short_description = 'Herausgeber'
     
 @admin.register(dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
@@ -368,7 +407,7 @@ class DokumentAdmin(MIZModelAdmin):
     superuser_only = True
     index_category = 'Archivgut'
     
-    infields = [BestandInLine]
+    inlines = [BestandInLine]
     
 @admin.register(genre, site=miz_site)
 class GenreAdmin(MIZModelAdmin):
@@ -393,7 +432,6 @@ class GenreAdmin(MIZModelAdmin):
     def alias_string(self, obj):
         return concat_limit(obj.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
-    
 
 @admin.register(magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
@@ -685,9 +723,14 @@ class DateiAdmin(MIZModelAdmin):
 class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
     
+@admin.register(Herausgeber, site=miz_site)
+class HerausgeberAdmin(MIZModelAdmin):
+    form = HerausgeberForm
+    index_category = 'Stammdaten'
+    
 @admin.register(
-    buch_serie, monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 
-    Format, FormatTag, FormatSize, FormatTyp, NoiseRed, 
+    monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 
+    Format, FormatTag, FormatSize, FormatTyp, NoiseRed, Organisation, schriftenreihe,  
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):

@@ -691,25 +691,14 @@ class TestAdminVeranstaltung(AdminTestMethodsMixin, AdminTestCase):
 class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = BuchAdmin
     model = buch
-    exclude_expected = ['autor', 'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
-    fields_expected = ['titel', 'titel_orig', ('jahr', 'verlag'), ('jahr_orig', 'verlag_orig'), 
-            'ausgabe', 'auflage', 'buch_band', 
-            'ubersetzer', ('EAN', 'ISBN'), 'LCCN', 
-            'beschreibung', 'bemerkungen', 
-            'buch_serie', ('sprache', 'sprache_orig'), 
+    exclude_expected = [
+        'herausgeber', 'autor', 'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung'
+    ]
+    fields_expected = [
+            'titel', 'titel_orig', 'seitenumfang', 'jahr', 'jahr_orig', 'auflage', 'EAN', 'ISBN', 
+            'is_buchband', 'beschreibung', 'bemerkungen', 'schriftenreihe', 'buchband', 'verlag', 'sprache', 
         ]
-    test_data_count = 1
-
-    def test_group_fields(self):        
-        # BuchAdmin flds_to_group = [('jahr', 'verlag'), ('jahr_orig','verlag_orig'), ('EAN', 'ISBN'), ('sprache', 'sprache_orig')]
-        expected = ['titel', 'titel_orig', ('jahr', 'verlag'), ('jahr_orig', 'verlag_orig'), 
-            'ausgabe', 'auflage', 'buch_serie', 'buch_band', 
-            ('sprache', 'sprache_orig'), 'ubersetzer', ('EAN', 'ISBN'), 'LCCN'
-        ]
-        request = self.get_request()
-        fields = self.model_admin.get_fields(request)
-        self.assertEqual(self.model_admin.group_fields(), self.fields_expected)
-        
+    test_data_count = 1        
     
 class TestAdminSite(UserTestCase):
     

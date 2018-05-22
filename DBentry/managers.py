@@ -270,3 +270,15 @@ class AusgabeQuerySet(CNQuerySet):
         
     
     
+class BuchQuerySet(MIZQuerySet):
+    
+    def filter(self, *args, **kwargs):
+        from stdnum import isbn, ean    
+        for k, v in kwargs.copy().items():
+            if 'ISBN' in k and isbn.is_valid(v):
+                # we only store formatted ISBN-13 
+                kwargs[k] = isbn.format(v, convert = True)
+            if 'EAN' in k and ean.is_valid(v):
+                # we only store clean/compact/unformatted EAN
+                kwargs[k] = ean.compact(v)
+        return super().filter(*args, **kwargs)

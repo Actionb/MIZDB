@@ -133,6 +133,8 @@ class ArtikelForm(AusgabeMagazinFieldForm):
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
         
+#TODO: make a OneRequiredForm 
+        
 class AutorForm(FormBase):
     
     def clean(self):
@@ -142,6 +144,32 @@ class AutorForm(FormBase):
             return cleaned_data
         else:
             raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: Kürzel, Person')
+            
+class BuchForm(FormBase):
+    class Meta:
+        widgets = {
+            'titel' : Textarea(attrs={'rows':1, 'cols':90}), 
+            'titel_orig': Textarea(attrs={'rows':1, 'cols':90}), 
+            'buchband' : make_widget(url='acbuchband', model=buch, wrap=False, can_delete_related=False),
+        }
+    
+    def clean(self):
+        # The user must not fill out both is_buchband and buchband
+        cleaned_data = super().clean()
+        if cleaned_data.get('is_buchband') and cleaned_data.get('buchband'):
+            raise ValidationError('Ein Buchband kann nicht selber Teil eines Buchbandes sein.')
+        else:
+            return cleaned_data
+        
+class HerausgeberForm(FormBase):
+    
+    def clean(self):
+        # The user has to fill out at least person or organisation
+        cleaned_data = super().clean()
+        if cleaned_data.get('person') or cleaned_data.get('organisation'):
+            return cleaned_data
+        else:
+            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: Person, Organisation')
         
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
