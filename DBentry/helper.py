@@ -1,10 +1,10 @@
 """ Copy pasta'ed from django.contrib.admin.helpers just to swap a checkbox widget with its label..."""
-
+#TODO: introduce MIZAdminForm // add this to admin.py 
 from django.utils.encoding import force_text
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
-from django.contrib.admin.helpers import Fieldset, Fieldline, AdminField, AdminReadonlyField
+from django.contrib.admin.helpers import Fieldset, Fieldline, AdminField, AdminReadonlyField, AdminForm
 
 class MIZFieldset(Fieldset):
     
@@ -23,10 +23,6 @@ class MIZFieldline(Fieldline):
 
 class MIZAdminField(AdminField):
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.is_checkbox = False
-
     def label_tag(self):
         classes = []
         contents = conditional_escape(force_text(self.field.label))
@@ -36,4 +32,21 @@ class MIZAdminField(AdminField):
         if not self.is_first:
             classes.append('inline')
         attrs = {'class': ' '.join(classes)} if classes else {}
-        return self.field.label_tag(contents=mark_safe(contents), attrs=attrs, label_suffix='')
+        return self.field.label_tag(contents=mark_safe(contents), attrs=attrs, label_suffix=None)
+        
+class MIZAdminFormWrapper(AdminForm):
+    
+    def __init__(self, admin_form):
+        self.form, self.fieldsets = admin_form.form, admin_form.fieldsets
+        self.prepopulated_fields = admin_form.prepopulated_fields
+        self.model_admin = admin_form.model_admin
+        self.readonly_fields = admin_form.readonly_fields
+
+    def __iter__(self):
+        for name, options in self.fieldsets:
+            yield MIZFieldset(
+                self.form, name,
+                readonly_fields=self.readonly_fields,
+                model_admin=self.model_admin,
+                **options
+            )

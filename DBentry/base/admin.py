@@ -14,6 +14,7 @@ from DBentry.forms import makeForm, InLineAusgabeForm, FormBase
 from DBentry.actions import merge_records
 from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
+from DBentry.helper import MIZAdminFormWrapper
 
 class MIZModelAdmin(admin.ModelAdmin):
     
@@ -298,7 +299,13 @@ class MIZModelAdmin(admin.ModelAdmin):
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
             form.instance.update_name(force_update=True)
-                
+    
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        # Move checkbox widget to the right of its label.
+        #TODO: make me fool proof//tests
+        if 'adminform' in context:
+            context['adminform'] = MIZAdminFormWrapper(context['adminform'])
+        return super().render_change_form(request, context, add, change, form_url, obj)
 
         
 class BaseInlineMixin(object):
