@@ -300,8 +300,8 @@ class ausgabe_monat(BaseModel):
     search_fields = ['monat__monat', 'monat__abk']
     
     class Meta(BaseModel.Meta):
-        verbose_name = 'Monat'
-        verbose_name_plural = 'Monate'
+        verbose_name = 'Ausgabe-Monat'
+        verbose_name_plural = 'Ausgabe-Monate'
         unique_together = ('ausgabe', 'monat')
         ordering = ['monat']
         

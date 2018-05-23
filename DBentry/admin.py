@@ -112,6 +112,7 @@ class AusgabenAdmin(MIZModelAdmin):
         extra = 0
     class MonatInLine(BaseTabularInline):
         model = ausgabe_monat
+        verbose_model = monat
         extra = 0
     class LNumInLine(BaseTabularInline):
         model = ausgabe_lnum
