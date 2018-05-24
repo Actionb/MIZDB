@@ -1,0 +1,70 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static admin_urls %}
+
+{% comment %}
+{% endcomment %}
+{% block extrahead %}
+<!-- Extrahead -->
+    {{ block.super }}
+    <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+    {{media}}
+{% endblock extrahead %}
+
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; 
+        <a href="{% url 'dupes_select' %}">Duplikate</a>
+        {% if breadcrumbs_title %} &rsaquo; {{ breadcrumbs_title }}{% endif %}
+    </div>
+{% endblock %}
+    
+{% block content %}
+<div>
+<form method="get">
+    {{ form.non_field_errors }}
+    
+    {% for fieldset in form %}
+      {% include "admin/includes/fieldset.html" %}
+    {% endfor %}
+        <input type="submit" name="get_duplicates" value="Suchen">
+</form>
+</div>
+<br><hr><hr><br>
+
+{% if items %}
+{% for dupe_item, cl_url in items %}
+    
+    <form method="post">
+        {% csrf_token %}
+        <table class="form">
+            <thead><tr>
+                <th>Merge</th>
+                <th>id</th>
+                <th style="min-width: 150px;">link</th>       
+                {% for header in headers %}
+                    <th> {{header}} </th>
+                {% endfor %}
+            </tr></thead>
+            
+            {% for object, object_link, fields in dupe_item %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td><input type="checkbox" name="{{ action_checkbox_name }}" value="{{object.pk}}" checked /></td>
+                    <td>{{object.pk}}</td>
+                    <td>{{object_link}}</td>
+                    {% for field in fields %}
+                        <td>{{field}}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+        <input type="hidden" name="action" value="{{action_name}}" />
+        <input type="submit" name="merge_sub" value="Zusammenfügen"> <a href="{{cl_url}}" class="button" target="_blank">Änderungsliste</a>
+    </form>
+    <br><hr><br>
+{% endfor %}
+{% else %}
+<p>Keine Duplikate gefunden!</p>
+{% endif %}
+{% endblock content %}

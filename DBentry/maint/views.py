@@ -1,3 +1,6 @@
+
+from itertools import chain 
+
 from django import views
 from django.shortcuts import render, redirect 
 from django.http import HttpResponse 
@@ -5,26 +8,35 @@ from django.http import HttpResponse
 from django.urls import reverse_lazy, reverse 
 from django.db.models import Count 
 from django.apps import apps 
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.utils.http import urlencode
  
-from itertools import chain 
  
-from DBentry.views import MIZAdminToolViewMixin 
+from DBentry.views import MIZAdminToolViewMixin, FixedSessionWizardView
+from DBentry.actions.views import MergeViewWizarded
 from DBentry.models import * 
 from DBentry.sites import register_tool
- 
+from DBentry.utils import get_obj_link, get_model_from_string
+
 from .forms import * 
 
- 
+#@register_tool
 class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
     url_name = 'maint_main' 
     index_label = 'Wartung' 
     template_name = 'admin/basic.html' 
     success_url = reverse_lazy('admin:index') 
+    title = 'Wartung'
     
     @staticmethod 
     def show_on_index_page(request): 
+        # Only show a link on the index page if superuser
         return request.user.is_superuser 
-     
+        
+    @classmethod
+    def permission_test(cls, request):
+        # Only allow superusers to access the page
+        return request.user.is_superuser 
      
 class UnusedObjectsView(MaintView): 
     model_name = '' 
@@ -38,33 +50,86 @@ class UnusedObjectsView(MaintView):
         qs = model.objects.annotate(num_a=Count('artikel')).filter(num_a__lte=lte) 
         request.session['qs'] = dict(id__in=list(qs.values_list('pk', flat=True))) 
         return redirect(url) 
- 
-def has_change_conflict(wizard): 
-    cleaned_data = wizard.get_cleaned_data_for_step('0') or {} 
-    if not cleaned_data: 
-        # Don't think this can happen. To get to this step, it is required to have posted a valid form in the 0-th step. 
-        return False 
-    if not cleaned_data.get('expand_o'): 
-        # Original is not meant to be expanded, there cannot be any conflicts 
-        return False 
-    original_pk = cleaned_data.get('original', 0) 
-    original = wizard.model.objects.get(pk=original_pk) 
-    qs = wizard.qs.exclude(pk=original_pk) 
-    has_conflict = False 
-     
-    original_valdict = wizard.model.objects.filter(pk=original.pk).values()[0] 
-    # The fields that may be updated by this merge 
-    updateable_fields = original.get_updateable_fields() 
-    if updateable_fields: 
-        # Keep track of any fields or original that would be updated (needs user input to decide what change to keep if more than one) 
-        updates = { fld_name : [] for fld_name in updateable_fields}  
-         
-        for other_record_valdict in qs.values(*updateable_fields): 
-            for k, v in other_record_valdict.items(): 
-                if v: 
-                    if updates[k]: 
-                        # Another value for this field has already been found, we have found a conflict 
-                        return True 
-                    else: 
-                        updates[k].append(v) 
-    return False 
+
+@register_tool
+class DuplicateObjectsView(MaintView):
+    #TODO: provide more info for the select to merge bit
+    
+    url_name = 'dupes_select' 
+    index_label = 'Duplikate finden' 
+    template_name = 'admin/dupes.html'
+    dupe_fields = None
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.model = get_model_from_string(kwargs.get('model_name'))
+        self.opts = self.model._meta
+        self.title = 'Duplikate: ' + self.opts.verbose_name 
+        self.breadcrumbs_title = self.opts.verbose_name 
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        from DBentry.sites import miz_site
+        selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
+        queryset = self.model.objects.filter(pk__in=selected)
+        model_admin = miz_site.get_admin_model(self.model)
+        response = MergeViewWizarded.as_view(model_admin=model_admin, queryset=queryset)(request)
+        if response:
+            return response
+        else:
+            return redirect(request.get_full_path())
+                
+    def get(self, request, *args, **kwargs):
+        if 'fields' in request.GET:
+            self.dupe_fields = request.GET.getlist('fields')
+        return super().get(request, *args, **kwargs)
+        
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        
+        form_choices = [(f.name, f.verbose_name.capitalize()) for f in get_model_fields(self.model, foreign = True,  m2m = False)]
+        form_initial = {'fields': self.dupe_fields} if self.dupe_fields else {}
+        context['form'] = DuplicateFieldsSelectForm(choices=form_choices, initial = form_initial)
+        
+        media = context.get('media', False)
+        if media:
+            media += context['form'].media
+        else:
+            media = context['form'].media
+        context['media'] = media
+        
+        items = []
+        if self.dupe_fields:
+            duplicates = self.model.objects.duplicates(*self.dupe_fields)
+            
+            context['headers'] = [self.opts.get_field(f).verbose_name for f in self.dupe_fields]
+            for id_set, fields_dict in duplicates.items():
+                dupe_item = []
+                for id in id_set:
+                    instance = self.model.objects.get(pk=id)
+                    link = get_obj_link(instance, self.request.user, include_name=False)
+                    dupe_item.append((instance, link, [fields_dict[f] for f in self.dupe_fields]))
+                    
+                cl_url =  reverse('admin:{}_{}_changelist'.format(self.opts.app_label, self.opts.model_name))
+                cl_url += '?id__in={}'.format(",".join([str(id) for id in id_set]))
+                items.append((dupe_item, cl_url))
+            
+        context['items'] = items
+        context['action_name'] = 'merge_records'
+        context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
+        return context
+        
+        
+class ModelSelectView(MaintView, views.generic.FormView):
+    
+    submit_value = 'Weiter'
+    form_method = 'get'
+    form_class = ModelSelectForm
+    next_view = None
+    
+    def get(self, request, *args, **kwargs):
+        if request.GET.get('model_select'):
+            return redirect(reverse(self.next_view, kwargs = {'model_name':request.GET.get('model_select')}))
+        return super().get(request, *args, **kwargs)
+    
+    

@@ -100,6 +100,7 @@ class MIZChangeList(ChangeList):
         # BulkViews redirect
         if request.session.get('qs', {}):
             qs = self.root_queryset.filter(**request.session.get('qs'))
+            #TODO: keep the qs if you want to return to the filtered changelist? Example: bulk_ausgabe-> edit created -> merge created -> abort -> back to edit created and not the entire cl
             del request.session['qs']
             return qs
         
@@ -160,3 +161,28 @@ class MIZChangeList(ChangeList):
             return qs.distinct()
         else:
             return qs
+            
+    def get_query_string(self, new_params=None, remove=None):
+        # Allow the use of '__in' lookup in the query string
+        if new_params is None: new_params = {}
+        if remove is None: remove = []
+        p = self.params.copy()
+        for r in remove:
+            for k in list(p):
+                if k.startswith(r):
+                    del p[k]
+        for k, v in new_params.items():
+            if v is None:
+                if k in p:
+                    del p[k]
+            else:
+                if k in p and '__in' in k:
+                    in_list = p[k].split(',')
+                    if not v in in_list:
+                        in_list.append(v)
+                    else:
+                        in_list.remove(v)
+                    p[k] = ','.join(in_list)
+                else:
+                    p[k] = v
+        return '?%s' % urlencode(sorted(p.items()))

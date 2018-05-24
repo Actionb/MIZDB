@@ -1,8 +1,8 @@
-
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 
 from django.db import models, transaction
 from django.contrib.admin.utils import get_fields_from_path
+from django.core.exceptions import FieldDoesNotExist, ValidationError
 
 from DBentry.utils import flatten_dict
 from DBentry.query import *
@@ -22,8 +22,59 @@ class MIZQuerySet(models.QuerySet):
             strat = BaseSearchQuery
         result, exact_match = strat(self, **kwargs).search(q)
         return result
+    
+    def _duplicates(self, *fields, as_dict = False):
+        if len(fields)==1:
+            return self.single_field_dupes(*fields)
+        else:
+            return self.multi_field_dupes(*fields, as_dict = as_dict)
+            
+    def duplicates(self, *fields):
+        dupes = self._duplicates(*fields)
+        rslt = OrderedDict()
+        for tpl in dupes:
+            dupe_values, c = tpl[:-1], tpl[-1] #NOTE: this REQUIRES tuples/lists and does not work with dicts
+            filter = dict(zip(fields, dupe_values))
+            ids = self.filter(**filter).values_list('pk', flat=True)
+            rslt[ids] = filter
+        return rslt
         
-    def values_dict(self, *flds, include_empty = False, flatten = False, **expressions):
+    def exclude_empty(self, *fields):
+        filter = {}
+        for field_name in fields:
+            try:
+                field = self.model._meta.get_field(field_name)
+            except FieldDoesNotExist:
+                continue
+            if field.null:
+                filter[field_name+'__isnull'] = True
+            if field.get_internal_type() in ('CharField', 'TextField'):
+                filter[field_name] = ''
+        return self.exclude(**filter)
+        
+    def single_field_dupes(self, field):
+        count_name = field + '__count'
+        return self.exclude_empty(field).values_list(field).annotate(**{count_name:models.Count(field)}).filter(**{count_name + '__gt':1}).order_by('-'+count_name)
+        
+    def multi_field_dupes(self, *fields, as_dict=False):
+        #sorted(m1,key=lambda d: d[[k for k in d.keys() if '__count' in k][0]])
+        #TODO: use values_dict? t = map(tuple,[d.values() for d in vd.values()]) -> s = [tuple(tuple(i) for i in l) for l in t]
+        # vd(tuplfy =True) -> Counter(map(tuple,[d.values() for d in vd.values()]))
+        # This would allow capturing multiple duplicate relations -- values_list only returns one item per relation!
+        null_filter = {f + '__isnull':False for f in fields} #TODO: exclude empty string
+        x = self.exclude_empty(*fields).values_list(*fields)
+        rslt = []
+        for tpl, c in Counter(x).items():
+            if c>1:
+                if as_dict:
+                    d = dict(zip(fields, tpl))
+                    d['__count'] = c
+                    rslt.append(d)
+                else:
+                    rslt.append(tpl + (c, ))
+        return rslt
+        
+    def values_dict(self, *flds, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
         An extension of QuerySet.values(). 
         
@@ -66,11 +117,17 @@ class MIZQuerySet(models.QuerySet):
                 if not include_empty and v in [None, '', [], (), {}]:
                     continue
                 if k not in d:
-                    d[k] = [v]
+                    if tuplfy:
+                        d[k] = (v, )
+                    else:
+                        d[k] = [v]
                 elif v in d.get(k):
                     continue
                 else:
-                    d.get(k).append(v)
+                    if tuplfy:
+                        d[k] += (v, )
+                    else:
+                        d.get(k).append(v)
         if flds and flatten:
             #TODO: flatten with flds empty (all fields requested)
             # Do not flatten fields that represent a reverse relation, as a list is expected
@@ -204,7 +261,6 @@ class AusgabeQuerySet(CNQuerySet):
         # Overridden, to better deal with poorly formatted e_datum values
         # django's way of validating inputs for querysets is done via django.utils.dateparse.py
         if 'e_datum' in kwargs:
-            from django.core.exceptions import ValidationError
             try:
                 return super(AusgabeQuerySet, self).filter(*args, **kwargs)
             except ValidationError:

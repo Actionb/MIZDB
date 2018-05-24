@@ -39,15 +39,19 @@ class MIZAdminMixin(object):
     """
     A mixin that provides an admin 'look and feel' to custom views by adding admin_site specific context (each_context).
     """
+    title = None
+    breadcrumbs_title = None
     admin_site = miz_site
     
     def get_context_data(self, *args, **kwargs):
-        kwargs = super(MIZAdminMixin, self).get_context_data(*args, **kwargs)
+        context = super(MIZAdminMixin, self).get_context_data(*args, **kwargs)
         # Add admin site context
-        kwargs.update(self.admin_site.each_context(self.request))
+        context.update(self.admin_site.each_context(self.request))
         # Enable popups behaviour for custom views
-        kwargs['is_popup'] = '_popup' in self.request.GET
-        return kwargs
+        context['is_popup'] = '_popup' in self.request.GET
+        if self.title: context['title'] = self.title
+        if self.breadcrumbs_title: context['breadcrumbs_title'] = self.breadcrumbs_title
+        return context
         
 class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
     """
@@ -113,7 +117,18 @@ class MIZAdminToolViewMixin(MIZAdminPermissionMixin):
     The base mixin for all 'Admin Tools'. 
     """
     
+    submit_value = None
+    submit_name = None
+    form_method = 'post'
     template_name = 'admin/basic.html'
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        if self.submit_value: context['submit_value'] = self.submit_value
+        if self.submit_name: context['submit_name']  = self.submit_name
+        context['form_method'] = self.form_method
+        return context
+            
     
     @staticmethod
     def show_on_index_page(request):
