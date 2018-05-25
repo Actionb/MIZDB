@@ -89,6 +89,25 @@ def get_relation_info_to(model, rel):
         related_field = rel.field
     return related_model, related_field
     
+def get_required_fields(model):
+    #FIXME: this doesnt return 'name' for model geber
+    """
+    Returns the fields that require a value.
+    """
+    rslt = []
+    for f in get_model_fields(model, m2m = False):
+        if f.null:
+            continue
+        if f.blank and isinstance(f, (models.CharField, models.TextField)):
+            # String-based fields should not have null = True, hence checking the less meaningful blank attribute
+            continue
+        if f.has_default():
+            # Field has a default value, whether or not that value is an 'EMPTY_VALUE' we do not care
+            continue
+        rslt.append(f)
+    return rslt
+                
+    
     
 class BaseModel(models.Model):
     #TODO: exclude attribute does not do what the description says, it excludes fields from the 'field collection' methods as well!
