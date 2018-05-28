@@ -132,16 +132,16 @@ class ACCapture(ACBase):
     def get_queryset(self):
         model_name = self.model._meta.model_name
         cache = self.request.session.get('ac-cache', {})
-        if self.q in cache.get(model_name, {}):
-            return cache[model_name][self.q]
+#        if self.q in cache.get(model_name, {}):
+#            return cache[model_name][self.q]
         qs = super().get_queryset()
-        if self.q:
-            if not cache or model_name not in cache:
-                self.request.session['ac-cache'] = {model_name:{self.q:qs}}
-            elif model_name in cache:
-                cached = self.request.session['ac-cache'][model_name]
-                cached[self.q] = qs
-                self.request.session['ac-cache'] = {model_name:cached}
+#        if self.q:
+#            if not cache or model_name not in cache:
+#                self.request.session['ac-cache'] = {model_name:{self.q:qs}}
+#            elif model_name in cache:
+#                cached = self.request.session['ac-cache'][model_name]
+#                cached[self.q] = qs
+#                self.request.session['ac-cache'] = {model_name:cached}
         return qs
     
     def apply_q(self, qs, use_suffix=True):
