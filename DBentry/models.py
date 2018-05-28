@@ -536,7 +536,7 @@ class buch(BaseModel):
     auflage = models.CharField(**CF_ARGS_B)
     EAN = EANField(blank = True)
     ISBN = ISBNField(blank = True)
-    is_buchband = models.BooleanField(default = False, verbose_name = 'Ist Buchband', help_text = 'Dieses Buch ist ein Buchband bestehend aus Aufsätzen.')
+    is_buchband = models.BooleanField(default = False, verbose_name = 'Ist Sammelband', help_text = 'Dieses Buch ist ein Sammelband bestehend aus Aufsätzen.')
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Buches')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
@@ -544,7 +544,8 @@ class buch(BaseModel):
     schriftenreihe = models.ForeignKey('schriftenreihe', models.SET_NULL, null = True, blank = True)
     buchband = models.ForeignKey(
         'self', models.PROTECT, null = True,  blank = True, limit_choices_to = {'is_buchband':True}, 
-        related_name = 'buch_set', help_text = 'Der Buchband, der diesen Aufsatz enthält.'
+        related_name = 'buch_set', help_text = 'Der Sammelband, der diesen Aufsatz enthält.', 
+        verbose_name = 'Sammelband', 
     )
     verlag = models.ForeignKey('verlag', models.SET_NULL, null = True,  blank = True)
     sprache = models.ForeignKey('sprache', models.SET_NULL, null = True, blank = True)
