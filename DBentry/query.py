@@ -208,7 +208,7 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
                 else:
                     if any(q in self.clean_string(s) for s in values_list):
                         match = True
-                if not match and search_field in self.primary_search_fields:
+                if not match and search_field in self.primary_search_fields and len(q.split())>1:
                     # Scramble the order of q, if all bits of it can be found, accept the values_list as a match
                     partial_match_count = 0
                     for i in q.split():
