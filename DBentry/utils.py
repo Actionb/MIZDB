@@ -268,4 +268,6 @@ def flatten_dict(d, exclude=[]):
         else:
             rslt[k] = v
     return rslt
-            
+
+def is_iterable(obj):
+    return isinstance(obj, Iterable) and not isinstance(obj, (bytes, str))
