@@ -9,6 +9,8 @@ from DBentry.models import *
 from DBentry.logging import LoggingMixin
 from DBentry.utils import get_model_from_string
 
+from django import http
+
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     _search_fields = None
     
@@ -121,7 +123,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     
 class ACCapture(ACBase):
     create_field = None
-    
+
     def dispatch(self, *args, **kwargs):
         if not self.model:
             model_name = kwargs.pop('model_name', '')
@@ -173,3 +175,93 @@ class ACCapture(ACBase):
 class ACBuchband(ACBase):
     model = buch
     queryset = buch.objects.filter(is_buchband=True)
+    
+from .creator import Creator
+creation_failed_response = http.JsonResponse({'id':0, 'text':'Creation failed, please use button!'})
+
+class ACCreateable(ACCapture):
+    #TODO: handle MultipleObjectsReturnedException raised by creator
+    def dispatch(self, *args, **kwargs):
+        if not self.model:
+            model_name = kwargs.pop('model_name', '')
+            self.model = get_model_from_string(model_name)
+        self.creator = Creator(self.model)
+        self.create_field = self.create_field or kwargs.pop('create_field', None)
+        return super().dispatch(*args, **kwargs)
+        
+    def createable(self, text, creator = None):
+        creator = creator or self.creator
+        return creator.createable(text)
+    
+    def get_create_option(self, context, q):
+        """Form the correct create_option to append to results."""
+        # Override:
+        # - to include a hook has_create_field() instead of just checking for if self.create_field (needed for ACProv)
+        # - to translate the create text
+        create_option = []
+        display_create_option = False
+        if q:
+            page_obj = context.get('page_obj', None)
+            if page_obj is None or not self.has_more(context):#or page_obj.number == 1:
+                # See if we can create an object from q
+                if self.createable(q):
+                    display_create_option = True
+
+        if display_create_option and self.has_add_permission(self.request):
+            create_option = [{
+                'id': q,
+                'text': gettext('Create "%(new_value)s"') % {'new_value': q}, 
+                'create_id': True,
+            }]
+            create_info = self.get_creation_info(q)
+            if create_info:
+                create_option.extend(self.get_creation_info(q))
+        
+        return create_option
+        
+    def get_creation_info(self, text, creator = None):
+        creator = creator or self.creator
+        create_info = []
+        default = {'id':None, 'create_id':True, 'text':'...mit folgenden Daten:'} # 'id' : None will make the option unselectable
+        
+        create_info.append(default.copy())
+        for k, v in creator.create_info(text).items():
+            if not v or k == 'instance':
+                continue
+            if isinstance(v, dict):
+                for _k, _v in v.items():
+                    if not _v or _k == 'instance':
+                        continue
+                    default['text'] = ' '*4 + str(_k) + ': ' + str(_v)
+                    create_info.append(default.copy())
+            else:
+                default['text'] = str(k) + ': ' + str(v)
+                create_info.append(default.copy())
+        return create_info
+        
+    def create_object(self, text, creator = None):
+        if self.has_create_field():
+            return super().create_object(text)
+        creator = creator or self.creator
+        created_instance = creator.create(text).get('instance')
+        return created_instance
+
+    def post(self, request):
+        """Create an object given a text after checking permissions."""
+        if not self.has_add_permission(request):
+            return http.HttpResponseForbidden()
+
+        if not self.creator and not self.create_field:
+            raise ImproperlyConfigured('Missing "create_field"') #TODO: adjust error message
+
+        text = request.POST.get('text', None)
+
+        if text is None:
+            return http.HttpResponseBadRequest()
+
+        result = self.create_object(text)
+
+        return http.JsonResponse({
+            'id': result.pk,
+            'text': six.text_type(result),
+        })
