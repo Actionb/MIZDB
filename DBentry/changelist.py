@@ -186,3 +186,53 @@ class MIZChangeList(ChangeList):
                 else:
                     p[k] = v
         return '?%s' % urlencode(sorted(p.items()))
+
+class AusgabeChangeList(MIZChangeList):
+    
+    def get_queryset(self, request):
+        from DBentry.models import magazin
+        from itertools import chain
+        from django.db.models import Count, Sum, Min, Max
+        queryset = super().get_queryset(request).order_by() #NOTE: we can keep the querystring order this way
+        
+        # Get the ordering set either by ModelAdmin.get_ordering/CL._get_default_ordering 
+        # or (overriding the previous two) the ordering given by a query string.
+        # The primary key is also appended to the end.
+        ordering = self.get_ordering(request, queryset)
+        if not queryset.exists():
+            return queryset.order_by(*ordering)
+            
+        pk_order_item = ordering.pop(-1)
+        for o in ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']: #NOTE: jahrgang -> jahr?
+            if o not in ordering:
+                ordering.append(o)
+        
+        # Find the best criteria to order with, which might be either: num, lnum, monat or e_datum
+        # If the queryset only contains ausgaben of a single magazin and that magazin sets an ausgaben_merkmal,
+        # we should take that as the order criteria.
+        mag_pks = queryset.values_list('magazin_id', flat = True).distinct()
+        if mag_pks.count() == 1 and magazin.objects.get(pk=mag_pks.first()).ausgaben_merkmal:
+            #TODO: keep this or not? The user may not be aware why ordering is potentially messed up
+            result_ordering = [magazin.objects.get(pk=mag_pks.first()).ausgaben_merkmal]
+        
+        else:
+            # Count the presence of the different criteria and pick the one that is most dominant in the queryset.
+            # Account for the joins by taking each sum individually.
+            counted = dict(chain(
+                queryset.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(), 
+                queryset.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
+                queryset.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(), 
+                queryset.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
+            ))
+            
+            criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
+            result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
+        ordering.extend(result_ordering + [pk_order_item])
+        
+        queryset = queryset.annotate(
+            jahr = Min('ausgabe_jahr__jahr'), 
+            num = Max('ausgabe_num__num'), 
+            lnum = Max('ausgabe_lnum__lnum'), 
+            monat = Max('ausgabe_monat__monat__ordinal'), 
+        ).order_by(*ordering)
+        return queryset

@@ -129,7 +129,7 @@ class AusgabenAdmin(MIZModelAdmin):
     actions = [bulk_jg, add_bestand]
     list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahr_string', 'jahrgang', 
                         'magazin','e_datum','anz_artikel', 'status') 
-    ordering = ['_name']
+    #ordering = ['magazin', 'jahr', 'jahrgang']
     
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     fields = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
@@ -140,6 +140,10 @@ class AusgabenAdmin(MIZModelAdmin):
         'selects':['magazin','status'], 
         'simple':['jahrgang', 'sonderausgabe']
     }
+    
+    def get_changelist(self, request, **kwargs):
+        from .changelist import AusgabeChangeList
+        return AusgabeChangeList
     
     def anz_artikel(self, obj):
         return obj.artikel_set.count()
