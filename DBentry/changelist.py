@@ -151,11 +151,10 @@ class MIZChangeList(ChangeList):
         # Apply search results
         qs, search_use_distinct = self.model_admin.get_search_results(request, qs, self.query)
         
-        qs = qs.resultbased_ordering()
         # Set ordering.
         ordering = self.get_ordering(request, qs)
         qs = qs.order_by(*ordering)
-        
+
         # Remove duplicates from results, if necessary
         if filters_use_distinct | search_use_distinct:
             return qs.distinct()
@@ -198,35 +197,51 @@ class AusgabeChangeList(MIZChangeList):
         # Get the ordering set either by ModelAdmin.get_ordering/CL._get_default_ordering 
         # or (overriding the previous two) the ordering given by a query string.
         # The primary key is also appended to the end.
-        ordering = self.get_ordering(request, queryset)
-        if not queryset.exists():
-            return queryset.order_by(*ordering)
+        ordering = self.get_ordering(request, queryset) #NOTE: haven't we done this through the call to super() already?
+        if not queryset.exists() or not queryset.query.where.children:
+            # Don't bother if queryset is empty or not filtered in any way
+            return queryset.order_by(*ordering) # django would warn about an unordered list even it was empty
             
         pk_order_item = ordering.pop(-1)
         for o in ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']: #NOTE: jahrgang -> jahr?
             if o not in ordering:
                 ordering.append(o)
+                
+        # Determine if jahr and/or jahrgang should be in ordering. 
+        # The overall order may be messed up if the queryset is a mixed bag of records of having both, having neither and having one or the other.
+        jj_values = list(queryset.values_list('ausgabe_jahr', 'jahrgang'))
+        jahr_values, jahrgang_values = zip(*jj_values) # zip(*list) is the inverse of zip(list)
+        jahr_missing = jahr_values.count(None)
+        jahrgang_missing = jahrgang_values.count(None)
+        
+        if jahr_missing and jahrgang_missing:
+            # Some records in queryset are missing jahr while others are missing jahrgang
+            if jahr_missing > jahrgang_missing:
+                # there are more records missing jahr than there are records missing jahrgang
+                ordering.remove('jahr')
+            elif jahrgang_missing > jahr_missing:
+                ordering.remove('jahrgang')
+            else:
+                # the records are missing an equal amount of either criteria, remove them both
+                ordering.remove('jahr')
+                ordering.remove('jahrgang')
+        elif jahr_missing:
+            ordering.remove('jahr')
+        elif jahrgang_missing:
+            ordering.remove('jahrgang')
         
         # Find the best criteria to order with, which might be either: num, lnum, monat or e_datum
-        # If the queryset only contains ausgaben of a single magazin and that magazin sets an ausgaben_merkmal,
-        # we should take that as the order criteria.
-        mag_pks = queryset.values_list('magazin_id', flat = True).distinct()
-        if mag_pks.count() == 1 and magazin.objects.get(pk=mag_pks.first()).ausgaben_merkmal:
-            #TODO: keep this or not? The user may not be aware why ordering is potentially messed up
-            result_ordering = [magazin.objects.get(pk=mag_pks.first()).ausgaben_merkmal]
+        # Count the presence of the different criteria and sort them accordingly.
+        # Account for the joins by taking each sum individually.
+        counted = dict(chain(
+            queryset.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(), 
+            queryset.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
+            queryset.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(), 
+            queryset.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
+        ))
         
-        else:
-            # Count the presence of the different criteria and pick the one that is most dominant in the queryset.
-            # Account for the joins by taking each sum individually.
-            counted = dict(chain(
-                queryset.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(), 
-                queryset.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
-                queryset.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(), 
-                queryset.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
-            ))
-            
-            criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
-            result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
+        criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
+        result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
         
         queryset = queryset.annotate(
