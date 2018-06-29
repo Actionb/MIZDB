@@ -109,6 +109,59 @@ class TestAutorForm(ModelFormTestCase):
         with self.assertNotRaises(ValidationError):
             form.clean()
         
+class TestBuchForm(ModelFormTestCase):
+    form_class = BuchForm
+    fields = ['is_buchband', 'buchband']
+    model = buch
+    
+    def test_clean(self):
+        # clean should raise a ValidationError if both is_buchband and buchband data is present
+        b = make(buch, is_buchband = True)
+        
+        form = self.get_form(data={'is_buchband':True, 'buchband':b.pk})
+        form.full_clean()
+        with self.assertRaises(ValidationError):
+            form.clean()
+        
+        form = self.get_form(data={'is_buchband':True})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'buchband':b.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+class TestHerausgeberForm(ModelFormTestCase):
+    form_class = HerausgeberForm
+    fields = ['person', 'organisation']
+    model = Herausgeber
+    
+    def test_clean(self):
+        p = make(person)
+        o = make(Organisation)
+        
+        form = self.get_form(data={})
+        form.full_clean()
+        with self.assertRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'organisation':o.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'person':p.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+            
+        form = self.get_form(data={'organisation':o.pk, 'person':p.pk})
+        form.full_clean()
+        with self.assertNotRaises(ValidationError):
+            form.clean()
+        
 class TestMIZAdminForm(FormTestCase):
     
     form_class = MIZAdminForm
