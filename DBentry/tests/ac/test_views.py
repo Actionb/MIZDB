@@ -1,7 +1,4 @@
 from .base import *
-
-#TODO: a cached result list was returned although an item of that result list only CONTAINED the search term
-# search term: 'Katalog', cached result list: ['Blablkatalog','Zeugs']
         
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     

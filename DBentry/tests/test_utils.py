@@ -115,7 +115,6 @@ class TestDebugUtils(TestCase):
         def func():
             return list(ausgabe.objects.all())
         self.assertEqual(utils.num_queries(func), 1)
-        self.assertEqual(utils.num_queries(), 0) #TODO: have num_queries return 0 when no func is given
 
 
 ##############################################################################################################

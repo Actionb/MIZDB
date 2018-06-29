@@ -132,16 +132,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         form.full_clean()
         self.assertIsNone(view.form_valid(form))
         
-    def test_get_context_data_with_form(self):
-        #TODO: how to compare media objects?
-#        request = self.get_request()
-#        view = self.get_view(request)
-#        context = view.get_context_data()
-#        media = context['media']
-#        expected = self.model_admin.media + view.get_form().media
-#        self.assertEqual(media, expected)
-        pass
-        
     # self.client.post(path=self.changelist_path,data={stuff})? --> nope this goes through ModelAdmin.response_action first   
     def test_post_action_confirmed(self):
         # If the posted form is valid, the post method (through form_valid()) should return None (redirecting us back to the changelist)

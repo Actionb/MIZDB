@@ -52,11 +52,11 @@ class CreateViewMixin(object):
     view_class = None
     
     def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
-        #TODO: swap instantiation and attribute settings around ( set attributes on the instance, not the class )
-        self.view_class.request = request
-        self.view_class.args = args or []
-        self.view_class.kwargs = kwargs or {}
-        return self.view_class(**initkwargs)
+        view = self.view_class(**initkwargs)
+        view.request = request
+        view.args = args or []
+        view.kwargs = kwargs or {}
+        return view
         
     def get_dummy_view_class(self, bases=None, attrs=None):
         if bases is None:

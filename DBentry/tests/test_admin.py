@@ -5,8 +5,6 @@ from .base import *
 from DBentry.admin import *
 from DBentry.sites import MIZAdminSite
 
-#TODO: LagerortAdmin (HiddenFromIndex) showed an empty Beschreibung & Bemerkungen fieldset
-
 class AdminTestMethodsMixin(object):
     
     crosslinks_relations = None
@@ -91,7 +89,7 @@ class AdminTestMethodsMixin(object):
         media = self.model_admin.media
         if self.model_admin.googlebtns:
             self.assertIn('admin/js/utils.js', media._js)
-
+            
 class TestMIZModelAdmin(AdminTestCase):
     
     model_admin_class = DateiAdmin

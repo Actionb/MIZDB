@@ -2,8 +2,6 @@ from .base import *
 
 from DBentry.factory import *
 
-#TODO: test django_get_or_create
-
 class TestRuntimeFactoryMixin(TestCase):
 
     local_factory_module = 'DBentry.factory'    # the module modelfactory_factory lives in
@@ -51,11 +49,6 @@ class TestUniqueFaker(TestCase):
         
         faker = UniqueFaker(factory.Faker('month'), function = lambda n:n)
         self.assertEqual(faker.faker.provider, 'month')
-        
-    def test_evaluate(self):
-        #TODO:
-        # Assert that the returned instance is always unique
-        pass
         
 class TestSelfFactory(TestCase):
     
@@ -343,6 +336,10 @@ class TestMagazinFactory(ModelFactoryTestCase):
         m = MagazinFactory(issn = '45010528')
         self.assertEqual(m.issn, '4501-0528')
         
+    def test_get_or_create(self):
+        expected = self.factory_class()
+        self.assertEqual(self.factory_class(magazin_name=expected.magazin_name), expected)
+        
         
 class TestAusgabeFactory(ModelFactoryTestCase):
     
@@ -469,3 +466,7 @@ class TestMonatFactory(ModelFactoryTestCase):
         
         m = self.factory_class(monat = 'Nope')
         self.assertEqual(m.abk, 'Nop')
+        
+    def test_get_or_create(self):
+        expected = self.factory_class()
+        self.assertEqual(self.factory_class(monat=expected.monat), expected)

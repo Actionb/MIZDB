@@ -76,6 +76,7 @@ class ACViewTestMethodMixin(object):
     def test_search_fields_prop(self):
         self.assertListEqualSorted(self.get_view().search_fields, self.model.get_search_fields())
         
+    @translation_override(language = None)
     def test_get_create_option(self):
         request = self.get_request()
         view = self.get_view(request)
@@ -83,7 +84,7 @@ class ACViewTestMethodMixin(object):
         if view.has_create_field():
             self.assertEqual(len(create_option), 1)
             self.assertEqual(create_option[0].get('id'), 'Beep')
-            self.assertEqual(create_option[0].get('text'), 'Erstelle "Beep"') #TODO: translation
+            self.assertEqual(create_option[0].get('text'), 'Create "Beep"')
             self.assertTrue(create_option[0].get('create_id'))
         else:
             self.assertEqual(len(create_option), 0)

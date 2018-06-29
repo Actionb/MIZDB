@@ -30,7 +30,7 @@ class FactoryTestCaseMixin(object):
         model_admin = self.model_admin
         labels = model_admin.advanced_search_form.get('labels', {})
         form = advSF_factory(model_admin, labels=labels)()
-        self.assertEqual(sorted(list(form.fields)), sorted(list(expected_fields)))  # TODO: use assertListsEqualSorted
+        self.assertListEqualSorted(list(form.fields), expected_fields)
         for field_path, formfield in form.fields.items():
             self.assertTrue(field_path in expected_fields, msg=field_path)
             self.assertEqual(formfield.label, expected_labels[field_path], msg=field_path)
