@@ -1,43 +1,5 @@
 from .base import *
 
-class TestModelFunctions(TestCase):
-    
-    def test_get_model_relations(self):
-        # model video has the four kinds of relations:
-        # FK from bestand to video
-        # FK from video to sender
-        # ManyToMany auto created band <-> video
-        # ManyToMany intermediary musiker <-> video
-        model = video
-        rev_fk = bestand._meta.get_field('video').remote_field
-        fk = video._meta.get_field('sender').remote_field
-        m2m_inter = video.musiker.rel
-        m2m_auto = video.band.rel
-        
-        rels = get_model_relations(video)
-        self.assertIn(rev_fk, rels)
-        self.assertIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-        
-        rels = get_model_relations(video, reverse = False)
-        self.assertNotIn(rev_fk, rels)
-        self.assertIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-        
-        rels = get_model_relations(video, forward = False)
-        self.assertIn(rev_fk, rels)
-        self.assertNotIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-        
-        rels = get_model_relations(video, forward = False, reverse = False)
-        self.assertNotIn(rev_fk, rels)
-        self.assertNotIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-
 class TestModelBase(DataTestCase):
 
     model = artikel
