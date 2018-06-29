@@ -419,7 +419,7 @@ class TestModelAusgabeMonat(DataTestCase):
     model = ausgabe_monat
     
     def test_str(self):
-        obj = make(self.model, monat__abk='Dez')
+        obj = make(self.model, monat__monat='Dezember')
         self.assertEqual(str(obj), 'Dez')
         
 class TestModelAusgabeNum(DataTestCase):

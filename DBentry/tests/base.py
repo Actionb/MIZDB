@@ -244,6 +244,22 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
             request_data.update(other_dict)
         return self.client.post(self.changelist_path, data=request_data)
         
+    def get_changelist(self, request):
+        list_display = self.model_admin.get_list_display(request)
+        list_display_links = self.model_admin.get_list_display_links(request, list_display)
+        list_filter = self.model_admin.get_list_filter(request)
+        search_fields = self.model_admin.get_search_fields(request)
+        list_select_related = self.model_admin.get_list_select_related(request)
+        
+        ChangeList = self.model_admin.get_changelist(request)
+        cl = ChangeList(
+            request, self.model, list_display,
+            list_display_links, list_filter, self.model_admin.date_hierarchy,
+            search_fields, list_select_related, self.model_admin.list_per_page,
+            self.model_admin.list_max_show_all, self.model_admin.list_editable, self.model_admin,
+        )
+        return cl
+        
 
 ##############################################################################################################
 # TEST_FORMS TEST CASES
@@ -309,8 +325,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
             ]
             
             # The values of the objects of the related model that are related to original
-            self.original_related[(related_model, related_field)] = related_model.objects.filter(**{related_field.name:self.original}).values(*preserved_fields)  # list() to force evaluation
-            #get_related_set(self.original, rel).values(*preserved_fields)
+            self.original_related[(related_model, related_field)] = list(related_model.objects.filter(**{related_field.name:self.original}).values(*preserved_fields))  # list() to force evaluation
             
             # A queryset of all objects of the related model affected by the merge
             updated_qs = related_model.objects.filter(**{related_field.name + '__in':self.merge_records})

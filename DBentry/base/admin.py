@@ -109,7 +109,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             # Remove all other fields of the tuple that are in self.fields
             for i in indexes:
                 grouped_fields.pop(i)
-            fields_used.update(tpl)
+            fields_used.update(tpl) #TODO: shouldn't this be *tpl or some such?
         return grouped_fields
         
     def get_fieldsets(self, request, obj=None):

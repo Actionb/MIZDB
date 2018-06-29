@@ -18,7 +18,7 @@ class TestActionConfirmationView(ActionViewTestCase, LoggingTestMixin):
             
     def test_init_no_action_name(self):
         # Not setting an action_name attribute on view
-        view = self.view()
+        view = self.get_view()
         self.assertEqual(getattr(view, 'model_admin', None), self.model_admin)
         self.assertEqual(list(getattr(view, 'queryset', None)), list(self.queryset))
         self.assertEqual(getattr(view, 'action_name', None), view.__class__.__name__)
@@ -26,47 +26,47 @@ class TestActionConfirmationView(ActionViewTestCase, LoggingTestMixin):
         
     def test_init_with_action_name(self):
         # Setting an action_name attribute on view
-        view = self.view(action_name='test_action')
+        view = self.get_view(action_name='test_action')
         self.assertEqual(getattr(view, 'action_name', None), 'test_action')
         
     def test_get_form_class_fields_no_form_class(self):
         # 1. view.fields set and no view.form_class set => makeSelectionForm should make a form (so: a MIZAdminForm)
-        view = self.view()
+        view = self.get_view()
         view.fields = ['band_name']
         self.assertTrue(issubclass(view.get_form_class(), MIZAdminForm))
         
     def test_get_form_class_fields_and_form_class(self):
         # 2. view.fields set and view.form_class set => views.generic.FormView will take over with the provided form_class
-        view = self.view()
+        view = self.get_view()
         view.fields = ['band_name']
         view.form_class = forms.Form
         self.assertEqual(view.get_form_class(), forms.Form)
     
     def test_get_form_class_nada(self):
         # 3. view fields not set => super().get_form_class() ====> None
-        view = self.view()
+        view = self.get_view()
         self.assertEqual(view.get_form_class(), None)
         
     def test_perform_action_not_implemented(self):
         # this base class has not implemented the perform_action method
-        view = self.view()
+        view = self.get_view()
         with self.assertRaises(NotImplementedError):
             view.perform_action()
             
     def test_action_allowed(self):
         # defaults to True
-        view = self.view()
+        view = self.get_view()
         self.assertTrue(view.action_allowed())
     
     def test_compile_affected_objects(self):
         request = self.get_request()
-        view = self.view(request=request)
+        view = self.get_view(request=request)
         expected = [[get_obj_link(self.obj1, request.user)]]
         self.assertEqual(view.compile_affected_objects(), expected)
         
     def test_get_context_data_one_item(self):
         request = self.get_request()
-        view = self.view(request=request)
+        view = self.get_view(request=request)
         context = view.get_context_data()
         self.assertEqual(context['objects_name'], self.model_admin.opts.verbose_name)
         
@@ -75,7 +75,7 @@ class TestActionConfirmationView(ActionViewTestCase, LoggingTestMixin):
         queryset = self.model.objects.all()
         
         request = self.get_request()
-        view = self.view(request=request, queryset=queryset)
+        view = self.get_view(request=request, queryset=queryset)
         context = view.get_context_data()
         self.assertEqual(context['objects_name'], self.model_admin.opts.verbose_name_plural)
        
@@ -96,14 +96,13 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # set self.queryset to objects 1 and 2 as these are compliant with the view's checks
         self.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         
-        
     def test_action_allowed(self):
         # the DataFactory assigns both ausgaben the same magazin
-        self.assertTrue(self.view().action_allowed())
+        self.assertTrue(self.get_view().action_allowed())
         
     def test_action_allowed_multi_magazine(self):
         request = self.get_request()
-        view = self.view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
+        view = self.get_view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
         self.assertFalse(view.action_allowed())
         expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin." 
         self.assertMessageSent(request, expected_message)
@@ -116,19 +115,19 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # affected_fields for this view: ['jahrgang','ausgabe_jahr__jahr']
         request = self.get_request()
         
-        view = self.view(request, queryset=self.qs_obj1)
+        view = self.get_view(request, queryset=self.qs_obj1)
         result = view.compile_affected_objects()
         expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
         
-        view = self.view(request, queryset=self.qs_obj3)
+        view = self.get_view(request, queryset=self.qs_obj3)
         result = view.compile_affected_objects()
         expected = ["Jahrgang: 20", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
         
     def test_form_valid(self):
         request = self.post_request(data={'action_confirmed':True, 'jahrgang':1})
-        view = self.view(request)
+        view = self.get_view(request)
         form = view.get_form()
         form.full_clean()
         self.assertIsNone(view.form_valid(form))
@@ -136,7 +135,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_get_context_data_with_form(self):
         #TODO: how to compare media objects?
 #        request = self.get_request()
-#        view = self.view(request)
+#        view = self.get_view(request)
 #        context = view.get_context_data()
 #        media = context['media']
 #        expected = self.model_admin.media + view.get_form().media
@@ -147,14 +146,14 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_post_action_confirmed(self):
         # If the posted form is valid, the post method (through form_valid()) should return None (redirecting us back to the changelist)
         request = self.post_request(data={'action_confirmed':True, 'jahrgang':1})
-        view = self.view(request)
+        view = self.get_view(request)
         response = view.post(request)
         self.assertIsNone(response)
     
     def test_post_show_confirmation_page(self):
         # get an ACTUAL response
         request = self.post_request()
-        view = self.view(request)
+        view = self.get_view(request)
         response = view.post(request)
         self.assertEqual(response.status_code, 200)
         from django.template.response import TemplateResponse
@@ -163,14 +162,14 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_dispatch_action_not_allowed(self):
         # Two different magazines
         request = self.post_request()
-        view = self.view(request, queryset=self.model.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk]))
+        view = self.get_view(request, queryset=self.model.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk]))
         response = view.dispatch(request)
         self.assertIsNone(response)
         
     @tag('logging')
     def test_perform_action(self): 
         request = self.get_request()
-        view = self.view(request)
+        view = self.get_view(request)
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416, 31417])
@@ -181,7 +180,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_perform_action_no_years(self):    
         # obj4 has no years assigned, perform_action should assign it the value given by the 'form'
         request = self.get_request()
-        view = self.view(request, queryset=self.qs_obj4)
+        view = self.get_view(request, queryset=self.qs_obj4)
         view.perform_action({'jahrgang':31416})
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
@@ -190,7 +189,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     @tag('logging')
     def test_perform_action_jahrgang_zero(self):   
         request = self.get_request()   
-        view = self.view(request)
+        view = self.get_view(request)
         view.perform_action({'jahrgang':0})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [None, None])
@@ -219,7 +218,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     def test_compile_affected_objects_obj1(self):
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj1)
+        view = self.get_view(request=request, queryset=self.qs_obj1)
         obj_link = get_obj_link(self.obj1, request.user)
         related_links = []
         expected = [[obj_link, related_links]]
@@ -227,7 +226,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     def test_compile_affected_objects_obj2(self):
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj2)
+        view = self.get_view(request=request, queryset=self.qs_obj2)
         obj_link = get_obj_link(self.obj2, request.user)
         related_links = [
             get_obj_link(obj, request.user)
@@ -238,7 +237,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     def test_compile_affected_objects_obj3(self):
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj3)
+        view = self.get_view(request=request, queryset=self.qs_obj3)
         obj_link = get_obj_link(self.obj3, request.user)
         related_links = [
             get_obj_link(obj, request.user)
@@ -249,7 +248,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         
     def test_compile_affected_objects_obj4(self):
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj4)
+        view = self.get_view(request=request, queryset=self.qs_obj4)
         obj_link = get_obj_link(self.obj4, request.user)
         related_links = [
             get_obj_link(obj, request.user)
@@ -264,7 +263,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         old_bestand = list(self.obj1.bestand_set.values_list('pk', flat=True))
         
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj1)
+        view = self.get_view(request=request, queryset=self.qs_obj1)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         
         all_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
@@ -280,7 +279,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         old_bestand = list(self.obj2.bestand_set.values_list('pk', flat=True))
         
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj2)
+        view = self.get_view(request=request, queryset=self.qs_obj2)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         
         all_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
@@ -297,7 +296,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         old_bestand = list(self.obj3.bestand_set.values_list('pk', flat=True))
         
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj3)
+        view = self.get_view(request=request, queryset=self.qs_obj3)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         
         all_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
@@ -314,7 +313,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         old_bestand = list(self.obj4.bestand_set.values_list('pk', flat=True))
         
         request = self.get_request()
-        view = self.view(request=request, queryset=self.qs_obj4)
+        view = self.get_view(request=request, queryset=self.qs_obj4)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         
         new_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
@@ -334,7 +333,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         old_bestand4 = list(self.obj4.bestand_set.values_list('pk', flat=True))
         
         request = self.get_request()
-        view = self.view(request=request)
+        view = self.get_view(request=request)
         view.perform_action({'bestand':self.bestand_lagerort, 'dublette':self.dubletten_lagerort})
         
         # obj1
@@ -370,7 +369,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         self.assertLoggedAddition(self.obj4, new_bestand.first())
         
     def test_get_initial(self):
-        view = self.view()
+        view = self.get_view()
         initial = view.get_initial()
         
         self.assertTrue('bestand' in initial)
@@ -393,19 +392,19 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     
     def test_action_allowed(self):
         queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
-        view = self.view(queryset=queryset)
+        view = self.get_view(queryset=queryset)
         self.assertTrue(view.action_allowed())
     
     def test_action_allowed_low_qs_count(self):
         request = self.post_request()
-        view = self.view(request=request, queryset=self.qs_obj1)
+        view = self.get_view(request=request, queryset=self.qs_obj1)
         self.assertFalse(view.action_allowed())
         expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.'
         self.assertMessageSent(request, expected_message)
         
     def test_action_allowed_different_magazin(self):
         request = self.post_request()
-        view = self.view(request=request, queryset=self.queryset)
+        view = self.get_view(request=request, queryset=self.queryset)
         self.assertFalse(view.action_allowed())
         expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(request, expected_message)
@@ -534,7 +533,7 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
         
     def test_action_allowed_different_magazin(self):
         request = self.post_request()
-        view = self.view(request=request, queryset=self.queryset)
+        view = self.get_view(request=request, queryset=self.queryset)
         self.assertFalse(view.action_allowed())
         expected_message = 'Die ausgewählten Artikel gehören zu unterschiedlichen Ausgaben.'
         self.assertMessageSent(request, expected_message)

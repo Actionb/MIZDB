@@ -1,4 +1,7 @@
 from .base import *
+
+#TODO: a cached result list was returned although an item of that result list only CONTAINED the search term
+# search term: 'Katalog', cached result list: ['Blablkatalog','Zeugs']
         
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     
@@ -20,7 +23,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         super(TestACBase, cls).setUpTestData()
     
     def test_has_create_field(self):
-        v = self.view()
+        v = self.get_view()
         self.assertTrue(v.has_create_field())
         v.create_field = ''
         self.assertFalse(v.has_create_field())
@@ -28,12 +31,12 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     def test_has_add_permission(self):
         # Test largely covered by test_get_create_option_no_perms
         request = self.get_request(user=self.noperms_user)
-        self.assertFalse(self.view().has_add_permission(request)) 
+        self.assertFalse(self.get_view().has_add_permission(request)) 
         
     def test_get_create_option_no_create_field(self):
         # No create option should be displayed if there is no create_field
         request = self.get_request()
-        view = self.view(request)
+        view = self.get_view(request)
         view.create_field = ''
         create_option = view.get_create_option(context={}, q='')
         self.assertEqual(create_option, [])
@@ -41,20 +44,20 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     def test_get_create_option_no_perms(self):
         # No create option should be displayed if the user has no add permissions
         request = self.get_request(user=self.noperms_user)
-        create_option = self.view(request).get_create_option(context={}, q='Beep')
+        create_option = self.get_view(request).get_create_option(context={}, q='Beep')
         self.assertEqual(create_option, [])
         
     def test_get_create_option_more_pages(self):
         # No create option should be displayed if there is more than one page to show
         request = self.get_request()
-        view = self.view(request)
+        view = self.get_view(request)
         paginator, page_obj, queryset, is_paginated = view.paginate_queryset(self.queryset, 1)
         create_option = view.get_create_option(context={'page_obj':page_obj}, q='Beep')
         self.assertEqual(create_option, [])
         
     def test_apply_q(self):
         # Test the ordering of exact_match_qs, startswith_qs and then contains_qs
-        view = self.view(q='Boop')
+        view = self.get_view(q='Boop')
         # obj1 is the only exact match
         # obj4 starts with q
         # obj2 contains q
@@ -70,14 +73,14 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         
     def test_get_queryset_with_q(self):
         request = self.get_request()
-        view = self.view(request)
+        view = self.get_view(request)
         view.q = 'notfound'
         self.assertEqual(list(view.get_queryset()), [self.obj3])
         
     def test_get_queryset_forwarded(self):
         # fake forwarded attribute
         request = self.get_request()
-        view = self.view(request)
+        view = self.get_view(request)
         view.forwarded = {'genre':self.genre.pk}
         
         # get_queryset should filter out the useless '' forward
@@ -104,61 +107,57 @@ class TestACAusgabe(ACViewTestCase):
         
         super().setUpTestData()
         
-    def setUp(self):
-        super(TestACAusgabe, self).setUp()
-        self.qs = self.model.objects.all()
-    
     def test_do_ordering(self):
         pass
         
     def test_apply_q_num(self):
-        view = self.view(q=self.obj_num.__str__())
+        view = self.get_view(q=self.obj_num.__str__())
         expected = (self.obj_num.pk, force_text(self.obj_num))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
         self.obj_num.ausgabe_num_set.create(num=11)
         self.obj_num.refresh_from_db()
-        view = self.view(q=self.obj_num.__str__())
+        view = self.get_view(q=self.obj_num.__str__())
         expected = (self.obj_num.pk, force_text(self.obj_num))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
     def test_apply_q_lnum(self):
-        view = self.view(q=self.obj_lnum.__str__())
-        #expected_qs = list(self.qs.filter(pk=self.obj_lnum.pk))
+        view = self.get_view(q=self.obj_lnum.__str__())
+        #expected_qs = list(self.queryset.filter(pk=self.obj_lnum.pk))
         expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
         self.obj_lnum.ausgabe_lnum_set.create(lnum=11)
         self.obj_lnum.refresh_from_db()
-        view = self.view(q=self.obj_lnum.__str__())
+        view = self.get_view(q=self.obj_lnum.__str__())
         expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
     def test_apply_q_monat(self):
-        view = self.view(q=self.obj_monat.__str__())
+        view = self.get_view(q=self.obj_monat.__str__())
         expected = (self.obj_monat.pk, force_text(self.obj_monat))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
-        self.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb', ordinal = 2))
+        self.obj_monat.ausgabe_monat_set.create(monat=make(monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
-        view = self.view(q=self.obj_monat.__str__())
+        view = self.get_view(q=self.obj_monat.__str__())
         expected = (self.obj_monat.pk, force_text(self.obj_monat))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
     def test_apply_q_sonderausgabe_forwarded(self):
-        view = self.view(q=self.obj_sonder.__str__(), forwarded={'magazin':self.mag.pk})
+        view = self.get_view(q=self.obj_sonder.__str__(), forwarded={'magazin':self.mag.pk})
         expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
     def test_apply_q_sonderausgabe(self):
-        view = self.view(q=self.obj_sonder.__str__())
+        view = self.get_view(q=self.obj_sonder.__str__())
         expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
         
     def test_apply_q_jahrgang(self):
-        view = self.view(q=self.obj_jahrg.__str__())
+        view = self.get_view(q=self.obj_jahrg.__str__())
         expected = (self.obj_jahrg.pk, force_text(self.obj_jahrg))
-        self.assertIn(expected, list(view.apply_q(self.qs)))
+        self.assertIn(expected, list(view.apply_q(self.queryset)))
 
         
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
@@ -194,7 +193,7 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
     def test_apply_q_favorites(self):
         request = self.get_request()
-        view = self.view(request=request)
+        view = self.get_view(request=request)
         
         result = view.apply_q(self.queryset)
         # If the user has no favorites, it should return the untouched queryset
@@ -216,7 +215,7 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         
     def test_apply_q_favorites(self):
         request = self.get_request()
-        view = self.view(request=request)
+        view = self.get_view(request=request)
         
         result = view.apply_q(self.queryset)
         # If the user has no favorites, it should return the untouched queryset

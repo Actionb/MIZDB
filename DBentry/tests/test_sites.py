@@ -5,10 +5,8 @@ from DBentry.sites import MIZAdminSite
 class TestMIZAdminSite(RequestTestCase):
     
     def test_index_tools(self):
+        #TODO: add Wartung
         response = self.client.get(reverse('admin:index'))
-#        site = MIZAdminSite()
-#        request = self.get_request()
-#        response = site.index(request)
         tools = response.context_data.get('admintools')
         self.assertIn('bulk_ausgabe', tools)
         self.assertEqual(tools.get('bulk_ausgabe'), 'Ausgaben Erstellung')

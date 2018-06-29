@@ -113,7 +113,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
     def test_save_data(self):
         form = self.get_valid_form()
         request = self.post_request()
-        view = self.view(request)
+        view = self.get_view(request)
         
         # store the currently existing pks
         before_save_ids = list(self.queryset.values_list('pk', flat=True))
@@ -145,7 +145,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # NIY:
         # self.assertIsNone(self.updated.jahrgang)
         
-        ids, created, updated = self.view(request).save_data(form)
+        ids, created, updated = self.get_view(request).save_data(form)
         
         self.assertTrue(self.updated.audio.exists())
         # NIY:
@@ -172,7 +172,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         
         form = self.get_valid_form()
         request = self.post_request()
-        ids, created, updated = self.view(request).save_data(form)
+        ids, created, updated = self.get_view(request).save_data(form)
         
         # for the data num = '1,2,3,4,4,5' we expect to have created three new objects for num 2, 3 and 4. 
         self.assertEqual(len(created), 3)
@@ -235,7 +235,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         
     def test_next_initial_data(self):
         form = self.get_valid_form()
-        next_data = self.view().next_initial_data(form)
+        next_data = self.get_view().next_initial_data(form)
         self.assertEqual(next_data.get('jahrgang', 0), 12)
         self.assertEqual(next_data.get('jahr', ''), '2002, 2003')
         

@@ -51,8 +51,7 @@ class CreateViewMixin(object):
     
     view_class = None
     
-    def view(self, request=None, args=None, kwargs=None, **initkwargs):
-        #TODO: rename method to get_view
+    def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
         #TODO: swap instantiation and attribute settings around ( set attributes on the instance, not the class )
         self.view_class.request = request
         self.view_class.args = args or []
@@ -60,8 +59,10 @@ class CreateViewMixin(object):
         return self.view_class(**initkwargs)
         
     def get_dummy_view_class(self, bases=None, attrs=None):
-        attrs = attrs or getattr(self, 'view_attrs', {})
-        bases = bases or getattr(self, 'view_bases', ())
+        if bases is None:
+            bases = getattr(self, 'view_bases', ())
+        if attrs is None:
+            attrs = attrs or getattr(self, 'view_attrs', {})
         if not isinstance(bases, (list, tuple)):
             bases = (bases, )
         return type("DummyView", bases, attrs)
@@ -92,7 +93,8 @@ class CreateFormMixin(object):
         return form
     
     def get_dummy_form(self, fields=None, **form_initkwargs):
-        fields = fields or self.dummy_fields
+        if fields is None:
+            fields = self.dummy_fields
         return type('DummyForm', (self.form_class, ), fields.copy())(**form_initkwargs)
         
 class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):

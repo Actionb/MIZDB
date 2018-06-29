@@ -6,10 +6,11 @@ from django.utils.text import get_text_list
 
 from DBentry.logging import *
 
+#TODO: either compare change messages with their translated version or use gettext(original version)
 class TestLoggingMixin(ViewTestCase): 
     
     model = band
-    view_class = type('DummyView', (LoggingMixin, views.View), {})
+    view_bases = (LoggingMixin, views.View)
     
     @classmethod
     def setUpTestData(cls):        
@@ -26,7 +27,7 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_add_add(self):
         rel = ort.band_set.rel
         
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
         self.assertEqual(logs[0].get_change_message(), 'Band "Testband" hinzugefügt.')
         self.assertEqual(logs[0].action_flag, ADDITION)
@@ -36,32 +37,32 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_add_change(self):
         rel = ort.band_set.rel
         
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
         self.assertEqual(logs[1].get_change_message(), 'Orte geändert.')
         self.assertEqual(logs[1].action_flag, CHANGE)
         
     def test_log_addition(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         l = view.log_addition(self.obj1)
         self.assertEqual(l.get_change_message(), gettext('Added.'))
         self.assertEqual(l.action_flag, ADDITION)
         
     def test_log_addition_m2m(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         l = view.log_addition(self.obj1, self.m2m)
         expected = gettext('Added {name} "{object}".').format(name=self.m2m._meta.verbose_name, object = force_text(self.m2m))
         self.assertEqual(l.get_change_message(), expected)
         self.assertEqual(l.action_flag, ADDITION)
         
     def test_log_change(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         l = view.log_change(self.obj1, ['band_name'])
         self.assertEqual(l.get_change_message(), 'Band_name geändert.')
         self.assertEqual(l.action_flag, CHANGE)
         
     def test_log_change_fields_is_no_list(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         l = view.log_change(self.obj1,'band_name')
         self.assertEqual(l.get_change_message(), 'Band_name geändert.')
         self.assertEqual(l.action_flag, CHANGE)
@@ -70,7 +71,7 @@ class TestLoggingMixin(ViewTestCase):
         self.assertEqual(l.action_flag, CHANGE)
         
     def test_log_change_m2m(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         l = view.log_change(self.obj1, ['genre'], self.m2m)
         expected = gettext(
             'Changed {fields} for {name} "{object}".').format(
@@ -81,20 +82,20 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_delete(self):
         qs = self.model.objects.all()
         
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         logs = view.log_delete(qs)
         for l in logs:
             self.assertEqual(l.get_change_message(), '')
             self.assertEqual(l.action_flag, DELETION)
         
     def test_log_deletion(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         l = view.log_deletion(self.obj1)
         self.assertEqual(l.get_change_message(), '')
         self.assertEqual(l.action_flag, DELETION)
         
     def test_log_update(self):
-        view = self.view(self.get_request())
+        view = self.get_dummy_view(request=self.get_request())
         qs = self.model.objects.all()
         update_data = dict(beschreibung='No update.', ort=self.ort)
         logs = view.log_update(qs, update_data)
