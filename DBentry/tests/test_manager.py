@@ -1,8 +1,14 @@
 from .base import *
 from DBentry.managers import CNQuerySet
 
-class TestMIZQuerySet(BandDataMixin, DataTestCase):
+class TestMIZQuerySet(DataTestCase):
     
+    model = band
+    raw_data = [
+        {'band_name': 'Testband1', }, 
+        {'band_name': 'Testband2', 'band_alias__alias':'Coffee', 'genre__genre': ['Rock']}, 
+        {'band_name': 'Testband3', 'band_alias__alias':['Juice', 'Water'], 'genre__genre': ['Rock', 'Jazz']}, 
+    ]
     fields = ['band_name', 'genre__genre', 'band_alias__alias']
     
     def test_values_dict(self):
@@ -54,37 +60,14 @@ class TestMIZQuerySetAusgabe(DataTestCase):
 
     model = ausgabe
     fields = ausgabe.name_composing_fields
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.obj1 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=True)
-        
-        cls.obj2 = ausgabe.objects.create(magazin=cls.mag, beschreibung='Snowflake', sonderausgabe=False)
-        
-        cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj3.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj3.ausgabe_jahr_set.create(jahr=2001)
-        cls.obj3.ausgabe_num_set.create(num=1)
-        cls.obj3.ausgabe_num_set.create(num=2)
-        
-        cls.obj4 = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj4.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj4.ausgabe_jahr_set.create(jahr=2001)
-        cls.obj4.ausgabe_lnum_set.create(lnum=1)
-        cls.obj4.ausgabe_lnum_set.create(lnum=2)
-        
-        cls.obj5 = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj5.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj5.ausgabe_jahr_set.create(jahr=2001)
-        cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Januar', abk='Jan', ordinal = 1))
-        cls.obj5.ausgabe_monat_set.create(monat=monat.objects.create(monat='Februar', abk='Feb', ordinal = 2))
-        
-        cls.obj6 = ausgabe.objects.create(magazin=cls.mag, e_datum='2000-01-01') 
-        
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5, cls.obj6]
-        
-        super().setUpTestData()
+    raw_data = [
+        {'magazin__magazin_name':'Testmagazin', 'sonderausgabe': True, 'beschreibung': 'Snowflake'}, 
+        {'magazin__magazin_name':'Testmagazin', 'sonderausgabe': False, 'beschreibung': 'Snowflake'}, 
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 'ausgabe_num__num': [1, 2]}, 
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 'ausgabe_lnum__lnum': [1, 2]}, 
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 'ausgabe_monat__monat__monat':['Januar', 'Februar']}, 
+        {'magazin__magazin_name':'Testmagazin', 'e_datum':'2000-01-01'}, 
+    ]
     
     def test_values_dict_obj1(self):
         expected = {self.obj1.pk :  {
@@ -149,7 +132,20 @@ class TestMIZQuerySetAusgabe(DataTestCase):
     
     
 @tag("cn")
-class TestCNQuerySet(AusgabeSimpleDataMixin, DataTestCase):
+class TestCNQuerySet(DataTestCase):
+    
+    model = ausgabe
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.mag = make(magazin, magazin_name = 'Testmagazin')
+        cls.obj1 = make(ausgabe, magazin=cls.mag)
+        cls.obj2 = make(
+            ausgabe, magazin=cls.mag, ausgabe_monat__monat__monat='Dezember', ausgabe_lnum__lnum=12, 
+            ausgabe_num__num=12, ausgabe_jahr__jahr=2000
+        )
+        cls.test_data = [cls.obj1, cls.obj2]
+        super().setUpTestData()
     
     def setUp(self):
         super().setUp()

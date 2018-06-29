@@ -121,29 +121,15 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.zraum = lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand LO')
-        cls.dublette = lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dublette LO')
-        cls.audio_lo = lagerort.objects.create(ort='Audio LO')
-        g = geber.objects.create(name='TestGeber')
-        cls.prov = provenienz.objects.create(geber=g, typ='Fund')
+        cls.mag = make(magazin, magazin_name='Testmagazin')
+        cls.zraum = make(lagerort, ort='Bestand LO')
+        cls.dublette = make(lagerort, ort='Dubletten LO')
+        cls.audio_lo = make(lagerort)
+        cls.prov = make(provenienz)
+        cls.updated = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=1)
+        cls.multi1, cls.multi2 = batch(ausgabe, 2, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=5)
         
-        cls.obj1 = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2001)
-        cls.obj1.ausgabe_num_set.create(num=1)
-        
-        # Create two identical objects for test_lookup_instance_multi_result
-        cls.obj2 = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj2.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj2.ausgabe_jahr_set.create(jahr=2001)
-        cls.obj2.ausgabe_num_set.create(num=5)
-        cls.obj3 = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj3.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj3.ausgabe_jahr_set.create(jahr=2001)
-        cls.obj3.ausgabe_num_set.create(num=5)
-        
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         
         super().setUpTestData()
 
@@ -161,7 +147,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             lagerort        = self.zraum.pk,  
             dublette        = self.dublette.pk, 
             provenienz      = self.prov.pk, 
-            info            = '', 
+            beschreibung    = '', 
             status          = 'unb', 
             _debug          = False, 
         )

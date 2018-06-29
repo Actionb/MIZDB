@@ -2,21 +2,38 @@
 from django.contrib.admin.models import LogEntry, ContentType, ADDITION, CHANGE, DELETION
 from django.utils.encoding import force_text
 
-from .data import DataFactory, ausgabe_data_simple, band_data
+from DBentry.factory import make, batch
 
 class TestDataMixin(object):
     
     model = None
     queryset = None
-    test_data = []
+    test_data = None
     test_data_count = 0
     add_relations = True
+    raw_data = None
+    fixtures = ['monat.json']
     
     @classmethod
     def setUpTestData(cls):
         super(TestDataMixin, cls).setUpTestData()
+        if cls.test_data is None:
+            cls.test_data = []
+        
+        if cls.raw_data:
+            if isinstance(cls.raw_data, dict):
+                for pk, values in cls.raw_data.items():
+                    try:
+                        cls.test_data.append(make(cls.model, pk = pk, **values))
+                    except TyperError:
+                        # pk is included in values
+                        cls.test_data.append(make(cls.model, **values))
+            else:
+                for values in cls.raw_data:
+                    cls.test_data.append(make(cls.model, **values))
+            
         if cls.test_data_count:
-            cls.test_data = DataFactory().create_data(cls.model, count=cls.test_data_count, add_relations = cls.add_relations)
+            cls.test_data.extend(list(batch(cls.model, cls.test_data_count)))
         for c, obj in enumerate(cls.test_data, 1):
             setattr(cls, 'obj' + str(c), obj)
         
@@ -89,20 +106,6 @@ class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
         else:
             return super(CreateFormViewMixin, self).get_form_class()
             
-class AusgabeSimpleDataMixin(TestDataMixin):
-    
-    @classmethod
-    def setUpTestData(cls):
-        ausgabe_data_simple(cls)        
-        super().setUpTestData()
-        
-class BandDataMixin(TestDataMixin):
-    
-    @classmethod
-    def setUpTestData(cls):
-        band_data(cls)        
-        super().setUpTestData()
-        
 
 class LoggingTestMixin(object):
     """

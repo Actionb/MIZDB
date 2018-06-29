@@ -78,7 +78,7 @@ class TestModelBase(DataTestCase):
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
 
     def test_get_updateable_fields(self):
-        # The DataFactory provided an instance with only the required fields filled out
+        # The factory provided an instance with only the required fields filled out
         self.assertEqual(self.obj1.get_updateable_fields(), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
 
         self.obj1.seitenumfang = 'f'
@@ -89,10 +89,7 @@ class TestModelBase(DataTestCase):
 
     def test_get_updateable_fields_not_ignores_default(self):
         # get_updateable_fields should include fields that have their default value
-        # artikel has no 'useful' defaults to test with
-        obj = person(vorname='Alice') # nachname has default 
-        obj.save()
-        self.assertListEqualSorted(obj.get_updateable_fields(), ['beschreibung','nachname', 'bemerkungen'])
+        self.assertListEqualSorted(make(geber).get_updateable_fields(), ['name'])
 
 @tag("cn")    
 class TestComputedNameModel(DataTestCase):
@@ -102,14 +99,9 @@ class TestComputedNameModel(DataTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = DataFactory().create_obj(magazin)
-        monat.objects.create(id=12, monat='Dezember', abk ='Dez', ordinal = 12)
-        cls.obj1 = ausgabe(magazin=cls.mag)
-        cls.obj1.save()
-
-        cls.obj2 = ausgabe(magazin=cls.mag)
-        cls.obj2.save()
-
+        cls.mag = make(magazin)
+        cls.obj1 = make(cls.model, magazin=cls.mag)
+        cls.obj2 = make(cls.model, magazin=cls.mag)
         cls.test_data = [cls.obj1, cls.obj2]
 
         super().setUpTestData()
@@ -218,13 +210,7 @@ class TestComputedNameModel(DataTestCase):
 class TestModelArtikel(DataTestCase):
 
     model = artikel
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = DataFactory().create_obj(artikel)
-        cls.test_data = [cls.obj1]
-        
-        super().setUpTestData()
+    test_data_count = 1
 
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), str(self.obj1.schlagzeile))
@@ -236,14 +222,8 @@ class TestModelArtikel(DataTestCase):
 class TestModelAudio(DataTestCase):
 
     model = audio
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = audio.objects.create(titel='Testaudio')
-        cls.test_data = [cls.obj1]
-
-        super().setUpTestData()
-
+    raw_data = [{'titel' : 'Testaudio'}]
+    
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Testaudio')
 
@@ -264,9 +244,6 @@ class TestModelAusgabe(DataTestCase):
         # 2. !jahre + jahrgang/!jahrgang
         # 3. ausgaben_merkmal>e_datum>monat>lnum>?
         # 4. num>monat>lnum>e_datum>beschreibung>k.A.
-        
-        monat.objects.create(monat = 'Dezember', abk = 'Dez', ordinal = 12)
-        monat.objects.create(monat = 'Januar', abk = 'Jan', ordinal = 1)
 
         # sonderausgabe + beschreibung => beschreibung
         name_data = {'sonderausgabe':True, 'beschreibung':'Test-Info'}
@@ -464,8 +441,7 @@ class TestModelAusgabeJahr(DataTestCase):
     model = ausgabe_jahr
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        obj = self.model(jahr='2018', ausgabe=ausgabe_object)
+        obj = make(self.model, jahr=2018)
         self.assertEqual(str(obj), '2018')
         
 class TestModelAusgabeLnum(DataTestCase):
@@ -473,8 +449,7 @@ class TestModelAusgabeLnum(DataTestCase):
     model = ausgabe_lnum
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        obj = self.model(lnum='21', ausgabe=ausgabe_object)
+        obj = make(self.model, lnum=21)
         self.assertEqual(str(obj), '21')
         
 class TestModelAusgabeMonat(DataTestCase):
@@ -482,9 +457,7 @@ class TestModelAusgabeMonat(DataTestCase):
     model = ausgabe_monat
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        monat_object = monat.objects.create(monat='Dezember', abk='Dez', ordinal = 12)
-        obj = self.model(monat=monat_object, ausgabe=ausgabe_object)
+        obj = make(self.model, monat__abk='Dez')
         self.assertEqual(str(obj), 'Dez')
         
 class TestModelAusgabeNum(DataTestCase):
@@ -492,8 +465,7 @@ class TestModelAusgabeNum(DataTestCase):
     model = ausgabe_num
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        obj = self.model(num='20', ausgabe=ausgabe_object)
+        obj = make(self.model, num = 20)
         self.assertEqual(str(obj), '20')
 
 class TestModelAutor(DataTestCase):
@@ -536,7 +508,7 @@ class TestModelBand(DataTestCase):
     model = band
     
     def test_str(self):
-        obj = self.model(band_name='Testband', beschreibung = 'Beep', bemerkungen = 'Boop')
+        obj = make(self.model, band_name='Testband', beschreibung = 'Beep', bemerkungen = 'Boop')
         self.assertEqual(str(obj), 'Testband')
         
 class TestModelBestand(DataTestCase):
@@ -556,9 +528,8 @@ class TestModelBundesland(DataTestCase):
     model = bundesland
     
     def test_str(self):
-        land_object = land.objects.create(land_name = 'Deutschland', code='DE')
-        obj = self.model(bland_name ='Hessen', code = 'DE-HE', land = land_object)
-        self.assertEqual(str(obj), 'Hessen DE-HE')
+        obj = make(self.model, bland_name ='Hessen', code = 'HE')
+        self.assertEqual(str(obj), 'Hessen HE')
 
 class TestModelDatei(DataTestCase):
 
@@ -799,7 +770,7 @@ class TestModelProvenienz(DataTestCase):
     model = provenienz
 
     def test_str(self):
-        obj = provenienz(geber=geber.objects.create(name='TestGeber'), typ='Fund')
+        obj = make(self.model, geber__name = 'TestGeber', typ = 'Fund')
         self.assertEqual(str(obj), 'TestGeber (Fund)')
         
 class TestModelSchlagwort(DataTestCase):

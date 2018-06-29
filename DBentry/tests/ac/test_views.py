@@ -9,14 +9,11 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = band.objects.create(band_name='Boop')
-        cls.genre = genre.objects.create(genre='Testgenre')
-        m2m_band_genre.objects.create(band=cls.obj1, genre=cls.genre)
-        cls.musiker = musiker.objects.create(kuenstler_name='Meehh')
-        m2m_band_musiker.objects.create(band=cls.obj1, musiker=cls.musiker)
-        cls.obj2 = band.objects.create(band_name='Aleboop')
-        cls.obj3 = band.objects.create(band_name='notfound')
-        cls.obj4 = band.objects.create(band_name='Boopband')
+        cls.genre = make(genre, genre='Testgenre')
+        cls.obj1 = make(band, band_name='Boop', genre=cls.genre, musiker__extra=1)
+        cls.obj2 = make(band, band_name='Aleboop')
+        cls.obj3 = make(band, band_name='notfound')
+        cls.obj4 = make(band, band_name='Boopband')
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
         
@@ -96,27 +93,16 @@ class TestACAusgabe(ACViewTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.obj_num = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj_num.ausgabe_jahr_set.create(jahr=2020)
-        cls.obj_num.ausgabe_num_set.create(num=10)
-        
-        cls.obj_lnum = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj_lnum.ausgabe_jahr_set.create(jahr=2020)
-        cls.obj_lnum.ausgabe_lnum_set.create(lnum=10)
-        
-        cls.obj_monat = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj_monat.ausgabe_jahr_set.create(jahr=2020)
-        cls.obj_monat.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan', ordinal = 1))
-        
-        cls.obj_sonder = ausgabe.objects.create(magazin=cls.mag, sonderausgabe=True, beschreibung='Special Edition')
-        
-        cls.obj_jahrg = ausgabe.objects.create(magazin=cls.mag, jahrgang=12)
-        cls.obj_jahrg.ausgabe_num_set.create(num=13)
+        cls.mag = make(magazin, magazin_name='Testmagazin')
+        cls.obj_num = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_num__num=10)
+        cls.obj_lnum = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_lnum__lnum=10)
+        cls.obj_monat = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_monat__monat__monat='Januar')
+        cls.obj_sonder = make(ausgabe, magazin=cls.mag, sonderausgabe = True, beschreibung = 'Special Edition')
+        cls.obj_jahrg = make(ausgabe, magazin=cls.mag, jahrgang=12, ausgabe_num__num=13)
         
         cls.test_data = [cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg]
         
-        super(TestACAusgabe, cls).setUpTestData()
+        super().setUpTestData()
         
     def setUp(self):
         super(TestACAusgabe, self).setUp()

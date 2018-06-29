@@ -10,29 +10,13 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.zraum = lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand LO')
-        cls.dublette = lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dubletten LO')
-        cls.audio_lo = lagerort.objects.create(ort='Audio LO')
-        g = geber.objects.create(name='TestGeber')
-        cls.prov = provenienz.objects.create(geber=g, typ='Fund')
-        
-        # Create an instance that should be updated by the view
-        cls.updated = ausgabe.objects.create(pk=111, magazin=cls.mag)
-        cls.updated.ausgabe_jahr_set.create(jahr=2000)
-        cls.updated.ausgabe_jahr_set.create(jahr=2001)
-        cls.updated.ausgabe_num_set.create(num=1)
-        
-        # Create two identical objects to verify that the view simply does nothing if it cannot uniquely resolve an 
-        # instance given by a form through its ['jahr', 'num', 'monat', 'lnum'] sets
-        cls.multi1 = ausgabe.objects.create(pk=222, magazin=cls.mag)
-        cls.multi1.ausgabe_jahr_set.create(jahr=2000)
-        cls.multi1.ausgabe_jahr_set.create(jahr=2001)
-        cls.multi1.ausgabe_num_set.create(num=5)
-        cls.multi2 = ausgabe.objects.create(pk=333, magazin=cls.mag)
-        cls.multi2.ausgabe_jahr_set.create(jahr=2000)
-        cls.multi2.ausgabe_jahr_set.create(jahr=2001)
-        cls.multi2.ausgabe_num_set.create(num=5)
+        cls.mag = make(magazin, magazin_name='Testmagazin')
+        cls.zraum = make(lagerort, ort='Bestand LO')
+        cls.dublette = make(lagerort, ort='Dubletten LO')
+        cls.audio_lo = make(lagerort)
+        cls.prov = make(provenienz)
+        cls.updated = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=1)
+        cls.multi1, cls.multi2 = batch(ausgabe, 2, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=5)
         
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         
@@ -152,7 +136,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
     @tag('logging')
     def test_save_data_updated(self):
         # check that the object called 'updated' has had an audio record added to it
-        # NIY: check that the object called 'updated' has had an audio record  and a jahrgang value added to it
+        # NYI: check that the object called 'updated' has had an audio record  and a jahrgang value added to it
         form = self.get_valid_form()
         request = self.post_request()
         
@@ -375,9 +359,9 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         # The user puts in new data and presses preview
         continue_data = self.valid_data.copy()
         continue_data['num'] = ''
-        continue_data['monat'] = ['1']
         # A saved monat record is required
-        monat.objects.create(pk=1, monat='Januar', abk='Jan', ordinal = 1)
+        jan = make(monat, monat='Januar')
+        continue_data['monat'] = [str(jan.pk)]
         continue_data['jahr'] = ['2018']
         continue_data['jahrgang'] = ''
         continue_data['_preview'] = True

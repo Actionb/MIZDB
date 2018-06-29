@@ -84,25 +84,12 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     view_class = BulkEditJahrgang
     model = ausgabe
     model_admin_class = AusgabenAdmin
-    
-    @classmethod
-    def setUpTestData(cls):
-        mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.obj1 = ausgabe.objects.create(magazin=mag)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2001)
-        
-        cls.obj2 = ausgabe.objects.create(magazin=mag)
-        cls.obj2.ausgabe_jahr_set.create(jahr=2001)
-        
-        cls.obj3 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Bad'), jahrgang=20)
-        cls.obj3.ausgabe_jahr_set.create(jahr=2001)
-        
-        cls.obj4 = ausgabe.objects.create(magazin=mag)
-        
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
-        
-        super(TestBulkEditJahrgang, cls).setUpTestData()
+    raw_data = [    
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001]}, 
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001]}, 
+        {'magazin__magazin_name':'Bad', 'jahrgang' : 20, 'ausgabe_jahr__jahr': [2001]}, 
+        {'magazin__magazin_name':'Testmagazin'}
+    ]
     
     def setUp(self):
         super(TestBulkEditJahrgang, self).setUp()
@@ -218,25 +205,17 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     @classmethod
     def setUpTestData(cls):
-        cls.bestand_lagerort = lagerort.objects.create(pk=6, ort='Bestand') # ZRAUM_ID constant = 6
-        cls.dubletten_lagerort = lagerort.objects.create(pk=5, ort='Dublette') # DUPLETTEN_ID constant = 5
-        mag = magazin.objects.create(magazin_name='Testmagazin')
+        cls.bestand_lagerort = make(lagerort, pk=ZRAUM_ID, ort='Bestand')
+        cls.dubletten_lagerort = make(lagerort, pk=DUPLETTEN_ID, ort='Dublette')
+        mag = make(magazin, magazin_name = 'Testmagazin')
         
-        cls.obj1 = ausgabe.objects.create(magazin=mag)
-        
-        cls.obj2 = ausgabe.objects.create(magazin=mag)
-        cls.obj2.bestand_set.create(lagerort=cls.bestand_lagerort)
-        
-        cls.obj3 = ausgabe.objects.create(magazin=mag)
-        cls.obj3.bestand_set.create(lagerort=cls.dubletten_lagerort)
-        
-        cls.obj4 = ausgabe.objects.create(magazin=mag)
-        cls.obj4.bestand_set.create(lagerort=cls.bestand_lagerort)
-        cls.obj4.bestand_set.create(lagerort=cls.dubletten_lagerort)
+        cls.obj1 = make(ausgabe, magazin=mag)
+        cls.obj2 = make(ausgabe, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
+        cls.obj3 = make(ausgabe, magazin=mag, bestand__lagerort=cls.dubletten_lagerort)
+        cls.obj4 = make(ausgabe, magazin=mag, bestand__lagerort=[cls.bestand_lagerort, cls.dubletten_lagerort])
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
-        
-        super(TestBulkAddBestand, cls).setUpTestData()
+        super().setUpTestData()
     
     def test_compile_affected_objects_obj1(self):
         request = self.get_request()
@@ -405,25 +384,13 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     view_class = MergeViewWizarded
     model = ausgabe
     model_admin_class = AusgabenAdmin
+    raw_data = [    
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000]}, 
+        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001], 'jahrgang':1}, 
+        {'magazin__magazin_name':'Bad', 'ausgabe_jahr__jahr': [2001], 'jahrgang' : 20}, 
+        {'magazin__magazin_name':'Testmagazin', 'jahrgang':2}
+    ]
     
-    @classmethod
-    def setUpTestData(cls):
-        mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.obj1 = ausgabe.objects.create(magazin=mag)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2000)
-        
-        cls.obj2 = ausgabe.objects.create(magazin=mag, jahrgang = 1)
-        cls.obj2.ausgabe_jahr_set.create(jahr=2001)
-        
-        cls.obj3 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Bad'), jahrgang=20)
-        cls.obj3.ausgabe_jahr_set.create(jahr=2001)
-        
-        cls.obj4 = ausgabe.objects.create(magazin=mag, jahrgang = 2)
-        
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
-        
-        super(TestMergeViewWizardedAusgabe, cls).setUpTestData()
-        
     def test_action_allowed(self):
         queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view = self.view(queryset=queryset)
@@ -563,18 +530,7 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
     view_class = MergeViewWizarded
     model = artikel
     model_admin_class = ArtikelAdmin
-    
-    @classmethod
-    def setUpTestData(cls):
-        ausg1 = DataFactory().create_obj(ausgabe, create_new = True)
-        ausg2 = DataFactory().create_obj(ausgabe, create_new = True)
-        cls.obj1 = artikel.objects.create(ausgabe=ausg1, schlagzeile='Beep', seite=1)
-        
-        cls.obj2 = artikel.objects.create(ausgabe=ausg2, schlagzeile='Boop', seite=2)
-        
-        cls.test_data = [cls.obj1, cls.obj2]
-        
-        super(TestMergeViewWizardedArtikel, cls).setUpTestData()
+    test_data_count = 2
         
     def test_action_allowed_different_magazin(self):
         request = self.post_request()

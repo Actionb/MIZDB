@@ -13,14 +13,13 @@ class TestLoggingMixin(ViewTestCase):
     
     @classmethod
     def setUpTestData(cls):        
-        cls.obj1 = cls.model.objects.create(band_name='Logging')
-        cls.obj2 = cls.model.objects.create(band_name='Testband', beschreibung='This is a test.')
+        cls.obj1 = make(band, genre__genre='Related')
+        cls.obj2 = make(band, band_name = 'Testband', beschreibung = 'This is a test.')
+        cls.m2m = band.genre.through.objects.get(band=cls.obj1)
         
-        cls.genre = genre.objects.create(genre='Related')
-        cls.m2m = band.genre.through.objects.create(band=cls.obj1, genre=cls.genre)
-        cls.ort = ort.objects.create(land=land.objects.create(land_name='Merryland'))
+        cls.ort = make(ort)
         
-        cls.test_data = [cls.obj1]
+        cls.test_data = [cls.obj1, cls.obj2, cls.m2m, cls.ort]
         
         super().setUpTestData()
         

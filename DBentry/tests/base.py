@@ -1,5 +1,6 @@
 from unittest import expectedFailure, skip
 from itertools import chain
+from collections import OrderedDict
 import contextlib
 import re
 
@@ -16,6 +17,7 @@ from django.db.models.query import QuerySet
 from DBentry.models import *
 from DBentry.constants import *
 from DBentry.sites import miz_site
+from DBentry.factory import *
 
 from .mixins import *
 
@@ -259,8 +261,6 @@ class FormTestCase(MyTestCase, CreateFormMixin):
 class ModelFormTestCase(TestDataMixin, FormTestCase):
     
     fields = None
-    test_data_count = 1
-    add_relations = False
     
     def get_form(self, **kwargs):
         return forms.modelform_factory(self.model, form=self.form_class, fields=self.fields)(**kwargs)

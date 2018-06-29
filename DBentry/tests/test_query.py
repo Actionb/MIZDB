@@ -9,25 +9,14 @@ class QueryTestCase(DataTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = band.objects.create(band_name="Guns 'N Roses")
-        cls.obj1.band_alias_set.create(alias="Guns and Roses")
+        cls.axl = make(musiker, kuenstler_name='Axl Rose', musiker_alias__alias='Axel Rose')
         
-        cls.obj2 = band.objects.create(band_name='AC/DC') # can only be found via 'Axl' when searching 'Rose'
-        cls.obj2.band_alias_set.create(alias="ACDC")
-        
-        cls.obj3 = band.objects.create(band_name="Rolling Stones") # never found
-        
-        cls.obj4 = band.objects.create(band_name="Rosewood") # startsw Rose
-        
-        cls.obj5 = band.objects.create(band_name='More Roses') # contains Rose
-        
-        cls.obj6 = band.objects.create(band_name='Beep')
-        cls.obj6.band_alias_set.create(alias="Booproses") # alias icontains Rose
-        
-        cls.axl = musiker.objects.create(kuenstler_name='Axl Rose')
-        cls.axl.musiker_alias_set.create(alias='Axel Rose')
-        m2m_band_musiker.objects.create(musiker=cls.axl, band=cls.obj1)
-        m2m_band_musiker.objects.create(musiker=cls.axl, band=cls.obj2)
+        cls.obj1 = make(band, band_name="Guns 'N Roses", band_alias__alias='Guns and Roses', musiker=cls.axl)
+        cls.obj2 = make(band, band_name="AC/DC", band_alias__alias='ACDC', musiker=cls.axl) # can only be found via 'Axl' when searching 'Rose'
+        cls.obj3 = make(band, band_name="Rolling Stones") # never found
+        cls.obj4 = make(band, band_name="Rosewood") # startsw Rose
+        cls.obj5 = make(band, band_name='More Roses') # contains Rose
+        cls.obj6 = make(band, band_name='Beep', band_alias__alias='Booproses') # alias icontains Rose
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5, cls.obj6, cls.axl]
         
@@ -246,13 +235,9 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         # Check that the results are ordered according to the _search query
         
         rose_band = band.objects.create(band_name='Rose')
-        some_other_band = band.objects.create(band_name='Boop')
-        rose_musiker = musiker.objects.create(kuenstler_name='Rose')
-        m2m_band_musiker.objects.create(musiker=rose_musiker, band=some_other_band)
+        some_other_band = make(band, band_name='Boop', musiker__kuenstler_name = 'Rose')
         
-        yet_another_band = band.objects.create(band_name='NoName')
-        rose_musiker2 = musiker.objects.create(kuenstler_name='Roseman')
-        m2m_band_musiker.objects.create(musiker=rose_musiker2, band=yet_another_band)
+        yet_another_band = make(band, band_name='NoName', musiker__kuenstler_name='Roseman')
         
         q = 'Rose'
         query= self.make_query()
@@ -304,7 +289,7 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         expected = self.append_suffix(query, [self.obj2], search_field, lookup)
         self.assertEqual([search_results[8]], expected)
         
-        
+      
 class TestNameFieldQuery(TestPrimaryFieldsQuery):
     
     query_class = NameFieldSearchQuery
@@ -329,7 +314,9 @@ class TestValuesDictQuery(TestNameFieldQuery):
     
     def make_query(self, values_dict = None, **kwargs):
         query = super().make_query(**kwargs)
-        query.values_dict = values_dict or self.queryset.values_dict(*query.search_fields) 
+        query.values_dict = values_dict
+        if values_dict is None:
+            query.values_dict = self.queryset.values_dict(*query.search_fields) 
         return query
     
     def test_get_queryset(self):
@@ -337,6 +324,11 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # fetched by values_dict()
         expected = list(self.queryset.exclude(band_name='Rolling Stones').values_list('pk', flat=True))
         self.assertQSValuesList(self.make_query().get_queryset(q = 'Rose'), 'pk', expected)
+        
+    def test_bugged_ordering(self):
+        #TODO: in a list of genres ['Acid Rock','Rock','Psy Rock'], the faulty partial match algorithm caused everything 
+        # containing 'rock' to be in the list of exact_matches.
+        pass
         
     def test_search(self):
         # obj1 = "Guns 'N Roses"
@@ -350,13 +342,9 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # for bits of it in the search_fields
         
         rose_band = band.objects.create(band_name='Rose')
-        some_other_band = band.objects.create(band_name='Boop')
-        rose_musiker = musiker.objects.create(kuenstler_name='Rose')
-        m2m_band_musiker.objects.create(musiker=rose_musiker, band=some_other_band)
+        some_other_band = make(band, band_name='Boop', musiker__kuenstler_name = 'Rose')
         
-        yet_another_band = band.objects.create(band_name='NoName')
-        rose_musiker2 = musiker.objects.create(kuenstler_name='Roseman')
-        m2m_band_musiker.objects.create(musiker=rose_musiker2, band=yet_another_band)
+        yet_another_band = make(band, band_name='NoName', musiker__kuenstler_name='Roseman')
         
         q = 'Rose'
         query= self.make_query()
@@ -376,7 +364,7 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # "Guns N' Roses", 'More Roses', 'Rosewood'
         lookup = '__istartswith'
         search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj1, self.obj5, self.obj4], search_field, lookup)
+        expected = self.append_suffix(query, [self.obj4, self.obj1, self.obj5], search_field, lookup)
         self.assertEqual(search_results[1:4], expected)
         
         # Then primary contains matches

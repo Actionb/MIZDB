@@ -96,14 +96,7 @@ class TestMIZModelAdmin(AdminTestCase):
     
     model_admin_class = DateiAdmin
     model = datei
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = datei.objects.create(titel='Testdatei')
-        
-        cls.test_data = [cls.obj1]
-        
-        super().setUpTestData()
+    test_data_count = 1
     
     def test_get_actions(self):
         # No permissions: no actions
@@ -204,32 +197,14 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = [
         ('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
-        
-    def test_get_changeform_initial_data_with_changelist_filters(self):
-        # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
-        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('magazin'), '326')
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.ausg = ausgabe.objects.create(magazin=cls.mag)
-        cls.obj1 = artikel.objects.create(
-            ausgabe = cls.ausg, seite = 1, schlagzeile = 'Test!'
+        cls.mag = make(magazin, magazin_name = 'Testmagazin')
+        cls.obj1 = make(artikel, 
+            ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!', schlagwort__schlagwort = ['Testschlagwort1', 'Testschlagwort2'], 
+            musiker__kuenstler_name = 'Alice Tester', band__band_name = 'Testband'
         )
-        
-        s1 = schlagwort.objects.create(schlagwort = 'Testschlagwort1')
-        s2 = schlagwort.objects.create(schlagwort = 'Testschlagwort2')
-        artikel.schlagwort.through.objects.create(schlagwort = s1, artikel = cls.obj1)
-        artikel.schlagwort.through.objects.create(schlagwort = s2, artikel = cls.obj1)
-        
-        m = musiker.objects.create(kuenstler_name='Alice Tester')
-        b = band.objects.create(band_name='Testband')
-        artikel.musiker.through.objects.create(musiker=m, artikel=cls.obj1)
-        artikel.band.through.objects.create(band=b, artikel=cls.obj1)
-        
         cls.test_data = [cls.obj1]
         
         super().setUpTestData()
@@ -247,6 +222,13 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
 
     def test_kuenstler_string(self):
         self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
+        
+    def test_get_changeform_initial_data_with_changelist_filters(self):
+        # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
+        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
+        request = self.get_request(data=initial)
+        cf_init_data = self.model_admin.get_changeform_initial_data(request)
+        self.assertEqual(cf_init_data.get('magazin'), '326')
 
 class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     
@@ -259,27 +241,18 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
    
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name='Testmagazin'))
-        artikel.objects.create(ausgabe=cls.obj1, schlagzeile='Test', seite=1)
-        
-        cls.obj1.ausgabe_jahr_set.create(jahr=2020)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2021)
-        cls.obj1.ausgabe_jahr_set.create(jahr=2022)
-        
-        cls.obj1.ausgabe_num_set.create(num=10)
-        cls.obj1.ausgabe_num_set.create(num=11)
-        cls.obj1.ausgabe_num_set.create(num=12)
-        
-        cls.obj1.ausgabe_lnum_set.create(lnum=10)
-        cls.obj1.ausgabe_lnum_set.create(lnum=11)
-        cls.obj1.ausgabe_lnum_set.create(lnum=12)
-        
-        cls.obj1.ausgabe_monat_set.create(monat=monat.objects.create(id=1, monat='Januar', abk='Jan', ordinal = 1))
-        cls.obj1.ausgabe_monat_set.create(monat=monat.objects.create(id=2, monat='Februar', abk='Feb', ordinal = 2))
+        cls.obj1 = make(ausgabe, 
+            magazin__magazin_name = 'Testmagazin', ausgabe_jahr__jahr = [2020, 2021, 2022], ausgabe_num__num = [10, 11, 12], 
+            ausgabe_lnum__lnum = [10, 11, 12], ausgabe_monat__monat__monat = ['Januar', 'Februar'], 
+            artikel__schlagzeile = 'Test', artikel__seite = 1
+        )
         
         cls.test_data = [cls.obj1]
         
         super().setUpTestData()
+        
+    def test_get_changelist(self):
+        self.assertEqual(self.model_admin.get_changelist(self.get_request()), AusgabeChangeList)
     
     def test_group_fields(self):        
         # AusgabenAdmin flds_to_group = [('status', 'sonderausgabe')]
@@ -315,15 +288,7 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
     ]
     
     crosslinks_relations = [magazin.ausgabe_set.rel]
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = magazin.objects.create(magazin_name='Testmagazin')
-        ausgabe.objects.create(magazin=cls.obj1)
-        
-        cls.test_data = [cls.obj1]
-        
-        super().setUpTestData()
+    raw_data = [{'ausgabe__extra':1}]
         
     def test_anz_ausgaben(self):
         self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 1)
@@ -340,17 +305,10 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     
     crosslinks_relations = [person.autor_set.rel, person.musiker_set.rel]
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = person.objects.create(vorname='Alice', nachname='Tester')
-        musiker.objects.create(kuenstler_name='Beep', person=cls.obj1)
-        autor.objects.create(person=cls.obj1)
-        cls.obj2 = person.objects.create(vorname='Bob', nachname='Failure')
-        
-        cls.test_data = [cls.obj1, cls.obj2]
-        
-        super().setUpTestData()
+    raw_data = [
+        {'musiker__extra':1, 'autor__extra':1},
+        {}, 
+    ]
     
     def test_Ist_Musiker(self):
         self.assertTrue(self.model_admin.Ist_Musiker(self.obj1))
@@ -373,24 +331,10 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         technik.musiker.rel, veranstaltung.musiker.rel, memorabilien.musiker.rel, buch.musiker.rel, 
         datei.musiker.rel, audio.musiker.rel, 
     ]
-    
-    @classmethod
-    def setUpTestData(cls):
-        # let the DataFactory set up obj1
-        super().setUpTestData()
-        
-        cls.obj2 = musiker.objects.create(kuenstler_name='Test')
-        b1 = band.objects.create(band_name='Testband1')
-        musiker.band_set.through.objects.create(band=b1, musiker=cls.obj2)
-        b2 = band.objects.create(band_name='Testband2')
-        musiker.band_set.through.objects.create(band=b2, musiker=cls.obj2)
-        
-        g1 = genre.objects.create(genre='Testgenre1')
-        musiker.genre.through.objects.create(genre=g1, musiker=cls.obj2)
-        g2 = genre.objects.create(genre='Testgenre2')
-        musiker.genre.through.objects.create(genre=g2, musiker=cls.obj2)
-        
-        cls.test_data.append(cls.obj2)
+    raw_data = [
+        {}, 
+        {'band__band_name':['Testband1', 'Testband2'], 'genre__genre':['Testgenre1', 'Testgenre2']}
+    ]
     
     def test_media_prop(self):
         self.assertTrue('admin/js/utils.js' in self.model_admin.media._js)
@@ -407,10 +351,10 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj2), '')
-        o = ort.objects.create(stadt='Dortmund', land=land.objects.create(land_name='Testland', code='TE'))
+        o = make(ort, stadt='Dortmund', land__code = 'XYZ')
         self.obj2.orte.add(o)
         self.obj2.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, TE')
+        self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
         
 class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     
@@ -425,43 +369,36 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
         genre.memorabilien_set.rel, genre.magazin_set.rel, genre.artikel_set.rel, genre.technik_set.rel, 
         genre.sub_genres.rel, genre.video_set.rel, genre.band_set.rel, genre.dokument_set.rel
     ]
-    
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        
-        cls.obj2 = genre.objects.create(genre='Topobject')
-        cls.obj3 = genre.objects.create(genre='Subobject', ober=cls.obj2)
-        cls.obj3.genre_alias_set.create(alias='Alias1')
-        cls.obj3.genre_alias_set.create(alias='Alias2')
-        
-        cls.test_data.extend([cls.obj2, cls.obj3])
+    raw_data = [
+        {'genre':'Topobject'}, 
+        {'genre':'Subobject', 'genre_alias__alias':['Alias1', 'Alias2'], 'ober__genre':'Topobject'}
+    ]
         
     def test_search_finds_alias(self):
         # check if an object can be found via its alias
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertIn(self.obj3, result)
+        self.assertIn(self.obj2, result)
         
     def test_search_for_sub_finds_top(self):
         # check if a search for a subobject finds its topobject
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertIn(self.obj2, result)
+        self.assertIn(self.obj1, result)
         
     def test_search_for_top_not_finds_sub(self):
         # check if a search for a topobject does not find its subobjects
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Topobject')
-        self.assertNotIn(self.obj3, result)
+        self.assertNotIn(self.obj2, result)
         
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj3), 'Alias1, Alias2')
+        self.assertEqual(self.model_admin.alias_string(self.obj2), 'Alias1, Alias2')
         
     def test_ober_string(self):
-        self.assertEqual(self.model_admin.ober_string(self.obj2), '')
-        self.assertEqual(self.model_admin.ober_string(self.obj3), 'Topobject')
+        self.assertEqual(self.model_admin.ober_string(self.obj1), '')
+        self.assertEqual(self.model_admin.ober_string(self.obj2), 'Topobject')
         
     def test_sub_string(self):
-        self.assertEqual(self.model_admin.sub_string(self.obj2), 'Subobject')
-        self.assertEqual(self.model_admin.sub_string(self.obj3), '')
+        self.assertEqual(self.model_admin.sub_string(self.obj1), 'Subobject')
+        self.assertEqual(self.model_admin.sub_string(self.obj2), '')
     
     def test_get_search_fields(self):
         # genre/schlagwort admin removes the search field that results in all subobjects of a topobject
@@ -469,13 +406,11 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
         # This would be useful for dal, but not for searches on the changelist
         super().test_get_search_fields()
         self.assertNotIn('ober__genre', self.model_admin.get_search_fields())
-        
     
 class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = SchlagwortAdmin
     model = schlagwort
-    test_data_count = 1
     fields_expected = ['schlagwort', 'ober']
     
     crosslinks_relations = [
@@ -484,43 +419,36 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
         schlagwort.dokument_set.rel, schlagwort.bildmaterial_set.rel, schlagwort.veranstaltung_set.rel, 
         schlagwort.unterbegriffe.rel, schlagwort.schlagwort_alias_set.rel, schlagwort.buch_set.rel, schlagwort.audio_set.rel
     ]
-    
-    @classmethod
-    def setUpTestData(cls):
-        super(TestAdminSchlagwort, cls).setUpTestData()
-        
-        cls.obj2 = schlagwort.objects.create(schlagwort='Topobject')
-        cls.obj3 = schlagwort.objects.create(schlagwort='Subobject', ober=cls.obj2)
-        cls.obj3.schlagwort_alias_set.create(alias='Alias1')
-        cls.obj3.schlagwort_alias_set.create(alias='Alias2')
-        
-        cls.test_data.extend([cls.obj2, cls.obj3])
+    raw_data = [
+        {'schlagwort':'Topobject'}, 
+        {'schlagwort':'Subobject', 'schlagwort_alias__alias':['Alias1', 'Alias2'], 'ober__schlagwort':'Topobject'}
+    ]
         
     def test_search_finds_alias(self):
         # check if an object can be found via its alias
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertIn(self.obj3, result)
+        self.assertIn(self.obj2, result)
         
     def test_search_for_sub_finds_top(self):
         # check if a search for a subobject finds its topobject
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertIn(self.obj2, result)
+        self.assertIn(self.obj1, result)
         
     def test_search_for_top_not_finds_sub(self):
         # check if a search for a topobject does not find its subobjects
         result, use_distinct = self.model_admin.get_search_results(request=None, queryset=self.queryset, search_term='Topobject')
-        self.assertNotIn(self.obj3, result)
+        self.assertNotIn(self.obj2, result)
         
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj3), 'Alias1, Alias2')
+        self.assertEqual(self.model_admin.alias_string(self.obj2), 'Alias1, Alias2')
         
     def test_ober_string(self):
-        self.assertEqual(self.model_admin.ober_string(self.obj2), '')
-        self.assertEqual(self.model_admin.ober_string(self.obj3), 'Topobject')
+        self.assertEqual(self.model_admin.ober_string(self.obj1), '')
+        self.assertEqual(self.model_admin.ober_string(self.obj2), 'Topobject')
         
     def test_sub_string(self):
-        self.assertEqual(self.model_admin.sub_string(self.obj2), 'Subobject')
-        self.assertEqual(self.model_admin.sub_string(self.obj3), '')
+        self.assertEqual(self.model_admin.sub_string(self.obj1), 'Subobject')
+        self.assertEqual(self.model_admin.sub_string(self.obj2), '')
     
     def test_get_search_fields(self):
         # genre/schlagwort admin removes the search field that results in all subobjects of a topobject
@@ -535,26 +463,12 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     model = band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = band.objects.create(band_name='Testband')
-        band_alias.objects.create(alias='Alias1', parent=cls.obj1)
-        band_alias.objects.create(alias='Alias2', parent=cls.obj1)
-        
-        g1 = genre.objects.create(genre='Testgenre1')
-        band.genre.through.objects.create(genre=g1, band=cls.obj1)
-        g2 = genre.objects.create(genre='Testgenre2')
-        band.genre.through.objects.create(genre=g2, band=cls.obj1)
-        
-        m1 = musiker.objects.create(kuenstler_name='Testkuenstler1')
-        band.musiker.through.objects.create(musiker=m1, band=cls.obj1)
-        m2 = musiker.objects.create(kuenstler_name='Testkuenstler2')
-        band.musiker.through.objects.create(musiker=m2, band=cls.obj1)
-        
-        cls.test_data = [cls.obj1]
-        
-        super().setUpTestData()
+    raw_data = [
+        {
+            'band_alias__alias':['Alias1', 'Alias2'], 'genre__genre':['Testgenre1', 'Testgenre2'],
+            'musiker__kuenstler_name':['Testkuenstler1', 'Testkuenstler2']
+        }
+    ]
         
     def test_alias_string(self):
         self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
@@ -571,18 +485,10 @@ class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
     model = autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
+    raw_data = [
+        {'magazin__magazin_name':['Testmagazin1', 'Testmagazin2']}
+    ]
     
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = autor.objects.create(person=person.objects.create(vorname='Alice', nachname='Tester'))
-        
-        m2m_autor_magazin.objects.create(magazin=magazin.objects.create(magazin_name='Testmagazin1'), autor=cls.obj1)
-        m2m_autor_magazin.objects.create(magazin=magazin.objects.create(magazin_name='Testmagazin2'), autor=cls.obj1)
-        
-        cls.test_data = [cls.obj1]
-        
-        super().setUpTestData()
-        
     def test_magazin_string(self):
         self.assertEqual(self.model_admin.magazin_string(self.obj1), 'Testmagazin1, Testmagazin2')
         
@@ -642,30 +548,14 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
         'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'sender'
     ]
-    
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = audio.objects.create(titel='Testaudio')
-        ausg = ausgabe.objects.create(magazin=magazin.objects.create(magazin_name = 'Beep'))
-        m2m_audio_ausgabe.objects.create(audio=cls.obj1, ausgabe=ausg)
-        cls.test_data = [cls.obj1]
-
-        super().setUpTestData()
+    raw_data = [
+        {'band__band_name':'Testband', 'musiker__kuenstler_name':'Alice Tester', 'format__format_typ__typ':['TestTyp1', 'TestTyp2']}
+    ]
 
     def test_kuenstler_string(self):
-        m = musiker.objects.create(kuenstler_name='Alice Tester')
-        self.model.musiker.through.objects.create(musiker=m, audio=self.obj1)
-        b = band.objects.create(band_name='Testband')
-        self.model.band.through.objects.create(band=b, audio=self.obj1)
         self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
 
     def test_formate_string(self):
-        ft = FormatTyp.objects.create(typ='TestTyp1')
-        Format.objects.create(format_typ=ft, audio=self.obj1)
-        ft = FormatTyp.objects.create(typ='TestTyp2')
-        Format.objects.create(format_typ=ft, audio=self.obj1)
-        # format_name is a non-editable field (compiled of the Format's properties), its use is mainly for autocomplete searches
-        # any format_name set manually should be overriden by Format.get_name()
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
     
 class TestAdminSpielort(AdminTestMethodsMixin, AdminTestCase):
