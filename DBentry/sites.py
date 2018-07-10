@@ -8,7 +8,9 @@ from django.views.decorators.cache import never_cache
 class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
     
-    tools = []
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tools = []
     
     def register_tool(self, view):
         self.tools.append(view)
@@ -28,9 +30,9 @@ class MIZAdminSite(admin.AdminSite):
                 extra_context['admintools'][tool.url_name] = tool.index_label
         # Sort by index_label, not by url_name
         extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
-        
         response = super(MIZAdminSite, self).index(request, extra_context)
         app_list = response.context_data['app_list']
+        
         index = None
         try:
             index = next(i for i, d in enumerate(app_list) if d['app_label'] == 'DBentry')
