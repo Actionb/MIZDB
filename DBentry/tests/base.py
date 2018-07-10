@@ -1,5 +1,7 @@
 from unittest import expectedFailure, skip
+from unittest.mock import Mock, MagicMock, patch
 from itertools import chain
+from functools import partial
 from collections import OrderedDict
 import contextlib
 import re
@@ -21,11 +23,19 @@ from DBentry.factory import *
 
 from .mixins import *
 
+def mockv(value):
+    return Mock(return_value=value)
+    
+def mockex(exception):
+    return Mock(side_effect=exception)
+
 class MyTestCase(TestCase):
             
     @contextlib.contextmanager
-    def assertNotRaises(self, exceptions):
-        # assert that the body does NOT raise one of the passed exceptions.
+    def assertNotRaises(self, exceptions, msg = None):
+        """
+        Assert that the body does NOT raise one of the passed exceptions.
+        """ 
         raised = None
         try:
             yield
@@ -33,7 +43,10 @@ class MyTestCase(TestCase):
             raised = e
             
         if raised and issubclass(raised.__class__, exceptions):
-            self.fail("{} raised.".format(raised.__class__.__name__))
+            fail_txt = "{} raised.".format(raised.__class__.__name__)
+            if msg:
+                fail_txt += ':' + msg
+            self.fail(fail_txt)
         
     def assertDictKeysEqual(self, d1, d2):
         t = "dict keys missing from {d}: {key_diff}"
@@ -86,7 +99,7 @@ class MyTestCase(TestCase):
             
     def assertAllValues(self, values_list, value, msg=None):
         """
-        Assert that `value` is equal to any item of `values_list`.
+        Assert that `value` is equal to all items of `values_list`.
         """
         expected = [value for v in values_list]
         self.assertEqual(values_list, expected, msg)  # delivers more useful information on failure than self.assertTrue(all(v==value for v in values_list))
@@ -118,7 +131,6 @@ class DataTestCase(TestDataMixin, MyTestCase):
         if isinstance(pk_list2, QuerySet):
             pk_list2 = list(pk_list2.values_list('pk', flat=True))
         self.assertListEqualSorted(pk_list1, pk_list2)
-        
         
     def assertQSValues(self, queryset, fields, values, msg=None):
         if isinstance(fields, str):
@@ -345,7 +357,6 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
         
     def assertOriginalExpanded(self, expand_original = True):
         """ Assert whether the original's values were expanded by the merged records correctly. """
-        #TODO: what about changes provoked by passing a custom update_data dict to utils.merge_records?
         updateable_fields = self.original.get_updateable_fields()
         change_message_fields = set()
         for fld_name, value in self.qs.filter(pk=self.original.pk).values()[0].items():
