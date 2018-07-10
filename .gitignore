@@ -22,3 +22,11 @@ db/
 docs/
 
 DBentry/tests/timed/timed_test_getname\.txt
+
+*.e4p
+
+\.eric5project/
+
+tests\.txt
+
+DBentry/stuff\.py
