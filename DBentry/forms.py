@@ -255,7 +255,8 @@ class DynamicChoiceForm(forms.Form):
                 if isinstance(choices, QuerySet):
                     choices = [(i.pk, i.__str__()) for i in choices]
                     
-                if isinstance(choices, dict):
+                #NOTE: these can never be true after the first if else
+                if isinstance(choices, dict): 
                     choices = [(k, v) for k, v in choices.items()]
                 if not isinstance(choices, (list, tuple)):
                     choices = list(choices)

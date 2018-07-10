@@ -14,6 +14,7 @@ class MIZQuerySet(models.QuerySet):
         Finds any occurence of the search term 'q' in the queryset, depending on the search strategy used.
         """
         # Find the best strategy to use:
+        #TODO: when searching in ausgabe, the ordering is all messed up
         if getattr(self.model, 'name_field', False):
             strat = ValuesDictSearchQuery
         elif getattr(self.model, 'primary_search_fields', False):

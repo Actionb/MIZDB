@@ -16,6 +16,8 @@ from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
 
+#TODO: add beschreibung bemerkungen to search fields so that ppl can find 'special' ausgaben
+
 class MIZModelAdmin(admin.ModelAdmin):
     
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
@@ -109,7 +111,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             # Remove all other fields of the tuple that are in self.fields
             for i in indexes:
                 grouped_fields.pop(i)
-            fields_used.update(tpl)
+            fields_used.update(tpl) #TODO: shouldn't this be *tpl or some such?
         return grouped_fields
         
     def get_fieldsets(self, request, obj=None):

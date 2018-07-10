@@ -14,3 +14,8 @@ python-stdnum==1.8.1
 pytz==2017.2
 six==1.10.0
 xlrd==1.0.0
+django-test-without-migrations==0.6
+factory-boy==2.11.1
+Faker==0.8.15
+python-dateutil==2.7.3
+text-unidecode==1.2

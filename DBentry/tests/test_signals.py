@@ -6,16 +6,10 @@ class TestSignalsAusgabe(DataTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = magazin.objects.create(magazin_name='Testmagazin')
-        cls.obj1 = cls.model.objects.create(magazin=cls.mag)
-        cls.monat = monat.objects.create(pk=12, monat='Dezember', abk='Dez', ordinal = 12)
-        
-        cls.obj2 = cls.model.objects.create(magazin=cls.mag)
-        cls.obj2.ausgabe_jahr_set.create(jahr=2000)
-        cls.obj2.ausgabe_num_set.create(num=12)
-        cls.obj2.ausgabe_lnum_set.create(lnum=12)
-        cls.obj2.ausgabe_monat_set.create(monat_id=12)
-        
+        cls.mag = make(magazin, magazin_name='Testmagazin')
+        cls.obj1 = make(ausgabe, magazin=cls.mag)
+        cls.obj2 = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2000, ausgabe_num__num=12, ausgabe_lnum__lnum=12, ausgabe_monat__monat__monat='Dezember')
+
         cls.test_data = [cls.obj1, cls.obj2]
         
         super().setUpTestData()

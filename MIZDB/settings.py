@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_admin_listfilter_dropdown',
     'formtools', 
+    'test_without_migrations',
 ]
 
 MIDDLEWARE = [

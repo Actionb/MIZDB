@@ -2,21 +2,40 @@
 from django.contrib.admin.models import LogEntry, ContentType, ADDITION, CHANGE, DELETION
 from django.utils.encoding import force_text
 
-from .data import DataFactory, ausgabe_data_simple, band_data
+from DBentry.factory import make, batch
 
 class TestDataMixin(object):
+    #TODO: make a backup of all existing factory declarations so that changes to those declarations
+    # do not persist throughout all other tests?
     
     model = None
     queryset = None
-    test_data = []
+    test_data = None
     test_data_count = 0
     add_relations = True
+    raw_data = None
+    fixtures = ['monat.json']
     
     @classmethod
     def setUpTestData(cls):
         super(TestDataMixin, cls).setUpTestData()
+        if cls.test_data is None:
+            cls.test_data = []
+        
+        if cls.raw_data:
+            if isinstance(cls.raw_data, dict):
+                for pk, values in cls.raw_data.items():
+                    try:
+                        cls.test_data.append(make(cls.model, pk = pk, **values))
+                    except TyperError:
+                        # pk is included in values
+                        cls.test_data.append(make(cls.model, **values))
+            else:
+                for values in cls.raw_data:
+                    cls.test_data.append(make(cls.model, **values))
+            
         if cls.test_data_count:
-            cls.test_data = DataFactory().create_data(cls.model, count=cls.test_data_count, add_relations = cls.add_relations)
+            cls.test_data.extend(list(batch(cls.model, cls.test_data_count)))
         for c, obj in enumerate(cls.test_data, 1):
             setattr(cls, 'obj' + str(c), obj)
         
@@ -34,17 +53,18 @@ class CreateViewMixin(object):
     
     view_class = None
     
-    def view(self, request=None, args=None, kwargs=None, **initkwargs):
-        #TODO: rename method to get_view
-        #TODO: swap instantiation and attribute settings around ( set attributes on the instance, not the class )
-        self.view_class.request = request
-        self.view_class.args = args or []
-        self.view_class.kwargs = kwargs or {}
-        return self.view_class(**initkwargs)
+    def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
+        view = self.view_class(**initkwargs)
+        view.request = request
+        view.args = args or []
+        view.kwargs = kwargs or {}
+        return view
         
     def get_dummy_view_class(self, bases=None, attrs=None):
-        attrs = attrs or getattr(self, 'view_attrs', {})
-        bases = bases or getattr(self, 'view_bases', ())
+        if bases is None:
+            bases = getattr(self, 'view_bases', ())
+        if attrs is None:
+            attrs = attrs or getattr(self, 'view_attrs', {})
         if not isinstance(bases, (list, tuple)):
             bases = (bases, )
         return type("DummyView", bases, attrs)
@@ -75,7 +95,8 @@ class CreateFormMixin(object):
         return form
     
     def get_dummy_form(self, fields=None, **form_initkwargs):
-        fields = fields or self.dummy_fields
+        if fields is None:
+            fields = self.dummy_fields
         return type('DummyForm', (self.form_class, ), fields.copy())(**form_initkwargs)
         
 class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
@@ -89,20 +110,6 @@ class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
         else:
             return super(CreateFormViewMixin, self).get_form_class()
             
-class AusgabeSimpleDataMixin(TestDataMixin):
-    
-    @classmethod
-    def setUpTestData(cls):
-        ausgabe_data_simple(cls)        
-        super().setUpTestData()
-        
-class BandDataMixin(TestDataMixin):
-    
-    @classmethod
-    def setUpTestData(cls):
-        band_data(cls)        
-        super().setUpTestData()
-        
 
 class LoggingTestMixin(object):
     """
@@ -138,7 +145,7 @@ class LoggingTestMixin(object):
             else:
                 pk = obj.pk
                 # obj is a model instance, use its model class to get the correct content_type
-                content_type = get_content_type_for_model(obj._meta.model)
+                content_type = get_content_type_for_model(obj._meta.model) #NOTE: this is overriding everything we have done above
                 
             filter_params = dict(object_id=pk, content_type__pk=content_type.pk, action_flag=action_flag)
             filter_params.update(**kwargs)

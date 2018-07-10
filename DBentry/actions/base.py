@@ -24,7 +24,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
     
     def __init__(self, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
-        self.queryset = kwargs.pop('queryset')
+        self.queryset = kwargs.pop('queryset') #TODO: either make queryset/model_admin required or pop(,None)
         self.model_admin = kwargs.pop('model_admin')
         if not getattr(self, 'action_name', False): # Allow setting of custom action_names, otherwise use the class's name
             self.action_name = self.__class__.__name__
@@ -79,7 +79,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         context.update(**kwargs)
         return context
     
-
+#TODO: rename fields to 'selection_form_fields' (or similar)
 class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
     
     template_name = 'admin/action_confirmation.html'
@@ -127,8 +127,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         Compile a list of the objects that are affected by this action.
         Display them as a link to that object's respective change page, if possible.
         If the action is aimed at the values of particular fields of the objects, present those values as a nested list.
-        """
-        
+        """        
         def linkify(obj):
             return get_obj_link(obj, self.request.user, self.model_admin.admin_site.name)
         
@@ -150,7 +149,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
                         value = getattr(obj, field.name)
                         if value is None:
                             value = '---'
-                        flds.append("{}: {}".format(field.verbose_name, str(value)))
+                        flds.append("{}: {}".format(field.verbose_name, str(value))) #TODO: capitalize field names
                 sub_list.append(flds)
             objs.append(sub_list)
         return objs

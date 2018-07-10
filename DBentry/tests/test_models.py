@@ -1,44 +1,6 @@
 from .base import *
 
-class TestModelFunctions(TestCase):
-    
-    def test_get_model_relations(self):
-        # model video has the four kinds of relations:
-        # FK from bestand to video
-        # FK from video to sender
-        # ManyToMany auto created band <-> video
-        # ManyToMany intermediary musiker <-> video
-        model = video
-        rev_fk = bestand._meta.get_field('video').remote_field
-        fk = video._meta.get_field('sender').remote_field
-        m2m_inter = video.musiker.rel
-        m2m_auto = video.band.rel
-        
-        rels = get_model_relations(video)
-        self.assertIn(rev_fk, rels)
-        self.assertIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-        
-        rels = get_model_relations(video, reverse = False)
-        self.assertNotIn(rev_fk, rels)
-        self.assertIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-        
-        rels = get_model_relations(video, forward = False)
-        self.assertIn(rev_fk, rels)
-        self.assertNotIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-        
-        rels = get_model_relations(video, forward = False, reverse = False)
-        self.assertNotIn(rev_fk, rels)
-        self.assertNotIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-
-class TestModelBase(DataTestCase):
+class TestBaseModel(DataTestCase):
 
     model = artikel
     add_relations = True
@@ -78,7 +40,7 @@ class TestModelBase(DataTestCase):
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
 
     def test_get_updateable_fields(self):
-        # The DataFactory provided an instance with only the required fields filled out
+        # The factory provided an instance with only the required fields filled out
         self.assertEqual(self.obj1.get_updateable_fields(), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
 
         self.obj1.seitenumfang = 'f'
@@ -89,10 +51,21 @@ class TestModelBase(DataTestCase):
 
     def test_get_updateable_fields_not_ignores_default(self):
         # get_updateable_fields should include fields that have their default value
-        # artikel has no 'useful' defaults to test with
-        obj = person(vorname='Alice') # nachname has default 
-        obj.save()
-        self.assertListEqualSorted(obj.get_updateable_fields(), ['beschreibung','nachname', 'bemerkungen'])
+        self.assertListEqualSorted(make(geber).get_updateable_fields(), ['name'])
+        
+class TestBaseM2MModel(DataTestCase):
+    
+    model = m2m_audio_musiker
+    raw_data = [
+        {'audio__titel':'Testaudio', 'musiker__kuenstler_name':'Alice Test'}, 
+        {'audio__titel':'Testaudio', 'musiker__kuenstler_name':'Alice Test', 'instrument__instrument':'Piano'}, 
+    ]
+    
+    def test_str(self):
+        expected = "Testaudio (Alice Test)"
+        self.assertEqual(self.obj1.__str__(), expected)
+        self.assertEqual(self.obj2.__str__(), expected)
+    
 
 @tag("cn")    
 class TestComputedNameModel(DataTestCase):
@@ -102,14 +75,9 @@ class TestComputedNameModel(DataTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = DataFactory().create_obj(magazin)
-        monat.objects.create(id=12, monat='Dezember', abk ='Dez', ordinal = 12)
-        cls.obj1 = ausgabe(magazin=cls.mag)
-        cls.obj1.save()
-
-        cls.obj2 = ausgabe(magazin=cls.mag)
-        cls.obj2.save()
-
+        cls.mag = make(magazin)
+        cls.obj1 = make(cls.model, magazin=cls.mag)
+        cls.obj2 = make(cls.model, magazin=cls.mag)
         cls.test_data = [cls.obj1, cls.obj2]
 
         super().setUpTestData()
@@ -218,13 +186,7 @@ class TestComputedNameModel(DataTestCase):
 class TestModelArtikel(DataTestCase):
 
     model = artikel
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = DataFactory().create_obj(artikel)
-        cls.test_data = [cls.obj1]
-        
-        super().setUpTestData()
+    test_data_count = 1
 
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), str(self.obj1.schlagzeile))
@@ -236,14 +198,8 @@ class TestModelArtikel(DataTestCase):
 class TestModelAudio(DataTestCase):
 
     model = audio
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = audio.objects.create(titel='Testaudio')
-        cls.test_data = [cls.obj1]
-
-        super().setUpTestData()
-
+    raw_data = [{'titel' : 'Testaudio'}]
+    
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Testaudio')
 
@@ -253,7 +209,8 @@ class TestModelAudio(DataTestCase):
         self.obj1.release_id = 1
         self.obj1.save()
         self.assertEqual(self.obj1.discogs_url, "http://www.discogs.com/release/1")
-        
+ 
+@tag("cn")        
 class TestModelAusgabe(DataTestCase):
 
     model = ausgabe
@@ -264,9 +221,6 @@ class TestModelAusgabe(DataTestCase):
         # 2. !jahre + jahrgang/!jahrgang
         # 3. ausgaben_merkmal>e_datum>monat>lnum>?
         # 4. num>monat>lnum>e_datum>beschreibung>k.A.
-        
-        monat.objects.create(monat = 'Dezember', abk = 'Dez', ordinal = 12)
-        monat.objects.create(monat = 'Januar', abk = 'Jan', ordinal = 1)
 
         # sonderausgabe + beschreibung => beschreibung
         name_data = {'sonderausgabe':True, 'beschreibung':'Test-Info'}
@@ -464,8 +418,7 @@ class TestModelAusgabeJahr(DataTestCase):
     model = ausgabe_jahr
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        obj = self.model(jahr='2018', ausgabe=ausgabe_object)
+        obj = make(self.model, jahr=2018)
         self.assertEqual(str(obj), '2018')
         
 class TestModelAusgabeLnum(DataTestCase):
@@ -473,8 +426,7 @@ class TestModelAusgabeLnum(DataTestCase):
     model = ausgabe_lnum
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        obj = self.model(lnum='21', ausgabe=ausgabe_object)
+        obj = make(self.model, lnum=21)
         self.assertEqual(str(obj), '21')
         
 class TestModelAusgabeMonat(DataTestCase):
@@ -482,9 +434,7 @@ class TestModelAusgabeMonat(DataTestCase):
     model = ausgabe_monat
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        monat_object = monat.objects.create(monat='Dezember', abk='Dez', ordinal = 12)
-        obj = self.model(monat=monat_object, ausgabe=ausgabe_object)
+        obj = make(self.model, monat__monat='Dezember')
         self.assertEqual(str(obj), 'Dez')
         
 class TestModelAusgabeNum(DataTestCase):
@@ -492,10 +442,10 @@ class TestModelAusgabeNum(DataTestCase):
     model = ausgabe_num
     
     def test_str(self):
-        ausgabe_object = ausgabe.objects.create(magazin = magazin.objects.create(magazin_name='Testmagazin'))
-        obj = self.model(num='20', ausgabe=ausgabe_object)
+        obj = make(self.model, num = 20)
         self.assertEqual(str(obj), '20')
 
+@tag("cn") 
 class TestModelAutor(DataTestCase):
 
     model = autor
@@ -536,7 +486,7 @@ class TestModelBand(DataTestCase):
     model = band
     
     def test_str(self):
-        obj = self.model(band_name='Testband', beschreibung = 'Beep', bemerkungen = 'Boop')
+        obj = make(self.model, band_name='Testband', beschreibung = 'Beep', bemerkungen = 'Boop')
         self.assertEqual(str(obj), 'Testband')
         
 class TestModelBestand(DataTestCase):
@@ -556,9 +506,8 @@ class TestModelBundesland(DataTestCase):
     model = bundesland
     
     def test_str(self):
-        land_object = land.objects.create(land_name = 'Deutschland', code='DE')
-        obj = self.model(bland_name ='Hessen', code = 'DE-HE', land = land_object)
-        self.assertEqual(str(obj), 'Hessen DE-HE')
+        obj = make(self.model, bland_name ='Hessen', code = 'HE')
+        self.assertEqual(str(obj), 'Hessen HE')
 
 class TestModelDatei(DataTestCase):
 
@@ -571,6 +520,7 @@ class TestModelDatei(DataTestCase):
 class TestModelDokument(DataTestCase):
     pass
 
+@tag("cn") 
 class TestModelFormat(DataTestCase):
     
     model = Format
@@ -645,6 +595,26 @@ class TestModelGenre(DataTestCase):
     def test_str(self):
         obj = self.model(genre='Testgenre')
         self.assertEqual(str(obj), 'Testgenre')
+   
+@tag("cn")      
+class TestModelHerausgeber(DataTestCase):
+    
+    model = Herausgeber
+    
+    @translation_override(language = None)
+    def test_get_name(self):
+        name_data = {'person___name':'Alice Test', 'organisation__name':'Testorga'}
+        expected = "Alice Test (Testorga)"
+        self.assertEqual(self.model._get_name(**name_data), expected)
+        
+        name_data = {'person___name':'Alice Test'}
+        expected = "Alice Test"
+        self.assertEqual(self.model._get_name(**name_data), expected)
+        
+        name_data = {'organisation__name':'Testorga'}
+        expected = "Testorga"
+        self.assertEqual(self.model._get_name(**name_data), expected)
+        
         
 class TestModelInstrument(DataTestCase):
 
@@ -660,10 +630,12 @@ class TestModelInstrument(DataTestCase):
 class TestModelKreis(DataTestCase):
     pass
 
+@tag("cn") 
 class TestModelLagerort(DataTestCase):
 
     model = lagerort
 
+    @translation_override(language = None)
     def test_get_name(self):        
         # ort only
         name_data = {'ort':'Testort'}
@@ -739,11 +711,13 @@ class TestModelNoiseRed(DataTestCase):
     def test_str(self):
         obj = self.model(verfahren='Beepboop')
         self.assertEqual(str(obj), 'Beepboop')
-        
+ 
+@tag("cn")        
 class TestModelOrt(DataTestCase):
 
     model = ort
         
+    @translation_override(language = None)
     def test_get_name(self):        
         # land only
         name_data = {'land__land_name':'Deutschland'}
@@ -764,7 +738,8 @@ class TestModelOrt(DataTestCase):
         name_data.update({'bland__code':'HE'})
         expected = 'Kassel, DE-HE'
         self.assertEqual(self.model._get_name(**name_data), expected, msg = 'stadt + land + bundesland')
-        
+  
+@tag("cn")       
 class TestModelPerson(DataTestCase):
 
     model = person
@@ -799,7 +774,7 @@ class TestModelProvenienz(DataTestCase):
     model = provenienz
 
     def test_str(self):
-        obj = provenienz(geber=geber.objects.create(name='TestGeber'), typ='Fund')
+        obj = make(self.model, geber__name = 'TestGeber', typ = 'Fund')
         self.assertEqual(str(obj), 'TestGeber (Fund)')
         
 class TestModelSchlagwort(DataTestCase):
@@ -900,9 +875,3 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
     def test_get_favorite_models(self):
         expected = [genre, schlagwort]
         self.assertEqual(Favoriten.get_favorite_models(), expected)
-        
-class TestGetModelFields(TestCase):
-    pass
-    
-class TestGetModelRelations(TestCase):
-    pass

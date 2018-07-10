@@ -17,7 +17,7 @@ class StdNumField(models.CharField):
         
     def formfield(self, **kwargs):
         kwargs['min_length'] = self.min_length
-        kwargs['validators'] = self.default_validators #NOTE: is this actually needed?
+        kwargs['validators'] = self.default_validators
         return super().formfield(**kwargs)
         
     def pre_save(self, model_instance, add):

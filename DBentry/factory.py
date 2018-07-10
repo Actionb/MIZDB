@@ -11,7 +11,10 @@ from DBentry.models import *
 
 #TODO: put logging back in for RelatedFactory
 # logger = factory.declarations.logger
-
+#TODO: catch UNIQUE constraints errors when trying to create a duplicate (pk field etc.)
+#TODO: all fields declared in django_get_or_create must also be present in build/create kwargs
+#TODO: values for '_name' (ComputedNameModel) are being overwritten
+    
 class RuntimeFactoryMixin(object):
     """
     A mixin that can create a related factory on the fly.
@@ -208,7 +211,7 @@ class M2MFactory(RelatedFactory):
             source = related_manager.target_field_name
             target = related_manager.source_field_name
         
-        self.name = source
+        #self.name = source
         
         for related_object in super().call(instance, step, context):
             related_manager.through.objects.create(**{source:instance, target:related_object})
@@ -261,13 +264,15 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 # the ManyToManyField is declared on model
                 related_model = rel.field.related_model
                 descriptor_name = rel.field.name
+                declaration_name = rel.field.name
             else:
-                # the ManyToManyField is declared on the related_model
-                related_model = self.model
+                # the ManyToManyField is declared on the related_model, working on a 'reverse' m2m relation
+                related_model = rel.field.model
                 descriptor_name = rel.get_accessor_name()
+                declaration_name = rel.name
             factory_name = self._get_factory_name_for_model(related_model)
-            if not hasattr(self.factory, descriptor_name):
-                setattr(self.factory, descriptor_name, M2MFactory(factory_name, descriptor_name = descriptor_name, related_model = related_model))
+            if not hasattr(self.factory, declaration_name):
+                setattr(self.factory, declaration_name, M2MFactory(factory_name, descriptor_name = descriptor_name, related_model = related_model))
         
     def add_related_factories(self):
         for rel in get_model_relations(self.model, forward = False):
@@ -275,8 +280,8 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 continue
             factory_name = self._get_factory_name_for_model(rel.related_model) # these are all reverse relations, meaning rel.model == self.model
             accessor_name = rel.get_accessor_name()
-            if not hasattr(self.factory, accessor_name):
-                setattr(self.factory, accessor_name, RelatedFactory(
+            if not hasattr(self.factory, rel.name):
+                setattr(self.factory, rel.name, RelatedFactory(
                     factory_name, factory_related_name = rel.field.name, accessor_name = accessor_name, related_model = rel.related_model
                 ))
         
@@ -381,6 +386,11 @@ class BundeslandFactory(MIZModelFactory):
     bland_name = factory.Faker('state')
     code = factory.Faker('state_abbr')
     
+class GenreFactory(MIZModelFactory):
+    class Meta:
+        model = genre
+        django_get_or_create = ['genre']
+    
 class LandFactory(MIZModelFactory):
     class Meta:
         model = land
@@ -398,6 +408,7 @@ class MagazinFactory(MIZModelFactory):
 class MonatFactory(MIZModelFactory):
     class Meta:
         model = monat
+        django_get_or_create = ['monat']
     monat = factory.Faker('month_name')
     abk = factory.LazyAttribute(lambda o: o.monat[:3])
     ordinal = factory.Sequence(lambda n: n)        
@@ -419,6 +430,11 @@ class PersonFactory(MIZModelFactory):
     vorname = factory.Faker('first_name')
     nachname = factory.Faker('last_name')
     
+class SchlagwortFactory(MIZModelFactory):
+    class Meta:
+        model = schlagwort
+        django_get_or_create = ['schlagwort']
+    
 class SpracheFactory(MIZModelFactory):
     class Meta:
         model = sprache
@@ -426,3 +442,7 @@ class SpracheFactory(MIZModelFactory):
     
 def make(model, **kwargs):
     return modelfactory_factory(model)(**kwargs)
+    
+def batch(model, num, **kwargs):
+    for i in range(num):
+        yield modelfactory_factory(model)(**kwargs)

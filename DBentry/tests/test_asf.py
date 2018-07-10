@@ -7,6 +7,17 @@ from DBentry.admin import *
 
 from dal import forward
 
+class TestAdvSFForm(FormTestCase):
+    
+    form_class = AdvSFForm
+    
+    def test_get_initial_for_field(self):
+        # Assert that get_initial_for_field accepts and handles a MultiValueDict as initial
+        form = self.get_form()
+        form.initial = MultiValueDict({'Test':[1, 2, 3]})
+        mock_field = Mock()
+        self.assertEqual(form.get_initial_for_field(field = mock_field, field_name = 'Test'), [1, 2, 3])    
+
 class FactoryTestCaseMixin(object):
     
     admin_site = miz_site
@@ -30,7 +41,7 @@ class FactoryTestCaseMixin(object):
         model_admin = self.model_admin
         labels = model_admin.advanced_search_form.get('labels', {})
         form = advSF_factory(model_admin, labels=labels)()
-        self.assertEqual(sorted(list(form.fields)), sorted(list(expected_fields)))  # TODO: use assertListsEqualSorted
+        self.assertListEqualSorted(list(form.fields), expected_fields)
         for field_path, formfield in form.fields.items():
             self.assertTrue(field_path in expected_fields, msg=field_path)
             self.assertEqual(formfield.label, expected_labels[field_path], msg=field_path)
@@ -54,6 +65,7 @@ class TestFactory(MyTestCase):
     # advSF_factory requires a ModelAdmin **instance**:
     # it accesses model_admin.model, and that model attribute does not exist before instantiation.
     
+    @tag("bugfix")
     def test_factory_with_m2o_field_bug(self):
         # Bug:
         # the factory will try get the verbose_name of the field -- and ManyToOneFields do not have that attribute.
@@ -84,7 +96,7 @@ class TestFactory(MyTestCase):
     
     @translation_override(language = None)
     def test_factory_applies_forward(self):
-        # Test that forwarding is applied when possible (here: bland -> land)
+        # Test that forwarding is applied when possible (here: 'selects' : ['orte', 'orte__land', ('orte__bland', 'orte__land')]
         model_admin = PersonAdmin(person, miz_site)
         form = advSF_factory(model_admin)()
         widget = form.fields['orte__bland'].widget

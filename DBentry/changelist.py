@@ -31,7 +31,7 @@ class MIZChangeList(ChangeList):
     def get_filters(self, request):
         # pass request.GET to get_filters_params to get a QueryDict(MultiValueDict) back, this way we can catch multiple values for the same key 
         # which is needed in Advanced Search Form SelectMultiple cases 
-        lookup_params = self.get_filters_params(request.GET)
+        lookup_params = self.get_filters_params(request.GET) #FIXME: .copy() as get_filters_params may delete keys
         use_distinct = False
         
         if not lookup_params:
@@ -163,6 +163,7 @@ class MIZChangeList(ChangeList):
             
     def get_query_string(self, new_params=None, remove=None):
         # Allow the use of '__in' lookup in the query string
+        #NOTE: what does this *actually* do? 
         if new_params is None: new_params = {}
         if remove is None: remove = []
         p = self.params.copy()
@@ -200,7 +201,7 @@ class AusgabeChangeList(MIZChangeList):
         ordering = self.get_ordering(request, queryset) #NOTE: haven't we done this through the call to super() already?
         if not queryset.exists() or not queryset.query.where.children:
             # Don't bother if queryset is empty or not filtered in any way
-            return queryset.order_by(*ordering) # django would warn about an unordered list even it was empty
+            return queryset.order_by(*ordering) # django would warn about an unordered list even if it was empty
             
         pk_order_item = ordering.pop(-1)
         for o in ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']: #NOTE: jahrgang -> jahr?
@@ -239,7 +240,7 @@ class AusgabeChangeList(MIZChangeList):
             queryset.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(), 
             queryset.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
         ))
-        
+        #TODO: prioritize lnum, monat, num order if any values are equal instead of keeping it random
         criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
         result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])

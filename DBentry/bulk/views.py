@@ -242,6 +242,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
             else:
                 links = []
                 for instance in instances:
+                    #TODO: use utils.get_obj_link
                     link = reverse("admin:DBentry_ausgabe_change", args = [instance.pk])
                     label = str(instance)
                     links.append(format_html('<a href="{}" target="_blank">{}</a>', link, label))

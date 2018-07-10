@@ -17,7 +17,12 @@ from django.contrib.auth import get_permission_codename
 from .constants import M2M_LIST_MAX_LEN
 from .logging import get_logger
 
+
 def is_protected(objs, using='default'):
+    """
+    Returns a models.ProtectedError if any of the objs are protected through a ForeignKey, otherwise returns None.
+    """
+    # Used by merge_records
     collector = models.deletion.Collector(using='default')
     try:
         collector.collect(objs)
@@ -102,7 +107,7 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
                     logger.log_delete(not_updated)
                     not_updated.delete()
                     
-        
+        #TODO: shouldn't the protection check happen at the start of the merge??
         protected = is_protected(qs)
         if protected:
             # Some objects were protected, abort the merge
@@ -244,6 +249,7 @@ def num_queries(func=None, *args, **kwargs):
 
     context = CaptureQueriesContext(conn)
     if func is None:
+        #NOTE: why are we returning the context manager? shouldn't func be a required argument?
         return context
 
     with context as n:

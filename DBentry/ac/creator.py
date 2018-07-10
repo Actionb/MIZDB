@@ -5,6 +5,7 @@ from DBentry.models import *
 # isn't this very close to validation of form fields?
 #TODO: store created object/create_info etc.
 #TODO: allow or disallow 'duplicating' records?
+#TODO: create, createable and create_info all do the same thing
     
 class FormatException(Exception):
     message = 'Formatierung fehlgeschlagen.'

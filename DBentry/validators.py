@@ -2,12 +2,13 @@ from stdnum import issn, isbn, ean
 from stdnum.util import clean
 
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext, gettext_lazy
+from django.utils.translation import gettext_lazy
 
 class StdValidationError(ValidationError):
     message = None
     
     def __init__(self, *args, **kwargs):
+        # ValidationError requires one positional argument 'message'
         super().__init__(self.message, *args, **kwargs)
 
 class InvalidLength(StdValidationError):

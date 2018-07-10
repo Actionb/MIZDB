@@ -26,7 +26,9 @@ class BulkField(forms.CharField):
         if self.allowed_numerical:
             msg_text += ' Bitte nur Ziffern'
         else:
-            msg_text += ' Bitte nur Buchstaben'
+            #TODO: this doesn't even check self.allowed_alpha:
+            # allowed_alpha == False will still lead to a message mentioning 'Buchstaben'!
+            msg_text += ' Bitte nur Buchstaben' 
         msg_text += ' (plus Buchstaben-Kürzel)' if self.allowed_alpha and self.allowed_numerical else ''
         msg_text += ' oder ' if self.allowed_special else ''
         msg_text += ' oder '.join(['"'+s+'"' for s in self.allowed_special]) + ' benutzen.'
@@ -49,7 +51,6 @@ class BulkField(forms.CharField):
         ))
         return regex
         
-        
     def validate(self, value):
         super(BulkField, self).validate(value)
         if any(self.regex.search(c) is None for c in value):
@@ -61,9 +62,11 @@ class BulkField(forms.CharField):
         if value and value[-1] in self.allowed_special:
             # Strip accidental last delimiter
             value = value[:-1]
-        return value
+        return value #TODO: .strip() again in case of ' 1 , ' --> '1 '
         
     def to_list(self, value):
+        #TODO: docs
+        #TODO: strip() after every split
         if not value:
             return [], 0
         temp = []
@@ -71,9 +74,9 @@ class BulkField(forms.CharField):
         for item in value.split(','):
             item = item.strip()
             if item:
-                if item.count('-')==1:
+                if item.count('-')==1: # item is a 'range' of values
                     if item.count("*") == 1:
-                        item,  multi = item.split("*")
+                        item,  multi = item.split("*") # !! '2-4**3'
                         multi = int(multi)
                     else:
                         multi = 1
@@ -102,7 +105,7 @@ class BulkJahrField(BulkField):
         for item in value.replace('/', ',').split(','):
             item = item.strip()
             if len(item)==2:
-                if int(item) <= 17: #TODO current_year + 1 instead of 17?
+                if int(item) <= 17: #FIXME: current_year + 1 instead of 17?
                     item = '20' + item
                 else:
                     item = '19' + item
