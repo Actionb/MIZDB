@@ -16,17 +16,12 @@ class TestRuntimeFactoryMixin(TestCase):
         self.assertEqual(AutorFactory, fac.factory)
         self.assertEqual(fac.factory.__module__,  self.local_factory_module)
         
-    @skip("Don't quite understand the state of _cache; stuff in there that shouldn't be")
     def test_new_factory(self):
-        # Assert that the factory property can create a new factory if needed
-        # Choosing 'Technik' model as it is unlikely to be ever used for anything     
-        from DBentry.factory import _cache  
-        
-        self.assertNotIn('technik', _cache)
-        self.assertNotIn('TechnikFactory', dir())
-        fac = self.dummy_factory(self.local_factory_module + 'DoesNotExit', related_model = technik)
+        # Assert that the factory property can create a new factory if needed  
+        fac = self.dummy_factory(self.local_factory_module + '.DoesNotExit', related_model = technik)
         self.assertEqual(fac.factory._meta.model, technik)
-        self.assertIn('technik', _cache)
+        from DBentry import factory
+        self.assertIn('technik', factory._cache)
         
     def test_new_factory_wo_related_model(self):
         # factory property should raise an AttributeError if the factory's related_model attribute is None and a new factory has to be created.
@@ -78,6 +73,7 @@ class TestSelfFactory(TestCase):
         created = GenreFactory()
         self.assertIsNotNone(created.ober)
         self.assertIsNone(created.ober.ober)
+        GenreFactory.ober.required = False
             
 class TestRelatedFactory(TestCase):
     
@@ -113,16 +109,6 @@ class TestRelatedFactory(TestCase):
     def test_rf_extra(self):
         g = make(genre, genre = 'TestGenre0', genre_alias__extra = 3)
         self.assertEqual(g.genre_alias_set.count(), 3)
-
-# This only works for instances explicitly passed in
-#    def test_rf_respects_accessor_name(self):
-#        # RelatedFactory should not add related objects if it has no accessor name
-#        GenreFactory.genre_alias_set.accessor_name = None
-#        self.assertIsNone(GenreFactory.genre_alias_set.accessor_name)
-#        alias = genre.objects.create(genre='somealias')
-#        g = GenreFactory(genre = 'TestGenre0', genre_alias__alias = alias)
-#        self.assertEqual(g.genre_alias_set.count(), 0)
-        
     
 class TestM2MFactory(TestCase):
     
@@ -171,7 +157,6 @@ class TestM2MFactory(TestCase):
         m2m = M2MFactory('DBentry.factory.whatever', accessor_name = 'beep boop', related_model = genre)
         self.assertIsNone(m2m.accessor_name)
 
-
 class TestMIZDjangoOptions(TestCase):
     
     def test_get_decl_for_model_field(self):
@@ -190,6 +175,10 @@ class TestMIZDjangoOptions(TestCase):
         decl = func(ausgabe._meta.get_field('jahrgang'))
         self.assertIsInstance(decl, factory.Faker)
         self.assertEqual(decl.provider, 'pyint')
+        
+        mock_field = Mock(unique = True, get_internal_type = mockv('IntegerField'))
+        decl = func(mock_field)
+        self.assertIsInstance(decl, factory.Sequence)
         
         decl = func(audio._meta.get_field('laufzeit')) # DurationField
         self.assertIsInstance(decl, factory.Faker)
