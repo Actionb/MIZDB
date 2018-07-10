@@ -11,6 +11,8 @@ from DBentry.utils import get_model_from_string
 
 from django import http
 
+#TODO: review the whole caching thing
+
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     _search_fields = None
     
@@ -50,6 +52,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         
     def apply_q(self, qs):
         # NOTE: distinct() at every step? performance issue?
+        #TODO: accurate excepts
         if self.q:
             if self.search_fields:
                 exact_match_qs = qs
@@ -250,9 +253,9 @@ class ACCreateable(ACCapture):
         """Create an object given a text after checking permissions."""
         if not self.has_add_permission(request):
             return http.HttpResponseForbidden()
-
+            
         if not self.creator and not self.create_field:
-            raise ImproperlyConfigured('Missing "create_field"') #TODO: adjust error message
+            raise AttributeError('Missing "create_field"') #TODO: adjust error message
 
         text = request.POST.get('text', None)
 

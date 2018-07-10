@@ -17,11 +17,12 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
     
     def get_view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
         #DBentry.ac.views behave slightly different in their as_view() method
-        self.view_class.model = model or self.model
-        self.view_class.create_field = create_field or self.create_field
-        self.view_class.forwarded = forwarded or {}
-        self.view_class.q = q or ''
-        return super(ACViewTestCase, self).get_view(request, args, kwargs)
+        view = super(ACViewTestCase, self).get_view(request, args, kwargs)
+        view.model = model or self.model
+        view.create_field = create_field or self.create_field
+        view.forwarded = forwarded or {}
+        view.q = q or ''
+        return view
 
 @tag("dal")
 class ACViewTestMethodMixin(object):
