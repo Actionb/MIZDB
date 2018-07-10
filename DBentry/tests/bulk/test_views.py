@@ -3,7 +3,6 @@ from ..base import *
 from DBentry.bulk.views import *
 
 class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
-    #TODO: implement logging tests
     
     model = ausgabe
     path = reverse('bulk_ausgabe')
@@ -128,9 +127,10 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         
         # inspect the created objects
         after_save_ids = list(self.queryset.values_list('pk', flat=True))
-        # in total we should now have 6 objects (one for each num in  num = '1,2,3,4,5' plus the 'duplicate' second object with num = 5)
+        # in total we should now have 6 objects (3 old ones + 3 new ones)
         self.assertEqual(len(after_save_ids), 6)
-        # the pks of any object that was created/updated are stored in ids_of_altered_objects, comparing them (+ our unalted objects) with the after_save_ids
+        # the pks of any object that was created/updated are stored in ids_of_altered_objects
+        # compare them (and our unaltered objects) with the after_save_ids
         self.assertEqual(sorted(ids_of_altered_objects + [self.multi1.pk, self.multi2.pk]), sorted(after_save_ids))
         
     @tag('logging')
@@ -238,13 +238,6 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         next_data = self.get_view().next_initial_data(form)
         self.assertEqual(next_data.get('jahrgang', 0), 12)
         self.assertEqual(next_data.get('jahr', ''), '2002, 2003')
-        
-    def test_instance_data(self):
-        # nothing to test, it's all constants
-        pass
-        
-    def build_preview(self):
-        pass
     
 
 class TestBulkAusgabeStory(BulkAusgabeTestCase):

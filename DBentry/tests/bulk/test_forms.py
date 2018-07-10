@@ -77,12 +77,9 @@ class TestBulkForm(FormTestCase):
         form.is_valid()
         form.total_count = 1 # clean() expects total_count to be zero at the beginning
         with self.assertRaises(ValidationError) as e:
+            # some_bulkfield's item count will be 2, while total_count is 1
             form.clean()
         self.assertTrue(e.exception.message.startswith('Ungleiche Anzahl'))
-        try:
-            form.clean()
-        except ValidationError as e:
-            self.assertTrue(e.message.startswith('Ungleiche Anzahl'))
 
     def test_clean_errors_required_missing(self):   
         # not all fields in at_least_one_required have data => error message
@@ -98,6 +95,7 @@ class TestBulkForm(FormTestCase):
         data ={ 'some_bulkfield':'1,2', 'req_fld' : '2000', 'some_fld':'4,5'}
         form = self.get_dummy_form(data=data)
         form.is_valid()
+        self.assertTrue(hasattr(form, 'split_data'))
         self.assertTrue('some_bulkfield' in form.split_data)
         self.assertEqual(sorted(form.split_data.get('some_bulkfield')), ['1', '2'])
         self.assertTrue('req_fld' in form.split_data)
@@ -106,13 +104,19 @@ class TestBulkForm(FormTestCase):
     
     @tag("bug")
     def test_clean_handles_field_validation_errors(self):
-        # If a BulkField raises a ValidationError during the its cleaning process, the field's value is removed from cleaned_data.
+        # If a BulkField raises a ValidationError during its cleaning process, the field's value is removed from cleaned_data.
         # The form's clean method needs to be able to handle an expected, but missing, field in cleaned_data.
         data ={ 'some_bulkfield':'ABC', 'req_fld' : '2000A', 'some_fld':'4,5'}
         form = self.get_dummy_form(data=data)
         with self.assertNotRaises(KeyError):
             form.is_valid()
-        
+            
+    def test_clean_handles_to_list_errors(self):
+        # A BulkField's to_list method may throw an error, the form must not allow it to bubble up
+        data = {'some_bulkfield':'1,2-4**3', 'req_fld' : '2000', 'some_fld':'4,5'}
+        form = self.get_dummy_form(data=data)
+        with self.assertNotRaises(Exception):
+            form.is_valid()       
         
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     

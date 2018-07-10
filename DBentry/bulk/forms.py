@@ -9,6 +9,8 @@ from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from DBentry.ac.widgets import make_widget
 from .fields import *
 
+#TODO: review this
+
 class BulkForm(MIZAdminForm):
     
     model = None
@@ -86,11 +88,11 @@ class BulkForm(MIZAdminForm):
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BulkField):
                 # Retrieve the split up data and the amount of objects that are expected to be created with that data
-                list_data, item_count = fld.to_list(cleaned_data.get(fld_name))
+                list_data, item_count = fld.to_list(cleaned_data.get(fld_name)) #FIXME: catch non-ValidationError exceptions raised by to_list
                 # If the field belongs to the each_fields group, we should ignore the item_count it is returning as its data is used for every object we are about to create
                 if not fld_name in self.each_fields and item_count and self.total_count and item_count != self.total_count:
                     # This field's data exists and is meant to be split up into individual items, but the amount of items differs from the previously determined total_count
-                    errors = True
+                    errors = True #TODO: why not raise the ValidationError here?
                 else:
                     # Either:
                     # - the field is an each_field
@@ -214,7 +216,7 @@ class BulkFormAusgabe(BulkForm):
             ('jahr', 'ausgabe_jahr__jahr'), 
             ('num', 'ausgabe_num__num'), 
             ('lnum', 'ausgabe_lnum__lnum'), 
-            ('monat', 'ausgabe_monat__monat_id')]:
+            ('monat', 'ausgabe_monat__monat_id')]: #NOTE: monat.ordinal?
             row_data = row.get(fld_name, [])
             if isinstance(row_data, str):
                 row_data = [row_data]
@@ -225,6 +227,7 @@ class BulkFormAusgabe(BulkForm):
         
     @property
     def row_data(self):
+        #TODO: what about 'homeless_fields'? Should they be included here (as it is now) or not?
         if self.is_valid():
         # form is valid, split_data has been populated in clean()
             if self.has_changed() or not self._row_data:
