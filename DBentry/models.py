@@ -116,7 +116,10 @@ class autor(ComputedNameModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    person = models.ForeignKey('person', models.SET_NULL, null = True, blank = True)
+    person = models.ForeignKey(
+        'person', models.SET_NULL, null = True, blank = True, 
+        help_text = "Zur Schnell-Erstellung bitte folgendes Format benutzen: Nachname(n), Vorname(n)"
+    )
     
     magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
     
@@ -188,7 +191,7 @@ class ausgabe(ComputedNameModel):
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
-        ordering = ['magazin', 'jahrgang'] # TODO: revisit ordering
+        ordering = ['magazin']
         permissions = [
             ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'), 
             ('alter_data_ausgabe', 'Aktion: Daten verändern.')
@@ -551,7 +554,8 @@ class buch(BaseModel):
     sprache = models.ForeignKey('sprache', models.SET_NULL, null = True, blank = True)
     
     herausgeber = models.ManyToManyField('Herausgeber')
-    autor = models.ManyToManyField('autor')
+    autor = models.ManyToManyField('autor', 
+        help_text = "Zur Schnell-Erstellung bitte folgendes Format benutzen: Nachname(n), Vorname(n) (Kürzel)")
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -907,7 +911,7 @@ class veranstaltung_alias(BaseAliasModel):
 class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
     tracks = models.IntegerField()
-    laufzeit = models.TimeField()
+    laufzeit = models.TimeField() # TODO: models.DurationField
     festplatte = models.CharField(**CF_ARGS_B)
     quelle = models.CharField(**CF_ARGS_B)
     

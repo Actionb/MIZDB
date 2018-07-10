@@ -1,6 +1,6 @@
 from .base import *
 
-class TestModelBase(DataTestCase):
+class TestBaseModel(DataTestCase):
 
     model = artikel
     add_relations = True
@@ -52,6 +52,20 @@ class TestModelBase(DataTestCase):
     def test_get_updateable_fields_not_ignores_default(self):
         # get_updateable_fields should include fields that have their default value
         self.assertListEqualSorted(make(geber).get_updateable_fields(), ['name'])
+        
+class TestBaseM2MModel(DataTestCase):
+    
+    model = m2m_audio_musiker
+    raw_data = [
+        {'audio__titel':'Testaudio', 'musiker__kuenstler_name':'Alice Test'}, 
+        {'audio__titel':'Testaudio', 'musiker__kuenstler_name':'Alice Test', 'instrument__instrument':'Piano'}, 
+    ]
+    
+    def test_str(self):
+        expected = "Testaudio (Alice Test)"
+        self.assertEqual(self.obj1.__str__(), expected)
+        self.assertEqual(self.obj2.__str__(), expected)
+    
 
 @tag("cn")    
 class TestComputedNameModel(DataTestCase):
@@ -195,7 +209,8 @@ class TestModelAudio(DataTestCase):
         self.obj1.release_id = 1
         self.obj1.save()
         self.assertEqual(self.obj1.discogs_url, "http://www.discogs.com/release/1")
-        
+ 
+@tag("cn")        
 class TestModelAusgabe(DataTestCase):
 
     model = ausgabe
@@ -430,6 +445,7 @@ class TestModelAusgabeNum(DataTestCase):
         obj = make(self.model, num = 20)
         self.assertEqual(str(obj), '20')
 
+@tag("cn") 
 class TestModelAutor(DataTestCase):
 
     model = autor
@@ -504,6 +520,7 @@ class TestModelDatei(DataTestCase):
 class TestModelDokument(DataTestCase):
     pass
 
+@tag("cn") 
 class TestModelFormat(DataTestCase):
     
     model = Format
@@ -578,6 +595,26 @@ class TestModelGenre(DataTestCase):
     def test_str(self):
         obj = self.model(genre='Testgenre')
         self.assertEqual(str(obj), 'Testgenre')
+   
+@tag("cn")      
+class TestModelHerausgeber(DataTestCase):
+    
+    model = Herausgeber
+    
+    @translation_override(language = None)
+    def test_get_name(self):
+        name_data = {'person___name':'Alice Test', 'organisation__name':'Testorga'}
+        expected = "Alice Test (Testorga)"
+        self.assertEqual(self.model._get_name(**name_data), expected)
+        
+        name_data = {'person___name':'Alice Test'}
+        expected = "Alice Test"
+        self.assertEqual(self.model._get_name(**name_data), expected)
+        
+        name_data = {'organisation__name':'Testorga'}
+        expected = "Testorga"
+        self.assertEqual(self.model._get_name(**name_data), expected)
+        
         
 class TestModelInstrument(DataTestCase):
 
@@ -593,10 +630,12 @@ class TestModelInstrument(DataTestCase):
 class TestModelKreis(DataTestCase):
     pass
 
+@tag("cn") 
 class TestModelLagerort(DataTestCase):
 
     model = lagerort
 
+    @translation_override(language = None)
     def test_get_name(self):        
         # ort only
         name_data = {'ort':'Testort'}
@@ -672,11 +711,13 @@ class TestModelNoiseRed(DataTestCase):
     def test_str(self):
         obj = self.model(verfahren='Beepboop')
         self.assertEqual(str(obj), 'Beepboop')
-        
+ 
+@tag("cn")        
 class TestModelOrt(DataTestCase):
 
     model = ort
         
+    @translation_override(language = None)
     def test_get_name(self):        
         # land only
         name_data = {'land__land_name':'Deutschland'}
@@ -697,7 +738,8 @@ class TestModelOrt(DataTestCase):
         name_data.update({'bland__code':'HE'})
         expected = 'Kassel, DE-HE'
         self.assertEqual(self.model._get_name(**name_data), expected, msg = 'stadt + land + bundesland')
-        
+  
+@tag("cn")       
 class TestModelPerson(DataTestCase):
 
     model = person
@@ -833,9 +875,3 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
     def test_get_favorite_models(self):
         expected = [genre, schlagwort]
         self.assertEqual(Favoriten.get_favorite_models(), expected)
-        
-class TestGetModelFields(TestCase):
-    pass
-    
-class TestGetModelRelations(TestCase):
-    pass
