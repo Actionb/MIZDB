@@ -16,6 +16,8 @@ from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
 
+#TODO: add beschreibung bemerkungen to search fields so that ppl can find 'special' ausgaben
+
 class MIZModelAdmin(admin.ModelAdmin):
     
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered

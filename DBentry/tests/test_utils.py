@@ -1,7 +1,7 @@
 from .base import *
 
 from DBentry import utils
-
+#TODO: test DBentry.ac.creator.split_name once moved to utils.py
 ##############################################################################################################
 # general utilities
 ############################################################################################################## 
@@ -76,7 +76,6 @@ class TestModelUtils(TestCase):
         # FK from video to sender
         # ManyToMany auto created band <-> video
         # ManyToMany intermediary musiker <-> video
-        model = video
         rev_fk = bestand._meta.get_field('video').remote_field
         fk = video._meta.get_field('sender').remote_field
         m2m_inter = video.musiker.rel
@@ -172,6 +171,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
 ##############################################################################################################
 # merging
 ##############################################################################################################
+#TODO: test merge with update_data passed in
 class MergeTestMethodsMixin(object):
     #TODO:
     # test behaviour when merge cannot be completed due to an internal exception

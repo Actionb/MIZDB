@@ -91,6 +91,7 @@ def get_relation_info_to(model, rel):
     
 def get_required_fields(model):
     #FIXME: this doesnt return 'name' for model geber
+    #FIXME: this MUST NOT return a pk field!
     """
     Returns the fields that require a value.
     """
@@ -226,6 +227,7 @@ class BaseModel(models.Model):
         return rslt
         
     def get_updateable_fields(self):
+    #FIXME: this MUST NOT return a pk field!
         """
         Returns the self's fields (as their names) that are empty or have their default value.
         Used by merge_records.

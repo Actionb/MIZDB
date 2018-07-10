@@ -5,6 +5,8 @@ from django.utils.encoding import force_text
 from DBentry.factory import make, batch
 
 class TestDataMixin(object):
+    #TODO: make a backup of all existing factory declarations so that changes to those declarations
+    # do not persist throughout all other tests?
     
     model = None
     queryset = None
@@ -143,7 +145,7 @@ class LoggingTestMixin(object):
             else:
                 pk = obj.pk
                 # obj is a model instance, use its model class to get the correct content_type
-                content_type = get_content_type_for_model(obj._meta.model)
+                content_type = get_content_type_for_model(obj._meta.model) #NOTE: this is overriding everything we have done above
                 
             filter_params = dict(object_id=pk, content_type__pk=content_type.pk, action_flag=action_flag)
             filter_params.update(**kwargs)
