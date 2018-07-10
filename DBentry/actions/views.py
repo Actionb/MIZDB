@@ -46,6 +46,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
             # User entered 0 for jahrgang. Delete jahrgang data from the selected ausgaben.
             qs.update(jahrgang=None)
         else:
+            #TODO: account for months as a 'delimiter'
             years_in_qs = qs.values_list('ausgabe_jahr__jahr', flat = True).exclude(ausgabe_jahr__jahr=None).order_by('ausgabe_jahr__jahr').distinct()
             previous_year = years_in_qs.first()
             with transaction.atomic():            
