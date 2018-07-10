@@ -7,6 +7,17 @@ from DBentry.admin import *
 
 from dal import forward
 
+class TestAdvSFForm(FormTestCase):
+    
+    form_class = AdvSFForm
+    
+    def test_get_initial_for_field(self):
+        # Assert that get_initial_for_field accepts and handles a MultiValueDict as initial
+        form = self.get_form()
+        form.initial = MultiValueDict({'Test':[1, 2, 3]})
+        mock_field = Mock()
+        self.assertEqual(form.get_initial_for_field(field = mock_field, field_name = 'Test'), [1, 2, 3])    
+
 class FactoryTestCaseMixin(object):
     
     admin_site = miz_site
@@ -54,6 +65,7 @@ class TestFactory(MyTestCase):
     # advSF_factory requires a ModelAdmin **instance**:
     # it accesses model_admin.model, and that model attribute does not exist before instantiation.
     
+    @tag("bugfix")
     def test_factory_with_m2o_field_bug(self):
         # Bug:
         # the factory will try get the verbose_name of the field -- and ManyToOneFields do not have that attribute.
@@ -84,7 +96,7 @@ class TestFactory(MyTestCase):
     
     @translation_override(language = None)
     def test_factory_applies_forward(self):
-        # Test that forwarding is applied when possible (here: bland -> land)
+        # Test that forwarding is applied when possible (here: 'selects' : ['orte', 'orte__land', ('orte__bland', 'orte__land')]
         model_admin = PersonAdmin(person, miz_site)
         form = advSF_factory(model_admin)()
         widget = form.fields['orte__bland'].widget

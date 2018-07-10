@@ -1,7 +1,7 @@
 from .base import *
 
 from DBentry.forms import *
-from DBentry.ac.widgets import EasyWidgetWrapper
+from DBentry.ac.widgets import EasyWidgetWrapper, MIZModelSelect2
 
 class TestFormBase(ModelFormTestCase):
     
@@ -24,6 +24,33 @@ class TestFormBase(ModelFormTestCase):
         # validate_unique should now set the DELETE flag in cleaned_data
         form.validate_unique()
         self.assertEqual(form.cleaned_data.get('DELETE', False), True) 
+        
+    def test_makeForm(self):
+        # makeForm should add dal widgets for foreign fields
+        form = makeForm(audio)
+        self.assertIsInstance(form.base_fields['sender'].widget, MIZModelSelect2)
+        
+        # makeForm should override the widget attrs of a TextField model field
+        attrs = form.base_fields['beschreibung'].widget.attrs
+        self.assertEqual(attrs['rows'], ATTRS_TEXTAREA['rows'])
+        self.assertEqual(attrs['cols'], ATTRS_TEXTAREA['cols'])
+        attrs = form.base_fields['bemerkungen'].widget.attrs
+        self.assertEqual(attrs['rows'], ATTRS_TEXTAREA['rows'])
+        self.assertEqual(attrs['cols'], ATTRS_TEXTAREA['cols'])
+        
+        # makeForm should respect a given 'fields' parameter
+        form = makeForm(audio, fields = ['titel'])
+        self.assertIn('titel', form.base_fields)
+        self.assertNotIn('sender', form.base_fields)
+        self.assertNotIn('tracks', form.base_fields)
+        
+        # makeForm should return any form classes that are already present in DBentry.forms
+        # DBentry.forms.ArtikelForm overrides ATTRS_TEXTAREA for field 'schlagzeile' with {'rows':2, 'cols':90}
+        form = makeForm(artikel)
+        attrs = form.base_fields['schlagzeile'].widget.attrs
+        self.assertEqual(attrs['rows'], 2)
+        self.assertEqual(attrs['cols'], 90)
+        
         
 class TestInLineAusgabeForm(ModelFormTestCase):
     
@@ -198,10 +225,64 @@ class TestMIZAdminForm(FormTestCase):
         self.assertTrue(form.changed_data)
   
         
-class TestDynamicChoiceForm(FormTestCase):
+class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
+    
+    form_class = DynamicChoiceForm
+    dummy_fields = {
+        'cf' : forms.ChoiceField(choices = []), 
+        'cf2' : forms.ChoiceField(choices = [])
+    }
+    model = genre
+    test_data_count = 3
     
     def test_init(self):
-        pass
+        # choices is list of iterables with len == 2 - ideal case
+        choices = [('1', '1'), ('2', '3'), ('3', '0')]
+        form = self.get_dummy_form(choices=choices)
+        self.assertListEqualSorted(form.fields['cf'].choices, choices)
+        self.assertListEqualSorted(form.fields['cf2'].choices, choices)
+        
+        # choices is a list of iterables of len == 1
+        choices = ['1', '2', '3']
+        expected = [('1', '1'), ('2', '2'), ('3', '3')]
+        form = self.get_dummy_form(choices=choices)
+        self.assertListEqualSorted(form.fields['cf'].choices, expected)
+        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        
+        # choices is a list of objects that are not iterable
+        expected = [(str(o), str(o)) for o in self.test_data]
+        form = self.get_dummy_form(choices=self.test_data)
+        self.assertListEqualSorted(form.fields['cf'].choices, expected)
+        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        
+        # choices is a dict
+        choices = {'cf':['1', '2', '3'], 'cf2':self.test_data}
+        form = self.get_dummy_form(choices=choices)
+        self.assertListEqualSorted(form.fields['cf'].choices, [('1', '1'), ('2', '2'), ('3', '3')])
+        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        
+        # choices is a BaseManager
+        expected = [(str(o.pk), str(o)) for o in self.test_data]
+        form = self.get_dummy_form(choices=genre.objects)
+        self.assertListEqualSorted(form.fields['cf'].choices, expected)
+        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        
+        # choices is a QuerySet
+        expected = [(str(o.pk), str(o)) for o in self.test_data[:2]]
+        form = self.get_dummy_form(choices=genre.objects.filter(pk__in=[pk for pk, o in expected]))
+        self.assertListEqualSorted(form.fields['cf'].choices, expected)
+        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        
+        # preset choices are preserved
+        fields = {
+            'cf' : forms.ChoiceField(choices = []), 
+            'cf2' : forms.ChoiceField(choices = [('1', 'a')])
+        }
+        choices = ['1', '2', '3']
+        expected = [('1', '1'), ('2', '2'), ('3', '3')]
+        form = self.get_dummy_form(fields = fields, choices=choices)
+        self.assertListEqualSorted(form.fields['cf'].choices, expected)
+        self.assertListEqualSorted(form.fields['cf2'].choices, [('1', 'a')])
     
 class TestDynamicChoiceFormSet(FormTestCase):
     
