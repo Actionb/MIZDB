@@ -1,5 +1,8 @@
 from .base import *
-from DBentry.managers import CNQuerySet
+from DBentry.managers import *
+from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
+
+#TODO: everything... coverage is at 43%
 
 class TestMIZQuerySet(DataTestCase):
     
@@ -11,6 +14,28 @@ class TestMIZQuerySet(DataTestCase):
     ]
     fields = ['band_name', 'genre__genre', 'band_alias__alias']
     
+    @patch.object(ValuesDictSearchQuery, 'search', return_value = ('ValuesDictSearchQuery', False))
+    @patch.object(PrimaryFieldsSearchQuery, 'search', return_value = ('PrimaryFieldsSearchQuery', False))
+    @patch.object(BaseSearchQuery, 'search', return_value = ('BaseSearchQuery', False))
+    def test_find_strategy_chosen(self, MockBSQ, MockPFSQ, MockVDSQ):
+        # Assert that 'find' chooses the correct search strategy dependent on the model's properties
+        model = Mock(name_field = '', primary_search_fields = [], search_field_suffixes = {})
+        model.get_search_fields.return_value = []
+        qs = Mock(model = model, find = MIZQuerySet.find)
+        
+        self.assertEqual(qs.find(qs,'x'), 'BaseSearchQuery')
+        
+        model.primary_search_fields = ['Something']
+        self.assertEqual(qs.find(qs, 'x'), 'PrimaryFieldsSearchQuery')
+        
+        model.name_field = 'Something again'
+        self.assertEqual(qs.find(qs,'x'), 'ValuesDictSearchQuery')
+    
+    def test_find(self):
+        self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
+        self.assertIn((self.obj2.pk, str(self.obj2) + ' (Band-Alias)'), self.queryset.find('Coffee'))
+        self.assertFalse(self.queryset.find('Jazz'))
+        
     def test_values_dict(self):
         v = self.queryset.values_dict(*self.fields)
         self.assertEqual(len(v), 3)
