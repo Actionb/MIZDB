@@ -199,20 +199,37 @@ class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
         """
         For given data of a row, apply queryset filtering to find a matching instance.
         """
-        qs = self.cleaned_data.get('magazin').ausgabe_set
-        
+        qs = self.cleaned_data.get('magazin').ausgabe_set.all()
+                
         for fld_name, field_path in [
-            ('jahr', 'ausgabe_jahr__jahr'), 
             ('num', 'ausgabe_num__num'), 
             ('lnum', 'ausgabe_lnum__lnum'), 
-            ('monat', 'ausgabe_monat__monat_id')]: #NOTE: monat.ordinal?
+            ('monat', 'ausgabe_monat__monat__ordinal')]: 
             row_data = row.get(fld_name, [])
             if isinstance(row_data, str):
                 row_data = [row_data]
             for value in row_data:
                 if value:
                     qs = qs.filter(**{field_path:value})
-        return qs
+                    
+        if not qs.exists():
+            return qs
+            
+        jg = row.get('jahrgang', None)
+        jahre = row.get('jahr', None)
+        if isinstance(jahre, str): jahre = [jahre]
+        
+        if jg and jahre:
+            if qs.filter(jahrgang = jg, ausgabe_jahr__jahr__in = jahre).exists():
+                qs = qs.filter(jahrgang = jg, ausgabe_jahr__jahr__in = jahre)
+            else:
+                # Do not shadow possible duplicates that only have one of (jg, jahre) by using OR
+                qs = qs.filter(Q(('jahrgang', jg)) | Q(('ausgabe_jahr__jahr__in', jahre)))
+        elif jg:
+            qs = qs.filter(jahrgang=jg)
+        elif jahre:
+            qs = qs.filter(ausgabe_jahr__jahr__in=jahre)
+        return qs.distinct()
         
     @property
     def row_data(self):
