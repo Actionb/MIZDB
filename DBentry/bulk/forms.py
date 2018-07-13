@@ -1,59 +1,39 @@
 
 from django.core.exceptions import ValidationError
 
-from dal import autocomplete
-
 from DBentry.forms import MIZAdminForm
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from DBentry.ac.widgets import make_widget
 from .fields import *
 
-#TODO: review this
-
 class BulkForm(MIZAdminForm):
     
     model = None
-    each_fields = set() # data of these fields are part of every row/created object
-    at_least_one_required = [] # at least one of these fields needs to be filled out, takes priority over each_fields in regards to in which fieldset the fields will end up in
     
-
-    help_text = ''
+    # these fields are assigned to the first fieldset and data of these fields are part of every row/created object
+    each_fields = set() 
+    # fields for the second fieldset
+    at_least_one_required = () #TODO: rename to 'split_fields'?
+    
     #TODO: add help text to fieldsets, remember to also update the template for this
     fieldsets = [
         ('Angaben dieser Felder werden jedem Datensatz zugewiesen', {'fields':[]}), 
-        ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), 
+        ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), #TODO: rename this to 'Angaben dieser Felder werden aufgeteilt'?
         (None, {'fields':[]}), 
     ]
     
     def __init__(self, *args, **kwargs):
-        # Combine declared at_least_one_required/each_fields with those passed in and remove duplicate entries
-        self.at_least_one_required = set(list(self.at_least_one_required) + list(kwargs.pop('at_least_one_required', [])) )
-        self.each_fields = set(list(self.each_fields) + list(kwargs.pop('each_fields', [])) )
-        self._row_data = [] # this needs to be here in init or row_data will magically inherit data from previous instances?!
+        self._row_data = [] 
         self.total_count = 0 # the total count of objects to be created
-        self.split_data = {} # a dictionary of field names : split up values according to BulkField.to_list
+        self.split_data = {} # a dictionary of {field names : split up values according to BulkField.to_list}
         
         super(BulkForm, self).__init__(*args, **kwargs)
-        # For lazy people: walk through the fields and add any non-BulkField to the each_fields list and any BulkFields to the at_least_one_required list
-        for fld_name, fld in self.fields.items():
-            if isinstance(fld, BulkField):
-                if isinstance(fld, BulkJahrField):
-                    # Of the BulkFields only BulkJahrField should be used in an each_field role
-                    self.each_fields.add(fld_name)
-            else:
-                self.each_fields.add(fld_name)
-                
-        # Remove any fields from self.each_fields that are both in each_fields and at_least_one_required, as each_fields and at_least_one_required should be mutually exclusive
-        self.each_fields = self.each_fields - (self.each_fields & self.at_least_one_required)
-        # Find the fields that live neither in each_fields nor at_least_one_required (which can ONLY be regular BulkField fields at this point)
-        # TODO: find a home for them!
-        homeless_fields = set(self.fields.keys()) - self.each_fields - self.at_least_one_required
                 
         # Add the fields to the fieldsets, according to the order given by .fields (and thus given by field_order if available)
         self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.each_fields]
         self.fieldsets[1][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.at_least_one_required]
-        self.fieldsets[2][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in homeless_fields]
+
         
     @property
     def row_data(self):
