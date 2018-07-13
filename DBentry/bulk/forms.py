@@ -128,17 +128,6 @@ class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
     provenienz = forms.ModelChoiceField(required = False, 
                                     queryset = provenienz.objects.all(), 
                                     widget = make_widget(model_name='provenienz', wrap=True))    
-                             
-    def clean(self):
-        try:
-            cleaned_data = super(BulkFormAusgabe, self).clean()
-        except ValidationError as e:
-            raise e
-        else:
-            # If the user wishes to add audio data to the objects they are creating, they MUST also define a lagerort for the audio
-            if cleaned_data.get('audio') and not cleaned_data.get('audio_lagerort'):
-                raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
-            return cleaned_data
     beschreibung = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Beschreibung')
     bemerkungen = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
     
@@ -188,6 +177,23 @@ class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
         Monat: 12/1
         """
     }
+         
+    def clean(self):
+        # If the user wishes to add audio data to the objects they are creating, they MUST also define a lagerort for the audio
+        if self.cleaned_data.get('audio') and not self.cleaned_data.get('audio_lagerort'):
+            self.add_error('audio_lagerort', 'Bitte einen Lagerort für die Musik Beilage angeben.')
+        return super().clean()
+            
+    def clean_monat(self):
+        # Complain about monat values that are not in 1-12
+        value = self.fields['monat'].widget.value_from_datadict(self.data, self.files, self.add_prefix('monat'))
+        list_data, _ = self.fields['monat'].to_list(value)
+        for _list in list_data.copy():
+            if not isinstance(_list, list):
+                _list = [_list]
+            if any(int(v) < 1 or int(v) > 12 for v in _list):
+                raise ValidationError('Monat-Werte müssen zwischen 1 und 12 liegen.')
+        return value
         
     def lookup_instance(self, row):
         """
