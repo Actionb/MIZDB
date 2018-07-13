@@ -111,18 +111,11 @@ class BulkJahrField(BulkField):
     
     def clean(self, value):
         # Normalize Jahr values into years seperated by commas only
-        # Also correct the year if year is a shorthand
         value = super(BulkJahrField, self).clean(value)
-        clean_values = []
-        for item in value.replace('/', ',').split(','):
-            item = item.strip()
-            if len(item)==2:
-                if int(item) <= 17: #FIXME: current_year + 1 instead of 17?
-                    item = '20' + item
-                else:
-                    item = '19' + item
-            clean_values.append(item)
-        return ','.join(clean_values)
+        cleaned = [item for item in value.replace(' ', '').replace('/', ',').split(',')]
+        if any(len(item)!=4 for item in cleaned if item):
+            raise ValidationError('Bitte vierstellige Jahresangaben benutzen.')
+        return ','.join(cleaned)
         
     def to_list(self, value):
         temp, item_count = super(BulkJahrField, self).to_list(value)
