@@ -15,7 +15,7 @@ class TestBulkField(MyTestCase):
         self.assertEqual(field.error_messages['invalid'], expected)
         
         field = BulkField(allowed_special = ['^'], allowed_numerical = False)
-        expected = 'Unerlaubte Zeichen gefunden: Bitte nur Buchstaben oder "^" benutzen.'
+        expected = 'Unerlaubte Zeichen gefunden: Bitte nur "^" benutzen.'
         self.assertEqual(field.error_messages['invalid'], expected)
         
         field = BulkField(allowed_special = ['^'], allowed_numerical = True, allowed_alpha = True)
@@ -62,7 +62,8 @@ class TestBulkField(MyTestCase):
     def test_clean(self):
         # Assert that clean strips 'value' 
         self.assertEqual(BulkField().clean(' 1 , '), '1')
-        self.assertEqual(BulkField().clean(' 1 A '), '1 A')
+        self.assertEqual(BulkField(allowed_alpha = True).clean(' 1 A '), '1A')
+        self.assertEqual(BulkField().clean(' , 1 '), '1')
         
     def test_to_list(self):
         field = BulkField()
@@ -85,17 +86,18 @@ class TestBulkField(MyTestCase):
         expected = (['1', ['2'], ['3'], ['4'], ['5', '6', '7']], 5)
         self.assertEqual(field.to_list('1, 2 - 4, 5/6/7'), expected)
         
-        
 class TestBulkJahrField(MyTestCase):
     
+    @translation_override(language = None)
     def test_clean(self):
-        # Assert that clean adjusts 'year-shorthands' properly
+        # Assert that clean returns a string of years with only a ',' seperator
         field = BulkJahrField()
-        self.assertEqual(field.clean('15, 16'), '2015,2016')
-        self.assertEqual(field.clean('15, 19'), '2015,1919')
+        self.assertEqual(field.clean('2015, 2016'), '2015,2016')
+        self.assertEqual(field.clean('2015/ 2016, 2017, '), '2015,2016,2017')
         
-        # Assert that clean filters out 'empty years'
-        self.assertEqual(field.clean(' , 2016'), '2016')
+        with self.assertRaises(ValidationError) as cm:
+            field.clean('15, 16')
+        self.assertEqual(cm.exception.args[0], 'Bitte vierstellige Jahresangaben benutzen.')
         
     def test_to_list(self):
         # the second value of the tuple returned by BulkJahrField.to_list should always be 0
