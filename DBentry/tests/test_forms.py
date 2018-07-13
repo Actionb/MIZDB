@@ -288,4 +288,40 @@ class TestDynamicChoiceFormSet(FormTestCase):
     
     def test_get_form_kwargs(self):
         pass
+
+class TestXRequiredFormMixin(FormTestCase):
     
+    dummy_fields = {
+        'first_name' : forms.CharField(),  'last_name' : forms.CharField(required = True), 
+        'favorite_pet' : forms.CharField(), 'favorite_sport' : forms.CharField(), 
+    }
+        
+    def get_dummy_form(self, attrs = None, **form_initkwargs):
+        if attrs is None:
+            attrs = self.dummy_fields.copy()
+        else:
+            attrs.update(self.dummy_fields.copy())
+        return type('DummyForm', (XRequiredFormMixin, forms.Form), attrs)(**form_initkwargs)
+                
+    
+    def test_init_resets_required(self):
+        # Assert that __init__ sets any fields declared in xrequired to not required
+        form = self.get_dummy_form()
+        self.assertTrue(form.fields['last_name'].required)
+        form = self.get_dummy_form(attrs = {'xrequired': [{'min':1, 'fields':['first_name', 'last_name']}]})
+        self.assertFalse(form.fields['last_name'].required)
+    
+    @translation_override(language = None)
+    def test_clean(self):
+        attrs = {
+            'xrequired' : [
+                {'min':1, 'fields':['first_name', 'last_name']}, 
+                {'max':1, 'fields':['favorite_pet', 'favorite_sport']}, 
+            ]
+        }
+        form_data = {'favorite_pet':'Cat', 'favorite_sport':'Coffee drinking.'}
+        form = self.get_dummy_form(attrs, data = form_data)
+        form.is_valid()
+        self.assertIn('Bitte mindestens 1 dieser Felder ausfüllen: First Name, Last Name.', form.non_field_errors())
+        self.assertIn('Bitte höchstens 1 dieser Felder ausfüllen: Favorite Pet, Favorite Sport.', form.non_field_errors())
+        

@@ -132,6 +132,9 @@ def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
             rslt += sep + "[...]"
             break
     return rslt
+    
+def snake_case_to_spaces(value):
+    return value.replace('_', ' ').strip()
         
 def get_obj_link(obj, user, site_name='admin', include_name=True):
     opts = obj._meta

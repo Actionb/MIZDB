@@ -1,6 +1,6 @@
 from django import forms
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 from django.core.exceptions import ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -12,6 +12,7 @@ from django.db.models.manager import BaseManager
 from .models import *
 from .constants import ATTRS_TEXTAREA
 from DBentry.ac.widgets import MIZModelSelect2, make_widget
+from DBentry.utils import snake_case_to_spaces
 
 from dal import autocomplete
 
@@ -299,3 +300,66 @@ class FavoritenForm(MIZAdminForm, forms.ModelForm):
             'fav_genres'    :   FilteredSelectMultiple('Genres', False), 
             'fav_schl'      :   FilteredSelectMultiple('Schlagworte', False),
         }
+        
+class XRequiredFormMixin(object):
+    """
+    A mixin that allows setting a minimum/maximum number of groups of fields to be required.
+    
+    Attributes:
+    - xrequired: an iterable of dicts that specicify the number of required fields ('min', 'max'), the field names
+                ('fields') and optionally a custom error message ('error_message'). 
+    - default_error_messages: a dict of default error messages for min, max and minmax ValidationErrors
+    """
+    
+    xrequired = None 
+    default_error_messages = {
+        'min' : gettext_lazy('Bitte mindestens {min} dieser Felder ausfüllen: {fields}.'), 
+        'max' : gettext_lazy('Bitte höchstens {max} dieser Felder ausfüllen: {fields}.'), 
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.xrequired:
+            for required in self.xrequired:
+                for field_name in required['fields']:
+                    self.fields[field_name].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.xrequired:
+            return cleaned_data
+            
+        for required in self.xrequired:
+            min = required.get('min', 0)
+            max = required.get('max', 0)
+            if not min and not max:
+                continue
+                
+            fields_with_values = 0
+            for field_name in required['fields']:
+                if cleaned_data.get(field_name):
+                    fields_with_values += 1
+                    
+            min_error = max_error = False
+            if min and fields_with_values < min:
+                min_error = True
+            if max and fields_with_values > max:
+                max_error = True
+                
+            custom_error_msgs = required.get('error_message', {})
+            fields = ", ".join(
+                self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
+                for field_name in required['fields']
+            )
+            if min_error:
+                msg = custom_error_msgs.get('min') or self.default_error_messages['min']
+                msg = msg.format(min = min, fields = fields)
+                self.add_error(None, ValidationError(msg))
+            if max_error:
+                msg = custom_error_msgs.get('max') or self.default_error_messages['max']
+                msg = msg.format(max = max, fields = fields)
+                self.add_error(None, ValidationError(msg))
+                
+        return cleaned_data
+    
+    
