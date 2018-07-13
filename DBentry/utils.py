@@ -280,3 +280,15 @@ def flatten_dict(d, exclude=[]):
 
 def is_iterable(obj):
     return isinstance(obj, Iterable) and not isinstance(obj, (bytes, str))
+    
+def get_full_fields_list(model):
+    from DBentry.base.models import get_model_fields, get_model_relations
+    rslt = set()
+    for field in get_model_fields(model):
+        rslt.add(field.name)
+    for rel in get_model_relations(model, forward = False): # forward relations already handled by get_model_fields
+        if rel.many_to_many and rel.field.model == model:
+            rslt.add(rel.field.name)
+        else:
+            rslt.add(rel.name)
+    return rslt
