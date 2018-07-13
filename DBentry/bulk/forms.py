@@ -54,25 +54,19 @@ class BulkForm(MIZAdminForm):
         Populate split_data with data from BulkFields and raises errors if an unequal amount of data or missing required data is encountered.
         """
         cleaned_data = super().clean()
-        for fld_name in self.at_least_one_required:
-            if not cleaned_data.get(fld_name) in self.fields[fld_name].empty_values:
-                # If any of the fields in at_least_one_required contain valid data, we're good
-                break
-        else:
-            # otherwise mark the form as invalid
-            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: {}'.format(
-                    ", ".join([self.fields.get(fld_name).label or fld_name for fld_name in self.at_least_one_required])
-                ))   
-        errors = False
+        if self._errors:
+            # Other cleaning methods have added errors, stop further cleaning
+            return cleaned_data
+            
         self.split_data = {}
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BulkField):
                 # Retrieve the split up data and the amount of objects that are expected to be created with that data
-                list_data, item_count = fld.to_list(cleaned_data.get(fld_name)) #FIXME: catch non-ValidationError exceptions raised by to_list
+                list_data, item_count = fld.to_list(cleaned_data.get(fld_name))
                 # If the field belongs to the each_fields group, we should ignore the item_count it is returning as its data is used for every object we are about to create
                 if not fld_name in self.each_fields and item_count and self.total_count and item_count != self.total_count:
                     # This field's data exists and is meant to be split up into individual items, but the amount of items differs from the previously determined total_count
-                    errors = True #TODO: why not raise the ValidationError here?
+                    self.add_error(fld_name, 'Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
                 else:
                     # Either:
                     # - the field is an each_field
@@ -84,8 +78,6 @@ class BulkForm(MIZAdminForm):
                         # The item_count is not zero,  total_count IS zero (not yet calculated) and the field is eligible (by virtue of being a non-each_fields BulkField) to set the total_count
                         # All subsequent BulkField's item_counts in the iteration have to match this field's item_count (or be zero) or we cannot define the exact number of objects to create
                         self.total_count = item_count
-        if errors:
-            raise ValidationError('Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
         return cleaned_data
             
 class BulkFormAusgabe(BulkForm):
