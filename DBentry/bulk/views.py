@@ -214,9 +214,20 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         preview_data = []
         headers = []
         preview_fields = []
-        row_error = False
-        multiple_instances_msg = "Es wurden mehrere passende Ausgaben gefunden. Es soll immer nur eine bereits bestehende Ausgabe verändert werden: diese Zeile wird ignoriert. "
-        one_instance_msg = "Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt."
+        multiple_instances_msg = gettext("Es wurden mehrere passende Ausgaben gefunden. Es soll immer nur eine bereits bestehende Ausgabe verändert werden: diese Zeile wird ignoriert.")
+        one_instance_msg = gettext("Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt.")
+        
+        has_instances = False # if True, include the 'Bereits vorhanden' and 'Datenbank' headers
+        for row in form.row_data:
+            if 'instance' in row:
+                instances = [row.get('instance')]
+            elif 'multiples' in row:
+                instances = list(row.get('multiples'))
+            else:
+                continue
+            if len(instances):
+                has_instances = True
+                break
         
         for row in form.row_data:
             preview_row = OrderedDict()
@@ -243,25 +254,19 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 instances = list(row.get('multiples', []))
                 
             if len(instances)==0:
-                preview_row['Instanz'] = '---'
+                if has_instances:
+                    preview_row['Instanz'] = '---'
+                    preview_row['Datenbank'] = '---'
             else:
-                links = []
-                for instance in instances:
-                    #TODO: use utils.get_obj_link
-                    link = reverse("admin:DBentry_ausgabe_change", args = [instance.pk])
-                    label = str(instance)
-                    links.append(format_html('<a href="{}" target="_blank">{}</a>', link, label))
-                    
+                links = link_list(request, instances)
                 if len(instances)==1:
                     img = '<img alt="False" src="/static/admin/img/icon-alert.svg">'
-                    preview_row['Instanz'] = format_html(img + ", ".join(links))
-                    preview_row['Bemerkung'] = one_instance_msg
+                    msg = one_instance_msg
                 else:
-                    row_error = True
                     img = '<img alt="False" src="/static/admin/img/icon-no.svg">'
-                    preview_row['Instanz'] = format_html(img + ", ".join(links))
-                    preview_row['Bemerkung'] = multiple_instances_msg
-                    
+                    msg = multiple_instances_msg
+                preview_row['Instanz'] = format_html(img + links) 
+                preview_row['Datenbank'] = msg 
             preview_data.append(preview_row)
             
         for fld_name in form.preview_fields:
@@ -272,9 +277,8 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 headers.append(form.fields.get(fld_name).label.strip(":"))
             else:
                 headers.append(fld_name)
-        headers += ['Bereits vorhanden']
-        if row_error:
-            headers += ['Bemerkung']
+        if has_instances:
+            headers += ['Bereits vorhanden', 'Datenbank']
         return headers, preview_data
         
     def get_context_data(self, *args, **kwargs):
