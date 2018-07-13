@@ -1,11 +1,12 @@
-
+from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
-from DBentry.forms import MIZAdminForm
+from DBentry.forms import MIZAdminForm, XRequiredFormMixin
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from DBentry.ac.widgets import make_widget
-from .fields import *
+from .fields import BulkField, BulkJahrField
 
 class BulkForm(MIZAdminForm):
     
@@ -80,47 +81,53 @@ class BulkForm(MIZAdminForm):
                         self.total_count = item_count
         return cleaned_data
             
-class BulkFormAusgabe(BulkForm):
-    
+class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
+    # Form attributes
     model = ausgabe
-    field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'info', 'audio', 'audio_lagerort', 'lagerort', 'dublette', 'provenienz']
-    preview_fields = ['magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 'lagerort', 'provenienz']
-    at_least_one_required = ['num', 'monat', 'lnum']
-    multiple_instances_error_msg = "Es wurden mehrere passende Ausgaben gefunden. Es kann immer nur eine bereits bestehende Ausgabe verändert werden."
+    field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 'provenienz']
     
+    # BulkForm/XRequiredFormMixin attributes
+    xrequired = [{'min':1, 'fields':['jahr', 'jahrgang']}, {'min':1, 'fields':['num', 'monat', 'lnum']}]   
+    preview_fields = [
+        'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 
+        'ausgabe_lagerort', 'provenienz'
+    ]
+    each_fields = [
+        'magazin', 'jahrgang', 'jahr', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 
+        'provenienz', 'beschreibung', 'bemerkungen', 'status'
+    ]
+    at_least_one_required = ['num', 'monat', 'lnum']
+    
+    # Field declarations
     magazin = forms.ModelChoiceField(required = True, 
                                     queryset = magazin.objects.all(),  
                                     widget = make_widget(model_name='magazin', wrap=True))
                                     
     jahrgang = forms.IntegerField(required = False, min_value = 1) 
     
-    jahr = BulkJahrField(required = True, label = 'Jahr')
+    jahr = BulkJahrField(required = False, label = 'Jahr')
     num = BulkField(label = 'Nummer')
-    monat = BulkField(label = 'Monate') #FIXME: monat > 13
+    monat = BulkField(label = 'Monate')
     lnum = BulkField(label = 'Laufende Nummer')
     
-    lo = lagerort
     audio = forms.BooleanField(required = False, label = 'Musik Beilage:')
     audio_lagerort = forms.ModelChoiceField(required = False, 
                                     label = 'Lagerort f. Musik Beilage', 
-                                    queryset = lo.objects.all(), 
+                                    queryset = lagerort.objects.all(), 
                                     widget = make_widget(model_name='lagerort', wrap=True))
-    lagerort = forms.ModelChoiceField(required = True, 
-                                    queryset = lo.objects.all(), 
+    ausgabe_lagerort = forms.ModelChoiceField(required = True, 
+                                    queryset = lagerort.objects.all(), 
                                     widget = make_widget(model_name='lagerort', wrap=True), 
                                     initial = ZRAUM_ID, 
                                     label = 'Lagerort f. Ausgaben')
     dublette = forms.ModelChoiceField(required = True, 
-                                    queryset = lo.objects.all(), 
+                                    queryset = lagerort.objects.all(), 
                                     widget = make_widget(model_name='lagerort', wrap=True), 
                                     initial = DUPLETTEN_ID, 
                                     label = 'Lagerort f. Dubletten')
     provenienz = forms.ModelChoiceField(required = False, 
                                     queryset = provenienz.objects.all(), 
                                     widget = make_widget(model_name='provenienz', wrap=True))    
-    info = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
-    
-    status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus')
                              
     def clean(self):
         try:
@@ -132,10 +139,14 @@ class BulkFormAusgabe(BulkForm):
             if cleaned_data.get('audio') and not cleaned_data.get('audio_lagerort'):
                 raise ValidationError('Bitte einen Lagerort für die Musik Beilage angeben.')
             return cleaned_data
+    beschreibung = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Beschreibung')
+    bemerkungen = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
     
+    status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus') 
+        
     help_text = {
         'head' : """Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
-                    Dabei gilt die Regel, dass allen Ausgaben dasselbe Jahr und denselben Jahrgang zugewiesen werden. Es ist also nicht möglich, mehrere 'Jahrgänge' auf einmal einzugeben.
+                    Dabei gilt die Regel, dass allen Ausgaben dasselbe Jahr und derselbe Jahrgang zugewiesen werden. Es ist also nicht möglich, mehrere 'Jahrgänge' auf einmal einzugeben.
                     Liegt allen Ausgaben eine Musik-CD, o.ä. bei, setze den Haken bei dem Feld 'Musik-Beilage'. Ein Datensatz entsprechend dem Titel "Musik-Beilage: <Name des Magazins> <Name der Ausgabe>" wird dann in der Audiotabelle erstellt und mit der jeweiligen Ausgabe verknüpft.
                     
                     Mit den Auswahlfeldern zu Lagerort und Dublettenlagerort kann festgelegt werden, wo diese Ausgaben (und eventuelle Dubletten) gelagert werden.
@@ -173,7 +184,7 @@ class BulkFormAusgabe(BulkForm):
         Monat: 1-6, 7/8, 9-12 (oder auch 1,2,3,4,5,6,7/8,9,10,11,12)
         
         Eine jahresübergreifende Ausgabe mit dem Monat Dezember im Jahre 2000 und dem Monat Januar im Jahre 2001:
-        Jahr: 2000,2001 (oder 2000/2001 oder 00,01 oder 00/01)
+        Jahr: 2000,2001 (oder 2000/2001)
         Monat: 12/1
         """
     }
@@ -199,9 +210,8 @@ class BulkFormAusgabe(BulkForm):
         
     @property
     def row_data(self):
-        #TODO: what about 'homeless_fields'? Should they be included here (as it is now) or not?
         if self.is_valid():
-        # form is valid, split_data has been populated in clean()
+            # form is valid, split_data has been populated in clean()
             if self.has_changed() or not self._row_data:
                 for c in range(self.total_count):
                     row = {}
@@ -220,7 +230,7 @@ class BulkFormAusgabe(BulkForm):
                             row[fld_name] = item
                             
                     qs = self.lookup_instance(row)
-                    row['lagerort'] = self.cleaned_data['lagerort']
+                    row['ausgabe_lagerort'] = self.cleaned_data['ausgabe_lagerort']
                     if qs.count()==0:
                         # No ausgabe fits the parameters: we are creating a new one
                         
@@ -230,14 +240,14 @@ class BulkFormAusgabe(BulkForm):
                         # By checking for row == row_dict we avoid 'nesting' duplicates.
                         for row_dict in self._row_data:
                             if row == row_dict:
-                                row['lagerort'] = self.cleaned_data['dublette']
+                                row['ausgabe_lagerort'] = self.cleaned_data['dublette']
                                 row['dupe_of'] = row_dict
                                 break
                     elif qs.count()==1:
                         # A single object fitting the parameters already exists: this row represents a duplicate of that object.
                         
                         row['instance'] = qs.first()
-                        row['lagerort'] = self.cleaned_data['dublette']
+                        row['ausgabe_lagerort'] = self.cleaned_data['dublette']
                     else:
                         # lookup_instance returned multiple instances/objects, this row will be ignored from now on
                         row['multiples'] = qs

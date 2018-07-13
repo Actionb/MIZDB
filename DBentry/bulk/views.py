@@ -107,7 +107,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         for row in chain(original, dupes):
             if 'dupe_of' in row:
                 instance = row['dupe_of']['instance'] # this cannot fail, since we've saved all original instances before
-                bestand_data = dict(lagerort=row.get('lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
+                bestand_data = dict(lagerort=row.get('ausgabe_lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
                 if 'provenienz' in row['dupe_of']:
                     # Also add the provenienz of the original to this object's bestand
                     bestand_data['provenienz'] = row.get('provenienz')
@@ -178,7 +178,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 self.log_addition(audio_instance, b)
                 
             # Bestand
-            bestand_data = dict(lagerort=row.get('lagerort'))
+            bestand_data = dict(lagerort=row.get('ausgabe_lagerort'))
             if 'provenienz' in row:
                 bestand_data['provenienz'] = row.get('provenienz')
             b = instance.bestand_set.create(**bestand_data)
@@ -202,6 +202,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         rslt['jahrgang'] = row.get('jahrgang', None)
         rslt['magazin'] = row.get('magazin')
         rslt['beschreibung'] = row.get('beschreibung', '')
+        rslt['bemerkungen'] = row.get('bemerkungen', '')
         rslt['status'] = row.get('status')
         return rslt
         
