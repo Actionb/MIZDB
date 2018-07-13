@@ -61,25 +61,34 @@ class BulkField(forms.CharField):
         
     def clean(self, value):
         value = super(BulkField, self).clean(value)
-        value = value.strip()
-        if value and value[-1] in self.allowed_special:
-            # Strip accidental last delimiter
-            value = value[:-1]
-        return value #TODO: .strip() again in case of ' 1 , ' --> '1 '
+        value = value.replace(' ', '')
+        if value:
+            # Strip accidental first/last delimiter
+            if value[-1] in self.allowed_special:
+                value = value[:-1]
+            if value[0] in self.allowed_special:
+                value = value[1:]
+        # Attempt to_list() to verify that the input data can be worked with
+        try:
+            self.to_list(value)
+        except ValueError:
+            raise ValidationError(gettext('Bitte überprüfen Sie die Werte.'))
+        return value
         
     def to_list(self, value):
-        #TODO: docs
-        #TODO: strip() after every split
+        """
+        Returns the data of the field split up into a list with strings or 
+        sublists of strings (if '*' or '/' where used) and the total count of returned strings and sublists.
+        """
         if not value:
             return [], 0
         temp = []
         item_count = 0
-        for item in value.split(','):
-            item = item.strip()
+        for item in value.replace(' ', '').split(','):
             if item:
                 if item.count('-')==1: # item is a 'range' of values
                     if item.count("*") == 1:
-                        item,  multi = item.split("*") # !! '2-4**3'
+                        item,  multi = item.split("*")
                         multi = int(multi)
                     else:
                         multi = 1
@@ -88,7 +97,7 @@ class BulkField(forms.CharField):
                     for i in range(s, e+1, multi):
                         temp.append([str(i+j) for j in range(multi)])
                         item_count += 1
-                elif '/' in item:
+                elif '/' in item: # item is a 'pair' of values
                     temp.append([i for i in item.split('/') if i])
                     item_count += 1
                 else:
