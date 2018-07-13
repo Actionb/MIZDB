@@ -3,7 +3,7 @@ from itertools import chain
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
          
 class BulkField(forms.CharField):
     
@@ -22,17 +22,20 @@ class BulkField(forms.CharField):
         self.allowed_numerical = self.allowed_numerical if allowed_numerical is None else allowed_numerical
         self.allowed_alpha = self.allowed_alpha if allowed_alpha is None else allowed_alpha
         
-        msg_text = 'Unerlaubte Zeichen gefunden:'
+        msg_template = gettext('Unerlaubte Zeichen gefunden: Bitte nur {allowed} benutzen.')
+        allowed = ''
         if self.allowed_numerical:
-            msg_text += ' Bitte nur Ziffern'
-        else:
-            #TODO: this doesn't even check self.allowed_alpha:
-            # allowed_alpha == False will still lead to a message mentioning 'Buchstaben'!
-            msg_text += ' Bitte nur Buchstaben' 
-        msg_text += ' (plus Buchstaben-Kürzel)' if self.allowed_alpha and self.allowed_numerical else ''
-        msg_text += ' oder ' if self.allowed_special else ''
-        msg_text += ' oder '.join(['"'+s+'"' for s in self.allowed_special]) + ' benutzen.'
-        self.error_messages['invalid'] = _(msg_text)
+            allowed = gettext('Ziffern')
+            if self.allowed_alpha:
+                allowed += gettext(' (plus Buchstaben-Kürzel)')
+        elif self.allowed_alpha:
+            allowed = gettext('Buchstaben')
+        if self.allowed_special:
+            sep = ' ' + gettext('oder') + ' '
+            if allowed:
+                allowed += sep
+            allowed += sep.join(['"'+s+'"' for s in self.allowed_special])
+        self.error_messages['invalid'] = msg_template.format(allowed = allowed)
         
     def widget_attrs(self, widget):
         attrs = super(BulkField, self).widget_attrs(widget)
