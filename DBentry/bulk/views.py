@@ -192,7 +192,10 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         # Using form.cleaned_data would insert model instances into the data we are going to save in request.session... and model instances are not JSON serializable
         data = form.data.copy()
         # Increment jahr and jahrgang
-        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')]) 
+        if form.cleaned_data.get('jahr'):
+            data['jahr'] = ", ".join([
+                str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')
+            ]) 
         if form.cleaned_data.get('jahrgang'):  
             data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
         return data
