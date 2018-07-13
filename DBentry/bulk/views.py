@@ -123,7 +123,8 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 self.log_addition(instance)
                 created.append(instance)
             else:
-                # this instance already existed, mark it as updated
+                # this instance already existed, update it and mark it as such
+                instance.qs().update(**self.instance_data(row))
                 updated.append(instance)
             
             # Create and/or update sets
@@ -132,6 +133,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 data = row.get(fld_name, None)
                 if data:
                     if fld_name == 'monat':
+                        # ausgabe_monat is actually a m2m intermediary table between tables ausgabe and monat
                         fld_name = 'monat_id'
                     if not isinstance(data, (list, tuple)):
                         data = [data]
@@ -140,7 +142,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                             try:
                                 with transaction.atomic():
                                     o = set.create(**{fld_name:value})
-                            except IntegrityError as e: 
+                            except IntegrityError: 
                                 # ignore UNIQUE constraints violations
                                 continue
                             else:
