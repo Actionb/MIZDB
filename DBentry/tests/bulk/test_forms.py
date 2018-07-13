@@ -5,21 +5,17 @@ from DBentry.bulk.forms import *
 class TestBulkForm(FormTestCase):
     
     form_class = BulkForm
-    dummy_fields = {
+    dummy_attrs = {
             'some_fld' : forms.CharField(required = False), 
             'some_bulkfield' : BulkField(required = False, label = 'num') , 
             'req_fld' : BulkJahrField(required = False), 
             'another' : forms.CharField(required = False), 
+            'model' : ausgabe, 
+            'each_fields' : ['another'], 
+            'at_least_one_required' : ['req_fld'], 
+            'field_order' : ['some_fld', 'some_bulkfield', 'req_fld', 'another'], 
         }
-    
-    def get_dummy_form(self, fields=None, **form_initkwargs):
-        fields = fields or self.dummy_fields
-        form_class = type('DummyForm', (self.form_class, ), fields.copy())
-        form_class.model = ausgabe
-        form_class.each_fields = ['another']
-        form_class.at_least_one_required = ['req_fld']
-        form_class.field_order = ['some_fld', 'some_bulkfield', 'req_fld', 'another']
-        return form_class(**form_initkwargs)
+    dummy_bases = (BulkForm, )
     
     def test_init_combining_kwargs(self):
         form = self.get_dummy_form(at_least_one_required = ['some_bulkfield'])

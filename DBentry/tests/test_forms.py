@@ -191,11 +191,11 @@ class TestHerausgeberForm(ModelFormTestCase):
         
 class TestMIZAdminForm(FormTestCase):
     
-    form_class = MIZAdminForm
-    dummy_fields = {
+    dummy_attrs = {
         'some_int' : forms.IntegerField(), 
         'wrap_me' : forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin')), 
     }
+    dummy_bases = (MIZAdminForm, )
         
     def test_iter(self):
         form = self.get_dummy_form()
@@ -227,8 +227,8 @@ class TestMIZAdminForm(FormTestCase):
         
 class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
     
-    form_class = DynamicChoiceForm
-    dummy_fields = {
+    dummy_bases = (DynamicChoiceForm, )
+    dummy_attrs = {
         'cf' : forms.ChoiceField(choices = []), 
         'cf2' : forms.ChoiceField(choices = [])
     }
@@ -280,7 +280,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         }
         choices = ['1', '2', '3']
         expected = [('1', '1'), ('2', '2'), ('3', '3')]
-        form = self.get_dummy_form(fields = fields, choices=choices)
+        form = self.get_dummy_form(attrs = fields, choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
         self.assertListEqualSorted(form.fields['cf2'].choices, [('1', 'a')])
     
@@ -291,18 +291,11 @@ class TestDynamicChoiceFormSet(FormTestCase):
 
 class TestXRequiredFormMixin(FormTestCase):
     
-    dummy_fields = {
+    dummy_attrs = {
         'first_name' : forms.CharField(),  'last_name' : forms.CharField(required = True), 
         'favorite_pet' : forms.CharField(), 'favorite_sport' : forms.CharField(), 
     }
-        
-    def get_dummy_form(self, attrs = None, **form_initkwargs):
-        if attrs is None:
-            attrs = self.dummy_fields.copy()
-        else:
-            attrs.update(self.dummy_fields.copy())
-        return type('DummyForm', (XRequiredFormMixin, forms.Form), attrs)(**form_initkwargs)
-                
+    dummy_bases = (XRequiredFormMixin, forms.Form)                
     
     def test_init_resets_required(self):
         # Assert that __init__ sets any fields declared in xrequired to not required
@@ -320,7 +313,7 @@ class TestXRequiredFormMixin(FormTestCase):
             ]
         }
         form_data = {'favorite_pet':'Cat', 'favorite_sport':'Coffee drinking.'}
-        form = self.get_dummy_form(attrs, data = form_data)
+        form = self.get_dummy_form(attrs = attrs, data = form_data)
         form.is_valid()
         self.assertIn('Bitte mindestens 1 dieser Felder ausfüllen: First Name, Last Name.', form.non_field_errors())
         self.assertIn('Bitte höchstens 1 dieser Felder ausfüllen: Favorite Pet, Favorite Sport.', form.non_field_errors())
