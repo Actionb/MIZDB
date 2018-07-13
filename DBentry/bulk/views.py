@@ -1,15 +1,16 @@
  
 from collections import OrderedDict
 from itertools import chain
- 
+from urllib.parse import urlencode
+
 from django import views    
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.html import format_html
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import IntegrityError
+from django.utils.translation import gettext
 
 from DBentry.views import MIZAdminToolViewMixin
 from DBentry.utils import link_list
@@ -34,10 +35,11 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         # This way, we can track changes to the form the user has made.
         return self.request.session.get('old_form_data', {})
         
-    def get_success_url(self):
-        #TODO: do me!
-        from urllib.parse import urlencode
-        url = reverse(self.success_url) + '?' + urlencode(**data)
+    def get_success_url(self, query_data = None):
+        # Return an url with a query_string composed of data in query_data
+        if query_data is None:
+            return reverse(self.success_url)
+        url = reverse(self.success_url) + '?' + urlencode(query_data)
         return url
     
     def post(self, request, *args, **kwargs):
@@ -55,13 +57,12 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 if '_continue' in request.POST:
                     # save the data and redirect back to the changelist
                     ids, instances, updated = self.save_data(form)
-                    # Need to store the ids of the newly created items in request.session so the changelist can filter for them
-                    request.session['qs'] = dict(id__in=ids) if ids else None
-                    return redirect(self.success_url) #TODO: make this open in a popup/new tab
+                    success_url = self.get_success_url(query_data = dict(id__in=','.join(str(id) for id in ids)))
+                    #NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
+                    return redirect(success_url) 
                     
                 if '_addanother' in request.POST:   
                     # save the data, notify the user about changes and prepare the next view
-                    old_form = form
                     ids, created, updated = self.save_data(form)
                     
                     if created:
