@@ -325,41 +325,37 @@ class XRequiredFormMixin(object):
                     self.fields[field_name].required = False
 
     def clean(self):
-        cleaned_data = super().clean()
-        if not self.xrequired:
-            return cleaned_data
-            
-        for required in self.xrequired:
-            min = required.get('min', 0)
-            max = required.get('max', 0)
-            if not min and not max:
-                continue
-                
-            fields_with_values = 0
-            for field_name in required['fields']:
-                if cleaned_data.get(field_name):
-                    fields_with_values += 1
+        if self.xrequired:
+            for required in self.xrequired:
+                min = required.get('min', 0)
+                max = required.get('max', 0)
+                if not min and not max:
+                    continue
                     
-            min_error = max_error = False
-            if min and fields_with_values < min:
-                min_error = True
-            if max and fields_with_values > max:
-                max_error = True
-                
-            custom_error_msgs = required.get('error_message', {})
-            fields = ", ".join(
-                self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
-                for field_name in required['fields']
-            )
-            if min_error:
-                msg = custom_error_msgs.get('min') or self.default_error_messages['min']
-                msg = msg.format(min = min, fields = fields)
-                self.add_error(None, ValidationError(msg))
-            if max_error:
-                msg = custom_error_msgs.get('max') or self.default_error_messages['max']
-                msg = msg.format(max = max, fields = fields)
-                self.add_error(None, ValidationError(msg))
-                
-        return cleaned_data
+                fields_with_values = 0
+                for field_name in required['fields']:
+                    if self.cleaned_data.get(field_name):
+                        fields_with_values += 1
+                        
+                min_error = max_error = False
+                if min and fields_with_values < min:
+                    min_error = True
+                if max and fields_with_values > max:
+                    max_error = True
+                    
+                custom_error_msgs = required.get('error_message', {})
+                fields = ", ".join(
+                    self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
+                    for field_name in required['fields']
+                )
+                if min_error:
+                    msg = custom_error_msgs.get('min') or self.default_error_messages['min']
+                    msg = msg.format(min = min, fields = fields)
+                    self.add_error(None, msg)
+                if max_error:
+                    msg = custom_error_msgs.get('max') or self.default_error_messages['max']
+                    msg = msg.format(max = max, fields = fields)
+                    self.add_error(None, msg)
+        return super().clean()
     
     
