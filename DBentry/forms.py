@@ -308,7 +308,7 @@ class XRequiredFormMixin(object):
     Attributes:
     - xrequired: an iterable of dicts that specicify the number of required fields ('min', 'max'), the field names
                 ('fields') and optionally a custom error message ('error_message'). 
-    - default_error_messages: a dict of default error messages for min, max and minmax ValidationErrors
+    - default_error_messages: a dict of default error messages for min and max ValidationErrors
     """
     
     xrequired = None 
