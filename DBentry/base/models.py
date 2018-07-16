@@ -89,24 +89,6 @@ class BaseModel(models.Model):
         """
         return [f for f in cls._meta.get_fields() if f.is_relation and not f.concrete]
         
-        
-    @classmethod
-    def get_required_fields(cls, as_string=False):
-        """
-        Returns the model's fields that are required.
-        """
-        #TODO: fld.null check?
-        rslt = []
-        for fld in cls._meta.fields:
-            if not fld.auto_created and fld.blank == False:
-                if not fld.has_default() or fld.get_default() is None: 
-                    # fld either has no default or the default is None
-                    if as_string:
-                        rslt.append(fld.name)
-                    else:
-                        rslt.append(fld)
-        return rslt
-    
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         """
