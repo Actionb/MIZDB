@@ -13,7 +13,7 @@ class TestBulkForm(FormTestCase):
             'another' : forms.CharField(required = False), 
             'model' : ausgabe, 
             'each_fields' : ['another', 'some_fld'], 
-            'at_least_one_required' : ['req_fld', 'some_bulkfield'], 
+            'split_fields' : ['req_fld', 'some_bulkfield'], 
             'field_order' : ['some_fld', 'some_bulkfield', 'req_fld', 'another'], 
         }
     dummy_bases = (BulkForm, )
@@ -25,7 +25,7 @@ class TestBulkForm(FormTestCase):
         # The 'each' fieldset
         self.assertEqual(form.fieldsets[0][1]['fields'], ['some_fld', 'another'])
         
-        # The 'at_least_one_required' fieldset
+        # The 'split_fields' fieldset
         self.assertEqual(form.fieldsets[1][1]['fields'], ['some_bulkfield', 'req_fld'])
        
     def test_has_changed(self):

@@ -15,7 +15,7 @@ class BulkForm(MIZAdminForm):
     # these fields are assigned to the first fieldset and data of these fields are part of every row/created object
     each_fields = set() 
     # fields for the second fieldset
-    at_least_one_required = () #TODO: rename to 'split_fields'?
+    split_fields = () 
     
     #TODO: add help text to fieldsets, remember to also update the template for this
     fieldsets = [
@@ -33,7 +33,7 @@ class BulkForm(MIZAdminForm):
                 
         # Add the fields to the fieldsets, according to the order given by .fields (and thus given by field_order if available)
         self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.each_fields]
-        self.fieldsets[1][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.at_least_one_required]
+        self.fieldsets[1][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.split_fields]
 
         
     @property
@@ -96,7 +96,7 @@ class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
         'magazin', 'jahrgang', 'jahr', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 
         'provenienz', 'beschreibung', 'bemerkungen', 'status'
     ]
-    at_least_one_required = ['num', 'monat', 'lnum']
+    split_fields = ['num', 'monat', 'lnum']
     
     # Field declarations
     magazin = forms.ModelChoiceField(required = True, 
