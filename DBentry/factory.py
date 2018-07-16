@@ -5,8 +5,7 @@ import factory
 
 from stdnum import issn
 
-from DBentry.utils import is_iterable
-from DBentry.base.models import get_model_relations, get_model_fields
+from DBentry.utils import is_iterable, get_model_relations, get_model_fields
 from DBentry.models import *
 
 #TODO: put logging back in for RelatedFactory

@@ -32,9 +32,6 @@ class TestBaseModel(DataTestCase):
         ]
         self.assertListEqualSorted(self.model.get_m2mfields(True), expected)
 
-    def test_get_required_fields(self):
-        self.assertListEqualSorted(self.model.get_required_fields(True), ['ausgabe', 'schlagzeile', 'seite'])
-
     def test_get_search_fields(self):
         expected = ['schlagzeile', 'zusammenfassung', 'beschreibung']
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)

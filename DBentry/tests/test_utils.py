@@ -43,7 +43,7 @@ class TestUtils(TestCase):
 ##############################################################################################################
 # model utilities
 ##############################################################################################################  
-class TestModelUtils(TestCase):
+class TestModelUtils(MyTestCase):
     
     def test_get_relations_between_models_many_to_one(self):
         from DBentry.models import ausgabe, magazin
@@ -104,6 +104,22 @@ class TestModelUtils(TestCase):
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
+        
+    def test_get_required_fields(self):
+        def required_field_names(model):
+            return [f.name for f in utils.get_required_fields(model)]
+        self.assertListEqualSorted(required_field_names(person), ['nachname'])
+        self.assertListEqualSorted(required_field_names(musiker), ['kuenstler_name'])
+        self.assertListEqualSorted(required_field_names(genre), ['genre'])
+        self.assertListEqualSorted(required_field_names(band), ['band_name'])
+        self.assertListEqualSorted(required_field_names(autor), [])
+        self.assertListEqualSorted(required_field_names(ausgabe), ['magazin'])
+        self.assertListEqualSorted(required_field_names(magazin), ['magazin_name'])
+        self.assertListEqualSorted(required_field_names(ort), ['land'])
+        self.assertListEqualSorted(required_field_names(artikel), ['schlagzeile', 'seite', 'ausgabe'])
+        self.assertListEqualSorted(required_field_names(geber), []) # 'name' field is required but has a default
+        self.assertListEqualSorted(required_field_names(bestand), ['lagerort'])
+        
 
 ##############################################################################################################
 # debug utilities

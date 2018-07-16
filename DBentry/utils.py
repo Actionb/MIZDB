@@ -29,6 +29,109 @@ def model_from_string(model_name):
 #TODO: rename model_from_string to get_model_from_string
 get_model_from_string = model_from_string
 
+def get_model_fields(model, base = True, foreign = True, m2m = True, exclude = (), primary_key = False):
+    rslt = []
+    for f in model._meta.get_fields():
+        if not f.concrete or f.name in exclude:
+            continue
+        if f.primary_key and not primary_key:
+            continue
+        if f.is_relation:
+            if f.many_to_many:
+                if m2m:
+                    rslt.append(f)
+            elif foreign:
+                rslt.append(f)
+        elif base:
+            rslt.append(f)
+    return rslt
+            
+def get_model_relations(model, forward = True, reverse = True):
+    m2m_models = set(
+        f.remote_field.through if f.concrete else f.through
+        for f in model._meta.get_fields() 
+        if f.many_to_many
+    )
+    
+    relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
+    # ManyToManyRels can always be regarded as symmetrical (both 'forward' and 'reverse') and should always be included 
+    rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
+    for f in relation_fields:
+        if f.concrete:
+            if forward:
+                rslt.add(f.remote_field) # add the actual RELATION, not the ForeignKey/ManyToMany field
+        else:
+            if not reverse:
+                # We do not want any reverse relations. 
+                continue
+            if f.one_to_many and f.related_model in m2m_models:
+                # This is a 'reverse' ForeignKey relation from an actual (i.e. not auto_created) m2m intermediary model to 'model'.
+                # The relation between the intermediary model and this 'model' was realized on *both* sides, hence 
+                # it shows up twice (as a ManyToOneRel and a ManyToManyRel).
+                # The ManyToManyRel contains all the information we need so we ignore the ManyToOneRel.
+                continue
+            rslt.add(f)
+    return list(rslt)
+        
+def get_relation_info_to(model, rel):
+    """
+    Returns:
+    - the model that holds the related objects
+        (rel.through if many_to_many else rel.related_model)
+    - the field that realizes relation 'rel' towards direction 'model' 
+        (the field of the m2m table table pointing to model if many_to_many else the ForeignKey field i.e. rel.field)
+    """
+    if rel.many_to_many:
+        related_model = rel.through
+        m2m_field = rel.field
+        if m2m_field.model == model:
+            # The ManyToManyField is with model:
+            # the source accessor/field pointing back to model on the m2m table can be retrieved via m2m_field_name()
+            related_field = related_model._meta.get_field(m2m_field.m2m_field_name())
+        else:
+            # The ManyToManyField is with the *other* model:
+            # the related accessor/field pointing to model on the m2m table can be retrieved via m2m_reverse_field_name()
+            related_field = related_model._meta.get_field(m2m_field.m2m_reverse_field_name())
+    else:
+        related_model = rel.related_model
+        related_field = rel.field
+    return related_model, related_field
+    
+def get_required_fields(model):
+    """
+    Returns the fields that require a value.
+    """
+    rslt = []
+    for f in get_model_fields(model, m2m = False):
+        if f.null:
+            continue
+        if f.blank and isinstance(f, (models.CharField, models.TextField)):
+            # String-based fields should not have null = True, hence checking the less meaningful blank attribute
+            continue
+        if f.has_default():
+            # Field has a default value, whether or not that value is an 'EMPTY_VALUE' we do not care
+            continue
+        rslt.append(f)
+    return rslt
+
+def get_related_set(instance, rel):
+    model_class = instance._meta.model
+    if rel.many_to_many:
+        if rel.field.model == model_class:
+            attr = rel.field.name
+            #intermediary_field_name = rel.field.m2m_field_name()
+        else:
+            attr = rel.get_accessor_name()
+            #intermediary_field_name = rel.feld.m2m_reverse_field_name()
+        descriptor = getattr(model_class, attr)
+        #return rel.through.objects.filter(**{intermediary_field_name:instance})
+    else:
+        descriptor = getattr(rel.model, rel.get_accessor_name())
+    if isinstance(instance, model_class):
+        return descriptor.related_manager_cls(instance).all()
+    else:
+        return descriptor
+
 def is_protected(objs, using='default'):
     """
     Returns a models.ProtectedError if any of the objs are protected through a ForeignKey, otherwise returns None.
@@ -46,7 +149,6 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
         Returns the updated original.
     """
     #TODO: FIXME! Rework the unique_together bit.
-    from .base.models import get_model_relations, get_relation_info_to
     logger = get_logger(request)
     
     qs = qs.exclude(pk=original.pk)
@@ -159,7 +261,6 @@ def get_relations_between_models(model1, model2):
     return field, rel 
     
 def get_full_fields_list(model):
-    from DBentry.base.models import get_model_fields, get_model_relations
     rslt = set()
     for field in get_model_fields(model):
         rslt.add(field.name)
