@@ -35,10 +35,11 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
             lnum            = '', 
             audio           = True, 
             audio_lagerort  = self.audio_lo.pk, 
-            lagerort        = self.zraum.pk,  
+            ausgabe_lagerort= self.zraum.pk,  
             dublette        = self.dublette.pk, 
             provenienz      = self.prov.pk, 
             beschreibung    = '', 
+            bemerkungen     = '', 
             status          = 'unb', 
             _debug          = False, 
         )
@@ -82,7 +83,6 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.session.save()
         response = self.client.post(self.path, data=data, follow=False) # get the '_continue' response
         self.assertTrue('_continue' in response.wsgi_request.POST)
-        self.assertTrue('qs' in response.wsgi_request.session)
         self.assertEqual(response.status_code, 302) # 302 for redirect
         
     def test_post_save_and_addanother_preview(self):
@@ -132,24 +132,21 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # the pks of any object that was created/updated are stored in ids_of_altered_objects
         # compare them (and our unaltered objects) with the after_save_ids
         self.assertEqual(sorted(ids_of_altered_objects + [self.multi1.pk, self.multi2.pk]), sorted(after_save_ids))
-        
+
     @tag('logging')
     def test_save_data_updated(self):
         # check that the object called 'updated' has had an audio record added to it
-        # NYI: check that the object called 'updated' has had an audio record  and a jahrgang value added to it
         form = self.get_valid_form()
         request = self.post_request()
         
         # the data in question should not exist yet
         self.assertFalse(self.updated.audio.exists())
-        # NIY:
-        # self.assertIsNone(self.updated.jahrgang)
         
         ids, created, updated = self.get_view(request).save_data(form)
-        
+        self.updated.refresh_from_db()
         self.assertTrue(self.updated.audio.exists())
-        # NIY:
-        # self.assertIsNotNone(self.updated.jahrgang)
+        self.assertIsNotNone(self.updated.jahrgang)
+        self.assertLoggedChange(self.updated, fields = ['jahrgang', 'status'])
         
         # only 'updated' should be in the list 
         self.assertEqual(updated, [self.updated])
@@ -238,6 +235,14 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         next_data = self.get_view().next_initial_data(form)
         self.assertEqual(next_data.get('jahrgang', 0), 12)
         self.assertEqual(next_data.get('jahr', ''), '2002, 2003')
+        
+        data = self.valid_data.copy()
+        data['jahr'] = ''
+        form = self.get_form(data=data)
+        form.is_valid()
+        next_data = self.get_view().next_initial_data(form)
+        self.assertEqual(next_data.get('jahrgang', 0), 12)
+        self.assertFalse(next_data.get('jahr'))
     
 
 class TestBulkAusgabeStory(BulkAusgabeTestCase):
@@ -370,9 +375,7 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         del continue_data['_preview']
         continue_data['_continue'] = True
         continue_response = self.client.post(self.path, data=continue_data)
-        continue_request = continue_response.wsgi_request
         
-        self.assertTrue('qs' in continue_request.session)
         self.assertEqual(continue_response.status_code, 302) # 302 for redirect
-        self.assertEqual(continue_response.url, reverse("admin:DBentry_ausgabe_changelist"))
+        self.assertTrue(continue_response.url.startswith(reverse("admin:DBentry_ausgabe_changelist") + '?id__in=')) 
         

@@ -1,15 +1,16 @@
  
 from collections import OrderedDict
 from itertools import chain
- 
+from urllib.parse import urlencode
+
 from django import views    
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.html import format_html
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.utils import IntegrityError
+from django.utils.translation import gettext
 
 from DBentry.views import MIZAdminToolViewMixin
 from DBentry.utils import link_list
@@ -34,10 +35,11 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         # This way, we can track changes to the form the user has made.
         return self.request.session.get('old_form_data', {})
         
-    def get_success_url(self):
-        #TODO: do me!
-        from urllib.parse import urlencode
-        url = reverse(self.success_url) + '?' + urlencode(**data)
+    def get_success_url(self, query_data = None):
+        # Return an url with a query_string composed of data in query_data
+        if query_data is None:
+            return reverse(self.success_url)
+        url = reverse(self.success_url) + '?' + urlencode(query_data)
         return url
     
     def post(self, request, *args, **kwargs):
@@ -55,13 +57,12 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 if '_continue' in request.POST:
                     # save the data and redirect back to the changelist
                     ids, instances, updated = self.save_data(form)
-                    # Need to store the ids of the newly created items in request.session so the changelist can filter for them
-                    request.session['qs'] = dict(id__in=ids) if ids else None
-                    return redirect(self.success_url) #TODO: make this open in a popup/new tab
+                    success_url = self.get_success_url(query_data = dict(id__in=','.join(str(id) for id in ids)))
+                    #NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
+                    return redirect(success_url) 
                     
                 if '_addanother' in request.POST:   
                     # save the data, notify the user about changes and prepare the next view
-                    old_form = form
                     ids, created, updated = self.save_data(form)
                     
                     if created:
@@ -86,7 +87,6 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
     
     @transaction.atomic()
     def save_data(self, form):
-        #TODO: update instance attributes (jahrgang,etc.)?
         ids = [] # contains the pks of instances either created or updated by save_data
         created = [] # contains instances of objects that were newly created by save_data
         updated = [] # contains instances that were existed before save_data and were updated by it
@@ -107,7 +107,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         for row in chain(original, dupes):
             if 'dupe_of' in row:
                 instance = row['dupe_of']['instance'] # this cannot fail, since we've saved all original instances before
-                bestand_data = dict(lagerort=row.get('lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
+                bestand_data = dict(lagerort=row.get('ausgabe_lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
                 if 'provenienz' in row['dupe_of']:
                     # Also add the provenienz of the original to this object's bestand
                     bestand_data['provenienz'] = row.get('provenienz')
@@ -122,7 +122,15 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 self.log_addition(instance)
                 created.append(instance)
             else:
-                # this instance already existed, mark it as updated
+                # this instance already existed, update it and mark it as such
+                instance_data = {}
+                for k, v in self.instance_data(row).items():
+                    if k != 'magazin' and v and getattr(instance, k) != v:
+                        # The instance's value for this field differs from the new data, include it in the update
+                        instance_data[k] = v
+                
+                instance.qs().update(**instance_data)
+                self.log_update(instance.qs(), instance_data)
                 updated.append(instance)
             
             # Create and/or update sets
@@ -131,6 +139,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 data = row.get(fld_name, None)
                 if data:
                     if fld_name == 'monat':
+                        # ausgabe_monat is actually a m2m intermediary table between tables ausgabe and monat
                         fld_name = 'monat_id'
                     if not isinstance(data, (list, tuple)):
                         data = [data]
@@ -139,7 +148,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                             try:
                                 with transaction.atomic():
                                     o = set.create(**{fld_name:value})
-                            except IntegrityError as e: 
+                            except IntegrityError: 
                                 # ignore UNIQUE constraints violations
                                 continue
                             else:
@@ -178,7 +187,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 self.log_addition(audio_instance, b)
                 
             # Bestand
-            bestand_data = dict(lagerort=row.get('lagerort'))
+            bestand_data = dict(lagerort=row.get('ausgabe_lagerort'))
             if 'provenienz' in row:
                 bestand_data['provenienz'] = row.get('provenienz')
             b = instance.bestand_set.create(**bestand_data)
@@ -192,7 +201,10 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         # Using form.cleaned_data would insert model instances into the data we are going to save in request.session... and model instances are not JSON serializable
         data = form.data.copy()
         # Increment jahr and jahrgang
-        data['jahr'] = ", ".join([str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')]) 
+        if form.cleaned_data.get('jahr'):
+            data['jahr'] = ", ".join([
+                str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')
+            ]) 
         if form.cleaned_data.get('jahrgang'):  
             data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
         return data
@@ -202,6 +214,7 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         rslt['jahrgang'] = row.get('jahrgang', None)
         rslt['magazin'] = row.get('magazin')
         rslt['beschreibung'] = row.get('beschreibung', '')
+        rslt['bemerkungen'] = row.get('bemerkungen', '')
         rslt['status'] = row.get('status')
         return rslt
         
@@ -209,9 +222,20 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
         preview_data = []
         headers = []
         preview_fields = []
-        row_error = False
-        multiple_instances_msg = "Es wurden mehrere passende Ausgaben gefunden. Es soll immer nur eine bereits bestehende Ausgabe verändert werden: diese Zeile wird ignoriert. "
-        one_instance_msg = "Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt."
+        multiple_instances_msg = gettext("Es wurden mehrere passende Ausgaben gefunden. Es soll immer nur eine bereits bestehende Ausgabe verändert werden: diese Zeile wird ignoriert.")
+        one_instance_msg = gettext("Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt.")
+        
+        has_instances = False # if True, include the 'Bereits vorhanden' and 'Datenbank' headers
+        for row in form.row_data:
+            if 'instance' in row:
+                instances = [row.get('instance')]
+            elif 'multiples' in row:
+                instances = list(row.get('multiples'))
+            else:
+                continue
+            if len(instances):
+                has_instances = True
+                break
         
         for row in form.row_data:
             preview_row = OrderedDict()
@@ -221,6 +245,8 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 if fld_name == 'audio':
                     img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
                     preview_row[fld_name] = img
+                elif fld_name == 'audio_lagerort' and 'audio' not in row:
+                    continue
                 else:
                     values_list = row.get(fld_name) or []
                     if isinstance(values_list, list):
@@ -238,25 +264,19 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 instances = list(row.get('multiples', []))
                 
             if len(instances)==0:
-                preview_row['Instanz'] = '---'
+                if has_instances:
+                    preview_row['Instanz'] = '---'
+                    preview_row['Datenbank'] = '---'
             else:
-                links = []
-                for instance in instances:
-                    #TODO: use utils.get_obj_link
-                    link = reverse("admin:DBentry_ausgabe_change", args = [instance.pk])
-                    label = str(instance)
-                    links.append(format_html('<a href="{}" target="_blank">{}</a>', link, label))
-                    
+                links = link_list(request, instances)
                 if len(instances)==1:
                     img = '<img alt="False" src="/static/admin/img/icon-alert.svg">'
-                    preview_row['Instanz'] = format_html(img + ", ".join(links))
-                    preview_row['Bemerkung'] = one_instance_msg
+                    msg = one_instance_msg
                 else:
-                    row_error = True
                     img = '<img alt="False" src="/static/admin/img/icon-no.svg">'
-                    preview_row['Instanz'] = format_html(img + ", ".join(links))
-                    preview_row['Bemerkung'] = multiple_instances_msg
-                    
+                    msg = multiple_instances_msg
+                preview_row['Instanz'] = format_html(img + links) 
+                preview_row['Datenbank'] = msg 
             preview_data.append(preview_row)
             
         for fld_name in form.preview_fields:
@@ -267,9 +287,8 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 headers.append(form.fields.get(fld_name).label.strip(":"))
             else:
                 headers.append(fld_name)
-        headers += ['Bereits vorhanden']
-        if row_error:
-            headers += ['Bemerkung']
+        if has_instances:
+            headers += ['Bereits vorhanden', 'Datenbank']
         return headers, preview_data
         
     def get_context_data(self, *args, **kwargs):

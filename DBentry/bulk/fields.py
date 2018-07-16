@@ -3,7 +3,7 @@ from itertools import chain
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext
          
 class BulkField(forms.CharField):
     
@@ -22,17 +22,20 @@ class BulkField(forms.CharField):
         self.allowed_numerical = self.allowed_numerical if allowed_numerical is None else allowed_numerical
         self.allowed_alpha = self.allowed_alpha if allowed_alpha is None else allowed_alpha
         
-        msg_text = 'Unerlaubte Zeichen gefunden:'
+        msg_template = gettext('Unerlaubte Zeichen gefunden: Bitte nur {allowed} benutzen.')
+        allowed = ''
         if self.allowed_numerical:
-            msg_text += ' Bitte nur Ziffern'
-        else:
-            #TODO: this doesn't even check self.allowed_alpha:
-            # allowed_alpha == False will still lead to a message mentioning 'Buchstaben'!
-            msg_text += ' Bitte nur Buchstaben' 
-        msg_text += ' (plus Buchstaben-Kürzel)' if self.allowed_alpha and self.allowed_numerical else ''
-        msg_text += ' oder ' if self.allowed_special else ''
-        msg_text += ' oder '.join(['"'+s+'"' for s in self.allowed_special]) + ' benutzen.'
-        self.error_messages['invalid'] = _(msg_text)
+            allowed = gettext('Ziffern')
+            if self.allowed_alpha:
+                allowed += gettext(' (plus Buchstaben-Kürzel)')
+        elif self.allowed_alpha:
+            allowed = gettext('Buchstaben')
+        if self.allowed_special:
+            sep = ' ' + gettext('oder') + ' '
+            if allowed:
+                allowed += sep
+            allowed += sep.join(['"'+s+'"' for s in self.allowed_special])
+        self.error_messages['invalid'] = msg_template.format(allowed = allowed)
         
     def widget_attrs(self, widget):
         attrs = super(BulkField, self).widget_attrs(widget)
@@ -58,25 +61,34 @@ class BulkField(forms.CharField):
         
     def clean(self, value):
         value = super(BulkField, self).clean(value)
-        value = value.strip()
-        if value and value[-1] in self.allowed_special:
-            # Strip accidental last delimiter
-            value = value[:-1]
-        return value #TODO: .strip() again in case of ' 1 , ' --> '1 '
+        value = value.replace(' ', '')
+        if value:
+            # Strip accidental first/last delimiter
+            if value[-1] in self.allowed_special:
+                value = value[:-1]
+            if value[0] in self.allowed_special:
+                value = value[1:]
+        # Attempt to_list() to verify that the input data can be worked with
+        try:
+            self.to_list(value)
+        except ValueError:
+            raise ValidationError(gettext('Bitte überprüfen Sie die Werte.'))
+        return value
         
     def to_list(self, value):
-        #TODO: docs
-        #TODO: strip() after every split
+        """
+        Returns the data of the field split up into a list with strings or 
+        sublists of strings (if '*' or '/' where used) and the total count of returned strings and sublists.
+        """
         if not value:
             return [], 0
         temp = []
         item_count = 0
-        for item in value.split(','):
-            item = item.strip()
+        for item in value.replace(' ', '').split(','):
             if item:
                 if item.count('-')==1: # item is a 'range' of values
                     if item.count("*") == 1:
-                        item,  multi = item.split("*") # !! '2-4**3'
+                        item,  multi = item.split("*")
                         multi = int(multi)
                     else:
                         multi = 1
@@ -85,7 +97,7 @@ class BulkField(forms.CharField):
                     for i in range(s, e+1, multi):
                         temp.append([str(i+j) for j in range(multi)])
                         item_count += 1
-                elif '/' in item:
+                elif '/' in item: # item is a 'pair' of values
                     temp.append([i for i in item.split('/') if i])
                     item_count += 1
                 else:
@@ -99,18 +111,11 @@ class BulkJahrField(BulkField):
     
     def clean(self, value):
         # Normalize Jahr values into years seperated by commas only
-        # Also correct the year if year is a shorthand
         value = super(BulkJahrField, self).clean(value)
-        clean_values = []
-        for item in value.replace('/', ',').split(','):
-            item = item.strip()
-            if len(item)==2:
-                if int(item) <= 17: #FIXME: current_year + 1 instead of 17?
-                    item = '20' + item
-                else:
-                    item = '19' + item
-            clean_values.append(item)
-        return ','.join(clean_values)
+        cleaned = [item for item in value.replace(' ', '').replace('/', ',').split(',')]
+        if any(len(item)!=4 for item in cleaned if item):
+            raise ValidationError('Bitte vierstellige Jahresangaben benutzen.')
+        return ','.join(cleaned)
         
     def to_list(self, value):
         temp, item_count = super(BulkJahrField, self).to_list(value)

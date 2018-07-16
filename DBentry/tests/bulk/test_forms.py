@@ -1,7 +1,8 @@
 from ..base import *
 
 from DBentry.bulk.forms import *
-      
+  
+
 class TestBulkForm(FormTestCase):
     
     form_class = BulkForm
@@ -11,81 +12,39 @@ class TestBulkForm(FormTestCase):
             'req_fld' : BulkJahrField(required = False), 
             'another' : forms.CharField(required = False), 
             'model' : ausgabe, 
-            'each_fields' : ['another'], 
-            'at_least_one_required' : ['req_fld'], 
+            'each_fields' : ['another', 'some_fld'], 
+            'split_fields' : ['req_fld', 'some_bulkfield'], 
             'field_order' : ['some_fld', 'some_bulkfield', 'req_fld', 'another'], 
         }
     dummy_bases = (BulkForm, )
-    
-    def test_init_combining_kwargs(self):
-        form = self.get_dummy_form(at_least_one_required = ['some_bulkfield'])
-        self.assertEqual(sorted(form.at_least_one_required), sorted(['req_fld', 'some_bulkfield']))
-        
-        form = self.get_dummy_form(each_fields = ['some_bulkfield']) # Little cheat here: usually BulkFields do not get added to each_fields
-        self.assertEqual(sorted(form.each_fields), sorted(['another', 'some_bulkfield', 'some_fld']))
-    
-    def test_init_each_fields(self):
-        # Test init adding any non-declared non-BulkFields to it and excluding fields declared in at_least_one_required
+       
+    def test_init_sets_fieldsets(self):
+        # Assert that the form's fieldsets are set up properly during initial
         form = self.get_dummy_form()
-        self.assertEqual(sorted(form.each_fields), sorted(['another', 'some_fld']))
-    
-    def test_init_defining_each_fields_with_duplicate(self):
-        # Test init taking the given each_fields parameter that contains a field name that is also present in at_least_one_required
-        # req_fld should only show up in at_least_one_required
-        form = self.get_dummy_form(each_fields=['req_fld'], at_least_one_required = ['req_fld'])
-        self.assertFalse('req_fld' in form.each_fields)
-        self.assertTrue('req_fld' in form.at_least_one_required)
         
-    def test_init_fieldsets_each_fields(self):
-        # See if the fieldsets were set up properly, including its order
-        # each fields fieldset
-        form = self.get_dummy_form(at_least_one_required = ['some_bulkfield'])
-        fs = form.fieldsets[0][1]
-        expected = ['some_fld', 'another']
-        self.assertEqual(fs['fields'], expected)
+        # The 'each' fieldset
+        self.assertEqual(form.fieldsets[0][1]['fields'], ['some_fld', 'another'])
         
-    def test_init_fieldsets_at_least_one_required(self):
-        # See if the fieldsets were set up properly, including its order
-        # At least one required fieldset
-        form = self.get_dummy_form(at_least_one_required = ['some_bulkfield'])
-        fs = form.fieldsets[1][1]
-        expected = ['some_bulkfield', 'req_fld']
-        self.assertEqual(fs['fields'], expected)
-        
-    def test_init_fieldsets_homeless_fields(self):
-        # some_bulkfield is not assigned to at_least_one_required and is not allowed in each_fields
-        form = self.get_dummy_form()
-        self.assertTrue('some_bulkfield' in form.fieldsets[2][1]['fields'])
-        
+        # The 'split_fields' fieldset
+        self.assertEqual(form.fieldsets[1][1]['fields'], ['some_bulkfield', 'req_fld'])
+       
     def test_has_changed(self):
         # _row_data should be empty if anything about the form data has changed
         data = {'req_fld':'2001'}
         initial = {'req_fld':'2000'}
         form = self.get_dummy_form(data=data, initial=initial)
-        form._row_data = [1]
+        form._row_data = [1] # put *something* into _row_data
         self.assertTrue(form.has_changed())
         self.assertEqual(len(form._row_data), 0) 
-        
+         
     def test_clean_errors_uneven_item_count(self):        
         # total_count != item_count => error message
         data = {'some_bulkfield':'1,2', 'req_fld' : '2000'}
         form = self.get_dummy_form(data=data)
-        form.is_valid()
         form.total_count = 1 # clean() expects total_count to be zero at the beginning
-        with self.assertRaises(ValidationError) as e:
-            # some_bulkfield's item count will be 2, while total_count is 1
-            form.clean()
-        self.assertTrue(e.exception.message.startswith('Ungleiche Anzahl'))
-
-    def test_clean_errors_required_missing(self):   
-        # not all fields in at_least_one_required have data => error message
-        data = {'some_bulkfield':'1,2'}
-        form = self.get_dummy_form(data=data)
         form.is_valid()
-        with self.assertRaises(ValidationError) as e:
-            form.clean()
-        self.assertTrue(e.exception.message.startswith('Bitte mindestens'))
-            
+        self.assertTrue(form.has_error('some_bulkfield'))
+        
     def test_clean_populating_split_data(self):
         # check if split_data was populated correctly
         data ={ 'some_bulkfield':'1,2', 'req_fld' : '2000', 'some_fld':'4,5'}
@@ -113,7 +72,7 @@ class TestBulkForm(FormTestCase):
         form = self.get_dummy_form(data=data)
         with self.assertNotRaises(Exception):
             form.is_valid()       
-        
+   
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     
     form_class = BulkFormAusgabe
@@ -144,7 +103,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             lnum            = '', 
             audio           = True, 
             audio_lagerort  = self.audio_lo.pk, 
-            lagerort        = self.zraum.pk,  
+            ausgabe_lagerort= self.zraum.pk,  
             dublette        = self.dublette.pk, 
             provenienz      = self.prov.pk, 
             beschreibung    = '', 
@@ -152,39 +111,23 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             _debug          = False, 
         )
         
-    def test_init_each_fields(self):
-        form = self.get_form()
-        expected = sorted({'magazin', 'jahrgang', 'jahr', 'status', 'info', 'audio', 'audio_lagerort', 'lagerort', 'dublette', 'provenienz'})
-        self.assertEqual(sorted(form.each_fields), expected)
-        
-    def test_init_at_least_one_required_fields(self):
-        form = self.get_form()
-        self.assertEqual(sorted(form.at_least_one_required),  sorted({'num', 'monat', 'lnum'}))
-        
     def test_init_fieldsets(self):
         form = self.get_form()
         # Each field fieldset
-        fs = form.fieldsets[0][1]
-        expected = ['magazin', 'jahrgang', 'jahr', 'status', 'info', 'audio', 'audio_lagerort', 'lagerort', 'dublette', 'provenienz']
-        self.assertEqual(fs['fields'], expected)
+        expected = ['magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 'provenienz']
+        self.assertEqual(form.fieldsets[0][1]['fields'], expected)
         
         # At least one required fieldset
-        fs = form.fieldsets[1][1]
         expected = ['num', 'monat', 'lnum']
-        self.assertEqual(fs['fields'], expected)
-    
+        self.assertEqual(form.fieldsets[1][1]['fields'], expected)
+        
     def test_clean_errors_audio_but_no_audio_lagerort(self):
         # audio == True & audio_lagerort == False => 'Bitte einen Lagerort für die Musik Beilage angeben.'
         data = self.valid_data.copy()
         del data['audio_lagerort']
         form = self.get_form(data=data)
-        # imitate full_clean()
-        form.cleaned_data = {}
-        form._clean_fields()
-        with self.assertRaises(ValidationError) as e:
-            form.clean()
-        self.assertEqual(e.exception.args[0], 'Bitte einen Lagerort für die Musik Beilage angeben.')
-        self.assertTrue('Bitte einen Lagerort für die Musik Beilage angeben.' in form.errors.get('__all__'))
+        form.is_valid()
+        self.assertTrue(form.has_error('audio_lagerort'))
         
     def test_clean_errors_uneven_item_count(self):        
         # total_count != item_count => error message
@@ -192,19 +135,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         data['monat'] = '1'
         form = self.get_form(data=data)
         form.is_valid()
-        #form.total_count = 1 # clean() expects total_count to be zero at the beginning
-        with self.assertRaises(ValidationError) as e:
-            form.clean()
-        self.assertTrue(e.exception.message.startswith('Ungleiche Anzahl'))
-
-    def test_clean_errors_required_missing(self):   
-        # not all fields in at_least_one_required have data => error message
-        data = {}
-        form = self.get_form(data=data)
-        form.is_valid()
-        with self.assertRaises(ValidationError) as e:
-            form.clean()
-        self.assertTrue(e.exception.message.startswith('Bitte mindestens'))
+        self.assertTrue(form.has_error('monat'))
         
     def test_lookup_instance_no_result(self):
         # row['num'] == 2 => qs.exists() else !qs.exists()
@@ -217,12 +148,35 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         form = self.get_valid_form()
         row_data = {'num':'1', 'jahr':['2000','2001']}
         self.assertEqual(form.lookup_instance(row_data).count(), 1)
-        
+         
     def test_lookup_instance_multi_result(self):
         # row['num'] == 2 => qs.exists() else !qs.exists()
         form = self.get_valid_form()
         row_data = {'num':'5', 'jahr':['2000','2001']}
         self.assertEqual(form.lookup_instance(row_data).count(), 2)
+        
+    def test_lookup_instance_jahrgang(self):
+        form = self.get_valid_form()
+        # Assert that lookup_instance can now find matching instances through their jahrgang
+        instance = make(ausgabe, magazin = self.mag, jahrgang = 1, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
+        row_data = {'jahrgang': '1', 'num': '5'}
+        lookuped = form.lookup_instance(row_data)
+        self.assertEqual(lookuped.count(), 1)
+        self.assertIn(instance, lookuped)
+        
+        # Assert that lookup_instance will use jahrgang OR jahr to find matching instances
+        row_data = {'jahrgang': '1', 'num': '5', 'jahr': '2001'}
+        lookuped = form.lookup_instance(row_data)
+        self.assertEqual(lookuped.count(), 3) # 3 = the created instance, plus self.multi1, self.multi2
+        self.assertIn(instance, lookuped)
+        
+        # Assert that lookup_instance will use jahrgang AND jahr if there are instances that can be found like that
+        instance = make(ausgabe, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
+        make(ausgabe, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2003) # should not be found
+        row_data = {'jahrgang': '2', 'num': '5', 'jahr': '2002'}
+        lookuped = form.lookup_instance(row_data)
+        self.assertEqual(lookuped.count(), 1)
+        self.assertIn(instance, lookuped)
         
     def test_row_data_prop(self):
         # verify that form.row_data contains the expected data           
@@ -234,14 +188,14 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             jahr            = ['2000','2001'], 
             audio           = True, 
             audio_lagerort  = self.audio_lo, 
-            lagerort        = self.zraum,  
+            ausgabe_lagerort= self.zraum,  
             dublette        = self.dublette, 
             provenienz      = self.prov, 
             status          = 'unb', 
         )
         # valid_data: num             = '1,2,3,4,4,5', ==> 
         row_1 = row_template.copy()
-        row_1.update({'num':'1', 'lagerort':self.dublette,  'instance':self.obj1}) # should add a dublette
+        row_1.update({'num':'1', 'ausgabe_lagerort':self.dublette,  'instance':self.obj1}) # should add a dublette
         row_2 = row_template.copy()
         row_2.update({'num':'2'}) # new object
         row_3 = row_template.copy()
@@ -249,7 +203,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         row_4 = row_template.copy()
         row_4.update({'num':'4', }) # new object
         row_5 = row_template.copy()
-        row_5.update({'num':'4', 'lagerort':self.dublette, 'dupe_of':row_4}) # dupe of the previous row and should be marked as a dublette of the previous row
+        row_5.update({'num':'4', 'ausgabe_lagerort':self.dublette, 'dupe_of':row_4}) # dupe of the previous row and should be marked as a dublette of the previous row
         row_6 = row_template.copy()
         row_6.update({'num':'5', 'multiples':ausgabe.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk])}) 
         expected = [row_1, row_2, row_3, row_4, row_5, row_6]
@@ -278,14 +232,14 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             jahr            = ['2000','2001'], 
             audio           = True, 
             audio_lagerort  = self.audio_lo, 
-            lagerort        = self.zraum,  
+            ausgabe_lagerort= self.zraum,  
             dublette        = self.dublette, 
             provenienz      = self.prov, 
             status          = 'unb', 
         )
         # valid_data: num             = '1,2,3,4,4,5', ==> 
         row_1 = row_template.copy()
-        row_1.update({'num':'1', 'lagerort':self.dublette,  'instance':self.obj1}) # should add a dublette
+        row_1.update({'num':'1', 'ausgabe_lagerort':self.dublette,  'instance':self.obj1}) # should add a dublette
         row_2 = row_template.copy()
         row_2.update({'num':'2'}) # new object
         row_3 = row_template.copy()
@@ -293,7 +247,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         row_4 = row_template.copy()
         row_4.update({'num':'4', }) # new object
         row_5 = row_template.copy()
-        row_5.update({'num':'4', 'lagerort':self.dublette, 'dupe_of':row_4}) # dupe of the previous row and should be marked as a dublette of the previous row
+        row_5.update({'num':'4', 'ausgabe_lagerort':self.dublette, 'dupe_of':row_4}) # dupe of the previous row and should be marked as a dublette of the previous row
         row_6 = row_template.copy()
         row_6.update({'num':'5', 'multiples':ausgabe.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk])}) 
         expected = [row_1, row_2, row_3, row_4, row_5, row_6]
@@ -309,20 +263,24 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     def test_row_data_prop_invalid(self):
         # If the form is invalid, row_data should return empty
         form = self.get_form()
-        self.assertEqual(form.row_data, [])        
+        self.assertEqual(form.row_data, [])   
         
     def test_row_data_prop_homeless_fielddata_present(self):
-        # Make sure a BulkField that does not belong to either each_fields or at_least_one_required is still evaluated for row_data
+        # Assert that a field that does not belong to either each_fields or split_fields is not included in row_data
         form_class = type('DummyForm', (self.form_class, ), {'homeless':BulkField()})
         data = self.valid_data.copy()
         data['homeless'] = '9,8,7,6,5,5'
         form = form_class(data=data)
         self.assertFormValid(form)
-        self.assertTrue(all('homeless' in row for row in form.row_data))
-        self.assertEqual(form.row_data[0].get('homeless'), '9')
-        self.assertEqual(form.row_data[1].get('homeless'), '8')
-        self.assertEqual(form.row_data[2].get('homeless'), '7')
-        self.assertEqual(form.row_data[3].get('homeless'), '6')
-        self.assertEqual(form.row_data[4].get('homeless'), '5')
-        self.assertEqual(form.row_data[5].get('homeless'), '5')
+        self.assertFalse(all('homeless' in row for row in form.row_data))
+        
+    @translation_override(language = None)
+    def test_clean_handles_month_gt_12(self):
+        data = self.valid_data.copy()
+        data['monat'] = '13'
+        data['num'] = ''
+        form = self.get_form(data=data)
+        with self.assertRaises(ValidationError) as cm:
+            form.clean_monat()
+        self.assertEqual(cm.exception.args[0], 'Monat-Werte müssen zwischen 1 und 12 liegen.')
         
