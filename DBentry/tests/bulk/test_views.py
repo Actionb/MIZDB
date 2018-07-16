@@ -39,6 +39,7 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
             dublette        = self.dublette.pk, 
             provenienz      = self.prov.pk, 
             beschreibung    = '', 
+            bemerkungen     = '', 
             status          = 'unb', 
             _debug          = False, 
         )
@@ -131,24 +132,21 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # the pks of any object that was created/updated are stored in ids_of_altered_objects
         # compare them (and our unaltered objects) with the after_save_ids
         self.assertEqual(sorted(ids_of_altered_objects + [self.multi1.pk, self.multi2.pk]), sorted(after_save_ids))
-        
+
     @tag('logging')
     def test_save_data_updated(self):
         # check that the object called 'updated' has had an audio record added to it
-        # NYI: check that the object called 'updated' has had an audio record  and a jahrgang value added to it
         form = self.get_valid_form()
         request = self.post_request()
         
         # the data in question should not exist yet
         self.assertFalse(self.updated.audio.exists())
-        # NIY:
-        # self.assertIsNone(self.updated.jahrgang)
         
         ids, created, updated = self.get_view(request).save_data(form)
-        
+        self.updated.refresh_from_db()
         self.assertTrue(self.updated.audio.exists())
-        # NIY:
-        # self.assertIsNotNone(self.updated.jahrgang)
+        self.assertIsNotNone(self.updated.jahrgang)
+        self.assertLoggedChange(self.updated, fields = ['jahrgang', 'status'])
         
         # only 'updated' should be in the list 
         self.assertEqual(updated, [self.updated])

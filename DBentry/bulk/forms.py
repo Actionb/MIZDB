@@ -17,10 +17,9 @@ class BulkForm(MIZAdminForm):
     # fields for the second fieldset
     split_fields = () 
     
-    #TODO: add help text to fieldsets, remember to also update the template for this
     fieldsets = [
         ('Angaben dieser Felder werden jedem Datensatz zugewiesen', {'fields':[]}), 
-        ('Mindestes eines dieser Feld ausfüllen', {'fields':[]}), #TODO: rename this to 'Angaben dieser Felder werden aufgeteilt'?
+        ('Angaben dieser Felder werden aufgeteilt', {'fields':[]}), 
         (None, {'fields':[]}), 
     ]
     

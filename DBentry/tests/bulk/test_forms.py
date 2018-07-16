@@ -156,7 +156,27 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         self.assertEqual(form.lookup_instance(row_data).count(), 2)
         
     def test_lookup_instance_jahrgang(self):
-        pass
+        form = self.get_valid_form()
+        # Assert that lookup_instance can now find matching instances through their jahrgang
+        instance = make(ausgabe, magazin = self.mag, jahrgang = 1, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
+        row_data = {'jahrgang': '1', 'num': '5'}
+        lookuped = form.lookup_instance(row_data)
+        self.assertEqual(lookuped.count(), 1)
+        self.assertIn(instance, lookuped)
+        
+        # Assert that lookup_instance will use jahrgang OR jahr to find matching instances
+        row_data = {'jahrgang': '1', 'num': '5', 'jahr': '2001'}
+        lookuped = form.lookup_instance(row_data)
+        self.assertEqual(lookuped.count(), 3) # 3 = the created instance, plus self.multi1, self.multi2
+        self.assertIn(instance, lookuped)
+        
+        # Assert that lookup_instance will use jahrgang AND jahr if there are instances that can be found like that
+        instance = make(ausgabe, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
+        make(ausgabe, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2003) # should not be found
+        row_data = {'jahrgang': '2', 'num': '5', 'jahr': '2002'}
+        lookuped = form.lookup_instance(row_data)
+        self.assertEqual(lookuped.count(), 1)
+        self.assertIn(instance, lookuped)
         
     def test_row_data_prop(self):
         # verify that form.row_data contains the expected data           
@@ -243,29 +263,16 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     def test_row_data_prop_invalid(self):
         # If the form is invalid, row_data should return empty
         form = self.get_form()
-        self.assertEqual(form.row_data, [])        
-    @tag("wip")
+        self.assertEqual(form.row_data, [])   
+        
     def test_row_data_prop_homeless_fielddata_present(self):
-        # Make sure a BulkField that does not belong to either each_fields or at_least_one_required is still evaluated for row_data
-        #NOTE: since this is working, doesn't that imply we do not need at_least_one_required?
-        #TODO: what if the homeless field is not a bulkfield? Would it then behave as if it were in each_fields?
+        # Assert that a field that does not belong to either each_fields or split_fields is not included in row_data
         form_class = type('DummyForm', (self.form_class, ), {'homeless':BulkField()})
         data = self.valid_data.copy()
         data['homeless'] = '9,8,7,6,5,5'
         form = form_class(data=data)
         self.assertFormValid(form)
-        self.assertTrue(all('homeless' in row for row in form.row_data))
-        self.assertEqual(form.row_data[0].get('homeless'), '9')
-        self.assertEqual(form.row_data[1].get('homeless'), '8')
-        self.assertEqual(form.row_data[2].get('homeless'), '7')
-        self.assertEqual(form.row_data[3].get('homeless'), '6')
-        self.assertEqual(form.row_data[4].get('homeless'), '5')
-        self.assertEqual(form.row_data[5].get('homeless'), '5')
-        
-        form_class = type('DummyForm', (self.form_class, ), {'homeless':BulkField(), 'another':forms.CharField()})
-        data['another'] = '1-6'
-        form = form_class(data=data)
-        self.assertTrue(all(row.get('another')=='1-6' for row in form.row_data))
+        self.assertFalse(all('homeless' in row for row in form.row_data))
         
     @translation_override(language = None)
     def test_clean_handles_month_gt_12(self):
