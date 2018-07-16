@@ -239,6 +239,9 @@ class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
                 for c in range(self.total_count):
                     row = {}
                     for fld_name, fld in self.fields.items():
+                        if fld_name not in self.each_fields + self.split_fields:
+                            # This field was not assigned to either each_fields or split_fields, ignore it
+                            continue
                         if fld_name in self.split_data:
                             # this field is a BulkField
                             if fld_name in self.each_fields:
