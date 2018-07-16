@@ -1,4 +1,3 @@
-import re
 import time
 from collections import Iterable
 
@@ -17,6 +16,18 @@ from django.contrib.auth import get_permission_codename
 from .constants import M2M_LIST_MAX_LEN
 from .logging import get_logger
 
+##############################################################################################################
+# model utilities
+############################################################################################################## 
+    
+def model_from_string(model_name):
+    from django.apps import apps 
+    try:
+        return apps.get_model('DBentry', model_name)
+    except LookupError:
+        return None
+#TODO: rename model_from_string to get_model_from_string
+get_model_from_string = model_from_string
 
 def is_protected(objs, using='default'):
     """
@@ -35,7 +46,7 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
         Returns the updated original.
     """
     #TODO: FIXME! Rework the unique_together bit.
-    from .base.models import get_model_relations, get_relation_info_to, get_model_fields
+    from .base.models import get_model_relations, get_relation_info_to
     logger = get_logger(request)
     
     qs = qs.exclude(pk=original.pk)
@@ -48,7 +59,7 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
                 updateable_fields = original.get_updateable_fields() #TODO: model functions rework
                 for other_record_valdict in qs.values(*updateable_fields):
                     for k, v in other_record_valdict.items():
-                        if v and k not in update_data: #NOTE: why v AND k?
+                        if v and k not in update_data:
                             update_data[k] = v
             
             # Update the original object with the additional data and log the changes.
@@ -116,7 +127,52 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
         # And delete them
         qs.delete()
     return original_qs.first(), update_data
+         
+def get_relations_between_models(model1, model2): 
+    """ 
+    Returns the field and the relation object that connects model1 and model2. 
+    """ 
+    # used by signals.set_name_changed_flag_ausgabe
+    if isinstance(model1, str): 
+        model1 = model_from_string(model1) 
+    if isinstance(model2, str): 
+        model2 = model_from_string(model2) 
+     
+    field = None # the concrete field declaring the relation 
+    rel = None # the reverse relation 
+    for fld in model1._meta.get_fields(): 
+        if fld.is_relation and fld.related_model == model2: 
+            if fld.concrete: 
+                field = fld 
+            else: 
+                rel = fld 
+            break 
+                 
+    for fld in model2._meta.get_fields(): 
+        if fld.is_relation and fld.related_model == model1: 
+            if fld.concrete: 
+                field = fld 
+            else: 
+                rel = fld 
+            break 
+     
+    return field, rel 
+    
+def get_full_fields_list(model):
+    from DBentry.base.models import get_model_fields, get_model_relations
+    rslt = set()
+    for field in get_model_fields(model):
+        rslt.add(field.name)
+    for rel in get_model_relations(model, forward = False): # forward relations already handled by get_model_fields
+        if rel.many_to_many and rel.field.model == model:
+            rslt.add(rel.field.name)
+        else:
+            rslt.add(rel.name)
+    return rslt
 
+##############################################################################################################
+# text utilities
+##############################################################################################################
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     """
         Joins string values of iterable 'values' up to a length of 'width'.
@@ -136,6 +192,9 @@ def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
 def snake_case_to_spaces(value):
     return value.replace('_', ' ').strip()
         
+##############################################################################################################
+# admin utilities
+############################################################################################################## 
 def get_obj_link(obj, user, site_name='admin', include_name=True):
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
@@ -175,15 +234,23 @@ def link_list(request, obj_list, SEP = ", "):
     for obj in obj_list:
         links.append(get_obj_link(obj, request.user, include_name=False))
     return format_html(SEP.join(links))
-    
-def model_from_string(model_name):
-    from django.apps import apps 
-    try:
-        return apps.get_model('DBentry', model_name)
-    except LookupError:
-        return None
-#TODO: rename model_from_string to get_model_from_string
-get_model_from_string = model_from_string
+
+##############################################################################################################
+# general utilities
+##############################################################################################################
+def flatten_dict(d, exclude=[]):
+    rslt = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            rslt[k] = flatten_dict(v, exclude)
+        elif k not in exclude and isinstance(v, Iterable) and not isinstance(v, str) and len(v)==1:
+            rslt[k] = v[0]
+        else:
+            rslt[k] = v
+    return rslt
+
+def is_iterable(obj):
+    return isinstance(obj, Iterable) and not isinstance(obj, (bytes, str))
 
 def split_field(field_name, data, separators = [',']):
     """ Splits the content of data[field_name] according to separators and merges the new values back into a list of dicts."""
@@ -208,39 +275,13 @@ def recmultisplit(values, separators = []):
     for x in values.split(sep):
         rslt += recmultisplit(x, seps)
     return rslt   
-         
-def get_relations_between_models(model1, model2): 
-    """ 
-    Returns the field and the relation object that connects model1 and model2. 
-    """ 
-    if isinstance(model1, str): 
-        model1 = model_from_string(model1) 
-    if isinstance(model2, str): 
-        model2 = model_from_string(model2) 
-     
-    field = None # the concrete field declaring the relation 
-    rel = None # the reverse relation 
-    for fld in model1._meta.get_fields(): 
-        if fld.is_relation and fld.related_model == model2: 
-            if fld.concrete: 
-                field = fld 
-            else: 
-                rel = fld 
-            break 
-                 
-    for fld in model2._meta.get_fields(): 
-        if fld.is_relation and fld.related_model == model1: 
-            if fld.concrete: 
-                field = fld 
-            else: 
-                rel = fld 
-            break 
-     
-    return field, rel 
 
+##############################################################################################################
+# debug utilities
+############################################################################################################## 
 def timethis(func, *args, **kwargs):
     ts = time.time()
-    r = func(*args, **kwargs)
+    func(*args, **kwargs)
     te = time.time()
     return te - ts
     
@@ -266,29 +307,3 @@ def debug_queryfunc(func, *args, **kwargs):
     print("Time:", t)
     print("Num. queries:", n)
     return t, n
-    
-def flatten_dict(d, exclude=[]):
-    rslt = {}
-    for k, v in d.items():
-        if isinstance(v, dict):
-            rslt[k] = flatten_dict(v, exclude)
-        elif k not in exclude and isinstance(v, Iterable) and not isinstance(v, str) and len(v)==1:
-            rslt[k] = v[0]
-        else:
-            rslt[k] = v
-    return rslt
-
-def is_iterable(obj):
-    return isinstance(obj, Iterable) and not isinstance(obj, (bytes, str))
-    
-def get_full_fields_list(model):
-    from DBentry.base.models import get_model_fields, get_model_relations
-    rslt = set()
-    for field in get_model_fields(model):
-        rslt.add(field.name)
-    for rel in get_model_relations(model, forward = False): # forward relations already handled by get_model_fields
-        if rel.many_to_many and rel.field.model == model:
-            rslt.add(rel.field.name)
-        else:
-            rslt.add(rel.name)
-    return rslt
