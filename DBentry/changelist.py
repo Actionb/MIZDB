@@ -17,7 +17,7 @@ class MIZChangeList(ChangeList):
         """
         Returns all params except IGNORED_PARAMS
         """
-        lookup_params = super(MIZChangeList, self).get_filters_params(params)
+        lookup_params = super(MIZChangeList, self).get_filters_params(params).copy()
         # super() does not remove PAGE_VAR and ERROR_FLAG from lookup_params as these are not in IGNORED_PARAMS
         # lookup_params originally defaults to self.params, which already has had PAGE_VAR/ERROR_FLAG removed during init.
         # We are now passing in request.GET instead (to preserve QueryDict functionality), and thus must remove these params again
@@ -31,7 +31,7 @@ class MIZChangeList(ChangeList):
     def get_filters(self, request):
         # pass request.GET to get_filters_params to get a QueryDict(MultiValueDict) back, this way we can catch multiple values for the same key 
         # which is needed in Advanced Search Form SelectMultiple cases 
-        lookup_params = self.get_filters_params(request.GET) #FIXME: .copy() as get_filters_params may delete keys
+        lookup_params = self.get_filters_params(request.GET)
         use_distinct = False
         
         if not lookup_params:
