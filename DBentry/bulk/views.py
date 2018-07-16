@@ -87,7 +87,6 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
     
     @transaction.atomic()
     def save_data(self, form):
-        #TODO: update instance attributes (jahrgang,etc.)?
         ids = [] # contains the pks of instances either created or updated by save_data
         created = [] # contains instances of objects that were newly created by save_data
         updated = [] # contains instances that were existed before save_data and were updated by it
@@ -124,7 +123,14 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 created.append(instance)
             else:
                 # this instance already existed, update it and mark it as such
-                instance.qs().update(**self.instance_data(row))
+                instance_data = {}
+                for k, v in self.instance_data(row).items():
+                    if k != 'magazin' and v and getattr(instance, k) != v:
+                        # The instance's value for this field differs from the new data, include it in the update
+                        instance_data[k] = v
+                
+                instance.qs().update(**instance_data)
+                self.log_update(instance.qs(), instance_data)
                 updated.append(instance)
             
             # Create and/or update sets
@@ -239,6 +245,8 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
                 if fld_name == 'audio':
                     img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
                     preview_row[fld_name] = img
+                elif fld_name == 'audio_lagerort' and 'audio' not in row:
+                    continue
                 else:
                     values_list = row.get(fld_name) or []
                     if isinstance(values_list, list):
