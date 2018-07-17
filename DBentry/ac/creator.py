@@ -26,7 +26,7 @@ def split_name(full_name):
     return vorname.strip(), nachname.strip()
         
 def _format_name(full_name):
-    vorname, nachname = split_name(full_name)
+    vorname, nachname = split_name(full_name.strip())
     if vorname and not nachname:
         raise FormatException('Kein Nachname.')
     return vorname, nachname

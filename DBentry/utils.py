@@ -309,15 +309,14 @@ def get_full_fields_list(model):
 ##############################################################################################################
 def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     """
-        Joins string values of iterable 'values' up to a length of 'width'.
+    Joins string values of iterable 'values' up to a length of 'width', truncating the remainder.
     """
-    #TODO: use django.utils.text.Truncate
     if not values:
         return ''
     rslt = str(values[0]).zfill(z)
-    for c, i in enumerate(values[1:], 1):
-        if len(rslt) + len(str(i))<width:
-            rslt += sep + str(i).zfill(z)
+    for v in values[1:]:
+        if len(rslt) + len(str(v))<width:
+            rslt += sep + str(v).zfill(z)
         else:
             rslt += sep + "[...]"
             break
@@ -427,7 +426,7 @@ def num_queries(func=None, *args, **kwargs):
 
     context = CaptureQueriesContext(conn)
     if func is None:
-        #NOTE: why are we returning the context manager? shouldn't func be a required argument?
+        # return the context manager so the caller can use it 
         return context
 
     with context as n:

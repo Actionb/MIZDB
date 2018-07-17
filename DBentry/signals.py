@@ -3,6 +3,8 @@ from django.dispatch import receiver
 
 from DBentry.utils import get_relations_between_models
 
+#TODO: is still needed? And if so, what about all the other ComputedNameModels that are not included as sender
+
 def multi_sender(signal, senders, **kwargs):
     """
     Connects a signal handler (func) to models in senders.
