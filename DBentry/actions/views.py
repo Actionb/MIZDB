@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
 
-from DBentry.utils import link_list, merge_records
+from DBentry.utils import link_list, merge_records, get_updateable_fields
 from DBentry.models import *
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin
@@ -198,7 +198,7 @@ class MergeViewWizarded(WizardConfirmationView):
                 original = self.opts.model.objects.get(pk=data.get(prefix + '-original', 0)) 
                 qs = self.queryset.exclude(pk=original.pk)
                 
-                updateable_fields = original.get_updateable_fields() # The fields that may be updated by this merge 
+                updateable_fields = get_updateable_fields(original) # The fields that may be updated by this merge 
                 if updateable_fields: 
                     # Keep track of any fields of original that would be updated.
                     # If there is more than one possible change per field, we need user input to decide what change to keep.

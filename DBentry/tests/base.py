@@ -20,7 +20,7 @@ from DBentry.models import *
 from DBentry.constants import *
 from DBentry.sites import miz_site
 from DBentry.factory import *
-from DBentry.utils import get_relation_info_to, get_model_fields, get_model_relations
+from DBentry.utils import get_relation_info_to, get_model_fields, get_model_relations, get_updateable_fields
 
 from .mixins import *
 
@@ -358,7 +358,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
         
     def assertOriginalExpanded(self, expand_original = True):
         """ Assert whether the original's values were expanded by the merged records correctly. """
-        updateable_fields = self.original.get_updateable_fields()
+        updateable_fields = get_updateable_fields(self.original)
         change_message_fields = set()
         for fld_name, value in self.qs.filter(pk=self.original.pk).values()[0].items():
             if expand_original and fld_name in updateable_fields:
@@ -366,7 +366,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
                 # which is implied by that field's name not showing up in their respective updateable_fields
                 if any(fld_name not in other_updateable_fields
                         for other_updateable_fields
-                        in [merge_record.get_updateable_fields() for merge_record in self.merge_records]):
+                        in [get_updateable_fields(merge_record) for merge_record in self.merge_records]):
                     change_message_fields.add(fld_name)
                     expected_values = [getattr(merge_record, fld_name) for merge_record in self.merge_records]
                     if value not in expected_values:

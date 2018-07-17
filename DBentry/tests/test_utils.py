@@ -119,6 +119,26 @@ class TestModelUtils(MyTestCase):
         self.assertListEqualSorted(required_field_names(artikel), ['schlagzeile', 'seite', 'ausgabe'])
         self.assertListEqualSorted(required_field_names(geber), []) # 'name' field is required but has a default
         self.assertListEqualSorted(required_field_names(bestand), ['lagerort'])
+
+    def test_get_updateable_fields(self):
+        obj = make(artikel)
+        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
+
+        obj.seitenumfang = 'f'
+        obj.beschreibung = 'Beep'
+        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen', 'zusammenfassung'])
+        obj.zusammenfassung = 'Boop'
+        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen'])
+        
+        obj = make(ausgabe)
+        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen'])
+        obj.status = 2
+        self.assertNotIn('status', utils.get_updateable_fields(obj))
+        
+        self.assertIn('turnus', utils.get_updateable_fields(obj.magazin))
+        obj.magazin.turnus = 't'
+        self.assertNotIn('turnus', utils.get_updateable_fields(obj.magazin))
+        
         
 
 ##############################################################################################################

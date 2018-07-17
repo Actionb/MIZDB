@@ -99,7 +99,7 @@ def get_relation_info_to(model, rel):
     
 def get_required_fields(model):
     """
-    Returns the fields that require a value.
+    Returns the fields of a model that require a value.
     """
     rslt = []
     for f in get_model_fields(model, m2m = False):
@@ -139,6 +139,28 @@ def get_related_manager(instance, rel):
         return descriptor.related_manager_cls(getattr(instance, rel.field.name))
     return descriptor.related_manager_cls(instance)
 
+def get_updateable_fields(instance):
+    """
+    Returns the names of instance's fields that are empty or have their default value.
+    Used by merge_records.
+    """
+    rslt = []
+    for fld in get_model_fields(instance._meta.model, m2m = False, primary_key = False):
+        if not fld.concrete or fld.name.startswith('_'):
+            # Exclude 'private' fields
+            continue
+        field_value = fld.value_from_object(instance)
+        if field_value in fld.empty_values:
+            # This field's value is 'empty' in some form or other
+            rslt.append(fld.name)
+        elif fld.has_default():
+            if type(fld.default) is bool:
+                # Special case, boolean values should be left alone?
+                continue
+            elif fld.default == field_value:
+                # This field has it's default value/choice
+                rslt.append(fld.name)
+    return rslt
 
 def is_protected(objs, using='default'):
     """
@@ -166,7 +188,7 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
         if expand_original:
             if update_data is None:
                 update_data = {} # Avoid mutable default arguments shenanigans
-                updateable_fields = original.get_updateable_fields() #TODO: model functions rework
+                updateable_fields = get_updateable_fields(original)
                 for other_record_valdict in qs.values(*updateable_fields):
                     for k, v in other_record_valdict.items():
                         if v and k not in update_data:

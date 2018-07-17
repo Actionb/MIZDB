@@ -102,34 +102,6 @@ class BaseModel(models.Model):
                 rslt.append(field)
         return rslt
         
-    def get_updateable_fields(self):
-    #FIXME: this MUST NOT return a pk field!
-        """
-        Returns the self's fields (as their names) that are empty or have their default value.
-        Used by merge_records.
-        """
-        rslt = []
-        for fld in self._meta.get_fields():
-            if fld.concrete and not fld.name.startswith('_'): # exclude 'private' fields
-                value = fld.value_from_object(self)
-                if value in fld.empty_values:
-                    # This field's value is 'empty' in some form or other
-                    rslt.append(fld.name)
-                else:
-                    default = fld.default if not fld.default is models.fields.NOT_PROVIDED else None
-                    if default is not None:
-                        # fld.default is a non-None value, see if the field's value differs from it
-                        if type(default) is bool:
-                            # Special case, boolean values should be left alone?
-                            continue
-                        elif default == value:
-                            # This field has it's default value as value:
-                            rslt.append(fld.name)
-                        elif default in fld.choices and fld.choices[default][0] == value:
-                            # This field has it's default choice as a value
-                            rslt.append(fld.name)
-        return rslt
-        
     class Meta:
         abstract = True
         default_permissions = ('add', 'change', 'delete', 'merge')

@@ -510,9 +510,9 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(self.obj2.jahrgang, 1)
         self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
     
-    @patch.object(ausgabe, 'get_updateable_fields', return_value = [])
+    @patch('DBentry.actions.views.get_updateable_fields', return_value = [])
     @patch.object(SessionWizardView, 'process_step', return_value = {})
-    def test_process_step(self, super_process_step, ausgabe_updateable_fields):
+    def test_process_step(self, super_process_step, updateable_fields):
         view = self.get_view()
         view.get_form_prefix = mockv('0')
         view.storage = Mock(current_step = '')
@@ -528,12 +528,10 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         # if the 'original' has no fields that can be updated, the returned dict should not contain 'updates'
         super_process_step.return_value = {'0-original':self.obj1.pk}
         form.cleaned_data = {'0-original':self.obj1.pk, 'expand_o':True}
-        #mock_process_step.return_value = {'0-original':self.obj1.pk}
-        #with patch.object(self.obj1.__class__, 'get_updateable_fields', return_value = []):
         self.assertEqual(view.process_step(form), {'0-original':self.obj1.pk})
                 
         # obj1 can be updated on the field 'jahrgang' with obj2's value
-        ausgabe_updateable_fields.return_value = ['jahrgang']
+        updateable_fields.return_value = ['jahrgang']
         view.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view.storage.current_step = ''
         processed_data = view.process_step(form)

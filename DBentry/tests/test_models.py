@@ -35,20 +35,6 @@ class TestBaseModel(DataTestCase):
     def test_get_search_fields(self):
         expected = ['schlagzeile', 'zusammenfassung', 'beschreibung']
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
-
-    def test_get_updateable_fields(self):
-        # The factory provided an instance with only the required fields filled out
-        self.assertEqual(self.obj1.get_updateable_fields(), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
-
-        self.obj1.seitenumfang = 'f'
-        self.obj1.beschreibung = 'Beep'
-        self.assertListEqualSorted(self.obj1.get_updateable_fields(), ['bemerkungen', 'zusammenfassung'])
-        self.obj1.zusammenfassung = 'Boop'
-        self.assertListEqualSorted(self.obj1.get_updateable_fields(), ['bemerkungen'])
-
-    def test_get_updateable_fields_not_ignores_default(self):
-        # get_updateable_fields should include fields that have their default value
-        self.assertListEqualSorted(make(geber).get_updateable_fields(), ['name'])
         
 class TestBaseM2MModel(DataTestCase):
     
@@ -99,12 +85,6 @@ class TestComputedNameModel(DataTestCase):
         # _name should always be the first field in search_fields
         self.model.search_fields += ['_name']
         self.assertEqual(self.model.get_search_fields()[0], '_name')
-
-    def test_get_updateable_fields(self):
-        # _name and _changed_flag should not appear in get_updateable_fields even if empty/default value
-        obj = ausgabe(magazin=self.mag)
-        self.assertFalse('_name' in obj.get_updateable_fields())
-        self.assertFalse('_changed_flag' in obj.get_updateable_fields())
 
     def test_name_default(self):
         self.assertEqual(str(self.obj1), self.default)
