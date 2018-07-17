@@ -150,14 +150,14 @@ def get_updateable_fields(instance):
         field_value = fld.value_from_object(instance)
         if field_value in fld.empty_values:
             # This field's value is 'empty' in some form or other
-            rslt.append(fld.name)
+            rslt.append(fld.attname)
         elif fld.has_default():
             if type(fld.default) is bool:
                 # Special case, boolean values should be left alone?
                 continue
             elif fld.default == field_value:
                 # This field has it's default value/choice
-                rslt.append(fld.name)
+                rslt.append(fld.attname)
     return rslt
 
 def is_protected(objs, using='default'):

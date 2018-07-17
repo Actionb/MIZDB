@@ -330,7 +330,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
                 
             # These are the fields of the related_model that *should* retain their values
             preserved_fields = [
-                fld.name 
+                fld.attname 
                 for fld in get_model_fields(
                     related_model, m2m = False, 
                     exclude = [related_field.name], primary_key = True
@@ -339,7 +339,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
             
             # The values of the objects of the related model that are related to original
             self.original_related[(related_model, related_field)] = list(related_model.objects.filter(**{related_field.name:self.original}).values(*preserved_fields))  # list() to force evaluation
-            
+
             # A queryset of all objects of the related model affected by the merge
             updated_qs = related_model.objects.filter(**{related_field.name + '__in':self.merge_records})
             
@@ -396,6 +396,9 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
         #for (related_model, related_field), related_valdicts in self.merger_related.items():
         for rel in get_model_relations(self.model, forward = False):
             related_model, related_field = get_relation_info_to(self.model, rel)
+            if related_model == self.model:
+                # ignore self relations
+                continue
             pk_name = related_model._meta.pk.name
             pks_seen = set()
             qs = related_model.objects.filter(**{related_field.name:self.original})  # queryset of objects that are now related to original

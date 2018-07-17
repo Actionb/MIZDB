@@ -207,12 +207,9 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
 ##############################################################################################################
 # merging
 ##############################################################################################################
-#TODO: test merge with update_data passed in
+#TODO: merge_record: most of the TestClasses for models are VERY basic
 class MergeTestMethodsMixin(object):
-    #TODO:
-    # test behaviour when merge cannot be completed due to an internal exception
-    # test genre,schlagwort for self relations
-    # fix the logging
+
 
     def test_merge_records_expand(self):
         # A merge with expanding the original's values
@@ -309,7 +306,7 @@ class TestMergingAusgabe(MergingTestCase):
                 
 class TestMergingOrt(MergingTestCase, MergeTestMethodsMixin):
     model = ort
-    
+
 class TestMergingArtikel(MergingTestCase, MergeTestMethodsMixin):
     model = artikel
     
@@ -327,6 +324,16 @@ class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):
     
 class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
     model = genre
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(genre, genre='Original')
+        cls.obj2 = make(genre, genre='Merger1', ober=cls.obj1)
+        cls.obj3 = make(genre, genre='Merger2')
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        
+        super().setUpTestData()
     
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
     model = schlagwort
@@ -410,7 +417,7 @@ class VideoMergingDataMixin(object):
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         
         super().setUpTestData()
-        
+
 class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
 
     def test_merge_records_expand(self):
