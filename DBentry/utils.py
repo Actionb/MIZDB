@@ -113,24 +113,32 @@ def get_required_fields(model):
             continue
         rslt.append(f)
     return rslt
-
-def get_related_set(instance, rel):
-    model_class = instance._meta.model
+    
+def get_related_descriptor(model_class, rel):
+    """
+    Returns the descriptor that describes relation rel referenced from model model_class.
+    """
     if rel.many_to_many:
         if rel.field.model == model_class:
+            # model_class contains the ManyToManyField declaring the relation
             attr = rel.field.name
-            #intermediary_field_name = rel.field.m2m_field_name()
         else:
             attr = rel.get_accessor_name()
-            #intermediary_field_name = rel.feld.m2m_reverse_field_name()
         descriptor = getattr(model_class, attr)
-        #return rel.through.objects.filter(**{intermediary_field_name:instance})
     else:
         descriptor = getattr(rel.model, rel.get_accessor_name())
-    if isinstance(instance, model_class):
-        return descriptor.related_manager_cls(instance).all()
-    else:
-        return descriptor
+    return descriptor
+
+def get_related_manager(instance, rel):
+    """
+    Returns the related manager that governs the relation rel for model object instance.
+    """
+    descriptor = get_related_descriptor(instance._meta.model, rel)
+    if not rel.many_to_many and rel.field.model == instance._meta.model:
+        # If rel is a forward ManyToOneRel, we must call the related_manager_cls with the related object
+        return descriptor.related_manager_cls(getattr(instance, rel.field.name))
+    return descriptor.related_manager_cls(instance)
+
 
 def is_protected(objs, using='default'):
     """
