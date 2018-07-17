@@ -10,7 +10,7 @@ from django.contrib.auth import get_permission_codename
 from django.utils.functional import cached_property
 
 from .models import *
-from .utils import link_list, model_from_string
+from .utils import link_list, get_model_from_string
 from .forms import FavoritenForm
 from .sites import miz_site, register_tool
 from .constants import PERM_DENIED_MSG
@@ -74,7 +74,7 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
             else:
                 perm_code, model = perm_tuple
                 if isinstance(model, str):
-                    model = model_from_string(model)
+                    model = get_model_from_string(model)
             if model is None:
                 if hasattr(cls, 'opts'):
                     opts = getattr(cls, 'opts')

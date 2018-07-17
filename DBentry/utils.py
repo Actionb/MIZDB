@@ -20,14 +20,12 @@ from .logging import get_logger
 # model utilities
 ############################################################################################################## 
     
-def model_from_string(model_name):
+def get_model_from_string(model_name):
     from django.apps import apps 
     try:
         return apps.get_model('DBentry', model_name)
     except LookupError:
         return None
-#TODO: rename model_from_string to get_model_from_string
-get_model_from_string = model_from_string
 
 def get_model_fields(model, base = True, foreign = True, m2m = True, exclude = (), primary_key = False):
     rslt = []
@@ -266,9 +264,9 @@ def get_relations_between_models(model1, model2):
     """ 
     # used by signals.set_name_changed_flag_ausgabe
     if isinstance(model1, str): 
-        model1 = model_from_string(model1) 
+        model1 = get_model_from_string(model1) 
     if isinstance(model2, str): 
-        model2 = model_from_string(model2) 
+        model2 = get_model_from_string(model2) 
      
     field = None # the concrete field declaring the relation 
     rel = None # the reverse relation 
