@@ -1,9 +1,11 @@
 
 from django.utils.translation import gettext, gettext_lazy
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.contrib.admin.utils import get_fields_from_path
+from django.db.models import ProtectedError
 
-from DBentry.utils import get_obj_link
+from DBentry.utils import get_obj_link, link_list
 from DBentry.views import MIZAdminMixin, OptionalFormView, FixedSessionWizardView
 from .forms import makeSelectionForm
 
@@ -200,5 +202,12 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
     def done(self, form_list, **kwargs): 
         # The 'final' method of a WizardView.
         # By default, force a redirect back to the changelist by returning None
-        self.perform_action() 
+        try:
+            self.perform_action() 
+        except ProtectedError as e:
+            # The merge could not be completed as there were protected objects in the queryset
+            protected = format_html(link_list(self.request, e.protected_objects))
+            object_name = e.protected_objects.model._meta.verbose_name_plural or 'Objekte' 
+            msg = gettext('Folgende verwandte {object_name} verhinderten die Zusammenführung: ').format(object_name=object_name) + protected
+            self.model_admin.message_user(self.request, format_html(msg), 'error')
         return None

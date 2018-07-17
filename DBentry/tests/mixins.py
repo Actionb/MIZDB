@@ -122,6 +122,7 @@ class LoggingTestMixin(object):
     """
     Provides TestCases with Assertions that verify that a change to model objects is being logged.
     """
+    enforce_uniqueness = True # enfore uniqueness of LogEntry objects, set to False when str(obj) would result in the same string for two different objects
     
     def assertLogged(self, objects, action_flag, **kwargs):
         from django.contrib.admin.options import get_content_type_for_model
@@ -160,7 +161,7 @@ class LoggingTestMixin(object):
             if not qs.exists(): 
                 unlogged.append((obj, filter_params))
                 continue
-            if qs.count()>1:
+            if qs.count()>1 and self.enforce_uniqueness:
                 msg = "Could not verify uniqueness of LogEntry for object {object}.".format(object=object)
                 msg += "\nNumber of matching logs: {count}.".format(count = qs.count())
                 msg += "\nFilter parameters used: "

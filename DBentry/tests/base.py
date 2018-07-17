@@ -383,11 +383,12 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
                     # A value has changed although it shouldn't have changed
                     raise AssertionError('Unexpected change with expand_original = {}: value of field {} changed from {} to {}.'.format(
                         str(expand_original), fld_name, str(old_value), str(value)))
-        if expand_original:
+        if change_message_fields:
             self.change_message_fields = change_message_fields # prepare for the logging assertion
             
     def assertOriginalExpandedLogged(self):
-        self.assertLoggedChange(self.original, fields=getattr(self, 'change_message_fields', []))
+        if getattr(self, 'change_message_fields', None):
+            self.assertLoggedChange(self.original, fields=getattr(self, 'change_message_fields', []))
             
     def assertRelatedChanges(self):
         """ Assert that the original is now related to all objects that were related to the merge_records. """
@@ -450,7 +451,5 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase): # Need 
             try:
                 self.assertLoggedAddition(self.original, related_obj)
             except AssertionError as e:
-                print('related_obj', related_obj)
-                print(related_model, related_field)
                 raise e
             self.assertLoggedChange(related_obj, related_field.name, self.original)

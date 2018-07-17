@@ -176,7 +176,6 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.
     """
-    #TODO: FIXME! Rework the unique_together bit.
     logger = get_logger(request)
     
     qs = qs.exclude(pk=original.pk)
@@ -206,7 +205,13 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
             
             # exclude all related objects that the original has already, avoiding IntegrityError due to UNIQUE CONSTRAINT violations
             for unique_together in related_model._meta.unique_together:
-                #TODO: what about (related_field, some_other_field) unique_together?
+                if related_field.name in unique_together:
+                    # The ForeignKey field is part of this unique_together, remove it or
+                    # we will later do exclude(FKfield_id=original_id,<other_values>) which would not actually exclude anything.
+                    unique_together = list(unique_together)
+                    unique_together.remove(related_field.name)
+                    if not unique_together:
+                        continue
                 # Nothing will get excluded from the qs with related_field = original as no objects in the qs are related to original yet.
                 for values in related_model.objects.filter(**{related_field.name:original}).values(*unique_together):
                     qs_to_be_updated = qs_to_be_updated.exclude(**values)
@@ -247,14 +252,14 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
                     # delete the troublemakers?
                     logger.log_delete(not_updated)
                     not_updated.delete()
-                    
-        #TODO: shouldn't the protection check happen at the start of the merge??
+        
+        # All related objects that could have been protected should now have been moved to 'original'.
+        # We can now check if any of the merged objects are still protected.
         protected = is_protected(qs)
         if protected:
-            # Some objects were protected, abort the merge
+            # Some objects are still protected, abort the merge
             raise protected
         logger.log_delete(qs)
-        # And delete them
         qs.delete()
     return original_qs.first(), update_data
          

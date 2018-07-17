@@ -220,9 +220,9 @@ class MergeTestMethodsMixin(object):
         self.assertOriginalExpanded()
         self.assertRelatedChanges()
         self.assertRestDeleted()
-#        self.assertOriginalExpandedLogged()
-#        self.assertRelatedChangesLogged()
-#        self.assertRestDeletedLogged()
+        self.assertOriginalExpandedLogged()
+        self.assertRelatedChangesLogged()
+        self.assertRestDeletedLogged()
         
     def test_merge_records_no_expand(self):
         # A merge without expanding the original's values
@@ -230,10 +230,10 @@ class MergeTestMethodsMixin(object):
         self.assertOriginalExpanded(expand_original = False)
         self.assertRelatedChanges()
         self.assertRestDeleted()
-#        self.assertOriginalExpandedLogged()
-#        self.assertRelatedChangesLogged()
-#        self.assertRestDeletedLogged()
-
+        self.assertOriginalExpandedLogged()
+        self.assertRelatedChangesLogged()
+        self.assertRestDeletedLogged()
+        
 class TestMergingAusgabe(MergingTestCase): 
     
     model = ausgabe
@@ -460,5 +460,5 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
     
 # Using the more complex MergeTestMethodsMixin
 class TestMergingVideo(VideoMergingDataMixin, MergingTestCase, MergeTestMethodsMixin):
-    pass
+    enforce_uniqueness = False
     
