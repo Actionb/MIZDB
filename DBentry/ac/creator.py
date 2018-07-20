@@ -1,35 +1,15 @@
 from collections import OrderedDict
 
 from DBentry.models import *
+from DBentry.utils import parse_name
 
 # isn't this very close to validation of form fields?
 #TODO: store created object/create_info etc.
 #TODO: allow or disallow 'duplicating' records?
 #TODO: create, createable and create_info all do the same thing
     
-class FormatException(Exception):
-    message = 'Formatierung fehlgeschlagen.'
-    
 class MultipleObjectsReturnedException(Exception):
     message = 'Name nicht einzigartig.'
-    
-
-def split_name(full_name):
-    #TODO: move to utils.py
-    try:
-        if ',' in full_name:
-            nachname, vorname = full_name.strip().split(',')
-        else:
-            vorname, nachname = full_name.strip().rsplit(' ', 1)
-    except ValueError:
-        raise FormatException()
-    return vorname.strip(), nachname.strip()
-        
-def _format_name(full_name):
-    vorname, nachname = split_name(full_name.strip())
-    if vorname and not nachname:
-        raise FormatException('Kein Nachname.')
-    return vorname, nachname
     
 class FailedObject(object):
     """
@@ -53,7 +33,7 @@ class Creator(object):
     def create(self, text):
         try:
             created = self.creator(text, False)
-        except (FormatException, MultipleObjectsReturnedException) as e:
+        except MultipleObjectsReturnedException as e:
             if self.raise_exceptions:
                 raise e
             created = FailedObject(e.message)
@@ -91,7 +71,7 @@ class Creator(object):
         
         
     def create_person(self, text, dry_run = False):
-        vorname, nachname = _format_name(text.strip())
+        vorname, nachname = parse_name(text)
         
         p = self._get_model_instance(person, vorname = vorname, nachname = nachname)
         

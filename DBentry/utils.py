@@ -324,6 +324,15 @@ def concat_limit(values, width = M2M_LIST_MAX_LEN, sep = ", ", z = 0):
     
 def snake_case_to_spaces(value):
     return value.replace('_', ' ').strip()
+    
+def parse_name(full_name):
+    full_name = full_name.strip()
+    if len(full_name.split()) == 1:
+        return '', full_name
+        
+    from nameparser import HumanName
+    hn = HumanName(full_name)
+    return " ".join([hn.first, hn.middle]).strip(), hn.last
         
 ##############################################################################################################
 # admin utilities

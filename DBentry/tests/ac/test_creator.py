@@ -14,15 +14,9 @@ class TestCreator(DataTestCase):
         Assert that the method reraises exceptions according to creator.raise_exceptions.
         """
         x = creator.raise_exceptions
-        method = getattr(creator, method_name)
-        creator.raise_exceptions = True
-        creator.creator = mockex(FormatException())
-        with self.assertRaises(FormatException):
-            method('Alice ')
-        creator.raise_exceptions = False
-        with self.assertNotRaises(FormatException):
-            method('Alice ')
         
+        method = getattr(creator, method_name)
+        creator.raise_exceptions = False
         creator.creator = mockex(MultipleObjectsReturnedException())
         with self.assertNotRaises(MultipleObjectsReturnedException):
             method('Alice Testman')
@@ -42,11 +36,8 @@ class TestCreator(DataTestCase):
         self.assertIsNone(creator.creator('beep', 'boop'))
         
     def test_create_reraises_or_failed_object(self):
-        # If self.raise_exceptions, (FormatException, MultipleObjectsReturnedException) exceptions should bubble up
+        # If self.raise_exceptions, MultipleObjectsReturnedException exceptions should bubble up
         creator = Creator(model = person, raise_exceptions = True)
-        creator.creator = mockex(FormatException())
-        with self.assertRaises(FormatException):
-            creator.create('Alice ')
             
         creator.creator = mockex(MultipleObjectsReturnedException())
         with self.assertRaises(MultipleObjectsReturnedException):
@@ -56,10 +47,6 @@ class TestCreator(DataTestCase):
         creator.raise_exceptions = False
         with self.assertNotRaises(MultipleObjectsReturnedException):
             created = creator.create('Alice Testman')
-        self.assertIsInstance(created, FailedObject)
-        creator.creator = mockex(FormatException())
-        with self.assertNotRaises(FormatException):
-            created = creator.create('Alice ')
         self.assertIsInstance(created, FailedObject)
     
     def test_createable(self):
@@ -75,8 +62,6 @@ class TestCreator(DataTestCase):
         # createable should either return False or reraise upon encountering an exception, depending on raise_exceptions
         self.assertToReraiseOrNotToReraise(creator, 'createable')
         creator.raise_exceptions = False
-        creator.creator = mockex(FormatException())
-        self.assertEqual(creator.createable('Alice '), False)
         
         creator.creator = mockex(MultipleObjectsReturnedException())
         self.assertEqual(creator.createable('Alice Testman'), False)
