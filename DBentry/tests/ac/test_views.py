@@ -138,14 +138,6 @@ class TestACCreateable(ACViewTestCase):
             pass
         self.assertIsInstance(view.creator, Creator)
     
-    def test_createable_takes_creator(self):
-        # Assert that createable() takes a custom creator argument over self.creator
-        view = self.get_view()
-        view.creator = self.creator
-        mock_creator = Mock(spec = Creator)
-        mock_creator.createable.return_value = 'Test123'
-        self.assertEqual(view.createable('Beep', creator=mock_creator), 'Test123')
-    
     @translation_override(language = None)
     def test_get_create_option(self):
         # Assert that get_create_option appends a non-empty 'create_info' dict to the default create option list
@@ -153,9 +145,10 @@ class TestACCreateable(ACViewTestCase):
         request = self.get_request()
         view = self.get_view(request)
         view.creator = self.creator
+        self.assertTrue(hasattr(view, 'get_creation_info'))
         view.get_creation_info = mockv([{'id': None, 'create_id': True, 'text': 'Test123'}])
         
-        create_option = view.get_create_option(context = {}, q = 'Alice Tester') 
+        create_option = view.get_create_option(context = {}, q = 'Alice Testman (AT)') 
         self.assertEqual(len(create_option), 2, msg = ", ".join(str(d) for d in create_option))
         self.assertIn('Test123', [d['text'] for d in create_option])
         
@@ -166,16 +159,41 @@ class TestACCreateable(ACViewTestCase):
     def test_get_creation_info(self):
         default = {'id':None, 'create_id':True, 'text':'...mit folgenden Daten:'}
         sub = OrderedDict([
-            ('Person', OrderedDict([('Vorname','Alice'), ('Nachname','Testman'), ('None', None), ('instance','Nope')])), 
+            ('Person', OrderedDict(
+                [('Vorname','Alice'), ('Nachname','Testman'), ('None', None), ('instance','Nope'), 
+            ])), 
             ('Kürzel','AT'), 
             ('None', None), 
             ('instance', 'Nope'), 
         ])
         
         view = self.get_view()
-        view.creator = self.creator
-        view.creator.create_info = mockv(sub)
-        create_info = view.get_creation_info('Alice Testman (AT)')
+        with patch('DBentry.ac.creator.Creator', autospec = True, spec_set = True) as mocked_creator:
+            view.creator = mocked_creator
+            mocked_creator.create = mockv(sub)
+            create_info = view.get_creation_info('Alice Testman (AT)', creator = mocked_creator)
+                
+            self.assertEqual(len(create_info), 4) # also asserts that the empty 'None' dictionary items were removed
+            self.assertEqual(create_info[0], default)
+            expected = default.copy()
+            expected['text'] = ' '*4 + 'Vorname: Alice'
+            self.assertEqual(create_info[1], expected)
+            expected = default.copy()
+            expected['text'] = ' '*4 + 'Nachname: Testman'
+            self.assertEqual(create_info[2], expected)
+            expected = default.copy()
+            expected['text'] = 'Kürzel: AT'
+            self.assertEqual(create_info[3], expected)
+            
+            #TODO: NYI: Test the correct handling of nested dicts
+            sub['Person']['nested_dicts'] = dict(nested1=dict(nested2=dict(nested3='End of nest')))
+            mocked_creator.create = mockv(sub)
+            create_info = view.get_creation_info('Alice Testman (AT)', creator = mocked_creator)
+            
+        
+        create_info = view.get_creation_info('Alice Testman (AT)', creator = self.creator)
+            
+        self.assertEqual(len(create_info), 4) # also asserts that the empty 'None' dictionary items were removed
         self.assertEqual(create_info[0], default)
         expected = default.copy()
         expected['text'] = ' '*4 + 'Vorname: Alice'
@@ -186,8 +204,7 @@ class TestACCreateable(ACViewTestCase):
         expected = default.copy()
         expected['text'] = 'Kürzel: AT'
         self.assertEqual(create_info[3], expected)
-        self.assertEqual(len(create_info), 4)
-        
+            
     def test_create_object(self):
         obj1 = make(autor, person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT')
         view = self.get_view()
@@ -220,7 +237,7 @@ class TestACCreateable(ACViewTestCase):
     def test_post(self):
         # Assert that post raises an AttributeError exception if self.creator is unset and self.create_field is unset
         expected_error_msg = 'Missing "create_field"'
-        request = self.get_request() # request method/content doesn't matter as we're calling post directly
+        request = self.post_request(data = {'text': 'Alice Testman (AT)'})
         view = self.get_view()
         
         # both creator and create_field are None
@@ -245,6 +262,7 @@ class TestACCreateable(ACViewTestCase):
         view.creator = self.creator
         with self.assertNotRaises(AttributeError) as cm:
             view.post(request)
+        self.assertTrue(autor.objects.filter(person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT').exists())
             
 class TestACAusgabe2(ACViewTestCase):
     #NOTE: should all the queryset filtering be done with _name__icontains=q?

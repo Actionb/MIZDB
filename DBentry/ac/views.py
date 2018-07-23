@@ -194,7 +194,7 @@ class ACCreateable(ACCapture):
         
     def createable(self, text, creator = None):
         creator = creator or self.creator
-        return creator.createable(text)
+        return bool(creator.create(text, preview=True))
     
     def get_create_option(self, context, q):
         """Form the correct create_option to append to results."""
@@ -223,12 +223,13 @@ class ACCreateable(ACCapture):
         return create_option
         
     def get_creation_info(self, text, creator = None):
+        #TODO: iterate over all nested dicts in create_info returned by creator.create
         creator = creator or self.creator
         create_info = []
         default = {'id':None, 'create_id':True, 'text':'...mit folgenden Daten:'} # 'id' : None will make the option unselectable
         
         create_info.append(default.copy())
-        for k, v in creator.create_info(text).items():
+        for k, v in creator.create(text, preview = True).items():
             if not v or k == 'instance':
                 continue
             if isinstance(v, dict):
@@ -246,7 +247,7 @@ class ACCreateable(ACCapture):
         if self.has_create_field():
             return super().create_object(text)
         creator = creator or self.creator
-        created_instance = creator.create(text).get('instance')
+        created_instance = creator.create(text, preview = False).get('instance')
         return created_instance
 
     def post(self, request):
