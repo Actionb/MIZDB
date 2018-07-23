@@ -24,11 +24,11 @@ from DBentry.utils import get_relation_info_to, get_model_fields, get_model_rela
 
 from .mixins import *
 
-def mockv(value):
-    return Mock(return_value=value)
+def mockv(value, **kwargs):
+    return Mock(return_value=value, **kwargs)
     
-def mockex(exception):
-    return Mock(side_effect=exception)
+def mockex(exception, **kwargs):
+    return Mock(side_effect=exception, **kwargs)
 
 class MyTestCase(TestCase):
             
