@@ -164,7 +164,7 @@ class ausgabe(ComputedNameModel):
                  
     search_fields = [
         'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
-        'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'beschreibung'
+        'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'beschreibung', 'bemerkungen'
     ]
     primary_search_fields = ['_name']
     search_fields_suffixes = {
@@ -176,6 +176,7 @@ class ausgabe(ComputedNameModel):
         'ausgabe_monat__monat__abk':'Monat Abk.', 
         'ausgabe_jahr__jahr' : 'Jahr', 
         'beschreibung' : 'Beschreibung', 
+        'bemerkungen': 'Bemerkungen', 
         }
         
     name_composing_fields = [
