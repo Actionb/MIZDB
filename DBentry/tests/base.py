@@ -5,6 +5,7 @@ from functools import partial
 from collections import OrderedDict
 import contextlib
 import re
+import random
 
 from django.test import TestCase, SimpleTestCase, Client, tag
 from django.contrib.auth.models import User
