@@ -252,76 +252,107 @@ class CNQuerySet(MIZQuerySet):
     _update_names.alters_data = True
 
 class AusgabeQuerySet(CNQuerySet):
+    
+    def find(self, q, ordered = True, **kwargs):
+        strat = ValuesDictSearchQuery(self.all(), **kwargs)
+        result, exact_match = strat.search(q)
+        if result and ordered and self.ordered:
+            # Restore order that was messed up by the search
+            ordered_result = []
+            for id in self.values_list('pk', flat = True):
+                if id in strat.ids_found:
+                    for tpl in result:
+                        if tpl[0] == id:
+                            ordered_result.append(tpl)
+            return ordered_result
+        return result
+        
+    def data_dump(self, fields = None):
+        if fields is None:
+            fields = [
+                'magazin__magazin_name', 'sonderausgabe', 'jahrgang', 'e_datum', 
+                'ausgabe_jahr__jahr', 'ausgabe_lnum__lnum', 'ausgabe_num__num', 'ausgabe_monat__monat__ordinal', 
+            ]
+        vd = self.values_dict(*fields, flatten = True)
+        rslt = []
+        for pk, val_dict in vd.items():
+            y = val_dict.copy()
+            x = OrderedDict()
+            x['pk'] = pk
+            for f in fields:
+                if f in y:
+                    x[f] = y[f]
+            rslt.append(x)
+        return rslt
+    
+    def chronologic_order(self, ordering = None):
+        if not self.exists() or not self.query.where.children:
+            # Don't bother if queryset is empty or not filtered in any way
+            return self.order_by('pk') # django would warn about an unordered list even if it was empty
             
-    def filter(self, *args, **kwargs):
-        # Overridden, to better deal with poorly formatted e_datum values
-        # django's way of validating inputs for querysets is done via django.utils.dateparse.py
-        if 'e_datum' in kwargs:
-            try:
-                return super(AusgabeQuerySet, self).filter(*args, **kwargs)
-            except ValidationError:
-                from datetime import datetime
-                v = kwargs.get('e_datum', '')
-                for possible_formatting in ["%d.%m.%Y", "%d.%m.%y","%Y.%m.%d", "%Y-%m-%d", "%y-%m-%d"]: 
-                    # See if the value given for e_datum fits any of the possible formats
-                    try:
-                        v = datetime.strptime(v, possible_formatting).date()
-                    except ValueError:
-                        continue
-                    break
-                # If we couldn't 'fix' the e_datum value, the queryset still contains the faulty value
-                # and upon calling super, will raise an exception
-                kwargs['e_datum'] = v
-        return super(AusgabeQuerySet, self).filter(*args, **kwargs)
-       
-    def resultbased_ordering(self):
-        if not self.query.where.children:
-            # Only try to find a better ordering if we are not working on the entire ausgabe queryset 
-            # (that is: if filtering has been done)
-            return self
-        from django.db.models import Min, Max
+        default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe'] #NOTE: jahrgang -> jahr?
+        if ordering is None:
+            ordering = default_ordering
+            pk_order_item = 'pk'
+        else:
+            if 'pk' in ordering:
+                pk_order_item = ordering.pop(ordering.index('pk'))
+            elif '-pk' in ordering:
+                pk_order_item = ordering.pop(ordering.index('-pk'))
+            else:
+                pk_order_item = 'pk'
+                
+            # Remove any leading '-' so we do not append 'magazin' to ['-magazin']
+            stripped_ordering = [i[1:] if i[0] == '-' else i for i in ordering]
+            for o in default_ordering:
+                if o not in stripped_ordering:
+                    ordering.append(o)
+                
+        # Determine if jahr and/or jahrgang should be in ordering. 
+        # The overall order may be messed up if the queryset is a mixed bag of records of having both, having neither and having one or the other.
+        jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))
+        jahr_values, jahrgang_values = zip(*jj_values) # zip(*list) is the inverse of zip(list)
+        jahr_missing = jahr_values.count(None)
+        jahrgang_missing = jahrgang_values.count(None)
+        
+        if jahr_missing and jahrgang_missing:
+            # Some records in queryset are missing jahr while others are missing jahrgang
+            if jahr_missing > jahrgang_missing:
+                # there are more records missing jahr than there are records missing jahrgang
+                ordering.remove('jahr')
+            elif jahrgang_missing > jahr_missing:
+                ordering.remove('jahrgang')
+            else:
+                # the records are missing an equal amount of either criteria, remove them both
+                ordering.remove('jahr')
+                ordering.remove('jahrgang')
+        elif jahr_missing:
+            ordering.remove('jahr')
+        elif jahrgang_missing:
+            ordering.remove('jahrgang')
+        
+        # Find the best criteria to order with, which might be either: num, lnum, monat or e_datum
+        # Count the presence of the different criteria and sort them accordingly.
+        # Account for the joins by taking each sum individually.
+        # Since sorted() is stable, we can set the default order to (lnum, monat, num) in case any sum values are equal.
+        counted = OrderedDict(chain(
+            self.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
+            self.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(),
+            self.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(),  
+            self.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
+        ))
+        criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
+        result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
+        ordering.extend(result_ordering + [pk_order_item])
+        
         self = self.annotate(
-                jahr = Min('ausgabe_jahr__jahr'), 
-                num = Min('ausgabe_num__num'), 
-                lnum = Min('ausgabe_lnum__lnum'), 
-                monat = Min('ausgabe_monat__monat_id'), 
-                )
-        temp = []
-        from .models import magazin, ausgabe_num, ausgabe_lnum, ausgabe_monat
-        for ausg_detail, detail_name in [(ausgabe_num, 'num'), (ausgabe_lnum, 'lnum')]:
-            c = ausg_detail.objects.filter(ausgabe__in=self).values('ausgabe_id').distinct().count()
-            temp.append((c, detail_name))
-        temp.append(    (self.filter(e_datum__isnull=False).values('e_datum').count(), 'e_datum')   )
-        temp.sort(reverse=True)
-        ordering = [i[1] for i in temp]
+            jahr = Min('ausgabe_jahr__jahr'), 
+            num = Max('ausgabe_num__num'), 
+            lnum = Max('ausgabe_lnum__lnum'), 
+            monat = Max('ausgabe_monat__monat__ordinal'), 
+        ).order_by(*ordering)
+        return self
         
-        mag_ids = self.values_list('magazin_id', flat = True).distinct()
-        if mag_ids.count()==1:
-            merkmal = magazin.objects.get(pk=mag_ids.first()).ausgaben_merkmal
-            if merkmal:
-                if merkmal in ordering:
-                    ordering.remove(merkmal)
-                ordering.insert(0, merkmal)
-         #NOTE: using these annotations caused an exception in BulkConfirmationView when updating its queryset
-         # had to reset its order_by
-         # maybe something isn't quite loading from inside a view?
-        ordering = ['jahr'] + ordering + ['monat', 'sonderausgabe']
-        return self.order_by(*ordering)
-        
-    def print_qs(self):
-        qs = self
-        flds = ['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat']
-        alias = ['Jahr','Nummer','lfd.Nummer','Monat']
-        columns = list(zip(flds, alias))
-        obj_values = qs.values_all(flds)
-        for fld, alias in columns:
-            if all(all(value is None for value in row[fld]) for row in obj_values):
-                # Don't print columns whose rows are all None
-                columns.remove((fld, alias))
-        print_tabular(obj_values, columns)
-        
-    
-    
 class BuchQuerySet(MIZQuerySet):
     
     def filter(self, *args, **kwargs):

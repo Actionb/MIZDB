@@ -27,7 +27,7 @@ class TestDataMixin(object):
                 for pk, values in cls.raw_data.items():
                     try:
                         cls.test_data.append(make(cls.model, pk = pk, **values))
-                    except TyperError:
+                    except TypeError:
                         # pk is included in values
                         cls.test_data.append(make(cls.model, **values))
             else:
@@ -41,9 +41,11 @@ class TestDataMixin(object):
         
     def setUp(self):
         super(TestDataMixin, self).setUp()
+        self._ids = []
         for c, obj in enumerate(self.test_data, 1):
             obj.refresh_from_db()
             setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk))
+            self._ids.append(obj.pk)
         self.queryset = self.model.objects.all()
         
 class CreateViewMixin(object):

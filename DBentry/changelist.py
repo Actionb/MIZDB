@@ -1,5 +1,5 @@
 
-from django.contrib.admin.views.main import *
+from django.contrib.admin.views.main import * #TODO: explicit imports
 from django.utils.datastructures import MultiValueDict
 
 class MIZChangeList(ChangeList):
@@ -190,65 +190,5 @@ class MIZChangeList(ChangeList):
 class AusgabeChangeList(MIZChangeList):
     
     def get_queryset(self, request):
-        from DBentry.models import magazin
-        from itertools import chain
-        from django.db.models import Count, Sum, Min, Max
-        queryset = super().get_queryset(request).order_by() #NOTE: we can keep the querystring order this way
-        
-        # Get the ordering set either by ModelAdmin.get_ordering/CL._get_default_ordering 
-        # or (overriding the previous two) the ordering given by a query string.
-        # The primary key is also appended to the end.
-        ordering = self.get_ordering(request, queryset) #NOTE: haven't we done this through the call to super() already?
-        if not queryset.exists() or not queryset.query.where.children:
-            # Don't bother if queryset is empty or not filtered in any way
-            return queryset.order_by(*ordering) # django would warn about an unordered list even if it was empty
-            
-        pk_order_item = ordering.pop(-1)
-        for o in ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']: #NOTE: jahrgang -> jahr?
-            if o not in ordering:
-                ordering.append(o)
-                
-        # Determine if jahr and/or jahrgang should be in ordering. 
-        # The overall order may be messed up if the queryset is a mixed bag of records of having both, having neither and having one or the other.
-        jj_values = list(queryset.values_list('ausgabe_jahr', 'jahrgang'))
-        jahr_values, jahrgang_values = zip(*jj_values) # zip(*list) is the inverse of zip(list)
-        jahr_missing = jahr_values.count(None)
-        jahrgang_missing = jahrgang_values.count(None)
-        
-        if jahr_missing and jahrgang_missing:
-            # Some records in queryset are missing jahr while others are missing jahrgang
-            if jahr_missing > jahrgang_missing:
-                # there are more records missing jahr than there are records missing jahrgang
-                ordering.remove('jahr')
-            elif jahrgang_missing > jahr_missing:
-                ordering.remove('jahrgang')
-            else:
-                # the records are missing an equal amount of either criteria, remove them both
-                ordering.remove('jahr')
-                ordering.remove('jahrgang')
-        elif jahr_missing:
-            ordering.remove('jahr')
-        elif jahrgang_missing:
-            ordering.remove('jahrgang')
-        
-        # Find the best criteria to order with, which might be either: num, lnum, monat or e_datum
-        # Count the presence of the different criteria and sort them accordingly.
-        # Account for the joins by taking each sum individually.
-        counted = dict(chain(
-            queryset.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(), 
-            queryset.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
-            queryset.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(), 
-            queryset.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
-        ))
-        #TODO: prioritize lnum, monat, num order if any values are equal instead of keeping it random
-        criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
-        result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
-        ordering.extend(result_ordering + [pk_order_item])
-        
-        queryset = queryset.annotate(
-            jahr = Min('ausgabe_jahr__jahr'), 
-            num = Max('ausgabe_num__num'), 
-            lnum = Max('ausgabe_lnum__lnum'), 
-            monat = Max('ausgabe_monat__monat__ordinal'), 
-        ).order_by(*ordering)
-        return queryset
+        queryset = super().get_queryset(request)
+        return queryset.chronologic_order(ordering = self.get_ordering(request, queryset))

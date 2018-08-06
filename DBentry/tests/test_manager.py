@@ -100,75 +100,109 @@ class TestMIZQuerySetAusgabe(DataTestCase):
     model = ausgabe
     fields = ausgabe.name_composing_fields
     raw_data = [
-        {'magazin__magazin_name':'Testmagazin', 'sonderausgabe': True, 'beschreibung': 'Snowflake'}, 
-        {'magazin__magazin_name':'Testmagazin', 'sonderausgabe': False, 'beschreibung': 'Snowflake'}, 
-        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 'ausgabe_num__num': [1, 2]}, 
-        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 'ausgabe_lnum__lnum': [1, 2]}, 
-        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 'ausgabe_monat__monat__monat':['Januar', 'Februar']}, 
-        {'magazin__magazin_name':'Testmagazin', 'e_datum':'2000-01-01'}, 
+        { # obj1: nr 2 by chronologic_order
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
+            'ausgabe_monat__monat__ordinal':[9, 10], 'ausgabe_lnum__lnum': [55]
+        },
+        { # obj2: 6 
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 
+            'ausgabe_monat__monat__ordinal':[12, 1], 'ausgabe_num__num': [1, 12]
+        }, 
+        { # obj3: 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
+            'ausgabe_monat__monat__ordinal':[9], 'ausgabe_num__num': [9]
+        }, 
+        { # obj4: 5
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
+            'ausgabe_monat__monat__ordinal':[11, 12], 'ausgabe_lnum__lnum': [56]
+        },  
+        { # obj5: 3
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000],
+            'ausgabe_monat__monat__ordinal':[10], 'ausgabe_num__num': [10]
+        }, 
+        { # obj6: 4
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
+            'ausgabe_monat__monat__ordinal':[11], 'ausgabe_num__num': [11]
+        }, 
     ]
     
-    def test_values_dict_obj1(self):
-        expected = {self.obj1.pk :  {
-            'beschreibung': ['Snowflake'], 
-            'sonderausgabe': [True], 
-        }}
-        self.assertDictsEqual(self.qs_obj1.values_dict(*self.fields), expected)
-    
-    def test_values_dict_obj2(self):
-        expected = {self.obj2.pk :  {
-            'beschreibung': ['Snowflake'], 
-            'sonderausgabe': [False], 
-        }}
-        self.assertDictsEqual(self.qs_obj2.values_dict(*self.fields), expected)
-    
-    def test_values_dict_obj2_include_empty(self):
-        expected = {self.obj2.pk :  {
-            'beschreibung': ['Snowflake'], 
-            'sonderausgabe': [False], 
-            'e_datum': [None], 
-            'jahrgang': [None], 
-            'magazin__ausgaben_merkmal': [''], 
-            'ausgabe_jahr__jahr': [None], 
-            'ausgabe_num__num': [None], 
-            'ausgabe_lnum__lnum': [None], 
-            'ausgabe_monat__monat__abk': [None]
-        }}
-        self.assertDictsEqual(self.qs_obj2.values_dict(*self.fields, include_empty=True), expected)
-    
-    def test_values_dict_obj3(self):
-        expected = {self.obj3.pk :  {
-            'sonderausgabe': [False], 
-            'ausgabe_jahr__jahr': [2000, 2001], 
-            'ausgabe_num__num': [1, 2], 
-        }}
-        self.assertDictsEqual(self.qs_obj3.values_dict(*self.fields), expected)
-    
-    def test_values_dict_obj4(self):
-        expected = {self.obj4.pk :  {
-            'sonderausgabe': [False], 
-            'ausgabe_jahr__jahr': [2000, 2001], 
-            'ausgabe_lnum__lnum': [1, 2], 
-        }}
-        self.assertDictsEqual(self.qs_obj4.values_dict(*self.fields), expected)
-    
-    def test_values_dict_obj5(self):
-        expected = {self.obj5.pk :  {
-            'sonderausgabe': [False], 
-            'ausgabe_jahr__jahr': [2000, 2001], 
-            'ausgabe_monat__monat__abk': ['Jan', 'Feb']
-        }}
-        self.assertDictsEqual(self.qs_obj5.values_dict(*self.fields), expected)
-    
-    def test_values_dict_obj6(self):
-        import datetime
-        expected = {self.obj6.pk :  {
-            'sonderausgabe': [False], 
-            'e_datum': [datetime.date(2000, 1, 1)], 
-        }}
-        self.assertDictsEqual(self.qs_obj6.values_dict(*self.fields), expected)
+    def setUp(self):
+        super().setUp()
+        self.queryset = self.model.objects.filter(pk__in=self._ids)
+        self.ordered_ids = [self.obj3.pk, self.obj1.pk, self.obj5.pk, self.obj6.pk, self.obj4.pk, self.obj2.pk]
         
+    def test_chronologic_order(self):
+        # Assert that no expensive ordering is being done on an empty or unfiltered queryset.
+        self.assertEqual(self.queryset.none().chronologic_order().query.order_by, ['pk'])
+        self.assertEqual(self.model.objects.chronologic_order().query.order_by, ['pk'])
+        
+        self.assertPKListEqual(self.queryset, self._ids)
+        
+        expected_order_by = [
+            'magazin', 'jahr', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+        ]
+        qs = self.queryset.chronologic_order()
+        self.assertEqual(qs.query.order_by, expected_order_by)
+        self.assertPKListEqual(qs, self.ordered_ids)
+        
+        qs = self.queryset.chronologic_order(ordering = [])
+        self.assertEqual(qs.query.order_by, expected_order_by)
+        self.assertPKListEqual(qs, self.ordered_ids)
+        
+        qs = self.queryset.chronologic_order(ordering = ['pk'])
+        self.assertEqual(qs.query.order_by, expected_order_by)
+        self.assertPKListEqual(qs, self.ordered_ids)
+        
+        qs = self.queryset.chronologic_order(ordering = ['-pk'])
+        self.assertEqual(qs.query.order_by, expected_order_by[:-1] + ['-pk'])
+        self.assertPKListEqual(qs, self.ordered_ids)
+        
+        expected = [
+            '-magazin', 'sonderausgabe', 'jahr', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+        ]
+        qs = self.queryset.chronologic_order(ordering = ['-magazin', 'sonderausgabe', 'jahr'])
+        self.assertEqual(qs.query.order_by, expected)
+        self.assertPKListEqual(qs, self.ordered_ids)
+        
+        # Introduce a missing jahr in one of the objects; as long as the amount of missing jahr is smaller 
+        # than missing jahrgang, nothing should change
+        self.obj6.ausgabe_jahr_set.all().delete()
+        qs = self.queryset.chronologic_order()
+        self.assertEqual(qs.query.order_by, expected_order_by)
+        
+        # Have as many missing jahr as missing jahrgang; both should be removed from ordering
+        self.obj5.ausgabe_jahr_set.all().delete()
+        self.obj4.ausgabe_jahr_set.all().delete()
+        self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj3.pk]).update(jahrgang = 1)
+        expected = [
+            'magazin', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+        ]
+        qs = self.queryset.chronologic_order()
+        self.assertEqual(qs.query.order_by, expected)
+        
+        # Have more jahr missing than jahrgang; jahr should be removed
+        self.qs_obj4.update(jahrgang = 1)
+        expected.insert(1, 'jahrgang')
+        qs = self.queryset.chronologic_order()
+        self.assertEqual(qs.query.order_by, expected)
+        
+        # Have all objects with jahrgang but no jahr; only jahrgang should be in ordering
+        self.obj1.ausgabe_jahr_set.all().delete()
+        self.obj2.ausgabe_jahr_set.all().delete()
+        self.obj3.ausgabe_jahr_set.all().delete()
+        self.queryset.update(jahrgang = 1)
+        qs = self.queryset.chronologic_order()
+        self.assertEqual(qs.query.order_by, expected)
     
+    def test_find_order(self):
+        result_ids = [i[0] for i in self.queryset.chronologic_order().find('2000')]
+        self.assertEqual(result_ids, self.ordered_ids)
+        
+        # find() will return a list of [exact_matches] + [startswith_matches] + [contains_matches]
+        # the individual sublists will be ordered by primary key
+        expected = [self.obj2.pk, self.obj3.pk, self.obj5.pk, self.obj6.pk, self.obj1.pk, self.obj4.pk]
+        result_ids = [i[0] for i in self.queryset.find('2000', ordered = False)]
+        self.assertEqual(result_ids, expected)
     
 @tag("cn")
 class TestCNQuerySet(DataTestCase):
