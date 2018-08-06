@@ -363,15 +363,27 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         self.assertIn(21, a.ausgabe_lnum_set.values_list('lnum', flat=True))
         self.assertIn(22, a.ausgabe_lnum_set.values_list('lnum', flat=True))
         self.assertEqual(a.ausgabe_lnum_set.count(), 2)
+    
+    def test_ausgabe_monat(self):
+        januar, _ = monat.objects.get_or_create(monat='Januar', abk = 'Jan', ordinal = 1)
+        februar, _ = monat.objects.get_or_create(monat='Februar', abk = 'Feb', ordinal = 2)
         
-    def ausgabe_monat(self):
         a = self.factory_class(ausgabe_monat__monat__monat='Januar')
-        self.assertIn('Januar', a.ausgabe_monat_set.values_list('monat__monat', flat=True))
+        self.assertIn((januar.pk, 'Januar'), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat'))
+        self.assertEqual(a.ausgabe_monat_set.count(), 1)
+        
+        a = self.factory_class(ausgabe_monat__monat__ordinal=1)
+        self.assertIn((januar.pk, 'Januar', 1), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal'))
         self.assertEqual(a.ausgabe_monat_set.count(), 1)
         
         a = self.factory_class(ausgabe_monat__monat__monat=['Januar', 'Februar'])
-        self.assertIn('Januar', a.ausgabe_monat_set.values_list('monat__monat', flat=True))
-        self.assertIn('Februar', a.ausgabe_monat_set.values_list('monat__monat', flat=True))
+        self.assertIn((januar.pk, 'Januar'), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat'))
+        self.assertIn((februar.pk, 'Februar'), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat'))
+        self.assertEqual(a.ausgabe_monat_set.count(), 2)
+        
+        a = self.factory_class(ausgabe_monat__monat__ordinal=[1, 2])
+        self.assertIn((januar.pk, 'Januar', 1), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal'))
+        self.assertIn((februar.pk, 'Februar', 2), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal'))
         self.assertEqual(a.ausgabe_monat_set.count(), 2)
         
     def test_ausgabe_magazin(self):

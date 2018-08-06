@@ -1,4 +1,3 @@
-import random
 import itertools
 
 import factory
@@ -10,10 +9,7 @@ from DBentry.models import *
 
 #TODO: put logging back in for RelatedFactory
 # logger = factory.declarations.logger
-#TODO: catch UNIQUE constraints errors when trying to create a duplicate (pk field etc.)
-#TODO: all fields declared in django_get_or_create must also be present in build/create kwargs
-#TODO: values for '_name' (ComputedNameModel) are being overwritten
-    
+
 class RuntimeFactoryMixin(object):
     """
     A mixin that can create a related factory on the fly.
@@ -86,6 +82,10 @@ class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
         # Do not generate an object unless required or parameters are declared in extra.
         if not self.required and not extra:
             return
+        # evaluate() is called while resolving the pre-declarations of a factory.
+        # Extra contains explicitly passed in parameters - the factory needs to know these when 
+        # deciding on what fields to query for in get_or_create.
+        self.factory.set_memo(list(extra.keys()))
         return super().evaluate(instance, step, extra)
         
 class SelfFactory(SubFactory):
@@ -137,6 +137,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
     def call(self, instance, step, context):
         factory = self.get_factory()
         related_objects = []
+        
         if context.value:
             # context.value contains the related_object(s) that should be added to instance
             if isinstance(context.value, (list, tuple)):
@@ -202,7 +203,6 @@ class M2MFactory(RelatedFactory):
     def call(self, instance, step, context):
         related_manager = getattr(instance, self.descriptor_name)
         
-        m2m_table = related_manager.through
         if isinstance(instance, related_manager.through._meta.get_field(related_manager.source_field_name).related_model):
             source = related_manager.source_field_name
             target = related_manager.target_field_name
@@ -248,7 +248,6 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         
         
     def add_base_fields(self):
-        #TODO: might need this when using django_get_or_create
         #TODO: account for unique == True // unique_together
         for field in get_model_fields(self.model, foreign = False, m2m = False):
             if hasattr(self.factory, field.name) or field.has_default() or field.blank:
@@ -308,12 +307,21 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 self.base_declarations[k] = v
                 
         self.pre_declarations, self.post_declarations = factory.builder.parse_declarations(self.declarations)
-        
-        
 
 class MIZModelFactory(factory.django.DjangoModelFactory):
-    #TODO: overwrite _get_or_create?
     _options_class = MIZDjangoOptions
+    
+    __memo = [] # remembers the kwargs for the model instance creation that were explicitly passed in
+    
+    @classmethod
+    def set_memo(cls, value):
+        if cls.__memo and value and value!= cls.__memo:
+            # Memo already set for this factory
+            return
+        if len(cls._meta.django_get_or_create)<=1:
+            # Ignoring setting of Memo: django_get_or_create contains one field or less
+            return
+        cls.__memo = value
     
     @classmethod
     def full(cls, **kwargs):
@@ -334,6 +342,54 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             cls._meta.pre_declarations[name].declaration.required = False
         
         return created
+
+    @classmethod
+    def _generate(cls, strategy, params):
+        """generate the object.
+
+        Args:
+            params (dict): attributes to use for generating the object
+            strategy: the strategy to use
+        """
+        if params and len(cls._meta.django_get_or_create)>1:
+            # This factory has been called with explicit parameters for some of its fields.
+            # Add these fields to the memo so we can distinguish passed in parameters from *generated* ones.
+            cls.set_memo(list(params.keys()))
+        return super()._generate(cls, strategy, params)
+
+    @classmethod
+    def _get_or_create(cls, model_class, *args, **kwargs):
+        """Create an instance of the model through objects.get_or_create."""
+        manager = cls._get_manager(model_class)
+
+        assert 'defaults' not in cls._meta.django_get_or_create, (
+            "'defaults' is a reserved keyword for get_or_create "
+            "(in %s._meta.django_get_or_create=%r)"
+            % (cls, cls._meta.django_get_or_create))
+
+        # In case of a multi-field get or create setup, any fields in get_or_create_fields that 
+        # is not in memo had their values *generated* and not passed in.
+        # This can lead to not finding the model instance that the explicitly passed in kwargs
+        # refer to.
+        get_or_create_fields = []
+        for field in cls._meta.django_get_or_create.copy():
+            if cls.__memo and field not in cls.__memo:
+                # This field's value was generated by a declaration, do not include it in a get_or_create query.
+                continue
+            get_or_create_fields.append(field)
+            
+        if not get_or_create_fields:
+            instance =  manager.create(*args, **kwargs)
+        else:
+            key_fields = {}
+            for field in get_or_create_fields:
+                if field not in kwargs:
+                    continue
+                key_fields[field] = kwargs.pop(field)
+            key_fields['defaults'] = kwargs
+            instance, _created = manager.get_or_create(*args, **key_fields)
+        cls.__memo = []
+        return instance
             
 
 # Stores the factories created via modelfactory_factory so that sequences are shared
@@ -407,11 +463,11 @@ class MagazinFactory(MIZModelFactory):
 class MonatFactory(MIZModelFactory):
     class Meta:
         model = monat
-        django_get_or_create = ['monat']
+        django_get_or_create = ['monat', 'abk', 'ordinal']
     monat = factory.Faker('month_name')
     abk = factory.LazyAttribute(lambda o: o.monat[:3])
-    ordinal = factory.Sequence(lambda n: n)        
-
+    ordinal = factory.Sequence(lambda n: n)   
+    
 class MusikerFactory(MIZModelFactory):
     class Meta:
         model = musiker
@@ -445,3 +501,4 @@ def make(model, **kwargs):
 def batch(model, num, **kwargs):
     for i in range(num):
         yield modelfactory_factory(model)(**kwargs)
+        
