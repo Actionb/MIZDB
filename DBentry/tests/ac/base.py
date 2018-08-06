@@ -10,6 +10,8 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
     create_field = None
     
     def get_path(self):
+        if self.path != 'accapture':
+            return super().get_path()
         reverse_kwargs = {'model_name':self.model._meta.model_name}
         if getattr(self.model, 'create_field'):
             reverse_kwargs['create_field'] = self.model.create_field

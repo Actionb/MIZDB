@@ -1,9 +1,10 @@
 from django.conf.urls import url,  include
 
-from .views import ACCapture, ACBase, ACBuchband, ACCreateable
+from .views import ACCapture, ACBuchband, ACCreateable, ACAusgabe
 
 autocomplete_patterns = [
-    url(r'^buch/$', ACBuchband.as_view(), name='acbuchband')
+    url(r'^buch/$', ACBuchband.as_view(), name='acbuchband'), 
+    url(r'^ausgabe/$', ACAusgabe.as_view(), name='acausgabe')
 ]
 
 wip = [ 

@@ -1,7 +1,6 @@
 
 from django.db.models import Q
 from django.utils.translation import gettext
-from django.contrib.admin.utils import get_fields_from_path
 
 from dal import autocomplete
 
@@ -133,25 +132,10 @@ class ACCapture(ACBase):
             self.model = get_model_from_string(model_name)
         self.create_field = self.create_field or kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
-        
-    def get_queryset(self):
-        model_name = self.model._meta.model_name
-        cache = self.request.session.get('ac-cache', {})
-#        if self.q in cache.get(model_name, {}):
-#            return cache[model_name][self.q]
-        qs = super().get_queryset()
-#        if self.q:
-#            if not cache or model_name not in cache:
-#                self.request.session['ac-cache'] = {model_name:{self.q:qs}}
-#            elif model_name in cache:
-#                cached = self.request.session['ac-cache'][model_name]
-#                cached[self.q] = qs
-#                self.request.session['ac-cache'] = {model_name:cached}
-        return qs
     
-    def apply_q(self, qs, use_suffix=True):
+    def apply_q(self, qs, use_suffix=True, ordered = True):
         if self.q:
-            return qs.find(self.q, use_suffix=use_suffix)
+            return qs.find(self.q, ordered = ordered, use_suffix=use_suffix)
         elif self.model in Favoriten.get_favorite_models():
             # add Favoriten to the top of the result queryset if no search term was given.
             try:
@@ -179,6 +163,12 @@ class ACBuchband(ACBase):
     model = buch
     queryset = buch.objects.filter(is_buchband=True)
     
+class ACAusgabe(ACCapture):
+    model = ausgabe
+    
+    def do_ordering(self, qs):
+        return qs.chronologic_order()
+        
 from .creator import Creator
 creation_failed_response = http.JsonResponse({'id':0, 'text':'Creation failed, please use button!'})
 

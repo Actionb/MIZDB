@@ -267,7 +267,8 @@ class TestACCreateable(ACViewTestCase):
 class TestACAusgabe2(ACViewTestCase):
     #NOTE: should all the queryset filtering be done with _name__icontains=q?
     model = ausgabe
-    view_class = ACCapture
+    path = 'acausgabe'
+    view_class = ACAusgabe
     
     @classmethod
     def setUpTestData(cls):
@@ -425,7 +426,8 @@ class TestACAusgabe2(ACViewTestCase):
 class TestACAusgabe(ACViewTestCase):
     
     model = ausgabe
-    view_class = ACCapture
+    path = 'acausgabe'
+    view_class = ACAusgabe
 
     
     @classmethod
