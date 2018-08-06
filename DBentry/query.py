@@ -128,13 +128,12 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         for search_field in self.secondary_search_fields:
             rslt.extend(self.exact_search(search_field, q))
         
-        if self.use_separator and len(rslt):
-            weak_hits = [(0, self.get_separator(q))]
-        else:
-            weak_hits = []
+        weak_hits = []
         for search_field in self.secondary_search_fields:
             weak_hits.extend(self.startsw_search(search_field, q) + self.contains_search(search_field, q))
-        if len(weak_hits) > int(self.use_separator): # Will I burn in programmer hell for int(bool)?
+        if weak_hits:
+            if self.use_separator and len(rslt):
+                weak_hits.insert(0, (0, self.get_separator(q)))
             rslt.extend(weak_hits)
         return rslt
         
