@@ -355,7 +355,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             # This factory has been called with explicit parameters for some of its fields.
             # Add these fields to the memo so we can distinguish passed in parameters from *generated* ones.
             cls.set_memo(list(params.keys()))
-        return super()._generate(cls, strategy, params)
+        return super()._generate(strategy, params)
 
     @classmethod
     def _get_or_create(cls, model_class, *args, **kwargs):
