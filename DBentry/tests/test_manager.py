@@ -2,14 +2,12 @@ from .base import *
 from DBentry.managers import *
 from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
 
-#TODO: everything... coverage is at 43%
-
 class TestMIZQuerySet(DataTestCase):
     
     model = band
     raw_data = [
         {'band_name': 'Testband1', }, 
-        {'band_name': 'Testband2', 'band_alias__alias':'Coffee', 'genre__genre': ['Rock']}, 
+        {'band_name': 'Testband2', 'band_alias__alias':'Coffee', 'genre__genre': ['Rock', 'Jazz']}, 
         {'band_name': 'Testband3', 'band_alias__alias':['Juice', 'Water'], 'genre__genre': ['Rock', 'Jazz']}, 
     ]
     fields = ['band_name', 'genre__genre', 'band_alias__alias']
@@ -43,44 +41,60 @@ class TestMIZQuerySet(DataTestCase):
         self.assertTrue(all(o.pk in v for o in self.test_data))
         
         # obj1
-        d = v.get(self.obj1.pk)
-        self.assertListEqualSorted(d['band_name'], ['Testband1'])
+        expected = {'band_name': ['Testband1']}
+        self.assertEqual(v.get(self.obj1.pk), expected)
         
         # obj2
-        d = v.get(self.obj2.pk)
-        self.assertListEqualSorted(d['band_name'], ['Testband2'])
-        self.assertListEqualSorted(d['genre__genre'], ['Rock'])
-        self.assertListEqualSorted(d['band_alias__alias'], ['Coffee'])
+        expected = {
+            'band_name': ['Testband2'], 'genre__genre': ['Rock', 'Jazz'], 
+            'band_alias__alias': ['Coffee']
+        }
+        self.assertEqual(v.get(self.obj2.pk), expected)
         
         # obj3
-        d = v.get(self.obj3.pk)
-        self.assertListEqualSorted(d['band_name'], ['Testband3'])
-        self.assertListEqualSorted(d['genre__genre'], ['Rock', 'Jazz'])
-        self.assertListEqualSorted(d['band_alias__alias'], ['Juice', 'Water'])
+        expected = {
+            'band_name': ['Testband3'], 'genre__genre': ['Rock', 'Jazz'], 
+            'band_alias__alias': ['Juice', 'Water']
+        }
+        self.assertEqual(v.get(self.obj3.pk), expected)
         
     def test_values_dict_num_queries(self):
         with self.assertNumQueries(1):
-            v = self.queryset.values_dict(*self.fields)
+            self.queryset.values_dict(*self.fields)
         
-    def test_values_dict_obj1(self):
-        v = self.qs_obj1.values_dict(*self.fields)
+    def test_values_dict_include_empty(self):
+        v = self.qs_obj1.values_dict(*self.fields, include_empty = True)
+        expected = {
+            'band_name': ['Testband1'], 'genre__genre': [None], 
+            'band_alias__alias': [None]
+        }
+        self.assertEqual(v.get(self.obj1.pk), expected)
+        
+    def test_values_dict_tuplfy(self):
+        v = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
+        expected = {
+            'band_name': ('Testband2',), 'genre__genre': ('Rock', 'Jazz'), 
+            'band_alias__alias': ('Coffee',)
+        }
+        self.assertEqual(v.get(self.obj2.pk), expected)
+        
+    def test_values_dict_flatten(self):
+        v = self.qs_obj3.values_dict(*self.fields, flatten = True)
+        expected = {
+            'band_name': 'Testband3', 'genre__genre': ['Rock', 'Jazz'], 
+            'band_alias__alias': ['Juice', 'Water']
+        }
+        self.assertEqual(v.get(self.obj3.pk), expected)
+        
+    def test_values_dict_flatten_no_flds(self):
+        v = self.qs_obj1.values_dict(flatten = True)
         d = v.get(self.obj1.pk)
-        self.assertListEqualSorted(d['band_name'], ['Testband1'])
+        self.assertEqual(d, {'band_name': 'Testband1'})
         
-    def test_values_dict_obj2(self):
-        v = self.qs_obj2.values_dict(*self.fields)
-        d = v.get(self.obj2.pk)
-        self.assertListEqualSorted(d['band_name'], ['Testband2'])
-        self.assertListEqualSorted(d['genre__genre'], ['Rock'])
-        self.assertListEqualSorted(d['band_alias__alias'], ['Coffee'])
-        
-    def test_values_dict_obj3(self):
-        v = self.qs_obj3.values_dict(*self.fields)
-        d = v.get(self.obj3.pk)
-        self.assertListEqualSorted(d['band_name'], ['Testband3'])
-        self.assertListEqualSorted(d['genre__genre'], ['Rock', 'Jazz'])
-        self.assertListEqualSorted(d['band_alias__alias'], ['Juice', 'Water'])
-        
+    def test_values_dict_pk_in_flds(self):
+        v = self.qs_obj1.values_dict('band_name', 'pk')
+        self.assertIn(self.obj1.pk, v)
+   
 class TestMIZQuerySetAusgabe(DataTestCase):
 
     model = ausgabe
@@ -219,7 +233,6 @@ class TestCNQuerySet(DataTestCase):
         
     def test_values_list_not_updates_name(self):
         # values_list(!'_name') should NOT update the name => _changed_flag remains True
-        obj1_name = self.obj1._name
         self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
         self.assertQSValuesList(self.qs_obj1, '_changed_flag', True)
 
@@ -267,3 +280,27 @@ class TestCNQuerySet(DataTestCase):
         with self.assertNumQueries(4):
             list(self.queryset.only('_name').filter(_name='Testinfo').values_list('_name'))
         
+class BuchQuerySet(DataTestCase):
+    
+    model = buch
+    raw_data = [
+        {'ISBN': '978-1-234-56789-7', 'EAN': '73513537'}, 
+        {'ISBN': '978-4-56-789012-0', 'EAN': "1234567890128"}
+    ]
+    
+    def test_filter_finds_isbn(self):
+        isbn_10 = "123456789X"
+        self.assertIn(self.obj1, self.queryset.filter(ISBN=isbn_10))
+        isbn_10 = "1-234-56789-X"
+        self.assertIn(self.obj1, self.queryset.filter(ISBN=isbn_10))
+        
+        isbn_13 = '9784567890120'
+        self.assertIn(self.obj2, self.queryset.filter(ISBN=isbn_13))
+        isbn_13 = '978-4-56-789012-0'
+        self.assertIn(self.obj2, self.queryset.filter(ISBN=isbn_13))
+        
+    def test_filter_finds_ean(self):
+        ean_8 = '7351-3537'
+        self.assertIn(self.obj1, self.queryset.filter(EAN=ean_8))
+        ean_13 = '1-234567-890128'
+        self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))

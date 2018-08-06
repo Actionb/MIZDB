@@ -1,27 +1,30 @@
 from collections import Counter, OrderedDict
+from itertools import chain
 
 from django.db import models, transaction
+from django.db.models import Count, Sum, Min, Max
 from django.contrib.admin.utils import get_fields_from_path
-from django.core.exceptions import FieldDoesNotExist, ValidationError
+from django.core.exceptions import FieldDoesNotExist
 
 from DBentry.utils import flatten_dict
 from DBentry.query import *
 
+
 class MIZQuerySet(models.QuerySet):
     
-    def find(self, q, **kwargs):
+    def find(self, q, ordered = False, **kwargs):
         """
         Finds any occurence of the search term 'q' in the queryset, depending on the search strategy used.
         """
         # Find the best strategy to use:
-        #TODO: when searching in ausgabe, the ordering is all messed up
         if getattr(self.model, 'name_field', False):
-            strat = ValuesDictSearchQuery
+            strat_class = ValuesDictSearchQuery
         elif getattr(self.model, 'primary_search_fields', False):
-            strat = PrimaryFieldsSearchQuery
+            strat_class = PrimaryFieldsSearchQuery
         else:
-            strat = BaseSearchQuery
-        result, exact_match = strat(self, **kwargs).search(q)
+            strat_class = BaseSearchQuery
+        strat = strat_class(self, **kwargs)
+        result, exact_match = strat.search(q)
         return result
     
     def _duplicates(self, *fields, as_dict = False):
@@ -107,7 +110,7 @@ class MIZQuerySet(models.QuerySet):
                     flds.append(pk_name)
                 
         rslt = OrderedDict()
-        for val_dict in self.values(*flds, **expressions):
+        for val_dict in list(self.values(*flds, **expressions)): # NOTE: self.values() can mess with the ordering!?
             id = val_dict.pop(pk_name)
             if id in rslt:
                 d = rslt.get(id)
@@ -129,8 +132,7 @@ class MIZQuerySet(models.QuerySet):
                         d[k] += (v, )
                     else:
                         d.get(k).append(v)
-        if flds and flatten:
-            #TODO: flatten with flds empty (all fields requested)
+        if flatten:
             # Do not flatten fields that represent a reverse relation, as a list is expected
             exclude = []
             for field_path in flds:
@@ -142,9 +144,6 @@ class MIZQuerySet(models.QuerySet):
             return flatten_dict(rslt, exclude)
         return rslt
         
-    def resultbased_ordering(self):
-        return self
-    
     def create_val_dict(self, key, value, tuplfy=True):
         qs = self
         dict_by_key = {}
@@ -176,11 +175,6 @@ class CNQuerySet(MIZQuerySet):
     
     _updated = False
     
-    def find(self, q, **kwargs):
-        strat = ValuesDictSearchQuery(self, **kwargs)
-        result, exact_match = strat.search(q)
-        return result
-    
     def bulk_create(self, objs, batch_size=None):
         # Set the _changed_flag on the objects to be created
         for obj in objs:
@@ -204,6 +198,7 @@ class CNQuerySet(MIZQuerySet):
         If _name is deferred OR _name is not in the fields to be loaded, do not attempt an update.
         Likewise if self._fields is not None and does not contain _name.
         """
+        #TODO: was this ever finished?
         if not self._updated:
             # query.deferred_loading: 
             # A tuple that is a set of model field names and either True, if these
@@ -336,6 +331,6 @@ class BuchQuerySet(MIZQuerySet):
                 # we only store formatted ISBN-13 
                 kwargs[k] = isbn.format(v, convert = True)
             if 'EAN' in k and ean.is_valid(v):
-                # we only store clean/compact/unformatted EAN
+                # we only store clean/compact/unformatted EAN (without any dashes)
                 kwargs[k] = ean.compact(v)
         return super().filter(*args, **kwargs)
