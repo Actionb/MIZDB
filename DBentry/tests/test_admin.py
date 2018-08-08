@@ -48,7 +48,7 @@ class AdminTestMethodsMixin(object):
     def test_formfield_for_foreignkey(self):
         # Test that every ForeignKey formfield gets a fancy select2 widget
         from DBentry.ac.widgets import MIZModelSelect2
-        for fkey_field in self.model.get_foreignfields():
+        for fkey_field in get_model_fields(self.model, base = False, foreign = True, m2m = False):
             formfield = self.model_admin.formfield_for_foreignkey(fkey_field, self.get_request())
             self.assertIsInstance(formfield.widget, MIZModelSelect2, msg=fkey_field.name)
         

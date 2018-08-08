@@ -58,37 +58,7 @@ class BaseModel(models.Model):
             raise AttributeError("Calling qs() from class level is prohibited. Use {}.objects instead.".format(self.__name__))
         else:
             return self._meta.model.objects.filter(pk=self.pk)
-    
-    @classmethod
-    def get_basefields(cls, as_string=False):
-        """
-        Returns the model's fields that are not the primary key, a relation or in the model's exclude list.
-        Works much like cls._meta.concrete fields.
-        """
-        return [i.name if as_string else i for i in cls._meta.fields
-            if i != cls._meta.pk and not i.is_relation and not i.name in cls.exclude]
-        
-    @classmethod
-    def get_foreignfields(cls, as_string=False):
-        """
-        Returns the model's fields that represent a ForeignKey and are NOT in the model's exclude list.
-        """
-        return [i.name if as_string else i for i in cls._meta.fields if isinstance(i, models.ForeignKey) and not i.name in cls.exclude]
-        
-    @classmethod
-    def get_m2mfields(cls, as_string=False):
-        """
-        Returns the model's fields that represent a ManyToXField and are NOT in the model's exclude list.
-        """
-        return [i.name if as_string else i for i in cls._meta.get_fields() if (not isinstance(i, models.ForeignKey) and i.is_relation) and not i.name in cls.exclude] 
-        
-    @classmethod
-    def get_reverse_relations(cls):
-        """
-        Returns all relation objects that represent a reverse relation to this model.
-        """
-        return [f for f in cls._meta.get_fields() if f.is_relation and not f.concrete]
-        
+ 
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         """
@@ -96,6 +66,7 @@ class BaseModel(models.Model):
         """
         if cls.search_fields:
             return cls.search_fields
+        return [field.name for field in get_model_fields(cls, foreign = foreign, m2m = m2m)]
         rslt = []
         for field in cls.get_basefields(as_string=True):
             if field not in rslt:
@@ -182,6 +153,10 @@ class ComputedNameModel(BaseModel):
             if i != 0:
                 search_fields.pop(i)
                 search_fields.insert(0,'_name')
+        try:
+            search_fields.remove('_changed_flag')
+        except ValueError:
+            pass
         return search_fields
         
     def update_name(self, force_update = False):

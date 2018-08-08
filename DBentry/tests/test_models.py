@@ -16,14 +16,17 @@ class TestBaseModel(DataTestCase):
         with self.assertRaises(AttributeError):
             self.model.qs(self.model)
 
+    @skip("deprecated")
     def test_get_basefields(self):
         self.assertListEqualSorted(
             self.model.get_basefields(True), ['schlagzeile', 'seite', 'seitenumfang', 'zusammenfassung']
         )
-
+        
+    @skip("deprecated")
     def test_get_foreignfields(self):
         self.assertListEqualSorted(self.model.get_foreignfields(True), ['ausgabe'])
-
+        
+    @skip("deprecated")
     def test_get_m2mfields(self):
         expected = [
             'm2m_artikel_autor', 'm2m_artikel_band', 'm2m_artikel_genre', 'm2m_artikel_musiker', 'm2m_artikel_ort', 
@@ -71,7 +74,8 @@ class TestComputedNameModel(DataTestCase):
         obj = self.qs_obj1.first()
         self.assertFalse(obj._changed_flag)
         self.assertEqual(obj._name,  "Testinfo")
-
+        
+    @skip("deprecated")
     def test_get_basefields(self):
         # _name and _changed_flag should not appear in get_basefields
         self.assertNotIn('_name', self.model.get_basefields(True))

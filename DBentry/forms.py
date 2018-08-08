@@ -11,10 +11,8 @@ from django.db.models.manager import BaseManager
 
 from .models import *
 from .constants import ATTRS_TEXTAREA
-from DBentry.ac.widgets import MIZModelSelect2, make_widget
-from DBentry.utils import snake_case_to_spaces
-
-from dal import autocomplete
+from DBentry.ac.widgets import make_widget
+from DBentry.utils import snake_case_to_spaces, get_model_fields
 
 Textarea = forms.Textarea           
 
@@ -83,7 +81,7 @@ def makeForm(model, fields = (), form_class = None):
     
     #Otherwise use modelform_factory to create a generic Form with custom dal widgets
     widgets = {}
-    for field in model.get_foreignfields():
+    for field in get_model_fields(model, base = False, foreign = True, m2m = False):
         if fields and field.name not in fields:
             continue
         widgets[field.name] = make_widget(

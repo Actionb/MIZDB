@@ -24,7 +24,7 @@ class TestFormBase(ModelFormTestCase):
         # validate_unique should now set the DELETE flag in cleaned_data
         form.validate_unique()
         self.assertEqual(form.cleaned_data.get('DELETE', False), True) 
-        
+    
     def test_makeForm(self):
         # makeForm should add dal widgets for foreign fields
         form = makeForm(audio)

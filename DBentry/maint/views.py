@@ -16,7 +16,7 @@ from DBentry.views import MIZAdminToolViewMixin, FixedSessionWizardView
 from DBentry.actions.views import MergeViewWizarded
 from DBentry.models import * 
 from DBentry.sites import register_tool
-from DBentry.utils import get_obj_link, get_model_from_string
+from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields
 
 from .forms import * 
 
