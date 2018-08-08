@@ -346,7 +346,6 @@ class magazin(BaseModel):
     
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
     
-    #exclude = ['ausgaben_merkmal', 'magazin_url', 'turnus', 'erstausgabe', 'beschreibung']
     search_fields = ['magazin_name', 'beschreibung']
     name_field = 'magazin_name'
     search_fields_suffixes = {'beschreibung' : 'Beschreibung'}

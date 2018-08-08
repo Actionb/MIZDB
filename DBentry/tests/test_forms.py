@@ -3,6 +3,8 @@ from .base import *
 from DBentry.forms import *
 from DBentry.ac.widgets import EasyWidgetWrapper, MIZModelSelect2
 
+from dal import autocomplete
+
 class TestFormBase(ModelFormTestCase):
     
     form_class = FormBase

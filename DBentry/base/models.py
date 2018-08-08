@@ -5,11 +5,8 @@ from DBentry.managers import MIZQuerySet, CNQuerySet
 from DBentry.utils import get_model_fields
     
 class BaseModel(models.Model):
-    #TODO: exclude attribute does not do what the description says, it excludes fields from the 'field collection' methods as well!
     """
     Attributes related to searching:
-    - exclude: field names to exclude from searches 
-    
     - search_fields: field names to include in searches.
     
     - primary_search_fields: any search result from a search on a field that is in search_fields but not in primary_search_fields 
@@ -24,9 +21,7 @@ class BaseModel(models.Model):
         The suffixes will 'tell' the user why exactly they have found a particular result.
         
     - create_field: the name of the field for the dal autocomplete object creation
-    """
-    exclude = ['beschreibung', 'bemerkungen'] 
-    
+    """    
     search_fields = []
     
     primary_search_fields = []  
@@ -37,12 +32,14 @@ class BaseModel(models.Model):
     
     create_field = None
     
+    exclude_from_str = ['beschreibung', 'bemerkungen']
+    
     objects = MIZQuerySet.as_manager()
             
     def __str__(self):
         rslt = " ".join([
             str(fld.value_from_object(self))
-            for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude)
+            for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude_from_str)
             if fld.value_from_object(self)
         ])
         return rslt.strip() or "---"

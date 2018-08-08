@@ -1,4 +1,8 @@
-""" Copy pasta'ed from django.contrib.admin.helpers just to swap a checkbox widget with its label..."""
+""" 
+Copy pasta'ed from django.contrib.admin.helpers just to swap a checkbox widget with its label...
+All this really does is set label_suffix to None for all fields in AdminField.label_tag() 
+instead of it being an empty string for checkboxes.
+"""
 #TODO: introduce MIZAdminForm // add this to admin.py 
 from django.utils.encoding import force_text
 from django.utils.html import conditional_escape
