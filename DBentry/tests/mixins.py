@@ -36,16 +36,16 @@ class TestDataMixin(object):
             
         if cls.test_data_count:
             cls.test_data.extend(list(batch(cls.model, cls.test_data_count)))
+        cls._ids = []
         for c, obj in enumerate(cls.test_data, 1):
             setattr(cls, 'obj' + str(c), obj)
+            cls._ids.append(obj.pk)
         
     def setUp(self):
         super(TestDataMixin, self).setUp()
-        self._ids = []
         for c, obj in enumerate(self.test_data, 1):
             obj.refresh_from_db()
             setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk))
-            self._ids.append(obj.pk)
         self.queryset = self.model.objects.all()
         
 class CreateViewMixin(object):

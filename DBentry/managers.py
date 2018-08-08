@@ -290,7 +290,7 @@ class AusgabeQuerySet(CNQuerySet):
             # Don't bother if queryset is empty or not filtered in any way
             return self.order_by('pk') # django would warn about an unordered list even if it was empty
             
-        default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe'] #NOTE: jahrgang -> jahr?
+        default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
         if ordering is None:
             ordering = default_ordering
             pk_order_item = 'pk'
@@ -306,39 +306,27 @@ class AusgabeQuerySet(CNQuerySet):
             stripped_ordering = [i[1:] if i[0] == '-' else i for i in ordering]
             for o in default_ordering:
                 if o not in stripped_ordering:
-                    ordering.append(o)
+                    ordering.append(o) #NOTE: just append?
                 
-        # Determine if jahr and/or jahrgang should be in ordering. 
-        # The overall order may be messed up if the queryset is a mixed bag of records of having both, having neither and having one or the other.
+        # Determine if jahr should come before jahrgang in ordering
         jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))
-        jahr_values, jahrgang_values = zip(*jj_values) # zip(*list) is the inverse of zip(list)
-        jahr_missing = jahr_values.count(None)
-        jahrgang_missing = jahrgang_values.count(None)
-        
-        if jahr_missing and jahrgang_missing:
-            # Some records in queryset are missing jahr while others are missing jahrgang
-            if jahr_missing > jahrgang_missing:
-                # there are more records missing jahr than there are records missing jahrgang
-                ordering.remove('jahr')
-            elif jahrgang_missing > jahr_missing:
-                ordering.remove('jahrgang')
-            else:
-                # the records are missing an equal amount of either criteria, remove them both
-                ordering.remove('jahr')
-                ordering.remove('jahrgang')
-        elif jahr_missing:
-            ordering.remove('jahr')
-        elif jahrgang_missing:
-            ordering.remove('jahrgang')
+        # Remove empty values and unzip the 2-tuples into two lists
+        jahr_values, jahrgang_values = (list(filter(lambda x:x is not None, l)) for l in zip(*jj_values))
+        if len(jahrgang_values) > len(jahr_values):
+            # prefer jahrgang over jahr 
+            jahr_index = ordering.index('jahr')
+            jahrgang_index = ordering.index('jahrgang')
+            ordering[jahr_index] = 'jahrgang'
+            ordering[jahrgang_index] = 'jahr'
         
         # Find the best criteria to order with, which might be either: num, lnum, monat or e_datum
         # Count the presence of the different criteria and sort them accordingly.
         # Account for the joins by taking each sum individually.
         # Since sorted() is stable, we can set the default order to (lnum, monat, num) in case any sum values are equal.
-        counted = OrderedDict(chain(
-            self.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
+        counted = OrderedDict(chain( 
+            self.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(), 
             self.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(),
-            self.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(),  
+            self.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
             self.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
         ))
         criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
@@ -346,10 +334,10 @@ class AusgabeQuerySet(CNQuerySet):
         ordering.extend(result_ordering + [pk_order_item])
         
         self = self.annotate(
-            jahr = Min('ausgabe_jahr__jahr'), 
             num = Max('ausgabe_num__num'), 
-            lnum = Max('ausgabe_lnum__lnum'), 
-            monat = Max('ausgabe_monat__monat__ordinal'), 
+            monat = Max('ausgabe_monat__monat__ordinal'),
+            lnum = Max('ausgabe_lnum__lnum'),  
+            jahr = Min('ausgabe_jahr__jahr'), 
         ).order_by(*ordering)
         return self
         

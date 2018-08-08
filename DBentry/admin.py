@@ -243,8 +243,7 @@ class ArtikelAdmin(MIZModelAdmin):
     }  
 
     def get_queryset(self, request):
-        # NOTE: resultbased_ordering?
-        #NOTE: get_ordering()
+        #TODO: rethink this now that we have chronologic_order for ausgabe
         from django.db.models import Min
         qs = super(ArtikelAdmin, self).get_queryset(request)
         qs = qs.annotate(

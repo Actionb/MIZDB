@@ -94,8 +94,8 @@ class TestMIZQuerySet(DataTestCase):
     def test_values_dict_pk_in_flds(self):
         v = self.qs_obj1.values_dict('band_name', 'pk')
         self.assertIn(self.obj1.pk, v)
-   
-class TestMIZQuerySetAusgabe(DataTestCase):
+
+class TestAusgabeQuerySet(DataTestCase):
 
     model = ausgabe
     fields = ausgabe.name_composing_fields
@@ -130,67 +130,58 @@ class TestMIZQuerySetAusgabe(DataTestCase):
         super().setUp()
         self.queryset = self.model.objects.filter(pk__in=self._ids)
         self.ordered_ids = [self.obj3.pk, self.obj1.pk, self.obj5.pk, self.obj6.pk, self.obj4.pk, self.obj2.pk]
-        
+
     def test_chronologic_order(self):
         # Assert that no expensive ordering is being done on an empty or unfiltered queryset.
         self.assertEqual(self.queryset.none().chronologic_order().query.order_by, ['pk'])
         self.assertEqual(self.model.objects.chronologic_order().query.order_by, ['pk'])
         
-        self.assertPKListEqual(self.queryset, self._ids)
-        
-        expected_order_by = [
-            'magazin', 'jahr', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+        expected = [
+            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
         ]
         qs = self.queryset.chronologic_order()
-        self.assertEqual(qs.query.order_by, expected_order_by)
+        self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = self.queryset.chronologic_order(ordering = [])
-        self.assertEqual(qs.query.order_by, expected_order_by)
+        self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = self.queryset.chronologic_order(ordering = ['pk'])
-        self.assertEqual(qs.query.order_by, expected_order_by)
+        self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = self.queryset.chronologic_order(ordering = ['-pk'])
-        self.assertEqual(qs.query.order_by, expected_order_by[:-1] + ['-pk'])
+        self.assertEqual(qs.query.order_by, expected[:-1] + ['-pk'])
         self.assertPKListEqual(qs, self.ordered_ids)
         
-        expected = [
-            '-magazin', 'sonderausgabe', 'jahr', 'monat', 'num', 'lnum', 'e_datum', 'pk'
-        ]
         qs = self.queryset.chronologic_order(ordering = ['-magazin', 'sonderausgabe', 'jahr'])
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(
+            qs.query.order_by, 
+            ['-magazin', 'sonderausgabe', 'jahr', 'jahrgang', 'monat', 'num', 'lnum', 'e_datum', 'pk']
+        )
         self.assertPKListEqual(qs, self.ordered_ids)
         
-        # Introduce a missing jahr in one of the objects; as long as the amount of missing jahr is smaller 
-        # than missing jahrgang, nothing should change
-        self.obj6.ausgabe_jahr_set.all().delete()
-        qs = self.queryset.chronologic_order()
-        self.assertEqual(qs.query.order_by, expected_order_by)
+    def test_chronologic_order_jahrgang_over_jahr(self):
+        # Have more objects with jahrgang than jahr; jahrgang should take priority
+        ausgabe_jahr.objects.all().delete()
+        self.qs_obj4.update(jahrgang = 1)
         
-        # Have as many missing jahr as missing jahrgang; both should be removed from ordering
-        self.obj5.ausgabe_jahr_set.all().delete()
-        self.obj4.ausgabe_jahr_set.all().delete()
-        self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj3.pk]).update(jahrgang = 1)
         expected = [
-            'magazin', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+            'magazin', 'jahrgang', 'jahr', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
         ]
         qs = self.queryset.chronologic_order()
         self.assertEqual(qs.query.order_by, expected)
         
-        # Have more jahr missing than jahrgang; jahr should be removed
-        self.qs_obj4.update(jahrgang = 1)
-        expected.insert(1, 'jahrgang')
-        qs = self.queryset.chronologic_order()
-        self.assertEqual(qs.query.order_by, expected)
-        
-        # Have all objects with jahrgang but no jahr; only jahrgang should be in ordering
-        self.obj1.ausgabe_jahr_set.all().delete()
-        self.obj2.ausgabe_jahr_set.all().delete()
-        self.obj3.ausgabe_jahr_set.all().delete()
-        self.queryset.update(jahrgang = 1)
+    def test_chronologic_order_criteria_equal(self):
+        # If none of the four criteria dominate, the default order should be:
+        # num, monat, lnum, e_datum
+        ausgabe_monat.objects.all().delete()
+        ausgabe_num.objects.all().delete()
+        ausgabe_lnum.objects.all().delete()
+        expected = [
+            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'num', 'monat', 'lnum', 'e_datum', 'pk'
+        ]
         qs = self.queryset.chronologic_order()
         self.assertEqual(qs.query.order_by, expected)
     
@@ -203,6 +194,160 @@ class TestMIZQuerySetAusgabe(DataTestCase):
         expected = [self.obj2.pk, self.obj3.pk, self.obj5.pk, self.obj6.pk, self.obj1.pk, self.obj4.pk]
         result_ids = [i[0] for i in self.queryset.find('2000', ordered = False)]
         self.assertEqual(result_ids, expected)
+        
+@tag("slow")
+class TestAusgabeQuerySetOrdering(DataTestCase):
+    model = ausgabe
+    
+    @classmethod
+    def setUpTestData(cls):
+        possible_pks = list(range(1, 1001))
+        def get_random_pk():
+            # 'randomize' the pk values so we cannot rely on them for ordering
+            return possible_pks.pop(random.randrange(0, len(possible_pks)-1))
+        
+        cls.nums = []
+        cls.lnums = []
+        cls.monate = []
+        cls.jgs = []
+        cls.mag = make(magazin)
+        
+        for jg, year in enumerate(range(1999, 2005), start = 1):
+            for i in range(1, 13):
+                cls.nums.append(make(ausgabe, 
+                    pk = get_random_pk(), magazin = cls.mag, ausgabe_num__num = i, ausgabe_jahr__jahr = year
+                ))
+                cls.lnums.append(make(ausgabe, 
+                    pk = get_random_pk(), magazin = cls.mag, ausgabe_lnum__lnum = i, ausgabe_jahr__jahr = year
+                ))
+                cls.monate.append(make(ausgabe, 
+                    pk = get_random_pk(), magazin = cls.mag, ausgabe_monat__monat__ordinal = i, ausgabe_jahr__jahr = year
+                ))
+                cls.jgs.append(make(ausgabe, 
+                    pk = get_random_pk(), magazin = cls.mag, ausgabe_num__num = i, jahrgang = jg
+                ))
+        cls.all = cls.nums + cls.lnums + cls.monate + cls.jgs
+        super().setUpTestData()
+        
+    def setUp(self):
+        # We do not need the 'qs_objX' attribute TestDataMixin.setUp would create for us.
+        # By not having an empty test_data attribute, TestDataMixin will skip that part, reducing db hits.
+        for o in self.all:
+            o.refresh_from_db()
+        super().setUp
+    
+    def get_search_results(self, qs, q):
+        result = qs.find(q)
+        if isinstance(result, QuerySet):
+            return list(result.values_list('_name', flat = True))
+        return [tpl[1] for tpl in result]
+        
+    def filter(self, _list, qs):
+        filtered = qs.values_list('pk', flat = True)
+        return [o._name for o in _list if o.pk in filtered]
+        
+    def assertOrderingEqual(self, a, b):
+        # Might be faster..?
+        if len(a) != len(b):
+            raise AssertionError()
+        for i in range(len(a)-1):
+            if a[i] != b[i]:
+                raise AssertionError()
+    
+    def test_ordering_mixed(self):
+        # If no criteria (num, lnum, monat) dominates over the others, the general order should be:
+        # lnum, monat, num
+        # the queryset needs to be filtered or chronologic_order will take a short cut
+        queryset = ausgabe.objects.filter(pk__in = [o.pk for o in chain(self.lnums, self.monate, self.nums)]).chronologic_order() 
+        qs = ausgabe.objects.filter(ausgabe_jahr__jahr=2001)
+        expected = self.filter(self.lnums, qs) + self.filter(self.monate, qs) + self.filter(self.nums, qs)
+        self.assertEqual(self.get_search_results(queryset, '2001'), expected)
+        
+        # num dominant
+        
+        # lnum dominant
+        
+        # monat dominant
+        
+        # if jahr and jahrgang are present in the search results:
+        # pick the one that is most dominant or neither if both are equally presented
+        
+        # jahr dominant:
+        # --> any records with jahrgang and no jahr will be at the top
+        filtered = list(ausgabe_lnum.objects.filter(lnum=11).values_list('ausgabe_id', flat = True))
+        filtered += list(ausgabe_num.objects.filter(num=11).values_list('ausgabe_id', flat = True))
+        
+        queryset = ausgabe.objects.filter(pk__in = filtered).chronologic_order()
+        expected = self.filter(self.jgs, queryset) 
+        for num, lnum in zip(self.nums, self.lnums):
+            if lnum.pk in filtered:
+                expected.append(lnum._name)
+            if num.pk in filtered:
+                expected.append(num._name)
+            
+        self.assertEqual(list(queryset.values_list('_name', flat = True)), expected)
+        self.assertEqual(self.get_search_results(queryset, '11'), expected)
+        
+        # jahrgang dominant: 
+        # --> any records with jahr and no jahrgang will be at the top
+        ids = [
+           o.pk for o in chain(self.nums[3:] + self.jgs)
+           if o.pk in ausgabe_num.objects.filter(num=11).values_list('ausgabe_id')
+        ]
+        
+        queryset = ausgabe.objects.filter(pk__in = ids).chronologic_order()
+        expected = self.filter(self.nums[3:] + self.jgs, queryset)
+        self.assertEqual(list(queryset.values_list('_name', flat = True)), expected)
+        self.assertEqual(self.get_search_results(queryset, '11'), expected)
+        
+    def test_ordering_num(self):
+        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.nums]).chronologic_order()
+        
+        expected = [o.pk for o in self.nums]
+        self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
+        
+        expected = self.filter(self.nums, queryset.filter(ausgabe_jahr__jahr=2001))
+        self.assertEqual(self.get_search_results(queryset, '2001'), expected)
+        
+        expected = self.filter(self.nums, queryset.filter(ausgabe_num__num=11)) 
+        self.assertEqual(self.get_search_results(queryset, '11'), expected)
+        
+    def test_ordering_lnum(self):
+        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.lnums]).chronologic_order()
+        
+        expected = [o.pk for o in self.lnums]
+        self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
+        
+        expected = self.filter(self.lnums, queryset.filter(ausgabe_jahr__jahr=2001))
+        self.assertEqual(self.get_search_results(queryset, '2001'), expected)
+        
+        expected = self.filter(self.lnums, queryset.filter(ausgabe_lnum__lnum=11)) 
+        self.assertEqual(self.get_search_results(queryset, '11'), expected)
+        
+    def test_ordering_monate(self):
+        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.monate]).chronologic_order()
+        
+        expected = [o.pk for o in self.monate]
+        self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
+        
+        expected = self.filter(self.monate, queryset.filter(ausgabe_jahr__jahr=2001))
+        self.assertEqual(self.get_search_results(queryset, '2001'), expected)
+        
+        expected = self.filter(self.monate, queryset.filter(ausgabe_monat__monat__abk='Nov')) 
+        self.assertEqual(self.get_search_results(queryset, 'Nov'), expected)
+    
+    def test_ordering_jg(self):
+        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.jgs]).chronologic_order()
+        
+        expected = [o.pk for o in self.jgs]
+        self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
+        
+        expected = self.filter(self.jgs, queryset.filter(jahrgang=2))
+        self.assertEqual(self.get_search_results(queryset, 'Jg. 2'), expected)
+        
+        expected = self.filter(self.jgs, queryset.filter(ausgabe_num__num=11))
+        self.assertEqual(self.get_search_results(queryset, '11'), expected)
+        
     
 @tag("cn")
 class TestCNQuerySet(DataTestCase):
@@ -314,7 +459,7 @@ class TestCNQuerySet(DataTestCase):
         with self.assertNumQueries(4):
             list(self.queryset.only('_name').filter(_name='Testinfo').values_list('_name'))
         
-class BuchQuerySet(DataTestCase):
+class TestBuchQuerySet(DataTestCase):
     
     model = buch
     raw_data = [
