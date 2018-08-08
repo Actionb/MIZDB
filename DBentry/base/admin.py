@@ -10,13 +10,12 @@ from django import forms
 from DBentry.models import ausgabe, genre, schlagwort, models
 from DBentry.base.models import ComputedNameModel
 from DBentry.changelist import MIZChangeList
-from DBentry.forms import makeForm, InLineAusgabeForm, FormBase
+from DBentry.forms import InLineAusgabeForm, FormBase
 from DBentry.actions import merge_records
 from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
-
-#TODO: add beschreibung bemerkungen to search fields so that ppl can find 'special' ausgaben
+from DBentry.utils import get_model_relations
 
 class MIZModelAdmin(admin.ModelAdmin):
     
@@ -77,9 +76,8 @@ class MIZModelAdmin(admin.ModelAdmin):
         self.exclude = super().get_exclude(request, obj)
         if self.exclude is None:
             self.exclude = []
-            reverse_rels = self.model.get_reverse_relations()
             for fld in self.opts.get_fields():
-                if fld.concrete and fld.is_relation and fld.many_to_many:
+                if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)
         return self.exclude
     
@@ -111,7 +109,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             # Remove all other fields of the tuple that are in self.fields
             for i in indexes:
                 grouped_fields.pop(i)
-            fields_used.update(tpl) #TODO: shouldn't this be *tpl or some such?
+            fields_used.update(tpl) 
         return grouped_fields
         
     def get_fieldsets(self, request, obj=None):
@@ -145,17 +143,21 @@ class MIZModelAdmin(admin.ModelAdmin):
         return search_fields
         
     def add_crosslinks(self, object_id, labels=None):
-        #TODO: for audio this shows related ausgaben as crosslinks AND in an inline
-        # ---> m2m_audio_ausgabe in inlmdls, but r.related_model == ausgabe
-        #TODO: use get_model_relations(model,forward=False)
         """
         Provides the template with data to create links to related objects.
         """
         new_extra = {'crosslinks':[]}
         labels = labels or []
         
-        inlmdls = {i.model for i in self.inlines}
-        for rel in (r for r in self.model.get_reverse_relations() if r.related_model not in inlmdls):
+        inline_models = {i.model for i in self.inlines}
+        
+        for rel in get_model_relations(self.model, forward = False):
+            if rel.many_to_many:
+                inline_model = rel.through
+            else:
+                inline_model = rel.related_model
+            if inline_model in inline_models:
+                continue
             model = rel.related_model
             opts = model._meta
             fld_name = rel.remote_field.name
@@ -306,7 +308,6 @@ class MIZModelAdmin(admin.ModelAdmin):
     
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         # Move checkbox widget to the right of its label.
-        #TODO: make me fool proof//tests
         if 'adminform' in context:
             context['adminform'] = MIZAdminFormWrapper(context['adminform'])
         return super().render_change_form(request, context, add, change, form_url, obj)

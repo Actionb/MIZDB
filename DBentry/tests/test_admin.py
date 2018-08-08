@@ -3,7 +3,7 @@ from .base import *
 from DBentry.admin import *
 from DBentry.sites import MIZAdminSite
 from DBentry.changelist import *
-
+          
 class AdminTestMethodsMixin(object):
     
     crosslinks_relations = None
@@ -28,8 +28,8 @@ class AdminTestMethodsMixin(object):
             x = {'url':url_template.format(model_name=item['model_name'], fld_name=item['fld_name']), 'label':item['label']}
             self.assertIn(x, links)
             links.remove(x)
-        self.assertFalse(links)                
-    
+        self.assertFalse(links)      
+        
     def test_get_exclude(self):
         expected = self.exclude_expected or []
         self.assertEqual(self.model_admin.get_exclude(None), expected)
@@ -278,8 +278,6 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     model = ausgabe
     exclude_expected = ['audio']
     fields_expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
-    
-    crosslinks_relations = [ausgabe.artikel_set.rel]
    
     @classmethod
     def setUpTestData(cls):
@@ -359,7 +357,6 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
         'beschreibung', 'bemerkungen', 'verlag', 'ort', 
     ]
     
-    crosslinks_relations = [magazin.ausgabe_set.rel]
     raw_data = [{'ausgabe__extra':1}]
         
     def test_anz_ausgaben(self):
@@ -430,11 +427,6 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     
-    crosslinks_relations = [
-        dokument.musiker.rel, band.musiker.rel, artikel.musiker.rel, video.musiker.rel, bildmaterial.musiker.rel, 
-        technik.musiker.rel, veranstaltung.musiker.rel, memorabilien.musiker.rel, buch.musiker.rel, 
-        datei.musiker.rel, audio.musiker.rel, 
-    ]
     raw_data = [
         {}, 
         {'band__band_name':['Testband1', 'Testband2'], 'genre__genre':['Testgenre1', 'Testgenre2']}
@@ -468,8 +460,7 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         )
         expected = [
             {'model_name':'artikel',        'fld_name':'musiker', 'label':'Artikel (1)'}, 
-            {'model_name':'audio',          'fld_name':'musiker', 'label':'Audio Materialien (1)'}, 
-            {'model_name':'band',           'fld_name':'musiker', 'label':'Bands (1)'}, 
+            {'model_name':'audio',          'fld_name':'musiker', 'label':'Audio Materialien (1)'},
             {'model_name':'bildmaterial',   'fld_name':'musiker', 'label':'Bild Materialien (1)'},
             {'model_name':'buch',           'fld_name':'musiker', 'label':'Bücher (1)'}, 
             {'model_name':'datei',          'fld_name':'musiker', 'label':'Dateien (1)'}, 
@@ -488,12 +479,6 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     fields_expected = ['genre', 'ober']
     
-    crosslinks_relations = [
-        genre.musiker_set.rel, genre.datei_set.rel, genre.audio_set.rel, 
-        genre.veranstaltung_set.rel, genre.bildmaterial_set.rel, genre.buch_set.rel, 
-        genre.memorabilien_set.rel, genre.magazin_set.rel, genre.artikel_set.rel, genre.technik_set.rel, 
-        genre.sub_genres.rel, genre.video_set.rel, genre.band_set.rel, genre.dokument_set.rel
-    ]
     raw_data = [
         {'genre':'Topobject'}, 
         {'genre':'Subobject', 'genre_alias__alias':['Alias1', 'Alias2'], 'ober__genre':'Topobject'}
@@ -562,12 +547,6 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     model = schlagwort
     fields_expected = ['schlagwort', 'ober']
     
-    crosslinks_relations = [
-        schlagwort.memorabilien_set.rel, schlagwort.artikel_set.rel, schlagwort.technik_set.rel, 
-        schlagwort.datei_set.rel, schlagwort.video_set.rel, 
-        schlagwort.dokument_set.rel, schlagwort.bildmaterial_set.rel, schlagwort.veranstaltung_set.rel, 
-        schlagwort.unterbegriffe.rel, schlagwort.schlagwort_alias_set.rel, schlagwort.buch_set.rel, schlagwort.audio_set.rel
-    ]
     raw_data = [
         {'schlagwort':'Topobject'}, 
         {'schlagwort':'Subobject', 'schlagwort_alias__alias':['Alias1', 'Alias2'], 'ober__schlagwort':'Topobject'}
