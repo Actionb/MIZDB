@@ -1185,7 +1185,7 @@ class plattenfirma(BaseModel):
         verbose_name_plural = 'Plattenfirmen'
 
 
-class Favoriten(models.Model): #NOTE: why not inherit from BaseModel?
+class Favoriten(models.Model): 
     user = models.OneToOneField('auth.User', models.CASCADE, editable = False)
     fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten Genre', blank = True)
     fav_schl = models.ManyToManyField('schlagwort', verbose_name = 'Favoriten Schlagworte', blank = True)
