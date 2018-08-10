@@ -369,10 +369,9 @@ class TestValuesDictQuery(TestNameFieldQuery):
         expected = list(self.queryset.exclude(band_name='Rolling Stones').values_list('pk', flat=True))
         self.assertQSValuesList(self.make_query().get_queryset(q = 'Rose'), 'pk', expected)
         
-    def test_bugged_ordering(self):
-        #TODO: in a list of genres ['Acid Rock','Rock','Psy Rock'], the faulty partial match algorithm caused everything 
-        # containing 'rock' to be in the list of exact_matches.
-        pass
+    def test_partial_match(self):
+        # Assert that search can find 'More Roses' via search term 'Roses More'
+        self.assertEqual(self.make_query().search('Roses More'), ([(self.obj5.pk, 'More Roses')], True))
         
     def test_search(self):
         # obj1 = "Guns 'N Roses"
