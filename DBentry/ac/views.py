@@ -1,16 +1,15 @@
 
+from django import http
 from django.db.models import Q
 from django.utils.translation import gettext
+from django.core.exceptions import FieldError, ValidationError
 
 from dal import autocomplete
 
 from DBentry.models import *
 from DBentry.logging import LoggingMixin
 from DBentry.utils import get_model_from_string
-
-from django import http
-
-#TODO: review the whole caching thing
+from DBentry.ac.creator import Creator
 
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     _search_fields = None
@@ -50,8 +49,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         return qs.order_by(*self.model._meta.ordering)
         
     def apply_q(self, qs):
-        # NOTE: distinct() at every step? performance issue?
-        #TODO: accurate excepts
         if self.q:
             if self.search_fields:
                 exact_match_qs = qs
@@ -62,7 +59,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
                     for fld in self.search_fields:
                         qobjects |= Q((fld, self.q))
                     exact_match_qs = qs.filter(qobjects).distinct()
-                except:
+                except (FieldError, ValidationError):
                     # invalid lookup/ValidationError (for date fields)
                     exact_match_qs = qs.none()
                     
@@ -72,7 +69,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
                     for fld in self.search_fields:
                         qobjects |= Q((fld+'__istartswith', self.q))
                     startsw_qs = qs.exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
-                except:
+                except (FieldError, ValidationError):
                     startsw_qs = qs.none()
                     
                 # should we even split at spaces? Yes we should! Names for example:
@@ -168,24 +165,27 @@ class ACAusgabe(ACCapture):
     
     def do_ordering(self, qs):
         return qs.chronologic_order()
-        
-from .creator import Creator
-creation_failed_response = http.JsonResponse({'id':0, 'text':'Creation failed, please use button!'})
 
 class ACCreateable(ACCapture):
-    #TODO: handle MultipleObjectsReturnedException raised by creator
+    
     def dispatch(self, *args, **kwargs):
         if not self.model:
             model_name = kwargs.pop('model_name', '')
             self.model = get_model_from_string(model_name)
-        self.creator = Creator(self.model)
+        self.creator = Creator(self.model, raise_exceptions = False)
         self.create_field = self.create_field or kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
         
     def createable(self, text, creator = None):
+        """
+        Returns True if a new(!) model instance can be created from `text`.
+        """
         creator = creator or self.creator
-        return bool(creator.create(text, preview=True))
-    
+        created = creator.create(text, preview=True)
+        if created and getattr(created.get('instance', None), 'pk', None) is None:
+            return True
+        return False
+        
     def get_create_option(self, context, q):
         """Form the correct create_option to append to results."""
         # Override:
@@ -208,29 +208,31 @@ class ACCreateable(ACCapture):
             }]
             create_info = self.get_creation_info(q)
             if create_info:
-                create_option.extend(self.get_creation_info(q))
+                create_option.extend(create_info)
         
         return create_option
         
     def get_creation_info(self, text, creator = None):
-        #TODO: iterate over all nested dicts in create_info returned by creator.create
+        def flatten_dict(_dict):
+            rslt = []
+            for k, v in _dict.items():
+                if not v or k == 'instance':
+                    continue
+                if isinstance(v, dict):
+                    rslt.extend(flatten_dict(v))
+                else:
+                    rslt.append((k, v))
+            return rslt
+        
         creator = creator or self.creator
         create_info = []
         default = {'id':None, 'create_id':True, 'text':'...mit folgenden Daten:'} # 'id' : None will make the option unselectable
         
         create_info.append(default.copy())
-        for k, v in creator.create(text, preview = True).items():
-            if not v or k == 'instance':
-                continue
-            if isinstance(v, dict):
-                for _k, _v in v.items():
-                    if not _v or _k == 'instance':
-                        continue
-                    default['text'] = ' '*4 + str(_k) + ': ' + str(_v)
-                    create_info.append(default.copy())
-            else:
-                default['text'] = str(k) + ': ' + str(v)
-                create_info.append(default.copy())
+        # iterate over all nested dicts in create_info returned by creator.create
+        for k, v in flatten_dict(creator.create(text, preview = True)):
+            default['text'] = str(k) + ': ' + str(v)
+            create_info.append(default.copy())
         return create_info
         
     def create_object(self, text, creator = None):
@@ -246,14 +248,20 @@ class ACCreateable(ACCapture):
             return http.HttpResponseForbidden()
             
         if not self.creator and not self.create_field:
-            raise AttributeError('Missing "create_field"') #TODO: adjust error message
+            raise AttributeError('Missing creator object or "create_field"')
 
         text = request.POST.get('text', None)
 
         if text is None:
             return http.HttpResponseBadRequest()
-
-        result = self.create_object(text)
+            
+        try:
+            result = self.create_object(text)
+        except:
+            return http.JsonResponse({
+                'id':0,
+                'text':'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen Knopf".'
+            })
 
         return http.JsonResponse({
             'id': result.pk,
