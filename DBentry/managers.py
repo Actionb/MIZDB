@@ -110,7 +110,7 @@ class MIZQuerySet(models.QuerySet):
                     flds.append(pk_name)
                 
         rslt = OrderedDict()
-        for val_dict in list(self.values(*flds, **expressions)): # NOTE: self.values() can mess with the ordering!?
+        for val_dict in list(self.values(*flds, **expressions)):
             id = val_dict.pop(pk_name)
             if id in rslt:
                 d = rslt.get(id)
@@ -144,36 +144,7 @@ class MIZQuerySet(models.QuerySet):
             return flatten_dict(rslt, exclude)
         return rslt
         
-    def create_val_dict(self, key, value, tuplfy=True):
-        qs = self
-        dict_by_key = {}
-        dict_by_val = {}
-        for k, v in qs.values_list(key, value):
-            try:
-                dict_by_key[k].add(v)
-            except:
-                dict_by_key[k] = set()
-                dict_by_key[k].add(v)
-            if not tuplfy:
-                try:
-                    dict_by_val[v].add(k)
-                except:
-                    dict_by_val[v] = set()
-                    dict_by_val[v].add(k)
-        if tuplfy:
-            for k, v in dict_by_key.items():
-                v = tuple(v)
-                dict_by_key[k] = v
-                try:
-                    dict_by_val[v].add(k)
-                except:
-                    dict_by_val[v] = set()
-                    dict_by_val[v].add(k)
-        return dict_by_key, dict_by_val
-        
 class CNQuerySet(MIZQuerySet):
-    
-    _updated = False
     
     def bulk_create(self, objs, batch_size=None):
         # Set the _changed_flag on the objects to be created
@@ -190,34 +161,6 @@ class CNQuerySet(MIZQuerySet):
         if any(k.startswith('_name')  for k in kwargs):
             self._update_names()
         return super().filter(*args, **kwargs)
-        
-    @property
-    def updated(self):
-        """
-        If the names haven't yet been updated, check if they *should* be updated.
-        If _name is deferred OR _name is not in the fields to be loaded, do not attempt an update.
-        Likewise if self._fields is not None and does not contain _name.
-        """
-        #TODO: was this ever finished?
-        if not self._updated:
-            # query.deferred_loading: 
-            # A tuple that is a set of model field names and either True, if these
-            # are the fields to defer, or False if these are the only fields to
-            # load.
-            deferred, fields_are_deferred = self.query.deferred_loading
-            if fields_are_deferred:
-                if '_name' not in deferred:
-                    # We're good to try, _name was not defer()'ed
-                    return False
-            else:
-                if '_name' in deferred:
-                    # We're good to try, _name was only()'ed
-                    return False
-            if self._fields is not None and '_name' not in self._fields:
-                # We haven't called values/values_list (with _name as a field)
-                return False
-            return True
-        return self._updated
         
     def only(self, *fields):
         if '_name' in fields:
@@ -248,7 +191,6 @@ class CNQuerySet(MIZQuerySet):
                 for pk, val_dict in self.filter(_changed_flag=True).values_dict(*self.model.name_composing_fields, flatten=True).items():
                     new_name = self.model._get_name(**val_dict)
                     self.filter(pk=pk).update(_name=new_name, _changed_flag=False)
-        self._updated = True
     _update_names.alters_data = True
 
 class AusgabeQuerySet(CNQuerySet):
@@ -266,24 +208,6 @@ class AusgabeQuerySet(CNQuerySet):
                             ordered_result.append(tpl)
             return ordered_result
         return result
-        
-    def data_dump(self, fields = None):
-        if fields is None:
-            fields = [
-                'magazin__magazin_name', 'sonderausgabe', 'jahrgang', 'e_datum', 
-                'ausgabe_jahr__jahr', 'ausgabe_lnum__lnum', 'ausgabe_num__num', 'ausgabe_monat__monat__ordinal', 
-            ]
-        vd = self.values_dict(*fields, flatten = True)
-        rslt = []
-        for pk, val_dict in vd.items():
-            y = val_dict.copy()
-            x = OrderedDict()
-            x['pk'] = pk
-            for f in fields:
-                if f in y:
-                    x[f] = y[f]
-            rslt.append(x)
-        return rslt
     
     def chronologic_order(self, ordering = None):
         if not self.exists() or not self.query.where.children:
