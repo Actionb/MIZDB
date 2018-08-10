@@ -4,8 +4,6 @@ from nameparser import HumanName
 
 from DBentry.models import *
 from DBentry.utils import parse_name
-
-#TODO: allow or disallow 'duplicating' records?
     
 class MultipleObjectsReturnedException(Exception):
     message = 'Name nicht einzigartig.'
@@ -22,9 +20,10 @@ class FailedObject(object):
     def __str__(self):
         return self.text
 
-#NOTE: OrderedDict so the 'create_info' presented to the user is always of the same structure
-#TODO: Creator: documentation
 class Creator(object):
+    """
+    A helper class that uses a declared `create_<model_name>` method to create a model instance from a given string.
+    """
     
     def __init__(self, model, raise_exceptions = False):
         self.model = model
@@ -48,6 +47,12 @@ class Creator(object):
             return created
         
     def _get_model_instance(self, model, **data):
+        """
+        Queries for an existing model instance with `data` and returns:
+             - a new instance if the query did not find anything
+             - the singular model instance found by the query 
+        or raises a MultipleObjectsReturnedException to signal that a full instance cannot be created with `data`.
+        """
         possible_instances = list(model.objects.filter(**data))
         if len(possible_instances) == 0:
             return model(**data)
@@ -58,11 +63,10 @@ class Creator(object):
             
     def create_person(self, text, preview = True):
         vorname, nachname = parse_name(text)
-        
-        
+
         person_instance = self._get_model_instance(person, vorname = vorname, nachname = nachname)
         if not preview and person_instance.pk is None:
-                person_instance.save()
+            person_instance.save()
         
         return OrderedDict([('Vorname', vorname), ('Nachname', nachname), ('instance', person_instance)])    
         
@@ -77,7 +81,7 @@ class Creator(object):
         autor_instance = self._get_model_instance(autor, person = person_instance, kuerzel = kuerzel)
             
         if not preview and autor_instance.pk is None:
-                if autor_instance.person.pk is None:
-                    autor_instance.person.save()
-                autor_instance.save()
+            if autor_instance.person.pk is None:
+                autor_instance.person.save()
+            autor_instance.save()
         return OrderedDict([('Person', p), ('Kürzel', kuerzel), ('instance', autor_instance)]) 
