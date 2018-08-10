@@ -55,6 +55,47 @@ class TestBaseQuery(QueryTestCase):
         self.assertListEqualSorted(query._do_lookup(lookup, search_field, q), expected)
         self.assertListEqualSorted(list(query.ids_found), [self.obj1.pk, self.obj2.pk])
         
+    def test_date_lookup(self):
+        a1 = make(ausgabe, e_datum = '1986-08-15')
+        a2 = make(ausgabe, e_datum = '1986-08-18')
+        a3 = make(ausgabe, e_datum = '1986-09-18')
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__iexact', 'e_datum', '1986-08-15')], [a1.pk]
+        )
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__iexact', 'e_datum', '15.08.1986')], [a1.pk]
+        )
+        
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__istartswith', 'e_datum', '1986-08')], [a1.pk, a2.pk]
+        )
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__istartswith', 'e_datum', '08.1986')], [a1.pk, a2.pk]
+        )
+        
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__icontains', 'e_datum', '1986-08')], [a1.pk, a2.pk]
+        )
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__icontains', 'e_datum', '08.1986')], [a1.pk, a2.pk]
+        )
+        
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__istartswith', 'e_datum', '1986')], [a1.pk, a2.pk, a3.pk]
+        )
+        query = self.make_query(queryset = ausgabe.objects)
+        self.assertListEqualSorted(
+            [i[0] for i in query._do_lookup('__icontains', 'e_datum', '1986')], [a1.pk, a2.pk, a3.pk]
+        )
+        
+        
     def test_exact_search(self):
         lookup = '__iexact'
         
@@ -316,7 +357,10 @@ class TestValuesDictQuery(TestNameFieldQuery):
         query = super().make_query(**kwargs)
         query.values_dict = values_dict
         if values_dict is None:
-            query.values_dict = self.queryset.values_dict(*query.search_fields) 
+            if 'queryset' in kwargs:
+                query.values_dict = kwargs['queryset'].values_dict(*query.search_fields)
+            else:
+                query.values_dict = self.queryset.values_dict(*query.search_fields) 
         return query
     
     def test_get_queryset(self):
@@ -407,4 +451,3 @@ class TestValuesDictQuery(TestNameFieldQuery):
         query = self.make_query(use_separator = False)
         with self.assertNumQueries(1):
             query.search(q)
-        

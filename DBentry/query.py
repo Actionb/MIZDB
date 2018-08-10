@@ -1,6 +1,8 @@
 
 from django.utils.encoding import force_text
 from django.utils.translation import gettext_lazy
+from django.core.exceptions import FieldDoesNotExist
+from django.contrib.admin.utils import get_fields_from_path
 
 from django.db import models
 
@@ -22,9 +24,22 @@ class BaseSearchQuery(object):
         self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes', {})
         self.use_suffix = use_suffix
         self.exact_match = False
+        
+    def get_model_field(self, field_name):
+        try:
+            return get_fields_from_path(self._root_queryset.model, field_name)[-1]
+        except FieldDoesNotExist:
+            return None
 
-    def clean_string(self, s):
-        return str(s).strip().casefold()
+    def clean_string(self, s, field_name):
+        s = str(s).strip().casefold()
+        if isinstance(self.get_model_field(field_name), models.DateField):
+            # django.models.DateField expects a string of format 'yyyy-mm-dd' 
+            # __i<lookup_name> lookups work fine with a partial string of format 'yyyy-mm-dd'
+            # try transforming a string of format 'dd.mm.yyyy'
+            if '.' in s:
+                s = "-".join(date_bit.zfill(2) for date_bit in reversed(s.split('.')))
+        return s
         
     def get_queryset(self, q=None):
         return self._root_queryset.all()
@@ -48,6 +63,7 @@ class BaseSearchQuery(object):
             ]
             
     def _do_lookup(self, lookup, search_field, q):
+        q = self.clean_string(q, search_field)
         qs = self.get_queryset()
         rslt = []
         search_results = qs.exclude(pk__in=self.ids_found).filter(**{search_field + lookup:q})
@@ -57,18 +73,18 @@ class BaseSearchQuery(object):
         return rslt
         
     def exact_search(self, search_field, q):
-        q = self.clean_string(q)
+        #q = self.clean_string(q)
         exact = self._do_lookup('__iexact', search_field, q)
         if not self.exact_match and bool(exact):
             self.exact_match = True
         return exact
         
     def startsw_search(self, search_field, q):
-        q = self.clean_string(q)
+        #q = self.clean_string(q)
         return self._do_lookup('__istartswith', search_field, q)
         
     def contains_search(self, search_field, q=None):
-        q = self.clean_string(q)
+        #q = self.clean_string(q)
         return self._do_lookup('__icontains', search_field, q)
         
     def search(self, q):
@@ -115,7 +131,7 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         return '{:-^{width}}'.format(separator_text, width = self.separator_width)
         
     def exact_search(self, search_field, q):
-        q = self.clean_string(q)
+        #q = self.clean_string(q)
         exact = self._do_lookup('__iexact', search_field, q)
         if not self.exact_match and search_field in self.primary_search_fields and bool(exact):
             self.exact_match = True
@@ -170,52 +186,42 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
     Fetch all the relevant data first and then do a search in memory.
     """
     
-    def clean_string(self, s):
-        # Remove all special characters from s
-        rslt =  ""
-        for i in str(s).strip().casefold():
-            if i.isalnum():
-                rslt += i
-            elif rslt and not rslt[-1].isspace():
-                rslt += " "
-        return rslt
-    
     def get_queryset(self, q):
         # To limit the length of values_dict, exclude any records that do not at least icontain q in any of the search_fields
-        q = self.clean_string(q)
         qobjects = models.Q()
         for search_field in self.search_fields:
             for i in q.split():
-                qobjects |= models.Q((search_field+'__icontains', i))
+                qobjects |= models.Q((search_field+'__icontains', self.clean_string(i, search_field)))
         return self._root_queryset.filter(qobjects)
         
     def _do_lookup(self, lookup, search_field, q):
         # values_dict is a dict of dicts of lists! {pk: {field:[values,...] ,...},... }
-        q = self.clean_string(q)
         rslt = []
         
         for pk, data_dict in self.values_dict.copy().items():
             values_list = data_dict.get(search_field, None)
             if values_list:
                 match = False
+                _q = self.clean_string(q, search_field)
                 if lookup == '__iexact':
-                    if any(self.clean_string(s) == q for s in values_list):
+                    if any(self.clean_string(s, search_field) == _q for s in values_list):
                         match = True
                 elif lookup == '__istartswith':
-                    if any(self.clean_string(s).startswith(q) for s in values_list):
+                    if any(self.clean_string(s, search_field).startswith(_q) for s in values_list):
                         match = True
                 else:
-                    if any(q in self.clean_string(s) for s in values_list):
+                    if any(_q in self.clean_string(s, search_field) for s in values_list):
                         match = True
                 if not match and search_field in self.primary_search_fields and len(q.split())>1:
                     # Scramble the order of q, if all bits of it can be found, accept the values_list as a match
                     partial_match_count = 0
                     for i in q.split():
+                        i = self.clean_string(i, search_field)
                         if lookup == '__iexact':
-                            if any(any(i == v for v in self.clean_string(value).split()) for value in values_list):
+                            if any(any(i == v for v in self.clean_string(value, search_field).split()) for value in values_list):
                                 partial_match_count += 1
                         elif lookup == '__istartswith':
-                            if any(any(v.startswith(i) for v in self.clean_string(value).split()) for value in values_list):
+                            if any(any(v.startswith(i) for v in self.clean_string(value, search_field).split()) for value in values_list):
                                 partial_match_count += 1
                     if partial_match_count == len(q.split()):
                         match = True

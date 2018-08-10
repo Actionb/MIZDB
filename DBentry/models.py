@@ -163,7 +163,7 @@ class ausgabe(ComputedNameModel):
     audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe, blank = True)
                  
     search_fields = [
-        'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 
+        'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 'e_datum', 
         'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang', 'beschreibung', 'bemerkungen'
     ]
     primary_search_fields = ['_name']
