@@ -1,9 +1,10 @@
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.urls import reverse
+from django.core.exceptions import FieldDoesNotExist
 
 from dal import autocomplete, forward
 
-from DBentry.utils import get_model_from_string
+from DBentry.utils import get_model_from_string, snake_case_to_spaces
 
 class WidgetCaptureMixin(object):
     
@@ -136,8 +137,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
             if isinstance(forwarded, str):
                 dst = forwarded.split('__')[-1]
                 forwarded = forward.Field(src=forwarded, dst=dst)
-                widget_opts['forward'].append(forwarded)
-            #TODO: else... accept a forward.Field object
+            widget_opts['forward'].append(forwarded)
             
             if 'attrs' in widget_opts:
                 attrs = widget_opts.get('attrs')
@@ -146,13 +146,23 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 attrs = widget_opts['attrs']
                 
             if 'data-placeholder' not in attrs:
+                # forward with no data-placeholder-text
                 #NOTE: cannot figure out how to translate the placeholder text
                 # the widget is created when django initializes, not when the view is called
                 # apparently that is too early for translations...
-                #NOTE: (verbose_name) == forward field's name?
                 placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
-                # forward with no data-placeholder-text
-                forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.capitalize()
+                
+                # Try to find the verbose_name of the source formfield of the forward.
+                # We do not have access to the form and so no access to the forwarded formfield's (forwarded.src) label.
+                # If the forward's dst attribute is None, then get_field is likely to fail as src refers to the formfield's name
+                # and not the model field's name.
+                try:
+                    forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.capitalize()
+                except (AttributeError, FieldDoesNotExist):
+                    # AttributeError: the field returned by get_field does not have a verbose_name attribute (i.e. a relation)
+                    # FieldDoesNotExist: forwarded.dst/forwarded.src is not a name of a field of that model 
+                    forwarded_verbose = snake_case_to_spaces(forwarded.src).title()
+
                 attrs['data-placeholder'] = placeholder_template % {'verbose_name':forwarded_verbose}
             
     widget = widget_class(**widget_opts)

@@ -113,7 +113,7 @@ class TestMakeWidget(TestCase):
         
         widget = make_widget(model = genre, widget_class = autocomplete.ModelSelect2)
         self.assertTrue(hasattr(widget, '_url'))
-    
+        
     @translation_override(language = None)
     def test_forwarded(self):
         # The values for forward are wrapped in a forward.Field object.
@@ -127,10 +127,15 @@ class TestMakeWidget(TestCase):
         self.assertEqual(widget.forward[0].src, 'ober')
         self.assertEqual(widget.attrs['data-placeholder'], 'Go home!')
                 
-        #TODO: NYI: Assert that forward values can also be forward.Field objects
-        #forwarded = forward.Field(src='ober', dst='genre')
-        #widget = make_widget(model = genre, forward = forwarded)
-        #self.assertEqual(widget.forward[0], forwarded)
+        # Assert that forward values can also be forward.Field objects
+        forwarded = forward.Field(src='ober', dst='genre')
+        widget = make_widget(model = genre, forward = forwarded)
+        self.assertEqual(widget.forward[0], forwarded)
+        
+        # Assert that the placeholder text defaults to forward's src if no model field corresponds to src or dst
+        forwarded = forward.Field(src='beep_boop', dst=None)
+        widget = make_widget(model = genre, forward = forwarded)
+        self.assertEqual(widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.')
         
     def test_preserves_attrs(self):
         # Assert that make_widget preserves 'attrs' passed in via kwargs even though the forwarded bit messes with that
