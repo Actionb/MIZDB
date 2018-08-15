@@ -24,10 +24,10 @@ class ConfirmationViewMixin(MIZAdminMixin):
     
     view_helptext = ''
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, model_admin, queryset, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
-        self.queryset = kwargs.pop('queryset') #TODO: either make queryset/model_admin required or pop(,None)
-        self.model_admin = kwargs.pop('model_admin')
+        self.model_admin = model_admin
+        self.queryset = queryset 
         if not getattr(self, 'action_name', False): # Allow setting of custom action_names, otherwise use the class's name
             self.action_name = self.__class__.__name__
         self.opts = self.model_admin.opts
@@ -89,14 +89,14 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
     affected_fields = [] # these are the model fields that should be displayed in the summary of objects affected by this action
     
     # Related to the makeSelectionForm form factory. Can be omitted if form_class is given or no form needs to be displayed
-    fields = [] # these are the model fields that should be displayed in the 'selection form'
+    selection_form_fields = [] # these are the model fields that should be displayed in the 'selection form'
     help_texts = {} # help_texts for the makeSelectionForm
     labels = {} # labels  for the makeSelectionForm
         
     def get_form_class(self):
-        if self.fields and not self.form_class: 
+        if self.selection_form_fields and not self.form_class: 
             # default to the makeSelectionForm factory function if there is no form_class given
-            return makeSelectionForm(self.model_admin.model, fields=self.fields, labels=self.labels, help_texts=self.help_texts)
+            return makeSelectionForm(self.model_admin.model, fields=self.selection_form_fields, labels=self.labels, help_texts=self.help_texts)
         return super(ActionConfirmationView, self).get_form_class()
 
     def get_form_kwargs(self):
@@ -136,7 +136,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         objs = []
         for obj in self.queryset:
             sub_list = [linkify(obj)]
-            affected_fields = self.affected_fields or self.fields
+            affected_fields = self.affected_fields or self.selection_form_fields
             if affected_fields:
                 flds = []
                 for field_path in affected_fields:
@@ -151,7 +151,11 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
                         value = getattr(obj, field.name)
                         if value is None:
                             value = '---'
-                        flds.append("{}: {}".format(field.verbose_name, str(value))) #TODO: capitalize field names
+                        verbose_name = field.verbose_name
+                        if verbose_name == field.name.replace('_', ' '):
+                            # The field has the default django verbose_name
+                            verbose_name = verbose_name.title()
+                        flds.append("{}: {}".format(verbose_name, str(value)))
                 sub_list.append(flds)
             objs.append(sub_list)
         return objs
