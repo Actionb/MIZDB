@@ -3,13 +3,16 @@ from collections import OrderedDict
 
 from django import forms
 from django.contrib.admin.utils import get_fields_from_path
-from django.urls import reverse
 
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm
 from DBentry.models import lagerort
 from DBentry.ac.widgets import make_widget
 
-def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_classes = {}):
+def makeSelectionForm(model, fields, help_texts = None, labels = None, formfield_classes = None):
+    if help_texts is None: help_texts = {}
+    if labels is None: labels = {}
+    if formfield_classes is None: formfield_classes = {}
+    
     attrs = OrderedDict()
     for field_path in fields:
         field = get_fields_from_path(model, field_path)[-1]
@@ -26,6 +29,22 @@ def makeSelectionForm(model, fields, help_texts = {}, labels = {}, formfield_cla
         else:
             attrs[field_path] = field.formfield(**formfield_opts)
     return type('SelectionForm', (MIZAdminForm, ), attrs )
+
+class BulkEditJahrgangForm(DynamicChoiceForm, MIZAdminForm):
+    
+    start = forms.ChoiceField(
+        required = True, 
+        choices = (), 
+        label = 'Schlüssel-Ausgabe', 
+        help_text = 'Wählen Sie eine Ausgabe.', 
+        widget = forms.RadioSelect(), 
+    )
+    jahrgang = forms.IntegerField(
+        required = True, 
+        help_text = 'Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.'
+    )
+    
+    
     
 class BulkAddBestandForm(MIZAdminForm):
     

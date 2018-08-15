@@ -10,7 +10,7 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin
 
 from .base import ActionConfirmationView, WizardConfirmationView
-from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet
+from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm
 
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
@@ -21,16 +21,28 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
     affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
     
-    initial = {'jahrgang':1}
-    fields = ['jahrgang']
-    help_texts = {'jahrgang':'Wählen sie den Jahrgang für das erste Jahr.'}
+    form_class = BulkEditJahrgangForm
     
-    view_helptext = """ Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
-                        Dabei wird das früheste Jahr in der Auswahl als Startpunkt aufgefasst und der Wert für den Jahrgang für jedes weitere Jahr entsprechend hochgezählt.
-                        Für Ausgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), wird nur der eingegebene Wert für den Jahrgang benutzt.
-                        Wird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge der ausgewählten Ausgaben gelöscht.
-                        Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
+    view_helptext = """ 
+        Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
+        Wählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an.
+        Die Jahrgangswerte der anderen Ausgaben werden danach in Abständen von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt.
+        
+        Ausgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), werden ignoriert.
+        Wird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge aller ausgewählten Ausgaben gelöscht.
+        Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
     """
+    
+    def get_form_kwargs(self, *args, **kwargs):
+        kwargs = super().get_form_kwargs(*args, **kwargs)
+        kwargs['choices'] = self.queryset
+        return kwargs
+        
+    def get_initial(self):
+        return {
+            'jahrgang': 1, 
+            'start':self.queryset.values_list('pk', flat = True).first(), 
+        }
     
     def action_allowed(self):
         if self.queryset.values('magazin_id').distinct().count() != 1:
@@ -42,25 +54,13 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     def perform_action(self, form_cleaned_data):
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
+        start = self.queryset.get(pk = form_cleaned_data.get('start'))
+        
         if jg == 0:
             # User entered 0 for jahrgang. Delete jahrgang data from the selected ausgaben.
             qs.update(jahrgang=None)
         else:
-            #TODO: account for months as a 'delimiter'
-            years_in_qs = qs.values_list('ausgabe_jahr__jahr', flat = True).exclude(ausgabe_jahr__jahr=None).order_by('ausgabe_jahr__jahr').distinct()
-            previous_year = years_in_qs.first()
-            with transaction.atomic():            
-                # Update all the objects that do not have a year
-                qs.filter(ausgabe_jahr__jahr=None).update(jahrgang=jg)
-                
-                # Update all the objects that do have a year, and increment the jahrgang accordingly
-                for year in years_in_qs:
-                    jg += year - previous_year
-                    loop_qs = qs.filter(ausgabe_jahr__jahr=year)
-                    loop_qs.update(jahrgang=jg)
-                    # Do not update the same issue twice (e.g. issues with two years)
-                    qs = qs.exclude(ausgabe_jahr__jahr=year)
-                    previous_year = year
+            qs.increment_jahrgang(start, jg)
         self.log_update(self.queryset, 'jahrgang')
                 
                 
@@ -135,7 +135,6 @@ class MergeViewWizarded(WizardConfirmationView):
      
     _updates = {} 
     
-    #TODO: translation
     step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
         Danach werden die sekundären Datensätze GELÖSCHT.
     """
@@ -162,10 +161,10 @@ class MergeViewWizarded(WizardConfirmationView):
         request = self.request
         queryset = self.queryset
         
-        MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.' #TODO: translation
+        MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
         
         if queryset.count()==1:
-            msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' #TODO: translation
+            msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' 
             self.model_admin.message_user(request, msg_text, 'warning')
             return False
         if model == ausgabe and queryset.values_list('magazin').distinct().count()>1:

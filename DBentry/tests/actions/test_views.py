@@ -167,24 +167,47 @@ class TestWizardConfirmationView(ActionViewTestCase):
         view.perform_action = Mock()
         self.assertIsNone(view.done(None))
         view.perform_action.assert_called_once()
-       
+
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     
     view_class = BulkEditJahrgang
     model = ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [    
-        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001]}, 
-        {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001]}, 
-        {'magazin__magazin_name':'Bad', 'jahrgang' : 20, 'ausgabe_jahr__jahr': [2001]}, 
-        {'magazin__magazin_name':'Testmagazin'}
+        { # obj1: jg + 0
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 
+            'e_datum': '2000-06-12', 'ausgabe_monat__monat__ordinal': [6]
+        },
+        { # obj2: jg + 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001], 
+            'e_datum': '2001-06-12', 'ausgabe_monat__monat__ordinal': [6]
+        },
+        { # obj3: ignored
+            'magazin__magazin_name':'Bad', 'jahrgang' : 20, 'ausgabe_jahr__jahr': [2001]
+        },
+        { # obj4: ignored?
+            'magazin__magazin_name':'Testmagazin'
+        }, 
+        {  # obj5: jg + 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2002], 
+            'e_datum': '2002-05-11', 'ausgabe_monat__monat__ordinal': [5], 
+        },
+        {  # obj6: jg + 2 when using e_datum, jg + 1 when using monat
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2002], 
+            'e_datum': '2002-06-12', 'ausgabe_monat__monat__ordinal': [5]
+        },
+        {  # obj7: jg + 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001]
+        },
+        {  # obj8: jg + 2
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2002]
+        },
     ]
     
     def setUp(self):
         super(TestBulkEditJahrgang, self).setUp()
-        # set self.queryset to objects 1 and 2 as these are compliant with the view's checks
-        self.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
-    
+        self.queryset = self.model.objects.exclude(pk=self.obj3.pk)
+        
     def test_action_allowed(self):
         self.assertTrue(self.get_view().action_allowed())
         
@@ -244,9 +267,9 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_perform_action(self): 
         request = self.get_request()
         view = self.get_view(request)
-        view.perform_action({'jahrgang':31416})
-        new_jg = list(self.queryset.values_list('jahrgang', flat=True))
-        self.assertEqual(new_jg, [31416, 31417])
+        view.perform_action({'jahrgang':31416, 'start':self.obj1.pk})
+        new_jg = list(self.queryset.values_list('jahrgang', flat=True).exclude(jahrgang=None).distinct())
+        self.assertEqual(new_jg, [31416, 31417, 31418])
         for obj in self.queryset.all():
             self.assertLoggedChange(obj, 'jahrgang')
         
@@ -255,7 +278,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # obj4 has no years assigned, perform_action should assign it the jahrgang value given by 'form_cleaned_data'
         request = self.get_request()
         view = self.get_view(request, queryset=self.qs_obj4)
-        form_cleaned_data = {'jahrgang':31416}
+        form_cleaned_data = {'jahrgang':31416, 'start':self.obj4.pk}
         view.perform_action(form_cleaned_data)
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
@@ -265,17 +288,12 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_perform_action_jahrgang_zero(self):   
         request = self.get_request()   
         view = self.get_view(request)
-        view.perform_action({'jahrgang':0})
-        new_jg = list(self.queryset.values_list('jahrgang', flat=True))
-        self.assertEqual(new_jg, [None, None])
+        view.perform_action({'jahrgang':0, 'start':self.obj1.pk})
+        new_jg = list(self.queryset.values_list('jahrgang', flat=True).distinct())
+        self.assertEqual(new_jg, [None])
         for obj in self.queryset.all():
             self.assertLoggedChange(obj, 'jahrgang')
             
-    @tag('logging')
-    def test_perform_action_month_delimiter(self):
-        #TODO: NYI: BulkEditJahrgang respecting monat values
-        pass
-   
 class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     view_class = BulkAddBestand
