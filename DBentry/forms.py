@@ -67,6 +67,7 @@ class FormBase(forms.ModelForm):
             self.cleaned_data['DELETE']=True
             self._update_errors(e) #NOTE: update errors even if we're ignoring the ValidationError?
 
+#NOTE: is anything still using this?
 def makeForm(model, fields = (), form_class = None):
     fields_param = fields or '__all__'
     form_class = form_class or FormBase
