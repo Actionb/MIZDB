@@ -389,8 +389,9 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             key_fields['defaults'] = kwargs
             instance, _created = manager.get_or_create(*args, **key_fields)
         cls.__memo = []
-        #FIXME: the returned instance has not been refreshed_from_db 
-        # i.e.: ausgabe instances can have a str for their e_datum attribute
+        # Refresh the instance's data. This can be necessary if the instance was created f.ex. 
+        # with data of type string for a DateField. 
+        instance.refresh_from_db()
         return instance
             
 
