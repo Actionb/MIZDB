@@ -210,7 +210,7 @@ class MergeViewWizarded(WizardConfirmationView):
                                 if len(updates[k])>0:
                                     # Another value for this field has already been found, we have found a conflict 
                                     has_conflict = True
-                                #NOTE: str() everything? What about boolean or lists?
+                                # make v both hashable (for the set) and serializable (for the session)
                                 updates[k].add(str(v)) 
                                  
                     # Sets are not JSON serializable, turn them into lists and remove empty ones 

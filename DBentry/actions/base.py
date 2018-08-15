@@ -81,7 +81,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
         context.update(**kwargs)
         return context
     
-#TODO: rename fields to 'selection_form_fields' (or similar)
 class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
     
     template_name = 'admin/action_confirmation.html'
