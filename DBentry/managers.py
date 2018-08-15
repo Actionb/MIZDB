@@ -1,14 +1,13 @@
 from collections import Counter, OrderedDict
 from itertools import chain
-
+        
 from django.db import models, transaction
 from django.db.models import Count, Sum, Min, Max
 from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
 
-from DBentry.utils import flatten_dict
+from DBentry.utils import flatten_dict, leapdays, build_date
 from DBentry.query import *
-
 
 class MIZQuerySet(models.QuerySet):
     
@@ -208,6 +207,103 @@ class AusgabeQuerySet(CNQuerySet):
                             ordered_result.append(tpl)
             return ordered_result
         return result
+        
+    def increment_jahrgang(self, start_obj, start_jg = 1):
+        start = start_obj or self.chronologic_order().first()
+        start_date = start.e_datum
+        years = start.ausgabe_jahr_set.values_list('jahr', flat = True)
+        if start_date:
+            start_year = start_date.year
+        elif years:
+            start_year = min(years)
+        else:
+            start_year = None
+            
+        ids_seen = {start.pk}
+        update_dict = {start_jg : [start.pk]}
+        queryset = self.exclude(pk = start.pk)
+        
+        # Increment by date
+        if start_date is None:
+            month_ordinals = start.ausgabe_monat_set.values_list('monat__ordinal', flat = True)
+            start_date = build_date(years, month_ordinals)
+            
+        if start_date:
+            val_dicts = queryset.values_dict('e_datum', 'ausgabe_jahr__jahr', 'ausgabe_monat__monat__ordinal', include_empty = False, flatten = False)
+            for pk, val_dict in val_dicts.items():
+                if 'e_datum' in val_dict:
+                   obj_date = val_dict.get('e_datum')[-1]
+                elif not ('ausgabe_jahr__jahr' in val_dict and 'ausgabe_monat__monat__ordinal' in val_dict):
+                    continue
+                else:
+                    obj_date = build_date(
+                        val_dict['ausgabe_jahr__jahr'], val_dict['ausgabe_monat__monat__ordinal']
+                    )
+                if obj_date < start_date:
+                    # If the obj_date lies before start_date the obj_jg will always be start_jg - 1
+                    # plus the year difference between the two dates.
+                    # If the days and month of each date match, obj_date marks the BEGINNING of the obj_jg, 
+                    # thus we need to handle it inclusively (subtracting 1 from the day difference, thereby requiring 366 days difference)
+                    obj_jg = start_jg - (1 +\
+                        int(((start_date - obj_date).days - leapdays(start_date, obj_date) - 1)/365))
+                else:
+                    obj_jg = start_jg + \
+                        int(((obj_date - start_date).days - leapdays(start_date, obj_date))/365)
+                if obj_jg not in update_dict:
+                    update_dict[obj_jg] = []
+                update_dict[obj_jg].append(pk)
+                ids_seen.add(pk)
+        
+        # Increment by num
+        nums = start.ausgabe_num_set.values_list('num', flat = True)
+        if nums and start_year:
+            queryset = queryset.exclude(pk__in = ids_seen)
+            start_num = min(nums)
+            
+            val_dicts = queryset.values_dict('ausgabe_num__num', 'ausgabe_jahr__jahr', include_empty = False, flatten = False)
+            for pk, val_dict in val_dicts.items():
+                if 'ausgabe_num__num' not in val_dict or 'ausgabe_jahr__jahr' not in val_dict:
+                    continue
+                    
+                obj_year = min(val_dict['ausgabe_jahr__jahr'])
+                obj_num = min(val_dict['ausgabe_num__num'])
+                if len(val_dict['ausgabe_jahr__jahr']) > 1:
+                    # The ausgabe spans two years, choose the highest num number to order it at the end of the year
+                    obj_num = max(val_dict['ausgabe_num__num'])
+                
+                if (obj_num > start_num and obj_year == start_year) or\
+                    (obj_num < start_num and obj_year == start_year + 1):
+                    update_dict[start_jg].append(pk)
+                else:
+                    obj_jg = start_jg + obj_year - start_year
+                    if obj_num < start_num:
+                        # the object was released in the 'previous' jahrgang 
+                        obj_jg -= 1
+                    if obj_jg not in update_dict:
+                        update_dict[obj_jg] = []
+                    update_dict[obj_jg].append(pk)
+                ids_seen.add(pk)
+    
+        # Increment by year
+        if start_year:
+            queryset = queryset.exclude(pk__in = ids_seen)
+            
+            for pk, val_dict in queryset.values_dict('ausgabe_jahr__jahr', include_empty = False, flatten = False).items():
+                if 'ausgabe_jahr__jahr' not in val_dict:
+                    continue
+                obj_jg = start_jg + min(val_dict['ausgabe_jahr__jahr']) - start_year
+                if obj_jg not in update_dict:
+                    update_dict[obj_jg] = []
+                update_dict[obj_jg].append(pk)
+                ids_seen.add(pk)
+        
+            
+        with transaction.atomic():
+            for jg, ids in update_dict.items():
+                self.filter(pk__in=ids).update(jahrgang=jg)
+        
+        return update_dict
+                
     
     def chronologic_order(self, ordering = None):
         if not self.exists() or not self.query.where.children:

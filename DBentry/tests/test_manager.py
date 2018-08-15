@@ -195,6 +195,125 @@ class TestAusgabeQuerySet(DataTestCase):
         result_ids = [i[0] for i in self.queryset.find('2000', ordered = False)]
         self.assertEqual(result_ids, expected)
         
+class TestAusgabeIncrementJahrgang(DataTestCase):
+    
+    model = ausgabe
+    
+    raw_data = [
+        { # obj1: start_jg
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
+            'e_datum': '2000-06-01', 'ausgabe_monat__monat__ordinal': [6], 'ausgabe_num__num' : [6], 
+        }, 
+        { # obj2: start_jg - 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
+            'e_datum': '2000-05-01', 'ausgabe_monat__monat__ordinal': [5], 'ausgabe_num__num' : [5], 
+        }, 
+        { # obj3: start_jg - 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [1999], 
+            'e_datum': '1999-06-01', 'ausgabe_monat__monat__ordinal': [6], 'ausgabe_num__num' : [6], 
+        }, 
+        { # obj4: start_jg
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001], 
+            'e_datum': '2000-12-31', 'ausgabe_monat__monat__ordinal': [12, 1], 'ausgabe_num__num' : [12, 1], 
+        }, 
+        { # obj5: start_jg
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001], 
+            'e_datum': '2001-05-01', 'ausgabe_monat__monat__ordinal': [5], 'ausgabe_num__num' : [5], 
+        }, 
+        { # obj6: start_jg + 1
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2001], 
+            'e_datum': '2001-06-01', 'ausgabe_monat__monat__ordinal': [6], 'ausgabe_num__num' : [6], 
+        }, 
+        { # obj7: start_jg + 2
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2002], 
+            'e_datum': '2002-06-01', 'ausgabe_monat__monat__ordinal': [6], 'ausgabe_num__num' : [6], 
+        }, 
+        { # obj8: ignored
+            'magazin__magazin_name':'Testmagazin', 'ausgabe_monat__monat__ordinal': [6], 
+            'ausgabe_num__num' : [6]
+        }, 
+    ]
+    
+    def assertIncrementedUpdateDict(self, update_dict):
+        self.assertEqual(len(update_dict), 4, msg = str(update_dict))
+        
+        self.assertIn(9, update_dict)
+        self.assertEqual(update_dict[9], [self.obj2.pk, self.obj3.pk])
+        
+        self.assertIn(10, update_dict)
+        self.assertEqual(update_dict[10], [self.obj1.pk, self.obj4.pk, self.obj5.pk])
+        
+        self.assertIn(11, update_dict)
+        self.assertEqual(update_dict[11], [self.obj6.pk])
+        
+        self.assertIn(12, update_dict)
+        self.assertEqual(update_dict[12], [self.obj7.pk])
+        
+    def assertIncrementedQuerySet(self, queryset):
+        self.assertEqual(queryset.get(pk=self.obj1.pk).jahrgang, 10)
+        self.assertEqual(queryset.get(pk=self.obj2.pk).jahrgang, 9)
+        self.assertEqual(queryset.get(pk=self.obj3.pk).jahrgang, 9)
+        self.assertEqual(queryset.get(pk=self.obj4.pk).jahrgang, 10)
+        self.assertEqual(queryset.get(pk=self.obj5.pk).jahrgang, 10)
+        self.assertEqual(queryset.get(pk=self.obj6.pk).jahrgang, 11)
+        self.assertEqual(queryset.get(pk=self.obj7.pk).jahrgang, 12)
+        self.assertEqual(queryset.get(pk=self.obj8.pk).jahrgang, None)        
+    
+    def test_increment_by_date(self):
+        update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
+        self.assertIncrementedUpdateDict(update_dict)
+        self.assertIncrementedQuerySet(self.queryset)
+        
+    def test_increment_by_month(self):
+        self.queryset.update(e_datum = None)
+        self.obj1.refresh_from_db()
+        update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
+        self.assertIncrementedUpdateDict(update_dict)
+        self.assertIncrementedQuerySet(self.queryset)
+        
+    def test_increment_by_num(self):
+        self.queryset.update(e_datum = None)
+        ausgabe_monat.objects.all().delete()
+        self.obj1.refresh_from_db()
+        update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
+        self.assertIncrementedUpdateDict(update_dict)
+        self.assertIncrementedQuerySet(self.queryset)
+        
+    def test_increment_by_year(self):
+        self.queryset.update(e_datum = None)
+        ausgabe_monat.objects.all().delete()
+        ausgabe_num.objects.all().delete()
+        self.obj1.refresh_from_db()
+        update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
+        
+        self.assertEqual(len(update_dict), 4, msg = str(update_dict))
+        
+        self.assertIn(9, update_dict)
+        self.assertEqual(update_dict[9], [self.obj3.pk])
+        
+        self.assertIn(10, update_dict)
+        self.assertEqual(update_dict[10], [self.obj1.pk, self.obj2.pk, self.obj4.pk])
+        
+        self.assertIn(11, update_dict)
+        self.assertEqual(update_dict[11], [self.obj5.pk, self.obj6.pk])
+        
+        self.assertIn(12, update_dict)
+        self.assertEqual(update_dict[12], [self.obj7.pk])
+        
+        queryset = self.queryset
+        self.assertEqual(queryset.get(pk=self.obj1.pk).jahrgang, 10)
+        self.assertEqual(queryset.get(pk=self.obj2.pk).jahrgang, 10) 
+        self.assertEqual(queryset.get(pk=self.obj3.pk).jahrgang, 9)
+        self.assertEqual(queryset.get(pk=self.obj4.pk).jahrgang, 10)
+        self.assertEqual(queryset.get(pk=self.obj5.pk).jahrgang, 11)
+        self.assertEqual(queryset.get(pk=self.obj6.pk).jahrgang, 11)
+        self.assertEqual(queryset.get(pk=self.obj7.pk).jahrgang, 12)
+        self.assertEqual(queryset.get(pk=self.obj8.pk).jahrgang, None)  
+        
+    def test_increment_mixed(self):
+        #TODO: test_increment_mixed
+        pass
+        
 @tag("slow")
 class TestAusgabeQuerySetOrdering(DataTestCase):
     model = ausgabe
