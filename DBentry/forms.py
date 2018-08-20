@@ -95,6 +95,65 @@ def makeForm(model, fields = (), form_class = None):
     return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widgets) 
 
 
+        
+class XRequiredFormMixin(object):
+    """
+    A mixin that allows setting a minimum/maximum number of groups of fields to be required.
+    
+    Attributes:
+    - xrequired: an iterable of dicts that specicify the number of required fields ('min', 'max'), the field names
+                ('fields') and optionally a custom error message ('error_message'). 
+    - default_error_messages: a dict of default error messages for min and max ValidationErrors
+    """
+    
+    xrequired = None 
+    default_error_messages = {
+        'min' : gettext_lazy('Bitte mindestens {min} dieser Felder ausfüllen: {fields}.'), 
+        'max' : gettext_lazy('Bitte höchstens {max} dieser Felder ausfüllen: {fields}.'), 
+    }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.xrequired:
+            for required in self.xrequired:
+                for field_name in required['fields']:
+                    self.fields[field_name].required = False
+
+    def clean(self):
+        if self.xrequired:
+            for required in self.xrequired:
+                min = required.get('min', 0)
+                max = required.get('max', 0)
+                if not min and not max:
+                    continue
+                    
+                fields_with_values = 0
+                for field_name in required['fields']:
+                    if self.cleaned_data.get(field_name):
+                        fields_with_values += 1
+                        
+                min_error = max_error = False
+                if min and fields_with_values < min:
+                    min_error = True
+                if max and fields_with_values > max:
+                    max_error = True
+                    
+                custom_error_msgs = required.get('error_message', {})
+                fields = ", ".join(
+                    self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
+                    for field_name in required['fields']
+                )
+                if min_error:
+                    msg = custom_error_msgs.get('min') or self.default_error_messages['min']
+                    msg = msg.format(min = min, fields = fields)
+                    self.add_error(None, msg)
+                if max_error:
+                    msg = custom_error_msgs.get('max') or self.default_error_messages['max']
+                    msg = msg.format(max = max, fields = fields)
+                    self.add_error(None, msg)
+        return super().clean()
+    
+    
 class AusgabeMagazinFieldForm(FormBase):
     """
     In order to limit search results, forward ausgabe search results to a ModelChoiceField for the model magazin.
@@ -133,19 +192,11 @@ class ArtikelForm(AusgabeMagazinFieldForm):
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
         
-#TODO: make a OneRequiredForm 
-        
-class AutorForm(FormBase):
+class AutorForm(XRequiredFormMixin, FormBase):
     
-    def clean(self):
-        # The user has to fill out at least kuerzel or person
-        cleaned_data = super().clean()
-        if cleaned_data.get('kuerzel') or cleaned_data.get('person'):
-            return cleaned_data
-        else:
-            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: Kürzel, Person')
-            
-class BuchForm(FormBase):
+    xrequired = [{'min':1, 'fields':['kuerzel', 'person']}]
+    
+class BuchForm(XRequiredFormMixin, FormBase):
     class Meta:
         widgets = {
             'titel' : Textarea(attrs={'rows':1, 'cols':90}), 
@@ -153,24 +204,15 @@ class BuchForm(FormBase):
             'buchband' : make_widget(url='acbuchband', model=buch, wrap=False, can_delete_related=False),
         }
     
-    def clean(self):
-        # The user must not fill out both is_buchband and buchband
-        cleaned_data = super().clean()
-        if cleaned_data.get('is_buchband') and cleaned_data.get('buchband'):
-            raise ValidationError('Ein Buchband kann nicht selber Teil eines Buchbandes sein.')
-        else:
-            return cleaned_data
+    xrequired = [{
+        'max':1, 'fields': ['is_buchband', 'buchband'], 
+        'error_message': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
+    }]
         
-class HerausgeberForm(FormBase):
+class HerausgeberForm(XRequiredFormMixin, FormBase):
     
-    def clean(self):
-        # The user has to fill out at least person or organisation
-        cleaned_data = super().clean()
-        if cleaned_data.get('person') or cleaned_data.get('organisation'):
-            return cleaned_data
-        else:
-            raise ValidationError('Bitte mindestens eines dieser Felder ausfüllen: Person, Organisation')
-        
+    xrequired = [{'fields':['person', 'organisation'], 'min':1}]
+    
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
         
@@ -299,62 +341,3 @@ class FavoritenForm(MIZAdminForm, forms.ModelForm):
             'fav_genres'    :   FilteredSelectMultiple('Genres', False), 
             'fav_schl'      :   FilteredSelectMultiple('Schlagworte', False),
         }
-        
-class XRequiredFormMixin(object):
-    """
-    A mixin that allows setting a minimum/maximum number of groups of fields to be required.
-    
-    Attributes:
-    - xrequired: an iterable of dicts that specicify the number of required fields ('min', 'max'), the field names
-                ('fields') and optionally a custom error message ('error_message'). 
-    - default_error_messages: a dict of default error messages for min and max ValidationErrors
-    """
-    
-    xrequired = None 
-    default_error_messages = {
-        'min' : gettext_lazy('Bitte mindestens {min} dieser Felder ausfüllen: {fields}.'), 
-        'max' : gettext_lazy('Bitte höchstens {max} dieser Felder ausfüllen: {fields}.'), 
-    }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.xrequired:
-            for required in self.xrequired:
-                for field_name in required['fields']:
-                    self.fields[field_name].required = False
-
-    def clean(self):
-        if self.xrequired:
-            for required in self.xrequired:
-                min = required.get('min', 0)
-                max = required.get('max', 0)
-                if not min and not max:
-                    continue
-                    
-                fields_with_values = 0
-                for field_name in required['fields']:
-                    if self.cleaned_data.get(field_name):
-                        fields_with_values += 1
-                        
-                min_error = max_error = False
-                if min and fields_with_values < min:
-                    min_error = True
-                if max and fields_with_values > max:
-                    max_error = True
-                    
-                custom_error_msgs = required.get('error_message', {})
-                fields = ", ".join(
-                    self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
-                    for field_name in required['fields']
-                )
-                if min_error:
-                    msg = custom_error_msgs.get('min') or self.default_error_messages['min']
-                    msg = msg.format(min = min, fields = fields)
-                    self.add_error(None, msg)
-                if max_error:
-                    msg = custom_error_msgs.get('max') or self.default_error_messages['max']
-                    msg = msg.format(max = max, fields = fields)
-                    self.add_error(None, msg)
-        return super().clean()
-    
-    

@@ -114,82 +114,81 @@ class TestAutorForm(ModelFormTestCase):
     fields = ['person', 'kuerzel']
     model = autor
     
+    @translation_override(language = None)
     def test_clean(self):
         # clean should raise a ValidationError if either kuerzel or person data is missing
         p = make(person)
+        expected_error_message = 'Bitte mindestens 1 dieser Felder ausfüllen: Kürzel, Person.'
         
         form = self.get_form(data={'beschreibung':'Boop'})
         form.full_clean()
-        with self.assertRaises(ValidationError):
-            form.clean()
+        self.assertIn(expected_error_message, form.errors.get('__all__'))
             
         form = self.get_form(data={'kuerzel':'Beep'})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
             
         form = self.get_form(data={'person':p.pk})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
             
         form = self.get_form(data={'kuerzel':'Beep', 'person':p.pk})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
         
 class TestBuchForm(ModelFormTestCase):
     form_class = BuchForm
     fields = ['is_buchband', 'buchband']
     model = buch
     
+    @translation_override(language = None)
     def test_clean(self):
         # clean should raise a ValidationError if both is_buchband and buchband data is present
         b = make(buch, is_buchband = True)
+        expected_error_message = 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'
         
         form = self.get_form(data={'is_buchband':True, 'buchband':b.pk})
         form.full_clean()
-        with self.assertRaises(ValidationError):
-            form.clean()
+        self.assertIn(expected_error_message, form.errors.get('__all__'))
         
         form = self.get_form(data={'is_buchband':True})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
             
         form = self.get_form(data={'buchband':b.pk})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
-            
+        self.assertFalse(form.errors)
+        
+        form = self.get_form(data={})
+        form.full_clean()
+        self.assertFalse(form.errors)
+        
 class TestHerausgeberForm(ModelFormTestCase):
     form_class = HerausgeberForm
     fields = ['person', 'organisation']
     model = Herausgeber
     
+    @translation_override(language = None)
     def test_clean(self):
         p = make(person)
         o = make(Organisation)
+        expected_error_message = 'Bitte mindestens 1 dieser Felder ausfüllen: Person, Organisation.'
         
         form = self.get_form(data={})
         form.full_clean()
-        with self.assertRaises(ValidationError):
-            form.clean()
-            
+        self.assertIn(expected_error_message, form.errors.get('__all__'))
+        
         form = self.get_form(data={'organisation':o.pk})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
             
         form = self.get_form(data={'person':p.pk})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
             
         form = self.get_form(data={'organisation':o.pk, 'person':p.pk})
         form.full_clean()
-        with self.assertNotRaises(ValidationError):
-            form.clean()
+        self.assertFalse(form.errors)
         
 class TestMIZAdminForm(FormTestCase):
     
