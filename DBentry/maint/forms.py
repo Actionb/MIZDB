@@ -1,7 +1,7 @@
 from django import forms 
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
-from DBentry.forms import MIZAdminForm, DynamicChoiceForm, DynamicChoiceFormSet 
+from DBentry.forms import MIZAdminForm, DynamicChoiceForm 
 
 class MaintBaseForm(forms.Form): 
     pass 

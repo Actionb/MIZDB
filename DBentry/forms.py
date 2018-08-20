@@ -318,21 +318,6 @@ class DynamicChoiceForm(forms.Form):
                 choices = new_choices
                 fld.choices = choices
                 
-class DynamicChoiceFormSet(forms.formsets.BaseFormSet):
-    #NOTE: probably not needed anymore
-    
-    def get_form_kwargs(self, index):
-        if index is None:
-            return super(DynamicChoiceFormSet, self).get_form_kwargs(index)
-        form_kwargs = {}
-        for fld_name, fld in self.form.base_fields.items():
-            # DynamicChoiceForm expects kwargs in the format prefix+fld_name to set that field's choices to
-            kwarg_name = self.add_prefix(index) + '-' + fld_name
-            if kwarg_name in self.form_kwargs:
-                form_kwargs[kwarg_name] = self.form_kwargs.get(kwarg_name) #NOTE .copy()?
-        return form_kwargs
-        
-
 class FavoritenForm(MIZAdminForm, forms.ModelForm):
     class Meta:
         model = Favoriten
