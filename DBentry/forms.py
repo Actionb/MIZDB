@@ -275,32 +275,29 @@ class MIZAdminForm(forms.Form):
         return data
                     
 class DynamicChoiceForm(forms.Form):
-    """ A form that dynamically sets choices for ChoiceFields from keyword arguments provided. 
-        Accepts lists and querysets (as well as Manager instances).
-        If a ChoiceField's name is not represented in kwargs, the form will try to set that field's choices to a 'qs' or 'queryset' keyword argument.
+    """ 
+    A form that dynamically sets choices for instances of ChoiceFields from keyword arguments provided. 
+    Takes a keyword argument 'choices' that can either be:
+        - a dict: a mapping of a field's name to its choices
+        - an iterable containing choices that apply to all ChoiceFields
+    The actual choices for a given field can be lists/tuples, querysets or manager instances.
     """
     
     def __init__(self, *args, **kwargs):
-        choice_dict = kwargs.pop('choices', {})
+        all_choices = kwargs.pop('choices', {})
         super(DynamicChoiceForm, self).__init__(*args, **kwargs)
         for fld_name, fld in self.fields.items():
             if isinstance(fld, forms.ChoiceField) and not fld.choices:
-                if not isinstance(choice_dict, dict):
+                if not isinstance(all_choices, dict):
                     # choice_dict is a list, there is only one choice for any ChoiceFields
-                    choices = choice_dict
+                    choices = all_choices
                 else:
-                    choices = choice_dict.get(self.add_prefix(fld_name), [])
+                    choices = all_choices.get(self.add_prefix(fld_name), [])
                     
                 if isinstance(choices, BaseManager):
                     choices = choices.all()
                 if isinstance(choices, QuerySet):
                     choices = [(i.pk, i.__str__()) for i in choices]
-                    
-                #NOTE: these can never be true after the first if else
-                if isinstance(choices, dict): 
-                    choices = [(k, v) for k, v in choices.items()]
-                if not isinstance(choices, (list, tuple)):
-                    choices = list(choices)
                 
                 new_choices = []
                 for i in choices:

@@ -284,11 +284,8 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         form = self.get_dummy_form(attrs = fields, choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
         self.assertListEqualSorted(form.fields['cf2'].choices, [('1', 'a')])
-    
-class TestDynamicChoiceFormSet(FormTestCase):
-    
-    def test_get_form_kwargs(self):
-        pass
+        
+        
 
 class TestXRequiredFormMixin(FormTestCase):
     
