@@ -233,7 +233,7 @@ class ArtikelAdmin(MIZModelAdmin):
     list_display_links = ['__str__', 'seite']
     
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
-    fields = [('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen']
+    fields = [('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen']
     save_on_top = True
                                 
     advanced_search_form = {
@@ -255,16 +255,6 @@ class ArtikelAdmin(MIZModelAdmin):
                 monate = Min('ausgabe__ausgabe_monat__monat_id'), 
                 ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
         return qs
-        
-    def get_changeform_initial_data(self, request):
-        initial = super().get_changeform_initial_data(request)
-        if 'magazin' in initial:
-            return initial
-        elif 'ausgabe__magazin' in initial:
-            initial['magazin'] = initial['ausgabe__magazin']
-        elif 'ausgabe' in initial:
-            initial['magazin'] = ausgabe.objects.get(pk=initial['ausgabe']).magazin
-        return initial
     
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:

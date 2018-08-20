@@ -203,7 +203,37 @@ class TestMIZModelAdmin(AdminTestCase):
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(list(person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Mantest'])
+    
+    def test_get_preserved_filters(self):
+        query_string = '_changelist_filters=sender%3D1'
+        path = self.add_path + '?_changelist_filters=sender=1'
+        request_data = {'_changelist_filters': ['sender=1']}
         
+        # Ignore requests without POST or or without _changelist_filters in GET
+        request = self.get_request(path = self.add_path)
+        filters = self.model_admin.get_preserved_filters(request)
+        self.assertEqual(filters, '', msg = 'preserved_filters updated without request.POST and without _changelist_filters in request.GET')
+        
+        request = self.get_request(path = path)
+        filters = self.model_admin.get_preserved_filters(request)
+        self.assertEqual(filters, query_string, msg = 'preserved_filters updated without request.POST')
+        
+        request = self.get_request(path = self.add_path)
+        request.POST = {'sender':'2'}
+        filters = self.model_admin.get_preserved_filters(request)
+        self.assertEqual(filters, '', msg = 'preserved_filters updated without _changelist_filters')
+        
+        # Do not use key value pairs from POST data that are not present in GET _changelist_filters 
+        request = self.get_request(path = path, data = request_data)
+        request.POST = {'titel':'Beep boop'}
+        filters = self.model_admin.get_preserved_filters(request)
+        self.assertEqual(filters, query_string, msg = 'preserved_filters updated for field not present in _changelist_filters')
+        
+        # Update the changelist filters if applicable
+        request = self.get_request(path = path, data = request_data)
+        request.POST = {'sender':'2'}
+        filters = self.model_admin.get_preserved_filters(request)
+        self.assertEqual(filters, '_changelist_filters=sender%3D2', msg = 'preserved_filters not updated')
         
 class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     
@@ -211,7 +241,7 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     model = artikel
     exclude_expected = ['genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
     fields_expected = [
-        ('magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen'
+        ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
 
     @classmethod
@@ -241,29 +271,11 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
         
     def test_get_changeform_initial_data_with_changelist_filters(self):
         # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
-        # from magazin directly
-        initial = {'_changelist_filters':'magazin=326&q=asdasd&thisisbad'}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('magazin'), '326')
-        
         # from ausgabe__magazin path
         initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
         request = self.get_request(data=initial)
         cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('magazin'), '326')
-        
-        # via ausgabe.magazin
-        initial = {'_changelist_filters':'ausgabe={}&q=asdasd&thisisbad'.format(self.obj1.pk)}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('magazin'), self.mag)
-        
-        # no data provided
-        initial = {'_changelist_filters':'q=asdasd&thisisbad'}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data, initial)
+        self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
         
     def test_add_crosslinks(self):
         obj = make(artikel, 

@@ -67,7 +67,6 @@ class FormBase(forms.ModelForm):
             self.cleaned_data['DELETE']=True
             self._update_errors(e) #NOTE: update errors even if we're ignoring the ValidationError?
 
-#NOTE: is anything still using this?
 def makeForm(model, fields = (), form_class = None):
     fields_param = fields or '__all__'
     form_class = form_class or FormBase
@@ -161,19 +160,19 @@ class AusgabeMagazinFieldForm(FormBase):
     Any form that inherits AusgabeMagazinFieldMixin.Meta and declares widgets in its inner Meta, must also redeclare the widget for ausgabe.
     As such, it is not very useful to inherit the Meta.    (Python inheritance rules apply)
     """
-    magazin = forms.ModelChoiceField(required = False,
+    ausgabe__magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
                                     queryset = magazin.objects.all(), 
                                     widget = make_widget(model=magazin, wrap=True, can_delete_related=False) 
                                     )
     class Meta:
-        widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin'])}
+        widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin'])}
                                     
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs and kwargs['instance']:
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
-            kwargs['initial']['magazin'] = kwargs['instance'].ausgabe.magazin
+            kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
         super(AusgabeMagazinFieldForm, self).__init__(*args, **kwargs)
 
 class InLineAusgabeForm(AusgabeMagazinFieldForm):
@@ -186,7 +185,7 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         model = artikel
         fields = '__all__'
         widgets = {
-                'ausgabe': make_widget(model_name = 'ausgabe', forward = ['magazin']),               
+                'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin']),               
                 'schlagzeile'       : Textarea(attrs={'rows':2, 'cols':90}), 
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 

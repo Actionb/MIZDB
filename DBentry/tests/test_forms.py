@@ -66,14 +66,14 @@ class TestInLineAusgabeForm(ModelFormTestCase):
         kwargs = {'instance':self.obj1}
         form = self.get_form(**kwargs)
         self.assertEqual(form.instance, self.obj1)
-        self.assertEqual(form.initial.get('magazin'), self.obj1.ausgabe.magazin)
+        self.assertEqual(form.initial.get('ausgabe__magazin'), self.obj1.ausgabe.magazin)
         
     def test_form_widgets(self):
         form = self.get_form()
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
-        self.assertTrue('magazin' in form.fields)
-        self.assertIsInstance(form.fields['magazin'].widget, EasyWidgetWrapper)
+        self.assertTrue('ausgabe__magazin' in form.fields)
+        self.assertIsInstance(form.fields['ausgabe__magazin'].widget, EasyWidgetWrapper)
         
 class TestArtikelForm(ModelFormTestCase):
     
@@ -87,7 +87,7 @@ class TestArtikelForm(ModelFormTestCase):
         kwargs = {'instance':self.obj1}
         form = self.get_form(**kwargs)
         self.assertEqual(form.instance, self.obj1)
-        self.assertEqual(form.initial.get('magazin'), self.obj1.ausgabe.magazin)
+        self.assertEqual(form.initial.get('ausgabe__magazin'), self.obj1.ausgabe.magazin)
         
     def test_form_widgets(self):
         form = self.get_form()
@@ -106,8 +106,8 @@ class TestArtikelForm(ModelFormTestCase):
         self.assertIsInstance(form.fields['bemerkungen'].widget, forms.Textarea)
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
-        self.assertTrue('magazin' in form.fields)
-        self.assertIsInstance(form.fields['magazin'].widget, EasyWidgetWrapper)
+        self.assertTrue('ausgabe__magazin' in form.fields)
+        self.assertIsInstance(form.fields['ausgabe__magazin'].widget, EasyWidgetWrapper)
         
 class TestAutorForm(ModelFormTestCase):
     form_class = AutorForm
