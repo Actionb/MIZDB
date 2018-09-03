@@ -1,0 +1,41 @@
+{% extends 'admin/base_site.html' %} 
+{% load static i18n %}
+
+
+{% block extrastyle %}
+<!-- Extrastyle -->
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/helptext.css" %}" />
+{% endblock extrastyle %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        &rsaquo; <a href="{% url 'help_index' %}">Hilfe</a>
+        &rsaquo; {{breadcrumbs_title}}
+    </div>
+{% endblock %}
+
+{% block content %} 
+
+{% block sidenav %}
+<div id="sidenav" class="sidenav" >
+{% if is_popup %}
+    <div style="border-bottom: 2px solid lightgray;">
+        <a href="{% url 'help_index' %}?_popup=1">Home</a>
+    </div>
+{% endif %}
+{% for help_item in help_items %}
+    {{ help_item.sidenav }}
+{% endfor %}
+</div>
+{% endblock sidenav %}
+
+{% for help_item in help_items %}
+    <div class="helpitem">
+    <h3 id="{{ help_item.id }}"> {{ help_item.label|capfirst }} </h3>
+    {{ help_item.html|linebreaks }}
+    <hr>
+    </div>
+{% endfor %}
+{% endblock content %} 
