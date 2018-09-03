@@ -318,7 +318,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         if self.superuser_only:
             # Hide the associated models from the index if the current user is not a superuser
             return request.user.is_superuser
-        return True
+        return super().has_module_permission(request)
 
     def save_model(self, request, obj, form, change):
         if isinstance(obj, ComputedNameModel):

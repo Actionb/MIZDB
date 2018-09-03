@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^ac/',  include('DBentry.ac.urls')), 
     url(r'^tools/', include(admin_tools_urls)), 
     url(r'^maint/', include('DBentry.maint.urls')), 
+    url(r'^help/', include('DBentry.help.urls')), 
 ]

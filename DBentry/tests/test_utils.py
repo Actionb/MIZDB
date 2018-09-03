@@ -235,6 +235,33 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(url, '/admin/DBentry/band/{}/change/'.format(self.test_data[i].pk))
             self.assertEqual(label, str(self.test_data[i]))
             
+    def test_get_model_admin_for_model(self):
+        from DBentry.admin import ArtikelAdmin
+        self.assertIsInstance(utils.get_model_admin_for_model('artikel'), ArtikelAdmin)
+        self.assertIsInstance(utils.get_model_admin_for_model(artikel), ArtikelAdmin)
+        self.assertIsNone(utils.get_model_admin_for_model('beepboop'))
+        
+    def test_has_admin_permission(self):
+        from DBentry.admin import ArtikelAdmin, BildmaterialAdmin
+        request = self.get_request(user = self.noperms_user)
+        model_admin = ArtikelAdmin(artikel, miz_site)
+        self.assertFalse(utils.has_admin_permission(request, model_admin), msg = "Should return False for a user with no permissions.")
+        
+        from django.contrib.auth.models import Permission
+        perms = Permission.objects.filter(codename__in=('add_artikel', ))
+        self.staff_user.user_permissions.set(perms)
+        request = self.get_request(user = self.staff_user)
+        model_admin = ArtikelAdmin(artikel, miz_site)
+        self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for a user with at least some permissions for that model admin.")
+    
+        request = self.get_request(user = self.staff_user)
+        model_admin = BildmaterialAdmin(bildmaterial, miz_site)
+        self.assertFalse(utils.has_admin_permission(request, model_admin), msg = "Should return False for non-superusers on a superuser only model admin.")
+        
+        request = self.get_request(user = self.super_user)
+        model_admin = BildmaterialAdmin(bildmaterial, miz_site)
+        self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for superuser on a superuser-only model admin.")
+            
 
 ##############################################################################################################
 # date utils
