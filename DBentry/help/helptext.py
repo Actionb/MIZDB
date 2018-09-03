@@ -21,15 +21,6 @@ def get_field_helptext(field_name, model):
         and field_name in halp.help_for_model(model).fields:
             return halp.help_for_model(model).fields[field_name]
     return ''
-
-def as_listitems(iterable):
-    #NOTE: unused
-    if isinstance(iterable, dict):
-        template = "<li>{}<br>{}</li>"
-        return "".join(template.format(k, v) for k, v in iterable.items())
-    else:
-        template = "<li>{}</li>"
-        return "".join(template.format(i) for i in iterable)
     
 class Wrapper(object):
     
@@ -221,16 +212,3 @@ class ModelHelpText(FormHelpText):
                 return model_field.help_text
         return super().get_helptext_for_field(field_name, formfield)
         
-    def get_inline_formsets(self):
-        #NOTE: unused
-        return self.model_admin.get_formsets_with_inlines(self.request)
-        
-    def get_inline_help_text(self, request):
-        #NOTE: unused
-        for inline in self.model_admin.get_inline_instances(request):
-        #for formset, inline in self.model_admin.get_formsets_with_inlines(request):
-            if halp.is_registered(inline.model):
-                formset = inline.get_formset(request)
-                yield halp.help_for_model(inline.model).as_inline(request, form = formset.form)
-        return self.model_admin.inlines
-    
