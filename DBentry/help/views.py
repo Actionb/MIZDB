@@ -29,9 +29,14 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        html_template = '<a href="{url}{popup}">{label}</a>'
-        model_helps = []
-        for model, model_help in sorted(halp.get_registered_models().items(), key = lambda tpl: tpl[0]._meta.verbose_name_plural):
+        if context.get('is_popup', False):
+            html_template = '<a href="{url}?_popup=1">{label}</a>'
+        else:
+            html_template = '<a href="{url}">{label}</a>'
+            
+        # Model Helptexts
+        registered_models = []
+        for model, model_help in halp.get_registered_models().items():
             model_admin = getattr(model_help, 'model_admin', None) or get_model_admin_for_model(model)
             if not has_admin_permission(self.request, model_admin):
                 continue
@@ -39,16 +44,24 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
                 url = reverse('help', kwargs = {'model_name': model._meta.model_name})
             except NoReverseMatch:
                 continue
+            registered_models.append((
+                url, 
+                model_help.help_title or model._meta.verbose_name_plural
+            ))
+        
+        # Sort by model_help.help_title // model._meta.verbose_name_plural
+        model_helps = []
+        for url, label in sorted(registered_models, key = lambda tpl: tpl[1]):
             model_helps.append(format_html(
                 html_template, 
                 url = url, 
-                popup = '?_popup=1' if context.get('is_popup', False) else '', 
-                label = model_help.help_title or model._meta.verbose_name_plural, 
+                label = label
             ))
         context['model_helps'] = model_helps
         
-        form_helps = []
-        for url_name, form_help in sorted(halp.get_registered_forms().items(), key = lambda tpl: tpl[0]): #TODO: better sorting
+        # Form Helptexts
+        registered_forms = []
+        for url_name, form_help in halp.get_registered_forms().items():
             try:
                 url = reverse(url_name)
             except NoReverseMatch:
@@ -57,13 +70,21 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
             if not resolver_match.func.view_class.has_permission(self.request):
                 continue
                 
+            registered_forms.append((
+                url, 
+                form_help.help_title or 'Hilfe für ' + str(form_help.form_class)
+            ))
+            
+        form_helps = []
+        # Sort by form_help.help_title // str(form_help.form_class)
+        for url, label in sorted(registered_forms, key = lambda tpl: tpl[1]):
             form_helps.append(format_html(
                 html_template, 
                 url = url, 
-                popup = '?_popup=1' if context.get('is_popup', False) else '', 
-                label = form_help.help_title or 'Hilfe für ' + str(form_help.form_class), 
+                label = label, 
             ))
         context['form_helps'] = form_helps
+        
         return context
 
 class BaseHelpView(MIZAdminMixin, TemplateView):
