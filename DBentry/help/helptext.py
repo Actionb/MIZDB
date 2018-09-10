@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.text import capfirst
@@ -78,21 +80,24 @@ class BaseHelpText(object):
     
     def __init__(self, *args, **kwargs):
         if self.help_items is None:
-            self.help_items = kwargs.get('help_items', [])
+            self.help_items = kwargs.get('help_items', OrderedDict())
+        if not isinstance(self.help_items, OrderedDict):
+            # Force the help_items into an OrderedDict for easier lookups
+            help_items = OrderedDict()
+            for index, item in enumerate(self.help_items):
+                if not isinstance(item, (list, tuple)):
+                    # Assume item is just a single string
+                    help_items[item] = item
+                elif len(item) >= 2:
+                    help_items[item[0]] = item[1]
+                else:
+                    help_items[item[0]] = item[0]
+            self.help_items = help_items
+                    
         
     def for_context(self, **kwargs):
         help_items = []
-        for help_item in self.help_items:
-            if isinstance(help_item, str):
-                id = label = help_item
-            elif isinstance(help_item, (tuple, list)):
-                if len(help_item) == 2:
-                    id, label = help_item
-                else:
-                    id = label = help_item[0]
-            else:
-                continue
-                
+        for id, label in self.help_items.items():
             if id in kwargs:
                 help_items.append(kwargs[id])
                 continue
@@ -116,11 +121,16 @@ class FormHelpText(BaseHelpText):
         if self.fields is None:
             self.fields = kwargs.get('fields', {})
         super().__init__(*args, **kwargs)
-        if 'fields' not in self.help_items and self.fields:
+        
+        if 'fields' not in self.help_items:
             # Add the form's fields to the help items
-            # Assume that the deriving HelpText object contains at least a basic 'description' of sorts
-            # and add the field helptexts after that description
-            self.help_items.insert(1, 'fields')
+            self.help_items['fields'] = 'fields'
+            if len(self.help_items) > 2:
+                # Assuming that the deriving HelpText object contains at least a basic 'description' of sorts as the first item,
+                # add the field helptexts directly after that description
+                first_help_item_key = list(self.help_items.keys())[0]
+                self.help_items.move_to_end('fields', last = False) # move fields to the top
+                self.help_items.move_to_end(first_help_item_key, last = False) # and move the original first item back to the top
         
     @property
     def field_helptexts(self):
@@ -151,7 +161,7 @@ class FormHelpText(BaseHelpText):
         
     def for_context(self, **kwargs):
         if self.field_helptexts:
-            kwargs['fields'] = Wrapper(id = 'fields', val = self.field_helptexts)
+            kwargs['fields'] = Wrapper(id = 'fields', label = self.help_items.get('fields', 'fields'), val = self.field_helptexts)
         return super().for_context(**kwargs)
         
 class ModelHelpText(FormHelpText):
@@ -171,7 +181,7 @@ class ModelHelpText(FormHelpText):
         if not self.model_admin:
             self.model_admin = get_model_admin_for_model(self.model)
         if 'inlines' not in self.help_items:
-            self.help_items.append('inlines')
+            self.help_items['inlines'] = 'inlines'
         
     def for_context(self, **kwargs):
         if self.inline_helptexts:

@@ -15,13 +15,6 @@ class TestHTFunctions(TestCase):
         self.assertEqual(model_field, ausgabe._meta.get_field('magazin'))
         
         self.assertIsNone(formfield_to_modelfield(artikel, 'doesnotexist', None))
-    
-    def test_get_field_helptext(self):
-        field_ht = get_field_helptext('magazin', ausgabe)
-        self.assertEqual(field_ht, "Wählen Sie hier das Magazin.")
-        
-        field_ht = get_field_helptext('magazin', artikel)
-        self.assertEqual(field_ht, '')
         
 class TestWrapper(TestCase):
     
@@ -71,6 +64,7 @@ class TestBaseHelpText(TestCase):
         instance = BaseHelpText()
         instance.Alice = None
         instance.help_items = ['Alice']
+        instance.__init__()
         context = instance.for_context()
         self.assertIn('help_items', context)
         self.assertFalse(context['help_items'])
@@ -79,6 +73,7 @@ class TestBaseHelpText(TestCase):
         instance = BaseHelpText()
         instance.Alice = 'Beep'
         instance.help_items = ['Alice']
+        instance.__init__()
         context = instance.for_context()
         self.assertIn('help_items', context)
         self.assertEqual(len(context['help_items']), 1)
@@ -93,6 +88,7 @@ class TestBaseHelpText(TestCase):
         instance.Alice = 'Beep'
         instance.Bob = 'Boop'
         instance.help_items = [('Alice', ), ['Bob', 'BobLabel']]
+        instance.__init__()
         context = instance.for_context()
         self.assertIn('help_items', context)
         self.assertEqual(len(context['help_items']), 2)
@@ -109,6 +105,7 @@ class TestBaseHelpText(TestCase):
         # Assert that for_context keeps items passed in via kwargs as they are (i.e. doesn't wrap them)
         instance = BaseHelpText()
         instance.help_items = ['Charlie', ('Dave', )]
+        instance.__init__()
         context = instance.for_context(Charlie = 'This Is Charlie', Dave = 'And this is Dave')
         self.assertIn('help_items', context)
         self.assertIn('This Is Charlie', context['help_items'])
@@ -129,8 +126,9 @@ class TestFormHelpText(FormTestCase):
     
     def test_init_adds_fields(self):
         instance = FormHelpText(help_items = ['test'], fields = {'beep':'boop'})
+        instance.__init__()
         self.assertIn('fields', instance.help_items)
-        self.assertEqual(instance.help_items.index('fields'), 1)
+        self.assertEqual(list(instance.help_items.keys()).index('fields'), 1)
         
     def test_field_helptexts(self):
         expected = [
@@ -199,14 +197,14 @@ class TestModelHelpText(AdminTestCase):
         # Assert that init adds the inlines to the help_items
         help_items = self.instance.help_items
         self.assertIn('inlines', help_items)
-        self.assertEqual(help_items.index('inlines'), len(help_items)-1)
+        self.assertEqual(list(help_items.keys()).index('inlines'), len(help_items)-1)
     
     def test_inline_helptexts(self):
         # Assert that inline_helptexts uses an inline's verbose model attribute if present
         genre_inline_helptext = type('GenreHelpText', (ModelHelpText, ), {'model':genre, 'inline_text':'Genre Inline Text'})
         halp._registry = {'models':{genre:genre_inline_helptext}}
         expected = [
-            {'id': 'inline-Genre', 'label': 'Genre', 'text': 'Genre Inline Text'}
+            {'id': 'inline-Genre', 'label': 'Genres', 'text': 'Genre Inline Text'}
         ]
         self.assertEqual(self.instance.inline_helptexts, expected)
         
