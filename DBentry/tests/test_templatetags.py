@@ -2,7 +2,6 @@ from .base import *
 
 from DBentry.templatetags.object_tools import object_tools
 
-@tag("wip")
 class TestObjectTools(TestCase):
     
     def test_help_links(self):

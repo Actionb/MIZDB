@@ -85,12 +85,23 @@ class TestModelHelpView(RegistryRestoreMixin, ViewTestCase):
     path = '/admin/help/artikel'
     view_class = ModelHelpView
     
+    def setUp(self):
+        super().setUp()
+        halp._registry = {
+            'models' : {
+                artikel: type('ArtikelHelpText', (ModelHelpText, ), {'model':artikel}), 
+            }, 
+            'forms' : {}, 
+        }
+    
     def test_get_help_text(self):
+        # 'sender' is not registered
         request = self.get_request()
         view = self.get_view(request = request, kwargs = {'model_name':'sender'})
         with self.assertRaises(Http404):
             view.get_help_text(request)
-            
+        
+        # 'artikel' was registered in setUp
         request = self.get_request()
         view = self.get_view(request = request, kwargs = {'model_name':'artikel'})
         with self.assertNotRaises(Http404):
@@ -98,6 +109,7 @@ class TestModelHelpView(RegistryRestoreMixin, ViewTestCase):
             self.assertIsInstance(help_object, ModelHelpText)
         
     def test_model_property(self):
+        # that model does not exist
         request = self.get_request()
         view = self.get_view(request = request, kwargs = {'model_name':'arglblargl'})
         with self.assertRaises(Http404):
@@ -107,8 +119,9 @@ class TestModelHelpView(RegistryRestoreMixin, ViewTestCase):
         self.assertEqual(view.model, artikel)
         
     def test_model_admin_property(self):
+        # has no AdminModel
         request = self.get_request()
-        view = self.get_view(request = request, kwargs = {'model_name':'ausgabe_jahr'}) # has no AdminModel
+        view = self.get_view(request = request, kwargs = {'model_name':'ausgabe_jahr'})
         with self.assertRaises(Http404):
             view.model_admin
         
@@ -120,4 +133,4 @@ class TestModelHelpView(RegistryRestoreMixin, ViewTestCase):
         context = view.get_context_data()
         self.assertEqual(context.get('breadcrumbs_title', ''), artikel._meta.verbose_name, msg = "Breadcrumbs Title should default to the verbose name of the model.")
         self.assertEqual(context.get('site_title', ''), artikel._meta.verbose_name + ' Hilfe', msg = "Site Title should default to verbose_name of the model + ' Hilfe'")
-        
+            
