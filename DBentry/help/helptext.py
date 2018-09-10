@@ -8,7 +8,7 @@ from django.utils.html import format_html, mark_safe
 from .registry import halp
 from DBentry.models import *
 from DBentry.admin import *
-from DBentry.utils import get_model_admin_for_model
+from DBentry.utils import get_model_admin_for_model, is_iterable
 
 def formfield_to_modelfield(model, formfield_name, formfield = None):
     if formfield_name in [field.name for field in model._meta.get_fields()]:
@@ -42,14 +42,18 @@ class Wrapper(object):
         
     def sidenav(self):
         help_item_bookmark = format_html('<a href="#{id}">{label}</a>', id=self.id, label=capfirst(self.label))
-        if isinstance(self.val, str):
+        if not is_iterable(self.val):
             return help_item_bookmark
         return mark_safe(help_item_bookmark + self.html(template = '<li><a href="#{id}">{label}</a></li>'))
             
     def html(self, template = None):
-        if isinstance(self.val, str):
-            return format_html('<span id={id}>{text}</span>', id = self.id, text = mark_safe(self.val))
-            
+        if not is_iterable(self.val):
+            # self.val is either a string or another primitive type
+            if not isinstance(self.val, str):
+                self.val = str(self.val)
+            return format_html('<span id={id}>{text}</span>', id = self.id, text = mark_safe(self.val.strip()))
+        
+        # self.val is an iterable, i.e. list or tuple, etc.
         if template is None:
             template = '<li id={id} class="{classes}">{label}<br>{text}</li>'
         iterator = []
@@ -65,7 +69,7 @@ class Wrapper(object):
                 if v.get('label'):
                     d['label'] = mark_safe(v.get('label'))
                 if v.get('text'):
-                    d['text'] = mark_safe(v.get('text'))
+                    d['text'] = mark_safe(str(v.get('text')).strip())
                 if v.get('classes'):
                     d['classes'] = "".join(c for c in v.get('classes'))
             iterator.append(d)
@@ -111,7 +115,12 @@ class BaseHelpText(object):
         }
         
 class FormHelpText(BaseHelpText):
+    """
+    Note that the fields are gathered from the FORM and not the 'FormHelpText.fields' attribute,
+    meaning only fields declared on the form will contribute to this help text, any additional fields in FormHelpText.fields that are not on the form 
+    will be ignored.
     
+    """
     fields = None
     
     form_class = None
@@ -168,11 +177,14 @@ class ModelHelpText(FormHelpText):
     
     model = None
     
+    inlines = None
     inline_text = ''
     
     _inline_helptexts = None
     
     def __init__(self, request, model_admin = None, *args, **kwargs):
+        if self.inlines is None:
+            self.inlines = kwargs.get('inlines', {})
         super().__init__(*args, **kwargs)
         self.request = request
         if not self.help_title:
@@ -198,12 +210,17 @@ class ModelHelpText(FormHelpText):
                     # inlines that use BaseInlineMixin can have a verbose_model attribute set to the 
                     # 'target' model of a m2m relationship
                     inline_model = inline.verbose_model
-                if halp.is_registered(inline_model) and halp.help_for_model(inline_model).as_inline(self.request):
-                    self._inline_helptexts.append({
-                        'id' : 'inline-{}'.format(inline_model._meta.verbose_name), 
-                        'label' : inline_model._meta.verbose_name, 
-                        'text' : halp.help_for_model(inline_model).as_inline(self.request), 
-                    })
+                if inline_model._meta.verbose_name_plural in self.inlines:
+                    text = self.inlines[inline_model._meta.verbose_name_plural]
+                elif halp.is_registered(inline_model) and halp.help_for_model(inline_model).as_inline(self.request):
+                        text = halp.help_for_model(inline_model).as_inline(self.request)
+                else:
+                    continue
+                self._inline_helptexts.append({
+                    'id' : 'inline-{}'.format(inline_model._meta.verbose_name), 
+                    'label' : inline_model._meta.verbose_name_plural, 
+                    'text' : text, 
+                })
         return self._inline_helptexts
         
     @classmethod
