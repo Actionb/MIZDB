@@ -25,10 +25,13 @@ def get_field_helptext(field_name, model):
     return ''
     
 class Wrapper(object):
+    """
+    Wraps the help item to provide the two methods sidenav() and html() for use on the template.
+    """
     
     def __init__(self, id, val, label = None):
-        self.id = id
-        self.val = val
+        self.id = id # the id of the html element 
+        self.val = val # either a string representing the help text or a list of dictionaries of: 'list item header': 'list item help text'
         if label is None:
             self.label = id
         else:
@@ -41,12 +44,21 @@ class Wrapper(object):
         return "id:{}, label:{}, val:{}".format(self.id, self.label, self.val)
         
     def sidenav(self):
+        """
+        Returns side navigation bookmarks to the help item(s).
+        """
         help_item_bookmark = format_html('<a href="#{id}">{label}</a>', id=self.id, label=capfirst(self.label))
         if not is_iterable(self.val):
             return help_item_bookmark
+        # This help item contains a sublist.
         return mark_safe(help_item_bookmark + self.html(template = '<li><a href="#{id}">{label}</a></li>'))
             
     def html(self, template = None):
+        """
+        Returns a html representation of the help item.
+        If the help item is simple text, it will surround the the text with <span> elements,
+        otherwise an unordered list is used, with the text bits as list items.
+        """
         if not is_iterable(self.val):
             # self.val is either a string or another primitive type
             if not isinstance(self.val, str):
@@ -77,6 +89,14 @@ class Wrapper(object):
         
 
 class BaseHelpText(object):
+    """
+    The base class of all help texts.
+    
+    Attributes:
+        - index_title: the title used for this help text on the index page
+        - help_items: an iterable that contains the attribute names of help texts declared on this instance.
+                These names can either be simple strings or 2-tuples containing the name of the attribute and a label.
+    """
         
     help_title = ''
     
@@ -100,9 +120,15 @@ class BaseHelpText(object):
                     
         
     def for_context(self, **kwargs):
+        """
+        Prepare this help text to be used as context data for a template.
+        This includes wrapping help items in html.
+        """
         help_items = []
         for id, label in self.help_items.items():
             if id in kwargs:
+                # This help item was explicitly passed in through the kwargs.
+                # Assume it is already wrapped and ready for use.
                 help_items.append(kwargs[id])
                 continue
 
@@ -116,10 +142,15 @@ class BaseHelpText(object):
         
 class FormHelpText(BaseHelpText):
     """
-    Note that the fields are gathered from the FORM and not the 'FormHelpText.fields' attribute,
-    meaning only fields declared on the form will contribute to this help text, any additional fields in FormHelpText.fields that are not on the form 
-    will be ignored.
+    The basic container for help texts to a form.
     
+    It gathers help texts for each formfield from this instance's 'fields' mapping or the formfield's helptext attribute.
+    Note that this means that any additional help text for fields that are not declared on the form will be ignored.
+    The fields' helptexts will be inserted as the second item, unless specifically set otherwise in 'help_items'.
+    
+    Attributes:
+        - fields: a mapping of formfield name to a help text
+        - form_class: the class of the form this HelpText object is based off
     """
     fields = None
     
@@ -143,6 +174,9 @@ class FormHelpText(BaseHelpText):
         
     @property
     def field_helptexts(self):
+        """
+        Collect the help texts for each field of the form.
+        """
         if self._field_helptexts is None:
             self._field_helptexts = []
             for field_name, formfield in self.get_form().base_fields.items():
@@ -163,6 +197,10 @@ class FormHelpText(BaseHelpText):
         return {}
         
     def get_helptext_for_field(self, field_name, formfield):
+        """
+        Returns the help text for a particular formfield.
+        First, it looks up the formfield's name in the local 'fields' mapping, failing that, it uses the formfield's helptext.
+        """
         field_helptext = self.fields.get(field_name, '')
         if not field_helptext and formfield.help_text:
             field_helptext = formfield.help_text
@@ -174,6 +212,16 @@ class FormHelpText(BaseHelpText):
         return super().for_context(**kwargs)
         
 class ModelHelpText(FormHelpText):
+    """
+    The help text for a model admin that provides help texts for the inlines.
+    The inline help texts will be appended to the end of the help items.
+    
+    Attributes:
+        - model: duh
+        - inlines: a mapping of inline model (or the inline's verbose_model) to a help text
+        - inline_text: a short help text for when this model is viewed as an inline by another model admin
+    """
+    
     
     model = None
     
@@ -202,6 +250,11 @@ class ModelHelpText(FormHelpText):
   
     @property
     def inline_helptexts(self):
+        """
+        Collect the help texts for each inline of the model admin.
+        If the inline's model cannot be found in this instance's 'inlines' mapping, attempt to get the *inline* version of 
+        the help text of that model from the registered help texts.
+        """
         if self._inline_helptexts is None:
             self._inline_helptexts = []
             for inline in self.model_admin.get_inline_instances(self.request):
@@ -213,7 +266,7 @@ class ModelHelpText(FormHelpText):
                 if inline_model._meta.verbose_name_plural in self.inlines:
                     text = self.inlines[inline_model._meta.verbose_name_plural]
                 elif halp.is_registered(inline_model) and halp.help_for_model(inline_model).as_inline(self.request):
-                        text = halp.help_for_model(inline_model).as_inline(self.request)
+                    text = halp.help_for_model(inline_model).as_inline(self.request)
                 else:
                     continue
                 self._inline_helptexts.append({
@@ -225,7 +278,9 @@ class ModelHelpText(FormHelpText):
         
     @classmethod
     def as_inline(cls, request, form = None):
-        # Display this model's help text from the perspective of a related model
+        """
+        Display this model's help text from the perspective of a related model.
+        """
         return cls.inline_text
         
     def get_form(self):

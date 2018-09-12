@@ -95,13 +95,24 @@ class BaseHelpView(MIZAdminMixin, TemplateView):
         try:
             return super().dispatch(request, *args, **kwargs)
         except Http404 as e:
+            # Return to the index page on encountering Http404.
             messages.warning(request, e.args[0])
             return redirect('help_index')
             
     def get_help_text(self, request = None):
+        """
+        Returns the HelpText object (not wrapped) for this view.
+        """
         raise NotImplementedError()
         
 class FormHelpView(BaseHelpView):
+    """
+    The view for displaying help texts for a particular form.
+    
+    Attributes:
+        - form_helptext_class: the HelpText class for this help view
+        - target_view_class: the view that contains the form
+    """
     
     form_helptext_class = None
     target_view_class = None
@@ -111,6 +122,12 @@ class FormHelpView(BaseHelpView):
     
     @classmethod
     def has_permission(cls, request):
+        """
+        Checks if the request has the required permissions to access this view.
+        Returns True by default unless the target view is subclassing MIZAdminPermissionMixin,
+        in which case the target view's permission_test classmethod is called.
+        This is used in the index view to determine whether or not to show a link to this view on the index.
+        """
         from DBentry.views import MIZAdminPermissionMixin
         if cls.target_view_class and issubclass(cls.target_view_class, MIZAdminPermissionMixin):
             return cls.target_view_class.permission_test(request)
@@ -118,10 +135,16 @@ class FormHelpView(BaseHelpView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # for_context() wraps the helptext into a helper object that includes
+        # the methods html() and sidenav(), which are expected by the template
         context.update(self.get_help_text(request = self.request).for_context())
         return context
         
 class ModelHelpView(BaseHelpView):
+    """
+    The view for displaying help texts for a model admin.
+    The model admin is determined through the model, which is captured as a url parameter.
+    """
     
     template_name = 'admin/help.html'
     
@@ -130,6 +153,7 @@ class ModelHelpView(BaseHelpView):
     
     def get_help_text(self, request):
         if not halp.is_registered(self.model):
+            # This model does not have a helptext
             raise Http404("Hilfe für Modell {} nicht gefunden.".format(self.model._meta.verbose_name))
         return halp.help_for_model(self.model)(request, self.model_admin)
     
@@ -139,6 +163,7 @@ class ModelHelpView(BaseHelpView):
             model_name = self.kwargs.get('model_name')
             self._model = get_model_from_string(model_name)
             if self._model is None:
+                # get_model_from_string could not find a model with that name
                 raise Http404("Das Modell mit Namen '{}' existiert nicht.".format(model_name))
         return self._model
         
@@ -147,16 +172,20 @@ class ModelHelpView(BaseHelpView):
         if self._model_admin is None:
             self._model_admin = get_model_admin_for_model(self.model)
             if self._model_admin is None:
+                # get_model_admin_for_model could not find a model admin for this model
                 raise Http404("Keine Admin Seite for Modell {} gefunden.".format(self.model._meta.verbose_name))
         return self._model_admin
         
     def has_permission(self, request):
         if self.model_admin:
+            # calls utils.has_admin_permission
             return has_admin_permission(request, self.model_admin)
         return False
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # for_context() wraps the helptext into a helper object that includes
+        # the methods html() and sidenav(), which are expected by the template
         context.update(self.get_help_text(self.request).for_context())
         if self.model:
             context['breadcrumbs_title'] = self.model._meta.verbose_name
