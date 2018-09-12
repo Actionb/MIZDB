@@ -38,16 +38,17 @@
 <div id="content-main">
 {% block object-tools %}
     <ul class="object-tools">
+        {% block object-tools-items %}
         {% if change %}
-                {% block object-tools-items %}
                 <li>
                     {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
                     <a href="{% add_preserved_filters history_url %}" class="historylink">{% trans "History" %}</a>
                 </li>
                 {% if has_absolute_url %}<li><a href="{{ absolute_url }}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif %}
-                {% endblock %}
         {% endif %}
-        {% object_tools opts is_popup %}
+        {% help_link request is_popup %}
+        {% favorites_link opts is_popup %}
+        {% endblock %}
     </ul>
 {% endblock %}
 <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}

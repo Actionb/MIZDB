@@ -194,13 +194,13 @@ class RequestTestCase(UserTestCase):
     def get_path(self):
         return self.path
     
-    def post_request(self, path=None, data=None, user=None):
+    def post_request(self, path=None, data=None, user=None, **kwargs):
         self.client.force_login(user or self.super_user)
-        return self.client.post(path or self.get_path(), data).wsgi_request
+        return self.client.post(path or self.get_path(), data, **kwargs).wsgi_request
     
-    def get_request(self, path=None, data=None, user=None):
+    def get_request(self, path=None, data=None, user=None, **kwargs):
         self.client.force_login(user or self.super_user)
-        return self.client.get(path or self.get_path(), data).wsgi_request
+        return self.client.get(path or self.get_path(), data, **kwargs).wsgi_request
         
     def assertMessageSent(self, request, expected_message):
         messages = [str(msg) for msg in get_messages(request)]
