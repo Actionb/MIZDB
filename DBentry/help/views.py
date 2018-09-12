@@ -5,6 +5,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.utils.html import format_html
+from django.utils.text import capfirst
 
 from DBentry.sites import register_tool
 from DBentry.views import MIZAdminMixin, MIZAdminToolViewMixin
@@ -46,10 +47,10 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
                 continue
             registered_models.append((
                 url, 
-                model_help.help_title or model._meta.verbose_name_plural
+                model_help.index_title or capfirst(model._meta.verbose_name_plural)
             ))
         
-        # Sort by model_help.help_title // model._meta.verbose_name_plural
+        # Sort by model_help.index_title // model._meta.verbose_name_plural
         model_helps = []
         for url, label in sorted(registered_models, key = lambda tpl: tpl[1]):
             model_helps.append(format_html(
@@ -72,11 +73,11 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
                 
             registered_forms.append((
                 url, 
-                form_help.help_title or 'Hilfe für ' + str(form_help.form_class)
+                form_help.index_title or 'Hilfe für ' + str(form_help.form_class)
             ))
             
         form_helps = []
-        # Sort by form_help.help_title // str(form_help.form_class)
+        # Sort by form_help.index_title // str(form_help.form_class)
         for url, label in sorted(registered_forms, key = lambda tpl: tpl[1]):
             form_helps.append(format_html(
                 html_template, 
@@ -188,8 +189,10 @@ class ModelHelpView(BaseHelpView):
         # the methods html() and sidenav(), which are expected by the template
         context.update(self.get_help_text(self.request).for_context())
         if self.model:
-            context['breadcrumbs_title'] = self.model._meta.verbose_name
-            context['site_title'] = self.model._meta.verbose_name + ' Hilfe'
+            if not self.breadcrumbs_title:
+                context['breadcrumbs_title'] = self.model._meta.verbose_name_plural
+            if not self.site_title:
+                context['site_title'] = self.model._meta.verbose_name_plural + ' Hilfe'
         return context
 
 class BulkFormAusgabeHelpView(FormHelpView):

@@ -98,7 +98,7 @@ class BaseHelpText(object):
                 These names can either be simple strings or 2-tuples containing the name of the attribute and a label.
     """
         
-    help_title = ''
+    index_title = ''
     
     help_items = None
     
@@ -136,7 +136,6 @@ class BaseHelpText(object):
             if id and val:
                 help_items.append(Wrapper(id = id, label = label, val = val))
         return {
-            'help_title': self.help_title, 
             'help_items': help_items, 
         }
         
@@ -235,8 +234,8 @@ class ModelHelpText(FormHelpText):
             self.inlines = kwargs.get('inlines', {})
         super().__init__(*args, **kwargs)
         self.request = request
-        if not self.help_title:
-            self.help_title = capfirst(self.model._meta.verbose_name_plural)
+        if not self.index_title:
+            self.index_title = capfirst(self.model._meta.verbose_name_plural)
         self.model_admin = model_admin
         if not self.model_admin:
             self.model_admin = get_model_admin_for_model(self.model)

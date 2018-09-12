@@ -8,7 +8,7 @@ class BulkFormHelpText(FormHelpText):
     
     form_class = BulkFormAusgabe
     
-    help_title = 'Ausgaben Erstellung'
+    index_title = 'Ausgaben Erstellung'
     help_items = ['beschreibung', ('erlaubte_zeichen', 'Erlaubte Zeichen'), 'beispiele']
     
     fields = {
