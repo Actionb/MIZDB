@@ -229,6 +229,33 @@ class m2m_magazin_genre(BaseM2MModel):
         db_table = 'DBentry_magazin_genre'
         verbose_name = 'Magazin-Genre'
         verbose_name_plural = 'Magazin-Genres'
+        
+class m2m_magazin_verlag(BaseM2MModel):
+    magazin = models.ForeignKey('magazin', models.CASCADE)
+    verlag = models.ForeignKey('verlag', models.CASCADE)
+    start = models.CharField('von', max_length = 123, blank = True)
+    end = models.CharField('bis', max_length = 123, blank = True)
+    class Meta:
+        unique_together = ('magazin', 'verlag')
+        verbose_name = 'Magazin-Verlag'
+        verbose_name_plural = 'Magazin-Verlage'
+        
+    def __str__(self):
+        return str(self.verlag)
+    
+class m2m_magazin_herausgeber(BaseM2MModel):
+    magazin = models.ForeignKey('magazin', models.CASCADE)
+    herausgeber = models.ForeignKey('Herausgeber', models.CASCADE)
+    start = models.CharField('von', max_length = 123, blank = True)
+    end = models.CharField('bis', max_length = 123, blank = True)
+    class Meta:
+        unique_together = ('magazin', 'herausgeber')
+        verbose_name = 'Magazin-Herausgeber'
+        verbose_name_plural = 'Magazin-Herausgeber'
+        
+    def __str__(self):
+        return str(self.herausgeber)
+    
 
 # ================================= #
 ##              MUSIKER

@@ -439,6 +439,12 @@ class GenreAdmin(MIZModelAdmin):
 
 @admin.register(magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
+    class VerlagInLine(BaseTabularInline):
+        model = m2m_magazin_verlag
+        verbose_model = verlag
+    class HerausgeberInLine(BaseTabularInline):
+        model = m2m_magazin_herausgeber
+        verbose_model = Herausgeber
     class GenreInLine(BaseGenreInline):
         model = magazin.genre.through
         magazin.genre.through.verbose_name = ''
@@ -447,7 +453,7 @@ class MagazinAdmin(MIZModelAdmin):
         
     list_display = ('__str__','beschreibung','anz_ausgaben', 'ort')
     
-    inlines = [GenreInLine]
+    inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
     
     advanced_search_form = {
         'selects' : ['ort__land'], 
