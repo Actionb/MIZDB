@@ -331,7 +331,7 @@ class magazin(BaseModel):
     MERKMAL_CHOICES = [('num', 'Nummer'), ('lnum', 'Lfd.Nummer'), ('monat', 'Monat'), ('e_datum', 'Ersch.Datum')]
     
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    erstausgabe = models.DateField(null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
+    erstausgabe = models.CharField(**CF_ARGS_B) #TODO: charfield
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
     ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
