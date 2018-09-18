@@ -48,7 +48,7 @@ def advanced_search_form(cl):
                 )
             )
         # 2 Text inputs: greater than x and less than y
-        for item in asf_dict.get('gtelt', []):
+        for item in asf_dict.get('gtelt', []): #TODO: this adds an 'empty' div if there are no items in gtelt
             asf['gtelt'].append( dict(
                     label               = labels.get(item, None) or get_fields_from_path(model, item)[-1].verbose_name, 
                     gte_query_string    = item+"__gte", 
