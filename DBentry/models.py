@@ -331,18 +331,17 @@ class magazin(BaseModel):
     MERKMAL_CHOICES = [('num', 'Nummer'), ('lnum', 'Lfd.Nummer'), ('monat', 'Monat'), ('e_datum', 'Ersch.Datum')]
     
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    erstausgabe = models.DateField(null = True,  blank = True, help_text = 'Format: tt.mm.jjjj')
+    erstausgabe = models.CharField(**CF_ARGS_B)
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
     ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
-    fanzine = models.BooleanField(default = False)
-    issn = ISSNField(blank = True)
+    fanzine = models.BooleanField('Fanzine', default = False)
+    issn = ISSNField('ISSN', blank = True) #NOTE: implement this as reverse foreign relation so one magazin can have multiple ISSN numbers?
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    verlag = models.ForeignKey('verlag', models.SET_NULL, null = True,  blank = True)
-    ort = models.ForeignKey('ort', models.SET_NULL, null = True, blank = True, verbose_name = 'Hrsg.Ort')
+    ort = models.ForeignKey('ort', models.SET_NULL, null = True, blank = True, verbose_name = 'Hrsg.Ort', help_text = 'Angabe für auf eine Region beschränktes Magazin.')
     
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
     
