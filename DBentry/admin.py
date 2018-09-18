@@ -456,8 +456,9 @@ class MagazinAdmin(MIZModelAdmin):
     inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
     
     advanced_search_form = {
-        'selects' : ['ort__land'], 
-        'labels' : {'ort__land':'Herausgabeland'}
+        'simple': ['issn', 'fanzine'], 
+        'selects': ['m2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre'], 
+        'labels': {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort'}, 
     }
         
     def anz_ausgaben(self, obj):
