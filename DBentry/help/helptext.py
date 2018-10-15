@@ -134,10 +134,10 @@ class BaseHelpText(object):
 
             val = getattr(self, id, None)
             if id and val:
-                help_items.append(Wrapper(id = id, label = label, val = val))
         return {
             'help_items': help_items, 
         }
+                help_items.append(HTMLWrapper(id = id, label = label, val = val))
         
 class FormViewHelpText(BaseHelpText):
     """
