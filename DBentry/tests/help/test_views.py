@@ -5,6 +5,8 @@ from ..base import *
 from DBentry.help.helptext import ModelHelpText
 from DBentry.help.registry import halp
 from DBentry.help.views import *
+from DBentry.help.helptext import ModelAdminHelpText
+from DBentry.help.views import HelpIndexView, ModelAdminHelpView
 
 class RegistryRestoreMixin(object):
     
@@ -29,8 +31,8 @@ class TestHelpIndexView(RegistryRestoreMixin, ViewTestCase):
         self.assertEqual(context['model_helps'], [], msg = "User without any model permissions should not have access to any model helps.")
         
         halp._registry = { 'models' : {
-            artikel: type('ArtikelHelpText', (ModelHelpText, ), {'model':artikel}), 
-            buch: type('BuchHelpText', (ModelHelpText, ), {'model':buch, 'help_title':'Beep'}),  
+            artikel: type('ArtikelHelpText', (ModelAdminHelpText, ), {'model':artikel}), 
+            buch: type('BuchHelpText', (ModelAdminHelpText, ), {'model':buch, 'help_title':'Beep'}),  
         }}
         
         view = self.get_view(request = self.get_request())
@@ -60,7 +62,7 @@ class TestHelpIndexView(RegistryRestoreMixin, ViewTestCase):
     
 class TestBaseHelpView(RegistryRestoreMixin, ViewTestCase):
     
-    view_class = ModelHelpView
+    view_class = ModelAdminHelpView
     
     def test_dispatch_redirects_to_index_on_404(self):
         response = self.client.get(reverse('help', kwargs = {'model_name':'arglblargl'}))
@@ -83,13 +85,13 @@ class TestBaseHelpView(RegistryRestoreMixin, ViewTestCase):
 class TestModelHelpView(RegistryRestoreMixin, ViewTestCase):
     
     path = '/admin/help/artikel'
-    view_class = ModelHelpView
+    view_class = ModelAdminHelpView
     
     def setUp(self):
         super().setUp()
         halp._registry = {
             'models' : {
-                artikel: type('ArtikelHelpText', (ModelHelpText, ), {'model':artikel}), 
+                artikel: type('ArtikelHelpText', (ModelAdminHelpText, ), {'model':artikel}), 
             }, 
             'forms' : {}, 
         }
@@ -106,7 +108,7 @@ class TestModelHelpView(RegistryRestoreMixin, ViewTestCase):
         view = self.get_view(request = request, kwargs = {'model_name':'artikel'})
         with self.assertNotRaises(Http404):
             help_object = view.get_help_text(request)
-            self.assertIsInstance(help_object, ModelHelpText)
+            self.assertIsInstance(help_object, ModelAdminHelpText)
         
     def test_model_property(self):
         # that model does not exist

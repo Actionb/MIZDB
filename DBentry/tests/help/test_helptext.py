@@ -2,7 +2,7 @@ from ..base import *
 
 from django import forms as django_forms
 
-from DBentry.help.helptext import *
+from DBentry.help.helptext import formfield_to_modelfield, HTMLWrapper, BaseHelpText, ModelAdminHelpText, FormViewHelpText
 
 class TestHTFunctions(TestCase):
     
@@ -19,7 +19,7 @@ class TestHTFunctions(TestCase):
 class TestWrapper(TestCase):
     
     def test_sidenav(self):
-        wrapped = Wrapper(id = 'test', val = 'beep boop')
+        wrapped = HTMLWrapper(id = 'test', val = 'beep boop')
         self.assertEqual(wrapped.sidenav(), '<a href="#test">Test</a>')
         
         wrapped.val = ['beep', 'boop']
@@ -33,7 +33,7 @@ class TestWrapper(TestCase):
         self.assertEqual(wrapped.sidenav(), expected)
         
     def test_html(self):
-        wrapped = Wrapper(id = 'test', val = 'beep boop')
+        wrapped = HTMLWrapper(id = 'test', val = 'beep boop')
         self.assertEqual(wrapped.html(), '<span id=test>beep boop</span>')
         
         wrapped.val = ['beep', 'boop']
@@ -78,7 +78,7 @@ class TestBaseHelpText(TestCase):
         self.assertIn('help_items', context)
         self.assertEqual(len(context['help_items']), 1)
         alice_help = context['help_items'][0]
-        self.assertIsInstance(alice_help, Wrapper)
+        self.assertIsInstance(alice_help, HTMLWrapper)
         self.assertEqual(alice_help.id, 'Alice')
         self.assertEqual(alice_help.label, 'Alice')
         self.assertEqual(alice_help.val, 'Beep')
@@ -93,11 +93,11 @@ class TestBaseHelpText(TestCase):
         self.assertIn('help_items', context)
         self.assertEqual(len(context['help_items']), 2)
         alice_help, bob_help = context['help_items']
-        self.assertIsInstance(alice_help, Wrapper)
+        self.assertIsInstance(alice_help, HTMLWrapper)
         self.assertEqual(alice_help.id, 'Alice')
         self.assertEqual(alice_help.label, 'Alice')
         self.assertEqual(alice_help.val, 'Beep')
-        self.assertIsInstance(bob_help, Wrapper)
+        self.assertIsInstance(bob_help, HTMLWrapper)
         self.assertEqual(bob_help.id, 'Bob')
         self.assertEqual(bob_help.label, 'BobLabel')
         self.assertEqual(bob_help.val, 'Boop')
@@ -111,7 +111,7 @@ class TestBaseHelpText(TestCase):
         self.assertIn('This Is Charlie', context['help_items'])
         self.assertIn('And this is Dave', context['help_items'])
         
-class TestFormHelpText(FormTestCase):
+class TestFormViewHelpText(FormTestCase):
     
     dummy_bases = (django_forms.Form, )
     dummy_attrs = {
@@ -121,11 +121,11 @@ class TestFormHelpText(FormTestCase):
     
     def setUp(self):
         super().setUp()
-        self.instance = FormHelpText(fields = {'alice': 'beep boop'})
+        self.instance = FormViewHelpText(fields = {'alice': 'beep boop'})
         self.instance.form_class = self.get_dummy_form_class()
     
     def test_init_adds_fields(self):
-        instance = FormHelpText(help_items = ['test'], fields = {'beep':'boop'})
+        instance = FormViewHelpText(help_items = ['test'], fields = {'beep':'boop'})
         instance.__init__()
         self.assertIn('fields', instance.help_items)
         self.assertEqual(list(instance.help_items.keys()).index('fields'), 1)
@@ -156,11 +156,11 @@ class TestFormHelpText(FormTestCase):
         self.assertIn('help_items', context)
         help_items = []
         for i in context['help_items']:
-            if isinstance(i, Wrapper):
+            if isinstance(i, HTMLWrapper):
                 help_items.append(i.id)
         self.assertIn('fields', help_items)
         
-class TestModelHelpText(AdminTestCase):
+class TestModelAdminHelpText(AdminTestCase):
     
     dummy_bases = (django_forms.Form, )
     dummy_attrs = {
@@ -174,7 +174,7 @@ class TestModelHelpText(AdminTestCase):
     def setUp(self):
         super().setUp()
         request = self.get_request(path = '/admin/help/artikel/')
-        self.instance = type('Dummy', (ModelHelpText, ), {'model':artikel})(request = request)
+        self.instance = type('Dummy', (ModelAdminHelpText, ), {'model':artikel})(request = request)
     
     def test_init(self):
         # Assert that init sets a missing help_title from the model's verbose name
@@ -201,7 +201,7 @@ class TestModelHelpText(AdminTestCase):
     
     def test_inline_helptexts(self):
         # Assert that inline_helptexts uses an inline's verbose model attribute if present
-        genre_inline_helptext = type('GenreHelpText', (ModelHelpText, ), {'model':genre, 'inline_text':'Genre Inline Text'})
+        genre_inline_helptext = type('GenreHelpText', (ModelAdminHelpText, ), {'model':genre, 'inline_text':'Genre Inline Text'})
         halp._registry = {'models':{genre:genre_inline_helptext}}
         expected = [
             {'id': 'inline-Genre', 'label': 'Genres', 'text': 'Genre Inline Text'}

@@ -24,7 +24,7 @@ def get_field_helptext(field_name, model):
             return halp.help_for_model(model).fields[field_name]
     return ''
     
-class Wrapper(object):
+class HTMLWrapper(object):
     """
     Wraps the help item to provide the two methods sidenav() and html() for use on the template.
     """
@@ -139,9 +139,9 @@ class BaseHelpText(object):
             'help_items': help_items, 
         }
         
-class FormHelpText(BaseHelpText):
+class FormViewHelpText(BaseHelpText):
     """
-    The basic container for help texts to a form.
+    The basic container for help texts to a form view.
     
     It gathers help texts for each formfield from this instance's 'fields' mapping or the formfield's helptext attribute.
     Note that this means that any additional help text for fields that are not declared on the form will be ignored.
@@ -207,10 +207,10 @@ class FormHelpText(BaseHelpText):
         
     def for_context(self, **kwargs):
         if self.field_helptexts:
-            kwargs['fields'] = Wrapper(id = 'fields', label = self.help_items.get('fields', 'fields'), val = self.field_helptexts)
+            kwargs['fields'] = HTMLWrapper(id = 'fields', label = self.help_items.get('fields', 'fields'), val = self.field_helptexts)
         return super().for_context(**kwargs)
         
-class ModelHelpText(FormHelpText):
+class ModelAdminHelpText(FormViewHelpText):
     """
     The help text for a model admin that provides help texts for the inlines.
     The inline help texts will be appended to the end of the help items.
@@ -244,7 +244,7 @@ class ModelHelpText(FormHelpText):
         
     def for_context(self, **kwargs):
         if self.inline_helptexts:
-            kwargs['inlines'] = Wrapper(id = 'inlines', val = self.inline_helptexts)
+            kwargs['inlines'] = HTMLWrapper(id = 'inlines', val = self.inline_helptexts)
         return super().for_context(**kwargs)
   
     @property

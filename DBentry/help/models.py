@@ -1,11 +1,11 @@
 from .registry import register
-from .helptext import ModelHelpText
+from .helptext import ModelAdminHelpText
 
 from DBentry.models import *
 from DBentry.admin import *
     
 
-class MIZModelHelpText(ModelHelpText):
+class MIZModelAdminHelpText(ModelAdminHelpText):
     
     help_items = [('description', 'Beschreibung'), ('fields', 'Felder'), ('inlines', 'Inlines'), ('examples', 'Beispiele')]
     
@@ -22,15 +22,15 @@ class MIZModelHelpText(ModelHelpText):
             """
 
 #@register()
-class ArtikelHelpText(MIZModelHelpText):
+class ArtikelHelpText(MIZModelAdminHelpText):
     model = artikel
 
 #@register()
-class AudioHelpText(MIZModelHelpText):
+class AudioHelpText(MIZModelAdminHelpText):
     model = audio
     
-#@register()
-class AusgabeHelpText(MIZModelHelpText):
+@register()
+class AusgabeHelpText(MIZModelAdminHelpText):
     help_items = [('description', 'Beschreibung'), ('fields', 'Felder'), ('inlines', 'Inlines'), ('notes', 'Bemerkung'), ('text', 'Textliche Darstellung')]
     
     model = ausgabe
@@ -71,82 +71,82 @@ class AusgabeHelpText(MIZModelHelpText):
     """
     
 #@register()
-class AusgabeJahrHelpText(MIZModelHelpText):
+class AusgabeJahrHelpText(MIZModelAdminHelpText):
     model = ausgabe_jahr
 
 #@register()
-class AusgabeLnumHelpText(MIZModelHelpText):
+class AusgabeLnumHelpText(MIZModelAdminHelpText):
     model = ausgabe_lnum
 
 #@register()
-class AusgabeMonatHelpText(MIZModelHelpText):
+class AusgabeMonatHelpText(MIZModelAdminHelpText):
     model = ausgabe_monat
 
 #@register()
-class AusgabeNumHelpText(MIZModelHelpText):
+class AusgabeNumHelpText(MIZModelAdminHelpText):
     model = ausgabe_num
 
 #@register()
-class AutorHelpText(MIZModelHelpText):
+class AutorHelpText(MIZModelAdminHelpText):
     model = autor
 
 #@register()
-class BandHelpText(MIZModelHelpText):
+class BandHelpText(MIZModelAdminHelpText):
     model = band
 
 #@register()
-class BandAliasHelpText(MIZModelHelpText):
+class BandAliasHelpText(MIZModelAdminHelpText):
     model = band_alias
     
-#@register()
-class BestandHelpText(ModelHelpText):
+@register()
+class BestandHelpText(ModelAdminHelpText):
     
     model = bestand
     
     inline_text = 'Hier kann das Objekt im Bestand des Archives registriert werden. Dazu ist eine Angabe des Lagerortes des Objektes erforderlich. \nDazu kann auch noch die Provenienz (Herkunft, Ursprung) des Objektes angegeben werden.'
 
 #@register()
-class BildmaterialHelpText(MIZModelHelpText):
+class BildmaterialHelpText(MIZModelAdminHelpText):
     model = bildmaterial
 
 #@register()
-class BuchHelpText(MIZModelHelpText):
+class BuchHelpText(MIZModelAdminHelpText):
     model = buch
 
 #@register()
-class BundeslandHelpText(MIZModelHelpText):
+class BundeslandHelpText(MIZModelAdminHelpText):
     model = bundesland
 
 #@register()
-class DateiHelpText(MIZModelHelpText):
+class DateiHelpText(MIZModelAdminHelpText):
     model = datei
 
 #@register()
-class DokumentHelpText(MIZModelHelpText):
+class DokumentHelpText(MIZModelAdminHelpText):
     model = dokument
 
 #@register()
-class FormatHelpText(MIZModelHelpText):
+class FormatHelpText(MIZModelAdminHelpText):
     model = Format
 
 #@register()
-class FormatsizeHelpText(MIZModelHelpText):
+class FormatsizeHelpText(MIZModelAdminHelpText):
     model = FormatSize
 
 #@register()
-class FormattagHelpText(MIZModelHelpText):
+class FormattagHelpText(MIZModelAdminHelpText):
     model = FormatTag
 
 #@register()
-class FormattypHelpText(MIZModelHelpText):
+class FormattypHelpText(MIZModelAdminHelpText):
     model = FormatTyp
 
 #@register()
-class GeberHelpText(MIZModelHelpText):
+class GeberHelpText(MIZModelAdminHelpText):
     model = geber
     
 #@register()
-class GenreHelpText(MIZModelHelpText):
+class GenreHelpText(MIZModelAdminHelpText):
     
     model = genre
     
@@ -155,129 +155,129 @@ class GenreHelpText(MIZModelHelpText):
     """
 
 #@register()
-class GenreAliasHelpText(MIZModelHelpText):
+class GenreAliasHelpText(MIZModelAdminHelpText):
     model = genre_alias
 
 #@register()
-class HerausgeberHelpText(MIZModelHelpText):
+class HerausgeberHelpText(MIZModelAdminHelpText):
     model = Herausgeber
 
 #@register()
-class InstrumentHelpText(MIZModelHelpText):
+class InstrumentHelpText(MIZModelAdminHelpText):
     model = instrument
 
 #@register()
-class InstrumentAliasHelpText(MIZModelHelpText):
+class InstrumentAliasHelpText(MIZModelAdminHelpText):
     model = instrument_alias
 
 #@register()
-class KreisHelpText(MIZModelHelpText):
+class KreisHelpText(MIZModelAdminHelpText):
     model = kreis
 
 #@register()
-class LagerortHelpText(MIZModelHelpText):
+class LagerortHelpText(MIZModelAdminHelpText):
     model = lagerort
 
 #@register()
-class LandHelpText(MIZModelHelpText):
+class LandHelpText(MIZModelAdminHelpText):
     model = land
 
 #@register()
-class LandAliasHelpText(MIZModelHelpText):
+class LandAliasHelpText(MIZModelAdminHelpText):
     model = land_alias
 
 #@register()
-class MagazinHelpText(MIZModelHelpText):
+class MagazinHelpText(MIZModelAdminHelpText):
     model = magazin
 
 #@register()
-class MemorabilienHelpText(MIZModelHelpText):
+class MemorabilienHelpText(MIZModelAdminHelpText):
     model = memorabilien
 
 #@register()
-class MonatHelpText(MIZModelHelpText):
+class MonatHelpText(MIZModelAdminHelpText):
     model = monat
 
 #@register()
-class MusikerHelpText(MIZModelHelpText):
+class MusikerHelpText(MIZModelAdminHelpText):
     model = musiker
 
 #@register()
-class MusikerAliasHelpText(MIZModelHelpText):
+class MusikerAliasHelpText(MIZModelAdminHelpText):
     model = musiker_alias
 
 #@register()
-class NoiseredHelpText(MIZModelHelpText):
+class NoiseredHelpText(MIZModelAdminHelpText):
     model = NoiseRed
 
 #@register()
-class OrganisationHelpText(MIZModelHelpText):
+class OrganisationHelpText(MIZModelAdminHelpText):
     model = Organisation
 
 #@register()
-class OrtHelpText(MIZModelHelpText):
+class OrtHelpText(MIZModelAdminHelpText):
     model = ort
 
 #@register()
-class PersonHelpText(MIZModelHelpText):
+class PersonHelpText(MIZModelAdminHelpText):
     model = person
 
 #@register()
-class PlattenfirmaHelpText(MIZModelHelpText):
+class PlattenfirmaHelpText(MIZModelAdminHelpText):
     model = plattenfirma
 
 #@register()
-class ProvenienzHelpText(MIZModelHelpText):
+class ProvenienzHelpText(MIZModelAdminHelpText):
     model = provenienz
 
 #@register()
-class SchlagwortHelpText(MIZModelHelpText):
+class SchlagwortHelpText(MIZModelAdminHelpText):
     model = schlagwort
 
 #@register()
-class SchlagwortAliasHelpText(MIZModelHelpText):
+class SchlagwortAliasHelpText(MIZModelAdminHelpText):
     model = schlagwort_alias
 
 #@register()
-class SchriftenreiheHelpText(MIZModelHelpText):
+class SchriftenreiheHelpText(MIZModelAdminHelpText):
     model = schriftenreihe
 
 #@register()
-class SenderHelpText(MIZModelHelpText):
+class SenderHelpText(MIZModelAdminHelpText):
     model = sender
 
 #@register()
-class SenderAliasHelpText(MIZModelHelpText):
+class SenderAliasHelpText(MIZModelAdminHelpText):
     model = sender_alias
 
 #@register()
-class SpielortHelpText(MIZModelHelpText):
+class SpielortHelpText(MIZModelAdminHelpText):
     model = spielort
 
 #@register()
-class SpielortAliasHelpText(MIZModelHelpText):
+class SpielortAliasHelpText(MIZModelAdminHelpText):
     model = spielort_alias
 
 #@register()
-class SpracheHelpText(MIZModelHelpText):
+class SpracheHelpText(MIZModelAdminHelpText):
     model = sprache
 
 #@register()
-class TechnikHelpText(MIZModelHelpText):
+class TechnikHelpText(MIZModelAdminHelpText):
     model = technik
 
 #@register()
-class VeranstaltungHelpText(MIZModelHelpText):
+class VeranstaltungHelpText(MIZModelAdminHelpText):
     model = veranstaltung
 
 #@register()
-class VeranstaltungAliasHelpText(MIZModelHelpText):
+class VeranstaltungAliasHelpText(MIZModelAdminHelpText):
     model = veranstaltung_alias
 
 #@register()
-class VerlagHelpText(MIZModelHelpText):
+class VerlagHelpText(MIZModelAdminHelpText):
     model = verlag
 
 #@register()
-class VideoHelpText(MIZModelHelpText):
+class VideoHelpText(MIZModelAdminHelpText):
     model = video

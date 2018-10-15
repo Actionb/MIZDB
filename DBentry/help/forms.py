@@ -1,10 +1,10 @@
 
 from DBentry.bulk.forms import BulkFormAusgabe
 from DBentry.help.registry import register
-from DBentry.help.helptext import FormHelpText
+from DBentry.help.helptext import FormViewHelpText
 
 @register(url_name = 'help_bulk')
-class BulkFormHelpText(FormHelpText):
+class BulkFormHelpText(FormViewHelpText):
     
     form_class = BulkFormAusgabe
     

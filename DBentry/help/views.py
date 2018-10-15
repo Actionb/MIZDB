@@ -35,7 +35,7 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         else:
             html_template = '<a href="{url}">{label}</a>'
             
-        # Model Helptexts
+        # ModelAdmin Helptexts
         registered_models = []
         for model, model_help in halp.get_registered_models().items():
             model_admin = getattr(model_help, 'model_admin', None) or get_model_admin_for_model(model)
@@ -141,10 +141,10 @@ class FormHelpView(BaseHelpView):
         context.update(self.get_help_text(request = self.request).for_context())
         return context
         
-class ModelHelpView(BaseHelpView):
+class ModelAdminHelpView(BaseHelpView):
     """
     The view for displaying help texts for a model admin.
-    The model admin is determined through the model, which is captured as a url parameter.
+    The model admin is provided as initkwarg by the url resolver.
     """
     
     template_name = 'admin/help.html'
