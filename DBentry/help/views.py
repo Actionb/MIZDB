@@ -1,6 +1,6 @@
 from django.http import Http404
 from django.views.generic import TemplateView 
-from django.urls import resolve, reverse
+from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -9,16 +9,16 @@ from django.utils.text import capfirst
 
 from DBentry.sites import register_tool
 from DBentry.views import MIZAdminMixin, MIZAdminToolViewMixin
-from DBentry.utils import get_model_from_string, get_model_admin_for_model, has_admin_permission
-
-from DBentry.bulk.views import BulkAusgabe
-
-from .registry import halp
-from .models import *
-from .forms import BulkFormHelpText
+from DBentry.utils import has_admin_permission
 
 @register_tool
 class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
+    """
+    The view displaying an index over all available helptexts.
+    Attributes:
+        - registry: the registry of helptexts available to this view instance 
+            set during initialization by the url resolver (see help.registry.get_urls)
+    """
 
     # register_tool vars
     url_name = 'help_index' # Used in the admin_site.index
@@ -26,6 +26,8 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
 
     template_name = 'admin/help_index.html' 
     site_title = breadcrumbs_title = 'Hilfe'
+    
+    registry = None
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -37,19 +39,19 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
             
         # ModelAdmin Helptexts
         registered_models = []
-        for model, model_help in halp.get_registered_models().items():
-            model_admin = getattr(model_help, 'model_admin', None) or get_model_admin_for_model(model)
+        for model_admin in self.registry.get_registered_models():
+            model_help, url_name = self.registry._registry[model_admin]
             if not has_admin_permission(self.request, model_admin):
                 continue
             try:
-                url = reverse('help', kwargs = {'model_name': model._meta.model_name})
+                url = reverse(url_name)
             except NoReverseMatch:
                 continue
             registered_models.append((
                 url, 
-                model_help.index_title or capfirst(model._meta.verbose_name_plural)
+                model_help.index_title or capfirst(model_admin.opts.verbose_name_plural)
             ))
-        
+            
         # Sort by model_help.index_title // model._meta.verbose_name_plural
         model_helps = []
         for url, label in sorted(registered_models, key = lambda tpl: tpl[1]):
@@ -62,13 +64,13 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         
         # Form Helptexts
         registered_forms = []
-        for url_name, form_help in halp.get_registered_forms().items():
+        for formview_class in self.registry.get_registered_forms():
+            form_help, url_name = self.registry._registry[formview_class]
             try:
                 url = reverse(url_name)
             except NoReverseMatch:
                 continue
-            resolver_match = resolve(url)
-            if not resolver_match.func.view_class.has_permission(self.request):
+            if not FormHelpView.has_permission(self.request): #TODO: need a better place for the permission check
                 continue
                 
             registered_forms.append((
@@ -89,8 +91,19 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         return context
 
 class BaseHelpView(MIZAdminMixin, TemplateView):
+    """
+    The base class for the HelpViews
+    Attributes:
+        - template_name: inherited from TemplateView
+        - helptext_class: the helptext class this view is going to serve
+        - registry: the registry of helptexts available to this view instance 
+            set during initialization by the url resolver (see help.registry.get_urls)
+    """
      
     template_name = 'admin/help.html' 
+    helptext_class = None
+    
+    registry = None
     
     def dispatch(self, request, *args, **kwargs):
         try:
@@ -100,27 +113,26 @@ class BaseHelpView(MIZAdminMixin, TemplateView):
             messages.warning(request, e.args[0])
             return redirect('help_index')
             
-    def get_help_text(self, request = None):
+    def get_help_text(self, **kwargs):
         """
-        Returns the HelpText object (not wrapped) for this view.
+        Returns the HelpText instance (not wrapped) for this view.
         """
-        raise NotImplementedError()
+        if self.helptext_class is None:
+            raise Exception("You must set a helptext class.")
+        if 'registry' not in kwargs:
+            kwargs['registry'] = self.registry
+        return self.helptext_class(**kwargs)
         
 class FormHelpView(BaseHelpView):
     """
     The view for displaying help texts for a particular form.
     
     Attributes:
-        - form_helptext_class: the HelpText class for this help view
         - target_view_class: the view that contains the form
     """
     
-    form_helptext_class = None
     target_view_class = None
-    
-    def get_help_text(self, **kwargs):
-        return self.form_helptext_class(**kwargs)
-    
+
     @classmethod
     def has_permission(cls, request):
         """
@@ -145,37 +157,14 @@ class ModelAdminHelpView(BaseHelpView):
     """
     The view for displaying help texts for a model admin.
     The model admin is provided as initkwarg by the url resolver.
+    
+    Attributes:
+        - model_admin: set by help.registry.HelpRegistry.get_urls
     """
     
     template_name = 'admin/help.html'
     
-    _model = None
-    _model_admin = None
-    
-    def get_help_text(self, request):
-        if not halp.is_registered(self.model):
-            # This model does not have a helptext
-            raise Http404("Hilfe für Modell {} nicht gefunden.".format(self.model._meta.verbose_name))
-        return halp.help_for_model(self.model)(request, self.model_admin)
-    
-    @property
-    def model(self):
-        if self._model is None:
-            model_name = self.kwargs.get('model_name')
-            self._model = get_model_from_string(model_name)
-            if self._model is None:
-                # get_model_from_string could not find a model with that name
-                raise Http404("Das Modell mit Namen '{}' existiert nicht.".format(model_name))
-        return self._model
-        
-    @property
-    def model_admin(self):
-        if self._model_admin is None:
-            self._model_admin = get_model_admin_for_model(self.model)
-            if self._model_admin is None:
-                # get_model_admin_for_model could not find a model admin for this model
-                raise Http404("Keine Admin Seite for Modell {} gefunden.".format(self.model._meta.verbose_name))
-        return self._model_admin
+    model_admin = None
         
     def has_permission(self, request):
         if self.model_admin:
@@ -187,20 +176,10 @@ class ModelAdminHelpView(BaseHelpView):
         context = super().get_context_data(**kwargs)
         # for_context() wraps the helptext into a helper object that includes
         # the methods html() and sidenav(), which are expected by the template
-        context.update(self.get_help_text(self.request).for_context())
-        if self.model:
-            if not self.breadcrumbs_title:
-                context['breadcrumbs_title'] = self.model._meta.verbose_name_plural
-            if not self.site_title:
-                context['site_title'] = self.model._meta.verbose_name_plural + ' Hilfe'
+        context.update(self.get_help_text(request = self.request, model_admin = self.model_admin).for_context())
+        if not context.get('breadcrumbs_title', ''):
+            context['breadcrumbs_title'] = self.model_admin.opts.verbose_name_plural
+        if not context.get('site_title', ''):
+            context['site_title'] = self.model_admin.opts.verbose_name_plural + ' Hilfe'
         return context
-
-class BulkFormAusgabeHelpView(FormHelpView):
-    
-    site_title = 'Hilfe für Ausgaben Erstellung'
-    breadcrumbs_title = 'Ausgaben Erstellung'
-    
-    form_helptext_class = BulkFormHelpText
-    target_view_class = BulkAusgabe
-    
     

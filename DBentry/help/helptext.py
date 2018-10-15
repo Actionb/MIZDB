@@ -5,7 +5,6 @@ from django.core.exceptions import FieldDoesNotExist
 from django.utils.text import capfirst
 from django.utils.html import format_html, mark_safe
 
-from .registry import halp
 from DBentry.models import *
 from DBentry.admin import *
 from DBentry.utils import get_model_admin_for_model, is_iterable
@@ -96,6 +95,7 @@ class BaseHelpText(object):
         - index_title: the title used for this help text on the index page
         - help_items: an iterable that contains the attribute names of help texts declared on this instance.
                 These names can either be simple strings or 2-tuples containing the name of the attribute and a label.
+        - registry: the registry of helptexts available to this helptext instance, passed in by BaseHelpView.get_help_text
     """
         
     index_title = ''
@@ -103,7 +103,11 @@ class BaseHelpText(object):
     
     help_items = None
     
+    registry = None
+    
     def __init__(self, *args, **kwargs):
+        if 'registry' in kwargs:
+            self.registry = kwargs.get('registry')
         if self.help_items is None:
             self.help_items = kwargs.get('help_items', OrderedDict())
         if not isinstance(self.help_items, OrderedDict):
@@ -268,8 +272,8 @@ class ModelAdminHelpText(FormViewHelpText):
                     inline_model = inline.verbose_model
                 if inline_model._meta.verbose_name_plural in self.inlines:
                     text = self.inlines[inline_model._meta.verbose_name_plural]
-                elif halp.is_registered(inline_model) and halp.help_for_model(inline_model).as_inline(self.request):
-                    text = halp.help_for_model(inline_model).as_inline(self.request)
+                elif self.registry.helptext_for_model(inline_model) and self.registry.helptext_for_model(inline_model).as_inline(self.request):
+                    text = self.registry.helptext_for_model(inline_model).as_inline(self.request)
                 else:
                     continue
                 self._inline_helptexts.append({

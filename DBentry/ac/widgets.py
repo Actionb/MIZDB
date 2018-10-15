@@ -156,6 +156,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 # We do not have access to the form and so no access to the forwarded formfield's (forwarded.src) label.
                 # If the forward's dst attribute is None, then get_field is likely to fail as src refers to the formfield's name
                 # and not the model field's name.
+                #TODO: use from django.utils.text import capfirst?
                 try:
                     forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.capitalize()
                 except (AttributeError, FieldDoesNotExist):
