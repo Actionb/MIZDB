@@ -1,14 +1,16 @@
-
+from DBentry.bulk.views import BulkAusgabe
 from DBentry.bulk.forms import BulkFormAusgabe
 from DBentry.help.registry import register
 from DBentry.help.helptext import FormViewHelpText
 
-@register(url_name = 'help_bulk')
+@register(url_name = 'help_bulk_ausgabe')
 class BulkFormHelpText(FormViewHelpText):
     
     site_title = 'Hilfe für Ausgaben Erstellung'
     breadcrumbs_title = 'Ausgaben Erstellung'
+    
     form_class = BulkFormAusgabe
+    target_view_class = BulkAusgabe
     
     index_title = 'Ausgaben Erstellung'
     help_items = ['beschreibung', ('erlaubte_zeichen', 'Erlaubte Zeichen'), 'beispiele']
