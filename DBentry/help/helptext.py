@@ -99,6 +99,7 @@ class BaseHelpText(object):
     """
         
     index_title = ''
+    site_title = breadcrumbs_title = ''
     
     help_items = None
     
@@ -134,10 +135,13 @@ class BaseHelpText(object):
 
             val = getattr(self, id, None)
             if id and val:
-        return {
-            'help_items': help_items, 
-        }
                 help_items.append(HTMLWrapper(id = id, label = label, val = val))
+        context = {'help_items': help_items}
+        if self.site_title:
+            context['site_title'] = self.site_title
+        if self.breadcrumbs_title:
+            context['breadcrumbs_title'] = self.breadcrumbs_title
+        return context
         
 class FormViewHelpText(BaseHelpText):
     """

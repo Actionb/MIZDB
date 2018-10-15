@@ -6,6 +6,8 @@ from DBentry.help.helptext import FormViewHelpText
 @register(url_name = 'help_bulk')
 class BulkFormHelpText(FormViewHelpText):
     
+    site_title = 'Hilfe für Ausgaben Erstellung'
+    breadcrumbs_title = 'Ausgaben Erstellung'
     form_class = BulkFormAusgabe
     
     index_title = 'Ausgaben Erstellung'
