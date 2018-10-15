@@ -17,6 +17,7 @@ from django.utils.translation import gettext, gettext_lazy, override as translat
 from django import forms
 from django.db.models.query import QuerySet
 
+from DBentry.admin import *
 from DBentry.models import *
 from DBentry.constants import *
 from DBentry.sites import miz_site
