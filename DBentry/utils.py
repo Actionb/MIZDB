@@ -405,12 +405,15 @@ def link_list(request, obj_list, SEP = ", "):
         links.append(get_obj_link(obj, request.user, include_name=False))
     return format_html(SEP.join(links))
     
-def get_model_admin_for_model(model):
+def get_model_admin_for_model(model, *admin_sites):
+    from DBentry.sites import miz_site
     if isinstance(model, str):
         model = get_model_from_string(model)
-    from DBentry.sites import miz_site
-    if miz_site.is_registered(model):
-        return miz_site._registry.get(model)
+    sites = admin_sites or [miz_site]
+    for site in sites:
+        if site.is_registered(model):
+            return site._registry.get(model)
+        
 
 def has_admin_permission(request, model_admin):
     if not model_admin.has_module_permission(request):
