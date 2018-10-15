@@ -100,7 +100,7 @@ class HelpRegistry(object):
                 raise Exception("No ModelAdmin for model found.", helptext.model)
             if url_name is None:
                 url_name = 'help_' + helptext.model._meta.model_name
-            self._models.add(view_class)
+            self._modeladmins.add(view_class)
         elif issubclass(helptext, FormViewHelpText):
             # A helptext for a FormView
             view_class = helptext.target_view_class
