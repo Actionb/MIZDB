@@ -2,9 +2,14 @@ from DBentry.utils import make_simple_link
 
 def help_link(context):
     from DBentry.help.registry import halp
-    if 'request' not in context:
+    if 'request' in context:
+        request = context['request']
+    elif 'view' in context and hasattr(context['view'], 'request'):
+        # Get the request through the view context item that was added by views.generic.base.ContextMixin
+        request = context['view'].request
+    else:
+        # Cannot proceed with out the request!
         return ''
-    request = context['request']
     
     if hasattr(request.resolver_match.func, 'model_admin'):
         # This is a ModelAdmin view for the add/change page of a certain model
