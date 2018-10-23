@@ -213,7 +213,12 @@ class TestModelAdminHelpText(ModelAdminHelpTextTestCase):
         helptext_instance.__init__(model_admin = BuchAdmin(buch, miz_site), **minimal_initkwargs)
         self.assertIsInstance(helptext_instance.model_admin, BuchAdmin)
         
-        # Assert that init adds the inlines to the help_items
+        # Assert that init adds the inlines to the help_items, if there is at least one inline
+        help_items = helptext_instance.help_items
+        self.assertNotIn('inlines', help_items)
+        
+        helptext_instance.inlines = ['just pretend']
+        helptext_instance.__init__(**minimal_initkwargs)
         help_items = helptext_instance.help_items
         self.assertIn('inlines', help_items)
         self.assertEqual(list(help_items.keys()).index('inlines'), len(help_items)-1)

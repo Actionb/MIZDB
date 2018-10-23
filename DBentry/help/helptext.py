@@ -231,18 +231,20 @@ class ModelAdminHelpText(FormViewHelpText):
     _inline_helptexts = None
     
     def __init__(self, request, registry, model_admin = None, *args, **kwargs):
-        if self.inlines is None:
-            self.inlines = kwargs.get('inlines', {}) #NOTE: purpose?
         super().__init__(*args, **kwargs)
         self.request = request
         self.registry = registry
+        self.model_admin = model_admin or get_model_admin_for_model(self.model)
+        
+        if not self.inlines:
+            self.inlines = {}
+        elif 'inlines' not in self.help_items:
+            # Add an 'inlines' help item if there is at least one inline
+            self.help_items['inlines'] = 'inlines'
+            
+        # Set defaults for index_title, site_title and breadcrumbs_title
         if not self.index_title:
             self.index_title = capfirst(self.model._meta.verbose_name_plural)
-        self.model_admin = model_admin
-        if not self.model_admin:
-            self.model_admin = get_model_admin_for_model(self.model)
-        if 'inlines' not in self.help_items:
-            self.help_items['inlines'] = 'inlines'
         if not self.breadcrumbs_title:
             self.breadcrumbs_title = self.model_admin.opts.verbose_name_plural
         if not self.site_title:
