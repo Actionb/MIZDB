@@ -40,9 +40,9 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         # ModelAdmin Helptexts
         registered_models = []
         for model_admin in self.registry.get_registered_modeladmins():
-            model_help, url_name = self.registry._registry[model_admin]
             if not ModelAdminHelpView.permission_test(self.request, model_admin):
                 continue
+            model_help, url_name = self.registry._registry[model_admin]
             try:
                 url = reverse(url_name)
             except NoReverseMatch:
@@ -65,12 +65,12 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         # Form Helptexts
         registered_forms = []
         for formview_class in self.registry.get_registered_forms():
+            if not FormHelpView.permission_test(self.request, formview_class):
+                continue
             form_help, url_name = self.registry._registry[formview_class]
             try:
                 url = reverse(url_name)
             except NoReverseMatch:
-                continue
-            if not FormHelpView.permission_test(self.request, formview_class): #TODO: need a better place for the permission check
                 continue
                 
             registered_forms.append((
