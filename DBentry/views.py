@@ -55,6 +55,9 @@ class MIZAdminMixin(object):
         return context
         
 class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
+    #TODO: revisit MIZAdminPermissionMixin:
+    #   - UserPassesTestMixin vs PermissionRequiredMixin
+    #   - pass custom kwargs to test func (would be needed for class/staticmethod test_funcs with no instance access)
     """
     A mixin that enables permission restricted views.
     """
@@ -108,6 +111,7 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
             return request.user.is_staff
         
     def test_func(self):
+        #TODO: overwrite get_test_func() instead!
         """
         Redirect the test for UserPassesTestMixin to a more aptly named function.
         """

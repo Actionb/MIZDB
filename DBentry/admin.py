@@ -12,6 +12,8 @@ from .ac.widgets import make_widget
 
 from .sites import miz_site
 
+#TODO: FavoritenAdmin with a popup response
+
 class BestandInLine(BaseTabularInline):
     model = bestand
     readonly_fields = ['signatur']
@@ -209,7 +211,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = person
     class AutorInLine(BaseTabularInline):
         model = artikel.autor.through
-        verbose_model = autor
+        verbose_model = autor        
     class MusikerInLine(BaseTabularInline):
         model = artikel.musiker.through
         verbose_model = musiker

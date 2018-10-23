@@ -32,7 +32,7 @@ class RuntimeFactoryMixin(object):
             except AttributeError:
                 # The related factory does not exist yet
                 if self.related_model is None:
-                    raise AttributeError('Missing related factory for {}'.format(self.name)) # TODO: more useful error message
+                    raise AttributeError('Missing related factory for {}'.format(self.name))
                 self._factory =  modelfactory_factory(self.related_model)
         return self._factory
         
