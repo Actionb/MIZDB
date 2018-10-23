@@ -39,13 +39,7 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         urls = self.registry.get_urls()
         self.assertEqual(len(urls), 3)
         
-        # The ordering in urls depends on registry._registry, a dictionary - with the exception of the index page which is always last
-        index_pattern = urls.pop(-1)
-        if list(self.registry._registry)[0] == BulkAusgabe:
-            # First item of _registry is the formview_helptext
-            formview_pattern, modeladmin_pattern = urls
-        else:
-            modeladmin_pattern, formview_pattern = urls
+        modeladmin_pattern, formview_pattern, index_pattern = urls
         
         # MODELADMIN PAGE
         self.assertEqual(modeladmin_pattern._regex, r'^artikel/')

@@ -52,23 +52,24 @@ class HelpRegistry(object):
         return ''
     
     def get_urls(self):
-        #TODO: iterate over _modeladmins and _formviews to keep an order
         from django.conf.urls import url
         from DBentry.help.views import ModelAdminHelpView, FormHelpView, HelpIndexView
         
         urlpatterns = []
-        for view_class, (helptext, url_name) in self._registry.items():
-            if view_class in self._modeladmins:
-                # This is a help page for a ModelAdmin
-                regex = r'^{}/'.format(view_class.model._meta.model_name)
-                view_func = ModelAdminHelpView.as_view(model_admin = view_class, helptext_class = helptext, registry = self)
-            elif view_class in self._formviews:
-                # A help page for a custom FormView
-                regex = '^{}/'.format(url_name.replace('help_', ''))
-                view_func = FormHelpView.as_view(target_view_class = view_class, helptext_class = helptext)
-            else:
-                # TODO: raise exception
-                raise
+        for model_admin in self._modeladmins:
+            if not self.is_registered(model_admin):
+                continue
+            helptext, url_name = self._registry[model_admin]
+            regex = r'^{}/'.format(model_admin.model._meta.model_name)
+            view_func = ModelAdminHelpView.as_view(model_admin = model_admin, helptext_class = helptext, registry = self)
+            urlpatterns.append(url(regex, view_func, name = url_name))
+        
+        for formview in self._formviews:
+            if not self.is_registered(formview):
+                continue
+            helptext, url_name = self._registry[formview]
+            regex = '^{}/'.format(url_name.replace('help_', ''))
+            view_func = FormHelpView.as_view(target_view_class = formview, helptext_class = helptext)
             urlpatterns.append(url(regex, view_func, name = url_name))
             
         # Don't forget the index page
