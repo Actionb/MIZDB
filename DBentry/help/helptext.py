@@ -96,9 +96,9 @@ class BaseHelpText(object):
     
     help_items = None
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         if self.help_items is None:
-            self.help_items = kwargs.get('help_items', OrderedDict())
+            self.help_items = OrderedDict()
         if not isinstance(self.help_items, OrderedDict):
             # Force the help_items into an OrderedDict for easier lookups
             help_items = OrderedDict()
@@ -156,13 +156,16 @@ class FormViewHelpText(BaseHelpText):
     
     target_view_class = None
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         if self.fields is None:
-            self.fields = kwargs.get('fields', {})
+            self.fields = {}
         if self.form_class is None and self.target_view_class is not None:
             # Get the form class from the target FormView
             self.form_class = self.target_view_class.form_class
-        super().__init__(*args, **kwargs)
+        if not self.index_title:
+            self.index_title = 'Hilfe für ' + str(self.form_class)
+            
+        super().__init__()
         
         if 'fields' not in self.help_items:
             # Add the form's fields to the help items
@@ -230,18 +233,11 @@ class ModelAdminHelpText(FormViewHelpText):
     
     _inline_helptexts = None
     
-    def __init__(self, request, registry, model_admin = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, request, registry, model_admin = None):
         self.request = request
         self.registry = registry
         self.model_admin = model_admin or get_model_admin_for_model(self.model)
         
-        if not self.inlines:
-            self.inlines = {}
-        elif 'inlines' not in self.help_items:
-            # Add an 'inlines' help item if there is at least one inline
-            self.help_items['inlines'] = 'inlines'
-            
         # Set defaults for index_title, site_title and breadcrumbs_title
         if not self.index_title:
             self.index_title = capfirst(self.model._meta.verbose_name_plural)
@@ -249,6 +245,14 @@ class ModelAdminHelpText(FormViewHelpText):
             self.breadcrumbs_title = self.model_admin.opts.verbose_name_plural
         if not self.site_title:
             self.site_title = self.model_admin.opts.verbose_name_plural + ' Hilfe'
+            
+        super().__init__()
+        
+        if not self.inlines:
+            self.inlines = {}
+        elif 'inlines' not in self.help_items:
+            # Add an 'inlines' help item if there is at least one inline
+            self.help_items['inlines'] = 'inlines'
         
     def for_context(self, **kwargs):
         if self.inline_helptexts:

@@ -129,11 +129,7 @@ class TestFormViewHelpText(FormViewHelpTextMixin, FormTestCase):
         'alice': django_forms.CharField(label = 'Alice', help_text = 'Helptext for Alice'), 
         'bob': django_forms.CharField(label = 'Bob', help_text = 'Helptext for Bob'), 
     }
-    helptext_class = FormViewHelpText
-    
-    def get_helptext_initkwargs(self):
-        # Default the initkwargs to fields = {'alice': 'beep boop'}
-        return {'fields': {'alice': 'beep boop'}}
+    helptext_class = type('Dummy', (FormViewHelpText, ), {'fields': {'alice': 'beep boop'}})
     
     def test_init_adds_fields(self):
         # Assert that init adds 'fields' to the help_items as the second item if help_items has at least one item
@@ -141,12 +137,15 @@ class TestFormViewHelpText(FormViewHelpTextMixin, FormTestCase):
         self.assertIn('fields', helptext_instance.help_items)
         self.assertEqual(list(helptext_instance.help_items.keys()).index('fields'), 0)
         
-        helptext_instance = self.get_helptext_instance(help_items = ['test'])
+        self.helptext_class.help_items = ['test']
+        helptext_instance = self.get_helptext_instance()
         self.assertIn('fields', helptext_instance.help_items)
         help_item_keys = list(helptext_instance.help_items.keys())
         self.assertEqual(help_item_keys.index('fields'), 1)
         
-        helptext_instance = self.get_helptext_instance(help_items = ['test', 'bla', 'jada'], fields = {'beep':'boop'})
+        self.helptext_class.help_items = ['test', 'bla', 'jada']
+        self.helptext_class.fields = {'beep':'boop'}
+        helptext_instance = self.get_helptext_instance()
         self.assertIn('fields', helptext_instance.help_items)
         help_item_keys = list(helptext_instance.help_items.keys())
         self.assertEqual(help_item_keys.index('test'), 0)
