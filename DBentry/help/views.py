@@ -1,14 +1,14 @@
-from django.http import Http404
+
 from django.views.generic import TemplateView 
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
-from django.contrib import messages
-from django.shortcuts import redirect
+
+
 from django.utils.html import format_html
 from django.utils.text import capfirst
 
 from DBentry.sites import register_tool
-from DBentry.views import MIZAdminMixin, MIZAdminToolViewMixin, MIZAdminPermissionMixin
+from DBentry.views import MIZAdminToolViewMixin, MIZAdminPermissionMixin
 from DBentry.utils import has_admin_permission
 
 @register_tool
