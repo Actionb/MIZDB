@@ -49,7 +49,7 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
                 continue
             registered_models.append((
                 url, 
-                model_help.index_title or capfirst(model_admin.opts.verbose_name_plural)
+                model_help(self.request, self.registry, model_admin).index_title
             ))
             
         # Sort by model_help.index_title // model._meta.verbose_name_plural
@@ -75,7 +75,7 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
                 
             registered_forms.append((
                 url, 
-                form_help.index_title or 'Hilfe für ' + str(form_help.form_class) #TODO: move this to helptext.__init__
+                form_help().index_title
             ))
             
         form_helps = []
