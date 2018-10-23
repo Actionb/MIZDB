@@ -1,4 +1,4 @@
-from ..base import *
+from .base import *
 
 from django import forms as django_forms
 
@@ -61,20 +61,20 @@ class TestBaseHelpText(TestCase):
     
     def test_for_context(self):        
         # Assert that for_context skips help_items that refer to an attribute that was not declared
-        instance = BaseHelpText()
-        instance.Alice = None
-        instance.help_items = ['Alice']
-        instance.__init__()
-        context = instance.for_context()
+        helptext_instance = BaseHelpText()
+        helptext_instance.Alice = None
+        helptext_instance.help_items = ['Alice']
+        helptext_instance.__init__()
+        context = helptext_instance.for_context()
         self.assertIn('help_items', context)
         self.assertFalse(context['help_items'])
         
         # Assert that for_context accepts a 'help_item' of type str
-        instance = BaseHelpText()
-        instance.Alice = 'Beep'
-        instance.help_items = ['Alice']
-        instance.__init__()
-        context = instance.for_context()
+        helptext_instance = BaseHelpText()
+        helptext_instance.Alice = 'Beep'
+        helptext_instance.help_items = ['Alice']
+        helptext_instance.__init__()
+        context = helptext_instance.for_context()
         self.assertIn('help_items', context)
         self.assertEqual(len(context['help_items']), 1)
         alice_help = context['help_items'][0]
@@ -84,12 +84,12 @@ class TestBaseHelpText(TestCase):
         self.assertEqual(alice_help.val, 'Beep')
         
         # Assert that for_context accepts a help_item of type list/tuple
-        instance = BaseHelpText()
-        instance.Alice = 'Beep'
-        instance.Bob = 'Boop'
-        instance.help_items = [('Alice', ), ['Bob', 'BobLabel']]
-        instance.__init__()
-        context = instance.for_context()
+        helptext_instance = BaseHelpText()
+        helptext_instance.Alice = 'Beep'
+        helptext_instance.Bob = 'Boop'
+        helptext_instance.help_items = [('Alice', ), ['Bob', 'BobLabel']]
+        helptext_instance.__init__()
+        context = helptext_instance.for_context()
         self.assertIn('help_items', context)
         self.assertEqual(len(context['help_items']), 2)
         alice_help, bob_help = context['help_items']
@@ -103,56 +103,82 @@ class TestBaseHelpText(TestCase):
         self.assertEqual(bob_help.val, 'Boop')
         
         # Assert that for_context keeps items passed in via kwargs as they are (i.e. doesn't wrap them)
-        instance = BaseHelpText()
-        instance.help_items = ['Charlie', ('Dave', )]
-        instance.__init__()
-        context = instance.for_context(Charlie = 'This Is Charlie', Dave = 'And this is Dave')
+        helptext_instance = BaseHelpText()
+        helptext_instance.help_items = ['Charlie', ('Dave', )]
+        helptext_instance.__init__()
+        context = helptext_instance.for_context(Charlie = 'This Is Charlie', Dave = 'And this is Dave')
         self.assertIn('help_items', context)
         self.assertIn('This Is Charlie', context['help_items'])
         self.assertIn('And this is Dave', context['help_items'])
         
-class TestFormViewHelpText(FormTestCase):
+        # Assert that for_context adds site_title and breadcrumbs_title
+        helptext_instance = BaseHelpText()
+        helptext_instance.site_title = 'Beep'
+        helptext_instance.breadcrumbs_title = 'Boop'
+        context = helptext_instance.for_context()
+        self.assertIn('site_title', context)
+        self.assertEqual(context['site_title'], 'Beep')
+        self.assertIn('breadcrumbs_title', context)
+        self.assertEqual(context['breadcrumbs_title'], 'Boop')
+        
+        
+class TestFormViewHelpText(FormViewHelpTextMixin, FormTestCase):
     
     dummy_bases = (django_forms.Form, )
     dummy_attrs = {
         'alice': django_forms.CharField(label = 'Alice', help_text = 'Helptext for Alice'), 
         'bob': django_forms.CharField(label = 'Bob', help_text = 'Helptext for Bob'), 
     }
+    helptext_class = FormViewHelpText
     
-    def setUp(self):
-        super().setUp()
-        self.instance = FormViewHelpText(fields = {'alice': 'beep boop'})
-        self.instance.form_class = self.get_dummy_form_class()
+    def get_helptext_initkwargs(self):
+        # Default the initkwargs to fields = {'alice': 'beep boop'}
+        return {'fields': {'alice': 'beep boop'}}
     
     def test_init_adds_fields(self):
-        instance = FormViewHelpText(help_items = ['test'], fields = {'beep':'boop'})
-        instance.__init__()
-        self.assertIn('fields', instance.help_items)
-        self.assertEqual(list(instance.help_items.keys()).index('fields'), 1)
+        # Assert that init adds 'fields' to the help_items as the second item if help_items has at least one item
+        helptext_instance = self.get_helptext_instance()
+        self.assertIn('fields', helptext_instance.help_items)
+        self.assertEqual(list(helptext_instance.help_items.keys()).index('fields'), 0)
+        
+        helptext_instance = self.get_helptext_instance(help_items = ['test'])
+        self.assertIn('fields', helptext_instance.help_items)
+        help_item_keys = list(helptext_instance.help_items.keys())
+        self.assertEqual(help_item_keys.index('fields'), 1)
+        
+        helptext_instance = self.get_helptext_instance(help_items = ['test', 'bla', 'jada'], fields = {'beep':'boop'})
+        self.assertIn('fields', helptext_instance.help_items)
+        help_item_keys = list(helptext_instance.help_items.keys())
+        self.assertEqual(help_item_keys.index('test'), 0)
+        self.assertEqual(help_item_keys.index('fields'), 1)
+        self.assertEqual(help_item_keys.index('bla'), 2)
+        self.assertEqual(help_item_keys.index('jada'), 3)
         
     def test_field_helptexts(self):
         expected = [
             {'id': 'alice', 'label': 'Alice', 'text': 'beep boop'}, 
             {'id': 'bob', 'label': 'Bob', 'text': 'Helptext for Bob'}, 
         ]
-        self.assertEqual(self.instance.field_helptexts, expected)
+        self.assertEqual(self.get_helptext_instance().field_helptexts, expected)
         
     def test_get_helptext_for_field(self):
         # Assert that get_helptext_for_field prioritizes helptexts declared in self.fields over formfield helptexts
+        helptext_instance = self.get_helptext_instance()
+        
         formfield_alice = django_forms.CharField(help_text = 'Helptext for Alice')
-        ht_alice = self.instance.get_helptext_for_field('alice', formfield_alice)
+        ht_alice = helptext_instance.get_helptext_for_field('alice', formfield_alice)
         self.assertEqual(ht_alice, 'beep boop')
         
         formfield_bob = django_forms.CharField(help_text = 'Helptext for Bob')
-        ht_bob = self.instance.get_helptext_for_field('bob', formfield_bob)
+        ht_bob = helptext_instance.get_helptext_for_field('bob', formfield_bob)
         self.assertEqual(ht_bob, 'Helptext for Bob')
         
         formfield_charlie = django_forms.CharField()
-        ht_charlie = self.instance.get_helptext_for_field('charlie', formfield_charlie)
+        ht_charlie = helptext_instance.get_helptext_for_field('charlie', formfield_charlie)
         self.assertEqual(ht_charlie, '')
         
     def test_for_context(self):
-        context = self.instance.for_context()
+        context = self.get_helptext_instance().for_context()
         self.assertIn('help_items', context)
         help_items = []
         for i in context['help_items']:
@@ -160,64 +186,58 @@ class TestFormViewHelpText(FormTestCase):
                 help_items.append(i.id)
         self.assertIn('fields', help_items)
         
-class TestModelAdminHelpText(AdminTestCase):
+class TestModelAdminHelpText(ModelAdminHelpTextTestCase):
     
-    dummy_bases = (django_forms.Form, )
-    dummy_attrs = {
-        'beschreibung': django_forms.CharField(label = 'Alice', help_text = 'Helptext for Alice'), 
-        'bemerkungen': django_forms.CharField(label = 'Bob', help_text = 'Helptext for Bob'), 
-    }
+    path = '/admin/help/artikel/'
     
-    model = artikel
-    model_admin_class = ArtikelAdmin
-    
-    def setUp(self):
-        super().setUp()
-        request = self.get_request(path = '/admin/help/artikel/')
-        self.instance = type('Dummy', (ModelAdminHelpText, ), {'model':artikel})(request = request)
+    helptext_class = type('Dummy', (ModelAdminHelpText, ), {'model':artikel})
     
     def test_init(self):
-        # Assert that init sets a missing help_title from the model's verbose name
-        self.instance.help_title = ''
-        self.instance.__init__(request = None)
-        self.assertEqual(self.instance.help_title, 'Artikel')
+        helptext_instance = self.get_helptext_instance()
         
-        self.instance.help_title = 'Beep boop'
-        self.instance.__init__(request = None)
-        self.assertEqual(self.instance.help_title, 'Beep boop')
+        # Assert that init sets a missing index_title from the model's verbose name
+        helptext_instance.index_title = ''
+        helptext_instance.__init__(request = None)
+        self.assertEqual(helptext_instance.index_title, 'Artikel')
+        
+        helptext_instance.index_title = 'Beep boop'
+        helptext_instance.__init__(request = None)
+        self.assertEqual(helptext_instance.index_title, 'Beep boop')
         
         # Assert that init sets the admin model 
-        self.instance.model_admin = None
-        self.instance.__init__(request = None)
-        self.assertIsInstance(self.instance.model_admin, ArtikelAdmin)
+        helptext_instance.model_admin = None
+        helptext_instance.__init__(request = None)
+        self.assertIsInstance(helptext_instance.model_admin, ArtikelAdmin)
         
-        self.instance.__init__(request = None, model_admin = BuchAdmin(buch, miz_site))
-        self.assertIsInstance(self.instance.model_admin, BuchAdmin)
+        helptext_instance.__init__(request = None, model_admin = BuchAdmin(buch, miz_site))
+        self.assertIsInstance(helptext_instance.model_admin, BuchAdmin)
         
         # Assert that init adds the inlines to the help_items
-        help_items = self.instance.help_items
+        help_items = helptext_instance.help_items
         self.assertIn('inlines', help_items)
         self.assertEqual(list(help_items.keys()).index('inlines'), len(help_items)-1)
     
     def test_inline_helptexts(self):
         # Assert that inline_helptexts uses an inline's verbose model attribute if present
         genre_inline_helptext = type('GenreHelpText', (ModelAdminHelpText, ), {'model':genre, 'inline_text':'Genre Inline Text'})
-        halp._registry = {'models':{genre:genre_inline_helptext}}
+        self.registry.register(genre_inline_helptext, None)
         expected = [
             {'id': 'inline-Genre', 'label': 'Genres', 'text': 'Genre Inline Text'}
         ]
-        self.assertEqual(self.instance.inline_helptexts, expected)
+        self.assertEqual(self.get_helptext_instance().inline_helptexts, expected)
         
     def test_get_helptext_for_field(self):
         # Assert that get_helptext_for_field takes a model field's help text if no help text for that field
         # is declared.
+        helptext_instance = self.get_helptext_instance()
+        
         self.assertEqual(
-            self.instance.get_helptext_for_field('bemerkungen', None), 
+            helptext_instance.get_helptext_for_field('bemerkungen', None), 
             'Kommentare für Archiv-Mitarbeiter'
         )
         
-        self.instance.fields['bemerkungen'] = 'Beep Boop'
+        helptext_instance.fields['bemerkungen'] = 'Beep Boop'
         self.assertEqual(
-            self.instance.get_helptext_for_field('bemerkungen', None), 
+            helptext_instance.get_helptext_for_field('bemerkungen', None), 
             'Beep Boop'
         )
