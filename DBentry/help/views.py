@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django.utils.text import capfirst
 
 from DBentry.sites import register_tool
-from DBentry.views import MIZAdminMixin, MIZAdminToolViewMixin
+from DBentry.views import MIZAdminMixin, MIZAdminToolViewMixin, MIZAdminPermissionMixin
 from DBentry.utils import has_admin_permission
 
 @register_tool
@@ -39,9 +39,9 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
             
         # ModelAdmin Helptexts
         registered_models = []
-        for model_admin in self.registry.get_registered_models():
+        for model_admin in self.registry.get_registered_modeladmins():
             model_help, url_name = self.registry._registry[model_admin]
-            if not has_admin_permission(self.request, model_admin):
+            if not ModelAdminHelpView.permission_test(self.request, model_admin):
                 continue
             try:
                 url = reverse(url_name)
@@ -70,12 +70,12 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
                 url = reverse(url_name)
             except NoReverseMatch:
                 continue
-            if not FormHelpView.has_permission(self.request): #TODO: need a better place for the permission check
+            if not FormHelpView.permission_test(self.request, formview_class): #TODO: need a better place for the permission check
                 continue
                 
             registered_forms.append((
                 url, 
-                form_help.index_title or 'Hilfe für ' + str(form_help.form_class)
+                form_help.index_title or 'Hilfe für ' + str(form_help.form_class) #TODO: move this to helptext.__init__
             ))
             
         form_helps = []
@@ -90,7 +90,7 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         
         return context
 
-class BaseHelpView(MIZAdminMixin, TemplateView):
+class BaseHelpView(MIZAdminPermissionMixin, TemplateView):
     """
     The base class for the HelpViews
     Attributes:
@@ -104,24 +104,23 @@ class BaseHelpView(MIZAdminMixin, TemplateView):
     helptext_class = None
     
     registry = None
-    
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            return super().dispatch(request, *args, **kwargs)
-        except Http404 as e:
-            # Return to the index page on encountering Http404.
-            messages.warning(request, e.args[0])
-            return redirect('help_index')
             
     def get_help_text(self, **kwargs):
         """
         Returns the HelpText instance (not wrapped) for this view.
         """
-        if self.helptext_class is None:
-            raise Exception("You must set a helptext class.")
         if 'registry' not in kwargs:
             kwargs['registry'] = self.registry
+        if self.helptext_class is None:
+            raise Exception("You must set a helptext class.")
         return self.helptext_class(**kwargs)
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # for_context() wraps the helptext into a helper object that includes
+        # the methods html() and sidenav(), which are expected by the template
+        context.update(self.get_help_text().for_context())
+        return context
         
 class FormHelpView(BaseHelpView):
     """
@@ -132,26 +131,16 @@ class FormHelpView(BaseHelpView):
     """
     
     target_view_class = None
-
-    @classmethod
-    def has_permission(cls, request):
-        """
-        Checks if the request has the required permissions to access this view.
-        Returns True by default unless the target view is subclassing MIZAdminPermissionMixin,
-        in which case the target view's permission_test classmethod is called.
-        This is used in the index view to determine whether or not to show a link to this view on the index.
-        """
-        from DBentry.views import MIZAdminPermissionMixin
-        if cls.target_view_class and issubclass(cls.target_view_class, MIZAdminPermissionMixin):
-            return cls.target_view_class.permission_test(request)
+    
+    @staticmethod
+    def permission_test(request, target_view_class):
+        if issubclass(target_view_class, MIZAdminPermissionMixin): #TODO: issubclass(UserPassesTestMixin)
+            # If the target_view_class has access restrictions, only allow access to its help page if the user fulfills these restrictions
+            return target_view_class.permission_test(request)
         return True
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # for_context() wraps the helptext into a helper object that includes
-        # the methods html() and sidenav(), which are expected by the template
-        context.update(self.get_help_text(request = self.request).for_context())
-        return context
+        
+    def test_func(self):
+        return self.permission_test(self.request, self.target_view_class)
         
 class ModelAdminHelpView(BaseHelpView):
     """
@@ -165,21 +154,19 @@ class ModelAdminHelpView(BaseHelpView):
     template_name = 'admin/help.html'
     
     model_admin = None
-        
-    def has_permission(self, request):
-        if self.model_admin:
-            # calls utils.has_admin_permission
-            return has_admin_permission(request, self.model_admin)
-        return False
-        
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # for_context() wraps the helptext into a helper object that includes
-        # the methods html() and sidenav(), which are expected by the template
-        context.update(self.get_help_text(request = self.request, model_admin = self.model_admin).for_context())
-        if not context.get('breadcrumbs_title', ''):
-            context['breadcrumbs_title'] = self.model_admin.opts.verbose_name_plural
-        if not context.get('site_title', ''):
-            context['site_title'] = self.model_admin.opts.verbose_name_plural + ' Hilfe'
-        return context
     
+    def get_help_text(self, **kwargs):
+        # Make sure the helptext gets initialized with a model_admin and a request kwarg
+        if 'model_admin' not in kwargs:
+            kwargs['model_admin'] = self.model_admin
+        if 'request' not in kwargs:
+            kwargs['request'] = self.request
+        return super().get_help_text(**kwargs)
+        
+    @staticmethod
+    def permission_test(request, model_admin):
+        # calls utils.has_admin_permission
+        return has_admin_permission(request, model_admin)
+        
+    def test_func(self):
+        return self.permission_test(self.request, self.model_admin)

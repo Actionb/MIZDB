@@ -17,12 +17,6 @@ def formfield_to_modelfield(model, formfield_name, formfield = None):
     except FieldDoesNotExist:
         pass
         
-def get_field_helptext(field_name, model):
-    if halp.is_registered(model) and hasattr(halp.help_for_model(model), 'fields') \
-        and field_name in halp.help_for_model(model).fields:
-            return halp.help_for_model(model).fields[field_name]
-    return ''
-    
 class HTMLWrapper(object):
     """
     Wraps the help item to provide the two methods sidenav() and html() for use on the template.
@@ -146,7 +140,7 @@ class BaseHelpText(object):
         if self.breadcrumbs_title:
             context['breadcrumbs_title'] = self.breadcrumbs_title
         return context
-        
+
 class FormViewHelpText(BaseHelpText):
     """
     The basic container for help texts to a form view.
@@ -158,15 +152,21 @@ class FormViewHelpText(BaseHelpText):
     Attributes:
         - fields: a mapping of formfield name to a help text
         - form_class: the class of the form this HelpText object is based off
+        - target_view_class: the view this HelpText object is based off
     """
     fields = None
     
     form_class = None
     _field_helptexts = None
     
+    target_view_class = None
+    
     def __init__(self, *args, **kwargs):
         if self.fields is None:
             self.fields = kwargs.get('fields', {})
+        if self.form_class is None and self.target_view_class is not None:
+            # Get the form class from the target FormView
+            self.form_class = self.target_view_class.form_class
         super().__init__(*args, **kwargs)
         
         if 'fields' not in self.help_items:
@@ -249,6 +249,10 @@ class ModelAdminHelpText(FormViewHelpText):
             self.model_admin = get_model_admin_for_model(self.model)
         if 'inlines' not in self.help_items:
             self.help_items['inlines'] = 'inlines'
+        if not self.breadcrumbs_title:
+            self.breadcrumbs_title = self.model_admin.opts.verbose_name_plural
+        if not self.site_title:
+            self.site_title = self.model_admin.opts.verbose_name_plural + ' Hilfe'
         
     def for_context(self, **kwargs):
         if self.inline_helptexts:

@@ -40,7 +40,7 @@ class HelpRegistry(object):
             
     def help_url_for_view(self, view_class):
         """
-        Returns the full path to the help page for this view_class.
+        Returns the full path to the help page for this view_class (view_class is either a ModelAdmin or a FormView).
         """
         # Used by templatetags.object_tools
         if self.is_registered(view_class):
@@ -52,6 +52,7 @@ class HelpRegistry(object):
         return ''
     
     def get_urls(self):
+        #TODO: iterate over _modeladmins and _formviews to keep an order
         from django.conf.urls import url
         from DBentry.help.views import ModelAdminHelpView, FormHelpView, HelpIndexView
         
@@ -83,8 +84,8 @@ class HelpRegistry(object):
     @property
     def urls(self):
         return self.get_urls(), None, None
-        
-    def register(self, helptext, url_name, **kwargs):
+    
+    def register(self, helptext, url_name):
         """
         - helptext + (optional) url_name passed in
         - if ModelAdminHelpText: associate with the *ModelAdmin* instance registered to that model class
@@ -97,7 +98,7 @@ class HelpRegistry(object):
             # Look up the ModelAdmin instance belonging to that model and use that in the registry
             view_class = get_model_admin_for_model(helptext.model, *self.admin_sites)
             if view_class is None:
-                raise Exception("No ModelAdmin for model found.", helptext.model)
+                raise AttributeError("No ModelAdmin for model found.", helptext.model)
             if url_name is None:
                 url_name = 'help_' + helptext.model._meta.model_name
             self._modeladmins.add(view_class)
@@ -105,17 +106,17 @@ class HelpRegistry(object):
             # A helptext for a FormView
             view_class = helptext.target_view_class
             if view_class is None:
-                raise Exception("Helptext class has no target_view_class set.", helptext)
+                raise AttributeError("Helptext class has no target_view_class set.", helptext)
             if url_name is None:
                 url_name = 'help_' + str(view_class)
             self._formviews.add(view_class)
         else:
-            raise Exception("Unknown helptext class:", helptext)
+            raise TypeError("Unknown helptext class:", helptext)
         self._registry[view_class] = (helptext, url_name)
         
 halp = HelpRegistry()
 
-def register(url_name = None, **kwargs):
+def register(url_name = None, registry = None):
     
     from DBentry.help.helptext import BaseHelpText
     
@@ -123,11 +124,11 @@ def register(url_name = None, **kwargs):
         if not issubclass(helptext, BaseHelpText):
             raise ValueError('Wrapped helptext class must subclass BaseHelpText.')
         
-        registry = kwargs.pop('registry', halp)
-        if not isinstance(registry, HelpRegistry):
+        _registry = registry or halp
+        if not isinstance(_registry, HelpRegistry):
             raise ValueError('registry must subclass HelpRegistry')
             
-        registry.register(helptext, url_name, **kwargs)
+        _registry.register(helptext, url_name)
         
         return helptext
     return helptext_wrapper
