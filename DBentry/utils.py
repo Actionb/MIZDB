@@ -412,8 +412,7 @@ def get_model_admin_for_model(model, *admin_sites):
     sites = admin_sites or [miz_site]
     for site in sites:
         if site.is_registered(model):
-            return site._registry.get(model)
-        
+            return site._registry.get(model)        
 
 def has_admin_permission(request, model_admin):
     if not model_admin.has_module_permission(request):
@@ -422,6 +421,20 @@ def has_admin_permission(request, model_admin):
 
     # Check whether user has any perm for this module.
     return True in perms.values()
+    
+def make_simple_link(url, label, is_popup, as_listitem = False):
+    if is_popup:
+        template = '<a href="{url}?_popup=1" onclick="return popup(this)">{label}</a>'
+    else:
+        template = '<a href="{url}" target="_blank">{label}</a>'
+    if as_listitem:
+        template = '<li>' + template + '</li>'
+    return format_html(
+        template, 
+        url = url, 
+        label = label
+    )
+    
 
 ##############################################################################################################
 # general utilities

@@ -14,7 +14,6 @@ from django.contrib.messages import get_messages
 from django.utils.http import unquote
 from django.utils.encoding import force_text
 from django.utils.translation import gettext, gettext_lazy, override as translation_override
-from django import forms
 from django.db.models.query import QuerySet
 
 from DBentry.admin import *
@@ -25,6 +24,8 @@ from DBentry.factory import *
 from DBentry.utils import get_relation_info_to, get_model_fields, get_model_relations, get_updateable_fields
 
 from .mixins import *
+
+from django import forms #TODO: rework all these imports to be explicit
 
 def mockv(value, **kwargs):
     return Mock(return_value=value, **kwargs)
@@ -43,7 +44,10 @@ def add_urls(url_patterns, regex=''):
     from django.conf import settings
     from django.conf.urls import url, include
     from importlib import import_module
-    urls = import_module(settings.ROOT_URLCONF).urlpatterns
+    try:
+        urls = import_module(settings.ROOT_URLCONF).urlpatterns
+    except AttributeError as e:
+        raise AttributeError(e.args[0], "Cannot override ROOT_URLCONF twice!")
     urls.insert(0, url(regex, include(url_patterns)))
     with override_urls(urls):
         yield
