@@ -46,8 +46,8 @@
                 </li>
                 {% if has_absolute_url %}<li><a href="{{ absolute_url }}" class="viewsitelink">{% trans "View on site" %}</a></li>{% endif %}
         {% endif %}
-        {% help_link request is_popup %}
-        {% favorites_link opts is_popup %}
+        {% help_link %}
+        {% favorites_link %}
         {% endblock %}
     </ul>
 {% endblock %}
