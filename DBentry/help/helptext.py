@@ -89,7 +89,6 @@ class BaseHelpText(object):
         - index_title: the title used for this help text on the index page
         - help_items: an iterable that contains the attribute names of help texts declared on this instance.
                 These names can either be simple strings or 2-tuples containing the name of the attribute and a label.
-        - registry: the registry of helptexts available to this helptext instance, passed in by BaseHelpView.get_help_text
     """
         
     index_title = ''
@@ -97,11 +96,7 @@ class BaseHelpText(object):
     
     help_items = None
     
-    registry = None
-    
     def __init__(self, *args, **kwargs):
-        if 'registry' in kwargs:
-            self.registry = kwargs.get('registry')
         if self.help_items is None:
             self.help_items = kwargs.get('help_items', OrderedDict())
         if not isinstance(self.help_items, OrderedDict):
@@ -228,8 +223,6 @@ class ModelAdminHelpText(FormViewHelpText):
         - inlines: a mapping of inline model (or the inline's verbose_model) to a help text
         - inline_text: a short help text for when this model is viewed as an inline by another model admin
     """
-    
-    
     model = None
     
     inlines = None
@@ -237,11 +230,12 @@ class ModelAdminHelpText(FormViewHelpText):
     
     _inline_helptexts = None
     
-    def __init__(self, request, model_admin = None, *args, **kwargs):
+    def __init__(self, request, registry, model_admin = None, *args, **kwargs):
         if self.inlines is None:
-            self.inlines = kwargs.get('inlines', {})
+            self.inlines = kwargs.get('inlines', {}) #NOTE: purpose?
         super().__init__(*args, **kwargs)
         self.request = request
+        self.registry = registry
         if not self.index_title:
             self.index_title = capfirst(self.model._meta.verbose_name_plural)
         self.model_admin = model_admin

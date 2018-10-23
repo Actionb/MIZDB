@@ -194,22 +194,23 @@ class TestModelAdminHelpText(ModelAdminHelpTextTestCase):
     
     def test_init(self):
         helptext_instance = self.get_helptext_instance()
+        minimal_initkwargs = {'request':None, 'registry':None} # we do not need the full initkwargs to test the init method
         
         # Assert that init sets a missing index_title from the model's verbose name
         helptext_instance.index_title = ''
-        helptext_instance.__init__(request = None)
+        helptext_instance.__init__(**minimal_initkwargs)
         self.assertEqual(helptext_instance.index_title, 'Artikel')
         
         helptext_instance.index_title = 'Beep boop'
-        helptext_instance.__init__(request = None)
+        helptext_instance.__init__(**minimal_initkwargs)
         self.assertEqual(helptext_instance.index_title, 'Beep boop')
         
         # Assert that init sets the admin model 
         helptext_instance.model_admin = None
-        helptext_instance.__init__(request = None)
+        helptext_instance.__init__(**minimal_initkwargs)
         self.assertIsInstance(helptext_instance.model_admin, ArtikelAdmin)
         
-        helptext_instance.__init__(request = None, model_admin = BuchAdmin(buch, miz_site))
+        helptext_instance.__init__(model_admin = BuchAdmin(buch, miz_site), **minimal_initkwargs)
         self.assertIsInstance(helptext_instance.model_admin, BuchAdmin)
         
         # Assert that init adds the inlines to the help_items

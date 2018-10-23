@@ -63,13 +63,9 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         self.assertEqual(formview_pattern.name, 'help_bulk')
         self.assertEqual(formview_pattern.callback.view_class, FormHelpView)
         expected_kwargs = {
-            'registry': self.registry, 
             'helptext_class': formview_helptext, 
             'target_view_class': BulkAusgabe
         }
-        self.assertEqual(formview_pattern.callback.view_initkwargs['registry'], expected_kwargs['registry'])
-        self.assertEqual(formview_pattern.callback.view_initkwargs['helptext_class'], expected_kwargs['helptext_class'])
-        self.assertEqual(formview_pattern.callback.view_initkwargs['target_view_class'], expected_kwargs['target_view_class'])
         self.assertEqual(formview_pattern.callback.view_initkwargs, expected_kwargs)
         
         # INDEX PAGE

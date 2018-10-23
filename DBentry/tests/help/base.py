@@ -58,11 +58,14 @@ class RegisteredHelpTextMixin(HelpRegistryMixin, HelpTextMixin):
         super().setUp()
         self.registry.register(helptext = self.helptext_class, url_name = self.url_name)
         
-    def get_helptext_initkwargs(self):
-        return {'registry': self.registry}
-        
 class ModelAdminHelpTextTestCase(RegisteredHelpTextMixin, RequestTestCase):
     
+    def get_helptext_initkwargs(self):
+        # ModelAdminHelpTexts require a registry argument 
+        helptext_initkwargs = super().get_helptext_initkwargs()
+        helptext_initkwargs['registry'] = self.registry
+        return helptext_initkwargs
+        
     def get_helptext_instance(self, request = None, **kwargs):
         # request is a required argument for ModelAdminHelpText objects
         request = request or self.get_request()
@@ -74,7 +77,7 @@ class HelpViewMixin(HelpRegistryMixin, CreateViewMixin):
     """
     
     def get_view_initkwargs(self):
-        return {'registry': self.registry}
+        return {}
         
     def get_view(self, **kwargs):
         view_initkwargs = self.get_view_initkwargs()
@@ -93,4 +96,5 @@ class ModelHelpViewTestCase(RegisteredHelpViewMixin, AdminTestCase):
     def get_view_initkwargs(self):
         view_initkwargs = super().get_view_initkwargs()
         view_initkwargs['model_admin'] = self.model_admin
+        view_initkwargs['registry'] = self.registry
         return view_initkwargs

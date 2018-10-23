@@ -96,21 +96,16 @@ class BaseHelpView(MIZAdminPermissionMixin, TemplateView):
     Attributes:
         - template_name: inherited from TemplateView
         - helptext_class: the helptext class this view is going to serve
-        - registry: the registry of helptexts available to this view instance 
-            set during initialization by the url resolver (see help.registry.get_urls)
     """
      
     template_name = 'admin/help.html' 
     helptext_class = None
     
-    registry = None
             
     def get_help_text(self, **kwargs):
         """
         Returns the HelpText instance (not wrapped) for this view.
         """
-        if 'registry' not in kwargs:
-            kwargs['registry'] = self.registry
         if self.helptext_class is None:
             raise Exception("You must set a helptext class.")
         return self.helptext_class(**kwargs)
@@ -149,14 +144,20 @@ class ModelAdminHelpView(BaseHelpView):
     
     Attributes:
         - model_admin: set by help.registry.HelpRegistry.get_urls
+        - registry: the registry of helptexts available to this view instance 
+            set during initialization by the url resolver (see help.registry.get_urls)
     """
     
     template_name = 'admin/help.html'
     
     model_admin = None
     
+    registry = None
+    
     def get_help_text(self, **kwargs):
         # Make sure the helptext gets initialized with a model_admin and a request kwarg
+        if 'registry' not in kwargs:
+            kwargs['registry'] = self.registry
         if 'model_admin' not in kwargs:
             kwargs['model_admin'] = self.model_admin
         if 'request' not in kwargs:

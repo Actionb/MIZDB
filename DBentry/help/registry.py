@@ -58,18 +58,14 @@ class HelpRegistry(object):
         
         urlpatterns = []
         for view_class, (helptext, url_name) in self._registry.items():
-            init_kwargs = {'registry':self}
             if view_class in self._modeladmins:
                 # This is a help page for a ModelAdmin
-                model_name = view_class.model._meta.model_name
-                regex = r'^{}/'.format(model_name)
-                init_kwargs.update(model_admin = view_class, helptext_class = helptext)
-                view_func = ModelAdminHelpView.as_view(**init_kwargs)
+                regex = r'^{}/'.format(view_class.model._meta.model_name)
+                view_func = ModelAdminHelpView.as_view(model_admin = view_class, helptext_class = helptext, registry = self)
             elif view_class in self._formviews:
                 # A help page for a custom FormView
                 regex = '^{}/'.format(url_name.replace('help_', ''))
-                init_kwargs.update(target_view_class = view_class, helptext_class = helptext)
-                view_func = FormHelpView.as_view(**init_kwargs)
+                view_func = FormHelpView.as_view(target_view_class = view_class, helptext_class = helptext)
             else:
                 # TODO: raise exception
                 raise

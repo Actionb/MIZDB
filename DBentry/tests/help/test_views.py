@@ -3,14 +3,13 @@ from .base import *
 from DBentry.help.helptext import ModelAdminHelpText
 from DBentry.help.views import HelpIndexView, BaseHelpView, FormHelpView, ModelAdminHelpView
 
-
 class TestHelpIndexView(HelpViewMixin, ViewTestCase):
     
     path = '/admin/help/'
     view_class = HelpIndexView
-        
+    
     def test_get_context_data_models(self):
-        view = self.get_view(request = self.get_request(user = self.noperms_user))
+        view = self.get_view(request = self.get_request(user = self.noperms_user), registry = self.registry)
         context = view.get_context_data()
         self.assertIn('model_helps', context)
         self.assertEqual(context['model_helps'], [], msg = "User without any model permissions should not have access to any model helps.")
@@ -21,7 +20,7 @@ class TestHelpIndexView(HelpViewMixin, ViewTestCase):
         self.registry.register(helptext = buch_help, url_name = None)
         
         with add_urls(self.registry.get_urls(), '^admin/help/'):
-            view = self.get_view(request = self.get_request(path=''))
+            view = self.get_view(request = self.get_request(path=''), registry = self.registry)
             context = view.get_context_data()
             self.assertIn('model_helps', context)
             model_helps = context['model_helps']
@@ -34,7 +33,7 @@ class TestHelpIndexView(HelpViewMixin, ViewTestCase):
             self.assertEqual(model_helps[1], expected)
             
             # As a popup
-            view = self.get_view(request = self.get_request(path = self.path + '?_popup=1'))
+            view = self.get_view(request = self.get_request(path = self.path + '?_popup=1'), registry = self.registry)
             context = view.get_context_data()
             self.assertIn('model_helps', context)
             model_helps = context['model_helps']
