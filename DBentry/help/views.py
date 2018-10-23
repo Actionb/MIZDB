@@ -5,7 +5,6 @@ from django.urls.exceptions import NoReverseMatch
 
 
 from django.utils.html import format_html
-from django.utils.text import capfirst
 
 from DBentry.sites import register_tool
 from DBentry.views import MIZAdminToolViewMixin, MIZAdminPermissionMixin
