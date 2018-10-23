@@ -360,7 +360,7 @@ class magazin(BaseModel):
     
     
 class verlag(BaseModel):
-    verlag_name = models.CharField('verlag', **CF_ARGS)
+    verlag_name = models.CharField('Verlag', **CF_ARGS)
     
     sitz = models.ForeignKey('ort', models.SET_NULL, null = True,  blank = True)
     
@@ -643,7 +643,7 @@ class audio(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     tracks = models.IntegerField(verbose_name = 'Anz. Tracks', blank = True, null = True)
-    laufzeit = models.DurationField(blank = True, null = True)
+    laufzeit = models.DurationField(blank = True, null = True) #TODO: helptext format: hh:mm:ss
     e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)

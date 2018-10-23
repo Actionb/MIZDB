@@ -1,5 +1,5 @@
 {% extends 'admin/base_site.html' %}
-{% load i18n static %}
+{% load i18n static object_tools %}
 
 {% block extrahead %}
 <!-- Extrahead -->
@@ -10,11 +10,17 @@
 {% endblock extrahead %}
 
 {% block content %}
+<h1>Ausgaben Erstellung</h1>
 
+<!-- Help -->
+{% block object-tools %}
+    <ul class="object-tools">
+        {% help_link view.request is_popup %}
+    </ul>
+{% endblock object-tools %}
+
+<!-- Form -->
 <form method="post">
-<!-- Help Text -->
-{% include "admin/includes/help_text.html" %}
-
 {% csrf_token %}
 {{ form.non_field_errors }}
 

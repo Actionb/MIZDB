@@ -25,7 +25,7 @@ class MIZModelAdmin(admin.ModelAdmin):
                                             # that matches a field in the group
     googlebtns = []                         # Fields in this list get a little button that redirect to a google search page
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
-    hint = ''                               # A hint displayed at the top of the form 
+    hint = ''                               # A hint displayed at the top of the form #NOTE: is this hint even used by anything?
     crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
     superuser_only = False                  # If true, only a superuser can interact with this ModelAdmin
     actions = [merge_records]
@@ -188,21 +188,23 @@ class MIZModelAdmin(admin.ModelAdmin):
             media.add_js(['admin/js/utils.js']) # contains the googlebtns script
         return media
         
-    def add_extra_context(self, extra_context = None, object_id = None):
+    def add_extra_context(self, request = None, extra_context = None, object_id = None):
         new_extra = extra_context or {}
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
         new_extra['hint'] = self.hint
         new_extra['googlebtns'] = self.googlebtns
+        if request:
+            new_extra['request'] = request
         return new_extra
         
     def add_view(self, request, form_url='', extra_context=None):
-        new_extra = self.add_extra_context(extra_context)
+        new_extra = self.add_extra_context(request = request, extra_context = extra_context)
         return self.changeform_view(request, None, form_url, new_extra)
     
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        new_extra = self.add_extra_context(extra_context, object_id)
+        new_extra = self.add_extra_context(request = request, extra_context = extra_context, object_id = object_id)
         return super().change_view(request, object_id, form_url, new_extra)
         
     def lookup_allowed(self, key, value):
@@ -318,7 +320,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         if self.superuser_only:
             # Hide the associated models from the index if the current user is not a superuser
             return request.user.is_superuser
-        return True
+        return super().has_module_permission(request)
 
     def save_model(self, request, obj, form, change):
         if isinstance(obj, ComputedNameModel):

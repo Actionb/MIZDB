@@ -32,6 +32,7 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools.pop('bulk_ausgabe'), 'Ausgaben Erstellung')
         self.assertIn('favoriten', tools)
         self.assertEqual(tools.pop('favoriten'), 'Favoriten Verwaltung')
+        self.assertEqual(tools.pop('help_index'), 'Hilfe')
         self.assertFalse(tools)
     
 #    @tag("wip")

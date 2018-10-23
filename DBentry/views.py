@@ -39,7 +39,8 @@ class MIZAdminMixin(object):
     """
     A mixin that provides an admin 'look and feel' to custom views by adding admin_site specific context (each_context).
     """
-    title = None
+    #TODO: add site_title attribute
+    site_title = None
     breadcrumbs_title = None
     admin_site = miz_site
     
@@ -49,11 +50,14 @@ class MIZAdminMixin(object):
         context.update(self.admin_site.each_context(self.request))
         # Enable popups behaviour for custom views
         context['is_popup'] = '_popup' in self.request.GET
-        if self.title: context['title'] = self.title
+        if self.site_title: context['site_title'] = self.site_title
         if self.breadcrumbs_title: context['breadcrumbs_title'] = self.breadcrumbs_title
         return context
         
 class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
+    #TODO: revisit MIZAdminPermissionMixin:
+    #   - UserPassesTestMixin vs PermissionRequiredMixin
+    #   - pass custom kwargs to test func (would be needed for class/staticmethod test_funcs with no instance access)
     """
     A mixin that enables permission restricted views.
     """
@@ -107,6 +111,7 @@ class MIZAdminPermissionMixin(MIZAdminMixin, UserPassesTestMixin):
             return request.user.is_staff
         
     def test_func(self):
+        #TODO: overwrite get_test_func() instead!
         """
         Redirect the test for UserPassesTestMixin to a more aptly named function.
         """

@@ -404,6 +404,24 @@ def link_list(request, obj_list, SEP = ", "):
     for obj in obj_list:
         links.append(get_obj_link(obj, request.user, include_name=False))
     return format_html(SEP.join(links))
+    
+def get_model_admin_for_model(model, *admin_sites):
+    from DBentry.sites import miz_site
+    if isinstance(model, str):
+        model = get_model_from_string(model)
+    sites = admin_sites or [miz_site]
+    for site in sites:
+        if site.is_registered(model):
+            return site._registry.get(model)
+        
+
+def has_admin_permission(request, model_admin):
+    if not model_admin.has_module_permission(request):
+        return False
+    perms = model_admin.get_model_perms(request)
+
+    # Check whether user has any perm for this module.
+    return True in perms.values()
 
 ##############################################################################################################
 # general utilities

@@ -83,3 +83,4 @@ def tabindex(value, index):
     """
     value.field.widget.attrs['tabindex'] = index
     return value
+    
