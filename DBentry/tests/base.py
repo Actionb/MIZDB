@@ -7,7 +7,7 @@ import contextlib
 import re
 import random
 
-from django.test import TestCase, SimpleTestCase, Client, tag
+from django.test import TestCase, SimpleTestCase, Client, tag, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.contrib.messages import get_messages
@@ -31,6 +31,22 @@ def mockv(value, **kwargs):
     
 def mockex(exception, **kwargs):
     return Mock(side_effect=exception, **kwargs)
+    
+@contextlib.contextmanager
+def override_urls(url_patterns):
+    dummy_module = type('Dummy', (object, ), {'urlpatterns':url_patterns}) # safer than using a basic Mock object
+    with override_settings(ROOT_URLCONF=dummy_module): 
+        yield
+        
+@contextlib.contextmanager
+def add_urls(url_patterns, regex=''):
+    from django.conf import settings
+    from django.conf.urls import url, include
+    from importlib import import_module
+    urls = import_module(settings.ROOT_URLCONF).urlpatterns
+    urls.insert(0, url(regex, include(url_patterns)))
+    with override_urls(urls):
+        yield
 
 class MyTestCase(TestCase):
             
