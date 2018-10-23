@@ -6,9 +6,12 @@ from DBentry.utils import get_model_admin_for_model, make_simple_link
 
 register = Library()
     
-@register.simple_tag
-def favorites_link(model_opts, is_popup = False):
-    model_admin = get_model_admin_for_model(model_opts.model)
+@register.simple_tag(takes_context = True)
+def favorites_link(context):
+    if 'opts' not in context:
+        return ''
+        
+    model_admin = get_model_admin_for_model(context['opts'].model)
         
     inline_models = [
         getattr(inline, 'verbose_model', inline.model)._meta.model_name
@@ -21,7 +24,7 @@ def favorites_link(model_opts, is_popup = False):
             url = reverse('favoriten')
         except exceptions.NoReverseMatch:
             return ''
-        return make_simple_link(url = url, label = 'Favoriten', is_popup = is_popup, as_listitem = True)
+        return make_simple_link(url = url, label = 'Favoriten', is_popup = context.get('is_popup', False), as_listitem = True)
     return ''
         
 from DBentry.help.templatetags import help_link
