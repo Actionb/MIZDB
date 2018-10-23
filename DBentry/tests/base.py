@@ -44,7 +44,10 @@ def add_urls(url_patterns, regex=''):
     from django.conf import settings
     from django.conf.urls import url, include
     from importlib import import_module
-    urls = import_module(settings.ROOT_URLCONF).urlpatterns
+    try:
+        urls = import_module(settings.ROOT_URLCONF).urlpatterns
+    except AttributeError as e:
+        raise AttributeError(e.args[0], "Cannot override ROOT_URLCONF twice!")
     urls.insert(0, url(regex, include(url_patterns)))
     with override_urls(urls):
         yield
