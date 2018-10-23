@@ -85,15 +85,15 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         self.assertIn(model_admin, self.registry._registry)
         self.assertEqual(self.registry._registry[model_admin], (modeladmin_helptext, 'help_test'))
 
-        
-        formview_helptext = type('SomeFormHelpText', (FormViewHelpText, ), {'target_view_class':'just cheating'})
+        formview_helptext_target = type('TargetView', (object, ), {'form_class':'just cheating'})
+        formview_helptext = type('SomeFormHelpText', (FormViewHelpText, ), {'target_view_class':formview_helptext_target})
         self.registry.register(formview_helptext, url_name = None)
-        self.assertIn('just cheating', self.registry._registry)
-        self.assertEqual(self.registry._registry['just cheating'], (formview_helptext, "help_just cheating"))
-        self.assertIn('just cheating', self.registry._formviews)
+        self.assertIn(formview_helptext_target, self.registry._registry)
+        self.assertEqual(self.registry._registry[formview_helptext_target], (formview_helptext, "help_TargetView"))
+        self.assertIn(formview_helptext_target, self.registry._formviews)
         
         self.registry.register(formview_helptext, url_name = 'help_test')
-        self.assertEqual(self.registry._registry['just cheating'], (formview_helptext, 'help_test'))
+        self.assertEqual(self.registry._registry[formview_helptext_target], (formview_helptext, 'help_test'))
         
         formview_helptext.target_view_class = None
         with self.assertRaises(AttributeError) as e:

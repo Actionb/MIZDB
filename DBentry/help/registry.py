@@ -105,7 +105,7 @@ class HelpRegistry(object):
             if view_class is None:
                 raise AttributeError("Helptext class has no target_view_class set.", helptext)
             if url_name is None:
-                url_name = 'help_' + str(view_class)
+                url_name = 'help_' + str(view_class.__name__)
             self._formviews.add(view_class)
         else:
             raise TypeError("Unknown helptext class:", helptext)
