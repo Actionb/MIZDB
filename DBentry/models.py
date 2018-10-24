@@ -643,7 +643,7 @@ class audio(BaseModel):
     titel = models.CharField(**CF_ARGS)
     
     tracks = models.IntegerField(verbose_name = 'Anz. Tracks', blank = True, null = True)
-    laufzeit = models.DurationField(blank = True, null = True) #TODO: helptext format: hh:mm:ss
+    laufzeit = models.DurationField(blank = True, null = True, help_text = 'Format: hh:mm:ss')
     e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
@@ -907,7 +907,7 @@ class veranstaltung_alias(BaseAliasModel):
 class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
     tracks = models.IntegerField()
-    laufzeit = models.TimeField() # TODO: models.DurationField
+    laufzeit = models.DurationField(blank = True, null = True, help_text = 'Format: hh:mm:ss')
     festplatte = models.CharField(**CF_ARGS_B)
     quelle = models.CharField(**CF_ARGS_B)
     
