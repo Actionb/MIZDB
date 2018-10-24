@@ -145,13 +145,13 @@ class TestFactoryBand(FactoryTestCaseMixin,MyTestCase):
     expected_fields = ['musiker', 'genre', 'orte__land', 'orte']
     expected_labels = {'musiker':'Mitglied', 'genre':'Genre', 'orte__land':'Land', 'orte':'Ort'}
     expected_models = {'musiker': musiker, 'genre': genre, 'orte__land': land, 'orte': ort}
-    
+
 class TestFactoryMagazin(FactoryTestCaseMixin,MyTestCase):
     model = magazin
     model_admin_class = MagazinAdmin
-    expected_fields = ['ort__land']
-    expected_labels = {'ort__land':'Herausgabeland'}
-    expected_models = {'ort__land':land}
+    expected_fields = ['m2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre']
+    expected_labels = {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort', 'genre':'Genre'}
+    expected_models = {'m2m_magazin_verlag': m2m_magazin_verlag, 'm2m_magazin_herausgeber': m2m_magazin_herausgeber, 'ort': ort, 'genre': genre}
     
 class TestFactoryMusiker(FactoryTestCaseMixin,MyTestCase):
     model = musiker

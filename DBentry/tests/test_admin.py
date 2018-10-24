@@ -366,7 +366,7 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
     model = magazin
     exclude_expected = ['genre']
     fields_expected = ['magazin_name', 'erstausgabe', 'turnus', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn', 
-        'beschreibung', 'bemerkungen', 'verlag', 'ort', 
+        'beschreibung', 'bemerkungen', 'ort', 
     ]
     
     raw_data = [{'ausgabe__extra':1}]

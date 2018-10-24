@@ -12,8 +12,6 @@ from .ac.widgets import make_widget
 
 from .sites import miz_site
 
-#TODO: FavoritenAdmin with a popup response
-
 class BestandInLine(BaseTabularInline):
     model = bestand
     readonly_fields = ['signatur']
