@@ -218,12 +218,17 @@ class M2MFactory(RelatedFactory):
 class MIZDjangoOptions(factory.django.DjangoOptions):
 
     def _get_factory_name_for_model(self, model):
+        """
+        Returns the probable factory name for a given model.
+        """
         class_name = model.__name__.replace('m2m_', '').replace('_', ' ').title().replace(' ', '')
         return self.factory.__module__ + '.' + class_name + 'Factory'
     
     @staticmethod
     def _get_decl_for_model_field(field):
-        # For a given model field, return an appropriate faker declaration
+        """
+        For a given model field, return an appropriate faker declaration.
+        """
         internal_type = field.get_internal_type()
         if internal_type in ('CharField', 'TextField'):
             if field.unique:
@@ -238,6 +243,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             declaration = factory.Faker('pybool')
         elif internal_type in ('DateField', 'DateTimeField', 'TimeField'):
+            # the providers for these fields are called 'date','date_time','time' -> remove 'Field' and add a '_' before any capital letter
             provider = ''
             for i, c in enumerate(internal_type.replace('Field', '')):
                 if i and c.isupper():
@@ -248,6 +254,9 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         
         
     def add_base_fields(self):
+        """
+        Add any fields of the model that are not a relation and require a value.
+        """
         #TODO: account for unique == True // unique_together
         for field in get_model_fields(self.model, foreign = False, m2m = False):
             if hasattr(self.factory, field.name) or field.has_default() or field.blank:
@@ -255,6 +264,9 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             setattr(self.factory, field.name, self._get_decl_for_model_field(field))
         
     def add_m2m_factories(self):
+        """
+        Add M2MFactories for every many to many relation of this model.
+        """
         for rel in get_model_relations(self.model):
             if not rel.many_to_many:
                 continue
@@ -273,6 +285,9 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 setattr(self.factory, declaration_name, M2MFactory(factory_name, descriptor_name = descriptor_name, related_model = related_model))
         
     def add_related_factories(self):
+        """
+        Add RelatedFactories for every one to many (i.e. reverse) relation of this model.
+        """
         for rel in get_model_relations(self.model, forward = False):
             if rel.many_to_many: 
                 continue
@@ -284,6 +299,9 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 ))
         
     def add_sub_factories(self):
+        """
+        Add SubFactories for every (forward) one to many relation of this model.
+        """
         #TODO: account for unique == True // unique_together
         for field in get_model_fields(self.model, base = False, foreign = True, m2m = False):
             if not hasattr(self.factory, field.name):

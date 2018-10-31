@@ -147,7 +147,6 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 
             if 'data-placeholder' not in attrs:
                 # forward with no data-placeholder-text
-                #NOTE: cannot figure out how to translate the placeholder text
                 # the widget is created when django initializes, not when the view is called
                 # apparently that is too early for translations...
                 placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
@@ -156,9 +155,9 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 # We do not have access to the form and so no access to the forwarded formfield's (forwarded.src) label.
                 # If the forward's dst attribute is None, then get_field is likely to fail as src refers to the formfield's name
                 # and not the model field's name.
-                #TODO: use from django.utils.text import capfirst?
                 try:
-                    forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.capitalize()
+                    # verbose_name default is the field.name.replace('_',' ')
+                    forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.title()
                 except (AttributeError, FieldDoesNotExist):
                     # AttributeError: the field returned by get_field does not have a verbose_name attribute (i.e. a relation)
                     # FieldDoesNotExist: forwarded.dst/forwarded.src is not a name of a field of that model 

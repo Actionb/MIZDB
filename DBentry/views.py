@@ -39,7 +39,6 @@ class MIZAdminMixin(object):
     """
     A mixin that provides an admin 'look and feel' to custom views by adding admin_site specific context (each_context).
     """
-    #TODO: add site_title attribute
     site_title = None
     breadcrumbs_title = None
     admin_site = miz_site
