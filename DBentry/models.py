@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from .base.models import (
-    BaseModel, ComputedNameModel, BaseAliasModel, 
+    BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractNumModel
 )
 from .fields import ISSNField, ISBNField, EANField
 from .constants import *
