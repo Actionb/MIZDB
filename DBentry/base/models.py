@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from DBentry.managers import MIZQuerySet, CNQuerySet
 from DBentry.utils import get_model_fields
 from DBentry.constants import MIN_JAHR, MAX_JAHR
+from DBentry.fields import YearField
 
     
 class BaseModel(models.Model):
@@ -215,10 +216,8 @@ class ComputedNameModel(BaseModel):
         abstract = True
         ordering = ['_name']
 
-class AbstractJahrModel(BaseModel):
-    JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
-    
-    jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS)
+class AbstractJahrModel(BaseModel):    
+    jahr = YearField('Jahr')
     
     class Meta(BaseModel.Meta):
         abstract = True
