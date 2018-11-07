@@ -195,6 +195,13 @@ class ArtikelForm(AusgabeMagazinFieldForm):
 class AutorForm(XRequiredFormMixin, FormBase):
     
     xrequired = [{'min':1, 'fields':['kuerzel', 'person']}]
+        
+class BrochureForm(AusgabeMagazinFieldForm):
+    class Meta:
+        widgets = {
+            'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin']), 
+            'titel': Textarea(attrs={'rows':1, 'cols':90})
+        }
     
 class BuchForm(XRequiredFormMixin, FormBase):
     class Meta:
