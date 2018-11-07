@@ -172,7 +172,8 @@ class AusgabeMagazinFieldForm(FormBase):
         if 'instance' in kwargs and kwargs['instance']:
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
-            kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
+            if kwargs['instance'].ausgabe:
+                kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
         super(AusgabeMagazinFieldForm, self).__init__(*args, **kwargs)
 
 class InLineAusgabeForm(AusgabeMagazinFieldForm):
