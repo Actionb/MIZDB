@@ -5,7 +5,7 @@ from .base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
     BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from .forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm
+from .forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm
 from .utils import concat_limit
 from .actions import *
 from .ac.widgets import make_widget
@@ -738,10 +738,78 @@ class InstrumentAdmin(MIZModelAdmin):
 class HerausgeberAdmin(MIZModelAdmin):
     form = HerausgeberForm
     index_category = 'Stammdaten'
+
+class BaseBrochureAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
+        model = BaseBrochure.genre.through
+    class JahrInLine(BaseTabularInline):
+        model = BrochureYear
+    form = BrochureForm
+    index_category = 'Archivgut'
+    inlines = [JahrInLine, GenreInLine, BestandInLine]
+    
+    def get_fieldsets(self, request, obj=None):
+        # Add a fieldset for (ausgabe, ausgabe__magazin)
+        fieldsets = super().get_fieldsets(request, obj)
+        # django default implementation adds at minimum: [(None, {'fields': self.get_fields()})]
+        none_fieldsets = list(filter(lambda tpl: tpl[0] is None, fieldsets))
+        if none_fieldsets:
+            none_fieldset_fields = none_fieldsets[0][1]['fields']
+            if 'ausgabe' in none_fieldset_fields and 'ausgabe__magazin' in none_fieldset_fields:
+                none_fieldset_fields.remove('ausgabe')
+                none_fieldset_fields.remove('ausgabe__magazin')
+                fieldsets.insert(1, ('Beilage von Ausgabe', {
+                    'fields':[('ausgabe__magazin', 'ausgabe')], 
+                    'description':'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
+                }))
+        return fieldsets
+    
+@admin.register(Brochure, site=miz_site)
+class BrochureAdmin(BaseBrochureAdmin):
+    class JahrInLine(BaseTabularInline):
+        model = BrochureYear
+    class GenreInLine(BaseGenreInline):
+        model = BaseBrochure.genre.through
+    class SchlInLine(BaseSchlagwortInline):
+        model = Brochure.schlagwort.through
+        
+    inlines = [JahrInLine, GenreInLine, SchlInLine, BestandInLine]
+    
+@admin.register(Katalog, site=miz_site)
+class KatalogAdmin(BaseBrochureAdmin):
+
+    def get_fieldsets(self, *args, **kwargs):
+        # swap art and zusammenfassung without having to redeclare the entire fieldsets attribute
+        fieldsets = super().get_fieldsets(*args, **kwargs)
+        try:
+            none_fieldset = list(filter(lambda tpl: tpl[0] is None, fieldsets))[0]
+            fields = none_fieldset[1]['fields']
+            art = fields.index('art')
+            zusammenfassung = fields.index('zusammenfassung')
+            fields[art], fields[zusammenfassung] = fields[zusammenfassung], fields[art]
+        except (IndexError, KeyError):
+            # Either there is no 'None' fieldset, or it does not contain any fields or 'art' and/or 'zusammenfassung' are missing from fields
+            pass
+        return fieldsets
+    
+@admin.register(Kalendar, site=miz_site)
+class KalendarAdmin(BaseBrochureAdmin):
+    class GenreInLine(BaseGenreInline):
+        model = BaseBrochure.genre.through
+    class JahrInLine(BaseTabularInline):
+        model = BrochureYear
+    class SpielortInLine(BaseTabularInline):
+        model = Kalendar.spielort.through
+        verbose_model = spielort
+    class VeranstaltungInLine(BaseTabularInline):
+        model = Kalendar.veranstaltung.through
+        verbose_model = veranstaltung
+    
+    inlines = [JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     
 @admin.register(
     monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 
-    Format, FormatTag, FormatSize, FormatTyp, NoiseRed, Organisation, schriftenreihe,  
+    Format, FormatTag, FormatSize, FormatTyp, NoiseRed, Organisation, schriftenreihe, 
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):

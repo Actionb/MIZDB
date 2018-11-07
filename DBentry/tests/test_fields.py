@@ -1,7 +1,25 @@
 from .base import *
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
+from DBentry.constants import MIN_JAHR, MAX_JAHR
 from DBentry.fields import *
 from DBentry.validators import *
+
+class TestYearField(MyTestCase):
+    
+    def test_formfield(self):
+        # Assert that formfield() passes the MaxValue and the MinValue validators on to the formfield
+        formfield = YearField().formfield()
+        self.assertEqual(len(formfield.validators), 2)
+        if isinstance(formfield.validators[0], MinValueValidator):
+            min, max = formfield.validators
+        else:
+            max, min = formfield.validators
+        self.assertIsInstance(min, MinValueValidator)
+        self.assertEqual(min.limit_value, MIN_JAHR)
+        self.assertIsInstance(max, MaxValueValidator)
+        self.assertEqual(max.limit_value, MAX_JAHR)        
 
 class TestStdNumField(MyTestCase):
     

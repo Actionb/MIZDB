@@ -172,7 +172,8 @@ class AusgabeMagazinFieldForm(FormBase):
         if 'instance' in kwargs and kwargs['instance']:
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
-            kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
+            if kwargs['instance'].ausgabe:
+                kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
         super(AusgabeMagazinFieldForm, self).__init__(*args, **kwargs)
 
 class InLineAusgabeForm(AusgabeMagazinFieldForm):
@@ -194,6 +195,13 @@ class ArtikelForm(AusgabeMagazinFieldForm):
 class AutorForm(XRequiredFormMixin, FormBase):
     
     xrequired = [{'min':1, 'fields':['kuerzel', 'person']}]
+        
+class BrochureForm(AusgabeMagazinFieldForm):
+    class Meta:
+        widgets = {
+            'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin']), 
+            'titel': Textarea(attrs={'rows':1, 'cols':90})
+        }
     
 class BuchForm(XRequiredFormMixin, FormBase):
     class Meta:

@@ -1,9 +1,15 @@
 from stdnum import issn, isbn, ean
 
 from django.db import models
-from django.core.validators import EMPTY_VALUES
-
+from django.core.validators import EMPTY_VALUES, MaxValueValidator, MinValueValidator
 from .validators import ISSNValidator, ISBNValidator, EANValidator
+
+class YearField(models.IntegerField):
+    
+    def formfield(self, **kwargs):
+        from DBentry.constants import MIN_JAHR, MAX_JAHR
+        kwargs['validators'] = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
+        return super().formfield(**kwargs)
 
 class StdNumField(models.CharField):
     

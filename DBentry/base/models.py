@@ -1,8 +1,12 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
-
+from django.core.validators import MaxValueValidator, MinValueValidator
+        
 from DBentry.managers import MIZQuerySet, CNQuerySet
 from DBentry.utils import get_model_fields
+from DBentry.constants import MIN_JAHR, MAX_JAHR
+from DBentry.fields import YearField
+
     
 class BaseModel(models.Model):
     """
@@ -211,3 +215,21 @@ class ComputedNameModel(BaseModel):
     class Meta(BaseModel.Meta):
         abstract = True
         ordering = ['_name']
+
+class AbstractJahrModel(BaseModel):    
+    jahr = YearField('Jahr')
+    
+    class Meta(BaseModel.Meta):
+        abstract = True
+        verbose_name = 'Jahr'
+        verbose_name_plural = 'Jahre'
+        ordering = ['jahr']
+  
+class AbstractNumModel(BaseModel):
+    num = models.IntegerField('Nummer')
+    
+    class Meta(BaseModel.Meta):
+        abstract = True
+        verbose_name = 'Nummer'
+        verbose_name_plural = 'Nummern'
+        ordering = ['num']      
