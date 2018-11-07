@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from .base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractNumModel
 )
-from .fields import ISSNField, ISBNField, EANField
+from .fields import ISSNField, ISBNField, EANField, YearField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
@@ -1019,6 +1019,7 @@ class bestand(BaseModel):
     audio = models.ForeignKey('audio', models.CASCADE, blank = True, null = True)
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE, blank = True, null = True)
     bildmaterial = models.ForeignKey('bildmaterial', models.CASCADE, blank = True, null = True)
+    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank = True, null = True)
     buch = models.ForeignKey('buch', models.CASCADE, blank = True, null = True)
     dokument = models.ForeignKey('dokument', models.CASCADE, blank = True, null = True)
     memorabilien = models.ForeignKey('memorabilien', models.CASCADE, blank = True, null = True)
@@ -1182,8 +1183,58 @@ class plattenfirma(BaseModel):
         ordering = ['name']
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'
-
-
+        
+class BrochureYear(AbstractJahrModel):
+    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'jahre', blank = True, null = True)
+        
+class BaseBrochure(BaseModel):
+    titel = models.CharField(**CF_ARGS)
+    zusammenfassung = models.TextField(blank = True)
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
+    ausgabe = models.ForeignKey('ausgabe', models.SET_NULL, related_name = 'beilagen', verbose_name = 'Ausgabe', blank = True, null = True)
+    
+    genre = models.ManyToManyField('genre')
+    
+    name_field = 'titel'
+    
+    def __str__(self):
+        return str(self.titel)
+    
+    class Meta:
+        ordering = ['titel']
+    
+class Brochure(BaseBrochure):
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Broschüre')
+    
+    schlagwort = models.ManyToManyField('schlagwort')
+    
+    class Meta:
+        verbose_name = 'Broschüre'
+        verbose_name_plural = 'Broschüren'
+    
+class Kalendar(BaseBrochure):
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Programmheftes')
+    
+    spielort = models.ManyToManyField('spielort')
+    veranstaltung = models.ManyToManyField('veranstaltung')
+    
+    class Meta:
+        verbose_name = 'Programmheft'
+        verbose_name_plural = 'Programmhefte'
+    
+class Katalog(BaseBrochure):
+    ART_CHOICES = [('merch', 'Merchandise'), ('tech', 'Technik'), ('ton', 'Tonträger')]
+    
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Kataloges')
+    
+    art = models.CharField('Art d. Kataloges', max_length = 40, choices = ART_CHOICES, default = 1)
+    
+    class Meta:
+        verbose_name = 'Warenkatalog'
+        verbose_name_plural = 'Warenkataloge'
+    
+    
 class Favoriten(models.Model): 
     user = models.OneToOneField('auth.User', models.CASCADE, editable = False)
     fav_genres = models.ManyToManyField('genre', verbose_name = 'Favoriten Genre', blank = True)
