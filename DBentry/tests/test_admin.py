@@ -8,14 +8,8 @@ class AdminTestMethodsMixin(object):
     
     crosslinks_relations = None
     crosslinks_labels = {}
-    crosslinks_object = None
     exclude_expected = None
     fields_expected = None
-    
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        cls.crosslinks_object = modelfactory_factory(cls.model).full()
         
     def get_crosslinks(self, obj, labels=None):
         url =  '/admin/DBentry/{model_name}/?{fld_name}=' + str(obj.pk)
