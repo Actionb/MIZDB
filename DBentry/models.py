@@ -10,6 +10,9 @@ from .m2m import *
 from .utils import concat_limit
 from .managers import AusgabeQuerySet, BuchQuerySet
 
+#TODO: make a Beschreibung/Bemerkungen mixin
+#TODO: does a cross link from spielort to veranstaltung exist?
+
 class person(ComputedNameModel):
     vorname = models.CharField(**CF_ARGS_B)
     nachname = models.CharField(**CF_ARGS)
@@ -484,7 +487,7 @@ class artikel(BaseModel):
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
     
-    schlagzeile = models.CharField(**CF_ARGS)
+    schlagzeile = models.CharField(**CF_ARGS) #TODO: max_length = 200 might be insufficient (the formfield is a TextArea)
     seite = models.PositiveSmallIntegerField(verbose_name="Seite")
     seitenumfang = models.CharField(max_length = 3, blank = True,  choices = SU_CHOICES,  default = '')
     zusammenfassung = models.TextField(blank = True)
@@ -874,7 +877,7 @@ class technik(BaseModel):
     
 class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
-    datum = models.DateField(help_text = 'Format: tt.mm.jjjj')
+    datum = models.DateField(help_text = 'Format: tt.mm.jjjj') #TODO: events can span a time!
     
     spielort = models.ForeignKey('spielort', models.PROTECT)
     

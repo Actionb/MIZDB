@@ -115,6 +115,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         return grouped_fields
         
     def get_fieldsets(self, request, obj=None):
+        #TODO: this doesn't check if there is already a fieldset containing Beschreibung & Bemerkungen
         if self.fieldsets:
             return self.fieldsets
         fields = self.get_fields(request, obj).copy()

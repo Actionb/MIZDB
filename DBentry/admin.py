@@ -12,6 +12,8 @@ from .ac.widgets import make_widget
 
 from .sites import miz_site
 
+#TODO: advanced_search_form: ausgabe ausgabe_monat
+
 class BestandInLine(BaseTabularInline):
     model = bestand
     readonly_fields = ['signatur']

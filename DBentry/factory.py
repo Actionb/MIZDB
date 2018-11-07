@@ -250,6 +250,9 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                     provider += '_'
                 provider += c.lower()
             declaration = factory.Faker(provider)
+        #TODO: set faker for DurationField to time_delta
+#        elif internal_type == 'DurationField':
+#            declaration = factory.Faker('time_delta')
         return declaration
         
         
