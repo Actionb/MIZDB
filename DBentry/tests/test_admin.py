@@ -367,7 +367,7 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
         
     def test_anz_ausgaben(self):
         self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 1)
-        ausgabe.objects.all().delete()
+        self.obj1.ausgabe_set.all().delete()
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 0)
         
@@ -401,6 +401,13 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
     def test_Ist_Autor(self):
         self.assertTrue(self.model_admin.Ist_Autor(self.obj1))
         self.assertFalse(self.model_admin.Ist_Autor(self.obj2))
+        
+    def test_orte_string(self):
+        self.assertEqual(self.model_admin.orte_string(self.obj1), '')
+        o = make(ort, stadt='Dortmund', land__code = 'XYZ')
+        self.obj1.orte.add(o)
+        self.obj1.refresh_from_db()
+        self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
         
     def test_add_crosslinks(self):
         obj = make(person, 
@@ -633,6 +640,13 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
         
     def test_musiker_string(self):
         self.assertEqual(self.model_admin.musiker_string(self.obj1), 'Testkuenstler1, Testkuenstler2')
+    
+    def test_orte_string(self):
+        self.assertEqual(self.model_admin.orte_string(self.obj1), '')
+        o = make(ort, stadt='Dortmund', land__code = 'XYZ')
+        self.obj1.orte.add(o)
+        self.obj1.refresh_from_db()
+        self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
 
 class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
     
