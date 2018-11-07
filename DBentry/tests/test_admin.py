@@ -784,7 +784,38 @@ class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
         
     def test_genre_string(self):
         self.assertEqual(self.model_admin.genre_string(self.obj1), 'Testgenre1, Testgenre2')
+        
+class TestAdminBaseBrochure(AdminTestCase):
+    model_admin_class = BaseBrochureAdmin
+    model = Brochure
     
+    @translation_override(language = None)
+    def test_get_fieldsets(self):
+        # Assert that an extra fieldset vor the ausgabe__magazin, ausgabe group was added
+        fieldsets = self.model_admin.get_fieldsets(self.get_request())
+        # Should have three fieldsets: the default 'none', a beschreibung & bemerkungen and the ausgabe & ausgabe__magazin one
+        self.assertEqual(len(fieldsets), 3)
+        self.assertEqual(fieldsets[1][0], 'Beilage von Ausgabe')
+        fieldset_options = fieldsets[1][1]
+        self.assertIn('fields', fieldset_options)
+        self.assertEqual(fieldset_options['fields'], [('ausgabe__magazin', 'ausgabe')])
+        self.assertIn('description', fieldset_options)
+        self.assertEqual(fieldset_options['description'], 'Geben Sie die Ausgabe an, der dieses Objekt beilag.')
+        
+class TestAdminKatalog(AdminTestCase):
+    model_admin_class = KatalogAdmin
+    model = Katalog
+    
+    def test_get_fieldsets(self):
+        # Assert that 'art' and 'zusammenfassung' are swapped correctly
+        none_fieldset_options = self.model_admin.get_fieldsets(self.get_request())[0][1]
+        self.assertIn('fields', none_fieldset_options)
+        self.assertIn('art', none_fieldset_options['fields'])
+        art_index = none_fieldset_options['fields'].index('art')
+        self.assertIn('zusammenfassung', none_fieldset_options['fields'])
+        z_index = none_fieldset_options['fields'].index('zusammenfassung')
+        self.assertTrue(art_index < z_index)
+        
 class TestAdminSite(UserTestCase):
     
     def test_app_index(self):
