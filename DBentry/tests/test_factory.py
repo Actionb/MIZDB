@@ -259,7 +259,6 @@ class TestMIZDjangoOptions(TestCase):
             self.assertIn(field.name, declarations, msg = '{} not found in base declarations'.format(field.name))
         self.assertIn('titel', declarations)
         self.assertIn('tracks', declarations)
-        self.assertIn('laufzeit', declarations)
         
         # SubFactories
         for field in get_model_fields(video, base = False, foreign = True, m2m = False):

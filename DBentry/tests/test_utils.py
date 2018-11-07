@@ -517,7 +517,7 @@ class VideoMergingDataMixin(object):
     @classmethod
     def setUpTestData(cls):
         obj1 = make(video, 
-            titel = 'Original', tracks = 3, laufzeit = '10:22:22', band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
+            titel = 'Original', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
         )
         cls.sender_original = obj1.sender
         cls.band_original = obj1.band.get() # get() will complain if there's more than one record
@@ -526,7 +526,7 @@ class VideoMergingDataMixin(object):
         cls.obj1 = obj1
         
         obj2 = make(video, 
-            titel = 'Merger1', tracks = 3, laufzeit = '10:22:22', band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
+            titel = 'Merger1', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
         )
         cls.sender_merger1 = obj2.sender
         cls.band_merger1 = obj2.band.get()
@@ -535,7 +535,7 @@ class VideoMergingDataMixin(object):
         cls.obj2 = obj2
         
         obj3 = make(video, 
-            titel = 'Merger2', tracks = 3, laufzeit = '10:22:22', band__extra = 1, musiker__extra = 1, bestand__extra = 1,
+            titel = 'Merger2', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1,
             beschreibung = 'Hello!'
         )
         cls.sender_merger2 = obj3.sender
@@ -558,7 +558,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
         self.assertEqual(self.obj1.sender, self.sender_original)
         
         self.assertEqual(new_original.titel, 'Original')
-        self.assertEqual(str(new_original.laufzeit), '10:22:22')
         self.assertEqual(new_original.tracks, 3)
         self.assertEqual(new_original.beschreibung, 'Hello!')
         
@@ -570,7 +569,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
         self.assertEqual(self.obj1.sender, self.sender_original)
         
         self.assertEqual(new_original.titel, 'Original')
-        self.assertEqual(str(new_original.laufzeit), '10:22:22')
         self.assertEqual(new_original.tracks, 3)
         self.assertNotEqual(new_original.beschreibung, 'Hello!')
         
