@@ -308,6 +308,19 @@ def get_full_fields_list(model):
         else:
             rslt.add(rel.name)
     return rslt
+    
+def get_all_model_names():
+    """
+    Returns all the names of models in the apps registry that are subclasses of DBentry.base.models.BaseModel.
+    """
+    from django.apps import apps 
+    from DBentry.base.models import BaseModel
+    
+    mdls = apps.get_models('DBentry')
+    my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
+    return sorted(my_mdls, key = lambda m: m.lower())
+    
+    
 
 ##############################################################################################################
 # text utilities
