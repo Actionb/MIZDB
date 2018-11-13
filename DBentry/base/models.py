@@ -234,3 +234,11 @@ class AbstractNumModel(BaseModel):
         verbose_name = 'Nummer'
         verbose_name_plural = 'Nummern'
         ordering = ['num']      
+
+class AbstractURLModel(BaseModel):
+    url = models.URLField(verbose_name = 'Webpage', blank = True)
+    
+    class Meta(BaseModel.Meta):
+        abstract = True
+        verbose_name = 'Web-Adresse'
+        verbose_name_plural = 'Web-Adressen'

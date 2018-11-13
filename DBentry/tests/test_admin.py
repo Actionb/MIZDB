@@ -228,7 +228,12 @@ class TestMIZModelAdmin(AdminTestCase):
         request.POST = {'sender':'2'}
         filters = self.model_admin.get_preserved_filters(request)
         self.assertEqual(filters, '_changelist_filters=sender%3D2', msg = 'preserved_filters not updated')
-        
+       
+    def test_get_search_fields(self):
+        # Assert that get_search_fields does not include a iexact lookup for primary keys that are a relation
+        search_fields = KatalogAdmin(Katalog, self.admin_site).get_search_fields()
+        self.assertNotIn('=basebrochure_ptr', search_fields)
+                
 class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = ArtikelAdmin

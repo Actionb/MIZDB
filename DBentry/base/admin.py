@@ -131,6 +131,11 @@ class MIZModelAdmin(admin.ModelAdmin):
     
     def get_search_fields(self, request=None):
         search_fields = self.search_fields or list(self.model.get_search_fields())
+        if self.model._meta.pk.get_lookup('iexact') is None:
+            # the pk field does not support iexact lookups (most likely a related field) and
+            # ModelAdmin.get_search_results.construct_search tacks on the __iexact lookup, which will result in an error
+            # This is fixed in later versions of django.
+            return search_fields
         # An extra 'pk' search field needs to be removed
         if 'pk' in search_fields:
             search_fields.remove('pk')

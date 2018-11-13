@@ -746,9 +746,12 @@ class BaseBrochureAdmin(MIZModelAdmin):
         model = BaseBrochure.genre.through
     class JahrInLine(BaseTabularInline):
         model = BrochureYear
+    class URLInLine(BaseTabularInline):
+        model = BrochureURL
     form = BrochureForm
     index_category = 'Archivgut'
-    inlines = [JahrInLine, GenreInLine, BestandInLine]
+    list_display = ['titel', 'jahr_string']
+    inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     
     def get_fieldsets(self, request, obj=None):
         # Add a fieldset for (ausgabe, ausgabe__magazin)
@@ -765,6 +768,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
                     'description':'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
                 }))
         return fieldsets
+        
+    def jahr_string(self, obj):
+        return concat_limit(obj.jahre.all())
+    jahr_string.short_description = 'Jahre'
     
 @admin.register(Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
@@ -774,11 +781,15 @@ class BrochureAdmin(BaseBrochureAdmin):
         model = BaseBrochure.genre.through
     class SchlInLine(BaseSchlagwortInline):
         model = Brochure.schlagwort.through
+    class URLInLine(BaseTabularInline):
+        model = BrochureURL
         
-    inlines = [JahrInLine, GenreInLine, SchlInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, BestandInLine]
     
 @admin.register(Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
+    
+    list_display = ['titel', 'art', 'jahr_string']
 
     def get_fieldsets(self, *args, **kwargs):
         # swap art and zusammenfassung without having to redeclare the entire fieldsets attribute
@@ -806,8 +817,10 @@ class KalendarAdmin(BaseBrochureAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = Kalendar.veranstaltung.through
         verbose_model = veranstaltung
+    class URLInLine(BaseTabularInline):
+        model = BrochureURL
     
-    inlines = [JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     
 @admin.register(
     monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 

@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from .base.models import (
-    BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractNumModel
+    BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
 from .fields import ISSNField, ISBNField, EANField, YearField
 from .constants import *
@@ -1189,7 +1189,10 @@ class plattenfirma(BaseModel):
         
 class BrochureYear(AbstractJahrModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'jahre', blank = True, null = True)
-        
+    
+class BrochureURL(AbstractURLModel):
+    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'urls', blank = True, null = True)
+    
 class BaseBrochure(BaseModel):
     titel = models.CharField(**CF_ARGS)
     zusammenfassung = models.TextField(blank = True)
