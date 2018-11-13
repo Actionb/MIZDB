@@ -752,6 +752,11 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     list_display = ['titel', 'jahr_string']
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
+#TODO: add this once it's clear what we need    
+#    advanced_search_form = {
+#        'selects': ['genre'], 
+#        'gtelt': ['jahre__jahr']
+#    }
     
     def get_fieldsets(self, request, obj=None):
         # Add a fieldset for (ausgabe, ausgabe__magazin)

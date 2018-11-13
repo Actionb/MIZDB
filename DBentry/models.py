@@ -12,6 +12,7 @@ from .managers import AusgabeQuerySet, BuchQuerySet
 
 #TODO: make a Beschreibung/Bemerkungen mixin
 #TODO: does a cross link from spielort to veranstaltung exist?
+#TODO: allow searching by ISSN
 
 class person(ComputedNameModel):
     vorname = models.CharField(**CF_ARGS_B)
@@ -650,7 +651,7 @@ class audio(BaseModel):
     e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
-    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)")      #discogs release id (discogs.com/release/1709793)
+    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)") #TODO: turn into a charfield to allow directly copying the id number from discogs.com (includes letters)      #discogs release id (discogs.com/release/1709793)
     discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True)
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Mediums')
@@ -1187,12 +1188,14 @@ class plattenfirma(BaseModel):
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'
         
+#TODO: add verbose_name, etc. so the purpose of this model is clear when setting user permissions in admin (this model just reads as 'Jahr')
 class BrochureYear(AbstractJahrModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'jahre', blank = True, null = True)
     
 class BrochureURL(AbstractURLModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'urls', blank = True, null = True)
     
+#TODO: BaseBrochure and its children do not inherit the Meta of BaseModel and thus no permission for merging    
 class BaseBrochure(BaseModel):
     titel = models.CharField(**CF_ARGS)
     zusammenfassung = models.TextField(blank = True)

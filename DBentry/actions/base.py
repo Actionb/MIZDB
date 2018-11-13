@@ -108,7 +108,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         }
         # Only pass in 'data' if the user tries to confirm an action. 
         # Do not try to validate the form if it is the first time the user sees the form. (avoids 'INVALID' field errors popping up, scaring the user)
-        if self.request.method in ('POST', 'PUT') and 'action_confirmed' in self.request.POST:
+        if self.request.method in ('POST', 'PUT') and 'action_confirmed' in self.request.POST: #NOTE: why PUT?
             kwargs.update({
                 'data': self.request.POST,
                 'files': self.request.FILES,
@@ -208,6 +208,7 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         try:
             self.perform_action() 
         except ProtectedError as e:
+            #TODO: this bit about merging is specific to, well, merging and should be in the subclass that implements the MergeWizard
             # The merge could not be completed as there were protected objects in the queryset
             protected = format_html(link_list(self.request, e.protected_objects))
             object_name = e.protected_objects.model._meta.verbose_name_plural or 'Objekte' 

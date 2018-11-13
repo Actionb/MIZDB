@@ -378,7 +378,7 @@ def parse_cl_querystring(query_string):
 ##############################################################################################################
 # admin utilities
 ############################################################################################################## 
-def get_obj_link(obj, user, site_name='admin', include_name=True):
+def get_obj_link(obj, user, site_name='admin', include_name=True): #TODO: include_name == include_label??
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
                                force_text(obj))
@@ -399,7 +399,7 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
         return no_edit_link
     # Display a link to the admin page.
     if include_name:
-        link = format_html('{}: <a href="{}">{}</a>',
+        link = format_html('{}: <a href="{}">{}</a>', # include_name is more a label than... a 'name'
                            capfirst(opts.verbose_name),
                            admin_url,
                            obj)

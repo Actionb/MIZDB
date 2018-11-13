@@ -154,7 +154,7 @@ class TestWizardConfirmationView(ActionViewTestCase):
         view.get_form = mockv('The first form!')
         view.render = mockv('Rendered form.')
         self.assertEqual(view.post(request), 'Rendered form.')
-        view.storage.reset.assert_called_once()
+        view.storage.reset.assert_called_once() #TODO: replace assert_called_once with call_count == 1
         view.render.assert_called_once()
         view.storage.current_step = '1'
         
@@ -166,7 +166,7 @@ class TestWizardConfirmationView(ActionViewTestCase):
         view = self.get_view()
         view.perform_action = Mock()
         self.assertIsNone(view.done(None))
-        view.perform_action.assert_called_once()
+        view.perform_action.assert_called_once() #TODO: replace assert_called_once with call_count == 1
 
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     
