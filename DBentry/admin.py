@@ -746,9 +746,11 @@ class BaseBrochureAdmin(MIZModelAdmin):
         model = BaseBrochure.genre.through
     class JahrInLine(BaseTabularInline):
         model = BrochureYear
+    class URLInLine(BaseTabularInline):
+        model = BrochureURL
     form = BrochureForm
     index_category = 'Archivgut'
-    inlines = [JahrInLine, GenreInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     
     def get_fieldsets(self, request, obj=None):
         # Add a fieldset for (ausgabe, ausgabe__magazin)
@@ -774,8 +776,10 @@ class BrochureAdmin(BaseBrochureAdmin):
         model = BaseBrochure.genre.through
     class SchlInLine(BaseSchlagwortInline):
         model = Brochure.schlagwort.through
+    class URLInLine(BaseTabularInline):
+        model = BrochureURL
         
-    inlines = [JahrInLine, GenreInLine, SchlInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, BestandInLine]
     
 @admin.register(Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
@@ -806,8 +810,10 @@ class KalendarAdmin(BaseBrochureAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = Kalendar.veranstaltung.through
         verbose_model = veranstaltung
+    class URLInLine(BaseTabularInline):
+        model = BrochureURL
     
-    inlines = [JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     
 @admin.register(
     monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 
