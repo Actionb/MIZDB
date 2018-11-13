@@ -750,6 +750,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
         model = BrochureURL
     form = BrochureForm
     index_category = 'Archivgut'
+    list_display = ['titel', 'jahr_string']
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     
     def get_fieldsets(self, request, obj=None):
@@ -767,6 +768,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
                     'description':'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
                 }))
         return fieldsets
+        
+    def jahr_string(self, obj):
+        return concat_limit(obj.jahre.all())
+    jahr_string.short_description = 'Jahre'
     
 @admin.register(Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
@@ -783,6 +788,8 @@ class BrochureAdmin(BaseBrochureAdmin):
     
 @admin.register(Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
+    
+    list_display = ['titel', 'art', 'jahr_string']
 
     def get_fieldsets(self, *args, **kwargs):
         # swap art and zusammenfassung without having to redeclare the entire fieldsets attribute
