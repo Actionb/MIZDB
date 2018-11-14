@@ -1,17 +1,18 @@
 
 from django.db import transaction
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
 
-from DBentry.utils import link_list, merge_records, get_updateable_fields
+
+from DBentry.utils import link_list, merge_records, get_updateable_fields, get_obj_link, get_model_from_string, is_protected
 from DBentry.models import *
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin
 
 from .base import ActionConfirmationView, WizardConfirmationView
-from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm
-
+from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm, BrochureActionForm
+from django.forms import formset_factory 
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
@@ -284,5 +285,108 @@ class MergeViewWizarded(WizardConfirmationView):
                         update_data[fld_name] = value 
         original_pk = self.get_cleaned_data_for_step('0').get('original', 0) 
         original = self.opts.model.objects.get(pk=original_pk) 
-        merge_records(original, self.queryset, update_data, expand, request=self.request) 
-         
+        merge_records(original, self.queryset, update_data, expand, request=self.request)
+       
+class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
+    
+    short_description = 'zu Broschüren bewegen'
+    template_name = 'admin/movetobrochure.html'
+    action_name = 'moveto_brochure'
+    
+    form_class = formset_factory(form = BrochureActionForm, extra = 0, can_delete = True)
+    
+    def get_initial(self):
+        return [
+            {
+                'ausgabe_id': pk, 'titel': beschreibung, 'bemerkungen': bemerkungen
+            }
+                for pk, beschreibung, bemerkungen in self.queryset.values_list('pk', 'beschreibung', 'bemerkungen')
+        ]
+            
+    def action_allowed(self):
+        from django.db.models import Count
+        ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0)
+        if ausgaben_with_artikel.exists():
+            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {}"
+            msg_text = msg_text.format(link_list(self.request, ausgaben_with_artikel))
+            self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
+            return False
+        return True
+        
+    def perform_action(self, form_cleaned_data = None):        
+        protected_ausg, protected_mags = [], []
+        
+        for data in form_cleaned_data:
+            if not data.get('accept', False):
+                continue
+            
+            # Verify that the ausgabe exists and can be deleted
+            ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
+            if ausgabe_instance is None:
+                continue
+            if is_protected([ausgabe_instance]):
+                protected_ausg.append(ausgabe_instance)
+                continue
+            magazin_instance = ausgabe_instance.magazin
+            
+            # Create the brochure object
+            brochure_class = get_model_from_string(data.get('brochure_art', ''))
+            if brochure_class is None:
+                continue
+            instance_data = {'titel': data['titel']}
+            for key in ('zusammenfassung', 'beschreibung', 'bemerkungen'):
+                if key in data and data[key]:
+                    instance_data[key] = data[key]
+                    
+            # Add a hint to bemerkungen how this brochure was created
+            if not 'bemerkungen' in instance_data:
+                instance_data['bemerkungen'] = ''
+            hint = "Hinweis: {verbose_name} wurde automatisch erstellt mit Daten von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
+            instance_data['bemerkungen'] += hint.format(
+                verbose_name = brochure_class._meta.verbose_name, 
+                str_ausgabe = str(ausgabe_instance), str_magazin = str(magazin_instance)
+            )
+            
+            try:
+                with transaction.atomic():
+                    new_brochure = brochure_class.objects.create(**instance_data) 
+                    # Update the bestand and delete the ausgabe
+                    ausgabe_instance.bestand_set.update(ausgabe_id=None, brochure_id=new_brochure.pk)
+                    ausgabe_instance.delete()
+            finally:
+                self.log_addition(new_brochure)
+                self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
+                self.log_deletion(ausgabe_instance)
+                
+            # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
+            if data.get('delete_magazin', False):
+                if is_protected([magazin_instance]):
+                    protected_mags.append(magazin_instance)
+                else:
+                    try:
+                        with transaction.atomic():
+                            magazin_instance.delete()
+                    finally:
+                        self.log_deletion(magazin_instance)
+                    
+        if protected_ausg:
+            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg)
+            msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
+            self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+            
+        if protected_mags:
+            msg = "Folgende Magazine konnten nicht gelöscht werden: " + link_list(self.request, protected_mags)
+            self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+            
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        formset = self.get_form()
+        context['management_form'] = formset.management_form
+        context['forms'] = [
+            (
+                get_obj_link(ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False), 
+                form
+            )
+            for form in formset
+        ]
+        return context

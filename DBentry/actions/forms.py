@@ -73,3 +73,27 @@ class MergeFormHandleConflicts(DynamicChoiceForm, MIZAdminForm):
             self.fields['posvals'].label = 'Mögliche Werte für {}:'.format(self.data.get(self.add_prefix('verbose_fld_name')))
             
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)    
+
+class BrochureActionForm(MIZAdminForm):
+    textarea_config = {'rows':1, 'cols':30}
+    BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
+    
+    ausgabe_id = forms.IntegerField(widget = forms.HiddenInput())
+    brochure_art = forms.ChoiceField(label = 'Art d. Broschüre', choices = BROCHURE_CHOICES)
+    titel = forms.CharField(widget = forms.Textarea(attrs=textarea_config))
+    beschreibung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
+    bemerkungen = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
+    zusammenfassung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
+    delete_magazin = forms.BooleanField(label = 'Magazin löschen', required = False)
+    accept = forms.BooleanField(label = 'Änderungen bestätigen', required = False, initial = True)
+    
+    fieldsets = [(None, {'fields':['ausgabe_id','brochure_art', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'delete_magazin', 'accept']})]
+        
+    def __init__(self, *args, **kwargs):    
+        super().__init__(*args, **kwargs)
+        if 'ausgabe_id' in self and self['ausgabe_id'].value():
+            ausgabe_id = self['ausgabe_id'].value()
+            from DBentry.models import ausgabe
+            if ausgabe.objects.get(pk=ausgabe_id).magazin.ausgabe_set.count() > 1:
+                # the magazin cannot be deleted if it contains more ausgaben than the one we are working on
+                self.fields['delete_magazin'].disabled = True

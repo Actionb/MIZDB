@@ -128,7 +128,7 @@ class AusgabenAdmin(MIZModelAdmin):
         
     index_category = 'Archivgut'
     
-    actions = [bulk_jg, add_bestand]
+    actions = [bulk_jg, add_bestand, moveto_brochure]
     list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahr_string', 'jahrgang', 
                         'magazin','e_datum','anz_artikel', 'status') 
     #ordering = ['magazin', 'jahr', 'jahrgang']

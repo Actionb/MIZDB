@@ -1,0 +1,13 @@
+{% extends 'admin/action_confirmation.html' %}
+
+{% block selection_form %}
+    {{ management_form }}
+    {% for obj_link, form in forms %}
+        {% if form %}
+            <div>Ausgabe: {{obj_link}}</div>
+            {% for fieldset in form %}
+              {% include "admin/includes/fieldset.html" %}
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+{% endblock selection_form %}
