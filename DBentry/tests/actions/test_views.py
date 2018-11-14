@@ -622,7 +622,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     model_admin_class = AusgabenAdmin
     
     raw_data = [
-        {'beschreibung': 'Testausgabe', 'sonderausgabe': True, 'bestand__extra':1}
+        {'beschreibung': 'Testausgabe', 'sonderausgabe': True, 'bestand__extra':1, 'ausgabe_jahr__jahr': [2000, 2001]}
     ]
     
     def setUp(self):
@@ -679,6 +679,12 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertIsNone(changed_bestand.ausgabe_id)
         # Assert that the original was deleted
         self.assertFalse(ausgabe.objects.filter(pk=self.obj1.pk).exists())
+        
+    def test_perform_action_moves_jahre(self):
+        view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.perform_action(self.form_cleaned_data)
+        new_brochure = Brochure.objects.get()
+        self.assertEqual(list(new_brochure.jahre.values_list('jahr', flat = True)), [2000, 2001])
         
     def test_perform_action_adds_hint_to_bemerkungen(self):
         expected = "Hinweis: {verbose_name} wurde automatisch erstellt mit Daten von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
