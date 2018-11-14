@@ -22,7 +22,7 @@ def set_name_changed_flag_ausgabe(sender, **kwargs):
     instance = kwargs.get('instance', False)
     if instance:
         field, rel = get_relations_between_models(sender, 'ausgabe')
-        if field.related_model == sender:
+        if field.related_model == sender: #TODO: this can throw an AttributeError if field is None!
             # The relation field points to sender from ausgabe; get the reverse 'set'
             getattr(instance, rel.get_accessor_name()).update(_changed_flag=True)
         else:
