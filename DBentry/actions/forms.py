@@ -91,7 +91,7 @@ class BrochureActionForm(MIZAdminForm):
         
     def __init__(self, *args, **kwargs):    
         super().__init__(*args, **kwargs)
-        if 'ausgabe_id' in self and self['ausgabe_id'].value():
+        if 'ausgabe_id' in self.fields and self['ausgabe_id'].value():
             ausgabe_id = self['ausgabe_id'].value()
             from DBentry.models import ausgabe
             if ausgabe.objects.get(pk=ausgabe_id).magazin.ausgabe_set.count() > 1:
