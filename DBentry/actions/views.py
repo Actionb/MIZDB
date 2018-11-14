@@ -352,6 +352,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     new_brochure = brochure_class.objects.create(**instance_data) 
                     # Update the bestand and delete the ausgabe
                     ausgabe_instance.bestand_set.update(ausgabe_id=None, brochure_id=new_brochure.pk)
+                    ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list('jahr', flat=True)
+                    for jahr in ausgabe_jahre:
+                        BrochureYear.objects.create(brochure = new_brochure, jahr = jahr)
                     ausgabe_instance.delete()
             finally:
                 self.log_addition(new_brochure)
