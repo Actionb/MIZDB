@@ -1207,6 +1207,7 @@ class BaseBrochure(BaseModel):
     
     name_field = 'titel'
     
+    #TODO: add verbose_name as this base model's meta options are actually being used
     def __str__(self):
         return str(self.titel)
     
