@@ -1,3 +1,9 @@
+# ISSN always has 8 digits (the check bit can also be an 'X'), and its pretty version has two groups of 4 digits separated by a hyphen.
+# One can freely convert ISBN-10 to ISBN-13 and vice versa and both have pretty versions.
+# stdnum.ean does not provide a pretty format for EAN-8, but one can use ISBN-13 formatting for EAN-13.
+
+#TODO: use get_prep_lookup?
+
 from stdnum import issn, isbn, ean
 
 from django.db import models
@@ -26,12 +32,22 @@ class StdNumField(models.CharField):
         kwargs['validators'] = self.default_validators
         return super().formfield(**kwargs)
         
+    def get_prep_value(self, value):
+        # Return the formatted value for the queries.
+        # When saving, pre_save is called before this, but we still need to return the formatted value for ordinary queries.
+        return self._format_value(value)
+        
     def pre_save(self, model_instance, add):
-        value = getattr(model_instance, self.attname)
+        # Update the model_instance's value for this field with the formatted value.
+        # The SQL compiler uses this method to ask for the right value just before saving,
+        # but the compiler does not update the (already created but not saved) instance.
+        # Without this adjustment and without calling instance.refresh_from_db(), you may end up with an instance displaying the 'unformatted' value 
+        # while the db has stored the formatted one.
+        value = super().pre_save(model_instance, add)
         if value not in EMPTY_VALUES:
             value = self._format_value(value)
             setattr(model_instance, self.attname, value)
-        return super().pre_save(model_instance, add)
+        return value        
         
     def _add_check_digit(self, value):
         """
@@ -47,6 +63,11 @@ class StdNumField(models.CharField):
         """
         Hook to allow formatting the value according to the chosen ISO.
         """
+        # Run the validators before doing anything to value, no point formatting invalid input.
+        self.run_validators(value)
+        
+        # See if value is missing a check digit and add it if necessary
+        #TODO: try to streamline this a bit more, we are validating and formatting the value like three times in one process
         try:
             value = self._add_check_digit(value)
         except AttributeError:

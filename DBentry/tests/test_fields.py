@@ -31,7 +31,8 @@ class TestStdNumField(MyTestCase):
         formfield = field.formfield()
         self.assertIn(ISSNValidator, formfield.validators)
         self.assertEqual(formfield.min_length, 1)
-        
+    
+    #TODO: wtf is this test...
     def test_pre_save(self):
         # Assert that pre_save formats the value and updates the model instance accordingly
         field = StdNumField()
@@ -55,7 +56,7 @@ class TestStdNumField(MyTestCase):
     def test_format_value(self):
         # Assert that _format_value formats the given value 
         # ean has no 'format' attribute, value should be 'compact'ed instead
-        field = StdNumField()
+        field = StdNumField(max_length = 20) # need max_length argument for this base class
         field.stdnum = ean
         ean_13 = "1234-5678-9012-8"
         self.assertEqual(field._format_value(ean_13), ean.compact(ean_13))
@@ -75,9 +76,10 @@ class TestStdNumField(MyTestCase):
 
 class FieldTestMethodsMixin(object):
     
-    valid = ()
-    invalid = ()
+    valid = [] # Can't copy() tuples, dumbnut... remove this comment before committing
+    invalid = []
         
+    #TODO: this is testing FORMFIELDS, is this intended?
     def test_valid_input(self):
         ff = self.field_class().formfield()
         for v in self.valid.copy():
@@ -116,6 +118,30 @@ class TestISBNField(FieldTestMethodsMixin, MyTestCase):
         self.assertEqual(field._format_value('9789784567893'), expected)
         self.assertEqual(field._format_value('978978456789'), expected)
     
+    def test_conversion_on_save(self):
+        # Assert that valid input is saved in the correct format
+        isbn = '978456789'
+        obj = make(buch, ISBN=isbn)
+        self.assertEqual(obj.ISBN, self.field_class()._format_value(isbn))
+        
+    def test_conversion_on_query(self):
+        # Assert that valid input of any format leads to a successful query
+        isbn = '978456789'
+        obj = make(buch, ISBN=isbn)
+        qs = buch.objects.filter(ISBN=isbn)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), obj)
+        
+    def test_raises_validationerror_on_invalid_save(self):
+        # Assert that invalid input results in a ValidationError when saving
+        with self.assertRaises(ValidationError):
+            buch(buch, ISBN='invalid')
+            
+    def test_raises_validationerror_on_invalid_query(self):
+        # Assert that invalid input results in a ValidationError when querying
+        with self.assertRaises(ValidationError):
+            buch.objects.filter(ISBN='invalid')
+    
 class TestISSNField(FieldTestMethodsMixin, MyTestCase):
     valid = ["12345679", "1234-5679"]
     invalid = [
@@ -125,6 +151,30 @@ class TestISSNField(FieldTestMethodsMixin, MyTestCase):
     ]
     field_class = ISSNField
     
+    def test_conversion_on_save(self):
+        # Assert that valid input is saved in the correct format
+        issn = "12345679"
+        obj = make(magazin, issn=issn)
+        self.assertEqual(obj.issn, self.field_class()._format_value(issn))
+        
+    def test_conversion_on_query(self):
+        # Assert that valid input of any format leads to a successful query
+        issn = "12345679"
+        obj = make(magazin, issn=issn)
+        qs = magazin.objects.filter(issn=issn)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), obj)
+        
+    def test_raises_validationerror_on_invalid_save(self):
+        # Assert that invalid input results in a ValidationError when saving
+        with self.assertRaises(ValidationError):
+            make(magazin, issn='invalid')
+            
+    def test_raises_validationerror_on_invalid_query(self):
+        # Assert that invalid input results in a ValidationError when querying
+        with self.assertRaises(ValidationError):
+            magazin.objects.filter(issn='invalid')
+        
 class TestEANField(FieldTestMethodsMixin, MyTestCase):
     valid = ['73513537', "1234567890128"]
     invalid = [
@@ -133,3 +183,27 @@ class TestEANField(FieldTestMethodsMixin, MyTestCase):
     ]
     invalid.extend([(n[:-1] + '1', InvalidChecksum) for n in valid])
     field_class = EANField
+    
+    def test_conversion_on_save(self):
+        # Assert that valid input is saved in the correct format
+        ean = '978-0-471-11709-4'
+        obj = make(buch, EAN=ean)
+        self.assertEqual(obj.EAN, self.field_class()._format_value(ean))
+        
+    def test_conversion_on_query(self):
+        # Assert that valid input of any format leads to a successful query
+        ean = '978-0-471-11709-4'
+        obj = make(buch, EAN=ean)
+        qs = buch.objects.filter(EAN=ean)
+        self.assertEqual(qs.count(), 1)
+        self.assertEqual(qs.first(), obj)
+        
+    def test_raises_validationerror_on_invalid_save(self):
+        # Assert that invalid input results in a ValidationError when saving
+        with self.assertRaises(ValidationError):
+            make(buch, EAN='invalid')
+            
+    def test_raises_validationerror_on_invalid_query(self):
+        # Assert that invalid input results in a ValidationError when querying
+        with self.assertRaises(ValidationError):
+            buch.objects.filter(EAN='invalid')

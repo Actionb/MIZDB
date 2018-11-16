@@ -262,7 +262,7 @@ class MIZAdminForm(forms.Form):
             if not field.show_hidden_initial:
                 # Use the BoundField's initial as this is the value passed to
                 # the widget.
-                initial_value = self[name].initial
+                initial_value = self[name].initial # <--- this is a BOUNDFIELD (see BaseForm.__getitem__)
                 try:
                     # Convert the initial_value to the field's type
                     # If field is an IntegerField and has initial of type str, field.has_changed will return false

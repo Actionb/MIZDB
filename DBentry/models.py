@@ -349,9 +349,9 @@ class magazin(BaseModel):
     
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
     
-    search_fields = ['magazin_name', 'beschreibung']
+    search_fields = ['magazin_name', 'beschreibung', 'issn']
     name_field = 'magazin_name'
-    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung', 'issn':'ISSN'}
     create_field = 'magazin_name'
     
     class Meta(BaseModel.Meta):

@@ -49,6 +49,10 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         return qs.order_by(*self.model._meta.ordering)
         
     def apply_q(self, qs):
+        #TODO: rework the lookups for each individual field type:
+        # __istartswith for DateFields is nonsensical, as is __iexact for issn fields etc.
+        # Also: ValueErrors *might* bubble up to here from making queries with bad/invalid values (pk='a')
+        # When input is valid for one search_field, but invalid for another, the result will be queryset.none() due to bad exception handling!
         if self.q:
             if self.search_fields:
                 exact_match_qs = qs
