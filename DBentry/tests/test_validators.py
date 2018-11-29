@@ -1,4 +1,4 @@
-from .base import *
+from .base import MyTestCase
 
 from DBentry.validators import *
 from DBentry.validators import _add_check_digit, _validate
@@ -67,3 +67,31 @@ class TestValidators(MyTestCase):
         self.assertTrue(EANValidator("1234567890128")) # ean 13
         with self.assertRaises(ValidationError):
             EANValidator("1234567890121")
+        
+#TODO: use these:
+#ISBN            
+#invalid = [
+#        ("9999!)()/?1*", InvalidFormat), 
+#        ("9"*20, InvalidLength), 
+#        ("1234567890128", InvalidComponent), #NOTE: how does this contain an invalid component? prefix != 978 ?
+#        ('1234567890', InvalidChecksum), 
+#        ('1-234-56789-0', InvalidChecksum), 
+#        ('9781234567890', InvalidChecksum), 
+#        ('978-1-234-56789-0', InvalidChecksum), 
+#    ]
+#    
+#ISSN
+#invalid = [
+#        ("123%&/79", InvalidFormat), 
+#        ("9"*20, InvalidLength), 
+#        ('12345670', InvalidChecksum), 
+#        ("1234-5670", InvalidChecksum), 
+#    ]
+#    
+#EAN
+#invalid = [
+#        ("123%&/()90128", InvalidFormat), 
+#        ("9"*20, InvalidLength), 
+#        ('73513538', InvalidChecksum), 
+#        ("1234567890123", InvalidChecksum), 
+#    ]
