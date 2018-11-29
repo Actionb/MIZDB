@@ -186,7 +186,7 @@ class MergeViewWizarded(WizardConfirmationView):
         return self._updates 
          
     def process_step(self, form): 
-        data = super(MergeViewWizarded, self).process_step(form) 
+        data = super().process_step(form) 
         if isinstance(form, MergeFormSelectPrimary): 
             has_conflict = False
             # There can only be conflicts if the original is meant to be expanded
@@ -341,7 +341,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             # Add a hint to bemerkungen how this brochure was created
             if not 'bemerkungen' in instance_data:
                 instance_data['bemerkungen'] = ''
-            hint = "Hinweis: {verbose_name} wurde automatisch erstellt mit Daten von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
+            hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
             instance_data['bemerkungen'] += hint.format(
                 verbose_name = brochure_class._meta.verbose_name, 
                 str_ausgabe = str(ausgabe_instance), str_magazin = str(magazin_instance)

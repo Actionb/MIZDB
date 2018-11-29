@@ -44,7 +44,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if not self.action_allowed():
             # The action is not allowed, redirect back to the changelist
             return None
-        return super(ConfirmationViewMixin, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, *args, **kwargs):
         context = super(ConfirmationViewMixin, self).get_context_data(*args, **kwargs)
@@ -202,8 +202,8 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
             self.storage.current_step = self.steps.first
             return self.render(self.get_form())  
 
-    def done(self, form_list, **kwargs): 
-        # The 'final' method of a WizardView.
+    def done(self, *args, **kwargs): 
+        # The 'final' method of a WizardView. It is called from render_done with some args and kwargs we do not care about.
         # By default, force a redirect back to the changelist by returning None
         try:
             self.perform_action() 

@@ -681,7 +681,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(list(new_brochure.jahre.values_list('jahr', flat = True)), [2000, 2001])
         
     def test_perform_action_adds_hint_to_bemerkungen(self):
-        expected = "Hinweis: {verbose_name} wurde automatisch erstellt mit Daten von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
+        expected = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
         expected = expected.format(
             verbose_name = Brochure._meta.verbose_name, 
             str_ausgabe = str(self.obj1), str_magazin = str(self.obj1.magazin)
