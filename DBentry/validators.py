@@ -36,6 +36,7 @@ def _add_check_digit(std, number, min_length):
 def _validate(std, number, min_length=None):
     from stdnum import exceptions
     if min_length:
+        #TODO: is this still needed?
         number = _add_check_digit(std, number, min_length)
     try:
         std.validate(number)
