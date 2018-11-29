@@ -41,6 +41,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     
     @property
     def search_fields(self):
+        #TODO: why is this a property when could just set self.search_fields during init?
         if not self._search_fields:
             self._search_fields = self.model.get_search_fields()
         return self._search_fields
@@ -49,6 +50,8 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         return qs.order_by(*self.model._meta.ordering)
         
     def apply_q(self, qs):
+        #TODO: check the availability of lookups for any given search field first before you attempt a query
+        # Doing a query with a bad lookup will ruin the search results returned by other search fields that would allow said lookup
         if self.q:
             if self.search_fields:
                 exact_match_qs = qs

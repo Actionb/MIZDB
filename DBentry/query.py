@@ -6,6 +6,7 @@ from django.contrib.admin.utils import get_fields_from_path
 
 from django.db import models
 
+#TODO: this does not check/catch if a lookup expression is allowed
     
 class BaseSearchQuery(object):
     """
