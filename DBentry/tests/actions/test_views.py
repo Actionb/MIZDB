@@ -161,12 +161,6 @@ class TestWizardConfirmationView(ActionViewTestCase):
         prefix = 'wizard_confirmation_view' # SessionWizardView -> WizardView -> normalize_name
         request = self.post_request(data = {prefix + '-current_step':'2'})
         self.assertEqual(view.post(request), 'WizardForm!')
-        
-    def test_done(self):
-        view = self.get_view()
-        view.perform_action = Mock()
-        self.assertIsNone(view.done(None))
-        view.perform_action.assert_called_once() #TODO: replace assert_called_once with call_count == 1
 
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     
