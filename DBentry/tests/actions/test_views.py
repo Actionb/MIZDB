@@ -380,7 +380,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
 
 class TestMergeViewWizardedAusgabe(ActionViewTestCase): 
     # Note that tests concerning logging for this view are done on test_utils.merge_records directly.
-    
+    #TODO: there is no unit test for MergeViewWizarded.perform_action
     view_class = MergeViewWizarded
     model = ausgabe
     model_admin_class = AusgabenAdmin
@@ -594,6 +594,16 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertIn('form_kwargs', form_kwargs)
         self.assertIn('choices', form_kwargs['form_kwargs'])
         self.assertEqual(form_kwargs['form_kwargs']['choices'], {'1-0-posvals': [(0, '1'), (1, '2')]})
+    
+    @translation_override(language = None)
+    @patch.object(MergeViewWizarded, 'perform_action', new = mockex(ProtectedError('msg', artikel.objects.all())))
+    def test_done(self):
+        # Assert that an admin message is send to user upon encountering a ProtectedError during done
+        request = self.get_request()
+        view = self.get_view(request = request)
+        view.done()
+        self.assertMessageSent(request, 'Folgende verwandte Artikel verhinderten die Zusammenführung:')
+        
 
 class TestMergeViewWizardedArtikel(ActionViewTestCase): 
     

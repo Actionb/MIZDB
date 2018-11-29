@@ -1,18 +1,18 @@
 
 from django.db import transaction
+from django.db.models import ProtectedError
 from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
-
+from django.forms import formset_factory 
 
 from DBentry.utils import link_list, merge_records, get_updateable_fields, get_obj_link, get_model_from_string, is_protected
-from DBentry.models import *
+from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin
 
 from .base import ActionConfirmationView, WizardConfirmationView
 from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm, BrochureActionForm
-from django.forms import formset_factory 
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
@@ -286,6 +286,17 @@ class MergeViewWizarded(WizardConfirmationView):
         original_pk = self.get_cleaned_data_for_step('0').get('original', 0) 
         original = self.opts.model.objects.get(pk=original_pk) 
         merge_records(original, self.queryset, update_data, expand, request=self.request)
+        
+    def done(self, *args, **kwargs):
+        try:
+            self.perform_action()
+        except ProtectedError as e:
+            # The merge could not be completed as there were protected objects in the queryset, all changes were rolled back
+            protected = format_html(link_list(self.request, e.protected_objects))
+            object_name = e.protected_objects.model._meta.verbose_name_plural or 'Objekte' 
+            msg = gettext('Folgende verwandte {object_name} verhinderten die Zusammenführung: ').format(object_name=object_name) + protected
+            self.model_admin.message_user(self.request, format_html(msg), 'error')
+        return None
        
 class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     

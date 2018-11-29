@@ -262,7 +262,7 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
         # We can now check if any of the merged objects are still protected.
         protected = is_protected(qs)
         if protected:
-            # Some objects are still protected, abort the merge
+            # Some objects are still protected, abort the merge through a rollback
             raise protected
         logger.log_delete(qs)
         qs.delete()
