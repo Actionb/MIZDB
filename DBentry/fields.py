@@ -2,12 +2,13 @@
 # One can freely convert ISBN-10 to ISBN-13 and vice versa and both have pretty versions.
 # stdnum.ean does not provide a pretty format for EAN-8, but one can use ISBN-13 formatting for EAN-13.
 
-#TODO: use get_prep_lookup?
+#TODO: use get_prep_lookup? -- ?? For what exactly?
 
 from stdnum import issn, isbn, ean
 
 from django.db import models
-from django.core.validators import EMPTY_VALUES, MaxValueValidator, MinValueValidator
+from django.forms import widgets, fields
+from django.core.validators import MaxValueValidator, MinValueValidator
 from .validators import ISSNValidator, ISBNValidator, EANValidator
 
 class YearField(models.IntegerField):
@@ -16,9 +17,32 @@ class YearField(models.IntegerField):
         from DBentry.constants import MIN_JAHR, MAX_JAHR
         kwargs['validators'] = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
         return super().formfield(**kwargs)
+        
+class StdNumWidget(widgets.TextInput):
+    
+    def __init__(self, format_callback = None, *args, **kwargs):
+        self.format_callback = format_callback
+        super().__init__(*args, **kwargs)
+    
+    def format_value(self, value):
+        if self.format_callback is None:
+            return value
+        # Render the value in a pretty format
+        return self.format_callback(value)
+        
+class StdNumFormField(fields.CharField):
+    
+    def __init__(self, stdnum, *args, **kwargs):
+        self.stdnum = stdnum
+        super().__init__(*args, **kwargs)
+    
+    def to_python(self, value):
+        #TODO: For a FormField to be able to compare ISBN10 with ISBN13 correctly (automatic conversion to ISBN13), something needs to happen here
+        value = super().to_python(value)
+        # To ensure that an initial compact value does not differ from a data formatted value, compact the data value. See FormField.has_changed
+        return self.stdnum.compact(value)
 
 class StdNumField(models.CharField):
-    
     stdnum = None
     min_length = None
     max_length = None
@@ -28,59 +52,26 @@ class StdNumField(models.CharField):
         super().__init__(*args, **kwargs)
         
     def formfield(self, **kwargs):
-        kwargs['min_length'] = self.min_length
+        kwargs['min_length'] = self.min_length # max_length is added by CharField.formfield
+        kwargs['stdnum'] = self.stdnum
+        kwargs['form_class'] = StdNumFormField
+        # Pass this ModelField's validators to the FormField for form-based validation.
         kwargs['validators'] = self.default_validators
+        # Pass the format callback function to the widget for a prettier display of the value
+        kwargs['widget'] = StdNumWidget(format_callback = self.get_format_callback())
         return super().formfield(**kwargs)
         
-    def get_prep_value(self, value):
-        # Return the formatted value for the queries.
-        # When saving, pre_save is called before this, but we still need to return the formatted value for ordinary queries.
-        return self._format_value(value)
-        
-    def pre_save(self, model_instance, add):
-        # Update the model_instance's value for this field with the formatted value.
-        # The SQL compiler uses this method to ask for the right value just before saving,
-        # but the compiler does not update the (already created but not saved) instance.
-        # Without this adjustment and without calling instance.refresh_from_db(), you may end up with an instance displaying the 'unformatted' value 
-        # while the db has stored the formatted one.
-        value = super().pre_save(model_instance, add)
-        if value not in EMPTY_VALUES:
-            value = self._format_value(value)
-            setattr(model_instance, self.attname, value)
-        return value        
-        
-    def _add_check_digit(self, value):
-        """
-        Adds the check digit if it was missing.
-        """
+    def get_format_callback(self):
+        if hasattr(self.stdnum, 'format'):
+            return self.stdnum.format
+
+    def to_python(self, value):
+        # In order to deny querying and saving with invalid values, we have to call run_validators.
+        # Saving a model instance will not cause the validators to be tested!
         value = self.stdnum.compact(value)
-        if len(value) == self.min_length:    
-            # User did not include the check digit
-            value += self.stdnum.calc_check_digit(value)
+        self.run_validators(value)
         return value
         
-    def _format_value(self, value):
-        """
-        Hook to allow formatting the value according to the chosen ISO.
-        """
-        # Run the validators before doing anything to value, no point formatting invalid input.
-        self.run_validators(value)
-        
-        # See if value is missing a check digit and add it if necessary
-        #TODO: try to streamline this a bit more, we are validating and formatting the value like three times in one process
-        try:
-            value = self._add_check_digit(value)
-        except AttributeError:
-            # stdnum module didnt have either a compact or a calc_check_digit attribute
-            pass
-        if hasattr(self.stdnum, 'format'):
-            return self.stdnum.format(value)
-        elif hasattr(self.stdnum, 'compact'):
-            return self.stdnum.compact(value)
-        else:
-            return value
-    
-
 class ISBNField(StdNumField):
     description = 'Cleaned and validated ISBN string: min length 9 (ISBN-10 w/o check digit), max length 17 (13 digits + dashes/spaces).'
     
@@ -89,17 +80,16 @@ class ISBNField(StdNumField):
     max_length = 17 # ISBN-13 with four dashes/spaces and check digit
     
     default_validators = [ISBNValidator]
-        
-    def _format_value(self, value):
-        from stdnum.util import clean
-        value = clean(value, ' -').strip().upper()
-        if value.isnumeric():
-            if len(value) == 9:
-                value += isbn._calc_isbn10_check_digit(value)
-            elif len(value) == 12:
-                value += ean.calc_check_digit(value)
-        return isbn.format(value, convert = True) # convert to ISBN-13
     
+    def to_python(self, value):
+        # Save the values as ISBN-13
+        value = super().to_python(value)
+        return isbn.to_isbn13(value)
+        
+    def get_format_callback(self):
+        from functools import partial
+        return partial(isbn.format, convert=True)
+        
 
 class ISSNField(StdNumField):
     description = 'Cleaned and validated ISSN string of length 8.'
@@ -116,3 +106,6 @@ class EANField(StdNumField):
     min_length = 7  # EAN-8 without check digit
     max_length = 17 # EAN-13 with four dashes/spaces and check digit
     default_validators = [EANValidator]
+    
+    #TODO: use issn.format for EAN-8 and isbn.format for EAN-13?
+        
