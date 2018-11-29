@@ -71,7 +71,7 @@ class StdNumFieldTestsMixin(object):
         with self.collect_fails() as collector:
             for valid_number in self.valid:
                 with collector():
-                    with self.assertNotRaises(ValidationError):
+                    with self.assertNotRaises(ValidationError, msg = "for valid input: " + str(valid_number)):
                         self.model.objects.filter(**{self.model_field.name:valid_number})
          
     def test_query_with_any_format_returns_results(self):
@@ -194,8 +194,8 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
     valid = [
         '123456789X',  # ISBN-10 w/o hyphens
         '1-234-56789-X', # ISBN-10 w/ hyphens
-        '9781234567897', # ISBN-13 w/o hyphens
-        '978-1-234-56789-7', # ISBN-13 w/ hyphens
+        '9791234567896', # ISBN-13 w/o hyphens
+        '979-1-234-56789-6', # ISBN-13 w/ hyphens
     ]
     invalid = [
         "9999!)()/?1*", #InvalidFormat 
