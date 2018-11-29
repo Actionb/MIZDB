@@ -8,7 +8,7 @@ from .fields import ISSNField, ISBNField, EANField, YearField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
-from .managers import AusgabeQuerySet, BuchQuerySet
+from .managers import AusgabeQuerySet
 
 #TODO: make a Beschreibung/Bemerkungen mixin
 #TODO: does a cross link from spielort to veranstaltung exist?
@@ -573,8 +573,6 @@ class buch(BaseModel):
         'ISBN' : 'ISBN', 
         'EAN' : 'EAN', 
     }
-    
-    objects = BuchQuerySet.as_manager()
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
