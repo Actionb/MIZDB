@@ -245,7 +245,7 @@ class ArtikelAdmin(MIZModelAdmin):
     }  
 
     def get_queryset(self, request):
-        #TODO: rethink this now that we have chronologic_order for ausgabe
+        #TODO: rethink this now that we have chronologic_order for ausgabe -- also monat_id should not longer used
         #NOTE: what actually uses ModelAdmin.get_queryset? Because the changelist's results are 
         # ordered via chronologic_order.
         from django.db.models import Min
