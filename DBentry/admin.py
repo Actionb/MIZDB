@@ -131,16 +131,16 @@ class AusgabenAdmin(MIZModelAdmin):
     actions = [bulk_jg, add_bestand, moveto_brochure]
     list_display = ('__str__', 'num_string', 'lnum_string','monat_string','jahr_string', 'jahrgang', 
                         'magazin','e_datum','anz_artikel', 'status') 
-    #ordering = ['magazin', 'jahr', 'jahrgang']
     
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     fields = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
     flds_to_group = [('status', 'sonderausgabe')]
     
     advanced_search_form = {
-        'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum'], 
+        'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat__ordinal'], 
         'selects':['magazin','status'], 
-        'simple':['jahrgang', 'sonderausgabe']
+        'simple':['jahrgang', 'sonderausgabe'], 
+        'labels' : {'ausgabe_monat__monat__ordinal':'Monatsnummer'}
     }
     
     def get_changelist(self, request, **kwargs):
