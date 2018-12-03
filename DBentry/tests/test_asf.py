@@ -1,22 +1,18 @@
 import dal
-
-from .base import *
-
-from DBentry.advsfforms import *
-from DBentry.admin import *
-
 from dal import forward
 
-class TestAdvSFForm(FormTestCase):
-    
-    form_class = AdvSFForm
-    
-    def test_get_initial_for_field(self):
-        # Assert that get_initial_for_field accepts and handles a MultiValueDict as initial
-        form = self.get_form()
-        form.initial = MultiValueDict({'Test':[1, 2, 3]})
-        mock_field = Mock()
-        self.assertEqual(form.get_initial_for_field(field = mock_field, field_name = 'Test'), [1, 2, 3])    
+from django.utils.datastructures import MultiValueDict
+from django.contrib.admin.utils import get_fields_from_path
+from django.utils.translation import override as translation_override
+
+from .base import tag, MyTestCase, FormTestCase, Mock, make
+
+from DBentry.advsfforms import AdvSFForm, advSF_factory
+from DBentry.models import *
+from DBentry.admin import (
+    miz_site, ArtikelAdmin, AudioAdmin, AusgabenAdmin, AutorAdmin, BandAdmin, BestandAdmin, MagazinAdmin, MusikerAdmin, 
+    OrtAdmin, VerlagAdmin, PersonAdmin, BlandAdmin
+)
 
 class FactoryTestCaseMixin(object):
     
@@ -30,36 +26,57 @@ class FactoryTestCaseMixin(object):
     def setUp(self):
         super().setUp()
         self.model_admin = self.model_admin_class(self.model, self.admin_site)
+
+        
+    def get_expected_fields(self):
+        # Return the field_paths for any relation field declared in advanced_search_form['selects'] 
+        # whose formfield requires an daö autocomplete widget
+        expected_fields = set()  
+        for field_path in self.model_admin.advanced_search_form.get('selects', []):
+            if isinstance(field_path, (tuple, list)):
+                # This field_path is a tuple of (field_path, dal forward widget name)
+                field_path = field_path[0]
+            if get_fields_from_path(self.model, field_path)[-1].is_relation:
+                # This field path points to a relation field and thus requires a dal widget
+                expected_fields.add(field_path)
+        return list(expected_fields)
+        
+    def get_expected_models(self):
+        # Return the related models for any relation field declared in advanced_search_form['selects']
+        expected_models = {}
+        for field_path in self.model_admin.advanced_search_form.get('selects', []):
+            if isinstance(field_path, (tuple, list)):
+                # This field_path is a tuple of (field_path, dal forward widget name)
+                field_path = field_path[0]
+            expected_models[field_path] = get_fields_from_path(self.model, field_path)[-1].related_model
+        return expected_models
     
     def test_factory(self):
-        self.assertFormChecksOut(self.expected_fields, self.expected_labels, self.expected_models)
-            
-    def assertFormChecksOut(self, expected_fields=None, expected_labels=None, expected_models=None, msg=None):
-        expected_fields = expected_fields or self.expected_fields
-        expected_labels = expected_labels or self.expected_labels
-        expected_models = expected_models or self.expected_models
-        model_admin = self.model_admin
-        labels = model_admin.advanced_search_form.get('labels', {})
-        form = advSF_factory(model_admin, labels=labels)()
-        self.assertListEqualSorted(list(form.fields), expected_fields)
+        # Assert that advSF_factory creates all the relational formfields correctly
+        expected_fields = self.get_expected_fields()
+        expected_models = self.get_expected_models()
+        form = advSF_factory(self.model_admin, labels=self.model_admin.advanced_search_form.get('labels', {}))()
+        
+        # check the widgets
         for field_path, formfield in form.fields.items():
-            self.assertTrue(field_path in expected_fields, msg=field_path)
-            self.assertEqual(formfield.label, expected_labels[field_path], msg=field_path)
+            self.assertIn(field_path, expected_fields, msg=field_path)
+            expected_fields.remove(field_path)
+            self.assertIn(field_path, self.expected_labels, msg= "Label not found for. Please check the TestCase's expected_labels.")
+            self.assertEqual(formfield.label, self.expected_labels[field_path], msg=field_path)
             widget = formfield.widget
-            self.assertWidgetOfDAL(widget, msg=field_path)
+            self.assertIsInstance(widget, dal.widgets.QuerySetSelectMixin, msg=field_path)
             self.assertWidgetCannotCreate(widget, msg=field_path)
-            self.assertWidgetQSModel(widget, expected_models[field_path], msg=field_path)
-    
-    def assertWidgetOfDAL(self, widget, msg=None):
-        self.assertIsInstance(widget, dal.widgets.QuerySetSelectMixin, msg)
+            # Check that the widget queries the right model
+            self.assertEqual(widget.choices.queryset.model, expected_models[field_path], msg=field_path)
+        # Check that all fields in expected_fields have been used in the form
+        self.assertFalse(expected_fields, msg = "\n Select fields are missing from search form: " + str(expected_fields))
     
     def assertWidgetCannotCreate(self, widget, msg=None):
+        # Assert that the widget cannot create new records, this indicated by the widget's view not having a create_field
         from django.urls import resolve
         view_initkwargs = resolve(widget.url).func.view_initkwargs
         self.assertFalse('create_field' in view_initkwargs, msg)
-        
-    def assertWidgetQSModel(self, widget, model, msg=None):
-        self.assertEqual(widget.choices.queryset.model, model, msg)
+
 
 class TestFactory(MyTestCase):
     # advSF_factory requires a ModelAdmin **instance**:
@@ -101,7 +118,6 @@ class TestFactory(MyTestCase):
         form = advSF_factory(model_admin)()
         widget = form.fields['orte__bland'].widget
         forwarded = widget.forward[0]
-        expected = forward.Field(src='orte__land', dst='land')
 
         self.assertIsInstance(forwarded, forward.Field)
         self.assertEqual(forwarded.src, 'orte__land')
@@ -111,89 +127,86 @@ class TestFactory(MyTestCase):
 class TestFactoryArtikel(FactoryTestCaseMixin,MyTestCase):
     model = artikel
     model_admin_class = ArtikelAdmin
-    expected_fields = ['ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band', 'musiker', 'autor']
     expected_labels = {'ausgabe__magazin':'Magazin', 'ausgabe':'Ausgabe', 'schlagwort':'Schlagwort', 'genre':'Genre', 'band':'Band', 'musiker':'Musiker', 'autor':'Autor'}
-    expected_models = {'ausgabe__magazin': magazin, 'ausgabe': ausgabe, 'schlagwort': schlagwort, 'genre': genre, 'band': band, 'musiker': musiker, 'autor': autor}
     
 class TestFactoryAudio(FactoryTestCaseMixin,MyTestCase):
     model = audio
     model_admin_class = AudioAdmin
-    expected_fields = ['musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma', 
-                        'format__format_size', 'format__format_typ', 'format__tag']
     expected_labels = {'musiker': 'Musiker', 'band': 'Band', 'genre': 'Genre', 'spielort': 'Spielort', 'veranstaltung': 'Veranstaltung', 'plattenfirma': 'Plattenfirma', 
                         'format__format_size': 'Format Größe', 'format__format_typ': 'Format Typ' , 'format__tag': 'Tags'}
-    expected_models = {'musiker': musiker, 'band': band, 'genre': genre, 'spielort': spielort, 'veranstaltung': veranstaltung, 'plattenfirma': plattenfirma, 
-                        'format__format_size': FormatSize, 'format__format_typ': FormatTyp, 'format__tag': FormatTag}
-    
+                        
 class TestFactoryAusgabe(FactoryTestCaseMixin,MyTestCase):
     model = ausgabe
     model_admin_class = AusgabenAdmin
-    expected_fields = ['magazin']
     expected_labels = {'magazin': 'Magazin'}
-    expected_models = {'magazin': magazin}
     
 class TestFactoryAutor(FactoryTestCaseMixin,MyTestCase):
     model = autor
     model_admin_class = AutorAdmin
-    expected_fields = ['magazin']
     expected_labels = {'magazin': 'Magazin'}
-    expected_models = {'magazin': magazin}
     
 class TestFactoryBand(FactoryTestCaseMixin,MyTestCase):
     model = band
     model_admin_class = BandAdmin
-    expected_fields = ['musiker', 'genre', 'orte__land', 'orte']
     expected_labels = {'musiker':'Mitglied', 'genre':'Genre', 'orte__land':'Land', 'orte':'Ort'}
-    expected_models = {'musiker': musiker, 'genre': genre, 'orte__land': land, 'orte': ort}
 
 class TestFactoryMagazin(FactoryTestCaseMixin,MyTestCase):
     model = magazin
     model_admin_class = MagazinAdmin
-    expected_fields = ['m2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre']
     expected_labels = {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort', 'genre':'Genre'}
-    expected_models = {'m2m_magazin_verlag': m2m_magazin_verlag, 'm2m_magazin_herausgeber': m2m_magazin_herausgeber, 'ort': ort, 'genre': genre}
     
 class TestFactoryMusiker(FactoryTestCaseMixin,MyTestCase):
     model = musiker
     model_admin_class = MusikerAdmin
-    expected_fields = ['person', 'genre', 'band', 
-                'instrument','orte__land', 'orte']
     expected_labels = {'person':'Person', 'genre': 'Genre', 'band': 'Band', 
                 'instrument': 'Instrument','orte': 'Ort', 'orte__land':'Land'}
-    expected_models = {'person':person, 'genre':genre, 'band':band,'instrument': instrument,
-        'orte__land':land, 'orte':ort}
             
 class TestFactoryPerson(FactoryTestCaseMixin,MyTestCase):
     model = person
     model_admin_class = PersonAdmin
-    expected_fields = ['orte', 'orte__land', 'orte__bland']
     expected_labels = {'orte':'Ort', 'orte__land':'Land', 'orte__bland':'Bundesland'}
-    expected_models = {'orte': ort, 'orte__land': land, 'orte__bland': bundesland}
     
 class TestFactoryVerlag(FactoryTestCaseMixin,MyTestCase):
     model = verlag
     model_admin_class = VerlagAdmin
-    expected_fields = ['sitz','sitz__land', 'sitz__bland']
     expected_labels = {'sitz':'Sitz','sitz__land':'Land', 'sitz__bland':'Bundesland'}
-    expected_models = {'sitz':ort,'sitz__land':land, 'sitz__bland':bundesland}
     
 class TestFactoryBland(FactoryTestCaseMixin,MyTestCase):
     model = bundesland
     model_admin_class = BlandAdmin
-    expected_fields = ['ort__land']
     expected_labels = {'ort__land':'Land'}
-    expected_models = {'ort__land':land}
     
 class TestFactoryOrt(FactoryTestCaseMixin,MyTestCase):
     model = ort
     model_admin_class = OrtAdmin
-    expected_fields = ['land', 'bland']
     expected_labels = {'land':'Land', 'bland':'Bundesland'}
-    expected_models = {'land':land, 'bland':bundesland}
     
 class TestFactoryBestand(FactoryTestCaseMixin,MyTestCase):
     model = bestand
     model_admin_class = BestandAdmin
-    expected_fields = ['lagerort']
     expected_labels = {'lagerort':'Lagerort'}
-    expected_models = {'lagerort':lagerort}
+
+
+class TestAdvSFForm(FormTestCase):
+    
+    form_class = AdvSFForm
+    
+    def test_get_initial_for_field_MultiValueDict(self):
+        # Assert that get_initial_for_field accepts and handles a MultiValueDict as initial
+        form = self.get_form()
+        form.initial = MultiValueDict({'Test':[1, 2, 3]})
+        mock_field = Mock()
+        self.assertEqual(form.get_initial_for_field(field = mock_field, field_name = 'Test'), [1, 2, 3])   
+        
+    def test_get_initial_for_field_ausgabe_magazin(self):
+        # Assert that an initial value for a 'magazin' formfield is assigned from a present initial value for 'ausgabe'
+        obj = make(ausgabe)
+        form = self.get_form()
+        mock_field = Mock(initial = 'Mocked Initial')
+        mock_field.spec_set = True
+        self.assertEqual(form.get_initial_for_field(mock_field, 'ausgabe__magazin'), 'Mocked Initial')
+        form.initial = {'ausgabe':obj.pk}
+        self.assertEqual(form.get_initial_for_field(mock_field, 'ausgabe__magazin'), obj.magazin)
+        # Make sure DoesNotExist exceptions bubble up to the surface
+        form.initial = {'ausgabe':None}
+        self.assertEqual(form.get_initial_for_field(mock_field, 'ausgabe__magazin'), 'Mocked Initial')
