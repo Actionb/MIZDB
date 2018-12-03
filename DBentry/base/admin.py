@@ -6,6 +6,7 @@ from django.contrib.auth import get_permission_codename
 from django.utils.translation import override as translation_override
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
+from django.db.models.constants import LOOKUP_SEP
 
 from django import forms
 
@@ -213,16 +214,16 @@ class MIZModelAdmin(admin.ModelAdmin):
         new_extra = self.add_extra_context(request = request, extra_context = extra_context, object_id = object_id)
         return super().change_view(request, object_id, form_url, new_extra)
         
-    def lookup_allowed(self, key, value):
+    def lookup_allowed(self, lookup, value):
         if self.has_adv_sf():
             # allow lookups defined in advanced_search_form
-            for list in getattr(self, 'advanced_search_form').values():
-                if key in list:
+            for field_list in getattr(self, 'advanced_search_form').values():
+                if lookup in field_list:
                     return True
-        if key in [i[0] if isinstance(i, tuple) else i for i in self.list_filter]:
-            # allow lookups defined in list_filter
-            return True
-        return super().lookup_allowed(key, value)    
+                # the lookup may look like this: field_name__lookup, single out the field_name and try again
+                if LOOKUP_SEP in lookup and lookup.rsplit(LOOKUP_SEP, 1)[0] in field_list:
+                    return True
+        return super().lookup_allowed(lookup, value)    
         
     def get_preserved_filters(self, request):
         """

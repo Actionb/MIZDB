@@ -3,7 +3,8 @@ from .base import *
 from DBentry.admin import *
 from DBentry.sites import MIZAdminSite
 from DBentry.changelist import *
-          
+from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
+        
 class AdminTestMethodsMixin(object):
     
     crosslinks_relations = None
@@ -65,6 +66,27 @@ class AdminTestMethodsMixin(object):
         media = self.model_admin.media
         if self.model_admin.googlebtns:
             self.assertIn('admin/js/utils.js', media._js)
+    
+    def test_lookup_allowed_adv_sf(self):
+        # Assert that all fields and their lookups belonging to advanced search form are allowed
+        request = self.get_request()
+        advsf_dict = advanced_search_form_tag(self.get_changelist(request = request))['asf'] # advsf_dict = dict(selects=[{},...], gtelt=[], simple=[], ac_form=form)
+        for lookup_group_name, lookup_groups in advsf_dict.items():
+            if lookup_group_name in ('selects', 'simple'):
+                lookups = [lookup_group['query_string'] for lookup_group in lookup_groups]
+            elif lookup_group_name == 'gtelt':
+                # gtelt contains two lookups, gte_query_string and lt_query_string, wrangle them into a flattened iterator
+                lookups = chain.from_iterable((lookup_group['gte_query_string'], lookup_group['lt_query_string']) for lookup_group in lookup_groups)
+            elif lookup_group_name == 'ac_form':
+                lookups = lookup_groups.base_fields.keys()
+            else:
+                # Agh, just continue I am bad at computers
+                continue
+                
+            for lookup in lookups:
+                self.assertTrue(self.model_admin.lookup_allowed(lookup = lookup, value = None), msg = 'lookup not allowed: ' + lookup)
+        
+        
             
 class TestMIZModelAdmin(AdminTestCase):
     
