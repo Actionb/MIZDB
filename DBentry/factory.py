@@ -234,7 +234,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 declaration = UniqueFaker('word')
             else:
                 declaration = factory.Faker('word')
-        elif internal_type in ('IntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField', 'BigIntegerField', 'DurationField'):
+        elif internal_type in ('IntegerField', 'PositiveSmallIntegerField', 'SmallIntegerField', 'BigIntegerField'):
             if field.unique:
                 declaration = factory.Sequence(lambda n: n)
             else:
@@ -249,9 +249,8 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                     provider += '_'
                 provider += c.lower()
             declaration = factory.Faker(provider)
-        #TODO: set faker for DurationField to time_delta
-#        elif internal_type == 'DurationField':
-#            declaration = factory.Faker('time_delta')
+        elif internal_type == 'DurationField':
+            declaration = factory.Faker('time_delta')
         return declaration
         
         

@@ -1,5 +1,6 @@
 from .base import *
 
+from django.db.models.fields import *
 from DBentry.factory import *
 
 class TestRuntimeFactoryMixin(TestCase):
@@ -163,36 +164,50 @@ class TestMIZDjangoOptions(TestCase):
         # Assert that the dynamically added 'base' fields have the correct types
         func = MIZDjangoOptions._get_decl_for_model_field
         # CharField / TextField => factory.Faker('word')  || UniqueFaker('word')  if unique
-        decl = func(audio._meta.get_field('quelle'))
+        decl = func(CharField())
+        self.assertIsInstance(decl, factory.Faker)
+        self.assertEqual(decl.provider, 'word')
+        decl = func(TextField())
         self.assertIsInstance(decl, factory.Faker)
         self.assertEqual(decl.provider, 'word')
         
-        decl = func(land._meta.get_field('land_name'))
+        decl = func(CharField(unique = True))
+        self.assertIsInstance(decl, UniqueFaker)
+        self.assertEqual(decl.faker.provider, 'word')
+        decl = func(TextField(unique = True))
         self.assertIsInstance(decl, UniqueFaker)
         self.assertEqual(decl.faker.provider, 'word')
         
-        # IntegerField / DurationField => factory.Faker('pyint') || factory.Sequence(lambda n: n)  if unique
-        decl = func(ausgabe._meta.get_field('jahrgang'))
+        # IntegerField => factory.Faker('pyint') || factory.Sequence(lambda n: n)  if unique
+        decl = func(IntegerField())
         self.assertIsInstance(decl, factory.Faker)
         self.assertEqual(decl.provider, 'pyint')
         
-        mock_field = Mock(unique = True, get_internal_type = mockv('IntegerField'))
-        decl = func(mock_field)
+        decl = func(IntegerField(unique = True))
         self.assertIsInstance(decl, factory.Sequence)
         
-        decl = func(audio._meta.get_field('laufzeit')) # DurationField
-        self.assertIsInstance(decl, factory.Faker)
-        self.assertEqual(decl.provider, 'pyint')
-        
         # BooleanField =>  factory.Faker('pybool')
-        decl = func(ausgabe._meta.get_field('sonderausgabe'))
+        decl = func(BooleanField())
         self.assertIsInstance(decl, factory.Faker)
         self.assertEqual(decl.provider, 'pybool')
         
         # DateField => factory.Faker('date')
-        decl = func(ausgabe._meta.get_field('e_datum'))
+        decl = func(DateField())
         self.assertIsInstance(decl, factory.Faker)
         self.assertEqual(decl.provider, 'date')
+        
+        decl = func(DateTimeField())
+        self.assertIsInstance(decl, factory.Faker)
+        self.assertEqual(decl.provider, 'date_time')
+        
+        decl = func(TimeField())
+        self.assertIsInstance(decl, factory.Faker)
+        self.assertEqual(decl.provider, 'time')
+        
+        # DurationField => factory.Faker('time_delta')
+        decl = func(DurationField())
+        self.assertIsInstance(decl, factory.Faker)
+        self.assertEqual(decl.provider, 'time_delta')
     
     def test_adds_required_fields(self):
         # A dynamically created factory *must* include model fields that are required
