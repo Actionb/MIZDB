@@ -288,7 +288,7 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
         
         ChangeList = self.model_admin.get_changelist(request)
         cl = ChangeList(
-            request, self.model, list_display,
+            request, self.model_admin.model, list_display,
             list_display_links, list_filter, self.model_admin.date_hierarchy,
             search_fields, list_select_related, self.model_admin.list_per_page,
             self.model_admin.list_max_show_all, self.model_admin.list_editable, self.model_admin,
