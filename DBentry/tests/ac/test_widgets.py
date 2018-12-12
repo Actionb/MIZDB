@@ -41,6 +41,10 @@ class TestEasyWidgetWrapper(TestCase):
         context = self.widget.get_context('Beep', ['1'], {'id':1})
         self.assertTrue(context.get('can_delete_related', False))
         self.assertEqual(context.get('delete_related_template_url'), "/admin/DBentry/ausgabe/__fk__/delete/")
+        
+    def test_wrapper_includes_relatedobject_js(self):
+        # Assert that the wrapped widget includes the RelatedObjectLookups.js
+        self.assertIn('admin/js/admin/RelatedObjectLookups.js', self.widget.media._js)
 
 class TestWidgetCaptureMixin(TestCase):
     

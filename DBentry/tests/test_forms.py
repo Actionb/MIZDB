@@ -218,10 +218,10 @@ class TestMIZAdminForm(FormTestCase):
         from django.conf import settings
         media = self.get_dummy_form().media
         extra = '' if settings.DEBUG else '.min' 
-        self.assertTrue('admin/js/jquery.init.js' in media._js)
-        self.assertTrue('admin/js/vendor/jquery/jquery%s.js' % extra in media._js)
+        # The jquery base must always be loaded first
+        self.assertIn('admin/js/vendor/jquery/jquery%s.js' % extra, media._js)
         self.assertEqual(media._js.index('admin/js/vendor/jquery/jquery%s.js' % extra), 0)
-        self.assertEqual(media._js.index('admin/js/jquery.init.js'), 1)
+        self.assertIn('admin/js/jquery.init.js', media._js)
         
     def test_changed_data_prop_no_change(self):
         kwargs = dict(data=dict(some_int='10'), initial=dict(some_int='10'))

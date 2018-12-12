@@ -218,11 +218,10 @@ class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
         
     class Media:
-        #TODO: have a look at contrib.admin.options.ModelAdmin.media
         css = {
             'all' : ('admin/css/forms.css', )
         }
-        js = ['admin/js/collapse.js', 'admin/js/admin/RelatedObjectLookups.js']
+        js = ['admin/js/popup.js']
     
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
@@ -236,15 +235,20 @@ class MIZAdminForm(forms.Form):
         
     @property
     def media(self):
-        from django.conf import settings
-        media = super(MIZAdminForm, self).media
+        # Collect the media needed for all the widgets
+        media = super().media
+        # Collect the media needed for all fieldsets; this will add collapse.js if necessary (from django.contrib.admin.options.helpers.Fieldset)
         for fieldset in self.__iter__():
-            # Add collapse.js if necessary
-            media += fieldset.media         # Fieldset Media, since forms.Form checks self.fields instead of self.__iter__ (and fieldsets)
-        # Ensure jquery is loaded first
-        extra = '' if settings.DEBUG else '.min'
-        media._js.insert(0, 'admin/js/jquery.init.js')
-        media._js.insert(0, 'admin/js/vendor/jquery/jquery%s.js' % extra)
+            media += fieldset.media
+        # Ensure jquery proper is loaded first before any other files that might reference it
+        # Add the django jquery init file (it includes jquery into django's namespace)
+        if 'admin/js/jquery.init.js' not in media._js:
+            media._js.insert(0,'admin/js/jquery.init.js')
+        from django.conf import settings
+        jquery_path = 'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min')
+        if jquery_path in media._js:
+            media._js.remove(jquery_path)
+        media._js.insert(0, jquery_path)
         return media
         
     @cached_property
