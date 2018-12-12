@@ -28,6 +28,7 @@ def advanced_search_form(cl):
         
     asf = dict(selects=[], gtelt=[], simple=[], ac_form=form)
     if asf_dict:
+        # Simple selects with choices declared on a non-relational field
         for item in asf_dict.get('selects', []):
             if isinstance(item, (list, tuple)):
                 item, forward = item
@@ -35,8 +36,6 @@ def advanced_search_form(cl):
             if item in form_fields or getattr(field, 'name', None) in form_fields:
                 # Ignore items that are already being handled by the form
                 continue
-            #TODO: use field.get_choices(limit_choices_to={'pk__in':some_set}) to limit choices (duh)
-            #Maybe do this in autocomplete views?
             field_choices = field.get_choices() 
             choices = []
             for pk, name in field_choices:
@@ -47,7 +46,7 @@ def advanced_search_form(cl):
                     choices             = choices, 
                 )
             )
-        # 2 Text inputs: greater than x and less than y
+        # 2 Text inputs: greater than or equal x and less than y
         for item in asf_dict.get('gtelt', []):
             asf['gtelt'].append( dict(
                     label               = labels.get(item, None) or get_fields_from_path(model, item)[-1].verbose_name, 
