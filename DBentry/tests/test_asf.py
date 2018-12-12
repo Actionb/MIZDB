@@ -82,6 +82,18 @@ class TestFactory(MyTestCase):
     # advSF_factory requires a ModelAdmin **instance**:
     # it accesses model_admin.model, and that model attribute does not exist before instantiation.
     
+    @translation_override(language = None)
+    def test_exceptions(self):
+        # Assert that the correct exceptions are raised.
+        with self.assertRaises(TypeError, msg = "A subclass of ModelAdmin is required.") as context_manager:
+            advSF_factory(model_admin = object())
+        self.assertEqual("object class must be a subclass of ModelAdmin.", context_manager.exception.args[0])
+        
+        with self.assertRaises(TypeError, msg = "A ModelAdmin instance is required.") as context_manager:
+            advSF_factory(model_admin = PersonAdmin)
+        self.assertEqual("model_admin argument must be a ModelAdmin instance.", context_manager.exception.args[0])
+        
+    
     @tag("bugfix")
     def test_factory_with_m2o_field_bug(self):
         # Bug:

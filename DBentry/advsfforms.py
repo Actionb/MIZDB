@@ -1,4 +1,7 @@
+from inspect import isclass
+
 from django import forms
+from django.contrib.admin.options import ModelAdmin
 from django.contrib.admin.utils import get_fields_from_path
 from django.utils.datastructures import MultiValueDict
 from collections import OrderedDict
@@ -55,6 +58,11 @@ def advSF_factory(model_admin, labels = {}, formfield_classes = {}):
     """
     Handles the creation of all the autocomplete formfields.
     """
+    # We NEED an *instance* of ModelAdmin or the 'model' attribute would not exist.
+    if isclass(model_admin):
+        raise TypeError("model_admin argument must be a ModelAdmin instance.")
+    if not isinstance(model_admin, ModelAdmin):
+        raise TypeError(model_admin.__class__.__name__ + " class must be a subclass of ModelAdmin.")
     model = model_admin.model
     attrs = OrderedDict()
     
