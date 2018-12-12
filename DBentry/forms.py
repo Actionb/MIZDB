@@ -1,5 +1,4 @@
 from django import forms
-from django.conf import settings
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 from django.core.exceptions import ValidationError
@@ -176,12 +175,6 @@ class AusgabeMagazinFieldForm(FormBase):
                 kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
         super(AusgabeMagazinFieldForm, self).__init__(*args, **kwargs)
 
-#TODO: what is this for actually?
-class InLineAusgabeForm(AusgabeMagazinFieldForm):
-    # modelform_factory (called by InLineModelAdmin.get_formset) creates the Meta class attribute model, so no bad mojo for not declaring it in a Meta class
-    # this ModelForm is used as for a ModelAdmin inline formset. Its Meta class will be inherited from its parent (modelform_factory:521).
-    pass  
-
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
         model = artikel
@@ -243,10 +236,11 @@ class MIZAdminForm(forms.Form):
         
     @property
     def media(self):
+        from django.conf import settings
         media = super(MIZAdminForm, self).media
         for fieldset in self.__iter__():
             # Add collapse.js if necessary
-            media += fieldset.media         # Fieldset Media, since forms.Form checks self.fields instead of self.__iter__
+            media += fieldset.media         # Fieldset Media, since forms.Form checks self.fields instead of self.__iter__ (and fieldsets)
         # Ensure jquery is loaded first
         extra = '' if settings.DEBUG else '.min'
         media._js.insert(0, 'admin/js/jquery.init.js')

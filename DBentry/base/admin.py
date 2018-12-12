@@ -13,7 +13,7 @@ from django import forms
 from DBentry.models import ausgabe, genre, schlagwort, models
 from DBentry.base.models import ComputedNameModel
 from DBentry.changelist import MIZChangeList
-from DBentry.forms import InLineAusgabeForm, FormBase
+from DBentry.forms import AusgabeMagazinFieldForm, FormBase
 from DBentry.actions import merge_records
 from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
@@ -388,7 +388,7 @@ class BaseSchlagwortInline(BaseTabularInline):
     verbose_model = schlagwort
     
 class BaseAusgabeInline(BaseTabularInline):
-    form = InLineAusgabeForm
+    form = AusgabeMagazinFieldForm
     verbose_model = ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
     

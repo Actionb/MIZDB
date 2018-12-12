@@ -1,6 +1,13 @@
-from .base import *
+from .base import ModelFormTestCase,FormTestCase,TestDataMixin, make, translation_override
 
-from DBentry.forms import *
+from django import forms
+
+from DBentry.forms import (
+    makeForm, FormBase, AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, DynamicChoiceForm, 
+    HerausgeberForm, MIZAdminForm, XRequiredFormMixin
+)
+from DBentry.models import artikel, ausgabe, audio, land, autor, person, buch, Herausgeber, Organisation, genre
+from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.ac.widgets import EasyWidgetWrapper, MIZModelSelect2
 
 from dal import autocomplete
@@ -54,9 +61,9 @@ class TestFormBase(ModelFormTestCase):
         self.assertEqual(attrs['cols'], 90)
         
         
-class TestInLineAusgabeForm(ModelFormTestCase):
+class TestAusgabeMagazinFieldForm(ModelFormTestCase):
     
-    form_class = InLineAusgabeForm
+    form_class = AusgabeMagazinFieldForm
     model = ausgabe.audio.through
     fields = ['ausgabe']
     test_data_count = 1
@@ -208,6 +215,7 @@ class TestMIZAdminForm(FormTestCase):
             
     def test_media_prop(self):
         # Make sure jquery loaded in the right order
+        from django.conf import settings
         media = self.get_dummy_form().media
         extra = '' if settings.DEBUG else '.min' 
         self.assertTrue('admin/js/jquery.init.js' in media._js)
