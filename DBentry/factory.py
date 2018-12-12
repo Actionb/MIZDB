@@ -1,3 +1,5 @@
+""" unique together options are not really supported. Use with caution."""
+
 import itertools
 
 import factory
@@ -6,9 +8,6 @@ from stdnum import issn
 
 from DBentry.utils import is_iterable, get_model_relations, get_model_fields
 from DBentry.models import *
-
-#TODO: put logging back in for RelatedFactory
-# logger = factory.declarations.logger
 
 class RuntimeFactoryMixin(object):
     """
@@ -260,7 +259,6 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         """
         Add any fields of the model that are not a relation and require a value.
         """
-        #TODO: account for unique == True // unique_together
         for field in get_model_fields(self.model, foreign = False, m2m = False):
             if hasattr(self.factory, field.name) or field.has_default() or field.blank:
                 continue
@@ -305,7 +303,6 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         """
         Add SubFactories for every (forward) one to many relation of this model.
         """
-        #TODO: account for unique == True // unique_together
         for field in get_model_fields(self.model, base = False, foreign = True, m2m = False):
             if not hasattr(self.factory, field.name):
                 factory_name = self._get_factory_name_for_model(field.related_model)
@@ -345,14 +342,19 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         cls.__memo = value
     
     @classmethod
-    def full(cls, **kwargs):
+    def full_relations(cls, **kwargs):
+        """ Creates a model instance with a related object for each possible relation."""
+        #NOTE: is this actually that useful? We are NOT providing values for base fields of that instance. This is also not covered by tests.
         backup = []
         for name, decl in cls._meta.pre_declarations.as_dict().items():
             if hasattr(decl, 'required') and not decl.required and name not in kwargs:
+                # This declaration is not required by default and no value for it was passed in as kwarg.
+                # Set it to be required so the factory will create data for it.
                 backup.append(name)
                 decl.required = True
                 
         for name, decl in cls._meta.post_declarations.as_dict().items():
+            # Add an extra item to every post_declaration unless one was already passed in as kwarg.
             if name not in kwargs and not any(s.startswith(name + '__') for s in kwargs.keys()):
                 kwargs[name + '__extra'] = 1
         
@@ -379,7 +381,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         return super()._generate(strategy, params)
 
     @classmethod
-    def _get_or_create(cls, model_class, *args, **kwargs):
+    def _get_or_create(cls, model_class, **kwargs):
         """Create an instance of the model through objects.get_or_create."""
         manager = cls._get_manager(model_class)
 
@@ -400,18 +402,19 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             get_or_create_fields.append(field)
             
         if not get_or_create_fields:
-            instance =  manager.create(*args, **kwargs)
+            # All fields that could be used to get an object from the database had their values randomly generated.
+            # There is no point in even looking for a matching record, so just create a brandnew one.
+            instance =  manager.create(**kwargs)
         else:
             key_fields = {}
             for field in get_or_create_fields:
                 if field not in kwargs:
                     continue
                 key_fields[field] = kwargs.pop(field)
-            key_fields['defaults'] = kwargs
-            instance, _created = manager.get_or_create(*args, **key_fields)
+            key_fields['defaults'] = kwargs # 'defaults' contains the data which get_or_create would create a new instance with
+            instance, _created = manager.get_or_create(**key_fields)
         cls.__memo = []
-        # Refresh the instance's data. This can be necessary if the instance was created f.ex. 
-        # with data of type string for a DateField. 
+        # Refresh the instance's data. This can be necessary if the instance was created f.ex. with data of type string for a DateField. 
         instance.refresh_from_db()
         return instance
             
@@ -420,21 +423,21 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
 _cache = {}
     
 def modelfactory_factory(model, **kwargs):
-    #TODO: have a look at factory.helper.make_factory
-    if 'Meta' not in kwargs:
-        kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model':model})
     model_name = model.split('.')[-1] if isinstance(model, str) else model._meta.model_name
     
+    # Check the cache for a factory for that model_name
     if model_name in _cache:
         return _cache[model_name]
-    
+    # Check this module and the factory's base module for a factory matching the name
     factory_name = model_name.capitalize() + 'Factory'
     import sys
     if hasattr(sys.modules[__name__], factory_name):
         return getattr(sys.modules[__name__], factory_name)
     if hasattr(sys.modules['factory.base'], factory_name):
         return getattr(sys.modules['factory.base'], factory_name)
-    
+    # Create a new factory class 
+    if 'Meta' not in kwargs:
+        kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model':model})
     modelfac = type(factory_name, (MIZModelFactory, ), kwargs)
     _cache[model_name] = modelfac
     return modelfac

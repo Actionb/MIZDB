@@ -48,11 +48,13 @@ def advanced_search_form(cl):
                 )
             )
         # 2 Text inputs: greater than x and less than y
-        for item in asf_dict.get('gtelt', []): #TODO: this adds an 'empty' div if there are no items in gtelt
+        for item in asf_dict.get('gtelt', []):
             asf['gtelt'].append( dict(
                     label               = labels.get(item, None) or get_fields_from_path(model, item)[-1].verbose_name, 
                     gte_query_string    = item+"__gte", 
-                    gte_val             = params.get(item+"__gte", None) or params.get(item, ''), 
+                    # If 'gte' and 'lt' are being used (search from X to Y), the proper value for gte can be found with '__gte'.
+                    # If only gte has been used, the value is found with just 'gte'.
+                    gte_val             = params.get(item+"__gte", None) or params.get(item, ''),
                     lt_query_string     = item+"__lt", 
                     lt_val              = params.get(item+"__lt", ''), 
                )

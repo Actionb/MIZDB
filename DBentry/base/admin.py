@@ -38,6 +38,8 @@ class MIZModelAdmin(admin.ModelAdmin):
     index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
 
     def has_adv_sf(self):
+        # Used by the changelist's advanced_search_form template to determine whether there is a search form to display.
+        # NOTE: improve has_adv_sf? advanced_search_form = {'abc':[], 'def':[],...} would return as True although it's empty
         return len(getattr(self, 'advanced_search_form', []))>0
             
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
