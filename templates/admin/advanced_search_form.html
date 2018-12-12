@@ -3,14 +3,22 @@
 {% if cl.search_fields %}
 <div id="toolbar">
     <form id="adv-changelist-search" method="get">
+        {% if cl.model_admin.has_adv_sf %} 
         <fieldset class="collapse {% if show_result_count %}collapsed{% endif %}">
         <!-- ADVANCED SEARCH FORM -->
-            {% if cl.model_admin.has_adv_sf %} {# Probably unnecessary? #}
 
             <h2 class="collapsible">{% trans "Search options" %}</h2>
+            
+            {% if asf.ac_form.as_div %}
+            {# this form contains all the dal autocomplete fields #}
+            <fieldset id="adv-sf-form">
+                {{ asf.ac_form.as_div }} 
+            </fieldset>
+            {% endif %}
 
+            {% if asf.selects %}
             <fieldset id="adv-sf-select">
-            {{ asf.ac_form.as_div }}
+            {# basic selects (no dal) #}
             {% for s in asf.selects %}
                 <span>
                 
@@ -25,7 +33,9 @@
                 </span>
             {% endfor %}
             </fieldset>
+            {% endif %}
             
+            {% if asf.gtelt %}
             <fieldset id="adv-sf-gtelt">
             {% for pair in asf.gtelt %}
                 <span>
@@ -43,7 +53,9 @@
                 </span>
             {% endfor %}
             </fieldset>
+            {% endif %}
             
+            {% if asf.simple %}
             <fieldset id="adv-sf-simple">
             {% for i in asf.simple %}
                 <span>
@@ -56,9 +68,10 @@
                 </span>
             {% endfor %}
             </fieldset>
-            
             {% endif %}
+            
         </fieldset>
+        {% endif %}
         
         <fieldset id="search-input">
             <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
