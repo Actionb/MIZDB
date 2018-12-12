@@ -16,7 +16,8 @@ from DBentry.utils import snake_case_to_spaces, get_model_fields
 Textarea = forms.Textarea           
 
 class FormBase(forms.ModelForm):
-    
+
+#TODO: delete this! argh!
 #    def __init__(self, *args, **kwargs):
 #        # the change_form's (for add forms) initial data is being cleaned and provided by the method ModelBase.get_changeform_initial_data
 #        if 'initial' not in kwargs:
@@ -258,8 +259,7 @@ class MIZAdminForm(forms.Form):
             prefixed_name = self.add_prefix(name)
             data_value = field.widget.value_from_datadict(self.data, self.files, prefixed_name)
             if not field.show_hidden_initial:
-                # Use the BoundField's initial as this is the value passed to
-                # the widget.
+                # Use the BoundField's initial as this is the value passed to the widget.
                 initial_value = self[name].initial
                 try:
                     # Convert the initial_value to the field's type
@@ -320,7 +320,9 @@ class DynamicChoiceForm(forms.Form):
                     new_choices.append( (k, v) )
                 choices = new_choices
                 fld.choices = choices
-                
+
+#TODO: mro() is bad: forms.Form comes before forms.ModelForm and its descendants        
+# Arent we using ModelForm just to save the formfield declarations?
 class FavoritenForm(MIZAdminForm, forms.ModelForm):
     class Meta:
         model = Favoriten
