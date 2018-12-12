@@ -3,12 +3,11 @@ from .base import ModelFormTestCase,FormTestCase,TestDataMixin, make, translatio
 from django import forms
 
 from DBentry.forms import (
-    makeForm, FormBase, AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, DynamicChoiceForm, 
+    FormBase, AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, DynamicChoiceForm, 
     HerausgeberForm, MIZAdminForm, XRequiredFormMixin
 )
-from DBentry.models import artikel, ausgabe, audio, land, autor, person, buch, Herausgeber, Organisation, genre
-from DBentry.constants import ATTRS_TEXTAREA
-from DBentry.ac.widgets import EasyWidgetWrapper, MIZModelSelect2
+from DBentry.models import artikel, ausgabe, land, autor, person, buch, Herausgeber, Organisation, genre
+from DBentry.ac.widgets import EasyWidgetWrapper
 
 from dal import autocomplete
 
@@ -33,32 +32,6 @@ class TestFormBase(ModelFormTestCase):
         # validate_unique should now set the DELETE flag in cleaned_data
         form.validate_unique()
         self.assertEqual(form.cleaned_data.get('DELETE', False), True) 
-    
-    def test_makeForm(self):
-        # makeForm should add dal widgets for foreign fields
-        form = makeForm(audio)
-        self.assertIsInstance(form.base_fields['sender'].widget, MIZModelSelect2)
-        
-        # makeForm should override the widget attrs of a TextField model field
-        attrs = form.base_fields['beschreibung'].widget.attrs
-        self.assertEqual(attrs['rows'], ATTRS_TEXTAREA['rows'])
-        self.assertEqual(attrs['cols'], ATTRS_TEXTAREA['cols'])
-        attrs = form.base_fields['bemerkungen'].widget.attrs
-        self.assertEqual(attrs['rows'], ATTRS_TEXTAREA['rows'])
-        self.assertEqual(attrs['cols'], ATTRS_TEXTAREA['cols'])
-        
-        # makeForm should respect a given 'fields' parameter
-        form = makeForm(audio, fields = ['titel'])
-        self.assertIn('titel', form.base_fields)
-        self.assertNotIn('sender', form.base_fields)
-        self.assertNotIn('tracks', form.base_fields)
-        
-        # makeForm should return any form classes that are already present in DBentry.forms
-        # DBentry.forms.ArtikelForm overrides ATTRS_TEXTAREA for field 'schlagzeile' with {'rows':2, 'cols':90}
-        form = makeForm(artikel)
-        attrs = form.base_fields['schlagzeile'].widget.attrs
-        self.assertEqual(attrs['rows'], 2)
-        self.assertEqual(attrs['cols'], 90)
         
         
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):

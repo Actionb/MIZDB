@@ -29,35 +29,7 @@ class FormBase(forms.ModelForm):
             # Ignore non-unique entries in the same formset; see django.contrib.admin.options.InlineModelAdmin.get_formset.inner
             self.cleaned_data['DELETE']=True
             self._update_errors(e) #NOTE: update errors even if we're ignoring the ValidationError?
-
-def makeForm(model, fields = (), form_class = None):
-    fields_param = fields or '__all__'
-    form_class = form_class or FormBase
-    
-    #Check if a proper Form already exists:
-    import sys
-    model_name = model._meta.model_name
-    thismodule = sys.modules[__name__]
-    formname = model_name.capitalize() + 'Form'
-    if hasattr(thismodule, formname):
-        return getattr(thismodule, formname)
-    
-    #Otherwise use modelform_factory to create a generic Form with custom dal widgets
-    widgets = {}
-    for field in get_model_fields(model, base = False, foreign = True, m2m = False):
-        if fields and field.name not in fields:
-            continue
-        widgets[field.name] = make_widget(
-            model_name = field.related_model._meta.model_name, 
-            create_field=field.related_model.create_field
-        )
-    for field in model._meta.get_fields():
-        if isinstance(field, models.TextField):
-            widgets[field.name] = forms.Textarea(attrs=ATTRS_TEXTAREA)
-    return forms.modelform_factory(model = model, form=form_class, fields = fields_param, widgets = widgets) 
-
-
-        
+            
 class XRequiredFormMixin(object):
     """
     A mixin that allows setting a minimum/maximum number of groups of fields to be required.
