@@ -41,12 +41,14 @@ class BaseModel(models.Model):
     objects = MIZQuerySet.as_manager()
             
     def __str__(self):
-        #TODO: use name_field if set?
-        rslt = " ".join([
-            str(fld.value_from_object(self))
-            for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude_from_str)
-            if fld.value_from_object(self)
-        ])
+        if self.name_field is not None:
+            rslt = self._meta.get_field(self.name_field).value_from_object(self)
+        else:
+            rslt = " ".join([
+                str(fld.value_from_object(self))
+                for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude_from_str)
+                if fld.value_from_object(self)
+            ])
         return rslt.strip() or "---"
         
     def qs(self):
