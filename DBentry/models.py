@@ -1211,7 +1211,7 @@ class BaseBrochure(BaseModel):
     def __str__(self):
         return str(self.titel)
     
-    class Meta:
+    class Meta(BaseModel.Meta):
         ordering = ['titel']
     
 class Brochure(BaseBrochure):
@@ -1219,7 +1219,7 @@ class Brochure(BaseBrochure):
     
     schlagwort = models.ManyToManyField('schlagwort')
     
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
     
@@ -1229,7 +1229,7 @@ class Kalendar(BaseBrochure):
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
     
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
         verbose_name_plural = 'Programmhefte'
     
@@ -1240,7 +1240,7 @@ class Katalog(BaseBrochure):
     
     art = models.CharField('Art d. Kataloges', max_length = 40, choices = ART_CHOICES, default = 1)
     
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'
     
