@@ -1187,15 +1187,13 @@ class plattenfirma(BaseModel):
         ordering = ['name']
         verbose_name = 'Plattenfirma'
         verbose_name_plural = 'Plattenfirmen'
-        
-#TODO: add verbose_name, etc. so the purpose of this model is clear when setting user permissions in admin (this model just reads as 'Jahr')
+       
 class BrochureYear(AbstractJahrModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'jahre', blank = True, null = True)
     
 class BrochureURL(AbstractURLModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name = 'urls', blank = True, null = True)
     
-#TODO: BaseBrochure and its children do not inherit the Meta of BaseModel and thus no permission for merging    
 class BaseBrochure(BaseModel):
     titel = models.CharField(**CF_ARGS)
     zusammenfassung = models.TextField(blank = True)
@@ -1207,7 +1205,7 @@ class BaseBrochure(BaseModel):
     
     name_field = 'titel'
     
-    #TODO: add verbose_name as this base model's meta options are actually being used
+    #TODO: add verbose_name as this base model's meta options are actually being used (where exactly? if it's just the permission __str__ then we dont need a verbose_name)
     def __str__(self):
         return str(self.titel)
     
