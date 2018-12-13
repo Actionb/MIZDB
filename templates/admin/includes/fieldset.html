@@ -1,7 +1,7 @@
 {% load asf_tag %}
 <fieldset class="module aligned {{ fieldset.classes }}">
     {% if fieldset.name %}
-        <h2 class="fieldset-name collapsible">{{ fieldset.name }}</h2>
+        <h2 class="fieldset-name {% if 'collapse' in fieldset.classes %}collapsible{% endif %}">{{ fieldset.name }}</h2>
     {% endif %}
     {% if fieldset.description %}
         <div class="description">{{ fieldset.description|safe }}</div>
