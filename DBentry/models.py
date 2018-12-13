@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from .base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from .fields import ISSNField, ISBNField, EANField, YearField
+from .fields import ISSNField, ISBNField, EANField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit

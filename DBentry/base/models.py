@@ -1,12 +1,9 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
-from django.core.validators import MaxValueValidator, MinValueValidator
         
 from DBentry.managers import MIZQuerySet, CNQuerySet
 from DBentry.utils import get_model_fields
-from DBentry.constants import MIN_JAHR, MAX_JAHR
 from DBentry.fields import YearField
-
     
 class BaseModel(models.Model):
     """
