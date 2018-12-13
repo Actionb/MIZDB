@@ -5,7 +5,7 @@ from .base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
     BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from .forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm
+from .forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm
 from .utils import concat_limit
 from .actions import *
 from .ac.widgets import make_widget
@@ -77,6 +77,7 @@ class AudioAdmin(MIZModelAdmin):
     class AusgabeInLine(BaseAusgabeInline):
         model = ausgabe.audio.through
         
+    form = AudioForm
     index_category = 'Archivgut'
     
     list_display = ['__str__', 'formate_string', 'kuenstler_string']

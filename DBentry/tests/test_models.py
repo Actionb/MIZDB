@@ -1,5 +1,7 @@
 from .base import *
 
+from django.core.exceptions import ValidationError
+
 class TestBaseModel(DataTestCase):
 
     model = artikel
@@ -170,13 +172,27 @@ class TestModelAudio(DataTestCase):
     
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Testaudio')
-
-    def test_save(self):
-        self.obj1.save()
-        self.assertEqual(self.obj1.discogs_url, None)
-        self.obj1.release_id = 1
-        self.obj1.save()
-        self.assertEqual(self.obj1.discogs_url, "http://www.discogs.com/release/1")
+    
+    @translation_override(language = None)
+    def test_urls_only_valid_from_discogs(self):
+        # Assert that only urls with domain discogs.com are valid
+        obj = audio(titel='beep', discogs_url='http://www.google.com')
+        with self.assertRaises(ValidationError) as cm:
+            obj.full_clean()
+        self.assertIn('discogs_url', cm.exception.args[0])
+        self.assertEqual(cm.exception.args[0]['discogs_url'][0].message, "Bitte nur Adressen von discogs.com eingeben.")
+    
+    def test_urls_with_slug_valid(self):
+        # Assert that discogs urls with a slug are not regarded as invalid.
+        obj = audio(titel='beep', discogs_url='https://www.discogs.com/release/3512181')
+        with self.assertNotRaises(ValidationError):
+            obj.full_clean()
+            
+    def test_urls_without_slug_valid(self):
+        # Assert that discogs urls without a slug are not regarded as invalid.
+        obj = audio(titel='beep', discogs_url='https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181')
+        with self.assertNotRaises(ValidationError):
+            obj.full_clean()
  
 @tag("cn")        
 class TestModelAusgabe(DataTestCase):

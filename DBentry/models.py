@@ -651,8 +651,8 @@ class audio(BaseModel):
     e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
-    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)") #TODO: turn into a charfield to allow directly copying the id number from discogs.com (includes letters)      #discogs release id (discogs.com/release/1709793)
-    discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True)
+    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)")
+    discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True, validators = [RegexValidator(discogs_release_id_pattern, message= "Bitte nur Adressen von discogs.com eingeben.")]) #TODO: is null = True a good idea for URLFields?
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
@@ -684,13 +684,6 @@ class audio(BaseModel):
         
     def __str__(self):
         return str(self.titel)
-        
-    def save(self, *args, **kwargs):
-        if self.release_id:
-            self.discogs_url = "http://www.discogs.com/release/" + str(self.release_id)
-        else:
-            self.discogs_url = None
-        super(audio, self).save(*args, **kwargs)
     
     
 class bildmaterial(BaseModel):

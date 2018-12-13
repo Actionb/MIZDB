@@ -1,12 +1,14 @@
-from .base import ModelFormTestCase,FormTestCase,TestDataMixin, make, translation_override
+from .base import *
+from .mixins import TestDataMixin
 
 from django import forms
+from django.core.exceptions import NON_FIELD_ERRORS
 
 from DBentry.forms import (
     FormBase, AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, DynamicChoiceForm, 
-    HerausgeberForm, MIZAdminForm, XRequiredFormMixin
+    HerausgeberForm, MIZAdminForm, XRequiredFormMixin, AudioForm
 )
-from DBentry.models import artikel, ausgabe, land, autor, person, buch, Herausgeber, Organisation, genre
+from DBentry.models import artikel, ausgabe, land, autor, person, buch, Herausgeber, Organisation, genre, audio
 from DBentry.ac.widgets import EasyWidgetWrapper
 
 from dal import autocomplete
@@ -296,4 +298,64 @@ class TestXRequiredFormMixin(FormTestCase):
         form.is_valid()
         self.assertIn('Bitte mindestens 1 dieser Felder ausfüllen: First Name, Last Name.', form.non_field_errors())
         self.assertIn('Bitte höchstens 1 dieser Felder ausfüllen: Favorite Pet, Favorite Sport.', form.non_field_errors())
+        
+class TestAudioForm(ModelFormTestCase):
+    form_class = AudioForm
+    model = audio
+    fields = ['release_id', 'discogs_url']     
+    
+    def test_clean_aborts_on_invalid_releaseid_or_discogsurl(self):
+        # Assert that clean does not mess with release_id or discogs_url if both/either of them are invalid.
+        
+        # release_id invalid, discogs_url should not have been changed
+        form = self.get_form(data = {'release_id':'numbers', 'discogs_url':'https://www.discogs.com/release/3512181'})
+        form.full_clean()
+        self.assertNotIn('discogs_url', form._errors)
+        self.assertIn('discogs_url', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['discogs_url'], 'https://www.discogs.com/release/3512181')
+        
+        # url invalid, release_id should not have been changed
+        form = self.get_form(data = {'release_id':1234, 'discogs_url':'a real url'})
+        form.full_clean()
+        self.assertEqual(form.cleaned_data.get('release_id', ''), 1234)
+        
+        # both invalid
+        form = self.get_form(data = {'release_id':'numbers', 'discogs_url':'a real url'})
+        form.full_clean()
+        self.assertNotIn('release_id', form.cleaned_data)
+        self.assertNotIn('discogs_url', form.cleaned_data)
+        
+    @translation_override(language = None)
+    def test_clean_raises_error_when_releaseid_and_discogsurl_dont_fit(self):
+        # Assert that clean raises a ValidationError when release_id and the release_id given in discogs_url don't fit.
+        form = self.get_form(data = {'release_id':'1234', 'discogs_url':'http://www.discogs.com/release/3512181'})
+        form.full_clean()
+        self.assertIn(NON_FIELD_ERRORS, form.errors)
+        expected_error_message = "Die angegebene Release ID stimmt nicht mit der ID im Discogs Link überein."
+        self.assertIn(expected_error_message, form.errors[NON_FIELD_ERRORS])        
+    
+    def test_clean_sets_release_id_from_url(self):
+        # Assert that clean sets the correct release_id from a given valid url if a release_id was missing.
+        form = self.get_form(data = {'discogs_url':'http://www.discogs.com/release/3512181'})
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+        self.assertIn('release_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['release_id'], '3512181')
+        
+    def test_clean_sets_url_from_release_id(self):
+        # Assert that clean creates the correct url from a given valid release_id if an url was missing
+        form = self.get_form(data = {'release_id':1234})
+        form.full_clean()
+        self.assertIn('discogs_url', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['discogs_url'], 'http://www.discogs.com/release/1234')
+        
+    def test_clean_strips_slug(self):
+        # Assert that clean strips the url from any slugs
+        form = self.get_form(data = {
+            'release_id':3512181, 
+            'discogs_url': 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181'
+            }
+        )
+        form.full_clean()
+        self.assertEqual(form.cleaned_data['discogs_url'], 'http://www.discogs.com/release/3512181')
         

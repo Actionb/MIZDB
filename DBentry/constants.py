@@ -1,4 +1,4 @@
-
+import re
 import datetime
 
 from django.core.validators import *
@@ -52,3 +52,6 @@ MAX_JAHR = CUR_JAHR+1
 MIN_JAHR = 1899
 
 PERM_DENIED_MSG = 'Sie haben nicht die erforderliche Berechtigung diese Seite zu sehen.'
+
+RELEASE_ID_REGEX = r'discogs.com/.*release/(\d+)'
+discogs_release_id_pattern = re.compile(RELEASE_ID_REGEX)

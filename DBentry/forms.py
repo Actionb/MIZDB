@@ -9,7 +9,7 @@ from django.db.models.query import QuerySet
 from django.db.models.manager import BaseManager
 
 from .models import *
-from .constants import ATTRS_TEXTAREA
+from .constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
 from DBentry.utils import snake_case_to_spaces, get_model_fields
 
@@ -149,6 +149,38 @@ class BuchForm(XRequiredFormMixin, FormBase):
 class HerausgeberForm(XRequiredFormMixin, FormBase):
     
     xrequired = [{'fields':['person', 'organisation'], 'min':1}]
+    
+class AudioForm(FormBase):    
+    
+    def clean(self):
+        # release_id and discogs_url are not required, so there's two reason they might not turn up in self.cleaned_data at this point:
+        # - they simply had no data
+        # - the data they had was invalid
+        # There is no point in working on invalid data, so return early.
+        if 'release_id' in self._errors or 'discogs_url' in self._errors:
+            return self.cleaned_data
+        
+        # Cast release_id into a string; or if None or not in cleaned_data, set it to empty string
+        if 'release_id' in self.cleaned_data:
+            release_id = self.cleaned_data['release_id']
+            if release_id is None:
+                release_id = ''
+            else:
+                release_id = str(release_id)
+        else:
+            release_id = ''
+        match = discogs_release_id_pattern.search(self.cleaned_data.get('discogs_url') or '') # cleaned_data['discogs_url'] could be None therefore: or ''
+        if match and len(match.groups()) == 1:
+            # We have a valid url with a release_id in it
+            release_id_from_url = match.groups()[-1]
+            if release_id and release_id_from_url != release_id:
+                raise ValidationError("Die angegebene Release ID stimmt nicht mit der ID im Discogs Link überein.")
+            elif not release_id:
+                # Set release_id from the url
+                release_id = str(match.groups()[-1])
+                self.cleaned_data['release_id'] = release_id
+        # Clean (as in: remove slugs) and set discogs_url with the confirmed release_id
+        self.cleaned_data['discogs_url'] = "http://www.discogs.com/release/" + release_id
     
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
