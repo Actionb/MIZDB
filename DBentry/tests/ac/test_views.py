@@ -26,11 +26,6 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertTrue(v.has_create_field())
         v.create_field = ''
         self.assertFalse(v.has_create_field())
-# TODO: remove me       
-#    def test_has_add_permission(self):
-#        # Test largely covered by test_get_create_option_no_perms
-#        request = self.get_request(user=self.noperms_user)
-#        self.assertFalse(self.get_view().has_add_permission(request)) 
         
     def test_get_create_option_no_create_field(self):
         # No create option should be displayed if there is no create_field
