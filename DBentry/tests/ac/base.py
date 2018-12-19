@@ -10,6 +10,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
     create_field = None
     
     def get_path(self):
+        # Needed for the RequestTestCase
         if self.path != 'accapture':
             return super().get_path()
         reverse_kwargs = {'model_name':self.model._meta.model_name}
@@ -18,7 +19,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
         return reverse(self.path, kwargs=reverse_kwargs)
     
     def get_view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
-        #DBentry.ac.views behave slightly different in their as_view() method
+        # DBentry.ac.views behave slightly different in their as_view() method
         view = super(ACViewTestCase, self).get_view(request, args, kwargs)
         view.model = model or self.model
         view.create_field = create_field or self.create_field
@@ -44,7 +45,7 @@ class ACViewTestMethodMixin(object):
         return self._alias_accessor_name
     
     def test_do_ordering(self):
-        # Test covered by test_get_queryset
+        # Test covered by test_get_queryset #TODO:<-- what does this mean?
         view = self.get_view()
         expected = self.model._meta.ordering
         qs_order = view.do_ordering(self.queryset).query.order_by
@@ -77,6 +78,7 @@ class ACViewTestMethodMixin(object):
         self.assertListEqualSorted(qs, expected)
     
     def test_search_fields_prop(self):
+        # TODO: if we remove the property, this test can be deleted
         self.assertListEqualSorted(self.get_view().search_fields, self.model.get_search_fields())
         
     @translation_override(language = None)

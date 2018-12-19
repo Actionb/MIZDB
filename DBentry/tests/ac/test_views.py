@@ -26,11 +26,11 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertTrue(v.has_create_field())
         v.create_field = ''
         self.assertFalse(v.has_create_field())
-        
-    def test_has_add_permission(self):
-        # Test largely covered by test_get_create_option_no_perms
-        request = self.get_request(user=self.noperms_user)
-        self.assertFalse(self.get_view().has_add_permission(request)) 
+# TODO: remove me       
+#    def test_has_add_permission(self):
+#        # Test largely covered by test_get_create_option_no_perms
+#        request = self.get_request(user=self.noperms_user)
+#        self.assertFalse(self.get_view().has_add_permission(request)) 
         
     def test_get_create_option_no_create_field(self):
         # No create option should be displayed if there is no create_field
@@ -100,8 +100,10 @@ class TestACCapture(ViewTestCase):
         try:
             view.dispatch(model_name = 'ausgabe')
         except:
+            # view.dispatch will run fine until it calls super() without a request positional argument
+            # the model attribute is set before that
             pass
-        self.assertEqual(view.model, ausgabe)
+        self.assertEqual(view.model._meta.model_name, 'ausgabe')
         
     def test_get_result_value(self):
         # result is a list
@@ -131,15 +133,19 @@ class TestACCreateable(ACViewTestCase):
         self.creator = Creator(autor)
     
     def test_dispatch_sets_creator(self):
+        # Assert that a creator instance with the right model is created during dispatch()
         view = self.get_view()
         try:
             view.dispatch()
         except:
+            # view.dispatch will run fine until it calls super() without a request positional argument
+            # the creator attribute is set before that
             pass
         self.assertIsInstance(view.creator, Creator)
+        self.assertEqual(view.creator.model, self.model)
         
     def test_createable(self):
-        # Assert that createable return True if:
+        # Assert that createable returns True if:
         # - a new object can be created from the given parameters
         # - no objects already present in the database fit the given parameters
         
