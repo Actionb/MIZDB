@@ -4,6 +4,7 @@
 
 #TODO: use get_prep_lookup? -- ?? For what exactly?
 
+from functools import partial
 from stdnum import issn, isbn, ean
 
 from django.db import models
@@ -37,8 +38,10 @@ class StdNumFormField(fields.CharField):
         super().__init__(*args, **kwargs)
     
     def to_python(self, value):
-        #TODO: For a FormField to be able to compare ISBN10 with ISBN13 correctly (automatic conversion to ISBN13), something needs to happen here
         value = super().to_python(value)
+        if self.stdnum == isbn and isbn.isbn_type(value) == 'ISBN10':
+            # cast the ISBN10 into a ISBN13, so value can match the initial value (which is always ISBN13)
+            value = isbn.to_isbn13(value)
         # To ensure that an initial compact value does not differ from a data formatted value, compact the data value. See FormField.has_changed
         return self.stdnum.compact(value)
 
@@ -64,6 +67,8 @@ class StdNumField(models.CharField):
     def get_format_callback(self):
         if hasattr(self.stdnum, 'format'):
             return self.stdnum.format
+        # Fallback for ean stdnum which does not have a format function
+        return self.stdnum.compact
 
     def to_python(self, value):
         # In order to deny querying and saving with invalid values, we have to call run_validators.
@@ -87,7 +92,6 @@ class ISBNField(StdNumField):
         return isbn.to_isbn13(value)
         
     def get_format_callback(self):
-        from functools import partial
         return partial(isbn.format, convert=True)
         
 
@@ -106,6 +110,3 @@ class EANField(StdNumField):
     min_length = 7  # EAN-8 without check digit
     max_length = 17 # EAN-13 with four dashes/spaces and check digit
     default_validators = [EANValidator]
-    
-    #TODO: use issn.format for EAN-8 and isbn.format for EAN-13?
-        

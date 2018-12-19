@@ -1,7 +1,3 @@
-
-
-import contextlib
-
 from .base import MyTestCase
 
 from django.db import transaction
@@ -9,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django import forms
 from django.core.validators import MaxValueValidator, MinValueValidator
 
-from stdnum import issn, isbn, ean
+from stdnum import isbn
 
 from DBentry.fields import StdNumWidget, YearField
 from DBentry.models import buch, magazin
@@ -33,9 +29,6 @@ class TestYearField(MyTestCase):
 # Reminder: the field's cleaning methods will reraise any ValidationError subtypes as a new ValidationError, so we cannot
 # test for the correct subtype here.
 
-#TODO: I dont like the pretty() functions
-#TODO: the tests may not be very precise (passing in red stage, excluding certain values (backup_valids))
- 
 class StdNumFieldTestsMixin(object):
         
     prototype_data = None # the data necessary to create a partial prototype of a model instance 
@@ -73,18 +66,28 @@ class StdNumFieldTestsMixin(object):
                 with collector():
                     with self.assertNotRaises(ValidationError, msg = "for valid input: " + str(valid_number)):
                         self.model.objects.filter(**{self.model_field.name:valid_number})
-         
+     
     def test_query_with_any_format_returns_results(self):
         # Assert that the correct results are returned by querying for a std number no matter the format of the input
         # For this test to make any real sense, it is required that test_saves_as_compact passes.
+        valid_seen = set()
         with self.collect_fails() as collector:
             for valid_number in self.valid:
-                model_instance = self.create_model_instance(**{self.model_field.name:valid_number})
+                # Save as compact, query with pretty format
+                compact = self.model_field.stdnum.compact(valid_number)
+                pretty = self.model_field.get_format_callback()(valid_number)
+                if compact in valid_seen:
+                    continue
+                valid_seen.add(compact)
+                if compact == pretty:
+                    continue
+                
+                model_instance = self.create_model_instance(**{self.model_field.name:compact})
                 model_instance.save()
-                qs = self.model.objects.filter(**{self.model_field.name:valid_number})
+                qs = self.model.objects.filter(**{self.model_field.name:pretty})
                 with collector():
                     msg_info = "Querying for {filter_kwargs}\nIn database: {values}\n".format(
-                        filter_kwargs = {self.model_field.name:valid_number}, 
+                        filter_kwargs = {self.model_field.name:pretty}, 
                         values = list(self.model.objects.values_list(self.model_field.name, flat=True))
                     )
                     self.assertEqual(qs.count(), 1, msg = "Query returned unexpected number of records. " + msg_info)
@@ -100,37 +103,7 @@ class StdNumFieldTestsMixin(object):
                 model_instance.refresh_from_db()
                 with collector():
                     self.assertNotIn('-', getattr(model_instance, self.model_field.name))
-    
-    def test_modelform_invalid_for_invalid_input(self):
-        #TODO: I doubt this is needed, the validators take care of the validation 
-        form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
-        
-        with self.collect_fails() as collector:
-            for invalid_number in self.invalid:
-                form = form_class(data={self.model_field.name: invalid_number})
-                with collector():
-                    self.assertFalse(form.is_valid(), msg = "ModelForm validation passed unexpectedly for invalid input: " + str(invalid_number))
-    
-    def test_form_invalid_for_invalid_input(self):
-        #TODO: I doubt this is needed, the validators take care of the validation 
-        form_class = type('Form', (forms.Form, ), {'a':self.model_field.formfield()})
-        
-        with self.collect_fails() as collector:
-            for invalid_number in self.invalid:
-                form = form_class(data={'a': invalid_number})
-                with collector():
-                    self.assertFalse(form.is_valid(), msg = "Form validation passed unexpectedly for invalid input: " + str(invalid_number))
                     
-    def test_form_valid_for_valid_input(self):
-        #TODO: I doubt this is needed, the validators take care of the validation 
-        form_class = type('Form', (forms.Form, ), {'a':self.model_field.formfield()})
-        
-        with self.collect_fails() as collector:
-            for valid_number in self.valid:
-                form = form_class(data={'a': valid_number})
-                with collector():
-                    self.assertTrue(form.is_valid(), msg = "Form validation failed unexpectedly for valid input: " + str(valid_number))
-        
     def test_modelform_uses_pretty_format(self):
         # Assert that the value displayed on a modelform is the 'pretty' and not the compact version (if applicable).
         # We're using str(boundfield) for this as this renders the widget for the formfield.
@@ -145,7 +118,7 @@ class StdNumFieldTestsMixin(object):
                 model_form = model_form_class(instance = model_instance)
                 with collector():
                     self.assertIn(
-                        'value="' + self.pretty(valid_number) + '"',  
+                        'value="' + self.model_field.get_format_callback()(valid_number) + '"',  
                         str(model_form[self.model_field.name])
                     )
           
@@ -168,15 +141,16 @@ class StdNumFieldTestsMixin(object):
         
         with self.collect_fails() as collector:            
             for valid_number in self.valid:
-                if self.pretty(valid_number) == valid_number:
+                if self.model_field.get_format_callback()(valid_number) == valid_number:
                     # No point in checking if valid_number is already 'pretty'
                     continue
                 model_instance = self.create_model_instance(**{self.model_field.name:valid_number})
                 # This should save the compact form of the number
                 model_instance.save()
                 model_instance.refresh_from_db()
+                # Create the model form with the number's pretty format as initial value.
                 model_form = model_form_class(
-                    data = {self.model_field.name:self.pretty(valid_number)}, 
+                    data = {self.model_field.name:self.model_field.get_format_callback()(valid_number)}, 
                     instance = model_instance
                 )
                 with collector():
@@ -194,8 +168,10 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
     valid = [
         '123456789X',  # ISBN-10 w/o hyphens
         '1-234-56789-X', # ISBN-10 w/ hyphens
-        '9791234567896', # ISBN-13 w/o hyphens
-        '979-1-234-56789-6', # ISBN-13 w/ hyphens
+        '9780471117094', # ISBN-13 w/o hyphens
+        '978-0-471-11709-4', # ISBN-13 w/ hyphens
+        '9791234567896', # ISBN-13 w/o hyphens with 979 bookmark
+        '979-1-234-56789-6', # ISBN-13 w/ hyphens with 979 bookmark
     ]
     invalid = [
         "9999!)()/?1*", #InvalidFormat 
@@ -206,28 +182,41 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
         '9781234567890', #InvalidChecksum 
         '978-1-234-56789-0', #InvalidChecksum
     ]
-    
-    def pretty(self, value):
-        return isbn.format(value)
             
-    @contextlib.contextmanager
-    def backup_valids(self):
-        backup = self.valid.copy() 
-        self.valid = self.valid[2:]
-        yield
-        self.valid = backup
-        
-    def test_modelform_handles_formats_as_the_same_data(self):
-        # Only use the ISBN-13 numbers for this test as ISBNField 'upcasts' ISBN10
-        #NOTE: only using ISBN-13 may be a bad idea due to 'false positives'
-        with self.backup_valids():
-            super().test_modelform_handles_formats_as_the_same_data()
-        
-    def test_modelform_uses_pretty_format(self):
-        # Only use the ISBN-13 numbers for this test as ISBNField 'upcasts' ISBN10
-        #NOTE: only using ISBN-13 may be a bad idea due to 'false positives'
-        with self.backup_valids():
-            super().test_modelform_uses_pretty_format()
+    def test_modelform_handles_isbn10_as_isbn13(self):
+        # Assert that the form treats an initial value of ISBN13 as the same as an equal value of ISBN10 passed in as data. Ugh, what is English?
+        model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
+        isbn10_seen = set()
+        with self.collect_fails() as collector:
+            for valid_number in self.valid:
+                valid_number = isbn.compact(valid_number)
+                # Use the ISBN13 for initial and the ISBN10 as data
+                if valid_number.startswith('979'):
+                    # cannot convert from isbn13 with 979 bookmark to isbn10
+                    continue
+                if isbn.isbn_type(valid_number) == 'ISBN13':
+                    isbn10 = isbn.to_isbn10(valid_number)
+                    isbn13 = valid_number
+                else:
+                    isbn10 = valid_number
+                    isbn13 = isbn.to_isbn13(valid_number)
+                if isbn10 in isbn10_seen:
+                    continue
+                isbn10_seen.add(isbn10)
+                
+                model_instance = self.create_model_instance(**{self.model_field.name:isbn13})
+                model_instance.save()
+                model_instance.refresh_from_db()
+                model_form = model_form_class(
+                    data = {self.model_field.name:isbn10}, 
+                    instance = model_instance
+                )
+                with collector():
+                    msg_info = "\nform initial: {}, form data: {}\n".format(
+                        model_form[self.model_field.name].initial, 
+                        model_form[self.model_field.name].value()
+                    )
+                    self.assertFalse(model_form.has_changed(), msg = "ModelForm is flagged as changed for using different ISBN types of the same stdnum. " + msg_info)
 
     def test_converts_isbn10_to_isbn13_on_save(self):
         # Assert that only numbers of the isbn13 standard are saved
@@ -263,9 +252,6 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
         "1234-5670", #InvalidChecksum
     ]
     
-    def pretty(self, value):
-        return issn.format(value)
-    
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
     model = buch
     model_field = buch._meta.get_field('EAN')
@@ -278,8 +264,4 @@ class TestEANField(StdNumFieldTestsMixin, MyTestCase):
         '73513538', #InvalidChecksum
         "1234567890123", #InvalidChecksum
     ]
-    
-    def pretty(self, value):
-        return ean.compact(value)
-    
     
