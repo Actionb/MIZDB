@@ -164,11 +164,16 @@ class TestACCreateable(ACViewTestCase):
         view = self.get_view(request)
         view.creator = self.creator
         self.assertTrue(hasattr(view, 'get_creation_info'))
-        view.get_creation_info = mockv([{'id': None, 'create_id': True, 'text': 'Test123'}])
         
+        view.get_creation_info = mockv([{'id': None, 'create_id': True, 'text': 'Test123'}])
         create_option = view.get_create_option(context = {}, q = 'Alice Testman (AT)') 
         self.assertEqual(len(create_option), 2, msg = ", ".join(str(d) for d in create_option))
         self.assertIn('Test123', [d['text'] for d in create_option])
+        
+        # get_creation_info cannot return an empty list, but get_create_option checks for it so...
+        view.get_creation_info = mockv([])
+        create_option = view.get_create_option(context = {}, q = 'Alice Testman (AT)') 
+        self.assertEqual(len(create_option), 1)
         
         view.createable = mockv(False)
         self.assertFalse(view.get_create_option(context = {}, q = 'Nope'))

@@ -18,26 +18,27 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         if self.create_field:
             return True
         return False
-    
-    def get_create_option(self, context, q):
-        """Form the correct create_option to append to results."""
-        # Override:
-        # - to include a hook has_create_field() instead of just checking for if self.create_field (needed for ACProv)
-        # - to translate the create text
-        create_option = []
-        display_create_option = False
+        
+    def display_create_option(self, context, q):
+        """ Returns a boolean whether the create option should be displayed or not. """
         if self.has_create_field() and q:
             page_obj = context.get('page_obj', None)
             if page_obj is None or not self.has_more(context):#or page_obj.number == 1:
-                display_create_option = True
-
-        if display_create_option and self.has_add_permission(self.request):
-            create_option = [{
-                'id': q,
-                'text': gettext('Create "%(new_value)s"') % {'new_value': q},
-                'create_id': True,
-            }]
-        return create_option
+                return True
+        return False
+        
+    def build_create_option(self, q):    
+        return [{
+            'id': q,
+            'text': gettext('Create "%(new_value)s"') % {'new_value': q},
+            'create_id': True,
+        }]
+        
+    def get_create_option(self, context, q):
+        """Form the correct create_option to append to results."""
+        if self.display_create_option(context, q) and self.has_add_permission(self.request):
+            return self.build_create_option(q)
+        return []
     
     @property
     def search_fields(self):
@@ -193,30 +194,21 @@ class ACCreateable(ACCapture):
             return True
         return False
         
-    def get_create_option(self, context, q):
-        """Form the correct create_option to append to results."""
-        # Override:
-        # - to include a hook has_create_field() instead of just checking for if self.create_field (needed for ACProv)
-        # - to translate the create text
-        create_option = []
-        display_create_option = False
+    def display_create_option(self, context, q):
+        """ Returns a boolean whether the create option should be displayed or not. """
         if q:
             page_obj = context.get('page_obj', None)
             if page_obj is None or not self.has_more(context):#or page_obj.number == 1:
                 # See if we can create an object from q
                 if self.createable(q):
-                    display_create_option = True
-
-        if display_create_option and self.has_add_permission(self.request):
-            create_option = [{
-                'id': q,
-                'text': gettext('Create "%(new_value)s"') % {'new_value': q}, 
-                'create_id': True,
-            }]
-            create_info = self.get_creation_info(q)
-            if create_info:
-                create_option.extend(create_info)
+                    return True
+        return False
         
+    def build_create_option(self, q):
+        create_option = super().build_create_option(q)
+        create_info = self.get_creation_info(q)
+        if create_info:
+            create_option.extend(create_info)
         return create_option
         
     def get_creation_info(self, text, creator = None):
