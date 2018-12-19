@@ -1,5 +1,5 @@
 from stdnum import issn, isbn, ean
-from stdnum.util import clean
+from stdnum import exceptions as stdnum_exceptions
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy
@@ -23,47 +23,29 @@ class InvalidChecksum(StdValidationError):
 class InvalidComponent(StdValidationError):
     message = gettext_lazy("One of the parts of the number are invalid or unknown.")
 
-def _add_check_digit(std, number, min_length):
-    number = std.compact(number)
-    if len(number) == min_length:
-        # User did not include the check digit
-        if number.isnumeric():
-            number += std.calc_check_digit(number)
-        else:
-            raise InvalidComponent()
-    return number
 
-def _validate(std, number, min_length=None):
-    from stdnum import exceptions
-    if min_length:
-        #TODO: is this still needed?
-        number = _add_check_digit(std, number, min_length)
+def _validate(std, number):
+    # Reraise the exceptions as django.ValidationErrors
     try:
         std.validate(number)
-    except exceptions.InvalidLength:
+    except stdnum_exceptions.InvalidLength:
         raise InvalidLength()
-    except exceptions.InvalidFormat:
+    except stdnum_exceptions.InvalidFormat:
         raise InvalidFormat()
-    except exceptions.InvalidChecksum:
+    except stdnum_exceptions.InvalidChecksum:
         raise InvalidChecksum()
-    except exceptions.InvalidComponent:
+    except stdnum_exceptions.InvalidComponent:
         raise InvalidComponent()
     return True
     
 def ISBNValidator(raw_isbn):
-    raw_isbn = clean(raw_isbn, ' -').strip().upper()
-    if raw_isbn.isnumeric():
-        if len(raw_isbn) == 9:
-            raw_isbn += isbn._calc_isbn10_check_digit(raw_isbn)
-        elif len(raw_isbn) == 12:
-            raw_isbn += ean.calc_check_digit(raw_isbn)
     return _validate(isbn, raw_isbn)
 
 def ISSNValidator(raw_issn):
-    return _validate(issn, raw_issn, 7)
+    return _validate(issn, raw_issn)
     
 def EANValidator(raw_ean):
-    return _validate(ean, raw_ean, 7)
+    return _validate(ean, raw_ean)
     
         
         
