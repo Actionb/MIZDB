@@ -2,8 +2,6 @@
 # One can freely convert ISBN-10 to ISBN-13 and vice versa and both have pretty versions.
 # stdnum.ean does not provide a pretty format for EAN-8, but one can use ISBN-13 formatting for EAN-13.
 
-#TODO: use get_prep_lookup? -- ?? For what exactly?
-
 from functools import partial
 from stdnum import issn, isbn, ean
 
@@ -78,11 +76,11 @@ class StdNumField(models.CharField):
         return value
         
 class ISBNField(StdNumField):
-    description = 'Cleaned and validated ISBN string: min length 9 (ISBN-10 w/o check digit), max length 17 (13 digits + dashes/spaces).'
+    description = 'Cleaned and validated ISBN string: min length 10 (ISBN-10), max length 17 (13 digits + dashes/spaces).'
     
     stdnum = isbn
-    min_length = 9 # ISBN-10 without check-digit
-    max_length = 17 # ISBN-13 with four dashes/spaces and check digit
+    min_length = 10 # ISBN-10 without dashes/spaces
+    max_length = 17 # ISBN-13 with four dashes/spaces
     
     default_validators = [ISBNValidator]
     
@@ -99,14 +97,14 @@ class ISSNField(StdNumField):
     description = 'Cleaned and validated ISSN string of length 8.'
     
     stdnum = issn
-    min_length = 7 # ISSN without check digit: 1234567
-    max_length = 9 # ISSN with dash/space and check digit: 1234-5679
+    min_length = 8 # ISSN without dash/space
+    max_length = 9 # ISSN with dash/space
     default_validators = [ISSNValidator]
         
 class EANField(StdNumField):
-    description = 'Cleaned and validated EAN string: min length 7 (EAN-8 w/o check digit), max length 17 (13 digits + dashes/spaces).'
+    description = 'Cleaned and validated EAN string: min length 8 (EAN-8), max length 17 (13 digits + dashes/spaces).'
     
     stdnum = ean
-    min_length = 7  # EAN-8 without check digit
-    max_length = 17 # EAN-13 with four dashes/spaces and check digit
+    min_length = 8  # EAN-8
+    max_length = 17 # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
