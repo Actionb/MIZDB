@@ -78,7 +78,6 @@ class ACViewTestMethodMixin(object):
         self.assertListEqualSorted(qs, expected)
     
     def test_search_fields_prop(self):
-        # TODO: if we remove the property, this test can be deleted
         self.assertListEqualSorted(self.get_view().search_fields, self.model.get_search_fields())
         
     @translation_override(language = None)

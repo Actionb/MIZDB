@@ -12,6 +12,7 @@ from DBentry.utils import get_model_from_string
 from DBentry.ac.creator import Creator
 
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
+    
     _search_fields = None
     
     def has_create_field(self):
@@ -39,10 +40,13 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         if self.display_create_option(context, q) and self.has_add_permission(self.request):
             return self.build_create_option(q)
         return []
-    
+        
     @property
     def search_fields(self):
-        #TODO: why is this a property when could just set self.search_fields during init?
+        # This is a property so the evaluation of model.get_search_fields can be delayed for any subclass of ACBase 
+        # until after the attribute model has been set with certainty: 
+        # - direct children of ACBase should start with a set model attribute
+        # - ACCapture will set the model attribute during dispatch(), but before search fields are needed
         if not self._search_fields:
             self._search_fields = self.model.get_search_fields()
         return self._search_fields
