@@ -24,7 +24,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         """ Returns a boolean whether the create option should be displayed or not. """
         if self.has_create_field() and q:
             page_obj = context.get('page_obj', None)
-            if page_obj is None or not self.has_more(context):#or page_obj.number == 1:
+            if page_obj is None or not self.has_more(context):
                 return True
         return False
         
@@ -202,7 +202,7 @@ class ACCreateable(ACCapture):
         """ Returns a boolean whether the create option should be displayed or not. """
         if q:
             page_obj = context.get('page_obj', None)
-            if page_obj is None or not self.has_more(context):#or page_obj.number == 1:
+            if page_obj is None or not self.has_more(context):
                 # See if we can create an object from q
                 if self.createable(q):
                     return True
