@@ -52,6 +52,10 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     def apply_q(self, qs):
         #TODO: check the availability of lookups for any given search field first before you attempt a query
         # Doing a query with a bad lookup will ruin the search results returned by other search fields that would allow said lookup
+        #TODO: rework the lookups for each individual field type:
+        # __istartswith for DateFields is nonsensical, as is __iexact for issn fields etc.
+        # Also: ValueErrors *might* bubble up to here from making queries with bad/invalid values (pk='a')
+        # When input is valid for one search_field, but invalid for another, the result will be queryset.none() due to bad exception handling!
         if self.q:
             if self.search_fields:
                 exact_match_qs = qs

@@ -1,10 +1,15 @@
-from .base import *
+from .base import MyTestCase
 
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from django import forms
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from stdnum import isbn
+
+from DBentry.fields import StdNumWidget, YearField
+from DBentry.models import buch, magazin
 from DBentry.constants import MIN_JAHR, MAX_JAHR
-from DBentry.fields import *
-from DBentry.validators import *
 
 class TestYearField(MyTestCase):
     
@@ -21,115 +26,242 @@ class TestYearField(MyTestCase):
         self.assertIsInstance(max, MaxValueValidator)
         self.assertEqual(max.limit_value, MAX_JAHR)        
 
-class TestStdNumField(MyTestCase):
-    
-    def test_formfield(self):
-        # Assert that formfield() passes the min_length and the validators on to the formfield
-        field = StdNumField()
-        field.default_validators = [ISSNValidator]
-        field.min_length = 1
-        formfield = field.formfield()
-        self.assertIn(ISSNValidator, formfield.validators)
-        self.assertEqual(formfield.min_length, 1)
-        
-    def test_pre_save(self):
-        # Assert that pre_save formats the value and updates the model instance accordingly
-        field = StdNumField()
-        field.attname = 'x'
-        field._format_value = mockv("ABCD")
-        
-        instance = Mock(x="12345679")
-        self.assertEqual(field.pre_save(instance, True), "ABCD")
-        
-    def test_add_check_digit(self):
-        # Assert that a check digit is added to 'value' if its length is equal to min_length
-        field = StdNumField()
-        field.min_length = 7
-        field.stdnum = issn
-        self.assertEqual(len(field._add_check_digit("1234567")), 8)
-        field.stdnum = ean
-        self.assertEqual(len(field._add_check_digit("1234567")), 8)
-        field.min_length = 1
-        self.assertEqual(len(field._add_check_digit("1234567")), 7)
-        
-    def test_format_value(self):
-        # Assert that _format_value formats the given value 
-        # ean has no 'format' attribute, value should be 'compact'ed instead
-        field = StdNumField()
-        field.stdnum = ean
-        ean_13 = "1234-5678-9012-8"
-        self.assertEqual(field._format_value(ean_13), ean.compact(ean_13))
-        
-        # issn can do pretty formats
-        field.stdnum = issn
-        self.assertEqual(field._format_value("12345679"), "1234-5679")
-        
-        # or just return the value if stdnum has neither format nor compact
-        field.stdnum = None
-        self.assertEqual(field._format_value("12345679"), "12345679")
-        
-        # Assert that _format_value does not care about AttributeErrors raised in _add_check_digit
-        field._add_check_digit = mockex(AttributeError())
-        with self.assertNotRaises(AttributeError):
-            field._format_value("1")
+# Reminder: the field's cleaning methods will reraise any ValidationError subtypes as a new ValidationError, so we cannot
+# test for the correct subtype here.
 
-class FieldTestMethodsMixin(object):
-    
-    valid = ()
-    invalid = ()
+class StdNumFieldTestsMixin(object):
         
-    def test_valid_input(self):
-        ff = self.field_class().formfield()
-        for v in self.valid.copy():
-            with self.assertNotRaises(ValidationError):
-                ff.clean(v)
-            # Also test values with missing check digits
-            with self.assertNotRaises(ValidationError, msg = 'A stdnum without its check digit should validate.'):
-                ff.clean(v.replace('-', '')[:-1])
+    prototype_data = None # the data necessary to create a partial prototype of a model instance 
         
-    def test_invalid_input(self):
-        ff = self.field_class().formfield()
-        for v, exception in self.invalid.copy():
-            with self.assertRaises(ValidationError, msg = v) as cm:
-                ff.clean(v)
-            # The exception stored in the context manager is actually ValidationError raised by clean 
-            # with all collected errors in its 'error_list' attribute
-            self.assertIn(exception.message, [e.message for e in cm.exception.error_list])
-
-class TestISBNField(FieldTestMethodsMixin, MyTestCase):
+    def create_model_instance(self, **kwargs):
+        if not self.prototype_data is None:
+            instance_data = self.prototype_data.copy()
+        else:
+            instance_data = {}
+        instance_data.update(kwargs)
+        return self.model(**instance_data)
+        
+    def test_no_save_with_invalid_data(self):
+        # Assert that no records can be saved with invalid data
+        with self.collect_fails() as collector:
+            for invalid_number in self.invalid:
+                model_instance = self.create_model_instance(**{self.model_field.name:invalid_number})
+                with collector():
+                    with transaction.atomic():
+                        with self.assertRaises(ValidationError, msg = "for invalid input: " + str(invalid_number)):
+                            model_instance.save()
+            
+    def test_no_query_with_invalid_data(self):
+        # Assert that no query can be attempted with invalid data (much like DateFields)
+        with self.collect_fails() as collector:
+            for invalid_number in self.invalid:
+                with collector():
+                    with self.assertRaises(ValidationError, msg = "for invalid input: " + str(invalid_number)):
+                        self.model.objects.filter(**{self.model_field.name:invalid_number})
+                        
+    def test_query_with_any_format(self):
+        # Assert queries are possible regardless of the format (pretty/compact) of the valid input
+        with self.collect_fails() as collector:
+            for valid_number in self.valid:
+                with collector():
+                    with self.assertNotRaises(ValidationError, msg = "for valid input: " + str(valid_number)):
+                        self.model.objects.filter(**{self.model_field.name:valid_number})
+     
+    def test_query_with_any_format_returns_results(self):
+        # Assert that the correct results are returned by querying for a std number no matter the format of the input
+        # For this test to make any real sense, it is required that test_saves_as_compact passes.
+        valid_seen = set()
+        with self.collect_fails() as collector:
+            for valid_number in self.valid:
+                # Save as compact, query with pretty format
+                compact = self.model_field.stdnum.compact(valid_number)
+                pretty = self.model_field.get_format_callback()(valid_number)
+                if compact in valid_seen:
+                    continue
+                valid_seen.add(compact)
+                if compact == pretty:
+                    continue
+                
+                model_instance = self.create_model_instance(**{self.model_field.name:compact})
+                model_instance.save()
+                qs = self.model.objects.filter(**{self.model_field.name:pretty})
+                with collector():
+                    msg_info = "Querying for {filter_kwargs}\nIn database: {values}\n".format(
+                        filter_kwargs = {self.model_field.name:pretty}, 
+                        values = list(self.model.objects.values_list(self.model_field.name, flat=True))
+                    )
+                    self.assertEqual(qs.count(), 1, msg = "Query returned unexpected number of records. " + msg_info)
+                    self.assertEqual(qs.get(), model_instance, msg = "Query returned unexpected record.")
+                model_instance.delete()
+        
+    def test_saves_as_compact(self):
+        # Assert that all std number are saved to the db in their compact format
+        with self.collect_fails() as collector:
+            for valid_number in self.valid:
+                model_instance = self.create_model_instance(**{self.model_field.name:valid_number})
+                model_instance.save()
+                model_instance.refresh_from_db()
+                with collector():
+                    self.assertNotIn('-', getattr(model_instance, self.model_field.name))
+                    
+    def test_modelform_uses_pretty_format(self):
+        # Assert that the value displayed on a modelform is the 'pretty' and not the compact version (if applicable).
+        # We're using str(boundfield) for this as this renders the widget for the formfield.
+        # Note that this test will always succeed for EAN fields as they have nothing but compact.
+        model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
+        
+        with self.collect_fails() as collector:            
+            for valid_number in self.valid:
+                model_instance = self.create_model_instance(**{self.model_field.name:valid_number})
+                model_instance.save()
+                model_instance.refresh_from_db()
+                model_form = model_form_class(instance = model_instance)
+                with collector():
+                    self.assertIn(
+                        'value="' + self.model_field.get_format_callback()(valid_number) + '"',  
+                        str(model_form[self.model_field.name])
+                    )
+          
+    def test_min_max_parameter_passed_to_formfield(self):
+        # Assert that the correct min and max length parameters are passed to the field's formfield.
+        formfield = self.model_field.formfield()
+        self.assertEqual(formfield.min_length, self.model_field.min_length)
+        self.assertEqual(formfield.max_length, self.model_field.max_length)    
+        
+    def test_widget_class_passed_to_formfield(self):
+        # Assert that the widget class needed to render the value in the correct format is provided to the formfield.
+        formfield = self.model_field.formfield()
+        
+        self.assertIsInstance(formfield.widget, StdNumWidget)
+        
+    def test_modelform_handles_formats_as_the_same_data(self):
+        # Assert that a model form is not flagged as 'changed' when field's initial value is of another format than 
+        # the bound data.
+        model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
+        
+        with self.collect_fails() as collector:            
+            for valid_number in self.valid:
+                if self.model_field.get_format_callback()(valid_number) == valid_number:
+                    # No point in checking if valid_number is already 'pretty'
+                    continue
+                model_instance = self.create_model_instance(**{self.model_field.name:valid_number})
+                # This should save the compact form of the number
+                model_instance.save()
+                model_instance.refresh_from_db()
+                # Create the model form with the number's pretty format as initial value.
+                model_form = model_form_class(
+                    data = {self.model_field.name:self.model_field.get_format_callback()(valid_number)}, 
+                    instance = model_instance
+                )
+                with collector():
+                    msg_info = "\nform initial: {}, form data: {}\n".format(
+                        model_form[self.model_field.name].initial, 
+                        model_form[self.model_field.name].value()
+                    )
+                    self.assertFalse(model_form.has_changed(), msg = "ModelForm is flagged as changed for using different formats of the same stdnum. " + msg_info)
+   
+class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
+    model = buch
+    model_field = buch._meta.get_field('ISBN')
+    prototype_data = {'titel':'Testbuch'} 
     
-    valid = ['978456789X', "1-234-56789-X", '9784567890120', '978-4-56-789012-0']
-    invalid = [
-        ("9999!)()/?`*", InvalidFormat), 
-        ("9"*20, InvalidLength), 
-        ("1234567890128", InvalidComponent)
+    valid = [
+        '123456789X',  # ISBN-10 w/o hyphens
+        '1-234-56789-X', # ISBN-10 w/ hyphens
+        '9780471117094', # ISBN-13 w/o hyphens
+        '978-0-471-11709-4', # ISBN-13 w/ hyphens
+        '9791234567896', # ISBN-13 w/o hyphens with 979 bookmark
+        '979-1-234-56789-6', # ISBN-13 w/ hyphens with 979 bookmark
     ]
-    invalid.extend([(n[:-1] + '1', InvalidChecksum) for n in valid])
-    field_class = ISBNField
+    invalid = [
+        "9999!)()/?1*", #InvalidFormat 
+        "9"*20, #InvalidLength 
+        "1234567890128", #InvalidComponent prefix != 978 
+        '1234567890', #InvalidChecksum 
+        '1-234-56789-0', #InvalidChecksum
+        '9781234567890', #InvalidChecksum 
+        '978-1-234-56789-0', #InvalidChecksum
+    ]
+            
+    def test_modelform_handles_isbn10_as_isbn13(self):
+        # Assert that the form treats an initial value of ISBN13 as the same as an equal value of ISBN10 passed in as data. Ugh, what is English?
+        model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
+        isbn10_seen = set()
+        with self.collect_fails() as collector:
+            for valid_number in self.valid:
+                valid_number = isbn.compact(valid_number)
+                # Use the ISBN13 for initial and the ISBN10 as data
+                if valid_number.startswith('979'):
+                    # cannot convert from isbn13 with 979 bookmark to isbn10
+                    continue
+                if isbn.isbn_type(valid_number) == 'ISBN13':
+                    isbn10 = isbn.to_isbn10(valid_number)
+                    isbn13 = valid_number
+                else:
+                    isbn10 = valid_number
+                    isbn13 = isbn.to_isbn13(valid_number)
+                if isbn10 in isbn10_seen:
+                    continue
+                isbn10_seen.add(isbn10)
+                
+                model_instance = self.create_model_instance(**{self.model_field.name:isbn13})
+                model_instance.save()
+                model_instance.refresh_from_db()
+                model_form = model_form_class(
+                    data = {self.model_field.name:isbn10}, 
+                    instance = model_instance
+                )
+                with collector():
+                    msg_info = "\nform initial: {}, form data: {}\n".format(
+                        model_form[self.model_field.name].initial, 
+                        model_form[self.model_field.name].value()
+                    )
+                    self.assertFalse(model_form.has_changed(), msg = "ModelForm is flagged as changed for using different ISBN types of the same stdnum. " + msg_info)
+
+    def test_converts_isbn10_to_isbn13_on_save(self):
+        # Assert that only numbers of the isbn13 standard are saved
+        with self.collect_fails() as collector:            
+            for valid_number in self.valid:
+                model_instance = self.create_model_instance(**{self.model_field.name:valid_number})
+                model_instance.save()
+                model_instance.refresh_from_db()
+                with collector():
+                    self.assertEqual(getattr(model_instance, self.model_field.name), isbn.compact(isbn.to_isbn13(valid_number)))
+                    
+    def test_query_for_isbn10_finds_isbn13(self):
+        isbn_10 = '123456789X'
+        self.create_model_instance(ISBN=isbn.to_isbn13(isbn_10)).save()
+        
+        qs = self.model.objects.filter(ISBN=isbn_10)
+        msg_info = "\nISBN10: {}, in database: {}\n".format(
+            isbn_10, 
+            list(self.model.objects.values_list('ISBN', flat = True))
+        )
+        self.assertTrue(qs.exists(), msg = "Querying for ISBN10 did not return records with equivalent ISBN13. " + msg_info)
+                
+class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
+    model = magazin
+    model_field = magazin._meta.get_field('issn')
+    prototype_data = {'magazin_name':'Testmagazin'}
     
-    def test_format_value(self):
-        # ISBNField._format_value should always convert into a formatted isbn13 number 
-        field = self.field_class()
-        expected = '978-978-45678-9-3'
-        self.assertEqual(field._format_value('978456789X'), expected)
-        self.assertEqual(field._format_value('978456789'), expected)
-        self.assertEqual(field._format_value('9789784567893'), expected)
-        self.assertEqual(field._format_value('978978456789'), expected)
-    
-class TestISSNField(FieldTestMethodsMixin, MyTestCase):
     valid = ["12345679", "1234-5679"]
     invalid = [
-        ("123%&/79", InvalidFormat), 
-        ("9"*20, InvalidLength), 
-        ('12345671', InvalidChecksum), 
+        "123%&/79", #InvalidFormat
+        "9"*20, #InvalidLength
+        '12345670', #InvalidChecksum 
+        "1234-5670", #InvalidChecksum
     ]
-    field_class = ISSNField
     
-class TestEANField(FieldTestMethodsMixin, MyTestCase):
+class TestEANField(StdNumFieldTestsMixin, MyTestCase):
+    model = buch
+    model_field = buch._meta.get_field('EAN')
+    prototype_data = {'titel':'Testbuch'} 
+    
     valid = ['73513537', "1234567890128"]
     invalid = [
-        ("123%&/()90128", InvalidFormat), 
-        ("9"*20, InvalidLength), 
+        "123%&/()90128", #InvalidFormat
+        "9"*20, #InvalidLength
+        '73513538', #InvalidChecksum
+        "1234567890123", #InvalidChecksum
     ]
-    invalid.extend([(n[:-1] + '1', InvalidChecksum) for n in valid])
-    field_class = EANField
+    

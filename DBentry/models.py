@@ -8,7 +8,7 @@ from .fields import ISSNField, ISBNField, EANField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
-from .managers import AusgabeQuerySet, BuchQuerySet
+from .managers import AusgabeQuerySet
 
 #TODO: allow searching by ISSN
 
@@ -347,9 +347,9 @@ class magazin(BaseModel):
     
     genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
     
-    search_fields = ['magazin_name', 'beschreibung']
+    search_fields = ['magazin_name', 'beschreibung', 'issn']
     name_field = 'magazin_name'
-    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
+    search_fields_suffixes = {'beschreibung' : 'Beschreibung', 'issn':'ISSN'}
     create_field = 'magazin_name'
     
     class Meta(BaseModel.Meta):
@@ -571,8 +571,6 @@ class buch(BaseModel):
         'ISBN' : 'ISBN', 
         'EAN' : 'EAN', 
     }
-    
-    objects = BuchQuerySet.as_manager()
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']

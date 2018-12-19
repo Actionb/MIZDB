@@ -337,7 +337,7 @@ class TestMagazinFactory(ModelFactoryTestCase):
         self.assertTrue(issn.is_valid(m.issn))
         
         m = MagazinFactory(issn = '45010528')
-        self.assertEqual(m.issn, '4501-0528')
+        self.assertEqual(m.issn, '45010528')
         
     def test_get_or_create(self):
         expected = self.factory_class()

@@ -51,8 +51,36 @@ def add_urls(url_patterns, regex=''):
     urls.insert(0, url(regex, include(url_patterns)))
     with override_urls(urls):
         yield
+        
+class TestNotImplementedError(AssertionError):
+    pass
 
 class MyTestCase(TestCase):
+    
+    @contextlib.contextmanager
+    def collect_fails(self, msg = None):
+        #TODO: documentation
+        collected = []
+        @contextlib.contextmanager
+        def decorator(*args, **kwargs):
+            try:
+                yield
+            except AssertionError as e:
+                collected.append((e, args, kwargs))
+                
+        yield decorator
+        
+        if collected:
+            fail_txt = "Collected errors:"
+            template = "\nError: {error}"
+            if collected[0][1] or collected[0][2]:
+                # Add args and/or kwargs to the error output, if they contain any data
+                # All items in collected have the same number of args or the same keywords, so we only need to check the first item
+                template += "\ncollected with args: {args} | kwargs: {kwargs}"
+            for e, args, kwargs in collected:
+                fail_txt += template.format(error=e, args=args, kwargs=kwargs)
+            self.fail(fail_txt)
+                
             
     @contextlib.contextmanager
     def assertNotRaises(self, exceptions, msg = None):
