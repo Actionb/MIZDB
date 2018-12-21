@@ -30,7 +30,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
 @tag("dal")
 class ACViewTestMethodMixin(object):
     
-    view_class = ACCapture
+    view_class = ACBase
     test_data_count = 3
     add_relations = True
     _alias_accessor_name = ''
@@ -59,7 +59,14 @@ class ACViewTestMethodMixin(object):
             q = self.qs_obj1.values_list(search_field, flat=True).first()
             if q:
                 view.q = str(q)
-                result = (pk for pk, _ in view.apply_q(self.queryset))
+                result = view.apply_q(self.queryset)
+                if isinstance(result, list):
+                    if isinstance(result[-1], (list, tuple)):
+                        result = (o[0] for o in result)
+                    else:
+                        result = (o.pk for o in result)
+                else:
+                    result = result.values_list('pk', flat = True)
                 self.assertIn(self.obj1.pk, result, 
                     msg="search_field: {}, q: {}".format(search_field, str(q)))
         #TODO: review this and make it its own test method

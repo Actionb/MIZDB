@@ -14,6 +14,15 @@ from DBentry.ac.creator import Creator
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     
     _search_fields = None
+    create_field = None
+
+    def dispatch(self, *args, **kwargs):
+        if not self.model:
+            model_name = kwargs.pop('model_name', '')
+            self.model = get_model_from_string(model_name)
+        if self.create_field is None:
+            self.create_field = kwargs.pop('create_field', None)
+        return super().dispatch(*args, **kwargs)
     
     def has_create_field(self):
         if self.create_field:
@@ -53,52 +62,19 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     def do_ordering(self, qs):
         return qs.order_by(*self.model._meta.ordering)
         
-    def apply_q(self, qs):
-        #TODO: check the availability of lookups for any given search field first before you attempt a query
-        # Doing a query with a bad lookup will ruin the search results returned by other search fields that would allow said lookup
-        #TODO: rework the lookups for each individual field type:
-        # __istartswith for DateFields is nonsensical, as is __iexact for issn fields etc.
-        # Also: ValueErrors *might* bubble up to here from making queries with bad/invalid values (pk='a')
-        # When input is valid for one search_field, but invalid for another, the result will be queryset.none() due to bad exception handling!
-
-        if self.q and self.search_fields:
-            exact_match_qs = qs.none()
-            startsw_qs = qs.none()
-            
-            qobjects = Q()
-            for fld in self.search_fields:
-                newq = Q((fld, self.q))
-                try:
-                    qs.filter(newq)
-                except (FieldError, ValidationError, ValueError): 
-                    # FieldError: invalid lookup
-                    # ValidationError: invalid format
-                    # ValueError: pk='badstuff' => int('badstuff')
-                    continue
-                qobjects |= newq
-            if qobjects.children:
-                exact_match_qs = qs.filter(qobjects).distinct()
-                
-            qobjects = Q()
-            for fld in self.search_fields:
-                newq = Q((fld+'__istartswith', self.q))
-                try:
-                    qs.filter(newq)
-                except (FieldError, ValidationError, ValueError): 
-                    continue
-                qobjects |= newq
-            if qobjects.children:
-                startsw_qs = qs.exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
-            
-            # should we even split at spaces? Yes we should! Names for example:
-            # searching surname, prename should return results of format prename, surname!
-            for q in self.q.split():
-                qobjects = Q()
-                for fld in self.search_fields:
-                    qobjects |= Q((fld+"__icontains", q))
-                qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
-            return list(exact_match_qs)+list(startsw_qs)+list(qs)
-        return qs
+    def apply_q(self, qs, use_suffix=True, ordered = True):
+        if self.q:
+            return qs.find(self.q, ordered = ordered, use_suffix=use_suffix)
+        elif self.model in Favoriten.get_favorite_models():
+            # add Favoriten to the top of the result queryset if no search term was given.
+            try:
+                favorites = Favoriten.objects.get(user=self.request.user)
+            except Favoriten.DoesNotExist:
+                return qs
+            # if there are no favorites for the model, an empty queryset will be returned by get_favorites
+            return list(favorites.get_favorites(self.model)) + list(qs) 
+        else:
+            return qs
         
     def create_object(self, text):
         """Create an object given a text."""
@@ -137,30 +113,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         opts = self.model._meta
         codename = get_permission_codename('add', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
-    
-class ACCapture(ACBase):
-    create_field = None
-
-    def dispatch(self, *args, **kwargs):
-        if not self.model:
-            model_name = kwargs.pop('model_name', '')
-            self.model = get_model_from_string(model_name)
-        self.create_field = self.create_field or kwargs.pop('create_field', None)
-        return super().dispatch(*args, **kwargs)
-    
-    def apply_q(self, qs, use_suffix=True, ordered = True):
-        if self.q:
-            return qs.find(self.q, ordered = ordered, use_suffix=use_suffix)
-        elif self.model in Favoriten.get_favorite_models():
-            # add Favoriten to the top of the result queryset if no search term was given.
-            try:
-                favorites = Favoriten.objects.get(user=self.request.user)
-            except Favoriten.DoesNotExist:
-                return qs
-            # if there are no favorites for the model, an empty queryset will be returned by get_favorites
-            return list(favorites.get_favorites(self.model)) + list(qs) 
-        else:
-            return qs
         
     def get_result_value(self, result):
         """Return the value of a result."""
@@ -173,18 +125,18 @@ class ACCapture(ACBase):
         if isinstance(result, (list, tuple)):
             return result[1]
         return str(result)
-        
+
 class ACBuchband(ACBase):
     model = buch
     queryset = buch.objects.filter(is_buchband=True)
     
-class ACAusgabe(ACCapture):
+class ACAusgabe(ACBase):
     model = ausgabe
     
     def do_ordering(self, qs):
         return qs.chronologic_order()
 
-class ACCreateable(ACCapture):
+class ACCreateable(ACBase):
     
     def dispatch(self, *args, **kwargs):
         if not self.model:
