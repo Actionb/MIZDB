@@ -6,6 +6,7 @@ from collections import OrderedDict
 import contextlib
 import re
 import random
+import warnings
 
 from django.test import TestCase, SimpleTestCase, Client, tag, override_settings
 from django.contrib.auth.models import User
@@ -25,7 +26,19 @@ from DBentry.utils import get_relation_info_to, get_model_fields, get_model_rela
 
 from .mixins import *
 
-from django import forms #TODO: rework all these imports to be explicit
+from django import forms #TODO: rework all these imports to be explicitimport sys
+
+
+import sys
+def _showwarning(message, *args, **kwargs):
+    print(message, file = sys.stderr, end='... ')
+    
+if not sys.warnoptions:
+    import os
+    warnings.simplefilter("always") # Change the filter in this process
+    os.environ["PYTHONWARNINGS"] = "always" # Also affect subprocesses
+    warnings.showwarning = _showwarning
+
 
 def mockv(value, **kwargs):
     return Mock(return_value=value, **kwargs)
@@ -56,6 +69,9 @@ class TestNotImplementedError(AssertionError):
     pass
 
 class MyTestCase(TestCase):
+    
+    def warn(self, message):
+        warnings.warn(message)
     
     @contextlib.contextmanager
     def collect_fails(self, msg = None):
