@@ -404,6 +404,31 @@ class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     model = veranstaltung
     
+class TestACBuchband(ACViewTestCase):
+    model = buch
+    view_class = ACBuchband
+    test_data_count = 0
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(buch, titel = 'DerBuchband', is_buchband = True)
+        cls.obj2 = make(buch, titel = 'DasBuch', buchband = cls.obj1)
+        cls.obj3 = make(buch, titel = 'Buch')
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        
+        super().setUpTestData()
+        
+    def test_gets_queryset_only_returns_buchband(self):
+        # Assert that apply_q can only return buch instances that are a buchband
+        view = self.get_view(q='Buch')
+        result = view.get_queryset()
+        self.assertEqual(len(result), 1)
+        self.assertIn((self.obj1.pk, self.obj1.__str__()), result)
+        
+        self.obj1.qs().update(is_buchband=False)
+        self.assertFalse(view.get_queryset())
+        
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
     model = genre
