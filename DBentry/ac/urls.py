@@ -10,5 +10,5 @@ autocomplete_patterns = [
 urlpatterns = [
     url(r'', include(autocomplete_patterns)),
     url(r'^(?P<model_name>\w+)/(?P<create_field>\w+)/$', ACCapture.as_view(), name='accapture'), 
-    url(r'^(?P<model_name>\w+)/$', ACCreateable.as_view(), name='accapture'), 
+    url(r'^(?P<model_name>\w+)/$', ACCreateable.as_view(), name='accapture'), #NOTE: why does this have the same name as the previous url?
 ]

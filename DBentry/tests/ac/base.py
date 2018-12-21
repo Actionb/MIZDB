@@ -62,6 +62,7 @@ class ACViewTestMethodMixin(object):
                 result = (pk for pk, _ in view.apply_q(self.queryset))
                 self.assertIn(self.obj1.pk, result, 
                     msg="search_field: {}, q: {}".format(search_field, str(q)))
+        #TODO: review this and make it its own test method
         if self.alias:
             # Find an object through its alias
             alias = getattr(self.obj1, self.alias).first()

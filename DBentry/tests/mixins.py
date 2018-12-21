@@ -7,6 +7,7 @@ from DBentry.factory import make, batch
 class TestDataMixin(object):
     #TODO: make a backup of all existing factory declarations so that changes to those declarations
     # do not persist throughout all other tests?
+    #TODO: remove dead attribute add_relations
     
     model = None
     queryset = None

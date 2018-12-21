@@ -45,8 +45,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     def search_fields(self):
         # This is a property so the evaluation of model.get_search_fields can be delayed for any subclass of ACBase 
         # until after the attribute model has been set with certainty: 
-        # - direct children of ACBase should start with a set model attribute
-        # - ACCapture will set the model attribute during dispatch(), but before search fields are needed
+        # either the model attribute is set by the subclass or it is set with the captured model name during dispatch
         if not self._search_fields:
             self._search_fields = self.model.get_search_fields()
         return self._search_fields
