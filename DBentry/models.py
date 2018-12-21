@@ -435,6 +435,9 @@ class bundesland(BaseModel):
         'code':'Bundesland-Code'
     }
     
+    def __str__(self):
+        return "{} {}".format(self.bland_name, self.code).strip()
+    
     class Meta(BaseModel.Meta):
         verbose_name = 'Bundesland'
         verbose_name_plural = 'Bundesländer'
@@ -453,6 +456,9 @@ class land(BaseModel):
         'code':'Land-Code', 
         'land_alias__alias' : 'Land-Alias', 
     }
+    
+    def __str__(self):
+        return "{} {}".format(self.land_name, self.code).strip()
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Land'
