@@ -14,7 +14,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
         if self.path != 'accapture':
             return super().get_path()
         reverse_kwargs = {'model_name':self.model._meta.model_name}
-        if getattr(self.model, 'create_field'):
+        if self.model.create_field:
             reverse_kwargs['create_field'] = self.model.create_field
         return reverse(self.path, kwargs=reverse_kwargs)
     
@@ -32,24 +32,14 @@ class ACViewTestMethodMixin(object):
     
     view_class = ACBase
     test_data_count = 3
-    add_relations = True
     _alias_accessor_name = ''
     
-    @property
-    def alias(self):
-        if not self._alias_accessor_name:
-            if hasattr(self, 'model'):
-                alias_accessor_name = self.model._meta.model_name + '_alias_set'
-                if alias_accessor_name in self.model.get_search_fields():
-                    self._alias_accessor_name = alias_accessor_name
-        return self._alias_accessor_name
-    
     def test_do_ordering(self):
-        # Test covered by test_get_queryset #TODO:<-- what does this mean?
+        # Assert that the ordering of the queryset returned by the view matches the ordering of the model.
         view = self.get_view()
         expected = self.model._meta.ordering
         qs_order = view.do_ordering(self.queryset).query.order_by
-        self.assertListEqualSorted(qs_order, expected)
+        self.assertEqual(qs_order, expected)
         
     def test_apply_q(self):
         # Test that an object can be found through any of its search_fields
@@ -58,6 +48,7 @@ class ACViewTestMethodMixin(object):
         for search_field in search_fields:
             q = self.qs_obj1.values_list(search_field, flat=True).first()
             if q:
+                #TODO: to assure that we have a q for every search field we must set the test data manually (instead of just using make())
                 view.q = str(q)
                 result = view.apply_q(self.queryset)
                 if isinstance(result, list):
@@ -69,20 +60,40 @@ class ACViewTestMethodMixin(object):
                     result = result.values_list('pk', flat = True)
                 self.assertIn(self.obj1.pk, result, 
                     msg="search_field: {}, q: {}".format(search_field, str(q)))
-        #TODO: review this and make it its own test method
-        if self.alias:
-            # Find an object through its alias
-            alias = getattr(self.obj1, self.alias).first()
-            view.q = str(alias)
-            result = (pk for pk, _ in view.apply_q(self.queryset))
-            self.assertIn(self.obj1.pk, result)
+            else:
+                self.warn('Test poorly configured: no test data for every search field')
+           
+    def test_apply_q_alias(self):
+        # Assert that an object can be found through
+        alias_accessor_name = self._alias_accessor_name
+        if not alias_accessor_name:
+            if self.model._meta.model_name + '_alias__alias' in self.model.get_search_fields():
+                alias_accessor_name = self.model._meta.model_name + '_alias_set'
+            else:
+                # No point in running this test
+                self.warn('Test aborted: no alias accessor name')
+                return
+                
+        # Find an object through its alias
+        alias = getattr(self.obj1, alias_accessor_name).first()
+        if not alias:
+            self.warn('Test aborted: no alias to query for')
+            return
+        view = self.get_view()
+        view.q = str(alias)
+        result = view.apply_q(self.queryset)
+        self.assertTrue(result)
+        self.assertIn((self.obj1.pk, self.obj1.__str__()), result)
         
     def test_get_queryset(self):
         # Note that ordering does not matter here, testing for the correct order is the job of `test_do_ordering` and apply_q would mess it up anyhow
         request = self.get_request()
         view = self.get_view(request)
-        qs = view.get_queryset().values_list('pk', flat=True)
+        qs = view.get_queryset().values_list('pk', flat=True) #Isnt this just comparing the starting qs with an unfiltered qs returned by the view?
         expected = self.queryset.values_list('pk', flat=True)
+        if not expected:
+            # expected being empty means that this test has no test_data
+            self.warn('Test poorly configured: no test data')
         self.assertListEqualSorted(qs, expected)
     
     def test_search_fields_prop(self):
