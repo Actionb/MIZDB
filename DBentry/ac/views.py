@@ -117,6 +117,9 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     def get_result_value(self, result):
         """Return the value of a result."""
         if isinstance(result, (list, tuple)):
+            if result[0] == 0:
+                # This may be the 'weak hits' separator, set it's id to None to make it unselectable
+                return None
             return result[0]
         return str(result.pk)
 
