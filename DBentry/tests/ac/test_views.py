@@ -1,5 +1,5 @@
 from .base import *
-
+import contextlib
 from DBentry.ac.creator import Creator
         
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
@@ -83,6 +83,108 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertFalse(view.get_queryset().exists())
         view.forwarded = {'ignore_me_too':''}
         self.assertFalse(view.get_queryset().exists())
+     
+class TestACBaseRefactor(ACViewTestMethodMixin, ACViewTestCase):
+    
+    model = ausgabe
+    view_class = ACBase
+    test_data_count = 0
+    
+    raw_data = [
+        {'beschreibung':'Boop', 'sonderausgabe':True, 'e_datum':'2000-02-02'}, 
+        {'beschreibung':'BeBoops', 'sonderausgabe':True, 'e_datum':'2000-02-02'}, 
+        {'beschreibung':'Boops', 'sonderausgabe':True, 'e_datum':'2000-02-02'}, 
+    ]
+    
+    def setUp(self):
+        super().setUp()
+        self.view = self.get_view(q = 'Boop')
+        self.view._search_fields = ['_name', 'e_datum']
+    
+    @contextlib.contextmanager
+    def backup_lookups(self, *fields):
+        backup = {}
+        for field in fields:
+            if isinstance(field, str):
+                field = self.model._meta.get_field(field).__class__
+            backup[field] = field.class_lookups.copy()
+        yield
+        for field in backup:
+            field.class_lookups = backup[field]
+            field._clear_cached_lookups()
+            
+        
+    def test_apply_q_refactor(self):
+        # _name, e_datum, jahrgang
+        # source of ValidationError: bad date format
+        # source of FieldError: invalid lookup __year for int field
+        # ValueError: int field = 'a'
+        view = self.get_view(q='Boop')
+        # This should fail at the 'exact' stage because:
+        # - ValidationError: datefield = 'Boop' (bad format)
+        # - ValueError: jahrgang = 'Boop' #NOTE: why doesnt this propagate (does the first error occur first?)
+        # At 'startswith' stage because:
+        # - 
+        self.assertIn(self.obj1, view.apply_q(self.queryset))
+        self.assertIn(self.obj2, view.apply_q(self.queryset))
+    
+    @tag("wip")
+    def test_apply_q_keeps_valid_lookups(self):
+        # Assert that any valid lookups at any of the first two stages are not discarded because 
+        # another lookup was invalid.
+        name_field = ausgabe._meta.get_field('_name')
+        datum_field = ausgabe._meta.get_field('e_datum')
+        # Trick the fields in not using the IContains Lookup for the final stage, so only results from exact or startswith lookups
+        # can make it into the final result.
+        # Unregister the icontains lookup and replace it with the isnull lookup:
+        from django.db import models
+        from django.db.models.lookups import IsNull, IStartsWith
+        with self.backup_lookups(models.Field, name_field, datum_field):
+            models.Field._unregister_lookup(lookup = None, lookup_name = 'icontains')
+            models.Field.register_lookup(IsNull, 'icontains')
+            self.assertEqual(name_field.get_lookups().get('icontains'), IsNull)
+            self.assertEqual(datum_field.get_lookups().get('icontains'), IsNull)
+            # Then make a query for either other lookup and check if the result matches our expectations.
+            # exact lookup valid for _name, invalid for e_datum, istartswith lookup removed:
+            models.Field._unregister_lookup(None, 'istartswith')
+            models.Field._clear_cached_lookups()
+            self.assertIsNone(name_field.get_lookups().get('istartswith'))
+            results = self.view.apply_q(self.queryset) # should ONLY contain EXACT matches
+            self.assertIn(self.obj1, results)
+            self.assertNotIn(self.obj2, results)
+            self.assertNotIn(self.obj3, results)
+            
+            # istartswith valid for _name, not existant for e_datum, exact lookup removed
+            models.Field._unregister_lookup(None, 'exact')
+            models.Field._clear_cached_lookups()
+            self.assertIsNone(name_field.get_lookups().get('exact'))
+            name_field.register_lookup(IStartsWith, 'istartswith')
+            self.assertEqual(name_field.get_lookups().get('istartswith'), IStartsWith)
+            results = self.view.apply_q(self.queryset) # should ONLY contain ISTARTSWITH matches
+            self.assertIn(self.obj1, results)
+            self.assertNotIn(self.obj2, results)
+            self.assertIn(self.obj3, results)
+            
+    @tag("wip")
+    def test_apply_q_makes_one_query(self):
+        # 3 queries: list(exact_match_qs)+list(startsw_qs)+list(qs)
+        with self.assertNumQueries(3):
+            self.view.apply_q(self.queryset)
+            
+    def test_apply_q_catches_validationerror(self):
+        with self.assertNotRaises(ValidationError):
+            self.view.apply_q(self.queryset)
+        
+    def test_apply_q_catches_valueerror(self):
+        pass
+        
+    def test_apply_q_catches_fielderror(self):
+        pass
+        
+        
+        
+        
+        
         
 class TestACCapture(ViewTestCase):
     

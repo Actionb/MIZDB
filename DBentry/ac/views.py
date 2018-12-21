@@ -61,37 +61,44 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         # __istartswith for DateFields is nonsensical, as is __iexact for issn fields etc.
         # Also: ValueErrors *might* bubble up to here from making queries with bad/invalid values (pk='a')
         # When input is valid for one search_field, but invalid for another, the result will be queryset.none() due to bad exception handling!
-        if self.q:
-            if self.search_fields:
-                exact_match_qs = qs
-                startsw_qs = qs
+
+        if self.q and self.search_fields:
+            exact_match_qs = qs.none()
+            startsw_qs = qs.none()
+            
+            qobjects = Q()
+            for fld in self.search_fields:
+                newq = Q((fld, self.q))
+                try:
+                    qs.filter(newq)
+                except (FieldError, ValidationError, ValueError): 
+                    # FieldError: invalid lookup
+                    # ValidationError: invalid format
+                    # ValueError: pk='badstuff' => int('badstuff')
+                    continue
+                qobjects |= newq
+            if qobjects.children:
+                exact_match_qs = qs.filter(qobjects).distinct()
                 
+            qobjects = Q()
+            for fld in self.search_fields:
+                newq = Q((fld+'__istartswith', self.q))
                 try:
-                    qobjects = Q()
-                    for fld in self.search_fields:
-                        qobjects |= Q((fld, self.q))
-                    exact_match_qs = qs.filter(qobjects).distinct()
-                except (FieldError, ValidationError):
-                    # invalid lookup/ValidationError (for date fields)
-                    exact_match_qs = qs.none()
-                    
-                try:
-                    # __istartswith might be invalid lookup! --> then what about icontains?
-                    qobjects = Q()
-                    for fld in self.search_fields:
-                        qobjects |= Q((fld+'__istartswith', self.q))
-                    startsw_qs = qs.exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
-                except (FieldError, ValidationError):
-                    startsw_qs = qs.none()
-                    
-                # should we even split at spaces? Yes we should! Names for example:
-                # searching surname, prename should return results of format prename, surname!
-                for q in self.q.split():
-                    qobjects = Q()
-                    for fld in self.search_fields:
-                        qobjects |= Q((fld+"__icontains", q))
-                    qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
-                return list(exact_match_qs)+list(startsw_qs)+list(qs)
+                    qs.filter(newq)
+                except (FieldError, ValidationError, ValueError): 
+                    continue
+                qobjects |= newq
+            if qobjects.children:
+                startsw_qs = qs.exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
+            
+            # should we even split at spaces? Yes we should! Names for example:
+            # searching surname, prename should return results of format prename, surname!
+            for q in self.q.split():
+                qobjects = Q()
+                for fld in self.search_fields:
+                    qobjects |= Q((fld+"__icontains", q))
+                qs = qs.exclude(pk__in=startsw_qs).exclude(pk__in=exact_match_qs).filter(qobjects).distinct()
+            return list(exact_match_qs)+list(startsw_qs)+list(qs)
         return qs
         
     def create_object(self, text):
