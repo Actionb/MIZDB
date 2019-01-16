@@ -828,6 +828,7 @@ class KalendarAdmin(BaseBrochureAdmin):
     
     inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     
+#TODO: sender has an alias so it needs its own AdminModel class
 @admin.register(
     monat, lagerort, geber, sender, sprache, plattenfirma, provenienz, 
     Format, FormatTag, FormatSize, FormatTyp, NoiseRed, Organisation, schriftenreihe, 
