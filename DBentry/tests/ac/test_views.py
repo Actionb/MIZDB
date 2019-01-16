@@ -7,15 +7,15 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     view_class = ACBase
     model = band
     create_field = 'band_name'
-    test_data_count = 0
+    alias_accessor_name = 'band_alias_set'
 
     @classmethod
     def setUpTestData(cls):
         cls.genre = make(genre, genre='Testgenre')
-        cls.obj1 = make(band, band_name='Boop', genre=cls.genre, musiker__extra=1)
-        cls.obj2 = make(band, band_name='Aleboop')
-        cls.obj3 = make(band, band_name='notfound')
-        cls.obj4 = make(band, band_name='Boopband')
+        cls.obj1 = make(band, band_name='Boop', genre=cls.genre, musiker__extra=1, band_alias__alias = 'Voltaire')
+        cls.obj2 = make(band, band_name='Aleboop', band_alias__alias = 'Nietsche')
+        cls.obj3 = make(band, band_name='notfound', band_alias__alias = 'Descartes')
+        cls.obj4 = make(band, band_name='Boopband', band_alias__alias = 'Kant')
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
         
@@ -397,35 +397,56 @@ class TestACAusgabe(ACViewTestCase):
         
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
     model = provenienz
+    has_alias = False
+    test_data_count = 1
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     model = person
+    has_alias = False
+    raw_data = [{'beschreibung':'Klingt komisch, ist aber so', 'bemerkungen':'Abschalten!'}]
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = autor
+    raw_data = [{'beschreibung':'ABC'}, {'beschreibung':'DEF'}, {'beschreibung':'GHI'}] # beschreibung is a search_field and needs some data
+    has_alias = False
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     model = musiker
+    alias_accessor_name = 'musiker_alias_set'
+    raw_data = [{'musiker_alias__alias':'John', 'person__nachname':'James', 'beschreibung':'Description'}]
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
     model = land
+    raw_data = [{'land_alias__alias':'Dschland'}]
+    alias_accessor_name = 'land_alias_set'
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     model = instrument
+    raw_data = [
+        {'instrument_alias__alias' : 'Klavier'},  
+        {'instrument_alias__alias' : 'Laute Tröte'}, 
+        {'instrument_alias__alias' : 'Hau Drauf'}, 
+    ]
+    alias_accessor_name = 'instrument_alias_set'
 
 class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
     model = sender
+    alias_accessor_name = 'sender_alias_set'
+    raw_data = [{'sender_alias__alias':'AliasSender'}]
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = spielort
+    alias_accessor_name = 'spielort_alias_set'
+    raw_data = [{'spielort_alias__alias':'AliasSpielort'}]
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     model = veranstaltung
+    alias_accessor_name = 'veranstaltung_alias_set'
+    raw_data = [{'veranstaltung_alias__alias':'AliasVeranstaltung'}]
     
 class TestACBuchband(ACViewTestCase):
     model = buch
     view_class = ACBuchband
-    test_data_count = 0
     
     @classmethod
     def setUpTestData(cls):
@@ -450,6 +471,8 @@ class TestACBuchband(ACViewTestCase):
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
     model = genre
+    alias_accessor_name = 'genre_alias_set'
+    raw_data = [{'genre_alias__alias':'Beep', 'sub_genres__extra':1, 'ober__genre':'Obergenre'}]
         
     def test_apply_q_favorites(self):
         request = self.get_request()
@@ -472,6 +495,8 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         
     model = schlagwort
+    alias_accessor_name = 'schlagwort_alias_set'
+    raw_data = [{'unterbegriffe__extra': 1, 'ober__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias':'AliasSchlagwort'}]
         
     def test_apply_q_favorites(self):
         request = self.get_request()
@@ -488,5 +513,6 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         make(schlagwort, schlagwort='A')
         
         # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
+        #TODO: should it really show up twice (favorites + normal)?
         result = view.apply_q(self.model.objects.all())
         self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
