@@ -488,7 +488,7 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         # Create an object that should be displayed as the first in the results following default ordering
         make(genre, genre='A')
         
-        # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
+        # self.obj1 will show up twice in an unfiltered result; once as part of favorites and then as part of the qs
         result = view.apply_q(self.model.objects.all())
         self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
         
@@ -512,7 +512,6 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         # Create an object that should be displayed as the first in the results following default ordering
         make(schlagwort, schlagwort='A')
         
-        # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
-        #TODO: should it really show up twice (favorites + normal)?
+        # self.obj1 will show up twice in an unfiltered result; once as part of favorites and then as part of the qs
         result = view.apply_q(self.model.objects.all())
         self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))

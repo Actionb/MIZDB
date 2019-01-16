@@ -49,7 +49,6 @@ class ACViewTestMethodMixin(object):
         for search_field in search_fields:
             q = self.qs_obj1.values_list(search_field, flat=True).first()
             if q:
-                #TODO: to assure that we have a q for every search field we must set the test data manually (instead of just using make())
                 view.q = str(q)
                 result = view.apply_q(self.queryset)
                 if isinstance(result, list):
