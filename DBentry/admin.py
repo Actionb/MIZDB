@@ -751,7 +751,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
         model = BrochureURL
     form = BrochureForm
     index_category = 'Archivgut'
-    list_display = ['titel', 'jahr_string']
+    list_display = ['titel', 'zusammenfassung', 'jahr_string']
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
 #TODO: add this once it's clear what we need    
 #    advanced_search_form = {
@@ -795,7 +795,7 @@ class BrochureAdmin(BaseBrochureAdmin):
 @admin.register(Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
     
-    list_display = ['titel', 'art', 'jahr_string']
+    list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
 
     def get_fieldsets(self, *args, **kwargs):
         # swap art and zusammenfassung without having to redeclare the entire fieldsets attribute

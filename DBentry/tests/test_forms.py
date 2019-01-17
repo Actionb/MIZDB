@@ -304,6 +304,24 @@ class TestAudioForm(ModelFormTestCase):
     model = audio
     fields = ['release_id', 'discogs_url']     
     
+    def test_clean_continues_on_empty_data(self):
+        # Assert that the clean method does not complain if both fields are empty.
+        form = self.get_form(data = {'titel':'Beep'})
+        form.full_clean()
+        self.assertFalse(form.errors)
+        
+    def test_clean_handles_integer_release_id(self):
+        # Assert that clean can properly cast any valid input for release_id into a string.
+        form = self.get_form(data = {'release_id':1234})
+        with self.assertNotRaises(Exception):
+            form.full_clean()
+        self.assertNotIn('release_id', form._errors)
+        
+        form = self.get_form(data = {'release_id':'1234'})
+        with self.assertNotRaises(Exception):
+            form.full_clean()
+        self.assertNotIn('release_id', form._errors)
+        
     def test_clean_aborts_on_invalid_releaseid_or_discogsurl(self):
         # Assert that clean does not mess with release_id or discogs_url if both/either of them are invalid.
         

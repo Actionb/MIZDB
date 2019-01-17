@@ -156,20 +156,14 @@ class AudioForm(FormBase):
         # release_id and discogs_url are not required, so there's two reason they might not turn up in self.cleaned_data at this point:
         # - they simply had no data
         # - the data they had was invalid
-        # There is no point in working on invalid data, so return early.
-        if 'release_id' in self._errors or 'discogs_url' in self._errors:
-            return self.cleaned_data
+        release_id = str(self.cleaned_data.get('release_id', '') or '') # cleaned_data['release_id'] is either an int or None 
+        discogs_url = self.cleaned_data.get('discogs_url') or ''
         
-        # Cast release_id into a string; or if None or not in cleaned_data, set it to empty string
-        if 'release_id' in self.cleaned_data:
-            release_id = self.cleaned_data['release_id']
-            if release_id is None:
-                release_id = ''
-            else:
-                release_id = str(release_id)
-        else:
-            release_id = ''
-        match = discogs_release_id_pattern.search(self.cleaned_data.get('discogs_url') or '') # cleaned_data['discogs_url'] could be None therefore: or ''
+        # There is no point in working on empty or invalid data, so return early.
+        if not (release_id or discogs_url) or 'release_id' in self._errors or 'discogs_url' in self._errors:
+            return self.cleaned_data
+            
+        match = discogs_release_id_pattern.search(discogs_url) # cleaned_data['discogs_url'] could be None therefore: or ''
         if match and len(match.groups()) == 1:
             # We have a valid url with a release_id in it
             release_id_from_url = match.groups()[-1]
@@ -181,6 +175,8 @@ class AudioForm(FormBase):
                 self.cleaned_data['release_id'] = release_id
         # Clean (as in: remove slugs) and set discogs_url with the confirmed release_id
         self.cleaned_data['discogs_url'] = "http://www.discogs.com/release/" + release_id
+        
+        return self.cleaned_data
     
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
