@@ -28,9 +28,9 @@ from .mixins import *
 
 from django import forms #TODO: rework all these imports to be explicitimport sys
 
-
 import sys
-def _showwarning(message, *args, **kwargs):
+def _showwarning(message, category = Warning, *args, **kwargs):
+    message = category.__name__ + ': ' + str(message)
     print(message, file = sys.stderr, end='... ')
     
 if not sys.warnoptions:

@@ -10,15 +10,16 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
     create_field = None
     
     def get_path(self):
+        # Needed for the RequestTestCase
         if self.path != 'accapture':
             return super().get_path()
         reverse_kwargs = {'model_name':self.model._meta.model_name}
-        if getattr(self.model, 'create_field'):
+        if self.model.create_field:
             reverse_kwargs['create_field'] = self.model.create_field
         return reverse(self.path, kwargs=reverse_kwargs)
     
     def get_view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
-        #DBentry.ac.views behave slightly different in their as_view() method
+        # DBentry.ac.views behave slightly different in their as_view() method
         view = super(ACViewTestCase, self).get_view(request, args, kwargs)
         view.model = model or self.model
         view.create_field = create_field or self.create_field
@@ -29,26 +30,17 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
 @tag("dal")
 class ACViewTestMethodMixin(object):
     
-    view_class = ACCapture
-    test_data_count = 3
-    add_relations = True
-    _alias_accessor_name = ''
-    
-    @property
-    def alias(self):
-        if not self._alias_accessor_name:
-            if hasattr(self, 'model'):
-                alias_accessor_name = self.model._meta.model_name + '_alias_set'
-                if alias_accessor_name in self.model.get_search_fields():
-                    self._alias_accessor_name = alias_accessor_name
-        return self._alias_accessor_name
+    view_class = ACBase
+    test_data_count = 0
+    has_alias = True
+    alias_accessor_name = ''
     
     def test_do_ordering(self):
-        # Test covered by test_get_queryset
+        # Assert that the ordering of the queryset returned by the view matches the ordering of the model.
         view = self.get_view()
         expected = self.model._meta.ordering
         qs_order = view.do_ordering(self.queryset).query.order_by
-        self.assertListEqualSorted(qs_order, expected)
+        self.assertEqual(qs_order, expected)
         
     def test_apply_q(self):
         # Test that an object can be found through any of its search_fields
@@ -58,22 +50,48 @@ class ACViewTestMethodMixin(object):
             q = self.qs_obj1.values_list(search_field, flat=True).first()
             if q:
                 view.q = str(q)
-                result = (pk for pk, _ in view.apply_q(self.queryset))
+                result = view.apply_q(self.queryset)
+                if isinstance(result, list):
+                    if isinstance(result[-1], (list, tuple)):
+                        result = (o[0] for o in result)
+                    else:
+                        result = (o.pk for o in result)
+                else:
+                    result = result.values_list('pk', flat = True)
                 self.assertIn(self.obj1.pk, result, 
                     msg="search_field: {}, q: {}".format(search_field, str(q)))
-        if self.alias:
-            # Find an object through its alias
-            alias = getattr(self.obj1, self.alias).first()
-            view.q = str(alias)
-            result = (pk for pk, _ in view.apply_q(self.queryset))
-            self.assertIn(self.obj1.pk, result)
+            else:
+                self.warn('Test poorly configured: no test data for search field: ' + search_field)
+           
+    def test_apply_q_alias(self):
+        # Assert that an object can be found through its aliases.
+        if not self.has_alias:
+            return
+        if not self.alias_accessor_name:
+            # No point in running this test
+            self.warn('Test aborted: no alias accessor name set.')
+            return
+                
+        # Find an object through its alias
+        alias = getattr(self.obj1, self.alias_accessor_name).first()
+        if alias is None:
+            self.warn('Test aborted: queryset of aliases is empty.')
+            return
+        view = self.get_view()
+        view.q = str(alias)
+        result = [pk for pk, str_repr in view.apply_q(self.queryset)]
+        self.assertTrue(result, msg = 'View returned no results when querying for alias: ' + view.q)
+        self.assertIn(self.obj1.pk, result)
         
     def test_get_queryset(self):
         # Note that ordering does not matter here, testing for the correct order is the job of `test_do_ordering` and apply_q would mess it up anyhow
         request = self.get_request()
         view = self.get_view(request)
-        qs = view.get_queryset().values_list('pk', flat=True)
+        qs = view.get_queryset().values_list('pk', flat=True) #Isnt this just comparing the starting qs with an unfiltered qs returned by the view?
         expected = self.queryset.values_list('pk', flat=True)
+        if not expected:
+            # expected being empty means that this test has no test_data
+            self.warn('Test poorly configured: no test data')
         self.assertListEqualSorted(qs, expected)
     
     def test_search_fields_prop(self):

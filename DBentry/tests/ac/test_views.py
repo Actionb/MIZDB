@@ -7,15 +7,15 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     view_class = ACBase
     model = band
     create_field = 'band_name'
-    test_data_count = 0
+    alias_accessor_name = 'band_alias_set'
 
     @classmethod
     def setUpTestData(cls):
         cls.genre = make(genre, genre='Testgenre')
-        cls.obj1 = make(band, band_name='Boop', genre=cls.genre, musiker__extra=1)
-        cls.obj2 = make(band, band_name='Aleboop')
-        cls.obj3 = make(band, band_name='notfound')
-        cls.obj4 = make(band, band_name='Boopband')
+        cls.obj1 = make(band, band_name='Boop', genre=cls.genre, musiker__extra=1, band_alias__alias = 'Voltaire')
+        cls.obj2 = make(band, band_name='Aleboop', band_alias__alias = 'Nietsche')
+        cls.obj3 = make(band, band_name='notfound', band_alias__alias = 'Descartes')
+        cls.obj4 = make(band, band_name='Boopband', band_alias__alias = 'Kant')
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
         
@@ -26,11 +26,6 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertTrue(v.has_create_field())
         v.create_field = ''
         self.assertFalse(v.has_create_field())
-        
-    def test_has_add_permission(self):
-        # Test largely covered by test_get_create_option_no_perms
-        request = self.get_request(user=self.noperms_user)
-        self.assertFalse(self.get_view().has_add_permission(request)) 
         
     def test_get_create_option_no_create_field(self):
         # No create option should be displayed if there is no create_field
@@ -60,21 +55,31 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         # obj1 is the only exact match
         # obj4 starts with q
         # obj2 contains q
-        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4, self.obj2])
+        expected = [
+            (self.obj1.pk, self.obj1.__str__()), 
+            (self.obj4.pk, self.obj4.__str__()), 
+            (self.obj2.pk, self.obj2.__str__())
+        ]
+        self.assertEqual(list(view.apply_q(self.queryset)), expected)
         
         # all but obj3 contain 'oop', standard ordering should apply as there are neither exact nor startswith matches
         view.q = 'oop'
-        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj2, self.obj1, self.obj4])
+        expected = [
+            (self.obj2.pk, self.obj2.__str__()), 
+            (self.obj1.pk, self.obj1.__str__()), 
+            (self.obj4.pk, self.obj4.__str__())
+        ]
+        self.assertEqual(list(view.apply_q(self.queryset)), expected)
 
         # only obj4 should appear
         view.q = 'Boopband'
-        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj4])
+        self.assertEqual(list(view.apply_q(self.queryset)), [(self.obj4.pk, self.obj4.__str__())])
         
     def test_get_queryset_with_q(self):
         request = self.get_request()
         view = self.get_view(request)
         view.q = 'notfound'
-        self.assertEqual(list(view.get_queryset()), [self.obj3])
+        self.assertEqual(list(view.get_queryset()), [(self.obj3.pk, self.obj3.__str__())])
         
     def test_get_queryset_forwarded(self):
         # fake forwarded attribute
@@ -88,10 +93,6 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertFalse(view.get_queryset().exists())
         view.forwarded = {'ignore_me_too':''}
         self.assertFalse(view.get_queryset().exists())
-        
-class TestACCapture(ViewTestCase):
-    
-    view_class = ACCapture
     
     def test_dispatch_sets_model(self):
         # dispatch should set the model attribute from the url caught parameter 'model_name' if the view instance does not have one
@@ -100,8 +101,22 @@ class TestACCapture(ViewTestCase):
         try:
             view.dispatch(model_name = 'ausgabe')
         except:
+            # view.dispatch will run fine until it calls super() without a request positional argument
+            # the model attribute is set before that
             pass
-        self.assertEqual(view.model, ausgabe)
+        self.assertEqual(view.model._meta.model_name, 'ausgabe')
+        
+    def test_dispatch_sets_create_field(self):
+        # Assert that dispatch can set the create field attribute from its kwargs.
+        view = self.get_view()
+        view.create_field = None
+        try:
+            view.dispatch(create_field = 'this aint no field')
+        except:
+            # view.dispatch will run fine until it calls super() without a request positional argument
+            # the model attribute is set before that
+            pass
+        self.assertEqual(view.create_field, 'this aint no field')
         
     def test_get_result_value(self):
         # result is a list
@@ -120,7 +135,7 @@ class TestACCapture(ViewTestCase):
         # result is a model instance
         instance = make(genre, genre='All this testing')
         self.assertEqual(view.get_result_label(instance), 'All this testing')
-        
+
 class TestACCreateable(ACViewTestCase):
     
     model = autor
@@ -131,15 +146,19 @@ class TestACCreateable(ACViewTestCase):
         self.creator = Creator(autor)
     
     def test_dispatch_sets_creator(self):
+        # Assert that a creator instance with the right model is created during dispatch()
         view = self.get_view()
         try:
             view.dispatch()
         except:
+            # view.dispatch will run fine until it calls super() without a request positional argument
+            # the creator attribute is set before that
             pass
         self.assertIsInstance(view.creator, Creator)
+        self.assertEqual(view.creator.model, self.model)
         
     def test_createable(self):
-        # Assert that createable return True if:
+        # Assert that createable returns True if:
         # - a new object can be created from the given parameters
         # - no objects already present in the database fit the given parameters
         
@@ -158,11 +177,16 @@ class TestACCreateable(ACViewTestCase):
         view = self.get_view(request)
         view.creator = self.creator
         self.assertTrue(hasattr(view, 'get_creation_info'))
-        view.get_creation_info = mockv([{'id': None, 'create_id': True, 'text': 'Test123'}])
         
+        view.get_creation_info = mockv([{'id': None, 'create_id': True, 'text': 'Test123'}])
         create_option = view.get_create_option(context = {}, q = 'Alice Testman (AT)') 
         self.assertEqual(len(create_option), 2, msg = ", ".join(str(d) for d in create_option))
         self.assertIn('Test123', [d['text'] for d in create_option])
+        
+        # get_creation_info cannot return an empty list, but get_create_option checks for it so...
+        view.get_creation_info = mockv([])
+        create_option = view.get_create_option(context = {}, q = 'Alice Testman (AT)') 
+        self.assertEqual(len(create_option), 1)
         
         view.createable = mockv(False)
         self.assertFalse(view.get_create_option(context = {}, q = 'Nope'))
@@ -373,34 +397,82 @@ class TestACAusgabe(ACViewTestCase):
         
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
     model = provenienz
+    has_alias = False
+    test_data_count = 1
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     model = person
+    has_alias = False
+    raw_data = [{'beschreibung':'Klingt komisch, ist aber so', 'bemerkungen':'Abschalten!'}]
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = autor
+    raw_data = [{'beschreibung':'ABC'}, {'beschreibung':'DEF'}, {'beschreibung':'GHI'}] # beschreibung is a search_field and needs some data
+    has_alias = False
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     model = musiker
+    alias_accessor_name = 'musiker_alias_set'
+    raw_data = [{'musiker_alias__alias':'John', 'person__nachname':'James', 'beschreibung':'Description'}]
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
     model = land
+    raw_data = [{'land_alias__alias':'Dschland'}]
+    alias_accessor_name = 'land_alias_set'
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     model = instrument
+    raw_data = [
+        {'instrument_alias__alias' : 'Klavier'},  
+        {'instrument_alias__alias' : 'Laute Tröte'}, 
+        {'instrument_alias__alias' : 'Hau Drauf'}, 
+    ]
+    alias_accessor_name = 'instrument_alias_set'
 
 class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
     model = sender
+    alias_accessor_name = 'sender_alias_set'
+    raw_data = [{'sender_alias__alias':'AliasSender'}]
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = spielort
+    alias_accessor_name = 'spielort_alias_set'
+    raw_data = [{'spielort_alias__alias':'AliasSpielort'}]
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     model = veranstaltung
+    alias_accessor_name = 'veranstaltung_alias_set'
+    raw_data = [{'veranstaltung_alias__alias':'AliasVeranstaltung'}]
     
+class TestACBuchband(ACViewTestCase):
+    model = buch
+    view_class = ACBuchband
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(buch, titel = 'DerBuchband', is_buchband = True)
+        cls.obj2 = make(buch, titel = 'DasBuch', buchband = cls.obj1)
+        cls.obj3 = make(buch, titel = 'Buch')
+        
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+        
+        super().setUpTestData()
+        
+    def test_gets_queryset_only_returns_buchband(self):
+        # Assert that apply_q can only return buch instances that are a buchband
+        view = self.get_view(q='Buch')
+        result = view.get_queryset()
+        self.assertEqual(len(result), 1)
+        self.assertIn((self.obj1.pk, self.obj1.__str__()), result)
+        
+        self.obj1.qs().update(is_buchband=False)
+        self.assertFalse(view.get_queryset())
+        
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
     model = genre
+    alias_accessor_name = 'genre_alias_set'
+    raw_data = [{'genre_alias__alias':'Beep', 'sub_genres__extra':1, 'ober__genre':'Obergenre'}]
         
     def test_apply_q_favorites(self):
         request = self.get_request()
@@ -416,13 +488,15 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         # Create an object that should be displayed as the first in the results following default ordering
         make(genre, genre='A')
         
-        # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
+        # self.obj1 will show up twice in an unfiltered result; once as part of favorites and then as part of the qs
         result = view.apply_q(self.model.objects.all())
         self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
         
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         
     model = schlagwort
+    alias_accessor_name = 'schlagwort_alias_set'
+    raw_data = [{'unterbegriffe__extra': 1, 'ober__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias':'AliasSchlagwort'}]
         
     def test_apply_q_favorites(self):
         request = self.get_request()
@@ -438,6 +512,6 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         # Create an object that should be displayed as the first in the results following default ordering
         make(schlagwort, schlagwort='A')
         
-        # self.obj1 will show up twice in the result; once as part of favorites and then as the 'result' of the qs filtering
+        # self.obj1 will show up twice in an unfiltered result; once as part of favorites and then as part of the qs
         result = view.apply_q(self.model.objects.all())
         self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))

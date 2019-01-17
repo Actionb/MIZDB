@@ -802,6 +802,8 @@ class sender(BaseModel):
     name = models.CharField(**CF_ARGS)
     
     create_field = 'name'
+    search_fields = ['name', 'sender_alias__alias']
+    search_fields_suffixes = {'spielort_alias__alias':'Alias'}
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Sender'
