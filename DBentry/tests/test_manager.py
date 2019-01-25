@@ -195,6 +195,17 @@ class TestAusgabeQuerySet(DataTestCase):
         result_ids = [i[0] for i in self.queryset.find('2000', ordered = False)]
         self.assertEqual(result_ids, expected)
         
+    def test_update_names_after_chronologic_order(self):
+        # Assert that resetting ordering for _update_names does not break the ordering of the underlying queryset.
+        expected = [
+            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+        ]
+        qs = self.queryset.chronologic_order()
+        qs._update_names()
+        self.assertEqual(qs.query.order_by, expected)
+        self.assertPKListEqual(qs, self.ordered_ids)
+        
+        
 class TestAusgabeIncrementJahrgang(DataTestCase):
     
     model = ausgabe

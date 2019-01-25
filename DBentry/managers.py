@@ -189,7 +189,7 @@ class CNQuerySet(MIZQuerySet):
             with transaction.atomic():
                 for pk, val_dict in self.filter(_changed_flag=True).values_dict(*self.model.name_composing_fields, flatten=True).items():
                     new_name = self.model._get_name(**val_dict)
-                    self.filter(pk=pk).update(_name=new_name, _changed_flag=False)
+                    self.order_by().filter(pk=pk).update(_name=new_name, _changed_flag=False)
     _update_names.alters_data = True
 
 class AusgabeQuerySet(CNQuerySet):
