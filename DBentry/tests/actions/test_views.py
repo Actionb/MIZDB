@@ -734,8 +734,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         request = self.get_request()
         view = self.get_view(request = request, queryset = self.queryset)
         
-        with self.assertNotRaises(ProtectedError): 
-            view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data)
         self.assertTrue(ausgabe.objects.filter(pk=self.obj1.pk).exists())
         expected_message = "Folgende Ausgaben konnten nicht gelöscht werden: " + \
             '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'.format(pk = self.obj1.pk, name = str(self.obj1)) + \
@@ -761,8 +760,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view = self.get_view(request = request, queryset = self.queryset)
         
         with patch('DBentry.actions.views.is_protected', new = is_protected):
-            with self.assertNotRaises(ProtectedError):
-                view.perform_action(self.form_cleaned_data)
+            view.perform_action(self.form_cleaned_data)
         self.assertTrue(magazin.objects.filter(pk=mag.pk).exists())
         expected_message = "Folgende Magazine konnten nicht gelöscht werden: " + \
             '<a href="/admin/DBentry/magazin/{pk}/change/">{name}</a>'.format(pk = mag.pk, name = str(mag))
@@ -781,11 +779,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.form_cleaned_data[0]['delete_ausgabe'] = self.form_cleaned_data[0]['delete_magazin'] = True
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         
-        with self.assertRaises(ProtectedError):
-            view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data)
         self.assertFalse(ausgabe.objects.filter(pk=ausgabe_id).exists())
         self.assertTrue(magazin.objects.filter(pk=magazin_id).exists())
-        
         
     def test_perform_action_not_accepted(self):
         ausgabe_id = self.obj1.pk

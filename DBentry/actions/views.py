@@ -339,7 +339,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         return True
         
     def perform_action(self, form_cleaned_data = None):        
-        protected_ausg, protected_mags = [], []
+        protected_ausg, protected_mags = [], set()
         
         for data in form_cleaned_data:
             if not data.get('accept', False):
@@ -381,7 +381,10 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     for jahr in ausgabe_jahre:
                         BrochureYear.objects.create(brochure = new_brochure, jahr = jahr)
                     ausgabe_instance.delete()
-            finally:
+            except ProtectedError:
+                protected_ausg.append(ausgabe_instance)
+            #TODO: catch other possible exceptions
+            else:
                 self.log_addition(new_brochure)
                 self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
@@ -389,12 +392,18 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
             if data.get('delete_magazin', False):
                 if is_protected([magazin_instance]):
-                    protected_mags.append(magazin_instance)
+                    protected_mags.add(magazin_instance)
                 else:
+                    # Preemptively remove the magazin from the list of protected magazines
+                    if magazin_instance in protected_mags:
+                        protected_mags.remove(magazin_instance)
                     try:
                         with transaction.atomic():
                             magazin_instance.delete()
-                    finally:
+                    except ProtectedError:
+                        # Seems like the magazin was still protected after all. Readd it to the list.
+                        protected_mags.add(magazin_instance)
+                    else:
                         self.log_deletion(magazin_instance)
                     
         if protected_ausg:
