@@ -84,16 +84,30 @@ class BrochureActionForm(MIZAdminForm):
     beschreibung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
     bemerkungen = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
     zusammenfassung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
-    delete_magazin = forms.BooleanField(label = 'Magazin löschen', required = False)
-    accept = forms.BooleanField(label = 'Änderungen bestätigen', required = False, initial = True)
+    delete_magazin = forms.BooleanField(
+        label = 'Magazin löschen', required = False, 
+        help_text = 'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?'
+    )
+    accept = forms.BooleanField(
+        label = 'Änderungen bestätigen', required = False, initial = True, 
+        help_text = 'Hiermit bestätigen Sie, dass diese Ausgabe verschoben werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu überspringen und nicht zu verschieben.'
+    )
     
     fieldsets = [(None, {'fields':['ausgabe_id','brochure_art', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'delete_magazin', 'accept']})]
-        
-    def __init__(self, *args, **kwargs):    
+    
+    def __init__(self, disable_delete_magazin = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'ausgabe_id' in self.fields and self['ausgabe_id'].value():
-            ausgabe_id = self['ausgabe_id'].value()
-            from DBentry.models import ausgabe
-            if ausgabe.objects.get(pk=ausgabe_id).magazin.ausgabe_set.count() > 1:
-                # the magazin cannot be deleted if it contains more ausgaben than the one we are working on
-                self.fields['delete_magazin'].disabled = True
+        self.fields['delete_magazin'].disabled = disable_delete_magazin
+        
+class BaseBrochureActionFormSet(forms.BaseFormSet):
+
+    def __init__(self, disables, *args, **kwargs):
+        self.disables = disables
+        super().__init__(*args, **kwargs)
+    
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs['disable_delete_magazin'] = self.disables.get(index, False)
+        return kwargs
+        
+BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = BaseBrochureActionFormSet, extra = 0, can_delete = True)

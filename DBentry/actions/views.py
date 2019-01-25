@@ -4,7 +4,6 @@ from django.db.models import ProtectedError
 from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
-from django.forms import formset_factory 
 
 from DBentry.utils import link_list, merge_records, get_updateable_fields, get_obj_link, get_model_from_string, is_protected
 from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
@@ -12,7 +11,7 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin
 
 from .base import ActionConfirmationView, WizardConfirmationView
-from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm, BrochureActionForm
+from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm, BrochureActionFormSet
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
@@ -304,16 +303,31 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
     
-    form_class = formset_factory(form = BrochureActionForm, extra = 0, can_delete = True)
+    form_class = BrochureActionFormSet
     
     def get_initial(self):
         return [
             {
-                'ausgabe_id': pk, 'titel': beschreibung, 'bemerkungen': bemerkungen
+                'ausgabe_id': pk, 'titel': beschreibung, 'bemerkungen': bemerkungen, 'magazin_id': magazin_id
             }
-                for pk, beschreibung, bemerkungen in self.queryset.values_list('pk', 'beschreibung', 'bemerkungen')
+                for pk, beschreibung, bemerkungen, magazin_id in self.queryset.values_list('pk', 'beschreibung', 'bemerkungen', 'magazin_id')
         ]
-            
+        
+    def get_form_kwargs(self):
+        # Pass a dictionary with index, boolean whether delete_magazin should be disabled for the form with that index.
+        # This could possibly also live in the formset class BrochureActionFormSet
+        kwargs = super().get_form_kwargs()
+        cannot_delete_mags = [
+            mag.pk
+            for mag in magazin.objects.filter(pk__in=self.queryset.values_list('magazin_id', flat = True))
+            if list(mag.ausgabe_set.order_by('pk').values_list('pk', flat = True)) != list(self.queryset.order_by('pk').filter(magazin_id=mag.pk).values_list('pk', flat = True))
+        ]
+        kwargs['disables'] = {
+            index: init_kwargs['magazin_id'] in cannot_delete_mags
+            for index, init_kwargs in enumerate(kwargs['initial'])
+        }
+        return kwargs
+        
     def action_allowed(self):
         from django.db.models import Count
         ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0)
