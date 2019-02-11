@@ -13,6 +13,7 @@ from .ac.widgets import make_widget
 from .sites import miz_site
 
 #TODO: advanced_search_form: ausgabe ausgabe_monat
+#TODO: add admin_order_field attribute to all sortable callables
 
 class BestandInLine(BaseTabularInline):
     model = bestand
@@ -753,11 +754,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
-#TODO: add this once it's clear what we need    
-#    advanced_search_form = {
-#        'selects': ['genre'], 
-#        'gtelt': ['jahre__jahr']
-#    }
+    advanced_search_form = {
+        'selects': ['genre'], 
+        'gtelt': ['jahre__jahr']
+    }
     
     def get_fieldsets(self, request, obj=None):
         # Add a fieldset for (ausgabe, ausgabe__magazin)
@@ -775,9 +775,14 @@ class BaseBrochureAdmin(MIZModelAdmin):
                 }))
         return fieldsets
         
+    def get_queryset(self, request):
+        from django.db.models import Min
+        return super().get_queryset(request).annotate(jahr = Min('jahre__jahr')).order_by('titel', 'jahr', 'zusammenfassung')
+        
     def jahr_string(self, obj):
         return concat_limit(obj.jahre.all())
     jahr_string.short_description = 'Jahre'
+    jahr_string.admin_order_field = 'jahr'
     
 @admin.register(Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
