@@ -295,6 +295,12 @@ def get_relations_between_models(model1, model2):
             else: 
                 rel = fld 
             break 
+    #TODO: if rel is none: rel = field.rel // if field is none: field = rel.field
+    # Example relation video <- video_band (m2m) -> band
+    # get_relations_between_models(video_band, band): fk(video_band,band), None 
+    # band has no relation to video_band, only implicitly through the m2m field (whose related_model is video though!)
+    # The first loop finds the foreign key field just fine,
+    # but the second loop never finds anything where the related model is video_band
      
     return field, rel 
     

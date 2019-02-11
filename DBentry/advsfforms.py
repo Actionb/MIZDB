@@ -10,7 +10,8 @@ from .models import *
 from .constants import *
 from DBentry.ac.widgets import make_widget
 
-class AdvSFForm(forms.Form):            
+class AdvSFForm(forms.Form):      
+    #TODO: Make sure that it's clear that the search box is for text search
     
     def get_initial_for_field(self, field, field_name):
         """
