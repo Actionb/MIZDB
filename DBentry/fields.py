@@ -24,7 +24,7 @@ class StdNumWidget(widgets.TextInput):
         super().__init__(*args, **kwargs)
     
     def format_value(self, value):
-        if self.format_callback is None:
+        if value is None or self.format_callback is None:
             return value
         # Render the value in a pretty format
         return self.format_callback(value)
