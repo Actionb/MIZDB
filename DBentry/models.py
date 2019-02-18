@@ -907,7 +907,7 @@ class veranstaltung_alias(BaseAliasModel):
 
 class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
-    tracks = models.IntegerField()
+    tracks = models.IntegerField() #TODO: PositiveSmallIntegerField!
     laufzeit = models.DurationField(blank = True, null = True, help_text = 'Format: hh:mm:ss')
     festplatte = models.CharField(**CF_ARGS_B)
     quelle = models.CharField(**CF_ARGS_B)

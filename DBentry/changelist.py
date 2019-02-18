@@ -2,6 +2,9 @@
 from django.contrib.admin.views.main import * #TODO: explicit imports
 from django.utils.datastructures import MultiValueDict
 
+#TODO: get_ordering will double the ordering fields by getting the default fields first and then extending by the ordering fields given by 
+# the already sorted queryset.query.order_by || SEE TODO AT AusgabeChangeList
+
 class MIZChangeList(ChangeList):
     
     def __init__(self, request, model, list_display, list_display_links,
@@ -98,6 +101,7 @@ class MIZChangeList(ChangeList):
             Also allowed the usage of Q items to filter the queryset.
         """
         # BulkViews redirect
+        #TODO: is this still needed?
         if request.session.get('qs', {}):
             qs = self.root_queryset.filter(**request.session.get('qs'))
             #TODO: keep the qs if you want to return to the filtered changelist? Example: bulk_ausgabe-> edit created -> merge created -> abort -> back to edit created and not the entire cl
@@ -126,7 +130,7 @@ class MIZChangeList(ChangeList):
                         else:
                             qs = qs.filter(**{key:value})
             else:
-                # NOTE isn't remaining_lookup_params always a MultiValueDict?
+                # NOTE: isn't remaining_lookup_params always a MultiValueDict?
                 for k, v in remaining_lookup_params.items():
                     if isinstance(v, models.Q):
                         qs = qs.filter(v)
@@ -191,4 +195,7 @@ class AusgabeChangeList(MIZChangeList):
     
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
+        #TODO: by default, get_ordering returns ['magazin','magazin','-pk'] which is a bit ... useless considering SEE TODO AT THE TOP
+        # the queryset's ordering is going to be changed by chronologic_order
+        # print('ordering:', self.get_ordering(request, queryset))
         return queryset.chronologic_order(ordering = self.get_ordering(request, queryset))
