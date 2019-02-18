@@ -267,42 +267,24 @@ def merge_records(original, qs, update_data = None, expand_original = True, requ
         logger.log_delete(qs)
         qs.delete()
     return original_qs.first(), update_data
-         
-def get_relations_between_models(model1, model2): 
+
+def get_relations_between_models(model1, model2):
     """ 
     Returns the field and the relation object that connects model1 and model2. 
     """ 
-    # used by signals.set_name_changed_flag_ausgabe
     if isinstance(model1, str): 
         model1 = get_model_from_string(model1) 
     if isinstance(model2, str): 
         model2 = get_model_from_string(model2) 
      
-    field = None # the concrete field declaring the relation 
-    rel = None # the reverse relation 
-    for fld in model1._meta.get_fields(): 
-        if fld.is_relation and fld.related_model == model2: 
-            if fld.concrete: 
-                field = fld 
-            else: 
-                rel = fld 
-            break 
-                 
-    for fld in model2._meta.get_fields(): 
-        if fld.is_relation and fld.related_model == model1: 
-            if fld.concrete: 
-                field = fld 
-            else: 
-                rel = fld 
-            break 
-    #TODO: if rel is none: rel = field.rel // if field is none: field = rel.field
-    # Example relation video <- video_band (m2m) -> band
-    # get_relations_between_models(video_band, band): fk(video_band,band), None 
-    # band has no relation to video_band, only implicitly through the m2m field (whose related_model is video though!)
-    # The first loop finds the foreign key field just fine,
-    # but the second loop never finds anything where the related model is video_band
-     
-    return field, rel 
+    for f in model1._meta.get_fields():
+        if not f.is_relation:
+            continue
+        if (f.model == model1 and f.related_model == model2) or (f.model == model2 and f.related_model == model1):
+            if f.concrete:
+                return f, f.remote_field
+            else:
+                return f.remote_field, f
     
 def get_full_fields_list(model):
     rslt = set()
