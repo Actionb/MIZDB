@@ -1,8 +1,13 @@
+import re
+
 from stdnum import issn, isbn, ean
 from stdnum import exceptions as stdnum_exceptions
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy
+
+from DBentry.constants import discogs_release_id_pattern
 
 class StdValidationError(ValidationError):
     message = None
@@ -47,5 +52,9 @@ def ISSNValidator(raw_issn):
 def EANValidator(raw_ean):
     return _validate(ean, raw_ean)
     
+class DiscogsURLValidator(RegexValidator):
+    regex = re.compile(discogs_release_id_pattern)
+    message = "Bitte nur Adressen von discogs.com eingeben."
+    code = "discogs"
         
         

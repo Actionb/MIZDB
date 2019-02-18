@@ -150,7 +150,12 @@ class HerausgeberForm(XRequiredFormMixin, FormBase):
     
     xrequired = [{'fields':['person', 'organisation'], 'min':1}]
     
-class AudioForm(FormBase):    
+class AudioForm(FormBase):   
+   
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from DBentry.validators import DiscogsURLValidator
+        self.fields['discogs_url'].validators.append(DiscogsURLValidator())
     
     def clean(self):
         # release_id and discogs_url are not required, so there's two reason they might not turn up in self.cleaned_data at this point:

@@ -53,5 +53,5 @@ MIN_JAHR = 1899
 
 PERM_DENIED_MSG = 'Sie haben nicht die erforderliche Berechtigung diese Seite zu sehen.'
 
-RELEASE_ID_REGEX = r'discogs.com/.*release/(\d+)'
-discogs_release_id_pattern = re.compile(RELEASE_ID_REGEX)
+DISCOGS_RELEASE_ID_REGEX = r'discogs.com/.*release/(\d+)'
+discogs_release_id_pattern = re.compile(DISCOGS_RELEASE_ID_REGEX)

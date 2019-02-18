@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from .base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
@@ -653,8 +653,8 @@ class audio(BaseModel):
     e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
-    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)")
-    discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True, validators = [RegexValidator(discogs_release_id_pattern, message= "Bitte nur Adressen von discogs.com eingeben.")]) #TODO: is null = True a good idea for URLFields?
+    release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)") #TODO: val must be > 0!
+    discogs_url = models.URLField(verbose_name = "Link discogs.com", blank = True,  null = True) #TODO: is null = True a good idea for URLFields?
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')

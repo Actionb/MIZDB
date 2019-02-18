@@ -314,7 +314,7 @@ class TestAudioForm(ModelFormTestCase):
         # Assert that clean can properly cast any valid input for release_id into a string.
         form = self.get_form(data = {'release_id':1234})
         with self.assertNotRaises(Exception):
-            form.full_clean()
+            form.full_clean() #TODO: full_clean cannot raise exceptions and all exceptions are caught in the clean functions called
         self.assertNotIn('release_id', form._errors)
         
         form = self.get_form(data = {'release_id':'1234'})
@@ -377,3 +377,28 @@ class TestAudioForm(ModelFormTestCase):
         form.full_clean()
         self.assertEqual(form.cleaned_data['discogs_url'], 'http://www.discogs.com/release/3512181')
         
+    @translation_override(language = None)
+    def test_invalid_urls_keep_old_error_message(self):
+        # Assert that invalid urls are validated through the default URLValidator also
+        form = self.get_form(data = {'titel': 'Beep', 'discogs_url': 'notavalidurl'})
+        self.assertIn('discogs_url', form.errors)
+        self.assertIn('Enter a valid URL.', form.errors['discogs_url'])
+        self.assertIn("Bitte nur Adressen von discogs.com eingeben.", form.errors['discogs_url'])
+        
+    @translation_override(language = None)
+    def test_urls_only_valid_from_discogs(self):
+        # Assert that only urls with domain discogs.com are valid
+        form = self.get_form(data = {'titel': 'Beep', 'discogs_url': 'http://www.google.com'})
+        self.assertIn('discogs_url', form.errors)
+        self.assertIn("Bitte nur Adressen von discogs.com eingeben.", form.errors['discogs_url'])
+    
+    def test_urls_with_slug_valid(self):
+        # Assert that discogs urls with a slug are not regarded as invalid.
+        form = self.get_form(data = {'titel': 'Beep', 'discogs_url': 'https://www.discogs.com/release/3512181'})
+        self.assertNotIn('discogs_url', form.errors)
+        
+    def test_urls_without_slug_valid(self):
+        # Assert that discogs urls without a slug are not regarded as invalid.
+        form = self.get_form(data = {'titel': 'Beep', 'discogs_url': 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181'})
+        self.assertNotIn('discogs_url', form.errors)
+          

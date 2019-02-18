@@ -4,7 +4,8 @@ from django.core.exceptions import ValidationError
 
 from DBentry.validators import (
     ISSNValidator, ISBNValidator, EANValidator, 
-    InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength
+    InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength, 
+    DiscogsURLValidator
 )
 
 class TestStdNumValidators(MyTestCase):
@@ -49,3 +50,31 @@ class TestStdNumValidators(MyTestCase):
             ("1234567890123", InvalidChecksum), 
         ]
         self.run_validators(EANValidator, invalid)
+
+class TestDiscogsURLValidator(MyTestCase):
+    
+    def setUp(self):
+        self.validator = DiscogsURLValidator()
+        
+    @translation_override(language = None)
+    def assertValidationFailed(self, value):
+        with self.assertRaises(ValidationError) as cm:
+            self.validator('notavalidurl')
+        self.assertEqual(cm.exception.message, "Bitte nur Adressen von discogs.com eingeben.")
+        self.assertEqual(cm.exception.code, 'discogs')
+        
+    def test_invalid_url(self):
+        self.assertValidationFailed('notavalidurl')
+        
+    def test_not_a_discogs_url(self):
+        self.assertValidationFailed('www.google.com')
+        
+    def test_discogs_url_with_slug(self):
+        with self.assertNotRaises(ValidationError):
+            self.validator('https://www.discogs.com/release/3512181')
+    
+    def test_discogs_url_without_slug(self):
+        with self.assertNotRaises(ValidationError):
+            self.validator('https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181')
+    
+            
