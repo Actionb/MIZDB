@@ -18,13 +18,6 @@ AUTO_ASSIGN_DUPLICATE = True
 CF_ARGS = {'max_length' : 200}
 CF_ARGS_B = {'max_length' : 200, 'blank' : True}
 
-# Model.yearfield args
-YF_ARGS = { 
-    'null' : True,
-    'blank' : True, 
-    'validators' : [MinValueValidator(1900), MaxValueValidator(datetime.datetime.now().year+1)]
-}
-
 # attrs specifications for TextArea Formfield
 ATTRS_TEXTAREA = {'rows': 3,'cols': 90}
 

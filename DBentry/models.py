@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from .base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from .fields import ISSNField, ISBNField, EANField
+from .fields import ISSNField, ISBNField, EANField, YearField
 from .constants import *
 from .m2m import *
 from .utils import concat_limit
@@ -256,10 +256,8 @@ class ausgabe(ComputedNameModel):
         return cls._name_default % {'verbose_name':cls._meta.verbose_name}
     
         
-class ausgabe_jahr(BaseModel):
-    JAHR_VALIDATORS = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
-    
-    jahr = models.PositiveSmallIntegerField('Jahr', validators = JAHR_VALIDATORS)
+class ausgabe_jahr(BaseModel):    
+    jahr = YearField('Jahr')
     
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
     
@@ -538,8 +536,8 @@ class buch(BaseModel):
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
     seitenumfang = models.PositiveSmallIntegerField(blank = True, null = True)
-    jahr = models.PositiveIntegerField(**YF_ARGS)
-    jahr_orig = models.PositiveIntegerField('Jahr (Original)',**YF_ARGS)
+    jahr = YearField('Jahr', null = True, blank = True)
+    jahr_orig = YearField('Jahr (Original)', null = True, blank = True)
     auflage = models.CharField(**CF_ARGS_B)
     EAN = EANField(blank = True)
     ISBN = ISBNField(blank = True)
@@ -650,7 +648,7 @@ class audio(BaseModel):
     
     tracks = models.IntegerField(verbose_name = 'Anz. Tracks', blank = True, null = True)
     laufzeit = models.DurationField(blank = True, null = True, help_text = 'Format: hh:mm:ss')
-    e_jahr = models.PositiveSmallIntegerField(verbose_name = 'Erscheinungsjahr', blank = True, null = True)
+    e_jahr = YearField('Erscheinungsjahr', blank = True, null = True)
     quelle = models.CharField(help_text = 'Broadcast, Live, etc.',  **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name = 'Katalog Nummer', **CF_ARGS_B)
     release_id = models.PositiveIntegerField(blank = True,  null = True, verbose_name = "Release ID (discogs)") #TODO: val must be > 0!
