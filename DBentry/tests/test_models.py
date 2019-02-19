@@ -2,6 +2,8 @@ from .base import *
 
 from django.core.exceptions import ValidationError
 
+from DBentry.m2m import m2m_audio_musiker
+
 class TestBaseModel(DataTestCase):
 
     model = artikel

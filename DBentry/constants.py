@@ -1,7 +1,6 @@
 import re
 import datetime
 
-from django.core.validators import *
 from django.utils.six.moves.urllib.parse import quote, unquote
 
 # ID für den Lagerort, der den Zeitschriftenraum darstellt

@@ -5,8 +5,6 @@ from django.core.exceptions import FieldDoesNotExist
 from django.utils.text import capfirst
 from django.utils.html import format_html, mark_safe
 
-from DBentry.models import *
-from DBentry.admin import *
 from DBentry.utils import get_model_admin_for_model, is_iterable
 
 def formfield_to_modelfield(model, formfield_name, formfield = None):

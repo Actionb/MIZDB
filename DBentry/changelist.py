@@ -1,6 +1,17 @@
+import sys
 
-from django.contrib.admin.views.main import * #TODO: explicit imports
+from django.contrib.admin import FieldListFilter
+from django.contrib.admin.exceptions import DisallowedModelAdminLookup
+from django.contrib.admin.options import IncorrectLookupParameters
+from django.contrib.admin.utils import get_fields_from_path, lookup_needs_distinct, prepare_lookup_value
+from django.contrib.admin.views.main import ChangeList, PAGE_VAR, ERROR_FLAG
+
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, SuspiciousOperation
+from django.db import models
+
+from django.utils import six
 from django.utils.datastructures import MultiValueDict
+from django.utils.http import urlencode
 
 #TODO: get_ordering will double the ordering fields by getting the default fields first and then extending by the ordering fields given by 
 # the already sorted queryset.query.order_by || SEE TODO AT AusgabeChangeList

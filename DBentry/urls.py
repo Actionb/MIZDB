@@ -1,8 +1,8 @@
 from django.conf.urls import url,  include
 
 
-from .views import FavoritenView
-from .bulk.views import BulkAusgabe
+from DBentry.views import FavoritenView
+from DBentry.bulk.views import BulkAusgabe
 
 admin_tools_urls = [
     url(r'^bulk_ausgabe/$', BulkAusgabe.as_view(), name='bulk_ausgabe'), 

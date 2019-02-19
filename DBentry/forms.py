@@ -11,7 +11,7 @@ from django.db.models.manager import BaseManager
 from .models import *
 from .constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
-from DBentry.utils import snake_case_to_spaces, get_model_fields
+from DBentry.utils import snake_case_to_spaces
 
 Textarea = forms.Textarea           
 

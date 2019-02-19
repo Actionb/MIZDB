@@ -1,7 +1,6 @@
-
-from DBentry.utils import get_model_admin_for_model
 from django.urls import reverse, exceptions
 
+from DBentry.utils import get_model_admin_for_model
 
 class HelpRegistry(object):
     

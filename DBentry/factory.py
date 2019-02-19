@@ -6,8 +6,8 @@ import factory
 
 from stdnum import issn
 
+import DBentry.models as _models
 from DBentry.utils import is_iterable, get_model_relations, get_model_fields
-from DBentry.models import *
 
 class RuntimeFactoryMixin(object):
     """
@@ -440,10 +440,10 @@ def modelfactory_factory(model, **kwargs):
     modelfac = type(factory_name, (MIZModelFactory, ), kwargs)
     _cache[model_name] = modelfac
     return modelfac
-
+    
 class AutorFactory(MIZModelFactory):
     class Meta:
-        model = autor
+        model = _models.autor
     person = SubFactory('DBentry.factory.PersonFactory', required = True)
     
     @factory.lazy_attribute
@@ -456,39 +456,39 @@ class AutorFactory(MIZModelFactory):
 
 class BandFactory(MIZModelFactory):
     class Meta:
-        model = band
+        model = _models.band
         django_get_or_create = ['band_name']
     band_name = factory.Faker('company')
     
 class BundeslandFactory(MIZModelFactory):
     class Meta:
-        model = bundesland
+        model = _models.bundesland
         django_get_or_create = ['bland_name', 'code']
     bland_name = factory.Faker('state')
     code = factory.Faker('state_abbr')
     
 class GenreFactory(MIZModelFactory):
     class Meta:
-        model = genre
+        model = _models.genre
         django_get_or_create = ['genre']
     
 class LandFactory(MIZModelFactory):
     class Meta:
-        model = land
+        model = _models.land
         django_get_or_create = ['land_name', 'code']
     land_name = UniqueFaker('country')
     code = UniqueFaker('country_code')
 
 class MagazinFactory(MIZModelFactory):
     class Meta:
-        model = magazin
+        model = _models.magazin
         django_get_or_create = ['magazin_name']
     magazin_name = factory.Sequence(lambda n: 'TestMagazin' + str(n))
     issn = ISSNFaker()
     
 class MonatFactory(MIZModelFactory):
     class Meta:
-        model = monat
+        model = _models.monat
         django_get_or_create = ['monat', 'abk', 'ordinal']
     monat = factory.Faker('month_name')
     abk = factory.LazyAttribute(lambda o: o.monat[:3])
@@ -496,29 +496,29 @@ class MonatFactory(MIZModelFactory):
     
 class MusikerFactory(MIZModelFactory):
     class Meta:
-        model = musiker
+        model = _models.musiker
         django_get_or_create = ['kuenstler_name']
     kuenstler_name = factory.Sequence(lambda n: 'TestMusiker' + str(n))
     
 class OrtFactory(MIZModelFactory):
     class Meta:
-        model = ort
+        model = _models.ort
     stadt = factory.Faker('city')
     
 class PersonFactory(MIZModelFactory):
     class Meta:
-        model = person
+        model = _models.person
     vorname = factory.Faker('first_name')
     nachname = factory.Faker('last_name')
     
 class SchlagwortFactory(MIZModelFactory):
     class Meta:
-        model = schlagwort
+        model = _models.schlagwort
         django_get_or_create = ['schlagwort']
     
 class SpracheFactory(MIZModelFactory):
     class Meta:
-        model = sprache
+        model = _models.sprache
     abk = factory.Faker('language_code')
     
 def make(model, **kwargs):

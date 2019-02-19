@@ -1,21 +1,14 @@
-from collections import OrderedDict
-
 from django import views
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
 
-from django.contrib import admin, messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth import get_permission_codename
-from django.utils.functional import cached_property
 
-from .models import *
-from .utils import link_list, get_model_from_string
-from .forms import FavoritenForm
-from .sites import miz_site, register_tool
-from .constants import PERM_DENIED_MSG
+from DBentry.models import Favoriten
+from DBentry.utils import get_model_from_string
+from DBentry.forms import FavoritenForm
+from DBentry.sites import miz_site, register_tool
+from DBentry.constants import PERM_DENIED_MSG
 
-from dal import autocomplete
 from formtools.wizard.views import SessionWizardView
 
 class OptionalFormView(views.generic.FormView):

@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from nameparser import HumanName
 
-from DBentry.models import *
+from DBentry.models import autor, person
 from DBentry.utils import parse_name
     
 class MultipleObjectsReturnedException(Exception):

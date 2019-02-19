@@ -2,11 +2,10 @@
 from django import http
 from django.db.models import Q
 from django.utils.translation import gettext
-from django.core.exceptions import FieldError, ValidationError
 
 from dal import autocomplete
 
-from DBentry.models import *
+from DBentry.models import Favoriten, ausgabe, buch
 from DBentry.logging import LoggingMixin
 from DBentry.utils import get_model_from_string
 from DBentry.ac.creator import Creator
@@ -229,5 +228,5 @@ class ACCreateable(ACBase):
 
         return http.JsonResponse({
             'id': result.pk,
-            'text': six.text_type(result),
+            'text': str(result),
         })

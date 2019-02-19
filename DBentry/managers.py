@@ -7,7 +7,7 @@ from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
 
 from DBentry.utils import flatten_dict, leapdays, build_date
-from DBentry.query import *
+from DBentry.query import BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
 
 class MIZQuerySet(models.QuerySet):
     

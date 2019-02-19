@@ -6,8 +6,7 @@ from django.contrib.admin.utils import get_fields_from_path
 from django.utils.datastructures import MultiValueDict
 from collections import OrderedDict
 
-from .models import *
-from .constants import *
+from DBentry.models import ausgabe
 from DBentry.ac.widgets import make_widget
 
 class AdvSFForm(forms.Form):      

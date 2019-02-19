@@ -1,14 +1,14 @@
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MinValueValidator
 
-from .base.models import (
+import DBentry.m2m as _m2m
+from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from .fields import ISSNField, ISBNField, EANField, YearField
-from .constants import *
-from .m2m import *
-from .utils import concat_limit
-from .managers import AusgabeQuerySet
+from DBentry.fields import ISSNField, ISBNField, EANField, YearField
+from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
+from DBentry.utils import concat_limit
+from DBentry.managers import AusgabeQuerySet
 
 #TODO: allow searching by ISSN
 
@@ -41,8 +41,8 @@ class musiker(BaseModel):
     
     person = models.ForeignKey(person, models.SET_NULL, null = True, blank = True)
     
-    genre = models.ManyToManyField('genre',  through = m2m_musiker_genre)
-    instrument = models.ManyToManyField('instrument',  through = m2m_musiker_instrument)
+    genre = models.ManyToManyField('genre',  through = _m2m.m2m_musiker_genre)
+    instrument = models.ManyToManyField('instrument',  through = _m2m.m2m_musiker_instrument)
     orte = models.ManyToManyField('ort', blank = True)
     
     search_fields = ['kuenstler_name', 'person__vorname', 'person__nachname', 'musiker_alias__alias', 'beschreibung']
@@ -86,8 +86,8 @@ class band(BaseModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
-    genre = models.ManyToManyField('genre',  through = m2m_band_genre)
-    musiker = models.ManyToManyField('musiker',  through = m2m_band_musiker)
+    genre = models.ManyToManyField('genre',  through = _m2m.m2m_band_genre)
+    musiker = models.ManyToManyField('musiker',  through = _m2m.m2m_band_musiker)
     orte = models.ManyToManyField('ort', blank = True)
 
     search_fields = ['band_name','band_alias__alias', 'musiker__kuenstler_name', 'musiker__musiker_alias__alias', 'beschreibung']
@@ -120,7 +120,7 @@ class autor(ComputedNameModel):
         help_text = "Zur Schnell-Erstellung bitte folgendes Format benutzen: Nachname(n), Vorname(n)"
     )
     
-    magazin = models.ManyToManyField('magazin', blank = True,  through = m2m_autor_magazin)
+    magazin = models.ManyToManyField('magazin', blank = True,  through = _m2m.m2m_autor_magazin)
     
     search_fields = ['kuerzel', 'person___name', 'beschreibung']
     primary_search_fields = []
@@ -162,7 +162,7 @@ class ausgabe(ComputedNameModel):
     
     magazin = models.ForeignKey('magazin', models.PROTECT, verbose_name = 'Magazin')
     
-    audio = models.ManyToManyField('audio', through = m2m_audio_ausgabe, blank = True)
+    audio = models.ManyToManyField('audio', through = _m2m.m2m_audio_ausgabe, blank = True)
                  
     search_fields = [
         'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 'e_datum', 
@@ -343,7 +343,7 @@ class magazin(BaseModel):
     
     ort = models.ForeignKey('ort', models.SET_NULL, null = True, blank = True, verbose_name = 'Hrsg.Ort', help_text = 'Angabe für auf eine Region beschränktes Magazin.')
     
-    genre = models.ManyToManyField('genre', blank = True,  through = m2m_magazin_genre)
+    genre = models.ManyToManyField('genre', blank = True,  through = _m2m.m2m_magazin_genre)
     
     search_fields = ['magazin_name', 'beschreibung', 'issn']
     name_field = 'magazin_name'
@@ -500,15 +500,15 @@ class artikel(BaseModel):
     
     ausgabe = models.ForeignKey('ausgabe', models.PROTECT)
     
-    genre = models.ManyToManyField('genre', through = m2m_artikel_genre, verbose_name='Genre')
-    schlagwort = models.ManyToManyField('schlagwort', through = m2m_artikel_schlagwort, verbose_name='Schlagwort')
-    person = models.ManyToManyField('person', through = m2m_artikel_person)
-    autor = models.ManyToManyField('autor', through = m2m_artikel_autor)
-    band = models.ManyToManyField('band', through = m2m_artikel_band)
-    musiker = models.ManyToManyField('musiker', through = m2m_artikel_musiker)
-    ort = models.ManyToManyField('ort', through = m2m_artikel_ort)
-    spielort = models.ManyToManyField('spielort', through = m2m_artikel_spielort)
-    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_artikel_veranstaltung)
+    genre = models.ManyToManyField('genre', through = _m2m.m2m_artikel_genre, verbose_name='Genre')
+    schlagwort = models.ManyToManyField('schlagwort', through = _m2m.m2m_artikel_schlagwort, verbose_name='Schlagwort')
+    person = models.ManyToManyField('person', through = _m2m.m2m_artikel_person)
+    autor = models.ManyToManyField('autor', through = _m2m.m2m_artikel_autor)
+    band = models.ManyToManyField('band', through = _m2m.m2m_artikel_band)
+    musiker = models.ManyToManyField('musiker', through = _m2m.m2m_artikel_musiker)
+    ort = models.ManyToManyField('ort', through = _m2m.m2m_artikel_ort)
+    spielort = models.ManyToManyField('spielort', through = _m2m.m2m_artikel_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = _m2m.m2m_artikel_veranstaltung)
     
     search_fields = ['schlagzeile', 'zusammenfassung', 'beschreibung']
     primary_search_fields = ['schlagzeile']
@@ -659,15 +659,15 @@ class audio(BaseModel):
     
     sender = models.ForeignKey('sender', models.SET_NULL, blank = True,  null = True, help_text = 'Name des Radio-/Fernsehsenders')
     
-    plattenfirma = models.ManyToManyField('plattenfirma', through = m2m_audio_plattenfirma)
-    band = models.ManyToManyField('band', through = m2m_audio_band)
-    genre = models.ManyToManyField('genre', through = m2m_audio_genre)
-    musiker = models.ManyToManyField('musiker', through = m2m_audio_musiker)
-    person = models.ManyToManyField('person', through = m2m_audio_person)
-    schlagwort = models.ManyToManyField('schlagwort', through = m2m_audio_schlagwort)
-    spielort = models.ManyToManyField('spielort', through = m2m_audio_spielort)
-    veranstaltung = models.ManyToManyField('veranstaltung', through = m2m_audio_veranstaltung)
-    ort = models.ManyToManyField('ort', through = m2m_audio_ort)
+    plattenfirma = models.ManyToManyField('plattenfirma', through = _m2m.m2m_audio_plattenfirma)
+    band = models.ManyToManyField('band', through = _m2m.m2m_audio_band)
+    genre = models.ManyToManyField('genre', through = _m2m.m2m_audio_genre)
+    musiker = models.ManyToManyField('musiker', through = _m2m.m2m_audio_musiker)
+    person = models.ManyToManyField('person', through = _m2m.m2m_audio_person)
+    schlagwort = models.ManyToManyField('schlagwort', through = _m2m.m2m_audio_schlagwort)
+    spielort = models.ManyToManyField('spielort', through = _m2m.m2m_audio_spielort)
+    veranstaltung = models.ManyToManyField('veranstaltung', through = _m2m.m2m_audio_veranstaltung)
+    ort = models.ManyToManyField('ort', through = _m2m.m2m_audio_ort)
     
     search_fields = ['titel', 'beschreibung']
     primary_search_fields = []
@@ -917,7 +917,7 @@ class video(BaseModel):
     
     band = models.ManyToManyField('band')
     genre = models.ManyToManyField('genre')
-    musiker = models.ManyToManyField('musiker', through = m2m_video_musiker)
+    musiker = models.ManyToManyField('musiker', through = _m2m.m2m_video_musiker)
     person = models.ManyToManyField('person')
     schlagwort = models.ManyToManyField('schlagwort')
     spielort = models.ManyToManyField('spielort')
@@ -1071,7 +1071,7 @@ class datei(BaseModel):
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
     band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker', through = m2m_datei_musiker)
+    musiker = models.ManyToManyField('musiker', through = _m2m.m2m_datei_musiker)
     ort = models.ManyToManyField('ort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')

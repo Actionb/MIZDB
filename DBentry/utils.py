@@ -18,8 +18,8 @@ from django.urls import reverse, NoReverseMatch
 from django.contrib.admin.utils import quote
 from django.contrib.auth import get_permission_codename
 
-from .constants import M2M_LIST_MAX_LEN
-from .logging import get_logger
+from DBentry.constants import M2M_LIST_MAX_LEN
+from DBentry.logging import get_logger
 
 ##############################################################################################################
 # model utilities

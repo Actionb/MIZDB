@@ -1,6 +1,6 @@
 
 from django.db import models
-from .base.models import BaseM2MModel
+from DBentry.base.models import BaseM2MModel
 
 # ================================= #
 ##              AUDIO

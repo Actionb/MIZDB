@@ -1,9 +1,7 @@
+import DBentry.models as MIZModels
+
 from .registry import register
 from .helptext import ModelAdminHelpText
-
-from DBentry.models import *
-from DBentry.admin import *
-    
 
 class MIZModelAdminHelpText(ModelAdminHelpText):
     
@@ -23,17 +21,17 @@ class MIZModelAdminHelpText(ModelAdminHelpText):
 
 #@register()
 class ArtikelHelpText(MIZModelAdminHelpText):
-    model = artikel
+    model = MIZModels.artikel
 
 #@register()
 class AudioHelpText(MIZModelAdminHelpText):
-    model = audio
+    model = MIZModels.audio
     
 @register()
 class AusgabeHelpText(MIZModelAdminHelpText):
     help_items = [('description', 'Beschreibung'), ('fields', 'Felder'), ('inlines', 'Inlines'), ('notes', 'Bemerkung'), ('text', 'Textliche Darstellung')]
     
-    model = ausgabe
+    model = MIZModels.ausgabe
     
     description = """
         Die volle Korrektheit aller Angaben zu gewährleisten, ist in vielen Fällen nur begrenzt möglich, da für Begriffe wie 'Jahrgang', 'laufende Nummer' oder 'Ausgabennummer' """ + \
@@ -72,83 +70,83 @@ class AusgabeHelpText(MIZModelAdminHelpText):
     
 #@register()
 class AusgabeJahrHelpText(MIZModelAdminHelpText):
-    model = ausgabe_jahr
+    model = MIZModels.ausgabe_jahr
 
 #@register()
 class AusgabeLnumHelpText(MIZModelAdminHelpText):
-    model = ausgabe_lnum
+    model = MIZModels.ausgabe_lnum
 
 #@register()
 class AusgabeMonatHelpText(MIZModelAdminHelpText):
-    model = ausgabe_monat
+    model = MIZModels.ausgabe_monat
 
 #@register()
 class AusgabeNumHelpText(MIZModelAdminHelpText):
-    model = ausgabe_num
+    model = MIZModels.ausgabe_num
 
 #@register()
 class AutorHelpText(MIZModelAdminHelpText):
-    model = autor
+    model = MIZModels.autor
 
 #@register()
 class BandHelpText(MIZModelAdminHelpText):
-    model = band
+    model = MIZModels.band
 
 #@register()
 class BandAliasHelpText(MIZModelAdminHelpText):
-    model = band_alias
+    model = MIZModels.band_alias
     
 @register()
 class BestandHelpText(ModelAdminHelpText):
     
-    model = bestand
+    model = MIZModels.bestand
     
     inline_text = 'Hier kann das Objekt im Bestand des Archives registriert werden. Dazu ist eine Angabe des Lagerortes des Objektes erforderlich. \nDazu kann auch noch die Provenienz (Herkunft, Ursprung) des Objektes angegeben werden.'
 
 #@register()
 class BildmaterialHelpText(MIZModelAdminHelpText):
-    model = bildmaterial
+    model = MIZModels.bildmaterial
 
 #@register()
 class BuchHelpText(MIZModelAdminHelpText):
-    model = buch
+    model = MIZModels.buch
 
 #@register()
 class BundeslandHelpText(MIZModelAdminHelpText):
-    model = bundesland
+    model = MIZModels.bundesland
 
 #@register()
 class DateiHelpText(MIZModelAdminHelpText):
-    model = datei
+    model = MIZModels.datei
 
 #@register()
 class DokumentHelpText(MIZModelAdminHelpText):
-    model = dokument
+    model = MIZModels.dokument
 
 #@register()
 class FormatHelpText(MIZModelAdminHelpText):
-    model = Format
+    model = MIZModels.Format
 
 #@register()
 class FormatsizeHelpText(MIZModelAdminHelpText):
-    model = FormatSize
+    model = MIZModels.FormatSize
 
 #@register()
 class FormattagHelpText(MIZModelAdminHelpText):
-    model = FormatTag
+    model = MIZModels.FormatTag
 
 #@register()
 class FormattypHelpText(MIZModelAdminHelpText):
-    model = FormatTyp
+    model = MIZModels.FormatTyp
 
 #@register()
 class GeberHelpText(MIZModelAdminHelpText):
-    model = geber
+    model = MIZModels.geber
     
 #@register()
 class GenreHelpText(MIZModelAdminHelpText):
     
-    model = genre
+    model = MIZModels.genre
     
     inline_text = """
         Genres der ausgewählten Musiker oder Bands müssen hier nicht noch einmal explizit ausgewählt werden.
@@ -156,128 +154,128 @@ class GenreHelpText(MIZModelAdminHelpText):
 
 #@register()
 class GenreAliasHelpText(MIZModelAdminHelpText):
-    model = genre_alias
+    model = MIZModels.genre_alias
 
 #@register()
 class HerausgeberHelpText(MIZModelAdminHelpText):
-    model = Herausgeber
+    model = MIZModels.Herausgeber
 
 #@register()
 class InstrumentHelpText(MIZModelAdminHelpText):
-    model = instrument
+    model = MIZModels.instrument
 
 #@register()
 class InstrumentAliasHelpText(MIZModelAdminHelpText):
-    model = instrument_alias
+    model = MIZModels.instrument_alias
 
 #@register()
 class KreisHelpText(MIZModelAdminHelpText):
-    model = kreis
+    model = MIZModels.kreis
 
 #@register()
 class LagerortHelpText(MIZModelAdminHelpText):
-    model = lagerort
+    model = MIZModels.lagerort
 
 #@register()
 class LandHelpText(MIZModelAdminHelpText):
-    model = land
+    model = MIZModels.land
 
 #@register()
 class LandAliasHelpText(MIZModelAdminHelpText):
-    model = land_alias
+    model = MIZModels.land_alias
 
 #@register()
 class MagazinHelpText(MIZModelAdminHelpText):
-    model = magazin
+    model = MIZModels.magazin
 
 #@register()
 class MemorabilienHelpText(MIZModelAdminHelpText):
-    model = memorabilien
+    model = MIZModels.memorabilien
 
 #@register()
 class MonatHelpText(MIZModelAdminHelpText):
-    model = monat
+    model = MIZModels.monat
 
 #@register()
 class MusikerHelpText(MIZModelAdminHelpText):
-    model = musiker
+    model = MIZModels.musiker
 
 #@register()
 class MusikerAliasHelpText(MIZModelAdminHelpText):
-    model = musiker_alias
+    model = MIZModels.musiker_alias
 
 #@register()
 class NoiseredHelpText(MIZModelAdminHelpText):
-    model = NoiseRed
+    model = MIZModels.NoiseRed
 
 #@register()
 class OrganisationHelpText(MIZModelAdminHelpText):
-    model = Organisation
+    model = MIZModels.Organisation
 
 #@register()
 class OrtHelpText(MIZModelAdminHelpText):
-    model = ort
+    model = MIZModels.ort
 
 #@register()
 class PersonHelpText(MIZModelAdminHelpText):
-    model = person
+    model = MIZModels.person
 
 #@register()
 class PlattenfirmaHelpText(MIZModelAdminHelpText):
-    model = plattenfirma
+    model = MIZModels.plattenfirma
 
 #@register()
 class ProvenienzHelpText(MIZModelAdminHelpText):
-    model = provenienz
+    model = MIZModels.provenienz
 
 #@register()
 class SchlagwortHelpText(MIZModelAdminHelpText):
-    model = schlagwort
+    model = MIZModels.schlagwort
 
 #@register()
 class SchlagwortAliasHelpText(MIZModelAdminHelpText):
-    model = schlagwort_alias
+    model = MIZModels.schlagwort_alias
 
 #@register()
 class SchriftenreiheHelpText(MIZModelAdminHelpText):
-    model = schriftenreihe
+    model = MIZModels.schriftenreihe
 
 #@register()
 class SenderHelpText(MIZModelAdminHelpText):
-    model = sender
+    model = MIZModels.sender
 
 #@register()
 class SenderAliasHelpText(MIZModelAdminHelpText):
-    model = sender_alias
+    model = MIZModels.sender_alias
 
 #@register()
 class SpielortHelpText(MIZModelAdminHelpText):
-    model = spielort
+    model = MIZModels.spielort
 
 #@register()
 class SpielortAliasHelpText(MIZModelAdminHelpText):
-    model = spielort_alias
+    model = MIZModels.spielort_alias
 
 #@register()
 class SpracheHelpText(MIZModelAdminHelpText):
-    model = sprache
+    model = MIZModels.sprache
 
 #@register()
 class TechnikHelpText(MIZModelAdminHelpText):
-    model = technik
+    model = MIZModels.technik
 
 #@register()
 class VeranstaltungHelpText(MIZModelAdminHelpText):
-    model = veranstaltung
+    model = MIZModels.veranstaltung
 
 #@register()
 class VeranstaltungAliasHelpText(MIZModelAdminHelpText):
-    model = veranstaltung_alias
+    model = MIZModels.veranstaltung_alias
 
 #@register()
 class VerlagHelpText(MIZModelAdminHelpText):
-    model = verlag
+    model = MIZModels.verlag
 
 #@register()
 class VideoHelpText(MIZModelAdminHelpText):
-    model = video
+    model = MIZModels.video
