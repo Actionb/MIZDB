@@ -1,23 +1,25 @@
-from .base import *
+from .base import ViewTestCase
 
 from django import views
+from django.utils.encoding import force_text
+from django.utils.translation import override as translation_override
 
-from django.utils.text import get_text_list
-
-from DBentry.logging import *
+import DBentry.models as _models
+from DBentry.logging import LoggingMixin, ADDITION, CHANGE, DELETION, get_logger
+from DBentry.factory import make
 
 class TestLoggingMixin(ViewTestCase): 
     
-    model = band
+    model = _models.band
     view_bases = (LoggingMixin, views.View)
     
     @classmethod
     def setUpTestData(cls):        
-        cls.obj1 = make(band, genre__genre='Related')
-        cls.obj2 = make(band, band_name = 'Testband', beschreibung = 'This is a test.')
-        cls.m2m = band.genre.through.objects.get(band=cls.obj1)
+        cls.obj1 = make(cls.model, genre__genre='Related')
+        cls.obj2 = make(cls.model, band_name = 'Testband', beschreibung = 'This is a test.')
+        cls.m2m = cls.model.genre.through.objects.get(band=cls.obj1)
         
-        cls.ort = make(ort)
+        cls.ort = make(_models.ort)
         
         cls.test_data = [cls.obj1, cls.obj2, cls.m2m, cls.ort]
         
@@ -25,7 +27,7 @@ class TestLoggingMixin(ViewTestCase):
         
     @translation_override(language=None)
     def test_log_add_add(self):
-        rel = ort.band_set.rel
+        rel = _models.ort.band_set.rel
         
         view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
@@ -36,7 +38,7 @@ class TestLoggingMixin(ViewTestCase):
         
     @translation_override(language=None)
     def test_log_add_change(self):
-        rel = ort.band_set.rel
+        rel = _models.ort.band_set.rel
         
         view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)

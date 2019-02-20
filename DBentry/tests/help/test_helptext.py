@@ -1,22 +1,27 @@
-from .base import *
+from .base import ModelAdminHelpTextTestCase, FormViewHelpTextMixin
+from ..base import MyTestCase, FormTestCase
 
 from django import forms as django_forms
 
+import DBentry.models as _models
+import DBentry.admin as _admin
 from DBentry.help.helptext import formfield_to_modelfield, HTMLWrapper, BaseHelpText, ModelAdminHelpText, FormViewHelpText
+from DBentry.sites import miz_site
 
-class TestHTFunctions(TestCase):
+
+class TestHTFunctions(MyTestCase):
     
     def test_formfield_to_modelfield(self):
-        model_field = formfield_to_modelfield(artikel, 'schlagzeile', None)
-        self.assertEqual(model_field, artikel._meta.get_field('schlagzeile'))
+        model_field = formfield_to_modelfield(_models.artikel, 'schlagzeile', None)
+        self.assertEqual(model_field, _models.artikel._meta.get_field('schlagzeile'))
         
-        formfield = django_forms.ModelChoiceField(queryset = magazin.objects.all())
-        model_field = formfield_to_modelfield(artikel, 'ausgabe__magazin', formfield)
-        self.assertEqual(model_field, ausgabe._meta.get_field('magazin'))
+        formfield = django_forms.ModelChoiceField(queryset = _models.magazin.objects.all())
+        model_field = formfield_to_modelfield(_models.artikel, 'ausgabe__magazin', formfield)
+        self.assertEqual(model_field, _models.ausgabe._meta.get_field('magazin'))
         
-        self.assertIsNone(formfield_to_modelfield(artikel, 'doesnotexist', None))
+        self.assertIsNone(formfield_to_modelfield(_models.artikel, 'doesnotexist', None))
         
-class TestWrapper(TestCase):
+class TestWrapper(MyTestCase):
     
     def test_sidenav(self):
         wrapped = HTMLWrapper(id = 'test', val = 'beep boop')
@@ -57,7 +62,7 @@ class TestWrapper(TestCase):
         ])
         self.assertEqual(wrapped.html(), expected)
         
-class TestBaseHelpText(TestCase):
+class TestBaseHelpText(MyTestCase):
     
     def test_for_context(self):        
         # Assert that for_context skips help_items that refer to an attribute that was not declared
@@ -189,7 +194,7 @@ class TestModelAdminHelpText(ModelAdminHelpTextTestCase):
     
     path = '/admin/help/artikel/'
     
-    helptext_class = type('Dummy', (ModelAdminHelpText, ), {'model':artikel})
+    helptext_class = type('Dummy', (ModelAdminHelpText, ), {'model':_models.artikel})
     
     def test_init(self):
         helptext_instance = self.get_helptext_instance()
@@ -207,10 +212,10 @@ class TestModelAdminHelpText(ModelAdminHelpTextTestCase):
         # Assert that init sets the admin model 
         helptext_instance.model_admin = None
         helptext_instance.__init__(**minimal_initkwargs)
-        self.assertIsInstance(helptext_instance.model_admin, ArtikelAdmin)
+        self.assertIsInstance(helptext_instance.model_admin, _admin.ArtikelAdmin)
         
-        helptext_instance.__init__(model_admin = BuchAdmin(buch, miz_site), **minimal_initkwargs)
-        self.assertIsInstance(helptext_instance.model_admin, BuchAdmin)
+        helptext_instance.__init__(model_admin = _admin.BuchAdmin(_models.buch, miz_site), **minimal_initkwargs)
+        self.assertIsInstance(helptext_instance.model_admin, _admin.BuchAdmin)
         
         # Assert that init adds the inlines to the help_items, if there is at least one inline
         help_items = helptext_instance.help_items
@@ -224,7 +229,7 @@ class TestModelAdminHelpText(ModelAdminHelpTextTestCase):
     
     def test_inline_helptexts(self):
         # Assert that inline_helptexts uses an inline's verbose model attribute if present
-        genre_inline_helptext = type('GenreHelpText', (ModelAdminHelpText, ), {'model':genre, 'inline_text':'Genre Inline Text'})
+        genre_inline_helptext = type('GenreHelpText', (ModelAdminHelpText, ), {'model':_models.genre, 'inline_text':'Genre Inline Text'})
         self.registry.register(genre_inline_helptext, None)
         expected = [
             {'id': 'inline-Genre', 'label': 'Genres', 'text': 'Genre Inline Text'}

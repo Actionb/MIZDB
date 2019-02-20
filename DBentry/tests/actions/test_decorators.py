@@ -1,6 +1,6 @@
-from .base import *
+from django.test import SimpleTestCase
 
-from DBentry.actions.decorators import *
+from DBentry.actions.decorators import add_cls_attrs
 
 def dummy_func0():
     pass
@@ -10,6 +10,7 @@ def dummy_func1():
 dummy_func1.short_description = 'Beep'
 dummy_func1.perm_required = 'Boop'
 
+#NOTE: why is this a SimpleTestCase?
 class TestAddClsAttrsDecorator(SimpleTestCase):
     
     def test_deco_with_cls_attrs_and_no_func_attrs(self):

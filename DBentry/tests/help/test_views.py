@@ -1,5 +1,8 @@
-from .base import *
+from .base import HelpViewMixin, ModelHelpViewTestCase
+from ..base import ViewTestCase
 
+from DBentry.models import artikel, buch
+from DBentry.admin import ArtikelAdmin
 from DBentry.help.helptext import ModelAdminHelpText, FormViewHelpText
 from DBentry.help.views import HelpIndexView, BaseHelpView, FormHelpView, ModelAdminHelpView
 

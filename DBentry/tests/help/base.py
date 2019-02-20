@@ -1,4 +1,7 @@
-from ..base import *
+import contextlib
+
+from ..base import AdminTestCase, RequestTestCase, add_urls
+from ..mixins import CreateFormMixin, CreateViewMixin
 
 from DBentry.help.registry import HelpRegistry
 

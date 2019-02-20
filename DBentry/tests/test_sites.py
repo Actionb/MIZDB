@@ -1,4 +1,6 @@
-from .base import *
+from .base import RequestTestCase
+
+from django.urls import reverse
 
 from DBentry.admin import miz_site
 

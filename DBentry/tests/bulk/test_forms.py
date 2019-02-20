@@ -1,17 +1,26 @@
-from ..base import *
+from ..base import FormTestCase
+from ..mixins import TestDataMixin
 
-from DBentry.bulk.forms import *
+from django import forms as django_forms
+from django.test import tag
+from django.core.exceptions import ValidationError
+from django.utils.translation import override as translation_override
+
+import DBentry.models as _models
+from DBentry.factory import make, batch
+from DBentry.bulk.forms import BulkForm, BulkFormAusgabe
+from DBentry.bulk.fields import BulkField, BulkJahrField
   
 
 class TestBulkForm(FormTestCase):
     
     form_class = BulkForm
     dummy_attrs = {
-            'some_fld' : forms.CharField(required = False), 
+            'some_fld' : django_forms.CharField(required = False), 
             'some_bulkfield' : BulkField(required = False, label = 'num') , 
             'req_fld' : BulkJahrField(required = False), 
-            'another' : forms.CharField(required = False), 
-            'model' : ausgabe, 
+            'another' : django_forms.CharField(required = False), 
+            'model' : _models.ausgabe, 
             'each_fields' : ['another', 'some_fld'], 
             'split_fields' : ['req_fld', 'some_bulkfield'], 
             'field_order' : ['some_fld', 'some_bulkfield', 'req_fld', 'another'], 
@@ -76,17 +85,17 @@ class TestBulkForm(FormTestCase):
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     
     form_class = BulkFormAusgabe
-    model = ausgabe
+    model = _models.ausgabe
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(magazin, magazin_name='Testmagazin')
-        cls.zraum = make(lagerort, ort='Bestand LO')
-        cls.dublette = make(lagerort, ort='Dubletten LO')
-        cls.audio_lo = make(lagerort)
-        cls.prov = make(provenienz)
-        cls.updated = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=1)
-        cls.multi1, cls.multi2 = batch(ausgabe, 2, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=5)
+        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.zraum = make(_models.lagerort, ort='Bestand LO')
+        cls.dublette = make(_models.lagerort, ort='Dubletten LO')
+        cls.audio_lo = make(_models.lagerort)
+        cls.prov = make(_models.provenienz)
+        cls.updated = make(cls.model, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=1)
+        cls.multi1, cls.multi2 = batch(cls.model, 2, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=5)
         
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         
@@ -158,7 +167,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     def test_lookup_instance_jahrgang(self):
         form = self.get_valid_form()
         # Assert that lookup_instance can now find matching instances through their jahrgang
-        instance = make(ausgabe, magazin = self.mag, jahrgang = 1, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
+        instance = make(self.model, magazin = self.mag, jahrgang = 1, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
         row_data = {'jahrgang': '1', 'num': '5'}
         lookuped = form.lookup_instance(row_data)
         self.assertEqual(lookuped.count(), 1)
@@ -171,8 +180,8 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         self.assertIn(instance, lookuped)
         
         # Assert that lookup_instance will use jahrgang AND jahr if there are instances that can be found like that
-        instance = make(ausgabe, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
-        make(ausgabe, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2003) # should not be found
+        instance = make(self.model, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2002)
+        make(self.model, magazin = self.mag, jahrgang = 2, ausgabe_num__num = 5, ausgabe_jahr__jahr = 2003) # should not be found
         row_data = {'jahrgang': '2', 'num': '5', 'jahr': '2002'}
         lookuped = form.lookup_instance(row_data)
         self.assertEqual(lookuped.count(), 1)
@@ -205,7 +214,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         row_5 = row_template.copy()
         row_5.update({'num':'4', 'ausgabe_lagerort':self.dublette, 'dupe_of':row_4}) # dupe of the previous row and should be marked as a dublette of the previous row
         row_6 = row_template.copy()
-        row_6.update({'num':'5', 'multiples':ausgabe.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk])}) 
+        row_6.update({'num':'5', 'multiples': self.model.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk])}) 
         expected = [row_1, row_2, row_3, row_4, row_5, row_6]
         
         self.assertEqual(len(form.row_data), len(expected))
@@ -249,7 +258,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         row_5 = row_template.copy()
         row_5.update({'num':'4', 'ausgabe_lagerort':self.dublette, 'dupe_of':row_4}) # dupe of the previous row and should be marked as a dublette of the previous row
         row_6 = row_template.copy()
-        row_6.update({'num':'5', 'multiples':ausgabe.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk])}) 
+        row_6.update({'num':'5', 'multiples': self.model.objects.filter(pk__in=[self.obj2.pk, self.obj3.pk])}) 
         expected = [row_1, row_2, row_3, row_4, row_5, row_6]
         
         self.assertEqual(len(form.row_data), len(expected))

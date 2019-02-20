@@ -3,9 +3,13 @@ This is meant to test an action at its 'backend', i.e. testing the availablity o
 Probably not going to stay.
 """
 
-from .base import *
+from ..base import AdminTestCase
 
-from DBentry.admin import *
+from django.utils.translation import override as translation_override
+
+from DBentry.admin import ArtikelAdmin, AusgabenAdmin
+from DBentry.models import artikel, ausgabe, lagerort
+from DBentry.factory import make
 
 class TestAdminActionsArtikel(AdminTestCase):
     
@@ -15,9 +19,9 @@ class TestAdminActionsArtikel(AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         ausg = make(ausgabe)
-        cls.obj1 = make(artikel, ausgabe = ausg)
-        cls.obj2 = make(artikel, ausgabe = ausg)
-        cls.obj3 = make(artikel)
+        cls.obj1 = make(cls.model, ausgabe = ausg)
+        cls.obj2 = make(cls.model, ausgabe = ausg)
+        cls.obj3 = make(cls.model)
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         

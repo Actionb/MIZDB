@@ -1,4 +1,4 @@
-from .base import MyTestCase
+from ..base import MyTestCase
 
 from django import forms
 

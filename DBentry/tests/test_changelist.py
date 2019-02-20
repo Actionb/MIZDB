@@ -1,8 +1,12 @@
-from .base import *
+from unittest.mock import patch
+
+from .base import AdminTestCase, mockv
 
 from django.contrib.admin.views.main import ChangeList, DisallowedModelAdminLookup
+
+from DBentry.models import artikel
 from DBentry.admin import ArtikelAdmin
-from DBentry.changelist import *
+from DBentry.changelist import MIZChangeList, IncorrectLookupParameters
 
 #TODO: review after having moved the ordering of ausgabe querysets from changelist to querysets
         

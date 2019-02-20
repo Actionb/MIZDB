@@ -1,22 +1,35 @@
-from .base import *
-from formtools.wizard.views import SessionWizardView, WizardView
+from unittest.mock import patch, Mock
+
+from .base import ActionViewTestCase
+from ..base import AdminTestCase, mockv, mockex
+from ..mixins import LoggingTestMixin
+
+from django.test import tag
 from django.contrib.admin import helpers
+from django.utils.translation import override as translation_override
+from django.db.models.deletion import ProtectedError
 
+import DBentry.models as _models
+from DBentry.factory import make
 from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
-
-from DBentry.actions.base import *
-from DBentry.actions.views import *
+from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
+from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
+from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary
 from DBentry.forms import MIZAdminForm, forms
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
-from DBentry.views import MIZAdminMixin
+from DBentry.views import MIZAdminMixin, FixedSessionWizardView
+from DBentry.sites import miz_site
+from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
+
+from formtools.wizard.views import SessionWizardView, WizardView
 
 class TestConfirmationViewMixin(AdminTestCase):
     
-    model = audio
+    model = _models.audio
     model_admin_class = AudioAdmin
     
     def get_instance(self, **kwargs):
-        initkwargs = dict(model_admin = self.model_admin, queryset = audio.objects.all())
+        initkwargs = dict(model_admin = self.model_admin, queryset = self.model.objects.all())
         initkwargs.update(kwargs)
         return ConfirmationViewMixin(**initkwargs)
     
@@ -70,7 +83,7 @@ class TestConfirmationViewMixin(AdminTestCase):
 class TestActionConfirmationView(ActionViewTestCase):
     
     view_class = ActionConfirmationView
-    model = band
+    model = _models.band
     model_admin_class = BandAdmin
     test_data_count = 1
     
@@ -98,8 +111,8 @@ class TestActionConfirmationView(ActionViewTestCase):
         expected = [[get_obj_link(self.obj1, request.user)]]
         self.assertEqual(view.compile_affected_objects(), expected)
         
-        a = make(audio, sender = make(sender), band = self.obj1,format__extra = 2)
-        view = self.get_view(request, model_admin = AudioAdmin(audio, miz_site), queryset = audio.objects.all())
+        a = make(_models.audio, sender = make(_models.sender), band = self.obj1,format__extra = 2)
+        view = self.get_view(request, model_admin = AudioAdmin(_models.audio, miz_site), queryset = _models.audio.objects.all())
         view.affected_fields = ['titel', 'sender', 'band__band_name', 'format___name', 'release_id']
         link_list = view.compile_affected_objects() # [ ['Audio Material: <link>', [<affected objects>]], ]
         self.assertEqual(link_list[0][0], get_obj_link(a, request.user))
@@ -120,7 +133,7 @@ class TestActionConfirmationView(ActionViewTestCase):
 class TestWizardConfirmationView(ActionViewTestCase):
     
     view_class = WizardConfirmationView
-    model = audio
+    model = _models.audio
     model_admin_class = AudioAdmin
     
     @patch.object(ConfirmationViewMixin, 'get_context_data', return_value = {})
@@ -165,7 +178,7 @@ class TestWizardConfirmationView(ActionViewTestCase):
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     
     view_class = BulkEditJahrgang
-    model = ausgabe
+    model = _models.ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [    
         { # obj1: jg + 0
@@ -291,19 +304,19 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     
     view_class = BulkAddBestand
-    model = ausgabe
+    model = _models.ausgabe
     model_admin_class = AusgabenAdmin
     
     @classmethod
     def setUpTestData(cls):
-        cls.bestand_lagerort = make(lagerort, pk=ZRAUM_ID, ort='Bestand')
-        cls.dubletten_lagerort = make(lagerort, pk=DUPLETTEN_ID, ort='Dublette')
-        mag = make(magazin, magazin_name = 'Testmagazin')
+        cls.bestand_lagerort = make(_models.lagerort, pk=ZRAUM_ID, ort='Bestand')
+        cls.dubletten_lagerort = make(_models.lagerort, pk=DUPLETTEN_ID, ort='Dublette')
+        mag = make(_models.magazin, magazin_name = 'Testmagazin')
         
-        cls.obj1 = make(ausgabe, magazin=mag)
-        cls.obj2 = make(ausgabe, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
-        cls.obj3 = make(ausgabe, magazin=mag, bestand__lagerort=cls.dubletten_lagerort)
-        cls.obj4 = make(ausgabe, magazin=mag, bestand__lagerort=[cls.bestand_lagerort, cls.dubletten_lagerort])
+        cls.obj1 = make(cls.model, magazin=mag)
+        cls.obj2 = make(cls.model, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
+        cls.obj3 = make(cls.model, magazin=mag, bestand__lagerort=cls.dubletten_lagerort)
+        cls.obj4 = make(cls.model, magazin=mag, bestand__lagerort=[cls.bestand_lagerort, cls.dubletten_lagerort])
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
         super().setUpTestData()
@@ -382,7 +395,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     # Note that tests concerning logging for this view are done on test_utils.merge_records directly.
     #TODO: there is no unit test for MergeViewWizarded.perform_action
     view_class = MergeViewWizarded
-    model = ausgabe
+    model = _models.ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [    
         {'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000]}, 
@@ -596,7 +609,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(form_kwargs['form_kwargs']['choices'], {'1-0-posvals': [(0, '1'), (1, '2')]})
     
     @translation_override(language = None)
-    @patch.object(MergeViewWizarded, 'perform_action', new = mockex(ProtectedError('msg', artikel.objects.all())))
+    @patch.object(MergeViewWizarded, 'perform_action', new = mockex(ProtectedError('msg', _models.artikel.objects.all())))
     def test_done(self):
         # Assert that an admin message is send to user upon encountering a ProtectedError during done
         request = self.get_request()
@@ -608,7 +621,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 class TestMergeViewWizardedArtikel(ActionViewTestCase): 
     
     view_class = MergeViewWizarded
-    model = artikel
+    model = _models.artikel
     model_admin_class = ArtikelAdmin
     test_data_count = 2
         
@@ -622,7 +635,7 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
 class TestMoveToBrochureBase(ActionViewTestCase):
     
     view_class = MoveToBrochureBase
-    model = ausgabe
+    model = _models.ausgabe
     model_admin_class = AusgabenAdmin
     
     raw_data = [
@@ -639,7 +652,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     
     @translation_override(language = None)
     def test_action_allowed_has_artikels(self):
-        self.obj1.artikel_set.add(make(artikel))
+        self.obj1.artikel_set.add(make(_models.artikel))
         request = self.post_request()
         view = self.get_view(request = request, queryset = self.queryset)
         self.assertFalse(view.action_allowed())
@@ -668,10 +681,10 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
        
         changed_bestand = self.obj1.bestand_set.first()
-        self.assertEqual(Brochure.objects.count(), 0)
+        self.assertEqual(_models.Brochure.objects.count(), 0)
         view.perform_action(self.form_cleaned_data)
-        self.assertEqual(Brochure.objects.count(), 1)
-        new_brochure = Brochure.objects.get()
+        self.assertEqual(_models.Brochure.objects.count(), 1)
+        new_brochure = _models.Brochure.objects.get()
         
         # Inspect the brochure attributes
         self.assertEqual(new_brochure.titel, 'Testausgabe')
@@ -682,23 +695,23 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(new_brochure.bestand_set.first(), changed_bestand)
         self.assertIsNone(changed_bestand.ausgabe_id)
         # Assert that the original was deleted
-        self.assertFalse(ausgabe.objects.filter(pk=self.obj1.pk).exists())
+        self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
         
     def test_perform_action_moves_jahre(self):
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.perform_action(self.form_cleaned_data)
-        new_brochure = Brochure.objects.get()
+        new_brochure = _models.Brochure.objects.get()
         self.assertEqual(list(new_brochure.jahre.values_list('jahr', flat = True)), [2000, 2001])
         
     def test_perform_action_adds_hint_to_bemerkungen(self):
         expected = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
         expected = expected.format(
-            verbose_name = Brochure._meta.verbose_name, 
+            verbose_name = _models.Brochure._meta.verbose_name, 
             str_ausgabe = str(self.obj1), str_magazin = str(self.obj1.magazin)
         )
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.perform_action(self.form_cleaned_data)
-        new_brochure = Brochure.objects.get()
+        new_brochure = _models.Brochure.objects.get()
         self.assertIn(expected, new_brochure.bemerkungen)
     
     def test_perform_action_skips_invalid_brochure_classes(self):
@@ -707,52 +720,52 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         
         view.perform_action(self.form_cleaned_data)
         # Assert that the ausgabe was not deleted
-        self.assertTrue(ausgabe.objects.filter(pk=self.obj1.pk).exists())
-        self.assertEqual(BaseBrochure.objects.count(), 0)
+        self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
+        self.assertEqual(_models.BaseBrochure.objects.count(), 0)
      
     def test_perform_action_katalog(self):
         self.form_cleaned_data[0]['brochure_art'] = 'Katalog'
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         
-        self.assertEqual(Katalog.objects.count(), 0)
+        self.assertEqual(_models.Katalog.objects.count(), 0)
         view.perform_action(self.form_cleaned_data)
-        self.assertEqual(Katalog.objects.count(), 1)
+        self.assertEqual(_models.Katalog.objects.count(), 1)
      
     def test_perform_action_kalendar(self):
         self.form_cleaned_data[0]['brochure_art'] = 'Kalendar'
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         
-        self.assertEqual(Kalendar.objects.count(), 0)
+        self.assertEqual(_models.Kalendar.objects.count(), 0)
         view.perform_action(self.form_cleaned_data)
-        self.assertEqual(Kalendar.objects.count(), 1)
+        self.assertEqual(_models.Kalendar.objects.count(), 1)
      
     @patch('DBentry.actions.views.get_model_from_string')   
     def test_perform_action_protected_ausgabe(self, mocked_model_from_string):
-        mocked_model_from_string.return_value = Brochure
+        mocked_model_from_string.return_value = _models.Brochure
         
-        self.obj1.artikel_set.add(make(artikel, ausgabe_id = self.obj1.pk))
+        self.obj1.artikel_set.add(make(_models.artikel, ausgabe_id = self.obj1.pk))
         request = self.get_request()
         view = self.get_view(request = request, queryset = self.queryset)
         
         view.perform_action(self.form_cleaned_data)
-        self.assertTrue(ausgabe.objects.filter(pk=self.obj1.pk).exists())
+        self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         expected_message = "Folgende Ausgaben konnten nicht gelöscht werden: " + \
             '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'.format(pk = self.obj1.pk, name = str(self.obj1)) + \
             ". Es wurden keine Broschüren für diese Ausgaben erstellt."
         self.assertMessageSent(request, expected_message)
         
         # No new brochure objects should have been created
-        self.assertEqual(Brochure.objects.count(), 0)
+        self.assertEqual(_models.Brochure.objects.count(), 0)
     
     @patch('DBentry.actions.views.get_model_from_string')
     @translation_override(language = None)
     def test_perform_action_protected_magazin(self, mocked_model_from_string):
         def is_protected(instances):
             # The check for protection should pass for ausgaben but not for the magazin
-            if isinstance(instances[0], ausgabe):
+            if isinstance(instances[0], self.model):
                 return False
             return True
-        mocked_model_from_string.return_value = Brochure
+        mocked_model_from_string.return_value = _models.Brochure
         
         mag = self.obj1.magazin 
         self.form_cleaned_data[0]['delete_magazin'] = True
@@ -761,7 +774,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         
         with patch('DBentry.actions.views.is_protected', new = is_protected):
             view.perform_action(self.form_cleaned_data)
-        self.assertTrue(magazin.objects.filter(pk=mag.pk).exists())
+        self.assertTrue(_models.magazin.objects.filter(pk=mag.pk).exists())
         expected_message = "Folgende Magazine konnten nicht gelöscht werden: " + \
             '<a href="/admin/DBentry/magazin/{pk}/change/">{name}</a>'.format(pk = mag.pk, name = str(mag))
         self.assertMessageSent(request, expected_message)
@@ -770,18 +783,18 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     @patch('DBentry.actions.views.get_model_from_string')
     def test_perform_action_does_not_roll_back_ausgabe_deletion(self, mocked_model_from_string, mocked_is_protected):
         # Assert that a rollback on trying to delete the magazin does not also roll back the ausgabe
-        mocked_model_from_string.return_value = Brochure
+        mocked_model_from_string.return_value = _models.Brochure
         mocked_is_protected.return_value = False
         
         ausgabe_id = self.obj1.pk
         magazin_id = self.obj1.magazin_id
-        make(ausgabe, magazin_id = magazin_id) # Create an ausgabe that will force a ProtectedError
+        make(self.model, magazin_id = magazin_id) # Create an ausgabe that will force a ProtectedError
         self.form_cleaned_data[0]['delete_ausgabe'] = self.form_cleaned_data[0]['delete_magazin'] = True
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         
         view.perform_action(self.form_cleaned_data)
-        self.assertFalse(ausgabe.objects.filter(pk=ausgabe_id).exists())
-        self.assertTrue(magazin.objects.filter(pk=magazin_id).exists())
+        self.assertFalse(self.model.objects.filter(pk=ausgabe_id).exists())
+        self.assertTrue(_models.magazin.objects.filter(pk=magazin_id).exists())
         
     def test_perform_action_not_accepted(self):
         ausgabe_id = self.obj1.pk
@@ -789,13 +802,13 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         
         view.perform_action(self.form_cleaned_data)
-        self.assertTrue(ausgabe.objects.filter(pk=ausgabe_id).exists())
-        self.assertEqual(BaseBrochure.objects.count(), 0)
+        self.assertTrue(self.model.objects.filter(pk=ausgabe_id).exists())
+        self.assertEqual(_models.BaseBrochure.objects.count(), 0)
     
     def test_init_does_not_disable_delete_magazin_when_working_on_entire_ausgaben_set(self):
         # Assert that a form's delete_magazin field is not disabled if the action is being performed on
         # the full set of ausgaben of this magazin - and thus would allow deleting the magazin in the end.
-        new_obj = make(ausgabe, magazin=self.obj1.magazin)
+        new_obj = make(self.model, magazin=self.obj1.magazin)
         request = self.get_request()
         view = self.get_view(request = request, queryset = self.model.objects.filter(pk__in=[self.obj1.pk, new_obj.pk]))
         if any(form.fields['delete_magazin'].disabled for form in view.get_form()):
@@ -804,7 +817,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     def test_magazin_protection_status_updates(self):
         # Assert that magazines are not longer present in the protected_mags list when all of 
         # their ausgaben were affected by this action.
-        new_obj = make(ausgabe, magazin=self.obj1.magazin)
+        new_obj = make(self.model, magazin=self.obj1.magazin)
         request = self.get_request()
         view = self.get_view(request = request, queryset = self.model.objects.filter(pk__in=[self.obj1.pk, new_obj.pk]))
         form_cleaned_data = [
@@ -812,11 +825,11 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             { 'brochure_art': 'Brochure', 'titel': 'Testausgabe', 'ausgabe_id': new_obj.pk, 'accept': True, 'delete_magazin': True}
         ]
         view.perform_action(form_cleaned_data)
-        self.assertFalse(magazin.objects.filter(pk=self.obj1.magazin.pk).exists())
+        self.assertFalse(_models.magazin.objects.filter(pk=self.obj1.magazin.pk).exists())
         self.assertMessageNotSent(request, "Folgende Magazine konnten nicht gelöscht werden:")
         
     def test_form_disables_delete_magazin_for_protected_magazines(self):
-        make(ausgabe, magazin=self.obj1.magazin) # Protect ya magazin
+        make(self.model, magazin=self.obj1.magazin) # Protect ya magazin
         request = self.get_request()
         view = self.get_view(request = request, queryset = self.model.objects.filter(pk=self.obj1.pk))
         self.assertTrue(view.get_form()[0].fields['delete_magazin'].disabled)

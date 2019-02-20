@@ -1,18 +1,24 @@
+from functools import partial
+
 from django.urls.exceptions import NoReverseMatch
 from django.core.exceptions import ImproperlyConfigured 
 from django.forms import widgets
+from django.utils.translation import override as translation_override
 
-from .base import *
+from ..base import MyTestCase
 
+import DBentry.models as _models
 from DBentry.forms import ArtikelForm
-from DBentry.ac.widgets import *
+from DBentry.ac.widgets import EasyWidgetWrapper, WidgetCaptureMixin, MIZModelSelect2, MIZModelSelect2Multiple, make_widget
+
+from dal import autocomplete, forward
         
-class TestEasyWidgetWrapper(TestCase):
+class TestEasyWidgetWrapper(MyTestCase):
     
     def setUp(self):
         super().setUp()
         form = ArtikelForm()
-        self.widget = EasyWidgetWrapper(form.fields['ausgabe'].widget, ausgabe, 'id')
+        self.widget = EasyWidgetWrapper(form.fields['ausgabe'].widget, _models.ausgabe, 'id')
         rel_opts = self.widget.related_model._meta 
         self.info = (rel_opts.app_label, rel_opts.model_name) 
     
@@ -46,7 +52,7 @@ class TestEasyWidgetWrapper(TestCase):
         # Assert that the wrapped widget includes the RelatedObjectLookups.js
         self.assertIn('admin/js/admin/RelatedObjectLookups.js', self.widget.media._js)
 
-class TestWidgetCaptureMixin(TestCase):
+class TestWidgetCaptureMixin(MyTestCase):
     
     class MixinSuper(object):
         
@@ -89,15 +95,15 @@ class TestWidgetCaptureMixin(TestCase):
             o._get_url()
             
 
-class TestMakeWidget(TestCase):
+class TestMakeWidget(MyTestCase):
     
     def test_takes_widget_class(self):
         widget = make_widget(widget_class = widgets.TextInput)
         self.assertIsInstance(widget, widgets.TextInput)
         
     def test_selectmultiple(self):
-        self.assertIsInstance(make_widget(model = genre, multiple = False), MIZModelSelect2)
-        self.assertIsInstance(make_widget(model = genre, multiple = True), MIZModelSelect2Multiple)
+        self.assertIsInstance(make_widget(model = _models.genre, multiple = False), MIZModelSelect2)
+        self.assertIsInstance(make_widget(model = _models.genre, multiple = True), MIZModelSelect2Multiple)
         
     def test_exception_on_no_model(self):
         with self.assertRaises(ImproperlyConfigured) as cm:
@@ -106,7 +112,7 @@ class TestMakeWidget(TestCase):
         self.assertEqual(cm.exception.args[0], expected_error_msg)
         
     def test_assigns_create_field(self):
-        widget = make_widget(model = genre)
+        widget = make_widget(model = _models.genre)
         self.assertEqual(widget.create_field, 'genre')
         
     def test_does_not_assign_url_to_not_dal_widgets(self):
@@ -115,7 +121,7 @@ class TestMakeWidget(TestCase):
         widget = make_widget(widget_class = widgets.TextInput)
         self.assertFalse(hasattr(widget, '_url'))
         
-        widget = make_widget(model = genre, widget_class = autocomplete.ModelSelect2)
+        widget = make_widget(model = _models.genre, widget_class = autocomplete.ModelSelect2)
         self.assertTrue(hasattr(widget, '_url'))
         
     @translation_override(language = None)
@@ -123,22 +129,22 @@ class TestMakeWidget(TestCase):
         # The values for forward are wrapped in a forward.Field object.
         
         # Assert that make_widget can handle non-list 'forward' values
-        widget = make_widget(model = genre, forward = 'ober')
+        widget = make_widget(model = _models.genre, forward = 'ober')
         self.assertEqual(widget.forward[0].src, 'ober')
         self.assertEqual(widget.attrs['data-placeholder'], "Bitte zuerst Oberbegriff auswählen.")
         
-        widget = make_widget(model = genre, forward = 'ober', attrs = {'data-placeholder':'Go home!'})
+        widget = make_widget(model = _models.genre, forward = 'ober', attrs = {'data-placeholder':'Go home!'})
         self.assertEqual(widget.forward[0].src, 'ober')
         self.assertEqual(widget.attrs['data-placeholder'], 'Go home!')
                 
         # Assert that forward values can also be forward.Field objects
         forwarded = forward.Field(src='ober', dst='genre')
-        widget = make_widget(model = genre, forward = forwarded)
+        widget = make_widget(model = _models.genre, forward = forwarded)
         self.assertEqual(widget.forward[0], forwarded)
         
         # Assert that the placeholder text defaults to forward's src if no model field corresponds to src or dst
         forwarded = forward.Field(src='beep_boop', dst=None)
-        widget = make_widget(model = genre, forward = forwarded)
+        widget = make_widget(model = _models.genre, forward = forwarded)
         self.assertEqual(widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.')
         
     def test_preserves_attrs(self):
@@ -146,11 +152,11 @@ class TestMakeWidget(TestCase):
         class DummyWidget(MIZModelSelect2):
             def __init__(self, *args, **kwargs):
                 self.untouched = kwargs.get('attrs', {}).pop('untouched', None)
-        widget = make_widget(model = genre, widget_class = DummyWidget, forward = 'ober', attrs = {'data-placeholder':'Go home!', 'untouched':1})
+        widget = make_widget(model = _models.genre, widget_class = DummyWidget, forward = 'ober', attrs = {'data-placeholder':'Go home!', 'untouched':1})
         self.assertEqual(widget.untouched, 1)
         
     def test_wraps(self):
-        widget = make_widget(model = genre, multiple = False, wrap = False)
+        widget = make_widget(model = _models.genre, multiple = False, wrap = False)
         self.assertIsInstance(widget, MIZModelSelect2)
-        widget = make_widget(model = genre, multiple = False, wrap = True)
+        widget = make_widget(model = _models.genre, multiple = False, wrap = True)
         self.assertIsInstance(widget, EasyWidgetWrapper)

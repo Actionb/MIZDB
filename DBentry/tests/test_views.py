@@ -1,9 +1,12 @@
-from django import forms
-from .base import *
 
-from DBentry.views import *
-from DBentry.maint.views import *
-from DBentry.ie.views import *
+from .base import MyTestCase, ViewTestCase
+
+import django.views as django_views
+from django import forms
+from django.urls import reverse
+
+import DBentry.models as _models
+from DBentry.views import OptionalFormView, MIZAdminToolViewMixin, MIZ_permission_denied_view, FavoritenView
     
 class TestOptionalFormView(ViewTestCase):
     
@@ -59,11 +62,11 @@ class TestOptionalFormView(ViewTestCase):
 class TestMIZAdminToolViewMixin(ViewTestCase):
     # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin
     
-    view_bases = (MIZAdminToolViewMixin, views.generic.TemplateView)
+    view_bases = (MIZAdminToolViewMixin, django_views.generic.TemplateView)
     
     def test_permission_test_only_staff_required(self):
         # basic test for user.is_staff as MIZAdminToolView does not set any required permissions
-        view_class = self.get_dummy_view_class(attrs = {'model':band})
+        view_class = self.get_dummy_view_class(attrs = {'model':_models.band})
         request = self.get_request(user=self.noperms_user)
         self.assertFalse(view_class.permission_test(request))
         self.assertFalse(view_class.show_on_index_page(request))
@@ -79,7 +82,7 @@ class TestMIZAdminToolViewMixin(ViewTestCase):
     def test_permission_test_with_explicit_permreq(self):
         # setting MIZAdminToolView.permission_required 
         # none of the users actually have any permissions set other than is_staff/is_superuser
-        view_class = self.get_dummy_view_class(attrs={'_permissions_required':['beepboop'], 'model':band})
+        view_class = self.get_dummy_view_class(attrs={'_permissions_required':['beepboop'], 'model':_models.band})
         request = self.get_request(user=self.noperms_user)
         self.assertFalse(view_class.permission_test(request))
         
@@ -92,17 +95,17 @@ class TestMIZAdminToolViewMixin(ViewTestCase):
     def test_get_permissions_required(self):
         # See how get_permissions_required deals with various forms of setting model opts and permissions
         expected = ['DBentry.perm1_ausgabe', 'DBentry.perm2_ausgabe', 'DBentry.perm3_ausgabe', 'DBentry.perm4_ausgabe']
-        attrs = {'_permissions_required': ['perm1', ('perm2', ), ('perm3', ausgabe), ('perm4', 'ausgabe')]} 
+        attrs = {'_permissions_required': ['perm1', ('perm2', ), ('perm3', _models.ausgabe), ('perm4', 'ausgabe')]} 
         
         # opts set on view
         _attrs = attrs.copy()
-        _attrs.update(opts=ausgabe._meta)
+        _attrs.update(opts=_models.ausgabe._meta)
         view_class = self.get_dummy_view_class(attrs=_attrs)
         self.assertEqual(view_class.get_permissions_required(), expected)        
         
         # model set on view
         _attrs = attrs.copy()
-        _attrs.update(model=ausgabe)
+        _attrs.update(model=_models.ausgabe)
         view_class = self.get_dummy_view_class(attrs=_attrs)
         self.assertEqual(view_class.get_permissions_required(), expected)      
         
@@ -143,7 +146,7 @@ class TestFavoritenView(ViewTestCase):
         
         self.assertEqual(view.get_object(), new_entry) # direct access to Favoriten via queryset
 
-class TestPermissionDeniedView(TestCase):
+class TestPermissionDeniedView(MyTestCase):
     
     def test_MIZ_permission_denied_view_missing_template(self):
         response = MIZ_permission_denied_view(None, None, template_name='beepboop')

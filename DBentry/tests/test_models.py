@@ -1,18 +1,21 @@
-from .base import *
+from .base import DataTestCase, UserTestCase
 
-from django.core.exceptions import ValidationError
+from django.test import tag
+from django.db import models as django_models
+from django.utils.translation import override as translation_override
 
+import DBentry.models as _models
 from DBentry.m2m import m2m_audio_musiker
+from DBentry.factory import make
 
 class TestBaseModel(DataTestCase):
 
-    model = artikel
+    model = _models.artikel
     add_relations = True
     test_data_count = 1        
 
     def test_qs(self):
-        from django.db import models
-        self.assertIsInstance(self.obj1.qs(), models.QuerySet)
+        self.assertIsInstance(self.obj1.qs(), django_models.QuerySet)
         self.assertEqual(self.obj1.qs().count(), 1)
         self.assertListEqualSorted(self.obj1.qs(), self.queryset.filter(pk=self.obj1.pk))
 
@@ -22,7 +25,7 @@ class TestBaseModel(DataTestCase):
             
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(video, titel = "lotsa testing", tracks = 1, quelle = "from the computer")
+        obj = make(_models.video, titel = "lotsa testing", tracks = 1, quelle = "from the computer")
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")
@@ -53,12 +56,12 @@ class TestBaseM2MModel(DataTestCase):
 @tag("cn")    
 class TestComputedNameModel(DataTestCase):
 
-    model = ausgabe
-    default = ausgabe._name_default % {'verbose_name':ausgabe._meta.verbose_name}
+    model = _models.ausgabe
+    default = model._name_default % {'verbose_name': model._meta.verbose_name}
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(magazin)
+        cls.mag = make(_models.magazin)
         cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(cls.model, magazin=cls.mag)
         cls.test_data = [cls.obj1, cls.obj2]
@@ -86,12 +89,12 @@ class TestComputedNameModel(DataTestCase):
 
     def test_update_name_notexplodes_on_no_pk_and_forced(self):
         # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
-        obj = ausgabe(magazin=self.mag)
+        obj = _models.ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name(force_update = True))
 
     def test_update_name_aborts_on_no_pk(self):
         # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
-        obj = ausgabe(magazin=self.mag)
+        obj = _models.ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name())
 
     def test_update_name_aborts_on_name_deferred(self):
@@ -157,7 +160,7 @@ class TestComputedNameModel(DataTestCase):
 
 class TestModelArtikel(DataTestCase):
 
-    model = artikel
+    model = _models.artikel
     test_data_count = 1
 
     def test_str(self):
@@ -169,7 +172,7 @@ class TestModelArtikel(DataTestCase):
 
 class TestModelAudio(DataTestCase):
 
-    model = audio
+    model = _models.audio
     raw_data = [{'titel' : 'Testaudio'}]
     
     def test_str(self):
@@ -178,7 +181,7 @@ class TestModelAudio(DataTestCase):
 @tag("cn")        
 class TestModelAusgabe(DataTestCase):
 
-    model = ausgabe
+    model = _models.ausgabe
 
     @translation_override(language = None)
     def test_get_name(self):
@@ -190,84 +193,84 @@ class TestModelAusgabe(DataTestCase):
         # sonderausgabe + beschreibung => beschreibung
         name_data = {'sonderausgabe':True, 'beschreibung':'Test-Info'}
         expected = 'Test-Info'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'sonderausgabe + beschreibung => beschreibung')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'sonderausgabe + beschreibung => beschreibung')
         # sonderausgabe + beschreibung + any other data => beschreibung
         name_data.update({'jahrgang':'2','ausgabe_jahr__jahr':['2020'], 'ausgabe_monat__monat__abk':['Dez']})
         expected = 'Test-Info'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'sonderausgabe + beschreibung + any other data => beschreibung')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'sonderausgabe + beschreibung + any other data => beschreibung')
 
         # with jahr:
         # monat
         name_data = {'ausgabe_jahr__jahr':['2020'], 'ausgabe_monat__monat__abk':['Dez']}
         expected = "2020-Dez"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat => monat')
 
         # monat + e_datum => e_datum
         name_data.update({'e_datum':'02.05.2018'})
         expected = '02.05.2018'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum => e_datum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum => e_datum')
 
         # monat + e_datum + lnum => lnum
         name_data.update({'ausgabe_lnum__lnum':['21']})
         expected = "21 (2020)"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
 
         # monat + e_datum + lnum + num => num
         name_data.update({'ausgabe_num__num':['20']})
         expected = "2020-20"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
 
         # with jahrgang:
         # monat
         name_data = {'ausgabe_monat__monat__abk':['Dez'], 'jahrgang':'2'}
         expected = "Jg. 2-Dez"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
 
         # monat + e_datum => e_datum
         name_data.update({'e_datum':'02.05.2018'})
         expected = '02.05.2018'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum => e_datum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum => e_datum')
 
         # monat + e_datum + lnum => lnum
         name_data.update({'ausgabe_lnum__lnum':['21']})
         expected = "21 (Jg. 2)"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
 
         # monat + e_datum + lnum + num => num
         name_data.update({'ausgabe_num__num':['20']})
         expected = "Jg. 2-20"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
 
         # without jahr or jahrgang:
         # monat
         name_data = {'ausgabe_monat__monat__abk':['Dez']}
         expected = "k.A.-Dez"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
 
         # monat + e_datum => e_datum
         name_data.update({'e_datum':'02.05.2018'})
         expected = '02.05.2018'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum => e_datum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum => e_datum')
 
         # monat + e_datum + lnum => lnum
         name_data.update({'ausgabe_lnum__lnum':['21']})
         expected = "21"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
 
         # monat + e_datum + lnum + num => num
         name_data.update({'ausgabe_num__num':['20']})
         expected = "k.A.-20"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
 
         # only beschreibung
         name_data = {'beschreibung':'Test-Info'}
         expected = 'Test-Info'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = ' only beschreibung')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = ' only beschreibung')
 
         # no data whatsoever
         name_data = {}
         expected = 'No data for Ausgabe.'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
 
         # Tests with an ausgaben_merkmal override set
         name_data = {
@@ -280,28 +283,28 @@ class TestModelAusgabe(DataTestCase):
 
         name_data.update({'magazin__ausgaben_merkmal':'e_datum'})
         expected = '02.05.2018'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: e_datum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: e_datum')
 
         name_data.update({'magazin__ausgaben_merkmal':'monat'})
         expected = '2020-Dez'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: monat')
 
         name_data.update({'magazin__ausgaben_merkmal':'num'})
         expected = '2020-20'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: num')
 
         name_data.update({'magazin__ausgaben_merkmal':'lnum'})
         expected = '21 (2020)'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum')
 
         name_data.update({'ausgabe_jahr__jahr':[]})
         expected = '21'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
 
         # merkmal set but the ausgabe contains no data for it
         name_data = {'magazin__ausgaben_merkmal':'num', 'beschreibung' : 'Woops!'}
         expected = 'Woops!'
-        self.assertEqual(ausgabe._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
         
         
         # And now with multiples of related objects
@@ -309,49 +312,49 @@ class TestModelAusgabe(DataTestCase):
         # monat
         name_data = {'ausgabe_jahr__jahr':['2021', '2020'], 'ausgabe_monat__monat__abk':['Jan', 'Dez']}
         expected = "2020/21-Jan/Dez"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat => monat')
 
         # monat + e_datum + lnum => lnum
         name_data.update({'ausgabe_lnum__lnum':['22', '21']})
         expected = "21/22 (2020/21)"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
 
         # monat + e_datum + lnum + num => num
         name_data.update({'ausgabe_num__num':['21', '20']})
         expected = "2020/21-20/21"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
 
         # with jahrgang:
         # monat
         name_data = {'ausgabe_monat__monat__abk':['Jan', 'Dez'], 'jahrgang':'2'}
         expected = "Jg. 2-Jan/Dez"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
 
         # monat + e_datum + lnum => lnum
         name_data.update({'ausgabe_lnum__lnum':['22', '21']})
         expected = "21/22 (Jg. 2)"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
 
         # monat + e_datum + lnum + num => num
         name_data.update({'ausgabe_num__num':['21', '20']})
         expected = "Jg. 2-20/21"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
 
         # without jahr or jahrgang:
         # monat
         name_data = {'ausgabe_monat__monat__abk':['Jan', 'Dez']}
         expected = "k.A.-Jan/Dez"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
 
         # monat + e_datum + lnum => lnum
         name_data.update({'ausgabe_lnum__lnum':['22', '21']})
         expected = "21/22"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
 
         # monat + e_datum + lnum + num => num
         name_data.update({'ausgabe_num__num':['21', '20']})
         expected = "k.A.-20/21"
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
 
         # Tests with an ausgaben_merkmal override set
         name_data = {
@@ -363,24 +366,24 @@ class TestModelAusgabe(DataTestCase):
 
         name_data.update({'magazin__ausgaben_merkmal':'monat'})
         expected = '2020/21-Jan/Dez'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: monat')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: monat')
 
         name_data.update({'magazin__ausgaben_merkmal':'num'})
         expected = '2020/21-20/21'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: num')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: num')
 
         name_data.update({'magazin__ausgaben_merkmal':'lnum'})
         expected = '21/22 (2020/21)'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: lnum')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum')
 
         name_data.update({'ausgabe_jahr__jahr':[]})
         expected = '21/22'
-        self.assertEqual(ausgabe._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
+        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
         
         
 class TestModelAusgabeJahr(DataTestCase):
     
-    model = ausgabe_jahr
+    model = _models.ausgabe_jahr
     
     def test_str(self):
         obj = make(self.model, jahr=2018)
@@ -388,7 +391,7 @@ class TestModelAusgabeJahr(DataTestCase):
         
 class TestModelAusgabeLnum(DataTestCase):
     
-    model = ausgabe_lnum
+    model = _models.ausgabe_lnum
     
     def test_str(self):
         obj = make(self.model, lnum=21)
@@ -396,7 +399,7 @@ class TestModelAusgabeLnum(DataTestCase):
         
 class TestModelAusgabeMonat(DataTestCase):
     
-    model = ausgabe_monat
+    model = _models.ausgabe_monat
     
     def test_str(self):
         obj = make(self.model, monat__monat='Dezember')
@@ -404,7 +407,7 @@ class TestModelAusgabeMonat(DataTestCase):
         
 class TestModelAusgabeNum(DataTestCase):
     
-    model = ausgabe_num
+    model = _models.ausgabe_num
     
     def test_str(self):
         obj = make(self.model, num = 20)
@@ -413,7 +416,7 @@ class TestModelAusgabeNum(DataTestCase):
 @tag("cn") 
 class TestModelAutor(DataTestCase):
 
-    model = autor
+    model = _models.autor
 
     @translation_override(language = None)
     def test_get_name(self):
@@ -423,32 +426,32 @@ class TestModelAutor(DataTestCase):
         # 4. cls._name_default
         name_data = {'person___name':'Alice Tester', 'kuerzel':'TK'}
         expected = 'Alice Tester (TK)'
-        self.assertEqual(autor._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
 
         name_data = {'person___name':'Alice Tester'}
         expected = 'Alice Tester'
-        self.assertEqual(autor._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
 
         name_data = {'kuerzel':'TK'}
         expected = 'TK'
-        self.assertEqual(autor._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
 
         name_data = {}
         expected = 'No data for Autor.'
-        self.assertEqual(autor._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
 
         # get_name should ignore default values for person
         name_data = {'person___name':'No data for Person.', 'kuerzel':'TK'}
         expected = 'TK'
-        self.assertEqual(autor._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
 
         name_data = {'person___name':'unbekannt', 'kuerzel':'TK'}
         expected = 'TK'
-        self.assertEqual(autor._get_name(**name_data), expected)
+        self.assertEqual(self.model._get_name(**name_data), expected)
 
 class TestModelBand(DataTestCase):
 
-    model = band
+    model = _models.band
     
     def test_str(self):
         obj = make(self.model, band_name='Testband', beschreibung = 'Beep', bemerkungen = 'Boop')
@@ -468,7 +471,7 @@ class TestModelBuchSerie(DataTestCase):
         
 class TestModelBundesland(DataTestCase):
     
-    model = bundesland
+    model = _models.bundesland
     
     def test_str(self):
         obj = make(self.model, bland_name ='Hessen', code = 'HE')
@@ -476,7 +479,7 @@ class TestModelBundesland(DataTestCase):
 
 class TestModelDatei(DataTestCase):
 
-    model = datei
+    model = _models.datei
 
     def test_str(self):
         obj = self.model(titel='Testdatei')
@@ -488,7 +491,7 @@ class TestModelDokument(DataTestCase):
 @tag("cn") 
 class TestModelFormat(DataTestCase):
     
-    model = Format
+    model = _models.Format
     
     def test_get_name(self):
         # format_typ only
@@ -523,7 +526,7 @@ class TestModelFormat(DataTestCase):
         
 class TestModelFormatSize(DataTestCase):
     
-    model = FormatSize
+    model = _models.FormatSize
     
     def test_str(self):
         obj = self.model(size='LP')
@@ -531,7 +534,7 @@ class TestModelFormatSize(DataTestCase):
 
 class TestModelFormatTag(DataTestCase):
 
-    model = FormatTag
+    model = _models.FormatTag
 
     def test_str(self):
         obj = self.model(tag='Testtag')
@@ -539,15 +542,15 @@ class TestModelFormatTag(DataTestCase):
         
 class TestModelFormatTyp(DataTestCase):
     
-    model = FormatTyp
+    model = _models.FormatTyp
     
     def test_str(self):
-        obj = FormatTyp(typ='Test')
+        obj = self.model(typ='Test')
         self.assertEqual(str(obj), 'Test')
         
 class TestModelGeber(DataTestCase):
     
-    model = geber
+    model = _models.geber
     
     def test_str(self):
         obj = self.model(name='Testgeber')
@@ -555,7 +558,7 @@ class TestModelGeber(DataTestCase):
 
 class TestModelGenre(DataTestCase):
 
-    model = genre
+    model = _models.genre
     
     def test_str(self):
         obj = self.model(genre='Testgenre')
@@ -564,7 +567,7 @@ class TestModelGenre(DataTestCase):
 @tag("cn")      
 class TestModelHerausgeber(DataTestCase):
     
-    model = Herausgeber
+    model = _models.Herausgeber
     
     @translation_override(language = None)
     def test_get_name(self):
@@ -583,7 +586,7 @@ class TestModelHerausgeber(DataTestCase):
         
 class TestModelInstrument(DataTestCase):
 
-    model = instrument
+    model = _models.instrument
 
     def test_str(self):
         obj = self.model(instrument = 'Posaune', kuerzel = 'pos')
@@ -598,7 +601,7 @@ class TestModelKreis(DataTestCase):
 @tag("cn") 
 class TestModelLagerort(DataTestCase):
 
-    model = lagerort
+    model = _models.lagerort
 
     @translation_override(language = None)
     def test_get_name(self):        
@@ -636,7 +639,7 @@ class TestModelLagerort(DataTestCase):
         
 class TestModelLand(DataTestCase):
     
-    model = land
+    model = _models.land
     
     def test_str(self):
         obj = self.model(land_name = 'Deutschland', code='DE')
@@ -644,7 +647,7 @@ class TestModelLand(DataTestCase):
 
 class TestModelMagazin(DataTestCase):
 
-    model = magazin
+    model = _models.magazin
     
     def test_str(self):
         obj = self.model(magazin_name='Testmagazin')
@@ -655,7 +658,7 @@ class TestModelMemorabilien(DataTestCase):
         
 class TestModelMonat(DataTestCase):
     
-    model = monat
+    model = _models.monat
     
     def test_str(self):
         obj = self.model(monat='Dezember', abk='Dez')
@@ -663,7 +666,7 @@ class TestModelMonat(DataTestCase):
 
 class TestModelMusiker(DataTestCase):
 
-    model = musiker
+    model = _models.musiker
 
     def test_str(self):
         obj = self.model(kuenstler_name='Alice Tester', beschreibung = 'Beep', bemerkungen = 'Boop')
@@ -671,7 +674,7 @@ class TestModelMusiker(DataTestCase):
         
 class TestModelNoiseRed(DataTestCase):
     
-    model = NoiseRed
+    model = _models.NoiseRed
     
     def test_str(self):
         obj = self.model(verfahren='Beepboop')
@@ -680,7 +683,7 @@ class TestModelNoiseRed(DataTestCase):
 @tag("cn")        
 class TestModelOrt(DataTestCase):
 
-    model = ort
+    model = _models.ort
         
     @translation_override(language = None)
     def test_get_name(self):        
@@ -707,7 +710,7 @@ class TestModelOrt(DataTestCase):
 @tag("cn")       
 class TestModelPerson(DataTestCase):
 
-    model = person
+    model = _models.person
 
     @translation_override(language = None)
     def test_get_name(self):
@@ -728,15 +731,15 @@ class TestModelPerson(DataTestCase):
 
 class TestModelPlattenfirma(DataTestCase):
     
-    model = plattenfirma
+    model = _models.plattenfirma
     
     def test_str(self):
-        obj = plattenfirma(name='Testfirma')
+        obj = self.model(name='Testfirma')
         self.assertEqual(str(obj), 'Testfirma')
         
 class TestModelProvenienz(DataTestCase):
 
-    model = provenienz
+    model = _models.provenienz
 
     def test_str(self):
         obj = make(self.model, geber__name = 'TestGeber', typ = 'Fund')
@@ -744,7 +747,7 @@ class TestModelProvenienz(DataTestCase):
         
 class TestModelSchlagwort(DataTestCase):
 
-    model = schlagwort
+    model = _models.schlagwort
     
     def test_str(self):
         obj = self.model(schlagwort='Testschlagwort')
@@ -752,7 +755,7 @@ class TestModelSchlagwort(DataTestCase):
         
 class TestModelSender(DataTestCase):
     
-    model = sender
+    model = _models.sender
     
     def test_str(self):
         obj = self.model(name = 'Testsender')
@@ -760,16 +763,16 @@ class TestModelSender(DataTestCase):
         
 class TestModelSpielort(DataTestCase):
     
-    model = spielort
+    model = _models.spielort
     
     def test_str(self):
-        land_object = land.objects.create(land_name = 'Deutschland', code='DE')
-        obj = self.model(name = 'Testspielort', ort = ort.objects.create(land=land_object))
+        land_object = _models.land.objects.create(land_name = 'Deutschland', code='DE')
+        obj = self.model(name = 'Testspielort', ort = _models.ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')
         
 class TestModelSprache(DataTestCase):
     
-    model = sprache
+    model = _models.sprache
     
     def test_str(self):
         obj = self.model(sprache = 'Deutsch', abk = 'de')
@@ -780,17 +783,17 @@ class TestModelTechnik(DataTestCase):
         
 class TestModelVeranstaltung(DataTestCase):
     
-    model = veranstaltung
+    model = _models.veranstaltung
     
     def test_str(self):
-        land_object = land.objects.create(land_name = 'Deutschland', code='DE')
-        spielort_object = spielort(name = 'Testspielort', ort = ort.objects.create(land=land_object))
+        land_object = _models.land.objects.create(land_name = 'Deutschland', code='DE')
+        spielort_object = _models.spielort(name = 'Testspielort', ort = _models.ort.objects.create(land=land_object))
         obj = self.model(name='Testveranstaltung', datum = '02.05.2018', spielort = spielort_object)
         self.assertEqual(str(obj), 'Testveranstaltung (02.05.2018)')
         
 class TestModelVerlag(DataTestCase):
     
-    model = verlag
+    model = _models.verlag
     
     def test_str(self):
         obj = self.model(verlag_name='Testverlag')
@@ -802,12 +805,13 @@ class TestModelVideo(DataTestCase):
 
 class TestModelFavoriten(DataTestCase, UserTestCase):
 
-    model = Favoriten
+    model = _models.Favoriten
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData() # create the users
-        cls.obj1 = Favoriten.objects.create(user=cls.super_user)
+        cls.obj1 = cls.model.objects.create(user=cls.super_user)
+        genre, schlagwort = (_models.genre, _models.schlagwort)
         cls.obj1.fav_genres.add(genre.objects.create(genre='Testgenre1'))
         cls.obj1.fav_genres.add(genre.objects.create(genre='Testgenre2'))
         cls.obj1.fav_schl.add(schlagwort.objects.create(schlagwort='Testwort1'))
@@ -820,6 +824,7 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
 
     def test_get_favorites(self):
         # If no model is provided, return all favorites as a dict 
+        genre, schlagwort = (_models.genre, _models.schlagwort)
         expected = {genre : self.obj1.fav_genres.all(), schlagwort : self.obj1.fav_schl.all()}
         favorites = self.obj1.get_favorites()
         self.assertIn(genre, favorites)
@@ -828,8 +833,8 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
         self.assertQuerysetEqual(favorites[schlagwort], expected[schlagwort])
 
         # If an invalid model is provided, return an empty Favoriten queryset
-        expected = Favoriten.objects.none()
-        self.assertQuerysetEqual(self.obj1.get_favorites(artikel), expected)
+        expected = self.model.objects.none()
+        self.assertQuerysetEqual(self.obj1.get_favorites(_models.artikel), expected)
 
         expected = self.obj1.fav_genres.all()
         self.assertQuerysetEqual(self.obj1.get_favorites(genre), expected)
@@ -838,5 +843,5 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
         self.assertQuerysetEqual(self.obj1.get_favorites(schlagwort), expected)
 
     def test_get_favorite_models(self):
-        expected = [genre, schlagwort]
-        self.assertEqual(Favoriten.get_favorite_models(), expected)
+        expected = [_models.genre, _models.schlagwort]
+        self.assertEqual(self.model.get_favorite_models(), expected)

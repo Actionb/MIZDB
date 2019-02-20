@@ -1,8 +1,12 @@
-from .base import *
+from .base import HelpRegistryMixin, add_urls
+from ..base import RequestTestCase
+
+from unittest.mock import patch
 
 from django import views
 from django.conf.urls import url, include
 
+from DBentry.models import artikel
 from DBentry.help.helptext import ModelAdminHelpText, FormViewHelpText
 from DBentry.help.templatetags import help_link
 

@@ -1,21 +1,31 @@
-from .base import *
+from collections import OrderedDict
+from unittest.mock import patch
 
+from ..base import mockv
+from .base import ACViewTestMethodMixin, ACViewTestCase
+
+from django.utils.encoding import force_text
+from django.utils.translation import override as translation_override
+
+import DBentry.models as _models
+from DBentry.factory import make
+from DBentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable
 from DBentry.ac.creator import Creator
         
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     
     view_class = ACBase
-    model = band
+    model = _models.band
     create_field = 'band_name'
     alias_accessor_name = 'band_alias_set'
 
     @classmethod
     def setUpTestData(cls):
-        cls.genre = make(genre, genre='Testgenre')
-        cls.obj1 = make(band, band_name='Boop', genre=cls.genre, musiker__extra=1, band_alias__alias = 'Voltaire')
-        cls.obj2 = make(band, band_name='Aleboop', band_alias__alias = 'Nietsche')
-        cls.obj3 = make(band, band_name='notfound', band_alias__alias = 'Descartes')
-        cls.obj4 = make(band, band_name='Boopband', band_alias__alias = 'Kant')
+        cls.genre = make(_models.genre, genre='Testgenre')
+        cls.obj1 = make(cls.model, band_name='Boop', genre=cls.genre, musiker__extra=1, band_alias__alias = 'Voltaire')
+        cls.obj2 = make(cls.model, band_name='Aleboop', band_alias__alias = 'Nietsche')
+        cls.obj3 = make(cls.model, band_name='notfound', band_alias__alias = 'Descartes')
+        cls.obj4 = make(cls.model, band_name='Boopband', band_alias__alias = 'Kant')
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
         
@@ -124,7 +134,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_value(['value', 'label']), 'value')
         
         # result is a model instance
-        instance = make(genre)
+        instance = make(_models.genre)
         self.assertEqual(view.get_result_value(instance), str(instance.pk))
         
     def test_get_result_label(self):
@@ -133,17 +143,17 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_label(['value', 'label']), 'label')
         
         # result is a model instance
-        instance = make(genre, genre='All this testing')
+        instance = make(_models.genre, genre='All this testing')
         self.assertEqual(view.get_result_label(instance), 'All this testing')
 
 class TestACCreateable(ACViewTestCase):
     
-    model = autor
+    model = _models.autor
     view_class = ACCreateable
     
     def setUp(self):
         super().setUp()
-        self.creator = Creator(autor)
+        self.creator = Creator(self.model)
     
     def test_dispatch_sets_creator(self):
         # Assert that a creator instance with the right model is created during dispatch()
@@ -166,7 +176,7 @@ class TestACCreateable(ACViewTestCase):
         view = self.get_view(request)
         view.creator = self.creator
         self.assertTrue(view.createable('Alice Testman (AT)'))
-        make(autor, person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT')
+        make(self.model, person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT')
         self.assertFalse(view.createable('Alice Testman (AT)'))
         
     @translation_override(language = None)
@@ -260,7 +270,7 @@ class TestACCreateable(ACViewTestCase):
         self.assertEqual(create_info[3], expected)
             
     def test_create_object(self):
-        obj1 = make(autor, person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT')
+        obj1 = make(self.model, person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT')
         view = self.get_view()
         view.creator = self.creator
         
@@ -316,24 +326,24 @@ class TestACCreateable(ACViewTestCase):
         view.creator = self.creator
         with self.assertNotRaises(AttributeError) as cm:
             view.post(request)
-        self.assertTrue(autor.objects.filter(person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT').exists())
+        self.assertTrue(self.model.objects.filter(person__vorname = 'Alice', person__nachname = 'Testman', kuerzel = 'AT').exists())
 
 class TestACAusgabe(ACViewTestCase):
     
-    model = ausgabe
+    model = _models.ausgabe
     path = 'acausgabe'
     view_class = ACAusgabe
 
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(magazin, magazin_name='Testmagazin')
-        cls.obj_num = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_num__num=10)
-        cls.obj_lnum = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_lnum__lnum=10)
-        cls.obj_monat = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_monat__monat__monat='Januar')
-        cls.obj_sonder = make(ausgabe, magazin=cls.mag, sonderausgabe = True, beschreibung = 'Special Edition')
-        cls.obj_jahrg = make(ausgabe, magazin=cls.mag, jahrgang=12, ausgabe_num__num=13)
-        cls.obj_datum = make(ausgabe, magazin=cls.mag, e_datum = '1986-08-18')
+        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.obj_num = make(cls.model, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_num__num=10)
+        cls.obj_lnum = make(cls.model, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_lnum__lnum=10)
+        cls.obj_monat = make(cls.model, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_monat__monat__monat='Januar')
+        cls.obj_sonder = make(cls.model, magazin=cls.mag, sonderausgabe = True, beschreibung = 'Special Edition')
+        cls.obj_jahrg = make(cls.model, magazin=cls.mag, jahrgang=12, ausgabe_num__num=13)
+        cls.obj_datum = make(cls.model, magazin=cls.mag, e_datum = '1986-08-18')
         
         cls.test_data = [cls.obj_num, cls.obj_lnum, cls.obj_monat, cls.obj_sonder, cls.obj_jahrg]
         
@@ -369,7 +379,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(expected, view.apply_q(self.queryset))
         
         # search for Jan/Feb
-        self.obj_monat.ausgabe_monat_set.create(monat=make(monat, monat='Februar'))
+        self.obj_monat.ausgabe_monat_set.create(monat=make(_models.monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
         expected = (self.obj_monat.pk, force_text(self.obj_monat))
@@ -396,32 +406,32 @@ class TestACAusgabe(ACViewTestCase):
 
         
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
-    model = provenienz
+    model = _models.provenienz
     has_alias = False
     test_data_count = 1
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
-    model = person
+    model = _models.person
     has_alias = False
     raw_data = [{'beschreibung':'Klingt komisch, ist aber so', 'bemerkungen':'Abschalten!'}]
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
-    model = autor
+    model = _models.autor
     raw_data = [{'beschreibung':'ABC'}, {'beschreibung':'DEF'}, {'beschreibung':'GHI'}] # beschreibung is a search_field and needs some data
     has_alias = False
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
-    model = musiker
+    model = _models.musiker
     alias_accessor_name = 'musiker_alias_set'
     raw_data = [{'musiker_alias__alias':'John', 'person__nachname':'James', 'beschreibung':'Description'}]
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
-    model = land
+    model = _models.land
     raw_data = [{'land_alias__alias':'Dschland'}]
     alias_accessor_name = 'land_alias_set'
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
-    model = instrument
+    model = _models.instrument
     raw_data = [
         {'instrument_alias__alias' : 'Klavier'},  
         {'instrument_alias__alias' : 'Laute Tröte'}, 
@@ -430,29 +440,29 @@ class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'instrument_alias_set'
 
 class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
-    model = sender
+    model = _models.sender
     alias_accessor_name = 'sender_alias_set'
     raw_data = [{'sender_alias__alias':'AliasSender'}]
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
-    model = spielort
+    model = _models.spielort
     alias_accessor_name = 'spielort_alias_set'
     raw_data = [{'spielort_alias__alias':'AliasSpielort'}]
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
-    model = veranstaltung
+    model = _models.veranstaltung
     alias_accessor_name = 'veranstaltung_alias_set'
     raw_data = [{'veranstaltung_alias__alias':'AliasVeranstaltung'}]
     
 class TestACBuchband(ACViewTestCase):
-    model = buch
+    model = _models.buch
     view_class = ACBuchband
     
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = make(buch, titel = 'DerBuchband', is_buchband = True)
-        cls.obj2 = make(buch, titel = 'DasBuch', buchband = cls.obj1)
-        cls.obj3 = make(buch, titel = 'Buch')
+        cls.obj1 = make(cls.model, titel = 'DerBuchband', is_buchband = True)
+        cls.obj2 = make(cls.model, titel = 'DasBuch', buchband = cls.obj1)
+        cls.obj3 = make(cls.model, titel = 'Buch')
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         
@@ -470,7 +480,7 @@ class TestACBuchband(ACViewTestCase):
         
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
-    model = genre
+    model = _models.genre
     alias_accessor_name = 'genre_alias_set'
     raw_data = [{'genre_alias__alias':'Beep', 'sub_genres__extra':1, 'ober__genre':'Obergenre'}]
         
@@ -483,10 +493,10 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(list(result), list(self.queryset))
         
         # Create a favorite for the user 
-        fav = Favoriten.objects.create(user=request.user)
+        fav = _models.Favoriten.objects.create(user=request.user)
         fav.fav_genres.add(self.obj1)
         # Create an object that should be displayed as the first in the results following default ordering
-        make(genre, genre='A')
+        make(self.model, genre='A')
         
         # self.obj1 will show up twice in an unfiltered result; once as part of favorites and then as part of the qs
         result = view.apply_q(self.model.objects.all())
@@ -494,7 +504,7 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
         
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         
-    model = schlagwort
+    model = _models.schlagwort
     alias_accessor_name = 'schlagwort_alias_set'
     raw_data = [{'unterbegriffe__extra': 1, 'ober__schlagwort': 'Oberbegriff', 'schlagwort_alias__alias':'AliasSchlagwort'}]
         
@@ -507,10 +517,10 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(list(result), list(self.queryset))
         
         # Create a favorite for the user 
-        fav = Favoriten.objects.create(user=request.user)
+        fav = _models.Favoriten.objects.create(user=request.user)
         fav.fav_schl.add(self.obj1)
         # Create an object that should be displayed as the first in the results following default ordering
-        make(schlagwort, schlagwort='A')
+        make(self.model, schlagwort='A')
         
         # self.obj1 will show up twice in an unfiltered result; once as part of favorites and then as part of the qs
         result = view.apply_q(self.model.objects.all())

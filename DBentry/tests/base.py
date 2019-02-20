@@ -1,27 +1,15 @@
-from unittest import expectedFailure, skip
-from unittest.mock import Mock, MagicMock, patch
-from itertools import chain
-from functools import partial
-from collections import OrderedDict
+from unittest.mock import Mock
 import contextlib
-import re
-import random
 import warnings
 
-from django.test import TestCase, SimpleTestCase, Client, tag, override_settings
+from django.test import TestCase, tag, override_settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.contrib.messages import get_messages
 from django.utils.http import unquote
-from django.utils.encoding import force_text
-from django.utils.translation import gettext, gettext_lazy, override as translation_override
 from django.db.models.query import QuerySet
 
-from DBentry.admin import *
-from DBentry.models import *
-from DBentry.constants import *
 from DBentry.sites import miz_site
-from DBentry.factory import *
 from DBentry.utils import get_relation_info_to, get_model_fields, get_model_relations, get_updateable_fields
 
 from .mixins import *

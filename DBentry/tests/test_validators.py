@@ -1,6 +1,7 @@
-from .base import MyTestCase, translation_override
+from .base import MyTestCase
 
 from django.core.exceptions import ValidationError
+from django.utils.translation import override as translation_override
 
 from DBentry.validators import (
     ISSNValidator, ISBNValidator, EANValidator, 

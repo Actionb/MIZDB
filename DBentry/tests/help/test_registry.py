@@ -1,5 +1,7 @@
-from .base import *
+from .base import HelpRegistryMixin
+from ..base import MyTestCase
 
+from DBentry.models import artikel, sender
 from DBentry.help.views import HelpIndexView, FormHelpView, ModelAdminHelpView
 from DBentry.help.helptext import BaseHelpText, ModelAdminHelpText, FormViewHelpText
 from DBentry.help.registry import register

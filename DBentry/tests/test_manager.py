@@ -1,10 +1,20 @@
-from .base import *
-from DBentry.managers import *
+import random
+from itertools import chain
+from unittest.mock import patch, Mock
+
+from .base import DataTestCase
+
+from django.test import tag
+from django.db.models.query import QuerySet
+
+import DBentry.models as _models
+from DBentry.factory import make
+from DBentry.managers import CNQuerySet, MIZQuerySet
 from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
 
 class TestMIZQuerySet(DataTestCase):
     
-    model = band
+    model = _models.band
     raw_data = [
         {'band_name': 'Testband1', }, 
         {'band_name': 'Testband2', 'band_alias__alias':'Coffee', 'genre__genre': ['Rock', 'Jazz']}, 
@@ -97,8 +107,8 @@ class TestMIZQuerySet(DataTestCase):
 
 class TestAusgabeQuerySet(DataTestCase):
 
-    model = ausgabe
-    fields = ausgabe.name_composing_fields
+    model = _models.ausgabe
+    fields = model.name_composing_fields
     raw_data = [
         { # obj1: nr 2 by chronologic_order
             'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
@@ -164,7 +174,7 @@ class TestAusgabeQuerySet(DataTestCase):
         
     def test_chronologic_order_jahrgang_over_jahr(self):
         # Have more objects with jahrgang than jahr; jahrgang should take priority
-        ausgabe_jahr.objects.all().delete()
+        _models.ausgabe_jahr.objects.all().delete()
         self.qs_obj4.update(jahrgang = 1)
         
         expected = [
@@ -176,9 +186,9 @@ class TestAusgabeQuerySet(DataTestCase):
     def test_chronologic_order_criteria_equal(self):
         # If none of the four criteria dominate, the default order should be:
         # num, monat, lnum, e_datum
-        ausgabe_monat.objects.all().delete()
-        ausgabe_num.objects.all().delete()
-        ausgabe_lnum.objects.all().delete()
+        _models.ausgabe_monat.objects.all().delete()
+        _models.ausgabe_num.objects.all().delete()
+        _models.ausgabe_lnum.objects.all().delete()
         expected = [
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'num', 'monat', 'lnum', 'e_datum', 'pk'
         ]
@@ -208,7 +218,7 @@ class TestAusgabeQuerySet(DataTestCase):
         
 class TestAusgabeIncrementJahrgang(DataTestCase):
     
-    model = ausgabe
+    model = _models.ausgabe
     
     raw_data = [
         { # obj1: start_jg
@@ -284,7 +294,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         
     def test_increment_by_num(self):
         self.queryset.update(e_datum = None)
-        ausgabe_monat.objects.all().delete()
+        _models.ausgabe_monat.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
         self.assertIncrementedUpdateDict(update_dict)
@@ -292,8 +302,8 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         
     def test_increment_by_year(self):
         self.queryset.update(e_datum = None)
-        ausgabe_monat.objects.all().delete()
-        ausgabe_num.objects.all().delete()
+        _models.ausgabe_monat.objects.all().delete()
+        _models.ausgabe_num.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
         
@@ -327,7 +337,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         
 @tag("slow")
 class TestAusgabeQuerySetOrdering(DataTestCase):
-    model = ausgabe
+    model = _models.ausgabe
     
     @classmethod
     def setUpTestData(cls):
@@ -340,20 +350,20 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         cls.lnums = []
         cls.monate = []
         cls.jgs = []
-        cls.mag = make(magazin)
+        cls.mag = make(_models.magazin)
         
         for jg, year in enumerate(range(1999, 2005), start = 1):
             for i in range(1, 13):
-                cls.nums.append(make(ausgabe, 
+                cls.nums.append(make(cls.model, 
                     pk = get_random_pk(), magazin = cls.mag, ausgabe_num__num = i, ausgabe_jahr__jahr = year
                 ))
-                cls.lnums.append(make(ausgabe, 
+                cls.lnums.append(make(cls.model, 
                     pk = get_random_pk(), magazin = cls.mag, ausgabe_lnum__lnum = i, ausgabe_jahr__jahr = year
                 ))
-                cls.monate.append(make(ausgabe, 
+                cls.monate.append(make(cls.model, 
                     pk = get_random_pk(), magazin = cls.mag, ausgabe_monat__monat__ordinal = i, ausgabe_jahr__jahr = year
                 ))
-                cls.jgs.append(make(ausgabe, 
+                cls.jgs.append(make(cls.model, 
                     pk = get_random_pk(), magazin = cls.mag, ausgabe_num__num = i, jahrgang = jg
                 ))
         cls.all = cls.nums + cls.lnums + cls.monate + cls.jgs
@@ -388,8 +398,8 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         # If no criteria (num, lnum, monat) dominates over the others, the general order should be:
         # lnum, monat, num
         # the queryset needs to be filtered or chronologic_order will take a short cut
-        queryset = ausgabe.objects.filter(pk__in = [o.pk for o in chain(self.lnums, self.monate, self.nums)]).chronologic_order() 
-        qs = ausgabe.objects.filter(ausgabe_jahr__jahr=2001)
+        queryset = self.model.objects.filter(pk__in = [o.pk for o in chain(self.lnums, self.monate, self.nums)]).chronologic_order() 
+        qs = self.model.objects.filter(ausgabe_jahr__jahr=2001)
         expected = self.filter(self.lnums, qs) + self.filter(self.monate, qs) + self.filter(self.nums, qs)
         self.assertEqual(self.get_search_results(queryset, '2001'), expected)
         
@@ -404,10 +414,10 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         
         # jahr dominant:
         # --> any records with jahrgang and no jahr will be at the top
-        filtered = list(ausgabe_lnum.objects.filter(lnum=11).values_list('ausgabe_id', flat = True))
-        filtered += list(ausgabe_num.objects.filter(num=11).values_list('ausgabe_id', flat = True))
+        filtered = list(_models.ausgabe_lnum.objects.filter(lnum=11).values_list('ausgabe_id', flat = True))
+        filtered += list(_models.ausgabe_num.objects.filter(num=11).values_list('ausgabe_id', flat = True))
         
-        queryset = ausgabe.objects.filter(pk__in = filtered).chronologic_order()
+        queryset = self.model.objects.filter(pk__in = filtered).chronologic_order()
         expected = self.filter(self.jgs, queryset) 
         for num, lnum in zip(self.nums, self.lnums):
             if lnum.pk in filtered:
@@ -422,16 +432,16 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         # --> any records with jahr and no jahrgang will be at the top
         ids = [
            o.pk for o in chain(self.nums[3:] + self.jgs)
-           if o.pk in ausgabe_num.objects.filter(num=11).values_list('ausgabe_id')
+           if o.pk in _models.ausgabe_num.objects.filter(num=11).values_list('ausgabe_id')
         ]
         
-        queryset = ausgabe.objects.filter(pk__in = ids).chronologic_order()
+        queryset = self.model.objects.filter(pk__in = ids).chronologic_order()
         expected = self.filter(self.nums[3:] + self.jgs, queryset)
         self.assertEqual(list(queryset.values_list('_name', flat = True)), expected)
         self.assertEqual(self.get_search_results(queryset, '11'), expected)
         
     def test_ordering_num(self):
-        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.nums]).chronologic_order()
+        queryset = self.model.objects.filter(pk__in=[o.pk for o in self.nums]).chronologic_order()
         
         expected = [o.pk for o in self.nums]
         self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
@@ -443,7 +453,7 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         self.assertEqual(self.get_search_results(queryset, '11'), expected)
         
     def test_ordering_lnum(self):
-        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.lnums]).chronologic_order()
+        queryset = self.model.objects.filter(pk__in=[o.pk for o in self.lnums]).chronologic_order()
         
         expected = [o.pk for o in self.lnums]
         self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
@@ -455,7 +465,7 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         self.assertEqual(self.get_search_results(queryset, '11'), expected)
         
     def test_ordering_monate(self):
-        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.monate]).chronologic_order()
+        queryset = self.model.objects.filter(pk__in=[o.pk for o in self.monate]).chronologic_order()
         
         expected = [o.pk for o in self.monate]
         self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
@@ -467,7 +477,7 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
         self.assertEqual(self.get_search_results(queryset, 'Nov'), expected)
     
     def test_ordering_jg(self):
-        queryset = ausgabe.objects.filter(pk__in=[o.pk for o in self.jgs]).chronologic_order()
+        queryset = self.model.objects.filter(pk__in=[o.pk for o in self.jgs]).chronologic_order()
         
         expected = [o.pk for o in self.jgs]
         self.assertEqual(list(queryset.values_list('pk', flat = True)), expected)
@@ -482,14 +492,14 @@ class TestAusgabeQuerySetOrdering(DataTestCase):
 @tag("cn")
 class TestCNQuerySet(DataTestCase):
     
-    model = ausgabe
+    model = _models.ausgabe
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(magazin, magazin_name = 'Testmagazin')
-        cls.obj1 = make(ausgabe, magazin=cls.mag)
+        cls.mag = make(_models.magazin, magazin_name = 'Testmagazin')
+        cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(
-            ausgabe, magazin=cls.mag, ausgabe_monat__monat__monat='Dezember', ausgabe_lnum__lnum=12, 
+            cls.model, magazin=cls.mag, ausgabe_monat__monat__monat='Dezember', ausgabe_lnum__lnum=12, 
             ausgabe_num__num=12, ausgabe_jahr__jahr=2000
         )
         cls.test_data = [cls.obj1, cls.obj2]
@@ -518,7 +528,7 @@ class TestCNQuerySet(DataTestCase):
         
     def test_bulk_create_sets_changed_flag(self):
         # in order to update the created instances' names on their next query/instantiation, bulk_create must include _changed_flag == True
-        new_obj = ausgabe(magazin=self.mag, beschreibung='My Unique Name', sonderausgabe=True)
+        new_obj = self.model(magazin=self.mag, beschreibung='My Unique Name', sonderausgabe=True)
         self.queryset.bulk_create([new_obj])
         qs = self.queryset.filter(beschreibung='My Unique Name', sonderausgabe=True)
         self.assertAllQSValuesList(qs, '_changed_flag', True)
@@ -591,7 +601,7 @@ class TestCNQuerySet(DataTestCase):
         
 class TestBuchQuerySet(DataTestCase):
     
-    model = buch
+    model = _models.buch
     raw_data = [
         {'ISBN': '978-1-234-56789-7', 'EAN': '73513537'}, 
         {'ISBN': '978-4-56-789012-0', 'EAN': "1234567890128"}

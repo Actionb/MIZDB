@@ -1,15 +1,24 @@
 import datetime
+import re
+from collections import OrderedDict
+from itertools import chain
 
-from .base import *
+from .base import MyTestCase, RequestTestCase, MergingTestCase
+from .mixins import TestDataMixin
 
+from django.utils.encoding import force_text
+
+import DBentry.models as _models
 from DBentry import utils
+from DBentry.factory import make
+from DBentry.sites import miz_site
 
 from nameparser import HumanName
 
 ##############################################################################################################
 # general utilities
 ############################################################################################################## 
-class TestUtils(TestCase):
+class TestUtils(MyTestCase):
     
     def test_is_iterable(self):
         self.assertTrue(utils.is_iterable(list()))
@@ -66,44 +75,45 @@ class TestModelUtils(MyTestCase):
         self.assertEqual((utils.get_relations_between_models('FormatTag', 'Format')), expected)
         
     def test_is_protected(self):
-        art = make(artikel)
+        art = make(_models.artikel)
         self.assertIsNotNone(utils.is_protected([art.ausgabe]))
         self.assertIsNone(utils.is_protected([art]))
         
     def test_get_model_from_string(self):
-        self.assertEqual(ausgabe, utils.get_model_from_string('ausgabe'))
+        self.assertEqual(_models.ausgabe, utils.get_model_from_string('ausgabe'))
         self.assertIsNone(utils.get_model_from_string('beep boop'))
     
     def test_get_model_relations(self):
+        video = _models.video
         # model video has the four kinds of relations:
         # FK from bestand to video
         # FK from video to sender
         # ManyToMany auto created band <-> video
         # ManyToMany intermediary musiker <-> video
-        rev_fk = bestand._meta.get_field('video').remote_field
+        rev_fk = _models.bestand._meta.get_field('video').remote_field
         fk = video._meta.get_field('sender').remote_field
         m2m_inter = video.musiker.rel
         m2m_auto = video.band.rel
         
-        rels = get_model_relations(video)
+        rels = utils.get_model_relations(video)
         self.assertIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
         
-        rels = get_model_relations(video, reverse = False)
+        rels = utils.get_model_relations(video, reverse = False)
         self.assertNotIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
         
-        rels = get_model_relations(video, forward = False)
+        rels = utils.get_model_relations(video, forward = False)
         self.assertIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
         
-        rels = get_model_relations(video, forward = False, reverse = False)
+        rels = utils.get_model_relations(video, forward = False, reverse = False)
         self.assertNotIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
@@ -112,20 +122,20 @@ class TestModelUtils(MyTestCase):
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
-        self.assertListEqualSorted(required_field_names(person), ['nachname'])
-        self.assertListEqualSorted(required_field_names(musiker), ['kuenstler_name'])
-        self.assertListEqualSorted(required_field_names(genre), ['genre'])
-        self.assertListEqualSorted(required_field_names(band), ['band_name'])
-        self.assertListEqualSorted(required_field_names(autor), [])
-        self.assertListEqualSorted(required_field_names(ausgabe), ['magazin'])
-        self.assertListEqualSorted(required_field_names(magazin), ['magazin_name'])
-        self.assertListEqualSorted(required_field_names(ort), ['land'])
-        self.assertListEqualSorted(required_field_names(artikel), ['schlagzeile', 'seite', 'ausgabe'])
-        self.assertListEqualSorted(required_field_names(geber), []) # 'name' field is required but has a default
-        self.assertListEqualSorted(required_field_names(bestand), ['lagerort'])
+        self.assertListEqualSorted(required_field_names(_models.person), ['nachname'])
+        self.assertListEqualSorted(required_field_names(_models.musiker), ['kuenstler_name'])
+        self.assertListEqualSorted(required_field_names(_models.genre), ['genre'])
+        self.assertListEqualSorted(required_field_names(_models.band), ['band_name'])
+        self.assertListEqualSorted(required_field_names(_models.autor), [])
+        self.assertListEqualSorted(required_field_names(_models.ausgabe), ['magazin'])
+        self.assertListEqualSorted(required_field_names(_models.magazin), ['magazin_name'])
+        self.assertListEqualSorted(required_field_names(_models.ort), ['land'])
+        self.assertListEqualSorted(required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])
+        self.assertListEqualSorted(required_field_names(_models.geber), []) # 'name' field is required but has a default
+        self.assertListEqualSorted(required_field_names(_models.bestand), ['lagerort'])
 
     def test_get_updateable_fields(self):
-        obj = make(artikel)
+        obj = make(_models.artikel)
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
 
         obj.seitenumfang = 'f'
@@ -134,7 +144,7 @@ class TestModelUtils(MyTestCase):
         obj.zusammenfassung = 'Boop'
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen'])
         
-        obj = make(ausgabe)
+        obj = make(_models.ausgabe)
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen'])
         obj.status = 2
         self.assertNotIn('status', utils.get_updateable_fields(obj))
@@ -148,11 +158,11 @@ class TestModelUtils(MyTestCase):
 ##############################################################################################################
 # debug utilities
 ##############################################################################################################   
-class TestDebugUtils(TestCase):
+class TestDebugUtils(MyTestCase):
     
     def test_num_queries(self):
         def func():
-            return list(ausgabe.objects.all())
+            return list(_models.ausgabe.objects.all())
         self.assertEqual(utils.num_queries(func), 1)
 
 
@@ -200,9 +210,9 @@ class TestTextUtils(MyTestCase):
 ##############################################################################################################       
 class TestAdminUtils(TestDataMixin, RequestTestCase):
     
-    model = band
+    model = _models.band
     test_data_count = 3
-    opts = band._meta
+    opts = model._meta
     
     def test_get_obj_link_noperms(self):
         # Users without change permission should not get an edit link
@@ -238,28 +248,28 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_model_admin_for_model(self):
         from DBentry.admin import ArtikelAdmin
         self.assertIsInstance(utils.get_model_admin_for_model('artikel'), ArtikelAdmin)
-        self.assertIsInstance(utils.get_model_admin_for_model(artikel), ArtikelAdmin)
+        self.assertIsInstance(utils.get_model_admin_for_model(_models.artikel), ArtikelAdmin)
         self.assertIsNone(utils.get_model_admin_for_model('beepboop'))
         
     def test_has_admin_permission(self):
         from DBentry.admin import ArtikelAdmin, BildmaterialAdmin
         request = self.get_request(user = self.noperms_user)
-        model_admin = ArtikelAdmin(artikel, miz_site)
+        model_admin = ArtikelAdmin(_models.artikel, miz_site)
         self.assertFalse(utils.has_admin_permission(request, model_admin), msg = "Should return False for a user with no permissions.")
         
         from django.contrib.auth.models import Permission
         perms = Permission.objects.filter(codename__in=('add_artikel', ))
         self.staff_user.user_permissions.set(perms)
         request = self.get_request(user = self.staff_user)
-        model_admin = ArtikelAdmin(artikel, miz_site)
+        model_admin = ArtikelAdmin(_models.artikel, miz_site)
         self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for a user with at least some permissions for that model admin.")
     
         request = self.get_request(user = self.staff_user)
-        model_admin = BildmaterialAdmin(bildmaterial, miz_site)
+        model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
         self.assertFalse(utils.has_admin_permission(request, model_admin), msg = "Should return False for non-superusers on a superuser only model admin.")
         
         request = self.get_request(user = self.super_user)
-        model_admin = BildmaterialAdmin(bildmaterial, miz_site)
+        model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
         self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for superuser on a superuser-only model admin.")
             
     def test_make_simple_link(self):
@@ -363,15 +373,15 @@ class MergeTestMethodsMixin(object):
         
 class TestMergingAusgabe(MergingTestCase): 
     
-    model = ausgabe
+    model = _models.ausgabe
     test_data_count = 0
     
     @classmethod
     def setUpTestData(cls):
         default = dict(ausgabe_jahr__extra = 1, ausgabe_num__extra = 1, ausgabe_lnum__extra = 1, ausgabe_monat__extra = 1, bestand__extra = 1)
-        cls.obj1 = make(ausgabe, **default)
-        cls.obj2 = make(ausgabe, beschreibung = 'Test', **default)
-        cls.obj3 = make(ausgabe, **default)
+        cls.obj1 = make(cls.model, **default)
+        cls.obj2 = make(cls.model, beschreibung = 'Test', **default)
+        cls.obj3 = make(cls.model, **default)
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         
@@ -429,75 +439,73 @@ class TestMergingAusgabe(MergingTestCase):
     def test_merge_records_with_additional_relation_change(self):
         # More related changes than expected
         utils.merge_records(self.original, self.qs, expand_original = False, request=self.request)
-        make(ausgabe_num, num = 42, ausgabe = self.original)
+        make(_models.ausgabe_num, num = 42, ausgabe = self.original)
         with self.assertRaises(AssertionError) as context_manager:
             self.assertRelatedChanges()
         self.assertTrue(context_manager.exception.args[0].startswith('Unexpected additional 1 relation-changes occurred: '))
                 
 class TestMergingOrt(MergingTestCase, MergeTestMethodsMixin):
-    model = ort
+    model = _models.ort
 
 class TestMergingArtikel(MergingTestCase, MergeTestMethodsMixin):
-    model = artikel
+    model = _models.artikel
     
 class TestMergingBand(MergingTestCase, MergeTestMethodsMixin):
-    model = band
+    model = _models.band
 
 class TestMergingMusiker(MergingTestCase, MergeTestMethodsMixin):
-    model = musiker
+    model = _models.musiker
     
 class TestMergingAudio(MergingTestCase, MergeTestMethodsMixin):
-    model = audio
+    model = _models.audio
     
 class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):
-    model = autor
+    model = _models.autor
     
 class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
-    model = genre
+    model = _models.genre
     
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = make(genre, genre='Original')
-        cls.obj2 = make(genre, genre='Merger1', ober=cls.obj1)
-        cls.obj3 = make(genre, genre='Merger2')
+        cls.obj1 = make(cls.model, genre='Original')
+        cls.obj2 = make(cls.model, genre='Merger1', ober=cls.obj1)
+        cls.obj3 = make(cls.model, genre='Merger2')
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         
         super().setUpTestData()
     
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
-    model = schlagwort
+    model = _models.schlagwort
     
 class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
     
-    model = magazin
+    model = _models.magazin
     test_data_count = 0
     
     
     @classmethod
     def setUpTestData(cls):
         
-        cls.obj1 = magazin.objects.create(magazin_name = 'Original-Magazin')
-        cls.obj2 = magazin.objects.create(magazin_name = 'Merger1-Magazin')
-        cls.obj3 = magazin.objects.create(magazin_name = 'Merger2-Magazin')
+        cls.obj1 = cls.model.objects.create(magazin_name = 'Original-Magazin')
+        cls.obj2 = cls.model.objects.create(magazin_name = 'Merger1-Magazin')
+        cls.obj3 = cls.model.objects.create(magazin_name = 'Merger2-Magazin')
         
+        cls.genre_original = _models.genre.objects.create(genre = 'Original-Genre')
+        cls.genre_merger1 = _models.genre.objects.create(genre = 'Merger1-Genre')
+        cls.genre_merger2 = _models.genre.objects.create(genre = 'Merger2-Genre')
         
-        cls.genre_original = genre.objects.create(genre = 'Original-Genre')
-        cls.genre_merger1 = genre.objects.create(genre = 'Merger1-Genre')
-        cls.genre_merger2 = genre.objects.create(genre = 'Merger2-Genre')
+        cls.model.genre.through.objects.create(genre=cls.genre_original, magazin=cls.obj1)
+        cls.model.genre.through.objects.create(genre=cls.genre_merger1, magazin=cls.obj2)
+        cls.model.genre.through.objects.create(genre=cls.genre_merger2, magazin=cls.obj3)
         
-        magazin.genre.through.objects.create(genre=cls.genre_original, magazin=cls.obj1)
-        magazin.genre.through.objects.create(genre=cls.genre_merger1, magazin=cls.obj2)
-        magazin.genre.through.objects.create(genre=cls.genre_merger2, magazin=cls.obj3)
+        autor_instance = _models.autor.objects.create(kuerzel='Merger1-Autor')
+        cls.model.autor_set.through.objects.create(autor = autor_instance, magazin = cls.obj2)
         
-        autor.magazin.through.objects.create(
-            autor=autor.objects.create(kuerzel='Merger1-Autor'), magazin = cls.obj2
-        )
-        
-        cls.ausgabe_original = ausgabe.objects.create(
+        cls.ausgabe_original = _models.ausgabe.objects.create(
             beschreibung = 'Original-Ausgabe', sonderausgabe = True, magazin = cls.obj1
         )
-        cls.ausgabe_merger = ausgabe.objects.create(
+        cls.ausgabe_merger = _models.ausgabe.objects.create(
             beschreibung = 'Merger1-Ausgabe', sonderausgabe = True, magazin = cls.obj2
         )
     
@@ -507,16 +515,16 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
         
         
 class TestMergingPerson(MergingTestCase, MergeTestMethodsMixin):
-    model = person
+    model = _models.person
         
 class VideoMergingDataMixin(object):
     
-    model = video
+    model = _models.video
     test_data_count = 0
     
     @classmethod
     def setUpTestData(cls):
-        obj1 = make(video, 
+        obj1 = make(cls.model, 
             titel = 'Original', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
         )
         cls.sender_original = obj1.sender
@@ -525,7 +533,7 @@ class VideoMergingDataMixin(object):
         cls.bestand_original = obj1.bestand_set.get()
         cls.obj1 = obj1
         
-        obj2 = make(video, 
+        obj2 = make(cls.model, 
             titel = 'Merger1', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
         )
         cls.sender_merger1 = obj2.sender
@@ -534,7 +542,7 @@ class VideoMergingDataMixin(object):
         cls.bestand_merger1 = obj2.bestand_set.get()
         cls.obj2 = obj2
         
-        obj3 = make(video, 
+        obj3 = make(cls.model, 
             titel = 'Merger2', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1,
             beschreibung = 'Hello!'
         )

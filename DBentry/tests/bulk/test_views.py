@@ -1,21 +1,27 @@
-from ..base import *
+from ..base import ViewTestCase
+from ..mixins import TestDataMixin, CreateFormViewMixin, LoggingTestMixin
 
-from DBentry.bulk.views import *
+from django.test import tag
+from django.urls import reverse
+
+import DBentry.models as _models
+from DBentry.factory import make, batch
+from DBentry.bulk.views import BulkAusgabe
 
 class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
     
-    model = ausgabe
+    model = _models.ausgabe
     path = reverse('bulk_ausgabe')
     
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(magazin, magazin_name='Testmagazin')
-        cls.zraum = make(lagerort, ort='Bestand LO')
-        cls.dublette = make(lagerort, ort='Dubletten LO')
-        cls.audio_lo = make(lagerort)
-        cls.prov = make(provenienz)
-        cls.updated = make(ausgabe, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=1)
-        cls.multi1, cls.multi2 = batch(ausgabe, 2, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=5)
+        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.zraum = make(_models.lagerort, ort='Bestand LO')
+        cls.dublette = make(_models.lagerort, ort='Dubletten LO')
+        cls.audio_lo = make(_models.lagerort)
+        cls.prov = make(_models.provenienz)
+        cls.updated = make(cls.model, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=1)
+        cls.multi1, cls.multi2 = batch(cls.model, 2, magazin=cls.mag, ausgabe_jahr__jahr=[2000, 2001], ausgabe_num__num=5)
         
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         
@@ -152,7 +158,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertEqual(updated, [self.updated])
         # Assert that the update was logged properly
         a = self.updated.audio.first()
-        m2m_instance = ausgabe.audio.through.objects.get(ausgabe=self.updated, audio=a)
+        m2m_instance = self.model.audio.through.objects.get(ausgabe=self.updated, audio=a)
         self.assertLoggedAddition(a)
         self.assertLoggedAddition(a, a.bestand_set.first())
         self.assertLoggedAddition(self.updated, m2m_instance)
@@ -223,7 +229,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
             for n in instance.ausgabe_num_set.all():
                 self.assertLoggedAddition(instance, n)
             a = instance.audio.first()
-            m2m = ausgabe.audio.through.objects.get(ausgabe=instance, audio=a)
+            m2m = self.model.audio.through.objects.get(ausgabe=instance, audio=a)
             self.assertLoggedAddition(instance, m2m)
             self.assertLoggedAddition(a, m2m)
             self.assertLoggedAddition(a, a.bestand_set.first())
@@ -358,7 +364,7 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         continue_data = self.valid_data.copy()
         continue_data['num'] = ''
         # A saved monat record is required
-        jan = make(monat, monat='Januar')
+        jan = make(_models.monat, monat='Januar')
         continue_data['monat'] = [str(jan.pk)]
         continue_data['jahr'] = ['2018']
         continue_data['jahrgang'] = ''

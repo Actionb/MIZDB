@@ -1,8 +1,18 @@
-from .base import *
+from itertools import chain
 
-from DBentry.admin import *
+from .base import AdminTestCase, UserTestCase
+
+from django.utils.translation import override as translation_override
+
+import DBentry.admin as _admin
+from DBentry.sites import miz_site
+import DBentry.models as _models
+
 from DBentry.sites import MIZAdminSite
-from DBentry.changelist import *
+from DBentry.utils import get_model_fields
+from DBentry.factory import make
+from DBentry.changelist import MIZChangeList, AusgabeChangeList
+from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
         
 class AdminTestMethodsMixin(object):
@@ -90,8 +100,8 @@ class AdminTestMethodsMixin(object):
             
 class TestMIZModelAdmin(AdminTestCase):
     
-    model_admin_class = DateiAdmin
-    model = datei
+    model_admin_class = _admin.DateiAdmin
+    model = _models.datei
     test_data_count = 1
     
     def test_get_actions(self):
@@ -188,16 +198,16 @@ class TestMIZModelAdmin(AdminTestCase):
             
     def test_construct_m2m_change_message(self):
         # auto created
-        obj = datei.band.through.objects.create(
-            band = band.objects.create(band_name='Testband'), 
+        obj = self.model.band.through.objects.create(
+            band = _models.band.objects.create(band_name='Testband'), 
             datei = self.obj1
         )
         expected = {'name': 'Band', 'object': 'Testband'}
         self.assertEqual(self.model_admin._construct_m2m_change_message(obj), expected)
         
         # not auto created
-        obj = datei.musiker.through.objects.create(
-            musiker = musiker.objects.create(kuenstler_name = 'Testmusiker'), 
+        obj = self.model.musiker.through.objects.create(
+            musiker = _models.musiker.objects.create(kuenstler_name = 'Testmusiker'), 
             datei = self.obj1
         )
         expected = {'name': 'Musiker', 'object': 'Testmusiker'}
@@ -205,20 +215,20 @@ class TestMIZModelAdmin(AdminTestCase):
         
     def test_save_model(self):
         # save_model should not update the _name of a ComputedNameModel object
-        obj = make(person, vorname = 'Alice', nachname = 'Testman')
+        obj = make(_models.person, vorname = 'Alice', nachname = 'Testman')
         obj.nachname = 'Mantest'
         self.model_admin.save_model(None, obj, None, None)
-        self.assertEqual(list(person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Testman'])
+        self.assertEqual(list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Testman'])
         
     def test_save_related(self):
         # save_related should for an update of the _name of a ComputedNameModel object
-        obj = make(person, vorname = 'Alice', nachname = 'Testman')
+        obj = make(_models.person, vorname = 'Alice', nachname = 'Testman')
         obj.nachname = 'Mantest'
         obj.save(update=False)
         fake_form = type('Dummy', (object, ), {'instance':obj, 'save_m2m':lambda x=None:None})
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
-        self.assertEqual(list(person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Mantest'])
+        self.assertEqual(list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Mantest'])
     
     def test_get_preserved_filters(self):
         query_string = '_changelist_filters=sender%3D1'
@@ -253,13 +263,13 @@ class TestMIZModelAdmin(AdminTestCase):
        
     def test_get_search_fields(self):
         # Assert that get_search_fields does not include a iexact lookup for primary keys that are a relation
-        search_fields = KatalogAdmin(Katalog, self.admin_site).get_search_fields()
+        search_fields = _admin.KatalogAdmin(_models.Katalog, self.admin_site).get_search_fields()
         self.assertNotIn('=basebrochure_ptr', search_fields)
                 
 class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = ArtikelAdmin
-    model = artikel
+    model_admin_class = _admin.ArtikelAdmin
+    model = _models.artikel
     exclude_expected = ['genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung']
     fields_expected = [
         ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen'
@@ -267,8 +277,8 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(magazin, magazin_name = 'Testmagazin')
-        cls.obj1 = make(artikel, 
+        cls.mag = make(_models.magazin, magazin_name = 'Testmagazin')
+        cls.obj1 = make(_models.artikel, 
             ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!', schlagwort__schlagwort = ['Testschlagwort1', 'Testschlagwort2'], 
             musiker__kuenstler_name = 'Alice Tester', band__band_name = 'Testband'
         )
@@ -299,7 +309,7 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
         
     def test_add_crosslinks(self):
-        obj = make(artikel, 
+        obj = make(_models.artikel, 
             musiker__extra = 1, spielort__extra = 1, schlagwort__extra = 1, ort__extra = 1, person__extra = 1, 
             autor__extra = 1, genre__extra = 1, veranstaltung__extra = 1, band__extra = 1
         )
@@ -307,14 +317,14 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
 
 class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = AusgabenAdmin
-    model = ausgabe
+    model_admin_class = _admin.AusgabenAdmin
+    model = _models.ausgabe
     exclude_expected = ['audio']
     fields_expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
    
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = make(ausgabe, 
+        cls.obj1 = make(_models.ausgabe, 
             magazin__magazin_name = 'Testmagazin', ausgabe_jahr__jahr = [2020, 2021, 2022], ausgabe_num__num = [10, 11, 12], 
             ausgabe_lnum__lnum = [10, 11, 12], ausgabe_monat__monat__monat = ['Januar', 'Februar'], 
             artikel__schlagzeile = 'Test', artikel__seite = 1, bestand__lagerort__pk=[ZRAUM_ID, DUPLETTEN_ID], 
@@ -336,7 +346,7 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         
     def test_anz_artikel(self):
         self.assertEqual(self.model_admin.anz_artikel(self.obj1), 1)
-        artikel.objects.all().delete()
+        _models.artikel.objects.all().delete()
         self.assertEqual(self.model_admin.anz_artikel(self.obj1), 0)
         
     def test_jahr_string(self):
@@ -362,7 +372,7 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         self.assertFalse(self.model_admin.dbestand(self.obj1))
         
     def test_add_crosslinks(self):
-        obj = make(ausgabe, 
+        obj = make(_models.ausgabe, 
             ausgabe_num__extra = 1, ausgabe_lnum__extra = 1, ausgabe_monat__extra = 1, ausgabe_jahr__extra = 1, 
             artikel__extra = 1, audio__extra = 1, bestand__extra = 1, 
         )
@@ -373,7 +383,7 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         links, url = self.get_crosslinks(obj, labels={'artikel':'Beep boop'})
         self.assertIn({'url':url.format(model_name='artikel', fld_name='ausgabe'), 'label': 'Beep boop (1)'}, links)
         
-        ausgabe.artikel_set.rel.related_name = 'Boop beep'
+        _models.ausgabe.artikel_set.rel.related_name = 'Boop beep'
         links, url = self.get_crosslinks(obj)
         self.assertIn({'url':url.format(model_name='artikel', fld_name='ausgabe'), 'label': 'Boop Beep (1)'}, links)
         
@@ -383,8 +393,8 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = MagazinAdmin
-    model = magazin
+    model_admin_class = _admin.MagazinAdmin
+    model = _models.magazin
     exclude_expected = ['genre']
     fields_expected = ['magazin_name', 'erstausgabe', 'turnus', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn', 
         'beschreibung', 'bemerkungen', 'ort', 
@@ -399,7 +409,7 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 0)
         
     def test_add_crosslinks(self):
-        obj = make(magazin, 
+        obj = make(self.model, 
             ausgabe__extra = 1, autor__extra = 1, genre__extra = 1
         )
         expected = [
@@ -411,8 +421,8 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = PersonAdmin
-    model = person
+    model_admin_class = _admin.PersonAdmin
+    model = _models.person
     exclude_expected = ['orte']
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     
@@ -431,13 +441,13 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
         
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj1), '')
-        o = make(ort, stadt='Dortmund', land__code = 'XYZ')
+        o = make(_models.ort, stadt='Dortmund', land__code = 'XYZ')
         self.obj1.orte.add(o)
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
         
     def test_add_crosslinks(self):
-        obj = make(person, 
+        obj = make(self.model, 
             video__extra = 1, veranstaltung__extra = 1, herausgeber__extra = 1, datei__extra = 1, 
             artikel__extra = 1, orte__extra = 1, autor__extra = 1, memorabilien__extra = 1, musiker__extra = 1, 
             dokument__extra = 1, bildmaterial__extra = 1, technik__extra = 1, audio__extra = 1, buch__extra = 1,         
@@ -461,8 +471,8 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = MusikerAdmin
-    model = musiker
+    model_admin_class = _admin.MusikerAdmin
+    model = _models.musiker
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
@@ -487,13 +497,13 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj2), '')
-        o = make(ort, stadt='Dortmund', land__code = 'XYZ')
+        o = make(_models.ort, stadt='Dortmund', land__code = 'XYZ')
         self.obj2.orte.add(o)
         self.obj2.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
         
     def test_add_crosslinks(self):
-        obj = make(musiker, 
+        obj = make(self.model, 
             artikel__extra = 1, audio__extra = 1, band__extra = 1, bildmaterial__extra = 1, buch__extra = 1, 
             datei__extra = 1, dokument__extra = 1, memorabilien__extra = 1, instrument__extra = 1, orte__extra = 1, 
             genre__extra = 1, musiker_alias__extra = 1, technik__extra = 1, veranstaltung__extra = 1, video__extra = 1
@@ -514,8 +524,8 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = GenreAdmin
-    model = genre
+    model_admin_class = _admin.GenreAdmin
+    model = _models.genre
     test_data_count = 1
     fields_expected = ['genre', 'ober']
     
@@ -558,7 +568,7 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
         self.assertNotIn('ober__genre', self.model_admin.get_search_fields())
         
     def test_add_crosslinks(self):
-        obj = make(genre, 
+        obj = make(self.model, 
             artikel__extra = 1, audio__extra = 1, band__extra = 1, bildmaterial__extra = 1, buch__extra = 1, 
             datei__extra = 1, dokument__extra = 1, sub_genres__extra = 1, genre_alias__extra = 1, magazin__extra = 1, 
             memorabilien__extra = 1, musiker__extra = 1, technik__extra = 1, veranstaltung__extra = 1, video__extra = 1, 
@@ -583,8 +593,8 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     
 class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = SchlagwortAdmin
-    model = schlagwort
+    model_admin_class = _admin.SchlagwortAdmin
+    model = _models.schlagwort
     fields_expected = ['schlagwort', 'ober']
     
     raw_data = [
@@ -626,7 +636,7 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
         self.assertNotIn('ober__schlagwort', self.model_admin.get_search_fields())
         
     def test_add_crosslinks(self):
-        obj = make(schlagwort, 
+        obj = make(self.model, 
             artikel__extra = 1, audio__extra = 1, bildmaterial__extra = 1, buch__extra = 1, 
             datei__extra = 1, dokument__extra = 1, unterbegriffe__extra = 1, schlagwort_alias__extra = 1, 
             memorabilien__extra = 1, technik__extra = 1, veranstaltung__extra = 1, video__extra = 1, 
@@ -648,8 +658,8 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     
 class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = BandAdmin
-    model = band
+    model_admin_class = _admin.BandAdmin
+    model = _models.band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
     raw_data = [
@@ -670,15 +680,15 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
     
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj1), '')
-        o = make(ort, stadt='Dortmund', land__code = 'XYZ')
+        o = make(_models.ort, stadt='Dortmund', land__code = 'XYZ')
         self.obj1.orte.add(o)
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
 
 class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = AutorAdmin
-    model = autor
+    model_admin_class = _admin.AutorAdmin
+    model = _models.autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
     raw_data = [
@@ -690,14 +700,15 @@ class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = OrtAdmin   
-    model = ort
+    model_admin_class = _admin.OrtAdmin   
+    model = _models.ort
     fields_expected = ['stadt', 'land', 'bland']
     test_data_count = 1
     crosslinks_relations = [
-        datei.ort.rel, buch.ort.rel, audio.ort.rel, ort.spielort_set.rel, ort.verlag_set.rel, ort.person_set.rel, 
-        bildmaterial.ort.rel, dokument.ort.rel, artikel.ort.rel, ort.magazin_set.rel, technik.ort.rel, 
-        ort.band_set.rel, memorabilien.ort.rel, 
+        model.datei_set.rel, model.buch_set.rel, model.audio_set.rel, model.artikel_set.rel, 
+        model.bildmaterial_set.rel, model.dokument_set.rel, model.technik_set.rel, model.memorabilien_set.rel,    
+        model.verlag_set.rel, model.spielort_set.rel, model.person_set.rel,
+        model.magazin_set.rel, model.band_set.rel
     ]
     
     def bland_forwarded(self):
@@ -707,38 +718,38 @@ class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = LandAdmin
-    model = land
+    model_admin_class = _admin.LandAdmin
+    model = _models.land
     fields_expected = ['land_name', 'code']
     test_data_count = 1
     crosslinks_relations = [
-        land.ort_set.rel, land.bundesland_set.rel, 
+        model.ort_set.rel, model.bundesland_set.rel, 
     ]
         
 class TestAdminBundesland(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = BlandAdmin
-    model = bundesland
+    model_admin_class = _admin.BlandAdmin
+    model = _models.bundesland
     fields_expected = ['bland_name', 'code', 'land']
     test_data_count = 1
     crosslinks_relations = [
-        bundesland.kreis_set.rel, 
+        model.kreis_set.rel, 
     ]
         
 class TestAdminInstrument(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = InstrumentAdmin
-    model = instrument
+    model_admin_class = _admin.InstrumentAdmin
+    model = _models.instrument
     fields_expected = ['instrument', 'kuerzel']
     test_data_count = 1
     crosslinks_relations = [
-        instrument.musiker_set.rel, 
+        model.musiker_set.rel, 
     ]
     
 class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = AudioAdmin
-    model = audio
+    model_admin_class = _admin.AudioAdmin
+    model = _models.audio
     exclude_expected = ['plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung', 'ort']
     # Note that AudioAdmin specifies a fieldsets attribute, overriding (and removing catalog_nr) the fields for the form that way
     fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
@@ -755,7 +766,7 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
     def test_add_crosslinks(self):
-        obj = make(audio, 
+        obj = make(self.model, 
             m2m_datei_quelle__extra = 1, ausgabe__extra = 1, genre__extra = 1, band__extra = 1, ort__extra = 1, 
             veranstaltung__extra = 1, bestand__extra = 1, schlagwort__extra = 1, format__extra = 1, spielort__extra = 1, 
             plattenfirma__extra = 1, musiker__extra = 1, person__extra = 1
@@ -765,29 +776,29 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     
 class TestAdminSpielort(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = SpielortAdmin
-    model = spielort
+    model_admin_class = _admin.SpielortAdmin
+    model = _models.spielort
     fields_expected = ['name', 'ort']
     crosslinks_relations = [
-        spielort.dokument_set.rel, spielort.spielort_alias_set.rel, spielort.m2m_audio_spielort_set.rel,
-        spielort.artikel_set.rel, spielort.buch_set.rel, spielort.bildmaterial_set.rel,
-        spielort.video_set.rel, spielort.datei_set.rel, spielort.veranstaltung_set.rel,
-        spielort.audio_set.rel, spielort.technik_set.rel, spielort.m2m_artikel_spielort_set.rel,
-        spielort.memorabilien_set.rel,
+        model.dokument_set.rel, model.spielort_alias_set.rel, model.m2m_audio_spielort_set.rel,
+        model.artikel_set.rel, model.buch_set.rel, model.bildmaterial_set.rel,
+        model.video_set.rel, model.datei_set.rel, model.veranstaltung_set.rel,
+        model.audio_set.rel, model.technik_set.rel, model.m2m_artikel_spielort_set.rel,
+        model.memorabilien_set.rel,
         ]
     test_data_count = 1
         
 class TestAdminVeranstaltung(AdminTestMethodsMixin, AdminTestCase):
     
-    model_admin_class = VeranstaltungAdmin
-    model = veranstaltung
+    model_admin_class = _admin.VeranstaltungAdmin
+    model = _models.veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort']
     test_data_count = 1
     
 class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
-    model_admin_class = BuchAdmin
-    model = buch
+    model_admin_class = _admin.BuchAdmin
+    model = _models.buch
     exclude_expected = [
         'herausgeber', 'autor', 'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort', 'veranstaltung'
     ]
@@ -798,9 +809,9 @@ class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
     
     @classmethod
     def setUpTestData(cls):
-        p1 = make(person, vorname = 'Alice', nachname = 'Testman')
-        p2 = make(person, vorname = 'Bob', nachname = 'Mantest')
-        cls.obj1 = make(buch, 
+        p1 = make(_models.person, vorname = 'Alice', nachname = 'Testman')
+        p2 = make(_models.person, vorname = 'Bob', nachname = 'Mantest')
+        cls.obj1 = make(cls.model, 
             autor__person = [p1, p2], herausgeber__person = [p1, p2],
             schlagwort__schlagwort = ['Testschlagwort1', 'Testschlagwort2'], 
             genre__genre = ['Testgenre1', 'Testgenre2']
@@ -821,8 +832,8 @@ class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.genre_string(self.obj1), 'Testgenre1, Testgenre2')
         
 class TestAdminBaseBrochure(AdminTestCase):
-    model_admin_class = BaseBrochureAdmin
-    model = Brochure
+    model_admin_class = _admin.BaseBrochureAdmin
+    model = _models.Brochure
     
     @translation_override(language = None)
     def test_get_fieldsets(self):
@@ -838,8 +849,8 @@ class TestAdminBaseBrochure(AdminTestCase):
         self.assertEqual(fieldset_options['description'], 'Geben Sie die Ausgabe an, der dieses Objekt beilag.')
         
 class TestAdminKatalog(AdminTestCase):
-    model_admin_class = KatalogAdmin
-    model = Katalog
+    model_admin_class = _admin.KatalogAdmin
+    model = _models.Katalog
     
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -882,7 +893,7 @@ class TestAdminSite(UserTestCase):
         self.assertTrue('admintools' in response.context_data)
         
     def test_get_admin_model(self):
-        expected_model_admin = ArtikelAdmin
-        self.assertIsInstance(miz_site.get_admin_model(artikel), expected_model_admin)
+        expected_model_admin = _admin.ArtikelAdmin
+        self.assertIsInstance(miz_site.get_admin_model(_models.artikel), expected_model_admin)
         self.assertIsInstance(miz_site.get_admin_model('DBentry.artikel'), expected_model_admin)
         self.assertIsNone(miz_site.get_admin_model('BEEP.BOOP'))

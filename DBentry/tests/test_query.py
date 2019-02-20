@@ -1,22 +1,26 @@
-from .base import *
+from .base import DataTestCase
 
-from DBentry.query import *
+from django.utils.translation import override as translation_override
+
+import DBentry.models as _models
+from DBentry.factory import make
+from DBentry.query import BaseSearchQuery, NameFieldSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
 
 class QueryTestCase(DataTestCase):
     
-    model = band
+    model = _models.band
     query_class = None
     
     @classmethod
     def setUpTestData(cls):
-        cls.axl = make(musiker, kuenstler_name='Axl Rose', musiker_alias__alias='Axel Rose')
+        cls.axl = make(_models.musiker, kuenstler_name='Axl Rose', musiker_alias__alias='Axel Rose')
         
-        cls.obj1 = make(band, band_name="Guns 'N Roses", band_alias__alias='Guns and Roses', musiker=cls.axl)
-        cls.obj2 = make(band, band_name="AC/DC", band_alias__alias='ACDC', musiker=cls.axl) # can only be found via 'Axl' when searching 'Rose'
-        cls.obj3 = make(band, band_name="Rolling Stones") # never found
-        cls.obj4 = make(band, band_name="Rosewood") # startsw Rose
-        cls.obj5 = make(band, band_name='More Roses') # contains Rose
-        cls.obj6 = make(band, band_name='Beep', band_alias__alias='Booproses') # alias icontains Rose
+        cls.obj1 = make(cls.model, band_name="Guns 'N Roses", band_alias__alias='Guns and Roses', musiker=cls.axl)
+        cls.obj2 = make(cls.model, band_name="AC/DC", band_alias__alias='ACDC', musiker=cls.axl) # can only be found via 'Axl' when searching 'Rose'
+        cls.obj3 = make(cls.model, band_name="Rolling Stones") # never found
+        cls.obj4 = make(cls.model, band_name="Rosewood") # startsw Rose
+        cls.obj5 = make(cls.model, band_name='More Roses') # contains Rose
+        cls.obj6 = make(cls.model, band_name='Beep', band_alias__alias='Booproses') # alias icontains Rose
         
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5, cls.obj6, cls.axl]
         
@@ -56,6 +60,7 @@ class TestBaseQuery(QueryTestCase):
         self.assertListEqualSorted(list(query.ids_found), [self.obj1.pk, self.obj2.pk])
         
     def test_date_lookup(self):
+        ausgabe = _models.ausgabe
         a1 = make(ausgabe, e_datum = '1986-08-15')
         a2 = make(ausgabe, e_datum = '1986-08-18')
         a3 = make(ausgabe, e_datum = '1986-09-18')
@@ -275,10 +280,10 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         # obj6 = 'Beep', alias = 'Booproses'
         # Check that the results are ordered according to the _search query
         
-        rose_band = band.objects.create(band_name='Rose')
-        some_other_band = make(band, band_name='Boop', musiker__kuenstler_name = 'Rose')
+        rose_band = _models.band.objects.create(band_name='Rose')
+        some_other_band = make(_models.band, band_name='Boop', musiker__kuenstler_name = 'Rose')
         
-        yet_another_band = make(band, band_name='NoName', musiker__kuenstler_name='Roseman')
+        yet_another_band = make(_models.band, band_name='NoName', musiker__kuenstler_name='Roseman')
         
         q = 'Rose'
         query= self.make_query()
@@ -384,10 +389,10 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # Compared to PrimaryFieldsSearchQuery, the order changes a little as we are able to split up the search term and look 
         # for bits of it in the search_fields
         
-        rose_band = band.objects.create(band_name='Rose')
-        some_other_band = make(band, band_name='Boop', musiker__kuenstler_name = 'Rose')
+        rose_band = _models.band.objects.create(band_name='Rose')
+        some_other_band = make(_models.band, band_name='Boop', musiker__kuenstler_name = 'Rose')
         
-        yet_another_band = make(band, band_name='NoName', musiker__kuenstler_name='Roseman')
+        yet_another_band = make(_models.band, band_name='NoName', musiker__kuenstler_name='Roseman')
         
         q = 'Rose'
         query= self.make_query()

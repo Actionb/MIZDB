@@ -1,6 +1,11 @@
-from ..base import *
+from ..base import ViewTestCase
+from ..mixins import TestDataMixin, LoggingTestMixin
 
-from DBentry.ac.views import *
+from django.test import tag
+from django.urls import reverse
+from django.utils.translation import override as translation_override
+
+from DBentry.ac.views import ACBase
 
 @tag("dal")
 class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):

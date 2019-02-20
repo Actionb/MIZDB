@@ -1,4 +1,5 @@
-from ..base import *
+from ..base import AdminTestCase
+from ..mixins import CreateFormViewMixin
 
 class ActionViewTestCase(AdminTestCase, CreateFormViewMixin):
     

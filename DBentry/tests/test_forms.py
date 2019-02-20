@@ -1,8 +1,9 @@
-from .base import *
+from .base import FormTestCase, ModelFormTestCase
 from .mixins import TestDataMixin
 
 from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
+from django.utils.translation import override as translation_override
 
 from DBentry.forms import (
     FormBase, AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, DynamicChoiceForm, 
@@ -10,6 +11,7 @@ from DBentry.forms import (
 )
 from DBentry.models import artikel, ausgabe, land, autor, person, buch, Herausgeber, Organisation, genre, audio
 from DBentry.ac.widgets import EasyWidgetWrapper
+from DBentry.factory import make
 
 from dal import autocomplete
 

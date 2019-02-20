@@ -1,18 +1,23 @@
 import dal
-from dal import forward
+from unittest.mock import Mock
 
 from django.utils.datastructures import MultiValueDict
 from django.contrib.admin.utils import get_fields_from_path
 from django.utils.translation import override as translation_override
+from django.test import tag
 
-from .base import tag, MyTestCase, FormTestCase, Mock, make
+from .base import MyTestCase, FormTestCase
 
+import DBentry.models as _models
 from DBentry.advsfforms import AdvSFForm, advSF_factory
-from DBentry.models import *
 from DBentry.admin import (
-    miz_site, ArtikelAdmin, AudioAdmin, AusgabenAdmin, AutorAdmin, BandAdmin, BestandAdmin, MagazinAdmin, MusikerAdmin, 
+    ArtikelAdmin, AudioAdmin, AusgabenAdmin, AutorAdmin, BandAdmin, BestandAdmin, MagazinAdmin, MusikerAdmin, 
     OrtAdmin, VerlagAdmin, PersonAdmin, BlandAdmin
 )
+from DBentry.sites import miz_site
+from DBentry.factory import make
+
+from dal import forward
 
 class FactoryTestCaseMixin(object):
     
@@ -99,7 +104,7 @@ class TestFactory(MyTestCase):
         # Bug:
         # the factory will try get the verbose_name of the field -- and ManyToOneFields do not have that attribute.
         # AND later on it will call formfield() --  ManyToOneFields do not have that either!
-        model_admin = PersonAdmin(person, miz_site)
+        model_admin = PersonAdmin(_models.person, miz_site)
         model_admin.advanced_search_form = {
             'selects' : ['musiker']
         }
@@ -115,7 +120,7 @@ class TestFactory(MyTestCase):
         # The factory is meant to provide autocomplete functionality to the AdvSF. 
         # Basic fields that do not represent a relation do not need this.
         # Sneak in a non-relation field into 'selects'.
-        model_admin = PersonAdmin(person, miz_site)
+        model_admin = PersonAdmin(_models.person, miz_site)
         model_admin.advanced_search_form = {
             'selects' : ['orte', 'beschreibung']
         }
@@ -126,7 +131,7 @@ class TestFactory(MyTestCase):
     @translation_override(language = None)
     def test_factory_applies_forward(self):
         # Test that forwarding is applied when possible (here: 'selects' : ['orte', 'orte__land', ('orte__bland', 'orte__land')]
-        model_admin = PersonAdmin(person, miz_site)
+        model_admin = PersonAdmin(_models.person, miz_site)
         form = advSF_factory(model_admin)()
         widget = form.fields['orte__bland'].widget
         forwarded = widget.forward[0]
@@ -137,64 +142,64 @@ class TestFactory(MyTestCase):
         self.assertEqual(widget.attrs.get('data-placeholder', ''), 'Bitte zuerst Land auswählen.')
     
 class TestFactoryArtikel(FactoryTestCaseMixin,MyTestCase):
-    model = artikel
+    model = _models.artikel
     model_admin_class = ArtikelAdmin
     expected_labels = {'ausgabe__magazin':'Magazin', 'ausgabe':'Ausgabe', 'schlagwort':'Schlagwort', 'genre':'Genre', 'band':'Band', 'musiker':'Musiker', 'autor':'Autor'}
     
 class TestFactoryAudio(FactoryTestCaseMixin,MyTestCase):
-    model = audio
+    model = _models.audio
     model_admin_class = AudioAdmin
     expected_labels = {'musiker': 'Musiker', 'band': 'Band', 'genre': 'Genre', 'spielort': 'Spielort', 'veranstaltung': 'Veranstaltung', 'plattenfirma': 'Plattenfirma', 
                         'format__format_size': 'Format Größe', 'format__format_typ': 'Format Typ' , 'format__tag': 'Tags'}
                         
 class TestFactoryAusgabe(FactoryTestCaseMixin,MyTestCase):
-    model = ausgabe
+    model = _models.ausgabe
     model_admin_class = AusgabenAdmin
     expected_labels = {'magazin': 'Magazin'}
     
 class TestFactoryAutor(FactoryTestCaseMixin,MyTestCase):
-    model = autor
+    model = _models.autor
     model_admin_class = AutorAdmin
     expected_labels = {'magazin': 'Magazin'}
     
 class TestFactoryBand(FactoryTestCaseMixin,MyTestCase):
-    model = band
+    model = _models.band
     model_admin_class = BandAdmin
     expected_labels = {'musiker':'Mitglied', 'genre':'Genre', 'orte__land':'Land', 'orte':'Ort'}
 
 class TestFactoryMagazin(FactoryTestCaseMixin,MyTestCase):
-    model = magazin
+    model = _models.magazin
     model_admin_class = MagazinAdmin
     expected_labels = {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort', 'genre':'Genre'}
     
 class TestFactoryMusiker(FactoryTestCaseMixin,MyTestCase):
-    model = musiker
+    model = _models.musiker
     model_admin_class = MusikerAdmin
     expected_labels = {'person':'Person', 'genre': 'Genre', 'band': 'Band', 
                 'instrument': 'Instrument','orte': 'Ort', 'orte__land':'Land'}
             
 class TestFactoryPerson(FactoryTestCaseMixin,MyTestCase):
-    model = person
+    model = _models.person
     model_admin_class = PersonAdmin
     expected_labels = {'orte':'Ort', 'orte__land':'Land', 'orte__bland':'Bundesland'}
     
 class TestFactoryVerlag(FactoryTestCaseMixin,MyTestCase):
-    model = verlag
+    model = _models.verlag
     model_admin_class = VerlagAdmin
     expected_labels = {'sitz':'Sitz','sitz__land':'Land', 'sitz__bland':'Bundesland'}
     
 class TestFactoryBland(FactoryTestCaseMixin,MyTestCase):
-    model = bundesland
+    model = _models.bundesland
     model_admin_class = BlandAdmin
     expected_labels = {'ort__land':'Land'}
     
 class TestFactoryOrt(FactoryTestCaseMixin,MyTestCase):
-    model = ort
+    model = _models.ort
     model_admin_class = OrtAdmin
     expected_labels = {'land':'Land', 'bland':'Bundesland'}
     
 class TestFactoryBestand(FactoryTestCaseMixin,MyTestCase):
-    model = bestand
+    model = _models.bestand
     model_admin_class = BestandAdmin
     expected_labels = {'lagerort':'Lagerort'}
 
@@ -212,7 +217,7 @@ class TestAdvSFForm(FormTestCase):
         
     def test_get_initial_for_field_ausgabe_magazin(self):
         # Assert that an initial value for a 'magazin' formfield is assigned from a present initial value for 'ausgabe'
-        obj = make(ausgabe)
+        obj = make(_models.ausgabe)
         form = self.get_form()
         mock_field = Mock(initial = 'Mocked Initial')
         mock_field.spec_set = True
