@@ -1228,7 +1228,7 @@ class Kalendar(BaseBrochure):
         verbose_name_plural = 'Programmhefte'
     
 class Katalog(BaseBrochure):
-    ART_CHOICES = [('merch', 'Merchandise'), ('tech', 'Technik'), ('ton', 'Tonträger')]
+    ART_CHOICES = [('merch', 'Merchandise'), ('tech', 'Instrumente & Technik'), ('ton', 'Tonträger'), ('buch', 'Bücher'), ('other', 'Anderes')]
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Kataloges')
     
