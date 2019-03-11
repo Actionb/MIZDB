@@ -344,6 +344,7 @@ class magazin(BaseModel):
     ort = models.ForeignKey('ort', models.SET_NULL, null = True, blank = True, verbose_name = 'Hrsg.Ort', help_text = 'Angabe für auf eine Region beschränktes Magazin.')
     
     genre = models.ManyToManyField('genre', blank = True,  through = _m2m.m2m_magazin_genre)
+    verlag = models.ManyToManyField('verlag', through = _m2m.m2m_magazin_verlag)
     
     search_fields = ['magazin_name', 'beschreibung', 'issn']
     name_field = 'magazin_name'
