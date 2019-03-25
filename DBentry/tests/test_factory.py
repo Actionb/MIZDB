@@ -492,3 +492,38 @@ class TestMonatFactory(ModelFactoryTestCase):
     def test_get_or_create(self):
         expected = self.factory_class()
         self.assertEqual(self.factory_class(monat=expected.monat), expected)
+        
+class TestMIZModelFactory(MyTestCase):
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        from django.apps import apps
+        from DBentry.base.models import BaseModel, BaseM2MModel
+        from DBentry.models import BaseBrochure
+        from DBentry.factory import MIZDjangoOptions, MIZModelFactory
+        cls.factories = []
+        for model in [m for m in apps.get_models('DBentry') if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, BaseBrochure))]:
+            kwargs = {'Meta': type('Options', (MIZDjangoOptions,), {'model':model})}
+            cls.factories.append(type(model._meta.model_name.capitalize() + 'Factory', (MIZModelFactory, ), kwargs))
+            
+    def assertAllRelationsUsed(self, obj):
+        for rel in get_model_relations(obj._meta.model):
+            if rel.many_to_many:
+                if rel.related_model == obj._meta.model:
+                    # field is declared on obj
+                    self.assertTrue(getattr(obj, rel.field.name).all().exists(), msg = rel.name)
+                elif rel.model == obj._meta.model:
+                    self.assertTrue(getattr(obj, rel.get_accessor_name()).all().exists(), msg = rel.name)
+            elif rel.model == obj._meta.model:
+                # reverse foreign to obj
+                    self.assertTrue(getattr(obj, rel.get_accessor_name()).all().exists(), msg = rel.name)
+            else:
+                self.assertTrue(getattr(obj, rel.field.name), msg = rel.name)
+        
+    def test_full_relations(self):
+        with self.collect_fails() as collector:
+            for fac in self.factories:
+                obj = fac.full_relations()
+                with collector():
+                    self.assertAllRelationsUsed(obj)

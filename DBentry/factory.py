@@ -178,7 +178,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
                 
             for kwargs in passed_kwargs:
                 related_objects.append(step.recurse(factory, kwargs))
-                
+          
         return related_objects
                 
 class M2MFactory(RelatedFactory):
@@ -275,11 +275,15 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 related_model = rel.field.related_model
                 descriptor_name = rel.field.name
                 declaration_name = rel.field.name
-            else:
+            elif self.model == rel.field.related_model:
                 # the ManyToManyField is declared on the related_model, working on a 'reverse' m2m relation
                 related_model = rel.field.model
                 descriptor_name = rel.get_accessor_name()
                 declaration_name = rel.name
+            else:
+                #TODO: what the fuck to do with inherited relations?
+                # ex: Brochure will have a relation that goes from BaseBrochure to Genre - without involving Brochure at all
+                continue
             factory_name = self._get_factory_name_for_model(related_model)
             if not hasattr(self.factory, declaration_name):
                 setattr(self.factory, declaration_name, M2MFactory(factory_name, descriptor_name = descriptor_name, related_model = related_model))
@@ -344,6 +348,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
     def full_relations(cls, **kwargs):
         """ Creates a model instance with a related object for each possible relation."""
         #NOTE: is this actually that useful? We are NOT providing values for base fields of that instance. This is also not covered by tests.
+        #NOTE: check that pre_declarations/post_declaration only contains relations?
         backup = []
         for name, decl in cls._meta.pre_declarations.as_dict().items():
             if hasattr(decl, 'required') and not decl.required and name not in kwargs:
@@ -358,6 +363,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
                 kwargs[name + '__extra'] = 1
         
         step = factory.builder.StepBuilder(cls._meta, kwargs, factory.enums.CREATE_STRATEGY)
+        cls._meta._initialize_counter()
         created = step.build()
         
         for name in backup:
