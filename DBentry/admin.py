@@ -14,8 +14,8 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 
 from DBentry.sites import miz_site
 
-#TODO: advanced_search_form: ausgabe ausgabe_monat
 #TODO: add admin_order_field attribute to all sortable callables
+#TODO: crosslinks for verlag,herausgeber etc
 
 class BestandInLine(BaseTabularInline):
     model = _models.bestand
@@ -393,7 +393,7 @@ class BuchAdmin(MIZModelAdmin):
     }
     
     crosslink_labels = {
-        'buch' : 'Aufsätze', 
+        'buch' : 'Aufsätze', #TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
     }
     
     def autoren_string(self, obj):
@@ -838,7 +838,7 @@ class KalendarAdmin(BaseBrochureAdmin):
         verbose_model = _models.veranstaltung
     class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
-    
+        
     inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     
 #TODO: sender has an alias so it needs its own AdminModel class

@@ -72,6 +72,7 @@ def get_model_relations(model, forward = True, reverse = True):
                 # The relation between the intermediary model and this 'model' was realized on *both* sides, hence 
                 # it shows up twice (as a ManyToOneRel and a ManyToManyRel).
                 # The ManyToManyRel contains all the information we need so we ignore the ManyToOneRel.
+                #NOTE: this relies on the model declaring a ManyToManyField for this relation. It could also just receive the relation from the intermediary table.
                 continue
             rslt.add(f)
     return list(rslt)

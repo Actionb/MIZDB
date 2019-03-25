@@ -315,6 +315,7 @@ class m2m_datei_musiker(BaseM2MModel):
         return str(getattr(self, 'musiker'))
         
 class m2m_datei_quelle(BaseM2MModel):
+    #TODO: rework this, you should only ever be able to select one relation to a non-datei object (OneToOne?)
     datei = models.ForeignKey('datei', models.CASCADE)
     audio = models.ForeignKey('audio', models.SET_NULL, blank = True, null = True)
     bildmaterial = models.ForeignKey('bildmaterial', models.SET_NULL, blank = True, null = True)
@@ -328,6 +329,8 @@ class m2m_datei_quelle(BaseM2MModel):
         verbose_name_plural = 'Datei-Quellen'
         
     def get_quelle_art(self, as_field = True):
+        return None
+        #TODO: get_foreignfields no longer exists!
         for fld in m2m_datei_quelle.get_foreignfields():
             if fld.name != 'datei' and fld.value_from_object(self):
                 if as_field:

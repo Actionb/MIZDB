@@ -534,6 +534,7 @@ class artikel(BaseModel):
         
 
 class buch(BaseModel):
+    #TODO: an ISBN is automagically created when saving a model instance!
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
     seitenumfang = models.PositiveSmallIntegerField(blank = True, null = True)
@@ -542,7 +543,7 @@ class buch(BaseModel):
     auflage = models.CharField(**CF_ARGS_B)
     EAN = EANField(blank = True)
     ISBN = ISBNField(blank = True)
-    is_buchband = models.BooleanField(default = False, verbose_name = 'Ist Sammelband', help_text = 'Dieses Buch ist ein Sammelband bestehend aus Aufsätzen.')
+    is_buchband = models.BooleanField(default = False, verbose_name = 'Ist Sammelband', help_text = 'Dieses Buch ist ein Sammelband bestehend aus Aufsätzen.') #TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Buches')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
