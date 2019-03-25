@@ -608,7 +608,9 @@ class VeranstaltungAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):
         model = _models.veranstaltung.musiker.through
         verbose_model = _models.musiker
-    inlines=[GenreInLine, PersonInLine, BandInLine, MusikerInLine, SchlInLine]
+    class AliasInLine(BaseAliasInline):
+        model = _models.veranstaltung_alias
+    inlines=[GenreInLine, PersonInLine, BandInLine, MusikerInLine, SchlInLine, AliasInLine]
     
 @admin.register(_models.verlag, site=miz_site)
 class VerlagAdmin(MIZModelAdmin):
