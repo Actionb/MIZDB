@@ -17,13 +17,14 @@ from .mixins import *
 from django import forms #TODO: rework all these imports to be explicitimport sys
 
 import sys
+
 def _showwarning(message, category = Warning, *args, **kwargs):
     message = category.__name__ + ': ' + str(message)
     print(message, file = sys.stderr, end='... ')
     
 if not sys.warnoptions:
     import os
-    warnings.simplefilter("always") # Change the filter in this process
+    warnings.simplefilter("always") # Change the filter in this process #TODO: check out TextTestRunner.warnings attribute 
     os.environ["PYTHONWARNINGS"] = "always" # Also affect subprocesses
     warnings.showwarning = _showwarning
 
@@ -64,6 +65,7 @@ class MyTestCase(TestCase):
     @contextlib.contextmanager
     def collect_fails(self, msg = None):
         #TODO: documentation
+        #TODO: check out unittest.case.TestCase.subTest
         collected = []
         @contextlib.contextmanager
         def decorator(*args, **kwargs):
@@ -102,7 +104,7 @@ class MyTestCase(TestCase):
             if msg:
                 fail_txt += ':' + msg
             self.fail(fail_txt)
-        
+    #NOTE: only the bulk tests use these dict assertions
     def assertDictKeysEqual(self, d1, d2):
         t = "dict keys missing from {d}: {key_diff}"
         msg = ''
@@ -151,7 +153,8 @@ class MyTestCase(TestCase):
     
     def assertListEqualSorted(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg)
-            
+     
+    #NOTE: no test uses this assertion
     def assertAllValues(self, values_list, value, msg=None):
         """
         Assert that `value` is equal to all items of `values_list`.
@@ -186,7 +189,8 @@ class DataTestCase(TestDataMixin, MyTestCase):
         if isinstance(pk_list2, QuerySet):
             pk_list2 = list(pk_list2.values_list('pk', flat=True))
         self.assertListEqualSorted(pk_list1, pk_list2)
-        
+    
+    #NOTE: only test_manager cases use assertQSValues
     def assertQSValues(self, queryset, fields, values, msg=None):
         if isinstance(fields, str):
             fields = [fields]
@@ -210,7 +214,8 @@ class DataTestCase(TestDataMixin, MyTestCase):
                 
         expected = [value] * queryset.count() if queryset.count() else [value]  # an empty queryset should assert as not equal to [value] and not as equal to [] 
         self.assertQSValues(queryset, fields, expected, msg)
-        
+    
+    #NOTE: test_signals, test_query,test_models, test_manager use these two
     def assertQSValuesList(self, queryset, fields, values, msg=None):
         if isinstance(fields, str):
             fields = [fields]
