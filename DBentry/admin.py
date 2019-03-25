@@ -718,6 +718,9 @@ class DateiAdmin(MIZModelAdmin):
     class BandInLine(BaseTabularInline):
         model = _models.datei.band.through
         verbose_model = _models.band
+    class OrtInLine(BaseTabularInline):
+        model = _models.datei.ort.through
+        verbose_model = _models.ort
     class SpielortInLine(BaseTabularInline):
         model = _models.datei.spielort.through
         verbose_model = _models.spielort
@@ -728,7 +731,7 @@ class DateiAdmin(MIZModelAdmin):
     superuser_only = True
     index_category = 'Archivgut'
     
-    inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine]
+    inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, OrtInLine]
     fieldsets = [
         (None, { 'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
         ('Allgemeine Beschreibung', { 'fields' : ['beschreibung', 'quelle', 'sender', 'bemerkungen']}),  
