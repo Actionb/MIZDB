@@ -65,9 +65,11 @@ class BaseModel(models.Model):
         """
         Returns the model's fields that are used in admin, autocomplete and advanced search form(? really?) searches.
         """
+        #TODO: admin.get_search_fields tacks on a 'pk' search field (with a lookup)... should we do that *here* instead?
         if cls.search_fields:
             return cls.search_fields
         return [field.name for field in get_model_fields(cls, foreign = foreign, m2m = m2m)]
+        #TODO: remove this! get_basefields does no longer exist..
         rslt = []
         for field in cls.get_basefields(as_string=True):
             if field not in rslt:

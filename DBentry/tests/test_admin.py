@@ -832,7 +832,18 @@ class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
     def test_genre_string(self):
         self.assertEqual(self.model_admin.genre_string(self.obj1), 'Testgenre1, Testgenre2')
         
-class TestAdminBaseBrochure(AdminTestCase):
+class BaseBrochureMixin(object):
+    # BaseBrochure and its descendants use a OneToOneField as primary key which does not support the 
+    # 'iexact' lookup that django's ModelAdmin.get_search_results.construct_search replaces the '=' with.
+    # admin.get_search_fields thus does not add a primary key search field for BaseBrochure or its children.
+    search_fields_expected = None
+        
+    def test_get_search_fields(self):
+        if self.search_fields_expected is None:
+            return
+        self.assertEqual(self.model_admin.get_search_fields(), self.search_fields_expected)
+
+class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
     
@@ -849,9 +860,19 @@ class TestAdminBaseBrochure(AdminTestCase):
         self.assertIn('description', fieldset_options)
         self.assertEqual(fieldset_options['description'], 'Geben Sie die Ausgabe an, der dieses Objekt beilag.')
         
-class TestAdminKatalog(AdminTestCase):
+class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.BrochureAdmin
+    model = _models.Brochure
+    fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'ausgabe__magazin']
+    exclude_expected = ['genre', 'schlagwort']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
+        
+class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
+    fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'art',  'ausgabe__magazin']
+    exclude_expected = ['genre']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'art']
     
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -862,6 +883,13 @@ class TestAdminKatalog(AdminTestCase):
         self.assertIn('zusammenfassung', none_fieldset_options['fields'])
         z_index = none_fieldset_options['fields'].index('zusammenfassung')
         self.assertTrue(art_index < z_index)
+        
+class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.KalendarAdmin
+    model = _models.Kalendar
+    fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'ausgabe__magazin']
+    exclude_expected = ['genre', 'spielort', 'veranstaltung']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
         
 class TestAdminSite(UserTestCase):
     
