@@ -66,6 +66,7 @@
                 .addClass(options.formCssClass)
                 .attr("id", options.prefix + "-" + nextIndex);
                 
+                
                 //EDIT: remove collapsed class from the fieldset 
                 var fs = row.children("fieldset").first();
                 if(fs.hasClass('collapsed')){
@@ -90,6 +91,21 @@
                 });
                 // Insert the new form when it has been fully edited
                 row.insertBefore($(template));
+                if (addButton.parents('fieldset.module.copylast').length){
+                    // jquery.clone cannot clone selects, so we copy the selected option from the previous row to the cloned row.
+                    row.prev().find('select').each(function(){
+                        if ($(this).attr('data-autocomplete-light-function') === 'select2'){
+                            var clone_id = $(this).attr('id').replace(nextIndex-1,nextIndex)
+                            var cloned_select = $('#' + clone_id)
+                            var orig_option = $(this).find('option:selected')
+                            var cloned_option = orig_option.clone(true)
+                            cloned_option.attr('selected','')
+                            // change event will reinitialize the widget (including the add/change/delete buttons) with the new value
+                            // and render the selected option
+                            cloned_select.append(cloned_option).trigger('change');
+                        }
+                    });
+                }
                 // Update number of total forms
                 $(totalForms).val(parseInt(totalForms.val(), 10) + 1);
                 nextIndex += 1;
