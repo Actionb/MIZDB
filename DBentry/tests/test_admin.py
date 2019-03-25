@@ -62,15 +62,16 @@ class AdminTestMethodsMixin(object):
     
     def test_get_search_fields(self):
         # search fields are largely declared with the models, the admin classes only add the exact =id lookup
-        self.assertIn('=id', self.model_admin.get_search_fields())
-        self.model_admin.search_fields = ['id']
-        self.assertIn('=id', self.model_admin.get_search_fields())
-        self.assertNotIn('id', self.model_admin.get_search_fields())
-    
+        pk_name = self.model._meta.pk.name
+        self.assertIn('=' + pk_name, self.model_admin.get_search_fields())
+        self.model_admin.search_fields = [pk_name]
+        self.assertIn('=' + pk_name, self.model_admin.get_search_fields())
+        self.assertNotIn(pk_name, self.model_admin.get_search_fields())
+        
     def test_get_search_fields_extra_pk(self):
         # An extra 'pk' search field was added, it should be replaced by an '=id' lookup
         self.model_admin.search_fields = ['pk']
-        self.assertEqual(self.model_admin.get_search_fields(), ['=id'])
+        self.assertEqual(self.model_admin.get_search_fields(), ['=' + self.model._meta.pk.name])
         
     def test_media_prop(self):
         media = self.model_admin.media
