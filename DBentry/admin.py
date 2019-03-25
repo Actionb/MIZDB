@@ -20,6 +20,7 @@ from DBentry.sites import miz_site
 class BestandInLine(BaseTabularInline):
     model = _models.bestand
     readonly_fields = ['signatur']
+    classes = ['copylast']
     fields = ['signatur', 'lagerort', 'provenienz']
     verbose_name = _models.bestand._meta.verbose_name
     verbose_name_plural = _models.bestand._meta.verbose_name_plural
