@@ -178,7 +178,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
                 
             for kwargs in passed_kwargs:
                 related_objects.append(step.recurse(factory, kwargs))
-                
+          
         return related_objects
                 
 class M2MFactory(RelatedFactory):
@@ -275,11 +275,28 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 related_model = rel.field.related_model
                 descriptor_name = rel.field.name
                 declaration_name = rel.field.name
-            else:
+            elif self.model == rel.field.related_model:
                 # the ManyToManyField is declared on the related_model, working on a 'reverse' m2m relation
                 related_model = rel.field.model
                 descriptor_name = rel.get_accessor_name()
                 declaration_name = rel.name
+            else:
+                # rel is an inherited relation as neither end of the relation points to self.model
+                # (one points to the inherited parent model, the other to the actual related model)
+                # If rel.field.model is the parent, the related_model is rel.field.related_model and vice versa.
+                if rel.field.model in self.model._meta.parents:
+                    # self.model inherited the actual ManyToManyField
+                    related_model = rel.field.related_model
+                    # Use the inherited ManyToManyField's name for descriptor and declaration
+                    descriptor_name = rel.field.name
+                    declaration_name = rel.field.name
+                elif rel.field.related_model in self.model._meta.parents:
+                    # self.model inherited the reverse ManyToManyRelation
+                    related_model = rel.field.model
+                    descriptor_name = rel.get_accessor_name()
+                    declaration_name = rel.name
+                else:
+                    raise TypeError("Unknown relation: {!s}".format(rel.get_path_info()))
             factory_name = self._get_factory_name_for_model(related_model)
             if not hasattr(self.factory, declaration_name):
                 setattr(self.factory, declaration_name, M2MFactory(factory_name, descriptor_name = descriptor_name, related_model = related_model))
@@ -344,6 +361,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
     def full_relations(cls, **kwargs):
         """ Creates a model instance with a related object for each possible relation."""
         #NOTE: is this actually that useful? We are NOT providing values for base fields of that instance. This is also not covered by tests.
+        #NOTE: check that pre_declarations/post_declaration only contains relations?
         backup = []
         for name, decl in cls._meta.pre_declarations.as_dict().items():
             if hasattr(decl, 'required') and not decl.required and name not in kwargs:
@@ -358,6 +376,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
                 kwargs[name + '__extra'] = 1
         
         step = factory.builder.StepBuilder(cls._meta, kwargs, factory.enums.CREATE_STRATEGY)
+        cls._meta._initialize_counter()
         created = step.build()
         
         for name in backup:

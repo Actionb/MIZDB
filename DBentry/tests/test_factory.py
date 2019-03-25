@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 from .base import MyTestCase
 
 from django.db.models import fields
@@ -256,6 +257,80 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.instrument.factory._meta.model, _models.instrument)
         self.assertEqual(fac.band.factory._meta.model, _models.band)
         
+    def get_mocked_field(self, field_name, model, related_model):
+        mocked_field = Mock(model = model, related_model = related_model)
+        mocked_field.configure_mock(name = field_name)
+        return mocked_field
+        
+    def get_mocked_rel(self, rel_name, accessor_name, **kwargs):
+        mocked_rel = Mock(get_accessor_name = Mock(return_value = accessor_name), **kwargs)
+        mocked_rel.configure_mock(name = rel_name)
+        return mocked_rel
+        
+    @patch('DBentry.factory.get_model_relations')
+    def test_add_m2m_factories_inherited_relation(self, mocked_get_model_relations):
+        # Assert that add_m2m_factories can handle inherited ManyToManyRelations.
+        mocked_factory = Mock(spec = []) # pretend factory has no attributes, so add_m2m_factories will try to add one
+        
+        # Relation from BaseBrochure to genre inherited by Kalendar:
+        # - expected: declaration name and descriptor_name = 'mocked_field_name'; related_model = _models.genre
+        mocked_rel = self.get_mocked_rel(
+            'mocked_rel_name', 'mocked_rel_accessor', 
+            field = self.get_mocked_field('mocked_field_name', model = _models.BaseBrochure, related_model = _models.genre)
+        )
+        mocked_get_model_relations.return_value = [mocked_rel]
+        opts = MIZDjangoOptions()
+        opts.factory = mocked_factory
+        opts.model = _models.Kalendar
+        
+        with patch.object(opts, '_get_factory_name_for_model', new = Mock(return_value = 'SomeFactory')):
+            with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
+                opts.add_m2m_factories()
+        
+        self.assertTrue(hasattr(opts.factory, 'mocked_field_name'))
+        self.assertIsInstance(opts.factory.mocked_field_name, Mock)
+        expected_args = ('SomeFactory', )
+        expected_kwargs = {'descriptor_name': 'mocked_field_name', 'related_model': _models.genre}
+        self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
+        
+        # Relation from genre to BaseBrochure inherited by Kalendar:
+        # - expected: declaration name = 'mocked_rel_name'; descriptor_name = 'mocked_rel_accessor'; related_model = _models.genre
+        mocked_rel = self.get_mocked_rel(
+            'mocked_rel_name', 'mocked_rel_accessor', 
+            field = self.get_mocked_field('mocked_field_name', model = _models.genre, related_model = _models.BaseBrochure)
+        )
+        mocked_get_model_relations.return_value = [mocked_rel]
+        opts = MIZDjangoOptions()
+        opts.factory = mocked_factory
+        opts.model = _models.Kalendar
+        
+        with patch.object(opts, '_get_factory_name_for_model', new = Mock(return_value = 'SomeFactory')):
+            with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
+                opts.add_m2m_factories()
+        
+        self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
+        self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
+        expected_args = ('SomeFactory', )
+        expected_kwargs = {'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.genre}
+        self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
+        
+    @patch('DBentry.factory.get_model_relations')
+    def test_add_m2m_factories_unknown_relation(self, mocked_get_model_relations):
+        # Assert that add_m2m_factories raises a TypeError if it encounters a relation that:
+        # - does not originate from self.model
+        # - does not target self.model
+        # - is not an inherited relation
+        mocked_rel = self.get_mocked_rel(
+            'mocked_rel_name', 'mocked_rel_accessor', 
+            field = self.get_mocked_field(name = 'mocked_field_name', model = _models.ort, related_model = _models.instrument), 
+            many_to_many = True, 
+        )
+        mocked_get_model_relations.return_value = [mocked_rel]
+        opts = MIZDjangoOptions()
+        opts.model = _models.buch
+        with self.assertRaises(TypeError):
+            opts.add_m2m_factories()
+        
     def test_add_related_factories(self):
         # Assert that the created related factories are following the relation correctly
         fac = modelfactory_factory(_models.buch)
@@ -263,6 +338,37 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.buchband.factory._meta.model, _models.buch)
         self.assertEqual(fac.verlag.factory._meta.model, _models.verlag)
         self.assertEqual(fac.sprache.factory._meta.model, _models.sprache)
+        
+    @patch('DBentry.factory.get_model_relations')
+    def test_add_related_factories_inherited_relation(self, mocked_get_model_relations):
+        # Assert that add_related_factories can handle inherited relations.
+        mocked_factory = Mock(spec = []) # pretend factory has no attributes, so add_related_factories will try to add one
+        mocked_rel = self.get_mocked_rel(
+            'mocked_rel_name', 'mocked_rel_accessor', 
+            field = self.get_mocked_field('mocked_field_name', model = _models.BaseBrochure, related_model = _models.genre), 
+            many_to_many = False, model = _models.genre, related_model = _models.BaseBrochure
+        )
+        mocked_get_model_relations.return_value = [mocked_rel]
+        
+        opts = MIZDjangoOptions()
+        opts.factory = mocked_factory
+        opts.model = _models.Kalendar
+        
+        with patch.object(opts, '_get_factory_name_for_model', new = Mock(return_value = 'SomeFactory')):
+            with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:
+                opts.add_related_factories()
+        
+        self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
+        self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
+        expected_args = ('SomeFactory', )
+        expected_kwargs = {'factory_related_name': 'mocked_field_name', 'accessor_name':'mocked_rel_accessor', 'related_model': _models.BaseBrochure}
+        self.assertEqual(mocked_related_factory.call_args, (expected_args, expected_kwargs))
+        
+        mocked_get_model_relations.return_value = [_models.genre._meta.get_field('basebrochure')]
+        fac = modelfactory_factory(_models.Kalendar)
+        created = fac(genre__genre='Testgenre')
+        self.assertEqual(created.genre.values_list('genre__genre'), ['Testgenre'])
+        
         
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly
@@ -492,3 +598,38 @@ class TestMonatFactory(ModelFactoryTestCase):
     def test_get_or_create(self):
         expected = self.factory_class()
         self.assertEqual(self.factory_class(monat=expected.monat), expected)
+        
+class TestMIZModelFactory(MyTestCase):
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        from django.apps import apps
+        from DBentry.base.models import BaseModel, BaseM2MModel
+        from DBentry.models import BaseBrochure
+        from DBentry.factory import MIZDjangoOptions, MIZModelFactory
+        cls.factories = []
+        for model in [m for m in apps.get_models('DBentry') if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, BaseBrochure))]:
+            kwargs = {'Meta': type('Options', (MIZDjangoOptions,), {'model':model})}
+            cls.factories.append(type(model._meta.model_name.capitalize() + 'Factory', (MIZModelFactory, ), kwargs))
+            
+    def assertAllRelationsUsed(self, obj):
+        for rel in get_model_relations(obj._meta.model):
+            if rel.many_to_many:
+                if rel.related_model == obj._meta.model:
+                    # field is declared on obj
+                    self.assertTrue(getattr(obj, rel.field.name).all().exists(), msg = rel.name)
+                elif rel.model == obj._meta.model:
+                    self.assertTrue(getattr(obj, rel.get_accessor_name()).all().exists(), msg = rel.name)
+            elif rel.model == obj._meta.model:
+                # reverse foreign to obj
+                    self.assertTrue(getattr(obj, rel.get_accessor_name()).all().exists(), msg = rel.name)
+            else:
+                self.assertTrue(getattr(obj, rel.field.name), msg = rel.name)
+        
+    def test_full_relations(self):
+        with self.collect_fails() as collector:
+            for fac in self.factories:
+                obj = fac.full_relations()
+                with collector():
+                    self.assertAllRelationsUsed(obj)
