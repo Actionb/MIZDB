@@ -322,7 +322,7 @@ class TestMIZDjangoOptions(MyTestCase):
         # - is not an inherited relation
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor', 
-            field = self.get_mocked_field(name = 'mocked_field_name', model = _models.ort, related_model = _models.instrument), 
+            field = self.get_mocked_field('mocked_field_name', model = _models.ort, related_model = _models.instrument), 
             many_to_many = True, 
         )
         mocked_get_model_relations.return_value = [mocked_rel]
@@ -367,7 +367,7 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_get_model_relations.return_value = [_models.genre._meta.get_field('basebrochure')]
         fac = modelfactory_factory(_models.Kalendar)
         created = fac(genre__genre='Testgenre')
-        self.assertEqual(created.genre.values_list('genre__genre'), ['Testgenre'])
+        self.assertEqual(list(created.genre.values_list('genre', flat = True)), ['Testgenre'])
         
         
     def test_add_sub_factories(self):
