@@ -153,6 +153,8 @@ class AusgabenAdmin(MIZModelAdmin):
         from .changelist import AusgabeChangeList
         return AusgabeChangeList
     
+    #TODO: AusgabeQuerySet may override any changes to ordering we do on the changelist
+    
     def anz_artikel(self, obj):
         return obj.artikel_set.count()
     anz_artikel.short_description = 'Anz. Artikel'
@@ -578,7 +580,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     
     def sub_string(self, obj):
         return concat_limit(obj.unterbegriffe.all())
-    sub_string.short_description = 'Unterbegriff'
+    sub_string.short_description = 'Unterbegriffe'
         
     def alias_string(self, obj):
         return concat_limit(obj.schlagwort_alias_set.all())
