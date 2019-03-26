@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count, Min
 
 import DBentry.models as _models
 import DBentry.m2m as _m2m
@@ -253,7 +254,6 @@ class ArtikelAdmin(MIZModelAdmin):
         #TODO: rethink this now that we have chronologic_order for ausgabe -- also monat_id should not longer used
         #NOTE: what actually uses ModelAdmin.get_queryset? Because the changelist's results are 
         # ordered via chronologic_order.
-        from django.db.models import Min
         qs = super(ArtikelAdmin, self).get_queryset(request)
         qs = qs.annotate(
                 jahre = Min('ausgabe__ausgabe_jahr__jahr'), 
@@ -272,6 +272,7 @@ class ArtikelAdmin(MIZModelAdmin):
     def artikel_magazin(self, obj):
         return obj.ausgabe.magazin
     artikel_magazin.short_description = 'Magazin'
+    artikel_magazin.admin_order_field = 'ausgabe__magazin'
     
     def schlagwort_string(self, obj):
         return concat_limit(obj.schlagwort.all())
@@ -435,6 +436,7 @@ class GenreAdmin(MIZModelAdmin):
     def ober_string(self, obj):
         return str(obj.ober) if obj.ober else ''
     ober_string.short_description = 'Obergenre'
+    ober_string.admin_order_field = 'ober'
     
     def sub_string(self, obj):
         return concat_limit(obj.sub_genres.all())
@@ -467,10 +469,14 @@ class MagazinAdmin(MIZModelAdmin):
         'selects': ['m2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre'], 
         'labels': {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort'}, 
     }
+    
+    def _annotate_for_list_display(self, queryset):
+        return queryset.annotate(anz = Count('ausgabe'))
         
     def anz_ausgaben(self, obj):
         return obj.ausgabe_set.count()
     anz_ausgaben.short_description = 'Anz. Ausgaben'
+    anz_ausgaben.admin_order_field = 'anz'
 
 @admin.register(_models.memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
@@ -568,6 +574,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     def ober_string(self, obj):
         return str(obj.ober) if obj.ober else ''
     ober_string.short_description = 'Oberbegriff'
+    ober_string.admin_order_field = 'ober'
     
     def sub_string(self, obj):
         return concat_limit(obj.unterbegriffe.all())
@@ -783,9 +790,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
                 }))
         return fieldsets
         
-    def get_queryset(self, request):
-        from django.db.models import Min
-        return super().get_queryset(request).annotate(jahr = Min('jahre__jahr')).order_by('titel', 'jahr', 'zusammenfassung')
+    def _annotate_for_list_display(self, queryset):
+        return queryset.annotate(jahr = Min('jahre__jahr')).order_by('titel', 'jahr', 'zusammenfassung')
         
     def jahr_string(self, obj):
         return concat_limit(obj.jahre.all())
