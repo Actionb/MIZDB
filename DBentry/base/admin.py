@@ -41,6 +41,16 @@ class MIZModelAdmin(admin.ModelAdmin):
         # Used by the changelist's advanced_search_form template to determine whether there is a search form to display.
         # NOTE: improve has_adv_sf? advanced_search_form = {'abc':[], 'def':[],...} would return as True although it's empty
         return len(getattr(self, 'advanced_search_form', []))>0
+        
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return self._annotate_for_list_display(queryset)
+        
+    def _annotate_for_list_display(self, queryset):
+        """
+        Hook to add annotations to the root queryset of this ModelAdmin to allow ordering of callable list display items.
+        """
+        return queryset
             
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if 'widget' not in kwargs:
