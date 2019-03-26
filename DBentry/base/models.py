@@ -1,4 +1,5 @@
 from django.db import models
+from django.core import checks
 from django.utils.translation import gettext_lazy
         
 from DBentry.managers import MIZQuerySet, CNQuerySet
@@ -90,7 +91,31 @@ class BaseM2MModel(BaseModel):
         for ff in get_model_fields(self._meta.model, base=False, foreign=True, m2m=False):
             data.append(str(getattr(self, ff.name)))
         return "{} ({})".format(*data)
-            
+        
+    @classmethod
+    def check(cls, **kwargs):
+        errors = super().check(**kwargs)
+        errors.extend(cls._check_has_m2m_field(**kwargs))
+        return errors
+    
+    @classmethod
+    def _check_has_m2m_field(cls, **kwargs):
+        """
+        Checks for at least one of the related models of this intermediary table declaring a ManyToManyField through this table.
+        While the ManyToManyField is not required for m2m to work, some features rely on there being one (f.ex. the crosslinks).
+        """
+        fk_fields = [f for f in cls._meta.get_fields() if f.concrete and f.is_relation and not f.many_to_many]
+        found = False
+        for fk_field in fk_fields:
+            m2m_fields = get_model_fields(fk_field.related_model, base = False, foreign = False, m2m = True, primary_key = False)
+            if any(m2m_field.remote_field.through == cls for m2m_field in m2m_fields):
+                found = True
+                break
+        if not found:
+            msg_text = "{model_name} represents an intermediary many-to-many table but no related model declares a ManyToManyField through this model."
+            return [checks.Info(msg_text.format(model_name = cls._meta.model_name))]
+        return []
+        
     class Meta(BaseModel.Meta):
         abstract = True
         

@@ -345,3 +345,8 @@ class m2m_datei_quelle(BaseM2MModel):
             return '{} ({})'.format(str(getattr(self, art.name)), art.related_model._meta.verbose_name)
         else:
             return super(m2m_datei_quelle, self).__str__()
+            
+    @classmethod
+    def _check_has_m2m_field(cls, **kwargs):
+        # This is one whacky model, ignore that check for now...
+        return []
