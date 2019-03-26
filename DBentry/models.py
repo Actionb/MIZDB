@@ -345,6 +345,7 @@ class magazin(BaseModel):
     
     genre = models.ManyToManyField('genre', blank = True,  through = _m2m.m2m_magazin_genre)
     verlag = models.ManyToManyField('verlag', through = _m2m.m2m_magazin_verlag)
+    herausgeber = models.ManyToManyField('Herausgeber', through = _m2m.m2m_magazin_herausgeber)
     
     search_fields = ['magazin_name', 'beschreibung', 'issn']
     name_field = 'magazin_name'
