@@ -992,6 +992,59 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
     search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
         
+class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.MemoAdmin
+    model = _models.memorabilien
+    fields_expected = ['titel', 'beschreibung', 'bemerkungen']
+    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
+
+class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.DokumentAdmin
+    model = _models.dokument
+    fields_expected = ['titel', 'beschreibung', 'bemerkungen']
+    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
+    
+class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.TechnikAdmin
+    model = _models.technik
+    fields_expected = ['titel', 'beschreibung', 'bemerkungen']
+    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
+    
+class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.VideoAdmin
+    model = _models.video
+    fields_expected = ['titel',  'tracks',  'laufzeit',  'festplatte',  'quelle',  'beschreibung',  'bemerkungen',  'sender']
+    exclude_expected = ['band',  'genre',  'musiker',  'person',  'schlagwort',  'spielort',  'veranstaltung']
+    
+class TestKreisAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.KreisAdmin
+    model = _models.kreis
+    fields_expected = ['name', 'bland']
+    
+class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.BestandAdmin
+    model = _models.bestand
+    fields_expected = [
+        'bestand_art',  'lagerort',  'provenienz',  'audio',  'ausgabe',  'bildmaterial',  
+        'brochure',  'buch',  'dokument',  'memorabilien',  'technik',  'video'
+    ]
+    
+class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.DateiAdmin
+    model = _models.datei
+    fields_expected = ['titel',  'media_typ',  'datei_pfad',  'beschreibung',  'bemerkungen',  'quelle',  'sender',  'provenienz']
+    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
+    
+class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.HerausgeberAdmin
+    model = _models.Herausgeber
+    fields_expected = ['person', 'organisation']
+    
+    crosslinks_expected = [
+        {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'}, 
+        {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
+    ]
+    
 class TestAdminSite(UserTestCase):
     
     def test_app_index(self):
