@@ -1,5 +1,5 @@
+import re
 from itertools import chain
-
 from .base import AdminTestCase, UserTestCase
 
 from django.utils.translation import override as translation_override
@@ -10,31 +10,117 @@ import DBentry.models as _models
 
 from DBentry.sites import MIZAdminSite
 from DBentry.utils import get_model_fields
-from DBentry.factory import make
+from DBentry.factory import make, modelfactory_factory
 from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
-        
+
 class AdminTestMethodsMixin(object):
     
-    crosslinks_relations = None
-    crosslinks_labels = {}
-    exclude_expected = None
-    fields_expected = None
+    crosslinks_object = None # the model instance with which the add_crosslinks method is to be tested 
+    crosslinks_object_data = None # the data used to create the crosslinks_object with (via make())
+    crosslinks_labels = None # the labels that the model_admin_class creates the crosslinks with
+    crosslinks_expected = [] # the data that is expected to be returned by add_crosslinks
+    exclude_expected = None # fields to be excluded from the changeview form
+    fields_expected = None # fields expected to be on the changeview form
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        if not cls.crosslinks_object:
+            if cls.crosslinks_object_data:
+                cls.crosslinks_object = make(cls.model, **cls.crosslinks_object_data)
+            else:
+                cls.crosslinks_object = modelfactory_factory(cls.model).full_relations()
         
     def get_crosslinks(self, obj, labels=None):
-        url =  '/admin/DBentry/{model_name}/?{fld_name}=' + str(obj.pk)
-        links = self.model_admin.add_crosslinks(object_id=obj.pk, labels=labels).get('crosslinks')
-        return links, url
+        # Return the crosslinks bit of the 'new_extra' context the model_admin would add.
+        labels = labels or self.crosslinks_labels or self.model_admin.crosslink_labels or {}
+        return self.model_admin.add_crosslinks(object_id=obj.pk, labels=labels).get('crosslinks')
         
-    def assertCrosslinks(self, obj, expected):
-        links, url_template = self.get_crosslinks(obj)
+    def _prepare_crosslink_data(self, data, obj = None):
+        # Return a dict based off of 'data' similar in structure of those in the crosslinks.
+        if obj is not None and 'pk' not in data:
+            data['pk'] = str(obj.pk)
+        if 'url' in data:
+            url = data['url']
+        else:
+            url = '/admin/DBentry/{model_name}/?{fld_name}={pk}'.format(**data)
+        return {'url':url, 'label': data['label']}
+        
+    def assertInCrosslinks(self, expected, links):
+        # Assert that the data given in 'expected' is found in iterable 'links'.
+        # Add an url entry to that data if necessary.
+        if 'url' in expected:
+            url = expected['url']
+        else:
+            url = '/admin/DBentry/{model_name}/?{fld_name}={pk}'.format(**expected)
+        data = {'url':url, 'label': expected['label']}
+        self.assertIn(data, links)
+        return data
+        
+    def assertAllCrosslinks(self, obj, expected, links = None, labels = None):
+        # A crosslink will link to a changelist page of the related model with the related field filtered to the related object at hand.
+        # For any relation given in crosslinks_relations check the existence and correctness of the url & label provided by model_admin.add_crosslinks.
+        # expected must be an iterable of dicts with the keys model_name, fld_name and label.
+        if links is None:
+            links = self.get_crosslinks(obj, labels)
+        _links = links.copy() 
+        
+        # Check if any expected crosslinks are missing and remove found expected crosslinks from 'links'.
+        links_missing = []
         for item in expected:
-            x = {'url':url_template.format(model_name=item['model_name'], fld_name=item['fld_name']), 'label':item['label']}
-            self.assertIn(x, links)
-            links.remove(x)
-        self.assertFalse(links)      
+            data = self._prepare_crosslink_data(item, obj)
+            try:
+                self.assertInCrosslinks(data, links)
+            except AssertionError:
+                links_missing.append(data)
+            else:
+                links.remove(data)
+        if links_missing:
+            sorting_key = lambda data: data['url']
+            fail_message = 'The following crosslinks were not found:\n'
+            fail_message += '\n'.join(str(l) for l in sorted(links_missing, key = sorting_key))
+            fail_message += '\nCrosslinks available:\n'
+            fail_message += '\n'.join(str(l) for l in sorted(_links, key = sorting_key))
+            self.fail(fail_message)    
+        if links:
+            # There are some crosslinks left that were not expected:
+            # check for any links that should not be in crosslinks because their model is in inlines already
+            inline_crosslinks = []
+            inline_model_names = [inline.model._meta.model_name for inline in self.model_admin.inlines]
+            for i, link in enumerate(links.copy()):
+                model_name_regex = re.search(r'DBentry/(\w+)/', link['url'])
+                if not model_name_regex:
+                    continue
+                model_name = model_name_regex.groups()[0]
+                if model_name in inline_model_names:
+                    inline_crosslinks.append((model_name, links.pop(i)))
+            
+            fail_message = ''
+            if inline_crosslinks:
+                fail_message = 'The following crosslinks were added despite their model being present in the inlines already:\n'
+                fail_message += '\n'.join(str(i) for i in inline_crosslinks)
+            if links:
+                # If there are still links left, then the test was not supplied with the full expected data.
+                if fail_message: 
+                    fail_message += '~'*20
+                fail_message = 'The following crosslinks were added but no test data was supplied or the inline is missing:\n'
+                fail_message += '\n'.join(str(i) for i in links)
+            if fail_message:
+                self.fail(fail_message)
         
+    def test_add_crosslinks(self):
+        if self.crosslinks_object and self.crosslinks_expected is not None:
+            self.assertAllCrosslinks(self.crosslinks_object, self.crosslinks_expected)
+        else:
+            warning = 'Poorly configured TestCase:'
+            if not self.crosslinks_object:
+                warning += ' No crosslinks_object supplied.'
+            if self.crosslinks_expected is None:
+                warning += ' No crosslinks_expected supplied.'
+            self.warn(warning)
+            
     def test_get_exclude(self):
         expected = self.exclude_expected or []
         self.assertEqual(self.model_admin.get_exclude(None), expected)
@@ -96,8 +182,6 @@ class AdminTestMethodsMixin(object):
                 
             for lookup in lookups:
                 self.assertTrue(self.model_admin.lookup_allowed(lookup = lookup, value = None), msg = 'lookup not allowed: ' + lookup)
-        
-        
             
 class TestMIZModelAdmin(AdminTestCase):
     
@@ -137,7 +221,6 @@ class TestMIZModelAdmin(AdminTestCase):
         
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         self.assertNotIn('action', actions.keys())
-        
         
     def test_group_fields(self):
         self.model_admin.fields = None
@@ -267,7 +350,7 @@ class TestMIZModelAdmin(AdminTestCase):
         search_fields = _admin.KatalogAdmin(_models.Katalog, self.admin_site).get_search_fields()
         self.assertNotIn('=basebrochure_ptr', search_fields)
                 
-class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
+class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.ArtikelAdmin
     model = _models.artikel
@@ -308,20 +391,14 @@ class TestAdminArtikel(AdminTestMethodsMixin, AdminTestCase):
         request = self.get_request(data=initial)
         cf_init_data = self.model_admin.get_changeform_initial_data(request)
         self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
-        
-    def test_add_crosslinks(self):
-        obj = make(_models.artikel, 
-            musiker__extra = 1, spielort__extra = 1, schlagwort__extra = 1, ort__extra = 1, person__extra = 1, 
-            autor__extra = 1, genre__extra = 1, veranstaltung__extra = 1, band__extra = 1
-        )
-        self.assertCrosslinks(obj, [])
 
-class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
+class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.AusgabenAdmin
     model = _models.ausgabe
     exclude_expected = ['audio']
     fields_expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
+    crosslinks_expected = [{'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
    
     @classmethod
     def setUpTestData(cls):
@@ -372,33 +449,41 @@ class TestAdminAusgabe(AdminTestMethodsMixin, AdminTestCase):
         self.obj1.bestand_set.all().delete()
         self.assertFalse(self.model_admin.dbestand(self.obj1))
         
-    def test_add_crosslinks(self):
+    def test_add_crosslinks_custom(self):
         obj = make(_models.ausgabe, 
             ausgabe_num__extra = 1, ausgabe_lnum__extra = 1, ausgabe_monat__extra = 1, ausgabe_jahr__extra = 1, 
             artikel__extra = 1, audio__extra = 1, bestand__extra = 1, 
         )
-        links, url = self.get_crosslinks(obj)
+        # Only artikel should show up in the crosslinks as audio is present in the inlines.
+        links = self.get_crosslinks(obj)
         self.assertEqual(len(links), 1)
-        self.assertIn({'url':url.format(model_name='artikel', fld_name='ausgabe'), 'label': 'Artikel (1)'}, links)
+        expected = {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)', 'pk': str(obj.pk)}
+        self.assertInCrosslinks(expected, links)
         
-        links, url = self.get_crosslinks(obj, labels={'artikel':'Beep boop'})
-        self.assertIn({'url':url.format(model_name='artikel', fld_name='ausgabe'), 'label': 'Beep boop (1)'}, links)
+        links = self.get_crosslinks(obj, labels={'artikel':'Beep boop'})
+        expected = {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Beep boop (1)', 'pk': str(obj.pk)}
+        self.assertInCrosslinks(expected, links)
         
         _models.ausgabe.artikel_set.rel.related_name = 'Boop beep'
-        links, url = self.get_crosslinks(obj)
-        self.assertIn({'url':url.format(model_name='artikel', fld_name='ausgabe'), 'label': 'Boop Beep (1)'}, links)
+        links = self.get_crosslinks(obj)
+        expected = {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Boop Beep (1)', 'pk': str(obj.pk)} #Note the capitalization of each starting letter!
+        self.assertInCrosslinks(expected, links)
         
         obj.artikel_set.all().delete()
-        links, url = self.get_crosslinks(obj)
-        self.assertFalse(links)
+        self.assertFalse(self.get_crosslinks(obj))
         
-class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
+class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.MagazinAdmin
     model = _models.magazin
-    exclude_expected = ['genre']
+    exclude_expected = ['genre', 'verlag']
     fields_expected = ['magazin_name', 'erstausgabe', 'turnus', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn', 
         'beschreibung', 'bemerkungen', 'ort', 
+    ]
+
+    crosslinks_expected = [
+        {'model_name':'ausgabe', 'fld_name':'magazin', 'label': 'Ausgaben (1)'}, 
+        {'model_name':'autor', 'fld_name':'magazin', 'label': 'Autoren (1)'} 
     ]
     
     raw_data = [{'ausgabe__extra':1}]
@@ -408,28 +493,33 @@ class TestAdminMagazin(AdminTestMethodsMixin, AdminTestCase):
         self.obj1.ausgabe_set.all().delete()
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 0)
-        
-    def test_add_crosslinks(self):
-        obj = make(self.model, 
-            ausgabe__extra = 1, autor__extra = 1, genre__extra = 1
-        )
-        expected = [
-            {'model_name':'ausgabe', 'fld_name':'magazin', 'label': 'Ausgaben (1)'}, 
-            {'model_name':'autor', 'fld_name':'magazin', 'label': 'Autoren (1)'} 
-        ]
-        self.assertCrosslinks(obj, expected)
 
-
-class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
+class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.PersonAdmin
     model = _models.person
     exclude_expected = ['orte']
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
+    test_data_count = 1 # one extra 'empty' object without relations for Ist_Autor/Ist_Musiker
     
     raw_data = [
         {'musiker__extra':1, 'autor__extra':1},
-        {}, 
+    ]
+    
+    crosslinks_expected = [
+        {'model_name':'video',          'fld_name':'person', 'label':'Video Materialien (1)'}, 
+        {'model_name':'veranstaltung',  'fld_name':'person', 'label':'Veranstaltungen (1)'}, 
+        {'model_name':'herausgeber',    'fld_name':'person', 'label':'Herausgeber (1)'}, 
+        {'model_name':'datei',          'fld_name':'person', 'label':'Dateien (1)'}, 
+        {'model_name':'artikel',        'fld_name':'person', 'label':'Artikel (1)'}, 
+        {'model_name':'autor',          'fld_name':'person', 'label':'Autoren (1)'}, 
+        {'model_name':'memorabilien',   'fld_name':'person', 'label':'Memorabilien (1)'}, 
+        {'model_name':'dokument',       'fld_name':'person', 'label':'Dokumente (1)'}, 
+        {'model_name':'bildmaterial',   'fld_name':'person', 'label':'Bild Materialien (1)'}, 
+        {'model_name':'technik',        'fld_name':'person', 'label':'Technik (1)'}, 
+        {'model_name':'audio',          'fld_name':'person', 'label':'Audio Materialien (1)'}, 
+        {'model_name':'buch',           'fld_name':'person', 'label':'Bücher (1)'}, 
+        {'model_name':'musiker',        'fld_name':'person', 'label':'Musiker (1)'}, 
     ]
     
     def test_Ist_Musiker(self):
@@ -447,30 +537,7 @@ class TestAdminPerson(AdminTestMethodsMixin, AdminTestCase):
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
         
-    def test_add_crosslinks(self):
-        obj = make(self.model, 
-            video__extra = 1, veranstaltung__extra = 1, herausgeber__extra = 1, datei__extra = 1, 
-            artikel__extra = 1, orte__extra = 1, autor__extra = 1, memorabilien__extra = 1, musiker__extra = 1, 
-            dokument__extra = 1, bildmaterial__extra = 1, technik__extra = 1, audio__extra = 1, buch__extra = 1,         
-        )
-        expected = [
-            {'model_name':'video',          'fld_name':'person', 'label':'Video Materialien (1)'}, 
-            {'model_name':'veranstaltung',  'fld_name':'person', 'label':'Veranstaltungen (1)'}, 
-            {'model_name':'herausgeber',    'fld_name':'person', 'label':'Herausgeber (1)'}, 
-            {'model_name':'datei',          'fld_name':'person', 'label':'Dateien (1)'}, 
-            {'model_name':'artikel',        'fld_name':'person', 'label':'Artikel (1)'}, 
-            {'model_name':'autor',          'fld_name':'person', 'label':'Autoren (1)'}, 
-            {'model_name':'memorabilien',   'fld_name':'person', 'label':'Memorabilien (1)'}, 
-            {'model_name':'dokument',       'fld_name':'person', 'label':'Dokumente (1)'}, 
-            {'model_name':'bildmaterial',   'fld_name':'person', 'label':'Bild Materialien (1)'}, 
-            {'model_name':'technik',        'fld_name':'person', 'label':'Technik (1)'}, 
-            {'model_name':'audio',          'fld_name':'person', 'label':'Audio Materialien (1)'}, 
-            {'model_name':'buch',           'fld_name':'person', 'label':'Bücher (1)'}, 
-            {'model_name':'musiker',        'fld_name':'person', 'label':'Musiker (1)'}, 
-        ]
-        self.assertCrosslinks(obj, expected)
-        
-class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
+class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.MusikerAdmin
     model = _models.musiker
@@ -481,6 +548,19 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
     raw_data = [
         {}, 
         {'band__band_name':['Testband1', 'Testband2'], 'genre__genre':['Testgenre1', 'Testgenre2']}
+    ]
+    
+    crosslinks_expected = [
+        {'model_name':'artikel',        'fld_name':'musiker', 'label':'Artikel (1)'}, 
+        {'model_name':'audio',          'fld_name':'musiker', 'label':'Audio Materialien (1)'},
+        {'model_name':'bildmaterial',   'fld_name':'musiker', 'label':'Bild Materialien (1)'},
+        {'model_name':'buch',           'fld_name':'musiker', 'label':'Bücher (1)'}, 
+        {'model_name':'datei',          'fld_name':'musiker', 'label':'Dateien (1)'}, 
+        {'model_name':'dokument',       'fld_name':'musiker', 'label':'Dokumente (1)'},
+        {'model_name':'memorabilien',   'fld_name':'musiker', 'label':'Memorabilien (1)'}, 
+        {'model_name':'technik',        'fld_name':'musiker', 'label':'Technik (1)'},    
+        {'model_name':'veranstaltung',  'fld_name':'musiker', 'label':'Veranstaltungen (1)'}, 
+        {'model_name':'video',          'fld_name':'musiker', 'label':'Video Materialien (1)'},
     ]
     
     def test_media_prop(self):
@@ -503,27 +583,7 @@ class TestAdminMusiker(AdminTestMethodsMixin, AdminTestCase):
         self.obj2.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
         
-    def test_add_crosslinks(self):
-        obj = make(self.model, 
-            artikel__extra = 1, audio__extra = 1, band__extra = 1, bildmaterial__extra = 1, buch__extra = 1, 
-            datei__extra = 1, dokument__extra = 1, memorabilien__extra = 1, instrument__extra = 1, orte__extra = 1, 
-            genre__extra = 1, musiker_alias__extra = 1, technik__extra = 1, veranstaltung__extra = 1, video__extra = 1
-        )
-        expected = [
-            {'model_name':'artikel',        'fld_name':'musiker', 'label':'Artikel (1)'}, 
-            {'model_name':'audio',          'fld_name':'musiker', 'label':'Audio Materialien (1)'},
-            {'model_name':'bildmaterial',   'fld_name':'musiker', 'label':'Bild Materialien (1)'},
-            {'model_name':'buch',           'fld_name':'musiker', 'label':'Bücher (1)'}, 
-            {'model_name':'datei',          'fld_name':'musiker', 'label':'Dateien (1)'}, 
-            {'model_name':'dokument',       'fld_name':'musiker', 'label':'Dokumente (1)'},
-            {'model_name':'memorabilien',   'fld_name':'musiker', 'label':'Memorabilien (1)'}, 
-            {'model_name':'technik',        'fld_name':'musiker', 'label':'Technik (1)'},    
-            {'model_name':'veranstaltung',  'fld_name':'musiker', 'label':'Veranstaltungen (1)'}, 
-            {'model_name':'video',          'fld_name':'musiker', 'label':'Video Materialien (1)'},
-        ]
-        self.assertCrosslinks(obj, expected)
-        
-class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
+class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.GenreAdmin
     model = _models.genre
@@ -533,6 +593,23 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
     raw_data = [
         {'genre':'Topobject'}, 
         {'genre':'Subobject', 'genre_alias__alias':['Alias1', 'Alias2'], 'ober__genre':'Topobject'}
+    ]
+    
+    crosslinks_expected = [
+        {'model_name':'artikel',        'fld_name':'genre', 'label':'Artikel (1)'}, 
+        {'model_name':'audio',          'fld_name':'genre', 'label':'Audio Materialien (1)'}, 
+        {'model_name':'band',           'fld_name':'genre', 'label':'Bands (1)'},
+        {'model_name':'bildmaterial',   'fld_name':'genre', 'label':'Bild Materialien (1)'},
+        {'model_name':'buch',           'fld_name':'genre', 'label':'Bücher (1)'}, 
+        {'model_name':'datei',          'fld_name':'genre', 'label':'Dateien (1)'}, 
+        {'model_name':'genre',          'fld_name':'ober',  'label':'Sub Genres (1)'}, 
+        {'model_name':'magazin',        'fld_name':'genre', 'label':'Magazine (1)'}, 
+        {'model_name':'dokument',       'fld_name':'genre', 'label':'Dokumente (1)'}, 
+        {'model_name':'memorabilien',   'fld_name':'genre', 'label':'Memorabilien (1)'},
+        {'model_name':'musiker',        'fld_name':'genre', 'label':'Musiker (1)'},
+        {'model_name':'technik',        'fld_name':'genre', 'label':'Technik (1)'},    
+        {'model_name':'veranstaltung',  'fld_name':'genre', 'label':'Veranstaltungen (1)'}, 
+        {'model_name':'video',          'fld_name':'genre', 'label':'Video Materialien (1)'},
     ]
         
     def test_search_finds_alias(self):
@@ -567,32 +644,8 @@ class TestAdminGenre(AdminTestMethodsMixin, AdminTestCase):
         # This would be useful for dal, but not for searches on the changelist
         super().test_get_search_fields()
         self.assertNotIn('ober__genre', self.model_admin.get_search_fields())
-        
-    def test_add_crosslinks(self):
-        obj = make(self.model, 
-            artikel__extra = 1, audio__extra = 1, band__extra = 1, bildmaterial__extra = 1, buch__extra = 1, 
-            datei__extra = 1, dokument__extra = 1, sub_genres__extra = 1, genre_alias__extra = 1, magazin__extra = 1, 
-            memorabilien__extra = 1, musiker__extra = 1, technik__extra = 1, veranstaltung__extra = 1, video__extra = 1, 
-        )
-        expected = [
-            {'model_name':'artikel',        'fld_name':'genre', 'label':'Artikel (1)'}, 
-            {'model_name':'audio',          'fld_name':'genre', 'label':'Audio Materialien (1)'}, 
-            {'model_name':'band',           'fld_name':'genre', 'label':'Bands (1)'},
-            {'model_name':'bildmaterial',   'fld_name':'genre', 'label':'Bild Materialien (1)'},
-            {'model_name':'buch',           'fld_name':'genre', 'label':'Bücher (1)'}, 
-            {'model_name':'datei',          'fld_name':'genre', 'label':'Dateien (1)'}, 
-            {'model_name':'genre',          'fld_name':'ober',  'label':'Sub Genres (1)'}, 
-            {'model_name':'magazin',        'fld_name':'genre', 'label':'Magazine (1)'}, 
-            {'model_name':'dokument',       'fld_name':'genre', 'label':'Dokumente (1)'}, 
-            {'model_name':'memorabilien',   'fld_name':'genre', 'label':'Memorabilien (1)'},
-            {'model_name':'musiker',        'fld_name':'genre', 'label':'Musiker (1)'},
-            {'model_name':'technik',        'fld_name':'genre', 'label':'Technik (1)'},    
-            {'model_name':'veranstaltung',  'fld_name':'genre', 'label':'Veranstaltungen (1)'}, 
-            {'model_name':'video',          'fld_name':'genre', 'label':'Video Materialien (1)'},
-        ]
-        self.assertCrosslinks(obj, expected)
     
-class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
+class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.schlagwort
@@ -601,6 +654,21 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
     raw_data = [
         {'schlagwort':'Topobject'}, 
         {'schlagwort':'Subobject', 'schlagwort_alias__alias':['Alias1', 'Alias2'], 'ober__schlagwort':'Topobject'}
+    ]
+    
+    crosslinks_expected = [
+        {'model_name':'artikel',        'fld_name':'schlagwort', 'label':'Artikel (1)'}, 
+        {'model_name':'audio',          'fld_name':'schlagwort', 'label':'Audio Materialien (1)'}, 
+        {'model_name':'bildmaterial',   'fld_name':'schlagwort', 'label':'Bild Materialien (1)'},
+        {'model_name':'brochure',       'fld_name':'schlagwort', 'label': 'Broschüren (1)'}, 
+        {'model_name':'buch',           'fld_name':'schlagwort', 'label':'Bücher (1)'}, 
+        {'model_name':'datei',          'fld_name':'schlagwort', 'label':'Dateien (1)'}, 
+        {'model_name':'schlagwort',     'fld_name':'ober',        'label':'Unterbegriffe (1)'}, 
+        {'model_name':'dokument',       'fld_name':'schlagwort', 'label':'Dokumente (1)'}, 
+        {'model_name':'memorabilien',   'fld_name':'schlagwort', 'label':'Memorabilien (1)'},
+        {'model_name':'technik',        'fld_name':'schlagwort', 'label':'Technik (1)'},    
+        {'model_name':'veranstaltung',  'fld_name':'schlagwort', 'label':'Veranstaltungen (1)'}, 
+        {'model_name':'video',          'fld_name':'schlagwort', 'label':'Video Materialien (1)'},
     ]
         
     def test_search_finds_alias(self):
@@ -635,29 +703,8 @@ class TestAdminSchlagwort(AdminTestMethodsMixin, AdminTestCase):
         # This would be useful for dal, but not for searches on the changelist
         super().test_get_search_fields()
         self.assertNotIn('ober__schlagwort', self.model_admin.get_search_fields())
-        
-    def test_add_crosslinks(self):
-        obj = make(self.model, 
-            artikel__extra = 1, audio__extra = 1, bildmaterial__extra = 1, buch__extra = 1, 
-            datei__extra = 1, dokument__extra = 1, unterbegriffe__extra = 1, schlagwort_alias__extra = 1, 
-            memorabilien__extra = 1, technik__extra = 1, veranstaltung__extra = 1, video__extra = 1, 
-        )
-        expected = [
-            {'model_name':'artikel',        'fld_name':'schlagwort', 'label':'Artikel (1)'}, 
-            {'model_name':'audio',          'fld_name':'schlagwort', 'label':'Audio Materialien (1)'}, 
-            {'model_name':'bildmaterial',   'fld_name':'schlagwort', 'label':'Bild Materialien (1)'},
-            {'model_name':'buch',           'fld_name':'schlagwort', 'label':'Bücher (1)'}, 
-            {'model_name':'datei',          'fld_name':'schlagwort', 'label':'Dateien (1)'}, 
-            {'model_name':'schlagwort',     'fld_name':'ober',        'label':'Unterbegriffe (1)'}, 
-            {'model_name':'dokument',       'fld_name':'schlagwort', 'label':'Dokumente (1)'}, 
-            {'model_name':'memorabilien',   'fld_name':'schlagwort', 'label':'Memorabilien (1)'},
-            {'model_name':'technik',        'fld_name':'schlagwort', 'label':'Technik (1)'},    
-            {'model_name':'veranstaltung',  'fld_name':'schlagwort', 'label':'Veranstaltungen (1)'}, 
-            {'model_name':'video',          'fld_name':'schlagwort', 'label':'Video Materialien (1)'},
-        ]
-        self.assertCrosslinks(obj, expected)
     
-class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
+class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.BandAdmin
     model = _models.band
@@ -668,6 +715,19 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
             'band_alias__alias':['Alias1', 'Alias2'], 'genre__genre':['Testgenre1', 'Testgenre2'],
             'musiker__kuenstler_name':['Testkuenstler1', 'Testkuenstler2']
         }
+    ]
+    
+    crosslinks_expected = [
+        {'model_name': 'artikel', 'fld_name': 'band', 'label': 'Artikel (1)'},
+        {'model_name': 'audio', 'fld_name': 'band', 'label': 'Audio Materialien (1)'},
+        {'model_name': 'bildmaterial', 'fld_name': 'band', 'label': 'Bild Materialien (1)'},
+        {'model_name': 'buch', 'fld_name': 'band', 'label': 'Bücher (1)'},
+        {'model_name': 'datei', 'fld_name': 'band', 'label': 'Dateien (1)'},
+        {'model_name': 'dokument', 'fld_name': 'band', 'label': 'Dokumente (1)'},
+        {'model_name': 'memorabilien', 'fld_name': 'band', 'label': 'Memorabilien (1)'},
+        {'model_name': 'technik', 'fld_name': 'band', 'label': 'Technik (1)'},
+        {'model_name': 'veranstaltung', 'fld_name': 'band', 'label': 'Veranstaltungen (1)'},
+        {'model_name': 'video', 'fld_name': 'band', 'label': 'Video Materialien (1)'},
     ]
         
     def test_alias_string(self):
@@ -686,7 +746,7 @@ class TestAdminBand(AdminTestMethodsMixin, AdminTestCase):
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
 
-class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
+class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.AutorAdmin
     model = _models.autor
@@ -695,59 +755,79 @@ class TestAdminAutor(AdminTestMethodsMixin, AdminTestCase):
     raw_data = [
         {'magazin__magazin_name':['Testmagazin1', 'Testmagazin2']}
     ]
+    crosslinks_object_data = {'artikel__extra': 1, 'magazin__extra': 1, 'buch__extra': 1}
+    crosslinks_expected = [
+        {'model_name': 'artikel', 'fld_name': 'autor', 'label': 'Artikel (1)'}, 
+        {'model_name': 'buch', 'fld_name': 'autor', 'label': 'Bücher (1)'}, 
+    ]
     
     def test_magazin_string(self):
         self.assertEqual(self.model_admin.magazin_string(self.obj1), 'Testmagazin1, Testmagazin2')
         
-class TestAdminOrt(AdminTestMethodsMixin, AdminTestCase):
+class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.OrtAdmin   
     model = _models.ort
     fields_expected = ['stadt', 'land', 'bland']
     test_data_count = 1
-    crosslinks_relations = [
-        model.datei_set.rel, model.buch_set.rel, model.audio_set.rel, model.artikel_set.rel, 
-        model.bildmaterial_set.rel, model.dokument_set.rel, model.technik_set.rel, model.memorabilien_set.rel,    
-        model.verlag_set.rel, model.spielort_set.rel, model.person_set.rel,
-        model.magazin_set.rel, model.band_set.rel
+    
+    crosslinks_expected = [
+        {'model_name': 'artikel', 'fld_name': 'ort', 'label': 'Artikel (1)'}, 
+        {'model_name': 'audio', 'fld_name': 'ort', 'label': 'Audio Materialien (1)'}, 
+        {'model_name': 'band', 'fld_name': 'orte', 'label': 'Bands (1)'},  
+        {'model_name': 'bildmaterial', 'fld_name': 'ort', 'label': 'Bild Materialien (1)'}, 
+        {'model_name': 'buch', 'fld_name': 'ort', 'label': 'Bücher (1)'}, 
+        {'model_name': 'datei', 'fld_name': 'ort', 'label': 'Dateien (1)'},
+        {'model_name': 'dokument', 'fld_name': 'ort', 'label': 'Dokumente (1)'}, 
+        {'model_name': 'magazin', 'fld_name': 'ort', 'label': 'Magazine (1)'}, 
+        {'model_name': 'memorabilien', 'fld_name': 'ort', 'label': 'Memorabilien (1)'}, 
+        {'model_name': 'musiker', 'fld_name': 'orte', 'label': 'Musiker (1)'}, 
+        {'model_name': 'person', 'fld_name': 'orte', 'label': 'Personen (1)'}, 
+        {'model_name': 'spielort', 'fld_name': 'ort', 'label': 'Spielorte (1)'}, 
+        {'model_name': 'technik', 'fld_name': 'ort', 'label': 'Technik (1)'}, 
+        {'model_name': 'verlag', 'fld_name': 'sitz', 'label': 'Verlage (1)'}, 
     ]
     
     def bland_forwarded(self):
         f = self.model_admin.get_form(self.get_request())
         self.assertEqual(f.base_fields['bland'].widget.widget.forward[0], ['land'])
-            
         
-class TestAdminLand(AdminTestMethodsMixin, AdminTestCase):
+class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.LandAdmin
     model = _models.land
     fields_expected = ['land_name', 'code']
     test_data_count = 1
-    crosslinks_relations = [
-        model.ort_set.rel, model.bundesland_set.rel, 
+    
+    crosslinks_expected = [
+        {'model_name': 'ort', 'fld_name': 'land', 'label': 'Orte (1)'}, 
+        {'model_name': 'bundesland', 'fld_name': 'land', 'label': 'Bundesländer (1)'}
     ]
         
-class TestAdminBundesland(AdminTestMethodsMixin, AdminTestCase):
+class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.BlandAdmin
     model = _models.bundesland
     fields_expected = ['bland_name', 'code', 'land']
     test_data_count = 1
-    crosslinks_relations = [
-        model.kreis_set.rel, 
+    
+    crosslinks_expected = [
+        {'model_name': 'ort', 'fld_name': 'bland', 'label': 'Orte (1)'}, 
+        {'model_name': 'kreis', 'fld_name': 'bland', 'label': 'Kreise (1)'}
     ]
         
-class TestAdminInstrument(AdminTestMethodsMixin, AdminTestCase):
+class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.InstrumentAdmin
     model = _models.instrument
     fields_expected = ['instrument', 'kuerzel']
     test_data_count = 1
-    crosslinks_relations = [
-        model.musiker_set.rel, 
+    
+    crosslinks_expected = [
+        {'model_name': 'musiker', 'fld_name': 'instrument', 'label': 'Musiker (1)'}
     ]
     
-class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
+class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.AudioAdmin
     model = _models.audio
@@ -766,30 +846,29 @@ class TestAdminAudio(AdminTestMethodsMixin, AdminTestCase):
     def test_formate_string(self):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
-    def test_add_crosslinks(self):
-        obj = make(self.model, 
-            m2m_datei_quelle__extra = 1, ausgabe__extra = 1, genre__extra = 1, band__extra = 1, ort__extra = 1, 
-            veranstaltung__extra = 1, bestand__extra = 1, schlagwort__extra = 1, format__extra = 1, spielort__extra = 1, 
-            plattenfirma__extra = 1, musiker__extra = 1, person__extra = 1
-        )
-        links, url = self.get_crosslinks(obj)
-        self.assertFalse(links, msg = 'Audio cannot have any crosslinks.')
     
-class TestAdminSpielort(AdminTestMethodsMixin, AdminTestCase):
+class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SpielortAdmin
     model = _models.spielort
     fields_expected = ['name', 'ort']
-    crosslinks_relations = [
-        model.dokument_set.rel, model.spielort_alias_set.rel, model.m2m_audio_spielort_set.rel,
-        model.artikel_set.rel, model.buch_set.rel, model.bildmaterial_set.rel,
-        model.video_set.rel, model.datei_set.rel, model.veranstaltung_set.rel,
-        model.audio_set.rel, model.technik_set.rel, model.m2m_artikel_spielort_set.rel,
-        model.memorabilien_set.rel,
-        ]
     test_data_count = 1
+    
+    crosslinks_expected = [
+        {'model_name': 'dokument',      'fld_name': 'spielort', 'label': 'Dokumente (1)'}, 
+        {'model_name': 'memorabilien',  'fld_name': 'spielort', 'label': 'Memorabilien (1)'}, 
+        {'model_name': 'video',         'fld_name': 'spielort', 'label': 'Video Materialien (1)'}, 
+        {'model_name': 'kalendar',      'fld_name': 'spielort', 'label': 'Programmhefte (1)'}, 
+        {'model_name': 'buch',          'fld_name': 'spielort', 'label': 'Bücher (1)'}, 
+        {'model_name': 'bildmaterial',  'fld_name': 'spielort', 'label': 'Bild Materialien (1)'}, 
+        {'model_name': 'datei',         'fld_name': 'spielort', 'label': 'Dateien (1)'}, 
+        {'model_name': 'artikel',       'fld_name': 'spielort', 'label': 'Artikel (1)'}, 
+        {'model_name': 'audio',         'fld_name': 'spielort', 'label': 'Audio Materialien (1)'}, 
+        {'model_name': 'technik',       'fld_name': 'spielort', 'label': 'Technik (1)'}, 
+        {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'}
+    ]
         
-class TestAdminVeranstaltung(AdminTestMethodsMixin, AdminTestCase):
+class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.veranstaltung
@@ -797,7 +876,29 @@ class TestAdminVeranstaltung(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['name', 'datum', 'spielort']
     test_data_count = 1
     
-class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
+    crosslinks_expected = [
+        {'model_name': 'technik',       'fld_name': 'veranstaltung', 'label': 'Technik (1)'}, 
+        {'model_name': 'dokument',      'fld_name': 'veranstaltung', 'label': 'Dokumente (1)'}, 
+        {'model_name': 'memorabilien',  'fld_name': 'veranstaltung', 'label': 'Memorabilien (1)'}, 
+        {'model_name': 'video',         'fld_name': 'veranstaltung', 'label': 'Video Materialien (1)'}, 
+        {'model_name': 'kalendar',      'fld_name': 'veranstaltung', 'label': 'Programmhefte (1)'}, 
+        {'model_name': 'buch',          'fld_name': 'veranstaltung', 'label': 'Bücher (1)'}, 
+        {'model_name': 'bildmaterial',  'fld_name': 'veranstaltung', 'label': 'Bild Materialien (1)'}, 
+        {'model_name': 'datei',         'fld_name': 'veranstaltung', 'label': 'Dateien (1)'}, 
+        {'model_name': 'artikel',       'fld_name': 'veranstaltung', 'label': 'Artikel (1)'}, 
+        {'model_name': 'audio',         'fld_name': 'veranstaltung', 'label': 'Audio Materialien (1)'}
+    ]
+    
+class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.VerlagAdmin
+    model = _models.verlag
+    fields_expected = ['verlag_name', 'sitz']
+    crosslinks_expected = [
+        {'model_name': 'buch', 'fld_name': 'verlag', 'label': 'Bücher (1)'}, 
+        {'model_name': 'magazin', 'fld_name': 'verlag', 'label': 'Magazine (1)'}
+    ]
+    
+class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BuchAdmin
     model = _models.buch
     exclude_expected = [
@@ -807,6 +908,10 @@ class TestAdminBuch(AdminTestMethodsMixin, AdminTestCase):
             'titel', 'titel_orig', 'seitenumfang', 'jahr', 'jahr_orig', 'auflage', 'EAN', 'ISBN', 
             'is_buchband', 'beschreibung', 'bemerkungen', 'schriftenreihe', 'buchband', 'verlag', 'sprache', 
         ]
+    
+    crosslinks_expected = [
+        {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Einzelbänder (1)'}, 
+    ]
     
     @classmethod
     def setUpTestData(cls):
