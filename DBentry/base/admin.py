@@ -153,37 +153,54 @@ class MIZModelAdmin(admin.ModelAdmin):
         else:
             search_fields.append("=" + pk_name)
         return search_fields
-        
-    def add_crosslinks(self, object_id, labels=None):
+    
+    def add_crosslinks(self, object_id, labels = None):
         """
         Provides the template with data to create links to related objects.
         """
         new_extra = {'crosslinks':[]}
-        labels = labels or []
+        labels = labels or {}
         
         inline_models = {i.model for i in self.inlines}
+        # m2m self relations:
+        #   will be 'ignored' as a inline must be used to facilitate that relation (i.e. query_model inevitably shows up in inline_models)
+        # m2o self relations (rel.model == rel.related_model): 
+        #   query_model == rel.model == rel.related_model; differentiating between them is pointless
         
-        for rel in get_model_relations(self.model, forward = False):
+        for rel in get_model_relations(self.model, forward = False, reverse = True):
+            query_model = rel.related_model
+            query_field = rel.remote_field.name
             if rel.many_to_many:
                 inline_model = rel.through
+                if rel.field.model == self.model and rel.model != rel.related_model:
+                    # ManyToManyField lives on self.model and it is NOT a self relation. 
+                    # Target the 'other end' of the relation - otherwise we would create a crosslink that leads back to self.model's changelist.
+                    query_model = rel.model
+                    query_field = rel.name
             else:
                 inline_model = rel.related_model
             if inline_model in inline_models:
                 continue
-            model = rel.related_model
-            opts = model._meta
-            fld_name = rel.remote_field.name
-            count = model.objects.filter(**{fld_name:object_id}).count()
+            count = query_model.objects.filter(**{query_field:object_id}).count()
+            opts = query_model._meta
             if not count:
+                # No point showing an empty changelist.
                 continue
             try:
                 url = reverse("admin:{}_{}_changelist".format(opts.app_label, opts.model_name)) \
-                                + "?" + fld_name + "=" + str(object_id)
+                                + "?" + query_field + "=" + str(object_id)
             except NoReverseMatch:
+                # NoReverseMatch, no link that leads anywhere!
                 continue
+                
+            # Prepare the label for the link with the following priorities:
+            # - a passed in label 
+            # - an explicitly (as the default for it is None unless automatically created) declared related_name
+            # - the verbose_name_plural of the related_model
             if opts.model_name in labels:
                 label = labels[opts.model_name]
             elif rel.related_name:
+                # Automatically created related_names won't look pretty!
                 label = " ".join(capfirst(s) for s in rel.related_name.replace('_', ' ').split())
             else:
                 label = opts.verbose_name_plural
