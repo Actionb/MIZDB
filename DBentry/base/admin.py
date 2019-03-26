@@ -138,6 +138,7 @@ class MIZModelAdmin(admin.ModelAdmin):
             # the pk field does not support iexact lookups (most likely a related field) and
             # ModelAdmin.get_search_results.construct_search tacks on the __iexact lookup, which will result in an error
             # This is fixed in later versions of django.
+            # Models that rely on OneToOneFields (BaseBrochure, etc.) as their primary key can thus not support admin lookups for their pk.
             return search_fields
         # An extra 'pk' search field needs to be removed
         if 'pk' in search_fields:
