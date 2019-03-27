@@ -168,7 +168,7 @@ class TestWizardConfirmationView(ActionViewTestCase):
         view.render = mockv('Rendered form.')
         self.assertEqual(view.post(request), 'Rendered form.')
         self.assertEqual(view.storage.reset.call_count, 1)
-        view.render.assert_called_once()
+        self.assertEqual(view.render.call_count, 1)
         view.storage.current_step = '1'
         
         prefix = 'wizard_confirmation_view' # SessionWizardView -> WizardView -> normalize_name
