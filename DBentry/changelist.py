@@ -21,6 +21,9 @@ class MIZChangeList(ChangeList):
     def __init__(self, request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
                  list_per_page, list_max_show_all, list_editable, model_admin):
+        # Place to store the kwargs for annotations given by an admin_order_field. 
+        # Needs to be declared before super().__init__() as get_ordering_field is called during init.
+        self._annotations = []
         super(MIZChangeList, self).__init__(request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
                  list_per_page, list_max_show_all, list_editable, model_admin)
@@ -168,6 +171,9 @@ class MIZChangeList(ChangeList):
         
         # Set ordering.
         ordering = self.get_ordering(request, qs)
+        # Add any pending annotations required for the ordering of callable list_display items to the queryset.
+        for annotation in self._annotations:
+            qs = qs.annotate(**annotation)
         qs = qs.order_by(*ordering)
 
         # Remove duplicates from results, if necessary
@@ -201,6 +207,14 @@ class MIZChangeList(ChangeList):
                 else:
                     p[k] = v
         return '?%s' % urlencode(sorted(p.items()))
+    
+    def get_ordering_field(self, field_name):
+        # Record any admin_order_field attributes that are dictionaries and thus are meant to be later added as annotations in get_queryset.
+        order_field = super().get_ordering_field(field_name)
+        if isinstance(order_field, dict) and order_field:
+            self._annotations.append(order_field)
+            return list(order_field)[0]
+        return order_field
 
 class AusgabeChangeList(MIZChangeList):
     

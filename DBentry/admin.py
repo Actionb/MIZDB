@@ -471,14 +471,11 @@ class MagazinAdmin(MIZModelAdmin):
         'selects': ['m2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre'], 
         'labels': {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort'}, 
     }
-    
-    def _annotate_for_list_display(self, queryset):
-        return queryset.annotate(anz = Count('ausgabe'))
         
     def anz_ausgaben(self, obj):
         return obj.ausgabe_set.count()
     anz_ausgaben.short_description = 'Anz. Ausgaben'
-    anz_ausgaben.admin_order_field = 'anz'
+    anz_ausgaben.admin_order_field = {'anz': Count('ausgabe')}
 
 @admin.register(_models.memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
@@ -792,13 +789,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
                 }))
         return fieldsets
         
-    def _annotate_for_list_display(self, queryset):
-        return queryset.annotate(jahr = Min('jahre__jahr')).order_by('titel', 'jahr', 'zusammenfassung')
-        
     def jahr_string(self, obj):
         return concat_limit(obj.jahre.all())
     jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = 'jahr'
+    jahr_string.admin_order_field = {'jahr': Min('jahre__jahr')}
     
 @admin.register(_models.Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):

@@ -4,8 +4,8 @@ from .base import AdminTestCase, mockv
 
 from django.contrib.admin.views.main import ChangeList, DisallowedModelAdminLookup
 
-from DBentry.models import artikel
-from DBentry.admin import ArtikelAdmin
+from DBentry.models import artikel, magazin
+from DBentry.admin import ArtikelAdmin, MagazinAdmin
 from DBentry.changelist import MIZChangeList, IncorrectLookupParameters
 
 #TODO: review after having moved the ordering of ausgabe querysets from changelist to querysets
@@ -116,4 +116,32 @@ class TestChangeList(AdminTestCase):
         
         with self.assertRaises(IncorrectLookupParameters):
             cl.get_queryset(request)
+            
+class TestChangeListAnnotations(AdminTestCase):
+    
+    model = magazin
+    model_admin_class = MagazinAdmin
+    test_data_count = 0
+            
+    def test_annotations(self):
+        # Assert that dictionary admin_order_fields are interpreted to be annotations and that those annotations are 
+        # added correclty to the final queryset.
+        # MagazinAdmin should have a callable list_display item that would require annotation: anz_ausgaben
+        try:
+            # syntax magic *snort*: dict items unpacking directly into variables: 
+            # ((key_a, value_a), (key_b, value_b), ...) == dict_items([('a', 1), ('b', 2), ...])
+            (order_field, annotation), = self.model_admin.anz_ausgaben.admin_order_field.items()
+        except ValueError:
+            raise ValueError("admin_order_field for annotations should be a single item dictionary. Is: %s" % self.model_admin.anz_ausgaben.admin_order_field)
+        
+        # Get the index of 'anz_ausgaben' and send a request with the ORDER_VAR 'o' set to that index to get the ChangeList to evaluate 
+        # its list_display items.
+        list_display = self.model_admin.get_list_display(self.get_request())
+        idx = list_display.index('anz_ausgaben')
+        cl = self.get_changelist(self.get_request(data = {'o': str(idx)}))
+        self.assertIsInstance(cl, MIZChangeList, msg = '%s must be a subclass of MIZChangeList' % cl.__class__.__name__)
+        self.assertIn(self.model_admin.anz_ausgaben.admin_order_field, cl._annotations)
+        self.assertIn(order_field, cl.queryset.query.order_by)
+        self.assertIn(order_field, cl.queryset.query.annotations)
+        
         
