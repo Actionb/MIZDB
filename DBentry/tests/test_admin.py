@@ -150,10 +150,29 @@ class AdminTestMethodsMixin(object):
         # search fields are largely declared with the models, the admin classes only add the exact =id lookup
         # (or replace an existing pk_name search field with an exact lookup)
         pk_name = self.model._meta.pk.name
-        self.assertIn('=' + pk_name, self.model_admin.get_search_fields())
+        _backup = self.model_admin.search_fields
+        self.assertIn('=pk' , self.model_admin.get_search_fields())
+        
+        self.model_admin.search_fields = []
+        self.assertIn('=pk' , self.model_admin.get_search_fields())
+        
         self.model_admin.search_fields = [pk_name]
-        self.assertIn('=' + pk_name, self.model_admin.get_search_fields())
+        self.assertIn('=pk', self.model_admin.get_search_fields())
         self.assertNotIn(pk_name, self.model_admin.get_search_fields())
+        
+        self.model_admin.search_fields = ["=" + pk_name]
+        self.assertIn('=pk', self.model_admin.get_search_fields())
+        self.assertNotIn("=" + pk_name, self.model_admin.get_search_fields())
+        
+        self.model_admin.search_fields = ["pk"]
+        self.assertIn('=pk', self.model_admin.get_search_fields())
+        self.assertNotIn("pk", self.model_admin.get_search_fields())
+        
+        self.model_admin.search_fields = ["beep", pk_name, "baap", "pk", "boop", "=" + pk_name]
+        self.assertIn('=pk', self.model_admin.get_search_fields())
+        self.assertEqual(["beep", "=pk", "baap", "boop"], self.model_admin.get_search_fields())
+        
+        self.model_admin.search_fields = _backup
         
     def test_media_prop(self):
         media = self.model_admin.media

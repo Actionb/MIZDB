@@ -143,25 +143,26 @@ class MIZModelAdmin(admin.ModelAdmin):
         return fieldsets
     
     def get_search_fields(self, request=None):
-        search_fields = self.search_fields or list(self.model.get_search_fields())
+        # Replace the first primary key search field with an __iexact primary key lookup or append one if missing.
+        # Remove all duplicates of primary key search fields.
+        search_fields = list(self.search_fields or self.model.get_search_fields())
         if self.model._meta.pk.get_lookup('iexact') is None:
             # the pk field does not support iexact lookups (most likely a related field) and
             # ModelAdmin.get_search_results.construct_search tacks on the __iexact lookup, which will result in an error
             # This is fixed in later versions of django.
             # Models that rely on OneToOneFields (BaseBrochure, etc.) as their primary key can thus not support admin lookups for their pk.
             return search_fields
-        # An extra 'pk' search field needs to be removed
-        if 'pk' in search_fields:
-            search_fields.remove('pk')
-        # add __exact for pk lookups to enable searching for ids
+        pk_found = False
         pk_name = self.model._meta.pk.name
-        if "=" + pk_name in search_fields:
-            pass
-        elif pk_name in search_fields:
-            search_fields.remove(pk_name)
-            search_fields.append("=" + pk_name)
-        else:
-            search_fields.append("=" + pk_name)
+        for search_field in search_fields[:]:
+            if search_field in ('pk', '=pk', pk_name, '=' + pk_name):
+                if not pk_found:
+                    search_fields[search_fields.index(search_field)] = '=pk'
+                else:
+                    search_fields.remove(search_field)
+                pk_found = True
+        if not pk_found:
+            search_fields.append('=pk')
         return search_fields
     
     def add_crosslinks(self, object_id, labels = None):
