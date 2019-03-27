@@ -353,11 +353,12 @@ class AusgabeQuerySet(CNQuerySet):
         result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
         
-        self = self.annotate(
+        clone = self.annotate(
             num = Max('ausgabe_num__num'), 
             monat = Max('ausgabe_monat__monat__ordinal'),
             lnum = Max('ausgabe_lnum__lnum'),  
             jahr = Min('ausgabe_jahr__jahr'), 
         ).order_by(*ordering)
-        return self
+        clone.chronologically_ordered = True
+        return clone
         
