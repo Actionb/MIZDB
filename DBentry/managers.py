@@ -194,6 +194,18 @@ class CNQuerySet(MIZQuerySet):
 
 class AusgabeQuerySet(CNQuerySet):
     
+    chronologically_ordered = False
+    
+    def _clone(self, **kwargs):
+        if 'chronologically_ordered' not in kwargs:
+            kwargs['chronologically_ordered'] = self.chronologically_ordered
+        return super()._clone(**kwargs)        
+        
+    def order_by(self, *args, **kwargs):
+        # Any call to order_by is almost guaranteed to break the chronologic ordering.
+        self.chronologically_ordered = False
+        return super().order_by(*args, **kwargs)
+    
     def find(self, q, ordered = True, **kwargs):
         strat = ValuesDictSearchQuery(self.all(), **kwargs)
         result, exact_match = strat.search(q)
@@ -303,11 +315,12 @@ class AusgabeQuerySet(CNQuerySet):
                 self.filter(pk__in=ids).update(jahrgang=jg)
         
         return update_dict
-                
     
     def chronologic_order(self, ordering = None):
-        if not self.exists() or not self.query.where.children:
+        if self.chronologically_ordered or not self.exists() or not self.query.where.children:
             # Don't bother if queryset is empty or not filtered in any way
+            if self.query.order_by:
+                return self._clone()
             return self.order_by('pk') # django would warn about an unordered list even if it was empty
             
         default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']

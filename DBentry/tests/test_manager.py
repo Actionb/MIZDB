@@ -215,6 +215,35 @@ class TestAusgabeQuerySet(DataTestCase):
         self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
+    def test_keeps_chronologically_ordered_value_after_cloning(self):
+        qs = self.queryset
+        self.assertFalse(qs.chronologically_ordered)
+        self.assertFalse(qs._clone().chronologically_ordered)
+        
+        qs = qs.chronologic_order()
+        self.assertTrue(qs.chronologically_ordered)
+        self.assertTrue(qs._clone().chronologically_ordered)
+        self.assertFalse(self.queryset.chronologically_ordered) # just to make sure I didnt alter the class wide attribute... common gotcha
+        
+    def test_chronologic_order_does_not_order_twice(self):
+        # Assert that chronologic_order does not try to create a chronologic order if it's already *chronologically* ordered.
+        # To check, we mock annotate(), because that method is only called when establishing a new order.
+        qs = self.queryset.order_by()
+        with patch.object(qs, 'annotate') as mocked_annotate:
+            qs = qs.chronologic_order()
+            self.assertNotEqual(mocked_annotate.call_count, 0)
+        
+        # Patch twice to reset the mock
+        with patch.object(qs, 'annotate') as mocked_annotate:
+            qs.chronologic_order()
+            self.assertEqual(mocked_annotate.call_count, 0)
+            
+    def test_order_by_call_disables_chronologic_order(self):
+        # A call of order_by should set chronologically_ordered to False.
+        qs = self.queryset.chronologic_order()
+        self.assertTrue(qs.chronologically_ordered)
+        qs = qs.order_by('magazin')
+        self.assertFalse(qs.chronologically_ordered)
         
 class TestAusgabeIncrementJahrgang(DataTestCase):
     
