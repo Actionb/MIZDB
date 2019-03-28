@@ -317,11 +317,25 @@ class AusgabeQuerySet(CNQuerySet):
         return update_dict
     
     def chronologic_order(self, ordering = None):
-        if self.chronologically_ordered or not self.exists() or not self.query.where.children:
-            # Don't bother if queryset is empty or not filtered in any way
-            if self.query.order_by:
-                return self._clone()
-            return self.order_by('pk') # django would warn about an unordered list even if it was empty
+        """
+        Returns this queryset chronologically ordered if it is filtered to a single magazin.
+        """
+        if self.chronologically_ordered:
+            return self
+            
+        # A chronologic order is (mostly) consistent ONLY within the ausgabe_set of one particular magazin.
+        # Meaning if the queryset contains the ausgaben of more than one magazin, we may end up replacing one
+        # 'poor' ordering (the default one) with another poor chronologic one.
+        
+        # The if condition could also be:
+        #   if self.model._meta.get_field('magazin') not in [child.lhs.target for child in self.query.where.children]
+        # Which would not hit the database.
+        # But I am not sure if lhs.target really specifies the field that was filtered on.
+        if self.only('magazin').distinct().values_list('magazin').count() != 1:
+            # This condition is also True if self is an empty queryset.
+            if ordering is not None:
+                return self.order_by(*ordering)
+            return self.order_by(*self.model._meta.ordering)
             
         default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
         if ordering is None:

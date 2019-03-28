@@ -138,34 +138,36 @@ class TestAusgabeQuerySet(DataTestCase):
     
     def setUp(self):
         super().setUp()
-        self.queryset = self.model.objects.filter(pk__in=self._ids)
         self.ordered_ids = [self.obj3.pk, self.obj1.pk, self.obj5.pk, self.obj6.pk, self.obj4.pk, self.obj2.pk]
 
     def test_chronologic_order(self):
-        # Assert that no expensive ordering is being done on an empty or unfiltered queryset.
-        self.assertEqual(self.queryset.none().chronologic_order().query.order_by, ['pk'])
-        self.assertEqual(self.model.objects.chronologic_order().query.order_by, ['pk'])
+        # Assert that no expensive ordering is being done on an empty or on a queryset with more than one magazin.
+        default_ordering = self.model._meta.ordering
+        queryset = self.model.objects.filter(pk__in=self._ids)
+        self.assertEqual(queryset.none().chronologic_order().query.order_by, default_ordering)
+        make(_models.ausgabe, magazin__magazin_name = 'Bad') # make ausgabe with a new, different magazin
+        self.assertEqual(self.model.objects.chronologic_order().query.order_by, default_ordering)
         
         expected = [
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
         ]
-        qs = self.queryset.chronologic_order()
+        qs = queryset.chronologic_order()
         self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
-        qs = self.queryset.chronologic_order(ordering = [])
+        qs = queryset.chronologic_order(ordering = [])
         self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
-        qs = self.queryset.chronologic_order(ordering = ['pk'])
+        qs = queryset.chronologic_order(ordering = ['pk'])
         self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
-        qs = self.queryset.chronologic_order(ordering = ['-pk'])
+        qs = queryset.chronologic_order(ordering = ['-pk'])
         self.assertEqual(qs.query.order_by, expected[:-1] + ['-pk'])
         self.assertPKListEqual(qs, self.ordered_ids)
         
-        qs = self.queryset.chronologic_order(ordering = ['-magazin', 'sonderausgabe', 'jahr'])
+        qs = queryset.chronologic_order(ordering = ['-magazin', 'sonderausgabe', 'jahr'])
         self.assertEqual(
             qs.query.order_by, 
             ['-magazin', 'sonderausgabe', 'jahr', 'jahrgang', 'monat', 'num', 'lnum', 'e_datum', 'pk']
