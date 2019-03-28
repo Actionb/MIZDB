@@ -158,6 +158,7 @@ class AusgabenAdmin(MIZModelAdmin):
     def anz_artikel(self, obj):
         return obj.artikel_set.count()
     anz_artikel.short_description = 'Anz. Artikel'
+    anz_artikel.admin_order_field = ('anz', Count, 'artikel', {'distinct': True})
     
     def jahr_string(self, obj):
         return concat_limit(obj.ausgabe_jahr_set.all())
@@ -475,7 +476,7 @@ class MagazinAdmin(MIZModelAdmin):
     def anz_ausgaben(self, obj):
         return obj.ausgabe_set.count()
     anz_ausgaben.short_description = 'Anz. Ausgaben'
-    anz_ausgaben.admin_order_field = {'anz': Count('ausgabe')}
+    anz_ausgaben.admin_order_field = ('anz', Count, 'ausgabe', {})
 
 @admin.register(_models.memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
