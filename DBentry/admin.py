@@ -15,9 +15,6 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 
 from DBentry.sites import miz_site
 
-#TODO: add admin_order_field attribute to all sortable callables
-#TODO: crosslinks for verlag,herausgeber etc
-
 class BestandInLine(BaseTabularInline):
     model = _models.bestand
     readonly_fields = ['signatur']
@@ -152,8 +149,6 @@ class AusgabenAdmin(MIZModelAdmin):
     def get_changelist(self, request, **kwargs):
         from .changelist import AusgabeChangeList
         return AusgabeChangeList
-    
-    #TODO: AusgabeQuerySet may override any changes to ordering we do on the changelist
     
     def anz_artikel(self, obj):
         return obj.artikel_set.count()
@@ -459,7 +454,6 @@ class MagazinAdmin(MIZModelAdmin):
         verbose_model = _models.Herausgeber
     class GenreInLine(BaseGenreInline):
         model = _models.magazin.genre.through
-        _models.magazin.genre.through.verbose_name = '' #TODO: what the fuck is this?
         
     index_category = 'Stammdaten'
         
