@@ -112,14 +112,6 @@ class MIZChangeList(ChangeList):
         """ Copy pasted from original ChangeList to switch around ordering and filtering.
             Also allowed the usage of Q items to filter the queryset.
         """
-        # BulkViews redirect
-        #TODO: is this still needed?
-        if request.session.get('qs', {}):
-            qs = self.root_queryset.filter(**request.session.get('qs'))
-            #TODO: keep the qs if you want to return to the filtered changelist? Example: bulk_ausgabe-> edit created -> merge created -> abort -> back to edit created and not the entire cl
-            del request.session['qs']
-            return qs
-        
         # First, we collect all the declared list filters.
         (self.filter_specs, self.has_filters, remaining_lookup_params,
          filters_use_distinct) = self.get_filters(request)

@@ -61,17 +61,6 @@ class TestChangeList(AdminTestCase):
         cl = self.get_changelist(self.get_request())
         with self.assertRaises(IncorrectLookupParameters):
             cl.get_filters(self.get_request(data = {'beep': 'boop'}))
-
-    def test_get_queryset_qs_redirect(self):
-        session = self.client.session
-        ids = [i.pk for i in self.test_data]
-        session['qs'] = dict(id__in=ids)
-        session.save()
-        
-        cl = self.get_changelist(self.get_request())
-        cl_qs = cl.get_queryset(cl.request).order_by('pk')
-        expected_qs =  self.model.objects.filter(pk__in=ids).order_by('pk')
-        self.assertListEqual(list(cl_qs), list(expected_qs))
         
     def test_get_queryset_IncorrectLookupParameters(self):
         cl = self.get_changelist(self.get_request())
