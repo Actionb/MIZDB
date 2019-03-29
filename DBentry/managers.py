@@ -336,24 +336,23 @@ class AusgabeQuerySet(CNQuerySet):
             if ordering is not None:
                 return self.order_by(*ordering)
             return self.order_by(*self.model._meta.ordering)
-            
+        
         default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
         if ordering is None:
             ordering = default_ordering
-            pk_order_item = 'pk'
         else:
-            if 'pk' in ordering:
-                pk_order_item = ordering.pop(ordering.index('pk'))
-            elif '-pk' in ordering:
-                pk_order_item = ordering.pop(ordering.index('-pk'))
-            else:
-                pk_order_item = 'pk'
-                
-            # Remove any leading '-' so we do not append 'magazin' to ['-magazin']
-            stripped_ordering = [i[1:] if i[0] == '-' else i for i in ordering]
-            for o in default_ordering:
-                if o not in stripped_ordering:
-                    ordering.append(o) #NOTE: just append?
+            ordering.extend(default_ordering)
+            
+        pk_name = self.model._meta.pk.name
+        # Retrieve the first item in ordering that refers to the primary key, so we can later append 
+        # it to the final ordering.
+        # It makes no sense to have the queryset be ordered primarily on the primary key.
+        try:
+            pk_order_item = next(filter(lambda i: i in ('pk', '-pk', pk_name, '-' + pk_name), ordering))
+            ordering.remove(pk_order_item)
+        except StopIteration:
+            # No primary key in ordering, use '-pk' as default.
+            pk_order_item = '-pk'
                 
         # Determine if jahr should come before jahrgang in ordering
         jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))

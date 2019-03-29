@@ -149,7 +149,7 @@ class TestAusgabeQuerySet(DataTestCase):
         self.assertEqual(self.model.objects.chronologic_order().query.order_by, default_ordering)
         
         expected = [
-            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', '-pk'
         ]
         qs = queryset.chronologic_order()
         self.assertEqual(qs.query.order_by, expected)
@@ -160,18 +160,15 @@ class TestAusgabeQuerySet(DataTestCase):
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = ['pk'])
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, expected[:-1] + ['pk'])
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = ['-pk'])
-        self.assertEqual(qs.query.order_by, expected[:-1] + ['-pk'])
+        self.assertEqual(qs.query.order_by, expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = ['-magazin', 'sonderausgabe', 'jahr'])
-        self.assertEqual(
-            qs.query.order_by, 
-            ['-magazin', 'sonderausgabe', 'jahr', 'jahrgang', 'monat', 'num', 'lnum', 'e_datum', 'pk']
-        )
+        self.assertEqual(qs.query.order_by, ['-magazin', 'sonderausgabe', 'jahr'] + expected)
         self.assertPKListEqual(qs, self.ordered_ids)
         
     def test_chronologic_order_jahrgang_over_jahr(self):
@@ -180,7 +177,7 @@ class TestAusgabeQuerySet(DataTestCase):
         self.qs_obj4.update(jahrgang = 1)
         
         expected = [
-            'magazin', 'jahrgang', 'jahr', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+            'magazin', 'jahrgang', 'jahr', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', '-pk'
         ]
         qs = self.queryset.chronologic_order()
         self.assertEqual(qs.query.order_by, expected)
@@ -192,7 +189,7 @@ class TestAusgabeQuerySet(DataTestCase):
         _models.ausgabe_num.objects.all().delete()
         _models.ausgabe_lnum.objects.all().delete()
         expected = [
-            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'num', 'monat', 'lnum', 'e_datum', 'pk'
+            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'num', 'monat', 'lnum', 'e_datum', '-pk'
         ]
         qs = self.queryset.chronologic_order()
         self.assertEqual(qs.query.order_by, expected)
@@ -210,7 +207,7 @@ class TestAusgabeQuerySet(DataTestCase):
     def test_update_names_after_chronologic_order(self):
         # Assert that resetting ordering for _update_names does not break the ordering of the underlying queryset.
         expected = [
-            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', 'pk'
+            'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', '-pk'
         ]
         qs = self.queryset.chronologic_order()
         qs._update_names()
