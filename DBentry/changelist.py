@@ -178,32 +178,6 @@ class MIZChangeList(ChangeList):
         else:
             return qs
             
-    def get_query_string(self, new_params=None, remove=None):
-        # Allow the use of '__in' lookup in the query string
-        #NOTE: what does this *actually* do? 
-        if new_params is None: new_params = {}
-        if remove is None: remove = []
-        p = self.params.copy()
-        for r in remove:
-            for k in list(p):
-                if k.startswith(r):
-                    del p[k]
-        for k, v in new_params.items():
-            if v is None:
-                if k in p:
-                    del p[k]
-            else:
-                if k in p and '__in' in k:
-                    in_list = p[k].split(',')
-                    if not v in in_list:
-                        in_list.append(v)
-                    else:
-                        in_list.remove(v)
-                    p[k] = ','.join(in_list)
-                else:
-                    p[k] = v
-        return '?%s' % urlencode(sorted(p.items()))
-        
     def _annotate(self, queryset):
         # Add any pending annotations required for the ordering of callable list_display items to the queryset.
         needs_distinct = False
