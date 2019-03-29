@@ -7,8 +7,6 @@ from django.contrib.admin.views.main import ChangeList, DisallowedModelAdminLook
 from DBentry.models import artikel, ausgabe
 from DBentry.admin import ArtikelAdmin, AusgabenAdmin
 from DBentry.changelist import MIZChangeList, IncorrectLookupParameters
-
-#TODO: review after having moved the ordering of ausgabe querysets from changelist to querysets
         
 class TestChangeList(AdminTestCase):
     

@@ -14,9 +14,6 @@ from django.utils import six
 from django.utils.datastructures import MultiValueDict
 from django.utils.http import urlencode
 
-#TODO: get_ordering will double the ordering fields by getting the default fields first and then extending by the ordering fields given by 
-# the already sorted queryset.query.order_by || SEE TODO AT AusgabeChangeList
-
 class MIZChangeList(ChangeList):
     
     def __init__(self, request, model, list_display, list_display_links,
@@ -212,7 +209,7 @@ class MIZChangeList(ChangeList):
         needs_distinct = False
         if sum(map(len, (self._annotations, queryset.query.annotations))) > 1:
             # If func is Count and there is going to be more than one join, we may need to use distinct = True on all annotations.
-            #TODO: we cannot catch if apply_ordering() is going to add more annotations
+            #NOTE: we cannot catch if apply_ordering() is going to add more annotations
             needs_distinct = True
         for annotation in self._annotations:
             name, func, expression, extra = annotation
@@ -226,11 +223,11 @@ class MIZChangeList(ChangeList):
         return queryset.order_by(*ordering)
     
     def get_ordering_field(self, field_name):
-        # Record any admin_order_field attributes that are dictionaries and thus are meant to be later added as annotations in get_queryset.
+        # Record any admin_order_field attributes that are meant to be later added as annotations in get_queryset.
         order_field = super().get_ordering_field(field_name)
         if isinstance(order_field, (list, tuple)):
             if len(order_field) != 4:
-                raise ImproperlyConfigured("admin_order_field should be either the name of a field or a 4-tuple of (name, func, expression, **extra).")
+                raise ImproperlyConfigured("admin_order_field annotations must be a 4-tuple of (name, func, expression, **extra).")
             self._annotations.append(order_field)
             return order_field[0]
         return order_field

@@ -223,7 +223,7 @@ class ACCreateable(ACBase):
         except:
             return http.JsonResponse({
                 'id':0,
-                'text':'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen Knopf".'
+                'text':'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen" Knopf.'
             })
 
         return http.JsonResponse({
