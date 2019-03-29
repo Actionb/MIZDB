@@ -838,9 +838,15 @@ class KalendarAdmin(BaseBrochureAdmin):
         
     inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
     
-#TODO: sender has an alias so it needs its own AdminModel class
+@admin.register(_models.sender, site = miz_site)
+class SenderAdmin(MIZModelAdmin):
+    class AliasInLine(BaseAliasInline):
+        model = _models.sender_alias
+        
+    inlines = [AliasInLine]
+    
 @admin.register(
-    _models.monat, _models.lagerort, _models.geber, _models.sender, _models.sprache, _models.plattenfirma, _models.provenienz, 
+    _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma, _models.provenienz, 
     _models.Format, _models.FormatTag, _models.FormatSize, _models.FormatTyp, _models.NoiseRed, _models.Organisation, _models.schriftenreihe, 
     site=miz_site
 )
