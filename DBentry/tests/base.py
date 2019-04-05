@@ -317,18 +317,21 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
         return self.client.post(self.changelist_path, data=request_data)
         
     def get_changelist(self, request):
+        return self.model_admin.get_changelist_instance(request)
         list_display = self.model_admin.get_list_display(request)
         list_display_links = self.model_admin.get_list_display_links(request, list_display)
         list_filter = self.model_admin.get_list_filter(request)
         search_fields = self.model_admin.get_search_fields(request)
         list_select_related = self.model_admin.get_list_select_related(request)
+        sortable_by = self.model_admin.get_sortable_by(request)
         
         ChangeList = self.model_admin.get_changelist(request)
         cl = ChangeList(
             request, self.model_admin.model, list_display,
             list_display_links, list_filter, self.model_admin.date_hierarchy,
             search_fields, list_select_related, self.model_admin.list_per_page,
-            self.model_admin.list_max_show_all, self.model_admin.list_editable, self.model_admin,
+            self.model_admin.list_max_show_all, self.model_admin.list_editable, self.model_admin, 
+            sortable_by
         )
         return cl
         
