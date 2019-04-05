@@ -104,7 +104,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         # Overwritten since get_queryset() may return a list (of exact matches, startswith matches and contains matches) now too.
         # Plus, autocomplete views have a model attribute anyhow. This avoids doing anything expensive in get_queryset.
         """Return True if the user has the permission to add a model."""
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return False
         
         #opts = self.get_queryset().model._meta <--- Overwritten
