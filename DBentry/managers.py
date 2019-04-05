@@ -368,15 +368,25 @@ class AusgabeQuerySet(CNQuerySet):
         
         # Find the best criteria to order with, which might be either: num, lnum, monat or e_datum
         # Count the presence of the different criteria and sort them accordingly.
-        # Account for the joins by taking each sum individually.
-        # Since sorted() is stable, we can set the default order to (lnum, monat, num) in case any sum values are equal.
-        counted = OrderedDict(chain( 
-            self.annotate(c = Count('ausgabe_num')).aggregate(num__sum = Sum('c')).items(), 
-            self.annotate(c = Count('ausgabe_monat')).aggregate(monat__sum = Sum('c')).items(),
-            self.annotate(c = Count('ausgabe_lnum')).aggregate(lnum__sum = Sum('c')).items(), 
-            self.annotate(c = Count('e_datum')).aggregate(e_datum__sum = Sum('c')).items(), 
-        ))
-        criteria = sorted(counted.items(), key = lambda itemtpl: itemtpl[1], reverse = True)
+        # NOTE: tests succeed with or without distinct = True
+        counted = self.aggregate(
+            num__sum = Count('ausgabe_num', distinct = True), 
+            monat__sum = Count('ausgabe_monat', distinct = True), 
+            lnum__sum = Count('ausgabe_lnum', distinct = True), 
+            e_datum__sum = Count('e_datum', distinct = True), 
+        )
+        #TODO: this should be the default (due to chronologic accuracy):
+        default_criteria_ordering = ['e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
+        default_criteria_ordering = ['num__sum', 'monat__sum', 'lnum__sum', 'e_datum__sum']
+        
+        # Tuples are sorted lexicographically in ascending order: if any item of two tuples is the same, it goes on to the next item:
+        # sorted([(1, 'c'), (1, 'b'), (2, 'a')]) = [(1,'b'), (1, 'c'), (2, 'a')]
+        # In this case, we want to order the sums (tpl[1]) in descending, i.e. reverse, order (hence the minus operand)
+        # and if any sums are equal, the order of sum_names in the defaults decides.
+        criteria = sorted(
+            counted.items(), 
+            key = lambda itemtpl: (-itemtpl[1], default_criteria_ordering.index(itemtpl[0]))
+        )
         result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
         
