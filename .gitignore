@@ -25,7 +25,7 @@ DBentry/tests/timed/timed_test_getname\.txt
 
 *.e4p
 
-\.eric5project/
+\.eric*
 
 tests\.txt
 
