@@ -184,7 +184,7 @@ class TestAusgabeQuerySet(DataTestCase):
         
     def test_chronologic_order_criteria_equal(self):
         # If none of the four criteria dominate, the default order should be:
-        # num, monat, lnum, e_datum
+        # num, monat, lnum, e_datum #TODO: great, the test is wrong... default should be lnum, monat, num, e_datum
         _models.ausgabe_monat.objects.all().delete()
         _models.ausgabe_num.objects.all().delete()
         _models.ausgabe_lnum.objects.all().delete()

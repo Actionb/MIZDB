@@ -11,6 +11,7 @@ from DBentry.utils import concat_limit
 from DBentry.managers import AusgabeQuerySet
 
 #TODO: allow searching by ISSN
+#TODO: field choices to enums --> ausgabe.UNBEARBEITET -> 'unb'
 
 class person(ComputedNameModel):
     vorname = models.CharField(**CF_ARGS_B)

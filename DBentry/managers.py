@@ -315,7 +315,8 @@ class AusgabeQuerySet(CNQuerySet):
                 self.filter(pk__in=ids).update(jahrgang=jg)
         
         return update_dict
-    
+
+    #TODO: rename chronologic_order to chronological_order ??
     def chronologic_order(self, ordering = None):
         """
         Returns this queryset chronologically ordered if it is filtered to a single magazin.
