@@ -592,8 +592,8 @@ class buch(BaseModel):
         return str(self.titel)
         
 class Herausgeber(ComputedNameModel):
-    person = models.ForeignKey('person', blank = True, null = True)
-    organisation = models.ForeignKey('Organisation', blank = True, null = True)
+    person = models.ForeignKey('person', on_delete = models.CASCADE, blank = True, null = True)
+    organisation = models.ForeignKey('Organisation', on_delete = models.CASCADE, blank = True, null = True)
     
     name_composing_fields = ['person___name', 'organisation__name']    
     
