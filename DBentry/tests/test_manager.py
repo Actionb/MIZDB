@@ -142,7 +142,7 @@ class TestAusgabeQuerySet(DataTestCase):
 
     def test_chronologic_order(self):
         # Assert that no expensive ordering is being done on an empty or on a queryset with more than one magazin.
-        default_ordering = self.model._meta.ordering
+        default_ordering = tuple(self.model._meta.ordering)
         queryset = self.model.objects.filter(pk__in=self._ids)
         self.assertEqual(queryset.none().chronologic_order().query.order_by, default_ordering)
         make(_models.ausgabe, magazin__magazin_name = 'Bad') # make ausgabe with a new, different magazin
@@ -152,23 +152,23 @@ class TestAusgabeQuerySet(DataTestCase):
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', '-pk'
         ]
         qs = queryset.chronologic_order()
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, tuple(expected))
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = [])
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, tuple(expected))
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = ['pk'])
-        self.assertEqual(qs.query.order_by, expected[:-1] + ['pk'])
+        self.assertEqual(qs.query.order_by, tuple(expected[:-1] + ['pk']))
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = ['-pk'])
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, tuple(expected))
         self.assertPKListEqual(qs, self.ordered_ids)
         
         qs = queryset.chronologic_order(ordering = ['-magazin', 'sonderausgabe', 'jahr'])
-        self.assertEqual(qs.query.order_by, ['-magazin', 'sonderausgabe', 'jahr'] + expected)
+        self.assertEqual(qs.query.order_by, tuple(['-magazin', 'sonderausgabe', 'jahr'] + expected))
         self.assertPKListEqual(qs, self.ordered_ids)
         
     def test_chronologic_order_jahrgang_over_jahr(self):
@@ -180,7 +180,7 @@ class TestAusgabeQuerySet(DataTestCase):
             'magazin', 'jahrgang', 'jahr', 'sonderausgabe', 'monat', 'num', 'lnum', 'e_datum', '-pk'
         ]
         qs = self.queryset.chronologic_order()
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, tuple(expected))
         
     def test_chronologic_order_criteria_equal(self):
         # If none of the four criteria dominate, the default order should be:
@@ -192,7 +192,7 @@ class TestAusgabeQuerySet(DataTestCase):
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe', 'num', 'monat', 'lnum', 'e_datum', '-pk'
         ]
         qs = self.queryset.chronologic_order()
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, tuple(expected))
     
     def test_find_order(self):
         result_ids = [i[0] for i in self.queryset.chronologic_order().find('2000')]
@@ -211,17 +211,17 @@ class TestAusgabeQuerySet(DataTestCase):
         ]
         qs = self.queryset.chronologic_order()
         qs._update_names()
-        self.assertEqual(qs.query.order_by, expected)
+        self.assertEqual(qs.query.order_by, tuple(expected))
         self.assertPKListEqual(qs, self.ordered_ids)
         
     def test_keeps_chronologically_ordered_value_after_cloning(self):
         qs = self.queryset
         self.assertFalse(qs.chronologically_ordered)
-        self.assertFalse(qs._clone().chronologically_ordered)
+        self.assertFalse(qs._chain().chronologically_ordered)
         
         qs = qs.chronologic_order()
         self.assertTrue(qs.chronologically_ordered)
-        self.assertTrue(qs._clone().chronologically_ordered)
+        self.assertTrue(qs._chain().chronologically_ordered)
         self.assertFalse(self.queryset.chronologically_ordered) # just to make sure I didnt alter the class wide attribute... common gotcha
         
     def test_chronologic_order_does_not_order_twice(self):
