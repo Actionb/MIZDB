@@ -579,9 +579,6 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name':'veranstaltung',  'fld_name':'musiker', 'label':'Veranstaltungen (1)'}, 
         {'model_name':'video',          'fld_name':'musiker', 'label':'Video Materialien (1)'},
     ]
-    
-    def test_media_prop(self):
-        self.assertTrue('admin/js/utils.js' in self.model_admin.media._js)
         
     def test_add_extra_context(self):
         extra = self.model_admin.add_extra_context(object_id=self.obj1.pk)
