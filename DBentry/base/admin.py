@@ -223,7 +223,8 @@ class MIZModelAdmin(admin.ModelAdmin):
     def media(self):
         media = super().media
         if self.googlebtns:
-            media.add_js(['admin/js/utils.js']) # contains the googlebtns script
+            from django.forms import Media
+            return media + Media(js = ['admin/js/utils.js']) # contains the googlebtns script
         return media
         
     def add_extra_context(self, request = None, extra_context = None, object_id = None):
