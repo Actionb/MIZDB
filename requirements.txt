@@ -4,7 +4,7 @@ coverage==4.4.2
 data-importer==3.0.2
 Django==2.2
 django-admin-list-filter-dropdown==1.0.1
-django-autocomplete-light==3.2.7
+django-autocomplete-light>=3.3.1
 django-formtools==2.1
 django-test-without-migrations==0.6
 et-xmlfile==1.0.1
