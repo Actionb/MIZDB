@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from unittest import skip
 
 from .base import AdminTestCase, mockv
 
@@ -56,7 +57,8 @@ class TestChangeList(AdminTestCase):
         remaining_lookup_params = cl.get_filters(self.get_request(data= {'ausgabe':'1'}))[2]
         self.assertIn('ausgabe', remaining_lookup_params)
         self.assertEqual(remaining_lookup_params['ausgabe'], '1')
-        
+    
+    @skip("get_filters cannot raise a FieldDoesNotExist anymore since django 2.x")
     def test_get_filters_FieldDoesNotExist(self):
         cl = self.get_changelist(self.get_request())
         with self.assertRaises(IncorrectLookupParameters):

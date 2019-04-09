@@ -105,7 +105,8 @@ class MIZChangeList(ChangeList):
                     use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
             return filter_specs, bool(filter_specs), remaining_lookup_params, use_distinct
         except FieldDoesNotExist as e:
-            six.reraise(IncorrectLookupParameters, IncorrectLookupParameters(e), sys.exc_info()[2])
+            #NOTE: lookup_needs_distinct cannot raise a FieldDoesNotExist error anymore since django 2.x
+            raise IncorrectLookupParameters(e) from e
             
     
     def get_queryset(self, request):
