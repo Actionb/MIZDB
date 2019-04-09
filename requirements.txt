@@ -2,7 +2,7 @@
 appdirs==1.4.3
 coverage==4.4.2
 data-importer==3.0.2
-Django==1.11
+Django==2.2
 django-admin-list-filter-dropdown==1.0.1
 django-autocomplete-light==3.2.7
 django-formtools==2.1
