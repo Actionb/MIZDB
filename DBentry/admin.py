@@ -172,13 +172,14 @@ class AusgabenAdmin(MIZModelAdmin):
             return concat_limit(obj.ausgabe_monat_set.values_list('monat__abk', flat=True))
     monat_string.short_description = 'Monate'
     
+    #TODO: replace zbestand/dbestand with just a count of bestand (zbestand should be 1 at all times anyway)
     def zbestand(self, obj):
-        return obj.bestand_set.filter(lagerort=_models.lagerort.objects.filter(pk=ZRAUM_ID)).exists()
+        return obj.bestand_set.filter(lagerort=_models.lagerort.objects.filter(pk=ZRAUM_ID).first()).exists()
     zbestand.short_description = 'Bestand: ZRaum'
     zbestand.boolean = True
     
     def dbestand(self, obj):
-        return obj.bestand_set.filter(lagerort=_models.lagerort.objects.filter(pk=DUPLETTEN_ID)).exists()
+        return obj.bestand_set.filter(lagerort=_models.lagerort.objects.filter(pk=DUPLETTEN_ID).first()).exists()
     dbestand.short_description = 'Bestand: Dublette'
     dbestand.boolean = True
     
