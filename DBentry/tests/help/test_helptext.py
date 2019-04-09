@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from .base import ModelAdminHelpTextTestCase, FormViewHelpTextMixin
 from ..base import MyTestCase, FormTestCase
 
@@ -126,14 +128,12 @@ class TestBaseHelpText(MyTestCase):
         self.assertIn('breadcrumbs_title', context)
         self.assertEqual(context['breadcrumbs_title'], 'Boop')
         
-        
 class TestFormViewHelpText(FormViewHelpTextMixin, FormTestCase):
-    
     dummy_bases = (django_forms.Form, )
-    dummy_attrs = {
-        'alice': django_forms.CharField(label = 'Alice', help_text = 'Helptext for Alice'), 
-        'bob': django_forms.CharField(label = 'Bob', help_text = 'Helptext for Bob'), 
-    }
+    dummy_attrs = OrderedDict([
+        ('alice', django_forms.CharField(label = 'Alice', help_text = 'Helptext for Alice')), 
+        ('bob', django_forms.CharField(label = 'Bob', help_text = 'Helptext for Bob')), 
+    ])
     helptext_class = type('Dummy', (FormViewHelpText, ), {'fields': {'alice': 'beep boop'}})
     
     def test_init_adds_fields(self):
