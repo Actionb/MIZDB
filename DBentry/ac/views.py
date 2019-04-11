@@ -145,7 +145,7 @@ class ACCreateable(ACBase):
             model_name = kwargs.pop('model_name', '')
             self.model = get_model_from_string(model_name)
         self.creator = Creator(self.model, raise_exceptions = False)
-        self.create_field = self.create_field or kwargs.pop('create_field', None)
+        self.create_field = self.create_field or kwargs.pop('create_field', None) #TODO: super().dispatch() also sets create_field  
         return super().dispatch(*args, **kwargs)
         
     def createable(self, text, creator = None):
