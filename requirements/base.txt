@@ -1,0 +1,28 @@
+-c constraints.txt
+# django base
+Django==2.2
+
+# django extensions/apps
+django-test-without-migrations==0.6
+
+# autocomplete HumanName creator/name utils
+nameparser==0.5.7
+
+# import/export
+data-importer==3.0.2
+
+# autocomplete
+django-autocomplete-light==3.3.2
+
+# WizardViews
+django-formtools==2.1
+
+# ISSN/ISBN fields
+python-stdnum==1.8.1
+
+# DBentry's own factory
+factory-boy==2.11.1
+
+
+setuptools==40.9.0
+wheel==0.33.1
