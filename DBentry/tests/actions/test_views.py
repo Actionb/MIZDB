@@ -449,7 +449,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
         management_form = {'current_step':0}
         request_data.update(management_form)
-        form_data = {'original':None}
+        form_data = {'original':''}
         request_data.update(form_data)
         
         response = self.client.post(self.changelist_path, data=request_data)

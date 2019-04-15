@@ -18,13 +18,13 @@ class MIZChangeList(ChangeList):
     
     def __init__(self, request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
-                 list_per_page, list_max_show_all, list_editable, model_admin):
+                 list_per_page, list_max_show_all, list_editable, model_admin, sortable_by):
         # Place to store the kwargs for annotations given by an admin_order_field. 
         # Needs to be declared before super().__init__() as get_ordering_field is called during init.
         self._annotations = []
         super(MIZChangeList, self).__init__(request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
-                 list_per_page, list_max_show_all, list_editable, model_admin)
+                 list_per_page, list_max_show_all, list_editable, model_admin, sortable_by)
         # Save the request (in its QueryDict form) so asf_tag.advanced_search_form(cl) can access it
         self.request = request
         
@@ -105,7 +105,8 @@ class MIZChangeList(ChangeList):
                     use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
             return filter_specs, bool(filter_specs), remaining_lookup_params, use_distinct
         except FieldDoesNotExist as e:
-            six.reraise(IncorrectLookupParameters, IncorrectLookupParameters(e), sys.exc_info()[2])
+            #NOTE: lookup_needs_distinct cannot raise a FieldDoesNotExist error anymore since django 2.x
+            raise IncorrectLookupParameters(e) from e
             
     
     def get_queryset(self, request):

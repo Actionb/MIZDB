@@ -1,5 +1,6 @@
-from django.urls import reverse, exceptions
+from django.urls import reverse, exceptions, path
 
+from DBentry.help.views import ModelAdminHelpView, FormHelpView, HelpIndexView
 from DBentry.utils import get_model_admin_for_model
 
 class HelpRegistry(object):
@@ -50,30 +51,25 @@ class HelpRegistry(object):
                 pass
         return ''
     
-    def get_urls(self):
-        from django.conf.urls import url
-        from DBentry.help.views import ModelAdminHelpView, FormHelpView, HelpIndexView
-        
+    def get_urls(self):        
         urlpatterns = []
         for model_admin in self._modeladmins:
             if not self.is_registered(model_admin):
                 continue
             helptext, url_name = self._registry[model_admin]
-            regex = r'^{}/'.format(model_admin.model._meta.model_name)
             view_func = ModelAdminHelpView.as_view(model_admin = model_admin, helptext_class = helptext, registry = self)
-            urlpatterns.append(url(regex, view_func, name = url_name))
+            urlpatterns.append(path(model_admin.model._meta.model_name + '/', view_func, name = url_name))
         
         for formview in self._formviews:
             if not self.is_registered(formview):
                 continue
             helptext, url_name = self._registry[formview]
-            regex = '^{}/'.format(url_name.replace('help_', ''))
             view_func = FormHelpView.as_view(target_view_class = formview, helptext_class = helptext)
-            urlpatterns.append(url(regex, view_func, name = url_name))
+            urlpatterns.append(path(url_name.replace('help_', '') + '/', view_func, name = url_name))
             
         # Don't forget the index page
         urlpatterns.append(
-            url(r'', HelpIndexView.as_view(registry = self), name = 'help_index')
+            path('', HelpIndexView.as_view(registry = self), name = 'help_index')
         )
         return urlpatterns
         

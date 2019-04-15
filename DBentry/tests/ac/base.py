@@ -44,7 +44,7 @@ class ACViewTestMethodMixin(object):
         # Assert that the ordering of the queryset returned by the view matches the ordering of the model.
         view = self.get_view()
         expected = self.model._meta.ordering
-        qs_order = view.do_ordering(self.queryset).query.order_by
+        qs_order = list(view.do_ordering(self.queryset).query.order_by)
         self.assertEqual(qs_order, expected)
         
     def test_apply_q(self):

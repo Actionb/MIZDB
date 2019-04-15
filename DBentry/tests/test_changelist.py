@@ -1,8 +1,9 @@
 from unittest.mock import patch
+from unittest import skip
 
 from .base import AdminTestCase, mockv
 
-from django.contrib.admin.views.main import ChangeList, DisallowedModelAdminLookup
+from django.contrib.admin.views.main import ChangeList, DisallowedModelAdminLookup, ORDER_VAR
 
 from DBentry.models import artikel, ausgabe
 from DBentry.admin import ArtikelAdmin, AusgabenAdmin
@@ -56,7 +57,8 @@ class TestChangeList(AdminTestCase):
         remaining_lookup_params = cl.get_filters(self.get_request(data= {'ausgabe':'1'}))[2]
         self.assertIn('ausgabe', remaining_lookup_params)
         self.assertEqual(remaining_lookup_params['ausgabe'], '1')
-        
+    
+    @skip("get_filters cannot raise a FieldDoesNotExist anymore since django 2.x")
     def test_get_filters_FieldDoesNotExist(self):
         cl = self.get_changelist(self.get_request())
         with self.assertRaises(IncorrectLookupParameters):
@@ -72,6 +74,12 @@ class TestChangeListAnnotations(AdminTestCase):
     model = ausgabe
     model_admin_class = AusgabenAdmin
     test_data_count = 0
+    
+    def test_get_ordering_field(self):
+        list_display = self.model_admin.get_list_display(self.get_request())
+        idx = list_display.index('anz_artikel') # + 1 as 'action_checkbox' is now the first part in list_display
+        cl = self.get_changelist(self.get_request(data = {ORDER_VAR: str(idx)}))
+        self.assertEqual(cl.get_ordering_field('anz_artikel'), 'anz')
             
     def test_annotations(self):
         # Assert that dictionary admin_order_fields are interpreted to be annotations and that those annotations are 
@@ -82,14 +90,13 @@ class TestChangeListAnnotations(AdminTestCase):
         # Get the index of 'anz_artikel' and send a request with the ORDER_VAR 'o' set to that index to get the ChangeList to evaluate 
         # its list_display items.
         list_display = self.model_admin.get_list_display(self.get_request())
-        idx = list_display.index('anz_artikel')
-        cl = self.get_changelist(self.get_request(data = {'o': str(idx)}))
+        idx = list_display.index('anz_artikel') + 1  # + 1 as 'action_checkbox' is now the first part in list_display
+        cl = self.get_changelist(self.get_request(data = {ORDER_VAR: str(idx)}))
         self.assertIsInstance(cl, MIZChangeList, msg = '%s must be a subclass of MIZChangeList' % cl.__class__.__name__)
         self.assertIn(self.model_admin.anz_artikel.admin_order_field, cl._annotations)
         self.assertIn(order_field, cl.queryset.query.order_by)
         self.assertIn(order_field, cl.queryset.query.annotations)
         annotation = cl.queryset.query.annotations['anz']
         self.assertIsInstance(annotation, func)
-        self.assertIn('distinct', annotation.extra)
-        self.assertEqual(annotation.extra['distinct'], 'DISTINCT ') #  yes, the trailing whitespace is intentional
+        self.assertTrue(annotation.distinct)
         

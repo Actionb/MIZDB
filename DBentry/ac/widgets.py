@@ -152,6 +152,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 # forward with no data-placeholder-text
                 # the widget is created when django initializes, not when the view is called
                 # apparently that is too early for translations...
+                #TODO: maybe this is fixed in DAL 3.2.10 (#871)?
                 placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
                 
                 # Try to find the verbose_name of the source formfield of the forward.

@@ -16,11 +16,12 @@ Including another URLconf
 from django.conf.urls import url,  include
 from django.contrib import admin
 from DBentry.admin import miz_site
+from django.urls import include, path
 
 urlpatterns = [
-    url(r'^mizdb/', include('DBentry.urls')), # fallback?
-    url(r'^admin/', miz_site.urls), 
-    url(r'^admin/', include('DBentry.urls'))
+    path('mizdb/', include('DBentry.urls')), # fallback?
+    path('admin/', miz_site.urls), 
+    path('admin/', include('DBentry.urls'))
 ]
 
 from django.conf import settings

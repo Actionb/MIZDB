@@ -30,7 +30,7 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         with self.add_urls():
             self.assertEqual(self.registry.help_url_for_view(registered_model_admin), '/admin/help/artikel/')
             self.assertEqual(self.registry.help_url_for_view(unregistered_model_admin), '')
-            
+        
     def test_get_urls(self):
         from DBentry.bulk.views import BulkAusgabe
         modeladmin_helptext = type('ArtikelHelpText', (ModelAdminHelpText, ), {'model':artikel})
@@ -44,7 +44,7 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         modeladmin_pattern, formview_pattern, index_pattern = urls
         
         # MODELADMIN PAGE
-        self.assertEqual(modeladmin_pattern._regex, r'^artikel/')
+        self.assertEqual(modeladmin_pattern.pattern._route, 'artikel/')
         self.assertEqual(modeladmin_pattern.name, 'help_artikel')
         self.assertEqual(modeladmin_pattern.callback.view_class, ModelAdminHelpView)
         expected_kwargs = {
@@ -55,7 +55,7 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         self.assertEqual(modeladmin_pattern.callback.view_initkwargs, expected_kwargs)
         
         # FORMVIEW PAGE
-        self.assertEqual(formview_pattern._regex, r'^bulk/')
+        self.assertEqual(formview_pattern.pattern._route, 'bulk/')
         self.assertEqual(formview_pattern.name, 'help_bulk')
         self.assertEqual(formview_pattern.callback.view_class, FormHelpView)
         expected_kwargs = {
@@ -65,7 +65,7 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         self.assertEqual(formview_pattern.callback.view_initkwargs, expected_kwargs)
         
         # INDEX PAGE
-        self.assertEqual(index_pattern._regex, '')
+        self.assertEqual(index_pattern.pattern._route, '')
         self.assertEqual(index_pattern.name, 'help_index')
         self.assertEqual(index_pattern.callback.view_class, HelpIndexView)
         expected_kwargs = {

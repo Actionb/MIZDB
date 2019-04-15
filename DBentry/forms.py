@@ -211,14 +211,12 @@ class MIZAdminForm(forms.Form):
             media += fieldset.media
         # Ensure jquery proper is loaded first before any other files that might reference it
         # Add the django jquery init file (it includes jquery into django's namespace)
-        if 'admin/js/jquery.init.js' not in media._js:
-            media._js.insert(0,'admin/js/jquery.init.js')
         from django.conf import settings
-        jquery_path = 'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min')
-        if jquery_path in media._js:
-            media._js.remove(jquery_path)
-        media._js.insert(0, jquery_path)
-        return media
+        jquery_media = forms.Media(js  = [
+            'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min'), 
+            'admin/js/jquery.init.js' 
+        ])
+        return jquery_media + media
         
     @cached_property
     def changed_data(self):
