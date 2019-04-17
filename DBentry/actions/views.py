@@ -330,7 +330,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         
     def action_allowed(self):
         from django.db.models import Count
-        ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0)
+        ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
         if ausgaben_with_artikel.exists():
             msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {}"
             msg_text = msg_text.format(link_list(self.request, ausgaben_with_artikel))
