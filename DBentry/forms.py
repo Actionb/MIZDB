@@ -190,7 +190,6 @@ class MIZAdminForm(forms.Form):
         css = {
             'all' : ('admin/css/forms.css', )
         }
-        js = ['admin/js/popup.js']
     
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
