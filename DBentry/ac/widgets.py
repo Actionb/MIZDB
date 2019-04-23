@@ -44,10 +44,11 @@ class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multi
 class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
     
     class Media:
-        js  = ['admin/js/admin/RelatedObjectLookups.js']
+        js  = ['admin/js/jquery.init.js', 'admin/js/admin/RelatedObjectLookups.js']
     
     def __init__(self, widget, related_model, remote_field_name = 'id', 
             can_add_related=True, can_change_related=True, can_delete_related=True):
+            #TODO: this is not calling super().init!
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         self.choices = widget.choices
