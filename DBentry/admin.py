@@ -788,7 +788,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     def jahr_string(self, obj):
         return concat_limit(obj.jahre.all())
     jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = {'jahr': Min('jahre__jahr')}
+    jahr_string.admin_order_field = ('jahr', Min, ('jahre__jahr'), {})
     
 @admin.register(_models.Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
