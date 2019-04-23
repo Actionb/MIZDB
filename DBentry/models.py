@@ -195,7 +195,6 @@ class ausgabe(ComputedNameModel):
         ordering = ['magazin']
         permissions = [
             ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'), 
-            ('alter_data_ausgabe', 'Aktion: Daten verändern.')
         ]
         
     @classmethod
