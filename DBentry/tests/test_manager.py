@@ -693,10 +693,19 @@ class TestDuplicates(DataTestCase):
         self.assertEqual(dupes[0][-1], 2)
         self.assertEqual(dupes[0][:-1], ('News Aktuell', 'TestArtikel1', self.ausgabe_obj.pk))
             
-    
-            
-            
-            
+    def test_qs_dupes(self):
+        dupes = self.model.objects.all().qs_dupes('schlagzeile')
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupes = self.model.objects.all().qs_dupes('ausgabe_id')
+        dupe_count = dupes.values_list('ausgabe_id__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupes = self.model.objects.all().qs_dupes('schlagzeile', 'ausgabe_id')
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupes = self.model.objects.all().qs_dupes('schlagzeile', 'zusammenfassung', 'ausgabe_id')
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 2)
             
             
         

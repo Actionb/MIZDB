@@ -77,6 +77,15 @@ class MIZQuerySet(models.QuerySet):
                     rslt.append(tpl + (c, ))
         return rslt
         
+    def qs_dupes(self, *fields):
+        annotations, filters, ordering = {}, {}, []
+        for field in fields:
+            count_name = field + '__count'
+            annotations[count_name] = models.Count(field)
+            filters[count_name + '__gt'] = 1
+            ordering.append('-' + count_name)
+        return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
+        
     def values_dict(self, *flds, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
         An extension of QuerySet.values(). 
