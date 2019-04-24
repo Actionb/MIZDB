@@ -651,3 +651,52 @@ class TestBuchQuerySet(DataTestCase):
         self.assertIn(self.obj1, self.queryset.filter(EAN=ean_8))
         ean_13 = '1-234567-890128'
         self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))
+
+class TestDuplicates(DataTestCase):
+    
+    model = _models.artikel
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.test_data = []
+        cls.ausgabe_obj = make(_models.ausgabe)
+        data = {'schlagzeile': 'News Aktuell', 'ausgabe': cls.ausgabe_obj}
+        
+        # Create 9 objects with the same schlagzeile and ausgabe but different zusammenfassung
+        for i in range(1, 10):
+            obj = make(_models.artikel, zusammenfassung = 'TestArtikel%d' % i, **data)
+            setattr(cls, 'obj%d' % i, obj)
+            cls.test_data.append(obj)
+        
+        # Create a duplicate of cls.obj1 with zusammenfassung = TestArtikel1
+        cls.duplicate = cls.obj10 = make(_models.artikel, zusammenfassung = 'TestArtikel1', **data)
+        
+        # Create some other random objects 
+        for i in range(1, 6):
+            obj = make(_models.artikel)
+            setattr(cls, 'obj%d' % (i + 10), obj)
+            cls.test_data.append(obj)
+        
+    def test_single_field_dupes(self):
+        dupe_count = self.model.objects.all().single_field_dupes('schlagzeile').values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupe_count = self.model.objects.all().single_field_dupes('ausgabe_id').values_list('ausgabe_id__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        
+    def test_multi_field_dupes(self):
+        dupes = self.model.objects.all().multi_field_dupes('schlagzeile', 'ausgabe_id')
+        self.assertEqual(len(dupes), 1)
+        self.assertEqual(dupes[0][-1], 10) # count is appended to the data tuple -> tpl + (c,)
+        dupes = self.model.objects.all().multi_field_dupes('schlagzeile', 'zusammenfassung', 'ausgabe_id')
+        self.assertEqual(len(dupes), 1)
+        self.assertEqual(dupes[0][-1], 2)
+        self.assertEqual(dupes[0][:-1], ('News Aktuell', 'TestArtikel1', self.ausgabe_obj.pk))
+            
+    
+            
+            
+            
+            
+            
+        
