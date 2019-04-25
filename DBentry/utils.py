@@ -437,7 +437,47 @@ def make_simple_link(url, label, is_popup, as_listitem = False):
         label = label
     )
     
-
+def ensure_jquery(media):
+    """
+    Ensure that jquery is loaded first and in the right order (jquery.js -> jquery.init.js).
+    Can be called with a media object or be used as a method decorator.
+    """
+    def _ensure_jquery(_media):
+        from django.conf import settings
+        jquery_base = 'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min')
+        jquery_init = 'admin/js/jquery.init.js' 
+        if not _media._js_lists:
+            _media._js_lists.append([jquery_base, jquery_init])
+            return _media
+            
+        for js_list in _media._js_lists:
+            # insert jquery_base at the beginning and jquery_init right after; remove pre-existing entries if necessary
+            if jquery_base in js_list:
+                js_list.remove(jquery_base)
+            js_list.insert(0, jquery_base)
+            if jquery_init in js_list:
+                js_list.remove(jquery_init)
+            js_list.insert(1, jquery_init)
+        return _media
+        
+    def wrapper(attr):
+        # Use the closure, Luke!
+        def decorator(instance):
+            return _ensure_jquery(getattr(media, attr)(instance))
+        return decorator
+        
+    from django.forms import Media
+    if isinstance(media, Media):
+        # Directly working on the media object
+        return _ensure_jquery(media)
+    elif isinstance(media, property):
+        # Decorating the media property; decorator will try media.__get__(instance)
+        return property(wrapper('__get__'))
+    else:
+        # Decorating the media func; decorator will try media.__call__(instance)
+        return wrapper('__call__')
+    
+        
 ##############################################################################################################
 # general utilities
 ##############################################################################################################
