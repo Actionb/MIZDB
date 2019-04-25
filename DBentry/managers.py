@@ -98,8 +98,8 @@ class MIZQuerySet(models.QuerySet):
             count_name = field + '__count'
             annotations[count_name] = models.Count(field)
             filters[count_name + '__gt'] = 1
-            ordering.append('-' + count_name)
-        return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
+            ordering.append('-' + count_name) #NOTE: all the counts of fields should be the same for each record => we only need to order by one of them
+        return self.exclude_empty(*fields).values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
         
     def values_dict(self, *flds, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """

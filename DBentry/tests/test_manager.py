@@ -810,6 +810,36 @@ class TestDuplicates(DataTestCase):
         dupes = self.model.objects.all().qs_dupes('schlagzeile', 'zusammenfassung', 'ausgabe_id')
         dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
         self.assertEqual(dupe_count, 2)
+        
+    def test_qs_dupes_m2m(self):
+        # Assert that qs_dupes finds duplicates across m2m relationships.
+        # Baseline test. Establish that qs_dupes works..
+        fields = ['schlagzeile', 'zusammenfassung', 'ausgabe_id']
+        dupes = self.model.objects.all().qs_dupes(*fields)
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 2)
+        
+        fields.append('genre')
+        dupes = self.model.objects.all().qs_dupes(*fields)
+        msg = "No duplicates expected for {!s}: {}"
+        self.assertFalse(dupes.exists(), msg = msg.format(fields, "no artikel has any genre"))
+        
+        # Add a genre to self.duplicate; but no other artikel has a genre yet: no duplicates
+        g = make(_models.genre)
+        _models.artikel.genre.rel.through.objects.create(artikel = self.duplicate, genre = g)
+        self.assertFalse(self.model.objects.all().qs_dupes(*fields).exists(), msg = msg.format(fields, "only one artikel has a genre"))
+        
+        # Add another random genre to self.obj1; since that genre != g: no duplicates
+        _models.artikel.genre.rel.through.objects.create(artikel = self.obj1, genre = make(_models.genre))
+        self.assertFalse(self.model.objects.all().qs_dupes(*fields).exists(), msg = msg.format(fields, "no two artikel share the same genre"))
+        
+        # Add the same genre of self.duplicate to self.obj1; the artikel are now duplicates of each other
+        _models.artikel.genre.rel.through.objects.create(artikel = self.obj1, genre = g)
+        dupes = self.model.objects.all().qs_dupes(*fields)
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 2)
+        
+        
             
             
         
