@@ -43,17 +43,32 @@ class MIZQuerySet(models.QuerySet):
         return rslt
         
     def exclude_empty(self, *fields):
-        filter = {}
+        """
+        Exclude any record whose value for field in fields is 'empty' (either '' or None).
+        If a field in fields is a path, then also exclude empty values of every step on this path.
+        """
+        from django.db.models.constants import LOOKUP_SEP
+        from django.contrib.admin.utils import get_fields_from_path
+        filter = models.Q()
         for field_name in fields:
-            try:
-                field = self.model._meta.get_field(field_name)
-            except FieldDoesNotExist:
-                continue
-            if field.null:
-                filter[field_name+'__isnull'] = True
-            if field.get_internal_type() in ('CharField', 'TextField'):
-                filter[field_name] = ''
-        return self.exclude(**filter)
+            lookup_path = ''
+            # Follow the path and add a filter for each piece
+            for field in get_fields_from_path(self.model, field_name):
+                if isinstance(field, (models.CharField, models.TextField)):
+                    # empty string based model fields don't have Null/None as value!
+                    lookup = lookup_value = ''
+                else:
+                    lookup = '__isnull'
+                    lookup_value = True
+                if lookup_path:
+                    lookup_path += LOOKUP_SEP
+                lookup_path += field.name
+                q = models.Q(**{lookup_path + lookup: lookup_value})
+                
+                # Avoid having duplicates of the same filter (though I don't think having them would actually hurt?)
+                if q.children[0] not in filter:
+                    filter |= q        
+        return self.exclude(filter)
         
     def single_field_dupes(self, field):
         count_name = field + '__count'

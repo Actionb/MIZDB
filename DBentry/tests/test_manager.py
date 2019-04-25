@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock
 from .base import DataTestCase
 
 from django.test import tag
+from django.db import models as django_models
 from django.db.models.query import QuerySet
 
 import DBentry.models as _models
@@ -677,6 +678,109 @@ class TestDuplicates(DataTestCase):
             obj = make(_models.artikel)
             setattr(cls, 'obj%d' % (i + 10), obj)
             cls.test_data.append(obj)
+    
+    def test_exclude_empty_string_based(self):
+        # Assert that string-based fields get excluded correctly (with ='').
+        qs = self.queryset.order_by().only('beschreibung').exclude_empty('beschreibung')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        expression = where_node.children[0]
+        self.assertIsInstance(expression, django_models.lookups.Exact)
+        self.assertEqual(expression.lhs.target, self.model._meta.get_field('beschreibung'))
+        self.assertEqual(expression.rhs, '')
+        
+        self.assertFalse(qs.exists())
+        self.qs_obj1.update(beschreibung='woop')
+        self.assertIn(self.obj1, qs)
+        
+    def test_exclude_empty_non_string_based_field(self):
+        # Assert that non-string-based fields get excluded correctly (with __isnull=True).
+        # Needs a null-able field; ausgabe.jahrgang is such a field
+        qs = _models.ausgabe.objects.order_by().only('jahrgang').exclude_empty('jahrgang')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        expression = where_node.children[0]
+        self.assertIsInstance(expression, django_models.lookups.IsNull)
+        self.assertEqual(expression.lhs.target, _models.ausgabe._meta.get_field('jahrgang'))
+        self.assertTrue(expression.rhs)
+        
+        self.assertFalse(qs.exists())
+        _models.ausgabe.objects.filter(pk = self.ausgabe_obj.pk).update(jahrgang = 1)
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(self.ausgabe_obj, qs)
+    
+    def test_exclude_empty_fk(self):
+        # Assert that foreign key fields get excluded correctly (with __isnull=True).
+        # Needs a null-able fk which artikel doesnt have, so we use genre__ober instead.
+        g = make(_models.genre)
+        qs = _models.genre.objects.order_by().only('ober').exclude_empty('ober')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        expression = where_node.children[0]
+        self.assertIsInstance(expression, django_models.lookups.IsNull)
+        self.assertEqual(expression.lhs.target, _models.genre._meta.get_field('ober'))
+        self.assertTrue(expression.rhs)
+        
+        self.assertFalse(qs.exists())
+        _models.genre.objects.filter(pk=g.pk).update(ober = make(_models.genre))
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(g, qs)
+        
+    def test_exclude_empty_m2m(self):
+        # Assert that m2m fields get excluded correctly (through a subquery with __(related)isnull=True).
+        m2m_table = _models.artikel.genre.rel.through
+        qs = self.queryset.order_by().only('genre').exclude_empty('genre')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        subquery = where_node.children[0].rhs
+        expression = subquery.where.children[0]
+        self.assertIsInstance(expression, django_models.lookups.IsNull) # is actually RelatedIsNull
+        self.assertEqual(expression.lhs.target, m2m_table._meta.get_field('genre')) # the target is the FK to genre from the m2m table for some reason?
+        self.assertTrue(expression.rhs)
+        
+        self.assertFalse(qs.exists())
+        m2m_table.objects.create(artikel = self.obj1, genre = make(_models.genre))
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(self.obj1, qs)
+        
+    def test_exclude_empty_across_relations(self):
+        # Assert that every step in a relation is being excluded.
+        qs = self.queryset.order_by().only('band__musiker__beschreibung').exclude_empty('band__musiker__beschreibung')
+        # Time to unwrangle this mess of nested where nodes and subqueries!
+        # root where node looks like AND( NOT AND( OR STUFF))); 
+        # the first AND is pointless, the second is only there to be negated upon and the third contains the three lookups (or rather the subqueries for them)
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated, msg = "Expected negated where node for 'exclude'")
+        self.assertEqual(len(where_node.children[0].children), 3, msg = "Should be 3 lookups: band, band__musiker, band__musiker__beschreibung")
+        expected = [
+            (django_models.lookups.IsNull, True,  _models.artikel.band.rel.through._meta.get_field('band')), 
+            (django_models.lookups.IsNull, True, _models.band.musiker.rel.through._meta.get_field('musiker')), 
+            (django_models.lookups.Exact, '', _models.musiker._meta.get_field('beschreibung'))            
+        ]
+        # Get the three subqueries 
+        subqueries = [lookup.rhs for lookup in where_node.children[0].children]
+        # ... and the related_lookups within them
+        related_lookups = [query.where.children[0] for query in subqueries]
+        for related_lookup, (expected_lookup, expected_lookup_value, expected_field) in zip(related_lookups, expected):
+            with self.subTest():
+                self.assertIsInstance(related_lookup, expected_lookup)
+                self.assertEqual(related_lookup.rhs, expected_lookup_value)
+                self.assertEqual(related_lookup.lhs.target, expected_field)
+                
+        # No artikel has bands or band__musikeror band__musiker__beschreibung => every artikel is excluded
+        self.assertFalse(qs.exists(), msg = "No bands nor band__musiker nor band__musiker__beschreibung: empty qs expected.")
+        # Even after adding a band to some artikel, that artikel still won't have band__musiker or band__musiker__beschreibung => exclude all
+        band = make(_models.band)
+        _models.artikel.band.rel.through.objects.create(artikel = self.obj1, band = band)
+        self.assertFalse(qs.exists(), msg = "No band__musiker nor band__musiker__beschreibung: empty qs expected.")
+        # Add a musiker to that band, still no beschreibung hence all excluded though!
+        musiker = make(_models.musiker)
+        band.musiker.add(musiker)
+        self.assertFalse(qs.exists(),  msg = "No musiker with beschreibung: empty qs expected.")
+        # Now add a beschreibung to that musiker to show the won't be excluded anymore
+        _models.musiker.objects.filter(pk = musiker.pk).update(beschreibung = 'woop')
+        self.assertEqual(qs.count(), 1, msg = "One artikel's band__musiker__beschreibung is not empty.")
+        self.assertIn(self.obj1, qs)
         
     def test_single_field_dupes(self):
         dupe_count = self.model.objects.all().single_field_dupes('schlagzeile').values_list('schlagzeile__count', flat = True).first()
