@@ -58,7 +58,7 @@ class DuplicateObjectsView(MaintView):
     url_name = 'dupes_select' 
     index_label = 'Duplikate finden' 
     template_name = 'admin/dupes.html'
-    dupe_fields = None
+    _dupe_fields = None
     
     def dispatch(self, request, *args, **kwargs):
         self.model = get_model_from_string(kwargs.get('model_name'))
@@ -69,27 +69,21 @@ class DuplicateObjectsView(MaintView):
     
     def post(self, request, *args, **kwargs):
         from DBentry.sites import miz_site
+        response = None
         selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
-        queryset = self.model.objects.filter(pk__in=selected)
-        model_admin = miz_site.get_admin_model(self.model)
-        response = MergeViewWizarded.as_view(model_admin=model_admin, queryset=queryset)(request)
+        if selected:
+            queryset = self.model.objects.filter(pk__in=selected)
+            model_admin = miz_site.get_admin_model(self.model)
+            response = MergeViewWizarded.as_view(model_admin=model_admin, queryset=queryset)(request)
         if response:
             return response
         else:
             return redirect(request.get_full_path())
-                
-    def get(self, request, *args, **kwargs):
-        if 'fields' in request.GET:
-            self.dupe_fields = request.GET.getlist('fields')
-        return super().get(request, *args, **kwargs)
         
-    
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        
-        form_choices = [(f.name, f.verbose_name.capitalize()) for f in get_model_fields(self.model, foreign = True,  m2m = False)]
-        form_initial = {'fields': self.dupe_fields} if self.dupe_fields else {}
-        context['form'] = DuplicateFieldsSelectForm(choices=form_choices, initial = form_initial)
+               
+        context['form'] = self.get_fields_select_form()
         
         media = context.get('media', False)
         if media:
@@ -97,28 +91,87 @@ class DuplicateObjectsView(MaintView):
         else:
             media = context['form'].media
         context['media'] = media
-        
-        items = []
-        if self.dupe_fields:
-            duplicates = self.model.objects.duplicates(*self.dupe_fields)
             
-            context['headers'] = [self.opts.get_field(f).verbose_name for f in self.dupe_fields]
-            for id_set, fields_dict in duplicates.items():
-                dupe_item = []
-                for id in id_set:
-                    instance = self.model.objects.get(pk=id)
-                    link = get_obj_link(instance, self.request.user, include_name=False)
-                    dupe_item.append((instance, link, [fields_dict[f] for f in self.dupe_fields]))
-                    
-                cl_url =  reverse('admin:{}_{}_changelist'.format(self.opts.app_label, self.opts.model_name))
-                cl_url += '?id__in={}'.format(",".join([str(id) for id in id_set]))
-                items.append((dupe_item, cl_url))
-            
-        context['items'] = items
+        context['headers'], context['items'] = self.build_duplicate_items_context()
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
         return context
         
+    @property
+    def dupe_fields(self):
+        if self._dupe_fields is None:
+            #NOTE: make required_fields implicitly part of fields?
+            self._dupe_fields = [] + self.request.GET.getlist('fields', []) + self.request.GET.getlist('m2m_fields', [])
+        return self._dupe_fields
+        
+    def get_fields_select_form(self):
+        #TODO: should we allow looking for duplicates on m2m fields?
+        fields_choices = [
+            (f.name, f.verbose_name.capitalize())
+            for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
+        ]
+        m2m_choices = [
+            (f.name, f.verbose_name.capitalize()) 
+            for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
+        ]
+        form_initial = {
+            'fields': [f for f in self.dupe_fields if f in dict(fields_choices)], 
+            'm2m_fields': [f for f in self.dupe_fields if f in dict(m2m_choices)]
+        }
+        
+        return DuplicateFieldsSelectForm(
+            choices={'fields': fields_choices, 'm2m_fields': m2m_choices}, 
+            initial = form_initial
+        )
+        
+    def get_fields_select_form(self):
+        #TODO: should we allow looking for duplicates on m2m fields?
+        fields_choices = [
+            (f.name, f.verbose_name.capitalize())
+            for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
+        ]
+        m2m_choices = [
+            (f.name, f.verbose_name.capitalize()) 
+            for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
+        ]
+        form_initial = {
+            'fields': [f for f in self.dupe_fields if f in dict(fields_choices) or f in dict(m2m_choices)], 
+        }
+        
+        choices = [
+            ('Base', fields_choices), 
+            ('M2M', m2m_choices)
+        ]
+        
+        form =  DuplicateFieldsSelectForm(
+            initial = form_initial
+        )
+        
+        form.fields['fields'].choices = choices
+        return form
+        
+    def build_duplicate_items_context(self):
+        """
+        Returns a list of headers and a list of lists of:
+            - duplicate items (instance, link to change view, duplicate values)
+            - a link to the changelist of these items
+        """
+        if not self.dupe_fields:
+            return [], []
+        items = []
+        duplicates = self.model.objects.duplicates(*self.dupe_fields)
+        
+        headers = [self.opts.get_field(f).verbose_name for f in self.dupe_fields]
+        for instances, values in duplicates:
+            dupe_item = [
+                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in self.dupe_fields])
+                for instance in instances
+            ]           
+            cl_url =  reverse('admin:{}_{}_changelist'.format(self.opts.app_label, self.opts.model_name))
+            cl_url += '?id__in={}'.format(",".join([str(instance.pk) for instance in instances]))
+            items.append((dupe_item, cl_url))
+        return headers, items
+            
         
 class ModelSelectView(MaintView, views.generic.FormView):
     
