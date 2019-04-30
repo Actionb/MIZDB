@@ -33,13 +33,12 @@ class MIZQuerySet(models.QuerySet):
             return self.multi_field_dupes(*fields, as_dict = as_dict)
             
     def duplicates(self, *fields):
-        dupes = self._duplicates(*fields)
-        rslt = OrderedDict()
-        for tpl in dupes:
-            dupe_values, c = tpl[:-1], tpl[-1] #NOTE: this REQUIRES tuples/lists and does not work with dicts
-            filter = dict(zip(fields, dupe_values))
-            ids = self.filter(**filter).values_list('pk', flat=True)
-            rslt[ids] = filter
+        #NOTE: make required_fields implicitly part of fields?
+        from collections import namedtuple
+        rslt = []
+        Dupe = namedtuple('Dupe', ['instances', 'values'])
+        for values_dict in self.qs_dupes(*fields).values(*fields): # .values(*fields) to remove the annotated counts
+            rslt.append(Dupe(instances = self.model.objects.filter(**values_dict), values = values_dict))
         return rslt
         
     def exclude_empty(self, *fields):
@@ -99,7 +98,7 @@ class MIZQuerySet(models.QuerySet):
             annotations[count_name] = models.Count(field)
             filters[count_name + '__gt'] = 1
             ordering.append('-' + count_name) #NOTE: all the counts of fields should be the same for each record => we only need to order by one of them
-        return self.exclude_empty(*fields).values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
+        return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
         
     def values_dict(self, *flds, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """

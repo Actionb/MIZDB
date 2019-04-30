@@ -1,4 +1,5 @@
 import random
+from collections import namedtuple
 from itertools import chain
 from unittest.mock import patch, Mock
 
@@ -839,6 +840,34 @@ class TestDuplicates(DataTestCase):
         dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
         self.assertEqual(dupe_count, 2)
         
+    def test_duplicates(self):
+        # Test the structure of the returned iterable.
+        # needs to contain: iterable instances, mapping: dupe field_name <-> dupe field_value
+        # iterable of namedtuples with names = [instances, values: mapping]
+        fields = ['schlagzeile', 'zusammenfassung', 'ausgabe_id']
+        duplicates = self.model.objects.duplicates(*fields)
+        self.assertIsInstance(duplicates, list) # maybe OrderedDict?
+        self.assertEqual(len(duplicates), 1)
+        dupe = duplicates[0]
+        # dupe should be a namedtuple:
+        self.assertIsInstance(dupe, tuple)
+        self.assertTrue(hasattr(dupe, '_fields'))
+        
+        self.assertTrue(hasattr(dupe, 'instances'))
+        self.assertIsInstance(dupe.instances, django_models.QuerySet)
+        self.assertEqual(len(dupe.instances), 2)
+        self.assertIn(self.obj1, dupe.instances)
+        self.assertIn(self.duplicate, dupe.instances)
+        
+        self.assertTrue(hasattr(dupe,  'values'))
+        self.assertIsInstance(dupe.values, dict)
+        values = dupe.values
+        self.assertIn('schlagzeile', values)
+        self.assertEqual(values['schlagzeile'], 'News Aktuell')
+        self.assertIn('zusammenfassung', values)
+        self.assertEqual(values['zusammenfassung'], 'TestArtikel1')
+        self.assertIn('ausgabe_id', values)
+        self.assertEqual(values['ausgabe_id'], self.ausgabe_obj.pk)
         
             
             
