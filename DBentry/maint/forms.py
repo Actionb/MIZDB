@@ -1,6 +1,6 @@
 from django import forms 
 from django.contrib.admin.widgets import FilteredSelectMultiple
-
+from .widgets import ColumnedCheckboxWidget
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm 
 
 class MaintBaseForm(forms.Form): 
@@ -24,14 +24,46 @@ MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0,
    
 class DuplicateFieldsSelectForm(MIZAdminForm, DynamicChoiceForm):
     fields = forms.MultipleChoiceField(
-        widget =  FilteredSelectMultiple('Felder', False), 
+#        widget =  FilteredSelectMultiple('Felder', False), 
         help_text = 'Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.', 
-        label = 'Felder'
+        label = '', 
+        widget = forms.CheckboxSelectMultiple
     )
+    m2m_fields = forms.MultipleChoiceField(
+#        widget = FilteredSelectMultiple('Mehrfach-Beziehungen', False), 
+        help_text = "BLABLA", 
+        label = 'Mehrfach-Beziehungen', 
+        widget = forms.CheckboxSelectMultiple
+    )
+    
+    fieldsets = [('Felder', {'fields': ['fields', 'm2m_fields'], 'classes': ['collapse']})]
+    
+    @property
+    def fieldsets(self):
+        classes = ['collapse']
+        if self.initial.get('fields', False) or self.initial.get('m2m_fields', False):
+            classes.append('collapsed')
+        return [('Felder', {'fields': ['fields', 'm2m_fields'], 'classes': classes})]
+        
+class DuplicateFieldsSelectForm(MIZAdminForm):
+    fields = forms.MultipleChoiceField(
+#        widget =  FilteredSelectMultiple('Felder', False), 
+        help_text = 'Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.', 
+        label = '', 
+        widget = ColumnedCheckboxWidget
+    )
+    
+    @property
+    def fieldsets(self):
+        classes = ['collapse']
+        if self.initial.get('fields', False):
+            classes.append('collapsed')
+        return [('Felder', {'fields': ['fields'], 'classes': classes})]
     
 class ModelSelectForm(MIZAdminForm):
     
     def get_model_list():
+        #TODO: review this
         from django.apps import apps
         rslt = []
         for model in apps.get_models('DBentry'):
