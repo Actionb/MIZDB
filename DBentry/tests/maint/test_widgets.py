@@ -24,10 +24,28 @@ class TestWidget(MyTestCase):
         self.assertNotIn(widget.render(1, 1), '<div style="flex: 50%;">')
         
     def test_widget_render_with_groups(self):
-        # Assert that the div to create the columns is added if there are no groups in choices.
+        # Assert that the div to create the columns is added if there are groups in choices.
         widget = ColumnedCheckboxWidget(choices = [('Group1', [('a', 1)]), ('Group2', [('b', 2)])])
         self.assertEqual(widget.render(1, 1).count('<div style="flex: 50%;">'), 2, 
             msg = "Rendered output should contain two groups.")
+            
+    def test_widget_renders_group_names(self):
+        # Assert that, based on the 'showgroups' kwarg, the widget renders names of groups.
+        widget = ColumnedCheckboxWidget(
+            showgroups = True, 
+            choices = [('Group1', [('a', 1)]), ('Group2', [('b', 2)])], 
+        )
+        self.assertIn('Group1', widget.render(1, 1))
+        self.assertIn('Group2', widget.render(1, 1))
+        
+    def test_widget_not_renders_group_names(self):
+        # Assert that, based on the 'showgroups' kwarg, the widget does not render names of groups.
+        widget = ColumnedCheckboxWidget(
+            showgroups = False, 
+            choices = [('Group1', [('a', 1)]), ('Group2', [('b', 2)])], 
+        )
+        self.assertNotIn('Group1', widget.render(1, 1))
+        self.assertNotIn('Group2', widget.render(1, 1))
         
     def test_form_can_render(self):
         form = type('F',(forms.Form,),{'a':forms.CharField(widget=ColumnedCheckboxWidget(choices = [('a', 1), ('b', 2)]))})()
