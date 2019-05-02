@@ -100,7 +100,6 @@ class DuplicateObjectsView(MaintView):
     @property
     def dupe_fields(self):
         if self._dupe_fields is None:
-            #NOTE: make required_fields implicitly part of fields?
             self._dupe_fields = [] + self.request.GET.getlist('fields', []) + self.request.GET.getlist('m2m_fields', [])
         return self._dupe_fields
         
@@ -115,45 +114,18 @@ class DuplicateObjectsView(MaintView):
             for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
         ]
         form_initial = {
-            'fields': [f for f in self.dupe_fields if f in dict(fields_choices)], 
-            'm2m_fields': [f for f in self.dupe_fields if f in dict(m2m_choices)]
-        }
-        
-        return DuplicateFieldsSelectForm(
-            choices={'fields': fields_choices, 'm2m_fields': m2m_choices}, 
-            initial = form_initial
-        )
-        
-    def get_fields_select_form(self):
-        #TODO: should we allow looking for duplicates on m2m fields?
-        fields_choices = [
-            (f.name, f.verbose_name.capitalize())
-            for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
-        ]
-        m2m_choices = [
-            (f.name, f.verbose_name.capitalize()) 
-            for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
-        ]
-        form_initial = {
             'fields': [f for f in self.dupe_fields if f in dict(fields_choices) or f in dict(m2m_choices)], 
         }
+        choices = [('Base', fields_choices), ('M2M', m2m_choices)]
         
-        choices = [
-            ('Base', fields_choices), 
-            ('M2M', m2m_choices)
-        ]
-        
-        form =  DuplicateFieldsSelectForm(
-            initial = form_initial
-        )
-        
+        form =  DuplicateFieldsSelectForm(initial = form_initial)
         form.fields['fields'].choices = choices
         return form
         
     def build_duplicate_items_context(self):
         """
-        Returns a list of headers and a list of lists of:
-            - duplicate items (instance, link to change view, duplicate values)
+        Returns a list of headers and a list of 2-tuples of:
+            - a list of duplicate items (instance, link to change view, duplicate values)
             - a link to the changelist of these items
         """
         if not self.dupe_fields:
@@ -171,7 +143,6 @@ class DuplicateObjectsView(MaintView):
             cl_url += '?id__in={}'.format(",".join([str(instance.pk) for instance in instances]))
             items.append((dupe_item, cl_url))
         return headers, items
-            
         
 class ModelSelectView(MaintView, views.generic.FormView):
     
