@@ -44,15 +44,16 @@ class DuplicateFieldsSelectForm(MIZAdminForm, DynamicChoiceForm):
         if self.initial.get('fields', False) or self.initial.get('m2m_fields', False):
             classes.append('collapsed')
         return [('Felder', {'fields': ['fields', 'm2m_fields'], 'classes': classes})]
-        
+
 class DuplicateFieldsSelectForm(MIZAdminForm):
+    #TODO: MIZAdminForm creates fieldsets for the fields; fieldsets implicitly add a label even if the label of a field is ''
     fields = forms.MultipleChoiceField(
 #        widget =  FilteredSelectMultiple('Felder', False), 
         help_text = 'Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.', 
         label = '', 
         widget = ColumnedCheckboxWidget
     )
-    
+
     @property
     def fieldsets(self):
         classes = ['collapse']
