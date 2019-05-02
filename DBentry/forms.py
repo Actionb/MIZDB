@@ -255,6 +255,7 @@ class DynamicChoiceForm(forms.Form):
         - an iterable containing choices that apply to all ChoiceFields
     The actual choices for a given field can be lists/tuples, querysets or manager instances.
     """
+    #TODO: this cannot handle grouped choices (grouped by names)
     
     def __init__(self, *args, **kwargs):
         all_choices = kwargs.pop('choices', {})
