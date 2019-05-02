@@ -4,6 +4,7 @@ All this really does is set label_suffix to None for all fields in AdminField.la
 instead of it being an empty string for checkboxes.
 """
 #TODO: introduce MIZAdminForm // add this to admin.py 
+#TODO: check the template for fieldsets, it can swap checkbox widget and label too
 from django.utils.encoding import force_text
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe

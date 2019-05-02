@@ -15,7 +15,7 @@
 {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}" />{% endif %}
 {% block extrahead %}{% endblock %}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
-<link rel="stylesheet" type="text/css" href="{% static "admin/css/base_custom.css" %}"/>
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/base_custom.css" %}"/> {# TODO: is it safe to leave this outside 'extrahead'? might lead to unexpected overrides #}
 </head>
 {% load i18n %}
 

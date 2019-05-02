@@ -24,7 +24,7 @@ class MIZModelAdmin(admin.ModelAdmin):
     
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
                                             # that matches a field in the group
-    googlebtns = []                         # Fields in this list get a little button that redirect to a google search page
+    googlebtns = []                         # Fields in this list get a little button that redirect to a google search page #TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form #NOTE: is this hint even used by anything?
     crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
