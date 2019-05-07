@@ -377,7 +377,7 @@ def get_obj_link(obj, user, site_name='admin', include_name=True): #TODO: includ
                             % (site_name,
                                opts.app_label,
                                opts.model_name),
-                            None, (quote(obj._get_pk_val()),))
+                            None, (quote(obj._get_pk_val()),)) #TODO: this is the getter of the 'pk' property!
     except NoReverseMatch:
         # Change url doesn't exist -- don't display link to edit
         return no_edit_link
