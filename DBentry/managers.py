@@ -117,7 +117,7 @@ class MIZQuerySet(models.QuerySet):
                 d = {}
                 rslt[id] = d
             for k, v in val_dict.items(): 
-                if not include_empty and v in [None, '', [], (), {}]:
+                if not include_empty and v in [None, '', [], (), {}]: #TODO: django.db.models.fields.EMPTY_VALUES
                     continue
                 if k not in d:
                     if tuplfy:
@@ -141,6 +141,51 @@ class MIZQuerySet(models.QuerySet):
                 if field.one_to_many or field.many_to_many:
                     exclude.append(field_path)
             return flatten_dict(rslt, exclude)
+        return rslt
+    
+    def values_dict(self, *fields, include_empty = False, tuplfy = False):
+        from django.core.validators import EMPTY_VALUES
+        
+        # pk_name is the variable that will refer to this query's primary key values.
+        pk_name = self.model._meta.pk.name
+        
+        # Make sure the query includes the model's primary key values as we require it to build the result out of.
+        # If fields is empty, the query targets all the model's fields.
+        if fields:
+            if pk_name not in fields:
+                if 'pk' in fields:
+                    # the universal alias for the primary key was used in the query
+                    pk_name = 'pk'
+                else:
+                    # the query does not query for the primary key at all;
+                    # it must added to fields
+                    fields += (pk_name, )
+                    
+        rslt = OrderedDict()
+        for val_dict in self.values(*fields):
+            pk = val_dict.pop(pk_name)
+            # For easier lookups of field_names, use dictionaries for the item's values mapping.
+            # If tuplfy == True, we turn the values mapping back into a tuple 
+            # before adding it to the result.
+            if pk in rslt:
+                # Multiple rows returned due to joins for this primary key => reverse relation
+                item_dict = dict(rslt.get(pk))
+            else:
+                item_dict = {} 
+            for field_name, value in val_dict.items():
+                if not include_empty and value in EMPTY_VALUES:
+                    continue
+                if field_name not in item_dict:
+                    values = ()
+                else:
+                    values = item_dict.get(field_name)
+                if value in values:
+                    continue
+#                values.append(value)
+                item_dict[field_name] = values + (value, )
+            if tuplfy:
+                item_dict = tuple(item_dict.items())
+            rslt[pk] = item_dict
         return rslt
         
 class CNQuerySet(MIZQuerySet):

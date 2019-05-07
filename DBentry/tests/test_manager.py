@@ -651,3 +651,82 @@ class TestBuchQuerySet(DataTestCase):
         self.assertIn(self.obj1, self.queryset.filter(EAN=ean_8))
         ean_13 = '1-234567-890128'
         self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))
+        
+class TestValuesDict(DataTestCase):
+
+    model = _models.band
+    raw_data = [
+        {'band_name': 'Testband1', }, 
+        {'band_name': 'Testband2', 'band_alias__alias':'Coffee', 'genre__genre': ['Rock', 'Jazz']}, 
+        {'band_name': 'Testband3', 'band_alias__alias':['Juice', 'Water'], 'genre__genre': ['Rock', 'Jazz']}, 
+    ]
+    fields = ['band_name', 'genre__genre', 'band_alias__alias']
+        
+    def test_values_dict(self):
+        v = self.queryset.values_dict(*self.fields)
+        self.assertEqual(len(v), 3)
+        
+        self.assertTrue(all(o.pk in v for o in self.test_data))
+        
+        # obj1
+        expected = {'band_name': ('Testband1', )}
+        self.assertEqual(v.get(self.obj1.pk), expected)
+        
+        # obj2
+        expected = {
+            'band_name': ('Testband2', ), 'genre__genre': ('Rock', 'Jazz'), 
+            'band_alias__alias': ('Coffee', )
+        }
+        self.assertEqual(v.get(self.obj2.pk), expected)
+        
+        # obj3
+        expected = {
+            'band_name': ('Testband3', ), 'genre__genre': ('Rock', 'Jazz'), 
+            'band_alias__alias': ('Juice', 'Water')
+        }
+        self.assertEqual(v.get(self.obj3.pk), expected)
+        
+    def test_values_dict_num_queries(self):
+        with self.assertNumQueries(1):
+            self.queryset.values_dict(*self.fields)
+        
+    def test_values_dict_include_empty(self):
+        v = self.qs_obj1.values_dict(*self.fields, include_empty = True)
+        expected = {
+            'band_name': ('Testband1', ), 'genre__genre': (None, ), 
+            'band_alias__alias': (None, )
+        }
+        self.assertEqual(v.get(self.obj1.pk), expected)
+        
+    def test_values_dict_tuplfy(self):
+        v = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
+        expected = (
+            ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')), 
+            ('band_alias__alias', ('Coffee',))
+        )
+        for e in expected:
+            with self.subTest():
+                self.assertIn(e, v.get(self.obj2.pk))
+                
+    # Patching MIZQuerySet.values to find out how the primary key values are queried.
+    @patch.object(MIZQuerySet, 'values')
+    def test_values_dict_no_fields(self, mocked_values):
+        # Assert that values_dict does not add a pk item if called without any fields (implicitly querying all fields).
+        self.qs_obj1.values_dict()
+        self.assertTrue(mocked_values.called)
+        self.assertEqual(mocked_values.call_args[0], ()) # caching problem? sometimes this fails, sometimes it doesnt!
+        
+    @patch.object(MIZQuerySet, 'values')
+    def test_values_dict_pk_in_fields(self, mocked_values):
+        # Assert that values_dict queries for primary key values with the alias 'pk' if called with it.
+        self.qs_obj1.values_dict('band_name', 'pk')
+        self.assertTrue(mocked_values.called)
+        self.assertIn('pk', mocked_values.call_args[0])
+        
+    @patch.object(MIZQuerySet, 'values')
+    def test_values_dict_meta_pk_in_fields(self, mocked_values):
+        # Assert that values_dict keeps the model's pk name if called with it.
+        self.qs_obj1.values_dict('band_name', 'id')
+        self.assertTrue(mocked_values.called)
+        self.assertIn('id', mocked_values.call_args[0])
+    
