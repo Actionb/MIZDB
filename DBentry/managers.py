@@ -140,7 +140,7 @@ class MIZQuerySet(models.QuerySet):
                 d = {}
                 rslt[id] = d
             for k, v in val_dict.items(): 
-                if not include_empty and v in [None, '', [], (), {}]:
+                if not include_empty and v in [None, '', [], (), {}]: #TODO: django.db.models.fields.EMPTY_VALUES
                     continue
                 if k not in d:
                     if tuplfy:
