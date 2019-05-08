@@ -663,50 +663,49 @@ class TestValuesDict(DataTestCase):
     fields = ['band_name', 'genre__genre', 'band_alias__alias']
         
     def test_values_dict(self):
-        v = self.queryset.values_dict(*self.fields)
-        self.assertEqual(len(v), 3)
+        values = self.queryset.values_dict(*self.fields)
+        expected = [
+            (self.obj1.pk, {'band_name': ('Testband1', )}), 
+            (self.obj2.pk, {
+                'band_name': ('Testband2', ), 'genre__genre': ('Rock', 'Jazz'), 
+                'band_alias__alias': ('Coffee', )
+                }), 
+            (self.obj3.pk, {
+                'band_name': ('Testband3', ), 'genre__genre': ('Rock', 'Jazz'), 
+                'band_alias__alias': ('Juice', 'Water')
+                })
+        ]
         
-        self.assertTrue(all(o.pk in v for o in self.test_data))
-        
-        # obj1
-        expected = {'band_name': ('Testband1', )}
-        self.assertEqual(v.get(self.obj1.pk), expected)
-        
-        # obj2
-        expected = {
-            'band_name': ('Testband2', ), 'genre__genre': ('Rock', 'Jazz'), 
-            'band_alias__alias': ('Coffee', )
-        }
-        self.assertEqual(v.get(self.obj2.pk), expected)
-        
-        # obj3
-        expected = {
-            'band_name': ('Testband3', ), 'genre__genre': ('Rock', 'Jazz'), 
-            'band_alias__alias': ('Juice', 'Water')
-        }
-        self.assertEqual(v.get(self.obj3.pk), expected)
+        for obj_pk, expected_values in expected:
+            with self.subTest():
+                self.assertIn(obj_pk, values)
+                self.assertEqual(expected_values, values[obj_pk])
+        self.assertEqual(len(values), 3)
         
     def test_values_dict_num_queries(self):
         with self.assertNumQueries(1):
             self.queryset.values_dict(*self.fields)
         
     def test_values_dict_include_empty(self):
-        v = self.qs_obj1.values_dict(*self.fields, include_empty = True)
+        values = self.qs_obj1.values_dict(*self.fields, include_empty = True)
         expected = {
             'band_name': ('Testband1', ), 'genre__genre': (None, ), 
             'band_alias__alias': (None, )
         }
-        self.assertEqual(v.get(self.obj1.pk), expected)
+        self.assertEqual(values.get(self.obj1.pk), expected)
         
     def test_values_dict_tuplfy(self):
-        v = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
+        values = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
         expected = (
             ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')), 
             ('band_alias__alias', ('Coffee',))
         )
-        for e in expected:
+        # Iterate through the expected_values and compare them individuallly;
+        # full tuple comparison includes order equality - and we can't predict
+        # the order of the tuples.
+        for expected_values in expected:
             with self.subTest():
-                self.assertIn(e, v.get(self.obj2.pk))
+                self.assertIn(expected_values, values.get(self.obj2.pk))
                 
     # Patching MIZQuerySet.values to find out how the primary key values are queried.
     @patch.object(MIZQuerySet, 'values')
