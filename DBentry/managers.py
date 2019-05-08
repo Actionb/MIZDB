@@ -1,12 +1,12 @@
 from collections import Counter, OrderedDict
-from itertools import chain
         
 from django.db import models, transaction
-from django.db.models import Count, Sum, Min, Max
-from django.contrib.admin.utils import get_fields_from_path
+from django.db.models import Count, Min, Max
 from django.core.exceptions import FieldDoesNotExist
+from django.core.validators import EMPTY_VALUES
+from django.db.models.constants import LOOKUP_SEP
 
-from DBentry.utils import flatten_dict, leapdays, build_date
+from DBentry.utils import leapdays, build_date
 from DBentry.query import BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
 
 class MIZQuerySet(models.QuerySet):
@@ -100,7 +100,7 @@ class MIZQuerySet(models.QuerySet):
             ordering.append('-' + count_name) #NOTE: all the counts of fields should be the same for each record => we only need to order by one of them
         return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
         
-    def values_dict(self, *flds, include_empty = False, flatten = False, tuplfy = False, **expressions):
+    def values_dict(self, *fields, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
         An extension of QuerySet.values(). 
         
@@ -115,55 +115,71 @@ class MIZQuerySet(models.QuerySet):
                     
             values_dict('pk','pizza__topping', 'pizza__size'):
                     {
-                        '1' : {'pizza__topping' : ['Onions', 'Bacon' ], 'pizza__size': ['Tiny', 'God']},
+                        '1' : {'pizza__topping' : ('Onions', 'Bacon' ), 'pizza__size': ('Tiny', 'God')},
                     }   
         """
         # pk_name is the variable that will refer to this query's primary key values.
         pk_name = self.model._meta.pk.name
         
         # Make sure the query includes the model's primary key values as we require it to build the result out of.
-        # If flds is None, the query targets all the model's fields.
-        if flds:
-            if not pk_name in flds:
-                if 'pk' in flds:
+        # If fields is empty, the query targets all the model's fields.
+        if fields:
+            if pk_name not in fields:
+                if 'pk' in fields:
+                    # the universal alias for the primary key was used in the query
                     pk_name = 'pk'
                 else:
-                    flds = list(flds)
-                    flds.append(pk_name)
-                
+                    # the query does not query for the primary key at all;
+                    # it must be added to fields
+                    fields += (pk_name, )
+                    
+        # Do not flatten reverse relation values. An iterable is expected.
+        flatten_exclude = [] 
+        if flatten and fields:
+            for field_path in fields:
+                field_name = field_path
+                if LOOKUP_SEP in field_path:
+                    field_name = field_path.split(LOOKUP_SEP, 1)[0]
+                try:
+                    field = self.model._meta.get_field(field_name)
+                except FieldDoesNotExist:
+                    # Don't raise the exception here; let it be raised by self.values().
+                    # An invalid field will cause the query to fail anyway and
+                    # django provides a much more detailed error message.
+                    break
+                if not field.concrete:
+                    flatten_exclude.append(field_path)
+                    
         rslt = OrderedDict()
-        for val_dict in list(self.values(*flds, **expressions)):
-            id = val_dict.pop(pk_name)
-            if id in rslt:
-                d = rslt.get(id)
+        for val_dict in self.values(*fields, **expressions):
+            pk = val_dict.pop(pk_name)
+            # For easier lookups of field_names, use dictionaries for the item's values mapping.
+            # If tuplfy == True, we turn the values mapping back into a tuple 
+            # before adding it to the result.
+            if pk in rslt:
+                # Multiple rows returned due to joins over relations for this primary key
+                item_dict = dict(rslt.get(pk))
             else:
-                d = {}
-                rslt[id] = d
-            for k, v in val_dict.items(): 
-                if not include_empty and v in [None, '', [], (), {}]: #TODO: django.db.models.fields.EMPTY_VALUES
+                item_dict = {} 
+            for field_path, value in val_dict.items():
+                if not include_empty and value in EMPTY_VALUES:
                     continue
-                if k not in d:
-                    if tuplfy:
-                        d[k] = (v, )
-                    else:
-                        d[k] = [v]
-                elif v in d.get(k):
-                    continue
+                if field_path not in item_dict:
+                    values = ()
+                elif  flatten and not isinstance(item_dict.get(field_path), tuple):
+                    # This value has previously been flattend!
+                    values = (item_dict.get(field_path), )
                 else:
-                    if tuplfy:
-                        d[k] += (v, )
-                    else:
-                        d.get(k).append(v)
-        if flatten:
-            # Do not flatten fields that represent a reverse relation, as a list is expected
-            exclude = []
-            for field_path in flds:
-                if field_path == 'pk':
+                    values = item_dict.get(field_path)
+                if values and value in values:
                     continue
-                field = get_fields_from_path(self.model, field_path)[0]
-                if field.one_to_many or field.many_to_many:
-                    exclude.append(field_path)
-            return flatten_dict(rslt, exclude)
+                values += (value, )
+                if flatten and len(values) == 1 and not field_path in flatten_exclude:
+                    values = values[0]
+                item_dict[field_path] = values
+            if tuplfy:
+                item_dict = tuple(item_dict.items())
+            rslt[pk] = item_dict
         return rslt
         
 class CNQuerySet(MIZQuerySet):

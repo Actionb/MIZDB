@@ -482,11 +482,14 @@ def ensure_jquery(media):
 # general utilities
 ##############################################################################################################
 def flatten_dict(d, exclude=[]):
+    #TODO: this doesnt test that 'd' is a dict!
+    #NOTE: after the rework of MIZQuerySet.values_dict this may be unused
     rslt = {}
     for k, v in d.items():
         if isinstance(v, dict):
             rslt[k] = flatten_dict(v, exclude)
         elif k not in exclude and isinstance(v, Iterable) and not isinstance(v, str) and len(v)==1:
+            # TODO: either us is_iterable or also test for bytes instances
             rslt[k] = v[0]
         else:
             rslt[k] = v
