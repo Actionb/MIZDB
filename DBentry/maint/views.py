@@ -72,12 +72,16 @@ class DuplicateObjectsView(MaintView):
         response = None
         selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
         if selected:
+            # Items to be merged are selected, call the MergeViewWizarded view.
             queryset = self.model.objects.filter(pk__in=selected)
             model_admin = miz_site.get_admin_model(self.model)
             response = MergeViewWizarded.as_view(model_admin=model_admin, queryset=queryset)(request)
         if response:
+            # MergeViewWizarded has returned a response (the merge conflict page)
             return response
         else:
+            # MergeViewWizarded returned None (successful merge)
+            # or there was nothing selected: redirect back here.
             return redirect(request.get_full_path())
         
     def get_context_data(self, *args, **kwargs):
@@ -100,6 +104,8 @@ class DuplicateObjectsView(MaintView):
     @property
     def dupe_fields(self):
         if self._dupe_fields is None:
+            #TODO: there is only one formfield left: 'fields'
+            # what is m2m_fields still doing here? bad git merge conflict?
             self._dupe_fields = [] + self.request.GET.getlist('fields', []) + self.request.GET.getlist('m2m_fields', [])
         return self._dupe_fields
         
@@ -123,6 +129,8 @@ class DuplicateObjectsView(MaintView):
             (f.name, f.verbose_name.capitalize())
             for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
         ]
+        #TODO: querying for rel.name will return primary keys;
+        # need to be explicit what non-unique field to query!
         reverse_choices = [
             (rel.name, rel.related_model._meta.verbose_name)
             for rel in get_model_relations(self.model, forward = False, reverse = True)

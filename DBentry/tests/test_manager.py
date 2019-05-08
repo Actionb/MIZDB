@@ -743,6 +743,7 @@ class TestDuplicates(DataTestCase):
             setattr(cls, 'obj%d' % (i + 10), obj)
             cls.test_data.append(obj)
     
+    #TODO: not related to duplicates: move to MIZQuerySet tests
     def test_exclude_empty_string_based(self):
         # Assert that string-based fields get excluded correctly (with ='').
         qs = self.queryset.order_by().only('beschreibung').exclude_empty('beschreibung')
@@ -757,6 +758,7 @@ class TestDuplicates(DataTestCase):
         self.qs_obj1.update(beschreibung='woop')
         self.assertIn(self.obj1, qs)
         
+    #TODO: not related to duplicates: move to MIZQuerySet tests
     def test_exclude_empty_non_string_based_field(self):
         # Assert that non-string-based fields get excluded correctly (with __isnull=True).
         # Needs a null-able field; ausgabe.jahrgang is such a field
@@ -773,6 +775,7 @@ class TestDuplicates(DataTestCase):
         self.assertEqual(qs.count(), 1)
         self.assertIn(self.ausgabe_obj, qs)
     
+    #TODO: not related to duplicates: move to MIZQuerySet tests
     def test_exclude_empty_fk(self):
         # Assert that foreign key fields get excluded correctly (with __isnull=True).
         # Needs a null-able fk which artikel doesnt have, so we use genre__ober instead.
@@ -790,6 +793,7 @@ class TestDuplicates(DataTestCase):
         self.assertEqual(qs.count(), 1)
         self.assertIn(g, qs)
         
+    #TODO: not related to duplicates: move to MIZQuerySet tests
     def test_exclude_empty_m2m(self):
         # Assert that m2m fields get excluded correctly (through a subquery with __(related)isnull=True).
         m2m_table = _models.artikel.genre.rel.through
@@ -807,6 +811,7 @@ class TestDuplicates(DataTestCase):
         self.assertEqual(qs.count(), 1)
         self.assertIn(self.obj1, qs)
         
+    #TODO: not related to duplicates: move to MIZQuerySet tests
     def test_exclude_empty_across_relations(self):
         # Assert that every step in a relation is being excluded.
         qs = self.queryset.order_by().only('band__musiker__beschreibung').exclude_empty('band__musiker__beschreibung')
