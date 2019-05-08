@@ -118,6 +118,7 @@ class DuplicateObjectsView(MaintView):
         """
         Returns the different choices for the field select of the DuplicateFieldsSelectForm.
         """
+        #TODO: what about private fields (_name, _changed_flag)
         field_choices = [
             (f.name, f.verbose_name.capitalize())
             for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
