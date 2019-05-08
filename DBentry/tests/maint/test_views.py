@@ -9,6 +9,7 @@ from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
 from DBentry.maint.views import DuplicateObjectsView
 from DBentry.actions.views import MergeViewWizarded
+from DBentry.managers import MIZQuerySet
 
 from DBentry import models as _models
 from DBentry import utils
@@ -54,7 +55,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             self.assertEqual(response.url, path)
         
     def test_post_calls_merge_view(self):
-        # Assert that a post request will call the merge view.
+       # Assert that a post request will call the merge view.
         model_admin = utils.get_model_admin_for_model(self.model)
         request = self.post_request(data = {ACTION_CHECKBOX_NAME: ['1', '2']})
         view = self.get_view(request)
@@ -79,8 +80,8 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             view.post(request)
         self.assertEqual(mocked_as_view.call_count, 0)
         
-    def test_get_context_data_items(self):
-        # Assert that the context item 'items' is built correctly.
+    def test_build_duplicate_items_context(self):
+        # Assert that build_duplicate_items_context returns the correct items.
         change_form_path = unquote(reverse('admin:DBentry_band_change', args=['{pk}']))
         link_template = '<a href="{url}">{name}</a>'
         
@@ -89,10 +90,9 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         view.model = self.model
         view.opts = self.model._meta
         
-        context = view.get_context_data()
-        self.assertIn('items', context)
-        items = context['items']
-        self.assertEqual(len(items), 1)
+        headers, items = view.build_duplicate_items_context()
+        self.assertEqual(len(items), 1, 
+            msg = "There should be only one set of duplicate objects.")
         self.assertEqual(len(items[0]), 2, 
             msg = "Should contain one set of duplicate objects and the url to their changelist.")
         self.assertEqual(len(items[0][0]), 3, 
@@ -101,7 +101,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             with self.subTest():
                 self.assertEqual(len(dupe_item), 3)
                 self.assertIsInstance(dupe_item[0], self.model, 
-                    msg = "Should be one of duplicate objects.")
+                    msg = "Duplicate object should be an instance of {!s}.".format(self.model))
                 expected_link = link_template.format(
                     url = change_form_path.format(pk = dupe_item[0].pk), 
                     name = str(dupe_item[0])
@@ -116,6 +116,29 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             msg = "Changelist url should be of format <changelist>?id__in=[ids]")
         cl_url, _ = items[0][1].split('?')
         self.assertEqual(cl_url, reverse('admin:DBentry_band_changelist'))
+    
+    @patch.object(MIZQuerySet, 'duplicates')
+    def test_build_duplicate_items_context_headers(self, mocked_duplicates):
+        # Assert that the correct (field.verbose_name capitalized) headers are returned.
+        request = self.get_request()
+        view = self.get_view(request)
+        view.model = self.model
+        view.opts = self.model._meta
+        
+        # Hack the dupe_fields property
+        view._dupe_fields = ['band_name']
+        headers, _ = view.build_duplicate_items_context()
+        self.assertIn('Bandname', headers)
+        
+        # reverse fk
+        view._dupe_fields = ['band_alias']
+        headers, _ = view.build_duplicate_items_context()
+        self.assertIn('Alias', headers)
+        
+        # m2m
+        view._dupe_fields = ['genre']
+        headers, _ = view.build_duplicate_items_context()
+        self.assertIn('Genre', headers)
         
     def test_dupe_fields_prop(self):
         request = self.get_request(data = {'fields': ['beep', 'boop'], 'm2m_fields': ['baap']})
@@ -126,3 +149,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         request = self.post_request(data = {'fields': ['beep', 'boop'], 'm2m_fields': ['baap']})
         view = self.get_view(request)
         self.assertEqual(view.dupe_fields, [])
+        
+    def test_fields_select_form_choices_contains_reverse_fk(self):
+        # Assert that the form's choices include any reverse foreign keys (i.e. band_alias of band)
+        pass
