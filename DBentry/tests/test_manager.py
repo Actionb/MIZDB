@@ -2,15 +2,16 @@ import random
 from itertools import chain
 from unittest.mock import patch, Mock
 
-from .base import DataTestCase
-
 from django.test import tag
 from django.db.models.query import QuerySet
+from django.core.exceptions import FieldDoesNotExist, FieldError
 
 import DBentry.models as _models
 from DBentry.factory import make
 from DBentry.managers import CNQuerySet, MIZQuerySet
 from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
+
+from .base import DataTestCase
 
 class TestMIZQuerySet(DataTestCase):
     
@@ -43,67 +44,6 @@ class TestMIZQuerySet(DataTestCase):
         self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
         self.assertIn((self.obj2.pk, str(self.obj2) + ' (Band-Alias)'), self.queryset.find('Coffee'))
         self.assertFalse(self.queryset.find('Jazz'))
-        
-    def test_values_dict(self):
-        v = self.queryset.values_dict(*self.fields)
-        self.assertEqual(len(v), 3)
-        
-        self.assertTrue(all(o.pk in v for o in self.test_data))
-        
-        # obj1
-        expected = {'band_name': ['Testband1']}
-        self.assertEqual(v.get(self.obj1.pk), expected)
-        
-        # obj2
-        expected = {
-            'band_name': ['Testband2'], 'genre__genre': ['Rock', 'Jazz'], 
-            'band_alias__alias': ['Coffee']
-        }
-        self.assertEqual(v.get(self.obj2.pk), expected)
-        
-        # obj3
-        expected = {
-            'band_name': ['Testband3'], 'genre__genre': ['Rock', 'Jazz'], 
-            'band_alias__alias': ['Juice', 'Water']
-        }
-        self.assertEqual(v.get(self.obj3.pk), expected)
-        
-    def test_values_dict_num_queries(self):
-        with self.assertNumQueries(1):
-            self.queryset.values_dict(*self.fields)
-        
-    def test_values_dict_include_empty(self):
-        v = self.qs_obj1.values_dict(*self.fields, include_empty = True)
-        expected = {
-            'band_name': ['Testband1'], 'genre__genre': [None], 
-            'band_alias__alias': [None]
-        }
-        self.assertEqual(v.get(self.obj1.pk), expected)
-        
-    def test_values_dict_tuplfy(self):
-        v = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
-        expected = {
-            'band_name': ('Testband2',), 'genre__genre': ('Rock', 'Jazz'), 
-            'band_alias__alias': ('Coffee',)
-        }
-        self.assertEqual(v.get(self.obj2.pk), expected)
-        
-    def test_values_dict_flatten(self):
-        v = self.qs_obj3.values_dict(*self.fields, flatten = True)
-        expected = {
-            'band_name': 'Testband3', 'genre__genre': ['Rock', 'Jazz'], 
-            'band_alias__alias': ['Juice', 'Water']
-        }
-        self.assertEqual(v.get(self.obj3.pk), expected)
-        
-    def test_values_dict_flatten_no_flds(self):
-        v = self.qs_obj1.values_dict(flatten = True)
-        d = v.get(self.obj1.pk)
-        self.assertEqual(d, {'band_name': 'Testband1'})
-        
-    def test_values_dict_pk_in_flds(self):
-        v = self.qs_obj1.values_dict('band_name', 'pk')
-        self.assertIn(self.obj1.pk, v)
 
 class TestAusgabeQuerySet(DataTestCase):
 
@@ -728,4 +668,50 @@ class TestValuesDict(DataTestCase):
         self.qs_obj1.values_dict('band_name', 'id')
         self.assertTrue(mocked_values.called)
         self.assertIn('id', mocked_values.call_args[0])
+        
+    def test_values_dict_flatten(self):
+        # Assert that single values are flattened.
+        values = self.qs_obj2.values_dict(*self.fields, flatten = True)
+        self.assertIn(self.obj2.pk, values)
+        obj2_values = values.get(self.obj2.pk)
+        self.assertIn('band_name', obj2_values)
+        self.assertNotIsInstance(obj2_values['band_name'], tuple)
+        
+    def test_values_dict_flatten_reverse_relation(self):
+        # Assert that multiple values (reverse relations) are never flattened.
+        # obj2 has a single value for alias; which must not get flattened.
+        values = self.qs_obj2.values_dict(*self.fields, flatten = True)
+        self.assertIn(self.obj2.pk, values)
+        obj2_values = values.get(self.obj2.pk)
+        self.assertIn('band_alias__alias', obj2_values)
+        self.assertIsInstance(obj2_values['band_alias__alias'], tuple)
+        
+        # also test if the multiple genres do not get flattened (however that would work..)
+        self.assertIn('genre__genre', obj2_values)
+        self.assertIsInstance(obj2_values['genre__genre'], tuple)
+        
+    def test_values_dict_flatten_no_fields(self):
+        # This test just makes sure that values_dict doesn't error when no fields are passed in.
+        # The process of finding the fields/field paths to exclude from flattening is dependent
+        # on having passed in 'fields'.
+        # Calling values() without params will fetch all the values of the base fields; 
+        # i.e. no reverse stuff so everything WILL be flattened.
+        with self.assertNotRaises(Exception):
+            self.qs_obj2.values_dict(flatten = True)
+            
+    def test_values_dict_flatten_with_invalid_field(self):
+        # django's exception when calling values() with an invalid should be the exception that propagates.
+        # No exception should be raised from the process that determines the fields to be excluded
+        # even if a given field does not exist.
+        # The process catches a FieldDoesNotExist but does not act on it.
+        with patch.object(MIZQuerySet, 'values'):
+            with self.assertNotRaises(FieldDoesNotExist):
+                self.queryset.values_dict('thisaintnofield', flatten = True)
+        
+        # Assert that the much more informative django FieldError is raised.
+        with self.assertRaises(FieldError) as cm:
+                self.queryset.values_dict('thisaintnofield', flatten = True)
+        self.assertIn('Choices are', cm.exception.args[0])
+    
+        
     
