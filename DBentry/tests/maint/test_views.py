@@ -79,10 +79,6 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             view.post(request)
         self.assertEqual(mocked_as_view.call_count, 0)
         
-    def test_get_sets_dupe_fields(self):
-        # Assert that the attribute dupe_fields is set correctly.
-        pass
-        
     def test_get_context_data_items(self):
         # Assert that the context item 'items' is built correctly.
         change_form_path = unquote(reverse('admin:DBentry_band_change', args=['{pk}']))
