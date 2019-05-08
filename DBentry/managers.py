@@ -100,6 +100,29 @@ class MIZQuerySet(models.QuerySet):
             ordering.append('-' + count_name) #NOTE: all the counts of fields should be the same for each record => we only need to order by one of them
         return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
         
+    def values_dict_dupes(self, *fields):
+        from collections import namedtuple
+        Dupe = namedtuple('Dupe', ['instances', 'values'])
+        
+        queried = self.values_dict(*fields, tuplfy = True)
+        # chain all the values in queried to later count over them
+        from itertools import chain
+        all_values = list(chain(values for pk, values in queried.items()))
+        rslt = []
+        for elem, count in Counter(all_values).items():
+            if count < 2:
+                continue
+            # Find all the pks that match these values.
+            pks = []
+            for pk, values in queried.items():
+                if values == elem:
+                    pks.append(pk)
+            instances = self.model.objects.filter(pk__in = pks)
+            rslt.append(Dupe(instances, elem))
+        return rslt
+            
+            
+        
     def values_dict(self, *fields, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
         An extension of QuerySet.values(). 
