@@ -105,6 +105,10 @@ class DuplicateObjectsView(MaintView):
         
     def get_fields_select_form(self):
         #TODO: should we allow looking for duplicates on m2m fields?
+        #TODO: this does not add reverse fks/m2m based on another model:
+        # band <-- band_alias
+        # band <--> audio (audio implements m2m field) (debatable if we even want that)
+        #TODO: split the choices creation into its own method
         fields_choices = [
             (f.name, f.verbose_name.capitalize())
             for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
@@ -133,7 +137,7 @@ class DuplicateObjectsView(MaintView):
         items = []
         duplicates = self.model.objects.duplicates(*self.dupe_fields)
         
-        headers = [self.opts.get_field(f).verbose_name for f in self.dupe_fields]
+        headers = [self.opts.get_field(f).verbose_name.capitalize() for f in self.dupe_fields]
         for instances, values in duplicates:
             dupe_item = [
                 (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in self.dupe_fields])
