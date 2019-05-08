@@ -937,6 +937,83 @@ class TestDuplicates(DataTestCase):
         self.assertIn('ausgabe_id', values)
         self.assertEqual(values['ausgabe_id'], self.ausgabe_obj.pk)
         
-            
-            
+
+
+class TestDuplicates(DataTestCase):
+    
+    model = _models.musiker
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_data = [
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+        ]
+        
+        super().setUpTestData()
+        
+    def get_duplicate_instances(self, *fields, queryset = None):
+        if queryset is None:
+            queryset = self.queryset
+        duplicates = queryset.values_dict_dupes(*fields)
+        return list(chain(*(dupe.instances for dupe in duplicates)))
+        
+    def test_a_baseline(self):
+        print()
+        duplicates = self.get_duplicate_instances('kuenstler_name')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertIn(self.obj3, duplicates)
+    
+    def test_duplicates_m2m(self):
+        g1 = make(_models.genre)
+        g2 = make(_models.genre)
+        
+        self.obj1.genre.add(g1)
+        self.obj2.genre.add(g1)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj3.genre.add(g2)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        # obj1 and obj2 share a genre, but their total genres are not the same
+        self.obj1.genre.add(g2)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertNotIn(self.obj1, duplicates)
+        self.assertNotIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        
+    def test_duplicates_reverse_fk(self):
+        #TODO: this test fails when looking for duplicates with 'musiker_alias';
+        # 'musiker_alias' will look up the primary key of the musiker_alias object
+        # every musiker_alias object can only have one musiker
+        # so musiker_alias breaks duplicate search
+        # Need to query for a non-unique field(s)...
+        self.obj1.musiker_alias_set.create(alias='Beep')
+        self.obj2.musiker_alias_set.create(alias='Beep')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj3.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj1.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertNotIn(self.obj1, duplicates)
+        self.assertNotIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
         
