@@ -150,6 +150,20 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         view = self.get_view(request)
         self.assertEqual(view.dupe_fields, [])
         
-    def test_fields_select_form_choices_contains_reverse_fk(self):
-        # Assert that the form's choices include any reverse foreign keys (i.e. band_alias of band)
-        pass
+    def test_get_fields_select_choices(self):
+        # Assert that the various fields that should be present are present.
+        view = self.get_view()
+        view.model = _models.musiker
+        field_choices, reverse_choices, m2m_choices = view._get_fields_select_choices()
+        # simple fields & forward fk
+        self.assertIn(('kuenstler_name', 'Künstlername'), field_choices)
+        self.assertIn(('person', 'Person'), field_choices)
+        
+        # reverse fk
+        self.assertIn(('musiker_alias', 'Alias'), reverse_choices)
+        
+        # m2m declared on model
+        self.assertIn(('genre', 'Genre'), m2m_choices)
+        
+        # m2m declared on ANOTHER model; should NOT be a choice
+        self.assertNotIn(('band', 'Band'), m2m_choices)

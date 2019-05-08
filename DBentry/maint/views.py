@@ -16,7 +16,7 @@ from DBentry.views import MIZAdminToolViewMixin, FixedSessionWizardView
 from DBentry.actions.views import MergeViewWizarded
 from DBentry.models import * 
 from DBentry.sites import register_tool
-from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields
+from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations
 
 from .forms import * 
 
@@ -109,22 +109,34 @@ class DuplicateObjectsView(MaintView):
         # band <-- band_alias
         # band <--> audio (audio implements m2m field) (debatable if we even want that)
         #TODO: split the choices creation into its own method
-        fields_choices = [
+        field_choices, reverse_choices, m2m_choices = self._get_fields_select_choices()
+        form_initial = {
+            'fields': [f for f in self.dupe_fields if f in dict(field_choices) or f in dict(m2m_choices)], 
+        }
+        choices = [('Base', field_choices), ('Reverse', reverse_choices), ('M2M', m2m_choices)]
+        
+        form =  DuplicateFieldsSelectForm(initial = form_initial)
+        form.fields['fields'].choices = choices
+        return form
+        
+    def _get_fields_select_choices(self):
+        """
+        Returns the different choices for the field select of the DuplicateFieldsSelectForm.
+        """
+        field_choices = [
             (f.name, f.verbose_name.capitalize())
             for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
+        ]
+        reverse_choices = [
+            (rel.name, rel.related_model._meta.verbose_name)
+            for rel in get_model_relations(self.model, forward = False, reverse = True)
+            if not rel.many_to_many
         ]
         m2m_choices = [
             (f.name, f.verbose_name.capitalize()) 
             for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
         ]
-        form_initial = {
-            'fields': [f for f in self.dupe_fields if f in dict(fields_choices) or f in dict(m2m_choices)], 
-        }
-        choices = [('Base', fields_choices), ('M2M', m2m_choices)]
-        
-        form =  DuplicateFieldsSelectForm(initial = form_initial)
-        form.fields['fields'].choices = choices
-        return form
+        return field_choices, reverse_choices, m2m_choices
         
     def build_duplicate_items_context(self):
         """
