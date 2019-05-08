@@ -149,7 +149,9 @@ class DuplicateObjectsView(MaintView):
         items = []
         duplicates = self.model.objects.duplicates(*self.dupe_fields)
         
-        headers = [self.opts.get_field(f).verbose_name.capitalize() for f in self.dupe_fields]
+        # Use the verbose names established in the fields select form for the table's headers.
+        choices = dict(chain(*self._get_fields_select_choices()))
+        headers = [choices[f] for f in self.dupe_fields]
         for instances, values in duplicates:
             dupe_item = [
                 (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in self.dupe_fields])
