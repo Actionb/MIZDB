@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from .widgets import ColumnedCheckboxWidget
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm 
+from DBentry.utils import get_model_fields, get_model_relations
 
 class MaintBaseForm(forms.Form): 
     pass 
@@ -22,20 +23,63 @@ class MergeFormHandleConflicts(MergeFormBase):
 #MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, formset = DynamicChoiceFormSet, extra=0, can_delete=False) 
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)   
 
-class DuplicateFieldsSelectForm(MIZAdminForm):
+class DuplicateFieldsSelectForm(forms.Form): #DynamicChoiceForm still cant deal with the grouped choices we give it in 'reverse'
     #TODO: MIZAdminForm creates fieldsets for the fields; fieldsets implicitly add a label even if the label of a field is ''
-    fields = forms.MultipleChoiceField(
-        help_text = 'Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.', 
-        label = '', 
-        widget = ColumnedCheckboxWidget
-    )
-
+    base = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
+    m2m = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
+    reverse = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
+    
+    #TODO: fieldset help_text: 'Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.'
     @property
     def fieldsets(self):
         classes = ['collapse']
-        if self.initial.get('fields', False):
+        
+        if self.initial.get('base', False) or self.initial.get('m2m', False) or self.initial.get('reverse', False):
             classes.append('collapsed')
-        return [('Felder', {'fields': ['fields'], 'classes': classes})]
+        return [('Felder', {'fields': ['base', 'm2m', 'reverse'], 'classes': classes})]
+
+def get_dupe_fields_for_model(model):    
+    base = [
+        (f.name, f.verbose_name.capitalize())
+        for f in get_model_fields(model, base = True, foreign = True,  m2m = False)
+    ]
+    m2m = [
+        (f.name, f.verbose_name.capitalize()) 
+        for f in get_model_fields(model, base = False, foreign = False,  m2m = True)
+    ]
+    #TODO: Need to be properly ordered!
+    #TODO: exclude bestand // abstract models (base brochure)
+    # Group the choices by the related_model's verbose_name:
+    # ( (<group_name>,(<group_choices>,)), ... )
+    groups = []
+    for rel in get_model_relations(model, forward= False,  reverse =True):
+        if rel.many_to_many:
+            continue
+        related_model = rel.related_model
+        group_choices = []
+        for field in get_model_fields(related_model, base = True, foreign = True,  m2m = False):
+            if field.remote_field == rel:
+                # This is the foreign key field that brought us here to begin with;
+                # don't include it
+                continue
+            group_choices.append((field.name, field.verbose_name.capitalize()))
+        if group_choices:
+            group = (related_model._meta.verbose_name, group_choices)
+            groups.append(group)
+    return {'base': base, 'm2m': m2m, 'reverse': groups}
+
+def duplicatefieldsform_factory(model, selected_dupe_fields):
+    choices = get_dupe_fields_for_model(model)
+    initial = {
+            'base': [f for f in selected_dupe_fields if f in choices['base']], 
+            'm2m': [f for f in selected_dupe_fields if f in choices['m2m']], 
+            'reverse': [f for f in selected_dupe_fields if f in choices['reverse']], 
+        }
+    form = DuplicateFieldsSelectForm(initial = initial)
+    form.fields['base'].choices = choices['base']
+    form.fields['m2m'].choices = choices['m2m']
+    form.fields['reverse'].choices = choices['reverse']
+    return form
     
 class ModelSelectForm(MIZAdminForm):
     

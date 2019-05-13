@@ -18,7 +18,8 @@ from DBentry.models import *
 from DBentry.sites import register_tool
 from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations
 
-from .forms import * 
+#TODO: fix this import
+from .forms import *
 
 #@register_tool
 class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
@@ -87,7 +88,7 @@ class DuplicateObjectsView(MaintView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
                
-        context['form'] = self.get_fields_select_form()
+        context['form'] = self.get_form()
         
         media = context.get('media', False)
         if media:
@@ -109,47 +110,8 @@ class DuplicateObjectsView(MaintView):
             self._dupe_fields = [] + self.request.GET.getlist('fields', []) + self.request.GET.getlist('m2m_fields', [])
         return self._dupe_fields
         
-    def get_fields_select_form(self):
-        field_choices, reverse_choices, m2m_choices = self._get_fields_select_choices()
-        form_initial = {
-            'fields': [f for f in self.dupe_fields if f in dict(field_choices) or f in dict(m2m_choices)], 
-        }
-        choices = [('Base', field_choices), ('Reverse', reverse_choices), ('M2M', m2m_choices)]
-        
-        form =  DuplicateFieldsSelectForm(initial = form_initial)
-        form.fields['fields'].choices = choices
-        return form
-        
-    def _get_fields_select_choices(self):
-        """
-        Returns the different choices for the field select of the DuplicateFieldsSelectForm.
-        """
-        #TODO: what about private fields (_name, _changed_flag)
-        field_choices = [
-            (f.name, f.verbose_name.capitalize())
-            for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
-        ]
-        #TODO: querying for rel.name will return primary keys;
-        # ex: every musiker_alias can only have one musiker that it belongs to
-        # several musiker may have the same musiker_alias__alias though.
-        # need to be explicit what non-unique field to query!
-        # ideas:
-        # - rel.related_model.name_field ==> may be None
-        # - if only one other field besides the foreign key ==> ambigious
-        # - name composing fields ==> dependent on being ComputedNameModel; which ones though?
-        # - add all possible base fields of rel.related_model to the choices? ==> too many choices/same should then be done for m2m
-        # - model_admin (of self.model) inline (of rel.related_model) fields ==> works like above
-        #       - exclude only the foreign key to parent (contrib.admin.helpers.278: fk.name == field)
-        reverse_choices = [
-            (rel.name, rel.related_model._meta.verbose_name)
-            for rel in get_model_relations(self.model, forward = False, reverse = True)
-            if not rel.many_to_many
-        ]
-        m2m_choices = [
-            (f.name, f.verbose_name.capitalize()) 
-            for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
-        ]
-        return field_choices, reverse_choices, m2m_choices
+    def get_form(self):
+        return duplicatefieldsform_factory(self.model, self.dupe_fields)
         
     def build_duplicate_items_context(self):
         """
