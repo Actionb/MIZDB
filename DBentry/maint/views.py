@@ -130,7 +130,16 @@ class DuplicateObjectsView(MaintView):
             for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
         ]
         #TODO: querying for rel.name will return primary keys;
+        # ex: every musiker_alias can only have one musiker that it belongs to
+        # several musiker may have the same musiker_alias__alias though.
         # need to be explicit what non-unique field to query!
+        # ideas:
+        # - rel.related_model.name_field ==> may be None
+        # - if only one other field besides the foreign key ==> ambigious
+        # - name composing fields ==> dependent on being ComputedNameModel; which ones though?
+        # - add all possible base fields of rel.related_model to the choices? ==> too many choices/same should then be done for m2m
+        # - model_admin (of self.model) inline (of rel.related_model) fields ==> works like above
+        #       - exclude only the foreign key to parent (contrib.admin.helpers.278: fk.name == field)
         reverse_choices = [
             (rel.name, rel.related_model._meta.verbose_name)
             for rel in get_model_relations(self.model, forward = False, reverse = True)
