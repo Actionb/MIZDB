@@ -85,7 +85,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         change_form_path = unquote(reverse('admin:DBentry_band_change', args=['{pk}']))
         link_template = '<a href="{url}">{name}</a>'
         
-        request = self.get_request(data = {'fields':['band_name']})
+        request = self.get_request(data = {'base':['band_name']})
         view = self.get_view(request)
         view.model = self.model
         view.opts = self.model._meta
@@ -120,25 +120,31 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
     @patch.object(MIZQuerySet, 'duplicates')
     def test_build_duplicate_items_context_headers(self, mocked_duplicates):
         # Assert that the correct (field.verbose_name capitalized) headers are returned.
-        request = self.get_request()
-        view = self.get_view(request)
+        # Headers are built from the labels of the established choices.
+        view = self.get_view(self.get_request())
         view.model = self.model
         view.opts = self.model._meta
         
         # Hack the dupe_fields property
-        view._dupe_fields = ['band_name']
-        headers, _ = view.build_duplicate_items_context()
+        dupe_fields = ['band_name']
+        form = view.get_form()
+        form.fields['base'].choices = [('band_name', 'Bandname')]
+        headers, _ = view.build_duplicate_items_context(form = form, dupe_fields = dupe_fields)
         self.assertIn('Bandname', headers)
         
-        # reverse fk
-        view._dupe_fields = ['band_alias']
-        headers, _ = view.build_duplicate_items_context()
-        self.assertIn('Alias', headers)
-        
         # m2m
-        view._dupe_fields = ['genre']
-        headers, _ = view.build_duplicate_items_context()
+        dupe_fields = ['genre']
+        form = view.get_form()
+        form.fields['m2m'].choices = [('genre', 'Genre')]
+        headers, _ = view.build_duplicate_items_context(form = form, dupe_fields = dupe_fields)
         self.assertIn('Genre', headers)
+        
+        # reverse fk (grouped choices!)
+        dupe_fields = ['alias']
+        form = view.get_form()
+        form.fields['reverse'].choices = [('Alias', [('alias', 'Alias')])]
+        headers, _ = view.build_duplicate_items_context(form = form, dupe_fields = dupe_fields)
+        self.assertIn('Alias', headers)
         
     def test_dupe_fields_prop(self):
         dummy_form = type('DummyForm', (object, ), {'base_fields': ['base', 'm2m']})
@@ -156,23 +162,5 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         
         request = self.get_request(data = {'base': ['beep'], 'm2m': ['boop', 'baap']})
         view = self.get_view(request)
-        view.form_class = dummy_form
         self.assertEqual(view.dupe_fields, ['beep', 'boop', 'baap'])
         
-    def test_get_fields_select_choices(self):
-        # Assert that the various fields that should be present are present.
-        view = self.get_view()
-        view.model = _models.musiker
-        field_choices, reverse_choices, m2m_choices = view._get_fields_select_choices()
-        # simple fields & forward fk
-        self.assertIn(('kuenstler_name', 'Künstlername'), field_choices)
-        self.assertIn(('person', 'Person'), field_choices)
-        
-        # reverse fk
-        self.assertIn(('musiker_alias', 'Alias'), reverse_choices)
-        
-        # m2m declared on model
-        self.assertIn(('genre', 'Genre'), m2m_choices)
-        
-        # m2m declared on ANOTHER model; should NOT be a choice
-        self.assertNotIn(('band', 'Band'), m2m_choices)
