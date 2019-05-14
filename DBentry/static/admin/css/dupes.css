@@ -1,0 +1,25 @@
+
+form ul li {
+    list-style-type:none; 
+}
+
+.collapsed *:not(.collapsible){
+    display: none; 
+}
+
+.collapsible {
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+    background: lightblue none repeat scroll 0 0;
+    color: #447e9b; 
+    margin: 0;
+    padding: 8px;
+    font-weight: 400;
+    margin-bottom: 30px;
+    display: block;
+}
+
+.collapsible:hover {
+    cursor: pointer;
+}

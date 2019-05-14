@@ -23,21 +23,17 @@ class MergeFormHandleConflicts(MergeFormBase):
 #MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, formset = DynamicChoiceFormSet, extra=0, can_delete=False) 
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)   
 
-class DuplicateFieldsSelectForm(forms.Form): #DynamicChoiceForm still cant deal with the grouped choices we give it in 'reverse'
-    #TODO: MIZAdminForm creates fieldsets for the fields; fieldsets implicitly add a label even if the label of a field is ''
+class DuplicateFieldsSelectForm(forms.Form): 
     base = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     m2m = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     reverse = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     
-    #TODO: fieldset help_text: 'Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.'
-    @property
-    def fieldsets(self):
-        classes = ['collapse']
-        
-        if self.initial.get('base', False) or self.initial.get('m2m', False) or self.initial.get('reverse', False):
-            classes.append('collapsed')
-        return [('Felder', {'fields': ['base', 'm2m', 'reverse'], 'classes': classes})]
-
+    help_text ='Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.'
+    
+    class Media:
+        css = {'all':  ['admin/css/dupes.css']}
+        js = ['admin/js/collapse.js'] #TODO: django changed how it adds events to collapse stuff; check it out
+    
 def get_dupe_fields_for_model(model):    
     base = [
         (f.name, f.verbose_name.capitalize())

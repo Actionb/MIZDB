@@ -16,7 +16,7 @@ from DBentry.views import MIZAdminToolViewMixin, FixedSessionWizardView
 from DBentry.actions.views import MergeViewWizarded
 from DBentry.models import * 
 from DBentry.sites import register_tool
-from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations
+from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations, ensure_jquery
 
 #TODO: fix this import
 from .forms import *
@@ -96,7 +96,7 @@ class DuplicateObjectsView(MaintView):
             media += context['form'].media
         else:
             media = context['form'].media
-        context['media'] = media
+        context['media'] = ensure_jquery(media)
             
         context['headers'], context['items'] = self.build_duplicate_items_context()
         context['action_name'] = 'merge_records'
