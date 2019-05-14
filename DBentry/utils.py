@@ -177,8 +177,19 @@ def is_protected(objs, using='default'):
         collector.collect(objs)
     except models.ProtectedError as e:
         return e
-
-
+        
+def get_reverse_field_path(rel, field_name):
+    """
+    Builds a field_path to 'field_name' using the reverse relation 'rel'. 
+    """
+    if rel.related_query_name:
+        field_path = rel.related_query_name
+    elif rel.related_name:
+        field_path = rel.related_name
+    else:
+        field_path = rel.related_model._meta.model_name
+    return field_path + models.constants.LOOKUP_SEP + field_name
+    
 def merge_records(original, qs, update_data = None, expand_original = True, request = None):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.
