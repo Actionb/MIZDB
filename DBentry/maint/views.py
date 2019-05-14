@@ -98,7 +98,7 @@ class DuplicateObjectsView(MaintView):
             media = context['form'].media
         context['media'] = ensure_jquery(media)
             
-        context['headers'], context['items'] = self.build_duplicate_items_context()
+        context['headers'], context['items'] = self.build_duplicate_items_context(context['form'], self.dupe_fields)
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
         return context
@@ -106,34 +106,49 @@ class DuplicateObjectsView(MaintView):
     @property
     def dupe_fields(self):
         if self._dupe_fields is None:
-            #TODO: there is only one formfield left: 'fields'
-            # what is m2m_fields still doing here? bad git merge conflict?
             self._dupe_fields = []
             for formfield in self.form_class.base_fields: #NOTE self.get_form(self.model, None)?
                 if formfield in self.request.GET:
                     self._dupe_fields.extend(self.request.GET.getlist(formfield))
         return self._dupe_fields
         
-    def get_form(self):
-        return duplicatefieldsform_factory(self.model, self.dupe_fields)
+    def get_form(self, model = None, dupe_fields = None):
+        if dupe_fields is None:
+            dupe_fields = self.dupe_fields
+        return duplicatefieldsform_factory(model or self.model, dupe_fields)
         
-    def build_duplicate_items_context(self):
+    def build_duplicate_items_context(self, form = None, dupe_fields = None):
         """
         Returns a list of headers and a list of 2-tuples of:
             - a list of duplicate items (instance, link to change view, duplicate values)
             - a link to the changelist of these items
         """
-        if not self.dupe_fields:
-            return [], []
+        if dupe_fields is None:
+            if not self.dupe_fields:
+                return [], []
+            dupe_fields = self.dupe_fields
+        if form is None:
+            form = self.get_form(self.model, dupe_fields)
+            
         items = []
-        duplicates = self.model.objects.duplicates(*self.dupe_fields)
+        duplicates = self.model.objects.duplicates(*dupe_fields)
         
-        # Use the verbose names established in the fields select form for the table's headers.
-        choices = dict(chain(*self._get_fields_select_choices()))
-        headers = [choices[f] for f in self.dupe_fields]
+        # Use the verbose name labels established in the fields select form for the table's headers.
+        choices = {}
+        for choice_field in form.fields.values():
+            if not getattr(choice_field, 'choices', False):
+                # Not a choice field ... somehow!
+                continue
+            field_choices = choice_field.choices
+            if isinstance(field_choices[0][1], (list, tuple)):
+                # Grouped choices: [('group_name',[*choices])]; get the actual choices
+                field_choices = field_choices[0][1]
+            choices.update(dict(field_choices))
+                
+        headers = [choices[f] for f in dupe_fields]
         for instances, values in duplicates:
             dupe_item = [
-                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in self.dupe_fields])
+                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in dupe_fields])
                 for instance in instances
             ]           
             cl_url =  reverse('admin:{}_{}_changelist'.format(self.opts.app_label, self.opts.model_name))
