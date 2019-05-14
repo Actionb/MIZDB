@@ -3,7 +3,7 @@ from ..mixins import TestDataMixin
 
 from unittest.mock import patch, Mock
 
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils.http import unquote
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
@@ -28,6 +28,15 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             for i in range(1, 4)
         ]
         super().setUpTestData()
+        
+    def test_availabilty(self):
+        url = reverse('dupes', kwargs = {'model_name': 'band'})
+        self.assertTrue(resolve(url))
+        
+        # Assert that no queries are being done accessing the page;
+        # A oversight led to the page querying for duplicates without any fields when request.
+        with self.assertNumQueries(2): # one query each for: session, user (must be a client thing)
+            self.client.get(url)
         
     def test_dispatch_sets_attrs(self):
         # Assert that dispatch sets model, opts, title, breadcrumbs_title from kwargs passed to dispatch
@@ -79,6 +88,32 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         with patch.object(MergeViewWizarded, 'as_view') as mocked_as_view:
             view.post(request)
         self.assertEqual(mocked_as_view.call_count, 0)
+        
+    def test_build_duplicate_items_returns_empty(self):
+        # Assert that build_duplicate_items_context short circuits when:
+        # - view is called with a POST request (dupe_fields will be empty)
+        view = self.get_view(self.post_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context()
+        self.assertEqual(context, ([], []))
+        
+        # - view is called without any dupe_fields selected
+        view = self.get_view(self.get_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context()
+        self.assertEqual(context, ([], []))
+        
+        # - if build_duplicate_items_context is called with dupe_fields = None
+        view = self.get_view(self.get_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context(None, None)
+        self.assertEqual(context, ([], []))
+        
+        # -if build_duplicate_items_context is called with dupe_fields = []
+        view = self.get_view(self.get_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context(None, [])
+        self.assertEqual(context, ([], []))
         
     def test_build_duplicate_items_context(self):
         # Assert that build_duplicate_items_context returns the correct items.

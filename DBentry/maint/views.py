@@ -54,7 +54,7 @@ class UnusedObjectsView(MaintView):
 
 @register_tool
 class DuplicateObjectsView(MaintView):
-    #TODO: provide more info for the select to merge bit
+    #NOTE: check for 'get_duplicates' (name of submit button) in request.GET before doing a query for duplicates? 
     
     url_name = 'dupes_select' 
     index_label = 'Duplikate finden' 
@@ -97,7 +97,7 @@ class DuplicateObjectsView(MaintView):
         else:
             media = context['form'].media
         context['media'] = ensure_jquery(media)
-            
+        
         context['headers'], context['items'] = self.build_duplicate_items_context(context['form'], self.dupe_fields)
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
@@ -124,9 +124,9 @@ class DuplicateObjectsView(MaintView):
             - a link to the changelist of these items
         """
         if dupe_fields is None:
-            if not self.dupe_fields:
-                return [], []
             dupe_fields = self.dupe_fields
+        if not dupe_fields:
+            return [], []
         if form is None:
             form = self.get_form(self.model, dupe_fields)
             
