@@ -1,5 +1,8 @@
 from ..base import MyTestCase
 from ..mixins import CreateFormMixin
+from itertools import chain
+from django.core.exceptions import FieldDoesNotExist
+from django.contrib.admin.utils import get_fields_from_path
 
 import DBentry.models as _models
 from DBentry.maint.forms import get_dupe_fields_for_model
@@ -58,5 +61,22 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         group_names = [group_name for group_name, group_choices in reverse]
         self.assertEqual(group_names, expected)
         
-        
+    def test_reverse_choices_are_queryable(self):
+        # Assert that whatever is returned by get_dupe_fields_for_model can actually be used in query.
+        # Using get_fields_from_path to assert the ... queryability.
+        dupe_fields = get_dupe_fields_for_model(_models.ausgabe)
+        reverse = dupe_fields['reverse']
+        all_choices = list(chain(*(group_choices for group_name, group_choices in reverse)))
+        failed = []
+        for field_path, label in all_choices:
+            try:
+                get_fields_from_path(_models.ausgabe, field_path)
+            except FieldDoesNotExist:
+                failed.append(field_path)
+        if failed:
+            self.fail("Could not query for these fields:\n" + ", ".join(f for f in failed))
+            
+    def test_reverse_choices_excludes_abstract_models(self):
+        # Assert that get_dupe_fields_for_model does not include abstract models in reverse choices
+        pass
         

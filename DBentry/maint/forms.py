@@ -1,8 +1,11 @@
 from django import forms 
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.db.models.constants import LOOKUP_SEP
+
 from .widgets import ColumnedCheckboxWidget
+
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm 
-from DBentry.utils import get_model_fields, get_model_relations
+from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
 
 class MaintBaseForm(forms.Form): 
     pass 
@@ -58,7 +61,7 @@ def get_dupe_fields_for_model(model):
                 # This is the foreign key field that brought us here to begin with;
                 # don't include it
                 continue
-            group_choices.append((field.name, field.verbose_name.capitalize()))
+            group_choices.append((get_reverse_field_path(rel, field.name), field.verbose_name.capitalize()))
         if group_choices:
             group = (related_model._meta.verbose_name, group_choices)
             groups.append(group)
