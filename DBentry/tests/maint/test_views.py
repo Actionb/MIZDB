@@ -141,14 +141,23 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         self.assertIn('Genre', headers)
         
     def test_dupe_fields_prop(self):
-        request = self.get_request(data = {'fields': ['beep', 'boop'], 'm2m_fields': ['baap']})
-        view = self.get_view(request)
-        self.assertEqual(view.dupe_fields, ['beep', 'boop', 'baap'])
+        dummy_form = type('DummyForm', (object, ), {'base_fields': ['base', 'm2m']})
+        self.view_class.form_class = dummy_form
         
-        # dupe_fields uses request.GET, so a post request should return an empty list
-        request = self.post_request(data = {'fields': ['beep', 'boop'], 'm2m_fields': ['baap']})
+        # post requests should not be handled; empty list expected
+        request = self.post_request(data = {'base': ['beep'], 'm2m': ['boop', 'baap']})
         view = self.get_view(request)
-        self.assertEqual(view.dupe_fields, [])
+        self.assertEqual(view.dupe_fields, [])        
+        
+        # request without any fields ticked:
+        request = self.post_request(data = {'base': [], 'm2m': []})
+        view = self.get_view(request)
+        self.assertEqual(view.dupe_fields, [])        
+        
+        request = self.get_request(data = {'base': ['beep'], 'm2m': ['boop', 'baap']})
+        view = self.get_view(request)
+        view.form_class = dummy_form
+        self.assertEqual(view.dupe_fields, ['beep', 'boop', 'baap'])
         
     def test_get_fields_select_choices(self):
         # Assert that the various fields that should be present are present.

@@ -59,6 +59,7 @@ class DuplicateObjectsView(MaintView):
     url_name = 'dupes_select' 
     index_label = 'Duplikate finden' 
     template_name = 'admin/dupes.html'
+    form_class = DuplicateFieldsSelectForm
     _dupe_fields = None
     
     def dispatch(self, request, *args, **kwargs):
@@ -107,7 +108,10 @@ class DuplicateObjectsView(MaintView):
         if self._dupe_fields is None:
             #TODO: there is only one formfield left: 'fields'
             # what is m2m_fields still doing here? bad git merge conflict?
-            self._dupe_fields = [] + self.request.GET.getlist('fields', []) + self.request.GET.getlist('m2m_fields', [])
+            self._dupe_fields = []
+            for formfield in self.form_class.base_fields: #NOTE self.get_form(self.model, None)?
+                if formfield in self.request.GET:
+                    self._dupe_fields.extend(self.request.GET.getlist(formfield))
         return self._dupe_fields
         
     def get_form(self):
