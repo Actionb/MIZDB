@@ -58,6 +58,7 @@ def get_model_relations(model, forward = True, reverse = True):
     
     relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
     # ManyToManyRels can always be regarded as symmetrical (both 'forward' and 'reverse') and should always be included 
+    #TODO: this does not maintain the order of fields/rels returned by get_fields()
     rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
     for f in relation_fields:
         if f.concrete:

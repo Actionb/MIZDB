@@ -42,3 +42,21 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         #TODO: this assertion will pass if ['parent','Parent'] is used or the structure of the choices is off (test above)
         self.assertNotIn(('parent', 'Parent'), musiker_alias_fields)
         
+    def test_get_dupefields_sorts_reverse_choices(self):
+        # Assert that get_dupe_fields_for_model sorts the reverse choices by 
+        # - group name
+        # - choice labels
+        # ausgabe has the following 7 reverse rels:
+        # [<ManyToOneRel: DBentry.bestand>, <ManyToOneRel: DBentry.ausgabe_jahr>, <ManyToOneRel: DBentry.ausgabe_lnum>, 
+        # <ManyToOneRel: DBentry.artikel>, <ManyToOneRel: DBentry.basebrochure>, <ManyToOneRel: DBentry.ausgabe_num>, 
+        # <ManyToOneRel: DBentry.ausgabe_monat>]
+        dupe_fields = get_dupe_fields_for_model(_models.ausgabe)
+        self.assertIn('reverse', dupe_fields)
+        reverse = dupe_fields['reverse']
+        self.assertEqual(len(reverse), 7)
+        expected = ['Artikel', 'Ausgabe-Monat', 'Bestand', 'Jahr', 'Nummer', 'base brochure', 'lfd. Nummer']
+        group_names = [group_name for group_name, group_choices in reverse]
+        self.assertEqual(group_names, expected)
+        
+        
+        

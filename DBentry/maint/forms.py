@@ -43,11 +43,11 @@ def get_dupe_fields_for_model(model):
         (f.name, f.verbose_name.capitalize()) 
         for f in get_model_fields(model, base = False, foreign = False,  m2m = True)
     ]
-    #TODO: Need to be properly ordered!
     #TODO: exclude bestand // abstract models (base brochure)
+    
     # Group the choices by the related_model's verbose_name:
     # ( (<group_name>,(<group_choices>,)), ... )
-    groups = []
+    groups = []            
     for rel in get_model_relations(model, forward= False,  reverse =True):
         if rel.many_to_many:
             continue
@@ -62,6 +62,10 @@ def get_dupe_fields_for_model(model):
         if group_choices:
             group = (related_model._meta.verbose_name, group_choices)
             groups.append(group)
+    # get_model_relations uses an unordered set() to collect the rels;
+    # We need to sort everything alphabetically again to achieve some order
+    order_by_group_name = lambda group: group[0]
+    groups = sorted(groups, key = order_by_group_name)
     return {'base': base, 'm2m': m2m, 'reverse': groups}
 
 def duplicatefieldsform_factory(model, selected_dupe_fields):
