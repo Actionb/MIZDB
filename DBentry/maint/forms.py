@@ -1,8 +1,4 @@
 from django import forms 
-from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.db.models.constants import LOOKUP_SEP
-
-from .widgets import ColumnedCheckboxWidget
 
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm 
 from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
