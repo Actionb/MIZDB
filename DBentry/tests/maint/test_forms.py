@@ -36,19 +36,15 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         self.assertIsInstance(choice[1], str, msg = "Should be choice id.")
         
     def test_get_dupefields_excludes_reverse_fk_field(self):
-        # Assert that get_dupe_fields_for_model does not include the 'parent' ForeignKey field 
-        # in its 'reverse' choices.
+        # Assert that the reverse choices do not contain the ForeignKey field of that reverse relation.
         dupe_fields = get_dupe_fields_for_model(_models.musiker)
         self.assertIn('reverse', dupe_fields)
         self.assertIn('Alias', dict(dupe_fields['reverse']))
         musiker_alias_fields = dict(dupe_fields['reverse'])['Alias']
-        #TODO: this assertion will pass if ['parent','Parent'] is used or the structure of the choices is off (test above)
-        self.assertNotIn(('parent', 'Parent'), musiker_alias_fields)
+        self.assertNotIn('parent', [choice[0] for choice in musiker_alias_fields])
         
     def test_get_dupefields_sorts_reverse_choices(self):
-        # Assert that get_dupe_fields_for_model sorts the reverse choices by 
-        # - group name
-        # - choice labels
+        # Assert that get_dupe_fields_for_model sorts the reverse choices by group name (lower()).
         # ausgabe has the following 7 reverse rels:
         # [<ManyToOneRel: DBentry.bestand>, <ManyToOneRel: DBentry.ausgabe_jahr>, <ManyToOneRel: DBentry.ausgabe_lnum>, 
         # <ManyToOneRel: DBentry.artikel>, <ManyToOneRel: DBentry.basebrochure>, <ManyToOneRel: DBentry.ausgabe_num>, 
@@ -57,7 +53,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         self.assertIn('reverse', dupe_fields)
         reverse = dupe_fields['reverse']
         self.assertEqual(len(reverse), 7)
-        expected = ['Artikel', 'Ausgabe-Monat', 'Bestand', 'Jahr', 'Nummer', 'base brochure', 'lfd. Nummer']
+        expected = ['Artikel', 'Ausgabe-Monat', 'base brochure', 'Bestand', 'Jahr', 'lfd. Nummer', 'Nummer']
         group_names = [group_name for group_name, group_choices in reverse]
         self.assertEqual(group_names, expected)
         
