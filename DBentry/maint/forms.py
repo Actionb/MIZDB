@@ -46,7 +46,6 @@ def get_dupe_fields_for_model(model):
         (f.name, f.verbose_name.capitalize()) 
         for f in get_model_fields(model, base = False, foreign = False,  m2m = True)
     ]
-    #TODO: exclude bestand // abstract models (base brochure)
     
     # Group the choices by the related_model's verbose_name:
     # ( (<group_name>,(<group_choices>,)), ... )

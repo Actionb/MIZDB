@@ -75,8 +75,3 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
                 failed.append(field_path)
         if failed:
             self.fail("Could not query for these fields:\n" + ", ".join(f for f in failed))
-            
-    def test_reverse_choices_excludes_abstract_models(self):
-        # Assert that get_dupe_fields_for_model does not include abstract models in reverse choices
-        pass
-        
