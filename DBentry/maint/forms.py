@@ -67,7 +67,7 @@ def get_dupe_fields_for_model(model):
             groups.append(group)
     # get_model_relations uses an unordered set() to collect the rels;
     # We need to sort everything alphabetically again to achieve some order
-    order_by_group_name = lambda group: group[0]
+    order_by_group_name = lambda group: group[0].lower()
     groups = sorted(groups, key = order_by_group_name)
     return {'base': base, 'm2m': m2m, 'reverse': groups}
 
