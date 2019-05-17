@@ -107,7 +107,7 @@ class DuplicateObjectsView(MaintView):
     def dupe_fields(self):
         if self._dupe_fields is None:
             self._dupe_fields = []
-            for formfield in self.form_class.base_fields: #NOTE self.get_form(self.model, None)?
+            for formfield in self.form_class.base_fields: 
                 if formfield in self.request.GET:
                     self._dupe_fields.extend(self.request.GET.getlist(formfield))
         return self._dupe_fields
