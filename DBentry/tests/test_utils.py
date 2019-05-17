@@ -631,6 +631,7 @@ class TestEnsureJQuery(MyTestCase):
         self.expected = [self.jquery_base, self.jquery_init, 'beep', 'boop']
             
     def test_ensure_jquery_media_object(self):
+        # Assert that ensure_jquery adds jquery when given a Media object.
         media = Media(js = [])
         self.assertIsInstance(utils.ensure_jquery(media), Media)
         self.assertEqual(utils.ensure_jquery(media)._js, [self.jquery_base, self.jquery_init],  msg = "ensure_jquery should add jquery to empty media")
@@ -639,8 +640,9 @@ class TestEnsureJQuery(MyTestCase):
             media = Media(js = js)
             with self.subTest():
                 self.assertEqual(utils.ensure_jquery(media)._js,  self.expected)
-        
+                
     def test_ensure_jquery_as_func_decorator(self):
+        # Assert that ensure_jquery adds jquery when decorating the media function.
         def get_func(media):
             return lambda *args: media
         func = get_func(Media(js = []))
@@ -650,9 +652,9 @@ class TestEnsureJQuery(MyTestCase):
             func = get_func(Media(js = js))
             with self.subTest():
                 self.assertEqual(utils.ensure_jquery(func)(None)._js,  self.expected)
-        
-    
+                
     def test_ensure_jquery_as_property_decorator(self):
+        # Assert that ensure_jquery adds jquery when decorating the property of the media function.
         def get_prop(_media):
             return property(lambda *args: _media)
         

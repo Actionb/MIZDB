@@ -191,7 +191,6 @@ class TestMIZAdminForm(FormTestCase):
             self.assertIsInstance(fs, MIZFieldset)
             
     def test_media_prop(self):
-        #TODO: review this test now that stable topological sorting is being done on media
         # Make sure jquery is loaded in the right order:
         # jquery > jquery.init > whatever requires jquery
         from django.conf import settings
