@@ -464,12 +464,16 @@ def ensure_jquery(media):
             
         for js_list in _media._js_lists:
             # insert jquery_base at the beginning and jquery_init right after; remove pre-existing entries if necessary
+            # Cast the iterable js_list into a list for easier operations; if it's a tuple, change it back to that after we're done.
+            is_tuple = isinstance(js_list, (tuple))
+            js_list = list(js_list) if is_tuple else js_list
             if jquery_base in js_list:
                 js_list.remove(jquery_base)
             js_list.insert(0, jquery_base)
             if jquery_init in js_list:
                 js_list.remove(jquery_init)
             js_list.insert(1, jquery_init)
+            js_list = tuple(js_list) if not is_tuple else js_list
         return _media
         
     def wrapper(attr):
