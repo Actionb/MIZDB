@@ -459,9 +459,16 @@ class TestModelBand(DataTestCase):
         
 class TestModelBestand(DataTestCase):
     pass
-    
+
+from django.test import tag
+@tag("wip")
 class TestModelBildmaterial(DataTestCase):
-    pass
+    
+    model = _models.bildmaterial
+    
+    def test_str(self):
+        obj = make(self.model, titel='Testbild')
+        self.assertEqual(str(obj), 'Testband')
 
 class TestModelBuch(DataTestCase):
     pass

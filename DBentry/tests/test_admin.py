@@ -1100,7 +1100,9 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'}, 
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
     ]
-    
+ 
+from django.test import tag
+@tag("wip")   
 class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         
     model_admin_class = _admin.BildmaterialAdmin
