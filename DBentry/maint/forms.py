@@ -34,6 +34,9 @@ class DuplicateFieldsSelectForm(forms.Form):
         js = ['admin/js/collapse.js'] #TODO: django changed how it adds events to collapse stuff; check it out
     
 def get_dupe_fields_for_model(model):    
+    """
+    Returns two-tuples of (queryable field path, field label) of fields that can be used to find duplicates with.
+    """
     base = [
         (f.name, f.verbose_name.capitalize())
         for f in get_model_fields(model, base = True, foreign = True,  m2m = False)
