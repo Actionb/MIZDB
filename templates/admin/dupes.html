@@ -25,15 +25,10 @@
 <div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
 <h2 class="collapsible">Felder</h2>
 <form name="fields_select" method="get">
-    {{form.help_text}}
-    <table>
-    <thead>
-        {% for field in form %}<th></th>{% endfor %}
-    </thead>
-    <tbody> <tr>
+    <span class="help">{{form.help_text}}</span>
+    <table><tbody> <tr>
         {% for field in form %}<td>{{field}}</td>{% endfor %}
-    </tr> </tbody>
-    </table>
+    </tr> </tbody></table>
         <input type="submit" name="get_duplicates" value="Suchen">
 </form>
 </div>

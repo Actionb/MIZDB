@@ -16,10 +16,17 @@ form ul li {
     margin: 0;
     padding: 8px;
     font-weight: 400;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     display: block;
 }
 
 .collapsible:hover {
     cursor: pointer;
 }
+
+.help {
+    font-size: 11px;
+    color: #999;
+    margin-left:10px;
+}
+
