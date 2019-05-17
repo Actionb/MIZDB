@@ -11,7 +11,7 @@ from django.db.models.manager import BaseManager
 from .models import *
 from .constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
-from DBentry.utils import snake_case_to_spaces
+from DBentry.utils import snake_case_to_spaces, ensure_jquery
 
 Textarea = forms.Textarea           
 
@@ -185,6 +185,7 @@ class AudioForm(FormBase):
     
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
+    #TODO: shouldnt this include collapse.js if required by a fieldset?
         
     class Media:
         css = {
@@ -215,7 +216,7 @@ class MIZAdminForm(forms.Form):
             'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min'), 
             'admin/js/jquery.init.js' 
         ])
-        return jquery_media + media
+        return ensure_jquery(jquery_media + media)
         
     @cached_property
     def changed_data(self):
@@ -254,6 +255,7 @@ class DynamicChoiceForm(forms.Form):
         - an iterable containing choices that apply to all ChoiceFields
     The actual choices for a given field can be lists/tuples, querysets or manager instances.
     """
+    #TODO: this cannot handle grouped choices (grouped by names)
     
     def __init__(self, *args, **kwargs):
         all_choices = kwargs.pop('choices', {})

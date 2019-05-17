@@ -33,27 +33,41 @@ class MIZQuerySet(models.QuerySet):
             return self.multi_field_dupes(*fields, as_dict = as_dict)
             
     def duplicates(self, *fields):
-        dupes = self._duplicates(*fields)
-        rslt = OrderedDict()
-        for tpl in dupes:
-            dupe_values, c = tpl[:-1], tpl[-1] #NOTE: this REQUIRES tuples/lists and does not work with dicts
-            filter = dict(zip(fields, dupe_values))
-            ids = self.filter(**filter).values_list('pk', flat=True)
-            rslt[ids] = filter
+        #NOTE: make required_fields implicitly part of fields?
+        from collections import namedtuple
+        rslt = []
+        Dupe = namedtuple('Dupe', ['instances', 'values'])
+        for values_dict in self.qs_dupes(*fields).values(*fields): # .values(*fields) to remove the annotated counts
+            rslt.append(Dupe(instances = self.model.objects.filter(**values_dict), values = values_dict))
         return rslt
         
     def exclude_empty(self, *fields):
-        filter = {}
+        """
+        Exclude any record whose value for field in fields is 'empty' (either '' or None).
+        If a field in fields is a path, then also exclude empty values of every step on this path.
+        """
+        from django.db.models.constants import LOOKUP_SEP
+        from django.contrib.admin.utils import get_fields_from_path
+        filter = models.Q()
         for field_name in fields:
-            try:
-                field = self.model._meta.get_field(field_name)
-            except FieldDoesNotExist:
-                continue
-            if field.null:
-                filter[field_name+'__isnull'] = True
-            if field.get_internal_type() in ('CharField', 'TextField'):
-                filter[field_name] = ''
-        return self.exclude(**filter)
+            lookup_path = ''
+            # Follow the path and add a filter for each piece
+            for field in get_fields_from_path(self.model, field_name):
+                if isinstance(field, (models.CharField, models.TextField)):
+                    # empty string based model fields don't have Null/None as value!
+                    lookup = lookup_value = ''
+                else:
+                    lookup = '__isnull'
+                    lookup_value = True
+                if lookup_path:
+                    lookup_path += LOOKUP_SEP
+                lookup_path += field.name
+                q = models.Q(**{lookup_path + lookup: lookup_value})
+                
+                # Avoid having duplicates of the same filter (though I don't think having them would actually hurt?)
+                if q.children[0] not in filter:
+                    filter |= q        
+        return self.exclude(filter)
         
     def single_field_dupes(self, field):
         count_name = field + '__count'
@@ -76,7 +90,39 @@ class MIZQuerySet(models.QuerySet):
                 else:
                     rslt.append(tpl + (c, ))
         return rslt
-    
+        
+    def qs_dupes(self, *fields):
+        annotations, filters, ordering = {}, {}, []
+        for field in fields:
+            count_name = field + '__count'
+            annotations[count_name] = models.Count(field)
+            filters[count_name + '__gt'] = 1
+            ordering.append('-' + count_name) #NOTE: all the counts of fields should be the same for each record => we only need to order by one of them
+        return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
+        
+    def values_dict_dupes(self, *fields):
+        from collections import namedtuple
+        Dupe = namedtuple('Dupe', ['instances', 'values'])
+        
+        queried = self.values_dict(*fields, tuplfy = True)
+        # chain all the values in queried to later count over them
+        from itertools import chain
+        all_values = list(chain(values for pk, values in queried.items()))
+        rslt = []
+        for elem, count in Counter(all_values).items():
+            if count < 2:
+                continue
+            # Find all the pks that match these values.
+            pks = []
+            for pk, values in queried.items():
+                if values == elem:
+                    pks.append(pk)
+            instances = self.model.objects.filter(pk__in = pks)
+            rslt.append(Dupe(instances, elem))
+        return rslt
+            
+            
+        
     def values_dict(self, *fields, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
         An extension of QuerySet.values(). 

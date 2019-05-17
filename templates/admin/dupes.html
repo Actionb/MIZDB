@@ -21,24 +21,28 @@
 {% endblock %}
     
 {% block content %}
-<div>
-<form method="get">
-    {{ form.non_field_errors }}
-    
-    {% for fieldset in form %}
-      {% include "admin/includes/fieldset.html" %}
-    {% endfor %}
+<!-- Model Field Selection -->
+<div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
+<h2 class="collapsible">Felder</h2>
+<form name="fields_select" method="get">
+    <span class="help">{{form.help_text}}</span>
+    <table><tbody> <tr>
+        {% for field in form %}<td>{{field}}</td>{% endfor %}
+    </tr> </tbody></table>
         <input type="submit" name="get_duplicates" value="Suchen">
 </form>
 </div>
-<br><hr><hr><br>
+<!-- Model Field Selection END -->
+<br>
 
+<!-- Duplicates -->
 {% if items %}
+<h1>{{ items|length }} Duplikate gefunden!</h1>
 {% for dupe_item, cl_url in items %}
     
     <form method="post">
         {% csrf_token %}
-        <table class="form">
+        <table class="form" style="width:100%">
             <thead><tr>
                 <th>Merge</th>
                 <th>id</th>
@@ -65,6 +69,7 @@
     <br><hr><br>
 {% endfor %}
 {% else %}
-<p>Keine Duplikate gefunden!</p>
+<h1>Keine Duplikate gefunden!</h1>
 {% endif %}
+<!-- Duplicates END -->
 {% endblock content %}

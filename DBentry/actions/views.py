@@ -167,6 +167,7 @@ class MergeViewWizarded(WizardConfirmationView):
             msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' 
             self.model_admin.message_user(request, msg_text, 'warning')
             return False
+        #TODO: move these model specific merge-able tests somewhere else
         if model == ausgabe and queryset.values_list('magazin').distinct().count()>1:
             # User is trying to merge ausgaben from different magazines
             self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, magazin._meta.verbose_name_plural, 'n'), 'error')

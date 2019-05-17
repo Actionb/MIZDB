@@ -1,8 +1,10 @@
 import random
+from collections import namedtuple
 from itertools import chain
 from unittest.mock import patch, Mock
 
 from django.test import tag
+from django.db import models as django_models
 from django.db.models.query import QuerySet
 from django.core.exceptions import FieldDoesNotExist, FieldError
 
@@ -715,3 +717,310 @@ class TestValuesDict(DataTestCase):
     
         
     
+class TestDuplicates(DataTestCase):
+    
+    model = _models.artikel
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.test_data = []
+        cls.ausgabe_obj = make(_models.ausgabe)
+        data = {'schlagzeile': 'News Aktuell', 'ausgabe': cls.ausgabe_obj}
+        
+        # Create 9 objects with the same schlagzeile and ausgabe but different zusammenfassung
+        for i in range(1, 10):
+            obj = make(_models.artikel, zusammenfassung = 'TestArtikel%d' % i, **data)
+            setattr(cls, 'obj%d' % i, obj)
+            cls.test_data.append(obj)
+        
+        # Create a duplicate of cls.obj1 with zusammenfassung = TestArtikel1
+        cls.duplicate = cls.obj10 = make(_models.artikel, zusammenfassung = 'TestArtikel1', **data)
+        
+        # Create some other random objects 
+        for i in range(1, 6):
+            obj = make(_models.artikel)
+            setattr(cls, 'obj%d' % (i + 10), obj)
+            cls.test_data.append(obj)
+    
+    #TODO: not related to duplicates: move to MIZQuerySet tests
+    def test_exclude_empty_string_based(self):
+        # Assert that string-based fields get excluded correctly (with ='').
+        qs = self.queryset.order_by().only('beschreibung').exclude_empty('beschreibung')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        expression = where_node.children[0]
+        self.assertIsInstance(expression, django_models.lookups.Exact)
+        self.assertEqual(expression.lhs.target, self.model._meta.get_field('beschreibung'))
+        self.assertEqual(expression.rhs, '')
+        
+        self.assertFalse(qs.exists())
+        self.qs_obj1.update(beschreibung='woop')
+        self.assertIn(self.obj1, qs)
+        
+    #TODO: not related to duplicates: move to MIZQuerySet tests
+    def test_exclude_empty_non_string_based_field(self):
+        # Assert that non-string-based fields get excluded correctly (with __isnull=True).
+        # Needs a null-able field; ausgabe.jahrgang is such a field
+        qs = _models.ausgabe.objects.order_by().only('jahrgang').exclude_empty('jahrgang')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        expression = where_node.children[0]
+        self.assertIsInstance(expression, django_models.lookups.IsNull)
+        self.assertEqual(expression.lhs.target, _models.ausgabe._meta.get_field('jahrgang'))
+        self.assertTrue(expression.rhs)
+        
+        self.assertFalse(qs.exists())
+        _models.ausgabe.objects.filter(pk = self.ausgabe_obj.pk).update(jahrgang = 1)
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(self.ausgabe_obj, qs)
+    
+    #TODO: not related to duplicates: move to MIZQuerySet tests
+    def test_exclude_empty_fk(self):
+        # Assert that foreign key fields get excluded correctly (with __isnull=True).
+        # Needs a null-able fk which artikel doesnt have, so we use genre__ober instead.
+        g = make(_models.genre)
+        qs = _models.genre.objects.order_by().only('ober').exclude_empty('ober')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        expression = where_node.children[0]
+        self.assertIsInstance(expression, django_models.lookups.IsNull)
+        self.assertEqual(expression.lhs.target, _models.genre._meta.get_field('ober'))
+        self.assertTrue(expression.rhs)
+        
+        self.assertFalse(qs.exists())
+        _models.genre.objects.filter(pk=g.pk).update(ober = make(_models.genre))
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(g, qs)
+        
+    #TODO: not related to duplicates: move to MIZQuerySet tests
+    def test_exclude_empty_m2m(self):
+        # Assert that m2m fields get excluded correctly (through a subquery with __(related)isnull=True).
+        m2m_table = _models.artikel.genre.rel.through
+        qs = self.queryset.order_by().only('genre').exclude_empty('genre')
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated)
+        subquery = where_node.children[0].rhs
+        expression = subquery.where.children[0]
+        self.assertIsInstance(expression, django_models.lookups.IsNull) # is actually RelatedIsNull
+        self.assertEqual(expression.lhs.target, m2m_table._meta.get_field('genre')) # the target is the FK to genre from the m2m table for some reason?
+        self.assertTrue(expression.rhs)
+        
+        self.assertFalse(qs.exists())
+        m2m_table.objects.create(artikel = self.obj1, genre = make(_models.genre))
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(self.obj1, qs)
+        
+    #TODO: not related to duplicates: move to MIZQuerySet tests
+    def test_exclude_empty_across_relations(self):
+        # Assert that every step in a relation is being excluded.
+        qs = self.queryset.order_by().only('band__musiker__beschreibung').exclude_empty('band__musiker__beschreibung')
+        # Time to unwrangle this mess of nested where nodes and subqueries!
+        # root where node looks like AND( NOT AND( OR STUFF))); 
+        # the first AND is pointless, the second is only there to be negated upon and the third contains the three lookups (or rather the subqueries for them)
+        where_node = qs.query.where.children[0]
+        self.assertTrue(where_node.negated, msg = "Expected negated where node for 'exclude'")
+        self.assertEqual(len(where_node.children[0].children), 3, msg = "Should be 3 lookups: band, band__musiker, band__musiker__beschreibung")
+        expected = [
+            (django_models.lookups.IsNull, True,  _models.artikel.band.rel.through._meta.get_field('band')), 
+            (django_models.lookups.IsNull, True, _models.band.musiker.rel.through._meta.get_field('musiker')), 
+            (django_models.lookups.Exact, '', _models.musiker._meta.get_field('beschreibung'))            
+        ]
+        # Get the three subqueries 
+        subqueries = [lookup.rhs for lookup in where_node.children[0].children]
+        # ... and the related_lookups within them
+        related_lookups = [query.where.children[0] for query in subqueries]
+        for related_lookup, (expected_lookup, expected_lookup_value, expected_field) in zip(related_lookups, expected):
+            with self.subTest():
+                self.assertIsInstance(related_lookup, expected_lookup)
+                self.assertEqual(related_lookup.rhs, expected_lookup_value)
+                self.assertEqual(related_lookup.lhs.target, expected_field)
+                
+        # No artikel has bands or band__musikeror band__musiker__beschreibung => every artikel is excluded
+        self.assertFalse(qs.exists(), msg = "No bands nor band__musiker nor band__musiker__beschreibung: empty qs expected.")
+        # Even after adding a band to some artikel, that artikel still won't have band__musiker or band__musiker__beschreibung => exclude all
+        band = make(_models.band)
+        _models.artikel.band.rel.through.objects.create(artikel = self.obj1, band = band)
+        self.assertFalse(qs.exists(), msg = "No band__musiker nor band__musiker__beschreibung: empty qs expected.")
+        # Add a musiker to that band, still no beschreibung hence all excluded though!
+        musiker = make(_models.musiker)
+        band.musiker.add(musiker)
+        self.assertFalse(qs.exists(),  msg = "No musiker with beschreibung: empty qs expected.")
+        # Now add a beschreibung to that musiker to show the won't be excluded anymore
+        _models.musiker.objects.filter(pk = musiker.pk).update(beschreibung = 'woop')
+        self.assertEqual(qs.count(), 1, msg = "One artikel's band__musiker__beschreibung is not empty.")
+        self.assertIn(self.obj1, qs)
+        
+    def test_single_field_dupes(self):
+        dupe_count = self.model.objects.all().single_field_dupes('schlagzeile').values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupe_count = self.model.objects.all().single_field_dupes('ausgabe_id').values_list('ausgabe_id__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        
+    def test_multi_field_dupes(self):
+        dupes = self.model.objects.all().multi_field_dupes('schlagzeile', 'ausgabe_id')
+        self.assertEqual(len(dupes), 1)
+        self.assertEqual(dupes[0][-1], 10) # count is appended to the data tuple -> tpl + (c,)
+        dupes = self.model.objects.all().multi_field_dupes('schlagzeile', 'zusammenfassung', 'ausgabe_id')
+        self.assertEqual(len(dupes), 1)
+        self.assertEqual(dupes[0][-1], 2)
+        self.assertEqual(dupes[0][:-1], ('News Aktuell', 'TestArtikel1', self.ausgabe_obj.pk))
+            
+    def test_qs_dupes(self):
+        dupes = self.model.objects.all().qs_dupes('schlagzeile')
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupes = self.model.objects.all().qs_dupes('ausgabe_id')
+        dupe_count = dupes.values_list('ausgabe_id__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupes = self.model.objects.all().qs_dupes('schlagzeile', 'ausgabe_id')
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 10)
+        dupes = self.model.objects.all().qs_dupes('schlagzeile', 'zusammenfassung', 'ausgabe_id')
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 2)
+        
+    def test_qs_dupes_m2m(self):
+        # Assert that qs_dupes finds duplicates across m2m relationships.
+        # Baseline test. Establish that qs_dupes works..
+        fields = ['schlagzeile', 'zusammenfassung', 'ausgabe_id']
+        dupes = self.model.objects.all().qs_dupes(*fields)
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 2)
+        
+        fields.append('genre')
+        dupes = self.model.objects.all().qs_dupes(*fields)
+        msg = "No duplicates expected for {!s}: {}"
+        self.assertFalse(dupes.exists(), msg = msg.format(fields, "no artikel has any genre"))
+        
+        # Add a genre to self.duplicate; but no other artikel has a genre yet: no duplicates
+        g = make(_models.genre)
+        _models.artikel.genre.rel.through.objects.create(artikel = self.duplicate, genre = g)
+        self.assertFalse(self.model.objects.all().qs_dupes(*fields).exists(), msg = msg.format(fields, "only one artikel has a genre"))
+        
+        # Add another random genre to self.obj1; since that genre != g: no duplicates
+        _models.artikel.genre.rel.through.objects.create(artikel = self.obj1, genre = make(_models.genre))
+        self.assertFalse(self.model.objects.all().qs_dupes(*fields).exists(), msg = msg.format(fields, "no two artikel share the same genre"))
+        
+        # Add the same genre of self.duplicate to self.obj1; the artikel are now duplicates of each other
+        _models.artikel.genre.rel.through.objects.create(artikel = self.obj1, genre = g)
+        dupes = self.model.objects.all().qs_dupes(*fields)
+        dupe_count = dupes.values_list('schlagzeile__count', flat = True).first()
+        self.assertEqual(dupe_count, 2)
+        
+    def test_duplicates(self):
+        # Test the structure of the returned iterable.
+        # needs to contain: iterable instances, mapping: dupe field_name <-> dupe field_value
+        # iterable of namedtuples with names = [instances, values: mapping]
+        fields = ['schlagzeile', 'zusammenfassung', 'ausgabe_id']
+        duplicates = self.model.objects.duplicates(*fields)
+        self.assertIsInstance(duplicates, list) # maybe OrderedDict?
+        self.assertEqual(len(duplicates), 1)
+        dupe = duplicates[0]
+        # dupe should be a namedtuple:
+        self.assertIsInstance(dupe, tuple)
+        self.assertTrue(hasattr(dupe, '_fields'))
+        
+        self.assertTrue(hasattr(dupe, 'instances'))
+        self.assertIsInstance(dupe.instances, django_models.QuerySet)
+        self.assertEqual(len(dupe.instances), 2)
+        self.assertIn(self.obj1, dupe.instances)
+        self.assertIn(self.duplicate, dupe.instances)
+        
+        self.assertTrue(hasattr(dupe,  'values'))
+        self.assertIsInstance(dupe.values, dict)
+        values = dupe.values
+        self.assertIn('schlagzeile', values)
+        self.assertEqual(values['schlagzeile'], 'News Aktuell')
+        self.assertIn('zusammenfassung', values)
+        self.assertEqual(values['zusammenfassung'], 'TestArtikel1')
+        self.assertIn('ausgabe_id', values)
+        self.assertEqual(values['ausgabe_id'], self.ausgabe_obj.pk)
+        
+
+
+class TestDuplicates(DataTestCase):
+    
+    model = _models.musiker
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_data = [
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+        ]
+        
+        super().setUpTestData()
+        
+    def get_duplicate_instances(self, *fields, queryset = None):
+        if queryset is None:
+            queryset = self.queryset
+        duplicates = queryset.values_dict_dupes(*fields)
+        return list(chain(*(dupe.instances for dupe in duplicates)))
+        
+    def test_a_baseline(self):
+        print()
+        duplicates = self.get_duplicate_instances('kuenstler_name')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertIn(self.obj3, duplicates)
+    
+    def test_duplicates_m2m(self):
+        g1 = make(_models.genre)
+        g2 = make(_models.genre)
+        
+        self.obj1.genre.add(g1)
+        self.obj2.genre.add(g1)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj3.genre.add(g2)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        # obj1 and obj2 share a genre, but their total genres are not the same
+        self.obj1.genre.add(g2)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertNotIn(self.obj1, duplicates)
+        self.assertNotIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        
+    def test_duplicates_reverse_fk(self):
+        #TODO: this test fails when looking for duplicates with 'musiker_alias';
+        # 'musiker_alias' will look up the primary key of the musiker_alias object
+        # every musiker_alias object can only have one musiker
+        # so musiker_alias breaks duplicate search
+        # Need to query for a non-unique field(s)...
+        self.obj1.musiker_alias_set.create(alias='Beep')
+        self.obj2.musiker_alias_set.create(alias='Beep')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj3.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj1.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertNotIn(self.obj1, duplicates)
+        self.assertNotIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+    def test_duplicates_reverse_fk_joins(self):
+        # Assert that the number of duplicates found is not affected by table joins.
+        self.obj1.musiker_alias_set.create(alias='Beep')
+        self.obj2.musiker_alias_set.create(alias='Beep')
+        self.obj1.musiker_alias_set.create(alias='Boop')
+        self.obj2.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertEqual(len(duplicates), 2)
