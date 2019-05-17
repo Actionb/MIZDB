@@ -8,22 +8,6 @@
     {{ block.super }}
     <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
     {{media}}
-    {% comment %}
-    {% endcomment %}
-    <style>
-        /* 
-        Some overrides to move the choices more to left:
-        Label is empty (deliberately); but django's fieldsets will stay create space for it 
-        */
-        .aligned label { width: 0px; }
-
-        /* 
-        Since django fieldsets will implicitly include a label, all items are moved to the right a bit.
-        We don't use a label so move everything back!
-        */
-        form .aligned ul { margin-left:0px; }
-        form .aligned p.help, form .aligned div.help {margin-left:0px; }
-    </style>
 {% endblock extrahead %}
 
 
@@ -38,13 +22,13 @@
     
 {% block content %}
 <!-- Model Field Selection -->
-<div name="fields_select">
+<div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
+<h2 class="collapsible">Felder</h2>
 <form name="fields_select" method="get">
-    {{ form.non_field_errors }}
-    
-    {% for fieldset in form %}
-      {% include "admin/includes/fieldset.html" %}
-    {% endfor %}
+    <span class="help">{{form.help_text}}</span>
+    <table><tbody> <tr>
+        {% for field in form %}<td>{{field}}</td>{% endfor %}
+    </tr> </tbody></table>
         <input type="submit" name="get_duplicates" value="Suchen">
 </form>
 </div>

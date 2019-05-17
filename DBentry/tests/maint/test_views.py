@@ -3,7 +3,7 @@ from ..mixins import TestDataMixin
 
 from unittest.mock import patch, Mock
 
-from django.urls import reverse
+from django.urls import reverse, resolve
 from django.utils.http import unquote
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 
@@ -28,6 +28,15 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             for i in range(1, 4)
         ]
         super().setUpTestData()
+        
+    def test_availabilty(self):
+        url = reverse('dupes', kwargs = {'model_name': 'band'})
+        self.assertTrue(resolve(url))
+        
+        # Assert that no queries are being done accessing the page;
+        # A oversight led to the page querying for duplicates without any fields when request.
+        with self.assertNumQueries(2): # one query each for: session, user (must be a client thing)
+            self.client.get(url)
         
     def test_dispatch_sets_attrs(self):
         # Assert that dispatch sets model, opts, title, breadcrumbs_title from kwargs passed to dispatch
@@ -80,12 +89,38 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             view.post(request)
         self.assertEqual(mocked_as_view.call_count, 0)
         
+    def test_build_duplicate_items_returns_empty(self):
+        # Assert that build_duplicate_items_context short circuits when:
+        # - view is called with a POST request (dupe_fields will be empty)
+        view = self.get_view(self.post_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context()
+        self.assertEqual(context, ([], []))
+        
+        # - view is called without any dupe_fields selected
+        view = self.get_view(self.get_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context()
+        self.assertEqual(context, ([], []))
+        
+        # - if build_duplicate_items_context is called with dupe_fields = None
+        view = self.get_view(self.get_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context(None, None)
+        self.assertEqual(context, ([], []))
+        
+        # -if build_duplicate_items_context is called with dupe_fields = []
+        view = self.get_view(self.get_request())
+        with self.assertNumQueries(0):
+            context = view.build_duplicate_items_context(None, [])
+        self.assertEqual(context, ([], []))
+        
     def test_build_duplicate_items_context(self):
         # Assert that build_duplicate_items_context returns the correct items.
         change_form_path = unquote(reverse('admin:DBentry_band_change', args=['{pk}']))
         link_template = '<a href="{url}">{name}</a>'
         
-        request = self.get_request(data = {'fields':['band_name']})
+        request = self.get_request(data = {'base':['band_name']})
         view = self.get_view(request)
         view.model = self.model
         view.opts = self.model._meta
@@ -120,50 +155,47 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
     @patch.object(MIZQuerySet, 'duplicates')
     def test_build_duplicate_items_context_headers(self, mocked_duplicates):
         # Assert that the correct (field.verbose_name capitalized) headers are returned.
-        request = self.get_request()
-        view = self.get_view(request)
+        # Headers are built from the labels of the established choices.
+        view = self.get_view(self.get_request())
         view.model = self.model
         view.opts = self.model._meta
         
         # Hack the dupe_fields property
-        view._dupe_fields = ['band_name']
-        headers, _ = view.build_duplicate_items_context()
+        dupe_fields = ['band_name']
+        form = view.get_form()
+        form.fields['base'].choices = [('band_name', 'Bandname')]
+        headers, _ = view.build_duplicate_items_context(form = form, dupe_fields = dupe_fields)
         self.assertIn('Bandname', headers)
         
-        # reverse fk
-        view._dupe_fields = ['band_alias']
-        headers, _ = view.build_duplicate_items_context()
-        self.assertIn('Alias', headers)
-        
         # m2m
-        view._dupe_fields = ['genre']
-        headers, _ = view.build_duplicate_items_context()
+        dupe_fields = ['genre']
+        form = view.get_form()
+        form.fields['m2m'].choices = [('genre', 'Genre')]
+        headers, _ = view.build_duplicate_items_context(form = form, dupe_fields = dupe_fields)
         self.assertIn('Genre', headers)
         
+        # reverse fk (grouped choices!)
+        dupe_fields = ['alias']
+        form = view.get_form()
+        form.fields['reverse'].choices = [('Alias', [('alias', 'Alias')])]
+        headers, _ = view.build_duplicate_items_context(form = form, dupe_fields = dupe_fields)
+        self.assertIn('Alias', headers)
+        
     def test_dupe_fields_prop(self):
-        request = self.get_request(data = {'fields': ['beep', 'boop'], 'm2m_fields': ['baap']})
+        dummy_form = type('DummyForm', (object, ), {'base_fields': ['base', 'm2m']})
+        self.view_class.form_class = dummy_form
+        
+        # post requests should not be handled; empty list expected
+        request = self.post_request(data = {'base': ['beep'], 'm2m': ['boop', 'baap']})
+        view = self.get_view(request)
+        self.assertEqual(view.dupe_fields, [])        
+        
+        # request without any fields ticked:
+        request = self.post_request(data = {'base': [], 'm2m': []})
+        view = self.get_view(request)
+        self.assertEqual(view.dupe_fields, [])        
+        
+        request = self.get_request(data = {'base': ['beep'], 'm2m': ['boop', 'baap']})
         view = self.get_view(request)
         self.assertEqual(view.dupe_fields, ['beep', 'boop', 'baap'])
         
-        # dupe_fields uses request.GET, so a post request should return an empty list
-        request = self.post_request(data = {'fields': ['beep', 'boop'], 'm2m_fields': ['baap']})
-        view = self.get_view(request)
-        self.assertEqual(view.dupe_fields, [])
-        
-    def test_get_fields_select_choices(self):
-        # Assert that the various fields that should be present are present.
-        view = self.get_view()
-        view.model = _models.musiker
-        field_choices, reverse_choices, m2m_choices = view._get_fields_select_choices()
-        # simple fields & forward fk
-        self.assertIn(('kuenstler_name', 'Künstlername'), field_choices)
-        self.assertIn(('person', 'Person'), field_choices)
-        
-        # reverse fk
-        self.assertIn(('musiker_alias', 'Alias'), reverse_choices)
-        
-        # m2m declared on model
-        self.assertIn(('genre', 'Genre'), m2m_choices)
-        
-        # m2m declared on ANOTHER model; should NOT be a choice
-        self.assertNotIn(('band', 'Band'), m2m_choices)

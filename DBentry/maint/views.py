@@ -16,9 +16,10 @@ from DBentry.views import MIZAdminToolViewMixin, FixedSessionWizardView
 from DBentry.actions.views import MergeViewWizarded
 from DBentry.models import * 
 from DBentry.sites import register_tool
-from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations
+from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations, ensure_jquery
 
-from .forms import * 
+#TODO: fix this import
+from .forms import *
 
 #@register_tool
 class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
@@ -53,11 +54,12 @@ class UnusedObjectsView(MaintView):
 
 @register_tool
 class DuplicateObjectsView(MaintView):
-    #TODO: provide more info for the select to merge bit
+    #NOTE: check for 'get_duplicates' (name of submit button) in request.GET before doing a query for duplicates? 
     
     url_name = 'dupes_select' 
     index_label = 'Duplikate finden' 
     template_name = 'admin/dupes.html'
+    form_class = DuplicateFieldsSelectForm
     _dupe_fields = None
     
     def dispatch(self, request, *args, **kwargs):
@@ -87,16 +89,16 @@ class DuplicateObjectsView(MaintView):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
                
-        context['form'] = self.get_fields_select_form()
+        context['form'] = self.get_form()
         
         media = context.get('media', False)
         if media:
             media += context['form'].media
         else:
             media = context['form'].media
-        context['media'] = media
-            
-        context['headers'], context['items'] = self.build_duplicate_items_context()
+        context['media'] = ensure_jquery(media)
+        
+        context['headers'], context['items'] = self.build_duplicate_items_context(context['form'], self.dupe_fields)
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
         return context
@@ -104,70 +106,49 @@ class DuplicateObjectsView(MaintView):
     @property
     def dupe_fields(self):
         if self._dupe_fields is None:
-            #TODO: there is only one formfield left: 'fields'
-            # what is m2m_fields still doing here? bad git merge conflict?
-            self._dupe_fields = [] + self.request.GET.getlist('fields', []) + self.request.GET.getlist('m2m_fields', [])
+            self._dupe_fields = []
+            for formfield in self.form_class.base_fields: #NOTE self.get_form(self.model, None)?
+                if formfield in self.request.GET:
+                    self._dupe_fields.extend(self.request.GET.getlist(formfield))
         return self._dupe_fields
         
-    def get_fields_select_form(self):
-        field_choices, reverse_choices, m2m_choices = self._get_fields_select_choices()
-        form_initial = {
-            'fields': [f for f in self.dupe_fields if f in dict(field_choices) or f in dict(m2m_choices)], 
-        }
-        choices = [('Base', field_choices), ('Reverse', reverse_choices), ('M2M', m2m_choices)]
+    def get_form(self, model = None, dupe_fields = None):
+        if dupe_fields is None:
+            dupe_fields = self.dupe_fields
+        return duplicatefieldsform_factory(model or self.model, dupe_fields)
         
-        form =  DuplicateFieldsSelectForm(initial = form_initial)
-        form.fields['fields'].choices = choices
-        return form
-        
-    def _get_fields_select_choices(self):
-        """
-        Returns the different choices for the field select of the DuplicateFieldsSelectForm.
-        """
-        #TODO: what about private fields (_name, _changed_flag)
-        field_choices = [
-            (f.name, f.verbose_name.capitalize())
-            for f in get_model_fields(self.model, base = True, foreign = True,  m2m = False)
-        ]
-        #TODO: querying for rel.name will return primary keys;
-        # ex: every musiker_alias can only have one musiker that it belongs to
-        # several musiker may have the same musiker_alias__alias though.
-        # need to be explicit what non-unique field to query!
-        # ideas:
-        # - rel.related_model.name_field ==> may be None
-        # - if only one other field besides the foreign key ==> ambigious
-        # - name composing fields ==> dependent on being ComputedNameModel; which ones though?
-        # - add all possible base fields of rel.related_model to the choices? ==> too many choices/same should then be done for m2m
-        # - model_admin (of self.model) inline (of rel.related_model) fields ==> works like above
-        #       - exclude only the foreign key to parent (contrib.admin.helpers.278: fk.name == field)
-        reverse_choices = [
-            (rel.name, rel.related_model._meta.verbose_name)
-            for rel in get_model_relations(self.model, forward = False, reverse = True)
-            if not rel.many_to_many
-        ]
-        m2m_choices = [
-            (f.name, f.verbose_name.capitalize()) 
-            for f in get_model_fields(self.model, base = False, foreign = False,  m2m = True)
-        ]
-        return field_choices, reverse_choices, m2m_choices
-        
-    def build_duplicate_items_context(self):
+    def build_duplicate_items_context(self, form = None, dupe_fields = None):
         """
         Returns a list of headers and a list of 2-tuples of:
             - a list of duplicate items (instance, link to change view, duplicate values)
             - a link to the changelist of these items
         """
-        if not self.dupe_fields:
+        if dupe_fields is None:
+            dupe_fields = self.dupe_fields
+        if not dupe_fields:
             return [], []
+        if form is None:
+            form = self.get_form(self.model, dupe_fields)
+            
         items = []
-        duplicates = self.model.objects.duplicates(*self.dupe_fields)
+        duplicates = self.model.objects.duplicates(*dupe_fields)
         
-        # Use the verbose names established in the fields select form for the table's headers.
-        choices = dict(chain(*self._get_fields_select_choices()))
-        headers = [choices[f] for f in self.dupe_fields]
+        # Use the verbose name labels established in the fields select form for the table's headers.
+        choices = {}
+        for choice_field in form.fields.values():
+            if not getattr(choice_field, 'choices', False):
+                # Not a choice field ... somehow!
+                continue
+            field_choices = choice_field.choices
+            if isinstance(field_choices[0][1], (list, tuple)):
+                # Grouped choices: [('group_name',[*choices])]; get the actual choices
+                field_choices = field_choices[0][1]
+            choices.update(dict(field_choices))
+                
+        headers = [choices[f] for f in dupe_fields]
         for instances, values in duplicates:
             dupe_item = [
-                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in self.dupe_fields])
+                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in dupe_fields])
                 for instance in instances
             ]           
             cl_url =  reverse('admin:{}_{}_changelist'.format(self.opts.app_label, self.opts.model_name))

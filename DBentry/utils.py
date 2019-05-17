@@ -58,6 +58,7 @@ def get_model_relations(model, forward = True, reverse = True):
     
     relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
     # ManyToManyRels can always be regarded as symmetrical (both 'forward' and 'reverse') and should always be included 
+    #TODO: this does not maintain the order of fields/rels returned by get_fields()
     rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
     for f in relation_fields:
         if f.concrete:
@@ -176,8 +177,19 @@ def is_protected(objs, using='default'):
         collector.collect(objs)
     except models.ProtectedError as e:
         return e
-
-
+        
+def get_reverse_field_path(rel, field_name):
+    """
+    Builds a field_path to 'field_name' using the reverse relation 'rel'. 
+    """
+    if rel.related_query_name:
+        field_path = rel.related_query_name
+    elif rel.related_name:
+        field_path = rel.related_name
+    else:
+        field_path = rel.related_model._meta.model_name
+    return field_path + models.constants.LOOKUP_SEP + field_name
+    
 def merge_records(original, qs, update_data = None, expand_original = True, request = None):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.

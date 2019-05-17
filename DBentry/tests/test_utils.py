@@ -154,6 +154,15 @@ class TestModelUtils(MyTestCase):
         obj.magazin.turnus = 't'
         self.assertNotIn('turnus', utils.get_updateable_fields(obj.magazin))
         
+    def test_get_reverse_field_path(self):
+        # no related_query_name or related_name
+        rel = _models.ausgabe._meta.get_field('artikel')
+        self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
+        
+        # related_name
+        rel = _models.genre._meta.get_field('ober').remote_field
+        self.assertEqual(utils.get_reverse_field_path(rel, 'genre'), 'sub_genres__genre')
+        
         
 
 ##############################################################################################################
