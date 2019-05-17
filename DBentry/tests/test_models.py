@@ -468,7 +468,7 @@ class TestModelBildmaterial(DataTestCase):
     
     def test_str(self):
         obj = make(self.model, titel='Testbild')
-        self.assertEqual(str(obj), 'Testband')
+        self.assertEqual(str(obj), 'Testbild')
 
 class TestModelBuch(DataTestCase):
     pass
