@@ -1101,6 +1101,14 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
     ]
     
+class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
+        
+    model_admin_class = _admin.BildmaterialAdmin
+    model = _models.bildmaterial
+    
+    fields_expected = ['titel', 'signatur', 'size', 'beschreibung', 'bemerkungen']
+    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']   
+    
 class TestAdminSite(UserTestCase):
     
     def test_app_index(self):
