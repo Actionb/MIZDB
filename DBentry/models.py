@@ -691,6 +691,9 @@ class audio(BaseModel):
     
 class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
+    signatur = models.CharField(**CF_ARGS_B)
+    size = models.CharField(**CF_ARGS_B, verbose_name = 'Größe')
+    #TODO: zeitraum für das bild; oft ist das jahr unbekannt also kein datums feld!
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
