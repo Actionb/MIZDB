@@ -4,14 +4,12 @@ from django.urls.exceptions import NoReverseMatch, Resolver404
 from .base import MyTestCase
 
 from DBentry.sites import miz_site
-from DBentry.views import FavoritenView
-from DBentry.bulk.views import BulkAusgabe
-from DBentry.ac.views import ACBase, ACCreateable, ACAusgabe, ACBuchband
+from DBentry.bulk import views as bulk_views
 
 from MIZDB import urls as mizdb_urls
-from DBentry import urls as dbentry_urls
-from DBentry.ac import urls as autocomplete_urls
-from DBentry.help import urls as help_urls
+from DBentry import urls as dbentry_urls, views as dbentry_views
+from DBentry.ac import urls as autocomplete_urls, views as autocomplete_views
+#from DBentry.help import urls as help_urls, views as help_views
 from DBentry.maint import urls as maint_urls, views as maint_views
 
 class URLTestCase(MyTestCase):
@@ -68,8 +66,8 @@ class TestURLs(URLTestCase):
         self.urlconf = dbentry_urls
         
         expected = [
-            ('bulk_ausgabe', '/tools/bulk_ausgabe/', BulkAusgabe), 
-            ('favoriten', '/tools/favoriten/', FavoritenView)
+            ('bulk_ausgabe', '/tools/bulk_ausgabe/', bulk_views.BulkAusgabe), 
+            ('favoriten', '/tools/favoriten/', dbentry_views.FavoritenView)
         ]
         with self.collect_fails() as collector:
             for view_name, url, view_class in expected:
@@ -82,10 +80,11 @@ class TestURLs(URLTestCase):
         self.urlconf = autocomplete_urls
         
         expected = [
-            ('acbuchband', '/buch/', (), {}, ACBuchband), 
-            ('acausgabe', '/ausgabe/', (), {}, ACAusgabe), 
-            ('accapture', '/musiker/kuenstler_name/', (), {'model_name': 'musiker', 'create_field': 'kuenstler_name'}, ACBase), 
-            ('accapture', '/autor/', (), {'model_name': 'autor'}, ACCreateable)
+            ('acbuchband', '/buch/', (), {}, autocomplete_views.ACBuchband), 
+            ('acausgabe', '/ausgabe/', (), {}, autocomplete_views.ACAusgabe), 
+            ('accapture', '/musiker/kuenstler_name/', (), 
+                {'model_name': 'musiker', 'create_field': 'kuenstler_name'}, autocomplete_views.ACBase), 
+            ('accapture', '/autor/', (), {'model_name': 'autor'}, autocomplete_views.ACCreateable)
         ]
         with self.collect_fails() as collector:
             for view_name, url, args, kwargs, view_class in expected:
