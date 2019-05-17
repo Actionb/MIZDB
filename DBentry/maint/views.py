@@ -1,25 +1,17 @@
-
-from itertools import chain 
-
 from django import views
-from django.shortcuts import render, redirect 
-from django.http import HttpResponse 
+from django.shortcuts import redirect 
  
 from django.urls import reverse_lazy, reverse 
 from django.db.models import Count 
 from django.apps import apps 
-from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.utils.http import urlencode
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME 
  
- 
-from DBentry.views import MIZAdminToolViewMixin, FixedSessionWizardView
+from DBentry.views import MIZAdminToolViewMixin
 from DBentry.actions.views import MergeViewWizarded
-from DBentry.models import * 
 from DBentry.sites import register_tool
-from DBentry.utils import get_obj_link, get_model_from_string, get_model_fields, get_model_relations, ensure_jquery
+from DBentry.utils import get_obj_link, get_model_from_string, ensure_jquery
 
-#TODO: fix this import
-from .forms import *
+from DBentry.maint.forms import DuplicateFieldsSelectForm, duplicatefieldsform_factory, ModelSelectForm
 
 #@register_tool
 class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
