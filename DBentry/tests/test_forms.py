@@ -191,6 +191,7 @@ class TestMIZAdminForm(FormTestCase):
             self.assertIsInstance(fs, MIZFieldset)
             
     def test_media_prop(self):
+        #TODO: this test seems to fail when running the entire test suite? media._js returns empty
         # Make sure jquery is loaded in the right order:
         # jquery > jquery.init > whatever requires jquery
         from django.conf import settings
