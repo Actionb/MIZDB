@@ -12,7 +12,7 @@ from MIZDB import urls as mizdb_urls
 from DBentry import urls as dbentry_urls
 from DBentry.ac import urls as autocomplete_urls
 from DBentry.help import urls as help_urls
-from DBentry.maint import urls as maint_urls
+from DBentry.maint import urls as maint_urls, views as maint_views
 
 class URLTestCase(MyTestCase):
     
@@ -32,7 +32,7 @@ class URLTestCase(MyTestCase):
         try:
             reversed = reverse(view_name, args = args, kwargs = kwargs, urlconf = urlconf, current_app = current_app)
         except NoReverseMatch as e:
-            raise AssertionError from e
+            raise AssertionError(e.args[0])
         if expected is not None:
             self.assertEqual(reversed, expected)
         
@@ -45,7 +45,7 @@ class URLTestCase(MyTestCase):
         try:
             resolved = resolve(url, urlconf = urlconf)
         except Resolver404 as e:
-            raise AssertionError from e
+            raise AssertionError(e.args[0])
         if expected is not None:
             if hasattr(resolved.func, 'view_class'):
                 self.assertEqual(resolved.func.view_class, expected)
@@ -97,7 +97,19 @@ class TestURLs(URLTestCase):
         pass
         
     def test_maint_urls(self):
-        pass
+        self.urlconf = maint_urls
         
+        expected = [
+            ('dupes_select', '/dupes/', (), {}, maint_views.ModelSelectView), 
+            ('dupes', '/dupes/ausgabe/', (), {'model_name':'ausgabe'}, maint_views.DuplicateObjectsView), 
+#            ('unused_select', '/unused/', (), {}, maint_views.ModelSelectView), 
+#            ('unused_objects', '/unused/ausgabe/lte1/', (), {'model_name': 'ausgabe', 'lte': 1}, maint_views.UnusedObjectsView)
+        ]
+        with self.collect_fails() as collector:
+            for view_name, url, args, kwargs, view_class in expected:
+                with collector():
+                    self.assertReverses(view_name, url, *args, **kwargs)
+                    self.assertResolves(url, view_class)
+                    
     def test_miz_site_urls(self):
         pass
