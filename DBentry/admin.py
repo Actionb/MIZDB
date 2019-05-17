@@ -324,6 +324,34 @@ class BandAdmin(MIZModelAdmin):
     
 @admin.register(_models.bildmaterial, site=miz_site)
 class BildmaterialAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
+        model = _models.bildmaterial.genre.through
+    class SchlInLine(BaseSchlagwortInline):
+        model = _models.bildmaterial.schlagwort.through
+    class PersonInLine(BaseTabularInline):
+        model = _models.bildmaterial.person.through
+        verbose_model = _models.person
+    class MusikerInLine(BaseTabularInline):
+        model = _models.bildmaterial.musiker.through
+        verbose_model = _models.musiker
+    class BandInLine(BaseTabularInline):
+        model = _models.bildmaterial.band.through
+        verbose_model = _models.band
+    class OrtInLine(BaseTabularInline):
+        model = _models.bildmaterial.ort.through
+        verbose_model = _models.ort
+    class SpielortInLine(BaseTabularInline):
+        model = _models.bildmaterial.spielort.through
+        verbose_model = _models.spielort
+    class VeranstaltungInLine(BaseTabularInline):
+        model = _models.bildmaterial.veranstaltung.through
+        verbose_model = _models.veranstaltung
+    #TODO: ask about the best order for the inlines
+    inlines = [
+        VeranstaltungInLine, SpielortInLine, MusikerInLine, BandInLine, OrtInLine, SchlInLine, GenreInLine, 
+        PersonInLine, BestandInLine
+    ]
+    
     superuser_only = True
     index_category = 'Archivgut'
     
