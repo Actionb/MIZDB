@@ -1,7 +1,9 @@
 import re
 from itertools import chain
+from unittest.mock import patch
 from .base import AdminTestCase, UserTestCase
 
+from django.contrib import admin
 from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
@@ -178,6 +180,42 @@ class AdminTestMethodsMixin(object):
         media = self.model_admin.media
         if self.model_admin.googlebtns:
             self.assertIn('admin/js/utils.js', media._js)
+            
+    @patch.object(admin.ModelAdmin, 'render_change_form')
+    def test_changeform_media_context_collapse_after_jquery(self, mock):
+        # Assert that a ModelAdmin's add/changeform loads jquery before collapse.
+        # If the ModelAdmin does not contain any inlines the resulting media is media + AdminForm.media,
+        # where AdminForm.media has collapse in between jquery_base and jquery_init, ruining the load order.
+        # InlineFormsets usually do not contain collapse (or at least there's always one without it) so after 
+        # media + InlineFormset.media jquery_init follows directly after jquery_base.
+        # Patch render_change_form to get at the context the mock is called with.
+        from django.urls import reverse
+        try:
+            self.model_admin._changeform_view(
+                request = self.get_request(path = reverse('admin:DBentry_{}_add'.format(self.model._meta.model_name))), 
+                object_id = None, 
+                form_url = '', 
+                extra_context = {}, 
+            )
+        except TypeError:
+            # a response (string/bytes) is expected to be returned by _changeform_view
+            pass
+        self.assertTrue(mock.called)
+        context = mock.call_args[0][1] # context is the second positional argument to render_change_form
+        self.assertIn('media', context)
+        media = context['media']
+        from django.conf import settings
+        jquery_base = 'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min')
+        jquery_init = 'admin/js/jquery.init.js'         
+        collapse = 'admin/js/collapse%s.js' % ('' if settings.DEBUG else '.min')
+        
+        if collapse in media._js:
+            self.assertIn(jquery_base, media._js)
+            self.assertIn(jquery_init, media._js)
+            self.assertGreater(media._js.index(collapse), media._js.index(jquery_init), 
+                msg = "jquery.init must be loaded before collapse.js")
+            self.assertGreater(media._js.index(jquery_init), media._js.index(jquery_base), 
+                msg = "jquery base must be loaded before jquery.init")
     
     def test_lookup_allowed_adv_sf(self):
         # Assert that all fields and their lookups belonging to advanced search form are allowed
