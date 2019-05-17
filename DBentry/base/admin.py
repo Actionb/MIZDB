@@ -18,7 +18,7 @@ from DBentry.actions import merge_records
 from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
-from DBentry.utils import get_model_relations, parse_cl_querystring
+from DBentry.utils import get_model_relations, parse_cl_querystring, ensure_jquery
 
 class MIZModelAdmin(admin.ModelAdmin):
     
@@ -225,7 +225,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         if self.googlebtns:
             from django.forms import Media
             return media + Media(js = ['admin/js/utils.js']) # contains the googlebtns script
-        return media
+        return ensure_jquery(media)
         
     def add_extra_context(self, request = None, extra_context = None, object_id = None):
         new_extra = extra_context or {}
