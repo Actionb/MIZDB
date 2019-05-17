@@ -25,21 +25,10 @@ class MIZQuerySet(models.QuerySet):
         strat = strat_class(self, **kwargs)
         result, exact_match = strat.search(q)
         return result
-    
-    def _duplicates(self, *fields, as_dict = False):
-        if len(fields)==1:
-            return self.single_field_dupes(*fields)
-        else:
-            return self.multi_field_dupes(*fields, as_dict = as_dict)
-            
+        
     def duplicates(self, *fields):
         #NOTE: make required_fields implicitly part of fields?
-        from collections import namedtuple
-        rslt = []
-        Dupe = namedtuple('Dupe', ['instances', 'values'])
-        for values_dict in self.qs_dupes(*fields).values(*fields): # .values(*fields) to remove the annotated counts
-            rslt.append(Dupe(instances = self.model.objects.filter(**values_dict), values = values_dict))
-        return rslt
+        return self.values_dict_dupes(*fields)
         
     def exclude_empty(self, *fields):
         """
@@ -69,37 +58,6 @@ class MIZQuerySet(models.QuerySet):
                     filter |= q        
         return self.exclude(filter)
         
-    def single_field_dupes(self, field):
-        count_name = field + '__count'
-        return self.exclude_empty(field).values_list(field).annotate(**{count_name:models.Count(field)}).filter(**{count_name + '__gt':1}).order_by('-'+count_name)
-        
-    def multi_field_dupes(self, *fields, as_dict=False):
-        #sorted(m1,key=lambda d: d[[k for k in d.keys() if '__count' in k][0]])
-        #TODO: use values_dict? t = map(tuple,[d.values() for d in vd.values()]) -> s = [tuple(tuple(i) for i in l) for l in t]
-        # vd(tuplfy =True) -> Counter(map(tuple,[d.values() for d in vd.values()]))
-        # This would allow capturing multiple duplicate relations -- values_list only returns one item per relation!
-        null_filter = {f + '__isnull':False for f in fields} #TODO: exclude empty string
-        x = self.exclude_empty(*fields).values_list(*fields)
-        rslt = []
-        for tpl, c in Counter(x).items():
-            if c>1:
-                if as_dict:
-                    d = dict(zip(fields, tpl))
-                    d['__count'] = c
-                    rslt.append(d)
-                else:
-                    rslt.append(tpl + (c, ))
-        return rslt
-        
-    def qs_dupes(self, *fields):
-        annotations, filters, ordering = {}, {}, []
-        for field in fields:
-            count_name = field + '__count'
-            annotations[count_name] = models.Count(field)
-            filters[count_name + '__gt'] = 1
-            ordering.append('-' + count_name) #NOTE: all the counts of fields should be the same for each record => we only need to order by one of them
-        return self.values(*fields).annotate(**annotations).filter(**filters).order_by(*ordering)
-        
     def values_dict_dupes(self, *fields):
         from collections import namedtuple
         Dupe = namedtuple('Dupe', ['instances', 'values'])
@@ -120,8 +78,6 @@ class MIZQuerySet(models.QuerySet):
             instances = self.model.objects.filter(pk__in = pks)
             rslt.append(Dupe(instances, elem))
         return rslt
-            
-            
         
     def values_dict(self, *fields, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
