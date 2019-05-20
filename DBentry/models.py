@@ -535,6 +535,7 @@ class artikel(BaseModel):
         
 
 class buch(BaseModel):
+    #TODO: übersetzer feld
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
     seitenumfang = models.PositiveSmallIntegerField(blank = True, null = True)
