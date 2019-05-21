@@ -7,6 +7,7 @@ from .base import MyTestCase, RequestTestCase, MergingTestCase
 from .mixins import TestDataMixin
 
 from django.utils.encoding import force_text
+from django.forms import Media
 
 import DBentry.models as _models
 from DBentry import utils
@@ -152,6 +153,15 @@ class TestModelUtils(MyTestCase):
         self.assertIn('turnus', utils.get_updateable_fields(obj.magazin))
         obj.magazin.turnus = 't'
         self.assertNotIn('turnus', utils.get_updateable_fields(obj.magazin))
+        
+    def test_get_reverse_field_path(self):
+        # no related_query_name or related_name
+        rel = _models.ausgabe._meta.get_field('artikel')
+        self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
+        
+        # related_name
+        rel = _models.genre._meta.get_field('ober').remote_field
+        self.assertEqual(utils.get_reverse_field_path(rel, 'genre'), 'sub_genres__genre')
         
         
 
@@ -605,3 +615,54 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
 class TestMergingVideo(VideoMergingDataMixin, MergingTestCase, MergeTestMethodsMixin):
     enforce_uniqueness = False
     
+class TestEnsureJQuery(MyTestCase):
+    
+    def setUp(self):
+        super().setUp()
+        from django.conf import settings
+        self.jquery_base = 'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min')
+        self.jquery_init = 'admin/js/jquery.init.js'         
+        self.test_js = [
+            ['beep', 'boop'], 
+            ['beep', self.jquery_base, 'boop', self.jquery_init], 
+            [self.jquery_init, self.jquery_base, 'beep', 'boop'], 
+            ['beep', 'boop', self.jquery_init]
+        ]
+        self.expected = [self.jquery_base, self.jquery_init, 'beep', 'boop']
+            
+    def test_ensure_jquery_media_object(self):
+        # Assert that ensure_jquery adds jquery when given a Media object.
+        media = Media(js = [])
+        self.assertIsInstance(utils.ensure_jquery(media), Media)
+        self.assertEqual(utils.ensure_jquery(media)._js, [self.jquery_base, self.jquery_init],  msg = "ensure_jquery should add jquery to empty media")
+        
+        for js in self.test_js:
+            media = Media(js = js)
+            with self.subTest():
+                self.assertEqual(utils.ensure_jquery(media)._js,  self.expected)
+                
+    def test_ensure_jquery_as_func_decorator(self):
+        # Assert that ensure_jquery adds jquery when decorating the media function.
+        def get_func(media):
+            return lambda *args: media
+        func = get_func(Media(js = []))
+        self.assertEqual(utils.ensure_jquery(func)(None)._js, [self.jquery_base, self.jquery_init])
+        
+        for js in self.test_js:
+            func = get_func(Media(js = js))
+            with self.subTest():
+                self.assertEqual(utils.ensure_jquery(func)(None)._js,  self.expected)
+                
+    def test_ensure_jquery_as_property_decorator(self):
+        # Assert that ensure_jquery adds jquery when decorating the property of the media function.
+        def get_prop(_media):
+            return property(lambda *args: _media)
+        
+        prop = get_prop(Media(js = []))
+        self.assertEqual(utils.ensure_jquery(prop).fget(1)._js, [self.jquery_base, self.jquery_init])
+        
+        for js in self.test_js:
+            prop = get_prop(Media(js = js))
+            with self.subTest():
+                self.assertEqual(utils.ensure_jquery(prop).fget(1)._js,  self.expected)
+        

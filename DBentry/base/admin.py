@@ -18,13 +18,13 @@ from DBentry.actions import merge_records
 from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
-from DBentry.utils import get_model_relations, parse_cl_querystring
+from DBentry.utils import get_model_relations, parse_cl_querystring, ensure_jquery
 
 class MIZModelAdmin(admin.ModelAdmin):
     
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
                                             # that matches a field in the group
-    googlebtns = []                         # Fields in this list get a little button that redirect to a google search page
+    googlebtns = []                         # Fields in this list get a little button that redirect to a google search page #TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
     hint = ''                               # A hint displayed at the top of the form #NOTE: is this hint even used by anything?
     crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
@@ -225,7 +225,7 @@ class MIZModelAdmin(admin.ModelAdmin):
         if self.googlebtns:
             from django.forms import Media
             return media + Media(js = ['admin/js/utils.js']) # contains the googlebtns script
-        return media
+        return ensure_jquery(media)
         
     def add_extra_context(self, request = None, extra_context = None, object_id = None):
         new_extra = extra_context or {}
@@ -379,6 +379,17 @@ class MIZModelAdmin(admin.ModelAdmin):
         # Move checkbox widget to the right of its label.
         if 'adminform' in context:
             context['adminform'] = MIZAdminFormWrapper(context['adminform'])
+        # Fix jquery load order during the add/change view process.
+        # If the ModelAdmin does not have inlines, collapse elements will not work:
+        # django's Fieldsets will include just 'collapse.js' if collapse is in the fieldset's classes.
+        # django's AdminForm then scoops up all the Fieldsets and merges their media with its own
+        # (which may just be nothing).
+        # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...] with that of the AdminForm. 
+        # Since merging/sorting is now stable the result will be [jquery.js, collapse.js, jquery_init.js, ...]
+        # Usually this faulty load order is then later fixed by media mergers on the inlines which mostly only have 
+        # [jquery.js, jquery_init.js], but if the ModelAdmin does not have any inlines, collapse will not work.
+        if 'media' in context:
+            context['media'] = ensure_jquery(context['media'])
         return super().render_change_form(request, context, add, change, form_url, obj)
 
         

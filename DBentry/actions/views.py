@@ -167,6 +167,7 @@ class MergeViewWizarded(WizardConfirmationView):
             msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' 
             self.model_admin.message_user(request, msg_text, 'warning')
             return False
+        #TODO: move these model specific merge-able tests somewhere else
         if model == ausgabe and queryset.values_list('magazin').distinct().count()>1:
             # User is trying to merge ausgaben from different magazines
             self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, magazin._meta.verbose_name_plural, 'n'), 'error')
@@ -306,11 +307,17 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     form_class = BrochureActionFormSet
     
     def get_initial(self):
+        fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name')
+        values = self.queryset.values_list(*fields)
         return [
             {
-                'ausgabe_id': pk, 'titel': beschreibung, 'bemerkungen': bemerkungen, 'magazin_id': magazin_id
+                'ausgabe_id': pk, 
+                'titel': magazin_name, 
+                'zusammenfassung': beschreibung, 
+                'bemerkungen': bemerkungen, 
+                'magazin_id': magazin_id
             }
-                for pk, beschreibung, bemerkungen, magazin_id in self.queryset.values_list('pk', 'beschreibung', 'bemerkungen', 'magazin_id')
+                for pk, beschreibung, bemerkungen, magazin_id, magazin_name in values
         ]
         
     def get_form_kwargs(self):
@@ -364,6 +371,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     instance_data[key] = data[key]
                     
             # Add a hint to bemerkungen how this brochure was created
+            #TODO: move the hint to logging/change history?
             if not 'bemerkungen' in instance_data:
                 instance_data['bemerkungen'] = ''
             hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
@@ -399,6 +407,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                         protected_mags.remove(magazin_instance)
                     try:
                         with transaction.atomic():
+                            #TODO: if the user has not ticked all the delete_magazin of a given ausgabe_set 
+                            # that encompasses all the ausgaben of a magazin (and thus would make it not protected)
+                            # the ausgaben will be moved, but leave the magazin (despite it now being empty)
                             magazin_instance.delete()
                     except ProtectedError:
                         # Seems like the magazin was still protected after all. Readd it to the list.
@@ -419,6 +430,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()
         context['management_form'] = formset.management_form
+        #TODO: group forms by magazin and then have one delete_magazin checkbox for the entire group
         context['forms'] = [
             (
                 get_obj_link(ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False), 

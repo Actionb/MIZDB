@@ -58,6 +58,7 @@ def get_model_relations(model, forward = True, reverse = True):
     
     relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
     # ManyToManyRels can always be regarded as symmetrical (both 'forward' and 'reverse') and should always be included 
+    #TODO: this does not maintain the order of fields/rels returned by get_fields()
     rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
     for f in relation_fields:
         if f.concrete:
@@ -176,8 +177,19 @@ def is_protected(objs, using='default'):
         collector.collect(objs)
     except models.ProtectedError as e:
         return e
-
-
+        
+def get_reverse_field_path(rel, field_name):
+    """
+    Builds a field_path to 'field_name' using the reverse relation 'rel'. 
+    """
+    if rel.related_query_name:
+        field_path = rel.related_query_name
+    elif rel.related_name:
+        field_path = rel.related_name
+    else:
+        field_path = rel.related_model._meta.model_name
+    return field_path + models.constants.LOOKUP_SEP + field_name
+    
 def merge_records(original, qs, update_data = None, expand_original = True, request = None):
     """ Merges original object with all other objects in qs and updates original's values with those in update_data. 
         Returns the updated original.
@@ -377,7 +389,7 @@ def get_obj_link(obj, user, site_name='admin', include_name=True): #TODO: includ
                             % (site_name,
                                opts.app_label,
                                opts.model_name),
-                            None, (quote(obj._get_pk_val()),))
+                            None, (quote(obj._get_pk_val()),)) #TODO: this is the getter of the 'pk' property!
     except NoReverseMatch:
         # Change url doesn't exist -- don't display link to edit
         return no_edit_link
@@ -437,16 +449,63 @@ def make_simple_link(url, label, is_popup, as_listitem = False):
         label = label
     )
     
-
+def ensure_jquery(media):
+    """
+    Ensure that jquery is loaded first and in the right order (jquery.js -> jquery.init.js).
+    Can be called with a media object or be used as a method decorator.
+    """
+    def _ensure_jquery(_media):
+        from django.conf import settings
+        jquery_base = 'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min')
+        jquery_init = 'admin/js/jquery.init.js' 
+        if not _media._js_lists:
+            _media._js_lists.append([jquery_base, jquery_init])
+            return _media
+            
+        for js_list in _media._js_lists:
+            # insert jquery_base at the beginning and jquery_init right after; remove pre-existing entries if necessary
+            # Cast the iterable js_list into a list for easier operations; if it's a tuple, change it back to that after we're done.
+            is_tuple = isinstance(js_list, (tuple))
+            js_list = list(js_list) if is_tuple else js_list
+            if jquery_base in js_list:
+                js_list.remove(jquery_base)
+            js_list.insert(0, jquery_base)
+            if jquery_init in js_list:
+                js_list.remove(jquery_init)
+            js_list.insert(1, jquery_init)
+            js_list = tuple(js_list) if not is_tuple else js_list
+        return _media
+        
+    def wrapper(attr):
+        # Use the closure, Luke!
+        def decorator(instance):
+            return _ensure_jquery(getattr(media, attr)(instance))
+        return decorator
+        
+    from django.forms import Media
+    if isinstance(media, Media):
+        # Directly working on the media object
+        return _ensure_jquery(media)
+    elif isinstance(media, property):
+        # Decorating the media property; decorator will try media.__get__(instance)
+        return property(wrapper('__get__'))
+    else:
+        # Decorating the media func; decorator will try media.__call__(instance)
+        return wrapper('__call__')
+    
+        
 ##############################################################################################################
 # general utilities
 ##############################################################################################################
 def flatten_dict(d, exclude=[]):
+    #TODO: this doesnt test that 'd' is a dict!
+    #NOTE: after the rework of MIZQuerySet.values_dict this may be unused
     rslt = {}
     for k, v in d.items():
         if isinstance(v, dict):
             rslt[k] = flatten_dict(v, exclude)
         elif k not in exclude and isinstance(v, Iterable) and not isinstance(v, str) and len(v)==1:
+            # TODO: either us is_iterable or also test for bytes instances
             rslt[k] = v[0]
         else:
             rslt[k] = v

@@ -13,6 +13,8 @@ htmlcov/
 
 static/
 
+!DBentry/static
+
 docs/
 
 *.e4p

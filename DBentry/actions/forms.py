@@ -97,7 +97,11 @@ class BrochureActionForm(MIZAdminForm):
     
     def __init__(self, disable_delete_magazin = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['delete_magazin'].disabled = disable_delete_magazin
+        delete_magazin = self.fields['delete_magazin']
+        delete_magazin.disabled = disable_delete_magazin
+        if disable_delete_magazin:
+            delete_magazin.disabled = True
+            delete_magazin.help_text = "Magazin kann nicht gelöscht werden, da es weitere Ausgaben enthält."
         
 class BaseBrochureActionFormSet(forms.BaseFormSet):
 

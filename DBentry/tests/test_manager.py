@@ -1,16 +1,19 @@
 import random
+from collections import namedtuple
 from itertools import chain
 from unittest.mock import patch, Mock
 
-from .base import DataTestCase
-
 from django.test import tag
+from django.db import models as django_models
 from django.db.models.query import QuerySet
+from django.core.exceptions import FieldDoesNotExist, FieldError
 
 import DBentry.models as _models
 from DBentry.factory import make
 from DBentry.managers import CNQuerySet, MIZQuerySet
 from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
+
+from .base import DataTestCase
 
 class TestMIZQuerySet(DataTestCase):
     
@@ -43,67 +46,6 @@ class TestMIZQuerySet(DataTestCase):
         self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
         self.assertIn((self.obj2.pk, str(self.obj2) + ' (Band-Alias)'), self.queryset.find('Coffee'))
         self.assertFalse(self.queryset.find('Jazz'))
-        
-    def test_values_dict(self):
-        v = self.queryset.values_dict(*self.fields)
-        self.assertEqual(len(v), 3)
-        
-        self.assertTrue(all(o.pk in v for o in self.test_data))
-        
-        # obj1
-        expected = {'band_name': ['Testband1']}
-        self.assertEqual(v.get(self.obj1.pk), expected)
-        
-        # obj2
-        expected = {
-            'band_name': ['Testband2'], 'genre__genre': ['Rock', 'Jazz'], 
-            'band_alias__alias': ['Coffee']
-        }
-        self.assertEqual(v.get(self.obj2.pk), expected)
-        
-        # obj3
-        expected = {
-            'band_name': ['Testband3'], 'genre__genre': ['Rock', 'Jazz'], 
-            'band_alias__alias': ['Juice', 'Water']
-        }
-        self.assertEqual(v.get(self.obj3.pk), expected)
-        
-    def test_values_dict_num_queries(self):
-        with self.assertNumQueries(1):
-            self.queryset.values_dict(*self.fields)
-        
-    def test_values_dict_include_empty(self):
-        v = self.qs_obj1.values_dict(*self.fields, include_empty = True)
-        expected = {
-            'band_name': ['Testband1'], 'genre__genre': [None], 
-            'band_alias__alias': [None]
-        }
-        self.assertEqual(v.get(self.obj1.pk), expected)
-        
-    def test_values_dict_tuplfy(self):
-        v = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
-        expected = {
-            'band_name': ('Testband2',), 'genre__genre': ('Rock', 'Jazz'), 
-            'band_alias__alias': ('Coffee',)
-        }
-        self.assertEqual(v.get(self.obj2.pk), expected)
-        
-    def test_values_dict_flatten(self):
-        v = self.qs_obj3.values_dict(*self.fields, flatten = True)
-        expected = {
-            'band_name': 'Testband3', 'genre__genre': ['Rock', 'Jazz'], 
-            'band_alias__alias': ['Juice', 'Water']
-        }
-        self.assertEqual(v.get(self.obj3.pk), expected)
-        
-    def test_values_dict_flatten_no_flds(self):
-        v = self.qs_obj1.values_dict(flatten = True)
-        d = v.get(self.obj1.pk)
-        self.assertEqual(d, {'band_name': 'Testband1'})
-        
-    def test_values_dict_pk_in_flds(self):
-        v = self.qs_obj1.values_dict('band_name', 'pk')
-        self.assertIn(self.obj1.pk, v)
 
 class TestAusgabeQuerySet(DataTestCase):
 
@@ -651,3 +593,210 @@ class TestBuchQuerySet(DataTestCase):
         self.assertIn(self.obj1, self.queryset.filter(EAN=ean_8))
         ean_13 = '1-234567-890128'
         self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))
+        
+class TestValuesDict(DataTestCase):
+
+    model = _models.band
+    raw_data = [
+        {'band_name': 'Testband1', }, 
+        {'band_name': 'Testband2', 'band_alias__alias':'Coffee', 'genre__genre': ['Rock', 'Jazz']}, 
+        {'band_name': 'Testband3', 'band_alias__alias':['Juice', 'Water'], 'genre__genre': ['Rock', 'Jazz']}, 
+    ]
+    fields = ['band_name', 'genre__genre', 'band_alias__alias']
+        
+    def test_values_dict(self):
+        values = self.queryset.values_dict(*self.fields)
+        expected = [
+            (self.obj1.pk, {'band_name': ('Testband1', )}), 
+            (self.obj2.pk, {
+                'band_name': ('Testband2', ), 'genre__genre': ('Rock', 'Jazz'), 
+                'band_alias__alias': ('Coffee', )
+                }), 
+            (self.obj3.pk, {
+                'band_name': ('Testband3', ), 'genre__genre': ('Rock', 'Jazz'), 
+                'band_alias__alias': ('Juice', 'Water')
+                })
+        ]
+        
+        for obj_pk, expected_values in expected:
+            with self.subTest():
+                self.assertIn(obj_pk, values)
+                self.assertEqual(expected_values, values[obj_pk])
+        self.assertEqual(len(values), 3)
+        
+    def test_values_dict_num_queries(self):
+        with self.assertNumQueries(1):
+            self.queryset.values_dict(*self.fields)
+        
+    def test_values_dict_include_empty(self):
+        values = self.qs_obj1.values_dict(*self.fields, include_empty = True)
+        expected = {
+            'band_name': ('Testband1', ), 'genre__genre': (None, ), 
+            'band_alias__alias': (None, )
+        }
+        self.assertEqual(values.get(self.obj1.pk), expected)
+        
+    def test_values_dict_tuplfy(self):
+        values = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
+        expected = (
+            ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')), 
+            ('band_alias__alias', ('Coffee',))
+        )
+        # Iterate through the expected_values and compare them individuallly;
+        # full tuple comparison includes order equality - and we can't predict
+        # the order of the tuples.
+        for expected_values in expected:
+            with self.subTest():
+                self.assertIn(expected_values, values.get(self.obj2.pk))
+                
+    # Patching MIZQuerySet.values to find out how the primary key values are queried.
+    @patch.object(MIZQuerySet, 'values')
+    def test_values_dict_no_fields(self, mocked_values):
+        # Assert that values_dict does not add a pk item if called without any fields (implicitly querying all fields).
+        self.qs_obj1.values_dict()
+        self.assertTrue(mocked_values.called)
+        self.assertEqual(mocked_values.call_args[0], ()) # caching problem? sometimes this fails, sometimes it doesnt!
+        
+    @patch.object(MIZQuerySet, 'values')
+    def test_values_dict_pk_in_fields(self, mocked_values):
+        # Assert that values_dict queries for primary key values with the alias 'pk' if called with it.
+        self.qs_obj1.values_dict('band_name', 'pk')
+        self.assertTrue(mocked_values.called)
+        self.assertIn('pk', mocked_values.call_args[0])
+        
+    @patch.object(MIZQuerySet, 'values')
+    def test_values_dict_meta_pk_in_fields(self, mocked_values):
+        # Assert that values_dict keeps the model's pk name if called with it.
+        self.qs_obj1.values_dict('band_name', 'id')
+        self.assertTrue(mocked_values.called)
+        self.assertIn('id', mocked_values.call_args[0])
+        
+    def test_values_dict_flatten(self):
+        # Assert that single values are flattened.
+        values = self.qs_obj2.values_dict(*self.fields, flatten = True)
+        self.assertIn(self.obj2.pk, values)
+        obj2_values = values.get(self.obj2.pk)
+        self.assertIn('band_name', obj2_values)
+        self.assertNotIsInstance(obj2_values['band_name'], tuple)
+        
+    def test_values_dict_flatten_reverse_relation(self):
+        # Assert that multiple values (reverse relations) are never flattened.
+        # obj2 has a single value for alias; which must not get flattened.
+        values = self.qs_obj2.values_dict(*self.fields, flatten = True)
+        self.assertIn(self.obj2.pk, values)
+        obj2_values = values.get(self.obj2.pk)
+        self.assertIn('band_alias__alias', obj2_values)
+        self.assertIsInstance(obj2_values['band_alias__alias'], tuple)
+        
+        # also test if the multiple genres do not get flattened (however that would work..)
+        self.assertIn('genre__genre', obj2_values)
+        self.assertIsInstance(obj2_values['genre__genre'], tuple)
+        
+    def test_values_dict_flatten_no_fields(self):
+        # This test just makes sure that values_dict doesn't error when no fields are passed in.
+        # The process of finding the fields/field paths to exclude from flattening is dependent
+        # on having passed in 'fields'.
+        # Calling values() without params will fetch all the values of the base fields; 
+        # i.e. no reverse stuff so everything WILL be flattened.
+        with self.assertNotRaises(Exception):
+            self.qs_obj2.values_dict(flatten = True)
+            
+    def test_values_dict_flatten_with_invalid_field(self):
+        # django's exception when calling values() with an invalid should be the exception that propagates.
+        # No exception should be raised from the process that determines the fields to be excluded
+        # even if a given field does not exist.
+        # The process catches a FieldDoesNotExist but does not act on it.
+        with patch.object(MIZQuerySet, 'values'):
+            with self.assertNotRaises(FieldDoesNotExist):
+                self.queryset.values_dict('thisaintnofield', flatten = True)
+        
+        # Assert that the much more informative django FieldError is raised.
+        with self.assertRaises(FieldError) as cm:
+                self.queryset.values_dict('thisaintnofield', flatten = True)
+        self.assertIn('Choices are', cm.exception.args[0])
+    
+class TestDuplicates(DataTestCase):
+    
+    model = _models.musiker
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_data = [
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+            cls.model.objects.create(kuenstler_name = 'Bob'), 
+        ]
+        
+        super().setUpTestData()
+        
+    def get_duplicate_instances(self, *fields, queryset = None):
+        if queryset is None:
+            queryset = self.queryset
+        duplicates = queryset.values_dict_dupes(*fields)
+        return list(chain(*(dupe.instances for dupe in duplicates)))
+        
+    def test_a_baseline(self):
+        print()
+        duplicates = self.get_duplicate_instances('kuenstler_name')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertIn(self.obj3, duplicates)
+    
+    def test_duplicates_m2m(self):
+        g1 = make(_models.genre)
+        g2 = make(_models.genre)
+        
+        self.obj1.genre.add(g1)
+        self.obj2.genre.add(g1)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj3.genre.add(g2)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        # obj1 and obj2 share a genre, but their total genres are not the same
+        self.obj1.genre.add(g2)
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
+        self.assertNotIn(self.obj1, duplicates)
+        self.assertNotIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        
+    def test_duplicates_reverse_fk(self):
+        #TODO: this test fails when looking for duplicates with 'musiker_alias';
+        # 'musiker_alias' will look up the primary key of the musiker_alias object
+        # every musiker_alias object can only have one musiker
+        # so musiker_alias breaks duplicate search
+        # Need to query for a non-unique field(s)...
+        self.obj1.musiker_alias_set.create(alias='Beep')
+        self.obj2.musiker_alias_set.create(alias='Beep')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj3.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertIn(self.obj1, duplicates)
+        self.assertIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+        self.obj1.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertNotIn(self.obj1, duplicates)
+        self.assertNotIn(self.obj2, duplicates)
+        self.assertNotIn(self.obj3, duplicates)
+        
+    def test_duplicates_reverse_fk_joins(self):
+        # Assert that the number of duplicates found is not affected by table joins.
+        self.obj1.musiker_alias_set.create(alias='Beep')
+        self.obj2.musiker_alias_set.create(alias='Beep')
+        self.obj1.musiker_alias_set.create(alias='Boop')
+        self.obj2.musiker_alias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.assertEqual(len(duplicates), 2)

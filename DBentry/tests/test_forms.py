@@ -191,7 +191,9 @@ class TestMIZAdminForm(FormTestCase):
             self.assertIsInstance(fs, MIZFieldset)
             
     def test_media_prop(self):
-        # Make sure jquery loaded in the right order
+        #TODO: this test seems to fail when running the entire test suite? media._js returns empty
+        # Make sure jquery is loaded in the right order:
+        # jquery > jquery.init > whatever requires jquery
         from django.conf import settings
         media = self.get_dummy_form().media
         extra = '' if settings.DEBUG else '.min' 
@@ -199,6 +201,7 @@ class TestMIZAdminForm(FormTestCase):
         self.assertIn('admin/js/vendor/jquery/jquery%s.js' % extra, media._js)
         self.assertEqual(media._js.index('admin/js/vendor/jquery/jquery%s.js' % extra), 0)
         self.assertIn('admin/js/jquery.init.js', media._js)
+        self.assertEqual(media._js.index('admin/js/jquery.init.js'), 1)
         
     def test_changed_data_prop_no_change(self):
         kwargs = dict(data=dict(some_int='10'), initial=dict(some_int='10'))

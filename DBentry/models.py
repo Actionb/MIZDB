@@ -195,7 +195,6 @@ class ausgabe(ComputedNameModel):
         ordering = ['magazin']
         permissions = [
             ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'), 
-            ('alter_data_ausgabe', 'Aktion: Daten verändern.')
         ]
         
     @classmethod
@@ -536,7 +535,7 @@ class artikel(BaseModel):
         
 
 class buch(BaseModel):
-    #TODO: an ISBN is automagically created when saving a model instance!
+    #TODO: übersetzer feld
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
     seitenumfang = models.PositiveSmallIntegerField(blank = True, null = True)

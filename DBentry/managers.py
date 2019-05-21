@@ -1,12 +1,12 @@
 from collections import Counter, OrderedDict
-from itertools import chain
         
 from django.db import models, transaction
-from django.db.models import Count, Sum, Min, Max
-from django.contrib.admin.utils import get_fields_from_path
+from django.db.models import Count, Min, Max
 from django.core.exceptions import FieldDoesNotExist
+from django.core.validators import EMPTY_VALUES
+from django.db.models.constants import LOOKUP_SEP
 
-from DBentry.utils import flatten_dict, leapdays, build_date
+from DBentry.utils import leapdays, build_date
 from DBentry.query import BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
 
 class MIZQuerySet(models.QuerySet):
@@ -25,59 +25,61 @@ class MIZQuerySet(models.QuerySet):
         strat = strat_class(self, **kwargs)
         result, exact_match = strat.search(q)
         return result
-    
-    def _duplicates(self, *fields, as_dict = False):
-        if len(fields)==1:
-            return self.single_field_dupes(*fields)
-        else:
-            return self.multi_field_dupes(*fields, as_dict = as_dict)
-            
+        
     def duplicates(self, *fields):
-        dupes = self._duplicates(*fields)
-        rslt = OrderedDict()
-        for tpl in dupes:
-            dupe_values, c = tpl[:-1], tpl[-1] #NOTE: this REQUIRES tuples/lists and does not work with dicts
-            filter = dict(zip(fields, dupe_values))
-            ids = self.filter(**filter).values_list('pk', flat=True)
-            rslt[ids] = filter
-        return rslt
+        #NOTE: make required_fields implicitly part of fields?
+        return self.values_dict_dupes(*fields)
         
     def exclude_empty(self, *fields):
-        filter = {}
+        """
+        Exclude any record whose value for field in fields is 'empty' (either '' or None).
+        If a field in fields is a path, then also exclude empty values of every step on this path.
+        """
+        from django.db.models.constants import LOOKUP_SEP
+        from django.contrib.admin.utils import get_fields_from_path
+        filter = models.Q()
         for field_name in fields:
-            try:
-                field = self.model._meta.get_field(field_name)
-            except FieldDoesNotExist:
-                continue
-            if field.null:
-                filter[field_name+'__isnull'] = True
-            if field.get_internal_type() in ('CharField', 'TextField'):
-                filter[field_name] = ''
-        return self.exclude(**filter)
-        
-    def single_field_dupes(self, field):
-        count_name = field + '__count'
-        return self.exclude_empty(field).values_list(field).annotate(**{count_name:models.Count(field)}).filter(**{count_name + '__gt':1}).order_by('-'+count_name)
-        
-    def multi_field_dupes(self, *fields, as_dict=False):
-        #sorted(m1,key=lambda d: d[[k for k in d.keys() if '__count' in k][0]])
-        #TODO: use values_dict? t = map(tuple,[d.values() for d in vd.values()]) -> s = [tuple(tuple(i) for i in l) for l in t]
-        # vd(tuplfy =True) -> Counter(map(tuple,[d.values() for d in vd.values()]))
-        # This would allow capturing multiple duplicate relations -- values_list only returns one item per relation!
-        null_filter = {f + '__isnull':False for f in fields} #TODO: exclude empty string
-        x = self.exclude_empty(*fields).values_list(*fields)
-        rslt = []
-        for tpl, c in Counter(x).items():
-            if c>1:
-                if as_dict:
-                    d = dict(zip(fields, tpl))
-                    d['__count'] = c
-                    rslt.append(d)
+            lookup_path = ''
+            # Follow the path and add a filter for each piece
+            for field in get_fields_from_path(self.model, field_name):
+                if isinstance(field, (models.CharField, models.TextField)):
+                    # empty string based model fields don't have Null/None as value!
+                    lookup = lookup_value = ''
                 else:
-                    rslt.append(tpl + (c, ))
+                    lookup = '__isnull'
+                    lookup_value = True
+                if lookup_path:
+                    lookup_path += LOOKUP_SEP
+                lookup_path += field.name
+                q = models.Q(**{lookup_path + lookup: lookup_value})
+                
+                # Avoid having duplicates of the same filter (though I don't think having them would actually hurt?)
+                if q.children[0] not in filter:
+                    filter |= q        
+        return self.exclude(filter)
+        
+    def values_dict_dupes(self, *fields):
+        from collections import namedtuple
+        Dupe = namedtuple('Dupe', ['instances', 'values'])
+        
+        queried = self.values_dict(*fields, tuplfy = True)
+        # chain all the values in queried to later count over them
+        from itertools import chain
+        all_values = list(chain(values for pk, values in queried.items()))
+        rslt = []
+        for elem, count in Counter(all_values).items():
+            if count < 2:
+                continue
+            # Find all the pks that match these values.
+            pks = []
+            for pk, values in queried.items():
+                if values == elem:
+                    pks.append(pk)
+            instances = self.model.objects.filter(pk__in = pks)
+            rslt.append(Dupe(instances, elem))
         return rslt
         
-    def values_dict(self, *flds, include_empty = False, flatten = False, tuplfy = False, **expressions):
+    def values_dict(self, *fields, include_empty = False, flatten = False, tuplfy = False, **expressions):
         """
         An extension of QuerySet.values(). 
         
@@ -92,55 +94,71 @@ class MIZQuerySet(models.QuerySet):
                     
             values_dict('pk','pizza__topping', 'pizza__size'):
                     {
-                        '1' : {'pizza__topping' : ['Onions', 'Bacon' ], 'pizza__size': ['Tiny', 'God']},
+                        '1' : {'pizza__topping' : ('Onions', 'Bacon' ), 'pizza__size': ('Tiny', 'God')},
                     }   
         """
         # pk_name is the variable that will refer to this query's primary key values.
         pk_name = self.model._meta.pk.name
         
         # Make sure the query includes the model's primary key values as we require it to build the result out of.
-        # If flds is None, the query targets all the model's fields.
-        if flds:
-            if not pk_name in flds:
-                if 'pk' in flds:
+        # If fields is empty, the query targets all the model's fields.
+        if fields:
+            if pk_name not in fields:
+                if 'pk' in fields:
+                    # the universal alias for the primary key was used in the query
                     pk_name = 'pk'
                 else:
-                    flds = list(flds)
-                    flds.append(pk_name)
-                
+                    # the query does not query for the primary key at all;
+                    # it must be added to fields
+                    fields += (pk_name, )
+                    
+        # Do not flatten reverse relation values. An iterable is expected.
+        flatten_exclude = [] 
+        if flatten and fields:
+            for field_path in fields:
+                field_name = field_path
+                if LOOKUP_SEP in field_path:
+                    field_name = field_path.split(LOOKUP_SEP, 1)[0]
+                try:
+                    field = self.model._meta.get_field(field_name)
+                except FieldDoesNotExist:
+                    # Don't raise the exception here; let it be raised by self.values().
+                    # An invalid field will cause the query to fail anyway and
+                    # django provides a much more detailed error message.
+                    break
+                if not field.concrete:
+                    flatten_exclude.append(field_path)
+                    
         rslt = OrderedDict()
-        for val_dict in list(self.values(*flds, **expressions)):
-            id = val_dict.pop(pk_name)
-            if id in rslt:
-                d = rslt.get(id)
+        for val_dict in self.values(*fields, **expressions):
+            pk = val_dict.pop(pk_name)
+            # For easier lookups of field_names, use dictionaries for the item's values mapping.
+            # If tuplfy == True, we turn the values mapping back into a tuple 
+            # before adding it to the result.
+            if pk in rslt:
+                # Multiple rows returned due to joins over relations for this primary key
+                item_dict = dict(rslt.get(pk))
             else:
-                d = {}
-                rslt[id] = d
-            for k, v in val_dict.items(): 
-                if not include_empty and v in [None, '', [], (), {}]:
+                item_dict = {} 
+            for field_path, value in val_dict.items():
+                if not include_empty and value in EMPTY_VALUES:
                     continue
-                if k not in d:
-                    if tuplfy:
-                        d[k] = (v, )
-                    else:
-                        d[k] = [v]
-                elif v in d.get(k):
-                    continue
+                if field_path not in item_dict:
+                    values = ()
+                elif  flatten and not isinstance(item_dict.get(field_path), tuple):
+                    # This value has previously been flattend!
+                    values = (item_dict.get(field_path), )
                 else:
-                    if tuplfy:
-                        d[k] += (v, )
-                    else:
-                        d.get(k).append(v)
-        if flatten:
-            # Do not flatten fields that represent a reverse relation, as a list is expected
-            exclude = []
-            for field_path in flds:
-                if field_path == 'pk':
+                    values = item_dict.get(field_path)
+                if values and value in values:
                     continue
-                field = get_fields_from_path(self.model, field_path)[0]
-                if field.one_to_many or field.many_to_many:
-                    exclude.append(field_path)
-            return flatten_dict(rslt, exclude)
+                values += (value, )
+                if flatten and len(values) == 1 and not field_path in flatten_exclude:
+                    values = values[0]
+                item_dict[field_path] = values
+            if tuplfy:
+                item_dict = tuple(item_dict.items())
+            rslt[pk] = item_dict
         return rslt
         
 class CNQuerySet(MIZQuerySet):
