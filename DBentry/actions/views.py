@@ -307,11 +307,17 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     form_class = BrochureActionFormSet
     
     def get_initial(self):
+        fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name')
+        values = self.queryset.values_list(*fields)
         return [
             {
-                'ausgabe_id': pk, 'titel': beschreibung, 'bemerkungen': bemerkungen, 'magazin_id': magazin_id
+                'ausgabe_id': pk, 
+                'titel': magazin_name, 
+                'zusammenfassung': beschreibung, 
+                'bemerkungen': bemerkungen, 
+                'magazin_id': magazin_id
             }
-                for pk, beschreibung, bemerkungen, magazin_id in self.queryset.values_list('pk', 'beschreibung', 'bemerkungen', 'magazin_id')
+                for pk, beschreibung, bemerkungen, magazin_id, magazin_name in values
         ]
         
     def get_form_kwargs(self):
