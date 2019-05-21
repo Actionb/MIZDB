@@ -1,4 +1,4 @@
-from .base import MyTestCase
+from .base import MyTestCase, DataTestCase
 
 from django.db import transaction
 from django.core.exceptions import ValidationError
@@ -264,4 +264,163 @@ class TestEANField(StdNumFieldTestsMixin, MyTestCase):
         '73513538', #InvalidChecksum
         "1234567890123", #InvalidChecksum
     ]
+
+from unittest import skip
+from django.test import tag
+from DBentry.fields import PartialDate, PartialDateField, PartialDateWidget
+from DBentry.factory import make
+from DBentry import models as _models
+
+@tag("field")
+@tag("wip")    
+class TestPartialDate(MyTestCase):
     
+    def test_only_accepts_integers(self):
+        # Assert that a ValidationError is raised when day/month/year are not integer.
+        with self.assertRaises(ValidationError):
+            PartialDate('Beep-05-12')
+        with self.assertRaises(ValidationError):
+            PartialDate('2019-as-12')
+        with self.assertRaises(ValidationError):
+            PartialDate('2019-05-as')
+        
+    def test_equality_partial_date_to_partial_date(self):
+        # Assert that two equal PartialDate objects equate.
+        date = '2019-05-20'
+        self.assertEqual(PartialDate(date), PartialDate(date))
+        
+    def test_equality_string_to_partial_date(self):
+        # Assert that a PartialDate and a string of the same value equate.
+        date = '2019-05-20'
+        self.assertEqual(PartialDate(date), date)
+
+@tag("field")
+@tag("wip")    
+class TestPartialDateField(MyTestCase):
+    
+    def test_to_python_only_accepts_integers(self):
+        # Assert that a ValidationError is raised when day/month/year are not integer.
+        with self.assertRaises(ValidationError):
+            PartialDateField().to_python('Beep-05-12')
+        with self.assertRaises(ValidationError):
+            PartialDateField().to_python('2019-as-12')
+        with self.assertRaises(ValidationError):
+            PartialDateField().to_python('2019-05-as')
+    
+    def test_from_db(self):
+        # Assert that a value read from the db becomes a PartialDate.
+        #(from_db_value)
+        from_db = PartialDateField().from_db_value(value = '2019-05-20', expression = None, connection = None)
+        self.assertIsInstance(from_db, PartialDate)
+        
+    def test_to_db(self):
+        # Assert that a PartialDate value is prepared as a string (or date)?
+        #(get_prep_value)
+        pd = PartialDate()
+        prepped_value = PartialDateField().get_prep_value(value = pd)
+        self.assertEqual(prepped_value, '')
+        
+        pd = PartialDate('2019-05-20')
+        prepped_value = PartialDateField().get_prep_value(value = pd)
+        self.assertEqual(prepped_value, '2019-05-20')
+        
+    def test_to_python_takes_None(self):
+        #NOTE: should only be allowed if null=True; which it shouldn't if it's a CharField
+        with self.assertNotRaises(Exception):
+            value = PartialDateField().to_python(None)
+        self.assertIsEqual(value, '')
+        
+    def test_to_python_takes_empty_string(self):
+        pd = PartialDate()
+        with self.assertNotRaises(Exception):
+            value = PartialDateField().to_python('')
+        self.assertIsInstance(value, PartialDate)
+        self.assertEqual(value, pd)        
+        
+    def test_to_python_takes_partial_date(self):
+        pd = PartialDate()
+        with self.assertNotRaises(Exception):
+            value = PartialDateField().to_python(pd)
+        self.assertIsInstance(value, PartialDate)
+        self.assertIsEqual(value, pd)        
+        
+    def test_formfield(self):
+        # Assert that PartialDateField's formfield is a MultiValueField instance
+        formfield = PartialDateField().formfield()
+        self.assertIsInstance(formfield, forms.MultiValueField)
+
+@skip("no migrations yet")
+@tag("field")
+@tag("wip")    
+class TestPartialDateFieldQueries(DataTestCase):
+    # Test various queries using PartialDateField
+    model = _models.bildmaterial
+    raw_data = [{'datum': '2019-05-20'}] #TODO: we haven't tested that a model constructor can handle PDs...
+        
+    def test_constructor_partial_date(self):
+        # Assert that a model instance can be created with a PartialDate.
+        date = '2019-05-20'
+        pd = PartialDate(date)
+        obj = make(self.model)
+        obj.datum = pd
+        with self.assertNotRaises(Exception):
+            obj.save()
+        from_db = self.model.objects.filter(pk = obj.pk).values_list('datum', flat = True)[0]
+        self.assertIsInstance(from_db, PartialDate)
+        self.assertEqual(pd, from_db)
+        
+    def test_constructor_string(self):
+        # Assert that a model instance can be created with a string.
+        date = '2019-05-20'
+        pd = PartialDate(date)
+        obj = make(self.model)
+        obj.datum = date
+        with self.assertNotRaises(Exception):
+            obj.save()
+        from_db = self.model.objects.filter(pk = obj.pk).values_list('datum', flat = True)[0]
+        self.assertIsInstance(from_db, PartialDate)
+        self.assertEqual(pd, from_db)
+        
+    def test_lookup_range(self):
+        # Assert that __range works as expected for dates even if the field is CharField.
+        obj = make(self.model, datum = '2019-05-20')
+#        obj2 = make(self.model, datum = '2019-05-21')
+#        obj3 = make(self.model, datum = '2019-05-22')
+        qs = self.model.objects.filter(datum__range = ('2019-05-19', '2019-05-21'))
+        self.assertIn(obj, qs)
+        
+    def test_from_db(self):
+        # Assert that a value read from the db becomes a PartialDate.
+        #(from_db_value)
+        obj = make(self.model, datum = '2019-05-20')
+        qs = self.model.objects.filter(pk = obj.pk)
+        from_db = qs.values_list('datum', flat = True)[0]
+        self.assertIsInstance(from_db, PartialDate)
+        
+    def test_to_db(self):
+        # Assert that a PartialDate value is prepared as a string (or date)?
+        #(get_prep_value)
+        pd = PartialDate('2019-05-20')
+        obj = make(self.model, datum = pd)
+        qs = self.model.objects.filter(datum = pd)
+        self.assertIn(obj, qs)
+        
+@tag("field")
+@tag("wip")    
+class TestPartialDateFormField(MyTestCase):
+    
+    def test_widgets(self):
+        # Assert that the formfield's widget is a MultiWidget.
+        pass
+        #self.assertIsInstance(formfield.widget, PartialDateWidget)
+        
+@tag("field")
+@tag("wip")    
+class TestPartialDateWidget(MyTestCase):
+    
+    def test_subwidgets_are_integers(self):
+        #NOTE: pseudo code
+        return
+        for subwidget in self.widget.widgets:
+            with self.subTest():
+                self.assertIsInstance(subwidget, IntegerWidget)

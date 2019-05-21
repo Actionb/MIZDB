@@ -109,3 +109,26 @@ class EANField(StdNumField):
     min_length = 8  # EAN-8
     max_length = 17 # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
+    
+class PartialDate(object):
+    pass
+    
+class PartialDateWidget(widgets.MultiWidget):
+    pass
+
+class PartialDateFormField(fields.MultiValueField):
+    pass
+    
+class PartialDateField(models.CharField):
+    
+    def to_python(self, value):
+        pass
+    
+    def get_prep_value(self, value):
+        pass
+    
+    def from_db_value(self, value, expression, connection):
+        pass
+        
+    def formfield(self, **kwargs):
+        pass
