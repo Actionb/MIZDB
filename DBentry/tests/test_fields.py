@@ -264,8 +264,16 @@ class TestEANField(StdNumFieldTestsMixin, MyTestCase):
         '73513538', #InvalidChecksum
         "1234567890123", #InvalidChecksum
     ]
+    
+"""
+PartialDate inspired by:
+django-partial-date: https://github.com/ktowen/django_partial_date
+https://stackoverflow.com/q/2971198
+https://stackoverflow.com/a/30186603
+"""
 
 from unittest import skip
+from datetime import date
 from django.test import tag
 from DBentry.fields import PartialDate, PartialDateField, PartialDateWidget
 from DBentry.factory import make
@@ -275,14 +283,105 @@ from DBentry import models as _models
 @tag("wip")    
 class TestPartialDate(MyTestCase):
     
+    @tag("init")
+    def test_init_with_int_kwargs(self):
+        # Full date
+        pd = PartialDate(year = 2019, month = 5, day = 20)
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+        # year and month
+        pd = PartialDate(year = 2019, month = 5)
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, None)
+        # year only
+        pd = PartialDate(year = 2019)
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, None)
+        self.assertEqual(pd.day, None)
+        # month and day
+        pd = PartialDate(month = 5, day = 20)
+        self.assertEqual(pd.year, None)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+    
+    @tag("init")
+    def test_init_with_string_kwargs(self):
+        # Full date
+        pd = PartialDate(year = '2019', month = '5', day = '20')
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+        # year and month
+        pd = PartialDate(year = '2019', month = '5')
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, None)
+        # year only
+        pd = PartialDate(year = '2019')
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, None)
+        self.assertEqual(pd.day, None)
+        # month and day
+        pd = PartialDate(month = '5', day = '20')
+        self.assertEqual(pd.year, None)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+    
+    @tag("init")
+    def test_init_with_string(self):
+        # Full date
+        pd = PartialDate('2019-05-20')
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+        # year and month
+        pd = PartialDate('2019-05')
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, None)
+        # year only
+        pd = PartialDate('2019')
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, None)
+        self.assertEqual(pd.day, None)
+        # month and day
+        pd = PartialDate('05-20')
+        self.assertEqual(pd.year, None)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+        
+    @tag("init")
+    def test_init_with_date(self):
+        pd = PartialDate(date(2019, 5, 20))
+        self.assertEqual(pd.year, 2019)
+        self.assertEqual(pd.month, 5)
+        self.assertEqual(pd.day, 20)
+
+        #TODO: test with datetime object?
+        
+    @tag("init")
+    def test_init_not_validates_date(self):
+        # Assert that PartialDate does accept invalid dates (31st of February, etc.) on initialization.
+        # Validation should be done on the model/formfield.
+        expected_message = "invalid date"
+        for date in ('02-31', '04-31'):
+            with self.subTest():
+                with self.assertNotRaises(ValidationError, msg = "Date used: %s" % date) as cm:
+                    PartialDate(date)
+#                self.assertEqual(cm.exception.args[0], expected_message, msg = "Date used: %s" % date)
+    
+    @tag("init")
     def test_only_accepts_integers(self):
         # Assert that a ValidationError is raised when day/month/year are not integer.
-        with self.assertRaises(ValidationError):
-            PartialDate('Beep-05-12')
-        with self.assertRaises(ValidationError):
-            PartialDate('2019-as-12')
-        with self.assertRaises(ValidationError):
-            PartialDate('2019-05-as')
+        #NOTE: this raises an error because the regex fails...
+        expected_message = "unrecognized format"
+        for date in ('Beep-05-12', '2019-as-12', '2019-05-as'):
+            with self.subTest():
+                with self.assertRaises(ValidationError, msg = "Date used: %s" % date) as cm:
+                    PartialDate(date)
+                self.assertEqual(cm.exception.args[0], expected_message, msg = "Date used: %s" % date)
         
     def test_equality_partial_date_to_partial_date(self):
         # Assert that two equal PartialDate objects equate.
@@ -293,6 +392,20 @@ class TestPartialDate(MyTestCase):
         # Assert that a PartialDate and a string of the same value equate.
         date = '2019-05-20'
         self.assertEqual(PartialDate(date), date)
+        
+    def test_str(self):
+        full = PartialDate('2019-05-20')
+        year_only = PartialDate('2019')
+        year_month = PartialDate('2019-05')
+        month_day = PartialDate('05-20')
+        
+        self.assertEqual(str(full), '2019-05-20')
+        self.assertEqual(str(year_only), '2019')
+        self.assertEqual(str(year_month), '2019-05')
+        self.assertEqual(str(month_day), '05-20')
+        
+        with_date = PartialDate(date(2019, 5, 20))
+        self.assertEqual(str(with_date), '2019-05-20')
 
 @tag("field")
 @tag("wip")    
