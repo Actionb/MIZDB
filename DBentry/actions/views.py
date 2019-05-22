@@ -1,6 +1,6 @@
 
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, F
 from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
@@ -307,17 +307,18 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     form_class = BrochureActionFormSet
     
     def get_initial(self):
-        fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name')
-        values = self.queryset.values_list(*fields)
+        fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name', 'magazin_beschreibung')
+        values = self.queryset.annotate(magazin_beschreibung = F('magazin__beschreibung')).values_list(*fields)
         return [
             {
                 'ausgabe_id': pk, 
                 'titel': magazin_name, 
-                'zusammenfassung': beschreibung, 
+                'zusammenfassung': magazin_beschreibung, 
+                'beschreibung': beschreibung, 
                 'bemerkungen': bemerkungen, 
                 'magazin_id': magazin_id
             }
-                for pk, beschreibung, bemerkungen, magazin_id, magazin_name in values
+                for pk, beschreibung, bemerkungen, magazin_id, magazin_name, magazin_beschreibung in values
         ]
         
     def get_form_kwargs(self):
