@@ -14,7 +14,7 @@ from .base import ActionConfirmationView, WizardConfirmationView
 from .forms import (
     MergeFormSelectPrimary, MergeConflictsFormSet, 
     BulkAddBestandForm, BulkEditJahrgangForm, 
-    BrochureActionFormSet, BrochureActionFormExtra
+    BrochureActionFormSet, BrochureActionFormOptions
 )
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
@@ -430,8 +430,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             msg = "Folgende Magazine konnten nicht gelöscht werden: " + link_list(self.request, protected_mags)
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             
-    def get_additional_confirmations(self):
-        return BrochureActionFormExtra(can_delete_magazin = self.can_delete_magazin)
+    def get_options_form(self):
+        return BrochureActionFormOptions(can_delete_magazin = self.can_delete_magazin)
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

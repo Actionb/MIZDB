@@ -97,7 +97,7 @@ class BrochureActionForm(MIZAdminForm):
        
 BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = forms.BaseFormSet, extra = 0, can_delete = True)
 
-class BrochureActionFormExtra(MIZAdminForm):
+class BrochureActionFormOptions(MIZAdminForm):
     
     BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
     brochure_art = forms.ChoiceField(label = 'Verschieben nach', choices = BROCHURE_CHOICES)

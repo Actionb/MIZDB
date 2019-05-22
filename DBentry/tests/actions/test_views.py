@@ -14,7 +14,7 @@ from DBentry.factory import make
 from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
-from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormExtra
+from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions
 from DBentry.forms import MIZAdminForm, forms
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
@@ -131,10 +131,10 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertIsNone(view.form_valid(None))
     
     @tag("wip")
-    def test_context_contains_additional_confirmations(self):
+    def test_context_contains_options_form(self):
         view = self.get_view(self.get_request())
         context = view.get_context_data()
-        self.assertIn('additional_confirmations', context)
+        self.assertIn('options_form', context)
         
 class TestWizardConfirmationView(ActionViewTestCase):
     
@@ -846,27 +846,27 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertMessageNotSent(request, "Folgende Magazine konnten nicht gelöscht werden:")
     
     @tag("wip")
-    def test_context_contains_additional_confirmations(self):
+    def test_context_contains_options_form(self):
         view = self.get_view(self.get_request())
         context = view.get_context_data()
-        self.assertIn('additional_confirmations', context)
+        self.assertIn('options_form', context)
         
-        self.assertIsInstance(context['additional_confirmations'], BrochureActionFormExtra)
+        self.assertIsInstance(context['options_form'], BrochureActionFormOptions)
     
     @tag("wip")
     @patch('DBentry.actions.views.MoveToBrochureBase.can_delete_magazin', new_callable = PropertyMock)
-    def test_conditionally_show_delete_magazin_confirmation(self, mocked_can_delete):
-        # Assert that the field 'delete_magazin' only shows up on the additional_confirmation form
+    def test_conditionally_show_delete_magazin_option(self, mocked_can_delete):
+        # Assert that the field 'delete_magazin' only shows up on the options_form
         # if the magazin can be deleted.
         
         # Can be deleted:
         mocked_can_delete.return_value = True
-        form = self.get_view(self.get_request()).get_additional_confirmations()
+        form = self.get_view(self.get_request()).get_options_form()
         self.assertIn('delete_magazin', form.fields)
         
         # Cannot be deleted:
         mocked_can_delete.return_value = False
-        form = self.get_view(self.get_request()).get_additional_confirmations()
+        form = self.get_view(self.get_request()).get_options_form()
         self.assertNotIn('delete_magazin', form.fields)
         
     @tag("wip")

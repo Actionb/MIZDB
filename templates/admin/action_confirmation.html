@@ -37,14 +37,14 @@
                     {% endfor %}
                 {% endif %}
             {% endblock selection_form %}
-            {% block additional_confirmations %}
-            {% if additional_confirmations %}
+            {% block options_form %}
+            {% if options_form %}
                 <h2>Weitere Bestätigungen</h2>
-                {% for fieldset in additional_confirmations %}
+                {% for fieldset in options_form %}
                     {% include "admin/includes/fieldset.html" %}
                 {% endfor %}
             {% endif %}
-            {% endblock additional_confirmations %}
+            {% endblock options_form %}
             <p>
                 {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
             </p>

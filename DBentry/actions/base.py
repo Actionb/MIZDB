@@ -157,9 +157,9 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
             objs.append(sub_list)
         return objs
         
-    def get_additional_confirmations(self):
+    def get_options_form(self):
         """
-        Adds a form with additional confirmations to the context that is rendered
+        Adds a form with additional options to the context that is rendered
         below the selection form.
         """
         return None
@@ -169,7 +169,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
             
         context.update({
             'affected_objects': self.compile_affected_objects(), 
-            'additional_confirmations': self.get_additional_confirmations()
+            'options_form': self.get_options_form()
         })
         context.update(**kwargs)
         return context
