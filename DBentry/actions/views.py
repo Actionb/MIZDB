@@ -335,6 +335,14 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             for index, init_kwargs in enumerate(kwargs['initial'])
         }
         return kwargs
+    
+    @property
+    def can_delete_magazin(self):
+        if not getattr(self, 'mag', None):
+            return False
+        magazin_ausgabe_set = set(self.mag.ausgabe_set.values_list('pk', flat = True))
+        selected_ausgabe_set = set(self.queryset.values_list('pk', flat = True))
+        return magazin_ausgabe_set == selected_ausgabe_set
         
     def action_allowed(self):
         if self.queryset.values_list('magazin').distinct().count()>1:
@@ -349,6 +357,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             msg_text = msg_text.format(link_list(self.request, ausgaben_with_artikel))
             self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
             return False
+        self.mag = self.queryset.first().magazin
         return True
         
     def perform_action(self, form_cleaned_data = None):        

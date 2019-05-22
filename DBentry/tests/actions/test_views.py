@@ -870,5 +870,22 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?'
         )
         self.assertIn(expected, context['additional_confirmations'])
+
+    @tag("wip")
+    def test_can_delete_magazin(self):
+        # Assert that can_delete_magazin returns True when the magazin can be deleted after the action.
+        view = self.get_view(self.get_request())
+        view.mag = self.obj1.magazin
+        self.assertTrue(view.can_delete_magazin)
         
-    
+        # Add another ausgabe to magazin to forbid the deletion of it.
+        make(self.model, magazin = self.obj1.magazin)
+        view = self.get_view(self.get_request(), queryset = self.model.objects.filter(pk = self.obj1.pk))
+        view.mag = self.obj1.magazin
+        self.assertFalse(view.can_delete_magazin)
+        
+        view = self.get_view(self.get_request())
+        self.assertFalse(view.can_delete_magazin, 
+            msg = "Should return False if can_delete_magazin is called with no 'mag' attribute set."
+        )
+        
