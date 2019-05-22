@@ -94,27 +94,8 @@ class BrochureActionForm(MIZAdminForm):
     )
     
     fieldsets = [(None, {'fields':['ausgabe_id','brochure_art', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'delete_magazin', 'accept']})]
-    
-    def __init__(self, disable_delete_magazin = False, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        delete_magazin = self.fields['delete_magazin']
-        delete_magazin.disabled = disable_delete_magazin
-        if disable_delete_magazin:
-            delete_magazin.disabled = True
-            delete_magazin.help_text = "Magazin kann nicht gelöscht werden, da es weitere Ausgaben enthält."
-        
-class BaseBrochureActionFormSet(forms.BaseFormSet):
-
-    def __init__(self, disables, *args, **kwargs):
-        self.disables = disables
-        super().__init__(*args, **kwargs)
-    
-    def get_form_kwargs(self, index):
-        kwargs = super().get_form_kwargs(index)
-        kwargs['disable_delete_magazin'] = self.disables.get(index, False)
-        return kwargs
-        
-BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = BaseBrochureActionFormSet, extra = 0, can_delete = True)
+       
+BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = forms.BaseFormSet, extra = 0, can_delete = True)
 
 class BrochureActionFormExtra(MIZAdminForm):
     

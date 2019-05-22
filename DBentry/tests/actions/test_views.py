@@ -829,15 +829,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view.perform_action(self.form_cleaned_data)
         self.assertTrue(self.model.objects.filter(pk=ausgabe_id).exists())
         self.assertEqual(_models.BaseBrochure.objects.count(), 0)
-    
-    def test_init_does_not_disable_delete_magazin_when_working_on_entire_ausgaben_set(self):
-        # Assert that a form's delete_magazin field is not disabled if the action is being performed on
-        # the full set of ausgaben of this magazin - and thus would allow deleting the magazin in the end.
-        new_obj = make(self.model, magazin=self.obj1.magazin)
-        request = self.get_request()
-        view = self.get_view(request = request, queryset = self.model.objects.filter(pk__in=[self.obj1.pk, new_obj.pk]))
-        if any(form.fields['delete_magazin'].disabled for form in view.get_form()):
-            self.fail('delete_magazin field disabled.')
         
     def test_magazin_protection_status_updates(self):
         # Assert that magazines are not longer present in the protected_mags list when all of 
@@ -852,12 +843,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view.perform_action(form_cleaned_data)
         self.assertFalse(_models.magazin.objects.filter(pk=self.obj1.magazin.pk).exists())
         self.assertMessageNotSent(request, "Folgende Magazine konnten nicht gelöscht werden:")
-        
-    def test_form_disables_delete_magazin_for_protected_magazines(self):
-        make(self.model, magazin=self.obj1.magazin) # Protect ya magazin
-        request = self.get_request()
-        view = self.get_view(request = request, queryset = self.model.objects.filter(pk=self.obj1.pk))
-        self.assertTrue(view.get_form()[0].fields['delete_magazin'].disabled)
     
     @tag("wip")
     def test_context_contains_additional_confirmations(self):

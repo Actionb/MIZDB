@@ -324,21 +324,6 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             }
                 for pk, beschreibung, bemerkungen, magazin_id, magazin_name, magazin_beschreibung in values
         ]
-        
-    def get_form_kwargs(self):
-        # Pass a dictionary with index, boolean whether delete_magazin should be disabled for the form with that index.
-        # This could possibly also live in the formset class BrochureActionFormSet
-        kwargs = super().get_form_kwargs()
-        cannot_delete_mags = [
-            mag.pk
-            for mag in magazin.objects.filter(pk__in=self.queryset.values_list('magazin_id', flat = True))
-            if list(mag.ausgabe_set.order_by('pk').values_list('pk', flat = True)) != list(self.queryset.order_by('pk').filter(magazin_id=mag.pk).values_list('pk', flat = True))
-        ]
-        kwargs['disables'] = {
-            index: init_kwargs['magazin_id'] in cannot_delete_mags
-            for index, init_kwargs in enumerate(kwargs['initial'])
-        }
-        return kwargs
     
     @property
     def can_delete_magazin(self):
