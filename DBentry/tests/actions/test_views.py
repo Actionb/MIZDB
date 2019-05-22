@@ -822,6 +822,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(_models.magazin.objects.filter(pk=magazin_id).exists())
         
     def test_perform_action_not_accepted(self):
+        # Assert that an ausgabe is not changed if the user unticks 'accept'.
         ausgabe_id = self.obj1.pk
         self.form_cleaned_data[0]['accept'] = False
         view = self.get_view(request = self.get_request(), queryset = self.queryset)

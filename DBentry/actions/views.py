@@ -351,7 +351,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         
     def perform_action(self, form_cleaned_data = None):        
         protected_ausg, protected_mags = [], set()
-        
+        #TODO: form_cleaned_data can be NONE!!
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
