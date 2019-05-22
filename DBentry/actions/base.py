@@ -156,15 +156,21 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
                 sub_list.append(flds)
             objs.append(sub_list)
         return objs
+        
+    def get_additional_confirmations(self):
+        """
+        Adds additional checkbox confirmations to the rendered page.
+        Expected to return an iterable of 3-tuples (label, name, help_text).
+        """
+        return []
     
     def get_context_data(self, *args, **kwargs):
         context = super(ActionConfirmationView, self).get_context_data(*args, **kwargs)
             
-        context.update(
-            dict(
-                affected_objects        =   self.compile_affected_objects(), 
-            )
-        )
+        context.update({
+            'affected_objects': self.compile_affected_objects(), 
+            'additional_confirmations': self.get_additional_confirmations()
+        })
         context.update(**kwargs)
         return context
 

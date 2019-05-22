@@ -129,6 +129,12 @@ class TestActionConfirmationView(ActionViewTestCase):
         view = self.get_view()
         view.perform_action = Mock()
         self.assertIsNone(view.form_valid(None))
+    
+    @tag("wip")
+    def test_context_contains_additional_confirmations(self):
+        view = self.get_view(self.get_request())
+        context = view.get_context_data()
+        self.assertIn('additional_confirmations', context)
         
 class TestWizardConfirmationView(ActionViewTestCase):
     
