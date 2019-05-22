@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, PropertyMock
 
 from .base import ActionViewTestCase
 from ..base import AdminTestCase, mockv, mockex
@@ -14,7 +14,7 @@ from DBentry.factory import make
 from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
-from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary
+from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormExtra
 from DBentry.forms import MIZAdminForm, forms
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
@@ -865,12 +865,24 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         context = view.get_context_data()
         self.assertIn('additional_confirmations', context)
         
-        expected = (
-            'Magazin löschen', 'delete_magazin', 
-            'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?'
-        )
-        self.assertIn(expected, context['additional_confirmations'])
-
+        self.assertIsInstance(context['additional_confirmations'], BrochureActionFormExtra)
+    
+    @tag("wip")
+    @patch('DBentry.actions.views.MoveToBrochureBase.can_delete_magazin', new_callable = PropertyMock)
+    def test_conditionally_show_delete_magazin_confirmation(self, mocked_can_delete):
+        # Assert that the field 'delete_magazin' only shows up on the additional_confirmation form
+        # if the magazin can be deleted.
+        
+        # Can be deleted:
+        mocked_can_delete.return_value = True
+        form = self.get_view(self.get_request()).get_additional_confirmations()
+        self.assertIn('delete_magazin', form.fields)
+        
+        # Cannot be deleted:
+        mocked_can_delete.return_value = False
+        form = self.get_view(self.get_request()).get_additional_confirmations()
+        self.assertNotIn('delete_magazin', form.fields)
+        
     @tag("wip")
     def test_can_delete_magazin(self):
         # Assert that can_delete_magazin returns True when the magazin can be deleted after the action.

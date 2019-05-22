@@ -11,7 +11,11 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin
 
 from .base import ActionConfirmationView, WizardConfirmationView
-from .forms import BulkAddBestandForm, MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm, BrochureActionFormSet
+from .forms import (
+    MergeFormSelectPrimary, MergeConflictsFormSet, 
+    BulkAddBestandForm, BulkEditJahrgangForm, 
+    BrochureActionFormSet, BrochureActionFormExtra
+)
     
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     
@@ -442,11 +446,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             
     def get_additional_confirmations(self):
-        return super().get_additional_confirmations() + [
-            ('Magazin löschen', 'delete_magazin', 
-            'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?')
-        ]
-            
+        return BrochureActionFormExtra(can_delete_magazin = self.can_delete_magazin)
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()

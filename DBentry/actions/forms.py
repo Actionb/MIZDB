@@ -115,3 +115,18 @@ class BaseBrochureActionFormSet(forms.BaseFormSet):
         return kwargs
         
 BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = BaseBrochureActionFormSet, extra = 0, can_delete = True)
+
+class BrochureActionFormExtra(MIZAdminForm):
+    
+    BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
+    brochure_art = forms.ChoiceField(label = 'Verschieben nach', choices = BROCHURE_CHOICES)
+    
+    delete_magazin = forms.BooleanField(
+        label = 'Magazin löschen', required = False, 
+        help_text = 'Soll das Magazin dieser Ausgaben anschließend gelöscht werden?'
+    )
+    
+    def __init__(self, can_delete_magazin = True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not can_delete_magazin:
+            del self.fields['delete_magazin']
