@@ -426,6 +426,12 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             msg = "Folgende Magazine konnten nicht gelöscht werden: " + link_list(self.request, protected_mags)
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             
+    def get_additional_confirmations(self):
+        return super().get_additional_confirmations() + [
+            ('Magazin löschen', 'delete_magazin', 
+            'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?')
+        ]
+            
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()

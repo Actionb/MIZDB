@@ -846,7 +846,16 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view = self.get_view(request = request, queryset = self.model.objects.filter(pk=self.obj1.pk))
         self.assertTrue(view.get_form()[0].fields['delete_magazin'].disabled)
     
+    @tag("wip")
+    def test_context_contains_additional_confirmations(self):
+        view = self.get_view(self.get_request())
+        context = view.get_context_data()
+        self.assertIn('additional_confirmations', context)
         
-        
+        expected = (
+            'Magazin löschen', 'delete_magazin', 
+            'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?'
+        )
+        self.assertIn(expected, context['additional_confirmations'])
         
     

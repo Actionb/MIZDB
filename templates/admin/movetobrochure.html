@@ -11,3 +11,17 @@
         {% endif %}
     {% endfor %}
 {% endblock selection_form %}
+
+{% block additional_confirmations %}
+{% if additional_confirmations %}
+    <h2>Weitere Bestätigungen</h2>
+    <div class="aligned">
+        {% for label, name, help_text in additional_confirmations %}
+            <div class="form-row">
+                <label>{{label}}:</label><input name="{{name}}" id="{{name}}" type="checkbox">
+                <div class="help" style="margin:0; padding:0;">{{ help_text|safe }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock additional_confirmations %}
