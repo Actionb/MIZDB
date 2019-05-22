@@ -336,6 +336,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         return kwargs
         
     def action_allowed(self):
+        if self.queryset.values_list('magazin').distinct().count()>1:
+            # Ausgaben from more than one magazin selected.
+            msg_text = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+            self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
+            return False
         from django.db.models import Count
         ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
         if ausgaben_with_artikel.exists():

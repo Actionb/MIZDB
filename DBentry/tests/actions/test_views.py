@@ -669,6 +669,17 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         expected_message = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: "
         expected_message += '<a href="/admin/DBentry/ausgabe/{}/change/">Testausgabe</a>'.format(str(self.obj1.pk))
         self.assertMessageSent(request, expected_message)
+     
+    @tag("wip")   
+    @translation_override(language = None)
+    def test_action_allowed_different_magazin(self):
+        # Assert that only sets of a single magazin are allowed to be moved.
+        make(self.model, magazin__magazin_name = 'The Other')
+        request = self.post_request()
+        view = self.get_view(request=request, queryset=self.model.objects.all())
+        self.assertFalse(view.action_allowed())
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+        self.assertMessageSent(request, expected_message)
         
     def test_action_allowed(self):
         view = self.get_view(request = self.post_request(), queryset = self.queryset)
