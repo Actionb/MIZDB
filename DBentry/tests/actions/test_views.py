@@ -662,7 +662,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     
     @translation_override(language = None)
     def test_action_allowed_has_artikels(self):
-        self.obj1.artikel_set.add(make(_models.artikel))
+        self.obj1.artikel_set.add(make(_models.artikel, ausgabe = self.obj1))
         request = self.post_request()
         view = self.get_view(request = request, queryset = self.queryset)
         self.assertFalse(view.action_allowed())
