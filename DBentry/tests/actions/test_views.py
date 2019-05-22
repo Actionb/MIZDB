@@ -646,9 +646,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     
     raw_data = [
         {
-            'beschreibung': 'Testausgabe', 'sonderausgabe': True, 
+            'beschreibung': 'Testausgabe', 'bemerkungen': 'Testbemerkung', 'sonderausgabe': True, 
             'bestand__extra': 1, 'ausgabe_jahr__jahr': [2000, 2001], 
-            'magazin__magazin_name': 'Testmagazin'
+            'magazin__magazin_name': 'Testmagazin', 'magazin__beschreibung': 'Beep boop'
         }
     ]
     
@@ -694,7 +694,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertIn('titel', initial[0])
         self.assertEqual(initial[0]['titel'], self.obj1.magazin.magazin_name)
         self.assertIn('zusammenfassung', initial[0])
-        self.assertEqual(initial[0]['zusammenfassung'], self.obj1.beschreibung)
+        self.assertEqual(initial[0]['zusammenfassung'], self.obj1.magazin.beschreibung)
+        self.assertIn('beschreibung', initial[0])
+        self.assertEqual(initial[0]['beschreibung'], self.obj1.beschreibung)
         self.assertIn('bemerkungen', initial[0])
         self.assertEqual(initial[0]['bemerkungen'], self.obj1.bemerkungen)
     
