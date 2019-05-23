@@ -349,9 +349,33 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         self.mag = self.queryset.first().magazin
         return True
         
-    def perform_action(self, form_cleaned_data = None):        
-        protected_ausg, protected_mags = [], set()
-        #TODO: form_cleaned_data can be NONE!!
+    
+    def form_valid(self, form):
+        #TODO: use ActionConfirmationView.form_valid again once the whole mess with the addition form
+        # and its validation was solved.
+        options_form = self.get_options_form(data = self.request.POST)
+        options_form.is_valid()
+        self.perform_action(form.cleaned_data, options_form.cleaned_data)
+        return
+        
+    def perform_action(self, form_cleaned_data, options_form_cleaned_data):   
+        if form_cleaned_data is None or options_form_cleaned_data is None:
+            #TODO: this will return to the changelist without any changes? (even if only something is off with options)
+            #TODO: this is a very lazy approach to checking validity of the forms, but a rework is out of scope for now
+            # as it is, only the base form can be invalid (options form consisting of choice/boolean) so it's fine.
+            return
+            
+        protected_ausg = []        
+        delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
+        brochure_class = get_model_from_string(options_form_cleaned_data.get('brochure_art', ''))
+        if brochure_class is None:
+            #TODO: the validity of brochure_art should be checked by the options_form, not here!
+            # currently, though, validity of the options_form has no effect on the process
+            raise ValueError(
+                "Could not resolve brochure class '%s' into a model." % \
+                options_form_cleaned_data.get('brochure_art', '')
+            )
+            
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
@@ -363,12 +387,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
                 continue
-            magazin_instance = ausgabe_instance.magazin
             
             # Create the brochure object
-            brochure_class = get_model_from_string(data.get('brochure_art', ''))
-            if brochure_class is None:
-                continue
             instance_data = {'titel': data['titel']}
             for key in ('zusammenfassung', 'beschreibung', 'bemerkungen'):
                 if key in data and data[key]:
@@ -381,7 +401,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
             instance_data['bemerkungen'] += hint.format(
                 verbose_name = brochure_class._meta.verbose_name, 
-                str_ausgabe = str(ausgabe_instance), str_magazin = str(magazin_instance)
+                str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
             )
             
             try:
@@ -401,43 +421,32 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
                 
-            # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
-            if data.get('delete_magazin', False):
-                if is_protected([magazin_instance]):
-                    protected_mags.add(magazin_instance)
-                else:
-                    # Preemptively remove the magazin from the list of protected magazines
-                    if magazin_instance in protected_mags:
-                        protected_mags.remove(magazin_instance)
-                    try:
-                        with transaction.atomic():
-                            #TODO: if the user has not ticked all the delete_magazin of a given ausgabe_set 
-                            # that encompasses all the ausgaben of a magazin (and thus would make it not protected)
-                            # the ausgaben will be moved, but leave the magazin (despite it now being empty)
-                            magazin_instance.delete()
-                    except ProtectedError:
-                        # Seems like the magazin was still protected after all. Readd it to the list.
-                        protected_mags.add(magazin_instance)
-                    else:
-                        self.log_deletion(magazin_instance)
-                    
         if protected_ausg:
             msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg)
             msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+            return
+        
+        # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
+        if delete_magazin:
+                try:
+                    with transaction.atomic():
+                        self.mag.delete()
+                except ProtectedError:
+                    # Seems like the magazin was still protected after all. 
+                    msg = "Magazin konnte nicht gelöscht werden: " + get_obj_link(self.mag, self.request.user, include_name = False)
+                    self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+                else:
+                    self.log_deletion(self.mag)
             
-        if protected_mags:
-            msg = "Folgende Magazine konnten nicht gelöscht werden: " + link_list(self.request, protected_mags)
-            self.model_admin.message_user(self.request, mark_safe(msg), 'error')
-            
-    def get_options_form(self):
-        return BrochureActionFormOptions(can_delete_magazin = self.can_delete_magazin)
+    def get_options_form(self, **kwargs):
+        kwargs['can_delete_magazin'] = self.can_delete_magazin
+        return BrochureActionFormOptions(**kwargs)
         
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()
         context['management_form'] = formset.management_form
-        #TODO: group forms by magazin and then have one delete_magazin checkbox for the entire group
         context['forms'] = [
             (
                 get_obj_link(ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False), 

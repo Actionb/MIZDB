@@ -76,24 +76,18 @@ MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0,
 
 class BrochureActionForm(MIZAdminForm):
     textarea_config = {'rows':1, 'cols':30}
-    BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
     
     ausgabe_id = forms.IntegerField(widget = forms.HiddenInput())
-    brochure_art = forms.ChoiceField(label = 'Art d. Broschüre', choices = BROCHURE_CHOICES)
     titel = forms.CharField(widget = forms.Textarea(attrs=textarea_config))
     beschreibung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
     bemerkungen = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
     zusammenfassung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
-    delete_magazin = forms.BooleanField(
-        label = 'Magazin löschen', required = False, 
-        help_text = 'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?'
-    )
     accept = forms.BooleanField(
         label = 'Änderungen bestätigen', required = False, initial = True, 
         help_text = 'Hiermit bestätigen Sie, dass diese Ausgabe verschoben werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu überspringen und nicht zu verschieben.'
     )
     
-    fieldsets = [(None, {'fields':['ausgabe_id','brochure_art', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'delete_magazin', 'accept']})]
+    fieldsets = [(None, {'fields':['ausgabe_id', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'accept']})]
        
 BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = forms.BaseFormSet, extra = 0, can_delete = True)
 
