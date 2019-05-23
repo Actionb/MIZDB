@@ -6,6 +6,8 @@ from ..mixins import LoggingTestMixin
 
 from django.test import tag
 from django.contrib.admin import helpers
+from django.contrib.admin.models import LogEntry
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import override as translation_override
 from django.db.models.deletion import ProtectedError
 
@@ -749,7 +751,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         new_brochure = _models.Brochure.objects.get()
         self.assertEqual(list(new_brochure.jahre.values_list('jahr', flat = True)), [2000, 2001])
         
-    def test_perform_action_adds_hint_to_bemerkungen(self):
+    def test_perform_action_adds_hint_to_changelog(self):
         options_form_cleaned_data = {'brochure_art': 'brochure'}
         expected = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
         expected = expected.format(
@@ -760,7 +762,10 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view.mag = self.mag
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         new_brochure = _models.Brochure.objects.get()
-        self.assertIn(expected, new_brochure.bemerkungen)
+        ct = ContentType.objects.get_for_model(_models.Brochure)
+        logentry = LogEntry.objects.get(object_id = new_brochure.pk, content_type = ct)
+        self.assertEqual(logentry.get_change_message(), expected)
+#        self.assertIn(expected, new_brochure.bemerkungen)
      
     def test_perform_action_katalog(self):
         options_form_cleaned_data = {'brochure_art': 'katalog'}

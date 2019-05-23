@@ -8,7 +8,7 @@ from django.contrib.admin.utils import get_fields_from_path
 from DBentry.utils import link_list, merge_records, get_updateable_fields, get_obj_link, get_model_from_string, is_protected
 from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.logging import LoggingMixin
+from DBentry.logging import LoggingMixin, log_addition
 
 from .base import ActionConfirmationView, WizardConfirmationView
 from .forms import (
@@ -400,7 +400,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             if not 'bemerkungen' in instance_data:
                 instance_data['bemerkungen'] = ''
             hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
-            instance_data['bemerkungen'] += hint.format(
+            changelog_message = hint.format(
                 verbose_name = brochure_class._meta.verbose_name, 
                 str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
             )
@@ -418,7 +418,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 protected_ausg.append(ausgabe_instance)
             #TODO: catch other possible exceptions
             else:
-                self.log_addition(new_brochure)
+                log_addition(request = self.request, object = new_brochure, message = changelog_message)
                 self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
                 
