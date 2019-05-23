@@ -1219,7 +1219,7 @@ class Brochure(BaseBrochure):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
     
-class Kalendar(BaseBrochure):
+class Kalendar(BaseBrochure): #TODO: spelling: Kalender
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Programmheftes')
     
     spielort = models.ManyToManyField('spielort')
