@@ -3,10 +3,12 @@ from collections import OrderedDict
 
 from django import forms
 from django.contrib.admin.utils import get_fields_from_path
+from django.core.exceptions import ValidationError
 
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm
 from DBentry.models import lagerort
 from DBentry.ac.widgets import make_widget
+from DBentry.utils import get_model_from_string
 
 def makeSelectionForm(model, fields, help_texts = None, labels = None, formfield_classes = None):
     if help_texts is None: help_texts = {}
@@ -113,3 +115,9 @@ class BrochureActionFormOptions(MIZAdminForm):
         super().__init__(*args, **kwargs)
         if not can_delete_magazin:
             del self.fields['delete_magazin']
+        
+    def clean_brochure_art(self):
+        value = self.cleaned_data.get('brochure_art')
+        if get_model_from_string(value) is None:
+            raise ValidationError("%s ist kein zulässiges Model." % value)
+        return value
