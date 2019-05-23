@@ -381,17 +381,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             for key in ('zusammenfassung', 'beschreibung', 'bemerkungen'):
                 if key in data and data[key]:
                     instance_data[key] = data[key]
-                    
-            # Add a hint to bemerkungen how this brochure was created
-            #TODO: move the hint to logging/change history?
-            if not 'bemerkungen' in instance_data:
-                instance_data['bemerkungen'] = ''
-            hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
-            changelog_message = hint.format(
-                verbose_name = brochure_class._meta.verbose_name, 
-                str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
-            )
-            
+
             try:
                 with transaction.atomic():
                     new_brochure = brochure_class.objects.create(**instance_data) 
@@ -405,6 +395,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 protected_ausg.append(ausgabe_instance)
             #TODO: catch other possible exceptions
             else:
+                hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
+                changelog_message = hint.format(
+                    verbose_name = brochure_class._meta.verbose_name, 
+                    str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
+                )
                 log_addition(request = self.request, object = new_brochure, message = changelog_message)
                 self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
