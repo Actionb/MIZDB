@@ -5,7 +5,10 @@ from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
 
-from DBentry.utils import link_list, merge_records, get_updateable_fields, get_obj_link, get_model_from_string, is_protected
+from DBentry.utils import (
+    link_list, merge_records, get_updateable_fields, get_obj_link, get_changelist_link, 
+    get_model_from_string, is_protected
+)
 from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin, log_addition
@@ -342,46 +345,35 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         from django.db.models import Count
         ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
         if ausgaben_with_artikel.exists():
-            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {}"
-            msg_text = msg_text.format(link_list(self.request, ausgaben_with_artikel))
+            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {} ({})"
+            msg_text = msg_text.format(
+                link_list(self.request, ausgaben_with_artikel), 
+                get_changelist_link(ausgabe, self.request.user, obj_list = ausgaben_with_artikel)
+                )
             self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
             return False
         self.mag = self.queryset.first().magazin
         return True
         
-    
     def form_valid(self, form):
-        #TODO: use ActionConfirmationView.form_valid again once the whole mess with the addition form
-        # and its validation was solved.
         options_form = self.get_options_form(data = self.request.POST)
-        options_form.is_valid()
+        if not options_form.is_valid():
+            context = self.get_context_data(options_form = options_form)
+            return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
         return
         
-    def perform_action(self, form_cleaned_data, options_form_cleaned_data):   
-        if form_cleaned_data is None or options_form_cleaned_data is None:
-            #TODO: this will return to the changelist without any changes? (even if only something is off with options)
-            #TODO: this is a very lazy approach to checking validity of the forms, but a rework is out of scope for now
-            # as it is, only the base form can be invalid (options form consisting of choice/boolean) so it's fine.
-            return
-            
+    def perform_action(self, form_cleaned_data, options_form_cleaned_data):               
         protected_ausg = []        
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
+        # brochure_art is guaranteed to be a valid model name due to the form validation.
         brochure_class = get_model_from_string(options_form_cleaned_data.get('brochure_art', ''))
-        if brochure_class is None:
-            #TODO: the validity of brochure_art should be checked by the options_form, not here!
-            # currently, though, validity of the options_form has no effect on the process
-            raise ValueError(
-                "Could not resolve brochure class '%s' into a model." % \
-                options_form_cleaned_data.get('brochure_art', '')
-            )
-            
+        
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
             
             # Verify that the ausgabe exists and can be deleted
-            #TODO: shouldn't the user know about protected_ausg before submitting?
             ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
             if ausgabe_instance is None:
                 continue
@@ -394,17 +386,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             for key in ('zusammenfassung', 'beschreibung', 'bemerkungen'):
                 if key in data and data[key]:
                     instance_data[key] = data[key]
-                    
-            # Add a hint to bemerkungen how this brochure was created
-            #TODO: move the hint to logging/change history?
-            if not 'bemerkungen' in instance_data:
-                instance_data['bemerkungen'] = ''
-            hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
-            changelog_message = hint.format(
-                verbose_name = brochure_class._meta.verbose_name, 
-                str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
-            )
-            
+
             try:
                 with transaction.atomic():
                     new_brochure = brochure_class.objects.create(**instance_data) 
@@ -416,14 +398,19 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
-            #TODO: catch other possible exceptions
             else:
+                hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
+                changelog_message = hint.format(
+                    verbose_name = brochure_class._meta.verbose_name, 
+                    str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
+                )
                 log_addition(request = self.request, object = new_brochure, message = changelog_message)
                 self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
                 
         if protected_ausg:
-            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg)
+            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg) \
+                + ' (%s)' % get_changelist_link(ausgabe, self.request.user, obj_list = protected_ausg)
             msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             return
@@ -455,4 +442,6 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             )
             for form in formset
         ]
+        context['options_form'] = self.get_options_form()
+        context.update(kwargs)
         return context

@@ -37,14 +37,6 @@
                     {% endfor %}
                 {% endif %}
             {% endblock selection_form %}
-            {% block options_form %}
-            {% if options_form %}
-                <h2>Weitere Optionen</h2>
-                {% for fieldset in options_form %}
-                    {% include "admin/includes/fieldset.html" %}
-                {% endfor %}
-            {% endif %}
-            {% endblock options_form %}
             <p>
                 {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
             </p>
