@@ -75,7 +75,7 @@ class MergeFormHandleConflicts(DynamicChoiceForm, MIZAdminForm):
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)    
 
 class BrochureActionForm(MIZAdminForm):
-    textarea_config = {'rows':1, 'cols':30}
+    textarea_config = {'rows':2, 'cols':90}
     
     ausgabe_id = forms.IntegerField(widget = forms.HiddenInput())
     titel = forms.CharField(widget = forms.Textarea(attrs=textarea_config))
