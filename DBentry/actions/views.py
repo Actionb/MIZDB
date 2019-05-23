@@ -5,7 +5,10 @@ from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 from django.contrib.admin.utils import get_fields_from_path
 
-from DBentry.utils import link_list, merge_records, get_updateable_fields, get_obj_link, get_model_from_string, is_protected
+from DBentry.utils import (
+    link_list, merge_records, get_updateable_fields, get_obj_link, get_changelist_link, 
+    get_model_from_string, is_protected
+)
 from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin, log_addition
@@ -342,8 +345,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         from django.db.models import Count
         ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
         if ausgaben_with_artikel.exists():
-            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {}"
-            msg_text = msg_text.format(link_list(self.request, ausgaben_with_artikel))
+            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {} ({})"
+            msg_text = msg_text.format(
+                link_list(self.request, ausgaben_with_artikel), 
+                get_changelist_link(ausgabe, self.request.user, obj_list = ausgaben_with_artikel)
+                )
             self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
             return False
         self.mag = self.queryset.first().magazin
@@ -368,7 +374,6 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 continue
             
             # Verify that the ausgabe exists and can be deleted
-            #TODO: shouldn't the user know about protected_ausg before submitting?
             ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
             if ausgabe_instance is None:
                 continue
@@ -404,8 +409,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 self.log_deletion(ausgabe_instance)
                 
         if protected_ausg:
-            #TODO: add a link to the changelist filtered for these ausgaben
-            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg)
+            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg) \
+                + ' (%s)' % get_changelist_link(ausgabe, self.request.user, obj_list = protected_ausg)
             msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             return
