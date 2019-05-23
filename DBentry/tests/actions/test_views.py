@@ -1,4 +1,4 @@
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, PropertyMock
 
 from .base import ActionViewTestCase
 from ..base import AdminTestCase, mockv, mockex
@@ -6,6 +6,8 @@ from ..mixins import LoggingTestMixin
 
 from django.test import tag
 from django.contrib.admin import helpers
+from django.contrib.admin.models import LogEntry
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import override as translation_override
 from django.db.models.deletion import ProtectedError
 
@@ -14,7 +16,7 @@ from DBentry.factory import make
 from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
-from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary
+from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions
 from DBentry.forms import MIZAdminForm, forms
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
@@ -640,9 +642,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     
     raw_data = [
         {
-            'beschreibung': 'Testausgabe', 'sonderausgabe': True, 
+            'beschreibung': 'Testausgabe', 'bemerkungen': 'Testbemerkung', 'sonderausgabe': True, 
             'bestand__extra': 1, 'ausgabe_jahr__jahr': [2000, 2001], 
-            'magazin__magazin_name': 'Testmagazin'
+            'magazin__magazin_name': 'Testmagazin', 'magazin__beschreibung': 'Beep boop'
         }
     ]
     
@@ -650,18 +652,29 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         super().setUp()
         self.form_cleaned_data = [
             {
-                'brochure_art': 'Brochure', 'titel': 'Testausgabe', 'ausgabe_id': self.obj1.pk, 'accept': True, 
+                'titel': 'Testausgabe', 'ausgabe_id': self.obj1.pk, 'accept': True, 
             }
         ]
+        self.mag = self.obj1.magazin
     
     @translation_override(language = None)
     def test_action_allowed_has_artikels(self):
-        self.obj1.artikel_set.add(make(_models.artikel))
+        self.obj1.artikel_set.add(make(_models.artikel, ausgabe = self.obj1))
         request = self.post_request()
         view = self.get_view(request = request, queryset = self.queryset)
         self.assertFalse(view.action_allowed())
         expected_message = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: "
         expected_message += '<a href="/admin/DBentry/ausgabe/{}/change/">Testausgabe</a>'.format(str(self.obj1.pk))
+        self.assertMessageSent(request, expected_message)
+     
+    @translation_override(language = None)
+    def test_action_allowed_different_magazin(self):
+        # Assert that only sets of a single magazin are allowed to be moved.
+        make(self.model, magazin__magazin_name = 'The Other')
+        request = self.post_request()
+        view = self.get_view(request=request, queryset=self.model.objects.all())
+        self.assertFalse(view.action_allowed())
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(request, expected_message)
         
     def test_action_allowed(self):
@@ -677,18 +690,22 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertIn('titel', initial[0])
         self.assertEqual(initial[0]['titel'], self.obj1.magazin.magazin_name)
         self.assertIn('zusammenfassung', initial[0])
-        self.assertEqual(initial[0]['zusammenfassung'], self.obj1.beschreibung)
+        self.assertEqual(initial[0]['zusammenfassung'], self.obj1.magazin.beschreibung)
+        self.assertIn('beschreibung', initial[0])
+        self.assertEqual(initial[0]['beschreibung'], self.obj1.beschreibung)
         self.assertIn('bemerkungen', initial[0])
         self.assertEqual(initial[0]['bemerkungen'], self.obj1.bemerkungen)
     
     def test_perform_action(self):
         self.form_cleaned_data[0]['zusammenfassung'] = 'Bleep bloop' # should make it into the new record
         self.form_cleaned_data[0]['beschreibung'] = '' # empty value, should NOT make it into the new record
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
        
         changed_bestand = self.obj1.bestand_set.first()
         self.assertEqual(_models.Brochure.objects.count(), 0)
-        view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Brochure.objects.count(), 1)
         new_brochure = _models.Brochure.objects.get()
         
@@ -703,87 +720,85 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # Assert that the original was deleted
         self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
         
-    def test_perform_action_moves_jahre(self):
+    def test_perform_action_deletes_magazin(self):
+        options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        view.perform_action(self.form_cleaned_data)
+        view.mag = self.mag
+        
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
+        self.assertFalse(_models.magazin.objects.filter(pk = self.mag.pk).exists())
+        
+    def test_perform_action_not_deletes_magazin(self):
+        options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': False}
+        view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
+        
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
+        self.assertTrue(_models.magazin.objects.filter(pk = self.mag.pk).exists())
+        
+    def test_perform_action_moves_jahre(self):
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
+        view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         new_brochure = _models.Brochure.objects.get()
         self.assertEqual(list(new_brochure.jahre.values_list('jahr', flat = True)), [2000, 2001])
         
-    def test_perform_action_adds_hint_to_bemerkungen(self):
+    def test_perform_action_adds_hint_to_changelog(self):
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         expected = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
         expected = expected.format(
             verbose_name = _models.Brochure._meta.verbose_name, 
             str_ausgabe = str(self.obj1), str_magazin = str(self.obj1.magazin)
         )
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        view.perform_action(self.form_cleaned_data)
+        view.mag = self.mag
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         new_brochure = _models.Brochure.objects.get()
-        self.assertIn(expected, new_brochure.bemerkungen)
-    
-    def test_perform_action_skips_invalid_brochure_classes(self):
-        self.form_cleaned_data[0]['brochure_art'] = ''
-        view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        
-        view.perform_action(self.form_cleaned_data)
-        # Assert that the ausgabe was not deleted
-        self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
-        self.assertEqual(_models.BaseBrochure.objects.count(), 0)
+        ct = ContentType.objects.get_for_model(_models.Brochure)
+        logentry = LogEntry.objects.get(object_id = new_brochure.pk, content_type = ct)
+        self.assertEqual(logentry.get_change_message(), expected)
+#        self.assertIn(expected, new_brochure.bemerkungen)
      
     def test_perform_action_katalog(self):
-        self.form_cleaned_data[0]['brochure_art'] = 'Katalog'
+        options_form_cleaned_data = {'brochure_art': 'katalog'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
         
         self.assertEqual(_models.Katalog.objects.count(), 0)
-        view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Katalog.objects.count(), 1)
+#        self.assertEqual(_models.Katalog.objects.get().art, 'merch') TODO: uncommet once the default for katalog.art is correct
      
     def test_perform_action_kalendar(self):
-        self.form_cleaned_data[0]['brochure_art'] = 'Kalendar'
+        options_form_cleaned_data = {'brochure_art': 'kalendar'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
         
         self.assertEqual(_models.Kalendar.objects.count(), 0)
-        view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Kalendar.objects.count(), 1)
      
     @patch('DBentry.actions.views.get_model_from_string')   
     def test_perform_action_protected_ausgabe(self, mocked_model_from_string):
         mocked_model_from_string.return_value = _models.Brochure
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         
         self.obj1.artikel_set.add(make(_models.artikel, ausgabe_id = self.obj1.pk))
         request = self.get_request()
         view = self.get_view(request = request, queryset = self.queryset)
+        view.mag = self.mag
         
-        view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         expected_message = "Folgende Ausgaben konnten nicht gelöscht werden: " + \
             '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'.format(pk = self.obj1.pk, name = str(self.obj1)) + \
+            ' (<a href="/admin/DBentry/ausgabe/?id__in={pk}">Liste</a>)'.format(pk = self.obj1.pk) + \
             ". Es wurden keine Broschüren für diese Ausgaben erstellt."
         self.assertMessageSent(request, expected_message)
         
         # No new brochure objects should have been created
         self.assertEqual(_models.Brochure.objects.count(), 0)
-    
-    @patch('DBentry.actions.views.get_model_from_string')
-    @translation_override(language = None)
-    def test_perform_action_protected_magazin(self, mocked_model_from_string):
-        def is_protected(instances):
-            # The check for protection should pass for ausgaben but not for the magazin
-            if isinstance(instances[0], self.model):
-                return False
-            return True
-        mocked_model_from_string.return_value = _models.Brochure
-        
-        mag = self.obj1.magazin 
-        self.form_cleaned_data[0]['delete_magazin'] = True
-        request = self.get_request()
-        view = self.get_view(request = request, queryset = self.queryset)
-        
-        with patch('DBentry.actions.views.is_protected', new = is_protected):
-            view.perform_action(self.form_cleaned_data)
-        self.assertTrue(_models.magazin.objects.filter(pk=mag.pk).exists())
-        expected_message = "Folgende Magazine konnten nicht gelöscht werden: " + \
-            '<a href="/admin/DBentry/magazin/{pk}/change/">{name}</a>'.format(pk = mag.pk, name = str(mag))
-        self.assertMessageSent(request, expected_message)
     
     @patch('DBentry.actions.views.is_protected')  
     @patch('DBentry.actions.views.get_model_from_string')
@@ -791,56 +806,130 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # Assert that a rollback on trying to delete the magazin does not also roll back the ausgabe
         mocked_model_from_string.return_value = _models.Brochure
         mocked_is_protected.return_value = False
+        options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
         
         ausgabe_id = self.obj1.pk
         magazin_id = self.obj1.magazin_id
         make(self.model, magazin_id = magazin_id) # Create an ausgabe that will force a ProtectedError
-        self.form_cleaned_data[0]['delete_ausgabe'] = self.form_cleaned_data[0]['delete_magazin'] = True
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
         
-        view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertFalse(self.model.objects.filter(pk=ausgabe_id).exists())
         self.assertTrue(_models.magazin.objects.filter(pk=magazin_id).exists())
         
     def test_perform_action_not_accepted(self):
+        # Assert that an ausgabe is not changed if the user unticks 'accept'.
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         ausgabe_id = self.obj1.pk
         self.form_cleaned_data[0]['accept'] = False
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
+        view.mag = self.mag
         
-        view.perform_action(self.form_cleaned_data)
+        view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertTrue(self.model.objects.filter(pk=ausgabe_id).exists())
         self.assertEqual(_models.BaseBrochure.objects.count(), 0)
+        
+    def test_context_contains_options_form(self):
+        view = self.get_view(self.get_request())
+        context = view.get_context_data()
+        self.assertIn('options_form', context)
+        
+        self.assertIsInstance(context['options_form'], BrochureActionFormOptions)
     
-    def test_init_does_not_disable_delete_magazin_when_working_on_entire_ausgaben_set(self):
-        # Assert that a form's delete_magazin field is not disabled if the action is being performed on
-        # the full set of ausgaben of this magazin - and thus would allow deleting the magazin in the end.
-        new_obj = make(self.model, magazin=self.obj1.magazin)
-        request = self.get_request()
-        view = self.get_view(request = request, queryset = self.model.objects.filter(pk__in=[self.obj1.pk, new_obj.pk]))
-        if any(form.fields['delete_magazin'].disabled for form in view.get_form()):
-            self.fail('delete_magazin field disabled.')
+    @patch('DBentry.actions.views.MoveToBrochureBase.can_delete_magazin', new_callable = PropertyMock)
+    def test_conditionally_show_delete_magazin_option(self, mocked_can_delete):
+        # Assert that the field 'delete_magazin' only shows up on the options_form
+        # if the magazin can be deleted.
         
-    def test_magazin_protection_status_updates(self):
-        # Assert that magazines are not longer present in the protected_mags list when all of 
-        # their ausgaben were affected by this action.
-        new_obj = make(self.model, magazin=self.obj1.magazin)
-        request = self.get_request()
-        view = self.get_view(request = request, queryset = self.model.objects.filter(pk__in=[self.obj1.pk, new_obj.pk]))
-        form_cleaned_data = [
-            { 'brochure_art': 'Brochure', 'titel': 'Testausgabe', 'ausgabe_id': self.obj1.pk, 'accept': True, 'delete_magazin': True}, 
-            { 'brochure_art': 'Brochure', 'titel': 'Testausgabe', 'ausgabe_id': new_obj.pk, 'accept': True, 'delete_magazin': True}
-        ]
-        view.perform_action(form_cleaned_data)
-        self.assertFalse(_models.magazin.objects.filter(pk=self.obj1.magazin.pk).exists())
-        self.assertMessageNotSent(request, "Folgende Magazine konnten nicht gelöscht werden:")
+        # Can be deleted:
+        mocked_can_delete.return_value = True
+        form = self.get_view(self.get_request()).get_options_form()
+        self.assertIn('delete_magazin', form.fields)
         
-    def test_form_disables_delete_magazin_for_protected_magazines(self):
-        make(self.model, magazin=self.obj1.magazin) # Protect ya magazin
-        request = self.get_request()
-        view = self.get_view(request = request, queryset = self.model.objects.filter(pk=self.obj1.pk))
-        self.assertTrue(view.get_form()[0].fields['delete_magazin'].disabled)
-    
+        # Cannot be deleted:
+        mocked_can_delete.return_value = False
+        form = self.get_view(self.get_request()).get_options_form()
+        self.assertNotIn('delete_magazin', form.fields)
         
+    def test_can_delete_magazin(self):
+        # Assert that can_delete_magazin returns True when the magazin can be deleted after the action.
+        view = self.get_view(self.get_request())
+        view.mag = self.obj1.magazin
+        self.assertTrue(view.can_delete_magazin)
         
+        # Add another ausgabe to magazin to forbid the deletion of it.
+        make(self.model, magazin = self.obj1.magazin)
+        view = self.get_view(self.get_request(), queryset = self.model.objects.filter(pk = self.obj1.pk))
+        view.mag = self.obj1.magazin
+        self.assertFalse(view.can_delete_magazin)
         
-    
+        view = self.get_view(self.get_request())
+        self.assertFalse(view.can_delete_magazin, 
+            msg = "Should return False if can_delete_magazin is called with no 'mag' attribute set."
+        )
+        
+    def test_story(self):
+        other_mag = make(_models.magazin)
+        other = make(self.model, magazin = other_mag)
+        management_form_data = {
+            'form-TOTAL_FORMS': '2', 'form-INITIAL_FORMS': '0', 'form-MAX_NUM_FORMS':''
+        }
+        
+        # User selects two ausgaben of different magazines and gets a message about it
+        changelist_post_data = {'action': ['moveto_brochure'], helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, other.pk]}
+        response = self.client.post(path = self.changelist_path, data = changelist_post_data)
+        self.assertEqual(response.status_code, 302, 
+            msg = "Failed action. Should be a redirect back to the changelist.")
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
+        self.assertMessageSent(response.wsgi_request, expected_message)
+        
+        # User selects a single ausgabe and proceeds to the selection 
+        changelist_post_data[helpers.ACTION_CHECKBOX_NAME] = [self.obj1.pk]
+        response = self.client.post(path = self.changelist_path, data = changelist_post_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.view_class.template_name, [t.name for t in response.templates], 
+            msg = "Should be rendering the MoveToBrochure template.")        
+        
+        # User aborts and is directed back to the changelist
+        response = self.client.get(path = self.changelist_path)
+        self.assertEqual(response.status_code, 200)   
+        
+        # User selects another valid ausgabe and returns to the selection with the two instances
+        obj2 = make(self.model, magazin = self.mag)
+        changelist_post_data[helpers.ACTION_CHECKBOX_NAME] = [self.obj1.pk, obj2.pk]
+        response = self.client.post(path = self.changelist_path, data = changelist_post_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.view_class.template_name, [t.name for t in response.templates], 
+            msg = "Should be rendering the MoveToBrochure template.")      
+            
+        # User selects the 'Katalog' category and confirms, without having checked the delete_magazin checkbox
+        post_data = {
+            'action_confirmed': 'Ja, ich bin sicher', 'brochure_art': 'katalog', 'delete_magazin': False, 
+            'form-0-titel': 'Whatever', 'form-0-ausgabe_id': self.obj1.pk, 'form-0-accept': True, 
+            'form-1-titel': 'Whatever2', 'form-1-ausgabe_id': obj2.pk, 'form-1-accept': True, 
+        }
+        post_data.update(changelist_post_data)
+        post_data.update(management_form_data)
+        response = self.client.post(path = self.changelist_path, data = post_data)
+        self.assertTrue(_models.magazin.objects.filter(pk = self.mag.pk).exists())
+        
+        # User is redirected back to the changelist
+        self.assertEqual(response.status_code, 302)
+        
+        # User selects another ausgabe and this time also deletes the magazin
+        changelist_post_data[helpers.ACTION_CHECKBOX_NAME] = [other.pk]
+        response = self.client.post(path = self.changelist_path, data = changelist_post_data)
+        self.assertEqual(response.status_code, 200)
+        management_form_data['form-TOTAL_FORMS'] = '1'
+        post_data = {
+            'action_confirmed': 'Ja, ich bin sicher', 'brochure_art': 'katalog', 'delete_magazin': True, 
+            'form-0-titel': 'Whatever', 'form-0-ausgabe_id': other.pk, 'form-0-accept': True, 
+        }
+        post_data.update(changelist_post_data)
+        post_data.update(management_form_data)
+        response = self.client.post(path = self.changelist_path, data = post_data)
+        self.assertFalse(_models.magazin.objects.filter(pk = other_mag.pk).exists())
+        
+        # User is redirected back to the changelist
+        self.assertEqual(response.status_code, 302) 

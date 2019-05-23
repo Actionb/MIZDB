@@ -410,6 +410,22 @@ def get_obj_link(obj, user, site_name='admin', include_name=True): #TODO: includ
                            obj)           
     return link
     
+def get_changelist_link(model, user, site_name = 'admin', obj_list = None):
+    opts = model._meta
+    try:
+        url = reverse(
+            '%s:%s_%s_changelist' % (site_name,opts.app_label,opts.model_name)
+        )
+    except NoReverseMatch:
+        return ''
+    p = '%s.%s' % (opts.app_label,
+                   get_permission_codename('changelist', opts))
+    if not user.has_perm(p):
+        return ''
+    if obj_list:
+        url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))
+    return format_html('<a href="{}">Liste</a>', url)      
+    
 def link_list(request, obj_list, SEP = ", "):
     """ Returns a string with html links to the objects in obj_list separated by SEP.
         Used in ModelAdmin

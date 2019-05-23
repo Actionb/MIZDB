@@ -37,7 +37,6 @@
                     {% endfor %}
                 {% endif %}
             {% endblock selection_form %}
-            
             <p>
                 {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
             </p>
@@ -54,6 +53,7 @@
             
             <div>
                 {% for obj in queryset %} 
+                {# Yo, what is this for? #}
                     <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
                 {% endfor %}
                 <input type="hidden" name="action" value="{{action_name}}" />
