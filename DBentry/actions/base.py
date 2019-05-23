@@ -80,16 +80,20 @@ class ConfirmationViewMixin(MIZAdminMixin):
         return context
     
 class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
+    #TODO: check validity of options_form
+    #TODO: add options_form_class
     
-    template_name = 'admin/action_confirmation.html'
+    template_name = 'admin/action_confirmation.html' #TODO: the template doesnt seem to render non_field_errors
     
     affected_fields = [] # these are the model fields that should be displayed in the summary of objects affected by this action
     
+    #TODO: doesn't seem to be used by any ActionView
     # Related to the makeSelectionForm form factory. Can be omitted if form_class is given or no form needs to be displayed
     selection_form_fields = [] # these are the model fields that should be displayed in the 'selection form'
     help_texts = {} # help_texts for the makeSelectionForm
     labels = {} # labels  for the makeSelectionForm
         
+    #TODO: doesn't seem to be used by any ActionView
     def get_form_class(self):
         if self.selection_form_fields and not self.form_class: 
             # default to the makeSelectionForm factory function if there is no form_class given
@@ -114,6 +118,8 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         return kwargs
         
     def form_valid(self, form):
+        #TODO: OptionalFormView functionality is not used by any ActionView
+        #TODO: needs to include the options_form
         # OptionalFormView returns this when either the (optional) form is not given or the form is valid.
         self.perform_action(None if form is None else form.cleaned_data)
         
@@ -156,15 +162,21 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
                 sub_list.append(flds)
             objs.append(sub_list)
         return objs
+        
+    def get_options_form(self):
+        """
+        Adds a form with additional options to the context that is rendered
+        below the selection form.
+        """
+        return None
     
     def get_context_data(self, *args, **kwargs):
         context = super(ActionConfirmationView, self).get_context_data(*args, **kwargs)
             
-        context.update(
-            dict(
-                affected_objects        =   self.compile_affected_objects(), 
-            )
-        )
+        context.update({
+            'affected_objects': self.compile_affected_objects(), 
+            'options_form': self.get_options_form()
+        })
         context.update(**kwargs)
         return context
 

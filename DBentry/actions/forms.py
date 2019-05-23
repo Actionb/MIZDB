@@ -75,43 +75,41 @@ class MergeFormHandleConflicts(DynamicChoiceForm, MIZAdminForm):
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)    
 
 class BrochureActionForm(MIZAdminForm):
-    textarea_config = {'rows':1, 'cols':30}
-    BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
+    #TODO: this form does not cover Katalog.art
+    textarea_config = {'rows':2, 'cols':90}
     
     ausgabe_id = forms.IntegerField(widget = forms.HiddenInput())
-    brochure_art = forms.ChoiceField(label = 'Art d. Broschüre', choices = BROCHURE_CHOICES)
     titel = forms.CharField(widget = forms.Textarea(attrs=textarea_config))
     beschreibung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
     bemerkungen = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
     zusammenfassung = forms.CharField(widget = forms.Textarea(attrs=textarea_config), required = False)
-    delete_magazin = forms.BooleanField(
-        label = 'Magazin löschen', required = False, 
-        help_text = 'Soll das Magazin dieser Ausgabe anschließend gelöscht werden?'
-    )
     accept = forms.BooleanField(
         label = 'Änderungen bestätigen', required = False, initial = True, 
         help_text = 'Hiermit bestätigen Sie, dass diese Ausgabe verschoben werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu überspringen und nicht zu verschieben.'
     )
     
-    fieldsets = [(None, {'fields':['ausgabe_id','brochure_art', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'delete_magazin', 'accept']})]
-    
-    def __init__(self, disable_delete_magazin = False, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        delete_magazin = self.fields['delete_magazin']
-        delete_magazin.disabled = disable_delete_magazin
-        if disable_delete_magazin:
-            delete_magazin.disabled = True
-            delete_magazin.help_text = "Magazin kann nicht gelöscht werden, da es weitere Ausgaben enthält."
-        
-class BaseBrochureActionFormSet(forms.BaseFormSet):
+    fieldsets = [(None, {'fields':['ausgabe_id', ('titel', 'zusammenfassung'), ('beschreibung', 'bemerkungen'), 'accept']})]
+       
+BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = forms.BaseFormSet, extra = 0, can_delete = True)
 
-    def __init__(self, disables, *args, **kwargs):
-        self.disables = disables
-        super().__init__(*args, **kwargs)
+class BrochureActionFormOptions(MIZAdminForm):
     
-    def get_form_kwargs(self, index):
-        kwargs = super().get_form_kwargs(index)
-        kwargs['disable_delete_magazin'] = self.disables.get(index, False)
-        return kwargs
-        
-BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = BaseBrochureActionFormSet, extra = 0, can_delete = True)
+    def brochure_choices(*args, **kwargs):
+        from DBentry.models import Brochure, Kalendar, Katalog
+        return [
+            (Brochure._meta.model_name, Brochure._meta.verbose_name), 
+            (Katalog._meta.model_name, Katalog._meta.verbose_name), 
+            (Kalendar._meta.model_name, Kalendar._meta.verbose_name), 
+        ]
+    
+    brochure_art = forms.ChoiceField(label = 'Verschieben nach', choices = brochure_choices)
+    
+    delete_magazin = forms.BooleanField(
+        label = 'Magazin löschen', required = False, 
+        help_text = 'Soll das Magazin dieser Ausgaben anschließend gelöscht werden?'
+    )
+    
+    def __init__(self, can_delete_magazin = True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not can_delete_magazin:
+            del self.fields['delete_magazin']
