@@ -92,10 +92,16 @@ class BrochureActionForm(MIZAdminForm):
 BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = forms.BaseFormSet, extra = 0, can_delete = True)
 
 class BrochureActionFormOptions(MIZAdminForm):
-    #TODO: base BROCHURE_CHOICES of the models inheritig base_brochure
-    # so that it is guaranteed that get_model_from_string finds them; (or clean the field)
-    BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
-    brochure_art = forms.ChoiceField(label = 'Verschieben nach', choices = BROCHURE_CHOICES)
+    
+    def brochure_choices(*args, **kwargs):
+        from DBentry.models import Brochure, Kalendar, Katalog
+        return [
+            (Brochure._meta.model_name, Brochure._meta.verbose_name), 
+            (Katalog._meta.model_name, Katalog._meta.verbose_name), 
+            (Kalendar._meta.model_name, Kalendar._meta.verbose_name), 
+        ]
+    
+    brochure_art = forms.ChoiceField(label = 'Verschieben nach', choices = brochure_choices)
     
     delete_magazin = forms.BooleanField(
         label = 'Magazin löschen', required = False, 

@@ -704,7 +704,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     def test_perform_action(self):
         self.form_cleaned_data[0]['zusammenfassung'] = 'Bleep bloop' # should make it into the new record
         self.form_cleaned_data[0]['beschreibung'] = '' # empty value, should NOT make it into the new record
-        options_form_cleaned_data = {'brochure_art': 'Brochure'}
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.mag = self.mag
        
@@ -726,7 +726,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
         
     def test_perform_action_deletes_magazin(self):
-        options_form_cleaned_data = {'brochure_art': 'Brochure', 'delete_magazin': True}
+        options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.mag = self.mag
         
@@ -734,7 +734,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertFalse(_models.magazin.objects.filter(pk = self.mag.pk).exists())
         
     def test_perform_action_not_deletes_magazin(self):
-        options_form_cleaned_data = {'brochure_art': 'Brochure', 'delete_magazin': False}
+        options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': False}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.mag = self.mag
         
@@ -742,7 +742,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(_models.magazin.objects.filter(pk = self.mag.pk).exists())
         
     def test_perform_action_moves_jahre(self):
-        options_form_cleaned_data = {'brochure_art': 'Brochure'}
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.mag = self.mag
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
@@ -750,7 +750,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(list(new_brochure.jahre.values_list('jahr', flat = True)), [2000, 2001])
         
     def test_perform_action_adds_hint_to_bemerkungen(self):
-        options_form_cleaned_data = {'brochure_art': 'Brochure'}
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         expected = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
         expected = expected.format(
             verbose_name = _models.Brochure._meta.verbose_name, 
@@ -763,7 +763,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertIn(expected, new_brochure.bemerkungen)
      
     def test_perform_action_katalog(self):
-        options_form_cleaned_data = {'brochure_art': 'Katalog'}
+        options_form_cleaned_data = {'brochure_art': 'katalog'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.mag = self.mag
         
@@ -772,7 +772,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 1)
      
     def test_perform_action_kalendar(self):
-        options_form_cleaned_data = {'brochure_art': 'Kalendar'}
+        options_form_cleaned_data = {'brochure_art': 'kalendar'}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
         view.mag = self.mag
         
@@ -783,7 +783,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     @patch('DBentry.actions.views.get_model_from_string')   
     def test_perform_action_protected_ausgabe(self, mocked_model_from_string):
         mocked_model_from_string.return_value = _models.Brochure
-        options_form_cleaned_data = {'brochure_art': 'Brochure'}
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         
         self.obj1.artikel_set.add(make(_models.artikel, ausgabe_id = self.obj1.pk))
         request = self.get_request()
@@ -806,7 +806,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # Assert that a rollback on trying to delete the magazin does not also roll back the ausgabe
         mocked_model_from_string.return_value = _models.Brochure
         mocked_is_protected.return_value = False
-        options_form_cleaned_data = {'brochure_art': 'Brochure', 'delete_magazin': True}
+        options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
         
         ausgabe_id = self.obj1.pk
         magazin_id = self.obj1.magazin_id
@@ -820,7 +820,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         
     def test_perform_action_not_accepted(self):
         # Assert that an ausgabe is not changed if the user unticks 'accept'.
-        options_form_cleaned_data = {'brochure_art': 'Brochure'}
+        options_form_cleaned_data = {'brochure_art': 'brochure'}
         ausgabe_id = self.obj1.pk
         self.form_cleaned_data[0]['accept'] = False
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
@@ -908,7 +908,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             
         # User selects the 'Katalog' category and confirms, without having checked the delete_magazin checkbox
         post_data = {
-            'action_confirmed': 'Ja, ich bin sicher', 'brochure_art': 'Katalog', 'delete_magazin': False, 
+            'action_confirmed': 'Ja, ich bin sicher', 'brochure_art': 'katalog', 'delete_magazin': False, 
             'form-0-titel': 'Whatever', 'form-0-ausgabe_id': self.obj1.pk, 'form-0-accept': True, 
             'form-1-titel': 'Whatever2', 'form-1-ausgabe_id': obj2.pk, 'form-1-accept': True, 
         }
@@ -926,7 +926,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(response.status_code, 200)
         management_form_data['form-TOTAL_FORMS'] = '1'
         post_data = {
-            'action_confirmed': 'Ja, ich bin sicher', 'brochure_art': 'Katalog', 'delete_magazin': True, 
+            'action_confirmed': 'Ja, ich bin sicher', 'brochure_art': 'katalog', 'delete_magazin': True, 
             'form-0-titel': 'Whatever', 'form-0-ausgabe_id': other.pk, 'form-0-accept': True, 
         }
         post_data.update(changelist_post_data)
