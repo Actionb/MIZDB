@@ -1234,7 +1234,7 @@ class Katalog(BaseBrochure):
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Kataloges')
     
-    art = models.CharField('Art d. Kataloges', max_length = 40, choices = ART_CHOICES, default = 1)
+    art = models.CharField('Art d. Kataloges', max_length = 40, choices = ART_CHOICES, default = 1) #TODO: shouldnt default be 'merch' or choices[0][0]?
     
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
