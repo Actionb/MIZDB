@@ -80,8 +80,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
         return context
     
 class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
-    #TODO: check validity of options_form
-    #TODO: add options_form_class
     
     template_name = 'admin/action_confirmation.html' #TODO: the template doesnt seem to render non_field_errors
     
@@ -119,7 +117,6 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         
     def form_valid(self, form):
         #TODO: OptionalFormView functionality is not used by any ActionView
-        #TODO: needs to include the options_form
         # OptionalFormView returns this when either the (optional) form is not given or the form is valid.
         self.perform_action(None if form is None else form.cleaned_data)
         
@@ -163,19 +160,11 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
             objs.append(sub_list)
         return objs
         
-    def get_options_form(self):
-        """
-        Adds a form with additional options to the context that is rendered
-        below the selection form.
-        """
-        return None
-    
     def get_context_data(self, *args, **kwargs):
         context = super(ActionConfirmationView, self).get_context_data(*args, **kwargs)
             
         context.update({
             'affected_objects': self.compile_affected_objects(), 
-            'options_form': self.get_options_form()
         })
         context.update(**kwargs)
         return context

@@ -455,4 +455,6 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             )
             for form in formset
         ]
+        context['options_form'] = self.get_options_form()
+        context.update(kwargs)
         return context
