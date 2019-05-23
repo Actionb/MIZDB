@@ -381,6 +381,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 continue
             
             # Verify that the ausgabe exists and can be deleted
+            #TODO: shouldn't the user know about protected_ausg before submitting?
             ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
             if ausgabe_instance is None:
                 continue

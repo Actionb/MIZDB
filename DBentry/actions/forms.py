@@ -92,7 +92,8 @@ class BrochureActionForm(MIZAdminForm):
 BrochureActionFormSet = forms.formset_factory(form = BrochureActionForm, formset = forms.BaseFormSet, extra = 0, can_delete = True)
 
 class BrochureActionFormOptions(MIZAdminForm):
-    
+    #TODO: base BROCHURE_CHOICES of the models inheritig base_brochure
+    # so that it is guaranteed that get_model_from_string finds them; (or clean the field)
     BROCHURE_CHOICES = [('Brochure', 'Broschüre'), ('Katalog', 'Katalog'), ('Kalendar', 'Kalendar')]
     brochure_art = forms.ChoiceField(label = 'Verschieben nach', choices = BROCHURE_CHOICES)
     
