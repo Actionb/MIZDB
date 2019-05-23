@@ -349,33 +349,20 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         self.mag = self.queryset.first().magazin
         return True
         
-    
     def form_valid(self, form):
-        #TODO: use ActionConfirmationView.form_valid again once the whole mess with the addition form
-        # and its validation was solved.
         options_form = self.get_options_form(data = self.request.POST)
-        options_form.is_valid()
+        if not options_form.is_valid():
+            context = self.get_context_data(options_form = options_form)
+            return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
         return
         
-    def perform_action(self, form_cleaned_data, options_form_cleaned_data):   
-        if form_cleaned_data is None or options_form_cleaned_data is None:
-            #TODO: this will return to the changelist without any changes? (even if only something is off with options)
-            #TODO: this is a very lazy approach to checking validity of the forms, but a rework is out of scope for now
-            # as it is, only the base form can be invalid (options form consisting of choice/boolean) so it's fine.
-            return
-            
+    def perform_action(self, form_cleaned_data, options_form_cleaned_data):               
         protected_ausg = []        
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
+        # brochure_art is guaranteed to be a valid model name due to the form validation.
         brochure_class = get_model_from_string(options_form_cleaned_data.get('brochure_art', ''))
-        if brochure_class is None:
-            #TODO: the validity of brochure_art should be checked by the options_form, not here!
-            # currently, though, validity of the options_form has no effect on the process
-            raise ValueError(
-                "Could not resolve brochure class '%s' into a model." % \
-                options_form_cleaned_data.get('brochure_art', '')
-            )
-            
+        
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
