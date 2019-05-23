@@ -81,7 +81,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
     
 class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
     
-    template_name = 'admin/action_confirmation.html' #TODO: the template doesnt seem to render non_field_errors
+    template_name = 'admin/action_confirmation.html'
     
     affected_fields = [] # these are the model fields that should be displayed in the summary of objects affected by this action
     
