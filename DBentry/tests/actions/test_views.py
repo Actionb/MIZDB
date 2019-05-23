@@ -667,7 +667,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         expected_message += '<a href="/admin/DBentry/ausgabe/{}/change/">Testausgabe</a>'.format(str(self.obj1.pk))
         self.assertMessageSent(request, expected_message)
      
-    @tag("wip")   
     @translation_override(language = None)
     def test_action_allowed_different_magazin(self):
         # Assert that only sets of a single magazin are allowed to be moved.
@@ -794,6 +793,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         expected_message = "Folgende Ausgaben konnten nicht gelöscht werden: " + \
             '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'.format(pk = self.obj1.pk, name = str(self.obj1)) + \
+            ' (<a href="/admin/DBentry/ausgabe/?id__in={pk}">Liste</a>)'.format(pk = self.obj1.pk) + \
             ". Es wurden keine Broschüren für diese Ausgaben erstellt."
         self.assertMessageSent(request, expected_message)
         
@@ -830,7 +830,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(self.model.objects.filter(pk=ausgabe_id).exists())
         self.assertEqual(_models.BaseBrochure.objects.count(), 0)
         
-    @tag("wip")
     def test_context_contains_options_form(self):
         view = self.get_view(self.get_request())
         context = view.get_context_data()
@@ -838,7 +837,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         
         self.assertIsInstance(context['options_form'], BrochureActionFormOptions)
     
-    @tag("wip")
     @patch('DBentry.actions.views.MoveToBrochureBase.can_delete_magazin', new_callable = PropertyMock)
     def test_conditionally_show_delete_magazin_option(self, mocked_can_delete):
         # Assert that the field 'delete_magazin' only shows up on the options_form
@@ -854,7 +852,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         form = self.get_view(self.get_request()).get_options_form()
         self.assertNotIn('delete_magazin', form.fields)
         
-    @tag("wip")
     def test_can_delete_magazin(self):
         # Assert that can_delete_magazin returns True when the magazin can be deleted after the action.
         view = self.get_view(self.get_request())
