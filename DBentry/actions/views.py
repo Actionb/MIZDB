@@ -393,7 +393,6 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
-            #TODO: catch other possible exceptions
             else:
                 hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
                 changelog_message = hint.format(
@@ -405,6 +404,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 self.log_deletion(ausgabe_instance)
                 
         if protected_ausg:
+            #TODO: add a link to the changelist filtered for these ausgaben
             msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg)
             msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')

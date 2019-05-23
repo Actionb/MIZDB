@@ -769,6 +769,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Katalog.objects.count(), 1)
+#        self.assertEqual(_models.Katalog.objects.get().art, 'merch') TODO: uncommet once the default for katalog.art is correct
      
     def test_perform_action_kalendar(self):
         options_form_cleaned_data = {'brochure_art': 'kalendar'}

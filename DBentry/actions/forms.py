@@ -77,7 +77,6 @@ class MergeFormHandleConflicts(DynamicChoiceForm, MIZAdminForm):
 MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)    
 
 class BrochureActionForm(MIZAdminForm):
-    #TODO: this form does not cover Katalog.art
     textarea_config = {'rows':2, 'cols':90}
     
     ausgabe_id = forms.IntegerField(widget = forms.HiddenInput())
