@@ -110,25 +110,247 @@ class EANField(StdNumField):
     max_length = 17 # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
     
+from django.core.exceptions import ValidationError
+import datetime
+import re
+from collections import namedtuple
+
+DateType = namedtuple('DateType', ['pattern', 'format'])
+
+"""
+PartialDate inspired by:
+django-partial-date: https://github.com/ktowen/django_partial_date
+https://stackoverflow.com/q/2971198
+https://stackoverflow.com/a/30186603
+"""
+
 class PartialDate(object):
-    pass
+        
+#    def __new__(cls, *args, **kwargs):
+#        super().__new__(cls)
+
+    regex =  re.compile(r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$')
+    FULL = DateType(
+        r'^(?P<year>\d{4})(?:-(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$', 
+        '%Y-%m-%d'
+    )
+    YEAR = DateType(r'^(\d{4})', '%Y')
+    YEAR_MONTH = DateType(r'^(\d{4})-(\d{1,2})', '%Y-%m')
+    MONTH_DAY = DateType(r'^(\d{1,2})-(\d{1,2})', '%m-%d')
+    
+    DATE_TYPES = {
+        'full': FULL, 'year': YEAR, 'year_month': YEAR_MONTH, 'month_day': MONTH_DAY
+    }
+    
+    def __init__(self, *args, **kwargs):
+        self._date_type = None
+        
+        self._date = None
+        self._partial_date = None
+        if args:
+            if isinstance(args[0], datetime.date):
+                self._date = args[0]
+                self._date_type = self.FULL
+                year, month, day, *_ = args[0].timetuple()
+            elif isinstance(args[0], str):
+                match = self.regex.match(args[0])
+                if not match:
+                    raise ValidationError("unrecognized format")
+                self._date = args[0]
+                year, month, day = [
+                    None if i is None else int(i)
+                    for i in (match.groups())
+                ]
+            else:
+                raise TypeError
+        elif kwargs:
+            year, month, day = [
+                int(kwargs.pop(attr, 0)) or None
+                for attr in ('year', 'month', 'day')
+            ]
+        else:
+            raise TypeError("Expected some arguments.")
+        
+        if year and day and not month:
+            raise TypeError("Invalid arguments.")
+        self.year, self.month, self.day = (year, month, day)
+        
+    def __str__(self):
+        return self.date.strftime(self.date_type.format)            
+                
+    @property
+    def date(self):
+        if not isinstance(self._date, datetime.date):
+            self._date = datetime.datetime.strptime(self._date, self.date_type.format).date()
+        return self._date
+            
+    @property
+    def date_type(self):
+        if self._date_type is None:
+            if self.year and self.month and self.day: 
+                self._date_type = self.FULL
+            elif self.year and self.month: 
+                self._date_type = self.YEAR_MONTH
+            elif self.month and self.day: 
+                self._date_type = self.MONTH_DAY
+            elif self.year and not (self.month and self.day):
+                self._date_type = self.YEAR
+        return self._date_type
+            
+class PartialDate(datetime.date):
+    
+    date_types = {
+        'year_month_day': '%Y-%m-%d', 
+        'year_month': '%Y-%m', 
+        'year': '%Y', 
+        'month_day': '%m-%d'
+    }
+        
+    def __new__(cls, year = None, month = None, day = None):
+        instance_attrs = {'year': year, 'month': month, 'day': day}
+        constructor_args = []
+        date_type = []
+        
+        # Prepare the arguments for the datetime.date constructor 
+        # and the attributes that store the passed in parameters (cast to integers if possible).
+        for name, value in zip(('year', 'month', 'day'), (year, month, day)):
+            if value is None:
+                constructor_args.append(1 if name != 'year' else 4)
+            else:
+                # value can also be '0' at this point
+                # the attribute should be None and the constructor arg should be a default
+                value = int(value)  # this can raise a ValueError if value isnt an int
+                if value == 0:
+                    # if it is 0, the partial date should not include it, i.e. don't include it in date_type
+                    constructor_args.append(1 if name != 'year' else 4)
+                    instance_attrs[name] = None
+                else:
+                    date_type.append(name)
+                    constructor_args.append(value) 
+                    instance_attrs[name] = value
+            
+        date = super().__new__(cls, *constructor_args)
+        # Set the instance's attributes.
+        for k, v in instance_attrs.items():
+            # The default attrs year,month,day are not writable.
+            setattr(date, '__' + k, v)
+        # Get the format string associated with this instance's date type
+        if not date_type:
+            # This is an 'empty' partial date.
+            setattr(date, 'date_type', None)
+            setattr(date, 'partial', '')
+        else:
+            date_type = "_".join(date_type)
+            if date_type not in cls.date_types:
+                # Note this can only happen if a bad mix of parameters was passed in explicitly.
+                # from_string is guaranteed to provide useful parameters 
+                # (or it will not call __new__ at all).
+                raise ValueError("Unrecognized format: %s" % date_type)
+            setattr(date, 'date_type', date_type)
+            setattr(date, 'partial', date.strftime(cls.date_types[date_type]))
+        return date        
+        
+    def __str__(self):
+        return self.partial
+        
+    def __iter__(self):
+        for attr in ('__year', '__month', '__day'):
+            yield getattr(self, attr, None)
+        
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.__str__().__eq__(other)
+        return super().__eq__(other)
+        
+#    def __gt__(self, other):
+#        if isinstance(other, str):
+#            return self.__str__().__gt__(other)
+#        return super().__gt__(other)
+#        
+#    def __ge__(self, other):
+#        if isinstance(other, str):
+#            return self.__str__().__ge__(other)
+#        return super().__ge__(other)
+        
+    @classmethod
+    def from_string(cls, date):
+        regex =  re.compile(r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$')
+        match = regex.match(date)
+        if match:
+            return cls.__new__(cls, **match.groupdict())
+        raise ValueError("Invalid format.")
+        #TODO: raise ValueError if regex doesn't match? streamlines to_python
+            
+    @classmethod
+    def from_date(cls, date):
+        year, month, day, *_ = date.timetuple()
+        return cls.__new__(cls, year, month, day)
+        
     
 class PartialDateWidget(widgets.MultiWidget):
-    pass
+    
+    def __init__(self, **kwargs):
+        _widgets = [
+            widgets.NumberInput(), 
+            widgets.NumberInput(), 
+            widgets.NumberInput(), 
+        ]  
+        super().__init__(_widgets, **kwargs)
+        
+    def decompress(self, value):
+        if isinstance(value, PartialDate):
+            return list(value)
+        return [None, None, None]
 
 class PartialDateFormField(fields.MultiValueField):
-    pass
+    
+    def __init__(self, **kwargs):
+        _fields = [
+            fields.IntegerField(), 
+            fields.IntegerField(), 
+            fields.IntegerField(), 
+        ]
+        if 'max_length' in kwargs:
+            # super(PartialDateField).formfield adds a max_length kwarg that MultiValueField does not handle
+            del kwargs['max_length']
+        super().__init__(_fields, widget = PartialDateWidget, require_all_fields = False, **kwargs)
+        
+    def compress(self, data_list):
+        return PartialDate(*data_list)
     
 class PartialDateField(models.CharField):
     
+    default_error_messages = models.DateField.default_error_messages
+    
+    def __init__(self, *args, **kwargs):
+        kwargs['max_length'] = 10 # digits: 4 year, 2 month, 2 day, 2 dashes
+        super().__init__(*args, **kwargs)
+    
     def to_python(self, value):
-        pass
+        if not value:
+            return PartialDate() #TODO: or return None?
+        if isinstance(value, str):
+            try:
+                pd = PartialDate.from_string(value)
+            except ValueError:
+                # Either from_string could not match its regex or
+                # the date produced is invalid (e.g. 02-31)
+                raise ValidationError(
+                    self.error_messages['invalid_date'],
+                    code='invalid_date',
+                    params={'value': value},
+                )
+            return pd
+        elif isinstance(value, datetime.date):
+            return PartialDate.from_date(value)
+        elif isinstance(value, PartialDate):
+            return value
     
     def get_prep_value(self, value):
-        pass
+        return value.partial
     
     def from_db_value(self, value, expression, connection):
-        pass
+        return PartialDate.from_string(value)
         
     def formfield(self, **kwargs):
-        pass
+        return super().formfield(form_class = PartialDateFormField, **kwargs)
