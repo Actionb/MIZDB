@@ -407,6 +407,11 @@ class TestPartialDate(MyTestCase):
         
         with_date = PartialDate.from_date(datetime.date(2019, 5, 20))
         self.assertEqual(str(with_date), '2019-05-20')
+        
+    def test_bool(self):
+        # bool(PartialDate()) and bool(PartialDate(4,1,1)) seem to be False??
+        self.assertTrue(PartialDate())
+        self.assertTrue(PartialDate(2019, 5, 20))
 
 @tag("field")
 @tag("wip")    
@@ -483,12 +488,12 @@ class TestPartialDateField(MyTestCase):
 class TestPartialDateFieldQueries(DataTestCase):
     # Test various queries using PartialDateField
     model = _models.bildmaterial
-    raw_data = [{'datum': '2019-05-20'}] #TODO: we haven't tested that a model constructor can handle PDs...
+#    raw_data = [{'datum': '2019-05-20'}] #TODO: we haven't tested that a model constructor can handle PDs...
         
     def test_constructor_partial_date(self):
         # Assert that a model instance can be created with a PartialDate.
         date = '2019-05-20'
-        pd = PartialDate(date)
+        pd = PartialDate.from_string(date)
         obj = make(self.model)
         obj.datum = pd
         with self.assertNotRaises(Exception):
@@ -500,7 +505,7 @@ class TestPartialDateFieldQueries(DataTestCase):
     def test_constructor_string(self):
         # Assert that a model instance can be created with a string.
         date = '2019-05-20'
-        pd = PartialDate(date)
+        pd = PartialDate.from_string(date)
         obj = make(self.model)
         obj.datum = date
         with self.assertNotRaises(Exception):
@@ -512,8 +517,6 @@ class TestPartialDateFieldQueries(DataTestCase):
     def test_lookup_range(self):
         # Assert that __range works as expected for dates even if the field is CharField.
         obj = make(self.model, datum = '2019-05-20')
-#        obj2 = make(self.model, datum = '2019-05-21')
-#        obj3 = make(self.model, datum = '2019-05-22')
         qs = self.model.objects.filter(datum__range = ('2019-05-19', '2019-05-21'))
         self.assertIn(obj, qs)
         
@@ -528,10 +531,21 @@ class TestPartialDateFieldQueries(DataTestCase):
     def test_to_db(self):
         # Assert that a PartialDate value is prepared as a string (or date)?
         #(get_prep_value)
-        pd = PartialDate('2019-05-20')
+        pd = PartialDate.from_string('2019-05-20')
         obj = make(self.model, datum = pd)
         qs = self.model.objects.filter(datum = pd)
         self.assertIn(obj, qs)
+        
+    def test_clean(self):
+        date = '2019-05-20'
+        pd = PartialDate.from_string(date)
+        obj = self.model(titel = 'Whatever', datum = date)
+        with self.assertNotRaises(Exception):
+            cleaned = PartialDateField().clean(date, obj)
+        self.assertEqual(cleaned, pd)
+        
+        with self.assertRaises(ValidationError):
+            PartialDateField().clean('12019-05-20', obj)
         
 @tag("field")
 @tag("wip")    
@@ -546,12 +560,66 @@ class TestPartialDateFormField(MyTestCase):
         field = PartialDateFormField()
         self.assertEqual(field.compress(data_list), PartialDate(year = 2019, month = 5, day = 20))
         
+    def test_clean(self):
+        field = PartialDateFormField(required = False)
+        for data in ([], [2019], [2019, 5], [2019, 5, 20], [None, 5, 20]):
+            with self.assertNotRaises(ValidationError):
+                cleaned = field.clean(data)
+            self.assertEqual(cleaned, PartialDate(*data))
+    
+    def test_clean_year_day(self):
+        field = PartialDateFormField(required = False)
+        with self.assertRaises(ValidationError) as cm:
+            field.clean([2019, None, 20])        
+        self.assertEqual(cm.exception.args[0], "Ungültige Kombination von Jahr und Tag.")
+            
+    def test_as_form(self):
+        form = type('Form', (forms.Form, ), {'a': PartialDateFormField(required = False)})
+        # Empty stuff
+        self.assertFalse(form(data={'a':[None]*3}).errors)
+        self.assertFalse(form(data={'a':['']*3}).errors)
+        # year only
+        self.assertFalse(form(data={'a':['2019', None, None]}).errors)
+        self.assertFalse(form(data={'a':['2019', None]}).errors)
+        self.assertFalse(form(data={'a':['2019']}).errors)
+        self.assertFalse(form(data={'a':['2019', '']}).errors)
+        self.assertFalse(form(data={'a':['2019', '', '']}).errors)
+        # year and month
+        self.assertFalse(form(data={'a':['2019', '5', None]}).errors)
+        self.assertFalse(form(data={'a':['2019', '5']}).errors)
+        self.assertFalse(form(data={'a':['2019', '5', '']}).errors)
+        # year, month, day
+        self.assertFalse(form(data={'a':['2019', '5', '20']}).errors)
+        # month and day
+        self.assertFalse(form(data={'a':['', '5', '20']}).errors)
+        self.assertFalse(form(data={'a':[None, '5', '20']}).errors)
+        
+    def test_as_modelform(self):
+        form = forms.modelform_factory(model = _models.bildmaterial, fields = ['datum'])
+        # Empty stuff
+        self.assertFalse(form(data={'a':[None]*3}).errors)
+        self.assertFalse(form(data={'a':['']*3}).errors)
+        # year only
+        self.assertFalse(form(data={'a':['2019', None, None]}).errors)
+        self.assertFalse(form(data={'a':['2019', None]}).errors)
+        self.assertFalse(form(data={'a':['2019']}).errors)
+        self.assertFalse(form(data={'a':['2019', '']}).errors)
+        self.assertFalse(form(data={'a':['2019', '', '']}).errors)
+        # year and month
+        self.assertFalse(form(data={'a':['2019', '5', None]}).errors)
+        self.assertFalse(form(data={'a':['2019', '5']}).errors)
+        self.assertFalse(form(data={'a':['2019', '5', '']}).errors)
+        # year, month, day
+        self.assertFalse(form(data={'a':['2019', '5', '20']}).errors)
+        # month and day
+        self.assertFalse(form(data={'a':['', '5', '20']}).errors)
+        self.assertFalse(form(data={'a':[None, '5', '20']}).errors)
+        
 @tag("field")
 @tag("wip")    
 class TestPartialDateWidget(MyTestCase):
     
-    def test_subwidgets_are_integers(self):
-        #NOTE: pseudo code
+    def test_subwidgets_are_number_inputs(self):
         for subwidget in PartialDateWidget().widgets:
             with self.subTest():
                 self.assertIsInstance(subwidget, forms.widgets.NumberInput)

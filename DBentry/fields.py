@@ -143,7 +143,7 @@ class PartialDate(datetime.date):
             else:
                 # value can also be '0' at this point
                 # the attribute should be None and the constructor arg should be a default
-                value = int(value)  # this can raise a ValueError if value isnt an int
+                value = int(value)  # this can raise a ValueError if value cannot be cast to int
                 if value == 0:
                     # if it is 0, the partial date should not include it, i.e. don't include it in date_type
                     constructor_args.append(1 if name != 'year' else 4)
@@ -153,7 +153,7 @@ class PartialDate(datetime.date):
                     constructor_args.append(value) 
                     instance_attrs[name] = value
             
-        date = super().__new__(cls, *constructor_args)
+        date = super().__new__(cls, *constructor_args) # raises a ValueError on invalid dates
         # Set the instance's attributes.
         for k, v in instance_attrs.items():
             # The default attrs year,month,day are not writable.
@@ -180,6 +180,10 @@ class PartialDate(datetime.date):
     def __iter__(self):
         for attr in ('__year', '__month', '__day'):
             yield getattr(self, attr, None)
+            
+    def __len__(self):
+        # This allows the MaxLengthValidator of CharField to test the length of the PartialDate
+        return len(self.partial)
         
     def __eq__(self, other):
         if isinstance(other, str):
@@ -228,24 +232,35 @@ class PartialDateWidget(widgets.MultiWidget):
 
 class PartialDateFormField(fields.MultiValueField):
     
+    default_error_messages = fields.DateField.default_error_messages
+    default_error_messages['invalid_combo'] = "Ungültige Kombination von Jahr und Tag."
+    
     def __init__(self, **kwargs):
         _fields = [
-            fields.IntegerField(), 
-            fields.IntegerField(), 
-            fields.IntegerField(), 
+            fields.IntegerField(label = 'Jahr', required = False), 
+            fields.IntegerField(label = 'Monat', required = False), 
+            fields.IntegerField(label = 'Tag', required = False), 
         ]
         if 'max_length' in kwargs:
             # super(PartialDateField).formfield (i.e. CharField)
             # adds a max_length kwarg that MultiValueField does not handle
             del kwargs['max_length']
+        if 'widget' in kwargs: del kwargs['widget']
         super().__init__(_fields, widget = PartialDateWidget, require_all_fields = False, **kwargs)
         
     def compress(self, data_list):
-        return PartialDate(*data_list)
-    
+        try:
+            return PartialDate(*data_list)
+        except ValueError:
+            if len(data_list) == 3 and data_list[0] and data_list[-1] and not data_list[1]: 
+                # Attempting to build a partial date out of year and day.
+                raise ValidationError(self.error_messages['invalid_combo'], code='invalid_combo')
+            raise ValidationError(self.error_messages['invalid'], code='invalid')
+        
 class PartialDateField(models.CharField):
     
     default_error_messages = models.DateField.default_error_messages
+    default_error_messages['invalid_combo'] = "Ungültige Kombination von Jahr und Tag."
     
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 10 # digits: 4 year, 2 month, 2 day, 2 dashes
@@ -274,8 +289,9 @@ class PartialDateField(models.CharField):
             return PartialDate.from_date(value)
     
     def get_prep_value(self, value):
-        return value.partial
-    
+        value = super().get_prep_value(value)
+        return self.to_python(value).partial
+        
     def from_db_value(self, value, expression, connection):
         return PartialDate.from_string(value)
         
