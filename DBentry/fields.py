@@ -204,7 +204,6 @@ class PartialDate(datetime.date):
         if match:
             return cls.__new__(cls, **match.groupdict())
         raise ValueError("Invalid format.")
-        #TODO: raise ValueError if regex doesn't match? streamlines to_python
             
     @classmethod
     def from_date(cls, date):
