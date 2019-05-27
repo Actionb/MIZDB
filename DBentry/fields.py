@@ -186,6 +186,7 @@ class PartialDate(datetime.date):
             return self.__str__().__eq__(other)
         return super().__eq__(other)
         
+#TODO: rich comparison
 #    def __gt__(self, other):
 #        if isinstance(other, str):
 #            return self.__str__().__gt__(other)
@@ -235,7 +236,8 @@ class PartialDateFormField(fields.MultiValueField):
             fields.IntegerField(), 
         ]
         if 'max_length' in kwargs:
-            # super(PartialDateField).formfield adds a max_length kwarg that MultiValueField does not handle
+            # super(PartialDateField).formfield (i.e. CharField)
+            # adds a max_length kwarg that MultiValueField does not handle
             del kwargs['max_length']
         super().__init__(_fields, widget = PartialDateWidget, require_all_fields = False, **kwargs)
         
