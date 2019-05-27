@@ -249,6 +249,8 @@ class PartialDateField(models.CharField):
     
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 10 # digits: 4 year, 2 month, 2 day, 2 dashes
+        if 'null' not in kwargs: kwargs['null'] = False
+        if 'blank' not in kwargs: kwargs['blank'] = True
         super().__init__(*args, **kwargs)
     
     def to_python(self, value):
