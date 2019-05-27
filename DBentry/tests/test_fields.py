@@ -482,7 +482,6 @@ class TestPartialDateField(MyTestCase):
         formfield = PartialDateField().formfield()
         self.assertIsInstance(formfield, forms.MultiValueField)
 
-@skip("no migrations yet")
 @tag("field")
 @tag("wip")    
 class TestPartialDateFieldQueries(DataTestCase):
