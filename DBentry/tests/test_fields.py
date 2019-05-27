@@ -559,3 +559,5 @@ class TestPartialDateWidget(MyTestCase):
     def test_decompress(self):
         pd = PartialDate(year = 2019, month = 5, day = 20)
         self.assertEqual(PartialDateWidget().decompress(pd), [2019, 5, 20])
+        
+        self.assertEqual(PartialDateWidget().decompress(None), [None]*3)
