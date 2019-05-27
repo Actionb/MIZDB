@@ -113,9 +113,6 @@ class EANField(StdNumField):
 from django.core.exceptions import ValidationError
 import datetime
 import re
-from collections import namedtuple
-
-DateType = namedtuple('DateType', ['pattern', 'format'])
 
 """
 PartialDate inspired by:
@@ -124,79 +121,6 @@ https://stackoverflow.com/q/2971198
 https://stackoverflow.com/a/30186603
 """
 
-class PartialDate(object):
-        
-#    def __new__(cls, *args, **kwargs):
-#        super().__new__(cls)
-
-    regex =  re.compile(r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$')
-    FULL = DateType(
-        r'^(?P<year>\d{4})(?:-(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$', 
-        '%Y-%m-%d'
-    )
-    YEAR = DateType(r'^(\d{4})', '%Y')
-    YEAR_MONTH = DateType(r'^(\d{4})-(\d{1,2})', '%Y-%m')
-    MONTH_DAY = DateType(r'^(\d{1,2})-(\d{1,2})', '%m-%d')
-    
-    DATE_TYPES = {
-        'full': FULL, 'year': YEAR, 'year_month': YEAR_MONTH, 'month_day': MONTH_DAY
-    }
-    
-    def __init__(self, *args, **kwargs):
-        self._date_type = None
-        
-        self._date = None
-        self._partial_date = None
-        if args:
-            if isinstance(args[0], datetime.date):
-                self._date = args[0]
-                self._date_type = self.FULL
-                year, month, day, *_ = args[0].timetuple()
-            elif isinstance(args[0], str):
-                match = self.regex.match(args[0])
-                if not match:
-                    raise ValidationError("unrecognized format")
-                self._date = args[0]
-                year, month, day = [
-                    None if i is None else int(i)
-                    for i in (match.groups())
-                ]
-            else:
-                raise TypeError
-        elif kwargs:
-            year, month, day = [
-                int(kwargs.pop(attr, 0)) or None
-                for attr in ('year', 'month', 'day')
-            ]
-        else:
-            raise TypeError("Expected some arguments.")
-        
-        if year and day and not month:
-            raise TypeError("Invalid arguments.")
-        self.year, self.month, self.day = (year, month, day)
-        
-    def __str__(self):
-        return self.date.strftime(self.date_type.format)            
-                
-    @property
-    def date(self):
-        if not isinstance(self._date, datetime.date):
-            self._date = datetime.datetime.strptime(self._date, self.date_type.format).date()
-        return self._date
-            
-    @property
-    def date_type(self):
-        if self._date_type is None:
-            if self.year and self.month and self.day: 
-                self._date_type = self.FULL
-            elif self.year and self.month: 
-                self._date_type = self.YEAR_MONTH
-            elif self.month and self.day: 
-                self._date_type = self.MONTH_DAY
-            elif self.year and not (self.month and self.day):
-                self._date_type = self.YEAR
-        return self._date_type
-            
 class PartialDate(datetime.date):
     
     date_types = {
