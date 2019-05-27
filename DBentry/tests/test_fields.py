@@ -458,11 +458,19 @@ class TestPartialDateField(MyTestCase):
         self.assertEqual(value, pd)       
         
     def test_to_python_takes_partial_date_instance(self):
+        pd = PartialDate(year = 2019, month = 5, day = 20)
+        date = datetime.date(2019, 5, 20)
+        with self.assertNotRaises(Exception):
+            value = PartialDateField().to_python(date)
+        self.assertIsInstance(value, PartialDate)
+        self.assertEqual(value, pd)        
+        
+    def test_to_python_takes_date_instance(self):
         pd = PartialDate(year = 2019)
         with self.assertNotRaises(Exception):
             value = PartialDateField().to_python(pd)
         self.assertIsInstance(value, PartialDate)
-        self.assertEqual(value, pd)        
+        self.assertEqual(value, pd)
         
     def test_formfield(self):
         # Assert that PartialDateField's formfield is a MultiValueField instance

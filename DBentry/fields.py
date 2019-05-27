@@ -266,10 +266,10 @@ class PartialDateField(models.CharField):
                     params={'value': value},
                 )
             return pd
-        elif isinstance(value, datetime.date):
-            return PartialDate.from_date(value)
         elif isinstance(value, PartialDate):
             return value
+        elif isinstance(value, datetime.date):
+            return PartialDate.from_date(value)
     
     def get_prep_value(self, value):
         return value.partial
