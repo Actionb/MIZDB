@@ -614,47 +614,39 @@ class TestPartialDateFormField(MyTestCase):
                 cleaned = field.clean(data)
             self.assertEqual(cleaned, PartialDate(*data))
             
+    def assertNoFormErrors(self, form):
+        # Assert that form does not produce errors with various data
+        test_data = [
+            # Empty stuff
+            {'a':[None]*3}, {'a':['']*3},
+            # full
+            {'a':['2019', '5', '20']}, 
+            # year only
+            {'a':['2019']}, 
+            {'a':['2019', None]}, {'a':['2019', None, None]}, 
+            {'a':['2019', '']}, {'a':['2019', '', '']}, 
+            # year and month
+            {'a':['2019', '5', None]}, {'a':['2019', '5', '']}, 
+            # year and day
+            {'a':['2019', None, '20']}, {'a':['2019', '', '20']}, 
+            # month and day
+            {'a':[None, '5', '20']}, {'a':['', '5', '20']}, 
+            # month only
+            {'a':[None, '5', None]}, {'a':['', '5', '']}, 
+            # day only
+            {'a':[None, None, '20']}, {'a':['', '', '20']}
+        ]
+        for data in test_data:
+            with self.subTest():
+                self.assertFalse(form(data = data).errors, msg = data)
+            
     def test_as_form(self):
         form = type('Form', (forms.Form, ), {'a': PartialDateFormField(required = False)})
-        # Empty stuff
-        self.assertFalse(form(data={'a':[None]*3}).errors)
-        self.assertFalse(form(data={'a':['']*3}).errors)
-        # year only
-        self.assertFalse(form(data={'a':['2019', None, None]}).errors)
-        self.assertFalse(form(data={'a':['2019', None]}).errors)
-        self.assertFalse(form(data={'a':['2019']}).errors)
-        self.assertFalse(form(data={'a':['2019', '']}).errors)
-        self.assertFalse(form(data={'a':['2019', '', '']}).errors)
-        # year and month
-        self.assertFalse(form(data={'a':['2019', '5', None]}).errors)
-        self.assertFalse(form(data={'a':['2019', '5']}).errors)
-        self.assertFalse(form(data={'a':['2019', '5', '']}).errors)
-        # year, month, day
-        self.assertFalse(form(data={'a':['2019', '5', '20']}).errors)
-        # month and day
-        self.assertFalse(form(data={'a':['', '5', '20']}).errors)
-        self.assertFalse(form(data={'a':[None, '5', '20']}).errors)
+        self.assertNoFormErrors(form)
         
     def test_as_modelform(self):
         form = forms.modelform_factory(model = _models.bildmaterial, fields = ['datum'])
-        # Empty stuff
-        self.assertFalse(form(data={'a':[None]*3}).errors)
-        self.assertFalse(form(data={'a':['']*3}).errors)
-        # year only
-        self.assertFalse(form(data={'a':['2019', None, None]}).errors)
-        self.assertFalse(form(data={'a':['2019', None]}).errors)
-        self.assertFalse(form(data={'a':['2019']}).errors)
-        self.assertFalse(form(data={'a':['2019', '']}).errors)
-        self.assertFalse(form(data={'a':['2019', '', '']}).errors)
-        # year and month
-        self.assertFalse(form(data={'a':['2019', '5', None]}).errors)
-        self.assertFalse(form(data={'a':['2019', '5']}).errors)
-        self.assertFalse(form(data={'a':['2019', '5', '']}).errors)
-        # year, month, day
-        self.assertFalse(form(data={'a':['2019', '5', '20']}).errors)
-        # month and day
-        self.assertFalse(form(data={'a':['', '5', '20']}).errors)
-        self.assertFalse(form(data={'a':[None, '5', '20']}).errors)
+        self.assertNoFormErrors(form)
         
 @tag("field")
 @tag("wip")    
