@@ -123,56 +123,51 @@ https://stackoverflow.com/a/30186603
 
 class PartialDate(datetime.date):
     
-    date_types = {
-        'year_month_day': '%Y-%m-%d', 
-        'year_month': '%Y-%m', 
-        'year': '%Y', 
-        'month_day': '%m-%d'
-    }
-        
+    db_value_template = '{year!s:0>4}-{month!s:0>2}-{day!s:0>2}'
+    
     def __new__(cls, year = None, month = None, day = None):
-        instance_attrs = {'year': year, 'month': month, 'day': day}
-        constructor_args = []
-        date_type = []
-        
-        # Prepare the arguments for the datetime.date constructor 
-        # and the attributes that store the passed in parameters (cast to integers if possible).
-        for name, value in zip(('year', 'month', 'day'), (year, month, day)):
+        # Default values for the instance's attributes
+        instance_attrs = {'year': None, 'month': None, 'day': None}
+        # Default values for the datetime.date constructor
+        constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
+        date_format = []
+        for name, value, format in zip(
+                ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
+            ):
             if value is None:
-                constructor_args.append(1 if name != 'year' else 4)
-            else:
-                # value can also be '0' at this point
-                # the attribute should be None and the constructor arg should be a default
-                value = int(value)  # this can raise a ValueError if value cannot be cast to int
-                if value == 0:
-                    # if it is 0, the partial date should not include it, i.e. don't include it in date_type
-                    constructor_args.append(1 if name != 'year' else 4)
-                    instance_attrs[name] = None
-                else:
-                    date_type.append(name)
-                    constructor_args.append(value) 
-                    instance_attrs[name] = value
+                continue
+            value = int(value)
+            if value != 0:
+                constructor_kwargs[name] =  value
+                instance_attrs[name] = value
+                date_format.append(format)
             
-        date = super().__new__(cls, *constructor_args) # raises a ValueError on invalid dates
+        date = super().__new__(cls, **constructor_kwargs) # raises a ValueError on invalid dates
         # Set the instance's attributes.
         for k, v in instance_attrs.items():
             # The default attrs year,month,day are not writable.
             setattr(date, '__' + k, v)
-        # Get the format string associated with this instance's date type
-        if not date_type:
+        if not date_format:
             # This is an 'empty' partial date.
-            setattr(date, 'date_type', None)
+            setattr(date, 'date_format', None)
             setattr(date, 'partial', '')
         else:
-            date_type = "_".join(date_type)
-            if date_type not in cls.date_types:
-                # Note this can only happen if a bad mix of parameters was passed in explicitly.
-                # from_string is guaranteed to provide useful parameters 
-                # (or it will not call __new__ at all).
-                raise ValueError("Unrecognized format: %s" % date_type)
-            setattr(date, 'date_type', date_type)
-            setattr(date, 'partial', date.strftime(cls.date_types[date_type]))
-        return date        
+            date_format = ' '.join(date_format)
+            setattr(date, 'date_format', date_format)
+            setattr(date, 'partial', date.strftime(date_format))
+        return date
+        
+    @property
+    def db_value(self):
+        """
+        Returns a string of format 'YYYY-MM-DD' to store in the database.
+        """
+        format_kwargs = {'year': 0, 'month': 0, 'day': 0}
+        for attr in ('year', 'month', 'day'):
+            value = getattr(self, '__' + attr, False)
+            if value:
+                format_kwargs[attr] = value
+        return self.db_value_template.format(**format_kwargs)
         
     def __str__(self):
         return self.partial
@@ -183,11 +178,14 @@ class PartialDate(datetime.date):
             
     def __len__(self):
         # This allows the MaxLengthValidator of CharField to test the length of the PartialDate
-        return len(self.partial)
+        return len(self.db_value)
         
     def __eq__(self, other):
         if isinstance(other, str):
-            return self.__str__().__eq__(other)
+            try:
+                other = self.from_string(other)
+            except:
+                return False
         return super().__eq__(other)
         
 #TODO: rich comparison
@@ -263,7 +261,7 @@ class PartialDateField(models.CharField):
     default_error_messages['invalid_combo'] = "Ungültige Kombination von Jahr und Tag."
     
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 10 # digits: 4 year, 2 month, 2 day, 2 dashes
+        kwargs['max_length'] = 30 # digits: 4 year, 2 month, 2 day, 2 dashes
         if 'null' not in kwargs: kwargs['null'] = False
         if 'blank' not in kwargs: kwargs['blank'] = True
         super().__init__(*args, **kwargs)
@@ -290,7 +288,7 @@ class PartialDateField(models.CharField):
     
     def get_prep_value(self, value):
         value = super().get_prep_value(value)
-        return self.to_python(value).partial
+        return self.to_python(value).db_value
         
     def from_db_value(self, value, expression, connection):
         return PartialDate.from_string(value)
