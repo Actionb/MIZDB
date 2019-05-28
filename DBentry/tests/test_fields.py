@@ -375,13 +375,7 @@ class TestPartialDate(MyTestCase):
     def test_empty_date(self):
         with self.assertNotRaises(Exception):
             pd = PartialDate()
-        self.assertAttrsSet(pd, None, None, None, None)
-        self.assertEqual(pd.partial, '')
-        
-        with self.assertNotRaises(ValueError):
-            pd = PartialDate.from_string('0000-00-00')
-        self.assertAttrsSet(pd, None, None, None, None)
-        self.assertEqual(pd.partial, '')
+        self.assertAttrsSet(pd, year = None, month = None, day = None, date_format = '')
         
     def test_db_value(self):
         test_data = [

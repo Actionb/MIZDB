@@ -149,12 +149,9 @@ class PartialDate(datetime.date):
             setattr(date, '__' + k, v)
         if not date_format:
             # This is an 'empty' partial date.
-            setattr(date, 'date_format', None)
-            setattr(date, 'partial', '')
+            setattr(date, 'date_format', '')
         else:
-            date_format = ' '.join(date_format)
-            setattr(date, 'date_format', date_format)
-            setattr(date, 'partial', date.strftime(date_format))
+            setattr(date, 'date_format', ' '.join(date_format))
         return date
         
     @property
@@ -170,7 +167,7 @@ class PartialDate(datetime.date):
         return self.db_value_template.format(**format_kwargs)
         
     def __str__(self):
-        return self.partial
+        return self.strftime(self.date_format)
         
     def __iter__(self):
         for attr in ('__year', '__month', '__day'):
