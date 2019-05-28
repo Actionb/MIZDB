@@ -12,6 +12,7 @@ from django.db import models
 from django.forms import widgets, fields
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
+from django.utils import formats
 
 from DBentry.validators import ISSNValidator, ISBNValidator, EANValidator
 
@@ -132,7 +133,7 @@ class PartialDate(datetime.date):
         constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
         date_format = []
         for name, value, format in zip(
-                ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
+                ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y') #TODO: %d. (dot) for 20. May 2019?
             ):
             if value is None:
                 continue
@@ -168,6 +169,11 @@ class PartialDate(datetime.date):
         
     def __str__(self):
         return self.strftime(self.date_format)
+        
+    def localize(self):
+        if self.date_format:
+            return formats.date_format(self, self.date_format.replace('%', ''))
+        return ''
         
     def __iter__(self):
         for attr in ('__year', '__month', '__day'):
