@@ -95,6 +95,7 @@ class MyTestCase(TestCase):
         """
         Assert that the body does NOT raise one of the passed exceptions.
         """ 
+        #NOTE: what if the body raises more than one exception?
         raised = None
         try:
             yield
