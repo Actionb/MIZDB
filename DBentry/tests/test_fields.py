@@ -5,10 +5,15 @@ from django.core.exceptions import ValidationError
 from django import forms
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+import datetime
 from stdnum import isbn
 
-from DBentry.fields import StdNumWidget, YearField
-from DBentry.models import buch, magazin
+from DBentry.fields import (
+    StdNumWidget, YearField, 
+     PartialDate, PartialDateField, PartialDateWidget, PartialDateFormField
+)
+from DBentry import models as _models
+from DBentry.factory import make
 from DBentry.constants import MIN_JAHR, MAX_JAHR
 
 class TestYearField(MyTestCase):
@@ -161,8 +166,8 @@ class StdNumFieldTestsMixin(object):
                     self.assertFalse(model_form.has_changed(), msg = "ModelForm is flagged as changed for using different formats of the same stdnum. " + msg_info)
    
 class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
-    model = buch
-    model_field = buch._meta.get_field('ISBN')
+    model = _models.buch
+    model_field = _models.buch._meta.get_field('ISBN')
     prototype_data = {'titel':'Testbuch'} 
     
     valid = [
@@ -240,8 +245,8 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
         self.assertTrue(qs.exists(), msg = "Querying for ISBN10 did not return records with equivalent ISBN13. " + msg_info)
                 
 class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
-    model = magazin
-    model_field = magazin._meta.get_field('issn')
+    model = _models.magazin
+    model_field = _models.magazin._meta.get_field('issn')
     prototype_data = {'magazin_name':'Testmagazin'}
     
     valid = ["12345679", "1234-5679"]
@@ -253,8 +258,8 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
     ]
     
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
-    model = buch
-    model_field = buch._meta.get_field('EAN')
+    model = _models.buch
+    model_field = _models.buch._meta.get_field('EAN')
     prototype_data = {'titel':'Testbuch'} 
     
     valid = ['73513537', "1234567890128"]
@@ -266,13 +271,7 @@ class TestEANField(StdNumFieldTestsMixin, MyTestCase):
     ]
     
 
-from unittest import skip, expectedFailure
-import datetime
 from django.test import tag
-from DBentry.fields import PartialDate, PartialDateField, PartialDateWidget, PartialDateFormField
-from DBentry.factory import make
-from DBentry import models as _models
-
 @tag("field")
 @tag("wip")    
 class TestPartialDate(MyTestCase):
@@ -288,9 +287,7 @@ class TestPartialDate(MyTestCase):
             for attr in attrs:
                 with collector():
                     self.assertEqual(getattr(partial_date, attr), expected[attr], msg = attr)
-        
                     
-    @tag("init")
     def test_new_with_int_kwargs(self):
         # Full date
         self.assertAttrsSet(PartialDate(year = 2019, month = 5, day = 20), 2019, 5, 20, '%d %b %Y')
@@ -319,8 +316,7 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate(day = 0), None, None, None, '')
         self.assertAttrsSet(PartialDate(month = 0, day = 0), None, None, None, '')
         self.assertAttrsSet(PartialDate(year = 0, month = 0, day = 0), None, None, None, '')
-    
-    @tag("init")
+        
     def test_new_with_string_kwargs(self):
         # Full date
         self.assertAttrsSet(PartialDate(year = '2019', month = '5', day = '20'), 2019, 5, 20, '%d %b %Y')
@@ -350,7 +346,6 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate(month = '0', day = '0'), None, None, None, '')
         self.assertAttrsSet(PartialDate(year = '0', month = '0', day = '0'), None, None, None, '')
     
-    @tag("init")
     def test_new_with_string(self):
         # Full date
         self.assertAttrsSet(PartialDate.from_string('2019-05-20'), 2019, 5, 20, '%d %b %Y')
@@ -378,12 +373,10 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate.from_string('0000-00'), None, None, None, '')
         self.assertAttrsSet(PartialDate.from_string('0000-00-00'), None, None, None, '')
         
-    @tag("init")
     def test_new_with_date(self):
         self.assertAttrsSet(PartialDate.from_date(datetime.date(2019, 5, 20)), 2019, 5, 20, '%d %b %Y')
         self.assertAttrsSet(PartialDate.from_date(datetime.datetime(2019, 5, 20)), 2019, 5, 20, '%d %b %Y')
         
-    @tag("init")
     def test_new_validates_date(self):
         # Assert that PartialDate does not accept invalid dates (31st of February, etc.).
         invalid_dates = ('02-31', '04-31')
@@ -397,7 +390,6 @@ class TestPartialDate(MyTestCase):
                 with self.assertRaises(ValueError, msg = "Date args used: %s" % date_args):
                     PartialDate(*date_args)
                     
-    @tag("init")
     def test_only_accepts_integers(self):
         invalid_dates = ('Beep-05-12', '2019-as-12', '2019-05-as')
         for date in invalid_dates:
@@ -411,8 +403,7 @@ class TestPartialDate(MyTestCase):
                 with self.assertRaises(ValueError,
                     msg = "casting a string literal to int should raise a ValueError"):
                     PartialDate(*date_args)
-        
-    @tag("init")
+                    
     def test_empty_date(self):
         with self.assertNotRaises(Exception):
             pd = PartialDate()
