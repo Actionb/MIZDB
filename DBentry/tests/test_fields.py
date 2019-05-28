@@ -383,6 +383,16 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(pd, None, None, None, None)
         self.assertEqual(pd.partial, '')
         
+    def test_partial_attr(self):
+        test_data = [
+            '2019-05-20', '2019-05-00', '2019-00-20', '2019-00-00', 
+            '0000-05-20', '0000-05-00', '0000-00-20', '0000-00-00', 
+        ]
+        for data in test_data:
+            with self.subTest():
+                pd = PartialDate.from_string(data)
+                self.assertEqual(pd.partial, data)
+        
     def test_equality_partial_date_to_partial_date(self):
         # Assert that two equal PartialDate objects equate.
         date = '2019-05-20'
@@ -439,9 +449,15 @@ class TestPartialDateField(MyTestCase):
         prepped_value = PartialDateField().get_prep_value(value = pd)
         self.assertEqual(prepped_value, '')
         
-        pd = PartialDate.from_string('2019-05-20')
-        prepped_value = PartialDateField().get_prep_value(value = pd)
-        self.assertEqual(prepped_value, '2019-05-20')
+        test_data = [
+            '2019-05-20', '2019-05-00', '2019-00-20', '2019-00-00', 
+            '0000-05-20', '0000-05-00', '0000-00-20', '0000-00-00', 
+        ]
+        for data in test_data:
+            with self.subTest():
+                pd = PartialDate.from_string(data)
+                prepped_value = PartialDateField().get_prep_value(value = pd)
+                self.assertEqual(prepped_value, data)
         
     def test_to_python_takes_None(self):
         #NOTE: should only be allowed if null=True; which it shouldn't if it's a CharField
