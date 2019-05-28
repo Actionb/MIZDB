@@ -437,27 +437,28 @@ class TestPartialDate(MyTestCase):
     def test_equality_string_to_partial_date(self):
         # Assert that a PartialDate and a string of the same value equate.
         date = '2019-05-20'
-        self.assertTrue(PartialDate.from_string(date) == date)
+        self.assertTrue(PartialDate.from_string(date).__eq__(date))
+        self.assertFalse(PartialDate.from_string(date).__eq__('Nota-valid-date'), msg = 'Invalid string should equate to false.')
         
     def test_str(self):
-        full = PartialDate.from_string('2019-05-20')
-        year_only = PartialDate.from_string('2019')
-        year_month = PartialDate.from_string('2019-05')
-        month_day = PartialDate.from_string('05-20')
-        
-        self.assertEqual(str(full), '20 May 2019')
-        self.assertEqual(str(year_only), '2019')
-        self.assertEqual(str(year_month), 'May 2019')
-        self.assertEqual(str(month_day), '20 May')
-        
+        test_data = [
+            ('2019-05-20', '20 May 2019'), ('2019-05-00', 'May 2019'), 
+            ('2019-00-20', '20 2019'), ('2019-00-00', '2019'), 
+            ('0000-05-20', '20 May'), ('0000-05-00', 'May'), 
+            ('0000-00-20', '20'), ('0000-00-00', ''), 
+        ]
+        for data, expected in test_data:
+            with self.subTest():
+                pd = PartialDate.from_string(data)
+                self.assertEqual(str(pd), expected)
+                
         with_date = PartialDate.from_date(datetime.date(2019, 5, 20))
         self.assertEqual(str(with_date), '20 May 2019')
         
-    @expectedFailure
-    def test_bool(self):
-        # bool(PartialDate()) and bool(PartialDate(4,1,1)) seem to be False??
-        self.assertTrue(PartialDate())
-        self.assertTrue(PartialDate(2019, 5, 20))
+#    def test_bool(self):
+#        # bool(PartialDate()) and bool(PartialDate(4,1,1)) seem*ed* to be False?? but it's fixed now?
+#        self.assertTrue(PartialDate())
+#        self.assertTrue(PartialDate(2019, 5, 20))
 
 @tag("field")
 @tag("wip")    
@@ -465,12 +466,12 @@ class TestPartialDateField(MyTestCase):
     
     def test_to_python_only_accepts_integers(self):
         # Assert that a ValidationError is raised when day/month/year are not integer.
-        with self.assertRaises(ValidationError):
-            PartialDateField().to_python('Beep-05-12')
-        with self.assertRaises(ValidationError):
-            PartialDateField().to_python('2019-as-12')
-        with self.assertRaises(ValidationError):
-            PartialDateField().to_python('2019-05-as')
+        invalid_dates = ('Beep-05-12', '2019-as-12', '2019-05-as')
+        for invalid_date in invalid_dates:
+            with self.subTest():
+                with self.assertRaises(ValidationError, msg = invalid_date) as cm:
+                    PartialDateField().to_python(invalid_date)
+            self.assertEqual(cm.exception.code, 'invalid_date')
     
     def test_from_db(self):
         # Assert that a value read from the db becomes a PartialDate.
@@ -606,6 +607,14 @@ class TestPartialDateFormField(MyTestCase):
         data_list = [2019, 5, 20]
         field = PartialDateFormField()
         self.assertEqual(field.compress(data_list), PartialDate(year = 2019, month = 5, day = 20))
+        
+        invalid_dates = ('Beep-05-12', '2019-as-12', '2019-05-as')
+        for invalid_date in invalid_dates:
+            invalid_date = invalid_date.split('-')
+            with self.subTest():
+                with self.assertRaises(ValidationError, msg = invalid_date) as cm:
+                    field.compress(invalid_date)   
+                self.assertEqual(cm.exception.code, 'invalid')
         
     def test_clean(self):
         field = PartialDateFormField(required = False)
