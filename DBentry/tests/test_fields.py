@@ -291,7 +291,7 @@ class TestPartialDate(MyTestCase):
         
                     
     @tag("init")
-    def test_init_with_int_kwargs(self):
+    def test_new_with_int_kwargs(self):
         # Full date
         self.assertAttrsSet(PartialDate(year = 2019, month = 5, day = 20), 2019, 5, 20, 'year_month_day')
         # year and month
@@ -302,7 +302,7 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate(month = 5, day = 20), None, 5, 20, 'month_day')
     
     @tag("init")
-    def test_init_with_string_kwargs(self):
+    def test_new_with_string_kwargs(self):
         # Full date
         self.assertAttrsSet(PartialDate(year = '2019', month = '5', day = '20'), 2019, 5, 20, 'year_month_day')
         # year and month
@@ -316,7 +316,7 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate(year = '0000', month = '5', day = '20'), None, 5, 20, 'month_day')
     
     @tag("init")
-    def test_init_with_string(self):
+    def test_new_with_string(self):
         # Full date
         self.assertAttrsSet(PartialDate.from_string('2019-05-20'), 2019, 5, 20, 'year_month_day')
         # year and month
@@ -330,12 +330,12 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate.from_string('0000-05-20'), None, 5, 20, 'month_day')
         
     @tag("init")
-    def test_init_with_date(self):
+    def test_new_with_date(self):
         self.assertAttrsSet(PartialDate.from_date(datetime.date(2019, 5, 20)), 2019, 5, 20, 'year_month_day')
         self.assertAttrsSet(PartialDate.from_date(datetime.datetime(2019, 5, 20)), 2019, 5, 20, 'year_month_day')
         
     @tag("init")
-    def test_init_validates_date(self):
+    def test_new_validates_date(self):
         # Assert that PartialDate does not accept invalid dates (31st of February, etc.).
         invalid_dates = ('02-31', '04-31')
         for date in ('02-31', '04-31'):
