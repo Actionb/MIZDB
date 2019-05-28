@@ -271,6 +271,10 @@ class PartialDateField(models.CharField):
             try:
                 pd = PartialDate.from_string(value)
             except ValueError:
+                # TODO: if we raised a different kind of exception 
+                # in from_string we could differentiate between
+                # - invalid format for regex (--> code 'invalid')
+                # - invalid date (--> code 'invalid_date')
                 # Either from_string could not match its regex or
                 # the date produced is invalid (e.g. 02-31)
                 raise ValidationError(
