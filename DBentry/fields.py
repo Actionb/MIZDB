@@ -2,12 +2,16 @@
 # One can freely convert ISBN-10 to ISBN-13 and vice versa and both have pretty versions.
 # stdnum.ean does not provide a pretty format for EAN-8, but one can use ISBN-13 formatting for EAN-13.
 
+
+import datetime
+import re
 from functools import partial
 from stdnum import issn, isbn, ean
 
 from django.db import models
 from django.forms import widgets, fields
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.exceptions import ValidationError
 
 from DBentry.validators import ISSNValidator, ISBNValidator, EANValidator
 
@@ -110,10 +114,6 @@ class EANField(StdNumField):
     max_length = 17 # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
     
-from django.core.exceptions import ValidationError
-import datetime
-import re
-
 """
 PartialDate inspired by:
 django-partial-date: https://github.com/ktowen/django_partial_date
