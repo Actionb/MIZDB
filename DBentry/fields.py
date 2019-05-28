@@ -155,6 +155,19 @@ class PartialDate(datetime.date):
             setattr(date, 'date_format', ' '.join(date_format))
         return date
         
+    @classmethod
+    def from_string(cls, date):
+        regex =  re.compile(r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$')
+        match = regex.match(date)
+        if match:
+            return cls.__new__(cls, **match.groupdict())
+        raise ValueError("Invalid format.")
+            
+    @classmethod
+    def from_date(cls, date):
+        year, month, day, *_ = date.timetuple()
+        return cls.__new__(cls, year, month, day)
+        
     @property
     def db_value(self):
         """
@@ -200,21 +213,7 @@ class PartialDate(datetime.date):
 #    def __ge__(self, other):
 #        if isinstance(other, str):
 #            return self.__str__().__ge__(other)
-#        return super().__ge__(other)
-        
-    @classmethod
-    def from_string(cls, date):
-        regex =  re.compile(r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$')
-        match = regex.match(date)
-        if match:
-            return cls.__new__(cls, **match.groupdict())
-        raise ValueError("Invalid format.")
-            
-    @classmethod
-    def from_date(cls, date):
-        year, month, day, *_ = date.timetuple()
-        return cls.__new__(cls, year, month, day)
-        
+#        return super().__ge__(other)        
     
 class PartialDateWidget(widgets.MultiWidget):
     
