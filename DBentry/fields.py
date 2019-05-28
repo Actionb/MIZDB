@@ -228,7 +228,6 @@ class PartialDateWidget(widgets.MultiWidget):
 class PartialDateFormField(fields.MultiValueField):
     
     default_error_messages = fields.DateField.default_error_messages
-    default_error_messages['invalid_combo'] = "Ungültige Kombination von Jahr und Tag."
     
     def __init__(self, **kwargs):
         _fields = [
@@ -247,15 +246,11 @@ class PartialDateFormField(fields.MultiValueField):
         try:
             return PartialDate(*data_list)
         except ValueError:
-            if len(data_list) == 3 and data_list[0] and data_list[-1] and not data_list[1]: 
-                # Attempting to build a partial date out of year and day.
-                raise ValidationError(self.error_messages['invalid_combo'], code='invalid_combo')
             raise ValidationError(self.error_messages['invalid'], code='invalid')
         
 class PartialDateField(models.CharField):
     
     default_error_messages = models.DateField.default_error_messages
-    default_error_messages['invalid_combo'] = "Ungültige Kombination von Jahr und Tag."
     
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 30 # digits: 4 year, 2 month, 2 day, 2 dashes
