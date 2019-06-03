@@ -5,7 +5,7 @@ import DBentry.m2m as _m2m
 from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from DBentry.fields import ISSNField, ISBNField, EANField, YearField
+from DBentry.fields import ISSNField, ISBNField, EANField, YearField, PartialDateField
 from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.utils import concat_limit
 from DBentry.managers import AusgabeQuerySet
@@ -693,7 +693,7 @@ class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     signatur = models.CharField(**CF_ARGS_B)
     size = models.CharField(**CF_ARGS_B, verbose_name = 'Größe')
-    #TODO: zeitraum für das bild; oft ist das jahr unbekannt also kein datums feld!
+    datum = PartialDateField()
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
