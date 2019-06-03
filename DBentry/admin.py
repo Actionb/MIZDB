@@ -8,7 +8,7 @@ from DBentry.base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
     BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from DBentry.forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm
+from DBentry.forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm, BildmaterialForm
 from DBentry.utils import concat_limit
 from DBentry.ac.widgets import make_widget
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
@@ -346,6 +346,8 @@ class BildmaterialAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.bildmaterial.veranstaltung.through
         verbose_model = _models.veranstaltung
+        
+    form = BildmaterialForm
     #TODO: ask about the best order for the inlines
     inlines = [
         VeranstaltungInLine, SpielortInLine, MusikerInLine, BandInLine, OrtInLine, SchlInLine, GenreInLine, 

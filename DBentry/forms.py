@@ -182,7 +182,13 @@ class AudioForm(FormBase):
         self.cleaned_data['discogs_url'] = "http://www.discogs.com/release/" + release_id
         
         return self.cleaned_data
-    
+        
+class BildmaterialForm(FormBase):
+    class Meta:
+        widgets = {
+            'titel': Textarea(attrs={'rows':1, 'cols':90})
+        }
+        
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
     #TODO: shouldnt this include collapse.js if required by a fieldset?
