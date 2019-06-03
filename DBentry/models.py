@@ -902,7 +902,7 @@ class veranstaltung(BaseModel):
         ordering = ['name', 'spielort', 'datum']
     
     def __str__(self):
-        return "{} ({})".format(self.name, str(self.datum))
+        return "{} ({})".format(self.name, self.datum.localize())
         
         
 class veranstaltung_alias(BaseAliasModel):
