@@ -692,7 +692,7 @@ class audio(BaseModel):
 class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     signatur = models.CharField(**CF_ARGS_B)
-    size = models.CharField(**CF_ARGS_B, verbose_name = 'Größe')
+    size = models.CharField(**CF_ARGS_B, verbose_name = 'Größe') #TODO: ForeignKey with first few items set to be DIN-X?
     datum = PartialDateField()
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
