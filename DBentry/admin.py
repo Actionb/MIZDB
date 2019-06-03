@@ -235,7 +235,8 @@ class ArtikelAdmin(MIZModelAdmin):
         
     form = ArtikelForm
     index_category = 'Archivgut'
-    
+    #TODO: the changeform page looks HORRIBLE
+    # 'seitenumfang' looks to be below and off to the site of 'seite' 
     list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string','ausgabe','artikel_magazin', 'kuenstler_string']
     list_display_links = ['__str__', 'seite']
     
