@@ -242,11 +242,20 @@ class PartialDateFormField(fields.MultiValueField):
             fields.IntegerField(required = False), 
         ]
         if 'max_length' in kwargs:
-            # super(PartialDateField).formfield (i.e. CharField)
+            # super(PartialDateField).formfield (i.e. CharField.formfield)
             # adds a max_length kwarg that MultiValueField does not handle
             del kwargs['max_length']
-        if 'widget' in kwargs: del kwargs['widget']
-        super().__init__(_fields, widget = PartialDateWidget, require_all_fields = False, **kwargs)
+            
+        widget = PartialDateWidget
+        if 'widget' in kwargs: 
+            # django admin will try to instantiate this formfield with a AdminTextInputWidget
+            kwarg_widget = kwargs.pop('widget')
+            if (isinstance(kwarg_widget, type) and issubclass(kwarg_widget, PartialDateWidget)) or \
+                isinstance(kwarg_widget, PartialDateWidget):
+                    # Accept widget from the kwargs as a replacement if it's either 
+                    # a subclass or an instance of PartialDateWidget.
+                widget = kwarg_widget
+        super().__init__(_fields, widget = widget, require_all_fields = False, **kwargs)
         
     def compress(self, data_list):
         try:

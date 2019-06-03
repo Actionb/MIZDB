@@ -7,6 +7,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 import datetime
 from stdnum import isbn
+from unittest.mock import patch
 
 from DBentry.fields import (
     StdNumWidget, YearField, 
@@ -647,6 +648,30 @@ class TestPartialDateFormField(MyTestCase):
     def test_as_modelform(self):
         form = forms.modelform_factory(model = _models.bildmaterial, fields = ['datum'])
         self.assertNoFormErrors(form)
+        
+    def assertIsInstanceOrSubclass(self, stuff, klass):
+        if not isinstance(klass, type):
+            klass = klass.__class__
+        if isinstance(stuff, type):
+            self.assertEqual(stuff, klass)
+        else:
+            self.assertIsInstance(stuff, klass)
+            
+    @patch.object(forms.MultiValueField, '__init__')
+    def test_widget_kwarg(self, mocked_init):
+        # Assert that only subclasses/instances of PartialDateWidget are accepted as a custom widget.
+        for valid_widget in (PartialDateWidget, PartialDateWidget()):
+            PartialDateFormField(widget = valid_widget)
+            args, kwargs = mocked_init.call_args
+            self.assertIn('widget', kwargs)
+            self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
+        
+        for invald_widget in (None, forms.NumberInput, forms.NumberInput()):
+            PartialDateFormField(widget = invald_widget)
+            args, kwargs = mocked_init.call_args
+            self.assertIn('widget', kwargs)
+            self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
+
         
 @tag("field")
 @tag("wip")    
