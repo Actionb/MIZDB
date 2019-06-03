@@ -5,7 +5,7 @@ import DBentry.m2m as _m2m
 from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from DBentry.fields import ISSNField, ISBNField, EANField, YearField, PartialDateField
+from DBentry.fields import ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.utils import concat_limit
 from DBentry.managers import AusgabeQuerySet
@@ -904,7 +904,11 @@ class veranstaltung(BaseModel):
         ordering = ['name', 'spielort', 'datum']
     
     def __str__(self):
-        return "{} ({})".format(self.name, self.datum.localize())
+        if isinstance(self.datum, PartialDate):
+            date = self.datum.localize()
+        else:
+            date = str(self.datum)
+        return "{} ({})".format(self.name, date)
         
         
 class veranstaltung_alias(BaseAliasModel):
