@@ -161,7 +161,7 @@ class PartialDate(datetime.date):
         match = regex.match(date)
         if match:
             return cls.__new__(cls, **match.groupdict())
-        raise ValueError("Invalid format.")
+        raise ValueError("Invalid format: 'YYYY-MM-DD' expected.")
             
     @classmethod
     def from_date(cls, date):
@@ -283,10 +283,11 @@ class PartialDateField(models.CharField):
             try:
                 pd = PartialDate.from_string(value)
             except ValueError:
-                # TODO: if we raised a different kind of exception 
-                # in from_string we could differentiate between
+                # TODO: raise a different exception in from_string:
                 # - invalid format for regex (--> code 'invalid')
                 # - invalid date (--> code 'invalid_date')
+                # Since PartialDateField uses a MultiValueField, though,
+                # the user does not get a choice on what format to use.
                 # Either from_string could not match its regex or
                 # the date produced is invalid (e.g. 02-31)
                 raise ValidationError(

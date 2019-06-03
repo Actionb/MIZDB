@@ -528,8 +528,7 @@ class TestPartialDateField(MyTestCase):
 class TestPartialDateFieldQueries(DataTestCase):
     # Test various queries using PartialDateField
     model = _models.bildmaterial
-#    raw_data = [{'datum': '2019-05-20'}] #TODO: we haven't tested that a model constructor can handle PDs...
-        
+    
     def test_constructor_partial_date(self):
         # Assert that a model instance can be created with a PartialDate.
         date = '2019-05-20'
@@ -661,16 +660,18 @@ class TestPartialDateFormField(MyTestCase):
     def test_widget_kwarg(self, mocked_init):
         # Assert that only subclasses/instances of PartialDateWidget are accepted as a custom widget.
         for valid_widget in (PartialDateWidget, PartialDateWidget()):
-            PartialDateFormField(widget = valid_widget)
-            args, kwargs = mocked_init.call_args
-            self.assertIn('widget', kwargs)
-            self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
+            with self.subTest():
+                PartialDateFormField(widget = valid_widget)
+                args, kwargs = mocked_init.call_args
+                self.assertIn('widget', kwargs)
+                self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
         
         for invald_widget in (None, forms.NumberInput, forms.NumberInput()):
-            PartialDateFormField(widget = invald_widget)
-            args, kwargs = mocked_init.call_args
-            self.assertIn('widget', kwargs)
-            self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
+            with self.subTest():
+                PartialDateFormField(widget = invald_widget)
+                args, kwargs = mocked_init.call_args
+                self.assertIn('widget', kwargs)
+                self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
 
         
 @tag("field")
