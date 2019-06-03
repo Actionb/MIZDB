@@ -83,6 +83,8 @@ class MyTestCase(TestCase):
                 # Add args and/or kwargs to the error output, if they contain any data
                 # All items in collected have the same number of args or the same keywords, so we only need to check the first item
                 template += "\ncollected with args: {args} | kwargs: {kwargs}"
+            if msg:
+                fail_txt = msg + '\n' + fail_txt
             for e, args, kwargs in collected:
                 fail_txt += template.format(error=e, args=args, kwargs=kwargs)
             self.fail(fail_txt)
@@ -93,6 +95,7 @@ class MyTestCase(TestCase):
         """
         Assert that the body does NOT raise one of the passed exceptions.
         """ 
+        #NOTE: what if the body raises more than one exception?
         raised = None
         try:
             yield
