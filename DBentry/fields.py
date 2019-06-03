@@ -218,11 +218,12 @@ class PartialDate(datetime.date):
 class PartialDateWidget(widgets.MultiWidget):
     
     def __init__(self, **kwargs):
-        _widgets = [
-            widgets.NumberInput(), 
-            widgets.NumberInput(), 
-            widgets.NumberInput(), 
-        ]  
+        style = {'style':'width:70px; margin-right:10px;'}
+        _widgets = []
+        for placeholder in ('Jahr', 'Monat', 'Tag'):
+            attrs = {'placeholder': placeholder}
+            attrs.update(style)
+            _widgets.append(widgets.NumberInput(attrs = attrs))
         super().__init__(_widgets, **kwargs)
         
     def decompress(self, value):
@@ -236,9 +237,9 @@ class PartialDateFormField(fields.MultiValueField):
     
     def __init__(self, **kwargs):
         _fields = [
-            fields.IntegerField(label = 'Jahr', required = False), 
-            fields.IntegerField(label = 'Monat', required = False), 
-            fields.IntegerField(label = 'Tag', required = False), 
+            fields.IntegerField(required = False), 
+            fields.IntegerField(required = False), 
+            fields.IntegerField(required = False), 
         ]
         if 'max_length' in kwargs:
             # super(PartialDateField).formfield (i.e. CharField)
