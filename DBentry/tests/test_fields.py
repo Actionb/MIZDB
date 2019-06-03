@@ -3,6 +3,7 @@ from .base import MyTestCase, DataTestCase
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django import forms
+from django.test import tag
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 import datetime
@@ -272,10 +273,7 @@ class TestEANField(StdNumFieldTestsMixin, MyTestCase):
         "1234567890123", #InvalidChecksum
     ]
     
-
-from django.test import tag
-@tag("field")
-@tag("wip")    
+@tag("partial_date")
 class TestPartialDate(MyTestCase):
     
     def assertAttrsSet(self, partial_date, year, month, day, date_format, msg = None):
@@ -453,8 +451,7 @@ class TestPartialDate(MyTestCase):
 #        self.assertTrue(PartialDate())
 #        self.assertTrue(PartialDate(2019, 5, 20))
 
-@tag("field")
-@tag("wip")    
+@tag("partial_date")  
 class TestPartialDateField(MyTestCase):
     
     def test_to_python_only_accepts_integers(self):
@@ -525,8 +522,7 @@ class TestPartialDateField(MyTestCase):
         self.assertIsInstance(formfield, forms.MultiValueField)
 
 @skip("requires a model with this field")
-@tag("field")
-@tag("wip")    
+@tag("partial_date")  
 class TestPartialDateFieldQueries(DataTestCase):
     # Test various queries using PartialDateField
     model = None
@@ -588,8 +584,7 @@ class TestPartialDateFieldQueries(DataTestCase):
         with self.assertRaises(ValidationError):
             PartialDateField().clean('12019-05-20', obj)
         
-@tag("field")
-@tag("wip")    
+@tag("partial_date")
 class TestPartialDateFormField(MyTestCase):
     
     def test_widgets(self):
@@ -675,10 +670,8 @@ class TestPartialDateFormField(MyTestCase):
                 args, kwargs = mocked_init.call_args
                 self.assertIn('widget', kwargs)
                 self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
-
-        
-@tag("field")
-@tag("wip")    
+                
+@tag("partial_date")
 class TestPartialDateWidget(MyTestCase):
     
     def test_subwidgets_are_number_inputs(self):
