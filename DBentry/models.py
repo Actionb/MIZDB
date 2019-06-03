@@ -698,6 +698,7 @@ class bildmaterial(BaseModel):
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
+    #TODO: bildmaterial reihe // fotoalbum
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -883,6 +884,7 @@ class veranstaltung(BaseModel):
     
     spielort = models.ForeignKey('spielort', models.PROTECT)
     
+    #TODO: veranstaltungsreihe
     genre = models.ManyToManyField('genre')
     person = models.ManyToManyField('person')
     band = models.ManyToManyField('band')
