@@ -5,7 +5,7 @@ import DBentry.m2m as _m2m
 from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from DBentry.fields import ISSNField, ISBNField, EANField, YearField, PartialDateField
+from DBentry.fields import ISSNField, ISBNField, EANField, YearField
 from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.utils import concat_limit
 from DBentry.managers import AusgabeQuerySet
@@ -691,7 +691,6 @@ class audio(BaseModel):
     
 class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
-    datum = PartialDateField()
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')

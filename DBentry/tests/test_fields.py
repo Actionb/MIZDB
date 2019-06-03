@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 import datetime
 from stdnum import isbn
 from unittest.mock import patch
+from unittest import skip
 
 from DBentry.fields import (
     StdNumWidget, YearField, 
@@ -523,11 +524,12 @@ class TestPartialDateField(MyTestCase):
         formfield = PartialDateField().formfield()
         self.assertIsInstance(formfield, forms.MultiValueField)
 
+@skip("requires a model with this field")
 @tag("field")
 @tag("wip")    
 class TestPartialDateFieldQueries(DataTestCase):
     # Test various queries using PartialDateField
-    model = _models.bildmaterial
+    model = None
     
     def test_constructor_partial_date(self):
         # Assert that a model instance can be created with a PartialDate.
@@ -644,8 +646,9 @@ class TestPartialDateFormField(MyTestCase):
         form = type('Form', (forms.Form, ), {'a': PartialDateFormField(required = False)})
         self.assertNoFormErrors(form)
         
+    @skip("requires a model with this field")
     def test_as_modelform(self):
-        form = forms.modelform_factory(model = _models.bildmaterial, fields = ['datum'])
+        form = forms.modelform_factory(model = None, fields = ['datum'])
         self.assertNoFormErrors(form)
         
     def assertIsInstanceOrSubclass(self, stuff, klass):
