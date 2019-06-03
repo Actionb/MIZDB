@@ -879,7 +879,7 @@ class technik(BaseModel):
     
 class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
-    datum = models.DateField(help_text = 'Format: tt.mm.jjjj')
+    datum = PartialDateField(blank = False)
     
     spielort = models.ForeignKey('spielort', models.PROTECT)
     
