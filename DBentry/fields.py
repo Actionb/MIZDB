@@ -237,9 +237,9 @@ class PartialDateFormField(fields.MultiValueField):
     
     def __init__(self, **kwargs):
         _fields = [
-            fields.IntegerField(required = False), 
-            fields.IntegerField(required = False), 
-            fields.IntegerField(required = False), 
+            fields.IntegerField(), 
+            fields.IntegerField(), 
+            fields.IntegerField(), 
         ]
         if 'max_length' in kwargs:
             # super(PartialDateField).formfield (i.e. CharField.formfield)
@@ -255,7 +255,7 @@ class PartialDateFormField(fields.MultiValueField):
                     # Accept widget from the kwargs as a replacement if it's either 
                     # a subclass or an instance of PartialDateWidget.
                 widget = kwarg_widget
-        super().__init__(_fields, widget = widget, require_all_fields = False, **kwargs)
+        super().__init__(_fields, widget = widget, **kwargs)
         
     def compress(self, data_list):
         try:
