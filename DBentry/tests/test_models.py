@@ -461,7 +461,6 @@ class TestModelBand(DataTestCase):
 class TestModelBestand(DataTestCase):
     pass
 
-from django.test import tag
 @tag("wip")
 class TestModelBildmaterial(DataTestCase):
     
@@ -789,6 +788,7 @@ class TestModelSprache(DataTestCase):
 class TestModelTechnik(DataTestCase):
     pass
         
+@tag("wip")   
 class TestModelVeranstaltung(DataTestCase):
     
     model = _models.veranstaltung
