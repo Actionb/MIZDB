@@ -447,12 +447,18 @@ class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.spielort
     alias_accessor_name = 'spielort_alias_set'
-    raw_data = [{'spielort_alias__alias':'AliasSpielort'}]
+    raw_data = [{
+        'spielort_alias__alias':'AliasSpielort', 
+        'beschreibung': "If it beeps like a boop, it's probably a test."
+    }]
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.veranstaltung
     alias_accessor_name = 'veranstaltung_alias_set'
-    raw_data = [{'veranstaltung_alias__alias':'AliasVeranstaltung'}]
+    raw_data = [{
+        'veranstaltung_alias__alias':'AliasVeranstaltung', 
+        'beschreibung': "If it beeps like a boop, it's probably a test."
+    }]
     
 class TestACBuchband(ACViewTestCase):
     model = _models.buch

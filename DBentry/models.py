@@ -5,7 +5,7 @@ import DBentry.m2m as _m2m
 from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel, AbstractURLModel
 )
-from DBentry.fields import ISSNField, ISBNField, EANField, YearField
+from DBentry.fields import ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.utils import concat_limit
 from DBentry.managers import AusgabeQuerySet
@@ -691,10 +691,15 @@ class audio(BaseModel):
     
 class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
+    signatur = models.CharField(unique = True, null = True, **CF_ARGS_B)
+    size = models.CharField(**CF_ARGS_B, verbose_name = 'Größe')
+    datum = PartialDateField()
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
+    reihe = models.ForeignKey('Bildreihe', models.PROTECT, blank = True, null = True)
+
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
@@ -704,10 +709,13 @@ class bildmaterial(BaseModel):
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
     
-    search_fields = ['titel', 'beschreibung']
-    primary_search_fields = []
+    search_fields = ['titel', 'signatur', 'beschreibung']
+    primary_search_fields = ['titel', 'signatur']
     name_field = 'titel'
-    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
+    search_fields_suffixes = {
+        'signatur': 'Signatur', 
+        'beschreibung' : 'Beschreibung', 
+    }
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -716,6 +724,18 @@ class bildmaterial(BaseModel):
         permissions = [
             ('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.'), 
         ]
+        
+class Bildreihe(BaseModel):
+    name = models.CharField(**CF_ARGS)
+    
+    search_fields = ['name']
+    name_field = 'name'
+    create_field = 'name'
+    
+    class Meta(BaseModel.Meta):
+        ordering = ['name']
+        verbose_name = 'Bildreihe'
+        verbose_name_plural = 'Bildreihen'
         
 class schriftenreihe(BaseModel):
     name = models.CharField(**CF_ARGS)
@@ -817,14 +837,18 @@ class sender_alias(BaseAliasModel):
 class spielort(BaseModel):
     name = models.CharField(**CF_ARGS)
     
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Spielortes')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     ort = models.ForeignKey('ort', models.PROTECT)
     
-    search_fields = ['name', 'spielort_alias__alias', 'ort___name']
+    search_fields = ['name', 'spielort_alias__alias', 'ort___name', 'beschreibung']
     primary_search_fields = ['name']
     name_field = 'name'
     search_fields_suffixes = {
         'spielort_alias__alias':'Alias', 
         'ort___name' : 'Ort', 
+        'beschreibung': 'Beschreibung', 
     }
     
     class Meta(BaseModel.Meta):
@@ -876,9 +900,13 @@ class technik(BaseModel):
     
 class veranstaltung(BaseModel):
     name = models.CharField(**CF_ARGS)
-    datum = models.DateField(help_text = 'Format: tt.mm.jjjj')
+    datum = PartialDateField(blank = False)
     
     spielort = models.ForeignKey('spielort', models.PROTECT)
+    reihe = models.ForeignKey('Veranstaltungsreihe', models.PROTECT, blank = True, null = True)
+    
+    beschreibung = models.TextField(blank = True)
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
     genre = models.ManyToManyField('genre')
     person = models.ManyToManyField('person')
@@ -886,26 +914,42 @@ class veranstaltung(BaseModel):
     schlagwort = models.ManyToManyField('schlagwort')
     musiker = models.ManyToManyField('musiker')
     
-    search_fields = ['name', 'veranstaltung_alias__alias']
-    primary_search_fields = []
+    search_fields = ['name', 'veranstaltung_alias__alias', 'beschreibung']
+    primary_search_fields = ['name']
     name_field = 'name'
     search_fields_suffixes = {
         'veranstaltung_alias__alias' : 'Alias', 
+        'beschreibung': 'Beschreibung', 
     }
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
-        ordering = ['name', 'spielort', 'datum']
+        ordering = ['name', 'datum', 'spielort']
     
     def __str__(self):
-        return "{} ({})".format(self.name, str(self.datum))
+        if isinstance(self.datum, PartialDate):
+            date = self.datum.localize()
+        else:
+            date = str(self.datum)
+        return "{} ({})".format(self.name, date)
         
         
 class veranstaltung_alias(BaseAliasModel):
     parent = models.ForeignKey('veranstaltung', models.CASCADE)
 
-
+class Veranstaltungsreihe(BaseModel):
+    name = models.CharField(**CF_ARGS)
+    
+    search_fields = ['name']
+    name_field = 'name'
+    create_field = 'name'
+    
+    class Meta(BaseModel.Meta):
+        ordering = ['name']
+        verbose_name = 'Veranstaltungsreihe'
+        verbose_name_plural = 'Veranstaltungsreihen'
+    
 class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
     tracks = models.IntegerField() #TODO: PositiveSmallIntegerField!

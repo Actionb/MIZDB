@@ -736,7 +736,6 @@ class TestDuplicates(DataTestCase):
         return list(chain(*(dupe.instances for dupe in duplicates)))
         
     def test_a_baseline(self):
-        print()
         duplicates = self.get_duplicate_instances('kuenstler_name')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)

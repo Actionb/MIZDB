@@ -8,12 +8,14 @@ from DBentry.base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
     BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from DBentry.forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm
+from DBentry.forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm, BildmaterialForm
 from DBentry.utils import concat_limit
 from DBentry.ac.widgets import make_widget
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 
 from DBentry.sites import miz_site
+
+#TODO: order inlines alphabetically? in any case: make the order of different ModelAdmin inlines consistent
 
 class BestandInLine(BaseTabularInline):
     model = _models.bestand
@@ -324,8 +326,48 @@ class BandAdmin(MIZModelAdmin):
     
 @admin.register(_models.bildmaterial, site=miz_site)
 class BildmaterialAdmin(MIZModelAdmin):
-    superuser_only = True
+    class GenreInLine(BaseGenreInline):
+        model = _models.bildmaterial.genre.through
+    class SchlInLine(BaseSchlagwortInline):
+        model = _models.bildmaterial.schlagwort.through
+    class PersonInLine(BaseTabularInline):
+        model = _models.bildmaterial.person.through
+        verbose_model = _models.person
+    class MusikerInLine(BaseTabularInline):
+        model = _models.bildmaterial.musiker.through
+        verbose_model = _models.musiker
+    class BandInLine(BaseTabularInline):
+        model = _models.bildmaterial.band.through
+        verbose_model = _models.band
+    class OrtInLine(BaseTabularInline):
+        model = _models.bildmaterial.ort.through
+        verbose_model = _models.ort
+    class SpielortInLine(BaseTabularInline):
+        model = _models.bildmaterial.spielort.through
+        verbose_model = _models.spielort
+    class VeranstaltungInLine(BaseTabularInline):
+        model = _models.bildmaterial.veranstaltung.through
+        verbose_model = _models.veranstaltung
+        
+    form = BildmaterialForm
+    inlines = [
+        SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, VeranstaltungInLine, SpielortInLine, 
+        PersonInLine, BestandInLine
+    ]
+    list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
+    save_on_top = True
+    collapse_all = True
+    
     index_category = 'Archivgut'
+    
+    def datum_localized(self, obj):
+        return obj.datum.localize()
+    datum_localized.short_description = 'Datum'
+    datum_localized.admin_order_field = 'datum'
+    
+    def veranstaltung_string(self, obj):
+        return concat_limit(list(obj.veranstaltung.all()))
+    veranstaltung_string.short_description = 'Veranstaltungen'
     
 @admin.register(_models.buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
@@ -615,6 +657,14 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.veranstaltung_alias
     inlines=[GenreInLine, PersonInLine, BandInLine, MusikerInLine, SchlInLine, AliasInLine]
     
+    list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
+    save_on_top = True
+    collapse_all = True
+    
+    def kuenstler_string(self, obj):
+        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
+    
 @admin.register(_models.verlag, site=miz_site)
 class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
@@ -848,8 +898,10 @@ class SenderAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
     
 @admin.register(
-    _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma, _models.provenienz, 
-    _models.Format, _models.FormatTag, _models.FormatSize, _models.FormatTyp, _models.NoiseRed, _models.Organisation, _models.schriftenreihe, 
+    _models.monat, _models.lagerort, _models.geber, _models.sprache, 
+    _models.plattenfirma, _models.provenienz, _models.Format, _models.FormatTag, 
+    _models.FormatSize, _models.FormatTyp, _models.NoiseRed, 
+    _models.Organisation, _models.schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe, 
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):

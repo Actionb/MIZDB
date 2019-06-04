@@ -26,7 +26,7 @@ class MIZModelAdmin(admin.ModelAdmin):
                                             # that matches a field in the group
     googlebtns = []                         # Fields in this list get a little button that redirect to a google search page #TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
     collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
-    hint = ''                               # A hint displayed at the top of the form #NOTE: is this hint even used by anything?
+    hint = ''                               # A hint displayed at the top of the form #NOTE: is this hint even used by anything?: yes, DateiAdmin
     crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
     superuser_only = False                  # If true, only a superuser can interact with this ModelAdmin
     actions = [merge_records]

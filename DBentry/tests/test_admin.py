@@ -17,6 +17,8 @@ from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
 
+from django.test import tag
+
 class AdminTestMethodsMixin(object):
     
     crosslinks_object = None # the model instance with which the add_crosslinks method is to be tested 
@@ -898,12 +900,12 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_formate_string(self):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
-    
+@tag("wip")
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SpielortAdmin
     model = _models.spielort
-    fields_expected = ['name', 'ort']
+    fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     test_data_count = 1
     
     crosslinks_expected = [
@@ -919,13 +921,13 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'technik',       'fld_name': 'spielort', 'label': 'Technik (1)'}, 
         {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'}
     ]
-        
+@tag("wip")
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
-    fields_expected = ['name', 'datum', 'spielort']
+    fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     
     crosslinks_expected = [
@@ -1100,6 +1102,15 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'}, 
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
     ]
+ 
+@tag("wip")   
+class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
+        
+    model_admin_class = _admin.BildmaterialAdmin
+    model = _models.bildmaterial
+    
+    fields_expected = ['titel', 'signatur', 'size', 'datum', 'beschreibung', 'bemerkungen', 'reihe']
+    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']   
     
 class TestAdminSite(UserTestCase):
     
