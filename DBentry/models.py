@@ -898,7 +898,8 @@ class veranstaltung(BaseModel):
     spielort = models.ForeignKey('spielort', models.PROTECT)
     reihe = models.ForeignKey('Veranstaltungsreihe', models.PROTECT, blank = True, null = True)
     
-    #TODO: beschreibung/bemerkungen?
+    beschreibung = models.TextField(blank = True)
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
     
     genre = models.ManyToManyField('genre')
     person = models.ManyToManyField('person')
