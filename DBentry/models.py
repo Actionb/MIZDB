@@ -839,12 +839,13 @@ class spielort(BaseModel):
     
     ort = models.ForeignKey('ort', models.PROTECT)
     
-    search_fields = ['name', 'spielort_alias__alias', 'ort___name']
+    search_fields = ['name', 'spielort_alias__alias', 'ort___name', 'beschreibung']
     primary_search_fields = ['name']
     name_field = 'name'
     search_fields_suffixes = {
         'spielort_alias__alias':'Alias', 
         'ort___name' : 'Ort', 
+        'beschreibung': 'Beschreibung', 
     }
     
     class Meta(BaseModel.Meta):
@@ -910,11 +911,12 @@ class veranstaltung(BaseModel):
     schlagwort = models.ManyToManyField('schlagwort')
     musiker = models.ManyToManyField('musiker')
     
-    search_fields = ['name', 'veranstaltung_alias__alias']
+    search_fields = ['name', 'veranstaltung_alias__alias', 'beschreibung']
     primary_search_fields = []
     name_field = 'name'
     search_fields_suffixes = {
         'veranstaltung_alias__alias' : 'Alias', 
+        'beschreibung': 'Beschreibung', 
     }
     
     class Meta(BaseModel.Meta):
