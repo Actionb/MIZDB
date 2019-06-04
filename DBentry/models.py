@@ -721,6 +721,14 @@ class bildmaterial(BaseModel):
             ('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.'), 
         ]
         
+class Bildreihe(BaseModel):
+    name = models.CharField(**CF_ARGS)
+    
+    class Meta(BaseModel.Meta):
+        ordering = ['name']
+        verbose_name = 'Bildreihe'
+        verbose_name_plural = 'Bildreihen'
+        
 class schriftenreihe(BaseModel):
     name = models.CharField(**CF_ARGS)
     
