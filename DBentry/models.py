@@ -892,8 +892,10 @@ class veranstaltung(BaseModel):
     datum = PartialDateField(blank = False)
     
     spielort = models.ForeignKey('spielort', models.PROTECT)
+    reihe = models.ForeignKey('Veranstaltungsreihe', models.PROTECT, blank = True, null = True)
     
-    #TODO: veranstaltungsreihe
+    #TODO: beschreibung/bemerkungen?
+    
     genre = models.ManyToManyField('genre')
     person = models.ManyToManyField('person')
     band = models.ManyToManyField('band')
