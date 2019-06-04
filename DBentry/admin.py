@@ -354,9 +354,19 @@ class BildmaterialAdmin(MIZModelAdmin):
         SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, VeranstaltungInLine, SpielortInLine, 
         PersonInLine, BestandInLine
     ]
+    list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
     
     superuser_only = True
     index_category = 'Archivgut'
+    
+    def datum_localized(self, obj):
+        return obj.datum.localize()
+    datum_localized.short_description = 'Datum'
+    datum_localized.admin_order_field = 'datum'
+    
+    def veranstaltung_string(self, obj):
+        return concat_limit(list(obj.veranstaltung.all()))
+    veranstaltung_string.short_description = 'Veranstaltungen'
     
 @admin.register(_models.buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
@@ -645,6 +655,12 @@ class VeranstaltungAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.veranstaltung_alias
     inlines=[GenreInLine, PersonInLine, BandInLine, MusikerInLine, SchlInLine, AliasInLine]
+    
+    list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
+
+    def kuenstler_string(self, obj):
+        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
     
 @admin.register(_models.verlag, site=miz_site)
 class VerlagAdmin(MIZModelAdmin):
