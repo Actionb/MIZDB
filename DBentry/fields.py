@@ -269,11 +269,13 @@ class PartialDateFormField(fields.MultiValueField):
 class PartialDateField(models.CharField):
     
     default_error_messages = models.DateField.default_error_messages
+    help_text = "Teilweise Angaben sind erlaubt (z.B. Jahr & Monat aber ohne Tag)."
     
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 10 # digits: 4 year, 2 month, 2 day, 2 dashes
         if 'null' not in kwargs: kwargs['null'] = False
         if 'blank' not in kwargs: kwargs['blank'] = True
+        if 'help_text' not in kwargs: kwargs['help_text'] = self.help_text
         super().__init__(*args, **kwargs)
     
     def to_python(self, value):
