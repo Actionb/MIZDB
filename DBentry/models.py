@@ -834,6 +834,9 @@ class sender_alias(BaseAliasModel):
 class spielort(BaseModel):
     name = models.CharField(**CF_ARGS)
     
+    beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Spielortes')
+    bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
+    
     ort = models.ForeignKey('ort', models.PROTECT)
     
     search_fields = ['name', 'spielort_alias__alias', 'ort___name']
