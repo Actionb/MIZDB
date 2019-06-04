@@ -709,10 +709,13 @@ class bildmaterial(BaseModel):
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
     
-    search_fields = ['titel', 'beschreibung']
-    primary_search_fields = []
+    search_fields = ['titel', 'signatur', 'beschreibung']
+    primary_search_fields = ['titel', 'signatur']
     name_field = 'titel'
-    search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
+    search_fields_suffixes = {
+        'signatur': 'Signatur', 
+        'beschreibung' : 'Beschreibung', 
+    }
     
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -912,7 +915,7 @@ class veranstaltung(BaseModel):
     musiker = models.ManyToManyField('musiker')
     
     search_fields = ['name', 'veranstaltung_alias__alias', 'beschreibung']
-    primary_search_fields = []
+    primary_search_fields = ['name']
     name_field = 'name'
     search_fields_suffixes = {
         'veranstaltung_alias__alias' : 'Alias', 
