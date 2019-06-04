@@ -355,8 +355,9 @@ class BildmaterialAdmin(MIZModelAdmin):
         PersonInLine, BestandInLine
     ]
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
+    save_on_top = True
+    collapse_all = True
     
-    superuser_only = True
     index_category = 'Archivgut'
     
     def datum_localized(self, obj):
@@ -657,7 +658,9 @@ class VeranstaltungAdmin(MIZModelAdmin):
     inlines=[GenreInLine, PersonInLine, BandInLine, MusikerInLine, SchlInLine, AliasInLine]
     
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
-
+    save_on_top = True
+    collapse_all = True
+    
     def kuenstler_string(self, obj):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
     kuenstler_string.short_description = 'Künstler'
