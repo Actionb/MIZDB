@@ -725,6 +725,10 @@ class bildmaterial(BaseModel):
 class Bildreihe(BaseModel):
     name = models.CharField(**CF_ARGS)
     
+    search_fields = ['name']
+    name_field = 'name'
+    create_field = 'name'
+    
     class Meta(BaseModel.Meta):
         ordering = ['name']
         verbose_name = 'Bildreihe'
@@ -928,11 +932,15 @@ class veranstaltung_alias(BaseAliasModel):
 class Veranstaltungsreihe(BaseModel):
     name = models.CharField(**CF_ARGS)
     
+    search_fields = ['name']
+    name_field = 'name'
+    create_field = 'name'
+    
     class Meta(BaseModel.Meta):
         ordering = ['name']
         verbose_name = 'Veranstaltungsreihe'
         verbose_name_plural = 'Veranstaltungsreihen'
-
+    
 class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
     tracks = models.IntegerField() #TODO: PositiveSmallIntegerField!
