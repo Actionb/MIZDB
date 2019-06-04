@@ -901,7 +901,7 @@ class veranstaltung(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
-        ordering = ['name', 'spielort', 'datum']
+        ordering = ['name', 'datum', 'spielort']
     
     def __str__(self):
         if isinstance(self.datum, PartialDate):
