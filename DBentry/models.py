@@ -922,6 +922,13 @@ class veranstaltung(BaseModel):
 class veranstaltung_alias(BaseAliasModel):
     parent = models.ForeignKey('veranstaltung', models.CASCADE)
 
+class Veranstaltungsreihe(BaseModel):
+    name = models.CharField(**CF_ARGS)
+    
+    class Meta(BaseModel.Meta):
+        ordering = ['name']
+        verbose_name = 'Veranstaltungsreihe'
+        verbose_name_plural = 'Veranstaltungsreihen'
 
 class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
