@@ -15,6 +15,8 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 
 from DBentry.sites import miz_site
 
+#TODO: order inlines alphabetically? in any case: make the order of different ModelAdmin inlines consistent
+
 class BestandInLine(BaseTabularInline):
     model = _models.bestand
     readonly_fields = ['signatur']
