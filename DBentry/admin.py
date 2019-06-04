@@ -350,9 +350,8 @@ class BildmaterialAdmin(MIZModelAdmin):
         verbose_model = _models.veranstaltung
         
     form = BildmaterialForm
-    #TODO: ask about the best order for the inlines
     inlines = [
-        VeranstaltungInLine, SpielortInLine, MusikerInLine, BandInLine, OrtInLine, SchlInLine, GenreInLine, 
+        SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, VeranstaltungInLine, SpielortInLine, 
         PersonInLine, BestandInLine
     ]
     
