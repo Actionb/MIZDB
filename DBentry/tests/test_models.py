@@ -767,7 +767,7 @@ class TestModelSender(DataTestCase):
     def test_str(self):
         obj = self.model(name = 'Testsender')
         self.assertEqual(str(obj), 'Testsender')
-        
+@tag("wip")
 class TestModelSpielort(DataTestCase):
     
     model = _models.spielort

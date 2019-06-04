@@ -900,12 +900,12 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_formate_string(self):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
-    
+@tag("wip")
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SpielortAdmin
     model = _models.spielort
-    fields_expected = ['name', 'ort']
+    fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     test_data_count = 1
     
     crosslinks_expected = [
