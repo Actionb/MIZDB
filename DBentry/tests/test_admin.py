@@ -927,7 +927,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
-    fields_expected = ['name', 'datum', 'spielort']
+    fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     
     crosslinks_expected = [
@@ -1109,7 +1109,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BildmaterialAdmin
     model = _models.bildmaterial
     
-    fields_expected = ['titel', 'signatur', 'size', 'datum', 'beschreibung', 'bemerkungen']
+    fields_expected = ['titel', 'signatur', 'size', 'datum', 'beschreibung', 'bemerkungen', 'reihe']
     exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']   
     
 class TestAdminSite(UserTestCase):
