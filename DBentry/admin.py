@@ -369,6 +369,20 @@ class BildmaterialAdmin(MIZModelAdmin):
         return concat_limit(list(obj.veranstaltung.all()))
     veranstaltung_string.short_description = 'Veranstaltungen'
     
+    def copy_related(self, obj):
+        from DBentry.utils import copy_related_set
+        copy_related_set(obj, 'veranstaltung__band', 'veranstaltung__musiker')
+        
+    def response_add(self, request, obj, post_url_continue=None):
+        if 'copy_related' in request.POST:
+            self.copy_related(obj)
+        return super().response_add(request, obj, post_url_continue)
+        
+    def response_change(self, request, obj):
+        if 'copy_related' in request.POST:
+            self.copy_related(obj)
+        return super().response_change(request, obj)
+    
 @admin.register(_models.buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):

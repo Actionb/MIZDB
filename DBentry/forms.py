@@ -184,6 +184,12 @@ class AudioForm(FormBase):
         return self.cleaned_data
         
 class BildmaterialForm(FormBase):
+    copy_related = forms.BooleanField(
+        label = 'Bands/Musiker kopieren', 
+        help_text = 'Setzen Sie das Häkchen, um Bands und Musiker der Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.', 
+        required = False
+    )
+    
     class Meta:
         widgets = {
             'titel': Textarea(attrs={'rows':1, 'cols':90})
