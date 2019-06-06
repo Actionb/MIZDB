@@ -606,40 +606,71 @@ class TestPartialDateFormField(MyTestCase):
             with self.assertNotRaises(ValidationError):
                 cleaned = field.clean(data)
             self.assertEqual(cleaned, PartialDate(*data))
+    
+    def prepare_form_data(self, data):
+        # The form data for a MultiValueField should be of the format 
+        # <field_name>_[0,1...]
+        return {
+                    k + '_%s' % i: v
+                    for k, values_list in data.items()
+                    for i, v in enumerate(values_list)
+                }
             
-    def assertNoFormErrors(self, form):
+    def assertNoFormErrors(self, form, field_name):
         # Assert that form does not produce errors with various data
+        f = field_name
         test_data = [
-            # Empty stuff
-            {'a':[None]*3}, {'a':['']*3},
             # full
-            {'a':['2019', '5', '20']}, 
+            {f:['2019', '5', '20']}, 
             # year only
-            {'a':['2019']}, 
-            {'a':['2019', None]}, {'a':['2019', None, None]}, 
-            {'a':['2019', '']}, {'a':['2019', '', '']}, 
+            {f:['2019']}, 
+            {f:['2019', None]}, {f:['2019', None, None]}, 
+            {f:['2019', '']}, {f:['2019', '', '']}, 
             # year and month
-            {'a':['2019', '5', None]}, {'a':['2019', '5', '']}, 
+            {f:['2019', '5', None]}, {f:['2019', '5', '']}, 
             # year and day
-            {'a':['2019', None, '20']}, {'a':['2019', '', '20']}, 
+            {f:['2019', None, '20']}, {f:['2019', '', '20']}, 
             # month and day
-            {'a':[None, '5', '20']}, {'a':['', '5', '20']}, 
+            {f:[None, '5', '20']}, {f:['', '5', '20']}, 
             # month only
-            {'a':[None, '5', None]}, {'a':['', '5', '']}, 
+            {f:[None, '5', None]}, {f:['', '5', '']}, 
             # day only
-            {'a':[None, None, '20']}, {'a':['', '', '20']}
+            {f:[None, None, '20']}, {f:['', '', '20']}, 
+            
         ]
         for data in test_data:
             with self.subTest():
-                self.assertFalse(form(data = data).errors, msg = data)
-            
-    def test_as_form(self):
-        form = type('Form', (forms.Form, ), {'a': PartialDateFormField(required = False)})
-        self.assertNoFormErrors(form)
-        
-    def test_as_modelform(self):
+                self.assertFalse(form(data = self.prepare_form_data(data)).errors, msg = data)
+                    
+    def test_as_form_required(self):
+        form = type('Form', (forms.Form, ), {'datum': PartialDateFormField(required = True)})
+        self.assertNoFormErrors(form, 'datum')
+        for data in ({'datum': [None]*3}, {'datum': ['']*3}):
+            with self.subTest():
+                self.assertTrue(form(data = self.prepare_form_data(data)).errors, msg = data)
+         
+    def test_as_form_not_required(self):
+        form = type('Form', (forms.Form, ), {'datum': PartialDateFormField(required = False)})
+        self.assertNoFormErrors(form, 'datum')
+        # Test 'empty' 
+        for data in ({'datum': [None]*3}, {'datum': ['']*3}):
+            with self.subTest():
+                self.assertFalse(form(data = self.prepare_form_data(data)).errors, msg = data)
+                   
+    def test_as_modelform_required(self):
+        form = forms.modelform_factory(model = _models.veranstaltung, fields = ['datum'])
+        self.assertNoFormErrors(form, 'datum')
+        for data in ({'datum': [None]*3}, {'datum': ['']*3}):
+            with self.subTest():
+                self.assertTrue(form(data = self.prepare_form_data(data)).errors, msg = data)
+                
+    def test_as_modelform_not_required(self):
         form = forms.modelform_factory(model = _models.bildmaterial, fields = ['datum'])
-        self.assertNoFormErrors(form)
+        self.assertNoFormErrors(form, 'datum')
+        # Test 'empty' 
+        for data in ({'datum': [None]*3}, {'datum': ['']*3}):
+            with self.subTest():
+                self.assertFalse(form(data = self.prepare_form_data(data)).errors, msg = data)
         
     def assertIsInstanceOrSubclass(self, stuff, klass):
         if not isinstance(klass, type):
