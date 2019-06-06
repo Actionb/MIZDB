@@ -198,6 +198,9 @@ class PartialDate(datetime.date):
         
     def __eq__(self, other):
         if isinstance(other, str):
+            if not other and not self.date_format:
+                # Comparing an empty string to an 'empty' date.
+                return True
             try:
                 other = self.from_string(other)
             except:

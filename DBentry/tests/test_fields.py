@@ -430,6 +430,9 @@ class TestPartialDate(MyTestCase):
         self.assertTrue(PartialDate.from_string(date).__eq__(date))
         self.assertFalse(PartialDate.from_string(date).__eq__('Nota-valid-date'), msg = 'Invalid string should equate to false.')
         
+    def test_equality_empty_string(self):
+        self.assertTrue(PartialDate().__eq__(''))
+        
     def test_str(self):
         test_data = [
             ('2019-05-20', '20 May 2019'), ('2019-05-00', 'May 2019'), 
@@ -445,11 +448,6 @@ class TestPartialDate(MyTestCase):
         with_date = PartialDate.from_date(datetime.date(2019, 5, 20))
         self.assertEqual(str(with_date), '20 May 2019')
         
-#    def test_bool(self):
-#        # bool(PartialDate()) and bool(PartialDate(4,1,1)) seem*ed* to be False?? but it's fixed now?
-#        self.assertTrue(PartialDate())
-#        self.assertTrue(PartialDate(2019, 5, 20))
-
 @tag("partial_date")  
 class TestPartialDateField(MyTestCase):
     
