@@ -9,6 +9,8 @@ from collections import OrderedDict
 from DBentry.models import ausgabe
 from DBentry.ac.widgets import make_widget
 
+#TODO: make compatible with PartialDate
+
 class AdvSFForm(forms.Form):      
     #TODO: Make sure that it's clear that the search box is for text search
     
