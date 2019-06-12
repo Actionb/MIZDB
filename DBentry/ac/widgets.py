@@ -138,6 +138,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         widget_opts['forward'] = []
             
         for forwarded in _forward:
+            #TODO: filter out 'false' forwarded (i.e. None)
             if isinstance(forwarded, str):
                 dst = forwarded.split('__')[-1]
                 forwarded = forward.Field(src=forwarded, dst=dst)
