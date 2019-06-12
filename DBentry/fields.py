@@ -207,11 +207,21 @@ class PartialDate(datetime.date):
         # This allows the MaxLengthValidator of CharField to test the length of the PartialDate
         return len(self.db_value)
         
+    def __bool__(self):
+        # Base 'truthiness' of a PartialDate on it having a non-empty date_format.
+        # Empty PartialDates thus are recognized as False.
+        return bool(self.date_format)
+        
     def __eq__(self, other):
+        if bool(self) != bool(other):
+            # Comparing an empty date with any non-empty string/date or
+            # comparing any non-empty date with an empty string/date.
+            return False
+        if not bool(self) and not bool(other):
+            # Comparing an empty date with an empty string/date.
+            return True
+        # Comparing an actual date with an actual string/date.
         if isinstance(other, str):
-            if not other and not self.date_format:
-                # Comparing an empty string to an 'empty' date.
-                return True
             try:
                 other = self.from_string(other)
             except:

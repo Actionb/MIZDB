@@ -445,18 +445,30 @@ class TestPartialDate(MyTestCase):
         
     def test_equality_partial_date_to_partial_date(self):
         # Assert that two equal PartialDate objects equate.
+        self.assertTrue(PartialDate().__eq__(PartialDate()))
         date = '2019-05-20'
-        self.assertTrue(PartialDate.from_string(date) == PartialDate.from_string(date))
-        self.assertTrue(PartialDate(*date.split('-')) == PartialDate(*date.split('-')))
+        self.assertTrue(PartialDate.from_string(date).__eq__(PartialDate.from_string(date)))
+        self.assertTrue(PartialDate(*date.split('-')).__eq__(PartialDate(*date.split('-'))))
+        
+        msg = "A partial date created explicitly with the 'default' values should "\
+            "not equate to an empty partial date."
+        self.assertFalse(PartialDate(4, 1, 1).__eq__(PartialDate()), msg = msg)
         
     def test_equality_string_to_partial_date(self):
         # Assert that a PartialDate and a string of the same value equate.
+        self.assertTrue(PartialDate().__eq__(''))
         date = '2019-05-20'
         self.assertTrue(PartialDate.from_string(date).__eq__(date))
         self.assertFalse(PartialDate.from_string(date).__eq__('Nota-valid-date'), msg = 'Invalid string should equate to false.')
         
-    def test_equality_empty_string(self):
-        self.assertTrue(PartialDate().__eq__(''))
+        msg = "A partial date created explicitly with the 'default' values should "\
+            "not equate to an empty string."
+        self.assertFalse(PartialDate(4, 1, 1).__eq__(''), msg = msg)
+        
+    def test_equality_partial_date_to_date(self):
+        self.assertTrue(PartialDate(4, 1, 1).__eq__(datetime.date(4, 1, 1)))
+        msg = "An empty partial date should not equate to any datetime.date."
+        self.assertFalse(PartialDate().__eq__(datetime.date(4, 1, 1)), msg = msg)
         
     def test_str(self):
         test_data = [
