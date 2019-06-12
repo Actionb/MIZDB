@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 from DBentry.fields import (
     StdNumWidget, YearField, 
-     PartialDate, PartialDateField, PartialDateWidget, PartialDateFormField
+    PartialDate, PartialDateField, PartialDateWidget, PartialDateFormField
 )
 from DBentry import models as _models
 from DBentry.factory import make
@@ -47,6 +47,21 @@ class StdNumFieldTestsMixin(object):
             instance_data = {}
         instance_data.update(kwargs)
         return self.model(**instance_data)
+        
+    def test_empty_values_modelfield(self):
+        # Assert that 'empty' values are left untouched by the modelfield.
+        with self.collect_fails() as collector:
+            for empty_value in self.model_field.empty_values:
+                with collector():
+                    self.assertEqual(self.model_field.to_python(empty_value), empty_value)
+            
+    def test_empty_values_widget(self):
+        # Assert that 'empty' values are left untouched by the widget.
+        widget = self.model_field.formfield().widget
+        with self.collect_fails() as collector:
+            for empty_value in self.model_field.empty_values:
+                with collector():
+                    self.assertEqual(widget.format_value(empty_value), empty_value)
         
     def test_no_save_with_invalid_data(self):
         # Assert that no records can be saved with invalid data
@@ -224,7 +239,17 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
                         model_form[self.model_field.name].value()
                     )
                     self.assertFalse(model_form.has_changed(), msg = "ModelForm is flagged as changed for using different ISBN types of the same stdnum. " + msg_info)
-
+        
+        # Test for empty string
+        model_instance = self.create_model_instance(**{self.model_field.name: ''})
+        model_instance.save()
+        model_instance.refresh_from_db()
+        model_form = model_form_class(
+            data = {self.model_field.name: ''}, 
+            instance = model_instance
+        )
+        self.assertFalse(model_form.has_changed())
+        
     def test_converts_isbn10_to_isbn13_on_save(self):
         # Assert that only numbers of the isbn13 standard are saved
         with self.collect_fails() as collector:            
@@ -245,7 +270,7 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
             list(self.model.objects.values_list('ISBN', flat = True))
         )
         self.assertTrue(qs.exists(), msg = "Querying for ISBN10 did not return records with equivalent ISBN13. " + msg_info)
-                
+        
 class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.magazin
     model_field = _models.magazin._meta.get_field('issn')

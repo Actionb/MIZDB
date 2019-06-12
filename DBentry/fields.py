@@ -30,7 +30,7 @@ class StdNumWidget(widgets.TextInput):
         super().__init__(*args, **kwargs)
     
     def format_value(self, value):
-        if value is None or self.format_callback is None:
+        if not value or self.format_callback is None:
             return value
         # Render the value in a pretty format
         return self.format_callback(value)
@@ -43,7 +43,7 @@ class StdNumFormField(fields.CharField):
     
     def to_python(self, value):
         value = super().to_python(value)
-        if self.stdnum == isbn and isbn.isbn_type(value) == 'ISBN10':
+        if not value in self.empty_values  and self.stdnum == isbn and isbn.isbn_type(value) == 'ISBN10':
             # cast the ISBN10 into a ISBN13, so value can match the initial value (which is always ISBN13)
             value = isbn.to_isbn13(value)
         # To ensure that an initial compact value does not differ from a data formatted value, compact the data value. See FormField.has_changed
@@ -77,7 +77,8 @@ class StdNumField(models.CharField):
     def to_python(self, value):
         # In order to deny querying and saving with invalid values, we have to call run_validators.
         # Saving a model instance will not cause the validators to be tested!
-        value = self.stdnum.compact(value)
+        if value not in self.empty_values:
+            value = self.stdnum.compact(value)
         self.run_validators(value)
         return value
         
@@ -92,11 +93,21 @@ class ISBNField(StdNumField):
     
     def to_python(self, value):
         # Save the values as ISBN-13
+        if value in self.empty_values:
+            return value
         value = super().to_python(value)
         return isbn.to_isbn13(value)
         
     def get_format_callback(self):
-        return partial(isbn.format, convert=True)
+        #BUGFIX: not only did to_python('') return '9782' (isbn13 prefix + check digit for '978'),
+        # but ISBNField then also formatted '9782' to '978-978-4'
+        # (isbn.format(convert=True) calls isbn.compact on '9782' with conversion to isbn13, 
+        # the result is 9789784).
+        def _format(value):
+            if value in self.empty_values:
+                return value
+            return isbn.format(value, convert = True)
+        return _format
         
 
 class ISSNField(StdNumField):
