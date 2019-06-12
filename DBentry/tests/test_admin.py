@@ -964,7 +964,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         ]
     
     crosslinks_expected = [
-        {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Einzelbänder (1)'}, 
+        {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Aufsätze (1)'}, 
     ]
     
     @classmethod
