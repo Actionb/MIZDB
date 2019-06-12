@@ -35,7 +35,7 @@ class FactoryTestCaseMixin(object):
         
     def get_expected_fields(self):
         # Return the field_paths for any relation field declared in advanced_search_form['selects'] 
-        # whose formfield requires an daö autocomplete widget
+        # whose formfield requires a dal autocomplete widget
         expected_fields = set()  
         for field_path in self.model_admin.advanced_search_form.get('selects', []):
             if isinstance(field_path, (tuple, list)):
@@ -77,7 +77,7 @@ class FactoryTestCaseMixin(object):
         self.assertFalse(expected_fields, msg = "\n Select fields are missing from search form: " + str(expected_fields))
     
     def assertWidgetCannotCreate(self, widget, msg=None):
-        # Assert that the widget cannot create new records, this indicated by the widget's view not having a create_field
+        # Assert that the widget cannot create new records, this is indicated by the widget's view not having a create_field
         from django.urls import resolve
         view_initkwargs = resolve(widget.url).func.view_initkwargs
         self.assertFalse('create_field' in view_initkwargs, msg)
