@@ -15,6 +15,7 @@ class AdvSFForm(forms.Form):
     #TODO: Make sure that it's clear that the search box is for text search
     
     def get_initial_for_field(self, field, field_name):
+        #TODO: this is the django form.get_initial_for_field docstring isnt it?
         """
         Return initial data for field on form. Use initial data from the form
         or the field, in that order. Evaluate callable values.

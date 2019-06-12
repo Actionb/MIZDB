@@ -162,6 +162,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
                 # and not the model field's name.
                 try:
                     # verbose_name default is the field.name.replace('_',' ')
+                    #TODO: model may be None!
                     forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.title()
                 except (AttributeError, FieldDoesNotExist):
                     # AttributeError: the field returned by get_field does not have a verbose_name attribute (i.e. a relation)
