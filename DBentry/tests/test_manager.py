@@ -1,10 +1,8 @@
 import random
-from collections import namedtuple
 from itertools import chain
 from unittest.mock import patch, Mock
 
 from django.test import tag
-from django.db import models as django_models
 from django.db.models.query import QuerySet
 from django.core.exceptions import FieldDoesNotExist, FieldError
 
@@ -13,7 +11,7 @@ from DBentry.factory import make
 from DBentry.managers import CNQuerySet, MIZQuerySet
 from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
 
-from .base import DataTestCase
+from .base import DataTestCase, MyTestCase
 
 class TestMIZQuerySet(DataTestCase):
     
@@ -799,3 +797,24 @@ class TestDuplicates(DataTestCase):
         self.obj2.musiker_alias_set.create(alias='Boop')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
         self.assertEqual(len(duplicates), 2)
+        
+class TestHumanNameQuerySet(MyTestCase):
+    
+    def test_find_person(self):
+        obj = make(_models.person, vorname = 'Peter', nachname = 'Lustig')
+        for name in ('Peter Lustig', 'Lustig, Peter'):
+            with self.subTest():
+                results = _models.person.objects.find(name)
+                msg = "Name looked up: %s" % name
+                self.assertIn((obj.pk, 'Peter Lustig'), results, msg = msg)
+    
+    def test_find_autor(self):
+        obj = make(_models.autor, 
+            person__vorname = 'Peter', person__nachname = 'Lustig', kuerzel = 'PL')
+        for name in (
+            'Peter Lustig', 'Lustig, Peter', 
+            'Peter (PL) Lustig', 'Peter Lustig (PL)', 'Lustig, Peter (PL)'):
+            with self.subTest():
+                results = _models.autor.objects.find(name)
+                msg = "Name looked up: %s" % name
+                self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg = msg)

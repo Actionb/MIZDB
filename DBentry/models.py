@@ -8,7 +8,7 @@ from DBentry.base.models import (
 from DBentry.fields import ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.utils import concat_limit
-from DBentry.managers import AusgabeQuerySet
+from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet
 
 #TODO: allow searching by ISSN
 #TODO: field choices to enums --> ausgabe.UNBEARBEITET -> 'unb'
@@ -23,6 +23,8 @@ class person(ComputedNameModel):
     orte = models.ManyToManyField('ort', blank = True)
     
     name_composing_fields = ['vorname', 'nachname']
+    
+    objects = HumanNameQuerySet.as_manager()
     
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
@@ -51,6 +53,8 @@ class musiker(BaseModel):
     name_field = 'kuenstler_name'
     search_fields_suffixes = {'person__vorname':'Vorname', 'person__nachname':'Nachname', 'musiker_alias__alias':'Alias'}
     create_field = 'kuenstler_name'
+    
+    objects = HumanNameQuerySet.as_manager()
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Musiker'
@@ -128,6 +132,8 @@ class autor(ComputedNameModel):
     search_fields_suffixes = {'beschreibung' : 'Beschreibung'}
     
     name_composing_fields = ['person___name', 'kuerzel']
+    
+    objects = HumanNameQuerySet.as_manager()
     
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'

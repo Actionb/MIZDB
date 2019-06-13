@@ -4,8 +4,6 @@ from nameparser import HumanName
 
 from DBentry.models import autor, person
 from DBentry.utils import parse_name
-
-#TODO: Surname, Firstname does not seem to be recognized anymore!
     
 class MultipleObjectsReturnedException(Exception):
     message = 'Name nicht einzigartig.'

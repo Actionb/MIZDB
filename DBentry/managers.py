@@ -418,3 +418,15 @@ class AusgabeQuerySet(CNQuerySet):
         clone.chronologically_ordered = True
         return clone
         
+class HumanNameQuerySet(MIZQuerySet):
+    
+    def _parse_human_name(self, text):
+        from nameparser import HumanName
+        try:
+            return str(HumanName(text))
+        except:
+            return text
+            
+    def find(self, q, **kwargs):
+        q = self._parse_human_name(q)
+        return super().find(q, **kwargs)
