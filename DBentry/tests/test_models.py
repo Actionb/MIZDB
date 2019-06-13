@@ -461,7 +461,6 @@ class TestModelBand(DataTestCase):
 class TestModelBestand(DataTestCase):
     pass
 
-@tag("wip")
 class TestModelBildmaterial(DataTestCase):
     
     model = _models.bildmaterial
@@ -767,7 +766,7 @@ class TestModelSender(DataTestCase):
     def test_str(self):
         obj = self.model(name = 'Testsender')
         self.assertEqual(str(obj), 'Testsender')
-@tag("wip")
+        
 class TestModelSpielort(DataTestCase):
     
     model = _models.spielort
@@ -788,7 +787,6 @@ class TestModelSprache(DataTestCase):
 class TestModelTechnik(DataTestCase):
     pass
         
-@tag("wip")   
 class TestModelVeranstaltung(DataTestCase):
     
     model = _models.veranstaltung

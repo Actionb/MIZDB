@@ -17,8 +17,6 @@ from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
 
-from django.test import tag
-
 class AdminTestMethodsMixin(object):
     
     crosslinks_object = None # the model instance with which the add_crosslinks method is to be tested 
@@ -900,7 +898,6 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_formate_string(self):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
-@tag("wip")
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SpielortAdmin
@@ -921,7 +918,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'technik',       'fld_name': 'spielort', 'label': 'Technik (1)'}, 
         {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'}
     ]
-@tag("wip")
+    
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.VeranstaltungAdmin
@@ -1103,7 +1100,6 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
     ]
  
-@tag("wip")   
 class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         
     model_admin_class = _admin.BildmaterialAdmin
