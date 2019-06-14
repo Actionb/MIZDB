@@ -1,3 +1,4 @@
+from DBentry.search.forms import searchform_factory
             
 class AdminSearchFormMixin(object):
     
@@ -6,27 +7,27 @@ class AdminSearchFormMixin(object):
     
     search_form_kwargs = None
     search_form_class = None
-    search_form_wrapper = None
+    search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper
 
     def get_search_form_class(self, **kwargs):
         if self.search_form_class is not None:
             return self.search_form_class
         factory_kwargs = self.search_form_kwargs or {}
         factory_kwargs.update(kwargs)
-        return factory(self, **kwargs)
+        return searchform_factory(model = self.model, **factory_kwargs)
 
     def get_search_form(self, **form_kwargs):
         form_class = self.get_search_form_class()
         form = form_class(**form_kwargs)
-        if callable(self.model_admin.search_form_wrapper):
-            form = self.model_admin.search_form_wrapper(form)
+        if callable(self.search_form_wrapper):
+            form = self.search_form_wrapper(form)
         self.search_form = form
         return form
         
 class ChangelistSearchFormMixin(object):
     
     def get_filters_params(self, params=None):
-        lookup_params = super().get_filter_params(params)
+        lookup_params = super().get_filters_params(params)
         try:
             form = self.model_admin.get_search_form(data = params)
         except AttributeError:
