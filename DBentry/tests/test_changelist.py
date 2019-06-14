@@ -3,11 +3,12 @@ from unittest import skip
 
 from .base import AdminTestCase, mockv
 
+from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.admin.views.main import ChangeList, DisallowedModelAdminLookup, ORDER_VAR
 
 from DBentry.models import artikel, ausgabe
 from DBentry.admin import ArtikelAdmin, AusgabenAdmin
-from DBentry.changelist import MIZChangeList, IncorrectLookupParameters
+from DBentry.changelist import MIZChangeList
         
 class TestChangeList(AdminTestCase):
     

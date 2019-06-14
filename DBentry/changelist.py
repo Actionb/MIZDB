@@ -1,18 +1,8 @@
-import sys
-
-from django.contrib.admin import FieldListFilter
-from django.contrib.admin.exceptions import DisallowedModelAdminLookup
-from django.contrib.admin.options import IncorrectLookupParameters
-from django.contrib.admin.utils import get_fields_from_path, lookup_needs_distinct, prepare_lookup_value
+from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList, PAGE_VAR, ERROR_FLAG
-from django.db.models import Count
-
-from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, SuspiciousOperation
 from django.db import models
-
-from django.utils import six
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, SuspiciousOperation
 from django.utils.datastructures import MultiValueDict
-from django.utils.http import urlencode
 
 from DBentry.search.admin import ChangelistSearchFormMixin
 
@@ -34,7 +24,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
         """
         Returns all params except IGNORED_PARAMS
         """
-        lookup_params = super(MIZChangeList, self).get_filters_params(params).copy()
+        lookup_params = super().get_filters_params(params).copy()
         # super() does not remove PAGE_VAR and ERROR_FLAG from lookup_params as these are not in IGNORED_PARAMS
         # lookup_params originally defaults to self.params, which already has had PAGE_VAR/ERROR_FLAG removed during init.
         # We are now passing in request.GET instead (to preserve QueryDict functionality), and thus must remove these params again
@@ -57,7 +47,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
         for key, value_list in lookup_params.lists():
             for value in value_list:
                 if not self.model_admin.lookup_allowed(key, value):
-                    raise DisallowedModelAdminLookup("Filtering by %s not allowed" % key)
+                    raise admin.exceptions.DisallowedModelAdminLookup("Filtering by %s not allowed" % key)
             
         filter_specs = []
         if self.list_filter:
@@ -74,10 +64,10 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
                         # This is simply a field name, so use the default
                         # FieldListFilter class that has been registered for
                         # the type of the given field.
-                        field, field_list_filter_class = list_filter, FieldListFilter.create
+                        field, field_list_filter_class = list_filter, admin.FieldListFilter.create
                     if not isinstance(field, models.Field):
                         field_path = field
-                        field = get_fields_from_path(self.model, field_path)[-1]
+                        field = admin.utils.get_fields_from_path(self.model, field_path)[-1]
 
                     lookup_params_count = len(lookup_params)
                     spec = field_list_filter_class(
@@ -88,7 +78,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
                     # processes. If that happened, check if distinct() is
                     # needed to remove duplicate results.
                     if lookup_params_count > len(lookup_params):
-                        use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, field_path)
+                        use_distinct = use_distinct or admin.utils.lookup_needs_distinct(self.lookup_opts, field_path)
                 if spec and spec.has_output():
                     filter_specs.append(spec)
 
@@ -103,12 +93,12 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
             remaining_lookup_params = MultiValueDict()
             for key, value_list in lookup_params.lists():
                 for value in value_list:
-                    remaining_lookup_params.appendlist(key, prepare_lookup_value(key, value))
-                    use_distinct = use_distinct or lookup_needs_distinct(self.lookup_opts, key)
+                    remaining_lookup_params.appendlist(key, admin.utils.prepare_lookup_value(key, value))
+                    use_distinct = use_distinct or admin.utils.lookup_needs_distinct(self.lookup_opts, key)
             return filter_specs, bool(filter_specs), remaining_lookup_params, use_distinct
         except FieldDoesNotExist as e:
             #NOTE: lookup_needs_distinct cannot raise a FieldDoesNotExist error anymore since django 2.x
-            raise IncorrectLookupParameters(e) from e
+            raise admin.options.IncorrectLookupParameters(e) from e
             
     
     def get_queryset(self, request):
@@ -155,7 +145,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
             # are not in the correct type, so we might get FieldError,
             # ValueError, ValidationError, or ?.
             #TODO: a advsf formfield may throw a ValidationError!
-            raise IncorrectLookupParameters(e)
+            raise admin.options.IncorrectLookupParameters(e)
 
         if not qs.query.select_related:
             qs = self.apply_select_related(qs)
@@ -183,7 +173,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
             needs_distinct = True
         for annotation in self._annotations:
             name, func, expression, extra = annotation
-            if func == Count and needs_distinct and 'distinct' not in extra:
+            if func == models.Count and needs_distinct and 'distinct' not in extra:
                 extra['distinct'] = True
             annotation = {name: func(expression, **extra)}
             queryset = queryset.annotate(**annotation)
