@@ -11,6 +11,41 @@ from DBentry.ac.widgets import make_widget
 
 from .utils import get_dbfield_from_path
 
+class RangeWidget(forms.MultiWidget):
+    
+    #TODO: needs a custom template to squeeze the '-' in between the two other widgets
+    
+    def __init__(self, widget, attrs = None):
+        super().__init__(widgets = [widget]*2, attrs = attrs)
+        
+    def value_from_datadict(self, data, files, name):
+        # Allow an immediate lookup of 'name' instead of
+        # MultiWidget's usual 'name_index'.
+        if name in data:
+            return data[name]
+        return super().value_from_datadict(data, files, name)
+        
+    def decompress(self, value):
+        return value.split(',')
+        
+class RangeFormField(forms.MultiValueField):
+    """
+    A wrapper around a formfield that duplicates the field for use 
+    in a __range lookup.
+    """
+    
+    widget = RangeWidget
+    
+    def __init__(self, formfield, require_all_fields = False, **kwargs):
+        kwargs['widget'] = RangeWidget(formfield.widget)
+        #NOTE: it shouldn't be necessary to set required = False, the factory already does that?
+#        kwargs['required'] = False
+        self.empty_values = formfield.empty_values
+        super().__init__(fields = [formfield]*2, require_all_fields = require_all_fields, **kwargs)
+    
+    def clean(self, value):
+        return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
+    
 class SearchForm(forms.Form):
     
     range_start_suffix, range_end_suffix = None, None
