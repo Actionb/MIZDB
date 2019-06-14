@@ -39,6 +39,7 @@ class TestSearchFormFactory(MyTestCase):
         self.assertTrue(widget.forward)
         
     def test_get_search_form(self):
+        # Assert that the form class is created only with proper fields/lookups.
         fields = ['seite__gt', 'seitenumfang', 'genre__genre', 'notafield', 'schlagwort__notalookup']
         form_class = self.factory(_models.artikel, fields)
         self.assertIn('seite__gt', form_class.base_fields)
