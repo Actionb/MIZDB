@@ -3,6 +3,7 @@ from ..base import MyTestCase
 from DBentry import models as _models
 from DBentry.ac import widgets as autocomplete_widgets
 from DBentry.factory import make
+from DBentry.fields import PartialDate
 from DBentry.search import forms as search_forms
 
 class TestSearchFormFactory(MyTestCase):
@@ -128,3 +129,13 @@ class TestSearchForm(MyTestCase):
         filter_params = form.get_filter_params()
         self.assertNotIn('seite__range', filter_params)
         self.assertIn('seite__lte', filter_params)
+        
+    def test_get_filters_params(self):
+        form_class = search_forms.SearchFormFactory()(_models.bildmaterial, fields = ['datum'])
+        form = form_class(data = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 20})
+        self.assertTrue(form.is_valid())
+        self.assertIn('datum', form.cleaned_data)
+        expected = PartialDate(2020, 5, 20)
+        self.assertEqual(form.cleaned_data['datum'], expected)
+        self.assertEqual(form.get_filter_params(), {'datum': expected})
+    
