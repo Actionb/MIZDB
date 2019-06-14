@@ -2,6 +2,7 @@
 from django import forms
 from django.contrib import admin
 from django.core import exceptions
+from django.db.models import lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 from django.utils.datastructures import MultiValueDict
@@ -47,15 +48,6 @@ class RangeFormField(forms.MultiValueField):
         return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
     
 class SearchForm(forms.Form):
-    
-    range_start_suffix, range_end_suffix = None, None
-    
-#    def __init__(self, *args, range_suffixes, **kwargs):
-#        #TODO: add range_fields attribute for easier lookups for fields that are 'ranged'?
-#        if not self.range_start_suffix or not self.range_end_suffix:
-#            self.range_start_suffix, self.range_end_suffix = range_suffixes
-#        super().__init__(*args, **kwargs)
-    
     class Media:
         js = ['admin/js/collapse.js'] #NOTE: the collapsible elements are not part of the form but the changelist?
     
@@ -63,41 +55,47 @@ class SearchForm(forms.Form):
         params = {}
         if not self.is_valid():
             return params
+        range_lookup_name = self.range_lookup.lookup_name
+        upper_bound_lookup_name = self.range_upper_bound.lookup_name
         for field_name, value in self.cleaned_data.items():
-            if value in self.fields[field_name].empty_values or \
+            formfield = self.fields[field_name]
+            if isinstance(formfield, RangeFormField):
+                start, end = value
+                start_empty = start in formfield.empty_values
+                end_empty = end in formfield.empty_values
+                if not start_empty and not end_empty:
+                    # start and end are not empty; we can use the range lookup
+                    params[field_name] = value
+                elif not start_empty and end_empty:
+                    # start but no end: exact lookup for start
+                    param_key = field_name.replace(LOOKUP_SEP + range_lookup_name, '')
+                    params[param_key] = start
+                elif start_empty and not end_empty:
+                    # no start but end: lte lookup for end
+                    param_key = field_name.replace(range_lookup_name, upper_bound_lookup_name)
+                    params[param_key] = end
+                # start and end are empty: just skip it.
+            elif value in formfield.empty_values or \
                 isinstance(value, QuerySet) and not value:
                 # Dont want empty values as filter parameters!
                 continue
-            if field_name.endswith(self.range_start_suffix) or \
-                field_name.endswith(self.range_end_suffix):
-                if field_name.endswith(self.range_start_suffix):
-                    start = value
-                    end = self.cleaned_data.get(
-                        field_name.replace(self.range_start_suffix, self.range_end_suffix), None
-                    )
-                else:
-                    end = value
-                    start = self.cleaned_data.get(
-                        field_name.replace(self.range_end_suffix, self.range_start_suffix), None
-                    )
-                if start and not end:
-                    # This should be an 'exact' search
-                    param_key = field_name.replace(self.range_start_suffix, '') \
-                                          .replace(self.range_end_suffix, '')
-                    params[param_key] = start
             else:
                 params[field_name] = value
         return params
     
     def get_initial_for_field(self, field, field_name):
+        # Enable support for initial data in the form of a MultiValueDict
+        # (the native form of request data).
+        # This is required to get all initial values for SelectMultiple widgets.
         if isinstance(self.initial, MultiValueDict):
             return self.initial.getlist(field_name, field.initial)
         return super().get_initial_for_field(field, field_name)
+  
+class LookupRegistry:
+    range_lookup= django_lookups.Range
+    range_upper_bound = django_lookups.LessThanOrEqual
     
-class SearchFormFactory(object):
-    
-    range_start_suffix = '__gte' # django.db.models.lookups.GreaterThanOrEqual?
-    range_end_suffix = '__lt'
+class SearchFormFactory(LookupRegistry):
     
     def __call__(self, *args, **kwargs):
         return self.get_search_form(*args, **kwargs)
@@ -108,7 +106,7 @@ class SearchFormFactory(object):
     def formfield_for_dbfield(self, db_field, **kwargs):
         widget = kwargs.get('widget', None)
         if db_field.is_relation and widget is None: 
-            # Flesh out the creation of dal autocomplete stuff
+            # Create a dal autocomplete widget
             widget_opts = {
                 'model': db_field.related_model, 'multiple': db_field.many_to_many, 
                 'wrap': False, 'can_add_related': False, 
@@ -124,21 +122,22 @@ class SearchFormFactory(object):
         kwargs['required'] = False
         return db_field.formfield(**kwargs)
     
-    def get_search_form(self, model, fields, form = None, range = None, 
-        formfield_callback = None, widgets = None, localized_fields = None, 
-        labels = None, help_texts = None, error_messages = None, field_classes = None, 
-        forwards = None):
+    def get_search_form(self, model, fields = None, form = None, formfield_callback = None, 
+        widgets = None, localized_fields = None, labels = None, help_texts = None, 
+        error_messages = None, field_classes = None, forwards = None):
 #def fields_for_model(model, fields=None, exclude=None, widgets=None,
 #                     formfield_callback=None, localized_fields=None,
 #                     labels=None, help_texts=None, error_messages=None,
 #                     field_classes=None, *, apply_limit_choices_to=True):
+        #TODO: add 'bases' kwarg to allow overriding LookupRegistry
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback): 
             raise TypeError('formfield_callback must be a function or callable')
         
         # Create the formfields.
-        range = range or []
+        fields = fields or []
+        range_lookup_name = self.range_lookup.lookup_name
         formfields = OrderedDict()
         for path in fields:
             try:
@@ -164,18 +163,13 @@ class SearchFormFactory(object):
                 formfield_kwargs['forward'] = forwards[path]
             
             formfield = formfield_callback(db_field, **formfield_kwargs)
-            if path in range:
-                formfields[path + self.range_start_suffix] = formfield
-                formfields[path + self.range_end_suffix] = formfield
+            if range_lookup_name in lookups:
+                formfields[path] = RangeFormField(formfield)
             else:
                 formfields[path] = formfield
-    
-        attrs = OrderedDict()
-        attrs['range_start_suffix'] = self.range_start_suffix
-        attrs['range_end_suffix'] = self.range_end_suffix
-        attrs.update(formfields)
-        form = form or SearchForm
-        return type('SearchForm', (form, ), attrs)
+                
+        base_form = form or SearchForm
+        return type('SearchForm', (base_form, LookupRegistry), formfields)
         
 searchform_factory = SearchFormFactory()
             
