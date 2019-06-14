@@ -8,6 +8,9 @@ class AdminSearchFormMixin(object):
     search_form_kwargs = None
     search_form_class = None
     search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper
+    
+    def has_search_form(self):
+        return self.search_form_kwargs is not None
 
     def get_search_form_class(self, **kwargs):
         if self.search_form_class is not None:
