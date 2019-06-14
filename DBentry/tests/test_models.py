@@ -5,6 +5,7 @@ from django.db import models as django_models
 from django.utils.translation import override as translation_override
 
 import DBentry.models as _models
+from DBentry import fields as _fields
 from DBentry.m2m import m2m_audio_musiker
 from DBentry.factory import make
 
@@ -459,9 +460,14 @@ class TestModelBand(DataTestCase):
         
 class TestModelBestand(DataTestCase):
     pass
-    
+
 class TestModelBildmaterial(DataTestCase):
-    pass
+    
+    model = _models.bildmaterial
+    
+    def test_str(self):
+        obj = make(self.model, titel='Testbild')
+        self.assertEqual(str(obj), 'Testbild')
 
 class TestModelBuch(DataTestCase):
     pass
@@ -786,10 +792,15 @@ class TestModelVeranstaltung(DataTestCase):
     model = _models.veranstaltung
     
     def test_str(self):
-        land_object = _models.land.objects.create(land_name = 'Deutschland', code='DE')
-        spielort_object = _models.spielort(name = 'Testspielort', ort = _models.ort.objects.create(land=land_object))
-        obj = self.model(name='Testveranstaltung', datum = '02.05.2018', spielort = spielort_object)
+        obj = self.model(name='Testveranstaltung')
+        # __str__ should handle a 'datum' instance attribute that is not 
+        # a PartialDate:
+        obj.datum = '02.05.2018'
         self.assertEqual(str(obj), 'Testveranstaltung (02.05.2018)')
+        
+        # And it should localize the date if it is a PartialDate
+        obj.datum = _fields.PartialDate.from_string('2018-05-02')
+        self.assertEqual(str(obj), 'Testveranstaltung (02 Mai 2018)')
         
 class TestModelVerlag(DataTestCase):
     

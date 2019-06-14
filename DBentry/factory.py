@@ -228,6 +228,12 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         """
         For a given model field, return an appropriate faker declaration.
         """
+        try:
+            from DBentry.fields import PartialDateField
+            if isinstance(field, PartialDateField):
+                return factory.Faker('date')
+        except ImportError:
+            pass
         internal_type = field.get_internal_type()
         if internal_type in ('CharField', 'TextField'):
             if field.unique:

@@ -898,12 +898,11 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_formate_string(self):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
-    
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SpielortAdmin
     model = _models.spielort
-    fields_expected = ['name', 'ort']
+    fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     test_data_count = 1
     
     crosslinks_expected = [
@@ -919,13 +918,13 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'technik',       'fld_name': 'spielort', 'label': 'Technik (1)'}, 
         {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'}
     ]
-        
+    
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
-    fields_expected = ['name', 'datum', 'spielort']
+    fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     
     crosslinks_expected = [
@@ -962,7 +961,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         ]
     
     crosslinks_expected = [
-        {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Einzelbänder (1)'}, 
+        {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Aufsätze (1)'}, 
     ]
     
     @classmethod
@@ -1100,7 +1099,60 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'}, 
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
     ]
+ 
+class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
+        
+    model_admin_class = _admin.BildmaterialAdmin
+    model = _models.bildmaterial
+    test_data_count = 1
     
+    fields_expected = [
+        'titel', 'signatur', 'size', 'datum', 'beschreibung', 
+        'bemerkungen', 'reihe', 'copy_related'
+    ]
+    exclude_expected = [
+        'genre',  'schlagwort',  'person',  'band',  
+        'musiker',  'ort',  'spielort',  'veranstaltung'
+    ]   
+    
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        
+        cls.band = make(_models.band)
+        cls.musiker = make(_models.musiker)
+        cls.veranstaltung = make(_models.veranstaltung, band = [cls.band], musiker = [cls.musiker])
+        cls.obj1.veranstaltung.add(cls.veranstaltung)
+    
+    def test_copy_related_set(self):
+        self.model_admin.copy_related(self.obj1)
+        self.assertIn(self.band, self.obj1.band.all())
+        self.assertIn(self.musiker, self.obj1.musiker.all())
+        
+    def test_reponse_add(self):
+        request = self.post_request(data = {'copy_related': True})
+        self.model_admin.response_add(request, self.obj1)
+        self.assertIn(self.band, self.obj1.band.all())
+        self.assertIn(self.musiker, self.obj1.musiker.all())
+        
+    def test_reponse_add_no_copy(self):
+        request = self.post_request(data = {})
+        self.model_admin.response_add(request, self.obj1)
+        self.assertNotIn(self.band, self.obj1.band.all())
+        self.assertNotIn(self.musiker, self.obj1.musiker.all())
+        
+    def test_reponse_change(self):
+        request = self.post_request(data = {'copy_related': True})
+        self.model_admin.response_change(request, self.obj1)
+        self.assertIn(self.band, self.obj1.band.all())
+        self.assertIn(self.musiker, self.obj1.musiker.all())
+        
+    def test_reponse_change_no_copy(self):
+        request = self.post_request(data = {})
+        self.model_admin.response_change(request, self.obj1)
+        self.assertNotIn(self.band, self.obj1.band.all())
+        self.assertNotIn(self.musiker, self.obj1.musiker.all())
+        
 class TestAdminSite(UserTestCase):
     
     def test_app_index(self):
