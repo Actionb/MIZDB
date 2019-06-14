@@ -14,7 +14,9 @@ from django.utils import six
 from django.utils.datastructures import MultiValueDict
 from django.utils.http import urlencode
 
-class MIZChangeList(ChangeList):
+from DBentry.search.admin import ChangelistSearchFormMixin
+
+class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
     
     def __init__(self, request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
