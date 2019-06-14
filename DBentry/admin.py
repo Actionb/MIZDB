@@ -323,9 +323,9 @@ class BandAdmin(MIZModelAdmin):
     def orte_string(self, obj):
         return concat_limit(obj.orte.all())
     orte_string.short_description = 'Orte'
-    
+from DBentry.search.admin import AdminSearchFormMixin, ChangelistSearchFormMixin
 @admin.register(_models.bildmaterial, site=miz_site)
-class BildmaterialAdmin(MIZModelAdmin):
+class BildmaterialAdmin(AdminSearchFormMixin, MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.bildmaterial.genre.through
     class SchlInLine(BaseSchlagwortInline):
@@ -348,7 +348,7 @@ class BildmaterialAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.bildmaterial.veranstaltung.through
         verbose_model = _models.veranstaltung
-        
+    
     form = BildmaterialForm
     inlines = [
         SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, VeranstaltungInLine, SpielortInLine, 
@@ -357,6 +357,8 @@ class BildmaterialAdmin(MIZModelAdmin):
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
     save_on_top = True
     collapse_all = True
+    
+    search_form_kwargs =  {'fields': ['datum']}
     
     index_category = 'Archivgut'
     
