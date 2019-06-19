@@ -51,3 +51,11 @@ def get_dbfield_from_path(model, field_path):
             "Unsupported lookup(s) '%s' for %s." % (", ".join(unsupported), db_field.__class__.__name__)
         )
     return db_field, lookups
+
+def strip_lookups_from_path(path, lookups):
+    """
+    ('datum__jahr__in', ['in']) -> 'datum__jahr'
+    """
+    return LOOKUP_SEP.join(
+        filter(lambda piece: piece not in lookups, path.split(LOOKUP_SEP))
+    )

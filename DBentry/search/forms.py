@@ -143,7 +143,8 @@ class SearchFormFactory(LookupRegistry):
         # Create the formfields.
         fields = fields or []
         range_lookup_name = self.range_lookup.lookup_name
-        formfields = OrderedDict()
+        attrs = OrderedDict()
+        lookup_mapping = {}
         for path in fields:
             try:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
@@ -166,15 +167,19 @@ class SearchFormFactory(LookupRegistry):
                 formfield_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
                 formfield_kwargs['forward'] = forwards[path]
+                
+            formfield_name = strip_lookups_from_path(path, lookups)
+            lookup_mapping[formfield_name] = lookups
             
             formfield = formfield_callback(db_field, **formfield_kwargs)
             if range_lookup_name in lookups:
-                formfields[path] = RangeFormField(formfield)
+                attrs[formfield_name] = RangeFormField(formfield)
             else:
-                formfields[path] = formfield
+                attrs[formfield_name] = formfield
                 
         base_form = form or SearchForm
-        return type('SearchForm', (base_form, LookupRegistry), formfields)
+        attrs['lookups'] = lookup_mapping
+        return type('SearchForm', (base_form, LookupRegistry), attrs)
         
 searchform_factory = SearchFormFactory()
             
