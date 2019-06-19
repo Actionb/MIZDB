@@ -36,6 +36,9 @@ class MIZModelAdmin(admin.ModelAdmin):
     }
     
     index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
+    
+    #TODO: let the MIZ changelist template extend the default one 
+    #change_list_template = 'miz_changelist.html'
 
     def has_adv_sf(self):
         # Used by the changelist's advanced_search_form template to determine whether there is a search form to display.
