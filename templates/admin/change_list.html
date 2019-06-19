@@ -78,13 +78,13 @@
       {% endif %}
       {% endblock %}
 <!-- ADMIN SEARCH FORM --->
-        {% block search %}
-            {% if cl.model_admin.has_adv_sf %}
-                {% advanced_search_form cl %}
-            {% else %}
-                {% search_form cl %}
-            {% endif %}
-        {% endblock %}
+    {% block search %}
+        {% if cl.model_admin.has_search_form %}
+              {% include "admin/includes/advanced_search_form.html" %}
+        {% elif cl.search_fields %}
+            {% search_form cl %}
+        {% endif %}
+    {% endblock %}
       
       {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
       
