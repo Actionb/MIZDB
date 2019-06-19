@@ -1,6 +1,5 @@
 
 from django import forms
-from django.contrib import admin
 from django.core import exceptions
 from django.db.models import lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
@@ -11,7 +10,7 @@ from collections import OrderedDict
 from DBentry.ac.widgets import make_widget
 from DBentry.forms import MIZAdminForm
 
-from .utils import get_dbfield_from_path
+from .utils import get_dbfield_from_path, strip_lookups_from_path
 
 class RangeWidget(forms.MultiWidget):
     
@@ -55,36 +54,40 @@ class SearchForm(forms.Form):
         }
         js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
         
-    def get_filter_params(self):
-        params = {}
+    def get_filters_params(self):
+        params = MultiValueDict()
         if not self.is_valid():
             return params
-        range_lookup_name = self.range_lookup.lookup_name
-        upper_bound_lookup_name = self.range_upper_bound.lookup_name
+            
         for field_name, value in self.cleaned_data.items():
             formfield = self.fields[field_name]
+            if self.lookups.get(field_name, False):
+                param_key = "%s__%s" % (field_name, LOOKUP_SEP.join(self.lookups[field_name]))
+            else:
+                param_key = field_name
+            param_value = value
+            
             if isinstance(formfield, RangeFormField):
                 start, end = value
                 start_empty = start in formfield.empty_values
                 end_empty = end in formfield.empty_values
-                if not start_empty and not end_empty:
-                    # start and end are not empty; we can use the range lookup
-                    params[field_name] = value
+                if start_empty and end_empty:
+                # start and end are empty: just skip it.
+                    continue
                 elif not start_empty and end_empty:
                     # start but no end: exact lookup for start
-                    param_key = field_name.replace(LOOKUP_SEP + range_lookup_name, '')
-                    params[param_key] = start
+                    param_key = field_name
+                    param_value = start
                 elif start_empty and not end_empty:
                     # no start but end: lte lookup for end
-                    param_key = field_name.replace(range_lookup_name, upper_bound_lookup_name)
-                    params[param_key] = end
-                # start and end are empty: just skip it.
+                    param_key = field_name + LOOKUP_SEP + self.range_upper_bound.lookup_name
+                    param_value = end
             elif value in formfield.empty_values or \
-                isinstance(value, QuerySet) and not value:
+                isinstance(value, QuerySet) and not value.exists():
                 # Dont want empty values as filter parameters!
                 continue
-            else:
-                params[field_name] = value
+                
+            params[param_key] = param_value 
         return params
     
     def get_initial_for_field(self, field, field_name):
@@ -104,6 +107,13 @@ class SearchFormFactory(LookupRegistry):
     
     def __call__(self, *args, **kwargs):
         return self.get_search_form(*args, **kwargs)
+        
+    def get_default_lookup(self, formfield):
+        if isinstance(formfield.widget, forms.SelectMultiple):
+            return ['in']
+        elif isinstance(formfield, (forms.CharField, forms.Textarea)):
+            return ['icontains']
+        return []
         
     def resolve_to_dbfield(self, model, field_path):
         return get_dbfield_from_path(model, field_path)
@@ -157,7 +167,7 @@ class SearchFormFactory(LookupRegistry):
             if localized_fields == forms.models.ALL_FIELDS \
                 or (localized_fields and path in localized_fields):
                 formfield_kwargs['localize'] = True
-            if labels and path in labels:
+            if labels and path in labels: 
                 formfield_kwargs['label'] = labels[path]
             if help_texts and path in help_texts:
                 formfield_kwargs['help_text'] = help_texts[path]
@@ -169,13 +179,16 @@ class SearchFormFactory(LookupRegistry):
                 formfield_kwargs['forward'] = forwards[path]
                 
             formfield_name = strip_lookups_from_path(path, lookups)
-            lookup_mapping[formfield_name] = lookups
             
             formfield = formfield_callback(db_field, **formfield_kwargs)
             if range_lookup_name in lookups:
                 attrs[formfield_name] = RangeFormField(formfield)
             else:
                 attrs[formfield_name] = formfield
+            
+            if not lookups:
+                lookups = self.get_default_lookup(formfield)
+            lookup_mapping[formfield_name] = lookups
                 
         base_form = form or SearchForm
         attrs['lookups'] = lookup_mapping
