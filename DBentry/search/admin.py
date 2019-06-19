@@ -1,5 +1,7 @@
-from DBentry.search.forms import searchform_factory
-            
+from django.contrib.admin.views.main import SEARCH_VAR
+
+from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
+
 class AdminSearchFormMixin(object):
     
     #TODO: change_list_template attribute
@@ -10,6 +12,7 @@ class AdminSearchFormMixin(object):
     search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper
     
     def has_search_form(self):
+        #TODO: what's the best attribute to determine that a search_form is wanted?
         return self.search_form_kwargs is not None
 
     def get_search_form_class(self, **kwargs):
@@ -29,8 +32,30 @@ class AdminSearchFormMixin(object):
         
     def changelist_view(self, request, extra_context = None):
         if extra_context is None: extra_context = {}
-        extra_context['advanced_search_form'] = self.get_search_form(data = request.GET)
-        return super().changelist_view(request, extra_context)
+        search_form = self.get_search_form(initial = request.GET)
+        extra_context['advanced_search_form'] = search_form
+        extra_context['search_var'] = SEARCH_VAR
+        response = super().changelist_view(request, extra_context)
+        self.update_changelist_context(response)
+        return response
+        
+    def update_changelist_context(self, response, **kwargs):
+        """
+        A hook that allows changing the context data of the changelist response after it 
+        has been created by changelist_view().
+        """
+        if not isinstance(response.context_data, dict):
+            return response
+        if hasattr(self, 'search_form'):
+            response.context_data['media'] += self.search_form.media
+        response.context_data.update(**kwargs)
+        return response       
+
+class MIZAdminSearchFormMixin(AdminSearchFormMixin):
+    
+    def get_search_form_class(self, **kwargs):
+        kwargs['form'] = MIZAdminSearchForm
+        return super().get_search_form_class(**kwargs)
         
 class ChangelistSearchFormMixin(object):
     

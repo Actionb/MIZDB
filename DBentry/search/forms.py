@@ -9,6 +9,7 @@ from django.utils.datastructures import MultiValueDict
 from collections import OrderedDict
 
 from DBentry.ac.widgets import make_widget
+from DBentry.forms import MIZAdminForm
 
 from .utils import get_dbfield_from_path
 
@@ -49,8 +50,11 @@ class RangeFormField(forms.MultiValueField):
     
 class SearchForm(forms.Form):
     class Media:
-        js = ['admin/js/collapse.js'] #NOTE: the collapsible elements are not part of the form but the changelist?
-    
+        css = {
+            'all' : ('admin/css/forms.css', )
+        }
+        js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
+        
     def get_filter_params(self):
         params = {}
         if not self.is_valid():
@@ -84,13 +88,14 @@ class SearchForm(forms.Form):
         return params
     
     def get_initial_for_field(self, field, field_name):
-        # Enable support for initial data in the form of a MultiValueDict
-        # (the native form of request data).
-        # This is required to get all initial values for SelectMultiple widgets.
-        if isinstance(self.initial, MultiValueDict):
+        # Use getlist() if initial is a MultiValueDict and we're working on a SelectMultiple.
+        if isinstance(field.widget, forms.SelectMultiple) and isinstance(self.initial, MultiValueDict):
             return self.initial.getlist(field_name, field.initial)
         return super().get_initial_for_field(field, field_name)
-  
+        
+class MIZAdminSearchForm(MIZAdminForm, SearchForm):
+    pass
+    
 class LookupRegistry:
     range_lookup= django_lookups.Range
     range_upper_bound = django_lookups.LessThanOrEqual
