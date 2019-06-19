@@ -1,11 +1,11 @@
-jQuery(document).ready(function($){
+django.jQuery(document).ready(function($){
   
   // Remove empty fields from GET forms
   // Author: Bill Erickson
   // URL: http://www.billerickson.net/code/hide-empty-fields-get-form/
   	// Change 'form' to class or ID of your specific form
-	$("form").submit(function() {
-        var empty = $(this).find(":input").filter(function(){ return !this.value; });
+    var $form_selector = "#changelist-search"
+	$($form_selector).submit(function() {
 		$(this).find(":input").filter(function(){ return !this.value; }).attr("disabled", "disabled");
 		return true; // ensure form still submits
 	});
