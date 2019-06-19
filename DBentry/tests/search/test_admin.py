@@ -6,6 +6,7 @@ from django import forms
 
 from DBentry import models as _models, admin as _admin
 from DBentry.search.admin import AdminSearchFormMixin, ChangelistSearchFormMixin
+from DBentry.fields import PartialDate
 
 class TestAdminMixin(AdminTestCase):
     
@@ -117,3 +118,99 @@ class TestChangelistMixin(MyTestCase):
         params = self.get_dummy_changelist()().get_filters_params(params = 'Beepboop')
         self.assertEqual(params, 'Foobar')
         
+class TestSearchFormChangelist(AdminTestCase):
+    # Tests without heavy mocking.
+    
+    model = _models.bildmaterial
+    model_admin_class = _admin.BildmaterialAdmin
+    
+    def test_context_updated_with_form_media(self):
+        # Assert that the context for the response contains the form's media.
+        self.model_admin.search_form_kwargs = {'fields': ['datum']}
+        response = self.client.get(path = self.changelist_path)
+        self.assertIn('media', response.context)
+        media = response.context['media']
+        expected_js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
+        for javascript in expected_js:
+            with self.subTest():
+                self.assertIn(javascript, media._js)
+        expected_css = [('all', 'admin/css/forms.css')]
+        for group, css in expected_css:
+            with self.subTest():
+                self.assertIn(group, media._css)
+                self.assertIn(css, media._css[group])
+                
+    def test_get_filters_params_select_multiple_lookup(self):
+        # Assert that the params returned contain a valid lookup (i.e. '__in' for SelectMultiple).
+        self.model_admin.search_form_kwargs = {'fields': ['genre']}
+        form_data = {'genre': [1, 2]}
+        request = self.get_request(path = self.changelist_path)
+        changelist = self.get_changelist(request)
+        params = changelist.get_filters_params(form_data)
+        self.assertIn('genre__in', params)
+        self.assertEqual(params['genre__in'], [1, 2])
+        
+    def test_get_filters_params_range_lookup(self):
+        # Assert that the params returned contain a valid lookup (i.e. '__range' for RangeFormField).
+        self.model_admin.search_form_kwargs = {'fields': ['datum__range']}
+        form_data = {
+            'datum_0_0':2020, 'datum_0_1': 5, 'datum_0_2': 20, 
+            'datum_1_0':2020, 'datum_1_1': 5, 'datum_1_2': 22
+        }
+        request = self.get_request(path = self.changelist_path)
+        changelist = self.get_changelist(request)
+        params = changelist.get_filters_params(form_data)
+        self.assertIn('datum__range', params)
+        self.assertEqual(len(params['datum__range']), 2)
+        start, end = params['datum__range']
+        self.assertEqual(start, PartialDate(2020, 5, 20))
+        self.assertEqual(end, PartialDate(2020, 5, 22))
+        
+    def test_get_filters_params_range_lookup_no_start(self):
+        # Assert that the params returned contain a valid lookup (i.e. '__range' for RangeFormField).
+        # __range without start specified => lte lookup
+        self.model_admin.search_form_kwargs = {'fields': ['datum__range']}
+        form_data = {
+            'datum_1_0':2020, 'datum_1_1': 5, 'datum_1_2': 22
+        }
+        request = self.get_request(path = self.changelist_path)
+        changelist = self.get_changelist(request)
+        params = changelist.get_filters_params(form_data)
+        self.assertNotIn('datum__range', params)
+        self.assertIn('datum__lte', params)
+        self.assertEqual(params['datum__lte'], PartialDate(2020, 5, 22))
+        
+    def test_get_filters_params_range_lookup_no_end(self):
+        # Assert that the params returned contain a valid lookup (i.e. '__range' for RangeFormField).
+        # __range without end specified => exact lookup
+        self.model_admin.search_form_kwargs = {'fields': ['datum__range']}
+        form_data = {
+            'datum_0_0':2020, 'datum_0_1': 5, 'datum_0_2': 20, 
+        }
+        request = self.get_request(path = self.changelist_path)
+        changelist = self.get_changelist(request)
+        params = changelist.get_filters_params(form_data)
+        self.assertNotIn('datum__range', params)
+        self.assertIn('datum', params)
+        self.assertEqual(params['datum'], PartialDate(2020, 5, 20))
+        
+    def test_changelist_query(self):
+        # Using the filter params, assert that the changelist displays the correct 
+        # queryset results.
+        pass
+        
+    def test_get_filters_params_multifield(self):
+        # Check how changelist copes with MultiValueFields such as PartialDateFormField:
+        # the changelist must query with the cleaned data only and not the indiviual fields.
+        self.model_admin.search_form_kwargs = {'fields': ['datum']}
+        form_data = {'datum_0':2020, 'datum_1': 5, 'datum_2': 20}
+        request = self.get_request(path = self.changelist_path)
+        changelist = self.get_changelist(request)
+        
+        expected = PartialDate(2020, 5, 20)
+        params = changelist.get_filters_params(form_data)
+        self.assertIn('datum', params)
+        self.assertEqual(params['datum'], expected)
+        for key in form_data:
+            with self.subTest():
+                self.assertNotIn(key, params)
