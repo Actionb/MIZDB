@@ -69,33 +69,6 @@ class AdminSearchFormMixin(object):
                     return True
         return super().lookup_allowed(lookup, value)    
         
-#    def get_preserved_filters(self, request):
-#        """
-#        Update the querystring for the changelist with possibly new date from the form the user has 
-#        sent.
-#        """
-#        #FIXME: FIX THIS!!
-#        preserved_filters =  super().get_preserved_filters(request) #'_changelist_filters=ausgabe__magazin%3D326%26ausgabe%3D14962'
-#
-#        if not (request.POST and '_changelist_filters' in request.GET):
-#            # Either this is request has no POST or no filters were used on the changelist
-#            return preserved_filters
-#            
-#        # Decode the preserved_filters string to get the keys and values that were used to filter with back
-#        filter_items = parse_cl_querystring(preserved_filters)
-#        for k, v in filter_items.copy().items():
-#            if k in request.POST and request.POST[k]:
-#                # This changelist filter shows up in request.POST, the user may have changed its value
-#                filter_items[k] = request.POST[k] 
-#            
-#            # Flatten the lists of values
-#            if isinstance(filter_items[k], list) and len(filter_items[k]) == 1:
-#                filter_items[k] = filter_items[k][0]
-#        preserved_filters = parse_qs(preserved_filters) 
-#        preserved_filters['_changelist_filters'] = urlencode(sorted(filter_items.items()))
-#        return urlencode(preserved_filters)
-        
-        
     def get_changeform_initial_data(self, request):
         """ Turn _changelist_filters string into a useable dict of field_path:value
             so we can fill some formfields with initial values later on. 
