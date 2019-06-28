@@ -50,7 +50,7 @@ class AdminSearchFormMixin(object):
         A hook that allows changing the context data of the changelist response after it 
         has been created by changelist_view().
         """
-        if not isinstance(response.context_data, dict):
+        if not hasattr(response, 'context_data') or not isinstance(response.context_data, dict):
             return response
         if hasattr(self, 'search_form'):
             response.context_data['media'] += self.search_form.media
