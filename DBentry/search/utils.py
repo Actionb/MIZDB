@@ -2,46 +2,44 @@ from django.contrib import admin
 from django.core import exceptions
 from django.db.models.constants import LOOKUP_SEP    
 
+def get_fields_and_lookups_from_path(model, field_path):
+    """
+    Returns list of fields (using django admin's get_fields_from_path) and lookups of a given field_path.
+    e.g.: 'pizza__toppings__icontains' -> [pizza, toppings], ['icontains']
+    """
+    fields, lookups = [], []
+    path = field_path
+    while path:
+        try:
+            fields = admin.utils.get_fields_from_path(model, path)
+            break
+        except (exceptions.FieldDoesNotExist, admin.utils.NotRelationField):
+            # Remove the last part of the path as it may be a lookup 
+            # and try again with the shortened path.
+            path = path.split(LOOKUP_SEP)
+            lookups.append(path.pop(-1))
+            path = LOOKUP_SEP.join(path)
+    return fields, list(reversed(lookups))
+    
 def get_dbfield_from_path(model, field_path):
     """
-    Returns:
-        - the last model field in the path 'field_path' 
-        from root model 'model'
-        - a list of valid lookups that were part of 'field_path'
-    
-    Implementation is very close to 
-    django.contrib.admin.utils.get_fields_from_path
-    except that it only returns the last model field found 
-    and that it can handle lookups in the field_path.
+    Returns the ultimate, concrete target field of a field path and the lookups used on that path.
     """
-    pieces = field_path.split(LOOKUP_SEP)
-    parent = model
-    db_field, lookups = None, []
-    while pieces:
-        piece = pieces.pop(0)
-        try:
-            db_field = parent._meta.get_field(piece)
-        except exceptions.FieldDoesNotExist:
-            # piece is definitely not a model field;
-            # but it may still be a lookup,
-            # if we have previously found any db_field.
-            if db_field is None:
-                raise
-            lookups = [piece] + pieces
-            break
-        try:
-            parent = admin.utils.get_model_from_relation(db_field)
-        except admin.utils.NotRelationField:
-            # db_field is not a relation field; 
-            # every piece left over should be a lookup
-            lookups = pieces
-            break
-            
-    if not db_field.concrete:
+    fields, lookups = get_fields_and_lookups_from_path(model, field_path)
+    if not fields:
+        raise exceptions.FieldDoesNotExist(
+            "%s has no field named '%s'" % (model._meta.model_name, field_path)
+        )
+    db_field = fields[-1]
+    if not db_field.concrete: 
         # 'db_field' is a relation object.
         db_field = db_field.field
-            
-    # Check the lookups we have collected.
+    return db_field, lookups
+    
+def validate_lookups(db_field, lookups):
+    """
+    Checks a list of lookups for validity for a given db field.
+    """
     unsupported = []
     for lookup in lookups:
         if lookup not in db_field.get_lookups():
@@ -50,7 +48,6 @@ def get_dbfield_from_path(model, field_path):
         raise exceptions.FieldError(
             "Unsupported lookup(s) '%s' for %s." % (", ".join(unsupported), db_field.__class__.__name__)
         )
-    return db_field, lookups
 
 def strip_lookups_from_path(path, lookups):
     """
