@@ -6,6 +6,7 @@ from django.db.models.constants import LOOKUP_SEP
 from django.http import HttpResponseRedirect, QueryDict
 from django.urls import reverse
 
+from DBentry.search.utils import get_fields_and_lookups_from_path, strip_lookups_from_path
 from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
 
 class AdminSearchFormMixin(object):
@@ -58,16 +59,21 @@ class AdminSearchFormMixin(object):
         return response       
         
     def lookup_allowed(self, lookup, value):
-        if self.has_search_form():
-            # allow lookups defined in advanced_search_form
-            #TODO: adjust this to the new advanced_search_form!
-            for field_list in getattr(self, 'advanced_search_form').values():
-                if lookup in field_list:
-                    return True
-                # the lookup may look like this: field_name__lookup, single out the field_name and try again
-                if LOOKUP_SEP in lookup and lookup.rsplit(LOOKUP_SEP, 1)[0] in field_list:
-                    return True
-        return super().lookup_allowed(lookup, value)    
+        allowed = super().lookup_allowed(lookup, value)
+        if allowed or not hasattr(self, 'search_form'):
+            # super() determined the lookup is allowed or 
+            # this model admin has no search form instance set:
+            # no reason to dig deeper.
+            return allowed
+        # Allow lookups defined in advanced_search_form
+        # Extract the lookups from the field_path 'lookup'.
+        _, lookups = get_fields_and_lookups_from_path(self.model, lookup)
+        # Remove all lookups from the field_path to end up with just a relational path.
+        field_path = strip_lookups_from_path(lookup, lookups)
+        # Now check that the field_path is in the form's fields and 
+        # that the lookups are part of that field's registered lookups.        
+        return (field_path in self.search_form.fields) and \
+            (set(lookups).issubset(self.search_form.lookups.get(field_path, [])))
         
     def get_changeform_initial_data(self, request):
         """ Turn _changelist_filters string into a useable dict of field_path:value

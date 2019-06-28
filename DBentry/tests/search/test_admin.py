@@ -56,73 +56,7 @@ class TestAdminMixin(AdminTestCase):
         # Assert that the changelist_view's response context contains 'advanced_search_form'.
         response = self.client.get(path = self.changelist_path)
         self.assertIn('advanced_search_form', response.context)
-    
-# ChangelistSearchFormMixin inherits from object but calls
-# super().get_filters_params; object cannot be patched!
-# create some dummy class to set up a fitting inheritance.
-class DummyParent(object):
-    def get_filters_params(self, *args, **kwargs):
-        pass
-    
-@mock.patch.object(DummyParent, 'get_filters_params')
-class TestChangelistMixin(MyTestCase):
-    
-    def get_dummy_changelist(self, bases = None, attrs = None):
-        bases = bases or (ChangelistSearchFormMixin, DummyParent)
-        attrs = attrs or {}
-        return type('Changelist', bases, attrs)
-    
-    def test_get_filters_params(self, super_get_params):
-        initial_params = {'seite': '1', 'genre__genre': 1, 'somethingelse': 0}
-        super_get_params.return_value = initial_params
-
-        mocked_form = mock.Mock()
-        mocked_form.fields = ['seite', 'genre__genre']
-        mocked_form.get_filter_params.return_value = {'seite': 1, 'genre__genre': 2}
-        
-        mocked_model_admin = mock.Mock()
-        mocked_model_admin.get_search_form.return_value = mocked_form
-        
-        changelist = self.get_dummy_changelist(attrs = {'model_admin': mocked_model_admin})()
-        params = changelist.get_filters_params(initial_params)
-        # params should be updated by get_filter_params.return_value while 
-        # retaining any other params (somethingelse).
-        expected = {'seite': 1, 'genre__genre': 2, 'somethingelse': 0}
-        for key, value in expected.items():
-            with self.subTest():
-                self.assertIn(key, params)
-                self.assertEqual(params[key], value)
-        self.assertEqual(len(expected), len(params))
-        
-    def test_get_filters_params_removes_form_fields_from_params(self, super_get_params):
-        # Assert that any params connected to fields of the form 
-        # are removed if the formfield's values are empty/invalid.
-        initial_params = {'seite': '1'}
-        super_get_params.return_value = initial_params
-
-        mocked_form = mock.Mock()
-        mocked_form.fields = ['seite', 'somethingelse']
-        mocked_form.get_filter_params.return_value = {}
-        
-        mocked_model_admin = mock.Mock()
-        mocked_model_admin.get_search_form.return_value = mocked_form
-        
-        changelist = self.get_dummy_changelist(attrs = {'model_admin': mocked_model_admin})()
-        self.assertNotIn('seite', changelist.get_filters_params(initial_params))
-        
-    def test_get_filters_params_returns_params_on_exception(self, super_get_params):
-        # Assert that get_filters_params returns the initial params upon 
-        # encountering an AttributeError when trying to call the model admin's
-        # get_search_form method.
-        super_get_params.return_value = 'Foobar'
-        params = self.get_dummy_changelist()().get_filters_params(params = 'Beepboop')
-        self.assertEqual(params, 'Foobar')
-        
-class TestSearchFormChangelist(AdminTestCase):
-    # Tests without heavy mocking.
-    
-    model = _models.bildmaterial
-    model_admin_class = _admin.BildmaterialAdmin
+        self.assertIn(SEARCH_VAR, response.context)
     
     def test_context_updated_with_form_media(self):
         # Assert that the context for the response contains the form's media.
@@ -140,15 +74,33 @@ class TestSearchFormChangelist(AdminTestCase):
                 self.assertIn(group, media._css)
                 self.assertIn(css, media._css[group])
                 
+    def test_lookup_allowed(self):
+        self.model_admin.search_form_kwargs = {'fields': ['genre__genre']}
+        self.model_admin.get_search_form()
+        self.assertTrue(self.model_admin.lookup_allowed('genre__genre', None))
+        self.model_admin.search_form.lookups['genre__genre'] = ['icontains']
+        msg = "Registered lookup 'icontains' for genre__genre should be allowed."
+        self.assertTrue(self.model_admin.lookup_allowed('genre__genre__icontains', None), msg = msg) 
+        msg = "Lookup 'icontains' for genre__genre is not registered"\
+            " on the search_form's lookup mapping and thus should not be allowed."
+        self.assertFalse(self.model_admin.lookup_allowed('genre__genre__year', None), msg = msg)
+
+class TestSearchFormChangelist(AdminTestCase):
+    # Tests without heavy mocking.
+    
+    model = _models.bildmaterial
+    model_admin_class = _admin.BildmaterialAdmin
     def test_get_filters_params_select_multiple_lookup(self):
         # Assert that the params returned contain a valid lookup (i.e. '__in' for SelectMultiple).
+        g1 = _models.genre.objects.create(genre='Beep')
+        g2 = _models.genre.objects.create(genre='Boop')
+        form_data = {'genre': [g1, g2]}
         self.model_admin.search_form_kwargs = {'fields': ['genre']}
-        form_data = {'genre': [1, 2]}
         request = self.get_request(path = self.changelist_path)
         changelist = self.get_changelist(request)
         params = changelist.get_filters_params(form_data)
         self.assertIn('genre__in', params)
-        self.assertEqual(params['genre__in'], [1, 2])
+        self.assertEqual(list(params['genre__in']), [g1, g2])
         
     def test_get_filters_params_range_lookup(self):
         # Assert that the params returned contain a valid lookup (i.e. '__range' for RangeFormField).
