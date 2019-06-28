@@ -50,7 +50,75 @@ class AdminSearchFormMixin(object):
             response.context_data['media'] += self.search_form.media
         response.context_data.update(**kwargs)
         return response       
-
+        
+    def lookup_allowed(self, lookup, value):
+        if self.has_search_form():
+            # allow lookups defined in advanced_search_form
+            #TODO: adjust this to the new advanced_search_form!
+            for field_list in getattr(self, 'advanced_search_form').values():
+                if lookup in field_list:
+                    return True
+                # the lookup may look like this: field_name__lookup, single out the field_name and try again
+                if LOOKUP_SEP in lookup and lookup.rsplit(LOOKUP_SEP, 1)[0] in field_list:
+                    return True
+        return super().lookup_allowed(lookup, value)    
+        
+#    def get_preserved_filters(self, request):
+#        """
+#        Update the querystring for the changelist with possibly new date from the form the user has 
+#        sent.
+#        """
+#        #FIXME: FIX THIS!!
+#        preserved_filters =  super().get_preserved_filters(request) #'_changelist_filters=ausgabe__magazin%3D326%26ausgabe%3D14962'
+#
+#        if not (request.POST and '_changelist_filters' in request.GET):
+#            # Either this is request has no POST or no filters were used on the changelist
+#            return preserved_filters
+#            
+#        # Decode the preserved_filters string to get the keys and values that were used to filter with back
+#        filter_items = parse_cl_querystring(preserved_filters)
+#        for k, v in filter_items.copy().items():
+#            if k in request.POST and request.POST[k]:
+#                # This changelist filter shows up in request.POST, the user may have changed its value
+#                filter_items[k] = request.POST[k] 
+#            
+#            # Flatten the lists of values
+#            if isinstance(filter_items[k], list) and len(filter_items[k]) == 1:
+#                filter_items[k] = filter_items[k][0]
+#        preserved_filters = parse_qs(preserved_filters) 
+#        preserved_filters['_changelist_filters'] = urlencode(sorted(filter_items.items()))
+#        return urlencode(preserved_filters)
+        
+        
+    def get_changeform_initial_data(self, request):
+        """ Turn _changelist_filters string into a useable dict of field_path:value
+            so we can fill some formfields with initial values later on. 
+            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. 
+            Primarily used for setting ausgabe/magazin for Artikel add-views.
+        """
+        initial = super().get_changeform_initial_data(request)
+        if '_changelist_filters' not in initial or not initial['_changelist_filters']:
+            return initial
+            
+        # At this point, _changelist_filters is a string of format:
+        # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
+        # SEARCH_TERM_SEP: '='
+        filter_dict = {}
+        for part in initial['_changelist_filters'].split('&'):
+            if part and SEARCH_TERM_SEP in part:
+                if part.startswith("q="):
+                    # This part is a string typed into the searchbar, ignore it
+                    continue
+                try:
+                    k, v = part.split(SEARCH_TERM_SEP)
+                except ValueError:
+                    continue
+                if k not in initial:
+                    filter_dict[k] = v
+        initial.update(filter_dict)
+        return initial
+ 
+        
 class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     
     def get_search_form_class(self, **kwargs):
