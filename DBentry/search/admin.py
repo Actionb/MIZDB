@@ -16,7 +16,7 @@ class AdminSearchFormMixin(object):
     
     search_form_kwargs = None
     search_form_class = None
-    search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper
+    search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper #TODO: do we really need this?
     
     def has_search_form(self):
         #TODO: what's the best attribute to determine that a search_form is wanted?
@@ -110,7 +110,7 @@ class AdminSearchFormMixin(object):
         django.contrib.admin.templatetags.admin_urls.add_preserved_filters
         to tack on the changelist filters to the redirect url.
         (add_preserved_filters is also used to modify the links of result items)
-        But add_preserved_filters drops multiple values from a SelectMultiple by 
+        However, add_preserved_filters drops multiple values from a SelectMultiple by 
         calling dict() on a parsed querystring with multiple values.
         
         To preserve all the filters, we must readd these dropped values to the query string.
@@ -144,24 +144,20 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
         
 class ChangelistSearchFormMixin(object):
     
-    def get_filters_params(self, params=None):
-        lookup_params = super().get_filters_params(params)
-        try:
-            form = self.model_admin.get_search_form(data = params)
-        except AttributeError:
-            # model_admin does not have the get_search_form method;
-            # most likely, the ModelAdmin does not include the 
-            # advanced_search_form mixin.
-            return lookup_params
-        # Preliminarily remove all params that belong to the search form
-        # so that, if the form is invalid, the form's data is not 
-        # going to be used to filter the changelist's queryset.
-        #NOTE: should form.clean do this? 
-        for field_name in form.fields:
-            if field_name in lookup_params: 
-                del lookup_params[field_name]
-                
-        lookup_params.update(form.get_filter_params())
-        return lookup_params
+    def get_search_form_filters(self, data):
+        if not isinstance(self.model_admin, AdminSearchFormMixin):
+            return {}
+        result = {}
+        params = self.model_admin.get_search_form(data = data).get_filters_params()
+        for lookup, value in params.items():
+            if 'in' in lookup.split(LOOKUP_SEP): # or '__in' in lookup.split(LOOKUP_SEP)?
+                # Create a string with comma separated values.
+                # django admin's prepare_lookup_value() expects an '__in' lookup's value as such.
+                result[lookup] = ",".join(str(pk) for pk in value.values_list('pk', flat=True).order_by('pk'))
+            else:
+                result[lookup] = value
+        return result
         
-    
+    def get_filters_params(self, params=None):
+        return self.get_search_form_filters(params or self.request.GET)
+        

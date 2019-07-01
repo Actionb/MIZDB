@@ -303,7 +303,8 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_get_changeform_initial_data_no_initial(self):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
-        
+    
+    #TODO: this is now part of DBentry.search
     def test_get_changeform_initial_data_with_changelist_filters(self):
         initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
         request = self.get_request(data=initial)
@@ -389,6 +390,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_kuenstler_string(self):
         self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
         
+    #TODO: this is now part of DBentry.search
     def test_get_changeform_initial_data_with_changelist_filters(self):
         # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
         # from ausgabe__magazin path
@@ -850,7 +852,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_formate_string(self):
         self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
         
-@tag("wip")
+@tag("wip") #TODO: remove this tag
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.SpielortAdmin
@@ -871,7 +873,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'technik',       'fld_name': 'spielort', 'label': 'Technik (1)'}, 
         {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'}
     ]
-@tag("wip")
+@tag("wip") #TODO: remove this tag
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.VeranstaltungAdmin
@@ -1053,7 +1055,7 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
     ]
  
-@tag("wip")   
+@tag("wip") #TODO: remove this tag
 class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         
     model_admin_class = _admin.BildmaterialAdmin

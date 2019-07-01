@@ -10,7 +10,7 @@ from collections import OrderedDict
 from DBentry.ac.widgets import make_widget
 from DBentry.forms import MIZAdminForm
 
-from .utils import get_dbfield_from_path, strip_lookups_from_path
+from .utils import get_dbfield_from_path, strip_lookups_from_path, validate_lookups
 
 class RangeWidget(forms.MultiWidget):
     
@@ -27,7 +27,9 @@ class RangeWidget(forms.MultiWidget):
         return super().value_from_datadict(data, files, name)
         
     def decompress(self, value):
-        return value.split(',')
+        if value:
+            return value.split(',')
+        return [None, None]
         
 class RangeFormField(forms.MultiValueField):
     """
@@ -55,7 +57,7 @@ class SearchForm(forms.Form):
         js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
         
     def get_filters_params(self):
-        params = MultiValueDict()
+        params = {}
         if not self.is_valid():
             return params
             
@@ -66,7 +68,8 @@ class SearchForm(forms.Form):
             else:
                 param_key = field_name
             param_value = value
-            
+            #TODO: value could be a model instance or queryset (ModelChoiceField/Multiple-)
+            # django's prepare_lookup_value can only deal with string params
             if isinstance(formfield, RangeFormField):
                 start, end = value
                 start_empty = start in formfield.empty_values
@@ -158,6 +161,7 @@ class SearchFormFactory(LookupRegistry):
         for path in fields:
             try:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
+                validate_lookups(db_field, lookups)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError):
                 continue
                 

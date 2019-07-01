@@ -64,9 +64,7 @@ class TestSearchFormFactory(MyTestCase):
         # A callback that is not a callable should raise a TypeError
         with self.assertRaises(TypeError):
             self.factory(_models.artikel, formfield_callback = 1)
-        
-        
-    
+            
 class TestSearchForm(MyTestCase):
     
     model = _models.artikel
@@ -136,5 +134,5 @@ class TestSearchForm(MyTestCase):
         self.assertIn('datum', form.cleaned_data)
         expected = PartialDate(2020, 5, 20)
         self.assertEqual(form.cleaned_data['datum'], expected)
-        self.assertEqual(form.get_filters_params(), {'datum': [expected]})
+        self.assertEqual(form.get_filters_params(), {'datum': expected})
     
