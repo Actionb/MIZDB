@@ -219,25 +219,6 @@ class AdminTestMethodsMixin(object):
             self.assertGreater(media._js.index(jquery_init), media._js.index(jquery_base), 
                 msg = "jquery base must be loaded before jquery.init")
     
-    def test_lookup_allowed_adv_sf(self):
-        # Assert that all fields and their lookups belonging to advanced search form are allowed
-        request = self.get_request()
-        advsf_dict = advanced_search_form_tag(self.get_changelist(request = request))['asf'] # advsf_dict = dict(selects=[{},...], gtelt=[], simple=[], ac_form=form)
-        for lookup_group_name, lookup_groups in advsf_dict.items():
-            if lookup_group_name in ('selects', 'simple'):
-                lookups = [lookup_group['query_string'] for lookup_group in lookup_groups]
-            elif lookup_group_name == 'gtelt':
-                # gtelt contains two lookups, gte_query_string and lt_query_string, wrangle them into a flattened iterator
-                lookups = chain.from_iterable((lookup_group['gte_query_string'], lookup_group['lt_query_string']) for lookup_group in lookup_groups)
-            elif lookup_group_name == 'ac_form':
-                lookups = lookup_groups.base_fields.keys()
-            else:
-                # Agh, just continue I am bad at computers
-                continue
-                
-            for lookup in lookups:
-                self.assertTrue(self.model_admin.lookup_allowed(lookup = lookup, value = None), msg = 'lookup not allowed: ' + lookup)
-            
 class TestMIZModelAdmin(AdminTestCase):
     
     model_admin_class = _admin.DateiAdmin
@@ -368,38 +349,7 @@ class TestMIZModelAdmin(AdminTestCase):
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Mantest'])
-    
-    def test_get_preserved_filters(self):
-        query_string = '_changelist_filters=sender%3D1'
-        path = self.add_path + '?_changelist_filters=sender=1'
-        request_data = {'_changelist_filters': ['sender=1']}
-        
-        # Ignore requests without POST or or without _changelist_filters in GET
-        request = self.get_request(path = self.add_path)
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, '', msg = 'preserved_filters updated without request.POST and without _changelist_filters in request.GET')
-        
-        request = self.get_request(path = path)
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, query_string, msg = 'preserved_filters updated without request.POST')
-        
-        request = self.get_request(path = self.add_path)
-        request.POST = {'sender':'2'}
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, '', msg = 'preserved_filters updated without _changelist_filters')
-        
-        # Do not use key value pairs from POST data that are not present in GET _changelist_filters 
-        request = self.get_request(path = path, data = request_data)
-        request.POST = {'titel':'Beep boop'}
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, query_string, msg = 'preserved_filters updated for field not present in _changelist_filters')
-        
-        # Update the changelist filters if applicable
-        request = self.get_request(path = path, data = request_data)
-        request.POST = {'sender':'2'}
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, '_changelist_filters=sender%3D2', msg = 'preserved_filters not updated')
-       
+
     def test_get_search_fields(self):
         # Assert that get_search_fields does not include a iexact lookup for primary keys that are a relation
         search_fields = _admin.KatalogAdmin(_models.Katalog, self.admin_site).get_search_fields()
