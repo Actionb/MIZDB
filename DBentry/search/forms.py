@@ -12,6 +12,8 @@ from DBentry.forms import MIZAdminForm
 
 from .utils import get_dbfield_from_path, strip_lookups_from_path, validate_lookups
 
+#TODO: have 'and'/'or' checkboxes for SelectMultiple
+
 class RangeWidget(forms.MultiWidget):
     
     #TODO: needs a custom template to squeeze the '-' in between the two other widgets
@@ -122,11 +124,10 @@ class SearchForm(forms.Form):
 class MIZAdminSearchForm(MIZAdminForm, SearchForm):
     pass
     
-class LookupRegistry:
-    range_lookup= django_lookups.Range
-    range_upper_bound = django_lookups.LessThanOrEqual
+class SearchFormFactory:
     
-class SearchFormFactory(LookupRegistry):
+    range_lookup = django_lookups.Range
+    range_upper_bound = django_lookups.LessThanOrEqual
     
     def __call__(self, *args, **kwargs):
         return self.get_search_form(*args, **kwargs)
@@ -163,8 +164,6 @@ class SearchFormFactory(LookupRegistry):
 #                     formfield_callback=None, localized_fields=None,
 #                     labels=None, help_texts=None, error_messages=None,
 #                     field_classes=None, *, apply_limit_choices_to=True):
-        #TODO: add 'bases' kwarg to allow overriding LookupRegistry
-        #TODO: is LookupRegistry even needed?
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback): 
@@ -197,7 +196,7 @@ class SearchFormFactory(LookupRegistry):
             if field_classes and path in field_classes:
                 formfield_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
-                formfield_kwargs['forward'] = forwards[path]
+                formfield_kwargs['forward'] = forwards[path] #TODO: test forward!
                 
             formfield_name = strip_lookups_from_path(path, lookups)
             
@@ -213,7 +212,9 @@ class SearchFormFactory(LookupRegistry):
                 
         base_form = form or SearchForm
         attrs['lookups'] = lookup_mapping
-        return type('SearchForm', (base_form, LookupRegistry), attrs)
+        attrs['range_lookup'] = self.range_lookup
+        attrs['range_upper_bound'] = self.range_upper_bound
+        return type('SearchForm', (base_form, ), attrs)
         
 searchform_factory = SearchFormFactory()
             
