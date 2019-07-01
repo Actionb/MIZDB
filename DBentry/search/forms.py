@@ -19,13 +19,6 @@ class RangeWidget(forms.MultiWidget):
     def __init__(self, widget, attrs = None):
         super().__init__(widgets = [widget]*2, attrs = attrs)
         
-    def value_from_datadict(self, data, files, name):
-        # Allow an immediate lookup of 'name' instead of
-        # MultiWidget's usual 'name_index'.
-        if name in data:
-            return data[name]
-        return super().value_from_datadict(data, files, name)
-        
     def decompress(self, value):
         if value:
             return value.split(',')
@@ -40,11 +33,17 @@ class RangeFormField(forms.MultiValueField):
     widget = RangeWidget
     
     def __init__(self, formfield, require_all_fields = False, **kwargs):
-        kwargs['widget'] = RangeWidget(formfield.widget)
-        #NOTE: it shouldn't be necessary to set required = False, the factory already does that?
-#        kwargs['required'] = False
+        if not kwargs.get('widget', None):
+            kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
         super().__init__(fields = [formfield]*2, require_all_fields = require_all_fields, **kwargs)
+        
+    def get_initial(self, initial, name):
+        widget_data = self.widget.value_from_datadict(initial, None, name)
+        if isinstance(self.fields[0], forms.MultiValueField):
+            return [self.fields[0].compress(widget_data[0]), self.fields[1].compress(widget_data[1])]
+        else:
+            return widget_data
     
     def clean(self, value):
         return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
@@ -55,6 +54,34 @@ class SearchForm(forms.Form):
             'all' : ('admin/css/forms.css', )
         }
         js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.initial = self.prepare_initial(self.initial)
+        
+    def get_initial_for_field(self, field, field_name):
+        if not field_name in self.initial and isinstance(field, forms.MultiValueField):
+            # Only the individual subfields show up in a request payload.
+            if isinstance(field, RangeFormField):
+                return field.get_initial(self.initial, field_name)
+            widget_data = field.widget.value_from_datadict(self.initial, None, field_name)
+            return field.compress(widget_data)
+        return super().get_initial_for_field(field, field_name)        
+        
+    def prepare_initial(self, initial):
+        # Need to map request querystring to formfields
+        # Need to flatten request payload for all non-select multiple
+        cleaned = {}
+        if isinstance(initial, MultiValueDict):
+            iterator = initial.lists()
+        else:
+            iterator = initial.items()
+        for k, v in iterator:
+            if isinstance(v, (list, tuple)) and len(v) <= 1:
+                cleaned[k] = v[0] if v else None
+            else:
+                cleaned[k] = v
+        return cleaned
         
     def get_filters_params(self):
         params = {}
@@ -68,8 +95,7 @@ class SearchForm(forms.Form):
             else:
                 param_key = field_name
             param_value = value
-            #TODO: value could be a model instance or queryset (ModelChoiceField/Multiple-)
-            # django's prepare_lookup_value can only deal with string params
+            
             if isinstance(formfield, RangeFormField):
                 start, end = value
                 start_empty = start in formfield.empty_values
@@ -92,12 +118,6 @@ class SearchForm(forms.Form):
                 
             params[param_key] = param_value 
         return params
-    
-    def get_initial_for_field(self, field, field_name):
-        # Use getlist() if initial is a MultiValueDict and we're working on a SelectMultiple.
-        if isinstance(field.widget, forms.SelectMultiple) and isinstance(self.initial, MultiValueDict):
-            return self.initial.getlist(field_name, field.initial)
-        return super().get_initial_for_field(field, field_name)
         
 class MIZAdminSearchForm(MIZAdminForm, SearchForm):
     pass
@@ -132,10 +152,6 @@ class SearchFormFactory(LookupRegistry):
             if kwargs.get('forward', None) is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             kwargs['widget'] = make_widget(**widget_opts)
-            # TODO: aren't these set by the respective db_field?
-#            kwargs['queryset'] = db_field.related_model.objects
-#            if kwargs.get('label', None) is None:
-#                kwargs['label'] = db_field.verbose_name.title()
         # It's a search form, nothing is required!
         kwargs['required'] = False
         return db_field.formfield(**kwargs)
@@ -148,6 +164,7 @@ class SearchFormFactory(LookupRegistry):
 #                     labels=None, help_texts=None, error_messages=None,
 #                     field_classes=None, *, apply_limit_choices_to=True):
         #TODO: add 'bases' kwarg to allow overriding LookupRegistry
+        #TODO: is LookupRegistry even needed?
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback): 
@@ -186,7 +203,7 @@ class SearchFormFactory(LookupRegistry):
             
             formfield = formfield_callback(db_field, **formfield_kwargs)
             if range_lookup_name in lookups:
-                attrs[formfield_name] = RangeFormField(formfield)
+                attrs[formfield_name] = RangeFormField(formfield, required = False)
             else:
                 attrs[formfield_name] = formfield
             
