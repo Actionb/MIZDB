@@ -23,7 +23,7 @@ def get_fields_and_lookups_from_path(model, field_path):
     
 def get_dbfield_from_path(model, field_path):
     """
-    Returns the ultimate, concrete target field of a field path and the lookups used on that path.
+    Returns the final, concrete target field of a field path and the lookups used on that path.
     """
     fields, lookups = get_fields_and_lookups_from_path(model, field_path)
     if not fields:
