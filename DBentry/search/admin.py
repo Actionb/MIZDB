@@ -10,11 +10,9 @@ from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
 class AdminSearchFormMixin(object):
     
     #TODO: change_list_template attribute
-    #TODO: what if we dont want a search_form?
     
     search_form_kwargs = None
     search_form_class = None
-    search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper #TODO: do we really need this?
     
     def has_search_form(self):
         return bool(self.search_form_kwargs)
@@ -28,11 +26,8 @@ class AdminSearchFormMixin(object):
 
     def get_search_form(self, **form_kwargs):
         form_class = self.get_search_form_class()
-        form = form_class(**form_kwargs)
-        if callable(self.search_form_wrapper):
-            form = self.search_form_wrapper(form)
-        self.search_form = form
-        return form
+        self.search_form = form_class(**form_kwargs)
+        return self.search_form
         
     def changelist_view(self, request, extra_context = None):
         if extra_context is None: extra_context = {}

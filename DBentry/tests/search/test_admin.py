@@ -34,20 +34,7 @@ class TestAdminMixin(AdminTestCase):
             with self.subTest(key=key, value=value):
                 self.assertIn(key, kwargs)
                 self.assertEqual(kwargs[key], value)
-    
-    @skip("removal pending")
-    def test_get_search_form_with_wrapper(self):
-        # Assert that the search form is wrapped in a wrapper declared by search_form_wrapper attribute.
-        def dummy_wrapper(form):
-            setattr(form, 'formwaswrapped', True)
-            return form
-        
-        with mock.patch.object(self.model_admin, 'get_search_form_class') as mocked_form_class:
-            mocked_form_class.return_value = type('Dummy', (forms.Form, ), {})
-            self.model_admin.search_form_wrapper = dummy_wrapper
-            form = self.model_admin.get_search_form()
-            self.assertTrue(hasattr(form, 'formwaswrapped'))        
-    
+                
     def test_search_form_added_to_response_context(self):
         # Assert that the changelist_view's response context contains 'advanced_search_form'.
         response = self.client.get(path = self.changelist_path)
