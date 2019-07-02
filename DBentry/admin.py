@@ -96,13 +96,14 @@ class AudioAdmin(MIZModelAdmin):
     save_on_top = True
     collapse_all = True
     
-    advanced_search_form = {
-        'selects' : ['musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma', 
-                        'format__format_size', 'format__format_typ', 'format__tag'], 
-        'simple' : ['release_id'], 
-        'labels' : {'format__tag':'Tags'}, 
+    search_form_kwargs = {
+        'fields': [
+            'musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma', 
+            'format__format_size', 'format__format_typ', 'format__tag', 'release_id', 
+        ], 
+        'labels': {'format__tag':'Tags'}
     }
-        
+    
     def kuenstler_string(self, obj):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
     kuenstler_string.short_description = 'Künstler'
@@ -140,12 +141,19 @@ class AusgabenAdmin(MIZModelAdmin):
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     fields = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
     flds_to_group = [('status', 'sonderausgabe')]
-    
-    advanced_search_form = {
-        'gtelt':['ausgabe_jahr__jahr', 'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_monat__monat__ordinal'], 
-        'selects':['magazin','status'], 
-        'simple':['jahrgang', 'sonderausgabe'], 
-        'labels' : {'ausgabe_monat__monat__ordinal':'Monatsnummer'}
+   
+    search_form_kwargs = {
+        'fields': [
+            'magazin','status', 'ausgabe_jahr__jahr__range', 'ausgabe_num__num__range', 
+            'ausgabe_lnum__lnum__range', 'ausgabe_monat__monat__ordinal__range', 
+            'jahrgang', 'sonderausgabe'
+        ], 
+        'labels': {
+            'ausgabe_jahr__jahr__range': 'Jahr', 
+            'ausgabe_num__num__range': 'Nummer', 
+            'ausgabe_lnum__lnum__range': 'Lfd. Nummer', 
+            'ausgabe_monat__monat__ordinal__range':'Monatsnummer'
+        }
     }
     
     def get_changelist(self, request, **kwargs):
@@ -199,8 +207,8 @@ class AutorAdmin(MIZModelAdmin):
     
     inlines = [MagazinInLine]
 
-    advanced_search_form = {
-        'selects' : ['magazin']
+    search_form_kwargs = {
+        'fields' : ['magazin']
     }
             
     def magazin_string(self, obj):
@@ -245,12 +253,14 @@ class ArtikelAdmin(MIZModelAdmin):
     inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
     fields = [('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen']
     save_on_top = True
-                                
-    advanced_search_form = {
-        'gtelt':['seite', ], 
-        'selects':['ausgabe__magazin', ('ausgabe', 'ausgabe__magazin'), 'schlagwort', 'genre', 'band', 'musiker', 'autor'], 
-        'simple':[], 
-    }  
+    
+    search_form_kwargs = {
+        'fields': [
+            'ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band', 
+            'musiker', 'autor', 'seite__range'
+        ], 
+        'forwards': {'ausgabe': 'ausgabe__magazin'}
+    }
 
     def get_queryset(self, request):
         #TODO: rethink this now that we have chronologic_order for ausgabe -- also monat_id should not longer used
@@ -303,8 +313,8 @@ class BandAdmin(MIZModelAdmin):
     googlebtns = ['band_name']
     save_on_top = True
     
-    advanced_search_form = {
-        'selects' : ['musiker', 'genre', 'orte__land', 'orte'], 
+    search_form_kwargs = {
+        'fields' : ['musiker', 'genre', 'orte__land', 'orte'], 
         'labels' : {'musiker':'Mitglied'}
     }
         
@@ -358,7 +368,7 @@ class BildmaterialAdmin(MIZModelAdmin):
     save_on_top = True
     collapse_all = True
     
-    search_form_kwargs =  {'fields': ['datum']}
+    search_form_kwargs =  {'fields': ['genre__in', 'datum__range']} #TODO: set this properly
     
     index_category = 'Archivgut'
     
@@ -442,13 +452,13 @@ class BuchAdmin(MIZModelAdmin):
         ('Beschreibung & Bemerkungen', {'fields' : ['beschreibung', 'bemerkungen'], 'classes' : ['collapse', 'collapsed']}), 
     ]
     
-    advanced_search_form = {
-        'selects' : [
+    search_form_kwargs = {
+        'fields': [
             'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person', 
-            'schriftenreihe', 'buchband', 'verlag', 'sprache', 
+            'schriftenreihe', 'buchband', 'verlag', 'sprache', 'jahr', 'ISBN', 'EAN'
         ], 
-        'simple' : ['jahr', 'ISBN', 'EAN'], 
         'labels' : {'buchband': 'aus Buchband', 'jahr':'Jahr'}, 
+        'help_texts': {'autor': None} # this one contains help_texts for quick item creation which isn't allowed in search forms
     }
     
     crosslink_labels = {
@@ -521,12 +531,17 @@ class MagazinAdmin(MIZModelAdmin):
     
     inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
     
-    advanced_search_form = {
-        'simple': ['issn', 'fanzine'], 
-        'selects': ['m2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre'], 
-        'labels': {'m2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 'ort': 'Herausgabeort'}, 
+    search_form_kwargs = {
+        'fields': [
+            'm2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre', 
+            'issn', 'fanzine'
+        ], 
+        'labels': {
+            'm2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 
+            'ort': 'Herausgabeort'
+        }
     }
-        
+    
     def anz_ausgaben(self, obj):
         return obj.ausgabe_set.count()
     anz_ausgaben.short_description = 'Anz. Ausgaben'
@@ -566,9 +581,8 @@ class MusikerAdmin(MIZModelAdmin):
     googlebtns = ['kuenstler_name']
     save_on_top = True
     
-    advanced_search_form = {
-        'selects' : ['person', 'genre', 'band', 
-                'instrument','orte__land', 'orte'], 
+    search_form_kwargs = {
+        'fields' : ['person', 'genre', 'band', 'instrument','orte__land', 'orte'], 
     }
         
     def band_string(self, obj):
@@ -596,8 +610,9 @@ class PersonAdmin(MIZModelAdmin):
     
     fields = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     
-    advanced_search_form = {
-        'selects' : ['orte', 'orte__land', ('orte__bland', 'orte__land')]
+    search_form_kwargs = {
+        'fields' : ['orte', 'orte__land', 'orte__bland'], 
+        'forwards': {'orte__bland': 'orte__land'}
     }
     
     def Ist_Musiker(self, obj):
@@ -684,12 +699,11 @@ class VeranstaltungAdmin(MIZModelAdmin):
 @admin.register(_models.verlag, site=miz_site)
 class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
-    advanced_search_form = {
-        'selects' : ['sitz','sitz__land', 'sitz__bland'], 
+    search_form_kwargs = {
+        'fields' : ['sitz','sitz__land', 'sitz__bland'], 
         'labels' : {'sitz':'Sitz'}
     }
     
-        
 @admin.register(_models.video, site=miz_site)
 class VideoAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
@@ -726,8 +740,8 @@ class VideoAdmin(MIZModelAdmin):
 @admin.register(_models.bundesland, site=miz_site)
 class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
-    advanced_search_form = {
-        'selects' : ['ort__land'], 
+    search_form_kwargs = {
+        'fields' : ['ort__land'], 
     }
     
 @admin.register(_models.land, site=miz_site)
@@ -748,8 +762,8 @@ class OrtAdmin(MIZModelAdmin):
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
     
-    advanced_search_form = {
-        'selects' : ['land', 'bland']
+    search_form_kwargs = {
+        'fields' : ['land', 'bland']
     }
             
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -764,8 +778,8 @@ class BestandAdmin(MIZModelAdmin):
     #flds_to_group = [('ausgabe', 'ausgabe_magazin')]
     
     superuser_only = True
-    advanced_search_form = {
-        'selects' : ['bestand_art', 'lagerort'], 
+    search_form_kwargs = {
+        'fields' : ['bestand_art', 'lagerort'], 
     }
     
 @admin.register(_models.datei, site=miz_site)
@@ -831,9 +845,9 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
-    advanced_search_form = {
-        'selects': ['genre'], 
-        'gtelt': ['jahre__jahr']
+    
+    search_form_kwargs= {
+        'fields': ['genre', 'jahre__jahr'], 
     }
     
     def get_fieldsets(self, request, obj=None):
