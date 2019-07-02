@@ -316,12 +316,16 @@ class TestSearchFormChangelist(AdminTestCase):
             with self.subTest():
                 self.assertNotIn(key, params)
         
+    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_preserved_filters_result_list(self):
         # Assert that all items of the result list have the preserved filters attached to the link.
         preserved_filters_name = '_changelist_filters'
         filters = [
-            ('single_date', {'datum_0': '2019-05-19'}), 
-            ('date_range', {'datum_0': '2019-05-19', 'datum_1': '2019-05-20'}), 
+            ('single_date', {'datum_0_0':2020, 'datum_0_1': 5, 'datum_0_2': 20, }), 
+            ('date_range', {
+                'datum_0_0':2020, 'datum_0_1': 5, 'datum_0_2': 20, 
+                'datum_1_0':2020, 'datum_1_1': 5, 'datum_1_2': 22
+            }), 
             ('fk', {'reihe': str(self.reihe.pk)}),    
             ('m2m', {'genre': [self.genre1.pk, self.genre2.pk]}),
         ]
