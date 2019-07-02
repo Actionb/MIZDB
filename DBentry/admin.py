@@ -323,9 +323,9 @@ class BandAdmin(MIZModelAdmin):
     def orte_string(self, obj):
         return concat_limit(obj.orte.all())
     orte_string.short_description = 'Orte'
-from DBentry.search.admin import AdminSearchFormMixin, ChangelistSearchFormMixin
+
 @admin.register(_models.bildmaterial, site=miz_site)
-class BildmaterialAdmin(AdminSearchFormMixin, MIZModelAdmin):
+class BildmaterialAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.bildmaterial.genre.through
     class SchlInLine(BaseSchlagwortInline):

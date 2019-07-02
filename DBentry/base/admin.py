@@ -1,12 +1,9 @@
-from urllib.parse import urlencode, parse_qs
-
 from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.contrib.auth import get_permission_codename
 from django.utils.translation import override as translation_override
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
-from django.db.models.constants import LOOKUP_SEP
 
 from django import forms
 
@@ -15,12 +12,13 @@ from DBentry.base.models import ComputedNameModel
 from DBentry.changelist import MIZChangeList
 from DBentry.forms import AusgabeMagazinFieldForm, FormBase
 from DBentry.actions import merge_records
-from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
+from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
-from DBentry.utils import get_model_relations, parse_cl_querystring, ensure_jquery
+from DBentry.utils import get_model_relations,  ensure_jquery
+from DBentry.search.admin import MIZAdminSearchFormMixin
 
-class MIZModelAdmin(admin.ModelAdmin):
+class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
                                             # that matches a field in the group
