@@ -193,7 +193,7 @@ class SearchFormFactory:
             if labels and path in labels: 
                 formfield_kwargs['label'] = labels[path]
             if help_texts and path in help_texts:
-                formfield_kwargs['help_text'] = help_texts[path]
+                formfield_kwargs['help_text'] = help_texts[path] #TODO: only allow custom help_texts? Some fields have help_texts only useful for creation
             if error_messages and path in error_messages:
                 formfield_kwargs['error_messages'] = error_messages[path]
             if field_classes and path in field_classes:
