@@ -15,8 +15,11 @@ from .utils import get_dbfield_from_path, strip_lookups_from_path, validate_look
 #TODO: have 'and'/'or' checkboxes for SelectMultiple
 
 class RangeWidget(forms.MultiWidget):
-    
-    #TODO: needs a custom template to squeeze the '-' in between the two other widgets
+    class Media:
+        css = {
+            'all' : ('admin/css/rangewidget.css', )
+        }
+    template_name = 'rangewidget.html'
     
     def __init__(self, widget, attrs = None):
         super().__init__(widgets = [widget]*2, attrs = attrs)
