@@ -303,20 +303,7 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_get_changeform_initial_data_no_initial(self):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
-    
-    #TODO: this is now part of DBentry.search
-    def test_get_changeform_initial_data_with_changelist_filters(self):
-        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertTrue('ausgabe__magazin' in cf_init_data)
-        self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
         
-        # assert that the method can handle bad strings
-        request = self.get_request(data={'_changelist_filters':'thisisbad'})
-        with self.assertNotRaises(ValueError):
-            cf_init_data = self.model_admin.get_changeform_initial_data(request)
-            
     def test_construct_m2m_change_message(self):
         # auto created
         obj = self.model.band.through.objects.create(
@@ -390,14 +377,14 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_kuenstler_string(self):
         self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
         
-    #TODO: this is now part of DBentry.search
+    #NOTE: get_changeform_initial_data is now technically part of DBentry.search
     def test_get_changeform_initial_data_with_changelist_filters(self):
         # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
         # from ausgabe__magazin path
-        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
+        initial = {'_changelist_filters':'ausgabe__magazin=%s&q=asdasd&thisisbad' % self.mag.pk}
         request = self.get_request(data=initial)
         cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
+        self.assertEqual(cf_init_data.get('ausgabe__magazin'), self.mag)
 
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     

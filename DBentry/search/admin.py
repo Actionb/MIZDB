@@ -1,10 +1,8 @@
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
-from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
 from django.http import HttpResponseRedirect, QueryDict
-from django.urls import reverse
 
 from DBentry.search.utils import get_fields_and_lookups_from_path, strip_lookups_from_path
 from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
@@ -78,32 +76,22 @@ class AdminSearchFormMixin(object):
             (set(lookups).issubset(self.search_form.lookups.get(field_path, [])))
         
     def get_changeform_initial_data(self, request):
-        """ Turn _changelist_filters string into a useable dict of field_path:value
-            so we can fill some formfields with initial values later on. 
-            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. 
-            Primarily used for setting ausgabe/magazin for Artikel add-views.
+        """ 
+        Add data from the changelist filters to the add-form's initial.
         """
         initial = super().get_changeform_initial_data(request)
         if '_changelist_filters' not in initial or not initial['_changelist_filters']:
             return initial
+        
+        changelist_filters = QueryDict(initial['_changelist_filters'])
+        if self.has_search_form():
+            # Derive initial values directly from the processed search form data.
+            form = self.get_search_form(data=changelist_filters)
+            changelist_filters = form.get_filters_params()
             
-        # At this point, _changelist_filters is a string of format:
-        # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
-        # SEARCH_TERM_SEP: '='
-        filter_dict = {}
-        for part in initial['_changelist_filters'].split('&'):
-            if part and SEARCH_TERM_SEP in part:
-                if part.startswith("q="):
-                    # This part is a string typed into the searchbar, ignore it
-                    continue
-                try:
-                    k, v = part.split(SEARCH_TERM_SEP)
-                except ValueError:
-                    continue
-                if k not in initial:
-                    filter_dict[k] = v
-        initial.update(filter_dict)
-        return initial       
+        # let the intended initial overwrite the filters
+        initial = {**changelist_filters, **initial}
+        return changelist_filters
         
     def _response_post_save(self, request, obj):
         """
