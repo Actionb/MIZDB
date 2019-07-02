@@ -56,7 +56,7 @@ class RangeFormField(forms.MultiValueField):
 class SearchForm(forms.Form):
     class Media:
         css = {
-            'all' : ('admin/css/forms.css', )
+            'all' : ('admin/css/forms.css', 'admin/css/search_form.css')
         }
         js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
         
