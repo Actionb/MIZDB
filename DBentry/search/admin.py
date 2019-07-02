@@ -19,8 +19,7 @@ class AdminSearchFormMixin(object):
     search_form_wrapper = None # Wrapper class such as django admin's AdminForm wrapper #TODO: do we really need this?
     
     def has_search_form(self):
-        #TODO: what's the best attribute to determine that a search_form is wanted?
-        return self.search_form_kwargs is not None
+        return bool(self.search_form_kwargs)
 
     def get_search_form_class(self, **kwargs):
         if self.search_form_class is not None:
