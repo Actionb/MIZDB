@@ -245,10 +245,13 @@ class PartialDateWidget(widgets.MultiWidget):
         if 'widgets' in kwargs:
             _widgets = kwargs.pop('widgets')
         else:
-            style = {'style':'width:70px; margin-right:10px;'}
             _widgets = []
             for placeholder in ('Jahr', 'Monat', 'Tag'):
                 attrs = {'placeholder': placeholder}
+                if placeholder != 'Tag':
+                    style = {'style':'width:70px; margin-right:10px;'}
+                else:
+                    style = {'style':'width:70px;'}
                 attrs.update(style)
                 _widgets.append(widgets.NumberInput(attrs = attrs))
         super().__init__(_widgets, **kwargs)
