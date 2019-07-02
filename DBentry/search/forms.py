@@ -196,7 +196,7 @@ class SearchFormFactory:
             if field_classes and path in field_classes:
                 formfield_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
-                formfield_kwargs['forward'] = forwards[path] #TODO: test forward!
+                formfield_kwargs['forward'] = forwards[path]
                 
             formfield_name = strip_lookups_from_path(path, lookups)
             

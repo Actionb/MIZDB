@@ -66,6 +66,14 @@ class TestSearchFormFactory(MyTestCase):
         with self.assertRaises(TypeError):
             self.factory(_models.artikel, formfield_callback = 1)
             
+    def test_forward(self):
+        form_class = self.factory(_models.artikel, 
+            fields = ['ausgabe'], forwards = {'ausgabe':'magazin'}
+        )
+        self.assertIn('ausgabe', form_class.base_fields)
+        widget = form_class.base_fields['ausgabe'].widget
+        self.assertTrue(widget.forward)        
+            
 class TestSearchForm(MyTestCase):
     
     model = _models.artikel
