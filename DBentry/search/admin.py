@@ -1,6 +1,6 @@
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
-from django.contrib.admin.views.main import SEARCH_VAR
+from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
 from django.db.models.query import QuerySet
 from django.db.models.constants import LOOKUP_SEP
 from django.http import HttpResponseRedirect, QueryDict
@@ -41,7 +41,6 @@ class AdminSearchFormMixin(object):
         if extra_context is None: extra_context = {}
         search_form = self.get_search_form(initial = request.GET)
         extra_context['advanced_search_form'] = search_form
-        extra_context['search_var'] = SEARCH_VAR
         response = super().changelist_view(request, extra_context)
         self.update_changelist_context(response)
         return response
@@ -55,7 +54,11 @@ class AdminSearchFormMixin(object):
             return response
         if hasattr(self, 'search_form'):
             response.context_data['media'] += self.search_form.media
-        response.context_data.update(**kwargs)
+        # django's search form tag adds some more context items
+        if 'cl' in response.context_data:
+            extra = search_form_tag_context(response.context_data['cl'])
+            response.context_data.update(extra)
+        response.context_data.update(kwargs)
         return response       
         
     def lookup_allowed(self, lookup, value):
