@@ -205,7 +205,7 @@ class SearchFormFactory:
             
             formfield = formfield_callback(db_field, **formfield_kwargs)
             if range_lookup_name in lookups:
-                attrs[formfield_name] = RangeFormField(formfield, required = False)
+                attrs[formfield_name] = RangeFormField(formfield, required = False, **formfield_kwargs)
             else:
                 attrs[formfield_name] = formfield
             
