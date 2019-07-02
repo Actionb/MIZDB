@@ -129,6 +129,10 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
         
 class ChangelistSearchFormMixin(object):
     
+    def __init__(self, request, *args, **kwargs):
+        self.request = request
+        super().__init__(request, *args, **kwargs)
+    
     def get_search_form_filters(self, data):
         if not isinstance(self.model_admin, AdminSearchFormMixin):
             return {}
