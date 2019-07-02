@@ -1,5 +1,4 @@
 import re
-from itertools import chain
 from unittest.mock import patch
 from .base import AdminTestCase, UserTestCase
 
@@ -15,7 +14,6 @@ from DBentry.utils import get_model_fields
 from DBentry.factory import make, modelfactory_factory
 from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
 
 from django.test import tag
 
