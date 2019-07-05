@@ -1,9 +1,8 @@
 from ..base import AdminTestCase
 
-from unittest import mock, skip
+from unittest import mock
 from urllib.parse import urlparse
 
-from django import forms
 from django.http.request import QueryDict
 from django.utils.http import urlencode
 from django.urls import reverse
