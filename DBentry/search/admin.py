@@ -9,7 +9,7 @@ from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
 
 class AdminSearchFormMixin(object):
     
-    #TODO: change_list_template attribute
+    change_list_template = 'admin/change_list.html'
     
     search_form_kwargs = None
     search_form_class = None
