@@ -116,6 +116,11 @@ class SearchForm(forms.Form):
                     # no start but end: lte lookup for end
                     param_key = field_name + LOOKUP_SEP + self.range_upper_bound.lookup_name
                     param_value = end
+            elif isinstance(formfield, forms.BooleanField) and \
+                not isinstance(formfield, forms.NullBooleanField) and \
+                not value:
+                # value is False on a simple BooleanField, don't include it in the filter parameters.
+                continue    
             elif value in formfield.empty_values or \
                 isinstance(value, QuerySet) and not value.exists():
                 # Dont want empty values as filter parameters!

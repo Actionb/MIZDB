@@ -99,6 +99,20 @@ class TestSearchForm(MyTestCase):
         self.assertIn('ausgabe__magazin', filter_params)
         self.assertNotIn('musiker__in', filter_params)
         
+    def test_get_filters_params_boolean(self):
+        # Assert that an unchecked BooleanField is not evaluated as False
+        form_class =  search_forms.SearchFormFactory()(_models.ausgabe, fields = ['sonderausgabe'])
+        form = form_class(data = {})
+        self.assertTrue(form.is_valid(), msg = form.errors)
+        filter_params = form.get_filters_params()
+        self.assertNotIn('sonderausgabe', filter_params)
+    
+        form = form_class(data = {'sonderausgabe': True})
+        self.assertTrue(form.is_valid(), msg = form.errors)
+        filter_params = form.get_filters_params()
+        self.assertIn('sonderausgabe', filter_params)
+        self.assertEqual(filter_params['sonderausgabe'], True)
+        
     def test_get_filters_params_range(self):
         form_class =  search_forms.SearchFormFactory()(self.model, fields = ['seite__range'])
         data = {'seite_0': '1', 'seite_1': '2'}
