@@ -101,8 +101,6 @@ class TestAdminMixin(AdminTestCase):
         # Assert that saving on a changeform returns back to the changelist 
         # with the filters preserved.
         # This is a more integrated test for the changes made in _reponse_post_save.
-        # disable the inlines so we do not have to provide all the post data for them
-        self.model_admin.inlines = [] 
         preserved_filters_name = '_changelist_filters'
         obj = make(self.model)
         filters = [
@@ -111,32 +109,34 @@ class TestAdminMixin(AdminTestCase):
             ('fk', {'reihe': '1'}),    
             ('m2m', {'genre': ['1', '2']}),
         ]
-        for filter_type, filter in filters:
-            changelist_filters = urlencode(filter, doseq = True)
-            preserved_filters = urlencode({preserved_filters_name: changelist_filters})
-            with self.subTest(filter_type=filter_type):
-                response = self.client.post(
-                    path = self.change_path.format(pk = obj.pk) + '?' + preserved_filters, 
-                    data = {'_save': True, 'titel': 'irrelevant'}, 
-                    follow = True
-                )
-                request = response.wsgi_request
-                self.assertEqual(response.status_code, 200)
-                # Compare the querystring of the request with the original changelist_filters
-                query_string = urlparse(request.get_full_path())[4]
-                self.assertEqual(
-                    sorted(QueryDict(query_string).lists()), 
-                    sorted(QueryDict(changelist_filters).lists())
-                )
-                # Check that the request contains the data necessary to restore
-                # the filters.
-                for lookup, value in filter.items():
-                    with self.subTest(lookup = lookup):
-                        self.assertIn(lookup, request.GET)
-                        if isinstance(value, list):
-                            self.assertEqual(request.GET.getlist(lookup), value)
-                        else:
-                            self.assertEqual(request.GET[lookup], value)
+        # disable the inlines so we do not have to provide all the post data for them
+        with mock.patch.object(_admin.BildmaterialAdmin, 'inlines', []):
+            for filter_type, filter in filters:
+                changelist_filters = urlencode(filter, doseq = True)
+                preserved_filters = urlencode({preserved_filters_name: changelist_filters})
+                with self.subTest(filter_type=filter_type):
+                    response = self.client.post(
+                        path = self.change_path.format(pk = obj.pk) + '?' + preserved_filters, 
+                        data = {'_save': True, 'titel': 'irrelevant'}, 
+                        follow = True
+                    )
+                    request = response.wsgi_request
+                    self.assertEqual(response.status_code, 200)
+                    # Compare the querystring of the request with the original changelist_filters
+                    query_string = urlparse(request.get_full_path())[4]
+                    self.assertEqual(
+                        sorted(QueryDict(query_string).lists()), 
+                        sorted(QueryDict(changelist_filters).lists())
+                    )
+                    # Check that the request contains the data necessary to restore
+                    # the filters.
+                    for lookup, value in filter.items():
+                        with self.subTest(lookup = lookup):
+                            self.assertIn(lookup, request.GET)
+                            if isinstance(value, list):
+                                self.assertEqual(request.GET.getlist(lookup), value)
+                            else:
+                                self.assertEqual(request.GET[lookup], value)
                             
 class TestSearchFormChangelist(AdminTestCase):
     
