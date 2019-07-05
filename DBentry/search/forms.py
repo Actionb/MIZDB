@@ -46,6 +46,8 @@ class RangeFormField(forms.MultiValueField):
     def get_initial(self, initial, name):
         widget_data = self.widget.value_from_datadict(initial, None, name)
         if isinstance(self.fields[0], forms.MultiValueField):
+            # The sub fields are MultiValueFields themselves,
+            # let them figure out the correct values for the given data.
             return [self.fields[0].compress(widget_data[0]), self.fields[1].compress(widget_data[1])]
         else:
             return widget_data
@@ -74,8 +76,8 @@ class SearchForm(forms.Form):
         return super().get_initial_for_field(field, field_name)        
         
     def prepare_initial(self, initial):
-        # Need to map request querystring to formfields
-        # Need to flatten request payload for all non-select multiple
+        # initial may contain lists of values; 
+        # keep the lists with length > 1 (for SelectMultiple) but flatten all others
         cleaned = {}
         if isinstance(initial, MultiValueDict):
             iterator = initial.lists()
@@ -89,6 +91,12 @@ class SearchForm(forms.Form):
         return cleaned
         
     def get_filters_params(self):
+        """
+        Returns a dict of queryset filters based on the form's cleaned_data
+        to filter the changelist with.
+        
+        Adds any field specific lookups and clears 'empty' values.
+        """
         params = {}
         if not self.is_valid():
             return params
