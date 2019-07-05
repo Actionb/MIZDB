@@ -321,6 +321,7 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
         
     def get_changelist(self, request):
         return self.model_admin.get_changelist_instance(request)
+        #TODO: remove this unreachable code below
         list_display = self.model_admin.get_list_display(request)
         list_display_links = self.model_admin.get_list_display_links(request, list_display)
         list_filter = self.model_admin.get_list_filter(request)
