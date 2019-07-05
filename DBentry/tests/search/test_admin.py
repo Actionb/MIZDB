@@ -340,3 +340,12 @@ class TestSearchFormChangelist(AdminTestCase):
                         continue
                     with self.subTest():
                         self.assertIn(expected, result)
+                
+    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)        
+    def test_no_search_form_filtering_on_post(self):
+        # Assert that no special filtering is being done on a POST request (i.e. actions)
+        request = self.post_request(path = self.changelist_path + '?titel=NoFilter', data = {})
+        cl = self.get_changelist(request)
+        filters = cl.get_filters_params()
+        self.assertFalse(filters)
+        

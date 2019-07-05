@@ -148,5 +148,7 @@ class ChangelistSearchFormMixin(object):
         return result
         
     def get_filters_params(self, params=None):
+        if self.request.method == 'POST':
+            return {}
         return self.get_search_form_filters(params or self.request.GET)
         
