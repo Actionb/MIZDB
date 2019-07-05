@@ -11,6 +11,8 @@ from DBentry import models as _models, admin as _admin
 from DBentry.fields import PartialDate
 from DBentry.factory import batch, make
 
+#TODO: BrochureAdmin with jahre__jahr=1 returns the full list
+
 class TestAdminMixin(AdminTestCase):
     
     model = _models.bildmaterial
