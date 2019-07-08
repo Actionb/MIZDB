@@ -532,14 +532,8 @@ class MagazinAdmin(MIZModelAdmin):
     inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
     
     search_form_kwargs = {
-        'fields': [
-            'm2m_magazin_verlag', 'm2m_magazin_herausgeber', 'ort', 'genre', 
-            'issn', 'fanzine'
-        ], 
-        'labels': {
-            'm2m_magazin_verlag':'Verlag', 'm2m_magazin_herausgeber': 'Herausgeber', 
-            'ort': 'Herausgabeort'
-        }
+        'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine'], 
+        'labels': {'ort': 'Herausgabeort'}, 
     }
     
     def anz_ausgaben(self, obj):
@@ -582,7 +576,7 @@ class MusikerAdmin(MIZModelAdmin):
     save_on_top = True
     
     search_form_kwargs = {
-        'fields' : ['person', 'genre', 'band', 'instrument','orte__land', 'orte'], 
+        'fields' : ['person', 'genre', 'instrument','orte__land', 'orte'], 
     }
         
     def band_string(self, obj):
