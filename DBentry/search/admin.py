@@ -139,7 +139,7 @@ class ChangelistSearchFormMixin(object):
         result = {}
         params = self.model_admin.get_search_form(data = data).get_filters_params()
         for lookup, value in params.items():
-            if 'in' in lookup.split(LOOKUP_SEP): # or '__in' in lookup.split(LOOKUP_SEP)?
+            if 'in' in lookup.split(LOOKUP_SEP):
                 # Create a string with comma separated values.
                 # django admin's prepare_lookup_value() expects an '__in' lookup's value as such.
                 result[lookup] = ",".join(str(pk) for pk in value.values_list('pk', flat=True).order_by('pk'))
