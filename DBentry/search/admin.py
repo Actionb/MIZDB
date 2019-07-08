@@ -31,7 +31,7 @@ class AdminSearchFormMixin(object):
         
     def changelist_view(self, request, extra_context = None):
         if extra_context is None: extra_context = {}
-        search_form = self.get_search_form(initial = request.GET)
+        search_form = self.get_search_form(data = request.GET)
         extra_context['advanced_search_form'] = search_form
         response = super().changelist_view(request, extra_context)
         self.update_changelist_context(response)
