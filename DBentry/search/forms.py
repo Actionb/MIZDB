@@ -176,21 +176,15 @@ class SearchFormFactory:
     def get_search_form(self, model, fields = None, form = None, formfield_callback = None, 
         widgets = None, localized_fields = None, labels = None, help_texts = None, 
         error_messages = None, field_classes = None, forwards = None):
-#def fields_for_model(model, fields=None, exclude=None, widgets=None,
-#                     formfield_callback=None, localized_fields=None,
-#                     labels=None, help_texts=None, error_messages=None,
-#                     field_classes=None, *, apply_limit_choices_to=True):
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback): 
             raise TypeError('formfield_callback must be a function or callable')
         
         # Create the formfields.
-        fields = fields or []
-        range_lookup_name = self.range_lookup.lookup_name
         attrs = OrderedDict()
         lookup_mapping = {}
-        for path in fields:
+        for path in (fields or []):
             try:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
                 validate_lookups(db_field, lookups)
@@ -206,7 +200,7 @@ class SearchFormFactory:
             if labels and path in labels: 
                 formfield_kwargs['label'] = labels[path]
             if help_texts and path in help_texts:
-                formfield_kwargs['help_text'] = help_texts[path] #TODO: only allow custom help_texts? Some fields have help_texts only useful for creation
+                formfield_kwargs['help_text'] = help_texts[path]
             if error_messages and path in error_messages:
                 formfield_kwargs['error_messages'] = error_messages[path]
             if field_classes and path in field_classes:
@@ -217,7 +211,7 @@ class SearchFormFactory:
             formfield_name = strip_lookups_from_path(path, lookups)
             
             formfield = formfield_callback(db_field, **formfield_kwargs)
-            if range_lookup_name in lookups:
+            if self.range_lookup.lookup_name in lookups:
                 attrs[formfield_name] = RangeFormField(formfield, required = False, **formfield_kwargs)
             else:
                 attrs[formfield_name] = formfield
@@ -230,7 +224,8 @@ class SearchFormFactory:
         attrs['lookups'] = lookup_mapping
         attrs['range_lookup'] = self.range_lookup
         attrs['range_upper_bound'] = self.range_upper_bound
-        return type('SearchForm', (base_form, ), attrs)
+        form_class_name = '%sSearchForm' % model._meta.model_name.capitalize()
+        return type(form_class_name, (base_form, ), attrs)
         
 searchform_factory = SearchFormFactory()
             
