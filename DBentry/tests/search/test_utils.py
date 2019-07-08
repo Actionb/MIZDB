@@ -47,8 +47,10 @@ class TestUtils(MyTestCase):
     def test_get_dbfield_from_path_returns_concrete_field(self):
         # Assert that get_dbfield_from_path only returns concrete model fields.
         # ausgabe__artikel would return the reverse ManyToOneRel.
-        db_field, lookups = utils.get_dbfield_from_path(_models.ausgabe, 'artikel')
-        self.assertTrue(db_field.concrete)
+        with self.assertRaises(exceptions.FieldError) as cm:
+            utils.get_dbfield_from_path(_models.ausgabe, 'artikel')
+        expected = "Reverse relations not supported."
+        self.assertEqual(cm.exception.args[0], expected)
         
     def test_get_dbfield_from_path_raises_fielddoesnotexist_on_invalid_path(self):
         with self.assertRaises(exceptions.FieldDoesNotExist) as cm:

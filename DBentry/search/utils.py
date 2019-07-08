@@ -33,7 +33,7 @@ def get_dbfield_from_path(model, field_path):
     db_field = fields[-1]
     if not db_field.concrete: 
         # 'db_field' is a relation object.
-        db_field = db_field.field
+        raise exceptions.FieldError("Reverse relations not supported.")
     return db_field, lookups
     
 def validate_lookups(db_field, lookups):
