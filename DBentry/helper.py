@@ -27,6 +27,8 @@ class MIZFieldline(Fieldline):
                 yield MIZAdminField(self.form, field, is_first=(i == 0))
 
 class MIZAdminField(AdminField):
+    #TODO: find a better way to swap checkbox widget and its label
+    # relying on MIZAdminField makes this only accessible for model_admin stuff.
     
     def label_tag(self):
         classes = []

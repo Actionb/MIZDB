@@ -2,7 +2,6 @@ import time
 import calendar
 import datetime
 from collections import Iterable
-from urllib.parse import parse_qs
 
 from nameparser import HumanName
 
@@ -389,21 +388,6 @@ def coerce_human_name(full_name):
 def parse_name(full_name):
     hn = coerce_human_name(full_name)
     return " ".join([hn.first, hn.middle]).strip(), hn.last
-    
-def parse_cl_querystring(query_string):
-    """
-    Takes the full query string containing the preserved filters of a changelist and returns 
-    those as a dictionary.
-    Example:
-        - query_string: '_changelist_filters=ausgabe__magazin%3D326%26ausgabe%3D14962'
-        - returns: {'ausgabe__magazin': ['326'], 'ausgabe': ['14962']}
-    """
-    # Retrieve the _changelist_filters bit of the query_string: {'_changelist_filters': ['ausgabe__magazin=326&ausgabe=14962']}
-    cl_filters = parse_qs(query_string).get('_changelist_filters', None)
-    if not cl_filters:
-        return {}
-    # And parse the filters again: {'ausgabe__magazin': ['326'], 'ausgabe': ['14962']}
-    return parse_qs(cl_filters[0])
     
 ##############################################################################################################
 # admin utilities

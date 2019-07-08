@@ -1,12 +1,9 @@
-from urllib.parse import urlencode, parse_qs
-
 from django.contrib import admin
 from django.urls import reverse, NoReverseMatch
 from django.contrib.auth import get_permission_codename
 from django.utils.translation import override as translation_override
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
-from django.db.models.constants import LOOKUP_SEP
 
 from django import forms
 
@@ -15,12 +12,13 @@ from DBentry.base.models import ComputedNameModel
 from DBentry.changelist import MIZChangeList
 from DBentry.forms import AusgabeMagazinFieldForm, FormBase
 from DBentry.actions import merge_records
-from DBentry.constants import SEARCH_TERM_SEP, ATTRS_TEXTAREA
+from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
 from DBentry.helper import MIZAdminFormWrapper
-from DBentry.utils import get_model_relations, parse_cl_querystring, ensure_jquery
+from DBentry.utils import get_model_relations,  ensure_jquery
+from DBentry.search.admin import MIZAdminSearchFormMixin
 
-class MIZModelAdmin(admin.ModelAdmin):
+class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
                                             # that matches a field in the group
@@ -36,12 +34,10 @@ class MIZModelAdmin(admin.ModelAdmin):
     }
     
     index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
+    
+    #TODO: let the MIZ changelist template extend the default one 
+    #change_list_template = 'miz_changelist.html'
 
-    def has_adv_sf(self):
-        # Used by the changelist's advanced_search_form template to determine whether there is a search form to display.
-        # NOTE: improve has_adv_sf? advanced_search_form = {'abc':[], 'def':[],...} would return as True although it's empty
-        return len(getattr(self, 'advanced_search_form', []))>0
-        
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return self._annotate_for_list_display(queryset)
@@ -245,71 +241,6 @@ class MIZModelAdmin(admin.ModelAdmin):
     def change_view(self, request, object_id, form_url='', extra_context=None):
         new_extra = self.add_extra_context(request = request, extra_context = extra_context, object_id = object_id)
         return super().change_view(request, object_id, form_url, new_extra)
-        
-    def lookup_allowed(self, lookup, value):
-        if self.has_adv_sf():
-            # allow lookups defined in advanced_search_form
-            for field_list in getattr(self, 'advanced_search_form').values():
-                if lookup in field_list:
-                    return True
-                # the lookup may look like this: field_name__lookup, single out the field_name and try again
-                if LOOKUP_SEP in lookup and lookup.rsplit(LOOKUP_SEP, 1)[0] in field_list:
-                    return True
-        return super().lookup_allowed(lookup, value)    
-        
-    def get_preserved_filters(self, request):
-        """
-        Update the querystring for the changelist with possibly new date from the form the user has 
-        sent.
-        """
-        preserved_filters =  super().get_preserved_filters(request) #'_changelist_filters=ausgabe__magazin%3D326%26ausgabe%3D14962'
-
-        if not (request.POST and '_changelist_filters' in request.GET):
-            # Either this is request has no POST or no filters were used on the changelist
-            return preserved_filters
-            
-        # Decode the preserved_filters string to get the keys and values that were used to filter with back
-        filter_items = parse_cl_querystring(preserved_filters)
-        for k, v in filter_items.copy().items():
-            if k in request.POST and request.POST[k]:
-                # This changelist filter shows up in request.POST, the user may have changed its value
-                filter_items[k] = request.POST[k] 
-            
-            # Flatten the lists of values
-            if isinstance(filter_items[k], list) and len(filter_items[k]) == 1:
-                filter_items[k] = filter_items[k][0]
-        preserved_filters = parse_qs(preserved_filters) 
-        preserved_filters['_changelist_filters'] = urlencode(sorted(filter_items.items()))
-        return urlencode(preserved_filters)
-        
-        
-    def get_changeform_initial_data(self, request):
-        """ Turn _changelist_filters string into a useable dict of field_path:value
-            so we can fill some formfields with initial values later on. 
-            IMPORTANT: THIS ONLY GOVERNS FORMFIELDS FOR ADD-VIEWS. 
-            Primarily used for setting ausgabe/magazin for Artikel add-views.
-        """
-        initial = super().get_changeform_initial_data(request)
-        if '_changelist_filters' not in initial or not initial['_changelist_filters']:
-            return initial
-            
-        # At this point, _changelist_filters is a string of format:
-        # '_changelist_filters': 'ausgabe__magazin=47&ausgabe=4288'
-        # SEARCH_TERM_SEP: '='
-        filter_dict = {}
-        for part in initial['_changelist_filters'].split('&'):
-            if part and SEARCH_TERM_SEP in part:
-                if part.startswith("q="):
-                    # This part is a string typed into the searchbar, ignore it
-                    continue
-                try:
-                    k, v = part.split(SEARCH_TERM_SEP)
-                except ValueError:
-                    continue
-                if k not in initial:
-                    filter_dict[k] = v
-        initial.update(filter_dict)
-        return initial
         
     def construct_change_message(self, request, form, formsets, add=False):
         """

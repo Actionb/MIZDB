@@ -262,21 +262,7 @@ class TestTextUtils(MyTestCase):
         self.assertIsInstance(utils.coerce_human_name(13), HumanName)
         self.assertIsInstance(utils.coerce_human_name('13'), HumanName)
         self.assertIsInstance(utils.coerce_human_name(HumanName('13')), HumanName)
-    
-    def test_parse_cl_querystring(self):
-        self.assertEqual(utils.parse_cl_querystring(''), {})
-        self.assertEqual(utils.parse_cl_querystring('_changelist_filters='), {})
         
-        query_string = '_changelist_filters=ausgabe__magazin%3D326%26ausgabe%3D14962'
-        expected = {'ausgabe__magazin': ['326'], 'ausgabe': ['14962']}
-        self.assertEqual(utils.parse_cl_querystring(query_string), expected)
-        
-        query_string = '_changelist_filters=genre%3D824%26genre%3D594'
-        expected = {'genre': ['824', '594']}
-        self.assertEqual(utils.parse_cl_querystring(query_string), expected)
-        
-        
-
 ##############################################################################################################
 # admin utils
 ##############################################################################################################       
