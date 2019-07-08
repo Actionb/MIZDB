@@ -151,8 +151,6 @@ class SearchFormFactory:
     def get_default_lookup(self, formfield):
         if isinstance(formfield.widget, forms.SelectMultiple):
             return ['in']
-        elif isinstance(formfield, (forms.CharField, forms.Textarea)):
-            return ['icontains']
         return []
         
     def resolve_to_dbfield(self, model, field_path):

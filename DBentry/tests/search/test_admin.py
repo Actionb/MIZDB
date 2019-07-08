@@ -182,14 +182,7 @@ class TestSearchFormChangelist(AdminTestCase):
         
     @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_titel(self):
-        # icontains = 'object' should find all three
-        request_data = {'titel': 'object'}
-        response = self.client.get(path = self.changelist_path, data = request_data)
-        self.assertEqual(response.status_code, 200)
-        changelist = response.context['cl']
-        self.assertEqual(len(changelist.result_list), 3)
-        # icontains = 'object1' should only find obj1
-        request_data['titel'] = 'object1'
+        request_data = {'titel': 'Object1'}
         response = self.client.get(path = self.changelist_path, data = request_data)
         self.assertEqual(response.status_code, 200)
         changelist = response.context['cl']
