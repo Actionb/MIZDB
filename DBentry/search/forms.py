@@ -159,8 +159,10 @@ class SearchFormFactory:
         return get_dbfield_from_path(model, field_path)
         
     def formfield_for_dbfield(self, db_field, **kwargs):
-        widget = kwargs.get('widget', None)
-        if db_field.is_relation and widget is None: 
+        # It's a search form, nothing is required!
+        # Also disable the help_texts.
+        defaults = {'required': False, 'help_text': None}
+        if db_field.is_relation and kwargs.get('widget', None) is None: 
             # Create a dal autocomplete widget
             widget_opts = {
                 'model': db_field.related_model, 'multiple': db_field.many_to_many, 
@@ -168,10 +170,8 @@ class SearchFormFactory:
             }
             if kwargs.get('forward', None) is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
-            kwargs['widget'] = make_widget(**widget_opts)
-        # It's a search form, nothing is required!
-        kwargs['required'] = False
-        return db_field.formfield(**kwargs)
+            defaults['widget'] = make_widget(**widget_opts)
+        return db_field.formfield(**{**defaults, **kwargs})
     
     def get_search_form(self, model, fields = None, form = None, formfield_callback = None, 
         widgets = None, localized_fields = None, labels = None, help_texts = None, 
