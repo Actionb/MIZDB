@@ -121,6 +121,30 @@ class AdminSearchFormMixin(object):
         post_url = urlunparse(parsed_url)
         return HttpResponseRedirect(post_url)
         
+    def check(self,  **kwargs):
+        errors = super().check(**kwargs)
+        errors.extend(self._check_search_form_fields(**kwargs))
+        return errors
+    
+    def _check_search_form_fields(self, **kwargs):
+        # local imports in case I decide to remove this check later
+        from django.core import exceptions
+        from DBentry.search.utils import get_dbfield_from_path
+        from django.core import checks
+        if not self.has_search_form():
+            return []
+        errors = []
+        for field_path in self.search_form_kwargs.get('fields', []):
+            msg =  "Ignored '{model_admin}' search form field: '{field}'. %s."
+            msg = msg.format(model_admin = self.__class__.__name__, field = field_path)
+            try:
+                get_dbfield_from_path(self.model, field_path)
+            except exceptions.FieldDoesNotExist:
+                errors.append(checks.Info(msg % "Field does not exist"))
+            except exceptions.FieldError:
+                errors.append(checks.Info(msg % "Field is a reverse relation"))
+        return errors
+        
 class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     
     def get_search_form_class(self, **kwargs):
