@@ -1,7 +1,7 @@
 #
 
 from DBentry.models import *
-from DBentry.utils import split_field
+from DBentry.ie.utils import split_field
 
 from .name_utils import *
 from .reader import CSVReader
