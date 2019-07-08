@@ -146,7 +146,7 @@ class AdminTestMethodsMixin(object):
             self.assertIsInstance(formfield.widget, MIZModelSelect2, msg=fkey_field.name)
         
     def test_get_changelist(self):
-        self.assertEqual(self.model_admin.get_changelist(self.get_request()), MIZChangeList)
+        self.assertEqual(self.model_admin.get_changelist(self.get_request(path = self.changelist_path)), MIZChangeList)
     
     def test_get_search_fields(self):
         # search fields are largely declared with the models, the admin classes only add the exact =id lookup
@@ -1096,6 +1096,8 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminSite(UserTestCase):
     
+    site = miz_site
+    
     def test_app_index(self):
         response = self.client.get('/admin/DBentry/')
         self.assertEqual(response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__)
@@ -1105,7 +1107,7 @@ class TestAdminSite(UserTestCase):
         
     def test_index_DBentry(self):
         request = self.client.get('/admin/').wsgi_request
-        response = miz_site.index(request)
+        response = self.site.index(request)
         app_list = response.context_data['app_list']
         
         # check if there are two 'categories' (fake apps) for app DBentry (app_list was extended by two new app_dicts)
@@ -1117,15 +1119,28 @@ class TestAdminSite(UserTestCase):
     def test_index_admintools(self):
         from DBentry.bulk.views import BulkAusgabe
         tool = BulkAusgabe
-        miz_site.register_tool(tool)
+        self.site.register_tool(tool)
         
         request = self.client.get('/admin/').wsgi_request
-        response = miz_site.index(request)
+        response = self.site.index(request)
         
         self.assertTrue('admintools' in response.context_data)
         
     def test_get_admin_model(self):
         expected_model_admin = _admin.ArtikelAdmin
-        self.assertIsInstance(miz_site.get_admin_model(_models.artikel), expected_model_admin)
-        self.assertIsInstance(miz_site.get_admin_model('DBentry.artikel'), expected_model_admin)
-        self.assertIsNone(miz_site.get_admin_model('BEEP.BOOP'))
+        self.assertIsInstance(self.site.get_admin_model(_models.artikel), expected_model_admin)
+        self.assertIsInstance(self.site.get_admin_model('DBentry.artikel'), expected_model_admin)
+        self.assertIsNone(self.site.get_admin_model('BEEP.BOOP'))
+
+    def test_changelist_availability(self):
+        from django.urls import reverse
+        for model in self.site._registry:
+            opts = model._meta
+            with self.subTest(model_name = opts.model_name):
+                path = reverse(
+                    "%s:%s_%s_changelist" % 
+                    (self.site.name, opts.app_label, opts.model_name)
+                )
+                with self.assertNotRaises(Exception):
+                    response = self.client.get(path = path, user = self.super_user)
+                self.assertEqual(response.status_code, 200, msg = path)
