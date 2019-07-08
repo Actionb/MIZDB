@@ -375,7 +375,7 @@ class verlag(BaseModel):
         verbose_name_plural = 'Verlage'
         ordering = ['verlag_name', 'sitz']
 
-
+#TODO: clean up the model/ort/land/bland
 class ort(ComputedNameModel):
     stadt = models.CharField(**CF_ARGS_B)
     
