@@ -5,9 +5,9 @@ from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import override as translation_override
 
+from DBentry.base.forms import FormBase, DynamicChoiceForm, MIZAdminForm, XRequiredFormMixin
 from DBentry.forms import (
-    FormBase, AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, DynamicChoiceForm, 
-    HerausgeberForm, MIZAdminForm, XRequiredFormMixin, AudioForm
+    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, HerausgeberForm, AudioForm
 )
 from DBentry.models import artikel, ausgabe, land, autor, person, buch, Herausgeber, Organisation, genre, audio
 from DBentry.ac.widgets import EasyWidgetWrapper

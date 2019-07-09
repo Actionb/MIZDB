@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
-from DBentry.forms import MIZAdminForm, XRequiredFormMixin
+from DBentry.base.forms import MIZAdminForm, XRequiredFormMixin
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from DBentry.ac.widgets import make_widget

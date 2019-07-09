@@ -1,6 +1,6 @@
 from django import forms 
 
-from DBentry.forms import MIZAdminForm, DynamicChoiceForm 
+from DBentry.base.forms import MIZAdminForm, DynamicChoiceForm 
 from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
 
 class MaintBaseForm(forms.Form): 

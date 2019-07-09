@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from DBentry.forms import MIZAdminForm, DynamicChoiceForm
+from DBentry.base.forms import MIZAdminForm, DynamicChoiceForm
 from DBentry.models import lagerort
 from DBentry.ac.widgets import make_widget
 from DBentry.utils import get_model_from_string

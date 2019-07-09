@@ -9,8 +9,9 @@ from django import forms
 
 from DBentry.models import ausgabe, genre, schlagwort, models
 from DBentry.base.models import ComputedNameModel
+from DBentry.base.forms import FormBase
 from DBentry.changelist import MIZChangeList
-from DBentry.forms import AusgabeMagazinFieldForm, FormBase
+from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.actions import merge_records
 from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.ac.widgets import make_widget
