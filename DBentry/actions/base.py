@@ -5,7 +5,6 @@ from django.contrib.admin.utils import get_fields_from_path
 
 from DBentry.utils import get_obj_link
 from DBentry.views import MIZAdminMixin, OptionalFormView, FixedSessionWizardView
-from .forms import makeSelectionForm
 
 class ConfirmationViewMixin(MIZAdminMixin):
     
@@ -84,19 +83,6 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
     template_name = 'admin/action_confirmation.html'
     
     affected_fields = [] # these are the model fields that should be displayed in the summary of objects affected by this action
-    
-    #TODO: doesn't seem to be used by any ActionView
-    # Related to the makeSelectionForm form factory. Can be omitted if form_class is given or no form needs to be displayed
-    selection_form_fields = [] # these are the model fields that should be displayed in the 'selection form'
-    help_texts = {} # help_texts for the makeSelectionForm
-    labels = {} # labels  for the makeSelectionForm
-        
-    #TODO: doesn't seem to be used by any ActionView
-    def get_form_class(self):
-        if self.selection_form_fields and not self.form_class: 
-            # default to the makeSelectionForm factory function if there is no form_class given
-            return makeSelectionForm(self.model_admin.model, fields=self.selection_form_fields, labels=self.labels, help_texts=self.help_texts)
-        return super(ActionConfirmationView, self).get_form_class()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -128,7 +114,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         objs = []
         for obj in self.queryset:
             sub_list = [linkify(obj)]
-            affected_fields = self.affected_fields or self.selection_form_fields
+            affected_fields = self.affected_fields
             if affected_fields:
                 flds = []
                 for field_path in affected_fields:

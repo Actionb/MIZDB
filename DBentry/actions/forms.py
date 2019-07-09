@@ -1,36 +1,10 @@
-
-from collections import OrderedDict
-
 from django import forms
-from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import ValidationError
 
 from DBentry.forms import MIZAdminForm, DynamicChoiceForm
 from DBentry.models import lagerort
 from DBentry.ac.widgets import make_widget
 from DBentry.utils import get_model_from_string
-
-def makeSelectionForm(model, fields, help_texts = None, labels = None, formfield_classes = None):
-    if help_texts is None: help_texts = {}
-    if labels is None: labels = {}
-    if formfield_classes is None: formfield_classes = {}
-    
-    attrs = OrderedDict()
-    for field_path in fields:
-        field = get_fields_from_path(model, field_path)[-1]
-        formfield_opts = dict(required = True, help_text = help_texts.get(field_path, ''))
-        
-        if field.is_relation:
-            field = field.get_path_info()[-1].join_field
-            formfield_opts['queryset'] = field.related_model.objects
-            formfield_opts['widget'] = make_widget(model=field.model, model_name=field.model._meta.model_name, wrap=True)
-        
-        formfield_opts['label'] = labels.get(field_path, field.verbose_name.capitalize())
-        if field_path in formfield_classes:
-            attrs[field_path] = formfield_classes.get(field_path)(**formfield_opts)
-        else:
-            attrs[field_path] = field.formfield(**formfield_opts)
-    return type('SelectionForm', (MIZAdminForm, ), attrs )
 
 class BulkEditJahrgangForm(DynamicChoiceForm, MIZAdminForm):
     
@@ -45,8 +19,6 @@ class BulkEditJahrgangForm(DynamicChoiceForm, MIZAdminForm):
         required = True, 
         help_text = 'Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.'
     )
-    
-    
     
 class BulkAddBestandForm(MIZAdminForm):
     

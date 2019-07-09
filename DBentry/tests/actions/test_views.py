@@ -17,7 +17,6 @@ from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
 from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions
-from DBentry.forms import MIZAdminForm, forms
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
 from DBentry.sites import miz_site
@@ -88,24 +87,6 @@ class TestActionConfirmationView(ActionViewTestCase):
     model = _models.band
     model_admin_class = BandAdmin
     test_data_count = 1
-    
-    def test_get_form_class(self):
-        # get_form_class should create a 'selection form' form class if the view has no form_class assigned
-        # view fields not set => super().get_form_class() ====> None
-        view = self.get_view()
-        self.assertEqual(view.get_form_class(), None)
-        
-        # view.fields set and no view.form_class set 
-        # => makeSelectionForm should make a form (here: a MIZAdminForm)
-        view.selection_form_fields = ['band_name']
-        with patch('DBentry.actions.base.makeSelectionForm', return_value = 'SelectionForm'):
-            self.assertEqual(view.get_form_class(), 'SelectionForm')
-        form_class = view.get_form_class()
-        self.assertTrue(issubclass(form_class, MIZAdminForm))
-        self.assertEqual(form_class.__name__, 'SelectionForm')
-        
-        view.form_class = forms.Form
-        self.assertEqual(view.get_form_class(), forms.Form)
     
     def test_compile_affected_objects(self):
         request = self.get_request()
