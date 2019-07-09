@@ -7,7 +7,7 @@ from django.utils.datastructures import MultiValueDict
 from DBentry.search.admin import ChangelistSearchFormMixin
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
-    
+
     def __init__(self, request, model, list_display, list_display_links,
                  list_filter, date_hierarchy, search_fields, list_select_related,
                  list_per_page, list_max_show_all, list_editable, model_admin, sortable_by):
@@ -50,7 +50,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
                         qs = qs.filter(v)
                     else:
                         qs = qs.filter(**{k:v})
-                
+
         except (SuspiciousOperation, ImproperlyConfigured) as e:
             # Allow certain types of errors to be re-raised as-is so that the
             # caller can treat them in a special way.
@@ -66,21 +66,21 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 
         if not qs.query.select_related:
             qs = self.apply_select_related(qs)
-            
+
         # Apply search results
         qs, search_use_distinct = self.model_admin.get_search_results(request, qs, self.query)
-        
+
         # Get ordering, record and apply annotations and then set the ordering.
         ordering = self.get_ordering(request, qs)
         qs = self._annotate(qs)
         qs = self.apply_ordering(request, qs, ordering)
-        
+
         # Remove duplicates from results, if necessary
         if filters_use_distinct | search_use_distinct:
             return qs.distinct()
         else:
             return qs
-            
+
     def _annotate(self, queryset):
         # Add any pending annotations required for the ordering of callable list_display items to the queryset.
         needs_distinct = False
@@ -95,10 +95,10 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
             annotation = {name: func(expression, **extra)}
             queryset = queryset.annotate(**annotation)
         return queryset
-        
+
     def apply_ordering(self, request, queryset, ordering):
         return queryset.order_by(*ordering)
-    
+
     def get_ordering_field(self, field_name):
         # Record any admin_order_field attributes that are meant to be later added as annotations in get_queryset.
         order_field = super().get_ordering_field(field_name)
@@ -110,7 +110,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
         return order_field
 
 class AusgabeChangeList(MIZChangeList):
-    
+
     def apply_ordering(self, request, queryset, ordering):
         return queryset.chronologic_order(ordering)
-    
+
