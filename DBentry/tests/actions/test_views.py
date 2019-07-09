@@ -426,20 +426,6 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertIsInstance(response.context_data.get('form'), MergeFormSelectPrimary)
         self.assertIsInstance(response.context.get('wizard').get('form'), MergeFormSelectPrimary)
 
-    def test_post_first_form_invalid(self):
-        # post should not continue
-        #NOTE: the first form actually cannot fail??
-        request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
-        management_form = {'current_step':0}
-        request_data.update(management_form)
-        form_data = {'original':''}
-        request_data.update(form_data)
-
-        response = self.client.post(self.changelist_path, data=request_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.context_data.get('form'), MergeFormSelectPrimary)
-        self.assertIsInstance(response.context.get('wizard').get('form'), MergeFormSelectPrimary)
-
     def test_post_merge_conflict(self):
         # post should return the form that handles merge conflicts
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
@@ -739,7 +725,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         ct = ContentType.objects.get_for_model(_models.Brochure)
         logentry = LogEntry.objects.get(object_id = new_brochure.pk, content_type = ct)
         self.assertEqual(logentry.get_change_message(), expected)
-#        self.assertIn(expected, new_brochure.bemerkungen)
 
     def test_perform_action_katalog(self):
         options_form_cleaned_data = {'brochure_art': 'katalog'}
