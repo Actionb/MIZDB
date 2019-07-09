@@ -19,98 +19,98 @@ from .forms import (
     BulkAddBestandForm, BulkEditJahrgangForm, 
     BrochureActionFormSet, BrochureActionFormOptions
 )
-    
+
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
-    
+
     short_description = gettext_lazy("Add issue volume")
     perm_required = ['change']
     action_name = 'bulk_jg'
-    
+
     affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
-    
+
     form_class = BulkEditJahrgangForm
-    
+
     view_helptext = """ 
         Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
         Wählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an.
         Die Jahrgangswerte der anderen Ausgaben werden danach in Abständen von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt.
-        
+
         Ausgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), werden ignoriert.
         Wird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge aller ausgewählten Ausgaben gelöscht.
         Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
     """
-    
+
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
         kwargs['choices'] = self.queryset
         return kwargs
-        
+
     def get_initial(self):
         return {
             'jahrgang': 1, 
             'start':self.queryset.values_list('pk', flat = True).first(), 
         }
-    
+
     def action_allowed(self):
         if self.queryset.values('magazin_id').distinct().count() != 1:
             msg_text = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin."
             self.model_admin.message_user(self.request, msg_text, 'error')
             return False
         return True
-    
+
     def perform_action(self, form_cleaned_data):
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
         start = self.queryset.get(pk = form_cleaned_data.get('start'))
-        
+
         if jg == 0:
             # User entered 0 for jahrgang. Delete jahrgang data from the selected ausgaben.
             qs.update(jahrgang=None)
         else:
             qs.increment_jahrgang(start, jg)
         self.log_update(self.queryset, 'jahrgang')
-                
-                
+
+
 class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     short_description = gettext_lazy("Alter stock")
     perm_required = ['alter_bestand']
     action_name = 'add_bestand'
-    
+
     affected_fields = ['bestand']
-    
+
     form_class = BulkAddBestandForm
-    
+
     view_helptext = """ Sie können hier Bestände für die ausgewählten Objekte hinzufügen.
                         Besitzt ein Objekt bereits einen Bestand in der ersten Kategorie ('Lagerort (Bestand)'), so wird stattdessen diesem Objekt ein Bestand in der zweiten Kategorie ('Lagerort (Dublette)') hinzugefügt.
     """
-    
+
     def get_initial(self):
         # get initial values for bestand and dublette based on the view's model
         initial = super().get_initial()
         if self.model == ausgabe:
             initial = {'bestand' : lagerort.objects.get(pk=ZRAUM_ID), 'dublette' : lagerort.objects.get(pk=DUPLETTEN_ID)}
         return initial
-       
+
     def perform_action(self, form_cleaned_data):
-        
+
         base_msg = "{lagerort}-Bestand zu diesen {count} {verbose_model_name} hinzugefügt: {obj_links}"
         format_dict = {'verbose_model_name':self.opts.verbose_name_plural}
-        
+
         bestand_lagerort = form_cleaned_data['bestand']
         dupletten_lagerort = form_cleaned_data['dublette']
-        
+
         bestand_list = []
         dubletten_list = []
         # Get the correct fkey from bestand model to this view's model
         fkey = get_fields_from_path(self.opts.model, 'bestand')[0].field
-        
+
         for instance in self.queryset:
             if not bestand.objects.filter(**{fkey.name:instance, 'lagerort':bestand_lagerort}):
                 bestand_list.append(bestand(**{fkey.name:instance, 'lagerort':bestand_lagerort}))
             else:
                 dubletten_list.append(bestand(**{fkey.name:instance, 'lagerort':dupletten_lagerort}))
-                
+
         with transaction.atomic():
             if bestand_list:
                 for obj in bestand_list:
@@ -121,7 +121,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
                 format_dict.update({'lagerort': str(bestand_lagerort), 'count':len(bestand_list), 'obj_links': obj_links})
                 msg_text = base_msg.format(**format_dict)
                 self.model_admin.message_user(self.request, format_html(msg_text))
-            
+
             if dubletten_list:
                 for obj in dubletten_list:
                     obj.save()
@@ -131,45 +131,45 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
                 format_dict.update({'lagerort': str(dupletten_lagerort), 'count':len(dubletten_list), 'obj_links': obj_links})
                 msg_text = base_msg.format(**format_dict)
                 self.model_admin.message_user(self.request, format_html(msg_text))
- 
+
 class MergeViewWizarded(WizardConfirmationView): 
-    
+
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
     perm_required = ['merge']
     action_name = 'merge_records'
-     
+
     form_list = [MergeFormSelectPrimary, MergeConflictsFormSet] 
-     
+
     _updates = {} 
-    
+
     step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
         Danach werden die sekundären Datensätze GELÖSCHT.
     """
     #TODO: include this bit in the ACTUAL help page for this action:
     #    Fehlen dem primären Datensatz Grunddaten und wird unten bei der entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
     #   Bereits bestehende Grunddaten des primären Datensatzes werden NICHT überschrieben.
-    
+
     step2_helptext = """Für die Erweiterung der Grunddaten des primären Datensatzes stehen widersprüchliche Möglichkeiten zur Verfügung.
         Bitte wählen Sie jeweils eine der Möglichkeiten, die für den primären Datensatz übernommen werden sollen.
     """
-    
+
     view_helptext = {
         '0':step1_helptext, 
         '1':step2_helptext, 
     }
-    
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         context['title'] = gettext('Merge objects: step {}').format(str(int(self.steps.current)+1))
         return context
-    
+
     def action_allowed(self):
         model = self.opts.model
         request = self.request
         queryset = self.queryset
-        
+
         MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
-        
+
         if queryset.count()==1:
             msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' 
             self.model_admin.message_user(request, msg_text, 'warning')
@@ -184,14 +184,14 @@ class MergeViewWizarded(WizardConfirmationView):
             self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')
             return False
         return True
-         
+
     @property 
     def updates(self): 
         if not self._updates: 
             step_data = self.storage.get_step_data('0') or {} 
             self._updates = step_data.get('updates', {}) 
         return self._updates 
-         
+
     def process_step(self, form): 
         data = super().process_step(form) 
         if isinstance(form, MergeFormSelectPrimary): 
@@ -200,18 +200,18 @@ class MergeViewWizarded(WizardConfirmationView):
             if form.cleaned_data.get('expand_o', False):
                 prefix = self.get_form_prefix() 
                 data = data.copy() # data is an instance of QueryDict and thus immutable - make it mutable by copying
-                
+
                 # Get the 'primary'/'original' object chosen by the user and exclude it from the queryset we are working with.
                 original = self.opts.model.objects.get(pk=data.get(prefix + '-original', 0)) 
                 qs = self.queryset.exclude(pk=original.pk)
-                
+
                 updateable_fields = get_updateable_fields(original) # The fields that may be updated by this merge 
                 if updateable_fields: 
                     # Keep track of any fields of original that would be updated.
                     # If there is more than one possible change per field, we need user input to decide what change to keep.
                     # This is where MergeConflictsFormSet, the next form, comes in.
                     updates = { fld_name : set() for fld_name in updateable_fields}  
-                     
+
                     for other_record_valdict in qs.values(*updateable_fields): 
                         for k, v in other_record_valdict.items(): 
                             if v or isinstance(v, bool):
@@ -220,7 +220,7 @@ class MergeViewWizarded(WizardConfirmationView):
                                     has_conflict = True
                                 # make v both hashable (for the set) and serializable (for the session)
                                 updates[k].add(str(v)) 
-                                 
+
                     # Sets are not JSON serializable, turn them into lists and remove empty ones 
                     updates = {fld_name:list(value_set) for fld_name, value_set in updates.items() if len(value_set)>0} 
                     data['updates'] = updates.copy() 
@@ -231,7 +231,7 @@ class MergeViewWizarded(WizardConfirmationView):
                 # We use this way of skipping a form instead of declaring a condition_dict (the usual procedure for this WizardView),
                 # as the process of finding the actual updates to make already involves looking for any conflicts.
         return data 
-         
+
     def get_form_kwargs(self, step=None): 
         kwargs = super(MergeViewWizarded, self).get_form_kwargs(step) 
         if step is None: 
@@ -248,10 +248,10 @@ class MergeViewWizarded(WizardConfirmationView):
             choices = {}
             #form_kwargs['form_kwargs'] = {'choices' : {}} 
             total_forms = 0 
-            
+
             def add_prefix(key_name): 
                 return prefix + '-' + str(total_forms) + '-' + key_name 
-                
+
             for fld_name, values in sorted(self.updates.items()): 
                 if len(values)>1: 
                     # We do not care about values with len <= 1 as these do not cause merge conflicts (see process_step) 
@@ -261,7 +261,7 @@ class MergeViewWizarded(WizardConfirmationView):
                     })
                     choices.update({ add_prefix('posvals') : [(c, v) for c, v in enumerate(values)]}) 
                     total_forms += 1
-                    
+
             data[prefix + '-TOTAL_FORMS'] = total_forms 
             kwargs['data'] = data
             # In order to pass 'choices' on to the individual forms of the MergeConflictsFormSet, 
@@ -272,7 +272,7 @@ class MergeViewWizarded(WizardConfirmationView):
             # MergeFormSelectPrimary form: choices for the selection of primary are objects in the queryset
             kwargs['choices'] = self.queryset 
         return kwargs 
-        
+
     def perform_action(self, form_cleaned_data = None): 
         update_data = {} 
         expand = self.get_cleaned_data_for_step('0').get('expand_o', True) 
@@ -293,7 +293,7 @@ class MergeViewWizarded(WizardConfirmationView):
         original_pk = self.get_cleaned_data_for_step('0').get('original', 0) 
         original = self.opts.model.objects.get(pk=original_pk) 
         merge_records(original, self.queryset, update_data, expand, request=self.request)
-        
+
     def done(self, *args, **kwargs):
         try:
             self.perform_action()
@@ -304,15 +304,15 @@ class MergeViewWizarded(WizardConfirmationView):
             msg = gettext('Folgende verwandte {object_name} verhinderten die Zusammenführung: ').format(object_name=object_name) + protected
             self.model_admin.message_user(self.request, format_html(msg), 'error')
         return None
-       
+
 class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
-    
+
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
-    
+
     form_class = BrochureActionFormSet
-    
+
     def get_initial(self):
         fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name', 'magazin_beschreibung')
         values = self.queryset.annotate(magazin_beschreibung = F('magazin__beschreibung')).values_list(*fields)
@@ -327,7 +327,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             }
                 for pk, beschreibung, bemerkungen, magazin_id, magazin_name, magazin_beschreibung in values
         ]
-    
+
     @property
     def can_delete_magazin(self):
         if not getattr(self, 'mag', None):
@@ -335,7 +335,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         magazin_ausgabe_set = set(self.mag.ausgabe_set.values_list('pk', flat = True))
         selected_ausgabe_set = set(self.queryset.values_list('pk', flat = True))
         return magazin_ausgabe_set == selected_ausgabe_set
-        
+
     def action_allowed(self):
         if self.queryset.values_list('magazin').distinct().count()>1:
             # Ausgaben from more than one magazin selected.
@@ -354,7 +354,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             return False
         self.mag = self.queryset.first().magazin
         return True
-        
+
     def form_valid(self, form):
         options_form = self.get_options_form(data = self.request.POST)
         if not options_form.is_valid():
@@ -362,17 +362,17 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
         return
-        
+
     def perform_action(self, form_cleaned_data, options_form_cleaned_data):               
         protected_ausg = []        
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
         # brochure_art is guaranteed to be a valid model name due to the form validation.
         brochure_class = get_model_from_string(options_form_cleaned_data.get('brochure_art', ''))
-        
+
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
-            
+
             # Verify that the ausgabe exists and can be deleted
             ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
             if ausgabe_instance is None:
@@ -380,7 +380,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
                 continue
-            
+
             # Create the brochure object
             instance_data = {'titel': data['titel']}
             for key in ('zusammenfassung', 'beschreibung', 'bemerkungen'):
@@ -407,14 +407,14 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 log_addition(request = self.request, object = new_brochure, message = changelog_message)
                 self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
-                
+
         if protected_ausg:
             msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg) \
                 + ' (%s)' % get_changelist_link(ausgabe, self.request.user, obj_list = protected_ausg)
             msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             return
-        
+
         # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
         if delete_magazin:
                 try:
@@ -426,11 +426,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     self.model_admin.message_user(self.request, mark_safe(msg), 'error')
                 else:
                     self.log_deletion(self.mag)
-            
+
     def get_options_form(self, **kwargs):
         kwargs['can_delete_magazin'] = self.can_delete_magazin
         return BrochureActionFormOptions(**kwargs)
-        
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()

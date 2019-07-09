@@ -7,20 +7,20 @@ from DBentry.utils import get_obj_link
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
 
 class ConfirmationViewMixin(MIZAdminMixin):
-    
+
     title = '' # the title that is shown both in the template and in the browser
     breadcrumbs_title = ''
     non_reversible_warning = gettext_lazy("Warning: This action is NOT reversible!")
     action_reversible = False # if this action performs an operation that is not easily reversed, be as annoying as possible to wake the user up
-    
+
     queryset = None
     model_admin = None
     opts = None
     action_name = None
     model = None
-    
+
     view_helptext = ''
-    
+
     def __init__(self, model_admin, queryset, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
         self.model_admin = model_admin
@@ -30,36 +30,36 @@ class ConfirmationViewMixin(MIZAdminMixin):
         self.opts = self.model_admin.opts
         self.model = self.opts.model
         super(ConfirmationViewMixin, self).__init__(*args, **kwargs)
-        
+
     def action_allowed(self):
         return True
-        
+
     def perform_action(self, form_cleaned_data = None):
         raise NotImplementedError('Subclasses must implement this method.')
-        
+
     def dispatch(self, request, *args, **kwargs):
         if not self.action_allowed():
             # The action is not allowed, redirect back to the changelist
             return None
         return super().dispatch(request, *args, **kwargs)
-    
+
     def get_context_data(self, *args, **kwargs):
         context = super(ConfirmationViewMixin, self).get_context_data(*args, **kwargs)
-        
+
         if len(self.queryset) == 1:
             objects_name = force_text(self.opts.verbose_name)
         else:
             objects_name = force_text(self.opts.verbose_name_plural)
-        
+
         media = self.model_admin.media
         if hasattr(self, 'get_form') and self.get_form():
             media += self.get_form().media
-            
+
         title = self.title or getattr(self, 'short_description', '')
         breadcrumbs_title = self.breadcrumbs_title or getattr(self, 'short_description', '')
         title = title % {'verbose_name_plural':self.opts.verbose_name_plural}
         breadcrumbs_title = breadcrumbs_title % {'verbose_name_plural':self.opts.verbose_name_plural}
-        
+
         from django.contrib.admin import helpers
         context.update(
             dict(
@@ -77,11 +77,11 @@ class ConfirmationViewMixin(MIZAdminMixin):
         )
         context.update(**kwargs)
         return context
-    
+
 class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
-    
+
     template_name = 'admin/action_confirmation.html'
-    
+
     affected_fields = [] # these are the model fields that should be displayed in the summary of objects affected by this action
 
     def get_form_kwargs(self):
@@ -92,13 +92,13 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
             if 'data' in kwargs: del kwargs['data']
             if 'files' in kwargs: del kwargs['files']
         return kwargs
-        
+
     def form_valid(self, form):
         self.perform_action(form.cleaned_data)
         # We always want to be redirected back to the changelist the action originated from (request.get_full_path()).
         # If we return None, options.ModelAdmin.response_action will do the redirect for us.
         return None
-        
+
     def compile_affected_objects(self):
         """
         Compile a list of the objects that are affected by this action.
@@ -107,7 +107,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         """        
         def linkify(obj):
             return get_obj_link(obj, self.request.user, self.model_admin.admin_site.name)
-        
+
         objs = []
         for obj in self.queryset:
             sub_list = [linkify(obj)]
@@ -134,28 +134,28 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                 sub_list.append(flds)
             objs.append(sub_list)
         return objs
-        
+
     def get_context_data(self, *args, **kwargs):
         context = super(ActionConfirmationView, self).get_context_data(*args, **kwargs)
-            
+
         context.update({
             'affected_objects': self.compile_affected_objects(), 
         })
         context.update(**kwargs)
         return context
 
-              
+
 class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
-    
+
     template_name = 'admin/action_confirmation_wizard.html' 
-    
+
     # A dictionary of helptexts for every step: {step:helptext}
     view_helptext = {}
-    
+
     def __init__(self, *args, **kwargs):
         super(WizardConfirmationView, self).__init__(*args, **kwargs)
         self.qs = self.queryset # WizardView wants it so
-        
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
         if self.steps.current in self.view_helptext:
