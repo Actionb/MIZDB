@@ -29,23 +29,23 @@ class FormBase(forms.ModelForm):
             # Ignore non-unique entries in the same formset; see django.contrib.admin.options.InlineModelAdmin.get_formset.inner
             self.cleaned_data['DELETE']=True
             self._update_errors(e) #NOTE: update errors even if we're ignoring the ValidationError?
-            
+
 class XRequiredFormMixin(object):
     """
     A mixin that allows setting a minimum/maximum number of groups of fields to be required.
-    
+
     Attributes:
     - xrequired: an iterable of dicts that specicify the number of required fields ('min', 'max'), the field names
                 ('fields') and optionally a custom error message ('error_message'). 
     - default_error_messages: a dict of default error messages for min and max ValidationErrors
     """
-    
+
     xrequired = None 
     default_error_messages = {
         'min' : gettext_lazy('Bitte mindestens {min} dieser Felder ausfüllen: {fields}.'), 
         'max' : gettext_lazy('Bitte höchstens {max} dieser Felder ausfüllen: {fields}.'), 
     }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.xrequired:
@@ -60,18 +60,18 @@ class XRequiredFormMixin(object):
                 max = required.get('max', 0)
                 if not min and not max:
                     continue
-                    
+
                 fields_with_values = 0
                 for field_name in required['fields']:
                     if self.cleaned_data.get(field_name):
                         fields_with_values += 1
-                        
+
                 min_error = max_error = False
                 if min and fields_with_values < min:
                     min_error = True
                 if max and fields_with_values > max:
                     max_error = True
-                    
+
                 custom_error_msgs = required.get('error_message', {})
                 fields = ", ".join(
                     self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
@@ -86,8 +86,8 @@ class XRequiredFormMixin(object):
                     msg = msg.format(max = max, fields = fields)
                     self.add_error(None, msg)
         return super().clean()
-    
-    
+
+
 class AusgabeMagazinFieldForm(FormBase):
     """
     In order to limit search results, forward ausgabe search results to a ModelChoiceField for the model magazin.
@@ -102,7 +102,7 @@ class AusgabeMagazinFieldForm(FormBase):
                                     )
     class Meta:
         widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin'])}
-                                    
+
     def __init__(self, *args, **kwargs):
         if 'instance' in kwargs and kwargs['instance']:
             if 'initial' not in kwargs:
@@ -121,18 +121,18 @@ class ArtikelForm(AusgabeMagazinFieldForm):
                 'zusammenfassung'   : Textarea(attrs=ATTRS_TEXTAREA), 
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
-        
+
 class AutorForm(XRequiredFormMixin, FormBase):
-    
+
     xrequired = [{'min':1, 'fields':['kuerzel', 'person']}]
-        
+
 class BrochureForm(AusgabeMagazinFieldForm):
     class Meta:
         widgets = {
             'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin']), 
             'titel': Textarea(attrs={'rows':1, 'cols':90})
         }
-    
+
 class BuchForm(XRequiredFormMixin, FormBase):
     class Meta:
         widgets = {
@@ -140,34 +140,34 @@ class BuchForm(XRequiredFormMixin, FormBase):
             'titel_orig': Textarea(attrs={'rows':1, 'cols':90}), 
             'buchband' : make_widget(url='acbuchband', model=buch, wrap=False, can_delete_related=False),
         }
-    
+
     xrequired = [{
         'max':1, 'fields': ['is_buchband', 'buchband'], 
         'error_message': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
     }]
-        
+
 class HerausgeberForm(XRequiredFormMixin, FormBase):
-    
+
     xrequired = [{'fields':['person', 'organisation'], 'min':1}]
-    
+
 class AudioForm(FormBase):   
-   
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         from DBentry.validators import DiscogsURLValidator
         self.fields['discogs_url'].validators.append(DiscogsURLValidator())
-    
+
     def clean(self):
         # release_id and discogs_url are not required, so there's two reason they might not turn up in self.cleaned_data at this point:
         # - they simply had no data
         # - the data they had was invalid
         release_id = str(self.cleaned_data.get('release_id', '') or '') # cleaned_data['release_id'] is either an int or None 
         discogs_url = self.cleaned_data.get('discogs_url') or ''
-        
+
         # There is no point in working on empty or invalid data, so return early.
         if not (release_id or discogs_url) or 'release_id' in self._errors or 'discogs_url' in self._errors:
             return self.cleaned_data
-            
+
         match = discogs_release_id_pattern.search(discogs_url) # cleaned_data['discogs_url'] could be None therefore: or ''
         if match and len(match.groups()) == 1:
             # We have a valid url with a release_id in it
@@ -180,40 +180,40 @@ class AudioForm(FormBase):
                 self.cleaned_data['release_id'] = release_id
         # Clean (as in: remove slugs) and set discogs_url with the confirmed release_id
         self.cleaned_data['discogs_url'] = "http://www.discogs.com/release/" + release_id
-        
+
         return self.cleaned_data
-        
+
 class BildmaterialForm(FormBase):
     copy_related = forms.BooleanField(
         label = 'Bands/Musiker kopieren', 
         help_text = 'Setzen Sie das Häkchen, um Bands und Musiker der Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.', 
         required = False
     )
-    
+
     class Meta:
         widgets = {
             'titel': Textarea(attrs={'rows':1, 'cols':90})
         }
-        
+
 class MIZAdminForm(forms.Form):
     """ Basic form that looks and feels like a django admin form."""
     #TODO: shouldnt this include collapse.js if required by a fieldset?
-        
+
     class Media:
         css = {
             'all' : ('admin/css/forms.css', )
         }
-    
+
     def __iter__(self):
         fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
-            
+
         from .helper import MIZFieldset
         for name, options in fieldsets:  
             yield MIZFieldset(
                 self, name,
                 **options
             )
-        
+
     @property
     def media(self):
         # Collect the media needed for all the widgets
@@ -229,7 +229,7 @@ class MIZAdminForm(forms.Form):
             'admin/js/jquery.init.js' 
         ])
         return ensure_jquery(jquery_media + media)
-        
+
     @cached_property
     def changed_data(self):
         data = []
@@ -258,7 +258,7 @@ class MIZAdminForm(forms.Form):
             if field.has_changed(initial_value, data_value):
                 data.append(name)
         return data
-                    
+
 class DynamicChoiceForm(forms.Form):
     """ 
     A form that dynamically sets choices for instances of ChoiceFields from keyword arguments provided. 
@@ -268,7 +268,7 @@ class DynamicChoiceForm(forms.Form):
     The actual choices for a given field can be lists/tuples, querysets or manager instances.
     """
     #TODO: this cannot handle grouped choices (grouped by names)
-    
+
     def __init__(self, *args, **kwargs):
         all_choices = kwargs.pop('choices', {})
         super(DynamicChoiceForm, self).__init__(*args, **kwargs)
@@ -279,12 +279,12 @@ class DynamicChoiceForm(forms.Form):
                     choices = all_choices
                 else:
                     choices = all_choices.get(self.add_prefix(fld_name), [])
-                    
+
                 if isinstance(choices, BaseManager):
                     choices = choices.all()
                 if isinstance(choices, QuerySet):
                     choices = [(i.pk, i.__str__()) for i in choices]
-                
+
                 new_choices = []
                 for i in choices:
                     try:
