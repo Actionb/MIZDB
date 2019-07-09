@@ -25,15 +25,11 @@ class BaseModel(models.Model):
     - create_field: the name of the field for the dal autocomplete object creation
     """    
     search_fields = []
-
     primary_search_fields = []  
-
-    name_field = None
-
     search_fields_suffixes = {}
-
+    
+    name_field = None
     create_field = None
-
     exclude_from_str = ['beschreibung', 'bemerkungen']
 
     objects = MIZQuerySet.as_manager()
