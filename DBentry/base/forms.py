@@ -7,6 +7,12 @@ from django.utils.functional import cached_property
 from DBentry.utils import snake_case_to_spaces, ensure_jquery
 
 class FormBase(forms.ModelForm):
+    #FIXME: remove FormBase
+    # it's supposed to be a base for the forms of inlineformsets
+    # and ignore duplicate entries in those forms
+    # but form.validate_unique is called after formset.validate_unique
+    # with the duplicates already removed from cleaned_data
+    # hence the instance will not throw a ValidationError.
 
     def validate_unique(self):
         """
