@@ -252,15 +252,6 @@ class AbstractJahrModel(BaseModel):
         verbose_name_plural = 'Jahre'
         ordering = ['jahr']
 
-class AbstractNumModel(BaseModel):
-    num = models.IntegerField('Nummer')
-
-    class Meta(BaseModel.Meta):
-        abstract = True
-        verbose_name = 'Nummer'
-        verbose_name_plural = 'Nummern'
-        ordering = ['num']      
-
 class AbstractURLModel(BaseModel):
     url = models.URLField(verbose_name = 'Webpage', blank = True)
 
