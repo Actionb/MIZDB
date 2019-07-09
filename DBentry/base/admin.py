@@ -19,7 +19,7 @@ from DBentry.utils import get_model_relations,  ensure_jquery
 from DBentry.search.admin import MIZAdminSearchFormMixin
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
-    
+
     flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
                                             # that matches a field in the group
     googlebtns = []                         # Fields in this list get a little button that redirect to a google search page #TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
@@ -28,48 +28,48 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
     superuser_only = False                  # If true, only a superuser can interact with this ModelAdmin
     actions = [merge_records]
-    
+
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
     }
-    
+
     index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
-    
+
     #TODO: let the MIZ changelist template extend the default one 
     #change_list_template = 'miz_changelist.html'
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return self._annotate_for_list_display(queryset)
-        
+
     def _annotate_for_list_display(self, queryset):
         """
         Hook to add annotations to the root queryset of this ModelAdmin to allow ordering of callable list display items.
         """
         return queryset
-            
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if 'widget' not in kwargs:
             kwargs['widget'] = make_widget(model=db_field.related_model)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-        
+
     def get_changelist(self, request, **kwargs):
         return MIZChangeList
-        
+
     def get_index_category(self):
         # Should technically be different apps..
         return self.index_category
-        
+
     def get_actions(self, request):
         # Show actions based on user permissions
         actions = super().get_actions(request) # returns an OrderedDict( (name, (func, name, desc)) )
-        
+
         for func, name, desc in actions.copy().values():
             if name == 'delete_selected':
                 perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
             else:
                 perm_required = getattr(func, 'perm_required', [])
-            
+
             for p in perm_required:
                 perm_passed = False
                 if callable(p):
@@ -80,7 +80,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if not perm_passed:
                     del actions[name]
         return actions
-        
+
     def get_exclude(self, request, obj = None):
         # Exclude all m2m fields, as those are handled by inlines
         # reverse related fields will be sorted out by the ModelForm (django.forms.models.fields_for_model)
@@ -91,14 +91,14 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)
         return self.exclude
-    
+
     def get_fields(self, request, obj = None):
         if not self.fields:
             self.fields = super().get_fields(request, obj)
             if self.flds_to_group:
                 self.fields = self.group_fields()
         return self.fields
-        
+
     def group_fields(self):
         if not self.fields:
             return []
@@ -122,7 +122,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 grouped_fields.pop(i)
             fields_used.update(tpl) 
         return grouped_fields
-        
+
     def get_fieldsets(self, request, obj=None):
         #TODO: this doesn't check if there is already a fieldset containing Beschreibung & Bemerkungen
         if self.fieldsets:
@@ -137,7 +137,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if bb_fields:
             fieldsets.append(('Beschreibung & Bemerkungen', {'fields' : bb_fields, 'classes' : ['collapse', 'collapsed']}))
         return fieldsets
-    
+
     def get_search_fields(self, request=None):
         # Replace the first primary key search field with an __iexact primary key lookup or append one if missing.
         # Remove all duplicates of primary key search fields.
@@ -160,20 +160,20 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if not pk_found:
             search_fields.append('=pk')
         return search_fields
-    
+
     def add_crosslinks(self, object_id, labels = None):
         """
         Provides the template with data to create links to related objects.
         """
         new_extra = {'crosslinks':[]}
         labels = labels or {}
-        
+
         inline_models = {i.model for i in self.inlines}
         # m2m self relations:
         #   will be 'ignored' as a inline must be used to facilitate that relation (i.e. query_model inevitably shows up in inline_models)
         # m2o self relations (rel.model == rel.related_model): 
         #   query_model == rel.model == rel.related_model; differentiating between them is pointless
-        
+
         for rel in get_model_relations(self.model, forward = False, reverse = True):
             query_model = rel.related_model
             query_field = rel.remote_field.name
@@ -199,7 +199,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             except NoReverseMatch:
                 # NoReverseMatch, no link that leads anywhere!
                 continue
-                
+
             # Prepare the label for the link with the following priorities:
             # - a passed in label 
             # - an explicitly (as the default for it is None unless automatically created) declared related_name
@@ -214,7 +214,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             label += " ({})".format(str(count))
             new_extra['crosslinks'].append( dict(url=url, label=label) )
         return new_extra
-        
+
     @property
     def media(self):
         media = super().media
@@ -222,7 +222,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             from django.forms import Media
             return media + Media(js = ['admin/js/utils.js']) # contains the googlebtns script
         return ensure_jquery(media)
-        
+
     def add_extra_context(self, request = None, extra_context = None, object_id = None):
         new_extra = extra_context or {}
         if object_id:
@@ -233,15 +233,15 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if request:
             new_extra['request'] = request
         return new_extra
-        
+
     def add_view(self, request, form_url='', extra_context=None):
         new_extra = self.add_extra_context(request = request, extra_context = extra_context)
         return self.changeform_view(request, None, form_url, new_extra)
-    
+
     def change_view(self, request, object_id, form_url='', extra_context=None):
         new_extra = self.add_extra_context(request = request, extra_context = extra_context, object_id = object_id)
         return super().change_view(request, object_id, form_url, new_extra)
-        
+
     def construct_change_message(self, request, form, formsets, add=False):
         """
         Construct a JSON structure describing changes from a changed object.
@@ -267,7 +267,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     for deleted_object in formset.deleted_objects:
                         change_message.append({'deleted': self._construct_m2m_change_message(deleted_object)})
         return change_message
-        
+
     def _construct_m2m_change_message(self, obj):
         """
         Construct a more useful change message for m2m objects of auto created models.
@@ -285,7 +285,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     'name': force_text(obj._meta.verbose_name),
                     'object': force_text(obj),
                 }
-                
+
     def has_module_permission(self, request):
         if self.superuser_only:
             # Hide the associated models from the index if the current user is not a superuser
@@ -299,13 +299,13 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             obj.save(update=False)
         else:
             super().save_model(request, obj, form, change)
-        
+
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
             form.instance.update_name(force_update=True)
-    
+
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         # Move checkbox widget to the right of its label.
         if 'adminform' in context:
@@ -323,49 +323,49 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             context['media'] = ensure_jquery(context['media'])
         return super().render_change_form(request, context, add, change, form_url, obj)
 
-        
+
 class BaseInlineMixin(object):
-    
+
     original = False
     verbose_model = None
     extra = 1
     classes = ['collapse']
     form = FormBase # For the validate_unique override
     description = ''
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.verbose_model:
             self.verbose_name = self.verbose_model._meta.verbose_name
             self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
-            
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if 'widget' not in kwargs:
             kwargs['widget'] = make_widget(model=db_field.related_model)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-        
+
 class BaseTabularInline(BaseInlineMixin, admin.TabularInline):
     pass
-            
+
 class BaseStackedInline(BaseInlineMixin, admin.StackedInline):
     pass
 
 class BaseAliasInline(BaseTabularInline):
     verbose_name_plural = 'Alias'
-    
+
 class BaseGenreInline(BaseTabularInline):
     verbose_model = genre
-    
+
 class BaseSchlagwortInline(BaseTabularInline):
     verbose_model = schlagwort
-    
+
 class BaseAusgabeInline(BaseTabularInline):
     form = AusgabeMagazinFieldForm
     verbose_model = ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
-    
+
 class BaseOrtInLine(BaseTabularInline):
     verbose_name = 'Ort'
     verbose_name_plural = 'Assoziierte Orte'
-    
+
 
