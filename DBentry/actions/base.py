@@ -99,20 +99,12 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         return super(ActionConfirmationView, self).get_form_class()
 
     def get_form_kwargs(self):
-        """
-        Returns the keyword arguments for instantiating the form.
-        """
-        kwargs = {
-            'initial': self.get_initial(),
-            'prefix': self.get_prefix(),
-        }
-        # Only pass in 'data' if the user tries to confirm an action. 
-        # Do not try to validate the form if it is the first time the user sees the form. (avoids 'INVALID' field errors popping up, scaring the user)
-        if self.request.method in ('POST', 'PUT') and 'action_confirmed' in self.request.POST: #NOTE: why PUT?
-            kwargs.update({
-                'data': self.request.POST,
-                'files': self.request.FILES,
-            })
+        kwargs = super().get_form_kwargs()
+        if 'action_confirmed' not in self.request.POST:
+            # Only pass in 'data' if the user tries to confirm an action. 
+            # Do not try to validate the form if it is the first time the user sees the form. 
+            if 'data' in kwargs: del kwargs['data']
+            if 'files' in kwargs: del kwargs['files']
         return kwargs
         
     def form_valid(self, form):
