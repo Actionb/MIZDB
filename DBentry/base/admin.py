@@ -236,7 +236,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         new_extra = self.add_extra_context(request = request, extra_context = extra_context)
-        return self.changeform_view(request, None, form_url, new_extra)
+        return super().add_view(request, form_url, new_extra)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         new_extra = self.add_extra_context(request = request, extra_context = extra_context, object_id = object_id)
