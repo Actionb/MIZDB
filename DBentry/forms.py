@@ -8,8 +8,8 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models.query import QuerySet
 from django.db.models.manager import BaseManager
 
-from .models import *
-from .constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
+from DBentry import models as _models
+from DBentry.constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
 from DBentry.utils import snake_case_to_spaces, ensure_jquery
 
@@ -97,9 +97,10 @@ class AusgabeMagazinFieldForm(FormBase):
     """
     ausgabe__magazin = forms.ModelChoiceField(required = False,
                                     label = "Magazin", 
-                                    queryset = magazin.objects.all(), 
-                                    widget = make_widget(model=magazin, wrap=True, can_delete_related=False) 
-                                    )
+                                    queryset = _models.magazin.objects.all(), 
+                                    widget = make_widget(
+                                        model=_models.magazin, wrap=True, can_delete_related=False
+                                    ))
     class Meta:
         widgets = {'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin'])}
 
@@ -113,7 +114,7 @@ class AusgabeMagazinFieldForm(FormBase):
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
-        model = artikel
+        model = _models.artikel
         fields = '__all__'
         widgets = {
                 'ausgabe': make_widget(model_name = 'ausgabe', forward = ['ausgabe__magazin']),               
@@ -138,7 +139,9 @@ class BuchForm(XRequiredFormMixin, FormBase):
         widgets = {
             'titel' : Textarea(attrs={'rows':1, 'cols':90}), 
             'titel_orig': Textarea(attrs={'rows':1, 'cols':90}), 
-            'buchband' : make_widget(url='acbuchband', model=buch, wrap=False, can_delete_related=False),
+            'buchband' : make_widget(
+                url='acbuchband', model=_models.buch, wrap=False, can_delete_related=False
+            ),
         }
 
     xrequired = [{
