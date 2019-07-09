@@ -1,10 +1,10 @@
-
 from django.utils.translation import gettext_lazy
 from django.utils.encoding import force_text
 from django.contrib.admin.utils import get_fields_from_path
+from django import views
 
 from DBentry.utils import get_obj_link
-from DBentry.views import MIZAdminMixin, OptionalFormView, FixedSessionWizardView
+from DBentry.views import MIZAdminMixin, FixedSessionWizardView
 
 class ConfirmationViewMixin(MIZAdminMixin):
     
@@ -78,7 +78,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         context.update(**kwargs)
         return context
     
-class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
+class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
     
     template_name = 'admin/action_confirmation.html'
     
@@ -94,10 +94,7 @@ class ActionConfirmationView(ConfirmationViewMixin, OptionalFormView):
         return kwargs
         
     def form_valid(self, form):
-        #TODO: OptionalFormView functionality is not used by any ActionView
-        # OptionalFormView returns this when either the (optional) form is not given or the form is valid.
-        self.perform_action(None if form is None else form.cleaned_data)
-        
+        self.perform_action(form.cleaned_data)
         # We always want to be redirected back to the changelist the action originated from (request.get_full_path()).
         # If we return None, options.ModelAdmin.response_action will do the redirect for us.
         return None

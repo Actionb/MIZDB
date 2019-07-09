@@ -111,7 +111,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         # a return value of None will make options.ModelAdmin.response_action redirect there
         view = self.get_view()
         view.perform_action = Mock()
-        self.assertIsNone(view.form_valid(None))
+        self.assertIsNone(view.form_valid(Mock()))
         
 class TestWizardConfirmationView(ActionViewTestCase):
     
