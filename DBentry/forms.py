@@ -110,7 +110,7 @@ class AusgabeMagazinFieldForm(FormBase):
                 kwargs['initial'] = {}
             if kwargs['instance'].ausgabe:
                 kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
-        super(AusgabeMagazinFieldForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
@@ -274,7 +274,7 @@ class DynamicChoiceForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         all_choices = kwargs.pop('choices', {})
-        super(DynamicChoiceForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for fld_name, fld in self.fields.items():
             if isinstance(fld, forms.ChoiceField) and not fld.choices:
                 if not isinstance(all_choices, dict):
