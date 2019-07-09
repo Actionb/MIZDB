@@ -1,7 +1,7 @@
 from django.contrib import admin
-from django.contrib.admin.views.main import ChangeList, PAGE_VAR, ERROR_FLAG
+from django.contrib.admin.views.main import ChangeList
 from django.db import models
-from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, SuspiciousOperation
+from django.core.exceptions import ImproperlyConfigured, SuspiciousOperation
 from django.utils.datastructures import MultiValueDict
 
 from DBentry.search.admin import ChangelistSearchFormMixin
