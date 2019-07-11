@@ -66,8 +66,7 @@ class XRequiredFormMixin(object):
         
         
 class MIZAdminFormMixin(object):
-    """ Basic form that looks and feels like a django admin form."""
-    #TODO: shouldnt this include collapse.js if required by a fieldset?
+    """A mixin that adds django admin media and fieldsets."""
 
     class Media:
         css = {
