@@ -297,6 +297,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if isinstance(obj, ComputedNameModel):
             # Delay the update of the _name until ModelAdmin._changeform_view has saved the related objects via save_related.
             # This is to avoid update_name building a name with outdated related objects.
+            # TODO: set obj._changed_flag = False to disable updates entirely?
             obj.save(update=False)
         else:
             super().save_model(request, obj, form, change)
@@ -305,6 +306,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         super().save_related(request, form, formsets, change)
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
+            #TODO: use the form and formsets to figure out if an update is required
             form.instance.update_name(force_update=True)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):

@@ -205,14 +205,14 @@ class ComputedNameModel(BaseModel):
             changed_flag = self._changed_flag
         else:
             # avoid calling refresh_from_db by fetching the value directly from the database
-            changed_flag = self.qs().values_list('_changed_flag', flat = True).get(pk = self.pk)
+            changed_flag = self.qs().values_list('_changed_flag', flat = True).get(pk = self.pk) #TODO: qs() followed by get() is redundant
 
         if force_update or changed_flag:
             # an update was scheduled or forced for this instance
-
             if not self.name_composing_fields:
+                #TODO: this exception is never caught
                 raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
-            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk)
+            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk) #TODO: qs() followed by get() is redundant
             current_name = self._get_name(**name_data)
 
             if self._name != current_name:
@@ -225,7 +225,6 @@ class ComputedNameModel(BaseModel):
                 # We have checked whether or not the name needs updating; the changed_flag must be reset
                 self.qs().update(_changed_flag=False)
                 self._changed_flag = False
-
         return name_updated
 
     @classmethod
