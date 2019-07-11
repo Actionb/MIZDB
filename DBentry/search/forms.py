@@ -8,7 +8,7 @@ from django.utils.datastructures import MultiValueDict
 from collections import OrderedDict
 
 from DBentry.ac.widgets import make_widget
-from DBentry.forms import MIZAdminForm
+from DBentry.forms import MIZAdminFormMixin
 
 from .utils import get_dbfield_from_path, strip_lookups_from_path, validate_lookups
 
@@ -137,7 +137,7 @@ class SearchForm(forms.Form):
             params[param_key] = param_value 
         return params
         
-class MIZAdminSearchForm(MIZAdminForm, SearchForm):
+class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     pass
     
 class SearchFormFactory:

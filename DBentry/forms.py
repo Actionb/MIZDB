@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from DBentry import models as _models
-from DBentry.base.forms import MIZAdminForm, XRequiredFormMixin
+from DBentry.base.forms import MIZAdminFormMixin, XRequiredFormMixin
 from DBentry.constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
 
@@ -119,9 +119,7 @@ class BildmaterialForm(forms.ModelForm):
             'titel': Textarea(attrs={'rows':1, 'cols':90})
         }
 
-#TODO: mro() is bad: forms.Form comes before forms.ModelForm and its descendants        
-# Arent we using ModelForm just to save the formfield declarations?
-class FavoritenForm(MIZAdminForm, forms.ModelForm):
+class FavoritenForm(MIZAdminFormMixin, forms.ModelForm):
     class Meta:
         model = _models.Favoriten
         fields = '__all__'

@@ -1,12 +1,12 @@
 from django import forms 
 
-from DBentry.base.forms import MIZAdminForm, DynamicChoiceForm 
+from DBentry.base.forms import MIZAdminFormMixin, MIZAdminForm, DynamicChoiceForm 
 from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
 
 class MaintBaseForm(forms.Form): 
     pass 
      
-class MergeFormBase(DynamicChoiceForm, MIZAdminForm): 
+class MergeFormBase(MIZAdminFormMixin, DynamicChoiceForm): 
     pass
      
 class MergeFormSelectPrimary(MergeFormBase): 

@@ -65,7 +65,7 @@ class XRequiredFormMixin(object):
         return super().clean()
         
         
-class MIZAdminForm(forms.Form):
+class MIZAdminFormMixin(object):
     """ Basic form that looks and feels like a django admin form."""
     #TODO: shouldnt this include collapse.js if required by a fieldset?
 
@@ -128,6 +128,9 @@ class MIZAdminForm(forms.Form):
             if field.has_changed(initial_value, data_value):
                 data.append(name)
         return data
+        
+class MIZAdminForm(MIZAdminFormMixin, forms.Form):
+    pass
 
 class DynamicChoiceForm(forms.Form):
     """ 
