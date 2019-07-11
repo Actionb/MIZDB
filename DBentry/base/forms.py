@@ -109,8 +109,10 @@ class MIZAdminFormMixin(object):
                 # Use the BoundField's initial as this is the value passed to the widget.
                 initial_value = self[name].initial
                 try:
-                    # Convert the initial_value to the field's type
-                    # If field is an IntegerField and has initial of type str, field.has_changed will return false
+                    # forms.Field does not convert the initial_value to the
+                    # field's python type (like it does for the data_value)
+                    # for its has_changed check.
+                    # This results in IntegerField.has_changed('1',1) returning False.
                     initial_value = field.to_python(initial_value)
                 except:
                     pass
