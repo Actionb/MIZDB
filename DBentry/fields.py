@@ -228,7 +228,7 @@ class PartialDate(datetime.date):
                 return False
         return super().__eq__(other)
         
-#TODO: rich comparison
+#TODO: rich comparison => functools.total_ordering
 #    def __gt__(self, other):
 #        if isinstance(other, str):
 #            return self.__str__().__gt__(other)
