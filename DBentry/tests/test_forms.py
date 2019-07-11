@@ -5,37 +5,15 @@ from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import override as translation_override
 
-from DBentry.base.forms import FormBase, DynamicChoiceForm, MIZAdminForm, XRequiredFormMixin
+from DBentry.base.forms import DynamicChoiceForm, MIZAdminForm, XRequiredFormMixin
 from DBentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, HerausgeberForm, AudioForm
 )
-from DBentry.models import artikel, ausgabe, land, autor, person, buch, Herausgeber, Organisation, genre, audio
+from DBentry.models import artikel, ausgabe, autor, person, buch, Herausgeber, Organisation, genre, audio
 from DBentry.ac.widgets import EasyWidgetWrapper
 from DBentry.factory import make
 
 from dal import autocomplete
-
-class TestFormBase(ModelFormTestCase):
-
-    form_class = FormBase
-    model = land
-    fields = ['land_name', 'code']
-    raw_data = [{'land_name':'Deutschland', 'code':'DE'}]
-
-    def test_validate_unique(self):
-        kwargs = {'instance':self.obj1, 'data' : dict(land_name=self.obj1.land_name, code=self.obj1.code)}
-        form = self.get_form(**kwargs)
-        self.assertTrue(form.is_valid())
-        self.assertFalse(form.errors)
-
-        # attempt to create a duplicate of a unique, by passing in the same data without the instance
-        kwargs.pop('instance')
-        form = self.get_form(**kwargs)
-        self.assertFalse(form.is_valid())
-        self.assertTrue(form.errors)
-        # validate_unique should now set the DELETE flag in cleaned_data
-        form.validate_unique()
-        self.assertEqual(form.cleaned_data.get('DELETE', False), True) 
 
 
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):

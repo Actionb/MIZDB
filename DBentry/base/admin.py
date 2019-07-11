@@ -9,7 +9,6 @@ from django import forms
 
 from DBentry.models import ausgabe, genre, schlagwort, models
 from DBentry.base.models import ComputedNameModel
-from DBentry.base.forms import FormBase
 from DBentry.changelist import MIZChangeList
 from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.actions import merge_records
@@ -333,7 +332,6 @@ class BaseInlineMixin(object):
     verbose_model = None
     extra = 1
     classes = ['collapse']
-    form = FormBase # For the validate_unique override
     description = ''
 
     def __init__(self, *args, **kwargs):

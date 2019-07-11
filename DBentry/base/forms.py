@@ -6,26 +6,6 @@ from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 from DBentry.utils import snake_case_to_spaces, ensure_jquery
 
-class FormBase(forms.ModelForm):
-    #FIXME: remove FormBase
-    # it's supposed to be a base for the forms of inlineformsets
-    # and ignore duplicate entries in those forms
-    # but form.validate_unique is called after formset.validate_unique
-    # with the duplicates already removed from cleaned_data
-    # hence the instance will not throw a ValidationError.
-
-    def validate_unique(self):
-        """
-        Calls the instance's validate_unique() method and updates the form's
-        validation errors if any were raised.
-        """
-        exclude = self._get_validation_exclusions()
-        try:
-            self.instance.validate_unique(exclude=exclude)
-        except ValidationError as e:
-            # Ignore non-unique entries in the same formset; see django.contrib.admin.options.InlineModelAdmin.get_formset.inner
-            self.cleaned_data['DELETE']=True
-            self._update_errors(e) #NOTE: update errors even if we're ignoring the ValidationError?
 
 class XRequiredFormMixin(object):
     """

@@ -3,13 +3,13 @@ from django.core.exceptions import ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from DBentry import models as _models
-from DBentry.base.forms import FormBase, MIZAdminForm, XRequiredFormMixin
+from DBentry.base.forms import MIZAdminForm, XRequiredFormMixin
 from DBentry.constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
 
 Textarea = forms.Textarea           
 
-class AusgabeMagazinFieldForm(FormBase):
+class AusgabeMagazinFieldForm(forms.ModelForm):
     """
     In order to limit search results, forward ausgabe search results to a ModelChoiceField for the model magazin.
     Useable by any ModelForm that uses a relation to ausgabe.
@@ -44,7 +44,7 @@ class ArtikelForm(AusgabeMagazinFieldForm):
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
 
-class AutorForm(XRequiredFormMixin, FormBase):
+class AutorForm(XRequiredFormMixin, forms.ModelForm):
 
     xrequired = [{'min':1, 'fields':['kuerzel', 'person']}]
 
@@ -55,7 +55,7 @@ class BrochureForm(AusgabeMagazinFieldForm):
             'titel': Textarea(attrs={'rows':1, 'cols':90})
         }
 
-class BuchForm(XRequiredFormMixin, FormBase):
+class BuchForm(XRequiredFormMixin, forms.ModelForm):
     class Meta:
         widgets = {
             'titel' : Textarea(attrs={'rows':1, 'cols':90}), 
@@ -70,11 +70,11 @@ class BuchForm(XRequiredFormMixin, FormBase):
         'error_message': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
     }]
 
-class HerausgeberForm(XRequiredFormMixin, FormBase):
+class HerausgeberForm(XRequiredFormMixin, forms.ModelForm):
 
     xrequired = [{'fields':['person', 'organisation'], 'min':1}]
 
-class AudioForm(FormBase):   
+class AudioForm(forms.ModelForm):   
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -107,7 +107,7 @@ class AudioForm(FormBase):
 
         return self.cleaned_data
 
-class BildmaterialForm(FormBase):
+class BildmaterialForm(forms.ModelForm):
     copy_related = forms.BooleanField(
         label = 'Bands/Musiker kopieren', 
         help_text = 'Setzen Sie das Häkchen, um Bands und Musiker der Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.', 
