@@ -252,28 +252,43 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         self.assertListEqualSorted(form.fields['cf2'].choices, [('1', 'a')])
 
 
-
 class TestMinMaxRequiredFormMixin(FormTestCase):
 
     dummy_attrs = {
         'first_name' : forms.CharField(),  'last_name' : forms.CharField(required = True), 
         'favorite_pet' : forms.CharField(), 'favorite_sport' : forms.CharField(), 
     }
-    dummy_bases = (MinMaxRequiredFormMixin, forms.Form)                
-
+    dummy_bases = (MinMaxRequiredFormMixin, forms.Form)         
+    
     def test_init_resets_required(self):
         # Assert that __init__ sets any fields declared in minmax_required to not required
         form = self.get_dummy_form()
         self.assertTrue(form.fields['last_name'].required)
-        form = self.get_dummy_form(attrs = {'minmax_required': [{'min':1, 'fields':['first_name', 'last_name']}]})
+        minmax_required = [{'min':1, 'fields':['first_name', 'last_name']}]
+        form = self.get_dummy_form(attrs = {'minmax_required': minmax_required})
         self.assertFalse(form.fields['last_name'].required)
-
+        
+    def test_init_raises_keyerror(self):
+        # Assert that __init__ reraises a KeyError if a group's fields contains field names
+        # not found on the form.
+        minmax_required = [{'min': 1, 'fields': ['a']}]
+        form_class = self.get_dummy_form_class(attrs = {'minmax_required': minmax_required})
+        with self.assertRaises(KeyError):
+            form_class()
+            
+    def test_get_groups_raises_typeerror(self):
+        # Assert that get_groups() raises a TypeError from bad kwargs.
+        minmax_required = [{'min':1, 'fields':['first_name', 'last_name'], 'bad':'kwarg'}]
+        form = self.get_dummy_form(attrs = {'minmax_required': minmax_required})
+        with self.assertRaises(TypeError):
+            list(form.get_groups())
+            
     @translation_override(language = None)
     def test_clean(self):
         attrs = {
             'minmax_required' : [
                 {'min':1, 'fields':['first_name', 'last_name']}, 
-                {'max':1, 'fields':['favorite_pet', 'favorite_sport']}, 
+                {'max':1, 'fields':['favorite_pet', 'favorite_sport']}
             ]
         }
         form_data = {'favorite_pet':'Cat', 'favorite_sport':'Coffee drinking.'}
@@ -281,7 +296,36 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         form.is_valid()
         self.assertIn('Bitte mindestens 1 dieser Felder ausfüllen: First Name, Last Name.', form.non_field_errors())
         self.assertIn('Bitte höchstens 1 dieser Felder ausfüllen: Favorite Pet, Favorite Sport.', form.non_field_errors())
-
+        
+    def test_get_group_error_messages_form_callback(self):
+        # Assert that custom callbacks are handled correctly and return 
+        # the expected error messages.
+        def callback(form, group, error_messages, format_kwargs):
+            fields = " or ".join(f.replace('_', ' ').title() for f in group.fields)
+            return {'max': "%s! Cannot have both!" % fields}
+            
+        minmax_required = [{'max': 1, 'fields': ['favorite_pet', 'favorite_sport']}]
+        base_attrs = {'minmax_required': minmax_required}
+        form_data = {'favorite_pet':'Cat', 'favorite_sport':'Coffee drinking.'}
+        expected = "Favorite Pet or Favorite Sport! Cannot have both!"
+        # Try both valid values for a callback declaration:
+        # - the name of a method owned by the form
+        # - a standalone callable
+        for cb in ('form_cb', callback):
+            if isinstance(cb, str):
+                callback_type = "form owned method"
+            else:
+                callback_type = "standalone function"
+            with self.subTest(callback_type = callback_type):
+                minmax_required[0]['format_callback'] = cb
+                attrs = base_attrs.copy()
+                if isinstance(cb, str):
+                    # Add the callback to the form's methods
+                    attrs[cb] = callback
+                form = self.get_dummy_form(attrs = attrs , data = form_data)
+                self.assertFalse(form.is_valid())
+                self.assertIn(expected, form.non_field_errors())
+                
 class TestAudioForm(ModelFormTestCase):
     form_class = AudioForm
     model = audio
