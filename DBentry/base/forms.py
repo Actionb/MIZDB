@@ -7,62 +7,220 @@ from django.utils.functional import cached_property
 from DBentry.utils import snake_case_to_spaces, ensure_jquery
 
 
-class XRequiredFormMixin(object):
+class FieldGroup:
     """
-    A mixin that allows setting a minimum/maximum number of groups of fields to be required.
+    Helper object managing a group of fields for the MinMaxRequiredFormMixin.
+
+    Created during the clean() method of a form instance, a FieldGroup can
+    assess whether or not its minimum/maximum requirements are fulfilled.
+    """
+
+    def __init__(self, form, *, fields, min = None, max = None,
+                 error_messages = None, format_callback = None):
+        """Constructor for the FieldGroup.
+
+        Parameters:
+            form: the form instance this FieldGroup belongs to.
+            fields (list): this group's field names.
+            min (int): the minimum number of fields that need to be filled out.
+            max (int): the maximum number of fields that may be filled out.
+            error_messages (dict): a mapping of error_type (i.e. 'min','max')
+                to (ValidationError) error message.
+            format_callback (callable or str): a callable or the name of a
+                method of this group's form used to format the error messages.
+
+        """
+        self.form = form
+        self.fields = fields
+        self.min, self.max = min, max
+        self.error_messages = self.form.get_group_error_messages(
+            group=self, error_messages=error_messages or {},
+            format_callback=format_callback
+        )
+
+    def fields_with_values(self):
+        """Count the number of formfields that have a non-empty value.
+
+        Returns:
+            int: the number of formfields that have a non-empty value.
+        """
+        result = 0
+        for field in self.fields:
+            if field not in self.form.fields:
+                continue
+            formfield = self.form.fields[field]
+            value = self.form.cleaned_data.get(field, None)
+            if ((isinstance(formfield, forms.BooleanField) and not value) or
+                    value in formfield.empty_values):
+                continue
+            result += 1
+        return result
+
+    def has_min_error(self, fields_with_values):
+        return self.min and fields_with_values < self.min
+
+    def has_max_error(self, fields_with_values):
+        return self.max and fields_with_values > self.max
+
+    def check(self):
+        if not self.min and not self.max:
+            return False, False
+        fields_with_values = self.fields_with_values()
+        min_error = self.has_min_error(fields_with_values)
+        max_error = self.has_max_error(fields_with_values)
+        return min_error, max_error
+
+
+class MinMaxRequiredFormMixin(object):
+    """A mixin that allows setting groups of fields to be required.
+
+    By default, error messages are formatted with the number
+    of fields minimally (format kwarg: 'min') or maximally ('max') required and
+    a comma separated list of those fields ('fields').
 
     Attributes:
-    - xrequired: an iterable of dicts that specicify the number of required fields ('min', 'max'), the field names
-                ('fields') and optionally a custom error message ('error_message'). 
-    - default_error_messages: a dict of default error messages for min and max ValidationErrors
+        minmax_required: an iterable of dicts, essentially the keyword
+            arguments for the FieldGroups.
+            See 'FieldGroup' constructor args for more details.
+        min_error_message (str): the default error message for a min error.
+        max_error_message (str): the default error message for a max error.
+
+    Examples:
+        class MyForm(MinMaxRequiredFormMixin, forms.Form):
+            spam = forms.IntegerField()
+            bacon = forms.IntegerField()
+            egg = forms.IntegerField()
+
+            max_error_message = "Too much spam!"
+            minmax_required = [{
+                'min': 1, 'max': 2, 'fields': ['spam', 'bacon', 'egg'],
+                'error_messages' = {
+                    'min': 'Must have at least {min!s} of {fields}, {remark}!',
+                },
+                'format_callback': 'spam_callback'
+            }]
+
+            def spam_callback(self, group, error_messages, format_kwargs):
+                remark = "good Sir!"
+                if self.user.is_viking:
+                    remark = "you vile Viking!"
+                return {
+                    error_type: msg.format(remark=remark, **format_kwargs)
+                    for error_type, msg in error_messages.items()
+                }
+
+        If none of the three fields has data and the user is a viking
+        the form will display the min error:
+            "Must have at least 1 of Spam, Bacon, Egg, you vile Viking!"
+        If all three fields have data, the default max error will be shown
+        (as minmax_required does not define a custom error for that group):
+            "Too much spam!"
     """
 
-    xrequired = None 
-    default_error_messages = {
-        'min' : gettext_lazy('Bitte mindestens {min} dieser Felder ausfüllen: {fields}.'), 
-        'max' : gettext_lazy('Bitte höchstens {max} dieser Felder ausfüllen: {fields}.'), 
-    }
+    minmax_required = None
+    min_error_message = gettext_lazy(
+        'Bitte mindestens {min!s} dieser Felder ausfüllen: {fields}.'
+    )
+    max_error_message = gettext_lazy(
+        'Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.'
+    )
 
     def __init__(self, *args, **kwargs):
+        self.default_error_messages = {
+            'min': self.min_error_message,
+            'max': self.max_error_message
+        }
+
         super().__init__(*args, **kwargs)
-        if self.xrequired:
-            for required in self.xrequired:
-                for field_name in required['fields']:
-                    self.fields[field_name].required = False
+
+        self._groups = []
+        for group_kwargs in self.minmax_required or []:
+            fields = group_kwargs.get('fields', [])
+            if not fields:
+                continue
+            try:
+                for field in fields:
+                    self.fields[field].required = False
+            except KeyError:
+                # At least one field in that group does not have a
+                # corresponding formfield; skip the entire group.
+                raise
+            self._groups.append(group_kwargs)
+
+    def get_groups(self):
+        """Instantiate the helper objects."""
+        for group_kwargs in self._groups:
+            try:
+                yield FieldGroup(self, **group_kwargs)
+            except TypeError:
+                raise
 
     def clean(self):
-        if self.xrequired:
-            for required in self.xrequired:
-                min = required.get('min', 0)
-                max = required.get('max', 0)
-                if not min and not max:
-                    continue
-
-                fields_with_values = 0
-                for field_name in required['fields']:
-                    if self.cleaned_data.get(field_name):
-                        fields_with_values += 1
-
-                min_error = max_error = False
-                if min and fields_with_values < min:
-                    min_error = True
-                if max and fields_with_values > max:
-                    max_error = True
-
-                custom_error_msgs = required.get('error_message', {})
-                fields = ", ".join(
-                    self.fields[field_name].label if self.fields[field_name].label else snake_case_to_spaces(field_name).title()
-                    for field_name in required['fields']
-                )
-                if min_error:
-                    msg = custom_error_msgs.get('min') or self.default_error_messages['min']
-                    msg = msg.format(min = min, fields = fields)
-                    self.add_error(None, msg)
-                if max_error:
-                    msg = custom_error_msgs.get('max') or self.default_error_messages['max']
-                    msg = msg.format(max = max, fields = fields)
-                    self.add_error(None, msg)
+        for group in self.get_groups():
+            min_error, max_error = group.check()
+            if min_error:
+                self.add_group_error('min', group)
+            if max_error:
+                self.add_group_error('max', group)
         return super().clean()
+
+    def add_group_error(self, error_type, group):
+        self.add_error(None, group.error_messages[error_type])
+
+    def get_error_message_format_kwargs(self, group):
+        return {
+            'fields': self._get_message_field_names(group),
+            'min': group.min or '0',
+            'max': group.max or '0',
+        }
+
+    def _get_message_field_names(self, group):
+        return ", ".join(
+            self.fields[field_name].label or 
+            snake_case_to_spaces(field_name).title()
+            for field_name in group.fields
+        )
+
+    def get_group_error_messages(self, group, error_messages, format_callback = None):
+        """Prepare and format the error messages for the given group.
+        
+        If a format_callback is provided (which can be either a callable or 
+        the name of a method of this form instance), it will be called with 
+        the following args:
+            self: this form's instance
+            group (FieldGroup): the given group
+            error_messages (dict): custom error messages to be formatted
+                directly passed through from declarations in 'minmax_required'
+            format_kwargs (dict): some default formatting keyword arguments
+            
+        Returns:
+            dict: mapping of error_type to error_message in which
+                custom error messages override the default ones.
+        """
+        format_kwargs = self.get_error_message_format_kwargs(group)
+
+        callback = format_callback
+        if isinstance(callback, str) and hasattr(self, callback):
+            # The callback is the name of a method of this form.
+            # Get the function instead, so we can keep the 
+            # callback args consistent.
+            callback = getattr(self.__class__, callback)
+        if callable(callback):
+            error_messages = callback(self, group, error_messages, format_kwargs)
+        else:
+            error_messages = {
+                k: v.format(**format_kwargs)
+                for k, v in error_messages.items()
+            }
+        defaults = self.get_default_error_messages(format_kwargs)
+        return {**defaults, **error_messages}
+
+    def get_default_error_messages(self, format_kwargs):
+        messages = {}
+        for error_type in ('min', 'max'):
+            message = self.default_error_messages[error_type].format(**format_kwargs)
+            messages[error_type] = message
+        return messages    
         
         
 class MIZAdminFormMixin(object):

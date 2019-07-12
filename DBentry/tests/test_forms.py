@@ -5,7 +5,7 @@ from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import override as translation_override
 
-from DBentry.base.forms import DynamicChoiceForm, MIZAdminForm, XRequiredFormMixin
+from DBentry.base.forms import DynamicChoiceForm, MIZAdminForm, MinMaxRequiredFormMixin
 from DBentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, HerausgeberForm, AudioForm
 )
@@ -253,25 +253,25 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
 
 
-class TestXRequiredFormMixin(FormTestCase):
+class TestMinMaxRequiredFormMixin(FormTestCase):
 
     dummy_attrs = {
         'first_name' : forms.CharField(),  'last_name' : forms.CharField(required = True), 
         'favorite_pet' : forms.CharField(), 'favorite_sport' : forms.CharField(), 
     }
-    dummy_bases = (XRequiredFormMixin, forms.Form)                
+    dummy_bases = (MinMaxRequiredFormMixin, forms.Form)                
 
     def test_init_resets_required(self):
-        # Assert that __init__ sets any fields declared in xrequired to not required
+        # Assert that __init__ sets any fields declared in minmax_required to not required
         form = self.get_dummy_form()
         self.assertTrue(form.fields['last_name'].required)
-        form = self.get_dummy_form(attrs = {'xrequired': [{'min':1, 'fields':['first_name', 'last_name']}]})
+        form = self.get_dummy_form(attrs = {'minmax_required': [{'min':1, 'fields':['first_name', 'last_name']}]})
         self.assertFalse(form.fields['last_name'].required)
 
     @translation_override(language = None)
     def test_clean(self):
         attrs = {
-            'xrequired' : [
+            'minmax_required' : [
                 {'min':1, 'fields':['first_name', 'last_name']}, 
                 {'max':1, 'fields':['favorite_pet', 'favorite_sport']}, 
             ]

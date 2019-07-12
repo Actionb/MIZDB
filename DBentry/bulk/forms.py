@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
-from DBentry.base.forms import MIZAdminForm, XRequiredFormMixin
+from DBentry.base.forms import MIZAdminForm, MinMaxRequiredFormMixin
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from DBentry.ac.widgets import make_widget
@@ -80,13 +80,13 @@ class BulkForm(MIZAdminForm):
                         self.total_count = item_count
         return cleaned_data
 
-class BulkFormAusgabe(XRequiredFormMixin, BulkForm):
+class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     # Form attributes
     model = ausgabe
     field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 'provenienz']
 
     # BulkForm/XRequiredFormMixin attributes
-    xrequired = [{'min':1, 'fields':['jahr', 'jahrgang']}, {'min':1, 'fields':['num', 'monat', 'lnum']}]   
+    minmax_required = [{'min':1, 'fields':['jahr', 'jahrgang']}, {'min':1, 'fields':['num', 'monat', 'lnum']}]   
     preview_fields = [
         'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort', 
         'ausgabe_lagerort', 'provenienz'

@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.admin.widgets import FilteredSelectMultiple
 
 from DBentry import models as _models
-from DBentry.base.forms import MIZAdminFormMixin, XRequiredFormMixin
+from DBentry.base.forms import MIZAdminFormMixin, MinMaxRequiredFormMixin
 from DBentry.constants import ATTRS_TEXTAREA, discogs_release_id_pattern  
 from DBentry.ac.widgets import make_widget
 
@@ -44,9 +44,9 @@ class ArtikelForm(AusgabeMagazinFieldForm):
                 'info'              : Textarea(attrs=ATTRS_TEXTAREA), 
         }
 
-class AutorForm(XRequiredFormMixin, forms.ModelForm):
+class AutorForm(MinMaxRequiredFormMixin, forms.ModelForm):
 
-    xrequired = [{'min':1, 'fields':['kuerzel', 'person']}]
+    minmax_required = [{'min':1, 'fields':['kuerzel', 'person']}]
 
 class BrochureForm(AusgabeMagazinFieldForm):
     class Meta:
@@ -55,7 +55,7 @@ class BrochureForm(AusgabeMagazinFieldForm):
             'titel': Textarea(attrs={'rows':1, 'cols':90})
         }
 
-class BuchForm(XRequiredFormMixin, forms.ModelForm):
+class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
     class Meta:
         widgets = {
             'titel' : Textarea(attrs={'rows':1, 'cols':90}), 
@@ -65,14 +65,14 @@ class BuchForm(XRequiredFormMixin, forms.ModelForm):
             ),
         }
 
-    xrequired = [{
+    minmax_required = [{
         'max':1, 'fields': ['is_buchband', 'buchband'], 
-        'error_message': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
+        'error_messages': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
     }]
 
-class HerausgeberForm(XRequiredFormMixin, forms.ModelForm):
+class HerausgeberForm(MinMaxRequiredFormMixin, forms.ModelForm):
 
-    xrequired = [{'fields':['person', 'organisation'], 'min':1}]
+    minmax_required = [{'fields':['person', 'organisation'], 'min':1}]
 
 class AudioForm(forms.ModelForm):   
 
