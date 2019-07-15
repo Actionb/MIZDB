@@ -1,4 +1,4 @@
-from ..base import MyTestCase
+from ..base import MyTestCase #TODO: absolute import paths
 from ..mixins import CreateFormMixin
 from itertools import chain
 from django.core.exceptions import FieldDoesNotExist

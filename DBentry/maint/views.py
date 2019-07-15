@@ -127,8 +127,8 @@ class DuplicateObjectsView(MaintView):
         
         # Use the verbose name labels established in the fields select form for the table's headers.
         choices = {}
-        for choice_field in form.fields.values():
-            if not getattr(choice_field, 'choices', False):
+        for choice_field in form.fields.values(): #TODO: clarify what kind of fields are in the form
+            if not getattr(choice_field, 'choices', False): #FIXME: check for it being an instance of ChoiceField!
                 # Not a choice field ... somehow!
                 continue
             field_choices = choice_field.choices

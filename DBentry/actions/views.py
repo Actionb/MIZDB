@@ -13,7 +13,7 @@ from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, Brochur
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin, log_addition
 
-from .base import ActionConfirmationView, WizardConfirmationView
+from .base import ActionConfirmationView, WizardConfirmationView #TODO: absolute imports
 from .forms import (
     MergeFormSelectPrimary, MergeConflictsFormSet, 
     BulkAddBestandForm, BulkEditJahrgangForm, 
@@ -236,6 +236,8 @@ class MergeViewWizarded(WizardConfirmationView):
         kwargs = super(MergeViewWizarded, self).get_form_kwargs(step) 
         if step is None: 
             step = self.steps.current 
+        #TODO: do not rely on the existing order of forms to determine what form we are using
+        # in a given step, maybe WizardView has some get_form_class_for_step method?
         if step == '1': 
             # If we are at step 1, then there is a conflict as two or more records are trying to change one of original's fields.
             # We need to provide the MergeConflictsFormSet with 'data' for its fields AND 'choices' for the DynamicChoiceForm.

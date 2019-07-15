@@ -1,6 +1,6 @@
 from unittest.mock import patch, Mock, PropertyMock
 
-from .base import ActionViewTestCase
+from .base import ActionViewTestCase #TODO: absolute imports
 from ..base import AdminTestCase, mockv, mockex
 from ..mixins import LoggingTestMixin
 

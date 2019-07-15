@@ -4,6 +4,7 @@ from DBentry.base.forms import MIZAdminForm
 from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
 
 class DuplicateFieldsSelectForm(forms.Form): 
+    #TODO: this doesn't use DynamicChoiceForm mixin despite it assigning choices after creation
     base = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     m2m = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     reverse = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')

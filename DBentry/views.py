@@ -187,7 +187,7 @@ class FixedSessionWizardView(SessionWizardView):
         return super(FixedSessionWizardView, self).get_form(step, data, files) 
         
 class DynamicChoiceFormMixin(object):
-    
+    #TODO: what is this class? not used by anything
     def get_form_choices(self, form):
         pass
     
