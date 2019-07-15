@@ -1,24 +1,7 @@
 from django import forms 
 
-from DBentry.base.forms import MIZAdminFormMixin, MIZAdminForm, DynamicChoiceForm 
+from DBentry.base.forms import MIZAdminForm 
 from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
-
-class MaintBaseForm(forms.Form): 
-    pass 
-     
-class MergeFormBase(MIZAdminFormMixin, DynamicChoiceForm): 
-    pass
-     
-class MergeFormSelectPrimary(MergeFormBase): 
-    original = forms.ChoiceField(choices = [], label = 'Primären Datensatz auswählen', widget = forms.RadioSelect()) 
-    expand_o = forms.BooleanField(required = False, label = 'Primären Datensatz erweitern') 
-     
-class MergeFormHandleConflicts(MergeFormBase): 
-    original_fld_name = forms.CharField(required=False, widget=forms.HiddenInput()) # Stores the name of the field 
-    verbose_fld_name = forms.CharField(label = 'Original-Feld', widget=forms.TextInput(attrs={'readonly':'readonly'})) # Displays the verbose name of the field 
-    posvals = forms.ChoiceField(choices = [], label = 'Mögliche Werte', widget = forms.RadioSelect()) 
-     
-MergeConflictsFormSet = forms.formset_factory(MergeFormHandleConflicts, extra=0, can_delete=False)   
 
 class DuplicateFieldsSelectForm(forms.Form): 
     base = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
