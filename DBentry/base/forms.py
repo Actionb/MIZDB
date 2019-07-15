@@ -291,44 +291,46 @@ class MIZAdminFormMixin(object):
 class MIZAdminForm(MIZAdminFormMixin, forms.Form):
     pass
 
-class DynamicChoiceForm(forms.Form):
-    """ 
-    A form that dynamically sets choices for instances of ChoiceFields from keyword arguments provided. 
-    Takes a keyword argument 'choices' that can either be:
-        - a dict: a mapping of a field's name to its choices
-        - an iterable containing choices that apply to all ChoiceFields
-    The actual choices for a given field can be lists/tuples, querysets or manager instances.
-    """
-    #TODO: this cannot handle grouped choices (grouped by names)
-
-    def __init__(self, *args, **kwargs):
-        all_choices = kwargs.pop('choices', {})
+class DynamicChoiceFormMixin(object):
+    """Set formfield choices after init from keyword arguments."""
+    
+    def __init__(self, choices = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if choices:
+            self.set_choices(choices)
+
+    def set_choices(self, choices):
+        """Set choices for choice fields that do not already have choices.
+        
+        Arguments:
+            choices (dict): a mapping of choicefield names to its choices.
+                django.forms.models.ALL_FIELDS constant can be used to set the
+                same choices to all fields that are not mentioned in 'choices'.
+                
+        django guidelines for choices apply.
+        A choice can also be a manager or queryset instance.
+        """
+        if not isinstance(choices, dict):
+            raise TypeError(
+                "Expected mapping formfield_name: choices. Got %s." 
+                % type(choices)
+            )
         for fld_name, fld in self.fields.items():
-            if isinstance(fld, forms.ChoiceField) and not fld.choices:
-                if not isinstance(all_choices, dict):
-                    # choice_dict is a list, there is only one choice for any ChoiceFields
-                    choices = all_choices
-                else:
-                    choices = all_choices.get(self.add_prefix(fld_name), [])
+            if not isinstance(fld, forms.ChoiceField) or fld.choices:
+                # Not a choice field or the choices are already set.
+                continue
+            if self.add_prefix(fld_name) in choices:
+                field_choices = choices[self.add_prefix(fld_name)]
+            elif forms.ALL_FIELDS in choices:
+                field_choices = choices[forms.ALL_FIELDS]
+            else:
+                continue
 
-                if isinstance(choices, BaseManager):
-                    choices = choices.all()
-                if isinstance(choices, QuerySet):
-                    choices = [(i.pk, i.__str__()) for i in choices]
-
-                new_choices = []
-                for i in choices:
-                    try:
-                        k = str(i[0])
-                        v = str(i[1])
-                    except IndexError:
-                        # i is an iterable with len < 2)
-                        k = v = str(i[0])
-                    except TypeError:
-                        # i is not an iterable
-                        k = v = str(i)
-                    new_choices.append( (k, v) )
-                choices = new_choices
-                fld.choices = choices
-
+            if isinstance(field_choices, BaseManager):
+                # model.objects; need to call all() on it.
+                field_choices = field_choices.all()
+            if isinstance(field_choices, QuerySet):
+                # We need 2-tuples (actual value, human readable name):
+                fld.choices = [(str(obj.pk), str(obj)) for obj in field_choices]
+            else:
+                fld.choices = list(field_choices)
