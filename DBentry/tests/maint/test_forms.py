@@ -1,11 +1,11 @@
-from ..base import MyTestCase #TODO: absolute import paths
-from ..mixins import CreateFormMixin
 from itertools import chain
 from django.core.exceptions import FieldDoesNotExist
 from django.contrib.admin.utils import get_fields_from_path
 
 import DBentry.models as _models
 from DBentry.maint.forms import get_dupe_fields_for_model
+from DBentry.tests.base import MyTestCase
+from DBentry.tests.mixins import CreateFormMixin
 
 class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         
