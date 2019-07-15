@@ -327,13 +327,11 @@ class TestAudioForm(ModelFormTestCase):
     def test_clean_handles_integer_release_id(self):
         # Assert that clean can properly cast any valid input for release_id into a string.
         form = self.get_form(data = {'release_id':1234})
-        with self.assertNotRaises(Exception):
-            form.full_clean() #TODO: full_clean cannot raise exceptions and all exceptions are caught in the clean functions called
+        form.full_clean()
         self.assertNotIn('release_id', form._errors)
 
         form = self.get_form(data = {'release_id':'1234'})
-        with self.assertNotRaises(Exception):
-            form.full_clean()
+        form.full_clean()
         self.assertNotIn('release_id', form._errors)
 
     def test_clean_aborts_on_invalid_releaseid_or_discogsurl(self):
