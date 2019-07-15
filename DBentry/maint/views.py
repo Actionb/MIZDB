@@ -140,7 +140,7 @@ class DuplicateObjectsView(MaintView):
         headers = [choices[f] for f in dupe_fields]
         for instances, values in duplicates:
             dupe_item = [
-                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in dupe_fields])
+                (instance, get_obj_link(instance, self.request.user, include_name = False), [values[f] for f in dupe_fields]) #FIXME: values is a tuple!
                 for instance in instances
             ]           
             cl_url =  reverse('admin:{}_{}_changelist'.format(self.opts.app_label, self.opts.model_name))
