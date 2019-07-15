@@ -5,7 +5,7 @@ from django import forms
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.translation import override as translation_override
 
-from DBentry.base.forms import DynamicChoiceForm, MIZAdminForm, MinMaxRequiredFormMixin
+from DBentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin
 from DBentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, HerausgeberForm, AudioForm
 )
@@ -194,7 +194,7 @@ class TestMIZAdminForm(FormTestCase):
 
 class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
-    dummy_bases = (DynamicChoiceForm, )
+    dummy_bases = (DynamicChoiceFormMixin, forms.Form)
     dummy_attrs = {
         'cf' : forms.ChoiceField(choices = []), 
         'cf2' : forms.ChoiceField(choices = [])
@@ -202,50 +202,37 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
     model = genre
     test_data_count = 3
 
-    def test_init(self):
+    def test_set_choices(self):
         # choices is list of iterables with len == 2 - ideal case
-        choices = [('1', '1'), ('2', '3'), ('3', '0')]
-        form = self.get_dummy_form(choices=choices)
-        self.assertListEqualSorted(form.fields['cf'].choices, choices)
-        self.assertListEqualSorted(form.fields['cf2'].choices, choices)
-
-        # choices is a list of iterables of len == 1
-        choices = ['1', '2', '3']
-        expected = [('1', '1'), ('2', '2'), ('3', '3')]
+        choices = {forms.ALL_FIELDS: [('1', '1'), ('2', '3'), ('3', '0')]}
+        expected = [('1', '1'), ('2', '3'), ('3', '0')]
         form = self.get_dummy_form(choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
         self.assertListEqualSorted(form.fields['cf2'].choices, expected)
 
-        # choices is a list of objects that are not iterable
-        expected = [(str(o), str(o)) for o in self.test_data]
-        form = self.get_dummy_form(choices=self.test_data)
-        self.assertListEqualSorted(form.fields['cf'].choices, expected)
-        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
-
-        # choices is a dict
-        choices = {'cf':['1', '2', '3'], 'cf2':self.test_data}
-        form = self.get_dummy_form(choices=choices)
-        self.assertListEqualSorted(form.fields['cf'].choices, [('1', '1'), ('2', '2'), ('3', '3')])
-        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
-
+    def test_set_choices_manager(self):
         # choices is a BaseManager
+        choices = {forms.ALL_FIELDS: genre.objects}
         expected = [(str(o.pk), str(o)) for o in self.test_data]
-        form = self.get_dummy_form(choices=genre.objects)
+        form = self.get_dummy_form(choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
         self.assertListEqualSorted(form.fields['cf2'].choices, expected)
 
+    def test_set_choices_queryset(self):
         # choices is a QuerySet
-        expected = [(str(o.pk), str(o)) for o in self.test_data[:2]]
-        form = self.get_dummy_form(choices=genre.objects.filter(pk__in=[pk for pk, o in expected]))
+        choices = {forms.ALL_FIELDS: genre.objects.all()}
+        expected = [(str(o.pk), str(o)) for o in self.test_data]
+        form = self.get_dummy_form(choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
         self.assertListEqualSorted(form.fields['cf2'].choices, expected)
 
+    def test_set_choices_preserved(self):
         # preset choices are preserved
         fields = {
             'cf' : forms.ChoiceField(choices = []), 
             'cf2' : forms.ChoiceField(choices = [('1', 'a')])
         }
-        choices = ['1', '2', '3']
+        choices = {forms.ALL_FIELDS: [(i,i) for i in ['1', '2', '3']]}
         expected = [('1', '1'), ('2', '2'), ('3', '3')]
         form = self.get_dummy_form(attrs = fields, choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)

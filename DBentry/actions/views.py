@@ -1,4 +1,4 @@
-
+from django import forms
 from django.db import transaction
 from django.db.models import ProtectedError, F
 from django.utils.html import format_html, mark_safe
@@ -42,7 +42,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
-        kwargs['choices'] = self.queryset
+        kwargs['choices'] = {forms.ALL_FIELDS: self.queryset}
         return kwargs
 
     def get_initial(self):
@@ -240,7 +240,7 @@ class MergeViewWizarded(WizardConfirmationView):
         # in a given step, maybe WizardView has some get_form_class_for_step method?
         if step == '1': 
             # If we are at step 1, then there is a conflict as two or more records are trying to change one of original's fields.
-            # We need to provide the MergeConflictsFormSet with 'data' for its fields AND 'choices' for the DynamicChoiceForm.
+            # We need to provide the MergeConflictsFormSet with 'data' for its fields AND 'choices' for the DynamicChoiceFormMixin.
             form_class = self.form_list[step] 
             prefix = self.get_form_prefix(step, form_class) 
             data = { 
@@ -272,7 +272,9 @@ class MergeViewWizarded(WizardConfirmationView):
             kwargs['form_kwargs'] = {'choices':choices}
         else: 
             # MergeFormSelectPrimary form: choices for the selection of primary are objects in the queryset
-            kwargs['choices'] = self.queryset 
+            kwargs['choices'] = {forms.ALL_FIELDS: self.queryset}
+            # TODO: replace ALL_FIELDS with the 'original' formfield 
+            #(make the reference to it an attribute on the form?)
         return kwargs 
 
     def perform_action(self, form_cleaned_data = None): 

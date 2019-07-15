@@ -188,6 +188,7 @@ class FixedSessionWizardView(SessionWizardView):
         
 class DynamicChoiceFormMixin(object):
     #TODO: what is this class? not used by anything
+    #FIXME: same name as the form mixin!
     def get_form_choices(self, form):
         pass
     

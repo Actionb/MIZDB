@@ -4,6 +4,7 @@ from .base import ActionViewTestCase #TODO: absolute imports
 from ..base import AdminTestCase, mockv, mockex
 from ..mixins import LoggingTestMixin
 
+from django import forms
 from django.test import tag
 from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry
@@ -560,7 +561,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         form_kwargs = view.get_form_kwargs(step = '0')
         self.assertIn('choices', form_kwargs)
         self.assertListEqualSorted(
-            view.queryset.values_list('pk', flat = True), form_kwargs['choices'].values_list('pk', flat = True)
+            view.queryset.values_list('pk', flat = True), 
+            form_kwargs['choices'][forms.ALL_FIELDS].values_list('pk', flat = True)
         )
 
         # MergeConflictsFormSet step
