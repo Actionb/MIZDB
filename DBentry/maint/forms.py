@@ -1,7 +1,11 @@
-from django import forms 
+from django import forms
+from django.apps import apps
 
-from DBentry.base.forms import MIZAdminForm 
-from DBentry.utils import get_model_fields, get_model_relations, get_reverse_field_path
+from DBentry.base import models as base_models
+from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
+from DBentry.utils import (
+    get_model_fields, get_model_relations, get_reverse_field_path, nfilter
+)
 
 class DuplicateFieldsSelectForm(forms.Form): 
     #TODO: this doesn't use DynamicChoiceFormMixin despite it assigning choices after creation
@@ -64,17 +68,38 @@ def duplicatefieldsform_factory(model, selected_dupe_fields):
     form.fields['reverse'].choices = choices['reverse']
     return form
     
-class ModelSelectForm(MIZAdminForm):
+class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
     
-    def get_model_list():
-        #TODO: review this
-        from django.apps import apps
-        rslt = []
-        for model in apps.get_models('DBentry'):
-            if model.__module__ == 'DBentry.models' and not model._meta.auto_created\
-            and 'alias' not in model._meta.model_name\
-            and model._meta.verbose_name not in ('favoriten', 'lfd. Nummer', 'Ausgabe-Monat', 'Nummer'):
-                rslt.append((model._meta.model_name, model._meta.verbose_name))
-        return [('', '')] + sorted(rslt, key=lambda tpl:tpl[1])
-        
-    model_select = forms.ChoiceField(choices = get_model_list, label = 'Bitte das Modell auswählen', initial = '')
+    def __init__(self, model_filters = None, *args, **kwargs):
+        choices = {'model_select': self.get_model_list(model_filters)}
+        super().__init__(choices = choices, *args, **kwargs)
+    
+    _model_name_excludes = [
+        'Favoriten', 'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat', 
+    ]
+    
+    def get_model_filters(self):
+        """
+        Prepare filters to apply to the list of models returned by apps.get_models.
+        """
+        return [
+            # Filter out m2m intermediary tables (manually or auto created)
+            # and models inherited from other apps. 
+            lambda model: (
+                issubclass(model, base_models.BaseModel) and 
+                not issubclass(model, base_models.BaseM2MModel)), 
+            # <model>_alias tables can contain as many duplicates as they want.
+            lambda model: not model._meta.model_name.endswith('_alias'),
+            lambda model: model._meta.model_name not in self._model_name_excludes
+        ]
+    
+    def get_model_list(self, filters = None):
+        """Return the choices for the 'model_select' field."""
+        if filters is None:
+            filters = self.get_model_filters()
+        choices = [
+            (model._meta.model_name, model._meta.verbose_name)
+            for model in nfilter(filters, apps.get_models('DBentry'))
+        ]
+        # Sort the choices by verbose_name.
+        return sorted(choices, key=lambda tpl: tpl[1])
