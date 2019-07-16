@@ -22,3 +22,12 @@ def flatten_dict(d, exclude=[]):
         else:
             rslt[k] = v
     return rslt
+    
+def nfilter(filters, iterable):
+    """Apply every filter function in 'filters' to 'iterable'."""
+    def filter_func(item):
+        if not filters:
+            return True
+        return all(filter(item) for filter in filters)
+    return filter(filter_func, iterable)
+    
