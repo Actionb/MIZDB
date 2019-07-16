@@ -1,27 +1,28 @@
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.urls import reverse
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 
 from dal import autocomplete, forward
 
 from DBentry.utils import get_model_from_string, snake_case_to_spaces
 
+
 class WidgetCaptureMixin(object):
-    
+
     def __init__(self, model_name, *args, **kwargs):
         self.model_name = model_name
         self.create_field = kwargs.pop('create_field', None)
         if 'url' not in kwargs:
             kwargs['url'] = 'accapture'
         super().__init__(*args, **kwargs)
-    
+
     def _get_url(self):
         if self._url is None:
             return None
 
         if '/' in self._url:
             return self._url
-        
+
         reverse_kwargs = {}
         if self._url == 'accapture':
             if self.model_name:
@@ -34,21 +35,28 @@ class WidgetCaptureMixin(object):
         self._url = url
 
     url = property(_get_url, _set_url)
-    
+
+
 class MIZModelSelect2(WidgetCaptureMixin, autocomplete.ModelSelect2):
     pass
-    
+
+
 class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multiple):
     pass
 
+
 class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
-    
+
     class Media:
-        js  = ['admin/js/jquery.init.js', 'admin/js/admin/RelatedObjectLookups.js']
-    
-    def __init__(self, widget, related_model, remote_field_name = 'id', 
-            can_add_related=True, can_change_related=True, can_delete_related=True):
-            #TODO: this is not calling super().init!
+        js = [
+            'admin/js/jquery.init.js', 'admin/js/admin/RelatedObjectLookups.js'
+        ]
+
+    def __init__(
+            self, widget, related_model, remote_field_name = 'id',
+            can_add_related=True, can_change_related=True,
+            can_delete_related=True):
+        # TODO: this is not calling super().init!
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         self.choices = widget.choices
@@ -58,11 +66,11 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         self.can_delete_related = can_delete_related
         self.related_model = related_model
         self.remote_field_name = remote_field_name
-        
+
     def get_related_url(self, info, action, *args):
         from django.urls import reverse
         return reverse("admin:%s_%s_%s" % (info + (action,)), args=args)
-                       
+
     def get_context(self, name, value, attrs):
         from django.contrib.admin.views.main import IS_POPUP_VAR, TO_FIELD_VAR
         rel_opts = self.related_model._meta
@@ -97,10 +105,12 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
                 delete_related_template_url=delete_related_template_url,
             )
         return context
-        
-    
-def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='id', 
-        can_add_related=True, can_change_related=True, can_delete_related=True, **kwargs):
+
+
+def make_widget(
+        url='accapture', multiple=False, wrap=False, remote_field_name='id',
+        can_add_related=True, can_change_related=True, can_delete_related=True,
+        **kwargs):
     # Create a (default: MIZModelSelect2) widget
     widget_opts = {}
     model = kwargs.pop('model', None)
@@ -109,7 +119,7 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         model_name = model._meta.model_name
     if model_name and not model:
         model = get_model_from_string(model_name)
-    
+
     if 'widget_class' in kwargs:
         widget_class = kwargs.pop('widget_class')
     else:
@@ -120,15 +130,21 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         if model_name:
             widget_opts['model_name'] = model_name
         else:
-            from django.core.exceptions import ImproperlyConfigured
-            raise ImproperlyConfigured("{} widget missing argument 'model_name'.".format(widget_class.__name__))
+            raise ImproperlyConfigured(
+                "{} widget missing argument 'model_name'.".format(
+                    widget_class.__name__)
+                )
         if 'create_field' not in kwargs and can_add_related and model:
             widget_opts['create_field'] = model.create_field
-    if issubclass(widget_class, (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)):
+
+    if issubclass(
+                widget_class,
+                (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)
+            ):
         widget_opts['url'] = url
-        
+
     widget_opts.update(kwargs)
-        
+
     if 'forward' in widget_opts:
         _forward = widget_opts.get('forward')
         if not isinstance(_forward, (list, tuple)):
@@ -136,47 +152,54 @@ def make_widget(url='accapture', multiple=False, wrap=False, remote_field_name='
         else:
             _forward = list(_forward)
         widget_opts['forward'] = []
-            
+
         for forwarded in _forward:
-            #TODO: filter out 'false' forwarded (i.e. None)
+            # TODO: filter out 'false' forwarded (i.e. None)
             if isinstance(forwarded, str):
                 dst = forwarded.split('__')[-1]
                 forwarded = forward.Field(src=forwarded, dst=dst)
             widget_opts['forward'].append(forwarded)
-            
+
             if 'attrs' in widget_opts:
                 attrs = widget_opts.get('attrs')
             else:
                 widget_opts['attrs'] = {}
                 attrs = widget_opts['attrs']
-                
+
             if 'data-placeholder' not in attrs:
                 # forward with no data-placeholder-text
-                # the widget is created when django initializes, not when the view is called
-                # apparently that is too early for translations...
-                #TODO: maybe this is fixed in DAL 3.2.10 (#871)?
+                # the widget is created when django initializes, not when
+                # the view is called apparently that is too early
+                # for translations...
+                # TODO: maybe this is fixed in DAL 3.2.10 (#871)?
                 placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
-                
-                # Try to find the verbose_name of the source formfield of the forward.
-                # We do not have access to the form and so no access to the forwarded formfield's (forwarded.src) label.
-                # If the forward's dst attribute is None, then get_field is likely to fail as src refers to the formfield's name
+
+                # Try to find the verbose_name of the source formfield
+                # of the forward.
+                # We do not have access to the form and so no access to the
+                # forwarded formfield's (forwarded.src) label.
+                # If the forward's dst attribute is None, then get_field is
+                # likely to fail as src refers to the formfield's name
                 # and not the model field's name.
                 try:
                     # verbose_name default is the field.name.replace('_',' ')
-                    #TODO: model may be None!
-                    forwarded_verbose = model._meta.get_field(forwarded.dst or forwarded.src).verbose_name.title()
+                    # TODO: model may be None!
+                    forwarded_verbose = model._meta.get_field(
+                        forwarded.dst or forwarded.src).verbose_name.title()
                 except (AttributeError, FieldDoesNotExist):
-                    # AttributeError: the field returned by get_field does not have a verbose_name attribute (i.e. a relation)
-                    # FieldDoesNotExist: forwarded.dst/forwarded.src is not a name of a field of that model 
+                    # AttributeError: the field returned by get_field does not
+                    # have a verbose_name attribute (i.e. a relation)
+                    # FieldDoesNotExist: forwarded.dst/forwarded.src is not
+                    # a name of a field of that model
                     forwarded_verbose = snake_case_to_spaces(forwarded.src).title()
+                placeholder = placeholder_template % {'verbose_name': forwarded_verbose}
+                attrs['data-placeholder'] = placeholder
 
-                attrs['data-placeholder'] = placeholder_template % {'verbose_name':forwarded_verbose}
-            
     widget = widget_class(**widget_opts)
-        
+
     if wrap and remote_field_name:
         if model:
-            return EasyWidgetWrapper(widget, model, remote_field_name, can_add_related, can_change_related, can_delete_related)
+            return EasyWidgetWrapper(
+                widget, model, remote_field_name,
+                can_add_related, can_change_related, can_delete_related)
     return widget
-        
-        
