@@ -1,7 +1,8 @@
+from django import views
+from django.contrib.admin import helpers
+from django.contrib.admin.utils import get_fields_from_path
 from django.utils.translation import gettext_lazy
 from django.utils.encoding import force_text
-from django.contrib.admin.utils import get_fields_from_path
-from django import views
 
 from DBentry.utils import get_obj_link
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
