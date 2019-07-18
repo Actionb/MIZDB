@@ -112,10 +112,21 @@ class ConfirmationViewMixin(MIZAdminMixin):
         return context
 
 class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
+    """
+    Base view for all action views.
+
+    It provides the template with a list of changeform-links to objects that
+    are going to be changed by this action. This list is created by the
+    `compile_affected_objects` method.
+
+    Attributes:
+        affected_fields (list): the model fields whose values should be
+            displayed in the summary of objects affected by this action.
+    """
 
     template_name = 'admin/action_confirmation.html'
 
-    affected_fields = [] # these are the model fields that should be displayed in the summary of objects affected by this action
+    affected_fields = []
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
