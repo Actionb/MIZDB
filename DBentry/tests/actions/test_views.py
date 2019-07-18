@@ -69,13 +69,13 @@ class TestConfirmationViewMixin(AdminTestCase):
         self.assertEqual(context.get('title'), 'Mergeaudio')
         self.assertEqual(context.get('breadcrumbs_title'), 'Breads')
         self.assertEqual(context.get('non_reversible_warning'), instance.non_reversible_warning)
-        self.assertEqual(context.get('objects_name'), instance.opts.verbose_name_plural)
+        self.assertEqual(context.get('objects_name'), instance.opts.verbose_name_plural) #TODO: where are all the model instances?!
 
         instance.title = ''
         instance.short_description = 'Testdescription'
         instance.breadcrumbs_title = ''
         instance.action_reversible = True
-        instance.queryset = [1]
+        instance.queryset = Mock(count = Mock(return_value = 1))
         context = instance.get_context_data()
         self.assertEqual(context.get('title'), 'Testdescription')
         self.assertEqual(context.get('breadcrumbs_title'), 'Testdescription')

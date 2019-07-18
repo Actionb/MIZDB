@@ -68,36 +68,47 @@ class ConfirmationViewMixin(MIZAdminMixin):
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        if len(self.queryset) == 1:
-            objects_name = force_text(self.opts.verbose_name)
-        else:
-            objects_name = force_text(self.opts.verbose_name_plural)
+        defaults = {
+            'queryset': self.queryset,
+            'opts': self.opts,
+            'action_name': self.action_name,
+            'view_helptext': self.view_helptext,
+            # action_checkbox_name is used for marking the (hidden) inputs
+            # that hold the primary keys of the objects.
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+        }
 
-        media = self.model_admin.media
+        # template variable to accurately address the objects of the queryset
+        if self.queryset.count() == 1:
+            defaults['objects_name'] = force_text(self.opts.verbose_name)
+        else:
+            defaults['objects_name'] = force_text(self.opts.verbose_name_plural)
+
+        # Add model_admin and form media.
+        if 'media' in context:
+            media = context['media'] + self.model_admin.media
+        else:
+            media = self.model_admin.media
         if hasattr(self, 'get_form') and self.get_form():
             media += self.get_form().media
+        defaults['media'] = media
 
+        # Add view specific variables.
         title = self.title or getattr(self, 'short_description', '')
-        breadcrumbs_title = self.breadcrumbs_title or getattr(self, 'short_description', '')
-        title = title % {'verbose_name_plural':self.opts.verbose_name_plural}
-        breadcrumbs_title = breadcrumbs_title % {'verbose_name_plural':self.opts.verbose_name_plural}
+        title = title % {'verbose_name_plural': self.opts.verbose_name_plural}
+        breadcrumbs_title = self.breadcrumbs_title or title
+        breadcrumbs_title = breadcrumbs_title % {
+            'verbose_name_plural': self.opts.verbose_name_plural
+        }
 
-        from django.contrib.admin import helpers
-        context.update(
-            dict(
-                title                   =   title,
-                objects_name            =   objects_name,
-                queryset                =   self.queryset,
-                opts                    =   self.opts,
-                action_checkbox_name    =   helpers.ACTION_CHECKBOX_NAME, # this variable is used for marking the (hidden) inputs that hold the primary keys of the objects
-                media                   =   media,
-                action_name             =   self.action_name, # action_name is a context variable that will be used on the template to tell django to direct back here (through response_action (line contrib.admin.options:1255))
-                view_helptext           =   self.view_helptext, 
-                non_reversible_warning  =   self.non_reversible_warning if not self.action_reversible else '', 
-                breadcrumbs_title       =   breadcrumbs_title, 
-            )
-        )
-        context.update(**kwargs)
+        defaults['title'] = title
+        defaults['breadcrumbs_title'] = breadcrumbs_title
+        if not self.action_reversible:
+            defaults['non_reversible_warning'] = self.non_reversible_warning
+        else:
+            defaults['non_reversible_warning'] = ''
+
+        context.update({**defaults, **kwargs})
         return context
 
 class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
