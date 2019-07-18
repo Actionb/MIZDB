@@ -1,5 +1,4 @@
 from django import forms
-from django.contrib.admin.utils import get_fields_from_path
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, F
@@ -101,50 +100,66 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     def get_initial(self):
         # get initial values for bestand and dublette based on the view's model
-        initial = super().get_initial()
-        if self.model == ausgabe:
-            initial = {'bestand' : lagerort.objects.get(pk=ZRAUM_ID), 'dublette' : lagerort.objects.get(pk=DUPLETTEN_ID)}
-        return initial
+        if self.model == _models.ausgabe:
+           return {
+                'bestand' : _models.lagerort.objects.get(pk=ZRAUM_ID), 
+                'dublette' : _models.lagerort.objects.get(pk=DUPLETTEN_ID)
+            }
+        return super().get_initial()
+
+    def _build_message(self, lagerort_instance, bestand_instances, fkey):
+        base_msg = "{lagerort}-Bestand zu diesen {count} {verbose_model_name} hinzugefügt: {obj_links}"
+        format_dict = {
+            'verbose_model_name': self.opts.verbose_name_plural, 
+            'obj_links': link_list(
+                request=self.request, 
+                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances]
+            ), 
+            'lagerort': str(lagerort_instance), 
+            'count': len(bestand_instances)
+        }
+        return base_msg.format(**format_dict)
+
+    def _get_bestand_field(self, model):
+        """Return the ForeignKey field from `bestand` to model `model`."""
+        for field in _models.bestand._meta.get_fields():
+            if field.is_relation and field.related_model == model:
+                return field
 
     def perform_action(self, form_cleaned_data):
-
-        base_msg = "{lagerort}-Bestand zu diesen {count} {verbose_model_name} hinzugefügt: {obj_links}"
-        format_dict = {'verbose_model_name':self.opts.verbose_name_plural}
+        """Add a bestand instance to the given instances."""
 
         bestand_lagerort = form_cleaned_data['bestand']
-        dupletten_lagerort = form_cleaned_data['dublette']
-
+        dubletten_lagerort = form_cleaned_data['dublette']
         bestand_list = []
         dubletten_list = []
         # Get the correct fkey from bestand model to this view's model
-        fkey = get_fields_from_path(self.opts.model, 'bestand')[0].field
+        fkey = self._get_bestand_field(self.model)
 
         for instance in self.queryset:
-            if not bestand.objects.filter(**{fkey.name:instance, 'lagerort':bestand_lagerort}):
-                bestand_list.append(bestand(**{fkey.name:instance, 'lagerort':bestand_lagerort}))
+            filter_kwargs = {fkey.name: instance, 'lagerort': bestand_lagerort}
+            instance_data = {fkey.name: instance}
+            if not _models.bestand.objects.filter(**filter_kwargs).exists():
+                instance_data['lagerort'] = bestand_lagerort
+                bestand_list.append(_models.bestand(**instance_data))
             else:
-                dubletten_list.append(bestand(**{fkey.name:instance, 'lagerort':dupletten_lagerort}))
+                instance_data['lagerort'] = dubletten_lagerort
+                dubletten_list.append(_models.bestand(**instance_data))
 
         with transaction.atomic():
-            if bestand_list:
-                for obj in bestand_list:
+            for lagerort_instance, bestand_instances in (
+                (bestand_lagerort, bestand_list), 
+                (dubletten_lagerort, dubletten_list)
+            ):
+                for obj in bestand_instances:
                     obj.save()
                     self.log_addition(getattr(obj, fkey.name), obj)
-                #bestand.objects.bulk_create(bestand_list)
-                obj_links = link_list(self.request, [getattr(z, fkey.name) for z in bestand_list])
-                format_dict.update({'lagerort': str(bestand_lagerort), 'count':len(bestand_list), 'obj_links': obj_links})
-                msg_text = base_msg.format(**format_dict)
-                self.model_admin.message_user(self.request, format_html(msg_text))
-
-            if dubletten_list:
-                for obj in dubletten_list:
-                    obj.save()
-                    self.log_addition(getattr(obj, fkey.name), obj)
-                #bestand.objects.bulk_create(dubletten_list)
-                obj_links = link_list(self.request, [getattr(z, fkey.name) for z in dubletten_list])
-                format_dict.update({'lagerort': str(dupletten_lagerort), 'count':len(dubletten_list), 'obj_links': obj_links})
-                msg_text = base_msg.format(**format_dict)
-                self.model_admin.message_user(self.request, format_html(msg_text))
+                admin_message = self._build_message(
+                    lagerort_instance = lagerort_instance, 
+                    bestand_instances = bestand_instances, 
+                    fkey = fkey
+                )
+                self.model_admin.message_user(self.request, admin_message)
 
 class MergeViewWizarded(WizardConfirmationView): 
 
