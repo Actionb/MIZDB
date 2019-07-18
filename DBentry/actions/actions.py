@@ -1,6 +1,8 @@
+from DBentry.actions.views import (
+    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
+)
+from DBentry.actions.decorators import add_cls_attrs
 
-from .views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
-from .decorators import add_cls_attrs
 
 @add_cls_attrs(BulkEditJahrgang)
 def bulk_jg(model_admin, request, queryset):
