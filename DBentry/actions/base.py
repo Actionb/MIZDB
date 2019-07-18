@@ -6,6 +6,7 @@ from django import views
 from DBentry.utils import get_obj_link
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
 
+
 class ConfirmationViewMixin(MIZAdminMixin):
     """A mixin that controls the confirmation stage of an admin action.
 
@@ -111,6 +112,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         context.update({**defaults, **kwargs})
         return context
 
+
 class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
     """
     Base view for all action views.
@@ -202,15 +204,16 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
 
 
 class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
+    """Base view for action views that require a SessionWizardView."""
 
-    template_name = 'admin/action_confirmation_wizard.html' 
+    template_name = 'admin/action_confirmation_wizard.html'
 
     # A dictionary of helptexts for every step: {step:helptext}
     view_helptext = {}
 
     def __init__(self, *args, **kwargs):
         super(WizardConfirmationView, self).__init__(*args, **kwargs)
-        self.qs = self.queryset # WizardView wants it so
+        self.qs = self.queryset  # WizardView wants it so
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -219,23 +222,26 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         return context
 
     def post(self, request, *args, **kwargs):
-        # Actions are always POSTED, but to initialize the SessionWizardView a GET request is expected.
-        # We work around this by checking if there's a 'current_step' in the request.
+        # Actions are always POSTED, but to initialize the SessionWizardView
+        # a GET request is expected.
+        # We work around this by checking if there's a 'current_step'
+        # in the request.
         if request.POST.get(self.get_prefix(request)+'-current_step') is not None:
             # the 'previous' form was a wizard form, call WizardView.post()
-            return super(WizardConfirmationView, self).post(request, *args, **kwargs)
+            return super().post(request, *args, **kwargs)
         else:
             # we just got here from the changelist -- prepare the storage engine
             self.storage.reset()
 
             # reset the current step to the first step.
             self.storage.current_step = self.steps.first
-            return self.render(self.get_form())  
+            return self.render(self.get_form())
 
-    def done(self, *args, **kwargs): 
-        # The 'final' method of a WizardView. It is called from render_done with some args and kwargs we do not care about.
+    def done(self, *args, **kwargs):
+        # The 'final' method of a WizardView. It is called from render_done
+        # with some args and kwargs we do not care about.
         # By default, force a redirect back to the changelist by returning None
         try:
-            self.perform_action() 
+            self.perform_action()
         finally:
-            return None
+            return
