@@ -1,29 +1,35 @@
 from django import forms
+from django.contrib.admin.utils import get_fields_from_path
+from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, F
 from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
-from django.contrib.admin.utils import get_fields_from_path
 
-from DBentry.utils import (
-    link_list, merge_records, get_updateable_fields, get_obj_link, get_changelist_link, 
-    get_model_from_string, is_protected
+from DBentry import models as _models
+from DBentry.actions.base import (
+    ActionConfirmationView, WizardConfirmationView
 )
-from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.logging import LoggingMixin, log_addition
-
-from .base import ActionConfirmationView, WizardConfirmationView #TODO: absolute imports
-from .forms import (
+from DBentry.actions.forms import (
     MergeFormSelectPrimary, MergeConflictsFormSet, 
     BulkAddBestandForm, BulkEditJahrgangForm, 
     BrochureActionFormSet, BrochureActionFormOptions
 )
+from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
+from DBentry.logging import LoggingMixin, log_addition
+from DBentry.utils import (
+    link_list, merge_records, get_updateable_fields, get_obj_link, 
+    get_changelist_link, get_model_from_string, is_protected
+)
+
 
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
+    """
+    View that bulk edits the jahrgang of a collection of ausgabe instances.
+    """
 
     short_description = gettext_lazy("Add issue volume")
-    perm_required = ['change']
+    perm_required = ['change'] 
     action_name = 'bulk_jg'
 
     affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
@@ -59,12 +65,19 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         return True
 
     def perform_action(self, form_cleaned_data):
+        """
+        Incrementally update the jahrgang for each instance.
+
+        If the user has chosen the integer 0 for jahrgang, 
+        delete all jahrgang values instead.
+        """
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
         start = self.queryset.get(pk = form_cleaned_data.get('start'))
 
         if jg == 0:
-            # User entered 0 for jahrgang. Delete jahrgang data from the selected ausgaben.
+            # User entered 0 for jahrgang. 
+            # Delete jahrgang data from the selected ausgaben.
             qs.update(jahrgang=None)
         else:
             qs.increment_jahrgang(start, jg)
@@ -72,6 +85,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
 
 
 class BulkAddBestand(ActionConfirmationView, LoggingMixin):
+    """View that adds a bestand to a given model instances."""
 
     short_description = gettext_lazy("Alter stock")
     perm_required = ['alter_bestand']
@@ -352,7 +366,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {} ({})"
             msg_text = msg_text.format(
                 link_list(self.request, ausgaben_with_artikel), 
-                get_changelist_link(ausgabe, self.request.user, obj_list = ausgaben_with_artikel)
+                get_changelist_link(_models.ausgabe, self.request.user, obj_list = ausgaben_with_artikel)
                 )
             self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
             return False
@@ -378,7 +392,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 continue
 
             # Verify that the ausgabe exists and can be deleted
-            ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
+            ausgabe_instance = _models.ausgabe.objects.filter(pk=data['ausgabe_id']).first()
             if ausgabe_instance is None:
                 continue
             if is_protected([ausgabe_instance]):
@@ -398,7 +412,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ausgabe_instance.bestand_set.update(ausgabe_id=None, brochure_id=new_brochure.pk)
                     ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list('jahr', flat=True)
                     for jahr in ausgabe_jahre:
-                        BrochureYear.objects.create(brochure = new_brochure, jahr = jahr)
+                        _models.BrochureYear.objects.create(brochure = new_brochure, jahr = jahr)
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
@@ -409,12 +423,12 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
                 )
                 log_addition(request = self.request, object = new_brochure, message = changelog_message)
-                self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
+                self.log_update(_models.bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
 
         if protected_ausg:
             msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg) \
-                + ' (%s)' % get_changelist_link(ausgabe, self.request.user, obj_list = protected_ausg)
+                + ' (%s)' % get_changelist_link(_models.ausgabe, self.request.user, obj_list = protected_ausg)
             msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
             self.model_admin.message_user(self.request, mark_safe(msg), 'error')
             return
@@ -441,7 +455,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         context['management_form'] = formset.management_form
         context['forms'] = [
             (
-                get_obj_link(ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False), 
+                get_obj_link(_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False), 
                 form
             )
             for form in formset
