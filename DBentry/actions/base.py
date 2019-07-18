@@ -161,29 +161,34 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
 
         objs = []
         for obj in self.queryset:
-            sub_list = [linkify(obj)]
-            affected_fields = self.affected_fields
-            if affected_fields:
-                flds = []
-                for field_path in affected_fields:
-                    field = get_fields_from_path(self.opts.model, field_path)[0]
-                    if field.is_relation:
-                        related_pks = self.queryset.filter(pk=obj.pk).values_list(field.name, flat=True)
-                        for pk in related_pks:
-                            if pk: # values() will also gather None values
-                                related_obj = field.related_model.objects.get(pk=pk)
-                                flds.append(linkify(related_obj))
-                    else:
-                        value = getattr(obj, field.name)
-                        if value is None:
-                            value = '---'
-                        verbose_name = field.verbose_name
-                        if verbose_name == field.name.replace('_', ' '):
-                            # The field has the default django verbose_name
-                            verbose_name = verbose_name.title()
-                        flds.append("{}: {}".format(verbose_name, str(value)))
-                sub_list.append(flds)
-            objs.append(sub_list)
+            links = [linkify(obj)]
+            # Investigate the field paths in affected_fields:
+            # - if the path follows a relation, add a link to each related
+            #   object that is going to be impacted by the action's changes
+            # - if it's a field of the object, get that field's value
+            sub_list = []
+            for field_path in self.affected_fields:
+                field = get_fields_from_path(self.opts.model, field_path)[0]
+                if field.is_relation:
+                    related_pks = self.queryset.filter(pk=obj.pk).values_list(field.name, flat=True)
+                    for pk in related_pks:
+                        if not pk:
+                            # values_list() will also gather None values
+                            continue
+                        related_obj = field.related_model.objects.get(pk=pk)
+                        sub_list.append(linkify(related_obj))
+                else:
+                    value = getattr(obj, field.name)
+                    if value is None:
+                        value = '---'
+                    verbose_name = field.verbose_name
+                    if verbose_name == field.name.replace('_', ' '):
+                        # The field has the default django verbose_name
+                        verbose_name = verbose_name.title()
+                    sub_list.append("{}: {}".format(verbose_name, str(value)))
+            if self.affected_fields:
+                links.append(sub_list)
+            objs.append(links)
         return objs
 
     def get_context_data(self, *args, **kwargs):

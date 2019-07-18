@@ -10,6 +10,7 @@ from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import override as translation_override
+from django.urls import reverse
 from django.db.models.deletion import ProtectedError
 
 import DBentry.models as _models
@@ -306,21 +307,41 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         super().setUpTestData()
 
     def test_compile_affected_objects(self):
-        link_template = 'Bestand: <a href="/admin/DBentry/bestand/{pk}/change/">{lagerort__ort}</a>'
-
+        # Assert that links to the instance's bestand objects are included.
+        def get_bestand_links(obj):
+            view_name = "admin:DBentry_%s_change" % (_models.bestand._meta.model_name)
+            link_template = '<a href="{url}">{lagerort__ort}</a>'
+            template = 'Bestand: {link}'
+            for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
+                url = reverse(view_name, args=[pk])
+                link = link_template.format(url=url, lagerort__ort=lagerort__ort)
+                yield template.format(link=link)
+                
         request = self.get_request()
         view = self.get_view(request)
         link_list = view.compile_affected_objects()
         self.assertEqual(len(link_list), 4)
-        # obj1
-        self.assertFalse(link_list[0][1])
-        # obj2
-        self.assertIn(link_template.format(**self.obj2.bestand_set.values('pk', 'lagerort__ort')[0]), link_list[1][1])
-        # obj3 
-        self.assertIn(link_template.format(**self.obj3.bestand_set.values('pk', 'lagerort__ort')[0]), link_list[2][1])
-        # obj4 
-        self.assertIn(link_template.format(**self.obj4.bestand_set.values('pk', 'lagerort__ort')[0]), link_list[3][1])
-        self.assertIn(link_template.format(**self.obj4.bestand_set.values('pk', 'lagerort__ort')[1]), link_list[3][1])
+        expected = [
+            # obj1 has no bestand, no links expected
+            [],
+        ]
+        # Let the helper function add the expected links for the other objects.
+        expected.extend(
+            get_bestand_links(obj)
+            for obj in self.test_data[1:]
+        )
+        
+        for i, links in enumerate(expected):
+            # The first item of every link_list is the link to the main object.
+            # The second is the sub list of affected objects.
+            with self.subTest(i=i, obj="obj%s" % (i + 1)):
+                if not links:
+                    self.assertFalse(
+                        link_list[i][1],  msg="No bestand links expected."
+                    )
+                for j, link in enumerate(links, 1):
+                    with self.subTest(link_number=str(j)):
+                        self.assertIn(link, link_list[i][1])
 
     @tag('logging') 
     def test_perform_action(self):
