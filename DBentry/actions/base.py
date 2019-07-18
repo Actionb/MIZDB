@@ -131,26 +131,33 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if 'action_confirmed' not in self.request.POST:
-            # Only pass in 'data' if the user tries to confirm an action. 
-            # Do not try to validate the form if it is the first time the user sees the form. 
+            # Only pass in 'data' if the user tries to confirm an action.
+            # Do not try to validate the form if it is the first time the
+            # user sees the form.
             if 'data' in kwargs: del kwargs['data']
             if 'files' in kwargs: del kwargs['files']
         return kwargs
 
     def form_valid(self, form):
         self.perform_action(form.cleaned_data)
-        # We always want to be redirected back to the changelist the action originated from (request.get_full_path()).
-        # If we return None, options.ModelAdmin.response_action will do the redirect for us.
-        return None
+        # We always want to be redirected back to the changelist the action
+        # originated from (request.get_full_path()).
+        # If we return None, options.ModelAdmin.response_action will do
+        # the redirect for us.
+        return
 
     def compile_affected_objects(self):
         """
         Compile a list of the objects that are affected by this action.
+
         Display them as a link to that object's respective change page, if possible.
-        If the action is aimed at the values of particular fields of the objects, present those values as a nested list.
-        """        
+        If the action is aimed at the values of particular fields of the
+        objects, present those values as a nested list.
+        """
         def linkify(obj):
-            return get_obj_link(obj, self.request.user, self.model_admin.admin_site.name)
+            return get_obj_link(
+                obj, self.request.user, self.model_admin.admin_site.name
+            )
 
         objs = []
         for obj in self.queryset:
@@ -183,7 +190,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         context = super(ActionConfirmationView, self).get_context_data(*args, **kwargs)
 
         context.update({
-            'affected_objects': self.compile_affected_objects(), 
+            'affected_objects': self.compile_affected_objects(),
         })
         context.update(**kwargs)
         return context
