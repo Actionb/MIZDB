@@ -42,14 +42,16 @@ class ConfirmationViewMixin(MIZAdminMixin):
     queryset = None
 
     def __init__(self, model_admin, queryset, *args, **kwargs):
-        # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
+        # queryset and model_admin are passed in from initkwargs in
+        # as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
         self.model_admin = model_admin
-        self.queryset = queryset 
-        if not getattr(self, 'action_name', False): # Allow setting of custom action_names, otherwise use the class's name
-            self.action_name = self.__class__.__name__
+        self.queryset = queryset
         self.opts = self.model_admin.opts
         self.model = self.opts.model
-        super(ConfirmationViewMixin, self).__init__(*args, **kwargs)
+        # Allow setting of custom action_names, otherwise use the class's name
+        if not getattr(self, 'action_name', False):
+            self.action_name = self.__class__.__name__
+        super().__init__(*args, **kwargs)
 
     def action_allowed(self):
         return True
@@ -64,7 +66,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, *args, **kwargs):
-        context = super(ConfirmationViewMixin, self).get_context_data(*args, **kwargs)
+        context = super().get_context_data(*args, **kwargs)
 
         if len(self.queryset) == 1:
             objects_name = force_text(self.opts.verbose_name)
