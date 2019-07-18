@@ -7,19 +7,39 @@ from DBentry.utils import get_obj_link
 from DBentry.views import MIZAdminMixin, FixedSessionWizardView
 
 class ConfirmationViewMixin(MIZAdminMixin):
+    """A mixin that controls the confirmation stage of an admin action.
 
-    title = '' # the title that is shown both in the template and in the browser
+    Attributes:
+        title (str): the title that is shown both in the template and
+            in the browser title
+        non_reversible_warning (str): a text that warns the user that
+            the action they are about to confirm is not reversible.
+        action_reversible (bool): set to True, if this action performs
+            an operation that is not easily reversed.
+        short_description (str): label for the action in the changelist
+            dropdown menu.
+        perm_required (list or tuple): list of permission codewords required to
+            access the action.
+            See DBentry.admin.base.MIZModelAdmin.get_actions().
+        action_name (str): context variable that will be used on the template
+            so django redirects back here through response_action
+            (line contrib.admin.options:1255)
+        view_helptext (str): a help text for this view
+    """
+
+    title = ''
     breadcrumbs_title = ''
     non_reversible_warning = gettext_lazy("Warning: This action is NOT reversible!")
-    action_reversible = False # if this action performs an operation that is not easily reversed, be as annoying as possible to wake the user up
-
-    queryset = None
-    model_admin = None
-    opts = None
+    action_reversible = False
+    short_description = ''
+    perm_required = ()
     action_name = None
-    model = None
-
     view_helptext = ''
+
+    # Must declare these class attributes so as_view() accepts
+    # 'model_admin' and 'queryset' as arguments.
+    model_admin = None
+    queryset = None
 
     def __init__(self, model_admin, queryset, *args, **kwargs):
         # queryset and model_admin are passed in from initkwargs in as_view(cls,**initkwargs).view(request)-> cls(**initkwargs)
