@@ -189,25 +189,27 @@ class MergeViewWizarded(WizardConfirmationView):
     ]
     # Admin message for some failed checks.
     denied_message = 'Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}.'
+    
+    SELECT_PRIMARY_STEP = '0'
+    CONFLICT_RESOLUTION_STEP = '1'
+    form_list = [
+        (SELECT_PRIMARY_STEP, MergeFormSelectPrimary),
+        (CONFLICT_RESOLUTION_STEP, MergeConflictsFormSet)
+    ] 
 
-    form_list = [MergeFormSelectPrimary, MergeConflictsFormSet] 
-
-    _updates = {} 
-
-    step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
-        Danach werden die sekundären Datensätze GELÖSCHT.
-    """
     #TODO: include this bit in the ACTUAL help page for this action:
     #    Fehlen dem primären Datensatz Grunddaten und wird unten bei der entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
     #   Bereits bestehende Grunddaten des primären Datensatzes werden NICHT überschrieben.
-
+    step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
+        Danach werden die sekundären Datensätze GELÖSCHT.
+    """
     step2_helptext = """Für die Erweiterung der Grunddaten des primären Datensatzes stehen widersprüchliche Möglichkeiten zur Verfügung.
         Bitte wählen Sie jeweils eine der Möglichkeiten, die für den primären Datensatz übernommen werden sollen.
     """
 
     view_helptext = {
-        '0':step1_helptext, 
-        '1':step2_helptext, 
+        SELECT_PRIMARY_STEP: step1_helptext, 
+        CONFLICT_RESOLUTION_STEP: step2_helptext
     }
 
     def get_context_data(self, *args, **kwargs):
@@ -260,12 +262,13 @@ class MergeViewWizarded(WizardConfirmationView):
     def updates(self):
         """Data to update the 'primary' instance with.
         
-        Prepared by `_has_merge_conflicts` during processing the first step (0)
-        and then added to the storage by `process_step`, this mapping of
-        field_name: value contains the data to expand 'primary' with.
+        Prepared by `_has_merge_conflicts` during processing the first step
+        (SELECT_PRIMARY_STEP) and then added to the storage by `process_step`,
+        this mapping of field_name: value contains the data to 
+        expand 'primary' with.
         """
         if not hasattr(self, '_updates'):
-            step_data = self.storage.get_step_data('0') or {} 
+            step_data = self.storage.get_step_data(self.SELECT_PRIMARY_STEP)
             self._updates = step_data.get('updates', {}) 
         return self._updates
 
@@ -331,7 +334,7 @@ class MergeViewWizarded(WizardConfirmationView):
 
     def process_step(self, form):
         data = super().process_step(form)  # the form.data for this step
-        if self.steps.current == self.steps.last:
+        if self.steps.current == self.CONFLICT_RESOLUTION_STEP:
             # No special processing needed for the last step.
             return data
         if not form.cleaned_data.get('expand_o', False):
@@ -347,54 +350,53 @@ class MergeViewWizarded(WizardConfirmationView):
                 data['updates'] = updates
         if not has_conflict:
             # No conflict found;
-            # we can skip the MergeConflictsFormSet and continue.
+            # Set the current_step to the CONFLICT_RESOLUTION_STEP
+            # so that the conflict reslution will be skipped.
+            self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
             #NOTE: this may break self.storage.set_step_files(self.steps.current, self.process_step_files(form)) - the next line - in post()
-            self.storage.current_step = self.steps.last 
-            # We use this way of skipping a form instead of declaring a 
-            # condition_dict (the usual procedure for formtools.WizardView), 
-            # as the process of finding the actual updates to make already
-            # involves looking for any conflicts.
         return data 
 
     def get_form_kwargs(self, step=None): 
-        kwargs = super(MergeViewWizarded, self).get_form_kwargs(step) 
+        kwargs = super().get_form_kwargs(step) 
         if step is None: 
             step = self.steps.current 
         form_class = self.form_list[step]
-        prefix = self.get_form_step form_class) 
-        if step == '1': 
-            # If we are at step 1, then there is a conflict as two or more records are trying to change one of original's fields.
-            # We need to provide the MergeConflictsFormSet with 'data' for its fields AND 'choices' for the DynamicChoiceFormMixin.
-            form_class = self.form_list[step] 
-            prefix = self.get_form_prefix(step, form_class) 
-            data = { 
-                    prefix + '-INITIAL_FORMS': '0', 
-                    prefix + '-MAX_NUM_FORMS': '', 
-            } 
-            choices = {}
-            #form_kwargs['form_kwargs'] = {'choices' : {}} 
-            total_forms = 0 
-
+        prefix = self.get_form_prefix(step, form_class) 
+        if step == self.CONFLICT_RESOLUTION_STEP: 
+            # There is a conflict.
+            # We need to provide the MergeConflictsFormSet with 'data'
+            # for its fields AND 'choices' for the DynamicChoiceFormMixin.
+            data, choices, total_forms = {}, {}, 0
+            
             def add_prefix(key_name): 
                 return prefix + '-' + str(total_forms) + '-' + key_name 
 
             for fld_name, values in sorted(self.updates.items()): 
                 if len(values)>1: 
-                    # We do not care about values with len <= 1 as these do not cause merge conflicts (see process_step) 
-                    data.update({ 
-                        add_prefix('original_fld_name') : fld_name,  
-                        add_prefix('verbose_fld_name') : self.opts.get_field(fld_name).verbose_name.capitalize(),  
-                    })
-                    choices.update({ add_prefix('posvals') : [(c, v) for c, v in enumerate(values)]}) 
+                    # We do not care about values with len <= 1 do not
+                    # cause merge conflicts (see _has_merge_conflicts).
+                    model_field = self.opts.get_field(fld_name)
+                    verbose_fld_name = model_field.verbose_name.capitalize()
+                    data[add_prefix('original_fld_name')] = fld_name
+                    data[add_prefix('verbose_fld_name')] = verbose_fld_name
+                    choices[add_prefix('posvals')] = [
+                        (c, v)  for c, v in enumerate(values)
+                    ]
                     total_forms += 1
-
-            data[prefix + '-TOTAL_FORMS'] = total_forms 
+                    
+            management_form_data = { 
+                    prefix + '-INITIAL_FORMS': '0',
+                    prefix + '-MAX_NUM_FORMS': '',
+                    prefix + '-TOTAL_FORMS': total_forms
+            } 
+            data.update(management_form_data)
             kwargs['data'] = data
-            # In order to pass 'choices' on to the individual forms of the MergeConflictsFormSet, 
-            # we need to wrap it in yet another dict called 'form_kwargs'.
+            # In order to pass 'choices' on to the individual forms of the
+            # MergeConflictsFormSet, we need to wrap it in yet another dict
+            # called 'form_kwargs'.
             # forms.BaseFormSet.__init__ will then do the rest for us.
-            kwargs['form_kwargs'] = {'choices':choices}
-        else: 
+            kwargs['form_kwargs'] = {'choices': choices}
+        elif step == self.SELECT_PRIMARY_STEP: 
             # MergeFormSelectPrimary form: 
             # choices for the selection of primary are objects in the queryset
             kwargs['choices'] = {

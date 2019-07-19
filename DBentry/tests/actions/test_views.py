@@ -525,27 +525,28 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
         response = self.client.post(self.changelist_path, data=request_data)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, self.changelist_path)
+        self.assertEqual(response.status_code, 302, msg = "Redirect expected.")
+        self.assertEqual(response.url, self.changelist_path, msg = "Redirect back to changelist expected.")
 
         self.obj2.refresh_from_db()
         self.assertEqual(self.obj2.jahrgang, 1)
         self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
-
+    
     @patch('DBentry.actions.views.get_updateable_fields', return_value = [])
     @patch.object(SessionWizardView, 'process_step', return_value = {})
     def test_process_step(self, super_process_step, updateable_fields):
         view = self.get_view()
         view.get_form_prefix = mockv('0')
         view.storage = Mock(current_step = '')
-        view.steps = Mock(last='No conflicts->Last step')
+        last_step = MergeViewWizarded.CONFLICT_RESOLUTION_STEP
+        view.steps = Mock(last=last_step)
         form = MergeFormSelectPrimary()
 
         # if expand_o is False in MergeFormSelectPrimary, there cannot be any conflicts
         # and the last step should be up next
         form.cleaned_data = {'expand_o':False}
         self.assertEqual(view.process_step(form), {})
-        self.assertEqual(view.storage.current_step, 'No conflicts->Last step')
+        self.assertEqual(view.storage.current_step, last_step)
 
         # if the 'primary' has no fields that can be updated, the returned dict should not contain 'updates'
         super_process_step.return_value = {'0-primary':self.obj1.pk}
@@ -560,7 +561,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertIn('updates', processed_data)
         self.assertIn('jahrgang', processed_data['updates'])
         self.assertEqual(processed_data['updates']['jahrgang'], ['1'])
-        self.assertEqual(view.storage.current_step, 'No conflicts->Last step')
+        self.assertEqual(view.storage.current_step, last_step)
 
         # same as above, but with a conflict due to involving obj4 as well
         view.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk])
@@ -582,9 +583,10 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(view.get_context_data().get('title'), 'Merge objects: step 23')
 
     @patch.object(WizardView, 'get_form_kwargs', return_value = {})
-    def test_get_form_kwargs(self, super_get_form_kwargs):
+    def test_get_form_kwargs_select_primary(self, super_get_form_kwargs):
         view = self.get_view(queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]))
         # MergeFormSelectPrimary step
+        view.form_list = {MergeViewWizarded.SELECT_PRIMARY_STEP: MergeFormSelectPrimary}
         form_kwargs = view.get_form_kwargs(step = '0')
         self.assertIn('choices', form_kwargs)
         formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
@@ -593,8 +595,11 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
             form_kwargs['choices'][formfield_name].values_list('pk', flat = True)
         )
 
+    @patch.object(WizardView, 'get_form_kwargs', return_value = {})
+    def test_get_form_kwargs_conflicts(self, super_get_form_kwargs):
+        view = self.get_view(queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]))
         # MergeConflictsFormSet step
-        view.form_list = {'1':MergeConflictsFormSet}
+        view.form_list = {MergeViewWizarded.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
         view._updates = {'jahrgang':['1', '2'], 'beschreibung':['Test']}
         form_kwargs = view.get_form_kwargs(step = '1')
         self.assertIn('data', form_kwargs)
