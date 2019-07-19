@@ -56,7 +56,7 @@ class TestConfirmationViewMixin(AdminTestCase):
     def test_dispatch_action_not_allowed(self):
         # dispatch should redirect 'back' (here: return None) if the action is not allowed
         instance = self.get_instance()
-        instance.action_allowed = mockv(False)
+        instance._action_allowed = False
         self.assertIsNone(instance.dispatch(self.get_request()))
 
     @translation_override(language = None)
@@ -201,15 +201,21 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.queryset = self.model.objects.exclude(pk=self.obj3.pk)
 
     def test_action_allowed(self):
-        self.assertTrue(self.get_view().action_allowed())
+        self.assertTrue(self.get_view().action_allowed)
 
         request = self.get_request()
-        view = self.get_view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
+        # Objects in this queryset have different magazines.
+        queryset = queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001)
+        view = self.get_view(request, queryset=queryset)
         view.model_admin.message_user = Mock()
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
 
-        expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin." 
-        view.model_admin.message_user.assert_called_once_with(request, expected_message, 'error')
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.' 
+        view.model_admin.message_user.assert_called_once_with(
+            request=request, 
+            message=expected_message, 
+            level=40, # TODO: messages.ERROR
+        )
 
     def test_compile_affected_objects(self):
         # result 0 0 => obj1
@@ -243,7 +249,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         response = self.client.post(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, self.changelist_path)
-        expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin."
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(response.wsgi_request, expected_message)
 
     def test_post_show_confirmation_page(self):
@@ -412,19 +418,19 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     def test_action_allowed(self):
         queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view = self.get_view(queryset=queryset)
-        self.assertTrue(view.action_allowed())
+        self.assertTrue(view.action_allowed)
 
     def test_action_allowed_low_qs_count(self):
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.qs_obj1)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.'
         self.assertMessageSent(request, expected_message)
 
     def test_action_allowed_different_magazin(self):
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(request, expected_message)
 
@@ -620,7 +626,7 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
     def test_action_allowed_different_magazin(self):
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Die ausgewählten Artikel gehören zu unterschiedlichen Ausgaben.'
         self.assertMessageSent(request, expected_message)
 
@@ -652,7 +658,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.obj1.artikel_set.add(make(_models.artikel, ausgabe = self.obj1))
         request = self.post_request()
         view = self.get_view(request = request, queryset = self.queryset)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: "
         expected_message += '<a href="/admin/DBentry/ausgabe/{}/change/">Testausgabe</a>'.format(str(self.obj1.pk))
         self.assertMessageSent(request, expected_message)
@@ -663,13 +669,13 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         make(self.model, magazin__magazin_name = 'The Other')
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.model.objects.all())
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(request, expected_message)
 
     def test_action_allowed(self):
         view = self.get_view(request = self.post_request(), queryset = self.queryset)
-        self.assertTrue(view.action_allowed())
+        self.assertTrue(view.action_allowed)
 
     def test_get_initial(self):
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
