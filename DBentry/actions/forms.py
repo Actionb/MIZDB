@@ -73,7 +73,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
         help_text = "Sollen fehlende Grunddaten des primäre Datensatzes um "
         "in anderen Datensätzen vorhandenen Daten erweitert werden?"
     )
-    
+
     PRIMARY_FIELD_NAME = 'primary'
 
 class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
