@@ -22,6 +22,20 @@ from DBentry.utils import (
 )
 
 
+def check_same_magazin(view, **kwargs):
+    """
+    Check that all objects in the view's queryset are related to the same magazin.
+    """
+    if view.queryset.values('magazin_id').distinct().count() != 1:
+        view.model_admin.message_user(
+            request=view.request,
+            level=messages.ERROR,
+            message='Aktion abgebrochen: Die ausgewählten %s gehören zu '
+            'unterschiedlichen Magazinen.' % view.opts.verbose_name_plural
+        )
+        return False
+
+
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     """
     View that bulk edits the jahrgang of a collection of ausgabe instances.
@@ -30,6 +44,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     short_description = gettext_lazy("Add issue volume")
     perm_required = ['change'] 
     action_name = 'bulk_jg'
+    action_allowed_checks = [check_same_magazin]
 
     affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
 
@@ -55,14 +70,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
             'jahrgang': 1, 
             'start':self.queryset.values_list('pk', flat = True).first(), 
         }
-
-    def action_allowed(self):
-        if self.queryset.values('magazin_id').distinct().count() != 1:
-            msg_text = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin."
-            self.model_admin.message_user(self.request, msg_text, 'error')
-            return False
-        return True
-
+        
     def perform_action(self, form_cleaned_data):
         """
         Incrementally update the jahrgang for each instance.
@@ -166,6 +174,13 @@ class MergeViewWizarded(WizardConfirmationView):
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
     perm_required = ['merge']
     action_name = 'merge_records'
+    action_allowed_checks = [
+        '_check_too_few_objects', 
+        '_check_different_magazines', 
+        '_check_different_ausgaben'
+    ]
+    # Admin message for some failed checks.
+    denied_message = 'Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}.'
 
     form_list = [MergeFormSelectPrimary, MergeConflictsFormSet] 
 
@@ -191,28 +206,54 @@ class MergeViewWizarded(WizardConfirmationView):
         context = super().get_context_data(*args, **kwargs)
         context['title'] = gettext('Merge objects: step {}').format(str(int(self.steps.current)+1))
         return context
-
-    def action_allowed(self):
-        model = self.opts.model
-        request = self.request
-        queryset = self.queryset
-
-        MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
-
-        if queryset.count()==1:
-            msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' 
-            self.model_admin.message_user(request, msg_text, 'warning')
+        
+    def _check_too_few_objects(view, **kwargs):
+        if view.queryset.count() == 1:
+            view.model_admin.message_user(
+                request = view.request, 
+                level = messages.WARNING, 
+                message = 'Es müssen mindestens zwei Objekte aus der Liste '
+                'ausgewählt werden, um diese Aktion durchzuführen.', 
+            )
             return False
-        #TODO: move these model specific merge-able tests somewhere else
-        if model == ausgabe and queryset.values_list('magazin').distinct().count()>1:
-            # User is trying to merge ausgaben from different magazines
-            self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, magazin._meta.verbose_name_plural, 'n'), 'error')
+            
+    def _check_different_magazines(view, **kwargs):
+        if (view.model == _models.ausgabe and
+                view.queryset.values_list('magazin').distinct().count() > 1):
+            # User is trying to merge ausgaben from different magazines.
+            format_dict = {
+                'view_plural': view.opts.verbose_name_plural, 
+                # Add a 'n' at the end because german grammar.
+                'other_plural': _models.magazin._meta.verbose_name_plural + 'n'
+            }
+            view.model_admin.message_user(
+                request=view.request, 
+                message=view.denied_message.format(**format_dict), 
+                level=messages.ERROR
+            )
             return False
-        if model == artikel and self.queryset.values('ausgabe').distinct().count()>1:
-            # User is trying to merge artikel from different ausgaben
-            self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')
+            
+    def _check_different_ausgaben(self, **kwargs):
+        if (self.model == _models.artikel and
+                self.queryset.values('ausgabe').distinct().count() > 1):
+            # User is trying to merge artikel from different ausgaben.
+            format_dict = {
+                'self_plural': self.opts.verbose_name_plural, 
+                'other_plural': _models.ausgabe._meta.verbose_name_plural
+            }
+            self.model_admin.message_user(
+                request=self.request, 
+                message=self.denied_message.format(**format_dict), 
+                level=messages.ERROR
+            )
             return False
-        return True
+
+    def action_allowed(self, **kwargs):
+        denied_msg = 'Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}.'
+        # Allow child classes to overwrite the denied_msg via kwargs:
+        if 'denied_msg' not in kwargs:
+            kwargs['denied_msg'] = denied_msg
+        return super().action_allowed(**kwargs)
 
     @property 
     def updates(self): 
@@ -343,6 +384,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
+    action_allowed_checks = [
+        check_same_magazin, 
+        '_check_protected_artikel', 
+    ]
+    # NOTE: MoveToBrochureBase does not declare 'perm_required'
 
     form_class = BrochureActionFormSet
 
@@ -368,25 +414,17 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         magazin_ausgabe_set = set(self.mag.ausgabe_set.values_list('pk', flat = True))
         selected_ausgabe_set = set(self.queryset.values_list('pk', flat = True))
         return magazin_ausgabe_set == selected_ausgabe_set
-
-    def action_allowed(self):
-        if self.queryset.values_list('magazin').distinct().count()>1:
-            # Ausgaben from more than one magazin selected.
-            msg_text = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
-            self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
-            return False
-        from django.db.models import Count
-        ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
+        
+    def _check_protected_artikel(view, **kwargs):
+        ausgaben_with_artikel = view.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
         if ausgaben_with_artikel.exists():
             msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {} ({})"
             msg_text = msg_text.format(
-                link_list(self.request, ausgaben_with_artikel), 
-                get_changelist_link(_models.ausgabe, self.request.user, obj_list = ausgaben_with_artikel)
+                link_list(view.request, ausgaben_with_artikel), 
+                get_changelist_link(_models.ausgabe, view.request.user, obj_list = ausgaben_with_artikel)
                 )
-            self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
+            view.model_admin.message_user(view.request, msg_text, messages.ERROR)
             return False
-        self.mag = self.queryset.first().magazin
-        return True
 
     def form_valid(self, form):
         options_form = self.get_options_form(data = self.request.POST)
