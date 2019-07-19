@@ -50,16 +50,16 @@ class BulkAddBestandForm(MIZAdminForm):
 
 class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
     """
-    A merge form that lets the user select the 'primary'/'original' object.
+    A merge form that lets the user select the 'primary' object.
 
     Fields:
-        original (ChoiceField): the object that other objects
+        primary (ChoiceField): the object that other objects
             will be merged into.
-        expand_o (BooleanField): whether or not to expand the original
+        expand_o (BooleanField): whether or not to expand the primary
             object with data from the other objects.
     """
 
-    original = forms.ChoiceField(
+    primary = forms.ChoiceField(
         choices = [],
         label = 'Primären Datensatz auswählen',
         widget = forms.RadioSelect(),

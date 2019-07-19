@@ -459,7 +459,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_o':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -474,7 +474,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_o':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -505,7 +505,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_o':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -513,14 +513,14 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(response.url, self.changelist_path)
 
     def test_merge_not_updating_fields_it_should_not(self):
-        # Check that the whole process does *NOT* change already present data of the selected primary/original object 
+        # Check that the whole process does *NOT* change already present data of the selected primary object 
         # spice up obj1 so we can verify that a merge has happened
         self.qs_obj1.update(beschreibung='I really should not be here.')
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        # select obj2 (or obj4) here as original as it already has a value for jahrgang (our only 'source' of conflict)
-        form_data = {'0-original':self.obj2.pk, '0-expand_o':True}
+        # select obj2 (or obj4) here as primary as it already has a value for jahrgang (our only 'source' of conflict)
+        form_data = {'0-primary':self.obj2.pk, '0-expand_o':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -547,10 +547,10 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(view.process_step(form), {})
         self.assertEqual(view.storage.current_step, 'No conflicts->Last step')
 
-        # if the 'original' has no fields that can be updated, the returned dict should not contain 'updates'
-        super_process_step.return_value = {'0-original':self.obj1.pk}
-        form.cleaned_data = {'0-original':self.obj1.pk, 'expand_o':True}
-        self.assertEqual(view.process_step(form), {'0-original':self.obj1.pk})
+        # if the 'primary' has no fields that can be updated, the returned dict should not contain 'updates'
+        super_process_step.return_value = {'0-primary':self.obj1.pk}
+        form.cleaned_data = {'0-primary':self.obj1.pk, 'expand_o':True}
+        self.assertEqual(view.process_step(form), {'0-primary':self.obj1.pk})
 
         # obj1 can be updated on the field 'jahrgang' with obj2's value
         updateable_fields.return_value = ['jahrgang']
@@ -713,7 +713,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         changed_bestand.refresh_from_db()
         self.assertEqual(new_brochure.bestand_set.first(), changed_bestand)
         self.assertIsNone(changed_bestand.ausgabe_id)
-        # Assert that the original was deleted
+        # Assert that the primary was deleted
         self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
 
     def test_perform_action_deletes_magazin(self):

@@ -173,10 +173,10 @@ class MergeViewWizarded(WizardConfirmationView):
     """View that merges model instances.
     
     The user selects one instance from the available instances to designate
-    it as the 'primary' or 'original'.
+    it as the 'primary'.
     All other instances will be merged into that one instance.
-    Optionally, the user can chose to expand that 'original' with data from the
-    other instances, for any fields of 'original' that do not have a value.
+    Optionally, the user can chose to expand the 'primary' with data from the
+    other instances, for any fields of 'primary' that do not have a value.
     """
 
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
@@ -258,11 +258,11 @@ class MergeViewWizarded(WizardConfirmationView):
 
     @property 
     def updates(self):
-        """Data to update the 'original' with.
+        """Data to update the 'primary' instance with.
         
         Prepared by `_has_merge_conflicts` during processing the first step (0)
         and then added to the storage by `process_step`, this mapping of
-        field_name: value contains the data to expand 'original' with.
+        field_name: value contains the data to expand 'primary' with.
         """
         if not hasattr(self, '_updates'):
             step_data = self.storage.get_step_data('0') or {} 
@@ -272,38 +272,38 @@ class MergeViewWizarded(WizardConfirmationView):
     def _has_merge_conflicts(self, data):
         """Determine if there is going to be a merge conflict.
         
-        If the 'original' is going to be expanded with values from the other
+        If the 'primary' is going to be expanded with values from the other
         instances and there is more than one possible value for any field,
         we have a conflict and the user needs to choose what value to keep.
         
         Parameters:
             data: the cleaned form data from step 0
-                (i.e. the selection of the 'original' instance).
+                (i.e. the selection of the 'primary' instance).
             
         Returns:
             boolean: whether or not there is a conflict.
             dict: a dictionary of field_name: new_value for all the updates
-                planned for 'original'.
+                planned for 'primary'.
         """
-        # Get the 'primary'/'original' object chosen by the user and 
+        # Get the 'primary' object chosen by the user and 
         # exclude it from the queryset we are working with.
         try:
-            original_pk = data[self.get_form_prefix() + '-original']
-            original = self.model.objects.get(pk=original_pk)
+            original_pk = data[self.get_form_prefix() + '-primary']
+            primary = self.model.objects.get(pk=original_pk)
         except (KeyError, self.model.DoesNotExist):
             return False, None
-        qs = self.queryset.exclude(pk=original.pk)
+        qs = self.queryset.exclude(pk=primary.pk)
 
         # get_updateable_fields() returns the fields that
         # may be updated by this merge;
         # i.e. empty fields without a (default) value.
-        updateable_fields = get_updateable_fields(original)
+        updateable_fields = get_updateable_fields(primary)
         if not updateable_fields:
-            # No updates can be done on 'original'.
+            # No updates can be done on 'primary'.
             return False, None
 
         has_conflict = False
-        # Keep track of fields of original that would be updated.
+        # Keep track of fields of primary that would be updated.
         # If there is more than one possible change per field, we
         # need user input to decide what change to keep.
         # This is where then the next form MergeConflictsFormSet comes in.
@@ -335,7 +335,7 @@ class MergeViewWizarded(WizardConfirmationView):
             # No special processing needed for the last step.
             return data
         if not form.cleaned_data.get('expand_o', False):
-            # There can only be conflicts if the original is to be expanded.
+            # There can only be conflicts if the primary is to be expanded.
             has_conflict = False
         else:
             has_conflict, updates = self._has_merge_conflicts(data)
@@ -397,7 +397,7 @@ class MergeViewWizarded(WizardConfirmationView):
         else: 
             # MergeFormSelectPrimary form: choices for the selection of primary are objects in the queryset
             kwargs['choices'] = {forms.ALL_FIELDS: self.queryset}
-            # TODO: replace ALL_FIELDS with the 'original' formfield 
+            # TODO: replace ALL_FIELDS with the 'primary' formfield 
             #(make the reference to it an attribute on the form?)
         return kwargs 
 
@@ -418,9 +418,9 @@ class MergeViewWizarded(WizardConfirmationView):
                         update_data[fld_name] = value[0] 
                     else: 
                         update_data[fld_name] = value 
-        original_pk = self.get_cleaned_data_for_step('0').get('original', 0) 
-        original = self.opts.model.objects.get(pk=original_pk) 
-        merge_records(original, self.queryset, update_data, expand, request=self.request)
+        original_pk = self.get_cleaned_data_for_step('0').get('primary', 0) 
+        primary = self.opts.model.objects.get(pk=original_pk) 
+        merge_records(primary, self.queryset, update_data, expand, request=self.request)
 
     def done(self, *args, **kwargs):
         try:
