@@ -74,12 +74,17 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return self.index_category
 
     def get_actions(self, request):
-        # Show actions based on user permissions
-        actions = super().get_actions(request) # returns an OrderedDict( (name, (func, name, desc)) )
+        """Show actions based on user permissions.
+        
+        Remove actions that the user has no access to.
+        """
+        # get_actions returns an OrderedDict( (name, (func, name, desc)) )
+        actions = super().get_actions(request)
 
         for func, name, desc in actions.copy().values():
             if name == 'delete_selected':
-                perm_required = ['delete'] # the builtin action delete_selected is set by the admin site
+                # The builtin action 'delete_selected' is set by the admin site.
+                perm_required = ['delete']
             else:
                 perm_required = getattr(func, 'perm_required', [])
 
@@ -88,7 +93,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if callable(p):
                     perm_passed = p(self, request)
                 else:
-                    perm = '{}.{}'.format(self.opts.app_label, get_permission_codename(p, self.opts))
+                    perm = '{}.{}'.format(
+                        self.opts.app_label, 
+                        get_permission_codename(p, self.opts)
+                    )
                     perm_passed = request.user.has_perm(perm)
                 if not perm_passed:
                     del actions[name]
