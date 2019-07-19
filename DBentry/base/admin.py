@@ -111,21 +111,35 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)
         return self.exclude
-
-    def get_fieldsets(self, request, obj=None):
-        #TODO: this doesn't check if there is already a fieldset containing Beschreibung & Bemerkungen
-        if self.fieldsets:
-            return self.fieldsets
-        fields = self.get_fields(request, obj).copy()
-        fieldsets = [(None, {'fields': fields})]
+        
+    def _add_bb_fieldset(self, fieldsets):
+        """Append a fieldset for 'Beschreibung & Bemerkungen'."""
+        # Check for any of the fields in the default fieldset
+        # and move them into their own fieldset.
+        default_fieldset = dict(fieldsets).get(None, None)
+        if not default_fieldset:
+            return fieldsets
+        # default_fieldset['fields'] might be a direct reference
+        # to self.get_fields(), so make a copy to leave the original
+        # list untouched.
+        fields = default_fieldset['fields'].copy()
         bb_fields = []
         if 'beschreibung' in fields:
             bb_fields.append(fields.pop(fields.index('beschreibung')))
         if 'bemerkungen' in fields:
             bb_fields.append(fields.pop(fields.index('bemerkungen')))
         if bb_fields:
-            fieldsets.append(('Beschreibung & Bemerkungen', {'fields' : bb_fields, 'classes' : ['collapse', 'collapsed']}))
+            fieldsets.append((
+                'Beschreibung & Bemerkungen', {
+                    'fields': bb_fields,
+                    'classes': ['collapse', 'collapsed']
+                }
+            ))
         return fieldsets
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        return self._add_bb_fieldset(fieldsets)
 
     def get_search_fields(self, request=None):
         # Replace the first primary key search field with an __iexact primary key lookup or append one if missing.
