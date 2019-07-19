@@ -27,6 +27,9 @@ class ConfirmationViewMixin(MIZAdminMixin):
             so django redirects back here through response_action
             (line contrib.admin.options:1255)
         view_helptext (str): a help text for this view
+        action_allowed_checks (list or tuple): list of callables or names of view
+            methods that assess if the action is allowed.
+            These checks must return a true boolean or None.
     """
 
     title = ''
@@ -37,6 +40,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
     perm_required = ()
     action_name = None
     view_helptext = ''
+    action_allowed_checks = ()
 
     # Must declare these class attributes so as_view() accepts
     # 'model_admin' and 'queryset' as arguments.
@@ -54,15 +58,35 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if not getattr(self, 'action_name', False):
             self.action_name = self.__class__.__name__
         super().__init__(*args, **kwargs)
-
+        
+    def get_action_allowed_checks(self):
+        for check in self.action_allowed_checks:
+            if isinstance(check, str) and hasattr(self, check):
+                check = getattr(self.__class__, check)
+            if not callable(check):
+                continue
+            yield check
+        
+    @property
     def action_allowed(self):
-        return True
+        """Check if the action is allowed.
+        
+        Checks are called with keyword argument 'view' which is this instance.
+        Assessment stops if a check returns False.
+        """
+        if not hasattr(self, '_action_allowed'):
+            self._action_allowed = True
+            for check in self.get_action_allowed_checks():
+                if check(view=self) is False:
+                    self._action_allowed = False
+                    break
+        return self._action_allowed
 
     def perform_action(self, form_cleaned_data = None):
         raise NotImplementedError('Subclasses must implement this method.')
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.action_allowed():
+        if not self.action_allowed:
             # The action is not allowed, redirect back to the changelist
             return None
         return super().dispatch(request, *args, **kwargs)
