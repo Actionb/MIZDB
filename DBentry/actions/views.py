@@ -222,7 +222,7 @@ class MergeViewWizarded(WizardConfirmationView):
                 view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
             format_dict = {
-                'view_plural': view.opts.verbose_name_plural, 
+                'self_plural': view.opts.verbose_name_plural, 
                 # Add a 'n' at the end because german grammar.
                 'other_plural': _models.magazin._meta.verbose_name_plural + 'n'
             }
@@ -233,17 +233,17 @@ class MergeViewWizarded(WizardConfirmationView):
             )
             return False
             
-    def _check_different_ausgaben(self, **kwargs):
-        if (self.model == _models.artikel and
-                self.queryset.values('ausgabe').distinct().count() > 1):
+    def _check_different_ausgaben(view, **kwargs):
+        if (view.model == _models.artikel and
+                view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
             format_dict = {
-                'self_plural': self.opts.verbose_name_plural, 
+                'self_plural': view.opts.verbose_name_plural, 
                 'other_plural': _models.ausgabe._meta.verbose_name_plural
             }
-            self.model_admin.message_user(
-                request=self.request, 
-                message=self.denied_message.format(**format_dict), 
+            view.model_admin.message_user(
+                request=view.request, 
+                message=view.denied_message.format(**format_dict), 
                 level=messages.ERROR
             )
             return False
@@ -406,12 +406,27 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             }
                 for pk, beschreibung, bemerkungen, magazin_id, magazin_name, magazin_beschreibung in values
         ]
+        
+    @property
+    def magazin_instance(self):
+        """Return the magazin instance common to all queryset objects."""
+        # At this point the checks have run and excluded the possibility
+        # that the queryset contains more than one magazin.
+        if not hasattr(self, '_magazin_instance'):
+            ausgabe_instance = self.queryset.select_related('magazin').first()
+            if ausgabe_instance:
+                self._magazin_instance = ausgabe_instance.magazin
+            else:
+                self._magazin_instance = None
+        return self._magazin_instance
 
     @property
     def can_delete_magazin(self):
-        if not getattr(self, 'mag', None):
+        #TODO: use is_protected?
+        if not self.magazin_instance:
+            # virtually impossible at this stage?
             return False
-        magazin_ausgabe_set = set(self.mag.ausgabe_set.values_list('pk', flat = True))
+        magazin_ausgabe_set = set(self.magazin_instance.ausgabe_set.values_list('pk', flat = True))
         selected_ausgabe_set = set(self.queryset.values_list('pk', flat = True))
         return magazin_ausgabe_set == selected_ausgabe_set
         
@@ -473,7 +488,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
                 changelog_message = hint.format(
                     verbose_name = brochure_class._meta.verbose_name, 
-                    str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
+                    str_ausgabe = str(ausgabe_instance), str_magazin = str(self.magazin_instance)
                 )
                 log_addition(request = self.request, object = new_brochure, message = changelog_message)
                 self.log_update(_models.bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
@@ -490,13 +505,13 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         if delete_magazin:
                 try:
                     with transaction.atomic():
-                        self.mag.delete()
+                        self.magazin_instance.delete()
                 except ProtectedError:
                     # Seems like the magazin was still protected after all. 
-                    msg = "Magazin konnte nicht gelöscht werden: " + get_obj_link(self.mag, self.request.user, include_name = False)
+                    msg = "Magazin konnte nicht gelöscht werden: " + get_obj_link(self.magazin_instance, self.request.user, include_name = False)
                     self.model_admin.message_user(self.request, mark_safe(msg), 'error')
                 else:
-                    self.log_deletion(self.mag)
+                    self.log_deletion(self.magazin_instance)
 
     def get_options_form(self, **kwargs):
         kwargs['can_delete_magazin'] = self.can_delete_magazin

@@ -719,7 +719,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     def test_perform_action_deletes_magazin(self):
         options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        view.mag = self.mag
+        view._magazin_instance = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertFalse(_models.magazin.objects.filter(pk = self.mag.pk).exists())
@@ -748,7 +748,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             str_ausgabe = str(self.obj1), str_magazin = str(self.obj1.magazin)
         )
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        view.mag = self.mag
+        view._magazin_instance = self.mag
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         new_brochure = _models.Brochure.objects.get()
         ct = ContentType.objects.get_for_model(_models.Brochure)
@@ -850,18 +850,19 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     def test_can_delete_magazin(self):
         # Assert that can_delete_magazin returns True when the magazin can be deleted after the action.
         view = self.get_view(self.get_request())
-        view.mag = self.obj1.magazin
+        view._magazin_instance = self.obj1.magazin
         self.assertTrue(view.can_delete_magazin)
 
         # Add another ausgabe to magazin to forbid the deletion of it.
         make(self.model, magazin = self.obj1.magazin)
         view = self.get_view(self.get_request(), queryset = self.model.objects.filter(pk = self.obj1.pk))
-        view.mag = self.obj1.magazin
+        view._magazin_instance = self.obj1.magazin
         self.assertFalse(view.can_delete_magazin)
 
         view = self.get_view(self.get_request())
+        view._magazin_instance = None
         self.assertFalse(view.can_delete_magazin, 
-            msg = "Should return False if can_delete_magazin is called with no 'mag' attribute set."
+            msg = "Should return False if can_delete_magazin is called with no 'magazin_instance' set."
         )
 
     def test_story(self):
