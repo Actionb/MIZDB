@@ -1,22 +1,22 @@
+from django import forms
 from django.contrib import admin
-from django.urls import reverse, NoReverseMatch
 from django.contrib.auth import get_permission_codename
+from django.db import models
+from django.urls import reverse, NoReverseMatch
 from django.utils.translation import override as translation_override
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 
-from django import forms
-
-from DBentry.models import ausgabe, genre, schlagwort, models
+from DBentry import models as _models
+from DBentry.ac.widgets import make_widget
+from DBentry.actions import merge_records
 from DBentry.base.models import ComputedNameModel
 from DBentry.changelist import MIZChangeList
-from DBentry.forms import AusgabeMagazinFieldForm
-from DBentry.actions import merge_records
 from DBentry.constants import ATTRS_TEXTAREA
-from DBentry.ac.widgets import make_widget
+from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.helper import MIZAdminFormWrapper
-from DBentry.utils import get_model_relations,  ensure_jquery
 from DBentry.search.admin import MIZAdminSearchFormMixin
+from DBentry.utils import get_model_relations,  ensure_jquery
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
@@ -219,8 +219,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def media(self):
         media = super().media
         if self.googlebtns:
-            from django.forms import Media
-            return media + Media(js = ['admin/js/utils.js']) # contains the googlebtns script
+            return media + forms.Media(js = ['admin/js/utils.js']) # contains the googlebtns script
         return ensure_jquery(media)
 
     def add_extra_context(self, request = None, extra_context = None, object_id = None):
@@ -355,14 +354,14 @@ class BaseAliasInline(BaseTabularInline):
     verbose_name_plural = 'Alias'
 
 class BaseGenreInline(BaseTabularInline):
-    verbose_model = genre
+    verbose_model = _models.genre
 
 class BaseSchlagwortInline(BaseTabularInline):
-    verbose_model = schlagwort
+    verbose_model = _models.schlagwort
 
 class BaseAusgabeInline(BaseTabularInline):
     form = AusgabeMagazinFieldForm
-    verbose_model = ausgabe
+    verbose_model = _models.ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
 
 class BaseOrtInLine(BaseTabularInline):
