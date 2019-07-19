@@ -19,21 +19,31 @@ from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import get_model_relations,  ensure_jquery
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
+    """Base ModelAdmin for this app.
+    
+    Attributes:
+        flds_to_group (list): Group these fields in a line; the group is inserted into the first formfield encountered that matches a field in the group
+        googlebtns (list):Fields in this list get a little button that redirect to a google search page 
+        collapse_all (bool): Whether to collapse all inlines/fieldsets by default or not
+        hint (str): A hint displayed at the top of the form 
+        crosslink_labels (dict): Override the labels given to crosslinks: {'model_name': 'custom_label'}
+        superuser_only (bool): If true, only a superuser can interact with this ModelAdmin
+        index_category (str): The name of the 'category' this ModelAdmin should be listed under on the index page
+    """
 
-    flds_to_group = []                      # Group these fields in a line; the group is inserted into the first formfield encountered
-                                            # that matches a field in the group
-    googlebtns = []                         # Fields in this list get a little button that redirect to a google search page #TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
-    collapse_all = False                    # Whether to collapse all inlines/fieldsets by default or not
-    hint = ''                               # A hint displayed at the top of the form #NOTE: is this hint even used by anything?: yes, DateiAdmin
-    crosslink_labels = {}                   # Override the labels given to crosslinks: {'model_name': 'custom_label'}
-    superuser_only = False                  # If true, only a superuser can interact with this ModelAdmin
+    flds_to_group = []
+    googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch 
+    collapse_all = False                    # 
+    hint = ''                               # NOTE: is this hint even used by anything?: yes, DateiAdmin
+    crosslink_labels = {}                   
+    superuser_only = False                  
     actions = [merge_records]
 
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
     }
 
-    index_category = 'Sonstige'             # The name of the 'category' this ModelAdmin should be listed under on the index page
+    index_category = 'Sonstige'             
 
     #TODO: let the MIZ changelist template extend the default one 
     #change_list_template = 'miz_changelist.html'
