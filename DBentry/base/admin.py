@@ -22,27 +22,30 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     """Base ModelAdmin for this app.
     
     Attributes:
-        googlebtns (list):Fields in this list get a little button that redirect to a google search page 
-        collapse_all (bool): Whether to collapse all inlines/fieldsets by default or not
-        hint (str): A hint displayed at the top of the form 
-        crosslink_labels (dict): Override the labels given to crosslinks: {'model_name': 'custom_label'}
-        superuser_only (bool): If true, only a superuser can interact with this ModelAdmin
-        index_category (str): The name of the 'category' this ModelAdmin should be listed under on the index page
+        googlebtns (list): a list of formfield names that get a button that
+            opens a google search page with the field's value.
+            (Used on BandAdmin and MusikerAdmin)
+        crosslink_labels (dict): mapping of related_model_name: custom_label
+            used to give crosslinks custom labels.
+        collapse_all (bool): if True, all inlines and fieldsets start out collapsed.
+        superuser_only (bool): if true, only a superuser can interact with
+            this ModelAdmin.
+        index_category (str): the name of the 'category' this ModelAdmin should
+            be listed under. A fake app is created for each category to visually
+            separate them on the index page.
     """
 
     googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch 
-    collapse_all = False                    # 
-    hint = ''                               # NOTE: is this hint even used by anything?: yes, DateiAdmin
-    crosslink_labels = {}                   
-    superuser_only = False                  
+    crosslink_labels = {}           
+    collapse_all = False        
+    superuser_only = False       
+    index_category = 'Sonstige'       
+    
     actions = [merge_records]
 
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
     }
-
-    index_category = 'Sonstige'             
-
     #TODO: let the MIZ changelist template extend the default one 
     #change_list_template = 'miz_changelist.html'
 
@@ -52,7 +55,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def _annotate_for_list_display(self, queryset):
         """
-        Hook to add annotations to the root queryset of this ModelAdmin to allow ordering of callable list display items.
+        Hook to add annotations to the root queryset of this ModelAdmin.
+        
+        This is to allow ordering of callable list display items.
         """
         return queryset
 
@@ -204,7 +209,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
-        new_extra['hint'] = self.hint
         new_extra['googlebtns'] = self.googlebtns
         if request:
             new_extra['request'] = request

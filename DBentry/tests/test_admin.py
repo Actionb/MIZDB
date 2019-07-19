@@ -262,14 +262,12 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_add_view(self):
         response = self.client.get(self.add_path)
         self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('hint' in response.context)
         self.assertTrue('googlebtns' in response.context)
         self.assertFalse('crosslinks' in response.context, msg='no crosslinks allowed in add views')
         
     def test_change_view(self):
         response = self.client.get(self.change_path.format(pk=self.obj1.pk))
         self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('hint' in response.context)
         self.assertTrue('googlebtns' in response.context)
         self.assertTrue('crosslinks' in response.context)
         

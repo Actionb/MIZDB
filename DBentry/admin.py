@@ -816,7 +816,6 @@ class DateiAdmin(MIZModelAdmin):
     ]
     save_on_top = True
     collapse_all = True
-    hint = 'Diese Seite ist noch nicht vollständig fertig gestellt. Bitte noch nicht benutzen.'
 
 @admin.register(_models.instrument, site=miz_site)
 class InstrumentAdmin(MIZModelAdmin):
