@@ -267,46 +267,93 @@ class MergeViewWizarded(WizardConfirmationView):
         if not hasattr(self, '_updates'):
             step_data = self.storage.get_step_data('0') or {} 
             self._updates = step_data.get('updates', {}) 
-        return self._updates 
+        return self._updates
 
-    def process_step(self, form): 
-        data = super().process_step(form) 
-        if isinstance(form, MergeFormSelectPrimary): 
+    def _has_merge_conflicts(self, data):
+        """Determine if there is going to be a merge conflict.
+        
+        If the 'original' is going to be expanded with values from the other
+        instances and there is more than one possible value for any field,
+        we have a conflict and the user needs to choose what value to keep.
+        
+        Parameters:
+            data: the cleaned form data from step 0
+                (i.e. the selection of the 'original' instance).
+            
+        Returns:
+            boolean: whether or not there is a conflict.
+            dict: a dictionary of field_name: new_value for all the updates
+                planned for 'original'.
+        """
+        # Get the 'primary'/'original' object chosen by the user and 
+        # exclude it from the queryset we are working with.
+        try:
+            original_pk = data[self.get_form_prefix() + '-original']
+            original = self.model.objects.get(pk=original_pk)
+        except (KeyError, self.model.DoesNotExist):
+            return False, None
+        qs = self.queryset.exclude(pk=original.pk)
+
+        # get_updateable_fields() returns the fields that
+        # may be updated by this merge;
+        # i.e. empty fields without a (default) value.
+        updateable_fields = get_updateable_fields(original)
+        if not updateable_fields:
+            # No updates can be done on 'original'.
+            return False, None
+
+        has_conflict = False
+        # Keep track of fields of original that would be updated.
+        # If there is more than one possible change per field, we
+        # need user input to decide what change to keep.
+        # This is where then the next form MergeConflictsFormSet comes in.
+        updates = {fld_name: set() for fld_name in updateable_fields}  
+
+        for other_record_valdict in qs.values(*updateable_fields): 
+            for k, v in other_record_valdict.items(): 
+                if v or isinstance(v, bool):
+                    if len(updates[k])>0:
+                        # Another value for this field has already been
+                        # found; we have found a conflict.
+                        has_conflict = True
+                    # Make v both hashable (for the set) and
+                    # serializable (for the session storage).
+                    updates[k].add(str(v))
+
+        # Sets are not JSON serializable (required for session storage):
+        # turn them into lists and remove empty ones.
+        updates = {
+            fld_name: list(value_set) 
+            for fld_name, value_set in updates.items() 
+            if value_set
+        }
+        return has_conflict, updates
+
+    def process_step(self, form):
+        data = super().process_step(form)  # the form.data for this step
+        if self.steps.current == self.steps.last:
+            # No special processing needed for the last step.
+            return data
+        if not form.cleaned_data.get('expand_o', False):
+            # There can only be conflicts if the original is to be expanded.
             has_conflict = False
-            # There can only be conflicts if the original is meant to be expanded
-            if form.cleaned_data.get('expand_o', False):
-                prefix = self.get_form_prefix() 
-                data = data.copy() # data is an instance of QueryDict and thus immutable - make it mutable by copying
-
-                # Get the 'primary'/'original' object chosen by the user and exclude it from the queryset we are working with.
-                original = self.opts.model.objects.get(pk=data.get(prefix + '-original', 0)) 
-                qs = self.queryset.exclude(pk=original.pk)
-
-                updateable_fields = get_updateable_fields(original) # The fields that may be updated by this merge 
-                if updateable_fields: 
-                    # Keep track of any fields of original that would be updated.
-                    # If there is more than one possible change per field, we need user input to decide what change to keep.
-                    # This is where MergeConflictsFormSet, the next form, comes in.
-                    updates = { fld_name : set() for fld_name in updateable_fields}  
-
-                    for other_record_valdict in qs.values(*updateable_fields): 
-                        for k, v in other_record_valdict.items(): 
-                            if v or isinstance(v, bool):
-                                if len(updates[k])>0:
-                                    # Another value for this field has already been found, we have found a conflict 
-                                    has_conflict = True
-                                # make v both hashable (for the set) and serializable (for the session)
-                                updates[k].add(str(v)) 
-
-                    # Sets are not JSON serializable, turn them into lists and remove empty ones 
-                    updates = {fld_name:list(value_set) for fld_name, value_set in updates.items() if len(value_set)>0} 
-                    data['updates'] = updates.copy() 
-            if not has_conflict:
-                # no conflict found, we can skip the MergeConflictsFormSet and continue
-                #NOTE: this may break self.storage.set_step_files(self.steps.current, self.process_step_files(form)) - the next line - in post()
-                self.storage.current_step = self.steps.last 
-                # We use this way of skipping a form instead of declaring a condition_dict (the usual procedure for this WizardView),
-                # as the process of finding the actual updates to make already involves looking for any conflicts.
+        else:
+            has_conflict, updates = self._has_merge_conflicts(data)
+            if updates:
+                # data is an instance of QueryDict and thus immutable;
+                # make it mutable by copying and then add
+                # the updates to it to store them in storage.
+                data = data.copy()
+                data['updates'] = updates
+        if not has_conflict:
+            # No conflict found;
+            # we can skip the MergeConflictsFormSet and continue.
+            #NOTE: this may break self.storage.set_step_files(self.steps.current, self.process_step_files(form)) - the next line - in post()
+            self.storage.current_step = self.steps.last 
+            # We use this way of skipping a form instead of declaring a 
+            # condition_dict (the usual procedure for formtools.WizardView), 
+            # as the process of finding the actual updates to make already
+            # involves looking for any conflicts.
         return data 
 
     def get_form_kwargs(self, step=None): 
