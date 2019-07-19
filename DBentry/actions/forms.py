@@ -55,7 +55,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
     Fields:
         primary (ChoiceField): the object that other objects
             will be merged into.
-        expand_o (BooleanField): whether or not to expand the primary
+        expand_primary (BooleanField): whether or not to expand the primary
             object with data from the other objects.
     """
 
@@ -66,7 +66,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
         help_text = "Bitten wählen Sie den Datensatz, dem die verwandten "
         "Objekte der anderen Datensätze angehängt werden sollen."
     )
-    expand_o = forms.BooleanField(
+    expand_primary = forms.BooleanField(
         required = False,
         label = 'Primären Datensatz erweitern',
         initial=True,

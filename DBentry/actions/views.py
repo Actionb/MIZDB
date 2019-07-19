@@ -337,7 +337,7 @@ class MergeViewWizarded(WizardConfirmationView):
         if self.steps.current == self.CONFLICT_RESOLUTION_STEP:
             # No special processing needed for the last step.
             return data
-        if not form.cleaned_data.get('expand_o', False):
+        if not form.cleaned_data.get('expand_primary', False):
             # There can only be conflicts if the primary is to be expanded.
             has_conflict = False
         else:
@@ -406,7 +406,7 @@ class MergeViewWizarded(WizardConfirmationView):
 
     def perform_action(self, form_cleaned_data = None): 
         update_data = {} 
-        expand = self.get_cleaned_data_for_step('0').get('expand_o', True) 
+        expand = self.get_cleaned_data_for_step('0').get('expand_primary', True) 
         if expand: 
             if self.get_cleaned_data_for_step('1'): 
                 # Conflicts were handled 

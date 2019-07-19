@@ -459,7 +459,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-primary':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -474,7 +474,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-primary':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -505,7 +505,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-primary':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -520,7 +520,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
         # select obj2 (or obj4) here as primary as it already has a value for jahrgang (our only 'source' of conflict)
-        form_data = {'0-primary':self.obj2.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj2.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -542,15 +542,15 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         view.steps = Mock(last=last_step)
         form = MergeFormSelectPrimary()
 
-        # if expand_o is False in MergeFormSelectPrimary, there cannot be any conflicts
+        # if expand_primary is False in MergeFormSelectPrimary, there cannot be any conflicts
         # and the last step should be up next
-        form.cleaned_data = {'expand_o':False}
+        form.cleaned_data = {'expand_primary':False}
         self.assertEqual(view.process_step(form), {})
         self.assertEqual(view.storage.current_step, last_step)
 
         # if the 'primary' has no fields that can be updated, the returned dict should not contain 'updates'
         super_process_step.return_value = {'0-primary':self.obj1.pk}
-        form.cleaned_data = {'0-primary':self.obj1.pk, 'expand_o':True}
+        form.cleaned_data = {'0-primary':self.obj1.pk, 'expand_primary':True}
         self.assertEqual(view.process_step(form), {'0-primary':self.obj1.pk})
 
         # obj1 can be updated on the field 'jahrgang' with obj2's value
