@@ -103,8 +103,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return actions
 
     def get_exclude(self, request, obj = None):
-        # Exclude all m2m fields, as those are handled by inlines
-        # reverse related fields will be sorted out by the ModelForm (django.forms.models.fields_for_model)
+        """Exclude all concrete M2M fields as those are handled by inlines."""
         self.exclude = super().get_exclude(request, obj)
         if self.exclude is None:
             self.exclude = []
