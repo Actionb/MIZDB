@@ -249,8 +249,14 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     @property 
-    def updates(self): 
-        if not self._updates: 
+    def updates(self):
+        """Data to update the 'original' with.
+        
+        Prepared by `_has_merge_conflicts` during processing the first step (0)
+        and then added to the storage by `process_step`, this mapping of
+        field_name: value contains the data to expand 'original' with.
+        """
+        if not hasattr(self, '_updates'):
             step_data = self.storage.get_step_data('0') or {} 
             self._updates = step_data.get('updates', {}) 
         return self._updates 
