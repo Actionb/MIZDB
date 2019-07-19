@@ -170,6 +170,14 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
                 self.model_admin.message_user(self.request, admin_message)
 
 class MergeViewWizarded(WizardConfirmationView): 
+    """View that merges model instances.
+    
+    The user selects one instance from the available instances to designate
+    it as the 'primary' or 'original'.
+    All other instances will be merged into that one instance.
+    Optionally, the user can chose to expand that 'original' with data from the
+    other instances, for any fields of 'original' that do not have a value.
+    """
 
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
     perm_required = ['merge']
