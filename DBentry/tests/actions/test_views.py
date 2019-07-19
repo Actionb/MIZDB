@@ -587,9 +587,10 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         # MergeFormSelectPrimary step
         form_kwargs = view.get_form_kwargs(step = '0')
         self.assertIn('choices', form_kwargs)
+        formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
         self.assertListEqualSorted(
             view.queryset.values_list('pk', flat = True), 
-            form_kwargs['choices'][forms.ALL_FIELDS].values_list('pk', flat = True)
+            form_kwargs['choices'][formfield_name].values_list('pk', flat = True)
         )
 
         # MergeConflictsFormSet step

@@ -360,8 +360,8 @@ class MergeViewWizarded(WizardConfirmationView):
         kwargs = super(MergeViewWizarded, self).get_form_kwargs(step) 
         if step is None: 
             step = self.steps.current 
-        #TODO: do not rely on the existing order of forms to determine what form we are using
-        # in a given step, maybe WizardView has some get_form_class_for_step method?
+        form_class = self.form_list[step]
+        prefix = self.get_form_step form_class) 
         if step == '1': 
             # If we are at step 1, then there is a conflict as two or more records are trying to change one of original's fields.
             # We need to provide the MergeConflictsFormSet with 'data' for its fields AND 'choices' for the DynamicChoiceFormMixin.
@@ -395,10 +395,11 @@ class MergeViewWizarded(WizardConfirmationView):
             # forms.BaseFormSet.__init__ will then do the rest for us.
             kwargs['form_kwargs'] = {'choices':choices}
         else: 
-            # MergeFormSelectPrimary form: choices for the selection of primary are objects in the queryset
-            kwargs['choices'] = {forms.ALL_FIELDS: self.queryset}
-            # TODO: replace ALL_FIELDS with the 'primary' formfield 
-            #(make the reference to it an attribute on the form?)
+            # MergeFormSelectPrimary form: 
+            # choices for the selection of primary are objects in the queryset
+            kwargs['choices'] = {
+                prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset
+            }
         return kwargs 
 
     def perform_action(self, form_cleaned_data = None): 
