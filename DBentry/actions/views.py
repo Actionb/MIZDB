@@ -248,13 +248,6 @@ class MergeViewWizarded(WizardConfirmationView):
             )
             return False
 
-    def action_allowed(self, **kwargs):
-        denied_msg = 'Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}.'
-        # Allow child classes to overwrite the denied_msg via kwargs:
-        if 'denied_msg' not in kwargs:
-            kwargs['denied_msg'] = denied_msg
-        return super().action_allowed(**kwargs)
-
     @property 
     def updates(self): 
         if not self._updates: 
