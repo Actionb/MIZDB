@@ -76,6 +76,7 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
 
     PRIMARY_FIELD_NAME = 'primary'
 
+
 class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
     """
     The form that resolves merge conflicts for one model field.

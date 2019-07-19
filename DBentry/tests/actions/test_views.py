@@ -4,7 +4,6 @@ from .base import ActionViewTestCase #TODO: absolute imports
 from ..base import AdminTestCase, mockv, mockex
 from ..mixins import LoggingTestMixin
 
-from django import forms
 from django.test import tag
 from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry

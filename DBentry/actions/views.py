@@ -2,7 +2,6 @@ from django import forms
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, F, Count
-from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy, gettext
 
 from DBentry import models as _models
@@ -217,7 +216,7 @@ class MergeViewWizarded(WizardConfirmationView):
         context = super().get_context_data(*args, **kwargs)
         # Add the current step to the view's title.
         context['title'] = gettext(
-            'Merge objects: step {}').format(str(int(self.steps.current)+1))
+            'Merge objects: step {}').format(str(int(self.steps.current) + 1))
         return context
 
     def _check_too_few_objects(view, **kwargs):
@@ -432,11 +431,20 @@ class MergeViewWizarded(WizardConfirmationView):
         try:
             self.perform_action()
         except ProtectedError as e:
-            # The merge could not be completed as there were protected objects in the queryset, all changes were rolled back
-            protected = format_html(link_list(self.request, e.protected_objects))
-            object_name = e.protected_objects.model._meta.verbose_name_plural or 'Objekte'
-            msg = gettext('Folgende verwandte {object_name} verhinderten die Zusammenführung: ').format(object_name=object_name) + protected
-            self.model_admin.message_user(self.request, format_html(msg), 'error')
+            # The merge could not be completed as there were protected objects
+            # in the queryset, all changes were rolled back.
+            object_name = 'Objekte'
+            if e.protected_objects.model._meta.verbose_name_plural:
+                object_name = e.protected_objects.model._meta.verbose_name_plural
+            self.model_admin.message_user(
+                request=self.request,
+                level=messages.ERROR,
+                message="Folgende verwandte {object_name} verhinderten "
+                "die Zusammenführung: {protected}".format(
+                        object_name=object_name,
+                        protected=link_list(self.request, e.protected_objects)
+                    )
+                )
         return
 
 
@@ -455,19 +463,27 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     form_class = BrochureActionFormSet
 
     def get_initial(self):
-        fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name', 'magazin_beschreibung')
-        values = self.queryset.annotate(magazin_beschreibung = F('magazin__beschreibung')).values_list(*fields)
-        return [
-            {
+        fields = (
+            'pk', 'beschreibung', 'bemerkungen', 'magazin_id',
+            'magazin__magazin_name', 'magazin_beschreibung'
+        )
+        values = (
+            self.queryset
+                .annotate(magazin_beschreibung = F('magazin__beschreibung'))
+                .values_list(*fields)
+        )
+        initial = []
+        for (pk, beschreibung, bemerkungen, magazin_id,
+                magazin_name, magazin_beschreibung) in values:
+            initial.append({
                 'ausgabe_id': pk,
                 'titel': magazin_name,
                 'zusammenfassung': magazin_beschreibung,
                 'beschreibung': beschreibung,
                 'bemerkungen': bemerkungen,
                 'magazin_id': magazin_id
-            }
-            for pk, beschreibung, bemerkungen, magazin_id, magazin_name, magazin_beschreibung in values
-        ]
+            })
+        return initial
 
     @property
     def magazin_instance(self):
@@ -499,20 +515,36 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 # the set of the selected ausgaben.
                 # If the sets match, all ausgabe instances of magazin will be
                 # moved and the magazin will be open to deletion afterwards.
-                magazin_ausgabe_set = set(self.magazin_instance.ausgabe_set.values_list('pk', flat=True))
-                selected_ausgabe_set = set(self.queryset.values_list('pk', flat=True))
-                self._can_delete_magazin = magazin_ausgabe_set == selected_ausgabe_set
+                magazin_ausgabe_set = set(
+                    self.magazin_instance.ausgabe_set.values_list('pk', flat=True)
+                )
+                selected = set(
+                    self.queryset.values_list('pk', flat=True)
+                )
+                self._can_delete_magazin = magazin_ausgabe_set == selected
         return self._can_delete_magazin
 
     def _check_protected_artikel(view, **kwargs):
-        ausgaben_with_artikel = view.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
+        ausgaben_with_artikel = (
+            view.queryset
+                .annotate(artikel_count=Count('artikel'))
+                .filter(artikel_count__gt=0)
+                .order_by('magazin')
+        )
         if ausgaben_with_artikel.exists():
-            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {} ({})"
-            msg_text = msg_text.format(
-                link_list(view.request, ausgaben_with_artikel),
-                get_changelist_link(_models.ausgabe, view.request.user, obj_list = ausgaben_with_artikel)
+            view.model_admin.message_user(
+                request=view.request,
+                level=messages.ERROR,
+                message="Aktion abgebrochen: Folgende Ausgaben besitzen "
+                "Artikel, die nicht verschoben werden können: {} ({})".format(
+                    link_list(view.request, ausgaben_with_artikel),
+                    get_changelist_link(
+                        model=_models.ausgabe,
+                        user=view.request.user,
+                        obj_list=ausgaben_with_artikel
+                    )
                 )
-            view.model_admin.message_user(view.request, msg_text, messages.ERROR)
+            )
             return False
 
     def form_valid(self, form):
@@ -526,16 +558,19 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     def perform_action(self, form_cleaned_data, options_form_cleaned_data):
         protected_ausg = []
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
-        # brochure_art is guaranteed to be a valid model name due to the form validation.
-        brochure_class = get_model_from_string(options_form_cleaned_data.get('brochure_art', ''))
+        # brochure_art is guaranteed to be a valid
+        # model name due to the form validation.
+        brochure_art = options_form_cleaned_data.get('brochure_art', '')
+        brochure_class = get_model_from_string(brochure_art)
 
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
 
             # Verify that the ausgabe exists and can be deleted
-            ausgabe_instance = _models.ausgabe.objects.filter(pk=data['ausgabe_id']).first()
-            if ausgabe_instance is None:
+            try:
+                ausgabe_instance = _models.ausgabe.objects.get(pk=data['ausgabe_id'])
+            except (_models.ausgabe.DoesNotExist, _models.ausgabe.MultipleObjectsReturned):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -551,39 +586,68 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 with transaction.atomic():
                     new_brochure = brochure_class.objects.create(**instance_data)
                     # Update the bestand and delete the ausgabe
-                    ausgabe_instance.bestand_set.update(ausgabe_id=None, brochure_id=new_brochure.pk)
+                    ausgabe_instance.bestand_set.update(
+                        ausgabe_id=None, brochure_id=new_brochure.pk
+                    )
                     ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list('jahr', flat=True)
                     for jahr in ausgabe_jahre:
-                        _models.BrochureYear.objects.create(brochure = new_brochure, jahr = jahr)
+                        _models.BrochureYear.objects.create(
+                            brochure=new_brochure, jahr=jahr
+                        )
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
-                changelog_message = hint.format(
-                    verbose_name = brochure_class._meta.verbose_name,
-                    str_ausgabe = str(ausgabe_instance), str_magazin = str(self.magazin_instance)
+                log_addition(
+                    request=self.request,
+                    object=new_brochure,
+                    message="Hinweis: "
+                    "{verbose_name} wurde automatisch erstellt beim Verschieben von "
+                    "Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
+                        verbose_name = brochure_class._meta.verbose_name,
+                        str_ausgabe = str(ausgabe_instance),
+                        str_magazin = str(self.magazin_instance)
+                    )
                 )
-                log_addition(request = self.request, object = new_brochure, message = changelog_message)
                 self.log_update(_models.bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
                 self.log_deletion(ausgabe_instance)
 
         if protected_ausg:
-            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg) \
-                + ' (%s)' % get_changelist_link(_models.ausgabe, self.request.user, obj_list = protected_ausg)
-            msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
-            self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+            self.model_admin.message_user(
+                request=self.request,
+                level=messages.ERROR,
+                message="Folgende Ausgaben konnten nicht gelöscht werden: "
+                "{obj_links} ({cl_link}). Es wurden keine Broschüren für "
+                "diese Ausgaben erstellt.".format(
+                    obj_links=link_list(self.request, protected_ausg),
+                    cl_link=get_changelist_link(
+                        model=_models.ausgabe,
+                        user=self.request.user,
+                        obj_list=protected_ausg
+                    )
+                )
+            )
             return
 
-        # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
+        # The deletion should not interrupt/rollback the deletion of
+        # the ausgabe, hence we do not include it in the ausgabe transaction.
         if delete_magazin:
             try:
                 with transaction.atomic():
                     self.magazin_instance.delete()
             except ProtectedError:
                 # Seems like the magazin was still protected after all.
-                msg = "Magazin konnte nicht gelöscht werden: " + get_obj_link(self.magazin_instance, self.request.user, include_name = False)
-                self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+                self.model_admin.message_user(
+                    request=self.request,
+                    level=messages.ERROR,
+                    message="Magazin konnte nicht gelöscht werden: {}".format(
+                        get_obj_link(
+                            obj=self.magazin_instance,
+                            user=self.request.user,
+                            include_name = False
+                        )
+                    )
+                )
             else:
                 self.log_deletion(self.magazin_instance)
 
@@ -594,14 +658,16 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()
-        context['management_form'] = formset.management_form
-        context['forms'] = [
-            (
-                get_obj_link(_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False),
-                form
+        forms = []
+        for form in formset:
+            link = get_obj_link(
+                obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
+                user=self.request.user,
+                include_name = False
             )
-            for form in formset
-        ]
+            forms.append((link, form))
+        context['forms'] = forms
+        context['management_form'] = formset.management_form
         context['options_form'] = self.get_options_form()
         context.update(kwargs)
         return context

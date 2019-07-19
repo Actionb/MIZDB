@@ -58,7 +58,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if not getattr(self, 'action_name', False):
             self.action_name = self.__class__.__name__
         super().__init__(*args, **kwargs)
-        
+
     def get_action_allowed_checks(self):
         for check in self.action_allowed_checks:
             if isinstance(check, str) and hasattr(self, check):
@@ -66,11 +66,11 @@ class ConfirmationViewMixin(MIZAdminMixin):
             if not callable(check):
                 continue
             yield check
-        
+
     @property
     def action_allowed(self):
         """Check if the action is allowed.
-        
+
         Checks are called with keyword argument 'view' which is this instance.
         Assessment stops if a check returns False.
         """
