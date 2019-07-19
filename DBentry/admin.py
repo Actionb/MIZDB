@@ -141,7 +141,6 @@ class AusgabenAdmin(MIZModelAdmin):
 
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine,BestandInLine, AudioInLine]
     fields = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
-    flds_to_group = [('status', 'sonderausgabe')]
 
     search_form_kwargs = {
         'fields': [
@@ -770,7 +769,6 @@ class OrtAdmin(MIZModelAdmin):
 class BestandAdmin(MIZModelAdmin):
     #readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
     list_display = ['signatur', 'bestand_art', 'lagerort','provenienz']
-    #flds_to_group = [('ausgabe', 'ausgabe_magazin')]
 
     superuser_only = True
     search_form_kwargs = {

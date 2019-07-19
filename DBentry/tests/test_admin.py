@@ -254,29 +254,6 @@ class TestMIZModelAdmin(AdminTestCase):
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         self.assertNotIn('action', actions.keys())
         
-    def test_group_fields(self):
-        self.model_admin.fields = None
-        self.assertEqual(self.model_admin.group_fields(), [])
-        
-        self.model_admin.fields = ['seite', 'ausgabe', 'schlagzeile', 'zusammenfassung', 'seitenumfang']
-        self.model_admin.flds_to_group = [
-            ('magazin', 'ausgabe'), ('xyz', 'abc'), ('schlagzeile', 'zusammenfassung'), ('seitenumfang', 'zusammenfassung')
-        ]
-        grouped_fields = self.model_admin.group_fields()
-        
-        # group_fields() should have ignored the nonsensical second tuple
-        self.assertNotIn(('xyz', 'abc'), grouped_fields, msg='bad group was not removed')
-        
-        # the first tuple is expected to have replaced the 'ausgabe' in fields
-        self.assertEqual(grouped_fields[1], ('magazin', 'ausgabe'))
-        self.assertNotIn('ausgabe', grouped_fields, msg='field was not replaced')
-        
-        # by inserting the third tuple, group_fields() should have also removed the now redundant fourth field 'zusammenfassung'
-        self.assertNotIn('zusammenfassung', grouped_fields, msg='redundant field not removed')
-        
-        # group_fields() must not add duplicate fields 
-        self.assertNotIn(('seitenumfang', 'zusammenfassung'), grouped_fields, msg='group_fields() must not add duplicate fields')
-                
     def test_add_extra_context(self):
         # no object_id passed in: add_crosslinks should not be called
         extra = self.model_admin.add_extra_context() 
@@ -404,13 +381,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         
     def test_get_changelist(self):
         self.assertEqual(self.model_admin.get_changelist(self.get_request()), AusgabeChangeList)
-    
-    def test_group_fields(self):        
-        # AusgabenAdmin flds_to_group = [('status', 'sonderausgabe')]
-        expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
-        request = self.get_request()
-        self.model_admin.get_fields(request)
-        self.assertEqual(self.model_admin.group_fields(), expected)
         
     def test_anz_artikel(self):
         self.assertEqual(self.model_admin.anz_artikel(self.obj1), 1)

@@ -22,7 +22,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     """Base ModelAdmin for this app.
     
     Attributes:
-        flds_to_group (list): Group these fields in a line; the group is inserted into the first formfield encountered that matches a field in the group
         googlebtns (list):Fields in this list get a little button that redirect to a google search page 
         collapse_all (bool): Whether to collapse all inlines/fieldsets by default or not
         hint (str): A hint displayed at the top of the form 
@@ -31,7 +30,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         index_category (str): The name of the 'category' this ModelAdmin should be listed under on the index page
     """
 
-    flds_to_group = []
     googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch 
     collapse_all = False                    # 
     hint = ''                               # NOTE: is this hint even used by anything?: yes, DateiAdmin
@@ -101,37 +99,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)
         return self.exclude
-
-    def get_fields(self, request, obj = None):
-        if not self.fields:
-            self.fields = super().get_fields(request, obj)
-            if self.flds_to_group:
-                self.fields = self.group_fields()
-        return self.fields
-
-    def group_fields(self):
-        if not self.fields:
-            return []
-        grouped_fields = self.fields
-        fields_used = set()
-        for tpl in self.flds_to_group:
-            # Find the correct spot to insert the tuple into,
-            # which would be the earliest occurence of any field of tuple in self.fields
-            if any(f in fields_used for f in tpl):
-                # To avoid duplicate fields, ignore tuples that contain any field we have already grouped
-                continue
-            indexes = [self.fields.index(f) for f in tpl if f in self.fields]
-            if not indexes:
-                # None of the fields in the tuple are actually in self.fields
-                continue
-            target_index = min(indexes)
-            grouped_fields[target_index] = tpl
-            indexes.remove(target_index)
-            # Remove all other fields of the tuple that are in self.fields
-            for i in indexes:
-                grouped_fields.pop(i)
-            fields_used.update(tpl) 
-        return grouped_fields
 
     def get_fieldsets(self, request, obj=None):
         #TODO: this doesn't check if there is already a fieldset containing Beschreibung & Bemerkungen
