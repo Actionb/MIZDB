@@ -422,13 +422,25 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
 
     @property
     def can_delete_magazin(self):
-        #TODO: use is_protected?
-        if not self.magazin_instance:
-            # virtually impossible at this stage?
-            return False
-        magazin_ausgabe_set = set(self.magazin_instance.ausgabe_set.values_list('pk', flat = True))
-        selected_ausgabe_set = set(self.queryset.values_list('pk', flat = True))
-        return magazin_ausgabe_set == selected_ausgabe_set
+        """
+        Assess if the magazin instance can be deleted following the action.
+        """
+        if not hasattr(self, '_can_delete_magazin'):
+            if not self.magazin_instance:
+                # This should be virtually impossible at this stage:
+                # every ausgabe instance must have a magazin and django
+                # enforces that at least one instance be selected from the
+                # changelist to start an action.
+                self._can_delete_magazin = False
+            else:
+                # Compare the set of all ausgabe instances of the magazin with
+                # the set of the selected ausgaben.
+                # If the sets match, all ausgabe instances of magazin will be
+                # moved and the magazin will be open to deletion afterwards.
+                magazin_ausgabe_set = set(self.magazin_instance.ausgabe_set.values_list('pk', flat=True))
+                selected_ausgabe_set = set(self.queryset.values_list('pk', flat=True))
+                self._can_delete_magazin = magazin_ausgabe_set == selected_ausgabe_set
+        return self._can_delete_magazin
         
     def _check_protected_artikel(view, **kwargs):
         ausgaben_with_artikel = view.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
