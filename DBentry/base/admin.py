@@ -3,6 +3,7 @@ from django.core import checks, exceptions
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.db import models
+from django.db.models.constants import LOOKUP_SEP
 from django.urls import reverse, NoReverseMatch
 from django.utils.translation import override as translation_override
 from django.utils.encoding import force_text
@@ -175,8 +176,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         search_fields = search_fields.copy()
         pk_field = self.model._meta.pk
         for i, search_field in enumerate(search_fields):
-            if models.constants.LOOKUP_SEP in search_field:
-                field, _ = search_field.split(models.constants.LOOKUP_SEP, 1)
+            if LOOKUP_SEP in search_field:
+                field, _ = search_field.split(LOOKUP_SEP, 1)
             else:
                 field = search_field
             if not field[0].isalpha():
