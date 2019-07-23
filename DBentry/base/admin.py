@@ -185,7 +185,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 field, _ = search_field.split(LOOKUP_SEP, 1)
             else:
                 field = search_field
-            if not field[0].isalpha():
+            if not field[0].isalpha() and field[0] != '_':
                 # Lookup alias prefixes for ModelAdmin.construct_search:
                 # '=', '^', '@' etc.
                 field = field[1:]
