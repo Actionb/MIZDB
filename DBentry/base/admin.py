@@ -162,6 +162,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     'classes': ['collapse', 'collapsed']
                 }
             ))
+        default_fieldset['fields'] = fields
         return fieldsets
 
     def get_fieldsets(self, request, obj=None):
