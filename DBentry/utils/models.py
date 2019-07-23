@@ -1,4 +1,6 @@
+from django.core import exceptions
 from django.db import models
+
 
 def get_model_from_string(model_name):
     from django.apps import apps 
@@ -205,3 +207,49 @@ def get_all_model_names():
     mdls = apps.get_models('DBentry')
     my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
     return sorted(my_mdls, key = lambda m: m.lower())
+    
+def get_fields_and_lookups(model, field_path):
+    """
+    Extract model fields and lookups from `field_path`.
+    
+    Raises:
+        django.core.exceptions.FieldDoesNotExist:
+            if the first part in `field_path` is not a field of `model`.
+        FieldError: on encountering an invalid lookup.
+        
+    Returns:
+        two lists, one containing the model fields that make up the path
+        and one containing the (assumed) lookups.
+    """
+    # TODO: this is more precise than DBentry.search.utils.get_fields_and_lookups_from_path
+    fields, lookups = [], []
+    parts = field_path.split(models.constants.LOOKUP_SEP)
+    
+    opts = model._meta
+    prev_field = None
+    for i, part in enumerate(parts):
+        if part == 'pk':
+            part = opts.pk.name
+        try:
+            field = opts.get_field(part)
+        except exceptions.FieldDoesNotExist:
+            if prev_field:
+                # A valid model field was found for the previous part.
+                # 'part' could be a lookup or a transform.
+                if prev_field.get_lookup(part) or prev_field.get_transform(part):
+                    lookups.append(part)
+                    continue
+                raise exceptions.FieldError(
+                    "Invalid lookup: %(lookup)s for %(field)s." % {
+                        'lookup': part, 
+                        'field': prev_field.__class__.__name__
+                    }
+                )
+            raise
+        else:
+            fields.append(field)
+            prev_field = field
+            if hasattr(field, 'get_path_info'):
+                # Update opts to follow the relation.
+                opts = field.get_path_info()[-1].to_opts
+    return fields, lookups
