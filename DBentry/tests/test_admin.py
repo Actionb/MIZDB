@@ -3,6 +3,7 @@ from unittest.mock import patch
 from .base import AdminTestCase, UserTestCase
 
 from django.contrib import admin
+from django.contrib.auth.models import Permission
 from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
@@ -199,19 +200,20 @@ class TestMIZModelAdmin(AdminTestCase):
     model = _models.datei
     test_data_count = 1
     
-    def test_get_actions(self):
+    def test_get_actions_noperms(self):
         # No permissions: no actions
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
         self.assertEqual(len(actions), 0)
         
+    def test_get_actions_staffuser(self):
         # staff_user has no permissions, so let's give him permission to delete artikel
-        from django.contrib.auth.models import Permission
         p = Permission.objects.get(codename='delete_datei')
         self.staff_user.user_permissions.add(p)
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         self.assertEqual(len(actions), 1)
         self.assertIn('delete_selected', actions.keys())
         
+    def test_get_actions_superuser(self):
         # superuser has all permissions inherently
         actions = self.model_admin.get_actions(self.get_request())
         self.assertEqual(len(actions), 2)   
