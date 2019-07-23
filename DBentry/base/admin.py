@@ -94,7 +94,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def get_index_category(self):
         """Return the index category of this ModelAdmin.
-        
+
         Called by MIZAdminSite to create 'fake' apps for grouping purposes.
         """
         return self.index_category
@@ -140,7 +140,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def _add_bb_fieldset(self, fieldsets):
         """
         Append a fieldset for 'Beschreibung & Bemerkungen'.
-        
+
         If any of these two fields are part of the default fieldset,
         move them out of there to their own fieldset.
         """
@@ -381,28 +381,42 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             form.instance.update_name(force_update=True)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        # Move checkbox widget to the right of its label.
         if 'adminform' in context:
+            # Move checkbox widget to the right of its label.
             context['adminform'] = MIZAdminFormWrapper(context['adminform'])
-        # Fix jquery load order during the add/change view process.
-        # If the ModelAdmin does not have inlines, collapse elements will not work:
-        # django's Fieldsets will include just 'collapse.js' if collapse is in the
-        # fieldset's classes. django's AdminForm then scoops up all the Fieldsets
-        # and merges their media with its own (which may just be nothing).
-        # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...]
-        # with that of the AdminForm. Since merging/sorting is now stable the
-        # result will be [jquery.js, collapse.js, jquery_init.js, ...].
-        # Usually this faulty load order is then later fixed by media mergers on the
-        # inlines which mostly only have [jquery.js, jquery_init.js], but if the
-        # ModelAdmin does not have any inlines, collapse will not work.
         if 'media' in context:
+            # Fix jquery load order during the add/change view process.
+            # If the ModelAdmin does not have inlines, collapse elements will not work:
+            # django's Fieldsets will include just 'collapse.js' if collapse is in the
+            # fieldset's classes. django's AdminForm then scoops up all the Fieldsets
+            # and merges their media with its own (which may just be nothing).
+            # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...]
+            # with that of the AdminForm. Since merging/sorting is now stable the
+            # result will be [jquery.js, collapse.js, jquery_init.js, ...].
+            # Usually this faulty load order is then later fixed by media mergers on the
+            # inlines which mostly only have [jquery.js, jquery_init.js], but if the
+            # ModelAdmin does not have any inlines, collapse will not work.
             context['media'] = ensure_jquery(context['media'])
         return super().render_change_form(request, context, add, change, form_url, obj)
 
 
 class BaseInlineMixin(object):
+    """
+    A mixin for inline classes.
 
-    original = False
+    It overrides the formfields for ForeignKeys, adds an optional 'description'
+    and simplifies the assignment of verbose_name and verbose_name_plural.
+    Sets extra for formsets to 1.
+
+    Attributes:
+        verbose_model (model class): the model whose verbose_name and
+            verbose_name_plural attributes will be used to override
+            this inline's default ones.
+        description (str): short description of this inline in relation to its
+            parent ModelAdmin.
+    """
+
+#    original = False  # TODO: this does nothing?!
     verbose_model = None
     extra = 1
     classes = ['collapse']
