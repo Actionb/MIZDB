@@ -20,9 +20,10 @@ from DBentry.helper import MIZAdminFormWrapper
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import get_model_relations,  ensure_jquery, get_fields_and_lookups
 
+
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     """Base ModelAdmin for this app.
-    
+
     Attributes:
         googlebtns (list): a list of formfield names that get a button that
             opens a google search page with the field's value.
@@ -37,20 +38,20 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             separate them on the index page.
     """
 
-    googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch 
-    crosslink_labels = {}           
-    collapse_all = False        
-    superuser_only = False       
-    index_category = 'Sonstige'       
-    
+    googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
+    crosslink_labels = {}
+    collapse_all = False
+    superuser_only = False
+    index_category = 'Sonstige'
+
     actions = [merge_records]
 
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
     }
-    #TODO: let the MIZ changelist template extend the default one 
-    #change_list_template = 'miz_changelist.html'
-   
+    # TODO: let the MIZ changelist template extend the default one
+    # change_list_template = 'miz_changelist.html'
+
     def check(self, **kwargs):
         errors = super().check(**kwargs)
         errors.extend(self._check_search_fields_lookups(**kwargs))
@@ -79,7 +80,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def _annotate_for_list_display(self, queryset):
         """
         Hook to add annotations to the root queryset of this ModelAdmin.
-        
+
         This is to allow ordering of callable list display items.
         """
         return queryset
@@ -98,13 +99,13 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def get_actions(self, request):
         """Show actions based on user permissions.
-        
+
         Remove actions that the user has no access to.
         """
         # get_actions returns an OrderedDict( (name, (func, name, desc)) )
         actions = super().get_actions(request)
 
-        for func, name, desc in actions.copy().values():
+        for func, name, _desc in actions.copy().values():
             if name == 'delete_selected':
                 # The builtin action 'delete_selected' is set by the admin site.
                 perm_required = ['delete']
@@ -117,7 +118,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     perm_passed = p(self, request)
                 else:
                     perm = '{}.{}'.format(
-                        self.opts.app_label, 
+                        self.opts.app_label,
                         get_permission_codename(p, self.opts)
                     )
                     perm_passed = request.user.has_perm(perm)
@@ -134,7 +135,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)
         return self.exclude
-        
+
     def _add_bb_fieldset(self, fieldsets):
         """Append a fieldset for 'Beschreibung & Bemerkungen'."""
         # Check for any of the fields in the default fieldset
@@ -163,7 +164,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         return self._add_bb_fieldset(fieldsets)
-        
+
     def _add_pk_search_field(self, search_fields):
         """
         Add a search field ('pk__iexact') for the primary key to the
@@ -175,7 +176,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         """
         search_fields = search_fields.copy()
         pk_field = self.model._meta.pk
-        for i, search_field in enumerate(search_fields):
+        for search_field in search_fields:
             if LOOKUP_SEP in search_field:
                 field, _ = search_field.split(LOOKUP_SEP, 1)
             else:
@@ -200,63 +201,77 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def add_crosslinks(self, object_id, labels = None):
         """
-        Provides the template with data to create links to related objects.
+        Provide the template with data to create links to related objects.
         """
-        new_extra = {'crosslinks':[]}
+        new_extra = {'crosslinks': []}
         labels = labels or {}
 
         inline_models = {i.model for i in self.inlines}
-        # m2m self relations:
-        #   will be 'ignored' as a inline must be used to facilitate that relation (i.e. query_model inevitably shows up in inline_models)
-        # m2o self relations (rel.model == rel.related_model): 
-        #   query_model == rel.model == rel.related_model; differentiating between them is pointless
-
-        for rel in get_model_relations(self.model, forward = False, reverse = True):
-            query_model = rel.related_model
-            query_field = rel.remote_field.name
+        # Walk through all reverse relations and create a crosslink for any
+        # relation that is not covered by inlines.
+        for rel in get_model_relations(self.model, forward=False, reverse=True):
             if rel.many_to_many:
                 inline_model = rel.through
-                if rel.field.model == self.model and rel.model != rel.related_model:
-                    # ManyToManyField lives on self.model and it is NOT a self relation. 
-                    # Target the 'other end' of the relation - otherwise we would create a crosslink that leads back to self.model's changelist.
-                    query_model = rel.model
-                    query_field = rel.name
             else:
                 inline_model = rel.related_model
             if inline_model in inline_models:
                 continue
-            count = query_model.objects.filter(**{query_field:object_id}).count()
+
+            query_model = rel.related_model
+            query_field = rel.remote_field.name
+            if rel.many_to_many and query_model == self.model:
+                # M2M relations are symmetric, but we wouldn't want to create
+                # a crosslink that leads back to *this* model's changelist
+                # (unless it's a self relation).
+                query_model = rel.model
+                query_field = rel.name
+
             opts = query_model._meta
+            count = query_model.objects.filter(**{query_field: object_id}).count()
             if not count:
                 # No point showing an empty changelist.
                 continue
             try:
-                url = reverse("admin:{}_{}_changelist".format(opts.app_label, opts.model_name)) \
-                                + "?" + query_field + "=" + str(object_id)
+                url = reverse(
+                    "admin:{}_{}_changelist".format(opts.app_label, opts.model_name)
+                )
             except NoReverseMatch:
                 # NoReverseMatch, no link that leads anywhere!
                 continue
+            # Add the query string to the url:
+            url += "?{field}={val}".format(
+                field=query_field, val=str(object_id)
+            )
 
             # Prepare the label for the link with the following priorities:
-            # - a passed in label 
-            # - an explicitly (as the default for it is None unless automatically created) declared related_name
-            # - the verbose_name_plural of the related_model
+            #   - a passed in label
+            #   - an explicitly declared related_name
+            #       (unless the relation was automatically created,
+            #       the default for related_name is None)
+            #    - the verbose_name_plural of the related_model
             if opts.model_name in labels:
                 label = labels[opts.model_name]
             elif rel.related_name:
                 # Automatically created related_names won't look pretty!
-                label = " ".join(capfirst(s) for s in rel.related_name.replace('_', ' ').split())
+                label = " ".join(
+                    capfirst(s)
+                    for s in rel.related_name.replace('_', ' ').split()
+                )
             else:
                 label = opts.verbose_name_plural
-            label += " ({})".format(str(count))
-            new_extra['crosslinks'].append( dict(url=url, label=label) )
+
+            label = "{label} ({count})".format(
+                label=label, count=str(count)
+            )
+            new_extra['crosslinks'].append({'url': url, 'label': label})
         return new_extra
 
     @property
     def media(self):
         media = super().media
         if self.googlebtns:
-            return media + forms.Media(js = ['admin/js/utils.js']) # contains the googlebtns script
+            # utils.js contains the googlebtns script
+            return media + forms.Media(js = ['admin/js/utils.js'])
         return ensure_jquery(media)
 
     def add_extra_context(self, request = None, extra_context = None, object_id = None):
@@ -270,47 +285,63 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return new_extra
 
     def add_view(self, request, form_url='', extra_context=None):
-        new_extra = self.add_extra_context(request = request, extra_context = extra_context)
+        new_extra = self.add_extra_context(
+            request=request, extra_context=extra_context
+        )
         return super().add_view(request, form_url, new_extra)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        new_extra = self.add_extra_context(request = request, extra_context = extra_context, object_id = object_id)
+        new_extra = self.add_extra_context(
+            request=request, extra_context=extra_context,
+            object_id=object_id
+        )
         return super().change_view(request, object_id, form_url, new_extra)
 
     def construct_change_message(self, request, form, formsets, add=False):
         """
         Construct a JSON structure describing changes from a changed object.
+
         Translations are deactivated so that strings are stored untranslated.
         Translation happens later on LogEntry access.
         """
-        #TODO: WIP
+        # TODO: WIP
         change_message = []
         if add:
             change_message.append({'added': {}})
         elif form.changed_data:
-            change_message.append({'changed': {'fields': form.changed_data}})
+            change_message.append(
+                {'changed': {'fields': form.changed_data}}
+            )
 
         if formsets:
             with translation_override(None):
                 for formset in formsets:
                     for added_object in formset.new_objects:
-                        change_message.append({'added': self._construct_m2m_change_message(added_object)})
+                        change_message.append(
+                            {'added': self._construct_m2m_change_message(added_object)}
+                        )
                     for changed_object, changed_fields in formset.changed_objects:
                         msg = self._construct_m2m_change_message(changed_object)
                         msg['fields'] = changed_fields
                         change_message.append({'changed': msg})
                     for deleted_object in formset.deleted_objects:
-                        change_message.append({'deleted': self._construct_m2m_change_message(deleted_object)})
+                        change_message.append(
+                            {'deleted': self._construct_m2m_change_message(deleted_object)}
+                        )
         return change_message
 
     def _construct_m2m_change_message(self, obj):
         """
         Construct a more useful change message for m2m objects of auto created models.
         """
-        #TODO: WIP
+        # TODO: WIP
         if obj._meta.auto_created:
             # An auto_created m2m through table only has two relation fields
-            relation_field = [fld for fld in obj._meta.get_fields() if fld.is_relation and fld.related_model != self.model][0]
+            relation_field = [
+                fld
+                for fld in obj._meta.get_fields()
+                if fld.is_relation and fld.related_model != self.model
+            ][0]
             return {
                     'name': force_text(relation_field.related_model._meta.verbose_name),
                     'object': force_text(getattr(obj, relation_field.name)),
@@ -323,14 +354,16 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def has_module_permission(self, request):
         if self.superuser_only:
-            # Hide the associated models from the index if the current user is not a superuser
+            # Hide the associated models from the index if
+            # the current user is not a superuser
             return request.user.is_superuser
         return super().has_module_permission(request)
 
     def save_model(self, request, obj, form, change):
         if isinstance(obj, ComputedNameModel):
-            # Delay the update of the _name until ModelAdmin._changeform_view has saved the related objects via save_related.
-            # This is to avoid update_name building a name with outdated related objects.
+            # Delay the update of the _name until ModelAdmin._changeform_view
+            # has saved the related objects via save_related. This is to avoid
+            # update_name building a name with outdated related objects.
             # TODO: set obj._changed_flag = False to disable updates entirely?
             obj.save(update=False)
         else:
@@ -340,7 +373,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         super().save_related(request, form, formsets, change)
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
-            #TODO: use the form and formsets to figure out if an update is required
+            # TODO: use the form and formsets to figure out if an update is required
             form.instance.update_name(force_update=True)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
@@ -349,13 +382,15 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             context['adminform'] = MIZAdminFormWrapper(context['adminform'])
         # Fix jquery load order during the add/change view process.
         # If the ModelAdmin does not have inlines, collapse elements will not work:
-        # django's Fieldsets will include just 'collapse.js' if collapse is in the fieldset's classes.
-        # django's AdminForm then scoops up all the Fieldsets and merges their media with its own
-        # (which may just be nothing).
-        # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...] with that of the AdminForm. 
-        # Since merging/sorting is now stable the result will be [jquery.js, collapse.js, jquery_init.js, ...]
-        # Usually this faulty load order is then later fixed by media mergers on the inlines which mostly only have 
-        # [jquery.js, jquery_init.js], but if the ModelAdmin does not have any inlines, collapse will not work.
+        # django's Fieldsets will include just 'collapse.js' if collapse is in the
+        # fieldset's classes. django's AdminForm then scoops up all the Fieldsets
+        # and merges their media with its own (which may just be nothing).
+        # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...]
+        # with that of the AdminForm. Since merging/sorting is now stable the
+        # result will be [jquery.js, collapse.js, jquery_init.js, ...].
+        # Usually this faulty load order is then later fixed by media mergers on the
+        # inlines which mostly only have [jquery.js, jquery_init.js], but if the
+        # ModelAdmin does not have any inlines, collapse will not work.
         if 'media' in context:
             context['media'] = ensure_jquery(context['media'])
         return super().render_change_form(request, context, add, change, form_url, obj)
@@ -380,28 +415,33 @@ class BaseInlineMixin(object):
             kwargs['widget'] = make_widget(model=db_field.related_model)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+
 class BaseTabularInline(BaseInlineMixin, admin.TabularInline):
     pass
+
 
 class BaseStackedInline(BaseInlineMixin, admin.StackedInline):
     pass
 
+
 class BaseAliasInline(BaseTabularInline):
     verbose_name_plural = 'Alias'
+
 
 class BaseGenreInline(BaseTabularInline):
     verbose_model = _models.genre
 
+
 class BaseSchlagwortInline(BaseTabularInline):
     verbose_model = _models.schlagwort
+
 
 class BaseAusgabeInline(BaseTabularInline):
     form = AusgabeMagazinFieldForm
     verbose_model = _models.ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
 
+
 class BaseOrtInLine(BaseTabularInline):
     verbose_name = 'Ort'
     verbose_name_plural = 'Assoziierte Orte'
-
-
