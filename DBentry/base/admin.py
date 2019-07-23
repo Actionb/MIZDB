@@ -1,4 +1,5 @@
 from django import forms
+from django.core import checks, exceptions
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.db import models
@@ -16,7 +17,7 @@ from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.helper import MIZAdminFormWrapper
 from DBentry.search.admin import MIZAdminSearchFormMixin
-from DBentry.utils import get_model_relations,  ensure_jquery
+from DBentry.utils import get_model_relations,  ensure_jquery, get_fields_and_lookups
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     """Base ModelAdmin for this app.
@@ -48,6 +49,27 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     }
     #TODO: let the MIZ changelist template extend the default one 
     #change_list_template = 'miz_changelist.html'
+   
+    def check(self, **kwargs):
+        errors = super().check(**kwargs)
+        errors.extend(self._check_search_fields_lookups(**kwargs))
+        return errors
+
+    def _check_search_fields_lookups(self, **kwargs):
+        """Check that all search fields and their lookups are valid."""
+        errors = []
+        for search_field in self.get_search_fields(request=None):
+            if not search_field[0].isalpha() and search_field[0] != '_':
+                # Lookup alias prefixes for ModelAdmin.construct_search:
+                # '=', '^', '@' etc.
+                search_field = search_field[1:]
+            try:
+                get_fields_and_lookups(self.model, search_field)
+            except exceptions.FieldDoesNotExist as e:
+                errors.append(checks.Critical(e.args[0]))
+            except exceptions.FieldError as e:
+                errors.append(checks.Critical(e.args[0]))
+        return errors
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
@@ -174,8 +196,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def get_search_fields(self, request=None):
         search_fields = list(self.search_fields or self.model.get_search_fields())
         return self._add_pk_search_field(search_fields)
-
-    # TODO: system check search_fields?
 
     def add_crosslinks(self, object_id, labels = None):
         """
