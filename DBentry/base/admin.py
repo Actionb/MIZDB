@@ -34,8 +34,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         superuser_only (bool): if true, only a superuser can interact with
             this ModelAdmin.
         index_category (str): the name of the 'category' this ModelAdmin should
-            be listed under. A fake app is created for each category to visually
-            separate them on the index page.
+            be listed under. A fake app is created for each category to group
+            them on the index page.
     """
 
     googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
@@ -79,9 +79,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def _annotate_for_list_display(self, queryset):
         """
-        Hook to add annotations to the root queryset of this ModelAdmin.
-
-        This is to allow ordering of callable list display items.
+        Hook to add annotations for callable list display items to the root
+        queryset of this ModelAdmin to allow ordering by these items.
         """
         return queryset
 
@@ -94,15 +93,17 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return MIZChangeList
 
     def get_index_category(self):
-        # Should technically be different apps..
+        """Return the index category of this ModelAdmin.
+        
+        Called by MIZAdminSite to create 'fake' apps for grouping purposes.
+        """
         return self.index_category
 
     def get_actions(self, request):
-        """Show actions based on user permissions.
-
-        Remove actions that the user has no access to.
         """
-        # get_actions returns an OrderedDict( (name, (func, name, desc)) )
+        Return a dictionary mapping of action_name: (callable, name, description)
+        for this ModelAdmin for each action that the user has access to.
+        """
         actions = super().get_actions(request)
 
         for func, name, _desc in actions.copy().values():
@@ -137,15 +138,17 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return self.exclude
 
     def _add_bb_fieldset(self, fieldsets):
-        """Append a fieldset for 'Beschreibung & Bemerkungen'."""
-        # Check for any of the fields in the default fieldset
-        # and move them into their own fieldset.
+        """
+        Append a fieldset for 'Beschreibung & Bemerkungen'.
+        
+        If any of these two fields are part of the default fieldset,
+        move them out of there to their own fieldset.
+        """
         default_fieldset = dict(fieldsets).get(None, None)
         if not default_fieldset:
             return fieldsets
-        # default_fieldset['fields'] might be a direct reference
-        # to self.get_fields(), so make a copy to leave the original
-        # list untouched.
+        # default_fieldset['fields'] might be a direct reference to self.get_fields(),
+        # so make a copy to leave the original list untouched.
         fields = default_fieldset['fields'].copy()
         bb_fields = []
         if 'beschreibung' in fields:
