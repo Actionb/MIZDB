@@ -23,7 +23,8 @@ class AdminTestMethodsMixin(object):
     crosslinks_expected = [] # the data that is expected to be returned by add_crosslinks
     exclude_expected = None # fields to be excluded from the changeview form
     fields_expected = None # fields expected to be on the changeview form
-    
+    search_fields_expected = None # the final search_fields expected
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -145,35 +146,12 @@ class AdminTestMethodsMixin(object):
         
     def test_get_changelist(self):
         self.assertEqual(self.model_admin.get_changelist(self.get_request(path = self.changelist_path)), MIZChangeList)
-    
+
     def test_get_search_fields(self):
-        # search fields are largely declared with the models, the admin classes only add the exact =id lookup
-        # (or replace an existing pk_name search field with an exact lookup)
-        pk_name = self.model._meta.pk.name
-        _backup = self.model_admin.search_fields
-        self.assertIn('=pk' , self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = []
-        self.assertIn('=pk' , self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = [pk_name]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertNotIn(pk_name, self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = ["=" + pk_name]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertNotIn("=" + pk_name, self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = ["pk"]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertNotIn("pk", self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = ["beep", pk_name, "baap", "pk", "boop", "=" + pk_name]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertEqual(["beep", "=pk", "baap", "boop"], self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = _backup
-        
+        if self.search_fields_expected is None:
+            return
+        self.assertEqual(self.model_admin.get_search_fields(), self.search_fields_expected)
+
     def test_media_prop(self):
         media = self.model_admin.media
         if self.model_admin.googlebtns:
@@ -309,11 +287,47 @@ class TestMIZModelAdmin(AdminTestCase):
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Mantest'])
 
-    def test_get_search_fields(self):
-        # Assert that get_search_fields does not include a iexact lookup for primary keys that are a relation
-        search_fields = _admin.KatalogAdmin(_models.Katalog, self.admin_site).get_search_fields()
-        self.assertNotIn('=basebrochure_ptr', search_fields)
-                
+    def test_add_pk_search_field(self):
+        # Assert that a search field for the primary key is added to the search fields.
+        # For primary keys that are a relation (OneToOneRelation) this should be
+        # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
+        test_data = [
+            ('NoRelation', self.model_admin, 'pk__iexact'), 
+            (
+                'OneToOneRelation',
+                _admin.KatalogAdmin(_models.Katalog, self.admin_site),
+                'pk__pk__iexact'
+            )
+        ]
+        for test_desc, model_admin, expected in test_data:
+            with self.subTest(desc=test_desc):
+                search_fields = model_admin._add_pk_search_field([])
+                self.assertTrue(search_fields, msg = "Expected pk field to be added.")
+                self.assertEqual(len(search_fields), 1, 
+                    msg = "Only one pk search field expected. Got: %s" % str(search_fields))
+                self.assertIn(expected, search_fields)
+
+    def test_add_pk_search_field_does_not_overwrite_existing(self):
+        # Assert that _add_pk_search_field does not overwrite or delete
+        # existing primary key search_fields.
+        pk_name = self.model._meta.pk.name
+        test_data = [
+            ('no prefix', ['pk']), 
+            ('prefixed', ['=pk']), 
+            ('lookup', ['pk__istartswith']), 
+            ('lookup prefixed', ['=pk__istartswith']), 
+            ('pk name', [pk_name]), 
+            ('pk name prefixed', ['=%s' % pk_name]), 
+            ('pk name lookup', ['%s__istartswith' % pk_name]), 
+            ('pk name lookup prefixed', ['=%s__istartswith' % pk_name])
+        ]
+
+        for test_desc, initial_fields in test_data:
+            with self.subTest(desc=test_desc):
+                search_fields = self.model_admin._add_pk_search_field(initial_fields)
+                self.assertEqual(initial_fields, search_fields)
+
+
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.ArtikelAdmin
@@ -926,14 +940,14 @@ class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     model = _models.Brochure
     fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'ausgabe__magazin']
     exclude_expected = ['genre', 'schlagwort']
-    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
         
 class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
     fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'art',  'ausgabe__magazin']
     exclude_expected = ['genre']
-    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'art']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'art', 'pk__pk__iexact']
     
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -950,7 +964,7 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     model = _models.Kalendar
     fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'ausgabe__magazin']
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
-    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
         
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin

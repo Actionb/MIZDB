@@ -140,29 +140,42 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super().get_fieldsets(request, obj)
         return self._add_bb_fieldset(fieldsets)
+        
+    def _add_pk_search_field(self, search_fields):
+        """
+        Add a search field ('pk__iexact') for the primary key to the
+        search fields if it is missing.
+        If the primary key is a OneToOneRelation, add 'pk__pk__iexact' instead.
+
+        Returns a copy of the passed in `search_fields`
+        with the added search field.
+        """
+        search_fields = search_fields.copy()
+        pk_field = self.model._meta.pk
+        for i, search_field in enumerate(search_fields):
+            if models.constants.LOOKUP_SEP in search_field:
+                field, _ = search_field.split(models.constants.LOOKUP_SEP, 1)
+            else:
+                field = search_field
+            if not field[0].isalpha():
+                # Lookup alias prefixes for ModelAdmin.construct_search:
+                # '=', '^', '@' etc.
+                field = field[1:]
+            if field in ('pk', pk_field.name):
+                # Done here, search_fields already contains a custom
+                # primary key search field.
+                break
+        else:
+            search_fields.append(
+                'pk__pk__iexact' if pk_field.is_relation else 'pk__iexact'
+            )
+        return search_fields
 
     def get_search_fields(self, request=None):
-        # Replace the first primary key search field with an __iexact primary key lookup or append one if missing.
-        # Remove all duplicates of primary key search fields.
         search_fields = list(self.search_fields or self.model.get_search_fields())
-        if self.model._meta.pk.get_lookup('iexact') is None:
-            # the pk field does not support iexact lookups (most likely a related field) and
-            # ModelAdmin.get_search_results.construct_search tacks on the __iexact lookup, which will result in an error
-            # This is fixed in later versions of django.
-            # Models that rely on OneToOneFields (BaseBrochure, etc.) as their primary key can thus not support admin lookups for their pk.
-            return search_fields
-        pk_found = False
-        pk_name = self.model._meta.pk.name
-        for search_field in search_fields[:]:
-            if search_field in ('pk', '=pk', pk_name, '=' + pk_name):
-                if not pk_found:
-                    search_fields[search_fields.index(search_field)] = '=pk'
-                else:
-                    search_fields.remove(search_field)
-                pk_found = True
-        if not pk_found:
-            search_fields.append('=pk')
-        return search_fields
+        return self._add_pk_search_field(search_fields)
+
+    # TODO: system check search_fields?
 
     def add_crosslinks(self, object_id, labels = None):
         """
