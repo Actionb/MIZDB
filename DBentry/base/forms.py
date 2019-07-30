@@ -4,6 +4,7 @@ from django.db.models.query import QuerySet
 from django.db.models.manager import BaseManager
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
+
 from DBentry.utils import snake_case_to_spaces, ensure_jquery
 
 
@@ -277,6 +278,7 @@ class MIZAdminFormMixin(object):
                     # This results in IntegerField.has_changed('1',1) returning False.
                     initial_value = field.to_python(initial_value)
                 except:
+                    # FIXME: bare except
                     pass
             else:
                 initial_prefixed_name = self.add_initial_prefix(name)
