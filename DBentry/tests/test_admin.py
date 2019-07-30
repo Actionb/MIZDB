@@ -397,9 +397,11 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.get_changelist(self.get_request()), AusgabeChangeList)
         
     def test_anz_artikel(self):
-        self.assertEqual(self.model_admin.anz_artikel(self.obj1), 1)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_artikel(obj), 1)
         _models.artikel.objects.all().delete()
-        self.assertEqual(self.model_admin.anz_artikel(self.obj1), 0)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_artikel(obj), 0)
         
     def test_jahr_string(self):
         self.assertEqual(self.model_admin.jahr_string(self.obj1), '2020, 2021, 2022')
@@ -465,10 +467,11 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     raw_data = [{'ausgabe__extra':1}]
         
     def test_anz_ausgaben(self):
-        self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 1)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_ausgaben(obj), 1)
         self.obj1.ausgabe_set.all().delete()
-        self.obj1.refresh_from_db()
-        self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 0)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_ausgaben(obj), 0)
 
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     

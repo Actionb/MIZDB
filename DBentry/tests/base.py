@@ -337,7 +337,12 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
             sortable_by
         )
         return cl
-        
+
+    def get_queryset(self, request = None):
+        if request is None:
+            request = self.get_request(path=self.changelist_path)
+        return self.model_admin.get_queryset(request)
+
 
 ##############################################################################################################
 # TEST_FORMS TEST CASES
