@@ -252,19 +252,12 @@ class MIZAdminFormMixin(object):
     def media(self):
         # Collect the media needed for all the widgets
         media = super().media
-        # Collect the media needed for all fieldset.
+        # Collect the media needed for all fieldsets.
         # This will add collapse.js if necessary
         # (from django.contrib.admin.options.helpers.Fieldset).
         for fieldset in self.__iter__():
             media += fieldset.media
-        # Ensure jquery proper is loaded first before any other files that might reference it
-        # Add the django jquery init file (it includes jquery into django's namespace)
-        from django.conf import settings
-        jquery_media = forms.Media(js = [
-            'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min'),
-            'admin/js/jquery.init.js'
-        ])
-        return ensure_jquery(jquery_media + media)
+        return ensure_jquery(media)
 
     @cached_property
     def changed_data(self):
