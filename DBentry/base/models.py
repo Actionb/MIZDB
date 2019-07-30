@@ -1,10 +1,12 @@
-from django.db import models
+from inspect import isclass
+
 from django.core import checks
+from django.db import models
 from django.utils.translation import gettext_lazy
 
-from DBentry.managers import MIZQuerySet, CNQuerySet
-from DBentry.utils import get_model_fields
 from DBentry.fields import YearField
+from DBentry.managers import CNQuerySet, MIZQuerySet
+from DBentry.utils import get_model_fields
 
 class BaseModel(models.Model):
     """
@@ -50,7 +52,6 @@ class BaseModel(models.Model):
         Returns a queryset that contains the current instance only.
         Counterpart to django.db.models.manager.ManagerDescriptor's __get__.
         """
-        from inspect import isclass
         if isclass(self):
             # The user may inadvertently call qs() when working on the class level. This should be avoided, as the user may EXPECT a filtered queryset.
             raise AttributeError("Calling qs() from class level is prohibited. Use {}.objects instead.".format(self.__name__))
