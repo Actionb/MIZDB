@@ -18,7 +18,10 @@ from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.helper import MIZAdminFormWrapper
 from DBentry.search.admin import MIZAdminSearchFormMixin
-from DBentry.utils import get_model_relations,  ensure_jquery, get_fields_and_lookups
+from DBentry.utils import (
+    get_model_relations,  ensure_jquery, get_fields_and_lookups,
+    resolve_list_display_item
+)
 
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
@@ -58,6 +61,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def check(self, **kwargs):
         errors = super().check(**kwargs)
         errors.extend(self._check_search_fields_lookups(**kwargs))
+        errors.extend(self._check_list_item_annotations(**kwargs))
         return errors
 
     def _check_search_fields_lookups(self, **kwargs):
@@ -75,17 +79,67 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             except exceptions.FieldError as e:
                 errors.append(checks.Critical(e.args[0]))
         return errors
+        
+    def _check_list_item_annotations(self, **kwargs):
+        """
+        Check items in 'list_display' that are expected to be sortable.
+        """
+        errors = []
+        for list_item in self.list_display:
+            func = resolve_list_display_item(self, list_item)
+            if func is None or not getattr(func, 'admin_order_field', None):
+                # Either resolve_list_display_item could not resolve the item
+                # at all (returned None) or func is something without an
+                # 'admin_order_field' attribute.
+                # In either case, this list_item is not sortable.
+                continue
+            annotation = getattr(func, 'annotation', None)
+            if not annotation:
+                # When the checks are run, we cannot check if the queryset needs
+                # an annotation for this order field (it might already have one).
+                # _annotate_for_list_display only adds annotations if both
+                # 'admin_order_field' and 'annotation' are declared.
+                continue
+            elif not isinstance(annotation, models.Aggregate):
+                errors.append(checks.Critical(
+                    "%(model_admin)s.%(func)s.annotation "
+                    "is not an aggregate: %(annotation)s" % {
+                            'model_admin': self.__class__.__name__, 
+                            'func': func.__name__, 
+                            'annotation': type(annotation)
+                    }
+                ))
+        return errors
+
+    def _annotate_for_list_display(self, request, queryset):
+        """
+        Add annotations for callable, sortable list display items to queryset.
+        
+        The annotations are built from the 'admin_order_field' (column name)
+        and 'annotation' (aggregate function) attribute of the callable.
+        Returns the annotated queryset.
+        """
+        ordering = queryset.query.order_by
+        for list_item in self.get_list_display(request):
+            func = resolve_list_display_item(self, list_item)
+            try:
+                queryset = queryset.annotate(
+                    **{func.admin_order_field: func.annotation}
+                )
+            except (AttributeError, exceptions.FieldError):
+                # At least one necessary attribute to build the annotation
+                # is missing. Or the aggregate function refers to an unknown
+                # model field. Ignore this list_item.
+                pass
+        # Explicitly reapply the ordering;
+        # django throws a RemovedInDjango31Warning when relying on
+        # model.Meta.ordering for GROUP BY queries
+        # (annotate() followed by values()).
+        return queryset.order_by(*ordering)
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return self._annotate_for_list_display(queryset)
-
-    def _annotate_for_list_display(self, queryset):
-        """
-        Hook to add annotations for callable list display items to the root
-        queryset of this ModelAdmin to allow ordering by these items.
-        """
-        return queryset
+        return self._annotate_for_list_display(request, queryset)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if 'widget' not in kwargs:

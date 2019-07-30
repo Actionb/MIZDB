@@ -4,6 +4,7 @@ from django.utils.text import capfirst
 from django.urls import reverse, NoReverseMatch
 from django.contrib.admin.utils import quote
 from django.contrib.auth import get_permission_codename
+from django.core import exceptions
 
 from DBentry.utils.models import get_model_from_string
 
@@ -92,3 +93,26 @@ def make_simple_link(url, label, is_popup, as_listitem = False):
         url = url, 
         label = label
     )
+
+def resolve_list_display_item(model_admin, item):
+    """
+    Helper function to resolve an item of the model_admin.list_display into
+    a model field or a callable.
+
+    Returns either:
+        a model field of model_admin.model
+        a callable (a function or a model_admin or model_admin.model method)
+        None if the item could not be resolved
+    """
+    try:
+        return model_admin.opts.get_field(item)
+    except exceptions.FieldDoesNotExist:
+        if callable(item):
+            func = item
+        elif hasattr(model_admin, item) and item != '__str__':
+            func = getattr(model_admin, item)
+        elif hasattr(model_admin.model, item):
+            func = getattr(model_admin.model, item)
+        else:
+            func = None
+        return func
