@@ -22,7 +22,8 @@ from DBentry.utils import get_model_relations,  ensure_jquery, get_fields_and_lo
 
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
-    """Base ModelAdmin for this app.
+    """
+    Base ModelAdmin for this app.
 
     Attributes:
         googlebtns (list): a list of formfield names that get a button that
@@ -37,8 +38,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             be listed under. A fake app is created for each category to group
             them on the index page.
     """
-
-    googlebtns = []                         # TODO: need to unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
+    # FIXME: googlebtns: unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
+    # TODO: googlebtns: fields in this list should be wrapped into a custom widget
+    # (let the widget render the button instead of the fieldset template)
+    googlebtns = []
     crosslink_labels = {}
     collapse_all = False
     superuser_only = False
