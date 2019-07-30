@@ -80,11 +80,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             except exceptions.FieldError as e:
                 errors.append(checks.Critical(e.args[0]))
         return errors
-        
+
     def _check_list_item_annotations(self, **kwargs):
-        """
-        Check items in 'list_display' that are expected to be sortable.
-        """
+        """Check items in 'list_display' that are expected to be sortable."""
         errors = []
         for list_item in self.list_display:
             func = resolve_list_display_item(self, list_item)
@@ -105,8 +103,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 errors.append(checks.Critical(
                     "%(model_admin)s.%(func)s.annotation "
                     "is not an aggregate: %(annotation)s" % {
-                            'model_admin': self.__class__.__name__, 
-                            'func': func.__name__, 
+                            'model_admin': self.__class__.__name__,
+                            'func': func.__name__,
                             'annotation': type(annotation)
                     }
                 ))
@@ -115,7 +113,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def _annotate_for_list_display(self, request, queryset):
         """
         Add annotations for callable, sortable list display items to queryset.
-        
+
         The annotations are built from the 'admin_order_field' (column name)
         and 'annotation' (aggregate function) attribute of the callable.
         Returns the annotated queryset.
@@ -479,7 +477,6 @@ class BaseInlineMixin(object):
             parent ModelAdmin.
     """
 
-#    original = False  # TODO: this does nothing?!
     verbose_model = None
     extra = 1
     classes = ['collapse']
