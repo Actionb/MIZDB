@@ -161,9 +161,10 @@ class AusgabenAdmin(MIZModelAdmin):
         return AusgabeChangeList
 
     def anz_artikel(self, obj):
-        return obj.artikel_set.count()
+        return obj.anz_artikel
     anz_artikel.short_description = 'Anz. Artikel'
-    anz_artikel.admin_order_field = ('anz', Count, 'artikel', {'distinct': True})
+    anz_artikel.admin_order_field = 'anz_artikel'
+    anz_artikel.annotation = Count('artikel', distinct=True)
 
     def jahr_string(self, obj):
         return concat_limit(obj.ausgabe_jahr_set.all())
@@ -537,9 +538,10 @@ class MagazinAdmin(MIZModelAdmin):
     }
 
     def anz_ausgaben(self, obj):
-        return obj.ausgabe_set.count()
+        return obj.anz_ausgabe
     anz_ausgaben.short_description = 'Anz. Ausgaben'
-    anz_ausgaben.admin_order_field = ('anz', Count, 'ausgabe', {})
+    anz_ausgaben.admin_order_field = 'anz_ausgabe'
+    anz_ausgaben.annotation = Count('ausgabe')
 
 @admin.register(_models.memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
@@ -861,7 +863,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
     def jahr_string(self, obj):
         return concat_limit(obj.jahre.all())
     jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = ('jahr', Min, ('jahre__jahr'), {})
+    jahr_string.admin_order_field = 'jahr' 
+    jahr_string.annotation = Min('jahre__jahr')
 
 @admin.register(_models.Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
