@@ -34,7 +34,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             (Used on BandAdmin and MusikerAdmin)
         crosslink_labels (dict): mapping of related_model_name: custom_label
             used to give crosslinks custom labels.
-        collapse_all (bool): if True, all inlines and fieldsets start out collapsed.
+        collapse_all (bool): context variable used in the inline templates.
+            If True, all inlines start out collapsed unless they contain data.
         superuser_only (bool): if true, only a superuser can interact with
             this ModelAdmin.
         index_category (str): the name of the 'category' this ModelAdmin should
@@ -159,7 +160,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def get_actions(self, request):
         """
         Return a dictionary mapping of action_name: (callable, name, description)
-        for this ModelAdmin for each action that the user has access to.
+        for this ModelAdmin for every action that the user has access to.
         """
         actions = super().get_actions(request)
 
@@ -232,8 +233,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         search fields if it is missing.
         If the primary key is a OneToOneRelation, add 'pk__pk__iexact' instead.
 
-        Returns a copy of the passed in `search_fields`
-        with the added search field.
+        Returns a copy of the passed in `search_fields` with the added search field.
         """
         search_fields = search_fields.copy()
         pk_field = self.model._meta.pk
@@ -263,6 +263,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def add_crosslinks(self, object_id, labels = None):
         """
         Provide the template with data to create links to related objects.
+
+        Crosslinks are links on an instance's change form that send the user
+        to the changelist containing the instance's related objects.
         """
         new_extra = {'crosslinks': []}
         labels = labels or {}
@@ -332,6 +335,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         media = super().media
         if self.googlebtns:
             # utils.js contains the googlebtns script
+            # TODO: remove this bit once googlebtns are handled by widgets
             return media + forms.Media(js = ['admin/js/utils.js'])
         return ensure_jquery(media)
 
@@ -340,8 +344,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
+        # TODO: remove this once googlebtns are handled by widgets
         new_extra['googlebtns'] = self.googlebtns
         if request:
+            # TODO: why do we need 'request' in the context?
             new_extra['request'] = request
         return new_extra
 
