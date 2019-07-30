@@ -17,7 +17,8 @@ class FieldGroup:
 
     def __init__(self, form, *, fields, min = None, max = None,
                  error_messages = None, format_callback = None):
-        """Constructor for the FieldGroup.
+        """
+        Constructor for the FieldGroup.
 
         Parameters:
             form: the form instance this FieldGroup belongs to.
@@ -28,8 +29,8 @@ class FieldGroup:
                 to (ValidationError) error message.
             format_callback (callable or str): a callable or the name of a
                 method of this group's form used to format the error messages.
-
         """
+
         self.form = form
         self.fields = fields
         self.min, self.max = min, max
@@ -39,7 +40,8 @@ class FieldGroup:
         )
 
     def fields_with_values(self):
-        """Count the number of formfields that have a non-empty value.
+        """
+        Count the number of formfields that have a non-empty value.
 
         Returns:
             int: the number of formfields that have a non-empty value.
@@ -72,7 +74,8 @@ class FieldGroup:
 
 
 class MinMaxRequiredFormMixin(object):
-    """A mixin that allows setting groups of fields to be required.
+    """
+    A mixin that allows setting groups of fields to be required.
 
     By default, error messages are formatted with the number
     of fields minimally (format kwarg: 'min') or maximally ('max') required and
@@ -176,23 +179,24 @@ class MinMaxRequiredFormMixin(object):
 
     def _get_message_field_names(self, group):
         return ", ".join(
-            self.fields[field_name].label or 
+            self.fields[field_name].label or
             snake_case_to_spaces(field_name).title()
             for field_name in group.fields
         )
 
     def get_group_error_messages(self, group, error_messages, format_callback = None):
-        """Prepare and format the error messages for the given group.
-        
-        If a format_callback is provided (which can be either a callable or 
-        the name of a method of this form instance), it will be called with 
+        """
+        Prepare and format the error messages for the given group.
+
+        If a format_callback is provided (which can be either a callable or
+        the name of a method of this form instance), it will be called with
         the following args:
             self: this form's instance
             group (FieldGroup): the given group
             error_messages (dict): custom error messages to be formatted
                 directly passed through from declarations in 'minmax_required'
             format_kwargs (dict): some default formatting keyword arguments
-            
+
         Returns:
             dict: mapping of error_type to error_message in which
                 custom error messages override the default ones.
@@ -202,7 +206,7 @@ class MinMaxRequiredFormMixin(object):
         callback = format_callback
         if isinstance(callback, str) and hasattr(self, callback):
             # The callback is the name of a method of this form.
-            # Get the function instead, so we can keep the 
+            # Get the function instead, so we can keep the
             # callback args consistent.
             callback = getattr(self.__class__, callback)
         if callable(callback):
@@ -220,22 +224,25 @@ class MinMaxRequiredFormMixin(object):
         for error_type in ('min', 'max'):
             message = self.default_error_messages[error_type].format(**format_kwargs)
             messages[error_type] = message
-        return messages    
-        
-        
+        return messages
+
+
 class MIZAdminFormMixin(object):
     """A mixin that adds django admin media and fieldsets."""
 
     class Media:
         css = {
-            'all' : ('admin/css/forms.css', )
+            'all': ('admin/css/forms.css', )
         }
 
     def __iter__(self):
-        fieldsets = getattr(self, 'fieldsets', [(None, {'fields':list(self.fields.keys())})])
+        fieldsets = getattr(
+            self, 'fieldsets',
+            [(None, {'fields': list(self.fields.keys())})]
+        )
 
         from DBentry.helper import MIZFieldset
-        for name, options in fieldsets:  
+        for name, options in fieldsets:
             yield MIZFieldset(
                 self, name,
                 **options
@@ -245,15 +252,17 @@ class MIZAdminFormMixin(object):
     def media(self):
         # Collect the media needed for all the widgets
         media = super().media
-        # Collect the media needed for all fieldsets; this will add collapse.js if necessary (from django.contrib.admin.options.helpers.Fieldset)
+        # Collect the media needed for all fieldset.
+        # This will add collapse.js if necessary
+        # (from django.contrib.admin.options.helpers.Fieldset).
         for fieldset in self.__iter__():
             media += fieldset.media
         # Ensure jquery proper is loaded first before any other files that might reference it
         # Add the django jquery init file (it includes jquery into django's namespace)
         from django.conf import settings
-        jquery_media = forms.Media(js  = [
-            'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min'), 
-            'admin/js/jquery.init.js' 
+        jquery_media = forms.Media(js = [
+            'admin/js/vendor/jquery/jquery%s.js' % ('' if settings.DEBUG else '.min'),
+            'admin/js/jquery.init.js'
         ])
         return ensure_jquery(jquery_media + media)
 
@@ -262,7 +271,9 @@ class MIZAdminFormMixin(object):
         data = []
         for name, field in self.fields.items():
             prefixed_name = self.add_prefix(name)
-            data_value = field.widget.value_from_datadict(self.data, self.files, prefixed_name)
+            data_value = field.widget.value_from_datadict(
+                self.data, self.files, prefixed_name
+            )
             if not field.show_hidden_initial:
                 # Use the BoundField's initial as this is the value passed to the widget.
                 initial_value = self[name].initial
@@ -287,32 +298,35 @@ class MIZAdminFormMixin(object):
             if field.has_changed(initial_value, data_value):
                 data.append(name)
         return data
-        
+
+
 class MIZAdminForm(MIZAdminFormMixin, forms.Form):
     pass
 
+
 class DynamicChoiceFormMixin(object):
     """Set formfield choices after init from keyword arguments."""
-    
+
     def __init__(self, choices = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if choices:
             self.set_choices(choices)
 
     def set_choices(self, choices):
-        """Set choices for choice fields that do not already have choices.
-        
+        """
+        Set choices for choice fields that do not already have choices.
+
         Arguments:
             choices (dict): a mapping of choicefield names to its choices.
                 django.forms.models.ALL_FIELDS constant can be used to set the
                 same choices to all fields that are not mentioned in 'choices'.
-                
+
         django guidelines for choices apply.
         A choice can also be a manager or queryset instance.
         """
         if not isinstance(choices, dict):
             raise TypeError(
-                "Expected mapping formfield_name: choices. Got %s." 
+                "Expected mapping formfield_name: choices. Got %s."
                 % type(choices)
             )
         for fld_name, fld in self.fields.items():
