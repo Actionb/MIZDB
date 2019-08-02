@@ -122,6 +122,17 @@ class TestComputedNameModel(DataTestCase):
         self.obj2._changed_flag = True
         self.assertTrue(self.obj2.update_name())
         self.assertFalse(self.obj2._changed_flag)
+        
+    def test_update_name_resets_change_flag_same_update(self):
+        # Assert that the update_name resets the changed flag with the same
+        # query that is used to update the name.
+        self.obj2._name = 'Beep'
+        self.obj2._changed_flag = True
+        # One query for the name data required for get_name,
+        # another for the update.
+        with self.assertNumQueries(2):
+            self.assertTrue(self.obj2.update_name())
+        self.assertFalse(self.obj2._changed_flag)
 
     def test_update_name__always_resets_change_flag(self):
         # Even if the _name does not need changing, the _changed_flag should still be set to False
@@ -133,14 +144,6 @@ class TestComputedNameModel(DataTestCase):
         # An update should be skipped if the _changed_flag is False
         self.qs_obj1.update(_name='Beep')
         self.assertFalse(self.obj1.update_name())
-
-    def test_update_name_enforces_name_composing_fields(self):
-        # the attribute name_composing_fields is required
-        backup = self.model.name_composing_fields.copy()
-        self.model.name_composing_fields = None
-        with self.assertRaises(AttributeError):
-            self.obj1.update_name(force_update = True)
-        self.model.name_composing_fields = backup
 
     def test_update_name_changed_flag_deferred(self):
         # _changed_flag attribute is deferred, instead of using refresh_from_db, get the value from the database

@@ -224,6 +224,21 @@ class ComputedNameModel(BaseModel):
         # FIXME: shouldn't _changed_flag be checked first?
         self.update_name()
 
+    @classmethod
+    def check(cls, **kwargs):
+        errors = super().check(**kwargs)
+        errors.extend(cls._check_name_composing_fields(**kwargs))
+        return errors
+
+    @classmethod
+    def _check_name_composing_fields(cls, **kwargs):
+        if not cls.name_composing_fields:
+            return [checks.Warning(
+                "You must specify the fields that make up the name by "
+                "listing them in name_composing_fields."
+            )]
+        return []
+
     def save(self, update = True, *args, **kwargs):
         super().save(*args, **kwargs)
         # Parameters that make up the name may have changed;
@@ -275,33 +290,29 @@ class ComputedNameModel(BaseModel):
             changed_flag = self._changed_flag
         else:
             # Avoid calling refresh_from_db by fetching the value directly.
-            changed_flag = self.qs().values_list('_changed_flag', flat = True).get(pk = self.pk)  # TODO: qs() followed by get() is redundant
+            changed_flag = self.qs().values_list('_changed_flag', flat=True).get()
 
         if force_update or changed_flag:
             # An update was scheduled or forced for this instance.
-            if not self.name_composing_fields:
-                # TODO: this exception is never caught; should be done as a system check
-                raise AttributeError(
-                    "You must specify the fields that make up the name by "
-                    "listing them in name_composing_fields."
-                )
-            # Retrieve the values for _get_name from the database. TODO: race condition?
-            # TODO: Unclear that .get(self.pk) refers to the dict method 'get' and not the queryset get.
-            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk)  # TODO: qs() followed by get() is redundant
-            current_name = self._get_name(**name_data)
+            # Retrieve the values for _get_name from the database.
+            current_name = self._get_name(
+                **self.qs()
+                .values_dict(*self.name_composing_fields, flatten=True)
+                .get(self.pk)  # here: get() is the dict.get() method
+            )
 
             if self._name != current_name:
                 # The name needs updating.
-                self.qs().update(_name= current_name)
+                self.qs().update(_name= current_name, _changed_flag=False)
                 self._name = current_name
                 name_updated = True
-
-            if changed_flag:
+                self._changed_flag = False
+            elif changed_flag:
                 # We have checked whether or not the name needs updating;
                 # the changed_flag must be reset.
-                # TODO: if the name needed changing, we're doing two updates - could update changed_flag when we update the name.
                 self.qs().update(_changed_flag=False)
                 self._changed_flag = False
+
         return name_updated
 
     @classmethod
