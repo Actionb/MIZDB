@@ -81,7 +81,6 @@ class BaseModel(models.Model):
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
         """Return the model's fields that are used in searches."""
-        # TODO: admin.get_search_fields tacks on a 'pk' search field (with a lookup)... should we do that *here* instead?
         if cls.search_fields:
             return cls.search_fields
         return [
