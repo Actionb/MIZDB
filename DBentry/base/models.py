@@ -55,7 +55,10 @@ class BaseModel(models.Model):
         else:
             rslt = " ".join([
                 str(fld.value_from_object(self))
-                for fld in get_model_fields(self._meta.model, foreign = False, m2m = False, exclude = self.exclude_from_str)
+                for fld in get_model_fields(
+                    self._meta.model, foreign = False, m2m = False,
+                    exclude = self.exclude_from_str
+                )
                 if fld.value_from_object(self)
             ])
         return rslt.strip() or "---"
@@ -81,7 +84,10 @@ class BaseModel(models.Model):
         # TODO: admin.get_search_fields tacks on a 'pk' search field (with a lookup)... should we do that *here* instead?
         if cls.search_fields:
             return cls.search_fields
-        return [field.name for field in get_model_fields(cls, foreign = foreign, m2m = m2m)]
+        return [
+            field.name 
+            for field in get_model_fields(cls, foreign = foreign, m2m = m2m)
+        ]
 
     class Meta:
         abstract = True
