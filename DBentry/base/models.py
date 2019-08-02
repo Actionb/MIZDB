@@ -33,10 +33,9 @@ class BaseModel(models.Model):
         create_field (str): the name of the field for the dal autocomplete object creation
     """
 
-    search_fields = []  # FIXME: mutable default
-    primary_search_fields = []  # FIXME: mutable default
-    search_fields_suffixes = {}  # FIXME: mutable default
-
+    search_fields = None
+    primary_search_fields = None
+    search_fields_suffixes = None
     name_field = None
     create_field = None
     exclude_from_str = ['beschreibung', 'bemerkungen']
