@@ -84,12 +84,6 @@ class BaseModel(models.Model):
         if cls.search_fields:
             return cls.search_fields
         return [field.name for field in get_model_fields(cls, foreign = foreign, m2m = m2m)]
-        # TODO: remove this! get_basefields does no longer exist..
-        rslt = []
-        for field in cls.get_basefields(as_string=True):
-            if field not in rslt:
-                rslt.append(field)
-        return rslt
 
     class Meta:
         abstract = True
