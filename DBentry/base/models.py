@@ -15,32 +15,37 @@ class BaseModel(models.Model):
     to the default permissions.
 
     Attributes:
-        search_fields (list): field names to include in searches.
+        search_fields (tuple): field names to include in searches.
             (autocomplete, ModelAdmin search bar, queries using find())
-        search_fields_suffixes (list): a dictionary of search_fields and their
+        search_fields_suffixes (dict): a dictionary of search_fields and their
             suffixes that will be appended to search results when using certain
             search strategies (queryset.find() or autocomplete views).
             Through these suffixes it can be hinted at why exactly a user has
             found a particular result for a given search term.
-        primary_search_fields (list): search results that were found through
+        primary_search_fields (tuple): search results that were found through
             fields that are not in primary_search_fields will be flagged as
             a 'weak hit' and thus be visually separated from the other results.
         name_field (str): the name of the field that most accurately represents
             the record. If set, only this field will a) be used for __str__()
             and b) fetched from the database as search results for queryset.find().
         create_field (str): the name of the field for the dal autocomplete object creation
-        exclude_from_str (list): list of field names to be excluded from the
+        exclude_from_str (tuple): list of field names to be excluded from the
             default __str__() implementation.
     """
 
-    search_fields = None
-    primary_search_fields = None
+    search_fields = ()
+    primary_search_fields = ()
     search_fields_suffixes = None
     name_field = None
     create_field = None
-    exclude_from_str = ['beschreibung', 'bemerkungen']
+    exclude_from_str = ('beschreibung', 'bemerkungen')
 
     objects = MIZQuerySet.as_manager()
+
+    def __init__(self, *args, **kwargs):
+        if self.search_fields_suffixes is None:
+            self.search_fields_suffixes = {}
+        super().__init__(*args, **kwargs)
 
     def __str__(self):
         """
@@ -84,7 +89,7 @@ class BaseModel(models.Model):
         if cls.search_fields:
             return cls.search_fields
         return [
-            field.name 
+            field.name
             for field in get_model_fields(cls, foreign = foreign, m2m = m2m)
         ]
 
@@ -191,17 +196,17 @@ class ComputedNameModel(BaseModel):
         _name (CharField): the field that contains the computed name.
         name_default (str): the default value for the _name field, if no name
             can be composed (missing data/new instance).
-        _changed_flag: if True, a new name will be computed the next time the
-            model object is instantiated.
-        name_composing_fields: a list of names of fields whose data make up the
-            name. Values of these fields are retrieved from the database and passed
-            to the '_get_name' method.
+        _changed_flag (boolean): if True, a new name will be computed the next
+            time the model object is instantiated.
+        name_composing_fields (tuple): a sequence of names of fields whose data
+            make up the name. Values of these fields are retrieved from the
+            database and passed to the '_get_name' method.
     """
 
     _name_default = gettext_lazy("No data for %(verbose_name)s.")
     _name = models.CharField(max_length=200, editable=False, default=_name_default)
     _changed_flag = models.BooleanField(editable=False, default=False)
-    name_composing_fields = []  # FIXME: mutable default
+    name_composing_fields = ()
 
     # TODO: this 'exclude' does nothing
     exclude = ['_name', '_changed_flag', 'beschreibung', 'bemerkungen']
