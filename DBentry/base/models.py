@@ -141,16 +141,22 @@ class BaseM2MModel(BaseModel):
         # TODO: which features need an explicit ManyToManyField + BaseM2MModel.
         fk_fields = [
             f for f in cls._meta.get_fields()
-            if f.concrete and f.is_relation and not f.many_to_many
-            # TODO: why not just if isinstance(f, ForeignKey)?
+            if isinstance(f, models.ForeignKey)
         ]
-        found = False
+        # Walk through the ForeignKeys of this model and check if this model
+        # represents the intermediary table for any of the related model's
+        # ManyToManyFields.
         for fk_field in fk_fields:
-            m2m_fields = get_model_fields(fk_field.related_model, base = False, foreign = False, m2m = True, primary_key = False)
+            m2m_fields = (
+                f for f in fk_field.related_model._meta.get_fields()
+                if isinstance(f, models.ManyToManyField)
+            )
             if any(m2m_field.remote_field.through == cls for m2m_field in m2m_fields):
-                found = True
                 break
-        if not found:
+        else:
+            # The loop completed without breaking:
+            # no related model defines this model as an intermediary
+            # for a ManyToMany relation.
             return [checks.Info(
                 "{model_name} represents an intermediary many-to-many table "
                 "but no related model declares a ManyToManyField through "
