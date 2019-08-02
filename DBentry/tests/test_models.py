@@ -21,7 +21,7 @@ class TestBaseModel(DataTestCase):
         self.assertListEqualSorted(self.obj1.qs(), self.queryset.filter(pk=self.obj1.pk))
 
     def test_qs_exception(self):
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(TypeError):
             self.model.qs(self.model)
             
     def test_str(self):

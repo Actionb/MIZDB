@@ -1,5 +1,3 @@
-from inspect import isclass
-
 from django.core import checks
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -64,19 +62,18 @@ class BaseModel(models.Model):
 
     def qs(self):
         """Return a queryset that contains the current instance only."""
-        # TODO: if self is a class, filter(pk=self.pk) will raise a TypeError as 'pk' is a property.
-        if isclass(self):
-            # The user may inadvertently call qs() when working on the class level.
-            # This should be avoided, as the user may EXPECT a filtered queryset
-            # (f.ex. for single record updates).
-            raise AttributeError(
+        try:
+            # Use 'model.objects' instead of 'self.objects' as managers
+            # are not accessible via instances.
+            return self._meta.model.objects.filter(pk=self.pk)
+        except TypeError:
+            # qs() was called from class level; i.e. 'self' is a model class.
+            # 'self.pk' thus refers to the property of that class which is not
+            # the right type.
+            raise TypeError(
                 "Calling qs() from class level is prohibited. "
                 "Use {}.objects instead.".format(self.__name__)
             )
-        else:
-            # Use model.objects instead of self.objects as managers
-            # are not accessible via instances.
-            return self._meta.model.objects.filter(pk=self.pk)
 
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
