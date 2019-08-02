@@ -100,12 +100,24 @@ class BaseM2MModel(BaseModel):
         """
         Return a string representation of this instance.
 
-        Combines the values of the two(!) ForeignKey fields of this model.
+        Combines the values of the ForeignKey fields of this model.
         """
-        data = []
-        for ff in get_model_fields(self._meta.model, base=False, foreign=True, m2m=False):
-            data.append(str(getattr(self, ff.name)))
-        return "{} ({})".format(*data)  # FIXME: what if this model has 3 FKs
+        data = [
+            # Collect the string representations of related objects.
+            # getattr(self, fk_field.attname) and fk_field.value_from_object(self)
+            # would only return the primary key of the related object.
+            str(getattr(self, fk_field.name))
+            for fk_field in get_model_fields(
+                self._meta.model, base=False, foreign=True, m2m=False
+            )
+            if not fk_field.null
+        ]
+        if len(data) < 2:
+            # Cannot build a meaningful representation.
+            return "---"
+        else:
+            template = "{}" + " ({})"*(len(data) - 1)
+            return template.format(*data)
 
     @classmethod
     def check(cls, **kwargs):
