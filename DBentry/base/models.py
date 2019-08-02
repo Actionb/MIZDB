@@ -28,7 +28,7 @@ class BaseModel(models.Model):
         name_field (str): the name of the field that most accurately represents
             the record. If set, only this field will a) be used for __str__()
             and b) fetched from the database as search results for queryset.find().
-        create_field (str): the name of the field for the dal autocomplete object creation
+        create_field (str): the name of the field for the dal autocomplete object creation.
         exclude_from_str (tuple): list of field names to be excluded from the
             default __str__() implementation.
     """
