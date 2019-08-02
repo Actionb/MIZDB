@@ -208,9 +208,6 @@ class ComputedNameModel(BaseModel):
     _changed_flag = models.BooleanField(editable=False, default=False)
     name_composing_fields = ()
 
-    # TODO: this 'exclude' does nothing
-    exclude = ['_name', '_changed_flag', 'beschreibung', 'bemerkungen']
-
     name_field = '_name'
 
     objects = CNQuerySet.as_manager()
