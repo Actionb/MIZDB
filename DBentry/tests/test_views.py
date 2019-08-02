@@ -6,8 +6,9 @@ from django import forms
 from django.urls import reverse
 
 import DBentry.models as _models
-from DBentry.views import OptionalFormView, MIZAdminToolViewMixin, MIZ_permission_denied_view, FavoritenView
-    
+from DBentry.base.views import OptionalFormView, MIZAdminToolViewMixin
+from DBentry.views import MIZ_permission_denied_view, FavoritenView
+
 class TestOptionalFormView(ViewTestCase):
     
     class DummyView(OptionalFormView):

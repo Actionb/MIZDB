@@ -19,7 +19,7 @@ from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, 
 from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
 from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
-from DBentry.views import MIZAdminMixin, FixedSessionWizardView
+from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
 from DBentry.sites import miz_site
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 

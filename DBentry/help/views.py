@@ -7,7 +7,7 @@ from django.urls.exceptions import NoReverseMatch
 from django.utils.html import format_html
 
 from DBentry.sites import register_tool
-from DBentry.views import MIZAdminToolViewMixin, MIZAdminPermissionMixin
+from DBentry.base.views import MIZAdminToolViewMixin, MIZAdminPermissionMixin
 from DBentry.utils import has_admin_permission
 
 @register_tool

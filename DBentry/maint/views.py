@@ -6,7 +6,7 @@ from django.db.models import Count
 from django.apps import apps 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME 
  
-from DBentry.views import MIZAdminToolViewMixin
+from DBentry.base.views import MIZAdminToolViewMixin
 from DBentry.actions.views import MergeViewWizarded
 from DBentry.sites import register_tool
 from DBentry.utils import get_obj_link, get_model_from_string, ensure_jquery
@@ -17,9 +17,21 @@ from DBentry.maint.forms import DuplicateFieldsSelectForm, duplicatefieldsform_f
 class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
     url_name = 'maint_main' 
     index_label = 'Wartung' 
-    template_name = 'admin/basic.html' 
+    template_name = 'admin/basic.html'  # FIXME: this template is now only used for maint views, rename it
     success_url = reverse_lazy('admin:index') 
     title = 'Wartung'
+
+    # FIXME: attributes used only in conjunction with admin/basic.html, remove them?
+    submit_value = None
+    submit_name = None
+    form_method = 'post'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        if self.submit_value: context['submit_value'] = self.submit_value
+        if self.submit_name: context['submit_name']  = self.submit_name
+        context['form_method'] = self.form_method
+        return context
     
     @staticmethod 
     def show_on_index_page(request): 

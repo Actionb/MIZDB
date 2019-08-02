@@ -6,7 +6,7 @@ from DBentry.admin import ArtikelAdmin
 from DBentry.help.helptext import ModelAdminHelpText, FormViewHelpText
 from DBentry.help.views import HelpIndexView, BaseHelpView, FormHelpView, ModelAdminHelpView
 
-from DBentry.views import MIZAdminPermissionMixin as target_view_base #NOTE: update this if you change FormHelpView.permission_test check to issubclass(UserPassesTestMixin)
+from DBentry.base.views import MIZAdminPermissionMixin as target_view_base #NOTE: update this if you change FormHelpView.permission_test check to issubclass(UserPassesTestMixin)
 
 class TestHelpIndexView(HelpViewMixin, ViewTestCase):
     

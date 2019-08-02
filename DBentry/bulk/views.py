@@ -12,7 +12,7 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 from django.utils.translation import gettext
 
-from DBentry.views import MIZAdminToolViewMixin
+from DBentry.base.views import MIZAdminToolViewMixin
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio
 from DBentry.m2m import m2m_audio_ausgabe

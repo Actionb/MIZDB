@@ -78,7 +78,7 @@ class MIZAdminSite(admin.AdminSite):
 miz_site = MIZAdminSite()
 
 def register_tool(tool_view):
-    from DBentry.views import MIZAdminToolViewMixin
+    from DBentry.base.views import MIZAdminToolViewMixin
     
     if not issubclass(tool_view, MIZAdminToolViewMixin):
         raise ValueError('Wrapped class must subclass MIZAdminToolView.')
