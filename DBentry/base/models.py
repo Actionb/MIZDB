@@ -183,7 +183,6 @@ class BaseAliasModel(BaseModel):
         abstract = True
 
 
-# TODO: ComputedNameModel could be a mixin?
 class ComputedNameModel(BaseModel):
     """
     Abstract base model that manages a 'name' field for a given model instance.
@@ -221,7 +220,6 @@ class ComputedNameModel(BaseModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # An up-to-date name _may_ be expected upon initialization.
-        # FIXME: shouldn't _changed_flag be checked first?
         self.update_name()
 
     @classmethod
