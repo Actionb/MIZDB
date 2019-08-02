@@ -185,13 +185,7 @@ class FixedSessionWizardView(SessionWizardView):
         data = data or kwargs.get('data', None)
         files = files or kwargs.get('files', None)
         return super(FixedSessionWizardView, self).get_form(step, data, files) 
-        
-class DynamicChoiceFormMixin(object):
-    #TODO: what is this class? not used by anything
-    #FIXME: same name as the form mixin!
-    def get_form_choices(self, form):
-        pass
-    
+
 # views for the django default handlers
 def MIZ_permission_denied_view(request, exception, template_name='admin/403.html'):
     from django.template import TemplateDoesNotExist, loader
