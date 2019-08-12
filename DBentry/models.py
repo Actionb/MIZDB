@@ -337,12 +337,13 @@ class magazin(BaseModel):
     MERKMAL_CHOICES = [('num', 'Nummer'), ('lnum', 'Lfd.Nummer'), ('monat', 'Monat'), ('e_datum', 'Ersch.Datum')]
     
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    erstausgabe = models.CharField(**CF_ARGS_B)
+    erstausgabe = models.CharField(**CF_ARGS_B)  # TODO: wofür?
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
     ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
     fanzine = models.BooleanField('Fanzine', default = False)
     issn = ISSNField('ISSN', blank = True) #NOTE: implement this as reverse foreign relation so one magazin can have multiple ISSN numbers?
+    # TODO: accept EAN-13 and issn-7
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
