@@ -79,6 +79,7 @@ def has_admin_permission(request, model_admin):
     perms = model_admin.get_model_perms(request)
 
     # Check whether user has any perm for this module.
+    # FIXME: 'any' perm could be add, delete, change or just view!
     return True in perms.values()
 
 def make_simple_link(url, label, is_popup, as_listitem = False):
