@@ -5,6 +5,7 @@ from django.db import models
 def get_model_from_string(model_name):
     from django.apps import apps 
     try:
+        # TODO: worthit to accept 'model_name' in the form of app_label.model_name?
         return apps.get_model('DBentry', model_name)
     except LookupError:
         return None
