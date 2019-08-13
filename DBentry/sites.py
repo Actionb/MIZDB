@@ -81,7 +81,7 @@ miz_site = MIZAdminSite()
 
 class register_tool(object):
 
-    def __init__(self, url_name, index_label, superuser_only=False, site = miz_site):
+    def __init__(self, url_name, index_label, superuser_only=False, site=miz_site):
         self.url_name = url_name
         self.index_label = index_label
         self.superuser_only = superuser_only
