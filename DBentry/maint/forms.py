@@ -69,7 +69,9 @@ def duplicatefieldsform_factory(model, selected_dupe_fields):
     return form
     
 class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
-    
+
+    # FIXME: commit 3c6b2c857254875d4e8b5d6ee298e921ab16e05b dropped the damn 'model_select' formfield!
+
     def __init__(self, model_filters = None, *args, **kwargs):
         choices = {'model_select': self.get_model_list(model_filters)}
         super().__init__(choices = choices, *args, **kwargs)
