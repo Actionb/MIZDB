@@ -7,7 +7,7 @@ from DBentry.forms import FavoritenForm
 from DBentry.sites import miz_site, register_tool
 
 
-@register_tool
+@register_tool(url_name='favoriten', index_label='Favoriten Verwaltung')
 class FavoritenView(MIZAdminToolViewMixin, PermissionRequiredMixin, views.generic.UpdateView):
     form_class = FavoritenForm
     template_name = 'admin/favorites.html'

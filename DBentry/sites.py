@@ -12,8 +12,8 @@ class MIZAdminSite(admin.AdminSite):
         super().__init__(*args, **kwargs)
         self.tools = []
     
-    def register_tool(self, view):
-        self.tools.append(view)
+    def register_tool(self, view, url_name, index_label, superuser_only):
+        self.tools.append((view, url_name, index_label, superuser_only))
         
     def app_index(self, request, app_label, extra_context=None):
         if app_label == 'DBentry':
@@ -25,9 +25,10 @@ class MIZAdminSite(admin.AdminSite):
     def index(self, request, extra_context=None): 
         extra_context = extra_context or {}
         extra_context['admintools'] = {}
-        for tool in self.tools:
-            if tool.show_on_index_page(request) and tool.permission_test(request):
-                extra_context['admintools'][tool.url_name] = tool.index_label
+        for tool, url_name, index_label, superuser_only in self.tools:
+            if superuser_only and not request.user.is_superuser:
+                continue
+            extra_context['admintools'][url_name] = index_label
         # Sort by index_label, not by url_name
         extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
         response = super(MIZAdminSite, self).index(request, extra_context)
@@ -86,4 +87,17 @@ def register_tool(tool_view):
     miz_site.register_tool(tool_view)
     
     return tool_view
-    
+
+class register_tool(object):
+
+    def __init__(self, url_name, index_label, superuser_only=False, site = miz_site):
+        self.url_name = url_name
+        self.index_label = index_label
+        self.superuser_only = superuser_only
+        self.site = site
+
+    def __call__(self, tool_view):
+        self.site.register_tool(
+            tool_view, self.url_name, self.index_label, self.superuser_only
+        )
+        return tool_view

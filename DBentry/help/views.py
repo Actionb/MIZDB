@@ -10,7 +10,7 @@ from DBentry.sites import register_tool
 from DBentry.base.views import MIZAdminToolViewMixin, MIZAdminPermissionMixin
 from DBentry.utils import has_admin_permission
 
-@register_tool
+@register_tool(url_name='help_index', index_label='Hilfe')
 class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
     """
     The view displaying an index over all available helptexts.

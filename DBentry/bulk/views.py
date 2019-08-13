@@ -21,7 +21,7 @@ from DBentry.logging import LoggingMixin
 from DBentry.sites import register_tool
 from .forms import BulkFormAusgabe
 
-@register_tool
+@register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
 class BulkAusgabe(MIZAdminToolViewMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
 
     template_name = 'admin/bulk.html'

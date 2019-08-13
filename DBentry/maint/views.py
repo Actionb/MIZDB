@@ -56,7 +56,11 @@ class UnusedObjectsView(MaintView):
         request.session['qs'] = dict(id__in=list(qs.values_list('pk', flat=True))) 
         return redirect(url) 
 
-@register_tool
+@register_tool(
+    url_name='dupes_select',
+    index_label='Duplikate finden',
+    superuser_only=True
+)
 class DuplicateObjectsView(MaintView):
     #NOTE: check for 'get_duplicates' (name of submit button) in request.GET before doing a query for duplicates? 
     
