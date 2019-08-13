@@ -13,6 +13,10 @@ from DBentry.utils import get_obj_link, get_model_from_string, ensure_jquery
 
 from DBentry.maint.forms import DuplicateFieldsSelectForm, duplicatefieldsform_factory, ModelSelectForm
 
+# TODO: these maint views are a mess!
+# Make ModelSelectView an 'abstract' view that handles redirection with the right model
+# Then create a DuplicateModelSelectView subclassing ModelSelectView and register THAT as a tool
+
 #@register_tool
 class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
     url_name = 'maint_main' 
