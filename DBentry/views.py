@@ -1,4 +1,5 @@
 from django import views
+from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from DBentry import models as _models
 from DBentry.base.views import MIZAdminToolViewMixin, PERM_DENIED_MSG
@@ -7,7 +8,7 @@ from DBentry.sites import miz_site, register_tool
 
 
 @register_tool
-class FavoritenView(MIZAdminToolViewMixin, views.generic.UpdateView):
+class FavoritenView(MIZAdminToolViewMixin, PermissionRequiredMixin, views.generic.UpdateView):
     form_class = FavoritenForm
     template_name = 'admin/favorites.html'
     model = _models.Favoriten
@@ -15,7 +16,11 @@ class FavoritenView(MIZAdminToolViewMixin, views.generic.UpdateView):
     url_name = 'favoriten'
     index_label = 'Favoriten Verwaltung'
 
-    _permissions_required = [('add', 'Favoriten'), ('change', 'Favoriten'), ('delete', 'Favoriten')]
+    permission_required = [
+        'DBentry.add_favoriten',
+        'DBentry.change_favoriten',
+        'DBentry.delete_favoriten'
+    ]
 
     def get_success_url(self):
         # Redirect back onto this site
