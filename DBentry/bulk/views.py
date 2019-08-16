@@ -3,7 +3,7 @@ from collections import OrderedDict
 from itertools import chain
 from urllib.parse import urlencode
 
-from django import views    
+from django import views
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
@@ -21,6 +21,7 @@ from DBentry.logging import LoggingMixin
 from DBentry.sites import register_tool
 from .forms import BulkFormAusgabe
 
+
 @register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
 class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
 
@@ -31,7 +32,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
     permission_required = ['DBentry.add_ausgabe']
 
     def get_initial(self):
-        # If there was a form 'before' the current one, its data will serve as initial values 
+        # If there was a form 'before' the current one, its data will serve as initial values
         # This way, we can track changes to the form the user has made.
         return self.request.session.get('old_form_data', {})
 
@@ -39,8 +40,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         # Return an url with a query_string composed of data in query_data
         if query_data is None:
             return reverse(self.success_url)
-        url = reverse(self.success_url) + '?' + urlencode(query_data)
-        return url
+        return reverse(self.success_url) + '?' + urlencode(query_data)
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
@@ -49,7 +49,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         if form.is_valid():
             if form.has_changed() or '_preview' in request.POST:
                 # the form's data differs from initial -- or the user has requested a preview
-                if not '_preview' in request.POST:
+                if '_preview' not in request.POST:
                     # the form has changed and the user did not request a preview, complain about it
                     messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
                 context['preview_headers'], context['preview'] = self.build_preview(request, form)
@@ -58,10 +58,10 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     # save the data and redirect back to the changelist
                     ids, instances, updated = self.save_data(form)
                     success_url = self.get_success_url(query_data = dict(id__in=','.join(str(id) for id in ids)))
-                    #NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
-                    return redirect(success_url) 
+                    # NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
+                    return redirect(success_url)
 
-                if '_addanother' in request.POST:   
+                if '_addanother' in request.POST:
                     # save the data, notify the user about changes and prepare the next view
                     ids, created, updated = self.save_data(form)
 
@@ -87,12 +87,12 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     @transaction.atomic()
     def save_data(self, form):
-        ids = [] # contains the pks of instances either created or updated by save_data
-        created = [] # contains instances of objects that were newly created by save_data
-        updated = [] # contains instances that were existed before save_data and were updated by it
+        ids = []  # contains the pks of instances either created or updated by save_data
+        created = []  # contains instances of objects that were newly created by save_data
+        updated = []  # contains instances that were existed before save_data and were updated by it
 
-        original = [] # any unique row or the first row in a set of equal rows 
-        dupes = [] # rows in this list are a duplicate of a row in originals, no new objects will be created for duplicate rows, but a 'dubletten' bestand will be added to their originals
+        original = []  # any unique row or the first row in a set of equal rows
+        dupes = []  # rows in this list are a duplicate of a row in originals, no new objects will be created for duplicate rows, but a 'dubletten' bestand will be added to their originals
         # Split row_data into rows of duplicates and originals, so we save the originals before any duplicates
         # This assumes row_data does not contain any nested duplicates
         # Also filter out rows that resulted in multiple matching existing instances
@@ -106,8 +106,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
         for row in chain(original, dupes):
             if 'dupe_of' in row:
-                instance = row['dupe_of']['instance'] # this cannot fail, since we've saved all original instances before
-                bestand_data = dict(lagerort=row.get('ausgabe_lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
+                instance = row['dupe_of']['instance']  # this cannot fail, since we've saved all original instances before
+                bestand_data = dict(lagerort=row.get('ausgabe_lagerort'))  # since this is a dupe_of another row, form.row_data has set lagerort to dublette
                 if 'provenienz' in row['dupe_of']:
                     # Also add the provenienz of the original to this object's bestand
                     bestand_data['provenienz'] = row.get('provenienz')
@@ -115,7 +115,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 self.log_addition(instance, b)
                 continue
 
-            instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
+            instance = row.get('instance', None) or ausgabe(**self.instance_data(row))
             if not instance.pk:
                 # this is a new instance, mark it as such
                 instance.save()
@@ -135,7 +135,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
             # Create and/or update sets
             for fld_name in ['jahr', 'num', 'monat', 'lnum']:
-                set = getattr(instance, "ausgabe_{}_set".format(fld_name))
+                related_set = getattr(instance, "ausgabe_{}_set".format(fld_name))
                 data = row.get(fld_name, None)
                 if data:
                     if fld_name == 'monat':
@@ -147,8 +147,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                         if value:
                             try:
                                 with transaction.atomic():
-                                    o = set.create(**{fld_name:value})
-                            except IntegrityError: 
+                                    o = related_set.create(**{fld_name: value})
+                            except IntegrityError:
                                 # ignore UNIQUE constraints violations
                                 continue
                             else:
@@ -160,10 +160,11 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             # Audio
             if 'audio' in row:
                 suffix = instance.__str__()
-                audio_data = dict(titel = 'Musik-Beilage: {}'.format(str(row.get('magazin'))) + " " + suffix, 
-                                                    quelle = 'Magazin', 
-                                                    e_jahr = row.get('jahr')[0],
-                                                    )
+                audio_data = {
+                    'titel': 'Musik-Beilage: {}'.format(str(row.get('magazin'))) + " " + suffix,
+                    'quelle': 'Magazin',
+                    'e_jahr': row.get('jahr')[0]
+                }
 
                 if audio.objects.filter(**audio_data).exists():
                     audio_instance = audio.objects.filter(**audio_data).first()
@@ -204,8 +205,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         if form.cleaned_data.get('jahr'):
             data['jahr'] = ", ".join([
                 str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')
-            ]) 
-        if form.cleaned_data.get('jahrgang'):  
+            ])
+        if form.cleaned_data.get('jahrgang'):
             data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
         return data
 
@@ -225,7 +226,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         multiple_instances_msg = gettext("Es wurden mehrere passende Ausgaben gefunden. Es soll immer nur eine bereits bestehende Ausgabe verändert werden: diese Zeile wird ignoriert.")
         one_instance_msg = gettext("Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt.")
 
-        has_instances = False # if True, include the 'Bereits vorhanden' and 'Datenbank' headers
+        has_instances = False  # if True, include the 'Bereits vorhanden' and 'Datenbank' headers
         for row in form.row_data:
             if 'instance' in row:
                 instances = [row.get('instance')]
@@ -240,7 +241,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         for row in form.row_data:
             preview_row = OrderedDict()
             for fld_name in form.preview_fields:
-                if not fld_name in row:
+                if fld_name not in row:
                     continue
                 if fld_name == 'audio':
                     img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
@@ -250,33 +251,33 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 else:
                     values_list = row.get(fld_name) or []
                     if isinstance(values_list, list):
-                        if len(values_list)==1:
+                        if len(values_list) == 1:
                             preview_row[fld_name] = values_list[0] or ''
                         else:
                             preview_row[fld_name] = ", ".join(values_list)
                     else:
                         preview_row[fld_name] = values_list or ''
-                preview_fields.append(fld_name) # record the field's appearance for the headers creation    
+                preview_fields.append(fld_name)  # record the field's appearance for the headers creation
 
             if 'instance' in row:
                 instances = [row.get('instance')]
             else:
                 instances = list(row.get('multiples', []))
 
-            if len(instances)==0:
+            if len(instances) == 0:
                 if has_instances:
                     preview_row['Instanz'] = '---'
                     preview_row['Datenbank'] = '---'
             else:
                 links = link_list(request, instances)
-                if len(instances)==1:
+                if len(instances) == 1:
                     img = '<img alt="False" src="/static/admin/img/icon-alert.svg">'
                     msg = one_instance_msg
                 else:
                     img = '<img alt="False" src="/static/admin/img/icon-no.svg">'
                     msg = multiple_instances_msg
-                preview_row['Instanz'] = format_html(img + links) 
-                preview_row['Datenbank'] = msg 
+                preview_row['Instanz'] = format_html(img + links)
+                preview_row['Datenbank'] = msg
             preview_data.append(preview_row)
 
         for fld_name in form.preview_fields:

@@ -5,15 +5,16 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext
 
+
 class BulkField(forms.CharField):
 
     allowed_special = [',', '/', '-', '*']
     allowed_space = True
     allowed_numerical = True
-    allowed_alpha = False    
+    allowed_alpha = False
 
-    def __init__(self, required=False, 
-            allowed_special = None, allowed_space = None, allowed_numerical = None, allowed_alpha = None, 
+    def __init__(self, required=False,
+            allowed_special = None, allowed_space = None, allowed_numerical = None, allowed_alpha = None,
             *args, **kwargs):
         super(BulkField, self).__init__(required=required,  *args, **kwargs)
 
@@ -44,15 +45,14 @@ class BulkField(forms.CharField):
 
     @property
     def regex(self):
-        regex = re.compile(r'|'.join(
+        return re.compile(r'|'.join(
             chain(
-                map(re.escape, self.allowed_special), 
-                [r'\s+'] if self.allowed_space else [], 
-                [r'[0-9]'] if self.allowed_numerical else [], 
-                [r'[a-zA-Z]'] if self.allowed_alpha else [], 
+                map(re.escape, self.allowed_special),
+                [r'\s+'] if self.allowed_space else [],
+                [r'[0-9]'] if self.allowed_numerical else [],
+                [r'[a-zA-Z]'] if self.allowed_alpha else [],
             )
         ))
-        return regex
 
     def validate(self, value):
         super(BulkField, self).validate(value)
@@ -77,7 +77,7 @@ class BulkField(forms.CharField):
 
     def to_list(self, value):
         """
-        Returns the data of the field split up into a list with strings or 
+        Returns the data of the field split up into a list with strings or
         sublists of strings (if '*' or '/' where used) and the total count of returned strings and sublists.
         """
         if not value:
@@ -86,7 +86,7 @@ class BulkField(forms.CharField):
         item_count = 0
         for item in value.replace(' ', '').split(','):
             if item:
-                if item.count('-')==1: # item is a 'range' of values
+                if item.count('-') == 1:  # item is a 'range' of values
                     if item.count("*") == 1:
                         item,  multi = item.split("*")
                         multi = int(multi)
@@ -97,13 +97,14 @@ class BulkField(forms.CharField):
                     for i in range(s, e+1, multi):
                         temp.append([str(i+j) for j in range(multi)])
                         item_count += 1
-                elif '/' in item: # item is a 'pair' of values
+                elif '/' in item:  # item is a 'pair' of values
                     temp.append([i for i in item.split('/') if i])
                     item_count += 1
                 else:
                     temp.append(item)
                     item_count += 1
         return temp, item_count
+
 
 class BulkJahrField(BulkField):
 
@@ -113,11 +114,10 @@ class BulkJahrField(BulkField):
         # Normalize Jahr values into years seperated by commas only
         value = super(BulkJahrField, self).clean(value)
         cleaned = [item for item in value.replace(' ', '').replace('/', ',').split(',')]
-        if any(len(item)!=4 for item in cleaned if item):
+        if any(len(item) != 4 for item in cleaned if item):
             raise ValidationError('Bitte vierstellige Jahresangaben benutzen.')
         return ','.join(cleaned)
 
     def to_list(self, value):
         temp, item_count = super(BulkJahrField, self).to_list(value)
         return temp, 0
-
