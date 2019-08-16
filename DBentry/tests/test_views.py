@@ -1,3 +1,4 @@
+from unittest import skip
 
 from .base import MyTestCase, ViewTestCase
 
@@ -6,7 +7,7 @@ from django import forms
 from django.urls import reverse
 
 import DBentry.models as _models
-from DBentry.base.views import OptionalFormView, MIZAdminToolViewMixin
+from DBentry.base.views import OptionalFormView
 from DBentry.views import MIZ_permission_denied_view, FavoritenView
 
 class TestOptionalFormView(ViewTestCase):
@@ -59,11 +60,15 @@ class TestOptionalFormView(ViewTestCase):
         view = self.get_view(request, success_url='Test', form_class=self.form_class)
         response = view.post(request)
         self.assertEqual(response.status_code, 200) # no redirect to the success_url
-        
+
+# NOTE: keeping this test (although it's non-functional) to maybe use 
+# the methods on the register_tool decorator
+@skip("MIZAdminToolViewMixin was removed")
 class TestMIZAdminToolViewMixin(ViewTestCase):
     # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin
-    
-    view_bases = (MIZAdminToolViewMixin, django_views.generic.TemplateView)
+
+# NOTE: MIZAdminToolViewMixin was removed
+#    view_bases = (MIZAdminToolViewMixin, django_views.generic.TemplateView)
     
     def test_permission_test_only_staff_required(self):
         # basic test for user.is_staff as MIZAdminToolView does not set any required permissions
