@@ -6,9 +6,7 @@ from DBentry.sites import miz_site
 
 
 class MIZAdminMixin(object):
-    """
-    Add admin_site specific context (each_context) to the view.
-    """
+    """Add admin_site specific context (each_context) to the view."""
 
     site_title = None
     breadcrumbs_title = None
@@ -22,7 +20,7 @@ class MIZAdminMixin(object):
         context['is_popup'] = '_popup' in self.request.GET
         if self.site_title:
             context['site_title'] = self.site_title
-        if self.breadcrumbs_title: 
+        if self.breadcrumbs_title:
             context['breadcrumbs_title'] = self.breadcrumbs_title
         return context
 
@@ -47,16 +45,14 @@ class OptionalFormView(views.generic.FormView):
 
 
 class FixedSessionWizardView(SessionWizardView):
-    """
-    Subclass of SessionWizardView that fixes some quirks.
-    """
+    """Subclass of SessionWizardView that fixes some quirks."""
 
     def get_context_data(self, form=None, **kwargs):
         # SessionWizardView expects 'form' as required positional argument.
         return super().get_context_data(form, **kwargs)
 
-    def get_form(self, step=None, data=None, files=None): 
-        """ 
+    def get_form(self, step=None, data=None, files=None):
+        """
         WizardView.get_form overrides any alterations to the form kwargs
         made in self.get_form_kwargs:
 
@@ -69,9 +65,9 @@ class FixedSessionWizardView(SessionWizardView):
             })
             Where 'step', 'data' and 'files' are get_form's arguments.
         """
-        if step is None: 
-            step = self.steps.current 
+        if step is None:
+            step = self.steps.current
         kwargs = self.get_form_kwargs(step)
         data = data or kwargs.get('data', None)
         files = files or kwargs.get('files', None)
-        return super().get_form(step, data, files) 
+        return super().get_form(step, data, files)
