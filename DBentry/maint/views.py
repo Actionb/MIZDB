@@ -6,8 +6,8 @@ from django.db.models import Count
 from django.apps import apps 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME 
  
-from DBentry.base.views import MIZAdminToolViewMixin
 from DBentry.actions.views import MergeViewWizarded
+from DBentry.base.views import MIZAdminMixin
 from DBentry.sites import register_tool
 from DBentry.utils import get_obj_link, get_model_from_string, ensure_jquery
 
@@ -18,9 +18,7 @@ from DBentry.maint.forms import DuplicateFieldsSelectForm, duplicatefieldsform_f
 # Then create a DuplicateModelSelectView subclassing ModelSelectView and register THAT as a tool
 
 #@register_tool
-class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
-    url_name = 'maint_main' 
-    index_label = 'Wartung' 
+class MaintView(MIZAdminMixin, views.generic.TemplateView):
     template_name = 'admin/basic.html'  # FIXME: this template is now only used for maint views, rename it
     success_url = reverse_lazy('admin:index') 
     title = 'Wartung'
@@ -67,9 +65,7 @@ class UnusedObjectsView(MaintView):
 )
 class DuplicateObjectsView(MaintView):
     #NOTE: check for 'get_duplicates' (name of submit button) in request.GET before doing a query for duplicates? 
-    
-    url_name = 'dupes_select' 
-    index_label = 'Duplikate finden' 
+
     template_name = 'admin/dupes.html'
     form_class = DuplicateFieldsSelectForm
     _dupe_fields = None

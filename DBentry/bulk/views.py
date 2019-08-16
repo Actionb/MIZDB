@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 from django.utils.translation import gettext
 
-from DBentry.base.views import MIZAdminToolViewMixin
+from DBentry.base.views import MIZAdminMixin
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio
 from DBentry.m2m import m2m_audio_ausgabe
@@ -22,13 +22,11 @@ from DBentry.sites import register_tool
 from .forms import BulkFormAusgabe
 
 @register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
-class BulkAusgabe(MIZAdminToolViewMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
+class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
 
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe' # Used in the admin_site.index
-    index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
 
     permission_required = ['DBentry.add_ausgabe']
 

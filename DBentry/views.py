@@ -2,19 +2,16 @@ from django import views
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from DBentry import models as _models
-from DBentry.base.views import MIZAdminToolViewMixin, PERM_DENIED_MSG
+from DBentry.base.views import MIZAdminMixin
 from DBentry.forms import FavoritenForm
 from DBentry.sites import miz_site, register_tool
 
 
 @register_tool(url_name='favoriten', index_label='Favoriten Verwaltung')
-class FavoritenView(MIZAdminToolViewMixin, PermissionRequiredMixin, views.generic.UpdateView):
+class FavoritenView(MIZAdminMixin, PermissionRequiredMixin, views.generic.UpdateView):
     form_class = FavoritenForm
     template_name = 'admin/favorites.html'
     model = _models.Favoriten
-
-    url_name = 'favoriten'
-    index_label = 'Favoriten Verwaltung'
 
     permission_required = [
         'DBentry.add_favoriten',
@@ -46,7 +43,8 @@ def MIZ_permission_denied_view(request, exception, template_name='admin/403.html
         return http.HttpResponseForbidden('<h1>403 Forbidden</h1>', content_type='text/html')
 
     from django.template.response import TemplateResponse
-    context = {'exception' : str(exception) if str(exception) else PERM_DENIED_MSG}
+    msg = 'Sie haben nicht die erforderliche Berechtigung diese Seite zu sehen.'
+    context = {'exception' : str(exception) if str(exception) else msg}
     context.update(miz_site.each_context(request))
     context['is_popup'] = '_popup' in request.GET 
     return TemplateResponse(request, template_name, context=context)
