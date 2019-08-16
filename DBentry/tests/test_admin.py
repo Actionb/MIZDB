@@ -7,7 +7,6 @@ from django.contrib.auth.models import Permission
 from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
-from DBentry.sites import miz_site
 import DBentry.models as _models
 
 from DBentry.sites import MIZAdminSite
@@ -1079,7 +1078,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         
 class TestAdminSite(UserTestCase):
     
-    site = miz_site
+    site = MIZAdminSite()
     
     def test_app_index(self):
         response = self.client.get('/admin/DBentry/')
@@ -1100,9 +1099,17 @@ class TestAdminSite(UserTestCase):
         self.assertTrue('Sonstige' in app_names)
         
     def test_index_admintools(self):
+        # TODO: move the import
+        # TODO: this only tests if the category 'admintools' appears on the index
+        # not that the link is displayed correctly (permissions, etc.)
         from DBentry.bulk.views import BulkAusgabe
         tool = BulkAusgabe
-        self.site.register_tool(tool)
+        self.site.register_tool(
+            tool,
+            url_name='bulk_ausgabe',
+            index_label='Test',
+            superuser_only=False,
+        )
         
         request = self.client.get('/admin/').wsgi_request
         response = self.site.index(request)

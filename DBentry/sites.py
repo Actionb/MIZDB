@@ -14,6 +14,7 @@ class MIZAdminSite(admin.AdminSite):
     
     def register_tool(self, view, url_name, index_label, superuser_only):
         self.tools.append((view, url_name, index_label, superuser_only))
+    # TODO: needs an unregister method (tests could use it?)
         
     def app_index(self, request, app_label, extra_context=None):
         if app_label == 'DBentry':
