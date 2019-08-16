@@ -8,16 +8,6 @@ from DBentry.search.admin import ChangelistSearchFormMixin
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 
-    def __init__(self, request, model, list_display, list_display_links,
-                 list_filter, date_hierarchy, search_fields, list_select_related,
-                 list_per_page, list_max_show_all, list_editable, model_admin, sortable_by):
-        # Place to store the kwargs for annotations given by an admin_order_field. 
-        # Needs to be declared before super().__init__() as get_ordering_field is called during init.
-        self._annotations = []
-        super(MIZChangeList, self).__init__(request, model, list_display, list_display_links,
-                 list_filter, date_hierarchy, search_fields, list_select_related,
-                 list_per_page, list_max_show_all, list_editable, model_admin, sortable_by)
-
     def get_queryset(self, request):
         """ Copy pasted from original ChangeList to switch around ordering and filtering.
             Also allowed the usage of Q items to filter the queryset.
@@ -72,7 +62,6 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 
         # Get ordering, record and apply annotations and then set the ordering.
         ordering = self.get_ordering(request, qs)
-        qs = self._annotate(qs)
         qs = self.apply_ordering(request, qs, ordering)
 
         # Remove duplicates from results, if necessary
@@ -81,33 +70,8 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
         else:
             return qs
 
-    def _annotate(self, queryset):
-        # Add any pending annotations required for the ordering of callable list_display items to the queryset.
-        needs_distinct = False
-        if sum(map(len, (self._annotations, queryset.query.annotations))) > 1:
-            # If func is Count and there is going to be more than one join, we may need to use distinct = True on all annotations.
-            #NOTE: we cannot catch if apply_ordering() is going to add more annotations
-            needs_distinct = True
-        for annotation in self._annotations:
-            name, func, expression, extra = annotation
-            if func == models.Count and needs_distinct and 'distinct' not in extra:
-                extra['distinct'] = True
-            annotation = {name: func(expression, **extra)}
-            queryset = queryset.annotate(**annotation)
-        return queryset
-
     def apply_ordering(self, request, queryset, ordering):
         return queryset.order_by(*ordering)
-
-    def get_ordering_field(self, field_name):
-        # Record any admin_order_field attributes that are meant to be later added as annotations in get_queryset.
-        order_field = super().get_ordering_field(field_name)
-        if isinstance(order_field, (list, tuple)):
-            if len(order_field) != 4:
-                raise ImproperlyConfigured("admin_order_field annotations must be a 4-tuple of (name, func, expression, **extra).")
-            self._annotations.append(order_field)
-            return order_field[0]
-        return order_field
 
 class AusgabeChangeList(MIZChangeList):
 

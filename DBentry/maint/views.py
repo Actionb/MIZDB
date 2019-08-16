@@ -6,20 +6,34 @@ from django.db.models import Count
 from django.apps import apps 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME 
  
-from DBentry.views import MIZAdminToolViewMixin
 from DBentry.actions.views import MergeViewWizarded
+from DBentry.base.views import MIZAdminMixin
 from DBentry.sites import register_tool
 from DBentry.utils import get_obj_link, get_model_from_string, ensure_jquery
 
 from DBentry.maint.forms import DuplicateFieldsSelectForm, duplicatefieldsform_factory, ModelSelectForm
 
+# TODO: these maint views are a mess!
+# Make ModelSelectView an 'abstract' view that handles redirection with the right model
+# Then create a DuplicateModelSelectView subclassing ModelSelectView and register THAT as a tool
+
 #@register_tool
-class MaintView(MIZAdminToolViewMixin, views.generic.TemplateView): 
-    url_name = 'maint_main' 
-    index_label = 'Wartung' 
-    template_name = 'admin/basic.html' 
+class MaintView(MIZAdminMixin, views.generic.TemplateView):
+    template_name = 'admin/basic.html'  # FIXME: this template is now only used for maint views, rename it
     success_url = reverse_lazy('admin:index') 
     title = 'Wartung'
+
+    # FIXME: attributes used only in conjunction with admin/basic.html, remove them?
+    submit_value = None
+    submit_name = None
+    form_method = 'post'
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        if self.submit_value: context['submit_value'] = self.submit_value
+        if self.submit_name: context['submit_name']  = self.submit_name
+        context['form_method'] = self.form_method
+        return context
     
     @staticmethod 
     def show_on_index_page(request): 
@@ -44,12 +58,14 @@ class UnusedObjectsView(MaintView):
         request.session['qs'] = dict(id__in=list(qs.values_list('pk', flat=True))) 
         return redirect(url) 
 
-@register_tool
+@register_tool(
+    url_name='dupes_select',
+    index_label='Duplikate finden',
+    superuser_only=True
+)
 class DuplicateObjectsView(MaintView):
     #NOTE: check for 'get_duplicates' (name of submit button) in request.GET before doing a query for duplicates? 
-    
-    url_name = 'dupes_select' 
-    index_label = 'Duplikate finden' 
+
     template_name = 'admin/dupes.html'
     form_class = DuplicateFieldsSelectForm
     _dupe_fields = None

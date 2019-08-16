@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy
 from django.utils.encoding import force_text
 
 from DBentry.utils import get_obj_link
-from DBentry.views import MIZAdminMixin, FixedSessionWizardView
+from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
 
 
 class ConfirmationViewMixin(MIZAdminMixin):

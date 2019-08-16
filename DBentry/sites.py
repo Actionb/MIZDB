@@ -12,8 +12,9 @@ class MIZAdminSite(admin.AdminSite):
         super().__init__(*args, **kwargs)
         self.tools = []
     
-    def register_tool(self, view):
-        self.tools.append(view)
+    def register_tool(self, view, url_name, index_label, superuser_only):
+        self.tools.append((view, url_name, index_label, superuser_only))
+    # TODO: needs an unregister method (tests could use it?)
         
     def app_index(self, request, app_label, extra_context=None):
         if app_label == 'DBentry':
@@ -25,9 +26,10 @@ class MIZAdminSite(admin.AdminSite):
     def index(self, request, extra_context=None): 
         extra_context = extra_context or {}
         extra_context['admintools'] = {}
-        for tool in self.tools:
-            if tool.show_on_index_page(request) and tool.permission_test(request):
-                extra_context['admintools'][tool.url_name] = tool.index_label
+        for tool, url_name, index_label, superuser_only in self.tools:
+            if superuser_only and not request.user.is_superuser:
+                continue
+            extra_context['admintools'][url_name] = index_label
         # Sort by index_label, not by url_name
         extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
         response = super(MIZAdminSite, self).index(request, extra_context)
@@ -77,13 +79,31 @@ class MIZAdminSite(admin.AdminSite):
         
 miz_site = MIZAdminSite()
 
-def register_tool(tool_view):
-    from DBentry.views import MIZAdminToolViewMixin
-    
-    if not issubclass(tool_view, MIZAdminToolViewMixin):
-        raise ValueError('Wrapped class must subclass MIZAdminToolView.')
 
-    miz_site.register_tool(tool_view)
-    
-    return tool_view
-    
+class register_tool(object):
+    """
+    Decorator that registers a View with a given admin site.
+
+    Required arguments:
+        url_name (str): name of the URL pattern to the view.
+        index_label (str): the label for the link on the index page to the view.
+    Optional arguments:
+        superuser_only (bool): determines whether a link to the view is displayed
+                on the index page. If True, only superusers will see a link.
+                This does not restrict access to the view in any way.
+                Defaults to False.
+        site (admin site instance): the site to register the view with.
+            Defaults to 'miz_site'.
+    """
+
+    def __init__(self, url_name, index_label, superuser_only=False, site=miz_site):
+        self.url_name = url_name
+        self.index_label = index_label
+        self.superuser_only = superuser_only
+        self.site = site
+
+    def __call__(self, tool_view):
+        self.site.register_tool(
+            tool_view, self.url_name, self.index_label, self.superuser_only
+        )
+        return tool_view

@@ -7,6 +7,7 @@ def get_fields_and_lookups_from_path(model, field_path):
     Returns list of fields (using django admin's get_fields_from_path) and lookups of a given field_path.
     e.g.: 'pizza__toppings__icontains' -> [pizza, toppings], ['icontains']
     """
+    # TODO: use DBentry.utils.get_fields_and_lookups instead?
     fields, lookups = [], []
     path = field_path
     while path:
@@ -43,6 +44,8 @@ def validate_lookups(db_field, lookups):
     unsupported = []
     for lookup in lookups:
         if lookup not in db_field.get_lookups():
+            # TODO: checking 'in get_lookups()' is NOT the same as checking for 'get_lookup'
+            # see django.db.models.query_utils.RegisterLookupMixin.get_lookup
             unsupported.append(lookup)
     if unsupported:
         raise exceptions.FieldError(

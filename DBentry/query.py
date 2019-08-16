@@ -22,7 +22,12 @@ class BaseSearchQuery(object):
         self.search_fields = list(self.search_fields) # 'cast' into a list
         self._root_queryset = queryset
         self.ids_found = set()
-        self.suffix = suffix or getattr(queryset.model, 'search_fields_suffixes', {})
+        if suffix:
+            self.suffix = suffix
+        elif getattr(queryset.model, 'search_fields_suffixes', None):
+            self.suffix = queryset.model.search_fields_suffixes
+        else:
+            self.suffix = {}
         self.use_suffix = use_suffix
         self.exact_match = False
         

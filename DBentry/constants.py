@@ -23,8 +23,6 @@ CUR_JAHR = datetime.datetime.now().year
 MAX_JAHR = CUR_JAHR+1
 MIN_JAHR = 1899
 
-PERM_DENIED_MSG = 'Sie haben nicht die erforderliche Berechtigung diese Seite zu sehen.'
-
 # regex for discogs id validation
 DISCOGS_RELEASE_ID_REGEX = r'discogs.com/.*release/(\d+)'
 discogs_release_id_pattern = re.compile(DISCOGS_RELEASE_ID_REGEX)

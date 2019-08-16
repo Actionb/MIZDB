@@ -6,22 +6,18 @@ from django.urls.exceptions import NoReverseMatch
 
 from django.utils.html import format_html
 
+from DBentry.base.views import MIZAdminMixin
 from DBentry.sites import register_tool
-from DBentry.views import MIZAdminToolViewMixin, MIZAdminPermissionMixin
 from DBentry.utils import has_admin_permission
 
-@register_tool
-class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
+@register_tool(url_name='help_index', index_label='Hilfe')
+class HelpIndexView(MIZAdminMixin, TemplateView):
     """
     The view displaying an index over all available helptexts.
     Attributes:
         - registry: the registry of helptexts available to this view instance 
             set during initialization by the url resolver (see help.registry.get_urls)
     """
-
-    # register_tool vars
-    url_name = 'help_index' # Used in the admin_site.index
-    index_label = 'Hilfe' # label for the tools section on the index page
 
     template_name = 'admin/help_index.html' 
     site_title = breadcrumbs_title = 'Hilfe'
@@ -88,8 +84,10 @@ class HelpIndexView(MIZAdminToolViewMixin, TemplateView):
         context['form_helps'] = form_helps
         
         return context
-
-class BaseHelpView(MIZAdminPermissionMixin, TemplateView):
+# TODO: BaseHelpView should (since MIZAdminPermissionMixin was removed) 
+# inherit from PermissionRequiredMixin to reenable permission checking
+# test_func and permission_test are essentially dead code right now
+class BaseHelpView(MIZAdminMixin, TemplateView):
     """
     The base class for the HelpViews
     Attributes:
@@ -128,6 +126,7 @@ class FormHelpView(BaseHelpView):
     
     @staticmethod
     def permission_test(request, target_view_class):
+        return True # NOTE: perrmission checking disabled, see TODO on BaseHelpView
         if issubclass(target_view_class, MIZAdminPermissionMixin): #TODO: issubclass(UserPassesTestMixin)
             # If the target_view_class has access restrictions, only allow access to its help page if the user fulfills these restrictions
             return target_view_class.permission_test(request)
@@ -165,6 +164,7 @@ class ModelAdminHelpView(BaseHelpView):
         
     @staticmethod
     def permission_test(request, model_admin):
+        return True # NOTE: perrmission checking disabled, see TODO on BaseHelpView
         # calls utils.has_admin_permission
         return has_admin_permission(request, model_admin)
         

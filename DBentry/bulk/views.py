@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 
 from django import views    
 from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.html import format_html
@@ -12,7 +13,7 @@ from django.db import transaction
 from django.db.utils import IntegrityError
 from django.utils.translation import gettext
 
-from DBentry.views import MIZAdminToolViewMixin
+from DBentry.base.views import MIZAdminMixin
 from DBentry.utils import link_list
 from DBentry.models import ausgabe, audio
 from DBentry.m2m import m2m_audio_ausgabe
@@ -20,16 +21,14 @@ from DBentry.logging import LoggingMixin
 from DBentry.sites import register_tool
 from .forms import BulkFormAusgabe
 
-@register_tool
-class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
+@register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
+class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
 
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe' # Used in the admin_site.index
-    index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
 
-    _permissions_required = [('add', 'ausgabe')]
+    permission_required = ['DBentry.add_ausgabe']
 
     def get_initial(self):
         # If there was a form 'before' the current one, its data will serve as initial values 

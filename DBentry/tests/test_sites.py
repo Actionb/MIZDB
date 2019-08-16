@@ -10,6 +10,7 @@ class TestMIZAdminSite(RequestTestCase):
         #FIXME: import_select is in tools when the full test suite is run 
         # -- and it is NOT in tools when only TestMIZAdminSite is run
         # It's also not in the admintools of the production site.
+        # NOTE: this could be due to other tests registering stuff to the admin site instance
         response = self.client.get(reverse('admin:index'))
         tools = response.context_data.get('admintools')
         self.assertIn('bulk_ausgabe', tools)
