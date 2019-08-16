@@ -80,6 +80,20 @@ miz_site = MIZAdminSite()
 
 
 class register_tool(object):
+    """
+    Decorator that registers a View with a given admin site.
+
+    Required arguments:
+        url_name (str): name of the URL pattern to the view.
+        index_label (str): the label for the link on the index page to the view.
+    Optional arguments:
+        superuser_only (bool): determines whether a link to the view is displayed
+                on the index page. If True, only superusers will see a link.
+                This does not restrict access to the view in any way.
+                Defaults to False.
+        site (admin site instance): the site to register the view with.
+            Defaults to 'miz_site'.
+    """
 
     def __init__(self, url_name, index_label, superuser_only=False, site=miz_site):
         self.url_name = url_name
