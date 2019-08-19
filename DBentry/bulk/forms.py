@@ -53,6 +53,7 @@ class BulkForm(MIZAdminForm):
         """
         Populate split_data with data from BulkFields and raises errors if an unequal amount of data or missing required data is encountered.
         """
+        # FIXME: docstring grammar
         cleaned_data = super().clean()
         if self._errors:
             # Other cleaning methods have added errors, stop further cleaning
@@ -75,6 +76,7 @@ class BulkForm(MIZAdminForm):
                     if list_data:
                         self.split_data[fld_name] = list_data
                     if item_count and fld_name not in self.each_fields:
+                        # NOTE: this is the only time where BulkJahrField returning item_count=0 matters?
                         # The item_count is not zero,  total_count IS zero (not yet calculated) and the field is eligible (by virtue of being a non-each_fields BulkField) to set the total_count
                         # All subsequent BulkField's item_counts in the iteration have to match this field's item_count (or be zero) or we cannot define the exact number of objects to create
                         self.total_count = item_count
@@ -244,7 +246,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
                             # This field was not assigned to either each_fields or split_fields, ignore it
                             continue
                         if fld_name in self.split_data:
-                            # this field is a BulkField
+                            # this field is a BulkField  # TODO: need to enforce this assumption
                             if fld_name in self.each_fields:
                                 # all items of this list are part of this row
                                 item = self.split_data.get(fld_name)
