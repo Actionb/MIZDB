@@ -6,7 +6,7 @@ from DBentry.base.forms import MIZAdminForm, MinMaxRequiredFormMixin
 from DBentry.models import ausgabe, magazin, lagerort, provenienz
 from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
 from DBentry.ac.widgets import make_widget
-from .fields import BulkField, BulkJahrField
+from .fields import BulkField, BulkJahrField, BaseSplitField
 
 
 class BulkForm(MIZAdminForm):
@@ -61,7 +61,7 @@ class BulkForm(MIZAdminForm):
 
         self.split_data = {}
         for fld_name, fld in self.fields.items():
-            if isinstance(fld, BulkField):
+            if isinstance(fld, BaseSplitField):
                 # Retrieve the split up data and the amount of objects that are expected to be created with that data
                 list_data, item_count = fld.to_list(cleaned_data.get(fld_name))
                 # If the field belongs to the each_fields group, we should ignore the item_count it is returning as its data is used for every object we are about to create
