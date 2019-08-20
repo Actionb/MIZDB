@@ -1,145 +1,120 @@
 import re
-from itertools import chain
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext
+from django.core.validators import RegexValidator
+
+from DBentry.bulk.handlers import (
+    NumericHandler, RangeHandler, RangeGroupingHandler, GroupingHandler
+)
 
 
-class BulkField(forms.CharField):
+class BaseSplitField(forms.CharField):
     """
-    A CharField that extracts a list of values from the data given.
+    A CharField that splits its data into a sequence of values.
+
+    The field's data is split into a sequence of values via a regular expression.
+    A series of handlers are run on these values to determine the validity
+    of each value.
+    The field's 'to_list' method will apply the handlers to each value again to
+    produce the sequence of final results.
 
     Attributes:
-        default_separator (str): the separator that separates values.
-        allowed_space (bool): if True, spaces may also be used to separate values.
-        allowed_special: a list of special characters that may appear in the field's data.
+        separator_pattern: pattern for a regular expression to split the field's
+            data with.
+        item_handlers: a sequence of Handler instances that validate each item
+            in the field's data and extract the final values from the item.
+            Validation for an item stops once a handler deemed it valid, thus the
+            order of the handlers can matter if their regexes are similar.
     """
 
+    separator_pattern = r','
+    item_handlers = ()
     default_error_messages = {
-        'invalid_format': 'Ungültig formatierte Angaben: %(invalid_values)s.',
+        'invalid': 'Ungültige Angabe(n): %(invalid)s.'
     }
 
-    separator_pattern = r'\s*,\s*'
-    range_pattern = r'^(?P<start>\d+)\s*-{1}\s*(?P<end>\d+)$'  # TODO: ^\s* at the start?
-    range_grouping_pattern =r'^(?P<start>\d+)\s*-{1}\s*(?P<end>\d+)\s*\*{1}\s*(?P<multi>\d+)$'
-    grouping_pattern = r'^\d+(\s*\/{1}\s*\d+)+$'
-
-    def __init__(self, required=False, *args, **kwargs):
-        super().__init__(required=required,  *args, **kwargs)
+    def __init__(self, separator_pattern=None, item_handlers=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if separator_pattern is not None:
+            self.separator_pattern = separator_pattern
+        if item_handlers is not None:
+            self.item_handlers = item_handlers
         self.separator_regex = re.compile(self.separator_pattern)
 
-    def widget_attrs(self, widget):
-        attrs = super().widget_attrs(widget)
-        # Limit the width of the BulkField's widget to 350px.
-        attrs['style'] = 'width:350px;'
-        return attrs
-
-    def get_regex_patterns(self):
-        return [self.range_pattern, self.range_grouping_pattern, self.grouping_pattern]
-
-    @property
-    def regexes(self):
-        if not hasattr(self, '_regexes'):
-            self._regexes = list(map(re.compile, self.get_regex_patterns()))
-        return self._regexes
-
-    def run_regexes(self, value):
-        for regex in self.regexes:
-            match = regex.search(value)
-            if match:
-                return match
-
     def validate(self, value):
-        """Validate that only allowed characters appear in 'value'."""  # TODO: adjust docstring
+        """Run validation on each item of value using the field's handlers."""
         super().validate(value)
         if not value:
             return
-
         invalid = []
         for item in self.separator_regex.split(value):
-            if item.isnumeric():
-                continue
-            if not self.run_regexes(item):
+            if not any(h.is_valid(item) for h in self.item_handlers):
                 invalid.append(item)
         if invalid:
             raise ValidationError(
-                self.error_messages['invalid_format'],
-                params = {'invalid_values': ", ".join(invalid)},
-                code = 'invalid_format'
+                self.error_messages['invalid'],
+                code = 'invalid',
+                params = {'invalid': ", ".join(invalid)}
             )
 
     def clean(self, value):
         if value:
             # Remove whitespaces and empty items.
-            value = ",".join([
+            value = self.separator_pattern.join([
                 item.replace(' ', '')
                 for item in self.separator_regex.split(value)
                 if item.strip()
             ])
         return super().clean(value)
 
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        # Limit the width of the SplitField's widget to 350px.
+        attrs['style'] = 'width:350px;'
+        return attrs
+
     def to_list(self, value):
         """
-        Split the value at commas (and spaces if allowed_space is True) into
-        a list of values.
+        Run handlers on each item of value.
 
-        If an item contains a '-' (indicating a range of values) or a 
-        '/' (indicating a grouping of values) a sublist containing the subitems
-        is added to the list.
-        If an item contains a '-' and a '*' subitems will be grouped according
-        to the numerical following the '*'.
-        Examples (item: added to the result list):
-            '10-13': [10, 11, 12 ,13]
-            '10/11': [10,11]
-            '10-13*2': [10, 11], [12, 13]
-
-        Return that list of values and the total count of returned strings
-        and sublists.
+        Returns a list of the results and the length of that list.
         """
         if not value:
             return [], 0
-        temp = []
-        item_count = 0  # FIXME: item_count is always len(temp) -- EXCEPT for BulkJahrField!
-        
+
+        result = []
         for item in self.separator_regex.split(value):
-            if item.isnumeric():
-                temp.append(item)
-                item_count += 1
-                continue
-            if '-' in item:
-                match = self.run_regexes(item)
-                if match is None:
-                    continue
-                start, end = map(int, match.groups()[:2])
-                multi = int(match.groupdict().get('multi', 1))
-                # Add each item (or grouping) as a separate list.
-                for i in range(start, end+1, multi):
-                    temp.append([str(i+j) for j in range(multi)])
-                    item_count += 1
-            elif '/' in item:
-                # Item is a 'grouping' of values.
-                temp.append([i.strip() for i in item.split('/') if i.strip()])
-                item_count += 1
-        return temp, item_count
+            for handler in self.item_handlers:
+                if handler.is_valid(item):
+                    result.extend(handler(item))
+                    break
+        return result, len(result)
 
 
-class BulkJahrField(BulkField):
+class BulkField(BaseSplitField):
+    """The default formfield for the 'BulkForm'."""
 
-    # Treat the slash as a separator just like a comma.
-#    separator_pattern = r'\/|,'
+    item_handlers = (
+        RangeGroupingHandler(), RangeHandler(), GroupingHandler(), NumericHandler()
+    )
 
-    def get_regex_patterns(self):
-        return [self.grouping_pattern]
+    def __init__(self, required=False, *args, **kwargs):
+        super().__init__(required=required,  *args, **kwargs)
 
-    def validate(self, value):
-        super().validate(value)
 
-        for item in self.separator_regex.split(value):
-            for jahr in item.split('/'):
-                if jahr and len(jahr) != 4:
-                    raise ValidationError('Bitte vierstellige Jahresangaben benutzen.')
+class BulkJahrField(BaseSplitField):
+    """A SplitField that only accepts numerical values with 4 digits."""
 
-    def to_list(self, value):
-        temp, item_count = super().to_list(value)
-        return temp, 0
+    item_handlers = (NumericHandler(), )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Add a validator that only allows numerals with 4 digits or the separator.
+        self.validators.append(
+            RegexValidator(
+                regex = r'^(\d{4}|%s)*$' % self.separator_pattern,
+                message='Bitte vierstellige Jahresangaben benutzen.',
+                code='invalid_year'
+            )
+        )
