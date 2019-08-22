@@ -40,9 +40,7 @@ class BulkForm(MIZAdminForm):
         return self._row_data
 
     def has_changed(self):
-        """
-        Returns True if data differs from initial.
-        """
+        """Returns True if data differs from initial."""
         has_changed = bool(self.changed_data)
         if has_changed:
             # Reset _row_data
@@ -86,54 +84,81 @@ class BulkForm(MIZAdminForm):
 class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     # Form attributes
     model = ausgabe
-    field_order = ['magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 'provenienz']
+    field_order = [
+        'magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen',
+        'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 'provenienz'
+    ]
 
     # BulkForm/XRequiredFormMixin attributes
-    minmax_required = [{'min': 1, 'fields': ['jahr', 'jahrgang']}, {'min': 1, 'fields': ['num', 'monat', 'lnum']}]
+    minmax_required = [
+        {'min': 1, 'fields': ['jahr', 'jahrgang']},
+        {'min': 1, 'fields': ['num', 'monat', 'lnum']}
+    ]
     preview_fields = [
-        'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio', 'audio_lagerort',
-        'ausgabe_lagerort', 'provenienz'
+        'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio',
+        'audio_lagerort', 'ausgabe_lagerort', 'provenienz'
     ]
     each_fields = [
-        'magazin', 'jahrgang', 'jahr', 'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette',
-        'provenienz', 'beschreibung', 'bemerkungen', 'status'
+        'magazin', 'jahrgang', 'jahr', 'audio', 'audio_lagerort',
+        'ausgabe_lagerort', 'dublette', 'provenienz', 'beschreibung',
+        'bemerkungen', 'status'
     ]
     split_fields = ['num', 'monat', 'lnum']
 
     # Field declarations
-    magazin = forms.ModelChoiceField(required = True,
-                                    queryset = magazin.objects.all(),
-                                    widget = make_widget(model_name='magazin', wrap=True))
+    magazin = forms.ModelChoiceField(
+        required = True,
+        queryset = magazin.objects.all(),
+        widget = make_widget(model_name='magazin', wrap=True)
+    )
 
     jahrgang = forms.IntegerField(required = False, min_value = 1)
-
     jahr = BulkJahrField(required = False, label = 'Jahr')
     num = BulkField(label = 'Nummer')
     monat = BulkField(label = 'Monate')
     lnum = BulkField(label = 'Laufende Nummer')
 
     audio = forms.BooleanField(required = False, label = 'Musik Beilage:')
-    audio_lagerort = forms.ModelChoiceField(required = False,
-                                    label = 'Lagerort f. Musik Beilage',
-                                    queryset = lagerort.objects.all(),
-                                    widget = make_widget(model_name='lagerort', wrap=True))
-    ausgabe_lagerort = forms.ModelChoiceField(required = True,
-                                    queryset = lagerort.objects.all(),
-                                    widget = make_widget(model_name='lagerort', wrap=True),
-                                    initial = ZRAUM_ID,
-                                    label = 'Lagerort f. Ausgaben')
-    dublette = forms.ModelChoiceField(required = True,
-                                    queryset = lagerort.objects.all(),
-                                    widget = make_widget(model_name='lagerort', wrap=True),
-                                    initial = DUPLETTEN_ID,
-                                    label = 'Lagerort f. Dubletten')
-    provenienz = forms.ModelChoiceField(required = False,
-                                    queryset = provenienz.objects.all(),
-                                    widget = make_widget(model_name='provenienz', wrap=True))
-    beschreibung = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Beschreibung')
-    bemerkungen = forms.CharField(required = False, widget = forms.Textarea(attrs=ATTRS_TEXTAREA), label = 'Bemerkungen')
-
-    status = forms.ChoiceField(choices = ausgabe.STATUS_CHOICES, initial = 1, label = 'Bearbeitungsstatus')
+    audio_lagerort = forms.ModelChoiceField(
+        required = False,
+        queryset = lagerort.objects.all(),
+        widget = make_widget(model_name='lagerort', wrap=True),
+        label = 'Lagerort f. Musik Beilage'
+    )
+    ausgabe_lagerort = forms.ModelChoiceField(
+        required = True,
+        queryset = lagerort.objects.all(),
+        widget = make_widget(model_name='lagerort', wrap=True),
+        initial = ZRAUM_ID,
+        label = 'Lagerort f. Ausgaben'
+    )
+    dublette = forms.ModelChoiceField(
+        required = True,
+        queryset = lagerort.objects.all(),
+        widget = make_widget(model_name='lagerort', wrap=True),
+        initial = DUPLETTEN_ID,
+        label = 'Lagerort f. Dubletten'
+    )
+    provenienz = forms.ModelChoiceField(
+        required = False,
+        queryset = provenienz.objects.all(),
+        widget = make_widget(model_name='provenienz', wrap=True)
+    )
+    beschreibung = forms.CharField(
+        required = False,
+        widget = forms.Textarea(attrs=ATTRS_TEXTAREA),
+        label = 'Beschreibung'
+    )
+    bemerkungen = forms.CharField(
+        required = False,
+        widget = forms.Textarea(attrs=ATTRS_TEXTAREA),
+        label = 'Bemerkungen'
+    )
+    status = forms.ChoiceField(
+        choices = ausgabe.STATUS_CHOICES,
+        initial = 1,
+        label = 'Bearbeitungsstatus'
+    )
 
     help_text = {
         'head': """Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
@@ -181,20 +206,28 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     }
 
     def clean(self):
-        # If the user wishes to add audio data to the objects they are creating, they MUST also define a lagerort for the audio
+        # If the user wishes to add audio data to the objects they are creating,
+        # they MUST also define a lagerort for the audio.
         if self.cleaned_data.get('audio') and not self.cleaned_data.get('audio_lagerort'):
-            self.add_error('audio_lagerort', 'Bitte einen Lagerort für die Musik Beilage angeben.')
+            self.add_error(
+                field='audio_lagerort',
+                error='Bitte einen Lagerort für die Musik Beilage angeben.'
+            )
         return super().clean()
 
     def clean_monat(self):
         # Complain about monat values that are not in 1-12
-        value = self.fields['monat'].widget.value_from_datadict(self.data, self.files, self.add_prefix('monat'))
+        value = self.fields['monat'].widget.value_from_datadict(
+            self.data, self.files, self.add_prefix('monat')
+        )
         list_data, _ = self.fields['monat'].to_list(value)
         for _list in list_data.copy():
             if not isinstance(_list, list):
                 _list = [_list]
             if any(int(v) < 1 or int(v) > 12 for v in _list):
-                raise ValidationError('Monat-Werte müssen zwischen 1 und 12 liegen.')
+                raise ValidationError(
+                    message='Monat-Werte müssen zwischen 1 und 12 liegen.'
+                )
         return value
 
     def lookup_instance(self, row):
@@ -226,8 +259,11 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
             if qs.filter(jahrgang = jg, ausgabe_jahr__jahr__in = jahre).exists():
                 qs = qs.filter(jahrgang = jg, ausgabe_jahr__jahr__in = jahre)
             else:
-                # Do not shadow possible duplicates that only have one of (jg, jahre) by using OR
-                qs = qs.filter(Q(('jahrgang', jg)) | Q(('ausgabe_jahr__jahr__in', jahre)))
+                # Do not shadow possible duplicates that
+                # only have one of (jg, jahre) by using OR.
+                qs = qs.filter(
+                    Q(('jahrgang', jg)) | Q(('ausgabe_jahr__jahr__in', jahre))
+                )
         elif jg:
             qs = qs.filter(jahrgang=jg)
         elif jahre:
@@ -243,15 +279,16 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
                     row = {}
                     for fld_name, _fld in self.fields.items():
                         if fld_name not in self.each_fields + self.split_fields:
-                            # This field was not assigned to either each_fields or split_fields, ignore it
+                            # This field was not assigned to either
+                            # each_fields or split_fields, ignore it.
                             continue
                         if fld_name in self.split_data:
-                            # this field is a BulkField  # TODO: need to enforce this assumption
+                            # This field is a BulkField.  # TODO: need to enforce this assumption
                             if fld_name in self.each_fields:
-                                # all items of this list are part of this row
+                                # All items of this list are part of this row.
                                 item = self.split_data.get(fld_name)
                             else:
-                                # only one item of this list needs to be part of this row
+                                # Only one item of this list needs to be part of this row.
                                 item = self.split_data.get(fld_name)[c]
                         else:
                             item = self.cleaned_data.get(fld_name)
@@ -261,24 +298,26 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
                     qs = self.lookup_instance(row)
                     row['ausgabe_lagerort'] = self.cleaned_data['ausgabe_lagerort']
                     if qs.count() == 0:
-                        # No ausgabe fits the parameters: we are creating a new one
-
-                        # See if this row (in its exact form) has already appeared in _row_data
-                        # We do not want to create multiple objects with the same data,
-                        # instead we will mark this row as a duplicate of the first matching row found
-                        # By checking for row == row_dict we avoid 'nesting' duplicates.
+                        # No ausgabe fits the parameters: we are creating a new one.
+                        # See if this row (in its exact form) has already appeared
+                        # in _row_data. We do not want to create multiple
+                        # objects with the same data, instead we will mark this
+                        # row as a duplicate of the first matching row found.
+                        # By checking for row == row_dict we
+                        # avoid 'nesting' duplicates.
                         for row_dict in self._row_data:
                             if row == row_dict:
                                 row['ausgabe_lagerort'] = self.cleaned_data['dublette']
                                 row['dupe_of'] = row_dict
                                 break
                     elif qs.count() == 1:
-                        # A single object fitting the parameters already exists: this row represents a duplicate of that object.
-
+                        # A single object fitting the parameters already exists:
+                        # this row represents a duplicate of that object.
                         row['instance'] = qs.first()
                         row['ausgabe_lagerort'] = self.cleaned_data['dublette']
                     else:
-                        # lookup_instance returned multiple instances/objects, this row will be ignored from now on
+                        # lookup_instance returned multiple instances/objects,
+                        # this row will be ignored from now on.
                         row['multiples'] = qs
 
                     self._row_data.append(row)
