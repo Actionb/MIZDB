@@ -13,7 +13,8 @@ class BulkForm(MIZAdminForm):
 
     model = None
 
-    # these fields are assigned to the first fieldset and data of these fields are part of every row/created object
+    # these fields are assigned to the first fieldset and data of these fields
+    # are part of every row/created object
     each_fields = set()
     # fields for the second fieldset
     split_fields = ()
@@ -26,14 +27,23 @@ class BulkForm(MIZAdminForm):
 
     def __init__(self, *args, **kwargs):
         self._row_data = []
-        self.total_count = 0  # the total count of objects to be created
-        self.split_data = {}  # a dictionary of {field names : split up values according to BulkField.to_list}
+        # the total count of objects to be created
+        self.total_count = 0
+        # a dictionary of {field names : split up values according to BulkField.to_list}
+        self.split_data = {}
 
         super(BulkForm, self).__init__(*args, **kwargs)
 
-        # Add the fields to the fieldsets, according to the order given by .fields (and thus given by field_order if available)
-        self.fieldsets[0][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.each_fields]
-        self.fieldsets[1][1]['fields'] = [fld_name for fld_name in self.fields if fld_name in self.split_fields]
+        # Add the fields to the fieldsets, according to the order given by .fields
+        # (and thus given by field_order if available).
+        self.fieldsets[0][1]['fields'] = [
+            fld_name
+            for fld_name in self.fields if fld_name in self.each_fields
+        ]
+        self.fieldsets[1][1]['fields'] = [
+            fld_name
+            for fld_name in self.fields if fld_name in self.split_fields
+        ]
 
     @property
     def row_data(self):
@@ -49,7 +59,8 @@ class BulkForm(MIZAdminForm):
 
     def clean(self):
         """
-        Populate split_data with data from BulkFields and raises errors if an unequal amount of data or missing required data is encountered.
+        Populate split_data with data from BulkFields and raises errors if an
+        unequal amount of data or missing required data is encountered.
         """
         # FIXME: docstring grammar
         cleaned_data = super().clean()
@@ -60,23 +71,42 @@ class BulkForm(MIZAdminForm):
         self.split_data = {}
         for fld_name, fld in self.fields.items():
             if isinstance(fld, BaseSplitField):
-                # Retrieve the split up data and the amount of objects that are expected to be created with that data
+                # Retrieve the split up data and the amount of objects that are
+                # expected to be created with that data.
                 list_data, item_count = fld.to_list(cleaned_data.get(fld_name))
-                # If the field belongs to the each_fields group, we should ignore the item_count it is returning as its data is used for every object we are about to create
-                if fld_name not in self.each_fields and item_count and self.total_count and item_count != self.total_count:
-                    # This field's data exists and is meant to be split up into individual items, but the amount of items differs from the previously determined total_count
-                    self.add_error(fld_name, 'Ungleiche Anzahl an {}.'.format(self.model._meta.verbose_name_plural))
+                # If the field belongs to the each_fields group, we should
+                # ignore the item_count it is returning as its data is used for
+                # every object we are about to create
+                if (
+                        fld_name not in self.each_fields and
+                        item_count and self.total_count and
+                        item_count != self.total_count
+                    ):
+                    # This field's data exists and is meant to be split up into
+                    # individual items, but the amount of items differs from
+                    # the previously determined total_count.
+                    self.add_error(
+                        field=fld_name,
+                        error='Ungleiche Anzahl an {}.'.format(
+                            self.model._meta.verbose_name_plural
+                        )
+                    )
                 else:
                     # Either:
                     # - the field is an each_field
                     # - its item_count is zero
-                    # - no total_count has yet been determined (meaning this is the first field encountered that contains list_data)
+                    # - no total_count has yet been determined (meaning this is
+                    #   the first field encountered that contains list_data)
                     if list_data:
                         self.split_data[fld_name] = list_data
                     if item_count and fld_name not in self.each_fields:
-                        # NOTE: this is the only time where BulkJahrField returning item_count=0 matters?
-                        # The item_count is not zero,  total_count IS zero (not yet calculated) and the field is eligible (by virtue of being a non-each_fields BulkField) to set the total_count
-                        # All subsequent BulkField's item_counts in the iteration have to match this field's item_count (or be zero) or we cannot define the exact number of objects to create
+                        # The item_count is not zero,  total_count IS zero
+                        # (not yet calculated) and the field is eligible
+                        # (by virtue of being a non-each_fields BulkField) to
+                        # set the total_count. All subsequent BulkField's
+                        # item_counts in the iteration have to match this field's
+                        # item_count (or be zero) or we cannot define the exact
+                        # number of objects to create.
                         self.total_count = item_count
         return cleaned_data
 
