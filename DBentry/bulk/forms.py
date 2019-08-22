@@ -257,53 +257,57 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
 
     @property
     def row_data(self):
-        if self.is_valid():
-            # form is valid, split_data has been populated in clean()
-            if self.has_changed() or not self._row_data:
-                for c in range(self.total_count):
-                    row = {}
-                    for fld_name, _fld in self.fields.items():
-                        if fld_name not in self.each_fields + self.split_fields:
-                            # This field was not assigned to either
-                            # each_fields or split_fields, ignore it.
-                            continue
-                        if fld_name in self.split_data:
-                            # This field is a BulkField.  # TODO: need to enforce this assumption
-                            if fld_name in self.each_fields:
-                                # All items of this list are part of this row.
-                                item = self.split_data.get(fld_name)
-                            else:
-                                # Only one item of this list needs to be part of this row.
-                                item = self.split_data.get(fld_name)[c]
-                        else:
-                            item = self.cleaned_data.get(fld_name)
-                        if item:
-                            row[fld_name] = item
-
-                    qs = self.lookup_instance(row)
-                    row['ausgabe_lagerort'] = self.cleaned_data['ausgabe_lagerort']
-                    if qs.count() == 0:
-                        # No ausgabe fits the parameters: we are creating a new one.
-                        # See if this row (in its exact form) has already appeared
-                        # in _row_data. We do not want to create multiple
-                        # objects with the same data, instead we will mark this
-                        # row as a duplicate of the first matching row found.
-                        # By checking for row == row_dict we
-                        # avoid 'nesting' duplicates.
-                        for row_dict in self._row_data:
-                            if row == row_dict:
-                                row['ausgabe_lagerort'] = self.cleaned_data['dublette']
-                                row['dupe_of'] = row_dict
-                                break
-                    elif qs.count() == 1:
-                        # A single object fitting the parameters already exists:
-                        # this row represents a duplicate of that object.
-                        row['instance'] = qs.first()
-                        row['ausgabe_lagerort'] = self.cleaned_data['dublette']
+        if not self.is_valid():
+            return []
+        if not self.has_changed() and self._row_data:
+            # Only (re)calculate if the form has changed or _row_data is empty.
+            # NOTE: has_changed() resets if the form has changed.
+            return self._row_data
+        # form is valid, split_data has been populated in clean()
+        for c in range(self.total_count):
+            row = {}
+            for fld_name, _fld in self.fields.items():
+                if fld_name not in self.each_fields + self.split_fields:
+                    # This field was not assigned to either
+                    # each_fields or split_fields, ignore it.
+                    continue
+                if fld_name in self.split_data:
+                    # This field is a BulkField.  # TODO: need to enforce this assumption
+                    if fld_name in self.each_fields:
+                        # All items of this list are part of this row.
+                        item = self.split_data.get(fld_name)
                     else:
-                        # lookup_instance returned multiple instances/objects,
-                        # this row will be ignored from now on.
-                        row['multiples'] = qs
+                        # Only one item of this list needs to be part of this row.
+                        item = self.split_data.get(fld_name)[c]
+                else:
+                    item = self.cleaned_data.get(fld_name)
+                if item:
+                    row[fld_name] = item
 
-                    self._row_data.append(row)
+            qs = self.lookup_instance(row)
+            row['ausgabe_lagerort'] = self.cleaned_data['ausgabe_lagerort']
+            if qs.count() == 0:
+                # No ausgabe fits the parameters: we are creating a new one.
+                # See if this row (in its exact form) has already appeared
+                # in _row_data. We do not want to create multiple
+                # objects with the same data, instead we will mark this
+                # row as a duplicate of the first matching row found.
+                # By checking for row == row_dict we
+                # avoid 'nesting' duplicates.
+                for row_dict in self._row_data:
+                    if row == row_dict:
+                        row['ausgabe_lagerort'] = self.cleaned_data['dublette']
+                        row['dupe_of'] = row_dict
+                        break
+            elif qs.count() == 1:
+                # A single object fitting the parameters already exists:
+                # this row represents a duplicate of that object.
+                row['instance'] = qs.first()
+                row['ausgabe_lagerort'] = self.cleaned_data['dublette']
+            else:
+                # lookup_instance returned multiple instances/objects,
+                # this row will be ignored from now on.
+                row['multiples'] = qs
+
+            self._row_data.append(row)
         return self._row_data
