@@ -3,15 +3,15 @@ import re
 from django.test import TestCase
 
 from DBentry.bulk.handlers import (
-    BaseHandler, NumericHandler, RangeHandler, RangeGroupingHandler, GroupingHandler
+    ItemHandler, NumericHandler, RangeHandler, RangeGroupingHandler, GroupingHandler
 )
 
 
-class TestBaseHandler(TestCase):
+class TestItemHandler(TestCase):
 
     def test_init_sets_regex_from_kwarg(self):
         # Assert that init sets regex from a passed in kwarg.
-        handler = BaseHandler(regex='new_regex')
+        handler = ItemHandler(regex='new_regex')
         self.assertEqual(handler.regex.pattern, 'new_regex')
 
     def test_init_compiles_pattern(self):
@@ -23,7 +23,7 @@ class TestBaseHandler(TestCase):
             ]
         for regex, test_info in test_data:
             with self.subTest(info=test_info):
-                handler = BaseHandler(regex=regex)
+                handler = ItemHandler(regex=regex)
                 self.assertIsInstance(handler.regex, regex_type)
 
 

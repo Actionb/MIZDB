@@ -1,6 +1,17 @@
 import re
 
-class BaseHandler(object):
+
+class ItemHandler(object):
+    """
+    A helper object that extracts values from a string item.
+
+    Intended use is to validate and to extract data from an encoded string
+    (i.e. formatted in a specific way) for the DBentry.bulk.fields.SplitField.
+
+    Attributes:
+        regex: either a regex pattern or a compiled regular expression to
+            validate the item with.
+    """
 
     regex = ''
 
@@ -14,12 +25,16 @@ class BaseHandler(object):
         return self.handle(item)
 
     def handle(self, item):
+        """Extract value(s) from the string item."""
         raise NotImplementedError("Subclasses must implement this method.")
 
     def is_valid(self, item):
+        """Validate that this handler can handle the item."""
         return self.regex.search(item)
 
-class NumericHandler(BaseHandler):
+
+class NumericHandler(ItemHandler):
+    """ItemHandler for numeric string literals."""
 
     regex = r'^\d+$'
 
@@ -27,7 +42,15 @@ class NumericHandler(BaseHandler):
         if self.is_valid(item):
             yield item
 
-class RangeHandler(BaseHandler):
+
+class RangeHandler(ItemHandler):
+    """
+    ItemHandler for a range of numeric string literals.
+
+    Expects an item in the form of <start number>-<end number>.
+    Example:
+        '1-6' yields  ['1', '2', '3', '4', '5', '6']
+    """
 
     regex = r'^(\d+)-(\d+)$'
 
@@ -38,7 +61,16 @@ class RangeHandler(BaseHandler):
             for i in range(start, end+1):
                 yield str(i)
 
-class RangeGroupingHandler(BaseHandler):
+
+class RangeGroupingHandler(ItemHandler):
+    """
+    ItemHandler for a range of grouped numeric string literals.
+
+    Expects an item in the form of <start number>-<end number>/<multiplier>.
+    Example:
+        '1-6*2' yields ['1', '2'], ['3', '4'], ['5', '6']
+        '1-6*3' yields ['1', '2', '3'], ['4', '5', '6']
+    """
 
     regex = r'^(\d+)-(\d+)\*(\d+)$'
 
@@ -49,7 +81,15 @@ class RangeGroupingHandler(BaseHandler):
             for i in range(start, end+1, multi):
                 yield [str(i+j) for j in range(multi)]
 
-class GroupingHandler(BaseHandler):
+
+class GroupingHandler(ItemHandler):
+    """
+    ItemHandler for grouped numeric string literals.
+
+    Expects an item in the form of <number1>/<number2>[/...] .
+    Example:
+        '1/2/3' yields ['1', '2', '3']
+    """
 
     regex = r'^\d+(/\d+)+$'
 
