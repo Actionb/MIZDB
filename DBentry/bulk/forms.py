@@ -142,11 +142,6 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         {'min': 1, 'fields': ['jahr', 'jahrgang']},
         {'min': 1, 'fields': ['num', 'monat', 'lnum']}
     ]
-    # FIXME: the forms don't use preview_fields, shouldn't this then be an attribute of the view
-    preview_fields = [
-        'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio',
-        'audio_lagerort', 'ausgabe_lagerort', 'provenienz'
-    ]
     field_order = [
         'magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen',
         'audio', 'audio_lagerort', 'ausgabe_lagerort', 'dublette', 'provenienz'

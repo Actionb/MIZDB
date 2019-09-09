@@ -29,6 +29,12 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
     permission_required = ['DBentry.add_ausgabe']
+    # 'preview_fields' determines what formfields may show up in the preview as
+    # columns and sets their order.
+    preview_fields = [
+        'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio',
+        'audio_lagerort', 'ausgabe_lagerort', 'provenienz'
+    ]
 
     def get_initial(self):
         """
@@ -311,7 +317,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         preview_fields_used = set()
         for row in form.row_data:
             preview_row = OrderedDict()
-            for field_name in form.preview_fields:
+            for field_name in self.preview_fields:
                 if field_name not in row:
                     continue
                 if field_name == 'audio':
@@ -370,7 +376,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             preview_data.append(preview_row)
         # Build the headers for the preview table.
         headers = []
-        for field_name in form.preview_fields:
+        for field_name in self.preview_fields:
             if field_name not in preview_fields_used:
                 # This field does not appear at least once in preview_data;
                 # do not include it in the headers.
