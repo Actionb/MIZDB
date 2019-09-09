@@ -19,6 +19,7 @@ class DuplicateFieldsSelectForm(forms.Form):
     'get_dupe_fields_for_model' and are set after initialization
     (see duplicatefieldsform_factory).
     """
+
     base = forms.MultipleChoiceField(
         widget = forms.CheckboxSelectMultiple,
         label = ''
@@ -113,15 +114,18 @@ def duplicatefieldsform_factory(model, selected_dupe_fields):
 class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
     """A form to select the model that is checked for duplicates."""
 
-    # FIXME: commit 3c6b2c857254875d4e8b5d6ee298e921ab16e05b dropped the damn 'model_select' formfield!
+    model_select = forms.ChoiceField(
+        initial='',
+        label='Bitte das Modell auswählen'
+    )
     # Exclude some models that would be nonsensical for a duplicates search.
     _model_name_excludes = [
         'Favoriten', 'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat',
     ]
 
-    def __init__(self, model_filters = None, *args, **kwargs):
+    def __init__(self, model_filters=None, *args, **kwargs):
         choices = {'model_select': self.get_model_list(model_filters)}
-        super().__init__(choices = choices, *args, **kwargs)
+        super().__init__(choices=choices, *args, **kwargs)
 
 
     def get_model_filters(self):
@@ -139,7 +143,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
             lambda model: model._meta.model_name not in self._model_name_excludes
         ]
 
-    def get_model_list(self, filters = None):
+    def get_model_list(self, filters=None):
         """Return the choices for the 'model_select' field."""
         if filters is None:
             filters = self.get_model_filters()
