@@ -157,6 +157,7 @@ class autor(ComputedNameModel):
             
             
 class ausgabe(ComputedNameModel):
+    # TODO: ENUMS!!!
     STATUS_CHOICES = [('unb','unbearbeitet'), ('iB','in Bearbeitung'), ('abg','abgeschlossen'), ('kB', 'keine Bearbeitung vorgesehen')]
 
     status = models.CharField('Bearbeitungsstatus', max_length = 40, choices = STATUS_CHOICES, default = 1)
