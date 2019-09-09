@@ -12,13 +12,13 @@ class DuplicateFieldsSelectForm(forms.Form):
     base = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     m2m = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
     reverse = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
-    
+
     help_text ='Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.'
-    
+
     class Media:
         css = {'all':  ['admin/css/dupes.css']}
         js = ['admin/js/collapse.js'] #TODO: django changed how it adds events to collapse stuff; check it out
-    
+
 def get_dupe_fields_for_model(model):    
     """
     Returns two-tuples of (queryable field path, field label) of fields that can be used to find duplicates with.
@@ -31,7 +31,7 @@ def get_dupe_fields_for_model(model):
         (f.name, f.verbose_name.capitalize()) 
         for f in get_model_fields(model, base = False, foreign = False,  m2m = True)
     ]
-    
+
     # Group the choices by the related_model's verbose_name:
     # ( (<group_name>,(<group_choices>,)), ... )
     groups = []            
@@ -67,7 +67,7 @@ def duplicatefieldsform_factory(model, selected_dupe_fields):
     form.fields['m2m'].choices = choices['m2m']
     form.fields['reverse'].choices = choices['reverse']
     return form
-    
+
 class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     # FIXME: commit 3c6b2c857254875d4e8b5d6ee298e921ab16e05b dropped the damn 'model_select' formfield!
@@ -75,11 +75,11 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
     def __init__(self, model_filters = None, *args, **kwargs):
         choices = {'model_select': self.get_model_list(model_filters)}
         super().__init__(choices = choices, *args, **kwargs)
-    
+
     _model_name_excludes = [
         'Favoriten', 'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat', 
     ]
-    
+
     def get_model_filters(self):
         """
         Prepare filters to apply to the list of models returned by apps.get_models.
@@ -94,7 +94,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
             lambda model: not model._meta.model_name.endswith('_alias'),
             lambda model: model._meta.model_name not in self._model_name_excludes
         ]
-    
+
     def get_model_list(self, filters = None):
         """Return the choices for the 'model_select' field."""
         if filters is None:
