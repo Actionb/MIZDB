@@ -154,7 +154,10 @@ class TestComputedNameModel(DataTestCase):
         self.obj2.sonderausgabe = True
         self.obj2._changed_flag = False
         self.obj2.save()
-        self.assertQSValuesList(self.qs_obj2, '_name', "Testinfo")
+        self.assertEqual(
+            list(self.qs_obj2.values_list('_name', flat=True)),
+            ["Testinfo"]
+        )
         self.assertEqual(self.obj2._name, "Testinfo")
         self.assertEqual(str(self.obj2), "Testinfo")
 
