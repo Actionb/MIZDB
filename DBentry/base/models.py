@@ -189,16 +189,16 @@ class ComputedNameModel(BaseModel):
         If the update is not aborted, the _changed_flag is always reset to False.
 
         Deferring the _name field will avoid an update, unless force_update is True.
+        Returns True when the _name was updated.
         """
         deferred = self.get_deferred_fields()
-        name_updated = False
 
         if not self.pk or '_name' in deferred and not force_update:
             # Abort the update if:
             # - this instance has not yet been saved to the database or 
             # - the _name field is not actually part of the instance AND 
             # - an update is not forced
-            return name_updated
+            return False
 
         if not '_changed_flag' in deferred:
             # _changed_flag was not deferred, self has access to it without calling refresh_from_db -- no need to hit the database
@@ -216,16 +216,17 @@ class ComputedNameModel(BaseModel):
             current_name = self._get_name(**name_data)
 
             if self._name != current_name:
-                # the name needs updating
-                self.qs().update(_name= current_name)
+                # Update the name and reset the _changed_flag.
+                self.qs().update(_name= current_name, _changed_flag=False)
                 self._name = current_name
-                name_updated = True
-
+                self._changed_flag = False
+                return True
             if changed_flag:
-                # We have checked whether or not the name needs updating; the changed_flag must be reset
+                # The changed_flag was set, but the name did not need an update.
+                # Reset the flag.
                 self.qs().update(_changed_flag=False)
                 self._changed_flag = False
-        return name_updated
+        return False
 
     @classmethod
     def _get_name(cls, **kwargs):
