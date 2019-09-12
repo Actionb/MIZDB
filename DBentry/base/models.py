@@ -195,25 +195,34 @@ class ComputedNameModel(BaseModel):
 
         if not self.pk or '_name' in deferred and not force_update:
             # Abort the update if:
-            # - this instance has not yet been saved to the database or 
-            # - the _name field is not actually part of the instance AND 
+            # - this instance has not yet been saved to the database or
+            # - the _name field is not actually part of the instance AND
             # - an update is not forced
             return False
 
         if not '_changed_flag' in deferred:
-            # _changed_flag was not deferred, self has access to it without calling refresh_from_db -- no need to hit the database
+            # _changed_flag was not deferred;
+            # self has access to it without calling refresh_from_db.
             changed_flag = self._changed_flag
         else:
-            # avoid calling refresh_from_db by fetching the value directly from the database
-            changed_flag = self.qs().values_list('_changed_flag', flat = True).get(pk = self.pk) #TODO: qs() followed by get() is redundant
+            # Avoid calling refresh_from_db by fetching the value directly
+            # from the database:
+            changed_flag =  self._meta.model.objects.values_list(
+                '_changed_flag', flat=True
+            ).get(pk=self.pk)
 
         if force_update or changed_flag:
-            # an update was scheduled or forced for this instance
+            # An update was scheduled or forced for this instance.
             if not self.name_composing_fields:
                 #TODO: this exception is never caught
-                raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
-            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=False).get(self.pk) #TODO: qs() followed by get() is redundant
-            current_name = self._get_name(**name_data)
+                raise AttributeError(
+                    "You must specify the fields that make up the name by "
+                    "listing them in name_composing_fields."
+                )
+            name_data =  self.qs().values_dict(
+                *self.name_composing_fields, include_empty=False, flatten=False
+            )
+            current_name = self._get_name(**name_data[self.pk])
 
             if self._name != current_name:
                 # Update the name and reset the _changed_flag.
