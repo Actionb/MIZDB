@@ -212,7 +212,7 @@ class ComputedNameModel(BaseModel):
             if not self.name_composing_fields:
                 #TODO: this exception is never caught
                 raise AttributeError("You must specify the fields that make up the name by listing them in name_composing_fields.")
-            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=True).get(self.pk) #TODO: qs() followed by get() is redundant
+            name_data = self.qs().values_dict(*self.name_composing_fields, flatten=False).get(self.pk) #TODO: qs() followed by get() is redundant
             current_name = self._get_name(**name_data)
 
             if self._name != current_name:
