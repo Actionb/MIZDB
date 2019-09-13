@@ -126,6 +126,7 @@ class TestComputedNameModel(DataTestCase):
     def test_update_name__always_resets_change_flag(self):
         # Even if the _name does not need changing, the _changed_flag should still be set to False
         self.qs_obj1.update(_changed_flag=True)
+        self.obj1.refresh_from_db()
         self.assertFalse(self.obj1.update_name())
         self.assertFalse(self.obj1._changed_flag)
 
@@ -154,7 +155,10 @@ class TestComputedNameModel(DataTestCase):
         self.obj2.sonderausgabe = True
         self.obj2._changed_flag = False
         self.obj2.save()
-        self.assertQSValuesList(self.qs_obj2, '_name', "Testinfo")
+        self.assertEqual(
+            list(self.qs_obj2.values_list('_name', flat=True)),
+            ["Testinfo"]
+        )
         self.assertEqual(self.obj2._name, "Testinfo")
         self.assertEqual(str(self.obj2), "Testinfo")
 
@@ -184,204 +188,174 @@ class TestModelAusgabe(DataTestCase):
 
     model = _models.ausgabe
 
-    @translation_override(language = None)
-    def test_get_name(self):
-        # 1. sonderausgabe + beschreibung
-        # 2. !jahre + jahrgang/!jahrgang
-        # 3. ausgaben_merkmal>e_datum>monat>lnum>?
-        # 4. num>monat>lnum>e_datum>beschreibung>k.A.
-
+    @translation_override(language=None)
+    def test_get_name_sonderausgabe(self):
+        # Check the results of get_name when sonderausgabe == True.
         # sonderausgabe + beschreibung => beschreibung
-        name_data = {'sonderausgabe':True, 'beschreibung':'Test-Info'}
-        expected = 'Test-Info'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'sonderausgabe + beschreibung => beschreibung')
+        name_data = {'sonderausgabe': (True, ), 'beschreibung': ('Test-Info', )}
+        self.assertEqual(
+            self.model._get_name(**name_data),
+            'Test-Info',
+            msg = 'sonderausgabe + beschreibung => beschreibung'
+        )
         # sonderausgabe + beschreibung + any other data => beschreibung
-        name_data.update({'jahrgang':'2','ausgabe_jahr__jahr':['2020'], 'ausgabe_monat__monat__abk':['Dez']})
-        expected = 'Test-Info'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'sonderausgabe + beschreibung + any other data => beschreibung')
+        name_data.update({
+            'jahrgang': ('2', ),
+            'ausgabe_jahr__jahr': ('2020', ),
+            'ausgabe_monat__monat__abk': ('Dez', )
+        })
+        self.assertEqual(
+            self.model._get_name(**name_data),
+            'Test-Info',
+            msg = 'sonderausgabe + beschreibung + any other data => beschreibung'
+        )
 
-        # with jahr:
-        # monat
-        name_data = {'ausgabe_jahr__jahr':['2020'], 'ausgabe_monat__monat__abk':['Dez']}
-        expected = "2020-Dez"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat => monat')
+    @translation_override(language=None)
+    def test_get_name_jahr(self):
+        # Check the results of get_name if 'jahr' is given.
+        name_data = {'ausgabe_jahr__jahr': ('2020', )}
+        test_data = [
+            ({'ausgabe_monat__monat__abk': ('Dez', )}, "2020-Dez"),
+            ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabe_lnum__lnum': ('21', )}, "21 (2020)"),
+            ({'ausgabe_num__num': ('20', )}, '2020-20'),
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        # monat + e_datum => e_datum
-        name_data.update({'e_datum':'02.05.2018'})
-        expected = '02.05.2018'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum => e_datum')
+    @translation_override(language=None)
+    def test_get_name_jahr_multiple_values(self):
+        # Check the results of get_name if multiple values for 'jahr'
+        # (or other attributes) are given.
+        name_data = {'ausgabe_jahr__jahr': ('2021', '2020')}
+        test_data = [
+            (
+                {'ausgabe_monat__monat__abk': ('Jan', 'Dez')},
+                "2020/21-Jan/Dez"
+            ),
+            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22 (2020/21)"),
+            ({'ausgabe_num__num': ('21', '20')}, "2020/21-20/21"),
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        # monat + e_datum + lnum => lnum
-        name_data.update({'ausgabe_lnum__lnum':['21']})
-        expected = "21 (2020)"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
+    @translation_override(language=None)
+    def test_get_name_jahrgang(self):
+        # Check the results of get_name if 'jahrgang' and no 'jahr' is given.
+        name_data = {'jahrgang': ('2', )}
+        test_data = [
+            ({'ausgabe_monat__monat__abk': ('Dez', )}, "Jg. 2-Dez"),
+            ({'ausgabe_monat__monat__abk': ('Jan', 'Dez')}, "Jg. 2-Jan/Dez"),
+            ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabe_lnum__lnum': ('21', )}, "21 (Jg. 2)"),
+            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22 (Jg. 2)"),
+            ({'ausgabe_num__num': ('20', )}, "Jg. 2-20"),
+            ({'ausgabe_num__num': ('21', '20')}, "Jg. 2-20/21")
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        # monat + e_datum + lnum + num => num
-        name_data.update({'ausgabe_num__num':['20']})
-        expected = "2020-20"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
+    @translation_override(language=None)
+    def test_get_name_no_jahr_or_jahrgang(self):
+        # Check the results of get_name if no 'jahrgang' or 'jahr' is given.
+        test_data = [
+            ({'ausgabe_monat__monat__abk': ('Dez', )}, "k.A.-Dez"),
+            ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabe_lnum__lnum': ('21', )}, "21"),
+            ({'ausgabe_num__num': ('20', )}, "k.A.-20"),
+            ({'ausgabe_monat__monat__abk': ('Jan', 'Dez')}, "k.A.-Jan/Dez"),
+            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22"),
+            ({'ausgabe_num__num': ('21', '20')}, "k.A.-20/21")
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        # with jahrgang:
-        # monat
-        name_data = {'ausgabe_monat__monat__abk':['Dez'], 'jahrgang':'2'}
-        expected = "Jg. 2-Dez"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
+    @translation_override(language=None)
+    def test_get_name_no_data(self):
+        # Check the results of get_name if no or little data is given.
+        test_data = [
+            ({}, 'No data for Ausgabe.'),
+            ({'beschreibung': ('Test-Info', )}, 'Test-Info')
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        # monat + e_datum => e_datum
-        name_data.update({'e_datum':'02.05.2018'})
-        expected = '02.05.2018'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum => e_datum')
-
-        # monat + e_datum + lnum => lnum
-        name_data.update({'ausgabe_lnum__lnum':['21']})
-        expected = "21 (Jg. 2)"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
-
-        # monat + e_datum + lnum + num => num
-        name_data.update({'ausgabe_num__num':['20']})
-        expected = "Jg. 2-20"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
-
-        # without jahr or jahrgang:
-        # monat
-        name_data = {'ausgabe_monat__monat__abk':['Dez']}
-        expected = "k.A.-Dez"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
-
-        # monat + e_datum => e_datum
-        name_data.update({'e_datum':'02.05.2018'})
-        expected = '02.05.2018'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum => e_datum')
-
-        # monat + e_datum + lnum => lnum
-        name_data.update({'ausgabe_lnum__lnum':['21']})
-        expected = "21"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
-
-        # monat + e_datum + lnum + num => num
-        name_data.update({'ausgabe_num__num':['20']})
-        expected = "k.A.-20"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
-
-        # only beschreibung
-        name_data = {'beschreibung':'Test-Info'}
-        expected = 'Test-Info'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = ' only beschreibung')
-
-        # no data whatsoever
-        name_data = {}
-        expected = 'No data for Ausgabe.'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
-
-        # Tests with an ausgaben_merkmal override set
+    @translation_override(language=None)
+    def test_get_name_ausgaben_merkmal(self):
+        # Check the results of get_name with ausgaben_merkmal override set.
         name_data = {
-            'ausgabe_jahr__jahr':['2020'], 
-            'ausgabe_monat__monat__abk':['Dez'], 
-            'ausgabe_lnum__lnum':['21'], 
-            'ausgabe_num__num':['20'], 
-            'e_datum' : '02.05.2018', 
+            'ausgabe_jahr__jahr': ('2020', ), 
+            'ausgabe_monat__monat__abk': ('Dez', ), 
+            'ausgabe_lnum__lnum': ('21', ), 
+            'ausgabe_num__num': ('20', ), 
+            'e_datum': ('02.05.2018', ), 
         }
+        test_data = [
+            ('e_datum','02.05.2018'),
+            ('monat', '2020-Dez'),
+            ('num', '2020-20'),
+            ('lnum', '21 (2020)'),
+        ]
+        for merkmal, expected in test_data:
+            name_data['magazin__ausgaben_merkmal'] = (merkmal, )
+            with self.subTest(merkmal=merkmal):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        name_data.update({'magazin__ausgaben_merkmal':'e_datum'})
-        expected = '02.05.2018'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: e_datum')
-
-        name_data.update({'magazin__ausgaben_merkmal':'monat'})
-        expected = '2020-Dez'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: monat')
-
-        name_data.update({'magazin__ausgaben_merkmal':'num'})
-        expected = '2020-20'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: num')
-
-        name_data.update({'magazin__ausgaben_merkmal':'lnum'})
-        expected = '21 (2020)'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum')
-
-        name_data.update({'ausgabe_jahr__jahr':[]})
-        expected = '21'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
-
-        # merkmal set but the ausgabe contains no data for it
-        name_data = {'magazin__ausgaben_merkmal':'num', 'beschreibung' : 'Woops!'}
-        expected = 'Woops!'
-        self.assertEqual(self.model._get_name(**name_data), expected)
-        
-        
-        # And now with multiples of related objects
-        # with jahr:
-        # monat
-        name_data = {'ausgabe_jahr__jahr':['2021', '2020'], 'ausgabe_monat__monat__abk':['Jan', 'Dez']}
-        expected = "2020/21-Jan/Dez"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat => monat')
-
-        # monat + e_datum + lnum => lnum
-        name_data.update({'ausgabe_lnum__lnum':['22', '21']})
-        expected = "21/22 (2020/21)"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum => lnum')
-
-        # monat + e_datum + lnum + num => num
-        name_data.update({'ausgabe_num__num':['21', '20']})
-        expected = "2020/21-20/21"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahr: monat + e_datum + lnum + num => num')
-
-        # with jahrgang:
-        # monat
-        name_data = {'ausgabe_monat__monat__abk':['Jan', 'Dez'], 'jahrgang':'2'}
-        expected = "Jg. 2-Jan/Dez"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat => monat')
-
-        # monat + e_datum + lnum => lnum
-        name_data.update({'ausgabe_lnum__lnum':['22', '21']})
-        expected = "21/22 (Jg. 2)"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum => lnum')
-
-        # monat + e_datum + lnum + num => num
-        name_data.update({'ausgabe_num__num':['21', '20']})
-        expected = "Jg. 2-20/21"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'jahrgang: monat + e_datum + lnum + num => num')
-
-        # without jahr or jahrgang:
-        # monat
-        name_data = {'ausgabe_monat__monat__abk':['Jan', 'Dez']}
-        expected = "k.A.-Jan/Dez"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat => monat')
-
-        # monat + e_datum + lnum => lnum
-        name_data.update({'ausgabe_lnum__lnum':['22', '21']})
-        expected = "21/22"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum => lnum')
-
-        # monat + e_datum + lnum + num => num
-        name_data.update({'ausgabe_num__num':['21', '20']})
-        expected = "k.A.-20/21"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no jahr/jahrgang: monat + e_datum + lnum + num => num')
-
-        # Tests with an ausgaben_merkmal override set
+        # Some edge case tests:
         name_data = {
-            'ausgabe_jahr__jahr':['2021', '2020'], 
-            'ausgabe_monat__monat__abk':['Jan', 'Dez'], 
-            'ausgabe_lnum__lnum':['22', '21'], 
-            'ausgabe_num__num':['21', '20'], 
+            'magazin__ausgaben_merkmal': ('lnum', ),
+            'ausgabe_lnum__lnum': ('21', )
         }
+        self.assertEqual(
+            self.model._get_name(**name_data), '21',
+            msg = "get_name should just return the lnum if ausgaben_merkmal is"
+            " set to lnum and neither jahr nor jahrgang are set."
+        )
+        name_data = {
+            'magazin__ausgaben_merkmal': ('num', ),
+            'beschreibung' : ('Woops!', )
+        }
+        self.assertEqual(
+            self.model._get_name(**name_data), 'Woops!',
+            msg="get_name should ignore ausgaben_merkmal if the attribute "
+            "it is referring to is not set."
+        )
 
-        name_data.update({'magazin__ausgaben_merkmal':'monat'})
-        expected = '2020/21-Jan/Dez'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: monat')
+    @translation_override(language=None)
+    def test_get_name_ausgaben_merkmal_multiple_values(self):
+        # Check the results of get_name with ausgaben_merkmal override set.
+        name_data =  {
+            'ausgabe_jahr__jahr': ('2021', '2020'), 
+            'ausgabe_monat__monat__abk': ('Jan', 'Dez'), 
+            'ausgabe_lnum__lnum': ('22', '21'), 
+            'ausgabe_num__num': ('21', '20'), 
+        }
+        test_data = [
+            ('monat', '2020/21-Jan/Dez'),
+            ('num', '2020/21-20/21'),
+            ('lnum', '21/22 (2020/21)'),
+        ]
+        for merkmal, expected in test_data:
+            name_data['magazin__ausgaben_merkmal'] = (merkmal, )
+            with self.subTest(merkmal=merkmal):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        name_data.update({'magazin__ausgaben_merkmal':'num'})
-        expected = '2020/21-20/21'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: num')
 
-        name_data.update({'magazin__ausgaben_merkmal':'lnum'})
-        expected = '21/22 (2020/21)'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum')
-
-        name_data.update({'ausgabe_jahr__jahr':[]})
-        expected = '21/22'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'merkmal: lnum + no jahr')
-        
-        
 class TestModelAusgabeJahr(DataTestCase):
     
     model = _models.ausgabe_jahr
@@ -419,36 +393,31 @@ class TestModelAutor(DataTestCase):
 
     model = _models.autor
 
-    @translation_override(language = None)
+    @translation_override(language=None)
     def test_get_name(self):
-        # 1. person_name + kuerzel
-        # 2. person_name
-        # 3. kuerzel
-        # 4. cls._name_default
-        name_data = {'person___name':'Alice Tester', 'kuerzel':'TK'}
-        expected = 'Alice Tester (TK)'
-        self.assertEqual(self.model._get_name(**name_data), expected)
+        test_data = [
+            ({'person___name': ('Alice Tester', )}, 'Alice Tester'),
+            ({'kuerzel': ('TK', )}, 'TK'),
+            ({'person___name': ('Alice Tester', ), 'kuerzel': ('TK', )}, 'Alice Tester (TK)'),
+            ({}, 'No data for Autor.'),
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        name_data = {'person___name':'Alice Tester'}
-        expected = 'Alice Tester'
-        self.assertEqual(self.model._get_name(**name_data), expected)
+    @translation_override(language=None)
+    def test_get_name_ignores_default_person(self):
+        # get_name should ignore default values for person.
+        test_data = [
+            ({'person___name': ('No data for Person.', ), 'kuerzel': ('TK', )},  'TK'),
+            ({'person___name': ('unbekannt', ), 'kuerzel': ('TK', )}, 'TK')
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        name_data = {'kuerzel':'TK'}
-        expected = 'TK'
-        self.assertEqual(self.model._get_name(**name_data), expected)
-
-        name_data = {}
-        expected = 'No data for Autor.'
-        self.assertEqual(self.model._get_name(**name_data), expected)
-
-        # get_name should ignore default values for person
-        name_data = {'person___name':'No data for Person.', 'kuerzel':'TK'}
-        expected = 'TK'
-        self.assertEqual(self.model._get_name(**name_data), expected)
-
-        name_data = {'person___name':'unbekannt', 'kuerzel':'TK'}
-        expected = 'TK'
-        self.assertEqual(self.model._get_name(**name_data), expected)
 
 class TestModelBand(DataTestCase):
 
@@ -499,37 +468,35 @@ class TestModelFormat(DataTestCase):
     
     model = _models.Format
     
+    @translation_override(language=None)
     def test_get_name(self):
-        # format_typ only
-        name_data = {'format_typ__typ':'Vinyl'}
-        expected = 'Vinyl'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_typ only')
-        
-        # format_size only
-        name_data = {'format_size__size':'LP'}
-        expected = 'LP'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size only')
-        
-        # format_size + anzahl <= 1
-        name_data.update({'anzahl':1})
-        expected = 'LP'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl <= 1')
-        
-        # format_size + anzahl 
-        name_data.update({'anzahl':2})
-        expected = '2xLP'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl')
-        
-        # format_size + anzahl + channel
-        name_data.update({'channel':'Mono'})
-        expected = '2xLP, Mono'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl + channel')
-        
-        # format_size + anzahl + channel + tags
-        name_data.update({'tag__tag':['Compilation', 'Album']})
-        expected = '2xLP, Album, Compilation, Mono'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'format_size + anzahl + channel + tags')
-        
+        name_data = {'format_size__size': ('LP', )}
+        test_data = [
+            ({}, 'LP'),
+            ({'anzahl': (1, )}, 'LP'),
+            ({'anzahl': (2, )}, '2xLP'),
+            ({'channel': ('Mono', )},'2xLP, Mono'),
+            (
+                {'tag__tag': ('Compilation', 'Album')},
+                '2xLP, Album, Compilation, Mono'
+            )
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+    @translation_override(language=None)
+    def test_get_name_uses_format_typ(self):
+        # Check that get_name uses 'format_typ__typ' if no 'format_size__size'
+        # is given in name_data.
+        name_data = {'format_typ__typ': ('Vinyl', )}
+        self.assertEqual(self.model._get_name(**name_data), 'Vinyl')
+        name_data.update({'format_size__size': ('LP', )})
+        self.assertEqual(self.model._get_name(**name_data), 'LP')
+
+
 class TestModelFormatSize(DataTestCase):
     
     model = _models.FormatSize
@@ -575,21 +542,22 @@ class TestModelHerausgeber(DataTestCase):
     
     model = _models.Herausgeber
     
-    @translation_override(language = None)
+    @translation_override(language=None)
     def test_get_name(self):
-        name_data = {'person___name':'Alice Test', 'organisation__name':'Testorga'}
-        expected = "Alice Test (Testorga)"
-        self.assertEqual(self.model._get_name(**name_data), expected)
-        
-        name_data = {'person___name':'Alice Test'}
-        expected = "Alice Test"
-        self.assertEqual(self.model._get_name(**name_data), expected)
-        
-        name_data = {'organisation__name':'Testorga'}
-        expected = "Testorga"
-        self.assertEqual(self.model._get_name(**name_data), expected)
-        
-        
+        test_data = [
+            ({'person___name': ('Alice Test', )}, "Alice Test"),
+            ({'organisation__name': ('Testorga', )}, "Testorga"),
+            (
+                {'person___name': ('Alice Test', ), 'organisation__name': ('Testorga', )},
+                "Alice Test (Testorga)"
+            ),
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+
 class TestModelInstrument(DataTestCase):
 
     model = _models.instrument
@@ -609,40 +577,35 @@ class TestModelLagerort(DataTestCase):
 
     model = _models.lagerort
 
-    @translation_override(language = None)
-    def test_get_name(self):        
-        # ort only
-        name_data = {'ort':'Testort'}
-        expected = 'Testort'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort only')
-        
-        # ort + regal
-        name_data.update({'regal':'Testregal'})
-        expected = 'Testregal (Testort)'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + regal')
-        
-        # ort + regal + fach
-        name_data.update({'fach':'12'})
-        expected = "Testregal-12 (Testort)"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + regal + fach')
-        
-        # ort + raum
-        name_data = {'ort':'Testort', 'raum':'Testraum'}
-        expected = 'Testraum (Testort)'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + raum')
-        
-        # ort + raum + regal
-        name_data.update({'regal':'Testregal'})
-        expected = 'Testraum-Testregal (Testort)'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + raum + regal')
-        
-        # ort + raum + regal + fach
-        name_data.update({'fach':'12'})
-        expected = "Testraum-Testregal-12 (Testort)"
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'ort + raum + regal + fach')
-        
-        
-        
+    @translation_override(language=None)
+    def test_get_name(self):
+        name_data = {'ort': ('Testort', )}
+        test_data = [
+            ({}, 'Testort'),
+            ({'regal': ('Testregal', )}, 'Testregal (Testort)'),
+            ({'fach': ('12', )}, "Testregal-12 (Testort)")
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+    @translation_override(language=None)
+    def test_get_name_with_raum(self):
+        name_data ={'ort': ('Testort', ), 'raum': ('Testraum', )}
+        test_data = [
+            ({}, 'Testraum (Testort)'),
+            ({'regal': ('Testregal', )}, 'Testraum-Testregal (Testort)'),
+            ({'fach': ('12', )}, "Testraum-Testregal-12 (Testort)")
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+
 class TestModelLand(DataTestCase):
     
     model = _models.land
@@ -691,49 +654,41 @@ class TestModelOrt(DataTestCase):
 
     model = _models.ort
         
-    @translation_override(language = None)
-    def test_get_name(self):        
-        # land only
-        name_data = {'land__land_name':'Deutschland'}
-        expected = 'Deutschland'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'land only')
-        
-        # land + bundesland
-        name_data.update({'land__code':'DE', 'bland__bland_name':'Hessen'})
-        expected = 'Hessen, DE'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'land + bundesland')
-        
-        # stadt + land
-        name_data.update({'stadt':'Kassel'})
-        expected = 'Kassel, DE'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'stadt + land')
-        
-        # stadt + land + bundesland
-        name_data.update({'bland__code':'HE'})
-        expected = 'Kassel, DE-HE'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'stadt + land + bundesland')
-  
+    @translation_override(language=None)
+    def test_get_name(self):
+        name_data = {'land__land_name': ('Deutschland', )}
+        test_data = [
+            ({}, 'Deutschland'),
+            ({'land__code': ('DE', ), 'bland__bland_name': ('Hessen', )}, 'Hessen, DE'),
+            ({'stadt': ('Kassel', )}, 'Kassel, DE'),
+            ({'bland__code': ('HE', )}, 'Kassel, DE-HE')
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+
 @tag("cn")       
 class TestModelPerson(DataTestCase):
 
     model = _models.person
 
-    @translation_override(language = None)
+    @translation_override(language=None)
     def test_get_name(self):
-        # no data given
-        name_data = {'vorname':'', 'nachname':''}
-        expected = 'No data for Person.'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'no data given')
+        test_data = [
+            ({'vorname': ('', )}, 'No data for Person.'),
+            ({'nachname': ('', )}, 'No data for Person.'),
+            ({'vorname': ('', ), 'nachname': ('', )}, 'No data for Person.'),
+            ({'vorname': ('', ), 'nachname': ('Test', )}, 'Test'),
+            ({'vorname': ('Beep', ), 'nachname': ('Boop', )}, 'Beep Boop')
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
-        # nachname only
-        name_data = {'vorname':'', 'nachname':'Test'}
-        expected = 'Test'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'nachname only')
-        
-        # vorname + nachname
-        name_data = {'vorname':'Beep', 'nachname':'Boop'}
-        expected = 'Beep Boop'
-        self.assertEqual(self.model._get_name(**name_data), expected, msg = 'vorname + nachname')
 
 class TestModelPlattenfirma(DataTestCase):
     

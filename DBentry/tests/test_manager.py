@@ -481,19 +481,20 @@ class TestCNQuerySet(DataTestCase):
         self.qs_obj2 = self.queryset.filter(pk=self.obj2.pk)
         # Do pending updates (_changed_flag set by signals, etc.)
         self.queryset._update_names()
-    
+
     def test_update_sets_changed_flag(self):
-        # update() should change the _changed_flag if it is NOT part of the update 
-        self.assertAllQSValuesList(self.queryset, '_changed_flag' , False)
-        self.queryset.update(beschreibung='Test')
-        self.assertAllQSValuesList(self.queryset, '_changed_flag' , True)
-        
+        # _changed_flag should be set to True if an update is done without
+        # _changed_flag as one of its arguments.
+        self.obj1.qs().update(beschreibung='Test')
+        values = self.queryset.values('_changed_flag').get(pk=self.obj1.pk)
+        self.assertTrue(values['_changed_flag'])
+
     def test_update_not_sets_changed_flag(self):
-        # update() should NOT change the _changed_flag if it is part of the update 
-        self.assertAllQSValuesList(self.queryset, '_changed_flag' , False)
-        self.queryset.update(_changed_flag=False)
-        self.assertAllQSValuesList(self.queryset, '_changed_flag' , False)
-        
+        # If _changed_flag is a part of an update, that value should be maintained.
+        self.obj1.qs().update(beschreibung='Test', _changed_flag=False)
+        values = self.queryset.values('_changed_flag').get(pk=self.obj1.pk)
+        self.assertFalse(values['_changed_flag'])
+
     def test_bulk_create_sets_changed_flag(self):
         # in order to update the created instances' names on their next query/instantiation, bulk_create must include _changed_flag == True
         new_obj = self.model(magazin=self.mag, beschreibung='My Unique Name', sonderausgabe=True)
@@ -502,56 +503,94 @@ class TestCNQuerySet(DataTestCase):
         self.assertAllQSValuesList(qs, '_changed_flag', True)
     
     def test_values_updates_name(self):
-        # values('_name') should return an up-to-date name
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertQSValues(self.qs_obj1, '_name', 'Testinfo')
-        self.assertQSValues(self.qs_obj1, '_changed_flag', False)
-        
+        # Calling values('_name') should cause a call to _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.values('_name'))
+            self.assertTrue(mocked_func.called)
+
     def test_values_not_updates_name(self):
-        # values(!'_name') should NOT update the name => _changed_flag remains True
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertQSValues(self.qs_obj1, '_changed_flag', True)
+        # Calling values() without '_name' should not cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.values('id'))
+            self.assertFalse(mocked_func.called)
     
     def test_values_list_updates_name(self):
-        # values_list('_name') should return an up-to-date name
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo')
-        self.assertQSValuesList(self.qs_obj1, '_changed_flag', False)
-        
+        # Calling values_list('_name') should cause a call to _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.values_list('_name'))
+            self.assertTrue(mocked_func.called)
+
     def test_values_list_not_updates_name(self):
-        # values_list(!'_name') should NOT update the name => _changed_flag remains True
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertQSValuesList(self.qs_obj1, '_changed_flag', True)
+        # Calling values_list() without '_name' should not cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.values_list('id'))
+            self.assertFalse(mocked_func.called)
 
     def test_only_updates_name(self):
-        # only('_name')/defer(!'_name') should return an up-to-date name
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertQSValuesList(self.qs_obj1.only('_name'), '_changed_flag', False)
-        self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo')
-        
-        self.qs_obj1.update(_changed_flag=True, beschreibung="Testinfo2")
-        self.assertQSValuesList(self.qs_obj1.defer('id'), '_changed_flag', False)
-        self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo2')
-        
+        # Calling only('_name') should cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.only('_name'))
+            self.assertTrue(mocked_func.called)
+
+    def test_only_not_updates_name(self):
+        # Calling only() without '_name' should not cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.only('id'))
+            self.assertFalse(mocked_func.called)
+
+    def test_defer_updates_name(self):
+        # Calling defer() without '_name' should cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.defer('id'))
+            self.assertTrue(mocked_func.called)
+
     def test_defer_not_updates_name(self):
-        # defer('_name')/only(!'_name') should NOT return an up-to-date name => _changed_flag remains True
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertQSValuesList(self.qs_obj1.defer('_name'), '_changed_flag', True)
-        self.assertQSValuesList(self.qs_obj1.only('id'), '_changed_flag', True)
-        
+        # Calling defer('_name') should not cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.defer('_name'))
+            self.assertFalse(mocked_func.called)
+
     def test_filter_updates_names(self):
-        # Make sure that .filter() updates and then searches with the updated name
-        self.assertFalse(self.qs_obj1.filter(_name='Testinfo').exists())
-        self.qs_obj1.update(_changed_flag=True, beschreibung='Testinfo', sonderausgabe=True)
-        self.assertTrue(self.qs_obj1.filter(_name='Testinfo').exists())
-        self.assertAllQSValuesList(self.qs_obj1, '_changed_flag' , False)
-        self.assertQSValuesList(self.qs_obj1, '_name', 'Testinfo')
-        
+        # Calling filter('_name') should cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.filter(_name='Test'))
+            self.assertTrue(mocked_func.called)
+
+    def test_update_names(self):
+        # Check the effects from calling _update_names.
+        # Disable the 'automatic' updating of names:
+        with patch.object(CNQuerySet, '_update_names'):
+            self.obj1.qs().update(
+                _changed_flag=True,
+                beschreibung='Testinfo',
+                sonderausgabe=True
+            )
+            self.obj2.qs().update(
+                _changed_flag=True,
+                beschreibung='Testinfo2',
+                sonderausgabe=True
+            )
+            # Check that the _name was not updated:
+            qs = self.queryset.values('_name')
+            self.assertNotEqual(qs.get(pk=self.obj1.pk)['_name'], 'Testinfo')
+            self.assertNotEqual(qs.get(pk=self.obj2.pk)['_name'], 'Testinfo2')
+        # values('_name') will call _update_names.
+        qs = self.queryset.values('_name')
+        self.assertEqual(qs.get(pk=self.obj1.pk)['_name'], 'Testinfo')
+        self.assertEqual(qs.get(pk=self.obj2.pk)['_name'], 'Testinfo2')
+
+    def test_filter_not_updates_names(self):
+        # Calling filter() without any arguments starting with '_name'
+        # should not cause a call of _update_names.
+        with patch.object(CNQuerySet, '_update_names') as mocked_func:
+            list(self.queryset.filter(beschreibung='Test'))
+            self.assertFalse(mocked_func.called)
+
     def test_update_names_num_queries_empty(self):
         self.assertAllQSValuesList(self.queryset, '_changed_flag' , False)
         with self.assertNumQueries(1):
             self.queryset._update_names()
-        
+
     def test_update_names_num_queries(self):
         # Should be six queries: 
         # - one from querying the existence of _changed_flag records,
@@ -561,7 +600,7 @@ class TestCNQuerySet(DataTestCase):
         self.queryset.update(_changed_flag=True)
         with self.assertNumQueries(6):
             self.queryset._update_names()
-            
+
     def test_num_queries(self):
         # 3 queries for each call of _update_names from only, filter and values_list + one query for the actual list
         with self.assertNumQueries(4):

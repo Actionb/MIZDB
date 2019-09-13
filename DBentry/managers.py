@@ -203,9 +203,19 @@ class CNQuerySet(MIZQuerySet):
         return super().values_list(*fields, **kwargs)
                 
     def _update_names(self):
-        if self.query.can_filter() and self.filter(_changed_flag=True).exists():    
+        """
+        Update the names of all rows of this queryset where _changed_flag is True.
+        """
+        if self.query.can_filter() and self.filter(_changed_flag=True).exists():
+            values = self.filter(
+                _changed_flag=True
+            ).values_dict(
+                *self.model.name_composing_fields,
+                include_empty=False,
+                flatten=False
+            )
             with transaction.atomic():
-                for pk, val_dict in self.filter(_changed_flag=True).values_dict(*self.model.name_composing_fields, flatten=True).items():
+                for pk, val_dict in values.items():
                     new_name = self.model._get_name(**val_dict)
                     self.order_by().filter(pk=pk).update(_name=new_name, _changed_flag=False)
     _update_names.alters_data = True
