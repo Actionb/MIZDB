@@ -32,8 +32,21 @@ class person(ComputedNameModel):
     
     @classmethod
     def _get_name(cls, **data):
-        name = "{} {}".format(data.get('vorname', ''), data.get('nachname', '')).strip()
-        return name or cls._name_default % {'verbose_name':cls._meta.verbose_name}
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+
+        Returns a name in the format '{vorname} {nachname}'.
+        """
+        vorname = nachname = ''
+        if 'vorname' in data:
+            vorname = data['vorname'][0]
+        if 'nachname' in data:
+            nachname = data['nachname'][0]
+        if vorname or nachname:
+            return "{} {}".format(vorname, nachname).strip()
+        return cls._name_default % {'verbose_name': cls._meta.verbose_name}
         
         
 class musiker(BaseModel): 
@@ -141,12 +154,30 @@ class autor(ComputedNameModel):
     
     @classmethod
     def _get_name(cls, **data):
-        kuerzel = data.get('kuerzel', '')
-        person_name = data.get('person___name', '')
-        if person_name == person._name_default % {'verbose_name':person._meta.verbose_name} or person_name == 'unbekannt': 
-            # person_name is a default value ('unbekannt' used to be the default for person__nachname)
-            person_name = ''
-            
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+
+        Returns a name in the format of either:
+            - '{person_name}' if no kuerzel is given
+            - '{kuerzel}' if no person name is given
+            - '{person_name} ({kuerzel})' if both are given
+        """
+        person_name = kuerzel = ''
+        if 'kuerzel' in data:
+            kuerzel = data['kuerzel'][0]
+        if 'person___name' in data:
+            person_name = data['person___name'][0]
+            # The person_name should not be a default value:
+            person_default = person._name_default % {
+                'verbose_name': person._meta.verbose_name
+            }
+            if person_name in (person_default, 'unbekannt'): 
+                # person_name is a default value:
+                # ('unbekannt' used to be the default for person__nachname)
+                person_name = ''
+
         if person_name:
             if kuerzel:
                 return "{} ({})".format(person_name, kuerzel)
@@ -206,34 +237,74 @@ class ausgabe(ComputedNameModel):
         
     @classmethod
     def _get_name(cls, **data):
-        # data provided by values_dict: { key: [value1, value2, ...], ... }
-        beschreibung = data.get('beschreibung', '')
-        beschreibung = concat_limit(beschreibung.split(), width = LIST_DISPLAY_MAX_LEN+5, sep=" ")
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+        """
+        beschreibung = ''
+        if 'beschreibung' in data:
+            beschreibung = concat_limit(
+                data['beschreibung'][0].split(),
+                width=LIST_DISPLAY_MAX_LEN+5,
+                sep=" "
+            )
         if data.get('sonderausgabe', False) and beschreibung:
+            # Special issues may be a bit... 'special' in their numerical values.
+            # Just use the 'beschreibung' for such an issue.
             return beschreibung
-        
-        jahre = sorted(data.get('ausgabe_jahr__jahr', []))
-        jahre = [str(jahr)[2:] if i else str(jahr) for i, jahr in enumerate(jahre)]
-        jahre = concat_limit(jahre, sep="/")
-        jahrgang = data.get('jahrgang', '')
-        
+
+        jahre = jahrgang = ''
+        if 'jahrgang' in data:
+            jahrgang = data['jahrgang'][0]
+        if 'ausgabe_jahr__jahr' in data:
+            # Concatenate the years given.
+            # Use four digits for the first year,
+            # use only the last two digits for the rest.
+            jahre = [
+                str(jahr)[2:] if i else str(jahr)
+                for i, jahr in enumerate(sorted(data['ausgabe_jahr__jahr']))
+            ]
+            jahre = concat_limit(jahre, sep="/")
         if not jahre:
+                # Use 'jahrgang' as a fallback or resort to 'k.A.'.
             if jahrgang:
                 jahre = "Jg. {}".format(jahrgang)
             else:
                 jahre = "k.A."
-                
-        e_datum = data.get('e_datum', '')
-        monat_ordering = ['Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
-        monate = sorted(
-            data.get('ausgabe_monat__monat__abk', []), 
-            key = lambda abk: monat_ordering.index(abk)+1 if abk in monat_ordering else 0
-        )
-        monate = concat_limit(monate, sep="/")
-        lnums = concat_limit(sorted(data.get('ausgabe_lnum__lnum', [])), sep="/", z=2)
-        nums = concat_limit(sorted(data.get('ausgabe_num__num', [])), sep="/", z=2)
-        merkmal = data.get('magazin__ausgaben_merkmal', '')
-        
+
+        e_datum = nums = lnums = monate = ''
+        if 'e_datum' in data:
+            e_datum = data['e_datum'][0]
+        if 'ausgabe_num__num' in data:
+            nums = concat_limit(
+                sorted(data['ausgabe_num__num']),
+                sep="/",
+                z=2
+            )
+        if 'ausgabe_lnum__lnum' in data:
+            lnums = concat_limit(
+                sorted(data['ausgabe_lnum__lnum']),
+                sep="/",
+                z=2
+            )
+        if 'ausgabe_monat__monat__abk' in data:
+            monat_ordering = [
+                'Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep',
+                'Okt', 'Nov', 'Dez'
+            ]
+            # Sort the month abbreviations according to the calendar.
+            monate = sorted(
+                data['ausgabe_monat__monat__abk'],
+                key=lambda abk: 
+                    monat_ordering.index(abk)+1 if abk in monat_ordering else 0
+            )
+            monate = concat_limit(monate, sep="/")
+        # 'ausgaben_merkmal' acts as an override to what attribute should make
+        # up the name. If that attribute is in data, use that directly.
+        merkmal = ''
+        if 'magazin__ausgaben_merkmal' in data:
+            merkmal = data['magazin__ausgaben_merkmal'][0]
         if merkmal:
             if  merkmal == 'e_datum' and e_datum:
                 return str(e_datum)
@@ -338,12 +409,13 @@ class magazin(BaseModel):
     MERKMAL_CHOICES = [('num', 'Nummer'), ('lnum', 'Lfd.Nummer'), ('monat', 'Monat'), ('e_datum', 'Ersch.Datum')]
     
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    erstausgabe = models.CharField(**CF_ARGS_B)
+    erstausgabe = models.CharField(**CF_ARGS_B)  # TODO: wofür?
     turnus = models.CharField(choices = TURNUS_CHOICES, default = 'u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name = 'Webpage', blank = True)
     ausgaben_merkmal = models.CharField('Ausgaben Merkmal', help_text = 'Das dominante Merkmal der Ausgaben', choices = MERKMAL_CHOICES, **CF_ARGS_B)
     fanzine = models.BooleanField('Fanzine', default = False)
     issn = ISSNField('ISSN', blank = True) #NOTE: implement this as reverse foreign relation so one magazin can have multiple ISSN numbers?
+    # TODO: accept EAN-13 and issn-7
     
     beschreibung = models.TextField(blank = True, help_text = 'Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank = True, help_text ='Kommentare für Archiv-Mitarbeiter')
@@ -408,14 +480,30 @@ class ort(ComputedNameModel):
         
     @classmethod
     def _get_name(cls, **data):
-        stadt = data.get('stadt', '')
-        bundesland = data.get('bland__bland_name', '')
-        bundesland_code = data.get('bland__code', '')
-        land = data.get('land__land_name', '')
-        land_code = data.get('land__code', '')
-        
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+
+        Returns a name in the format of either:
+            - '{stadt}, {a combination of bundesland_code and land_code}'
+            - '{stadt}, {land_code}'
+            - '{bundesland}, {land_code}'
+            - '{land_name}'
+        """
+        stadt = bundesland = bundesland_code = land = land_code = ''
+        if 'stadt' in data:
+            stadt = data['stadt'][0]
+        if 'bland__bland_name' in data:
+            bundesland = data['bland__bland_name'][0]
+        if 'bland__code' in data:
+            bundesland_code = data['bland__code'][0]
+        if 'land__land_name' in data:
+            land = data['land__land_name'][0]
+        if 'land__code' in data:
+            land_code = data['land__code'][0]
+
         rslt_template = "{}, {}"
-        
         if stadt:
             if bundesland_code:
                 codes = land_code + '-' + bundesland_code
@@ -609,8 +697,21 @@ class Herausgeber(ComputedNameModel):
     
     @classmethod
     def _get_name(cls, **data):
-        person = data.get('person___name', '')
-        organisation = data.get('organisation__name', '')
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+
+        Returns a name in the format of either:
+            - '{person} ({organisation})'
+            - '{person}'
+            - '{organisation}'
+        """
+        person = organisation = ''
+        if 'person___name' in data:
+            person = data['person___name'][0]
+        if 'organisation__name' in data:
+            organisation = data['organisation__name'][0]
         if person:
             if organisation:
                 return "{} ({})".format(person, organisation)
@@ -1039,11 +1140,25 @@ class lagerort(ComputedNameModel):
         
     @classmethod
     def _get_name(cls, **data):
-        ort = data.get('ort')
-        raum = data.get('raum', '')
-        regal = data.get('regal', '')
-        fach = data.get('fach', '')
-        
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+
+        Returns a name in the format of either:
+            - '{a combination of fach/regal/raum} ({ort})'
+            - '{ort}'
+        """
+        ort = raum = regal = fach = ''
+        if 'ort' in data:
+            ort = data['ort'][0]
+        if 'raum' in data:
+            raum = data['raum'][0]
+        if 'regal' in data:
+            regal = data['regal'][0]
+        if 'fach' in data:
+            fach = data['fach'][0]
+
         if regal and fach:
             regal = "{}-{}".format(regal, fach)
         if raum:
@@ -1170,25 +1285,26 @@ class Format(ComputedNameModel):
         
     @classmethod
     def _get_name(cls, **data):
-        if data.get('anzahl', 0) > 1:
-            qty = str(data.get('anzahl')) + 'x'
-        else:
-            qty = ''
-        
-        if data.get('format_size__size'):
-            format = str(data.get('format_size__size'))
-        else:
-            format = str(data.get('format_typ__typ'))
-            
-        if data.get('tag__tag'):
-            tags = ", " + concat_limit(sorted(data.get('tag__tag')))
-        else:
-            tags = ''
-            
-        if data.get('channel'):
-            channel = ", " + data.get('channel')
-        else:
-            channel = ''
+        """
+        Construct a name from the 'data' given.
+        'data' is a mapping of field_path: tuple of values provided by
+        MIZQuerySet.values_dict.
+
+        Returns a name in the format:
+            '{quantity (if > 1)} {format} {tags} {channel}'
+        where 'format' is either format_size or format_typ.
+        """
+        qty = format = tags = channel = ''
+        if 'anzahl' in data and data['anzahl'][0] > 1:
+            qty = str(data['anzahl'][0]) + 'x'
+        if 'format_size__size' in data:
+            format = str(data['format_size__size'][0])
+        elif 'format_typ__typ' in data:
+            format = str(data['format_typ__typ'][0])
+        if'tag__tag' in data:
+            tags = ", " + concat_limit(sorted(data['tag__tag']))
+        if 'channel' in data:
+            channel = ", " + data['channel'][0]
         return qty + format + tags + channel
         
 class NoiseRed(BaseModel):
