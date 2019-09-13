@@ -280,26 +280,20 @@ class ComputedNameModel(BaseModel):
             # - an update is not forced
             return False
 
-        if not '_changed_flag' in deferred:
+        if '_changed_flag' not in deferred:
             # _changed_flag was not deferred;
             # self has access to it without calling refresh_from_db.
             changed_flag = self._changed_flag
         else:
             # Avoid calling refresh_from_db by fetching the value directly
             # from the database:
-            changed_flag =  self._meta.model.objects.values_list(
+            changed_flag = self._meta.model.objects.values_list(
                 '_changed_flag', flat=True
             ).get(pk=self.pk)
 
         if force_update or changed_flag:
             # An update was scheduled or forced for this instance.
-            if not self.name_composing_fields:
-                #TODO: this exception is never caught
-                raise AttributeError(
-                    "You must specify the fields that make up the name by "
-                    "listing them in name_composing_fields."
-                )
-            name_data =  self.qs().values_dict(
+            name_data = self.qs().values_dict(
                 *self.name_composing_fields, include_empty=False, flatten=False
             )
             current_name = self._get_name(**name_data[self.pk])
