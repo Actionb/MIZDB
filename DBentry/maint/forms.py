@@ -3,10 +3,10 @@ from django.apps import apps
 
 from DBentry import utils
 from DBentry.base import models as base_models
-from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
+from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin, MinMaxRequiredFormMixin
 
 
-class DuplicateFieldsSelectForm(forms.Form):
+class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     """
     A form to select the model fields that are going to be used in the search
     for duplicates.
@@ -16,8 +16,7 @@ class DuplicateFieldsSelectForm(forms.Form):
         'm2m': concrete model fields that are ManyToManyFields
         'reverse': reverse ManyToOne relations to this model
     The choices for each MultipleChoiceField are created with the function
-    'get_dupe_fields_for_model' and are set after initialization
-    (see duplicatefieldsform_factory).
+    'get_dupe_fields_for_model'.
     """
 
     base = forms.MultipleChoiceField(
@@ -32,12 +31,21 @@ class DuplicateFieldsSelectForm(forms.Form):
         widget = forms.CheckboxSelectMultiple,
         label = ''
     )
-    help_text = 'Wähle die Felder, '
-    'deren Werte in die Suche miteinbezogen werden sollen.'
+    minmax_required = [{'min': 1, 'fields': ['base', 'm2m', 'reverse']}]
+    min_error_message = "Bitte mindestens 1 Häkchen setzen."
+    help_text = ('Wähle die Felder, '
+    'deren Werte in die Suche miteinbezogen werden sollen.')
 
     class Media:
         css = {'all':  ['admin/css/dupes.css']}
         js = ['admin/js/collapse.js']
+
+    def __init__(self, *, model, **kwargs):
+        super().__init__(**kwargs)
+        choices = get_dupe_fields_for_model(model)
+        self.fields['base'].choices = choices['base']
+        self.fields['m2m'].choices = choices['m2m']
+        self.fields['reverse'].choices = choices['reverse']
 
 
 def get_dupe_fields_for_model(model):
@@ -89,44 +97,32 @@ def get_dupe_fields_for_model(model):
     return {'base': base, 'm2m': m2m, 'reverse': groups}
 
 
-def duplicatefieldsform_factory(model, selected_dupe_fields):
-    """
-    Instantiate the DuplicateFieldsSelectForm and set the choices for its fields.
-
-    The form's initial data is derived from field names provided in argument
-    'selected_dupe_fields'.
-    """
-    choices = get_dupe_fields_for_model(model)
-    initial = {
-            'base': [f for f in selected_dupe_fields if f in choices['base']],
-            'm2m': [f for f in selected_dupe_fields if f in choices['m2m']],
-            'reverse': [f for f in selected_dupe_fields if f in choices['reverse']],
-        }
-    form = DuplicateFieldsSelectForm(initial=initial)
-    # While DynamicChoiceFormMixin could be used to streamline the setting of
-    # choices, this here is still quite a bit more straight forward.
-    form.fields['base'].choices = choices['base']
-    form.fields['m2m'].choices = choices['m2m']
-    form.fields['reverse'].choices = choices['reverse']
-    return form
-
-
 class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
-    """A form to select the model that is checked for duplicates."""
+    """
+    A form to select a model with.
+
+    The choices of the only formfield 'model_select' are the model names and
+    their verbose names as returned by apps.get_models, filtered with filters
+    provided by the form instance's get_model_filters method.
+    The attribute 'exclude_models' is a list of model names that are to be
+    filtered out.
+    """
 
     model_select = forms.ChoiceField(
         initial='',
         label='Bitte das Modell auswählen'
     )
-    # Exclude some models that would be nonsensical for a duplicates search.
-    _model_name_excludes = [
+    # Exclude some models that are a bit... different.
+    exclude_models = [
         'Favoriten', 'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat',
     ]
 
-    def __init__(self, model_filters=None, *args, **kwargs):
-        choices = {'model_select': self.get_model_list(model_filters)}
+    def __init__(self, exclude=None, app_label='DBentry', *args, **kwargs):
+        if exclude:
+            self.exclude_models = exclude
+        self.app_label = app_label
+        choices = {'model_select': self.get_model_list()}
         super().__init__(choices=choices, *args, **kwargs)
-
 
     def get_model_filters(self):
         """
@@ -140,16 +136,15 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
                 not issubclass(model, base_models.BaseM2MModel)),
             # <model>_alias tables can contain as many duplicates as they want.
             lambda model: not model._meta.model_name.endswith('_alias'),
-            lambda model: model._meta.model_name not in self._model_name_excludes
+            lambda model: model._meta.model_name not in self.exclude_models
         ]
 
-    def get_model_list(self, filters=None):
+    def get_model_list(self):
         """Return the choices for the 'model_select' field."""
-        if filters is None:
-            filters = self.get_model_filters()
+        filters = self.get_model_filters()
         choices = [
             (model._meta.model_name, model._meta.verbose_name)
-            for model in utils.nfilter(filters, apps.get_models('DBentry'))
+            for model in utils.nfilter(filters, apps.get_models(self.app_label))
         ]
         # Sort the choices by verbose_name.
         return sorted(choices, key=lambda tpl: tpl[1])
