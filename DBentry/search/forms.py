@@ -1,3 +1,5 @@
+# TODO: have 'and'/'or' checkboxes for SelectMultiple
+from collections import OrderedDict
 
 from django import forms
 from django.core import exceptions
@@ -5,23 +7,22 @@ from django.db.models import lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 from django.utils.datastructures import MultiValueDict
-from collections import OrderedDict
 
 from DBentry.ac.widgets import make_widget
 from DBentry.forms import MIZAdminFormMixin
+from DBentry.search import utils as search_utils
 
-from .utils import get_dbfield_from_path, strip_lookups_from_path, validate_lookups
-
-#TODO: have 'and'/'or' checkboxes for SelectMultiple
 
 class RangeWidget(forms.MultiWidget):
+    """A MultiWidget that takes one widget and duplicates it"""
+
     class Media:
         css = {
-            'all' : ('admin/css/rangewidget.css', )
+            'all': ('admin/css/rangewidget.css', )
         }
     template_name = 'rangewidget.html'
 
-    def __init__(self, widget, attrs = None):
+    def __init__(self, widget, attrs=None):
         super().__init__(widgets = [widget]*2, attrs = attrs)
 
     def decompress(self, value):
@@ -29,36 +30,45 @@ class RangeWidget(forms.MultiWidget):
             return value.split(',')
         return [None, None]
 
+
 class RangeFormField(forms.MultiValueField):
     """
-    A wrapper around a formfield that duplicates the field for use 
+    A wrapper around a formfield that duplicates the field for use
     in a __range lookup.
     """
 
     widget = RangeWidget
 
-    def __init__(self, formfield, require_all_fields = False, **kwargs):
+    def __init__(self, formfield, require_all_fields=False, **kwargs):
         if not kwargs.get('widget', None):
             kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
-        super().__init__(fields = [formfield]*2, require_all_fields = require_all_fields, **kwargs)
+        super().__init__(
+            fields=[formfield]*2,
+            require_all_fields=require_all_fields,
+            **kwargs
+        )
 
     def get_initial(self, initial, name):
         widget_data = self.widget.value_from_datadict(initial, None, name)
         if isinstance(self.fields[0], forms.MultiValueField):
             # The sub fields are MultiValueFields themselves,
             # let them figure out the correct values for the given data.
-            return [self.fields[0].compress(widget_data[0]), self.fields[1].compress(widget_data[1])]
+            return [
+                self.fields[0].compress(widget_data[0]),
+                self.fields[1].compress(widget_data[1])
+            ]
         else:
             return widget_data
 
     def clean(self, value):
         return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
 
+
 class SearchForm(forms.Form):
     class Media:
         css = {
-            'all' : ('admin/css/forms.css', 'admin/css/search_form.css')
+            'all': ('admin/css/forms.css', 'admin/css/search_form.css')
         }
         js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
 
@@ -67,16 +77,19 @@ class SearchForm(forms.Form):
         self.initial = self.prepare_initial(self.initial)
 
     def get_initial_for_field(self, field, field_name):
-        if not field_name in self.initial and isinstance(field, forms.MultiValueField):
+        if (field_name not in self.initial and
+                isinstance(field, forms.MultiValueField)):
             # Only the individual subfields show up in a request payload.
             if isinstance(field, RangeFormField):
                 return field.get_initial(self.initial, field_name)
-            widget_data = field.widget.value_from_datadict(self.initial, None, field_name)
+            widget_data = field.widget.value_from_datadict(
+                self.initial, None, field_name
+            )
             return field.compress(widget_data)
-        return super().get_initial_for_field(field, field_name)        
+        return super().get_initial_for_field(field, field_name)
 
     def prepare_initial(self, initial):
-        # initial may contain lists of values; 
+        # initial may contain lists of values;
         # keep the lists with length > 1 (for SelectMultiple) but flatten all others
         cleaned = {}
         if isinstance(initial, MultiValueDict):
@@ -104,7 +117,9 @@ class SearchForm(forms.Form):
         for field_name, value in self.cleaned_data.items():
             formfield = self.fields[field_name]
             if self.lookups.get(field_name, False):
-                param_key = "%s__%s" % (field_name, LOOKUP_SEP.join(self.lookups[field_name]))
+                param_key = "%s__%s" % (
+                    field_name, LOOKUP_SEP.join(self.lookups[field_name])
+                )
             else:
                 param_key = field_name
             param_value = value
@@ -114,7 +129,7 @@ class SearchForm(forms.Form):
                 start_empty = start in formfield.empty_values
                 end_empty = end in formfield.empty_values
                 if start_empty and end_empty:
-                # start and end are empty: just skip it.
+                    # start and end are empty: just skip it.
                     continue
                 elif not start_empty and end_empty:
                     # start but no end: exact lookup for start
@@ -122,23 +137,29 @@ class SearchForm(forms.Form):
                     param_value = start
                 elif start_empty and not end_empty:
                     # no start but end: lte lookup for end
-                    param_key = field_name + LOOKUP_SEP + self.range_upper_bound.lookup_name
+                    param_key = "".join(
+                        [field_name, LOOKUP_SEP, self.range_upper_bound.lookup_name]
+                    )
                     param_value = end
-            elif isinstance(formfield, forms.BooleanField) and \
-                not isinstance(formfield, forms.NullBooleanField) and \
-                not value:
-                # value is False on a simple BooleanField, don't include it in the filter parameters.
-                continue    
-            elif value in formfield.empty_values or \
-                isinstance(value, QuerySet) and not value.exists():
+            elif (isinstance(formfield, forms.BooleanField) and
+                    not isinstance(formfield, forms.NullBooleanField) and
+                    not value):
+                # value is False on a simple BooleanField;
+                # don't include it in the filter parameters.
+                continue
+            elif (value in formfield.empty_values or
+                    isinstance(value, QuerySet) and
+                    not value.exists()):
                 # Dont want empty values as filter parameters!
                 continue
 
-            params[param_key] = param_value 
+            params[param_key] = param_value
         return params
+
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     pass
+
 
 class SearchFormFactory:
 
@@ -154,29 +175,31 @@ class SearchFormFactory:
         return []
 
     def resolve_to_dbfield(self, model, field_path):
-        return get_dbfield_from_path(model, field_path)
+        return search_utils.get_dbfield_from_path(model, field_path)
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         # It's a search form, nothing is required!
         # Also disable the help_texts.
         defaults = {'required': False, 'help_text': None}
-        if db_field.is_relation and kwargs.get('widget', None) is None: 
+        if db_field.is_relation and kwargs.get('widget', None) is None:
             # Create a dal autocomplete widget
             widget_opts = {
-                'model': db_field.related_model, 'multiple': db_field.many_to_many, 
-                'wrap': False, 'can_add_related': False, 
+                'model': db_field.related_model, 'multiple': db_field.many_to_many,
+                'wrap': False, 'can_add_related': False,
             }
             if kwargs.get('forward', None) is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             defaults['widget'] = make_widget(**widget_opts)
         return db_field.formfield(**{**defaults, **kwargs})
 
-    def get_search_form(self, model, fields = None, form = None, formfield_callback = None, 
-        widgets = None, localized_fields = None, labels = None, help_texts = None, 
-        error_messages = None, field_classes = None, forwards = None):
+    def get_search_form(
+            self, model, fields=None, form=None, formfield_callback=None,
+            widgets=None, localized_fields=None, labels=None, help_texts=None,
+            error_messages=None, field_classes=None, forwards=None
+            ):
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
-        if not callable(formfield_callback): 
+        if not callable(formfield_callback):
             raise TypeError('formfield_callback must be a function or callable')
 
         # Create the formfields.
@@ -185,17 +208,17 @@ class SearchFormFactory:
         for path in (fields or []):
             try:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
-                validate_lookups(db_field, lookups)
+                search_utils.validate_lookups(db_field, lookups)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError):
                 continue
 
             formfield_kwargs = {}
             if widgets and path in widgets:
                 formfield_kwargs['widget'] = widgets[path]
-            if localized_fields == forms.models.ALL_FIELDS \
-                or (localized_fields and path in localized_fields):
+            if (localized_fields == forms.models.ALL_FIELDS or
+                    (localized_fields and path in localized_fields)):
                 formfield_kwargs['localize'] = True
-            if labels and path in labels: 
+            if labels and path in labels:
                 formfield_kwargs['label'] = labels[path]
             if help_texts and path in help_texts:
                 formfield_kwargs['help_text'] = help_texts[path]
@@ -206,11 +229,13 @@ class SearchFormFactory:
             if forwards and path in forwards:
                 formfield_kwargs['forward'] = forwards[path]
 
-            formfield_name = strip_lookups_from_path(path, lookups)
+            formfield_name = search_utils.strip_lookups_from_path(path, lookups)
 
             formfield = formfield_callback(db_field, **formfield_kwargs)
             if self.range_lookup.lookup_name in lookups:
-                attrs[formfield_name] = RangeFormField(formfield, required = False, **formfield_kwargs)
+                attrs[formfield_name] = RangeFormField(
+                    formfield, required = False, **formfield_kwargs
+                )
             else:
                 attrs[formfield_name] = formfield
 
@@ -224,5 +249,6 @@ class SearchFormFactory:
         attrs['range_upper_bound'] = self.range_upper_bound
         form_class_name = '%sSearchForm' % model._meta.model_name.capitalize()
         return type(form_class_name, (base_form, ), attrs)
+
 
 searchform_factory = SearchFormFactory()
