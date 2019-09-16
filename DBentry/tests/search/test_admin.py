@@ -138,7 +138,17 @@ class TestAdminMixin(AdminTestCase):
                                 self.assertEqual(request.GET.getlist(lookup), value)
                             else:
                                 self.assertEqual(request.GET[lookup], value)
-                            
+
+    def test_get_changeform_initial_data(self):
+        # Assert that data from the search form (via the '_changelist_filters'
+        # query arg) is added to a changeform's initial data.
+        request_data = {'_changelist_filters': 'datum_0_0=2019&datum_0_2=1&datum_0_1=1'}
+        response = self.client.get(path=self.add_path, data=request_data)
+        add_form = response.context['adminform'].form
+        self.assertIn('datum', add_form.initial)
+        expected = PartialDate(2019, 1, 1)
+        self.assertEqual(add_form.initial['datum'], expected)
+
 class TestSearchFormChangelist(AdminTestCase):
     
     model = _models.bildmaterial

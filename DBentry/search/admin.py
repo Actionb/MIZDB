@@ -77,16 +77,14 @@ class AdminSearchFormMixin(object):
         initial = super().get_changeform_initial_data(request)
         if '_changelist_filters' not in initial or not initial['_changelist_filters']:
             return initial
-
         changelist_filters = QueryDict(initial['_changelist_filters'])
         if self.has_search_form():
             # Derive initial values directly from the processed search form data.
             form = self.get_search_form(data=changelist_filters)
             changelist_filters = form.get_filters_params()
-
-        # let the intended initial overwrite the filters
+        # Let the intended initial overwrite the filters:
         initial = {**changelist_filters, **initial}
-        return changelist_filters
+        return initial
 
     def _response_post_save(self, request, obj):
         """
