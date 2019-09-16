@@ -232,6 +232,8 @@ class ChangelistSearchFormMixin(object):
 
     def get_filters_params(self, params=None):
         """Replace the default filter params with those from the search form."""
-        if self.request.method == 'POST':
-            return {}
-        return self.get_search_form_filters(params or self.request.GET)
+# TODO: why even bother differentiating between POST and GET?
+#        if self.request.method == 'POST':
+#            return {}
+        params = super().get_filters_params(params or self.request.GET)
+        return self.get_search_form_filters(params)
