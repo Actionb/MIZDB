@@ -9,7 +9,7 @@ from django.utils.translation import override as translation_override
 import DBentry.admin as _admin
 import DBentry.models as _models
 
-from DBentry.sites import MIZAdminSite
+from DBentry.sites import MIZAdminSite, miz_site
 from DBentry.utils import get_model_fields
 from DBentry.factory import make, modelfactory_factory
 from DBentry.changelist import MIZChangeList, AusgabeChangeList
@@ -1077,9 +1077,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertNotIn(self.musiker, self.obj1.musiker.all())
         
 class TestAdminSite(UserTestCase):
-    
-    site = MIZAdminSite()
-    
+
     def test_app_index(self):
         response = self.client.get('/admin/DBentry/')
         self.assertEqual(response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__)
@@ -1089,47 +1087,46 @@ class TestAdminSite(UserTestCase):
         
     def test_index_DBentry(self):
         request = self.client.get('/admin/').wsgi_request
-        response = self.site.index(request)
+        response = miz_site.index(request)
         app_list = response.context_data['app_list']
         
-        # check if there are two 'categories' (fake apps) for app DBentry (app_list was extended by two new app_dicts)
+        # Check for the three categories (fake apps) on the index page.
         app_names = [d.get('name','') for d in app_list]
-        self.assertTrue('Archivgut' in app_names)
-        self.assertTrue('Stammdaten' in app_names)
-        self.assertTrue('Sonstige' in app_names)
+        for category in ['Archivgut', 'Stammdaten', 'Sonstige']:
+            with self.subTest():
+                self.assertIn(category, app_names)
         
     def test_index_admintools(self):
         # TODO: move the import
         # TODO: this only tests if the category 'admintools' appears on the index
         # not that the link is displayed correctly (permissions, etc.)
+        site = MIZAdminSite()
         from DBentry.bulk.views import BulkAusgabe
         tool = BulkAusgabe
-        self.site.register_tool(
+        site.register_tool(
             tool,
             url_name='bulk_ausgabe',
             index_label='Test',
             superuser_only=False,
         )
-        
         request = self.client.get('/admin/').wsgi_request
-        response = self.site.index(request)
-        
+        response = site.index(request)
         self.assertTrue('admintools' in response.context_data)
         
     def test_get_admin_model(self):
         expected_model_admin = _admin.ArtikelAdmin
-        self.assertIsInstance(self.site.get_admin_model(_models.artikel), expected_model_admin)
-        self.assertIsInstance(self.site.get_admin_model('DBentry.artikel'), expected_model_admin)
-        self.assertIsNone(self.site.get_admin_model('BEEP.BOOP'))
+        self.assertIsInstance(miz_site.get_admin_model(_models.artikel), expected_model_admin)
+        self.assertIsInstance(miz_site.get_admin_model('DBentry.artikel'), expected_model_admin)
+        self.assertIsNone(miz_site.get_admin_model('BEEP.BOOP'))
 
     def test_changelist_availability(self):
         from django.urls import reverse
-        for model in self.site._registry:
+        for model in miz_site._registry:
             opts = model._meta
             with self.subTest(model_name = opts.model_name):
                 path = reverse(
                     "%s:%s_%s_changelist" % 
-                    (self.site.name, opts.app_label, opts.model_name)
+                    (miz_site.name, opts.app_label, opts.model_name)
                 )
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path = path, user = self.super_user)
