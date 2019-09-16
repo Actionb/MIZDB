@@ -21,7 +21,7 @@ def get_fields_and_lookups_from_path(model, field_path):
             lookups.append(path.pop(-1))
             path = LOOKUP_SEP.join(path)
     return fields, list(reversed(lookups))
-    
+
 def get_dbfield_from_path(model, field_path):
     """
     Returns the final, concrete target field of a field path and the lookups used on that path.
@@ -36,7 +36,7 @@ def get_dbfield_from_path(model, field_path):
         # 'db_field' is a relation object.
         raise exceptions.FieldError("Reverse relations not supported.")
     return db_field, lookups
-    
+
 def validate_lookups(db_field, lookups):
     """
     Checks a list of lookups for validity for a given db field.
