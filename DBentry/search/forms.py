@@ -14,7 +14,10 @@ from DBentry.search import utils as search_utils
 
 
 class RangeWidget(forms.MultiWidget):
-    """A MultiWidget that takes one widget and duplicates it"""
+    """
+    A MultiWidget that takes one widget and duplicates it for the purposes
+    of __range lookups.
+    """
 
     class Media:
         css = {
@@ -23,9 +26,14 @@ class RangeWidget(forms.MultiWidget):
     template_name = 'rangewidget.html'
 
     def __init__(self, widget, attrs=None):
-        super().__init__(widgets = [widget]*2, attrs = attrs)
+        super().__init__(widgets=[widget]*2, attrs=attrs)
 
-    def decompress(self, value):
+    def decompress(self, value):  # TODO: docstring
+        # What is value? Where does it come from?
+        # Why is it okay to assume it's a string?
+        # Why is it okay to assume it only contains one comma?
+        # decompress is only called in get_context which is only used to
+        # render the widget.
         if value:
             return value.split(',')
         return [None, None]
@@ -33,14 +41,14 @@ class RangeWidget(forms.MultiWidget):
 
 class RangeFormField(forms.MultiValueField):
     """
-    A wrapper around a formfield that duplicates the field for use
-    in a __range lookup.
+    A MultiValueField wrapper around a formfield that duplicates the field for
+    use in a __range lookup (start, end).
     """
 
     widget = RangeWidget
 
     def __init__(self, formfield, require_all_fields=False, **kwargs):
-        if not kwargs.get('widget', None):
+        if not kwargs.get('widget'):
             kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
         super().__init__(
@@ -62,10 +70,28 @@ class RangeFormField(forms.MultiValueField):
             return widget_data
 
     def clean(self, value):
+        """Delegate cleaning to the clean method of each field."""
         return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
 
 
 class SearchForm(forms.Form):
+    """
+    Base form for the changelist search form.
+
+    This form class is the default base class for searchform_factory.
+    It adds the method 'get_filters_params' that transforms the form's cleaned
+    data into valid queryset filter() keyword arguments.
+
+    Attributes:
+        - range_upper_bound: the lookup class that will be used when
+            a 'start' value is not provided for a range lookup.
+            defaults to: django.db.models.lookups.LessThanOrEqual
+    The factory adds the following attribute:
+        - lookups: mapping of formfield_name: list of valid lookups
+    """
+
+    range_upper_bound = django_lookups.LessThanOrEqual
+
     class Media:
         css = {
             'all': ('admin/css/forms.css', 'admin/css/search_form.css')
@@ -76,6 +102,9 @@ class SearchForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.initial = self.prepare_initial(self.initial)
 
+# FIXME: get_initial_for_field and prepare_initial seem pointless:
+# where is a search form initialized with initial data?
+# The changelist view only passes 'data'.
     def get_initial_for_field(self, field, field_name):
         if (field_name not in self.initial and
                 isinstance(field, forms.MultiValueField)):
@@ -83,7 +112,7 @@ class SearchForm(forms.Form):
             if isinstance(field, RangeFormField):
                 return field.get_initial(self.initial, field_name)
             widget_data = field.widget.value_from_datadict(
-                self.initial, None, field_name
+                data=self.initial, files=None, name=field_name
             )
             return field.compress(widget_data)
         return super().get_initial_for_field(field, field_name)
@@ -105,9 +134,8 @@ class SearchForm(forms.Form):
 
     def get_filters_params(self):
         """
-        Returns a dict of queryset filters based on the form's cleaned_data
+        Return a dict of queryset filters based on the form's cleaned_data
         to filter the changelist with.
-
         Adds any field specific lookups and clears 'empty' values.
         """
         params = {}
@@ -158,36 +186,53 @@ class SearchForm(forms.Form):
 
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
+    """A search form that includes django media and supports fieldsets."""
+
     pass
 
 
 class SearchFormFactory:
-
-    range_lookup = django_lookups.Range
-    range_upper_bound = django_lookups.LessThanOrEqual
+    """
+    Helper object around the central method 'get_search_form' to facilitate
+    building a form class for changelist filtering.
+    """
 
     def __call__(self, *args, **kwargs):
         return self.get_search_form(*args, **kwargs)
 
     def get_default_lookup(self, formfield):
+        """Return default lookups for a given formfield instance."""
         if isinstance(formfield.widget, forms.SelectMultiple):
             return ['in']
         return []
 
     def resolve_to_dbfield(self, model, field_path):
+        """
+        Follow the given 'field_path' from 'model' and return the final concrete
+        model field along the path and the path's remainder (lookups).
+        Raises FieldDoesNotExist if the field_path does not resolve to an
+        existing model field.
+        Raises FieldError if the field_path results in a reverse relation.
+        """
         return search_utils.get_dbfield_from_path(model, field_path)
 
     def formfield_for_dbfield(self, db_field, **kwargs):
+        """
+        Create a formfield for the given model field 'db_field' using the
+        keyword arguments provided.
+        If no widget is provided and the field is a relation, a dal widget
+        will be created.
+        """
         # It's a search form, nothing is required!
         # Also disable the help_texts.
         defaults = {'required': False, 'help_text': None}
-        if db_field.is_relation and kwargs.get('widget', None) is None:
-            # Create a dal autocomplete widget
+        if db_field.is_relation and 'widget' not in kwargs:
+            # Create a dal autocomplete widget:
             widget_opts = {
                 'model': db_field.related_model, 'multiple': db_field.many_to_many,
                 'wrap': False, 'can_add_related': False,
             }
-            if kwargs.get('forward', None) is not None:
+            if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             defaults['widget'] = make_widget(**widget_opts)
         return db_field.formfield(**{**defaults, **kwargs})
@@ -195,8 +240,35 @@ class SearchFormFactory:
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
             widgets=None, localized_fields=None, labels=None, help_texts=None,
-            error_messages=None, field_classes=None, forwards=None
+            error_messages=None, field_classes=None,
+            forwards=None,
+            range_lookup=django_lookups.Range,
             ):
+        """
+        Create and return a search form class for a given model.
+
+        In regards to the creation of the formfields, this method works quite
+        the same way as the method that creates the formfields for a ModelForm:
+        django.forms.models.fields_for_model.
+        Most arguments to get_search_form fulfill the same purposes as those
+        to fields_for_model.
+        One difference is that the collection 'fields' may contain field_paths
+        to other models ('foo__bar') and/or lookups ('foo__contains').
+
+        Any lookups that are valid lookups for the model field are stored in a
+        mapping, called 'lookups', of formfield_name: lookups which is attached
+        to resulting form class. This is done to allow lookups in admin that are
+        not whitelisted as a list_filter (see: ModelAdmin.lookup_allowed).
+        If the lookup (or parts of it) is a range lookup a RangeFormField is
+        automatically created, wrapping the default formfield class for that
+        formfield. If no lookups are included in the field_path, a default
+        lookup will be retrieved from get_default_lookup().
+
+        Additional arguments.
+            - forwards: a mapping of formfield_name: dal forwards
+            - range_lookup: the lookup class whose lookup_name is used to
+                recognize range lookups.
+        """
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback):
@@ -210,6 +282,9 @@ class SearchFormFactory:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
                 search_utils.validate_lookups(db_field, lookups)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError):
+                # Either the field_path does not end a model field
+                # or it ended in a reverse relation
+                # or a lookup used was invalid.
                 continue
 
             formfield_kwargs = {}
@@ -228,25 +303,24 @@ class SearchFormFactory:
                 formfield_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
                 formfield_kwargs['forward'] = forwards[path]
-
+            # Use the path stripped of all lookups as the formfield's name.
             formfield_name = search_utils.strip_lookups_from_path(path, lookups)
-
             formfield = formfield_callback(db_field, **formfield_kwargs)
-            if self.range_lookup.lookup_name in lookups:
+            if range_lookup.lookup_name in lookups:
+                # A range lookup is used;
+                # wrap the formfield in a RangeFormField.
                 attrs[formfield_name] = RangeFormField(
-                    formfield, required = False, **formfield_kwargs
+                    formfield, required=False, **formfield_kwargs
                 )
             else:
                 attrs[formfield_name] = formfield
-
+            # Add the lookups used to the lookup_mapping for this formfield.
             if not lookups:
                 lookups = self.get_default_lookup(formfield)
             lookup_mapping[formfield_name] = lookups
 
         base_form = form or SearchForm
         attrs['lookups'] = lookup_mapping
-        attrs['range_lookup'] = self.range_lookup
-        attrs['range_upper_bound'] = self.range_upper_bound
         form_class_name = '%sSearchForm' % model._meta.model_name.capitalize()
         return type(form_class_name, (base_form, ), attrs)
 
