@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest import mock, skip
 from urllib.parse import urlparse
 
 from django.http.request import QueryDict
@@ -391,6 +391,7 @@ class TestSearchFormChangelist(AdminTestCase):
                     with self.subTest():
                         self.assertIn(expected, result)
 
+    @skip("Unsure whether this special condition makes much sense.")
     @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_no_search_form_filtering_on_post(self):
         # Assert that no special filtering is being done on a POST request
