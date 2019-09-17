@@ -74,7 +74,7 @@ class MIZAdminSite(admin.AdminSite):
                     categories[model_category].append(m)
 
             for category, models in categories.items():
-                new_fake_app = DBentry_dict.copy()
+                new_fake_app = dbentry_dict.copy()
                 new_fake_app['name'] = category
                 new_fake_app['models'] = models
                 app_list.append(new_fake_app)
