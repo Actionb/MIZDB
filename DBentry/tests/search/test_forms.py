@@ -1,4 +1,4 @@
-from ..base import MyTestCase
+from itertools import chain
 
 from django import forms
 from django.utils.datastructures import MultiValueDict
@@ -8,25 +8,30 @@ from DBentry.ac import widgets as autocomplete_widgets
 from DBentry.factory import make
 from DBentry.fields import PartialDate, PartialDateFormField
 from DBentry.search import forms as search_forms
+from DBentry.tests.base import MyTestCase
 
 class TestSearchFormFactory(MyTestCase):
-    
+
     def setUp(self):
         super().setUp()
         self.factory = search_forms.SearchFormFactory()
-    
+
     def test_formfield_for_dbfield_dal(self):
-        # Assert that formfield_for_dbfield prepares an autocomplete ready formfield.
+        # Assert that formfield_for_dbfield prepares an
+        # autocomplete ready formfield for many to one relations.
         dbfield = _models.ausgabe._meta.get_field('magazin')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2)
         self.assertEqual(widget.model_name, _models.magazin._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
-        self.assertFalse(widget.create_field, msg = msg)
+        self.assertFalse(widget.create_field, msg=msg)
         self.assertEqual(formfield.queryset.model, _models.magazin)
         self.assertFalse(formfield.required)
-        
+
+    def test_formfield_for_dbfield_dal_m2m(self):
+        # Assert that formfield_for_dbfield prepares an
+        # autocomplete ready formfield for many to many relations.
         dbfield = _models.artikel._meta.get_field('genre')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
@@ -36,54 +41,87 @@ class TestSearchFormFactory(MyTestCase):
         self.assertFalse(widget.create_field, msg = msg)
         self.assertEqual(formfield.queryset.model, _models.genre)
         self.assertFalse(formfield.required)
-        
-        # Test with a forward
+
+    def test_formfield_for_dbfield_dal_with_forward(self):
+        # Assert that dal forwards are added.
         dbfield = _models.ausgabe._meta.get_field('magazin')
         formfield = self.factory.formfield_for_dbfield(dbfield, forward = ['ausgabe'])
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2)
         self.assertTrue(widget.forward)
-        
+
     def test_get_search_form(self):
         # Assert that the form class is created only with proper fields/lookups.
-        fields = ['seite__gt', 'seitenumfang', 'genre__genre', 'notafield', 'schlagwort__notalookup']
-        form_class = self.factory(_models.artikel, fields)
-        self.assertIn('seite', form_class.base_fields)
-        self.assertIn('seitenumfang', form_class.base_fields)
-        self.assertIn('genre__genre', form_class.base_fields)
-        self.assertNotIn('notafield', form_class.base_fields)
-        self.assertNotIn('schlagwort', form_class.base_fields)
-        self.assertNotIn('schlagwort__notalookup', form_class.base_fields)
-        
+        fields = [
+            'seite__gt', 'seitenumfang', 'genre__genre', 'notafield',
+            'schlagwort__notalookup'
+        ]
+        valid = ['seite', 'seitenumfang', 'genre__genre']
+        invalid = ['notafield', 'schlagwort', 'schlagwort__notalookup']
+        form_fields = self.factory(_models.artikel, fields).base_fields
+        for field_name in chain(valid, invalid):
+            should_be_valid = field_name in valid
+            with self.subTest(valid=should_be_valid, field_name=field_name):
+                if should_be_valid:
+                    self.assertIn(field_name, form_fields)
+                else:
+                    self.assertNotIn(field_name, form_fields)
+
     def test_takes_formfield_callback(self):
         # Assert that custom formfield_callback can be passed to the factory 
         # and that it uses that to create formfields for dbfields.
         callback = lambda dbfield: forms.DateField()
-        form_class = self.factory(_models.artikel, formfield_callback = callback, fields = ['seite'])
+        form_class = self.factory(
+            model=_models.artikel,
+            formfield_callback=callback,
+            fields=['seite']
+        )
         self.assertIn('seite', form_class.base_fields)
         self.assertIsInstance(form_class.base_fields['seite'], forms.DateField)
-        # A callback that is not a callable should raise a TypeError
+        
+    def test_takes_formfield_callback_callable(self):
+        # A callback that is not a callable should raise a TypeError.
         with self.assertRaises(TypeError):
-            self.factory(_models.artikel, formfield_callback = 1)
-            
-    def test_forward(self):
-        form_class = self.factory(_models.artikel, 
-            fields = ['ausgabe'], forwards = {'ausgabe':'magazin'}
+            self.factory(_models.artikel, formfield_callback=1)
+
+    def test_factory_forward(self):
+        # Assert that 'forward' arguments to the factory are respected.
+        form_class = self.factory(
+            model=_models.artikel,
+            fields=['ausgabe'],
+            forwards={'ausgabe':'magazin'}
         )
         self.assertIn('ausgabe', form_class.base_fields)
-        widget = form_class.base_fields['ausgabe'].widget
-        self.assertTrue(widget.forward)        
-            
+        self.assertTrue(form_class.base_fields['ausgabe'].widget.forward)
+
+    def test_factory_range_lookup(self):
+        # Assert that the factory recognizes range lookups in a field's path
+        # and creates a RangeFormField for it.
+        form_class = self.factory(
+            model=_models.ausgabe,
+            fields=['jahrgang__range'],
+        )
+        self.assertIn('jahrgang', form_class.base_fields)
+        self.assertIsInstance(
+            form_class.base_fields['jahrgang'],
+            search_forms.RangeFormField
+        )
+
 class TestSearchForm(MyTestCase):
-    
+
     model = _models.artikel
-    
+
+    def setUp(self):
+        super().setUp()
+        self.factory = search_forms.SearchFormFactory()
+
     def test_get_filters_params_returns_empty_on_invalid(self):
-        form_class = search_forms.SearchFormFactory()(self.model)
+        # get_filters_params should shortcircuit if the form is invalid.
+        form_class = self.factory(self.model)
         form = form_class()
         # Empty form without data => is_valid == False
         self.assertFalse(form.get_filters_params())
-    
+
     def test_get_filters_params_skips_empty(self):
         # Assert that get_filters_params does not return empty query values.
         data = {
@@ -91,129 +129,158 @@ class TestSearchForm(MyTestCase):
             'ausgabe__magazin': make(_models.magazin).pk, 
             'musiker': []
         }
-        form_class =  search_forms.SearchFormFactory()(self.model, fields = data.keys())
-        form = form_class(data = data)
-        self.assertTrue(form.is_valid(), msg = form.errors)
+        form_class = self.factory(self.model, fields=data.keys())
+        form = form_class(data=data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertIn('seite', filter_params)
         self.assertIn('ausgabe__magazin', filter_params)
         self.assertNotIn('musiker__in', filter_params)
-        
-    def test_get_filters_params_boolean(self):
-        # Assert that an unchecked BooleanField is not evaluated as False
-        form_class =  search_forms.SearchFormFactory()(_models.ausgabe, fields = ['sonderausgabe'])
-        form = form_class(data = {})
-        self.assertTrue(form.is_valid(), msg = form.errors)
+
+    def test_get_filters_params_boolean_false(self):
+        # Assert that an unchecked BooleanField is not evaluated as False.
+        form_class = self.factory(_models.ausgabe, fields=['sonderausgabe'])
+        form = form_class(data={})
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertNotIn('sonderausgabe', filter_params)
-    
-        form = form_class(data = {'sonderausgabe': True})
-        self.assertTrue(form.is_valid(), msg = form.errors)
+
+    def test_get_filters_params_boolean_true(self):
+        # Assert that an checked BooleanField is evaluated as True.
+        form_class = self.factory(_models.ausgabe, fields=['sonderausgabe'])
+        form = form_class(data={'sonderausgabe': True})
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertIn('sonderausgabe', filter_params)
         self.assertEqual(filter_params['sonderausgabe'], True)
-        
+
     def test_get_filters_params_range(self):
-        form_class =  search_forms.SearchFormFactory()(self.model, fields = ['seite__range'])
+        # Check that get_filters_params handles range lookups correctly.
+        form_class = self.factory(self.model, fields=['seite__range'])
         data = {'seite_0': '1', 'seite_1': '2'}
-        form = form_class(data = data)
-        self.assertTrue(form.is_valid(), msg = form.errors)
+        form = form_class(data=data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertIn('seite__range', filter_params)
         self.assertEqual(filter_params['seite__range'], [1, 2])
-        
+
     def test_get_filters_params_range_skipped_when_empty(self):
-        form_class =  search_forms.SearchFormFactory()(self.model, fields = ['seite__range'])
+        form_class = self.factory(self.model, fields=['seite__range'])
         data = {'seite__range_0': None, 'seite__range_1': None}
-        form = form_class(data = data)
-        self.assertTrue(form.is_valid(), msg = form.errors)
+        form = form_class(data=data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
-        self.assertFalse(filter_params)        
-        
-    def test_get_filters_params_replaces_range(self):
-        # Assert that get_filters_params replaces a range query with...
-        # with a query for exact when 'end' is 'empty'
-        form_class =  search_forms.SearchFormFactory()(self.model, fields = ['seite__range'])
-        
+        self.assertFalse(filter_params)
+
+    def test_get_filters_params_replaces_range_exact(self):
+        # Assert that get_filters_params replaces a range query with a query
+        # for exact when 'end' is 'empty'.
+        form_class = self.factory(self.model, fields=['seite__range'])
         data = {'seite_0': '1', 'seite_1': None}
-        form = form_class(data = data)
-        self.assertTrue(form.is_valid(), msg = form.errors)
+        form = form_class(data=data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertNotIn('seite__range', filter_params)
         self.assertIn('seite', filter_params)
-        
-        # with a query for lte when 'start' is 'empty'
+
+    def test_get_filters_params_replaces_range_lte(self):
+        # Assert that get_filters_params replaces a range query with a query
+        # for lte when 'start' is 'empty'.
+        form_class = self.factory(self.model, fields=['seite__range'])
         data = {'seite_0': None, 'seite_1': '1'}
-        form = form_class(data = data)
-        self.assertTrue(form.is_valid(), msg = form.errors)
+        form = form_class(data=data)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
         self.assertNotIn('seite__range', filter_params)
         self.assertIn('seite__lte', filter_params)
-        
+
     def test_get_filters_params(self):
-        form_class = search_forms.SearchFormFactory()(_models.bildmaterial, fields = ['datum'])
-        form = form_class(data = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 20})
+        form_class = self.factory(_models.bildmaterial, fields=['datum'])
+        form = form_class(data={'datum_0': 2020, 'datum_1': 5, 'datum_2': 20})
         self.assertTrue(form.is_valid())
         self.assertIn('datum', form.cleaned_data)
         expected = PartialDate(2020, 5, 20)
         self.assertEqual(form.cleaned_data['datum'], expected)
         self.assertEqual(form.get_filters_params(), {'datum': expected})
-    
-    def test_field_initial_select_multiple(self):
-        # Assert that the form returns the correct initial values from
-        # either a simple dict or a MultiValueDict. 
-        form_class = search_forms.SearchFormFactory()(_models.bildmaterial, fields = ['genre'])
+
+    def test_field_initial_select_multiple_dict(self):
+        # Assert that the form returns the correct initial values from a dict. 
+        form_class =self.factory(_models.bildmaterial, fields=['genre'])
         initial = {'genre': [1, 2]}
-        expected = [1, 2]
-        form = form_class(initial = initial)
+        form = form_class(initial=initial)
         formfield = form.fields['genre']
-        self.assertEqual(form.get_initial_for_field(formfield, 'genre'), expected)
-        
+        self.assertEqual(form.get_initial_for_field(formfield, 'genre'), [1, 2])
+
+    def test_field_initial_select_multiple_MultiValueDict(self):
+        # Assert that the form returns the correct initial values from a MultiValueDict.
+        form_class =self.factory(_models.bildmaterial, fields=['genre'])
+        initial = {'genre': [1, 2]}
         initial = MultiValueDict(initial)
         form = form_class(initial = initial)
         formfield = form.fields['genre']
-        self.assertEqual(form.get_initial_for_field(formfield, 'genre'), expected)
-        
-    def test_field_initial_multivaluefield(self):
-        # Assert that the form returns the correct initial values for MultiValueFields from
-        # either a simple dict or a MultiValueDict. 
-        form_class = search_forms.SearchFormFactory()(_models.bildmaterial, fields = ['datum'])
+        self.assertEqual(form.get_initial_for_field(formfield, 'genre'), [1, 2])
+
+    def test_field_initial_multivaluefield_dict(self):
+        # Assert that the form returns the correct initial values for
+        # MultiValueFields from a dict.
+        form_class = self.factory(_models.bildmaterial, fields=['datum'])
         initial = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 19}
-        expected = PartialDate(2020, 5, 19)
-        form = form_class(initial = initial)
+        form = form_class(initial=initial)
         formfield = form.fields['datum']
-        self.assertEqual(form.get_initial_for_field(formfield, 'datum'), expected)
-        
+        self.assertEqual(
+            form.get_initial_for_field(formfield, 'datum'),
+            PartialDate(2020, 5, 19)
+        )
+
+    def test_field_initial_multivaluefield_MultiValueDict(self):
+        # Assert that the form returns the correct initial values for
+        # MultiValueFields from a MultiValueDict.
+        form_class = self.factory(_models.bildmaterial, fields=['datum'])
+        initial = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 19}
         initial = MultiValueDict(initial)
         form = form_class(initial = initial)
         formfield = form.fields['datum']
-        self.assertEqual(form.get_initial_for_field(formfield, 'datum'), expected)
-        
-    def test_field_initial_rangeformfield(self):
-        # Assert that the form returns the correct initial values for RangeFormFields from
-        # either a simple dict or a MultiValueDict. 
-        form_class = search_forms.SearchFormFactory()(_models.bildmaterial, fields = ['datum__range'])
+        self.assertEqual(
+            form.get_initial_for_field(formfield, 'datum'),
+            PartialDate(2020, 5, 19)
+        )
+
+    def test_field_initial_rangeformfield_dict(self):
+        # Assert that the form returns the correct initial values for
+        # RangeFormFields from a dict.
+        form_class = self.factory(_models.bildmaterial, fields=['datum__range'])
         initial = {
-            'datum_0_0':2019, 'datum_0_1': 5, 'datum_0_2': 19, 
-            'datum_1_0':2019, 'datum_1_1': 5, 'datum_1_2': 20
+            'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19, 
+            'datum_1_0': 2019, 'datum_1_1': 5, 'datum_1_2': 20
         }
         expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]
-        form = form_class(initial = initial)
+        form = form_class(initial=initial)
         formfield = form.fields['datum']
         self.assertEqual(form.get_initial_for_field(formfield, 'datum'), expected)
-        
+
+    def test_field_initial_rangeformfield_MultiValueDict(self):
+        # Assert that the form returns the correct initial values for
+        # RangeFormFields from a MultiValueDict.
+        form_class = self.factory(_models.bildmaterial, fields=['datum__range'])
+        initial = {
+            'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19, 
+            'datum_1_0': 2019, 'datum_1_1': 5, 'datum_1_2': 20
+        }
+        expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]
         initial = MultiValueDict(initial)
         form = form_class(initial = initial)
         formfield = form.fields['datum']
         self.assertEqual(form.get_initial_for_field(formfield, 'datum'), expected)
-        
+
 
 class TestRangeFormField(MyTestCase):
-    
+
     def test_get_initial(self):
+        # Assert that get_initial recognizes that its subfields are
+        # MultiValueFields and thus returns the compressed values.
         initial = {
-            'datum_0_0':2019, 'datum_0_1': 5, 'datum_0_2': 19, 
-            'datum_1_0':2019, 'datum_1_1': 5, 'datum_1_2': 20
+            'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19, 
+            'datum_1_0': 2019, 'datum_1_1': 5, 'datum_1_2': 20
         }
         formfield = search_forms.RangeFormField(PartialDateFormField())
         expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]

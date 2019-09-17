@@ -211,21 +211,22 @@ def get_all_model_names():
     
 def get_fields_and_lookups(model, field_path):
     """
-    Extract model fields and lookups from `field_path`.
-    
+    Extract model fields and lookups from 'field_path'.
+
     Raises:
-        django.core.exceptions.FieldDoesNotExist:
-            if the first part in `field_path` is not a field of `model`.
+        django.core.exceptions.FieldDoesNotExist: if a part in 'field_path' is
+            not a field of 'model' or a valid lookup.
         FieldError: on encountering an invalid lookup.
-        
-    Returns:
-        two lists, one containing the model fields that make up the path
-        and one containing the (assumed) lookups.
+
+    Returns two lists, one containing the model fields that make up the path
+    and one containing the (assumed) lookups.
+
+    Example:
+        'pizza__toppings__icontains' -> [pizza, toppings], ['icontains']
     """
-    # TODO: this is more precise than DBentry.search.utils.get_fields_and_lookups_from_path
     fields, lookups = [], []
     parts = field_path.split(models.constants.LOOKUP_SEP)
-    
+
     opts = model._meta
     prev_field = None
     for i, part in enumerate(parts):
@@ -237,7 +238,7 @@ def get_fields_and_lookups(model, field_path):
             if prev_field:
                 # A valid model field was found for the previous part.
                 # 'part' could be a lookup or a transform.
-                if prev_field.get_lookup(part) or prev_field.get_transform(part):
+                if part in prev_field.get_lookups():
                     lookups.append(part)
                     continue
                 raise exceptions.FieldError(
