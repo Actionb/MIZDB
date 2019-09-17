@@ -5,24 +5,25 @@ from django.contrib import admin
 from django.apps import apps 
 from django.views.decorators.cache import never_cache
 
+
 class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
     site_title = 'MIZDB'
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tools = []
-    
+
     def register_tool(self, view, url_name, index_label, superuser_only):
         self.tools.append((view, url_name, index_label, superuser_only))
     # TODO: needs an unregister method (tests could use it?)
-        
+
     def app_index(self, request, app_label, extra_context=None):
         if app_label == 'DBentry':
             # Redirect to the 'tidied' up index page of the main page
             return self.index(request, extra_context)
         return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
-    
+
     @never_cache
     def index(self, request, extra_context=None): 
         extra_context = extra_context or {}
@@ -35,14 +36,14 @@ class MIZAdminSite(admin.AdminSite):
         extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
         response = super(MIZAdminSite, self).index(request, extra_context)
         app_list = response.context_data['app_list']
-        
+
         index = None
         try:
             index = next(i for i, d in enumerate(app_list) if d['app_label'] == 'DBentry')
         except StopIteration:
             # No app with label 'DBentry' found
             return response
-            
+
         if index is not None:
             DBentry_dict = app_list.pop(index) # the dict containing data for the DBentry app with keys: {app_url,name,has_module_perms,models,app_label}
             model_list = DBentry_dict.pop('models')
@@ -51,7 +52,7 @@ class MIZAdminSite(admin.AdminSite):
             categories['Archivgut'] = []
             categories['Stammdaten'] = []
             categories['Sonstige'] = []
-            
+
             for m in model_list:
                 # m is a dict with keys {admin_url, name (i.e. the label), perms, object_name (i.e. the model name), add_url}
                 model_admin = self.get_admin_model(m.get('object_name'))
@@ -60,7 +61,7 @@ class MIZAdminSite(admin.AdminSite):
                     categories['Sonstige'] = [m]
                 else:
                     categories[model_category].append(m)
-                    
+
             for category, models in categories.items():
                 new_fake_app = DBentry_dict.copy()
                 new_fake_app['name'] = category
@@ -77,7 +78,7 @@ class MIZAdminSite(admin.AdminSite):
             except LookupError:
                 return None
         return self._registry.get(model, None)
-        
+
 miz_site = MIZAdminSite()
 
 
