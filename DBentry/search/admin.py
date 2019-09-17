@@ -100,8 +100,9 @@ class AdminSearchFormMixin(object):
         field_path = search_utils.strip_lookups_from_path(lookup, lookups)
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
-        return (field_path in self.search_form.fields) and \
-            (set(lookups).issubset(self.search_form.lookups.get(field_path, [])))
+        registered_lookups = self.search_form.lookups.get(field_path, [])
+        return ((field_path in self.search_form.fields) and
+            (set(lookups).issubset(registered_lookups)))
 
     def get_changeform_initial_data(self, request):
         """Add data from the changelist filters to the add-form's initial."""
