@@ -1,8 +1,7 @@
-
 from collections import OrderedDict
 
-from django.contrib import admin  
-from django.apps import apps 
+from django.apps import apps
+from django.contrib import admin
 from django.views.decorators.cache import never_cache
 
 
@@ -25,36 +24,48 @@ class MIZAdminSite(admin.AdminSite):
         return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
 
     @never_cache
-    def index(self, request, extra_context=None): 
+    def index(self, request, extra_context=None):
         extra_context = extra_context or {}
         extra_context['admintools'] = {}
-        for tool, url_name, index_label, superuser_only in self.tools:
+        for _tool, url_name, index_label, superuser_only in self.tools:
             if superuser_only and not request.user.is_superuser:
                 continue
             extra_context['admintools'][url_name] = index_label
         # Sort by index_label, not by url_name
-        extra_context['admintools'] = OrderedDict(sorted(extra_context['admintools'].items(), key=lambda x: x[1]))
+        extra_context['admintools'] = OrderedDict(
+            sorted(extra_context['admintools'].items(), key=lambda x: x[1])
+        )
         response = super(MIZAdminSite, self).index(request, extra_context)
         app_list = response.context_data['app_list']
 
         index = None
         try:
-            index = next(i for i, d in enumerate(app_list) if d['app_label'] == 'DBentry')
+            index = next(
+                i
+                for i, d in enumerate(app_list)
+                if d['app_label'] == 'DBentry'
+            )
         except StopIteration:
             # No app with label 'DBentry' found
             return response
 
         if index is not None:
-            DBentry_dict = app_list.pop(index) # the dict containing data for the DBentry app with keys: {app_url,name,has_module_perms,models,app_label}
-            model_list = DBentry_dict.pop('models')
+            # Get the dict containing data for the DBentry app with keys:
+            # {app_url, name, has_module_perms, models, app_label}
+            dbentry_dict = app_list.pop(index)
+            model_list = dbentry_dict.pop('models')
             categories = OrderedDict()
-            #TODO: translation
             categories['Archivgut'] = []
             categories['Stammdaten'] = []
             categories['Sonstige'] = []
 
             for m in model_list:
-                # m is a dict with keys {admin_url, name (i.e. the label), perms, object_name (i.e. the model name), add_url}
+                # m is a dict with these keys:
+                #   - admin_url,
+                #   - name (i.e. the label),
+                #   - perms,
+                #   - object_name (i.e. the model name),
+                #   - add_url
                 model_admin = self.get_admin_model(m.get('object_name'))
                 model_category = model_admin.get_index_category()
                 if model_category not in categories:
@@ -78,6 +89,7 @@ class MIZAdminSite(admin.AdminSite):
             except LookupError:
                 return None
         return self._registry.get(model, None)
+
 
 miz_site = MIZAdminSite()
 
