@@ -14,8 +14,15 @@ class MIZAdminSite(admin.AdminSite):
         self.tools = []
 
     def register_tool(self, view, url_name, index_label, superuser_only):
+        """
+        Add the given view to the sites' registered tools.
+
+        A registered view will have a link (labelled according to 'index_label')
+        to it from the index page. The view must be reversible using 'url_name'.
+        If superuser_only is True, the link will only be added for superusers.
+        See MIZAdminSite.index for more details.
+        """
         self.tools.append((view, url_name, index_label, superuser_only))
-    # TODO: needs an unregister method (tests could use it?)
 
     def app_index(self, request, app_label, extra_context=None):
         if app_label == 'DBentry':
@@ -23,21 +30,23 @@ class MIZAdminSite(admin.AdminSite):
             return self.index(request, extra_context)
         return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
 
-    @never_cache
-    def index(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context['admintools'] = {}
-        for _tool, url_name, index_label, superuser_only in self.tools:
+    def build_admintools_context(self, request):
+        """
+        Return a mapping of url_name: index_label of registered tools
+        (ordered by index_label) to be added to the index' context.
+        """
+        result = OrderedDict()
+        # Walk through the tools by index_label:
+        tools = sorted(self.tools, key=lambda t:t[2])
+        for _tool, url_name, index_label, superuser_only in tools:
             if superuser_only and not request.user.is_superuser:
                 continue
-            extra_context['admintools'][url_name] = index_label
-        # Sort by index_label, not by url_name
-        extra_context['admintools'] = OrderedDict(
-            sorted(extra_context['admintools'].items(), key=lambda x: x[1])
-        )
-        response = super(MIZAdminSite, self).index(request, extra_context)
-        app_list = response.context_data['app_list']
+            result[url_name] = index_label
+        return result
 
+    def add_categories(self, app_list):
+        """Regroup the models in app_list by introducing categories."""
+        # Find the index of the DBentry app:
         index = None
         try:
             index = next(
@@ -46,42 +55,58 @@ class MIZAdminSite(admin.AdminSite):
                 if d['app_label'] == 'DBentry'
             )
         except StopIteration:
-            # No app with label 'DBentry' found
-            return response
+            pass
+        if index is None:
+            # No app with label 'DBentry' found.
+            # Return an empty app_list.
+            return []
 
-        if index is not None:
-            # Get the dict containing data for the DBentry app with keys:
-            # {app_url, name, has_module_perms, models, app_label}
-            dbentry_dict = app_list.pop(index)
-            model_list = dbentry_dict.pop('models')
-            categories = OrderedDict()
-            categories['Archivgut'] = []
-            categories['Stammdaten'] = []
-            categories['Sonstige'] = []
+        # Get the dict containing data for the DBentry app with keys:
+        # {app_url, name, has_module_perms, models, app_label}
+        dbentry_dict = app_list.pop(index)
+        model_list = dbentry_dict.pop('models')
+        categories = OrderedDict()
+        categories['Archivgut'] = []
+        categories['Stammdaten'] = []
+        categories['Sonstige'] = []
 
-            for m in model_list:
-                # m is a dict with these keys:
-                #   - admin_url,
-                #   - name (i.e. the label),
-                #   - perms,
-                #   - object_name (i.e. the model name),
-                #   - add_url
-                model_admin = self.get_admin_model(m.get('object_name'))
-                model_category = model_admin.get_index_category()
-                if model_category not in categories:
-                    categories['Sonstige'] = [m]
-                else:
-                    categories[model_category].append(m)
+        # Divide the models into their categories.
+        for m in model_list:
+            model_admin = self.get_admin_model(m.get('object_name'))
+            model_category = model_admin.get_index_category()
+            if model_category not in categories:
+                categories['Sonstige'] = [m]
+            else:
+                categories[model_category].append(m)
 
-            for category, models in categories.items():
-                new_fake_app = dbentry_dict.copy()
-                new_fake_app['name'] = category
-                new_fake_app['models'] = models
-                app_list.append(new_fake_app)
-            response.context_data['app_list'] = app_list
+        # Rebuild the app_list with the new categories.
+        for category, models in categories.items():
+            new_fake_app = dbentry_dict.copy()
+            new_fake_app['name'] = category
+            new_fake_app['models'] = models
+            app_list.append(new_fake_app)
+        return app_list
+
+    @never_cache
+    def index(self, request, extra_context=None):
+        """
+        Add the registered admintools to the index page and introduce
+        grouping categories into the index' model list.
+        """
+        extra_context = extra_context or {}
+        extra_context['admintools'] = self.build_admintools_context(request)
+        response = super().index(request, extra_context)
+        # Replace the original app_list with the one containing the grouping.
+        new_app_list = self.add_categories( response.context_data['app_list'])
+        if new_app_list:
+            response.context_data['app_list'] =new_app_list
         return response
 
     def get_admin_model(self, model):
+        """
+        Return the ModelAdmin instance that represents the given 'model'.
+        'model' can be a model class or the name of a model.
+        """
         if isinstance(model, str):
             model_name = model.split('.')[-1]
             try:

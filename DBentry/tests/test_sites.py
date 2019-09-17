@@ -52,4 +52,3 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertIn('Archivgut', app_names)
         self.assertIn('Stammdaten', app_names)
         self.assertIn('Sonstige', app_names)
-
