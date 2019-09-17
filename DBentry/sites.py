@@ -7,6 +7,7 @@ from django.views.decorators.cache import never_cache
 
 class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
+    site_title = 'MIZDB'
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
