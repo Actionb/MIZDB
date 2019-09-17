@@ -1,9 +1,11 @@
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
+from django.core import exceptions
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
 from django.db.models.constants import LOOKUP_SEP
 from django.http import HttpResponseRedirect, QueryDict
 
+from DBentry import utils
 from DBentry.search import utils as search_utils
 from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
 
@@ -95,7 +97,10 @@ class AdminSearchFormMixin(object):
             return allowed
         # Allow lookups defined in advanced_search_form.
         # Extract the lookups from the field_path 'lookup':
-        _, lookups = search_utils.get_fields_and_lookups_from_path(self.model, lookup)
+        try:
+            _, lookups = utils.get_fields_and_lookups(self.model, lookup)
+        except (exceptions.FieldDoesNotExist, exceptions.FieldError):
+            return False
         # Remove all lookups from the field_path to end up with just a relational path:
         field_path = search_utils.strip_lookups_from_path(lookup, lookups)
         # Now check that the field_path is in the form's fields and
@@ -173,7 +178,6 @@ class AdminSearchFormMixin(object):
     def _check_search_form_fields(self, **kwargs):
         """Check the fields given in self.search_form_kwargs."""
         # local imports in case I decide to remove this check later
-        from django.core import exceptions
         from DBentry.search.utils import get_dbfield_from_path
         from django.core import checks
         if not self.has_search_form():

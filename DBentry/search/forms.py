@@ -210,9 +210,11 @@ class SearchFormFactory:
         """
         Follow the given 'field_path' from 'model' and return the final concrete
         model field along the path and the path's remainder (lookups).
+
         Raises FieldDoesNotExist if the field_path does not resolve to an
         existing model field.
-        Raises FieldError if the field_path results in a reverse relation.
+        Raises FieldError if the field_path results in a reverse relation or if
+        an invalid lookup was used.
         """
         return search_utils.get_dbfield_from_path(model, field_path)
 
@@ -280,11 +282,7 @@ class SearchFormFactory:
         for path in (fields or []):
             try:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
-                search_utils.validate_lookups(db_field, lookups)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError):
-                # Either the field_path does not end a model field
-                # or it ended in a reverse relation
-                # or a lookup used was invalid.
                 continue
 
             formfield_kwargs = {}
