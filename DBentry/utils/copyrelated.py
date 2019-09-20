@@ -2,6 +2,7 @@ from django.contrib.admin.utils import get_fields_from_path
 from django.core import exceptions
 from django.db import transaction
 
+
 def copy_related_set(obj, *paths):
     """
     Add the related_objects in 'paths' to an equivalent relation of 'obj'.
@@ -16,7 +17,7 @@ def copy_related_set(obj, *paths):
                 continue
             target_model = fields[-1].related_model
             target_field = [
-                f for f in obj._meta.get_fields() 
+                f for f in obj._meta.get_fields()
                 if getattr(f, 'related_model', None) == target_model
             ].pop()
         except (exceptions.FieldDoesNotExist, IndexError):
