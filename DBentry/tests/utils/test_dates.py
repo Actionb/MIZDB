@@ -43,18 +43,3 @@ class TestDateUtils(MyTestCase):
         
         # start and end exclude leap days
         self.assertEqual(utils.leapdays(datetime.date(2000,3,1), datetime.date(2004,1,1)), 0)
-        
-    def test_build_date(self):
-        self.assertEqual(utils.build_date([2000], [1], 31), datetime.date(2000, 1, 31))
-        self.assertEqual(utils.build_date([2000], [1], None), datetime.date(2000, 1, 1))
-        
-        self.assertEqual(utils.build_date([2001, 2000], [12], None), datetime.date(2000, 12, 1))
-        # If there's more than one month, build_date should set the day to the last day of the min month
-        self.assertEqual(utils.build_date([None, 2000], [12, 2], None), datetime.date(2000, 2, 29))
-        # If there's more than one month and more than one year, 
-        # build_date should set the day to the last day of the max month
-        self.assertEqual(utils.build_date([2001, 2000], [12, 1], None), datetime.date(2000, 12, 31))
-        
-        self.assertIsNone(utils.build_date([None], [None]))
-        self.assertIsNotNone(utils.build_date(2000, 1))
-        

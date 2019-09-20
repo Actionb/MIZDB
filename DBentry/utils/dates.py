@@ -1,7 +1,6 @@
 import calendar
 import datetime
 
-from DBentry.utils.inspect import is_iterable
 
 def leapdays(start, end):
     # calendar.leapdays ignores the leap day if start.year == end.year and start.year is a leap year
@@ -30,37 +29,3 @@ def leapdays(start, end):
         leapdays += 1
     return leapdays
 
-def build_date(years, month_ordinals, day = None):
-    if not is_iterable(years):
-        years = [years]
-    if not is_iterable(month_ordinals):
-        month_ordinals = [month_ordinals]
-
-    # Filter out None values that may have been returned by a values_list call
-    none_filter = lambda x: x is not None
-    years = list(filter(none_filter,  years))
-    month_ordinals = list(filter(none_filter, month_ordinals))
-
-    if not (years and month_ordinals):
-        # either years or month_ordinals is an empty sequence
-        return
-    year = min(years)
-    month = min(month_ordinals)
-
-    if len(month_ordinals) > 1:
-        # If the ausgabe spans several months, use the last day of the first appropriate month
-        # to chronologically order it after any ausgabe that appeared 'only' in that first month
-        if len(years) > 1:
-            # the ausgabe spans two years, assume the latest month for the e_datum
-            month = max(month_ordinals)
-        # Get the last day of the chosen month
-        day = calendar.monthrange(year, month)[1]
-
-    if day is None:
-        day = 1
-
-    return datetime.date(
-        year = year, 
-        month = month, 
-        day = day, 
-    )

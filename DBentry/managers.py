@@ -1,3 +1,4 @@
+import calendar, datetime
 from collections import Counter, OrderedDict
         
 from django.db import models, transaction
@@ -6,7 +7,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db.models.constants import LOOKUP_SEP
 
-from DBentry.utils import leapdays, build_date
+from DBentry.utils import leapdays, is_iterable
 from DBentry.query import BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
 
 class MIZQuerySet(models.QuerySet):
@@ -219,6 +220,41 @@ class CNQuerySet(MIZQuerySet):
                     new_name = self.model._get_name(**val_dict)
                     self.order_by().filter(pk=pk).update(_name=new_name, _changed_flag=False)
     _update_names.alters_data = True
+
+def build_date(years, month_ordinals, day=None):
+    """
+    Helper function for AusgabeQuerySet.increment_jahrgang to build a
+    datetime.date instance out of lists of years and month ordinals.
+    """
+    if not is_iterable(years):
+        years = [years]
+    if not is_iterable(month_ordinals):
+        month_ordinals = [month_ordinals]
+
+    # Filter out None values that may have been returned by a values_list call.
+    none_filter = lambda x: x is not None
+    years = list(filter(none_filter,  years))
+    month_ordinals = list(filter(none_filter, month_ordinals))
+
+    if not (years and month_ordinals):
+        # Either years or month_ordinals is an empty sequence.
+        return
+    year = min(years)
+    month = min(month_ordinals)
+
+    if len(month_ordinals) > 1:
+        # If the ausgabe spans several months, use the last day of the first
+        # 'appropriate' month to chronologically order it after any ausgabe that
+        # appeared only in that first month.
+        # An ausgabe released at the end of a year that also includes the next
+        # year should use the last month of the previous year.
+        if len(years) > 1:
+            month = max(month_ordinals)
+        # Get the last day of the chosen month.
+        day = calendar.monthrange(year, month)[1]
+
+    return datetime.date(year=year, month=month, day=day or 1)
+
 
 class AusgabeQuerySet(CNQuerySet):
     

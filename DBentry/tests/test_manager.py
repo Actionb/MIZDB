@@ -1,4 +1,4 @@
-import random
+import random, datetime
 from itertools import chain
 from unittest.mock import patch, Mock
 
@@ -8,7 +8,7 @@ from django.core.exceptions import FieldDoesNotExist, FieldError
 
 import DBentry.models as _models
 from DBentry.factory import make
-from DBentry.managers import CNQuerySet, MIZQuerySet
+from DBentry.managers import CNQuerySet, MIZQuerySet, build_date
 from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery
 
 from .base import DataTestCase, MyTestCase
@@ -302,7 +302,22 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
     def test_increment_mixed(self):
         #TODO: test_increment_mixed
         pass
-        
+
+    def test_build_date(self):
+        self.assertEqual(build_date([2000], [1], 31), datetime.date(2000, 1, 31))
+        self.assertEqual(build_date([2000], [1], None), datetime.date(2000, 1, 1))
+
+        self.assertEqual(build_date([2001, 2000], [12], None), datetime.date(2000, 12, 1))
+        # If there's more than one month, build_date should set the day to the last day of the min month
+        self.assertEqual(build_date([None, 2000], [12, 2], None), datetime.date(2000, 2, 29))
+        # If there's more than one month and more than one year, 
+        # build_date should set the day to the last day of the max month
+        self.assertEqual(build_date([2001, 2000], [12, 1], None), datetime.date(2000, 12, 31))
+
+        self.assertIsNone(build_date([None], [None]))
+        self.assertIsNotNone(build_date(2000, 1))
+
+
 @tag("slow")
 class TestAusgabeQuerySetOrdering(DataTestCase):
     model = _models.ausgabe
