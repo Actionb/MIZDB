@@ -107,6 +107,7 @@ class MIZAdminSite(admin.AdminSite):
         Return the ModelAdmin instance that represents the given 'model'.
         'model' can be a model class or the name of a model.
         """
+        # TODO: does the same as utils.admin.get_model_admin_for_model
         if isinstance(model, str):
             model_name = model.split('.')[-1]
             try:
