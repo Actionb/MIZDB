@@ -1,119 +1,147 @@
+from django.contrib.auth import get_permission_codename
+from django.contrib.admin.utils import quote
+from django.core import exceptions
+from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
-from django.urls import reverse, NoReverseMatch
-from django.contrib.admin.utils import quote
-from django.contrib.auth import get_permission_codename
-from django.core import exceptions
 
 from DBentry.utils.models import get_model_from_string
 
-def get_obj_link(obj, user, site_name='admin', include_name=True): #TODO: include_name == include_label??
+
+def get_obj_link(obj, user, site_name='admin', include_name=True):  # TODO: include_name == include_label??
+    """Return a safe link to the change page of 'obj'."""
     opts = obj._meta
-    no_edit_link = '%s: %s' % (capfirst(opts.verbose_name),
-                               force_text(obj))
-
+    no_edit_link = '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))  # TODO: what exactly is this no_edit_link?
     try:
-        admin_url = reverse('%s:%s_%s_change'
-                            % (site_name,
-                               opts.app_label,
-                               opts.model_name),
-                            None, (quote(obj._get_pk_val()),)) #TODO: this is the getter of the 'pk' property!
+        viewname = '%s:%s_%s_change' % (
+            site_name,
+            opts.app_label,
+            opts.model_name
+        )
+        admin_url = reverse(
+            viewname,
+            args=(quote(obj._get_pk_val()),)  # TODO: this is the getter of the 'pk' property!
+        )
     except NoReverseMatch:
-        # Change url doesn't exist -- don't display link to edit
         return no_edit_link
 
-    p = '%s.%s' % (opts.app_label,
-                   get_permission_codename('change', opts))
-    if not user.has_perm(p):
+    perm = '%s.%s' % (
+        opts.app_label,
+        get_permission_codename('change', opts)
+    )
+    if not user.has_perm(perm):
         return no_edit_link
-    # Display a link to the admin page.
+
     if include_name:
-        link = format_html('{}: <a href="{}">{}</a>', # include_name is more a label than... a 'name'
-                           capfirst(opts.verbose_name),
-                           admin_url,
-                           obj)
-    else:
-        link = format_html('<a href="{}">{}</a>',
-                           admin_url,
-                           obj)           
-    return link
+        return format_html(
+            '{}: <a href="{}">{}</a>',  # include_name is more a label than... a 'name'
+            capfirst(opts.verbose_name),
+            admin_url,
+            obj
+        )
+    return format_html('<a href="{}">{}</a>', admin_url, obj)
 
-def get_changelist_link(model, user, site_name = 'admin', obj_list = None):
+
+def get_changelist_link(model, user, site_name='admin', obj_list=None):
+    """
+    Return a safe link to the changelist of 'model'.
+
+    If 'obj_list' is given, the url to the changelist will include a query
+    param to filter to records in that list.
+    """
     opts = model._meta
     try:
         url = reverse(
-            '%s:%s_%s_changelist' % (site_name,opts.app_label,opts.model_name)
+            '%s:%s_%s_changelist' % (site_name, opts.app_label, opts.model_name)
         )
     except NoReverseMatch:
         return ''
-    p = '%s.%s' % (opts.app_label,
-                   get_permission_codename('changelist', opts))
-    if not user.has_perm(p):
+    perm = '%s.%s' % (
+        opts.app_label,
+        get_permission_codename('changelist', opts)
+    )
+    if not user.has_perm(perm):
         return ''
     if obj_list:
         url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))
-    return format_html('<a href="{}">Liste</a>', url)      
+    return format_html('<a href="{}">Liste</a>', url)
 
-def link_list(request, obj_list, SEP = ", "):
-    """ Returns a string with html links to the objects in obj_list separated by SEP.
-        Used in ModelAdmin
+
+def link_list(request, obj_list, sep=", "):
+    """
+    Return links to the change page of each object in 'obj_list', separated by 'sep'.
     """
     links = []
     for obj in obj_list:
         links.append(get_obj_link(obj, request.user, include_name=False))
-    return format_html(SEP.join(links))
+    return format_html(sep.join(links))
+
 
 def get_model_admin_for_model(model, *admin_sites):
+    """
+    Check the registries of 'admin_sites' for a ModelAdmin that represents 'model'.
+    Return the first ModelAdmin found.
+    """
     from DBentry.sites import miz_site
     if isinstance(model, str):
         model = get_model_from_string(model)
     sites = admin_sites or [miz_site]
     for site in sites:
         if site.is_registered(model):
-            return site._registry.get(model)        
+            return site._registry.get(model)
+
 
 def has_admin_permission(request, model_admin):
+    """Return True if the user has either any module or model permissions."""
+    # (used by help views)
+    # Check if the user has any permissions to the module/app.
     if not model_admin.has_module_permission(request):
         return False
-    perms = model_admin.get_model_perms(request)
+    # Check if the user has any permissions
+    # (add, change, delete, view) for the model.
+    return True in model_admin.get_model_perms(request).values()
 
-    # Check whether user has any perm for this module.
-    # FIXME: 'any' perm could be add, delete, change or just view!
-    return True in perms.values()
 
-def make_simple_link(url, label, is_popup, as_listitem = False):
+def make_simple_link(url, label, is_popup, as_listitem=False):
+    """
+    Return a safe link to 'url'.
+
+    If is_popup is True, the link will include an 'onclick' attribute that calls
+    'popup(this)'.
+    If as_listitem is True, the link is wrapped in <li> tags.
+    """
     if is_popup:
         template = '<a href="{url}?_popup=1" onclick="return popup(this)">{label}</a>'
     else:
         template = '<a href="{url}" target="_blank">{label}</a>'
     if as_listitem:
         template = '<li>' + template + '</li>'
-    return format_html(
-        template, 
-        url = url, 
-        label = label
-    )
+    return format_html(template,url=url,label=label)
+
 
 def resolve_list_display_item(model_admin, item):
     """
-    Helper function to resolve an item of the model_admin.list_display into
-    a model field or a callable.
-
-    Returns either:
-        a model field of model_admin.model
-        a callable (a function or a model_admin or model_admin.model method)
-        None if the item could not be resolved
+    A ModelAdmin's list_display may contain any of the following:
+        name of a model field
+        callable
+        name of a method of model_admin
+        name of a method or attribute of model_admin.model
+    This helper function takes an item of list_display and returns the first
+    object that matches any of the possiblities given above (or None if no match).
     """
+    # (used in base.admin as a helper to annotate sortable list_display items)
     try:
         return model_admin.opts.get_field(item)
     except exceptions.FieldDoesNotExist:
         if callable(item):
             func = item
         elif hasattr(model_admin, item) and item != '__str__':
+            # item is a method of model_admin. '__str__' would refer to the
+            # model's str() method - NOT the ModelAdmin's.
             func = getattr(model_admin, item)
         elif hasattr(model_admin.model, item):
             func = getattr(model_admin.model, item)
         else:
             func = None
-        return func
+    return func
