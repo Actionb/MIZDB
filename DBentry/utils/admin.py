@@ -9,20 +9,24 @@ from django.utils.text import capfirst
 from DBentry.utils.models import get_model_from_string
 
 
-def get_obj_link(obj, user, site_name='admin', include_name=True):  # TODO: include_name == include_label??
-    """Return a safe link to the change page of 'obj'."""
+def get_obj_link(obj, user, site_name='admin', include_name=True):
+    """
+    Return a safe link to the change page of 'obj'.
+
+    If include_name is True, the verbose_name of the obj's model is prepended
+    to the link.
+    If no change page exists or the user has no change permission,
+    A simple string representation of 'obj' is returned.
+    """
     opts = obj._meta
-    no_edit_link = '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))  # TODO: what exactly is this no_edit_link?
+    no_edit_link = '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))
     try:
         viewname = '%s:%s_%s_change' % (
             site_name,
             opts.app_label,
             opts.model_name
         )
-        admin_url = reverse(
-            viewname,
-            args=(quote(obj._get_pk_val()),)  # TODO: this is the getter of the 'pk' property!
-        )
+        admin_url = reverse(viewname, args=[quote(obj.pk)])
     except NoReverseMatch:
         return no_edit_link
 
@@ -35,7 +39,7 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):  # TODO: incl
 
     if include_name:
         return format_html(
-            '{}: <a href="{}">{}</a>',  # include_name is more a label than... a 'name'
+            '{}: <a href="{}">{}</a>',
             capfirst(opts.verbose_name),
             admin_url,
             obj
