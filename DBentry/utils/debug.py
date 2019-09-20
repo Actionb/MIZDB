@@ -5,7 +5,7 @@ def timethis(func, *args, **kwargs):
     func(*args, **kwargs)
     te = time.time()
     return te - ts
-    
+
 def num_queries(func=None, *args, **kwargs):
     from django.test.utils import CaptureQueriesContext
     from django.db import connections, DEFAULT_DB_ALIAS
@@ -20,7 +20,7 @@ def num_queries(func=None, *args, **kwargs):
     with context as n:
         func(*args, **kwargs)
     return len(n)
-    
+
 def debug_queryfunc(func, *args, **kwargs):
     with num_queries() as n:
         t = timethis(func, *args, **kwargs)
