@@ -3,8 +3,17 @@ import datetime
 
 
 def leapdays(start, end):
-    # calendar.leapdays ignores the leap day if start.year == end.year and start.year is a leap year
-    # it also ignores the leapday if the end date is in a leap year and the date is passed the leap day
+    """
+    Count leap days between datetime.date instances.
+
+    calendar.leapdays only uses integer years to count leap days which can be
+    inaccurate:
+    If the start and end year are the same, the result is always 0
+    due to the end argument being regarded as exclusive.
+    If the either year is a leap year, the number of leap days depends on the
+    exact dates.
+    """
+    # (used in AusgabeQuerySet.increment_jahrgang)
     if start > end:
         start, end = end, start
 
@@ -15,17 +24,18 @@ def leapdays(start, end):
         end_leap = datetime.date(end.year, 2, 29)
 
     if start.year == end.year:
-        if start_leap and start < start_leap and end >= start_leap:
+        if start_leap and start <= start_leap and end >= start_leap:
+            # A leap day lies between start and end.
             return 1
         return 0
 
-    leapdays = calendar.leapdays(start.year, end.year) # end year is EXCLUSIVE 
+    leapdays = calendar.leapdays(start.year, end.year)
     if start_leap and start >= start_leap:
-        # calendar.leapdays would count the leap day of the start year even if the start date lies after the leap day
+        # calendar.leapdays would count the leap day of the start year even
+        # if the start date lies past the leap day.
         leapdays -= 1
     if end_leap and end >= end_leap:
-        # calendar.leapdays treats the end year exclusively, i.e. it counts the leap days UP to that year
-        # if the end date lies after the leap day, we must include it
+        # calendar.leapdays counts the leap days UP to the end year;
+        # if the end date lies past the leap day, we must include it.
         leapdays += 1
     return leapdays
-
