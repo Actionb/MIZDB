@@ -30,7 +30,7 @@ class BestandInLine(BaseTabularInline):
     verbose_name = _models.bestand._meta.verbose_name
     verbose_name_plural = _models.bestand._meta.verbose_name_plural
 
-
+# TODO: why are DateiInLine and QuelleInLine not declared within their ModelAdmin?
 class DateiInLine(BaseTabularInline):
     model = _m2m.m2m_datei_quelle
     fields = ['datei']
@@ -87,6 +87,10 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.plattenfirma
     class AusgabeInLine(BaseAusgabeInline):
         model = _models.ausgabe.audio.through
+    class DateiInLine(BaseTabularInline):
+        model = _m2m.m2m_datei_quelle
+        fields = ['datei']
+        verbose_model = _models.datei
 
     collapse_all = True
     form = AudioForm
