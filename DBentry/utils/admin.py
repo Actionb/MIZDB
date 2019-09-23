@@ -121,7 +121,7 @@ def make_simple_link(url, label, is_popup, as_listitem=False):
         template = '<a href="{url}" target="_blank">{label}</a>'
     if as_listitem:
         template = '<li>' + template + '</li>'
-    return format_html(template,url=url,label=label)
+    return format_html(template, url=url, label=label)
 
 
 def resolve_list_display_item(model_admin, item):

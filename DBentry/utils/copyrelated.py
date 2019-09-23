@@ -23,12 +23,12 @@ def copy_related_set(obj, *paths):
         except (exceptions.FieldDoesNotExist, IndexError):
             continue
         # Get the IDs of the instances to copy to obj.
-        obj_qs = obj._meta.model.objects.filter(pk = obj.pk)
+        obj_qs = obj._meta.model.objects.filter(pk=obj.pk)
         none_filter = lambda i: i is not None
-        ids = list(filter(none_filter, obj_qs.values_list(path, flat = True)))
+        ids = list(filter(none_filter, obj_qs.values_list(path, flat=True)))
         if ids:
             # Get the instances to copy to obj.
-            instances = target_model.objects.filter(pk__in = ids)
+            instances = target_model.objects.filter(pk__in=ids)
             related_manager = getattr(obj, target_field.name)
             with transaction.atomic():
                 related_manager.add(*instances)

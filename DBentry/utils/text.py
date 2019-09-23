@@ -13,7 +13,7 @@ def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
         return ''
     rslt = str(values[0]).zfill(z)
     for v in values[1:]:
-        if len(rslt) + len(str(v))<width:
+        if len(rslt) + len(str(v)) < width:
             rslt += sep + str(v).zfill(z)
         else:
             rslt += sep + "[...]"
