@@ -75,7 +75,7 @@ class AudioAdmin(MIZModelAdmin):
         fieldsets = [
             (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr', 'tape', 'channel', 'noise_red']}),
             ('Tags', {'fields': ['tag'], 'classes': ['collapse', 'collapsed']}),
-            ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']}),
+            ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']})
         ]
     class OrtInLine(BaseTabularInline):
         model = _models.audio.ort.through
@@ -88,15 +88,18 @@ class AudioAdmin(MIZModelAdmin):
 
     form = AudioForm
     index_category = 'Archivgut'
-
     list_display = ['__str__', 'formate_string', 'kuenstler_string']
 
-    inlines = [PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine, GenreInLine, SchlInLine,
-            VeranstaltungInLine, SpielortInLine, OrtInLine, PersonInLine, BestandInLine, AusgabeInLine]
+    inlines = [
+        PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine,
+        GenreInLine, SchlInLine, VeranstaltungInLine, SpielortInLine, OrtInLine,
+        PersonInLine, BestandInLine, AusgabeInLine
+    ]
     fieldsets = [
         (None, {'fields': ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender']}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
-        ('Beschreibung & Bemerkungen', {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']}),
+        # TODO: add beschreibung, bemerkungen to None fieldset to automatically create a fieldset
+        ('Beschreibung & Bemerkungen', {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']})
     ]
     save_on_top = True
     collapse_all = True
@@ -139,12 +142,19 @@ class AusgabenAdmin(MIZModelAdmin):
 
     index_category = 'Archivgut'
 
-    actions = MIZModelAdmin.actions + [_actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure]
-    list_display = ('__str__', 'num_string', 'lnum_string', 'monat_string', 'jahr_string', 'jahrgang',
-                        'magazin', 'e_datum', 'anz_artikel', 'status')
+    actions = MIZModelAdmin.actions + [  # TODO: add actions via get_actions()
+        _actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure
+    ]
+    list_display = (
+        '__str__', 'num_string', 'lnum_string', 'monat_string', 'jahr_string',
+        'jahrgang','magazin', 'e_datum', 'anz_artikel', 'status'
+    )
 
     inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine, BestandInLine, AudioInLine]
-    fields = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
+    fields = [
+        'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
+        'beschreibung', 'bemerkungen'
+    ]
 
     search_form_kwargs = {
         'fields': [
@@ -184,17 +194,24 @@ class AusgabenAdmin(MIZModelAdmin):
 
     def monat_string(self, obj):
         if obj.ausgabe_monat_set.exists():
-            return concat_limit(obj.ausgabe_monat_set.values_list('monat__abk', flat=True))
+            return concat_limit(
+                obj.ausgabe_monat_set.values_list('monat__abk', flat=True)
+            )
     monat_string.short_description = 'Monate'
 
-    # TODO: replace zbestand/dbestand with just a count of bestand (zbestand should be 1 at all times anyway)
+    # TODO: replace zbestand/dbestand with just a count of bestand
+    # (zbestand should be 1 at all times anyway)
     def zbestand(self, obj):
-        return obj.bestand_set.filter(lagerort=_models.lagerort.objects.filter(pk=ZRAUM_ID).first()).exists()
+        return obj.bestand_set.filter(
+            lagerort=_models.lagerort.objects.filter(pk=ZRAUM_ID).first()
+        ).exists()
     zbestand.short_description = 'Bestand: ZRaum'
     zbestand.boolean = True
 
     def dbestand(self, obj):
-        return obj.bestand_set.filter(lagerort=_models.lagerort.objects.filter(pk=DUPLETTEN_ID).first()).exists()
+        return obj.bestand_set.filter(
+            lagerort=_models.lagerort.objects.filter(pk=DUPLETTEN_ID).first()
+        ).exists()
     dbestand.short_description = 'Bestand: Dublette'
     dbestand.boolean = True
 
@@ -252,11 +269,20 @@ class ArtikelAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     # TODO: the changeform page looks HORRIBLE
     # 'seitenumfang' looks to be below and off to the site of 'seite'
-    list_display = ['__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string', 'ausgabe', 'artikel_magazin', 'kuenstler_string']
+    list_display = [
+        '__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string',
+        'ausgabe', 'artikel_magazin', 'kuenstler_string'
+    ]
     list_display_links = ['__str__', 'seite']
 
-    inlines = [AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine]
-    fields = [('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'), 'zusammenfassung', 'beschreibung', 'bemerkungen']
+    inlines = [
+        AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine
+    ]
+    fields = [
+        ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'),
+        'zusammenfassung', 'beschreibung', 'bemerkungen'
+    ]
     save_on_top = True
 
     search_form_kwargs = {
@@ -268,7 +294,8 @@ class ArtikelAdmin(MIZModelAdmin):
     }
 
     def get_queryset(self, request):
-        # TODO: rethink this now that we have chronologic_order for ausgabe -- also monat_id should not longer used
+        # TODO: rethink this now that we have chronologic_order for ausgabe
+        # (also monat_id should not longer used)
         # NOTE: what actually uses ModelAdmin.get_queryset? Because the changelist's results are
         # ordered via chronologic_order.
         qs = super(ArtikelAdmin, self).get_queryset(request)
@@ -366,8 +393,8 @@ class BildmaterialAdmin(MIZModelAdmin):
 
     form = BildmaterialForm
     inlines = [
-        SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine, VeranstaltungInLine, SpielortInLine,
-        PersonInLine, BestandInLine
+        SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine,
+        VeranstaltungInLine, SpielortInLine, PersonInLine, BestandInLine
     ]
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
     save_on_top = True
@@ -433,42 +460,47 @@ class BuchAdmin(MIZModelAdmin):
     form = BuchForm
     index_category = 'Archivgut'
 
-    list_display = ['titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string', 'herausgeber_string', 'schlagwort_string', 'genre_string']
+    list_display = [
+        'titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string',
+        'herausgeber_string', 'schlagwort_string', 'genre_string'
+    ]
 
     inlines = [
-        HerausgeberInLine, AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine,
-        SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
+        HerausgeberInLine, AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
     ]
     collapse_all = True
     save_on_top = True
 
     fieldsets = [
-        (None, {'fields': [
-            'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe', ('buchband', 'is_buchband'), 'verlag',
-            'ISBN', 'EAN', 'sprache',
-            ]
-        }),
+        (None, {
+            'fields': [
+                'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe',
+                ('buchband', 'is_buchband'), 'verlag', 'ISBN', 'EAN', 'sprache'
+            ]}
+        ),
         ('Original Angaben (bei Übersetzung)', {
             'fields': ['titel_orig', 'jahr_orig'],
             'description': "Angaben zum Original eines übersetzten Buches.",
             'classes': ['collapse', 'collapsed'],
             }
         ),
+        # TODO: add beschreibung, bemerkungen to None fieldset to automatically create a fieldset
         ('Beschreibung & Bemerkungen', {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']}),
     ]
 
     search_form_kwargs = {
         'fields': [
-            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person',
-            'schriftenreihe', 'buchband', 'verlag', 'sprache', 'jahr', 'ISBN', 'EAN'
+            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band',
+            'person', 'schriftenreihe', 'buchband', 'verlag', 'sprache', 'jahr',
+            'ISBN', 'EAN'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
-        'help_texts': {'autor': None}  # this one contains help_texts for quick item creation which isn't allowed in search forms
+        # 'autor' help_text is for quick item creation which is not allowed in search forms.
+        'help_texts': {'autor': None}
     }
-
-    crosslink_labels = {
-        'buch': 'Aufsätze',  # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
-    }
+    # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
+    crosslink_labels = {'buch': 'Aufsätze'}
 
     def autoren_string(self, obj):
         return concat_limit(obj.autor.all())
@@ -502,8 +534,9 @@ class GenreAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
 
     list_display = ['genre', 'alias_string', 'ober_string', 'sub_string']
-    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias']  # Removed the 'ober' field from search_fields (useful for dal searches, not so much on changelists)
-
+    # Remove the 'ober__genre' field from search_fields
+    # (useful for dal searches, not so much on changelists):
+    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias']
     inlines = [AliasInLine]
 
     def ober_string(self, obj):
@@ -532,7 +565,7 @@ class MagazinAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
 
-    list_display = ('__str__', 'beschreibung', 'anz_ausgaben', 'ort')
+    list_display =['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
 
     inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
 
@@ -581,9 +614,7 @@ class MusikerAdmin(MIZModelAdmin):
     googlebtns = ['kuenstler_name']
     save_on_top = True
 
-    search_form_kwargs = {
-        'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte'],
-    }
+    search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
 
     def band_string(self, obj):
         return concat_limit(obj.band_set.all())
@@ -636,7 +667,9 @@ class SchlagwortAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
 
     list_display = ['schlagwort', 'alias_string', 'ober_string', 'sub_string']
-    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias']  # Removed the 'ober' field from search_fields (useful for dal searches, not so much on changelists)
+    # Remove the 'ober__schlagwort' field from search_fields
+    # (useful for dal searches, not so much on changelists):
+    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias']
 
     inlines = [AliasInLine]
 
@@ -735,7 +768,10 @@ class VideoAdmin(MIZModelAdmin):
     superuser_only = True
     index_category = 'Archivgut'
 
-    inlines = [BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, BestandInLine]
+    inlines = [
+        BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine,
+        GenreInLine, SchlInLine, PersonInLine, BestandInLine
+    ]
 
 @admin.register(_models.bundesland, site=miz_site)
 class BlandAdmin(MIZModelAdmin):
@@ -762,9 +798,7 @@ class OrtAdmin(MIZModelAdmin):
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
 
-    search_form_kwargs = {
-        'fields': ['land', 'bland']
-    }
+    search_form_kwargs = {'fields': ['land', 'bland']}
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field == self.opts.get_field('bland'):
@@ -773,13 +807,14 @@ class OrtAdmin(MIZModelAdmin):
 
 @admin.register(_models.bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
-    # readonly_fields = ['audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch', 'dokument', 'memorabilien', 'technik', 'video']
+#    readonly_fields = [
+#        'audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch',
+#        'dokument', 'memorabilien', 'technik', 'video'
+#    ]
     list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
 
     superuser_only = True
-    search_form_kwargs = {
-        'fields': ['bestand_art', 'lagerort'],
-    }
+    search_form_kwargs = {'fields': ['bestand_art', 'lagerort']}
 
 @admin.register(_models.datei, site=miz_site)
 class DateiAdmin(MIZModelAdmin):
@@ -815,7 +850,10 @@ class DateiAdmin(MIZModelAdmin):
     superuser_only = True
     index_category = 'Archivgut'
 
-    inlines = [QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine, GenreInLine, SchlInLine, PersonInLine, OrtInLine]
+    inlines = [
+        QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine,
+        SpielortInLine, GenreInLine, SchlInLine, PersonInLine, OrtInLine
+    ]
     fieldsets = [
         (None, {'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
         ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'quelle', 'sender', 'bemerkungen']}),
@@ -844,24 +882,34 @@ class BaseBrochureAdmin(MIZModelAdmin):
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
 
-    search_form_kwargs = {
-        'fields': ['genre', 'jahre__jahr'],
-    }
+    search_form_kwargs = {'fields': ['genre', 'jahre__jahr']}
 
     def get_fieldsets(self, request, obj=None):
-        # Add a fieldset for (ausgabe, ausgabe__magazin)
+        """Add a fieldset for (ausgabe, ausgabe__magazin)."""
         fieldsets = super().get_fieldsets(request, obj)
-        # django default implementation adds at minimum: [(None, {'fields': self.get_fields()})]
+        # django default implementation adds at minimum:
+        # [(None, {'fields': self.get_fields()})]
+        # Check the default fieldset for (ausgabe, ausgabe__magazin).
+        # FIXME: this assumes the fields are in the default fieldset
+        # it doesn't check if the fieldset is already declared or
+        # if the fields are not (individually) in the 'fields' attribute.
+        # TODO: add (ausgabe, ausgabe__magazin) fieldset unless
+        # excluded (attribute) or a fieldset already exists.
+        # Do not rely on the default fieldset as it uses the 'fields'
+        # attribute for its fields, which is sensitive to changes made by
+        # subclasses.
         none_fieldsets = list(filter(lambda tpl: tpl[0] is None, fieldsets))
         if none_fieldsets:
-            none_fieldset_fields = none_fieldsets[0][1]['fields']
-            if 'ausgabe' in none_fieldset_fields and 'ausgabe__magazin' in none_fieldset_fields:
-                none_fieldset_fields.remove('ausgabe')
-                none_fieldset_fields.remove('ausgabe__magazin')
-                fieldsets.insert(1, ('Beilage von Ausgabe', {
-                    'fields': [('ausgabe__magazin', 'ausgabe')],
-                    'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
-                }))
+            fields = none_fieldsets[0][1]['fields']
+            if all(f in fields for f in ('ausgabe__magazin', 'ausgabe')):
+                fields.remove('ausgabe')
+                fields.remove('ausgabe__magazin')
+                fieldset = (
+                    'Beilage von Ausgabe', {
+                        'fields': [('ausgabe__magazin', 'ausgabe')],
+                        'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
+                })
+                fieldsets.insert(1, fieldset)
         return fieldsets
 
     def jahr_string(self, obj):
@@ -887,9 +935,13 @@ class BrochureAdmin(BaseBrochureAdmin):
 class KatalogAdmin(BaseBrochureAdmin):
 
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
+    # TODO: swap 'art' and 'zusammenfassung' through the use of 'fields' attribute
 
     def get_fieldsets(self, *args, **kwargs):
-        # swap art and zusammenfassung without having to redeclare the entire fieldsets attribute
+        """
+        Swap art and zusammenfassung without having to redeclare the entire
+        fieldsets attribute.
+        """
         fieldsets = super().get_fieldsets(*args, **kwargs)
         try:
             none_fieldset = list(filter(lambda tpl: tpl[0] is None, fieldsets))[0]
@@ -898,7 +950,9 @@ class KatalogAdmin(BaseBrochureAdmin):
             zusammenfassung = fields.index('zusammenfassung')
             fields[art], fields[zusammenfassung] = fields[zusammenfassung], fields[art]
         except (IndexError, KeyError):
-            # Either there is no 'None' fieldset, or it does not contain any fields or 'art' and/or 'zusammenfassung' are missing from fields
+            # Either there is no 'None' fieldset or
+            # it does not contain any fields or
+            # 'art' and/or 'zusammenfassung' are missing from fields.
             pass
         return fieldsets
 
@@ -927,10 +981,10 @@ class SenderAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
 
 @admin.register(
-    _models.monat, _models.lagerort, _models.geber, _models.sprache,
-    _models.plattenfirma, _models.provenienz, _models.Format, _models.FormatTag,
-    _models.FormatSize, _models.FormatTyp, _models.NoiseRed,
-    _models.Organisation, _models.schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
+    _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma,
+    _models.provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
+    _models.FormatTyp, _models.NoiseRed, _models.Organisation, _models.schriftenreihe,
+    _models.Bildreihe, _models.Veranstaltungsreihe,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
