@@ -95,27 +95,32 @@ def get_model_relations(model, forward=True, reverse=True):
 
 def get_relation_info_to(model, rel):
     """
-    Returns:
-    - the model that holds the related objects
-        (rel.through if many_to_many else rel.related_model)
-    - the field that realizes relation 'rel' towards direction 'model'
-        (the field of the m2m table table pointing to model if many_to_many
-        else the ForeignKey field i.e. rel.field)
+    Return the model that implements the relation 'rel' and the model field
+    that points towards 'model' from that model.
+
+    If rel is a ManyToManyRel, the relation is implemented by the intermediary
+    m2m model (rel.through) and the field is the ForeignKey towards 'model'
+    on that m2m model.
+    If rel is a ManyToOneRel, the returned model is rel.related_model and the
+    field is the ForeignKey rel.field.
+    In any case, the returned model can be queried for related objects of 'model'
+    using the name of the returned field.
     """
+    # (used in utils.merge)
     if rel.many_to_many:
         related_model = rel.through
         m2m_field = rel.field
         if m2m_field.model == model:
             # The ManyToManyField is with model:
-            # the source accessor/field pointing back to model on the m2m table
-            # can be retrieved via m2m_field_name()
+            # the field pointing back to model on the intermediary table can
+            # be retrieved via m2m_field_name().
             related_field = related_model._meta.get_field(
                 m2m_field.m2m_field_name()
             )
         else:
             # The ManyToManyField is with the *other* model:
-            # the related accessor/field pointing to model on the m2m table can
-            # be retrieved via m2m_reverse_field_name()
+            # the field pointing to model on the intermediary table can
+            # be retrieved via m2m_reverse_field_name().
             related_field = related_model._meta.get_field(
                 m2m_field.m2m_reverse_field_name()
             )
@@ -126,7 +131,11 @@ def get_relation_info_to(model, rel):
 
 
 def get_required_fields(model):
-    """Returns the fields of a model that require a value."""
+    """
+    Return a list of model fields that require an explicit value.
+    (i.e. not null, no default value, etc.)
+    """
+    # (this is not explicitly used by anything)
     rslt = []
     for f in get_model_fields(model, m2m=False):
         if f.null:
@@ -143,40 +152,42 @@ def get_required_fields(model):
     return rslt
 
 
-def get_related_descriptor(model_class, rel):
-    """
-    Returns the descriptor that describes relation rel referenced from model model_class.
-    """
+def get_related_descriptor(model, rel):
+    """Return the 'model's related descriptor of relation 'rel'."""
+    # (this is not explicitly used by anything)
     if rel.many_to_many:
-        if rel.field.model == model_class:
-            # model_class contains the ManyToManyField declaring the relation
+        if rel.field.model == model:
+            # model contains the ManyToManyField declaring the relation
             attr = rel.field.name
         else:
             attr = rel.get_accessor_name()
-        return getattr(model_class, attr)
+        return getattr(model, attr)
     else:
         return getattr(rel.model, rel.get_accessor_name())
 
 
 def get_related_manager(instance, rel):
     """
-    Returns the related manager that governs the relation rel for model object instance.
+    Return the related manager that governs the relation 'rel' for model object
+    instance.
     """
+    # (this is not explicitly used by anything)
     descriptor = get_related_descriptor(instance._meta.model, rel)
     if not rel.many_to_many and rel.field.model == instance._meta.model:
         # If rel is a forward ManyToOneRel, we must call the
-        # related_manager_cls with the related object
+        # related_manager_cls with the related object.
         return descriptor.related_manager_cls(getattr(instance, rel.field.name))
     return descriptor.related_manager_cls(instance)
 
 
 def get_updateable_fields(instance):
     """
-    Returns the names of instance's fields that are empty or have their default value.
-    Used by merge_records.
+    Return the names of 'instance's fields that are empty or have their default value.
     """
+    # (used by merge_records)
     rslt = []
-    for fld in get_model_fields(instance._meta.model, m2m=False, primary_key=False):
+    fields = get_model_fields(instance._meta.model, m2m=False, primary_key=False)
+    for fld in fields:
         if not fld.concrete or fld.name.startswith('_'):
             # Exclude 'private' fields
             continue
@@ -196,11 +207,13 @@ def get_updateable_fields(instance):
 
 def is_protected(objs, using='default'):
     """
-    Returns a models.ProtectedError if any of the objs are protected through a
-    ForeignKey, otherwise returns None.
+    Check if any model instances in 'objs' is protected through a ForeignKey.
+
+    Returns a models.ProtectedError as raised by django's deletion collector
+    if an object is protected.
     """
-    # Used by merge_records
-    collector = models.deletion.Collector(using='default')
+    # (used by merge_records)
+    collector = models.deletion.Collector(using=using)
     try:
         collector.collect(objs)
     except models.ProtectedError as e:
@@ -208,7 +221,8 @@ def is_protected(objs, using='default'):
 
 
 def get_reverse_field_path(rel, field_name):
-    """Builds a field_path to 'field_name' using the reverse relation 'rel'."""
+    """Build a field_path to 'field_name' using the reverse relation 'rel'."""
+    # (used by maint.forms.get_dupe_fields_for_model)
     if rel.related_query_name:
         field_path = rel.related_query_name
     elif rel.related_name:
@@ -220,8 +234,9 @@ def get_reverse_field_path(rel, field_name):
 
 def get_relations_between_models(model1, model2):
     """
-    Returns the field and the relation object that connects model1 and model2.
+    Return the field and the relation object that connects model1 and model2.
     """
+    # (this is not explicitly used by anything)
     if isinstance(model1, str):
         model1 = get_model_from_string(model1)
     if isinstance(model2, str):
@@ -239,6 +254,10 @@ def get_relations_between_models(model1, model2):
 
 
 def get_full_fields_list(model):
+    """
+    Collect the names of all fields and relations available on the given model.
+    """
+    # (this is not explicitly used by anything)
     rslt = set()
     for field in get_model_fields(model):
         rslt.add(field.name)
@@ -254,12 +273,11 @@ def get_full_fields_list(model):
 
 def get_all_model_names():
     """
-    Returns all the names of models in the apps registry that are subclasses
+    Return all the names of models in the apps registry that are subclasses
     of DBentry.base.models.BaseModel.
     """
-    from django.apps import apps
-    from DBentry.base.models import BaseModel
-
+    # (this is not explicitly used by anything)
+    from DBentry.base.models import BaseModel  # avoid circular imports
     mdls = apps.get_models('DBentry')
     my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
     return sorted(my_mdls, key=lambda m: m.lower())
@@ -272,14 +290,15 @@ def get_fields_and_lookups(model, field_path):
     Raises:
         django.core.exceptions.FieldDoesNotExist: if a part in 'field_path' is
             not a field of 'model' or a valid lookup.
-        FieldError: on encountering an invalid lookup.
+        django.core.exceptions.FieldError: on encountering an invalid lookup.
 
-    Returns two lists, one containing the model fields that make up the path
+    Returns two lists: one containing the model fields that make up the path
     and one containing the (assumed) lookups.
 
     Example:
         'pizza__toppings__icontains' -> [pizza, toppings], ['icontains']
     """
+    # (used by the changelist search forms to figure out search fields)
     fields, lookups = [], []
     parts = field_path.split(models.constants.LOOKUP_SEP)
 
