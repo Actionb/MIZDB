@@ -60,37 +60,42 @@ def get_model_relations(model, forward=True, reverse=True):
     ManyToManyRels are always included as they are symmetrical (they can be
     considered both as forward and reverse relations).
     """
-    m2m_models = set(
+    intermediary_models = set(
         f.remote_field.through if f.concrete else f.through
         for f in model._meta.get_fields()
         if f.many_to_many
     )
 
-    relation_fields = [f for f in model._meta.get_fields() if f.is_relation]
-    # TODO: this does not maintain the order of fields/rels returned by get_fields()
-    rslt = set(f.remote_field if f.concrete else f for f in relation_fields if f.many_to_many)
-    for f in relation_fields:
+    result = []
+    for f in model._meta.get_fields():
+        if not f.is_relation:
+            continue
         if f.concrete:
-            if forward:
-                # add the actual RELATION, not the ForeignKey/ManyToMany field.
-                rslt.add(f.remote_field)
+            rel = f.remote_field
+        else:
+            rel = f
+
+        if f.many_to_many:
+            # Always add ManyToManyRels.
+            pass
+        elif f.concrete:
+            if not forward:
+                continue
         else:
             if not reverse:
-                # We do not want any reverse relations.
                 continue
-            if f.one_to_many and f.related_model in m2m_models:
-                # This is a 'reverse' ForeignKey relation from an actual
-                # (i.e. not auto_created) m2m intermediary model to 'model' .
-                # The relation between the intermediary model and this 'model'
-                # was realized on *both* sides, hence it showing up twice
-                # (as a ManyToOneRel and a ManyToManyRel).
-                # The ManyToManyRel contains all the information we need so we
-                # ignore the ManyToOneRel. If 'model' does not declare a
-                # ManyToManyField for this relation, the intermediary model
-                # would not be in 'm2m_models'.
+            if f.one_to_many and f.related_model in intermediary_models:
+                # This is a reverse ForeignKey relation from an intermediary
+                # m2m model to 'model'.
+                # There are two relations involved here:
+                # - the ManyToOneRel from the intermediary to 'model'
+                # - the ManyToManyRel through the intermediary
+                # We are collecting all ManyToManyRels and this ManyToOneRel is
+                # 'part' of the ManyToManyRel, so we can ignore it.
                 continue
-            rslt.add(f)
-    return list(rslt)
+        if rel not in result:
+            result.append(rel)
+    return result
 
 
 def get_relation_info_to(model, rel):
