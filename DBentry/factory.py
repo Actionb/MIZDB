@@ -1,21 +1,18 @@
-""" unique together options are not really supported. Use with caution."""
-
+# WARNING: unique together options are not really supported. Use with caution.
 import itertools
-
 import factory
-
 from stdnum import issn
 
 import DBentry.models as _models
 from DBentry.utils import is_iterable, get_model_relations, get_model_fields
 
+
 class RuntimeFactoryMixin(object):
     """
     A mixin that can create a related factory on the fly.
 
-    Accepts one additional keyword argument:
-        - related_model: the model class for the related factory
-
+    Accepts the additional keyword argument 'related_model' which is the model
+    class for the related factory.
     """
 
     def __init__(self, *args, **kwargs):
@@ -29,14 +26,17 @@ class RuntimeFactoryMixin(object):
             try:
                 self._factory = super().get_factory()
             except AttributeError:
-                # The related factory does not exist yet
+                # The related factory does not exist yet.
                 if self.related_model is None:
-                    raise AttributeError('Missing related factory for {}'.format(self.name))
-                self._factory =  modelfactory_factory(self.related_model)
+                    raise AttributeError(
+                        'Missing related factory for {}'.format(self.name)
+                    )
+                self._factory = modelfactory_factory(self.related_model)
         return self._factory
 
     def get_factory(self):
         return self.factory
+
 
 class UniqueFaker(factory.Sequence):
     """
@@ -49,7 +49,7 @@ class UniqueFaker(factory.Sequence):
     Only works for strings.
     """
 
-    def __init__(self, faker, function = None, **kwargs):
+    def __init__(self, faker, function=None, **kwargs):
         if function is None:
             function = lambda n: n
         super().__init__(function, **kwargs)
@@ -62,18 +62,20 @@ class UniqueFaker(factory.Sequence):
         n = super().evaluate(instance, step, extra)
         return self.faker.generate(extra) + str(n)
 
+
 class ISSNFaker(factory.Faker):
 
-    def __init__(self, provider = 'ean', **kwargs):
+    def __init__(self, provider='ean', **kwargs):
         super().__init__(provider, **kwargs)
 
     def generate(self, extra_kwargs):
         ean = super().generate(extra_kwargs)
-        return ean[3:-3] + issn.calc_check_digit(ean[3:-3])    
+        return ean[3:-3] + issn.calc_check_digit(ean[3:-3])
+
 
 class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
 
-    def __init__(self, factory, required = False, **kwargs):
+    def __init__(self, factory, required=False, **kwargs):
         self.required = required
         super().__init__(factory, **kwargs)
 
@@ -82,10 +84,11 @@ class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
         if not self.required and not extra:
             return
         # evaluate() is called while resolving the pre-declarations of a factory.
-        # Extra contains explicitly passed in parameters - the factory needs to know these when 
+        # Extra contains explicitly passed in parameters - the factory needs to know these when
         # deciding on what fields to query for in get_or_create.
         self.factory.set_memo(list(extra.keys()))
         return super().evaluate(instance, step, extra)
+
 
 class SelfFactory(SubFactory):
 
@@ -102,18 +105,19 @@ class SelfFactory(SubFactory):
             if not self_name:
                 # do not recurse at all, if the SelfFactory cannot 'find itself'
                 return
-            extra = {self_name:None}
+            extra = {self_name: None}
         return super().evaluate(instance, step, extra)
+
 
 class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
     """
     A related factory that can handle iterables passed in.
 
     Accepts two additional keyword arguments:
-        - accessor_name (str): the name of the instance's attribute that refers to the relation's descriptor 
+        - accessor_name (str): the name of the instance's attribute that refers to the relation's descriptor
         - extra (int): the number of extra objects to create in addition to the objects that result from the passed in kwargs
 
-    Example: 
+    Example:
 
         class BuchFactory():
             autor = RelatedFactory(AutorFactory,'buch')
@@ -128,7 +132,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
 
     """
 
-    def __init__(self, factory, factory_related_name='', accessor_name = None, extra = 0, **defaults):
+    def __init__(self, factory, factory_related_name='', accessor_name=None, extra=0, **defaults):
         self.accessor_name = accessor_name
         self.extra = extra
         super().__init__(factory, factory_related_name, **defaults)
@@ -140,7 +144,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
         if context.value:
             # context.value contains the related_object(s) that should be added to instance
             if isinstance(context.value, (list, tuple)):
-                related_objects = list(context.value) # force tuples into lists
+                related_objects = list(context.value)  # force tuples into lists
             else:
                 related_objects = [context.value]
 
@@ -155,17 +159,17 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
 
             passed_kwargs = []
             default_kwargs = dict(self.defaults)
-            if self.name: 
+            if self.name:
                 default_kwargs[self.name] = instance
 
             if context.extra:
                 if any(is_iterable(v) for v in context.extra.values()):
-                    iterables = {k:v for k, v in context.extra.items() if is_iterable(v)} # => {'name':['Alice','Bob','Charlie'], 'kuerzel':['Al','Bo']}
-                    singles = {k:v for k, v in context.extra.items() if k not in iterables} # => {'beschreibung' : 'Test'}
+                    iterables = {k: v for k, v in context.extra.items() if is_iterable(v)} # => {'name':['Alice','Bob','Charlie'], 'kuerzel':['Al','Bo']}
+                    singles = {k: v for k, v in context.extra.items() if k not in iterables} # => {'beschreibung' : 'Test'}
                     for value in itertools.zip_longest(*iterables.values()): # => [('Alice','Al'), ('Bob','Bo'),('Charlie',None)]
                         kwargs = default_kwargs.copy()
                         kwargs.update(singles)
-                        kwargs.update({k:v for k, v in zip(iterables.keys(), value) if v is not None})
+                        kwargs.update({k: v for k, v in zip(iterables.keys(), value) if v is not None})
                         passed_kwargs.append(kwargs)
                 else:
                     kwargs = default_kwargs.copy()
@@ -174,23 +178,24 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
 
             while extra > 0:
                 passed_kwargs.append(default_kwargs)
-                extra -=1 
+                extra -= 1
 
             for kwargs in passed_kwargs:
                 related_objects.append(step.recurse(factory, kwargs))
 
         return related_objects
 
+
 class M2MFactory(RelatedFactory):
     """
     A factory that implements a m2m relation with the added benefits of RelatedFactory.
 
     Parameters:
-        descriptor_name (str): the name of the instance's attribute that refers to the relation's descriptor 
+        descriptor_name (str): the name of the instance's attribute that refers to the relation's descriptor
 
     """
 
-    def __init__(self, factory,  descriptor_name = None, **defaults): 
+    def __init__(self, factory,  descriptor_name=None, **defaults):
         self.descriptor_name = descriptor_name
         if 'accessor_name' in defaults:
             # Having the attribute accessor_name upon calling super().call() will make the RelatedFactory try to invoke .add()
@@ -209,10 +214,11 @@ class M2MFactory(RelatedFactory):
             source = related_manager.target_field_name
             target = related_manager.source_field_name
 
-        #self.name = source
+       # self.name = source  # TODO: why is this commented out?
 
         for related_object in super().call(instance, step, context):
-            related_manager.through.objects.create(**{source:instance, target:related_object})
+            related_manager.through.objects.create(**{source: instance, target: related_object})
+
 
 class MIZDjangoOptions(factory.django.DjangoOptions):
 
@@ -259,12 +265,11 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             declaration = factory.Faker('time_delta')
         return declaration
 
-
     def add_base_fields(self):
         """
         Add any fields of the model that are not a relation and require a value.
         """
-        for field in get_model_fields(self.model, foreign = False, m2m = False):
+        for field in get_model_fields(self.model, foreign=False, m2m=False):
             if hasattr(self.factory, field.name) or field.has_default() or field.blank:
                 continue
             setattr(self.factory, field.name, self._get_decl_for_model_field(field))
@@ -305,33 +310,33 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                     raise TypeError("Unknown relation: {!s}".format(rel.get_path_info()))
             factory_name = self._get_factory_name_for_model(related_model)
             if not hasattr(self.factory, declaration_name):
-                setattr(self.factory, declaration_name, M2MFactory(factory_name, descriptor_name = descriptor_name, related_model = related_model))
+                setattr(self.factory, declaration_name, M2MFactory(factory_name, descriptor_name=descriptor_name, related_model=related_model))
 
     def add_related_factories(self):
         """
         Add RelatedFactories for every one to many (i.e. reverse) relation of this model.
         """
-        for rel in get_model_relations(self.model, forward = False):
-            if rel.many_to_many: 
+        for rel in get_model_relations(self.model, forward=False):
+            if rel.many_to_many:
                 continue
             factory_name = self._get_factory_name_for_model(rel.related_model) # these are all reverse relations, meaning rel.model == self.model
             accessor_name = rel.get_accessor_name()
             if not hasattr(self.factory, rel.name):
                 setattr(self.factory, rel.name, RelatedFactory(
-                    factory_name, factory_related_name = rel.field.name, accessor_name = accessor_name, related_model = rel.related_model
+                    factory_name, factory_related_name=rel.field.name, accessor_name=accessor_name, related_model=rel.related_model
                 ))
 
     def add_sub_factories(self):
         """
         Add SubFactories for every (forward) one to many relation of this model.
         """
-        for field in get_model_fields(self.model, base = False, foreign = True, m2m = False):
+        for field in get_model_fields(self.model, base=False, foreign=True, m2m=False):
             if not hasattr(self.factory, field.name):
                 factory_name = self._get_factory_name_for_model(field.related_model)
                 if field.related_model == self.model:
-                    setattr(self.factory, field.name, SelfFactory(self.factory, required = not field.null))
+                    setattr(self.factory, field.name, SelfFactory(self.factory, required=not field.null))
                 else:
-                    setattr(self.factory, field.name, SubFactory(factory_name, related_model = field.related_model, required = not field.null))
+                    setattr(self.factory, field.name, SubFactory(factory_name, related_model=field.related_model, required=not field.null))
 
     def contribute_to_class(self, factory_class, meta=None, base_meta=None, base_factory=None, params=None):
         super().contribute_to_class(factory_class, meta=meta, base_meta=base_meta, base_factory=base_factory, params=params)
@@ -348,6 +353,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
 
         self.pre_declarations, self.post_declarations = factory.builder.parse_declarations(self.declarations)
 
+
 class MIZModelFactory(factory.django.DjangoModelFactory):
     _options_class = MIZDjangoOptions
 
@@ -355,10 +361,10 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
 
     @classmethod
     def set_memo(cls, value):
-        if cls.__memo and value and value!= cls.__memo:
+        if cls.__memo and value and value != cls.__memo:
             # Memo already set for this factory
             return
-        if len(cls._meta.django_get_or_create)<=1:
+        if len(cls._meta.django_get_or_create) <= 1:
             # Ignoring setting of Memo: django_get_or_create contains one field or less
             return
         cls.__memo = value
@@ -366,8 +372,8 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
     @classmethod
     def full_relations(cls, **kwargs):
         """ Creates a model instance with a related object for each possible relation."""
-        #NOTE: is this actually that useful? We are NOT providing values for base fields of that instance. This is also not covered by tests.
-        #NOTE: check that pre_declarations/post_declaration only contains relations?
+        # NOTE: is this actually that useful? We are NOT providing values for base fields of that instance. This is also not covered by tests.
+        # NOTE: check that pre_declarations/post_declaration only contains relations?
         backup = []
         for name, decl in cls._meta.pre_declarations.as_dict().items():
             if hasattr(decl, 'required') and not decl.required and name not in kwargs:
@@ -398,7 +404,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             params (dict): attributes to use for generating the object
             strategy: the strategy to use
         """
-        if params and len(cls._meta.django_get_or_create)>1:
+        if params and len(cls._meta.django_get_or_create) > 1:
             # This factory has been called with explicit parameters for some of its fields.
             # Add these fields to the memo so we can distinguish passed in parameters from *generated* ones.
             cls.set_memo(list(params.keys()))
@@ -414,7 +420,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             "(in %s._meta.django_get_or_create=%r)"
             % (cls, cls._meta.django_get_or_create))
 
-        # In case of a multi-field get or create setup, any fields in get_or_create_fields that 
+        # In case of a multi-field get or create setup, any fields in get_or_create_fields that
         # is not in memo had their values *generated* and not passed in.
         # This can lead to not finding the model instance that the explicitly passed in kwargs
         # refer to.
@@ -428,7 +434,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         if not get_or_create_fields:
             # All fields that could be used to get an object from the database had their values randomly generated.
             # There is no point in even looking for a matching record, so just create a brandnew one.
-            instance =  manager.create(**kwargs)
+            instance = manager.create(**kwargs)
         else:
             key_fields = {}
             for field in get_or_create_fields:
@@ -438,13 +444,14 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             key_fields['defaults'] = kwargs # 'defaults' contains the data which get_or_create would create a new instance with
             instance, _created = manager.get_or_create(**key_fields)
         cls.__memo = []
-        # Refresh the instance's data. This can be necessary if the instance was created f.ex. with data of type string for a DateField. 
+        # Refresh the instance's data. This can be necessary if the instance was created f.ex. with data of type string for a DateField.
         instance.refresh_from_db()
         return instance
 
 
 # Stores the factories created via modelfactory_factory so that sequences are shared
 _cache = {}
+
 
 def modelfactory_factory(model, **kwargs):
     model_name = model.split('.')[-1] if isinstance(model, str) else model._meta.model_name
@@ -459,17 +466,18 @@ def modelfactory_factory(model, **kwargs):
         return getattr(sys.modules[__name__], factory_name)
     if hasattr(sys.modules['factory.base'], factory_name):
         return getattr(sys.modules['factory.base'], factory_name)
-    # Create a new factory class 
+    # Create a new factory class
     if 'Meta' not in kwargs:
-        kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model':model})
+        kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model': model})
     modelfac = type(factory_name, (MIZModelFactory, ), kwargs)
     _cache[model_name] = modelfac
     return modelfac
 
+
 class AutorFactory(MIZModelFactory):
     class Meta:
         model = _models.autor
-    person = SubFactory('DBentry.factory.PersonFactory', required = True)
+    person = SubFactory('DBentry.factory.PersonFactory', required=True)
 
     @factory.lazy_attribute
     def kuerzel(object):
@@ -479,11 +487,13 @@ class AutorFactory(MIZModelFactory):
             return object.person.vorname[0] + object.person.nachname[0]
         return object.person.nachname[:2].upper()
 
+
 class BandFactory(MIZModelFactory):
     class Meta:
         model = _models.band
         django_get_or_create = ['band_name']
     band_name = factory.Faker('company')
+
 
 class BundeslandFactory(MIZModelFactory):
     class Meta:
@@ -492,10 +502,12 @@ class BundeslandFactory(MIZModelFactory):
     bland_name = factory.Faker('state')
     code = factory.Faker('state_abbr')
 
+
 class GenreFactory(MIZModelFactory):
     class Meta:
         model = _models.genre
         django_get_or_create = ['genre']
+
 
 class LandFactory(MIZModelFactory):
     class Meta:
@@ -504,6 +516,7 @@ class LandFactory(MIZModelFactory):
     land_name = UniqueFaker('country')
     code = UniqueFaker('country_code')
 
+
 class MagazinFactory(MIZModelFactory):
     class Meta:
         model = _models.magazin
@@ -511,13 +524,15 @@ class MagazinFactory(MIZModelFactory):
     magazin_name = factory.Sequence(lambda n: 'TestMagazin' + str(n))
     issn = ISSNFaker()
 
+
 class MonatFactory(MIZModelFactory):
     class Meta:
         model = _models.monat
         django_get_or_create = ['monat', 'abk', 'ordinal']
     monat = factory.Faker('month_name')
     abk = factory.LazyAttribute(lambda o: o.monat[:3])
-    ordinal = factory.Sequence(lambda n: n)   
+    ordinal = factory.Sequence(lambda n: n)
+
 
 class MusikerFactory(MIZModelFactory):
     class Meta:
@@ -525,10 +540,12 @@ class MusikerFactory(MIZModelFactory):
         django_get_or_create = ['kuenstler_name']
     kuenstler_name = factory.Sequence(lambda n: 'TestMusiker' + str(n))
 
+
 class OrtFactory(MIZModelFactory):
     class Meta:
         model = _models.ort
     stadt = factory.Faker('city')
+
 
 class PersonFactory(MIZModelFactory):
     class Meta:
@@ -536,21 +553,24 @@ class PersonFactory(MIZModelFactory):
     vorname = factory.Faker('first_name')
     nachname = factory.Faker('last_name')
 
+
 class SchlagwortFactory(MIZModelFactory):
     class Meta:
         model = _models.schlagwort
         django_get_or_create = ['schlagwort']
+
 
 class SpracheFactory(MIZModelFactory):
     class Meta:
         model = _models.sprache
     abk = factory.Faker('language_code')
 
-#TODO: allow disabling of get_or_create to create multiple objects with (almost) the same kwargs
+
+# TODO: allow disabling of get_or_create to create multiple objects with (almost) the same kwargs
 def make(model, **kwargs):
     return modelfactory_factory(model)(**kwargs)
+
 
 def batch(model, num, **kwargs):
     for i in range(num):
         yield modelfactory_factory(model)(**kwargs)
-
