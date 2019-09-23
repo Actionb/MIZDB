@@ -30,10 +30,12 @@ class BestandInLine(BaseTabularInline):
     verbose_name = _models.bestand._meta.verbose_name
     verbose_name_plural = _models.bestand._meta.verbose_name_plural
 
+
 class DateiInLine(BaseTabularInline):
     model = _m2m.m2m_datei_quelle
     fields = ['datei']
     verbose_model = _models.datei
+
 
 class QuelleInLine(BaseStackedInline):
     model = _m2m.m2m_datei_quelle
@@ -151,7 +153,7 @@ class AusgabenAdmin(MIZModelAdmin):
     ]
     list_display = (
         '__str__', 'num_string', 'lnum_string', 'monat_string', 'jahr_string',
-        'jahrgang','magazin', 'e_datum', 'anz_artikel', 'status'
+        'jahrgang', 'magazin', 'e_datum', 'anz_artikel', 'status'
     )
     search_form_kwargs = {
         'fields': [
@@ -228,6 +230,7 @@ class AutorAdmin(MIZModelAdmin):
     def magazin_string(self, obj):
         return concat_limit(obj.magazin.all())
     magazin_string.short_description = 'Magazin(e)'
+
 
 @admin.register(_models.artikel, site=miz_site)
 class ArtikelAdmin(MIZModelAdmin):
@@ -317,6 +320,7 @@ class ArtikelAdmin(MIZModelAdmin):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
     kuenstler_string.short_description = 'Künstler'
 
+
 @admin.register(_models.band, site=miz_site)
 class BandAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
@@ -354,6 +358,7 @@ class BandAdmin(MIZModelAdmin):
     def orte_string(self, obj):
         return concat_limit(obj.orte.all())
     orte_string.short_description = 'Orte'
+
 
 @admin.register(_models.bildmaterial, site=miz_site)
 class BildmaterialAdmin(MIZModelAdmin):
@@ -414,6 +419,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         if 'copy_related' in request.POST:
             self.copy_related(obj)
         return super().response_change(request, obj)
+
 
 @admin.register(_models.buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
@@ -504,11 +510,13 @@ class BuchAdmin(MIZModelAdmin):
         return concat_limit(obj.genre.all())
     genre_string.short_description = 'Genres'
 
+
 @admin.register(_models.dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
+
 
 @admin.register(_models.genre, site=miz_site)
 class GenreAdmin(MIZModelAdmin):
@@ -534,6 +542,7 @@ class GenreAdmin(MIZModelAdmin):
     def alias_string(self, obj):
         return concat_limit(obj.genre_alias_set.all())
     alias_string.short_description = 'Aliase'
+
 
 @admin.register(_models.magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
@@ -561,11 +570,13 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.admin_order_field = 'anz_ausgabe'
     anz_ausgaben.annotation = Count('ausgabe')
 
+
 @admin.register(_models.memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
+
 
 @admin.register(_models.musiker, site=miz_site)
 class MusikerAdmin(MIZModelAdmin):
@@ -604,6 +615,7 @@ class MusikerAdmin(MIZModelAdmin):
         return concat_limit(obj.orte.all())
     orte_string.short_description = 'Orte'
 
+
 @admin.register(_models.person, site=miz_site)
 class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
@@ -632,6 +644,7 @@ class PersonAdmin(MIZModelAdmin):
         return concat_limit(obj.orte.all())
     orte_string.short_description = 'Orte'
 
+
 @admin.register(_models.schlagwort, site=miz_site)
 class SchlagwortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
@@ -658,6 +671,7 @@ class SchlagwortAdmin(MIZModelAdmin):
         return concat_limit(obj.schlagwort_alias_set.all())
     alias_string.short_description = 'Aliase'
 
+
 @admin.register(_models.spielort, site=miz_site)
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
@@ -666,11 +680,13 @@ class SpielortAdmin(MIZModelAdmin):
     list_display = ['name', 'ort']
     inlines = [AliasInLine]
 
+
 @admin.register(_models.technik, site=miz_site)
 class TechnikAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
+
 
 @admin.register(_models.veranstaltung, site=miz_site)
 class VeranstaltungAdmin(MIZModelAdmin):
@@ -699,6 +715,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
     kuenstler_string.short_description = 'Künstler'
 
+
 @admin.register(_models.verlag, site=miz_site)
 class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
@@ -706,6 +723,7 @@ class VerlagAdmin(MIZModelAdmin):
         'fields': ['sitz', 'sitz__land', 'sitz__bland'],
         'labels': {'sitz': 'Sitz'}
     }
+
 
 @admin.register(_models.video, site=miz_site)
 class VideoAdmin(MIZModelAdmin):
@@ -743,6 +761,7 @@ class VideoAdmin(MIZModelAdmin):
         GenreInLine, SchlInLine, PersonInLine, BestandInLine
     ]
 
+
 @admin.register(_models.bundesland, site=miz_site)
 class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
@@ -750,13 +769,16 @@ class BlandAdmin(MIZModelAdmin):
         'fields': ['ort__land'],
     }
 
+
 @admin.register(_models.land, site=miz_site)
 class LandAdmin(MIZModelAdmin):
     pass
 
+
 @admin.register(_models.kreis, site=miz_site)
 class KreisAdmin(MIZModelAdmin):
     superuser_only = True
+
 
 @admin.register(_models.ort, site=miz_site)
 class OrtAdmin(MIZModelAdmin):
@@ -771,6 +793,7 @@ class OrtAdmin(MIZModelAdmin):
             kwargs['widget'] = make_widget(model=db_field.related_model, forward=['land'])
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+
 @admin.register(_models.bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
 #    readonly_fields = [
@@ -780,6 +803,7 @@ class BestandAdmin(MIZModelAdmin):
     list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['bestand_art', 'lagerort']}
     superuser_only = True
+
 
 @admin.register(_models.datei, site=miz_site)
 class DateiAdmin(MIZModelAdmin):
@@ -826,14 +850,17 @@ class DateiAdmin(MIZModelAdmin):
         ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'quelle', 'sender', 'bemerkungen']}),
     ]
 
+
 @admin.register(_models.instrument, site=miz_site)
 class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
+
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
     form = HerausgeberForm
     index_category = 'Stammdaten'
+
 
 class BaseBrochureAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
@@ -883,6 +910,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     jahr_string.admin_order_field = 'jahr'
     jahr_string.annotation = Min('jahre__jahr')
 
+
 @admin.register(_models.Brochure, site=miz_site)
 class BrochureAdmin(BaseBrochureAdmin):
     class JahrInLine(BaseTabularInline):
@@ -895,6 +923,7 @@ class BrochureAdmin(BaseBrochureAdmin):
         model = _models.BrochureURL
 
     inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, BestandInLine]
+
 
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
@@ -921,6 +950,7 @@ class KatalogAdmin(BaseBrochureAdmin):
             pass
         return fieldsets
 
+
 @admin.register(_models.Kalendar, site=miz_site)
 class KalendarAdmin(BaseBrochureAdmin):
     class GenreInLine(BaseGenreInline):
@@ -938,12 +968,14 @@ class KalendarAdmin(BaseBrochureAdmin):
 
     inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
 
+
 @admin.register(_models.sender, site=miz_site)
 class SenderAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.sender_alias
 
     inlines = [AliasInLine]
+
 
 @admin.register(
     _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma,
@@ -954,6 +986,7 @@ class SenderAdmin(MIZModelAdmin):
 )
 class HiddenFromIndex(MIZModelAdmin):
     superuser_only = True
+
 
 miz_site.register(Group, GroupAdmin)
 miz_site.register(User, UserAdmin)
