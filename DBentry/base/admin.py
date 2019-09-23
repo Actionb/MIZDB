@@ -42,6 +42,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             be listed under. A fake app is created for each category to group
             them on the index page.
     """
+    # FIXME: self.get_search_fields access self.search_fields which is not declared
     # FIXME: googlebtns: unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
     # TODO: googlebtns: fields in this list should be wrapped into a custom widget
     # (let the widget render the button instead of the fieldset template)
@@ -160,6 +161,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         Return a dictionary mapping of action_name: (callable, name, description)
         for this ModelAdmin for every action that the user has access to.
         """
+        # TODO: django has _filter_actions_by_permissions
         actions = super().get_actions(request)
 
         for func, name, _desc in actions.copy().values():
