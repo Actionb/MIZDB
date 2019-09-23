@@ -1,21 +1,25 @@
+# TODO: inlines should be ordered consistently (alphabetically?)
 from django.contrib import admin
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group, User
 from django.db.models import Count, Min
 
 import DBentry.models as _models
 import DBentry.m2m as _m2m
 import DBentry.actions as _actions
-from DBentry.base.admin import (
-    MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseSchlagwortInline, 
-    BaseStackedInline, BaseTabularInline, BaseOrtInLine
-)
-from DBentry.forms import ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm, BildmaterialForm
-from DBentry.utils import concat_limit
 from DBentry.ac.widgets import make_widget
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-
+from DBentry.base.admin import (
+    MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline,
+    BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
+)
+from DBentry.forms import (
+    ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm,
+    BildmaterialForm
+)
 from DBentry.sites import miz_site
+from DBentry.utils import concat_limit
 
-#TODO: order inlines alphabetically? in any case: make the order of different ModelAdmin inlines consistent
 
 class BestandInLine(BaseTabularInline):
     model = _models.bestand
