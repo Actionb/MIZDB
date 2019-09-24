@@ -5,21 +5,20 @@
 
 import datetime
 import re
-from functools import partial
 from stdnum import issn, isbn, ean
 
-from django.db import models
-from django.forms import widgets, fields
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
+from django.db import models
+from django.forms import widgets, fields
 from django.utils import formats
 
+from DBentry.constants import MIN_JAHR, MAX_JAHR
 from DBentry.validators import ISSNValidator, ISBNValidator, EANValidator
 
 class YearField(models.IntegerField):
 
     def formfield(self, **kwargs):
-        from DBentry.constants import MIN_JAHR, MAX_JAHR
         kwargs['validators'] = [MaxValueValidator(MAX_JAHR),MinValueValidator(MIN_JAHR)]
         return super().formfield(**kwargs)
 
