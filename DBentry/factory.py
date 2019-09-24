@@ -1,6 +1,7 @@
 # WARNING: unique together options are not really supported. Use with caution.
 import itertools
 import factory
+import sys
 from stdnum import issn
 
 import DBentry.models as _models
@@ -497,7 +498,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
     def _get_or_create(cls, model_class, **kwargs):
         """Create an instance of the model through manager.get_or_create."""
         manager = cls._get_manager(model_class)
-        # TODO: remove this assertion?
+
         assert 'defaults' not in cls._meta.django_get_or_create, (
             "'defaults' is a reserved keyword for get_or_create "
             "(in %s._meta.django_get_or_create=%r)"
@@ -543,21 +544,19 @@ _cache = {}
 
 
 def modelfactory_factory(model, **kwargs):
-    # FIXME: model must be a Model instance
-    model_name = model.split('.')[-1] if isinstance(model, str) else model._meta.model_name
-
-    # Check the cache for a factory for that model_name
+    """Create a factory class for the given model."""
+    model_name = model._meta.model_name
+    # Check the cache for a factory for that model_name.
     if model_name in _cache:
         return _cache[model_name]
     # Check this module and the factory's base module for a factory
     # matching the name.
     factory_name = model_name.capitalize() + 'Factory'
-    import sys
     if hasattr(sys.modules[__name__], factory_name):
         return getattr(sys.modules[__name__], factory_name)
     if hasattr(sys.modules['factory.base'], factory_name):
         return getattr(sys.modules['factory.base'], factory_name)
-    # Create a new factory class
+    # Create a new factory class:
     if 'Meta' not in kwargs:
         kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model': model})
     modelfac = type(factory_name, (MIZModelFactory, ), kwargs)
@@ -657,7 +656,6 @@ class SpracheFactory(MIZModelFactory):
     abk = factory.Faker('language_code')
 
 
-# TODO: allow disabling of get_or_create to create multiple objects with (almost) the same kwargs
 def make(model, **kwargs):
     return modelfactory_factory(model)(**kwargs)
 
