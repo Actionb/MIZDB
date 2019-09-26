@@ -21,7 +21,7 @@ class HTMLWrapper(object):
     """
     
     def __init__(self, id, val, label=None):
-        self.id = id # the id of the html element 
+        self.id = id # the id of the html element
         self.val = val # either a string representing the help text or a list of dictionaries of: 'list item header': 'list item help text'
         if label is None:
             self.label = id
@@ -62,10 +62,10 @@ class HTMLWrapper(object):
         iterator = []
         for i, v in enumerate(self.val, 1):
             d = dict(
-                id=self.id + '-' + str(i), 
-                label=str(v), 
-                text='', 
-                classes='', 
+                id=self.id + '-' + str(i),
+                label=str(v),
+                text='',
+                classes='',
             )
             if isinstance(v, dict):
                 d.update(v)
@@ -186,9 +186,9 @@ class FormViewHelpText(BaseHelpText):
                 field_helptext = self.get_helptext_for_field(field_name, formfield)
                 if field_helptext:
                     self.field_helptexts.append({
-                        'id': field_name, 
-                        'label': formfield.label, 
-                        'text': field_helptext, 
+                        'id': field_name,
+                        'label': formfield.label,
+                        'text': field_helptext,
                     })
         return self._field_helptexts
         
@@ -261,7 +261,7 @@ class ModelAdminHelpText(FormViewHelpText):
     def inline_helptexts(self):
         """
         Collect the help texts for each inline of the model admin.
-        If the inline's model cannot be found in this instance's 'inlines' mapping, attempt to get the *inline* version of 
+        If the inline's model cannot be found in this instance's 'inlines' mapping, attempt to get the *inline* version of
         the help text of that model from the registered help texts.
         """
         if self._inline_helptexts is None:
@@ -269,7 +269,7 @@ class ModelAdminHelpText(FormViewHelpText):
             for inline in self.model_admin.get_inline_instances(self.request):
                 inline_model = inline.model
                 if getattr(inline, 'verbose_model', False):
-                    # inlines that use BaseInlineMixin can have a verbose_model attribute set to the 
+                    # inlines that use BaseInlineMixin can have a verbose_model attribute set to the
                     # 'target' model of a m2m relationship
                     inline_model = inline.verbose_model
                 if inline_model._meta.verbose_name_plural in self.inlines:
@@ -279,9 +279,9 @@ class ModelAdminHelpText(FormViewHelpText):
                 else:
                     continue
                 self._inline_helptexts.append({
-                    'id': 'inline-{}'.format(inline_model._meta.verbose_name), 
-                    'label': inline_model._meta.verbose_name_plural, 
-                    'text': text, 
+                    'id': 'inline-{}'.format(inline_model._meta.verbose_name),
+                    'label': inline_model._meta.verbose_name_plural,
+                    'text': text,
                 })
         return self._inline_helptexts
         

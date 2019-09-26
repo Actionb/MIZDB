@@ -39,25 +39,25 @@ class AusgabeHelpText(MIZModelAdminHelpText):
     """
     
     fields = {
-        'status': "Wählen Sie hier den Bearbeitungsstatus im Bezug auf die Erfassung der Artikel dieser Ausgabe.", 
-        'sonderausgabe': "Sonderausgaben fehlen gelegentlich numerische Angaben.", 
-        'e_datum': "Oft ist diese Angabe in der vorangegangenen Ausgabe zu finden. Erlaubte Formate sind 'tt.mm.jjjj' (31.12.1999) oder 'jjjj-mm-tt' (1999-12-31).", 
-        'jahrgang': "Ist auf dem Titelblatt oder in dem Impressum ein Jahrgang vermerkt, so kann dieser hier eingetragen werden. Im Englischen ist dafür der Begriff 'Volume' geläufig.", 
+        'status': "Wählen Sie hier den Bearbeitungsstatus im Bezug auf die Erfassung der Artikel dieser Ausgabe.",
+        'sonderausgabe': "Sonderausgaben fehlen gelegentlich numerische Angaben.",
+        'e_datum': "Oft ist diese Angabe in der vorangegangenen Ausgabe zu finden. Erlaubte Formate sind 'tt.mm.jjjj' (31.12.1999) oder 'jjjj-mm-tt' (1999-12-31).",
+        'jahrgang': "Ist auf dem Titelblatt oder in dem Impressum ein Jahrgang vermerkt, so kann dieser hier eingetragen werden. Im Englischen ist dafür der Begriff 'Volume' geläufig.",
     }
     
     inlines = {
         'Ausgabennummer': "Neben der Jahresangabe ist auf dem Titelblatt oft auch eine weiter Nummer zu finden, welche entweder die Ausgabennummer oder die laufende Nummer darstellt.\n" + \
         "Die Ausgabennummer beschreibt die 'x-te' Ausgabe in einem Jahr, was bedeutet, dass - im Gegensatz zur laufenden Nummer - die Zählung bei einem neuen Jahr/Jahrgang erneut bei 1 beginnt. \n" + \
-        "Häufig kommt diese Nummer auch als Zusatz im Strichcode der Ausgabe vor.",  
+        "Häufig kommt diese Nummer auch als Zusatz im Strichcode der Ausgabe vor.",
         
         'Monate': "Die Monate, die dieser Ausgabe angehören. Sind keine Monate ausdrücklich (z.B. 'Jan/Feb-2002') erwähnt und ist es weiterhin nicht erkenntlich, dass sich Zahlenangaben auf Monate beziehen, sollte davon abgesehn werden, Monate einzutragen.\n" + \
-        "Findet man z.B. Angaben in der Form '12-2001' zu der Ausgabe, ist damit nicht unweigerlich der Monat Dezember gemeint!", 
+        "Findet man z.B. Angaben in der Form '12-2001' zu der Ausgabe, ist damit nicht unweigerlich der Monat Dezember gemeint!",
         
-        'Laufende Nummer': "Die fortlaufende Nummer in der Gesamtheit aller erschienen Ausgaben dieses Magazines.", 
+        'Laufende Nummer': "Die fortlaufende Nummer in der Gesamtheit aller erschienen Ausgaben dieses Magazines.",
         
-        'Jahre': 'Selbsterklärend. Bitte vier-stellige Jahreszahlen verwenden.', 
+        'Jahre': 'Selbsterklärend. Bitte vier-stellige Jahreszahlen verwenden.',
         
-        'Musik-Beilagen': 'Liegen der Ausgabe Musik-Medien bei, so können diese hier eingetragen werden. Näheres finden sie unter der <a href="/admin/help/audio/" target="_blank">Audio-Hilfe</a>.', 
+        'Musik-Beilagen': 'Liegen der Ausgabe Musik-Medien bei, so können diese hier eingetragen werden. Näheres finden sie unter der <a href="/admin/help/audio/" target="_blank">Audio-Hilfe</a>.',
     }
     
     notes = """

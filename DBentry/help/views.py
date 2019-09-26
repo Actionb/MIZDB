@@ -1,5 +1,5 @@
 
-from django.views.generic import TemplateView 
+from django.views.generic import TemplateView
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 
@@ -15,11 +15,11 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
     """
     The view displaying an index over all available helptexts.
     Attributes:
-        - registry: the registry of helptexts available to this view instance 
+        - registry: the registry of helptexts available to this view instance
             set during initialization by the url resolver (see help.registry.get_urls)
     """
 
-    template_name = 'admin/help_index.html' 
+    template_name = 'admin/help_index.html'
     site_title = breadcrumbs_title = 'Hilfe'
     
     registry = None
@@ -43,7 +43,7 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
             except NoReverseMatch:
                 continue
             registered_models.append((
-                url, 
+                url,
                 model_help(self.request, self.registry, model_admin).index_title
             ))
             
@@ -51,8 +51,8 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
         model_helps = []
         for url, label in sorted(registered_models, key=lambda tpl: tpl[1]):
             model_helps.append(format_html(
-                html_template, 
-                url=url, 
+                html_template,
+                url=url,
                 label=label
             ))
         context['model_helps'] = model_helps
@@ -69,7 +69,7 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
                 continue
                 
             registered_forms.append((
-                url, 
+                url,
                 form_help().index_title
             ))
             
@@ -77,14 +77,14 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
         # Sort by form_help.index_title // str(form_help.form_class)
         for url, label in sorted(registered_forms, key=lambda tpl: tpl[1]):
             form_helps.append(format_html(
-                html_template, 
-                url=url, 
-                label=label, 
+                html_template,
+                url=url,
+                label=label,
             ))
         context['form_helps'] = form_helps
         
         return context
-# TODO: BaseHelpView should (since MIZAdminPermissionMixin was removed) 
+# TODO: BaseHelpView should (since MIZAdminPermissionMixin was removed)
 # inherit from PermissionRequiredMixin to reenable permission checking
 # test_func and permission_test are essentially dead code right now
 class BaseHelpView(MIZAdminMixin, TemplateView):
@@ -95,7 +95,7 @@ class BaseHelpView(MIZAdminMixin, TemplateView):
         - helptext_class: the helptext class this view is going to serve
     """
      
-    template_name = 'admin/help.html' 
+    template_name = 'admin/help.html'
     helptext_class = None
     
             
@@ -142,7 +142,7 @@ class ModelAdminHelpView(BaseHelpView):
     
     Attributes:
         - model_admin: set by help.registry.HelpRegistry.get_urls
-        - registry: the registry of helptexts available to this view instance 
+        - registry: the registry of helptexts available to this view instance
             set during initialization by the url resolver (see help.registry.get_urls)
     """
     

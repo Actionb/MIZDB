@@ -30,7 +30,7 @@ class HelpRegistry(object):
     def helptext_for_model(self, model):
         """
         Returns the ModelAdminHelpText class that is registered to that model.
-        Since we store the ModelAdmin instance associated with that model instead of the model itself, the ModelAdmin must be looked up first. 
+        Since we store the ModelAdmin instance associated with that model instead of the model itself, the ModelAdmin must be looked up first.
         """
         # Used by ModelAdminHelpText.inline_helptexts
         model_admin = get_model_admin_for_model(model)
@@ -51,7 +51,7 @@ class HelpRegistry(object):
                 pass
         return ''
     
-    def get_urls(self):        
+    def get_urls(self):
         urlpatterns = []
         for model_admin in self._modeladmins:
             if not self.is_registered(model_admin):
