@@ -216,7 +216,7 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
             dupe_item = [
                 (
                     instance,
-                    utils.get_obj_link(instance, self.request.user, include_name = False),
+                    utils.get_obj_link(instance, self.request.user, include_name=False),
                     duplicate_values
                 )
                 for instance in dupe.instances

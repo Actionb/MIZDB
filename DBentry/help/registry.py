@@ -57,19 +57,19 @@ class HelpRegistry(object):
             if not self.is_registered(model_admin):
                 continue
             helptext, url_name = self._registry[model_admin]
-            view_func = ModelAdminHelpView.as_view(model_admin = model_admin, helptext_class = helptext, registry = self)
-            urlpatterns.append(path(model_admin.model._meta.model_name + '/', view_func, name = url_name))
+            view_func = ModelAdminHelpView.as_view(model_admin=model_admin, helptext_class=helptext, registry=self)
+            urlpatterns.append(path(model_admin.model._meta.model_name + '/', view_func, name=url_name))
         
         for formview in self._formviews:
             if not self.is_registered(formview):
                 continue
             helptext, url_name = self._registry[formview]
-            view_func = FormHelpView.as_view(target_view_class = formview, helptext_class = helptext)
-            urlpatterns.append(path(url_name.replace('help_', '') + '/', view_func, name = url_name))
+            view_func = FormHelpView.as_view(target_view_class=formview, helptext_class=helptext)
+            urlpatterns.append(path(url_name.replace('help_', '') + '/', view_func, name=url_name))
             
         # Don't forget the index page
         urlpatterns.append(
-            path('', HelpIndexView.as_view(registry = self), name = 'help_index')
+            path('', HelpIndexView.as_view(registry=self), name='help_index')
         )
         return urlpatterns
         
@@ -108,7 +108,7 @@ class HelpRegistry(object):
         
 halp = HelpRegistry()
 
-def register(url_name = None, registry = None):
+def register(url_name=None, registry=None):
     
     from DBentry.help.helptext import BaseHelpText
     

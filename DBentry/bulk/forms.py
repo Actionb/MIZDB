@@ -149,55 +149,55 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
 
     # Field declarations:
     magazin = forms.ModelChoiceField(
-        required = True,
-        queryset = _models.magazin.objects.all(),
-        widget = make_widget(model_name='magazin', wrap=True)
+        required=True,
+        queryset=_models.magazin.objects.all(),
+        widget=make_widget(model_name='magazin', wrap=True)
     )
-    jahrgang = forms.IntegerField(required = False, min_value = 1)
-    jahr = BulkJahrField(required = False, label = 'Jahr')
-    num = BulkField(label = 'Nummer')
-    monat = BulkField(label = 'Monate')
-    lnum = BulkField(label = 'Laufende Nummer')
-    audio = forms.BooleanField(required = False, label = 'Musik Beilage:')
+    jahrgang = forms.IntegerField(required=False, min_value=1)
+    jahr = BulkJahrField(required=False, label='Jahr')
+    num = BulkField(label='Nummer')
+    monat = BulkField(label='Monate')
+    lnum = BulkField(label='Laufende Nummer')
+    audio = forms.BooleanField(required=False, label='Musik Beilage:')
     audio_lagerort = forms.ModelChoiceField(
-        required = False,
-        queryset = _models.lagerort.objects.all(),
-        widget = make_widget(model_name='lagerort', wrap=True),
-        label = 'Lagerort f. Musik Beilage'
+        required=False,
+        queryset=_models.lagerort.objects.all(),
+        widget=make_widget(model_name='lagerort', wrap=True),
+        label='Lagerort f. Musik Beilage'
     )
     ausgabe_lagerort = forms.ModelChoiceField(
-        required = True,
-        queryset = _models.lagerort.objects.all(),
-        widget = make_widget(model_name='lagerort', wrap=True),
-        initial = ZRAUM_ID,
-        label = 'Lagerort f. Ausgaben'
+        required=True,
+        queryset=_models.lagerort.objects.all(),
+        widget=make_widget(model_name='lagerort', wrap=True),
+        initial=ZRAUM_ID,
+        label='Lagerort f. Ausgaben'
     )
     dublette = forms.ModelChoiceField(
-        required = True,
-        queryset = _models.lagerort.objects.all(),
-        widget = make_widget(model_name='lagerort', wrap=True),
-        initial = DUPLETTEN_ID,
-        label = 'Lagerort f. Dubletten'
+        required=True,
+        queryset=_models.lagerort.objects.all(),
+        widget=make_widget(model_name='lagerort', wrap=True),
+        initial=DUPLETTEN_ID,
+        label='Lagerort f. Dubletten'
     )
     provenienz = forms.ModelChoiceField(
-        required = False,
-        queryset = _models.provenienz.objects.all(),
-        widget = make_widget(model_name='provenienz', wrap=True)
+        required=False,
+        queryset=_models.provenienz.objects.all(),
+        widget=make_widget(model_name='provenienz', wrap=True)
     )
     beschreibung = forms.CharField(
-        required = False,
-        widget = forms.Textarea(attrs=ATTRS_TEXTAREA),
-        label = 'Beschreibung'
+        required=False,
+        widget=forms.Textarea(attrs=ATTRS_TEXTAREA),
+        label='Beschreibung'
     )
     bemerkungen = forms.CharField(
-        required = False,
-        widget = forms.Textarea(attrs=ATTRS_TEXTAREA),
-        label = 'Bemerkungen'
+        required=False,
+        widget=forms.Textarea(attrs=ATTRS_TEXTAREA),
+        label='Bemerkungen'
     )
     status = forms.ChoiceField(
-        choices = _models.ausgabe.STATUS_CHOICES,
-        initial = 1,
-        label = 'Bearbeitungsstatus'
+        choices=_models.ausgabe.STATUS_CHOICES,
+        initial=1,
+        label='Bearbeitungsstatus'
     )
 
     def clean(self):
@@ -257,7 +257,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
             jahre = [jahre]
         if jg and jahre:
             if qs.filter(jahrgang=jg, ausgabe_jahr__jahr__in=jahre).exists():
-                qs = qs.filter(jahrgang = jg, ausgabe_jahr__jahr__in=jahre)
+                qs = qs.filter(jahrgang=jg, ausgabe_jahr__jahr__in=jahre)
             else:
                 # Do not shadow possible duplicates that
                 # only have one of (jg, jahre) by using OR.

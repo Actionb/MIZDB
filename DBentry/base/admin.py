@@ -185,7 +185,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     del actions[name]
         return actions
 
-    def get_exclude(self, request, obj = None):
+    def get_exclude(self, request, obj=None):
         """Exclude all concrete M2M fields as those are handled by inlines."""
         self.exclude = super().get_exclude(request, obj)
         if self.exclude is None:
@@ -260,7 +260,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         search_fields = list(self.search_fields or self.model.get_search_fields())
         return self._add_pk_search_field(search_fields)
 
-    def add_crosslinks(self, object_id, labels = None):
+    def add_crosslinks(self, object_id, labels=None):
         """
         Provide the template with data to create links to related objects.
 
@@ -336,10 +336,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if self.googlebtns:
             # utils.js contains the googlebtns script
             # TODO: remove this bit once googlebtns are handled by widgets
-            return media + forms.Media(js = ['admin/js/utils.js'])
+            return media + forms.Media(js=['admin/js/utils.js'])
         return ensure_jquery(media)
 
-    def add_extra_context(self, request = None, extra_context = None, object_id = None):
+    def add_extra_context(self, request=None, extra_context=None, object_id=None):
         new_extra = extra_context or {}
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))

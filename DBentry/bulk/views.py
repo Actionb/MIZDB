@@ -92,7 +92,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             # Save the data and redirect back to the changelist.
             ids, instances, updated = self.save_data(form)
             success_url = self.get_success_url(
-                query_data = {'id__in': ','.join(str(id) for id in ids)}
+                query_data={'id__in': ','.join(str(id) for id in ids)}
             )
             # NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
             return redirect(success_url)

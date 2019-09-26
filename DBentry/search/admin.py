@@ -51,11 +51,11 @@ class AdminSearchFormMixin(object):
         self.search_form = form_class(**form_kwargs)
         return self.search_form
 
-    def changelist_view(self, request, extra_context = None):
+    def changelist_view(self, request, extra_context=None):
         if extra_context is None:
             extra_context = {}
         # Add the search form as 'advanced_search_form' to the extra_context.
-        search_form = self.get_search_form(data = request.GET)
+        search_form = self.get_search_form(data=request.GET)
         extra_context['advanced_search_form'] = search_form
         response = super().changelist_view(request, extra_context)
         # Let django.admin do its thing, then update the response's context.
@@ -155,7 +155,7 @@ class AdminSearchFormMixin(object):
         # Extract the query params for the search form from the redirect url.
         post_url = response.url
         parsed_url = urlparse(post_url)
-        post_url_query = QueryDict(parsed_url.query, mutable = True)
+        post_url_query = QueryDict(parsed_url.query, mutable=True)
         # Create a QueryDict mapping search_form fields to
         # lists of *all* their preserved values.
         preserved = QueryDict(preserved_filters['_changelist_filters'])
@@ -185,7 +185,7 @@ class AdminSearchFormMixin(object):
         errors = []
         for field_path in self.search_form_kwargs.get('fields', []):
             msg = "Ignored '{model_admin}' search form field: '{field}'. %s."
-            msg = msg.format(model_admin = self.__class__.__name__, field = field_path)
+            msg = msg.format(model_admin=self.__class__.__name__, field=field_path)
             try:
                 get_dbfield_from_path(self.model, field_path)
             except exceptions.FieldDoesNotExist:
@@ -222,7 +222,7 @@ class ChangelistSearchFormMixin(object):
         if not isinstance(self.model_admin, AdminSearchFormMixin):
             return {}
         result = {}
-        params = self.model_admin.get_search_form(data = data).get_filters_params()
+        params = self.model_admin.get_search_form(data=data).get_filters_params()
         for lookup, value in params.items():
             if 'in' in lookup.split(LOOKUP_SEP):
                 # django admin's prepare_lookup_value() expects an '__in' lookup

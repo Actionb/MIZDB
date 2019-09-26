@@ -20,16 +20,16 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     """
 
     base = forms.MultipleChoiceField(
-        widget = forms.CheckboxSelectMultiple,
-        label = ''
+        widget=forms.CheckboxSelectMultiple,
+        label=''
     )
     m2m = forms.MultipleChoiceField(
-        widget = forms.CheckboxSelectMultiple,
-        label = ''
+        widget=forms.CheckboxSelectMultiple,
+        label=''
     )
     reverse = forms.MultipleChoiceField(
-        widget = forms.CheckboxSelectMultiple,
-        label = ''
+        widget=forms.CheckboxSelectMultiple,
+        label=''
     )
     minmax_required = [{'min': 1, 'fields': ['base', 'm2m', 'reverse']}]
     min_error_message = "Bitte mindestens 1 Häkchen setzen."
@@ -66,7 +66,7 @@ def get_dupe_fields_for_model(model):
     # Group the choices by the related_model's verbose_name:
     # ( (<group_name>,(<group_choices>,)), ... )
     groups = []
-    for rel in utils.get_model_relations(model, forward= False,  reverse =True):
+    for rel in utils.get_model_relations(model, forward=False,  reverse=True):
         if rel.many_to_many:
             continue
         related_model = rel.related_model
@@ -93,7 +93,7 @@ def get_dupe_fields_for_model(model):
             ))
     # get_model_relations uses an unordered set() to collect the rels;
     # We need to sort the group names alphabetically to establish some order.
-    groups = sorted(groups, key = lambda group: group[0].lower())
+    groups = sorted(groups, key=lambda group: group[0].lower())
     return {'base': base, 'm2m': m2m, 'reverse': groups}
 
 

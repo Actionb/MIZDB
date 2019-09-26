@@ -61,8 +61,8 @@ class BaseModel(models.Model):
             rslt = " ".join([
                 str(fld.value_from_object(self))
                 for fld in get_model_fields(
-                    self._meta.model, foreign = False, m2m = False,
-                    exclude = self.exclude_from_str
+                    self._meta.model, foreign=False, m2m=False,
+                    exclude=self.exclude_from_str
                 )
                 if fld.value_from_object(self)
             ])
@@ -90,7 +90,7 @@ class BaseModel(models.Model):
             return cls.search_fields
         return [
             field.name
-            for field in get_model_fields(cls, foreign = foreign, m2m = m2m)
+            for field in get_model_fields(cls, foreign=foreign, m2m=m2m)
         ]
 
     class Meta:
@@ -174,7 +174,7 @@ class BaseAliasModel(BaseModel):
     ManyToOne 'alias' relation using the `parent` field.
     """
 
-    alias = models.CharField('Alias', max_length = 100)
+    alias = models.CharField('Alias', max_length=100)
     parent = None   # the field that will hold the ForeignKey
 
     class Meta(BaseModel.Meta):
@@ -237,12 +237,12 @@ class ComputedNameModel(BaseModel):
             )]
         return []
 
-    def save(self, update = True, *args, **kwargs):
+    def save(self, update=True, *args, **kwargs):
         super().save(*args, **kwargs)
         # Parameters that make up the name may have changed;
         # update the name if necessary.
         if update:
-            self.update_name(force_update = True)
+            self.update_name(force_update=True)
 
     @classmethod
     def get_search_fields(cls, foreign=False, m2m=False):
@@ -263,7 +263,7 @@ class ComputedNameModel(BaseModel):
             pass
         return search_fields
 
-    def update_name(self, force_update = False):
+    def update_name(self, force_update=False):
         """
         Update the _name, if _changed_flag or force_update is True.
 
@@ -300,7 +300,7 @@ class ComputedNameModel(BaseModel):
 
             if self._name != current_name:
                 # Update the name and reset the _changed_flag.
-                self.qs().update(_name= current_name, _changed_flag=False)
+                self.qs().update(_name=current_name, _changed_flag=False)
                 self._name = current_name
                 self._changed_flag = False
                 return True
@@ -344,7 +344,7 @@ class AbstractJahrModel(BaseModel):
 class AbstractURLModel(BaseModel):
     """Abstract model that adds an URLField."""
 
-    url = models.URLField(verbose_name = 'Webpage', blank = True)
+    url = models.URLField(verbose_name='Webpage', blank=True)
 
     class Meta(BaseModel.Meta):
         abstract = True

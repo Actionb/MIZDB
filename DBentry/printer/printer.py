@@ -2,7 +2,7 @@
 # DEBUG Printing
 
     
-def print_tabular(to_print, columns = [], default_col_width=6):
+def print_tabular(to_print, columns=[], default_col_width=6):
     from itertools import chain
     if isinstance(to_print, dict):
         to_print = [to_print]

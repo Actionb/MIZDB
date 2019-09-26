@@ -20,4 +20,4 @@ def help_link(context):
         
     if not url:
         return ''
-    return make_simple_link(url = url, label = 'Hilfe', is_popup = context.get('is_popup', False), as_listitem = True)
+    return make_simple_link(url=url, label='Hilfe', is_popup=context.get('is_popup', False), as_listitem=True)

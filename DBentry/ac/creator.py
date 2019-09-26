@@ -26,12 +26,12 @@ class Creator(object):
     create a model instance from a given string.
     """
 
-    def __init__(self, model, raise_exceptions = False):
+    def __init__(self, model, raise_exceptions=False):
         self.model = model
         self.raise_exceptions = raise_exceptions
         self.creator = getattr(self, 'create_' + model._meta.model_name, None)
 
-    def create(self, text, preview = True):
+    def create(self, text, preview=True):
         if self.creator is None:
             return {}
 
@@ -64,7 +64,7 @@ class Creator(object):
         else:
             raise MultipleObjectsReturnedException
 
-    def create_person(self, text, preview = True):
+    def create_person(self, text, preview=True):
         """Create a person instance from `text`.
 
         If preview is True, do not save the found instance even if it is new.
@@ -75,7 +75,7 @@ class Creator(object):
         # parse_name will join first and middle names
         vorname, nachname = parse_name(text)
         person_instance = self._get_model_instance(
-            person, vorname = vorname, nachname = nachname
+            person, vorname=vorname, nachname=nachname
         )
         if not preview and person_instance.pk is None:
             person_instance.save()
@@ -84,7 +84,7 @@ class Creator(object):
             ('instance', person_instance)
         ])
 
-    def create_autor(self, text, preview = True):
+    def create_autor(self, text, preview=True):
         """Create an autor instance from `text`.
 
         If preview is True, do not save the found instance even if it is new.
@@ -98,7 +98,7 @@ class Creator(object):
         p = self.create_person(name, preview)
         person_instance = p.get('instance')
         autor_instance = self._get_model_instance(
-            autor, person = person_instance, kuerzel = kuerzel
+            autor, person=person_instance, kuerzel=kuerzel
         )
         if not preview and autor_instance.pk is None:
             if autor_instance.person.pk is None:

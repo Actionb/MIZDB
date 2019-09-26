@@ -16,8 +16,8 @@ class FieldGroup:
     assess whether or not its minimum/maximum requirements are fulfilled.
     """
 
-    def __init__(self, form, *, fields, min = None, max = None,
-                 error_messages = None, format_callback = None):
+    def __init__(self, form, *, fields, min=None, max=None,
+                 error_messages=None, format_callback=None):
         """
         Constructor for the FieldGroup.
 
@@ -185,7 +185,7 @@ class MinMaxRequiredFormMixin(object):
             for field_name in group.fields
         )
 
-    def get_group_error_messages(self, group, error_messages, format_callback = None):
+    def get_group_error_messages(self, group, error_messages, format_callback=None):
         """
         Prepare and format the error messages for the given group.
 
@@ -302,7 +302,7 @@ class MIZAdminForm(MIZAdminFormMixin, forms.Form):
 class DynamicChoiceFormMixin(object):
     """Set formfield choices after init from keyword arguments."""
 
-    def __init__(self, choices = None, *args, **kwargs):
+    def __init__(self, choices=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if choices:
             self.set_choices(choices)

@@ -82,7 +82,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
                     break
         return self._action_allowed
 
-    def perform_action(self, form_cleaned_data = None):
+    def perform_action(self, form_cleaned_data=None):
         raise NotImplementedError('Subclasses must implement this method.')
 
     def dispatch(self, request, *args, **kwargs):

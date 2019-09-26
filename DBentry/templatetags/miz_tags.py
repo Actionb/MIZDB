@@ -21,6 +21,6 @@ def reset_ordering(cl):
     Resets the ordering of the changelist results.
     """
     template = '<span class="small quiet"><a href={url}>Sortierung zurücksetzen</a></span>'
-    url = cl.get_query_string(new_params = None, remove = [ORDER_VAR])
-    return format_html(template, url = url)
+    url = cl.get_query_string(new_params=None, remove=[ORDER_VAR])
+    return format_html(template, url=url)
     

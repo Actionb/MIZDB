@@ -79,7 +79,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         """
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
-        start = self.queryset.get(pk = form_cleaned_data.get('start'))
+        start = self.queryset.get(pk=form_cleaned_data.get('start'))
 
         if jg == 0:
             # User entered 0 for jahrgang.
@@ -162,9 +162,9 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
                     obj.save()
                     self.log_addition(getattr(obj, fkey.name), obj)
                 admin_message = self._build_message(
-                    lagerort_instance = lagerort_instance,
-                    bestand_instances = bestand_instances,
-                    fkey = fkey
+                    lagerort_instance=lagerort_instance,
+                    bestand_instances=bestand_instances,
+                    fkey=fkey
                 )
                 self.model_admin.message_user(self.request, admin_message)
 
@@ -222,9 +222,9 @@ class MergeViewWizarded(WizardConfirmationView):
     def _check_too_few_objects(view, **kwargs):
         if view.queryset.count() == 1:
             view.model_admin.message_user(
-                request = view.request,
-                level = messages.WARNING,
-                message = 'Es müssen mindestens zwei Objekte aus der Liste '
+                request=view.request,
+                level=messages.WARNING,
+                message='Es müssen mindestens zwei Objekte aus der Liste '
                 'ausgewählt werden, um diese Aktion durchzuführen.',
             )
             return False
@@ -406,7 +406,7 @@ class MergeViewWizarded(WizardConfirmationView):
             }
         return kwargs
 
-    def perform_action(self, form_cleaned_data = None):
+    def perform_action(self, form_cleaned_data=None):
         update_data = {}
         expand = self.get_cleaned_data_for_step('0').get('expand_primary', True)
         if expand:
@@ -469,7 +469,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         )
         values = (
             self.queryset
-                .annotate(magazin_beschreibung = F('magazin__beschreibung'))
+                .annotate(magazin_beschreibung=F('magazin__beschreibung'))
                 .values_list(*fields)
         )
         initial = []
@@ -548,9 +548,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             return False
 
     def form_valid(self, form):
-        options_form = self.get_options_form(data = self.request.POST)
+        options_form = self.get_options_form(data=self.request.POST)
         if not options_form.is_valid():
-            context = self.get_context_data(options_form = options_form)
+            context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
         return
@@ -604,9 +604,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     message="Hinweis: "
                     "{verbose_name} wurde automatisch erstellt beim Verschieben von "
                     "Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
-                        verbose_name = brochure_class._meta.verbose_name,
-                        str_ausgabe = str(ausgabe_instance),
-                        str_magazin = str(self.magazin_instance)
+                        verbose_name=brochure_class._meta.verbose_name,
+                        str_ausgabe=str(ausgabe_instance),
+                        str_magazin=str(self.magazin_instance)
                     )
                 )
                 self.log_update(_models.bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
@@ -644,7 +644,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                         get_obj_link(
                             obj=self.magazin_instance,
                             user=self.request.user,
-                            include_name = False
+                            include_name=False
                         )
                     )
                 )
@@ -663,7 +663,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             link = get_obj_link(
                 obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
                 user=self.request.user,
-                include_name = False
+                include_name=False
             )
             forms.append((link, form))
         context['forms'] = forms

@@ -49,11 +49,11 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
             
         # Sort by model_help.index_title // model._meta.verbose_name_plural
         model_helps = []
-        for url, label in sorted(registered_models, key = lambda tpl: tpl[1]):
+        for url, label in sorted(registered_models, key=lambda tpl: tpl[1]):
             model_helps.append(format_html(
                 html_template, 
-                url = url, 
-                label = label
+                url=url, 
+                label=label
             ))
         context['model_helps'] = model_helps
         
@@ -75,11 +75,11 @@ class HelpIndexView(MIZAdminMixin, TemplateView):
             
         form_helps = []
         # Sort by form_help.index_title // str(form_help.form_class)
-        for url, label in sorted(registered_forms, key = lambda tpl: tpl[1]):
+        for url, label in sorted(registered_forms, key=lambda tpl: tpl[1]):
             form_helps.append(format_html(
                 html_template, 
-                url = url, 
-                label = label, 
+                url=url, 
+                label=label, 
             ))
         context['form_helps'] = form_helps
         

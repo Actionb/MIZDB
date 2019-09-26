@@ -66,9 +66,9 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     def do_ordering(self, qs):
         return qs.order_by(*self.model._meta.ordering)
 
-    def apply_q(self, qs, use_suffix=True, ordered = True):
+    def apply_q(self, qs, use_suffix=True, ordered=True):
         if self.q:
-            return qs.find(self.q, ordered = ordered, use_suffix=use_suffix)
+            return qs.find(self.q, ordered=ordered, use_suffix=use_suffix)
         elif self.model in Favoriten.get_favorite_models():
             # add Favoriten to the top of the result queryset
             # if no search term was given.
@@ -158,12 +158,12 @@ class ACCreateable(ACBase):
         if not self.model:
             model_name = kwargs.pop('model_name', '')
             self.model = get_model_from_string(model_name)
-        self.creator = Creator(self.model, raise_exceptions = False)
+        self.creator = Creator(self.model, raise_exceptions=False)
         # TODO: super().dispatch() also sets create_field
         self.create_field = self.create_field or kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
 
-    def createable(self, text, creator = None):
+    def createable(self, text, creator=None):
         """
         Returns True if a new(!) model instance can be created from `text`.
         """
@@ -193,7 +193,7 @@ class ACCreateable(ACBase):
             create_option.extend(create_info)
         return create_option
 
-    def get_creation_info(self, text, creator = None):
+    def get_creation_info(self, text, creator=None):
         """
         Build template context to display a more informative create option.
         """
@@ -217,16 +217,16 @@ class ACCreateable(ACBase):
 
         create_info.append(default.copy())
         # iterate over all nested dicts in create_info returned by creator.create
-        for k, v in flatten_dict(creator.create(text, preview = True)):
+        for k, v in flatten_dict(creator.create(text, preview=True)):
             default['text'] = str(k) + ': ' + str(v)
             create_info.append(default.copy())
         return create_info
 
-    def create_object(self, text, creator = None):
+    def create_object(self, text, creator=None):
         if self.has_create_field():
             return super().create_object(text)
         creator = creator or self.creator
-        return creator.create(text, preview = False).get('instance')
+        return creator.create(text, preview=False).get('instance')
 
     def post(self, request):
         """Create an object given a text after checking permissions."""

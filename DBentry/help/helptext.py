@@ -7,7 +7,7 @@ from django.utils.html import format_html, mark_safe
 
 from DBentry.utils import get_model_admin_for_model, is_iterable
 
-def formfield_to_modelfield(model, formfield_name, formfield = None):
+def formfield_to_modelfield(model, formfield_name, formfield=None):
     if formfield_name in [field.name for field in model._meta.get_fields()]:
         return model._meta.get_field(formfield_name)
     try:
@@ -20,7 +20,7 @@ class HTMLWrapper(object):
     Wraps the help item to provide the two methods sidenav() and html() for use on the template.
     """
     
-    def __init__(self, id, val, label = None):
+    def __init__(self, id, val, label=None):
         self.id = id # the id of the html element 
         self.val = val # either a string representing the help text or a list of dictionaries of: 'list item header': 'list item help text'
         if label is None:
@@ -42,9 +42,9 @@ class HTMLWrapper(object):
         if not is_iterable(self.val):
             return help_item_bookmark
         # This help item contains a sublist.
-        return mark_safe(help_item_bookmark + self.html(template = '<li><a href="#{id}">{label}</a></li>'))
+        return mark_safe(help_item_bookmark + self.html(template='<li><a href="#{id}">{label}</a></li>'))
             
-    def html(self, template = None):
+    def html(self, template=None):
         """
         Returns a html representation of the help item.
         If the help item is simple text, it will surround the the text with <span> elements,
@@ -54,7 +54,7 @@ class HTMLWrapper(object):
             # self.val is either a string or another primitive type
             if not isinstance(self.val, str):
                 self.val = str(self.val)
-            return format_html('<span id={id}>{text}</span>', id = self.id, text = mark_safe(self.val.strip()))
+            return format_html('<span id={id}>{text}</span>', id=self.id, text=mark_safe(self.val.strip()))
         
         # self.val is an iterable, i.e. list or tuple, etc.
         if template is None:
@@ -62,10 +62,10 @@ class HTMLWrapper(object):
         iterator = []
         for i, v in enumerate(self.val, 1):
             d = dict(
-                id = self.id + '-' + str(i), 
-                label = str(v), 
-                text = '', 
-                classes = '', 
+                id=self.id + '-' + str(i), 
+                label=str(v), 
+                text='', 
+                classes='', 
             )
             if isinstance(v, dict):
                 d.update(v)
@@ -126,7 +126,7 @@ class BaseHelpText(object):
 
             val = getattr(self, id, None)
             if id and val:
-                help_items.append(HTMLWrapper(id = id, label = label, val = val))
+                help_items.append(HTMLWrapper(id=id, label=label, val=val))
         context = {'help_items': help_items}
         if self.site_title:
             context['site_title'] = self.site_title
@@ -172,8 +172,8 @@ class FormViewHelpText(BaseHelpText):
                 # Assuming that the deriving HelpText object contains at least a basic 'description' of sorts as the first item,
                 # add the field helptexts directly after that description
                 first_help_item_key = list(self.help_items.keys())[0]
-                self.help_items.move_to_end('fields', last = False) # move fields to the top
-                self.help_items.move_to_end(first_help_item_key, last = False) # and move the original first item back to the top
+                self.help_items.move_to_end('fields', last=False) # move fields to the top
+                self.help_items.move_to_end(first_help_item_key, last=False) # and move the original first item back to the top
         
     @property
     def field_helptexts(self):
@@ -211,7 +211,7 @@ class FormViewHelpText(BaseHelpText):
         
     def for_context(self, **kwargs):
         if self.field_helptexts:
-            kwargs['fields'] = HTMLWrapper(id = 'fields', label = self.help_items.get('fields', 'fields'), val = self.field_helptexts)
+            kwargs['fields'] = HTMLWrapper(id='fields', label=self.help_items.get('fields', 'fields'), val=self.field_helptexts)
         return super().for_context(**kwargs)
         
 class ModelAdminHelpText(FormViewHelpText):
@@ -231,7 +231,7 @@ class ModelAdminHelpText(FormViewHelpText):
     
     _inline_helptexts = None
     
-    def __init__(self, request, registry, model_admin = None):
+    def __init__(self, request, registry, model_admin=None):
         self.request = request
         self.registry = registry
         self.model_admin = model_admin or get_model_admin_for_model(self.model)
@@ -254,7 +254,7 @@ class ModelAdminHelpText(FormViewHelpText):
         
     def for_context(self, **kwargs):
         if self.inline_helptexts:
-            kwargs['inlines'] = HTMLWrapper(id = 'inlines', val = self.inline_helptexts)
+            kwargs['inlines'] = HTMLWrapper(id='inlines', val=self.inline_helptexts)
         return super().for_context(**kwargs)
   
     @property
@@ -286,7 +286,7 @@ class ModelAdminHelpText(FormViewHelpText):
         return self._inline_helptexts
         
     @classmethod
-    def as_inline(cls, request, form = None):
+    def as_inline(cls, request, form=None):
         """
         Display this model's help text from the perspective of a related model.
         """

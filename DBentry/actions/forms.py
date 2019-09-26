@@ -18,15 +18,15 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
     """
 
     start = forms.ChoiceField(
-        required = True,
-        choices = (),
-        label = 'Schlüssel-Ausgabe',
-        help_text = 'Wählen Sie eine Ausgabe.',
-        widget = forms.RadioSelect(),
+        required=True,
+        choices=(),
+        label='Schlüssel-Ausgabe',
+        help_text='Wählen Sie eine Ausgabe.',
+        widget=forms.RadioSelect(),
     )
     jahrgang = forms.IntegerField(
-        required = True,
-        help_text = 'Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.'
+        required=True,
+        help_text='Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.'
     )
 
 
@@ -35,16 +35,16 @@ class BulkAddBestandForm(MIZAdminForm):
 
     # TODO: BulkAddBestandForm is probably outdated?
     bestand = forms.ModelChoiceField(
-        required = True,
-        label = "Lagerort (Bestand)",
-        queryset = lagerort.objects.all(),
-        widget = make_widget(model=lagerort, wrap=True)
+        required=True,
+        label="Lagerort (Bestand)",
+        queryset=lagerort.objects.all(),
+        widget=make_widget(model=lagerort, wrap=True)
     )
     dublette = forms.ModelChoiceField(
-        required = True,
-        label = "Lagerort (Dublette)",
-        queryset = lagerort.objects.all(),
-        widget = make_widget(model=lagerort, wrap=True)
+        required=True,
+        label="Lagerort (Dublette)",
+        queryset=lagerort.objects.all(),
+        widget=make_widget(model=lagerort, wrap=True)
     )
 
 
@@ -60,17 +60,17 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
     """
 
     primary = forms.ChoiceField(
-        choices = [],
-        label = 'Primären Datensatz auswählen',
-        widget = forms.RadioSelect(),
-        help_text = "Bitten wählen Sie den Datensatz, dem die verwandten "
+        choices=[],
+        label='Primären Datensatz auswählen',
+        widget=forms.RadioSelect(),
+        help_text="Bitten wählen Sie den Datensatz, dem die verwandten "
         "Objekte der anderen Datensätze angehängt werden sollen."
     )
     expand_primary = forms.BooleanField(
-        required = False,
-        label = 'Primären Datensatz erweitern',
+        required=False,
+        label='Primären Datensatz erweitern',
         initial=True,
-        help_text = "Sollen fehlende Grunddaten des primäre Datensatzes um "
+        help_text="Sollen fehlende Grunddaten des primäre Datensatzes um "
         "in anderen Datensätzen vorhandenen Daten erweitert werden?"
     )
 
@@ -97,9 +97,9 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
         widget=forms.HiddenInput()
     )
     posvals = forms.ChoiceField(
-        choices = [],
-        label = 'Mögliche Werte',
-        widget = forms.RadioSelect()
+        choices=[],
+        label='Mögliche Werte',
+        widget=forms.RadioSelect()
     )
 
     def __init__(self, *args, **kwargs):
@@ -129,23 +129,23 @@ class BrochureActionForm(MIZAdminForm):
 
     textarea_config = {'rows': 2, 'cols': 90}
 
-    ausgabe_id = forms.IntegerField(widget = forms.HiddenInput())
-    titel = forms.CharField(widget = forms.Textarea(attrs=textarea_config))
+    ausgabe_id = forms.IntegerField(widget=forms.HiddenInput())
+    titel = forms.CharField(widget=forms.Textarea(attrs=textarea_config))
 
     beschreibung = forms.CharField(
-        widget = forms.Textarea(attrs=textarea_config), required = False)
+        widget=forms.Textarea(attrs=textarea_config), required=False)
 
     bemerkungen = forms.CharField(
-        widget = forms.Textarea(attrs=textarea_config), required = False)
+        widget=forms.Textarea(attrs=textarea_config), required=False)
 
     zusammenfassung = forms.CharField(
-        widget = forms.Textarea(attrs=textarea_config), required = False)
+        widget=forms.Textarea(attrs=textarea_config), required=False)
 
     accept = forms.BooleanField(
-        label = 'Änderungen bestätigen',
-        required = False,
-        initial = True,
-        help_text = "Hiermit bestätigen Sie, dass diese Ausgabe verschoben "
+        label='Änderungen bestätigen',
+        required=False,
+        initial=True,
+        help_text="Hiermit bestätigen Sie, dass diese Ausgabe verschoben "
         "werden soll. Entfernen Sie das Häkchen, um diese Ausgabe zu "
         "überspringen und nicht zu verschieben."
     )
@@ -156,10 +156,10 @@ class BrochureActionForm(MIZAdminForm):
     ]})]
 
 BrochureActionFormSet = forms.formset_factory(
-    form = BrochureActionForm,
-    formset = forms.BaseFormSet,
-    extra = 0,
-    can_delete = True
+    form=BrochureActionForm,
+    formset=forms.BaseFormSet,
+    extra=0,
+    can_delete=True
 )
 
 
@@ -184,15 +184,15 @@ class BrochureActionFormOptions(MIZAdminForm):
         ]
 
     brochure_art = forms.ChoiceField(
-        label = 'Verschieben nach', choices = brochure_choices)
+        label='Verschieben nach', choices=brochure_choices)
 
     delete_magazin = forms.BooleanField(
-        label = 'Magazin löschen',
-        required = False,
-        help_text = 'Soll das Magazin dieser Ausgaben anschließend gelöscht werden?'
+        label='Magazin löschen',
+        required=False,
+        help_text='Soll das Magazin dieser Ausgaben anschließend gelöscht werden?'
     )
 
-    def __init__(self, can_delete_magazin = True, *args, **kwargs):
+    def __init__(self, can_delete_magazin=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not can_delete_magazin:
             del self.fields['delete_magazin']

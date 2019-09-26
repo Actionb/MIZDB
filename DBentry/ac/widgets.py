@@ -53,7 +53,7 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         ]
 
     def __init__(
-            self, widget, related_model, remote_field_name = 'id',
+            self, widget, related_model, remote_field_name='id',
             can_add_related=True, can_change_related=True,
             can_delete_related=True):
         # TODO: this is not calling super().init!

@@ -15,7 +15,7 @@ def favorites_link(context):
     except exceptions.NoReverseMatch:
         return ''
     return make_simple_link(
-        url =url,
+        url=url,
         label='Favoriten',
         is_popup=context.get('is_popup', False),
         as_listitem=True

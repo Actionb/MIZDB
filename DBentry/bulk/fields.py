@@ -54,8 +54,8 @@ class BaseSplitField(forms.CharField):
         if invalid:
             raise ValidationError(
                 self.error_messages['invalid'],
-                code = 'invalid',
-                params = {'invalid': ", ".join(invalid)}
+                code='invalid',
+                params={'invalid': ", ".join(invalid)}
             )
 
     def clean(self, value):
@@ -113,7 +113,7 @@ class BulkJahrField(BaseSplitField):
         # Add a validator that only allows numerals with 4 digits or the separator.
         self.validators.append(
             RegexValidator(
-                regex = r'^(\d{4}|%s)*$' % self.separator_pattern,
+                regex=r'^(\d{4}|%s)*$' % self.separator_pattern,
                 message='Bitte vierstellige Jahresangaben benutzen.',
                 code='invalid_year'
             )
