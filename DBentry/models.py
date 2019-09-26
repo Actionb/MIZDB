@@ -510,7 +510,6 @@ class ort(ComputedNameModel):
         'land_name': 'Land'
     }
 
-
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ort'
         verbose_name_plural = 'Orte'
