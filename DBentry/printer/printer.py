@@ -64,4 +64,3 @@ def print_request(request, file=None):
         printf(k)
         printf(v)
         printf("")
-

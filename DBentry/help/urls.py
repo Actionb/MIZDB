@@ -7,4 +7,3 @@ from .forms import *
 
 from .registry import halp
 urlpatterns = [url(r'', halp.urls)]
-

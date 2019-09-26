@@ -124,4 +124,3 @@ def register(url_name=None, registry=None):
 
         return helptext
     return helptext_wrapper
-

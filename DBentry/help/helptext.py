@@ -302,4 +302,3 @@ class ModelAdminHelpText(FormViewHelpText):
             if model_field.help_text:
                 return model_field.help_text
         return super().get_helptext_for_field(field_name, formfield)
-
