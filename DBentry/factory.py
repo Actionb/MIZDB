@@ -236,7 +236,7 @@ class M2MFactory(RelatedFactory):
             to the relation's descriptor.
     """
 
-    def __init__(self, factory,  descriptor_name=None, **defaults):
+    def __init__(self, factory, descriptor_name=None, **defaults):
         self.descriptor_name = descriptor_name
         if 'accessor_name' in defaults:
             # Having the attribute accessor_name upon calling super().call()

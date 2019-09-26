@@ -58,7 +58,7 @@ class RangeHandler(ItemHandler):
         match = self.is_valid(item)
         if match:
             start, end = map(int, match.groups())
-            for i in range(start, end+1):
+            for i in range(start, end + 1):
                 yield str(i)
 
 
@@ -78,8 +78,8 @@ class RangeGroupingHandler(ItemHandler):
         match = self.is_valid(item)
         if match:
             start, end, multi = map(int, match.groups())
-            for i in range(start, end+1, multi):
-                yield [str(i+j) for j in range(multi)]
+            for i in range(start, end + 1, multi):
+                yield [str(i + j) for j in range(multi)]
 
 
 class GroupingHandler(ItemHandler):

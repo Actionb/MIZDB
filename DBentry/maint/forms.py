@@ -37,7 +37,7 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     'deren Werte in die Suche miteinbezogen werden sollen.')
 
     class Media:
-        css = {'all':  ['admin/css/dupes.css']}
+        css = {'all': ['admin/css/dupes.css']}
         js = ['admin/js/collapse.js']
 
     def __init__(self, *, model, **kwargs):
@@ -56,17 +56,17 @@ def get_dupe_fields_for_model(model):
     """
     base = [
         (f.name, f.verbose_name.capitalize())
-        for f in utils.get_model_fields(model, base=True, foreign=True,  m2m=False)
+        for f in utils.get_model_fields(model, base=True, foreign=True, m2m=False)
     ]
     m2m = [
         (f.name, f.verbose_name.capitalize())
-        for f in utils.get_model_fields(model, base=False, foreign=False,  m2m=True)
+        for f in utils.get_model_fields(model, base=False, foreign=False, m2m=True)
     ]
 
     # Group the choices by the related_model's verbose_name:
     # ( (<group_name>,(<group_choices>,)), ... )
     groups = []
-    for rel in utils.get_model_relations(model, forward=False,  reverse=True):
+    for rel in utils.get_model_relations(model, forward=False, reverse=True):
         if rel.many_to_many:
             continue
         related_model = rel.related_model

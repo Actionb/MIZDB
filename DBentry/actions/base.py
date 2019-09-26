@@ -251,7 +251,7 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         # a GET request is expected.
         # We work around this by checking if there's a 'current_step'
         # in the request.
-        if request.POST.get(self.get_prefix(request)+'-current_step') is not None:
+        if request.POST.get(self.get_prefix(request) + '-current_step') is not None:
             # the 'previous' form was a wizard form, call WizardView.post()
             return super().post(request, *args, **kwargs)
         else:

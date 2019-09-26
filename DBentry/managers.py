@@ -242,7 +242,7 @@ def build_date(years, month_ordinals, day=None):
 
     # Filter out None values that may have been returned by a values_list call.
     none_filter = lambda x: x is not None
-    years = list(filter(none_filter,  years))
+    years = list(filter(none_filter, years))
     month_ordinals = list(filter(none_filter, month_ordinals))
 
     if not (years and month_ordinals):

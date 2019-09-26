@@ -1,4 +1,4 @@
-from django.urls import path,  include
+from django.urls import path, include
 
 from DBentry.bulk.views import BulkAusgabe
 from DBentry.views import FavoritenView
@@ -9,7 +9,7 @@ admin_tools_urls = [
 ]
 
 urlpatterns = [
-    path('ac/',  include('DBentry.ac.urls')),
+    path('ac/', include('DBentry.ac.urls')),
     path('tools/', include(admin_tools_urls)),
     path('maint/', include('DBentry.maint.urls')),
     path('help/', include('DBentry.help.urls')),

@@ -309,7 +309,7 @@ class PartialDateFormField(fields.MultiValueField):
         if 'fields' in kwargs:
             _fields = kwargs.pop('fields')
         else:
-            _fields = [fields.IntegerField(required=False)]*3
+            _fields = [fields.IntegerField(required=False)] * 3
         if 'max_length' in kwargs:
             # super(PartialDateField).formfield (i.e. CharField.formfield)
             # adds a max_length kwarg that MultiValueField does not handle

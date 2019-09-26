@@ -26,7 +26,7 @@ class RangeWidget(forms.MultiWidget):
     template_name = 'rangewidget.html'
 
     def __init__(self, widget, attrs=None):
-        super().__init__(widgets=[widget]*2, attrs=attrs)
+        super().__init__(widgets=[widget] * 2, attrs=attrs)
 
     def decompress(self, value):  # TODO: docstring
         # What is value? Where does it come from?
@@ -52,7 +52,7 @@ class RangeFormField(forms.MultiValueField):
             kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
         super().__init__(
-            fields=[formfield]*2,
+            fields=[formfield] * 2,
             require_all_fields=require_all_fields,
             **kwargs
         )

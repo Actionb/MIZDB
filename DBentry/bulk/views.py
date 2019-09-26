@@ -280,7 +280,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             # 2018,2019 -> 2020,2021
             jahre = form.row_data[0]['jahr']
             data['jahr'] = ",".join([
-                str(int(j)+len(jahre))
+                str(int(j) + len(jahre))
                 for j in jahre
             ])
         if form.cleaned_data.get('jahrgang'):

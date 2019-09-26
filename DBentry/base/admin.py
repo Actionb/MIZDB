@@ -19,7 +19,7 @@ from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.helper import MIZAdminFormWrapper
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import (
-    get_model_relations,  ensure_jquery, get_fields_and_lookups,
+    get_model_relations, ensure_jquery, get_fields_and_lookups,
     resolve_list_display_item
 )
 

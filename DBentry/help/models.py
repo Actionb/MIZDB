@@ -14,7 +14,7 @@ class MIZModelAdminHelpText(ModelAdminHelpText):
         if 'beschreibung' not in self.fields and 'beschreibung' in self.get_form().base_fields:
             self.fields['beschreibung'] = "Hier können etwaige Anmerkungen bezüglich dieses Objektes, die dem Kunden behilflich sein könnten, notiert werden."
         if 'bemerkungen' not in self.fields and 'bemerkungen' in self.get_form().base_fields:
-            self.fields['bemerkungen'] =  """
+            self.fields['bemerkungen'] = """
                 In dieses Feld können Kommentare für Archiv-Mitarbeiter eingetragen werden. Zum Beispiel könnte ein Mitarbeiter eine Erinnerungsnotiz hinterlassen oder Besonderheiten, die für die Bearbeitung dieses Objektes hilfreich sein könnten, vermerken.
                 Dieses Feld wird einem Kunden NICHT angezeigt.
             """

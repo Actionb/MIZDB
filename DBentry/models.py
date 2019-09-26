@@ -58,7 +58,7 @@ class musiker(BaseModel):
 
     person = models.ForeignKey(person, models.SET_NULL, null=True, blank=True)
 
-    genre = models.ManyToManyField('genre',  through=_m2m.m2m_musiker_genre)
+    genre = models.ManyToManyField('genre', through=_m2m.m2m_musiker_genre)
     instrument = models.ManyToManyField('instrument', through=_m2m.m2m_musiker_instrument)
     orte = models.ManyToManyField('ort', blank=True)
 
@@ -89,7 +89,7 @@ class genre(BaseModel):
 
     ober = models.ForeignKey(
         'self', models.SET_NULL, related_name='sub_genres', verbose_name='Oberbegriff',
-        null=True,  blank=True,
+        null=True, blank=True,
     )
 
     create_field = 'genre'
@@ -115,8 +115,8 @@ class band(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre',  through=_m2m.m2m_band_genre)
-    musiker = models.ManyToManyField('musiker',  through=_m2m.m2m_band_musiker)
+    genre = models.ManyToManyField('genre', through=_m2m.m2m_band_genre)
+    musiker = models.ManyToManyField('musiker', through=_m2m.m2m_band_musiker)
     orte = models.ManyToManyField('ort', blank=True)
 
     create_field = 'band_name'
@@ -151,7 +151,7 @@ class autor(ComputedNameModel):
         help_text="Zur Schnell-Erstellung bitte folgendes Format benutzen: Nachname(n), Vorname(n)"
     )
 
-    magazin = models.ManyToManyField('magazin', blank=True,  through=_m2m.m2m_autor_magazin)
+    magazin = models.ManyToManyField('magazin', blank=True, through=_m2m.m2m_autor_magazin)
 
     name_composing_fields = ['person___name', 'kuerzel']
     objects = HumanNameQuerySet.as_manager()
@@ -213,7 +213,7 @@ class ausgabe(ComputedNameModel):
         'Erscheinungsdatum', null=True, blank=True, help_text='Format: tt.mm.jjjj'
     )
     jahrgang = models.PositiveSmallIntegerField(
-        null=True, blank=True, verbose_name="Jahrgang",  validators=[MinValueValidator(1)]
+        null=True, blank=True, verbose_name="Jahrgang", validators=[MinValueValidator(1)]
     )
     sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Ausgabe')
@@ -410,7 +410,7 @@ class ausgabe_monat(BaseModel):
 
 class monat(BaseModel):
     monat = models.CharField('Monat', **CF_ARGS)
-    abk = models.CharField('Abk',  **CF_ARGS)
+    abk = models.CharField('Abk', **CF_ARGS)
     ordinal = models.PositiveSmallIntegerField(editable=False)
 
     class Meta(BaseModel.Meta):
@@ -456,7 +456,7 @@ class magazin(BaseModel):
         help_text='Angabe für auf eine Region beschränktes Magazin.'
     )
 
-    genre = models.ManyToManyField('genre', blank=True,  through=_m2m.m2m_magazin_genre)
+    genre = models.ManyToManyField('genre', blank=True, through=_m2m.m2m_magazin_genre)
     verlag = models.ManyToManyField('verlag', through=_m2m.m2m_magazin_verlag)
     herausgeber = models.ManyToManyField('Herausgeber', through=_m2m.m2m_magazin_herausgeber)
 
@@ -477,7 +477,7 @@ class magazin(BaseModel):
 class verlag(BaseModel):
     verlag_name = models.CharField('Verlag', **CF_ARGS)
 
-    sitz = models.ForeignKey('ort', models.SET_NULL, null=True,  blank=True)
+    sitz = models.ForeignKey('ort', models.SET_NULL, null=True, blank=True)
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
@@ -494,7 +494,7 @@ class ort(ComputedNameModel):
     stadt = models.CharField(**CF_ARGS_B)
 
     bland = models.ForeignKey(
-        'bundesland', models.SET_NULL, verbose_name='Bundesland',  null=True,  blank=True
+        'bundesland', models.SET_NULL, verbose_name='Bundesland', null=True, blank=True
     )
     land = models.ForeignKey('land', models.PROTECT, verbose_name='Land')
 
@@ -558,7 +558,7 @@ class ort(ComputedNameModel):
 
 class bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', **CF_ARGS)
-    code = models.CharField(max_length=4,  unique=False)
+    code = models.CharField(max_length=4, unique=False)
 
     land = models.ForeignKey('land', models.PROTECT, verbose_name='Land')
 
@@ -580,8 +580,8 @@ class bundesland(BaseModel):
 
 
 class land(BaseModel):
-    land_name = models.CharField('Land', max_length=100,  unique=True)
-    code = models.CharField(max_length=4,  unique=True)
+    land_name = models.CharField('Land', max_length=100, unique=True)
+    code = models.CharField(max_length=4, unique=True)
 
     name_field = 'land_name'
     primary_search_fields = ['land_name', 'code']
@@ -603,11 +603,11 @@ class land_alias(BaseAliasModel):
 
 
 class schlagwort(BaseModel):
-    schlagwort = models.CharField(max_length=100,  unique=True)
+    schlagwort = models.CharField(max_length=100, unique=True)
 
     ober = models.ForeignKey(
         'self', models.SET_NULL, related_name='unterbegriffe',
-        verbose_name='Oberbegriff', null=True,  blank=True
+        verbose_name='Oberbegriff', null=True, blank=True
     )
 
     create_field = 'schlagwort'
@@ -637,7 +637,7 @@ class artikel(BaseModel):
 
     schlagzeile = models.CharField(**CF_ARGS)
     seite = models.PositiveSmallIntegerField(verbose_name="Seite")
-    seitenumfang = models.CharField(max_length=3, blank=True,  choices=SU_CHOICES,  default='')
+    seitenumfang = models.CharField(max_length=3, blank=True, choices=SU_CHOICES, default='')
     zusammenfassung = models.TextField(blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Artikels')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -697,11 +697,11 @@ class buch(BaseModel):
 
     schriftenreihe = models.ForeignKey('schriftenreihe', models.SET_NULL, null=True, blank=True)
     buchband = models.ForeignKey(
-        'self', models.PROTECT, null=True,  blank=True, limit_choices_to={'is_buchband': True},
+        'self', models.PROTECT, null=True, blank=True, limit_choices_to={'is_buchband': True},
         related_name='buch_set', help_text='Der Sammelband, der diesen Aufsatz enthält.',
         verbose_name='Sammelband',
     )
-    verlag = models.ForeignKey('verlag', models.SET_NULL, null=True,  blank=True)
+    verlag = models.ForeignKey('verlag', models.SET_NULL, null=True, blank=True)
     sprache = models.ForeignKey('sprache', models.SET_NULL, null=True, blank=True)
 
     herausgeber = models.ManyToManyField('Herausgeber')
@@ -816,15 +816,15 @@ class audio(BaseModel):
     tracks = models.IntegerField(verbose_name='Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Erscheinungsjahr', blank=True, null=True)
-    quelle = models.CharField(help_text='Broadcast, Live, etc.',  **CF_ARGS_B)
+    quelle = models.CharField(help_text='Broadcast, Live, etc.', **CF_ARGS_B)
     catalog_nr = models.CharField(verbose_name='Katalog Nummer', **CF_ARGS_B)
-    release_id = models.PositiveIntegerField(blank=True,  null=True, verbose_name="Release ID (discogs)")
+    release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
     discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     sender = models.ForeignKey(
-        'sender', models.SET_NULL, blank=True,  null=True, help_text='Name des Radio-/Fernsehsenders'
+        'sender', models.SET_NULL, blank=True, null=True, help_text='Name des Radio-/Fernsehsenders'
     )
 
     plattenfirma = models.ManyToManyField('plattenfirma', through=_m2m.m2m_audio_plattenfirma)
@@ -1121,7 +1121,7 @@ class video(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    sender = models.ForeignKey('sender', models.SET_NULL, blank=True,  null=True)
+    sender = models.ForeignKey('sender', models.SET_NULL, blank=True, null=True)
 
     band = models.ManyToManyField('band')
     genre = models.ManyToManyField('genre')
@@ -1157,7 +1157,7 @@ class provenienz(BaseModel):
     ]
 
     typ = models.CharField(
-        'Art der Provenienz',  max_length=100,  choices=TYP_CHOICES,  default=TYP_CHOICES[0][0]
+        'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=TYP_CHOICES[0][0]
     )
 
     geber = models.ForeignKey('geber', models.PROTECT)
@@ -1234,7 +1234,7 @@ class lagerort(ComputedNameModel):
 class bestand(BaseModel):
     BESTAND_CHOICES = [
         ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),
-        ('buch', 'Buch'),  ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
+        ('buch', 'Buch'), ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
         ('technik', 'Technik'), ('video', 'Video'),
     ]
     signatur = models.AutoField(primary_key=True)
@@ -1294,7 +1294,7 @@ class datei(BaseModel):
         choices=MEDIA_TYP_CHOICES, verbose_name='Media Typ', default='audio', **CF_ARGS
     )
     datei_media = models.FileField(  # Datei Media Server
-        verbose_name='Datei', blank=True,  null=True, editable=False,
+        verbose_name='Datei', blank=True, null=True, editable=False,
         help_text="Datei auf Datenbank-Server hoch- bzw herunterladen."
     )
     datei_pfad = models.CharField(
@@ -1306,7 +1306,7 @@ class datei(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
     quelle = models.CharField(help_text="z.B. Broadcast, Live, etc.", **CF_ARGS_B)
 
-    sender = models.ForeignKey('sender', models.SET_NULL, blank=True,  null=True)
+    sender = models.ForeignKey('sender', models.SET_NULL, blank=True, null=True)
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
 
     genre = models.ManyToManyField('genre')
@@ -1351,7 +1351,7 @@ class Format(ComputedNameModel):
     format_typ = models.ForeignKey('FormatTyp', models.PROTECT, verbose_name='Format Typ')
     format_size = models.ForeignKey(
         'FormatSize', models.SET_NULL, verbose_name='Format Größe',
-        help_text='LP, 12", Mini-Disc, etc.', blank=True,  null=True
+        help_text='LP, 12", Mini-Disc, etc.', blank=True, null=True
     )
 
     tag = models.ManyToManyField('FormatTag', verbose_name='Tags', blank=True)

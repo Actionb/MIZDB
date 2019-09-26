@@ -170,7 +170,7 @@ class AdminSearchFormMixin(object):
         post_url = urlunparse(parsed_url)
         return HttpResponseRedirect(post_url)
 
-    def check(self,  **kwargs):
+    def check(self, **kwargs):
         errors = super().check(**kwargs)
         errors.extend(self._check_search_form_fields(**kwargs))
         return errors

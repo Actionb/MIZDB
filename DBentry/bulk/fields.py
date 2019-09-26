@@ -100,7 +100,7 @@ class BulkField(BaseSplitField):
     )
 
     def __init__(self, required=False, *args, **kwargs):
-        super().__init__(required=required,  *args, **kwargs)
+        super().__init__(required=required, *args, **kwargs)
 
 
 class BulkJahrField(BaseSplitField):

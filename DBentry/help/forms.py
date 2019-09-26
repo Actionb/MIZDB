@@ -18,7 +18,7 @@ class BulkFormHelpText(FormViewHelpText):
     fields = {
     }
     
-    beschreibung =  """
+    beschreibung = """
         Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.
         Dabei gilt die Regel, dass allen Ausgaben dasselbe Jahr und derselbe Jahrgang zugewiesen werden. Es ist also nicht möglich, mehrere 'Jahrgänge' auf einmal einzugeben.
         Liegt allen Ausgaben eine Musik-CD, o.ä. bei, setze den Haken bei dem Feld 'Musik-Beilage'. Ein Datensatz entsprechend dem Titel "Musik-Beilage: <Name des Magazins> <Name der Ausgabe>" wird dann in der Audiotabelle erstellt und mit der jeweiligen Ausgabe verknüpft.
@@ -35,10 +35,10 @@ class BulkFormHelpText(FormViewHelpText):
         """
 
     erlaubte_zeichen = [
-        {'label':' "," (Trennzeichen)', 'text':'Ein Komma trennt einzelne Gruppierungen von Angaben voneinander: 1,3,6-8 = 1,3,6,7,8'}, 
-        {'label':' "-" (von bis)', 'text':'Das Minus-Zeichen stellt eine Reihe von Angaben dar: 1-4 = 1,2,3,4'}, 
-        {'label':' "/" (einfache Gruppierung)', 'text':'Das Slash-Zeichen weist einer einzelnen Ausgabe mehrere Angaben zu: 1,3,6/7 = 1,3,6 UND 7'}, 
-        {'label':' "*" (mehrfache Gruppierung)', 'text':'Das Sternchen erlaubt Zuweisung mehrerer Angaben zu einer Reihe (Kombination von "-" und "/"): 1-4*2 = 1/2, 3/4 oder 1-6*3 = 1/2/3, 4/5/6'}, 
+        {'label': ' "," (Trennzeichen)', 'text': 'Ein Komma trennt einzelne Gruppierungen von Angaben voneinander: 1,3,6-8 = 1,3,6,7,8'}, 
+        {'label': ' "-" (von bis)', 'text': 'Das Minus-Zeichen stellt eine Reihe von Angaben dar: 1-4 = 1,2,3,4'}, 
+        {'label': ' "/" (einfache Gruppierung)', 'text': 'Das Slash-Zeichen weist einer einzelnen Ausgabe mehrere Angaben zu: 1,3,6/7 = 1,3,6 UND 7'}, 
+        {'label': ' "*" (mehrfache Gruppierung)', 'text': 'Das Sternchen erlaubt Zuweisung mehrerer Angaben zu einer Reihe (Kombination von "-" und "/"): 1-4*2 = 1/2, 3/4 oder 1-6*3 = 1/2/3, 4/5/6'}, 
         
     ]
     

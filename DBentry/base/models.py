@@ -121,7 +121,7 @@ class BaseM2MModel(BaseModel):
             # Cannot build a meaningful representation.
             return "---"
         else:
-            template = "{}" + " ({})"*(len(data) - 1)
+            template = "{}" + " ({})" * (len(data) - 1)
             return template.format(*data)
 
     @classmethod

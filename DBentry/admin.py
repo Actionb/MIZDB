@@ -146,7 +146,7 @@ class AusgabenAdmin(MIZModelAdmin):
         model = _models.ausgabe.audio.through
 
     index_category = 'Archivgut'
-    inlines = [NumInLine,  MonatInLine, LNumInLine, JahrInLine, BestandInLine, AudioInLine]
+    inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, BestandInLine, AudioInLine]
 
     actions = MIZModelAdmin.actions + [  # TODO: add actions via get_actions()
         _actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure
@@ -561,7 +561,7 @@ class MagazinAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
-    list_display =['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
+    list_display = ['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
 
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine'],

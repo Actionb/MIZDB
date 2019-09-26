@@ -186,8 +186,8 @@ class FormViewHelpText(BaseHelpText):
                 field_helptext = self.get_helptext_for_field(field_name, formfield)
                 if field_helptext:
                     self.field_helptexts.append({
-                        'id' : field_name, 
-                        'label' : formfield.label, 
+                        'id': field_name, 
+                        'label': formfield.label, 
                         'text': field_helptext, 
                     })
         return self._field_helptexts
@@ -279,9 +279,9 @@ class ModelAdminHelpText(FormViewHelpText):
                 else:
                     continue
                 self._inline_helptexts.append({
-                    'id' : 'inline-{}'.format(inline_model._meta.verbose_name), 
-                    'label' : inline_model._meta.verbose_name_plural, 
-                    'text' : text, 
+                    'id': 'inline-{}'.format(inline_model._meta.verbose_name), 
+                    'label': inline_model._meta.verbose_name_plural, 
+                    'text': text, 
                 })
         return self._inline_helptexts
         
