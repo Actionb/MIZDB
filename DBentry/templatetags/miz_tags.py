@@ -13,7 +13,7 @@ def tabindex(value, index):
     """
     value.field.widget.attrs['tabindex'] = index
     return value
-    
+
 
 @register.simple_tag
 def reset_ordering(cl):
@@ -23,4 +23,4 @@ def reset_ordering(cl):
     template = '<span class="small quiet"><a href={url}>Sortierung zurücksetzen</a></span>'
     url = cl.get_query_string(new_params=None, remove=[ORDER_VAR])
     return format_html(template, url=url)
-    
+

@@ -1,7 +1,7 @@
 
 # DEBUG Printing
 
-    
+
 def print_tabular(to_print, columns=[], default_col_width=6):
     from itertools import chain
     if isinstance(to_print, dict):
@@ -9,7 +9,7 @@ def print_tabular(to_print, columns=[], default_col_width=6):
     if any(not isinstance(row, dict) for row in to_print):
         print("Printing requires an iterable of dicts.")
         return
-    
+
     column_ordering = columns[:] or list(set(chain(*[row.keys() for row in to_print])))
     # Allow column_ordering to consist of tuple/list with alias and key/name: (column_name,column_alias)
     for i, column in enumerate(column_ordering):
@@ -17,7 +17,7 @@ def print_tabular(to_print, columns=[], default_col_width=6):
             continue
         else:
             column_ordering[i] = (column, column)
-    
+
     # delete keys not existing in to_print.keys
     for key, alias in column_ordering:
         if any(key not in row.keys() for row in to_print):
@@ -30,7 +30,7 @@ def print_tabular(to_print, columns=[], default_col_width=6):
             except:
                 len_v = default_col_width
             max_item_len[key] = max(len_v, len(alias)) + 2
-            
+
     header_string = ""
     for key, alias in column_ordering:
         header_string += "|" + alias.center(max_item_len[key]) + "|"
@@ -64,4 +64,4 @@ def print_request(request, file=None):
         printf(k)
         printf(v)
         printf("")
-        
+
