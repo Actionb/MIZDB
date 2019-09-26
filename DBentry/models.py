@@ -199,12 +199,15 @@ class autor(ComputedNameModel):
 
 
 class ausgabe(ComputedNameModel):
-    # TODO: ENUMS!!!
+    UNBEARBEITET = 'unb'
+    INBEARBEITUNG = 'iB'
+    ABGESCHLOSSEN = 'abg'
+    KEINEBEARBEITUNG = 'kB'
     STATUS_CHOICES = [
-        ('unb', 'unbearbeitet'), ('iB', 'in Bearbeitung'),
-        ('abg', 'abgeschlossen'), ('kB', 'keine Bearbeitung vorgesehen')
+        (UNBEARBEITET, 'unbearbeitet'), (INBEARBEITUNG, 'in Bearbeitung'),
+        (ABGESCHLOSSEN, 'abgeschlossen'), (KEINEBEARBEITUNG, 'keine Bearbeitung vorgesehen')
     ]
-
+    # FIXME: ausgabe.status: default=1 is wrong
     status = models.CharField('Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=1)
     e_datum = models.DateField(
         'Erscheinungsdatum', null=True, blank=True, help_text='Format: tt.mm.jjjj'
@@ -420,13 +423,18 @@ class monat(BaseModel):
 
 
 class magazin(BaseModel):
+    # TODO: is ausgabe.turnus needed?
     TURNUS_CHOICES = [
         ('u', 'unbekannt'), ('t', 'täglich'), ('w', 'wöchentlich'),
         ('w2', 'zwei-wöchentlich'), ('m', 'monatlich'), ('m2', 'zwei-monatlich'),
         ('q', 'quartalsweise'), ('hj', 'halbjährlich'), ('j', 'jährlich')
     ]
+    NUM = 'num'
+    LNUM = 'lnum'
+    MONAT = 'monat'
+    E_DATUM = 'e_datum'
     MERKMAL_CHOICES = [
-        ('num', 'Nummer'), ('lnum', 'Lfd.Nummer'), ('monat', 'Monat'), ('e_datum', 'Ersch.Datum')
+        (NUM, 'Nummer'), (LNUM, 'Lfd.Nummer'), (MONAT, 'Monat'), (E_DATUM, 'Ersch.Datum')
     ]
 
     magazin_name = models.CharField('Magazin', **CF_ARGS)
@@ -1262,6 +1270,7 @@ class bestand(BaseModel):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
+        # TODO: bestand_art should get its value from the related_model.
         # Find the correct Bestand-Art
         for fld_name, _choice in self.BESTAND_CHOICES:
             if getattr(self, fld_name):
@@ -1270,10 +1279,14 @@ class bestand(BaseModel):
 
 
 class datei(BaseModel):
-
+    MEDIA_AUDIO = 'audio'
+    MEDIA_BILD = 'bild'
+    MEDIA_SONSTIGE = 'sonstige'
+    MEDIA_TEXT = 'text'
+    MEDIA_VIDEO = 'video'
     MEDIA_TYP_CHOICES = [
-        ('audio', 'Audio'), ('video', 'Video'), ('bild', 'Bild'),
-        ('text', 'Text'), ('sonstige', 'Sonstige')
+        (MEDIA_AUDIO, 'Audio'), (MEDIA_VIDEO, 'Video'), (MEDIA_BILD, 'Bild'),
+        (MEDIA_TEXT, 'Text'), (MEDIA_SONSTIGE, 'Sonstige')
     ]
 
     titel = models.CharField(**CF_ARGS)
@@ -1319,6 +1332,7 @@ class datei(BaseModel):
 
 
 class Format(ComputedNameModel):
+    # TODO: Format.channel: needed?
     CHANNEL_CHOICES = [
         ('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quad', 'Quadraphonic'),
         ('Ambi', 'Ambisonic'), ('Multi', 'Multichannel')
@@ -1478,13 +1492,18 @@ class Kalendar(BaseBrochure):  # TODO: spelling: Kalender
 
 
 class Katalog(BaseBrochure):
+    ART_BUCH = 'buch'
+    ART_MERCH = 'merch'
+    ART_OTHER = 'other'
+    ART_TECH = 'tech'
+    ART_TON = 'ton'
     ART_CHOICES = [
-        ('merch', 'Merchandise'), ('tech', 'Instrumente & Technik'),
-        ('ton', 'Tonträger'), ('buch', 'Bücher'), ('other', 'Anderes')
+        (ART_MERCH, 'Merchandise'), (ART_TECH, 'Instrumente & Technik'),
+        (ART_TON, 'Tonträger'), (ART_BUCH, 'Bücher'), (ART_OTHER, 'Anderes')
     ]
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Kataloges')
-    # TODO: shouldnt default for 'art' be 'merch' or choices[0][0]?
+    # FIXME: Katalog.art.choices: default=1 is wrong
     art = models.CharField('Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=1)
 
     class Meta(BaseBrochure.Meta):
