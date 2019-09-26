@@ -28,7 +28,7 @@ class MIZAdminSite(admin.AdminSite):
         if app_label == 'DBentry':
             # Redirect to the 'tidied' up index page of the main page
             return self.index(request, extra_context)
-        return super(MIZAdminSite, self).app_index(request, app_label, extra_context)
+        return super().app_index(request, app_label, extra_context)
 
     def build_admintools_context(self, request):
         """
@@ -37,7 +37,7 @@ class MIZAdminSite(admin.AdminSite):
         """
         result = OrderedDict()
         # Walk through the tools by index_label:
-        tools = sorted(self.tools, key=lambda t:t[2])
+        tools = sorted(self.tools, key=lambda t: t[2])
         for _tool, url_name, index_label, superuser_only in tools:
             if superuser_only and not request.user.is_superuser:
                 continue
@@ -97,9 +97,9 @@ class MIZAdminSite(admin.AdminSite):
         extra_context['admintools'] = self.build_admintools_context(request)
         response = super().index(request, extra_context)
         # Replace the original app_list with the one containing the grouping.
-        new_app_list = self.add_categories( response.context_data['app_list'])
+        new_app_list = self.add_categories(response.context_data['app_list'])
         if new_app_list:
-            response.context_data['app_list'] =new_app_list
+            response.context_data['app_list'] = new_app_list
         return response
 
     def get_admin_model(self, model):
