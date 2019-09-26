@@ -91,7 +91,10 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
 
     def get_queryset(self):
         # TODO: MultipleObjectMixin.get_queryset ?
-        qs = self.model.objects.all() if self.queryset is None else self.queryset
+        if self.queryset is None:
+            qs = self.model.objects.all()
+        else:
+            qs = self.queryset
 
         if self.forwarded:
             if any(k and v for k, v in self.forwarded.items()):

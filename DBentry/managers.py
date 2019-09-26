@@ -226,7 +226,8 @@ class CNQuerySet(MIZQuerySet):
             with transaction.atomic():
                 for pk, val_dict in values.items():
                     new_name = self.model._get_name(**val_dict)
-                    self.order_by().filter(pk=pk).update(_name=new_name, _changed_flag=False)
+                    self.order_by().filter(pk=pk).update(
+                        _name=new_name, _changed_flag=False)
     _update_names.alters_data = True
 
 
@@ -314,7 +315,8 @@ class AusgabeQuerySet(CNQuerySet):
 
         # Increment jahrgang using a (partial) date.
         if start_date is None:
-            month_ordinals = start.ausgabe_monat_set.values_list('monat__ordinal', flat=True)
+            month_ordinals = start.ausgabe_monat_set.values_list(
+                'monat__ordinal', flat=True)
             start_date = build_date(years, month_ordinals)
 
         if start_date:
@@ -450,7 +452,9 @@ class AusgabeQuerySet(CNQuerySet):
         # Determine if jahr should come before jahrgang in ordering.
         jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
-        jahr_values, jahrgang_values = (list(filter(lambda x: x is not None, l)) for l in zip(*jj_values))
+        jahr_values, jahrgang_values = (
+            list(filter(lambda x: x is not None, l)) for l in zip(*jj_values)
+        )
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
             jahr_index = ordering.index('jahr')

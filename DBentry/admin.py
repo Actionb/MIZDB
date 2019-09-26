@@ -75,7 +75,8 @@ class AudioAdmin(MIZModelAdmin):
         extra = 0
         filter_horizontal = ['tag']
         fieldsets = [
-            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr', 'tape', 'channel', 'noise_red']}),
+            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr', 'tape',
+                'channel', 'noise_red']}),
             ('Tags', {'fields': ['tag'], 'classes': ['collapse', 'collapsed']}),
             ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']})
         ]
@@ -970,7 +971,8 @@ class KalendarAdmin(BaseBrochureAdmin):
     class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
 
-    inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine, BestandInLine]
+    inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine,
+        BestandInLine]
 
 
 @admin.register(_models.sender, site=miz_site)

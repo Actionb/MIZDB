@@ -110,7 +110,8 @@ class BulkJahrField(BaseSplitField):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Add a validator that only allows numerals with 4 digits or the separator.
+        # Add a validator that only allows numerals with 4 digits or the
+        # separator.
         self.validators.append(
             RegexValidator(
                 regex=r'^(\d{4}|%s)*$' % self.separator_pattern,

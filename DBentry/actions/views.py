@@ -115,7 +115,8 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
         return super().get_initial()
 
     def _build_message(self, lagerort_instance, bestand_instances, fkey):
-        base_msg = "{lagerort}-Bestand zu diesen {count} {verbose_model_name} hinzugefügt: {obj_links}"
+        base_msg = ("{lagerort}-Bestand zu diesen {count} {verbose_model_name} "
+            "hinzugefügt: {obj_links}")
         format_dict = {
             'verbose_model_name': self.opts.verbose_name_plural,
             'obj_links': link_list(
@@ -609,7 +610,10 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                         str_magazin=str(self.magazin_instance)
                     )
                 )
-                self.log_update(_models.bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
+                self.log_update(
+                    _models.bestand.objects.filter(brochure_id=new_brochure.pk),
+                    ['ausgabe_id', 'brochure_id']
+                )
                 self.log_deletion(ausgabe_instance)
 
         if protected_ausg:

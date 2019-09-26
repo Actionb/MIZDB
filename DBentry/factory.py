@@ -424,7 +424,8 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
         for k, v in vars(self.factory).items():
             if self._is_declaration(k, v):
                 self.base_declarations[k] = v
-        self.pre_declarations, self.post_declarations = factory.builder.parse_declarations(self.declarations)
+        self.pre_declarations, self.post_declarations = (
+            factory.builder.parse_declarations(self.declarations))
 
 
 class MIZModelFactory(factory.django.DjangoModelFactory):

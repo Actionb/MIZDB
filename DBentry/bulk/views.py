@@ -155,7 +155,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 # form.row_data has set lagerort to dublette.
                 bestand_data = dict(lagerort=row.get('ausgabe_lagerort'))
                 if 'provenienz' in row['dupe_of']:
-                    # Also add the provenienz of the original to this object's bestand.
+                    # Also add the provenienz of the original to this object's
+                    # bestand.
                     bestand_data['provenienz'] = row.get('provenienz')
                 bestand = instance.bestand_set.create(**bestand_data)
                 self.log_addition(instance, bestand)

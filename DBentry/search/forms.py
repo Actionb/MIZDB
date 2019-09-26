@@ -231,8 +231,10 @@ class SearchFormFactory:
         if db_field.is_relation and 'widget' not in kwargs:
             # Create a dal autocomplete widget:
             widget_opts = {
-                'model': db_field.related_model, 'multiple': db_field.many_to_many,
-                'wrap': False, 'can_add_related': False,
+                'model': db_field.related_model,
+                'multiple': db_field.many_to_many,
+                'wrap': False,
+                'can_add_related': False,
             }
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')

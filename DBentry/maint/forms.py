@@ -3,7 +3,9 @@ from django.apps import apps
 
 from DBentry import utils
 from DBentry.base import models as base_models
-from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin, MinMaxRequiredFormMixin
+from DBentry.base.forms import (
+    MIZAdminForm, DynamicChoiceFormMixin, MinMaxRequiredFormMixin
+)
 
 
 class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):

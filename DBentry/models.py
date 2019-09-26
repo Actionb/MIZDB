@@ -481,7 +481,10 @@ class verlag(BaseModel):
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
-    search_fields = ['verlag_name', 'sitz___name', 'sitz__land__land_name', 'sitz__bland__bland_name']
+    search_fields = [
+        'verlag_name', 'sitz___name', 'sitz__land__land_name',
+        'sitz__bland__bland_name'
+    ]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
@@ -613,7 +616,8 @@ class schlagwort(BaseModel):
     name_field = 'schlagwort'
     primary_search_fields = []
     search_fields = [
-        'schlagwort', 'unterbegriffe__schlagwort', 'ober__schlagwort', 'schlagwort_alias__alias'
+        'schlagwort', 'unterbegriffe__schlagwort', 'ober__schlagwort',
+        'schlagwort_alias__alias'
     ]
     search_fields_suffixes = {
         'unterbegriffe__schlagwort': 'Oberbegriff',
@@ -1356,7 +1360,8 @@ class Format(ComputedNameModel):
     tag = models.ManyToManyField('FormatTag', verbose_name='Tags', blank=True)
 
     name_composing_fields = [
-        'anzahl', 'format_size__size', 'format_typ__typ', 'tag__tag', 'channel',
+        'anzahl', 'format_size__size', 'format_typ__typ',
+        'tag__tag', 'channel',
     ]
 
     class Meta(BaseModel.Meta):
@@ -1439,7 +1444,9 @@ class plattenfirma(BaseModel):
 
 
 class BrochureYear(AbstractJahrModel):
-    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='jahre', blank=True, null=True)
+    brochure = models.ForeignKey(
+        'BaseBrochure', models.CASCADE, related_name='jahre', blank=True, null=True
+    )
 
 
 class BrochureURL(AbstractURLModel):

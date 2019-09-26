@@ -202,7 +202,9 @@ class PartialDate(datetime.date):
     @classmethod
     def from_string(cls, date):
         """Create a PartialDate from the string 'date'."""
-        regex = re.compile(r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$')
+        regex = re.compile(
+            r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$'
+        )
         match = regex.match(date)
         if match:
             return cls.__new__(cls, **match.groupdict())

@@ -175,7 +175,8 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
                     group_choices
                     for group_name, group_choices in choices
                 ))
-            # Acquire the human readable parts of the choices that have been selected:
+            # Acquire the human readable parts of the choices that have been
+            # selected:
             headers.extend(
                 human_readable
                 for value, human_readable in choices
@@ -201,8 +202,8 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
         items = []
         for dupe in duplicates:
             # Prepare the duplicate values.
-            # dupe_fields uses the order of form.fields and thus shares the same
-            # order as the headers.
+            # dupe_fields uses the order of form.fields and thus shares the
+            # same order as the headers.
             values = dict(dupe.values)
             duplicate_values = [
                 values[field_name][0]
@@ -216,7 +217,8 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
             dupe_item = [
                 (
                     instance,
-                    utils.get_obj_link(instance, self.request.user, include_name=False),
+                    utils.get_obj_link(
+                        instance, self.request.user, include_name=False),
                     duplicate_values
                 )
                 for instance in dupe.instances

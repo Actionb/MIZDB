@@ -269,13 +269,15 @@ class MIZAdminFormMixin(object):
                 self.data, self.files, prefixed_name
             )
             if not field.show_hidden_initial:
-                # Use the BoundField's initial as this is the value passed to the widget.
+                # Use the BoundField's initial as this is the value passed
+                # to the widget.
                 initial_value = self[name].initial
                 try:
                     # forms.Field does not convert the initial_value to the
                     # field's python type (like it does for the data_value)
                     # for its has_changed check.
-                    # This results in IntegerField.has_changed('1',1) returning False.
+                    # This results in IntegerField.has_changed('1',1);
+                    # returning False.
                     initial_value = field.to_python(initial_value)
                 except:
                     # FIXME: bare except

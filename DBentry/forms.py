@@ -42,7 +42,8 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
             if kwargs['instance'].ausgabe:
-                kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
+                kwargs['initial']['ausgabe__magazin'] = (
+                    kwargs['instance'].ausgabe.magazin)
         super().__init__(*args, **kwargs)
 
 
@@ -51,7 +52,8 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         model = _models.artikel
         fields = '__all__'
         widgets = {
-            'ausgabe': make_widget(model_name='ausgabe', forward=['ausgabe__magazin']),
+            'ausgabe': make_widget(
+                model_name='ausgabe', forward=['ausgabe__magazin']),
             'schlagzeile': forms.Textarea(attrs={'rows': 2, 'cols': 90}),
             'zusammenfassung': forms.Textarea(attrs=ATTRS_TEXTAREA),
             'info': forms.Textarea(attrs=ATTRS_TEXTAREA),
@@ -65,7 +67,8 @@ class AutorForm(MinMaxRequiredFormMixin, forms.ModelForm):
 class BrochureForm(AusgabeMagazinFieldForm):
     class Meta:
         widgets = {
-            'ausgabe': make_widget(model_name='ausgabe', forward=['ausgabe__magazin']),
+            'ausgabe': make_widget(
+                model_name='ausgabe', forward=['ausgabe__magazin']),
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})
         }
 
@@ -116,13 +119,15 @@ class AudioForm(forms.ModelForm):
             release_id_from_url = match.groups()[-1]
             if release_id and release_id_from_url != release_id:
                 raise ValidationError(
-                    "Die angegebene Release ID stimmt nicht mit der ID im Discogs Link überein."
+                    "Die angegebene Release ID stimmt nicht mit der ID im "
+                    "Discogs Link überein."
                 )
             elif not release_id:
                 # Set release_id from the url.
                 release_id = str(match.groups()[-1])
                 self.cleaned_data['release_id'] = release_id
-        self.cleaned_data['discogs_url'] = "http://www.discogs.com/release/" + release_id
+        discogs_url = "http://www.discogs.com/release/" + release_id
+        self.cleaned_data['discogs_url'] = discogs_url
         return self.cleaned_data
 
 

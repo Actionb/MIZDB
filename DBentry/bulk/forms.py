@@ -203,7 +203,8 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     def clean(self):
         # If the user wishes to add audio data to the objects they are creating,
         # they MUST also define a lagerort for the audio.
-        if self.cleaned_data.get('audio') and not self.cleaned_data.get('audio_lagerort'):
+        if (self.cleaned_data.get('audio')
+                and not self.cleaned_data.get('audio_lagerort')):
             self.add_error(
                 field='audio_lagerort',
                 error='Bitte einen Lagerort für die Musik Beilage angeben.'
