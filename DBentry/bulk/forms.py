@@ -96,7 +96,7 @@ class BulkForm(MIZAdminForm):
                     and item_count 
                     and self.total_count
                     and item_count != self.total_count
-                ):
+                    ):
                 # This field's data exists and is meant to be split up into
                 # individual items, but the amount of items differs from
                 # the previously determined total_count.
