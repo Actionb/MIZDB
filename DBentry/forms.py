@@ -17,6 +17,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
     Also adds the ausgabe's magazin to the form's initial data (if applicable).
     Useable by any ModelForm that uses a relation to ausgabe.
     """
+
     ausgabe__magazin = forms.ModelChoiceField(
         required=False,
         label="Magazin",
@@ -25,6 +26,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
             model=_models.magazin, wrap=True, can_delete_related=False
         )
     )
+
     class Meta:
         # TODO: add the ausgabe widget during __new__?
         # That way, classes inheriting from this wouldn't have to redeclare
@@ -138,6 +140,7 @@ class BildmaterialForm(forms.ModelForm):
     musiker/band objects of the related veranstaltung instances to this
     bildmaterial instance.
     """
+
     copy_related = forms.BooleanField(
         label='Bands/Musiker kopieren',
         help_text=('Setzen Sie das Häkchen, um Bands und Musiker der '
@@ -147,6 +150,7 @@ class BildmaterialForm(forms.ModelForm):
 
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
+
 
 class FavoritenForm(MIZAdminFormMixin, forms.ModelForm):
     class Meta:

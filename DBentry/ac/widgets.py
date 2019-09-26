@@ -87,22 +87,22 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             'model': rel_opts.verbose_name,
         }
         if self.can_change_related:
-            change_related_template_url = self.get_related_url(info, 'change', '__fk__')
+            url = self.get_related_url(info, 'change', '__fk__')
             context.update(
                 can_change_related=True,
-                change_related_template_url=change_related_template_url,
+                change_related_template_url=url,
             )
         if self.can_add_related:
-            add_related_url = self.get_related_url(info, 'add')
+            url = self.get_related_url(info, 'add')
             context.update(
                 can_add_related=True,
-                add_related_url=add_related_url,
+                add_related_url=url,
             )
         if self.can_delete_related:
-            delete_related_template_url = self.get_related_url(info, 'delete', '__fk__')
+            url = self.get_related_url(info, 'delete', '__fk__')
             context.update(
                 can_delete_related=True,
-                delete_related_template_url=delete_related_template_url,
+                delete_related_template_url=url,
             )
         return context
 
@@ -133,14 +133,13 @@ def make_widget(
             raise ImproperlyConfigured(
                 "{} widget missing argument 'model_name'.".format(
                     widget_class.__name__)
-                )
+            )
         if 'create_field' not in kwargs and can_add_related and model:
             widget_opts['create_field'] = model.create_field
 
     if issubclass(
-                widget_class,
-                (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)
-            ):
+            widget_class,
+            (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)):
         widget_opts['url'] = url
 
     widget_opts.update(kwargs)
@@ -192,7 +191,8 @@ def make_widget(
                     # FieldDoesNotExist: forwarded.dst/forwarded.src is not
                     # a name of a field of that model
                     forwarded_verbose = snake_case_to_spaces(forwarded.src).title()
-                placeholder = placeholder_template % {'verbose_name': forwarded_verbose}
+                placeholder = placeholder_template % {
+                    'verbose_name': forwarded_verbose}
                 attrs['data-placeholder'] = placeholder
 
     widget = widget_class(**widget_opts)

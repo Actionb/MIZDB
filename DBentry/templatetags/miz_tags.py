@@ -5,6 +5,7 @@ from django.contrib.admin.views.main import ORDER_VAR
 
 register = Library()
 
+
 @register.filter
 def tabindex(value, index):
     """
@@ -17,9 +18,7 @@ def tabindex(value, index):
 
 @register.simple_tag
 def reset_ordering(cl):
-    """
-    Resets the ordering of the changelist results.
-    """
+    """Provide a link that resets the ordering of the changelist results."""
     template = '<span class="small quiet"><a href={url}>Sortierung zurücksetzen</a></span>'
     url = cl.get_query_string(new_params=None, remove=[ORDER_VAR])
     return format_html(template, url=url)

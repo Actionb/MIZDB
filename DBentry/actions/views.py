@@ -1,3 +1,4 @@
+# TODO: code style (200+ long lines, ouch)
 from django import forms
 from django.contrib import messages
 from django.db import transaction
@@ -388,9 +389,9 @@ class MergeViewWizarded(WizardConfirmationView):
                     total_forms += 1
 
             management_form_data = {
-                    prefix + '-INITIAL_FORMS': '0',
-                    prefix + '-MAX_NUM_FORMS': '',
-                    prefix + '-TOTAL_FORMS': total_forms
+                prefix + '-INITIAL_FORMS': '0',
+                prefix + '-MAX_NUM_FORMS': '',
+                prefix + '-TOTAL_FORMS': total_forms
             }
             data.update(management_form_data)
             kwargs['data'] = data
@@ -442,10 +443,10 @@ class MergeViewWizarded(WizardConfirmationView):
                 level=messages.ERROR,
                 message="Folgende verwandte {object_name} verhinderten "
                 "die Zusammenführung: {protected}".format(
-                        object_name=object_name,
-                        protected=link_list(self.request, e.protected_objects)
-                    )
+                    object_name=object_name,
+                    protected=link_list(self.request, e.protected_objects)
                 )
+            )
         return
 
 

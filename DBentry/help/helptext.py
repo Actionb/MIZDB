@@ -1,3 +1,4 @@
+# TODO: code style
 from collections import OrderedDict
 
 from django.contrib.admin.utils import get_fields_from_path
@@ -35,9 +36,7 @@ class HTMLWrapper(object):
         return "id:{}, label:{}, val:{}".format(self.id, self.label, self.val)
 
     def sidenav(self):
-        """
-        Returns side navigation bookmarks to the help item(s).
-        """
+        """Returns side navigation bookmarks to the help item(s)."""
         help_item_bookmark = format_html('<a href="#{id}">{label}</a>', id=self.id, label=capfirst(self.label))
         if not is_iterable(self.val):
             return help_item_bookmark
@@ -177,9 +176,7 @@ class FormViewHelpText(BaseHelpText):
 
     @property
     def field_helptexts(self):
-        """
-        Collect the help texts for each field of the form.
-        """
+        """Collect the help texts for each field of the form."""
         if self._field_helptexts is None:
             self._field_helptexts = []
             for field_name, formfield in self.get_form().base_fields.items():

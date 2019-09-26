@@ -3,6 +3,7 @@ from DBentry.bulk.forms import BulkFormAusgabe
 from DBentry.help.registry import register
 from DBentry.help.helptext import FormViewHelpText
 
+
 @register(url_name='help_bulk_ausgabe')
 class BulkFormHelpText(FormViewHelpText):
 

@@ -37,6 +37,7 @@ class ModelSelectView(views.generic.FormView):
     Attributes:
         next_view (str): reverseable view name of the next view.
     """
+
     template_name = 'admin/basic.html'  # a very generic template
     submit_value = 'Weiter'
     submit_name = 'submit'

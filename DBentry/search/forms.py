@@ -246,8 +246,7 @@ class SearchFormFactory:
             widgets=None, localized_fields=None, labels=None, help_texts=None,
             error_messages=None, field_classes=None,
             forwards=None,
-            range_lookup=django_lookups.Range,
-            ):
+            range_lookup=django_lookups.Range):
         """
         Create and return a search form class for a given model.
 

@@ -165,6 +165,7 @@ class BaseSearchQuery(object):
             )
         return rslt
 
+
 class PrimaryFieldsSearchQuery(BaseSearchQuery):
     """
     A search that visually separates 'strong' results from 'weak' results.
@@ -283,6 +284,7 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
 
 class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
     """Use the values of the 'name_field' as string representations of the results."""
+
     # TODO: make NameFieldSearchQuery a mixin for ValuesDictSearchQuery
 
     name_field = None  # FIXME: useless declaration
@@ -313,8 +315,10 @@ class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
             (pk, name + suffix) for pk, name in tuple_list
         ]
 
+
 class ValuesDictSearchQuery(NameFieldSearchQuery):
     """Fetch all the relevant data first and then do a search in memory."""
+
     # FIXME: init must check that the queryset is an instance of MIZQuerySet:
     # values_dict must be available.
 

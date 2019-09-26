@@ -147,7 +147,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
     """
 
     def __init__(self, factory, factory_related_name='', accessor_name=None,
-                        extra=0, **defaults):
+            extra=0, **defaults):
         self.accessor_name = accessor_name
         self.extra = extra
         super().__init__(factory, factory_related_name, **defaults)
@@ -467,7 +467,8 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         for name in cls._meta.post_declarations:
             # Add an extra item to every post_declaration unless one was
             # already passed in as kwarg.
-            if name not in kwargs and not any(s.startswith(name + '__') for s in kwargs):
+            if (name not in kwargs
+                    and not any(s.startswith(name + '__') for s in kwargs)):
                 kwargs[name + '__extra'] = 1
 
         step = factory.builder.StepBuilder(

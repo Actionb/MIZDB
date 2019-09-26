@@ -150,7 +150,7 @@ class ISSNField(StdNumField):
 class EANField(StdNumField):
     stdnum = ean  # NOTE: the ean module does not have a 'format' function
     min_length = 8  # EAN-8
-    max_length = 17 # EAN-13 with four dashes/spaces
+    max_length = 17  # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
     description = ('Cleaned and validated EAN string: min length 8 (EAN-8), '
         'max length 17 (13 digits + dashes/spaces).')
@@ -174,9 +174,9 @@ class PartialDate(datetime.date):
         constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
         date_format = []
         iterator = zip(
-                # TODO: %d. (dot) for 20. May 2019?
-                ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
-            )
+            # TODO: %d. (dot) for 20. May 2019?
+            ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
+        )
         for name, value, format in iterator:
             if value is None:
                 continue
@@ -323,10 +323,12 @@ class PartialDateFormField(fields.MultiValueField):
             # Accept widget from the kwargs as a replacement if it's either
             # a subclass or an instance of PartialDateWidget.
             kwarg_widget = kwargs.pop('widget')
-            is_pd_widget = (isinstance(kwarg_widget, type)
-                    and issubclass(kwarg_widget, PartialDateWidget))
+            is_pd_widget = (
+                isinstance(kwarg_widget, type)
+                and issubclass(kwarg_widget, PartialDateWidget)
+            )
             if (isinstance(kwarg_widget, PartialDateWidget)
-                or is_pd_widget):
+                    or is_pd_widget):
                 widget = kwarg_widget
         super().__init__(
             _fields, widget=widget, require_all_fields=False, **kwargs

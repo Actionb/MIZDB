@@ -85,7 +85,7 @@ class MIZQuerySet(models.QuerySet):
         return rslt
 
     def values_dict(self, *fields, include_empty=False, flatten=False,
-                                tuplfy=False, **expressions):
+            tuplfy=False, **expressions):
         """
         An extension of QuerySet.values().
 
@@ -365,7 +365,7 @@ class AusgabeQuerySet(CNQuerySet):
                 include_empty=False, flatten=False
             )
             for pk, val_dict in val_dicts.items():
-                if ('ausgabe_num__num' not in val_dict 
+                if ('ausgabe_num__num' not in val_dict
                         or 'ausgabe_jahr__jahr' not in val_dict):
                     continue
 

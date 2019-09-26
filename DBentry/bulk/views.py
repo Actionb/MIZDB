@@ -236,8 +236,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 # Check if the ausgabe instance is already related to the audio
                 # instance.
                 is_related = m2m_audio_ausgabe.objects.filter(
-                        ausgabe=instance, audio=audio_instance
-                    ).exists()
+                    ausgabe=instance, audio=audio_instance
+                ).exists()
                 if not is_related:
                     m2m_instance = m2m_audio_ausgabe(
                         ausgabe=instance,
@@ -257,8 +257,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
             # Add bestand for the ausgabe instance.
             bestand_data = {
-                    'lagerort': row.get('ausgabe_lagerort')
-                }
+                'lagerort': row.get('ausgabe_lagerort')
+            }
             if 'provenienz' in row:
                 bestand_data['provenienz'] = row.get('provenienz')
             bestand = instance.bestand_set.create(**bestand_data)

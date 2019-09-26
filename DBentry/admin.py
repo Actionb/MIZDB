@@ -299,11 +299,14 @@ class ArtikelAdmin(MIZModelAdmin):
         # ordered via chronologic_order.
         qs = super(ArtikelAdmin, self).get_queryset(request)
         qs = qs.annotate(
-                jahre=Min('ausgabe__ausgabe_jahr__jahr'),
-                nums=Min('ausgabe__ausgabe_num__num'),
-                lnums=Min('ausgabe__ausgabe_lnum__lnum'),
-                monate=Min('ausgabe__ausgabe_monat__monat_id'),
-                ).order_by('ausgabe__magazin__magazin_name', 'jahre', 'nums', 'lnums', 'monate', 'seite', 'pk')
+            jahre=Min('ausgabe__ausgabe_jahr__jahr'),
+            nums=Min('ausgabe__ausgabe_num__num'),
+            lnums=Min('ausgabe__ausgabe_lnum__lnum'),
+            monate=Min('ausgabe__ausgabe_monat__monat_id'),
+        ).order_by(
+            'ausgabe__magazin__magazin_name', 'jahre', 'nums',
+            'lnums', 'monate', 'seite', 'pk'
+        )
         return qs
 
     def zusammenfassung_string(self, obj):
@@ -475,8 +478,7 @@ class BuchAdmin(MIZModelAdmin):
             'fields': ['titel_orig', 'jahr_orig'],
             'description': "Angaben zum Original eines übersetzten Buches.",
             'classes': ['collapse', 'collapsed'],
-            }
-        ),
+        }),
         # TODO: add beschreibung, bemerkungen to None fieldset to automatically create a fieldset
         ('Beschreibung & Bemerkungen', {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']}),
     ]
@@ -971,8 +973,9 @@ class KalendarAdmin(BaseBrochureAdmin):
     class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
 
-    inlines = [URLInLine, JahrInLine, GenreInLine, SpielortInLine, VeranstaltungInLine,
-        BestandInLine]
+    inlines = [
+        URLInLine, JahrInLine, GenreInLine, SpielortInLine,
+        VeranstaltungInLine, BestandInLine]
 
 
 @admin.register(_models.sender, site=miz_site)

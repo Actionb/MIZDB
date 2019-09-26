@@ -161,8 +161,10 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
             # Only pass in 'data' if the user tries to confirm an action.
             # Do not try to validate the form if it is the first time the
             # user sees the form.
-            if 'data' in kwargs: del kwargs['data']
-            if 'files' in kwargs: del kwargs['files']
+            if 'data' in kwargs:
+                del kwargs['data']
+            if 'files' in kwargs:
+                del kwargs['files']
         return kwargs
 
     def form_valid(self, form):

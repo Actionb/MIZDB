@@ -36,7 +36,7 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     minmax_required = [{'min': 1, 'fields': ['base', 'm2m', 'reverse']}]
     min_error_message = "Bitte mindestens 1 Häkchen setzen."
     help_text = ('Wähle die Felder, '
-    'deren Werte in die Suche miteinbezogen werden sollen.')
+        'deren Werte in die Suche miteinbezogen werden sollen.')
 
     class Media:
         css = {'all': ['admin/css/dupes.css']}

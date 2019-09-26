@@ -106,8 +106,10 @@ class AdminSearchFormMixin(object):
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
         registered_lookups = self.search_form.lookups.get(field_path, [])
-        return ((field_path in self.search_form.fields)
-            and (set(lookups).issubset(registered_lookups)))
+        return (
+            (field_path in self.search_form.fields)
+            and (set(lookups).issubset(registered_lookups))
+        )
 
     def get_changeform_initial_data(self, request):
         """Add data from the changelist filters to the add-form's initial."""
@@ -145,7 +147,7 @@ class AdminSearchFormMixin(object):
         preserved_filters = self.get_preserved_filters(request)
         preserved_filters = dict(parse_qsl(preserved_filters))
         response = super()._response_post_save(request, obj)
-        if (not isinstance(response, HttpResponseRedirect) 
+        if (not isinstance(response, HttpResponseRedirect)
                 or not self.has_view_or_change_permission(request)
                 or '_changelist_filters' not in preserved_filters):
             # Either the response is not a redirect (we need the url attribute) or

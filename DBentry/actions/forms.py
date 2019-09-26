@@ -109,6 +109,7 @@ class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):
             self.fields['posvals'].label = 'Mögliche Werte für {}:'.format(
                 self.data.get(self.add_prefix('verbose_fld_name')))
 
+
 MergeConflictsFormSet = forms.formset_factory(
     MergeFormHandleConflicts, extra=0, can_delete=False
 )
@@ -154,6 +155,7 @@ class BrochureActionForm(MIZAdminForm):
         'ausgabe_id', ('titel', 'zusammenfassung'),
         ('beschreibung', 'bemerkungen'), 'accept'
     ]})]
+
 
 BrochureActionFormSet = forms.formset_factory(
     form=BrochureActionForm,

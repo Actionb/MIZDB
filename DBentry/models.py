@@ -1426,6 +1426,7 @@ class FormatSize(BaseModel):
 
 class FormatTyp(BaseModel):
     """Art des Formats (Vinyl, DVD, Cassette, etc)."""
+
     typ = models.CharField(**CF_ARGS)
 
     class Meta(BaseModel.Meta):

@@ -93,10 +93,9 @@ class BulkForm(MIZAdminForm):
             # ignore the item_count it is returning as its data is used for
             # every object we are about to create.
             if (fld_name not in self.each_fields
-                    and item_count 
+                    and item_count
                     and self.total_count
-                    and item_count != self.total_count
-                    ):
+                    and item_count != self.total_count):
                 # This field's data exists and is meant to be split up into
                 # individual items, but the amount of items differs from
                 # the previously determined total_count.

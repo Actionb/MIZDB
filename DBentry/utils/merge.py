@@ -61,11 +61,11 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                     unique_together.remove(related_field.name)
                     if not unique_together:
                         continue
-                # Exclude all values that would violate the unique constraints
-                # (i.e. values that original has already):
                 for values in related_model.objects.filter(
                         **{related_field.name: original}
-                        ).values(*unique_together):
+                    ).values(*unique_together):
+                    # Exclude all values that would violate the unique
+                    # constraints (i.e. values that original has already):
                     qs_to_be_updated = qs_to_be_updated.exclude(**values)
 
             # Get the ids of the related objects that will be updated.

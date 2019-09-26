@@ -42,6 +42,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             be listed under. A fake app is created for each category to group
             them on the index page.
     """
+
     # FIXME: self.get_search_fields access self.search_fields which is not declared
     # FIXME: googlebtns: unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
     # TODO: googlebtns: fields in this list should be wrapped into a custom widget
@@ -104,9 +105,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 errors.append(checks.Critical(
                     "%(model_admin)s.%(func)s.annotation "
                     "is not an aggregate: %(annotation)s" % {
-                            'model_admin': self.__class__.__name__,
-                            'func': func.__name__,
-                            'annotation': type(annotation)
+                        'model_admin': self.__class__.__name__,
+                        'func': func.__name__,
+                        'annotation': type(annotation)
                     }
                 ))
         return errors
@@ -205,8 +206,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         default_fieldset = dict(fieldsets).get(None, None)
         if not default_fieldset:
             return fieldsets
-        # default_fieldset['fields'] might be a direct reference to self.get_fields(),
-        # so make a copy to leave the original list untouched.
+        # default_fieldset['fields'] might be a direct reference to
+        # self.get_fields(): make a copy to leave the original list untouched.
         fields = default_fieldset['fields'].copy()
         bb_fields = []
         if 'beschreibung' in fields:
@@ -233,7 +234,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         search fields if it is missing.
         If the primary key is a OneToOneRelation, add 'pk__pk__iexact' instead.
 
-        Returns a copy of the passed in `search_fields` with the added search field.
+        Returns an updated copy of the passed in search_fields list.
         """
         search_fields = search_fields.copy()
         pk_field = self.model._meta.pk
@@ -257,7 +258,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return search_fields
 
     def get_search_fields(self, request=None):
-        search_fields = list(self.search_fields or self.model.get_search_fields())
+        if self.search_fields:
+            search_fields = list(self.search_fields)
+        else:
+            search_fields = list(self.model.get_search_fields())
         return self._add_pk_search_field(search_fields)
 
     def add_crosslinks(self, object_id, labels=None):
@@ -384,17 +388,15 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             with translation_override(None):
                 for formset in formsets:
                     for added_object in formset.new_objects:
-                        change_message.append(
-                            {'added': self._construct_m2m_change_message(added_object)}
-                        )
+                        msg = self._construct_m2m_change_message(added_object)
+                        change_message.append({'added': msg})
                     for changed_object, changed_fields in formset.changed_objects:
                         msg = self._construct_m2m_change_message(changed_object)
                         msg['fields'] = changed_fields
                         change_message.append({'changed': msg})
                     for deleted_object in formset.deleted_objects:
-                        change_message.append(
-                            {'deleted': self._construct_m2m_change_message(deleted_object)}
-                        )
+                        msg = self._construct_m2m_change_message(deleted_object)
+                        change_message.append({'deleted': msg})
         return change_message
 
     def _construct_m2m_change_message(self, obj):
@@ -410,14 +412,14 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 if fld.is_relation and fld.related_model != self.model
             ][0]
             return {
-                    'name': force_text(relation_field.related_model._meta.verbose_name),
-                    'object': force_text(getattr(obj, relation_field.name)),
-                }
+                'name': force_text(relation_field.related_model._meta.verbose_name),
+                'object': force_text(getattr(obj, relation_field.name)),
+            }
         else:
             return {
-                    'name': force_text(obj._meta.verbose_name),
-                    'object': force_text(obj),
-                }
+                'name': force_text(obj._meta.verbose_name),
+                'object': force_text(obj),
+            }
 
     def has_module_permission(self, request):
         if self.superuser_only:
@@ -448,8 +450,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             # Move checkbox widget to the right of its label.
             context['adminform'] = MIZAdminFormWrapper(context['adminform'])
         if 'media' in context:
-            # Fix jquery load order during the add/change view process.
-            # If the ModelAdmin does not have inlines, collapse elements will not work:
+            # Fix jquery load order during the add/change view process. If the
+            # ModelAdmin does not have inlines, collapse elements will not work:
             # django's Fieldsets will include just 'collapse.js' if collapse is in the
             # fieldset's classes. django's AdminForm then scoops up all the Fieldsets
             # and merges their media with its own (which may just be nothing).
@@ -460,7 +462,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             # inlines which mostly only have [jquery.js, jquery_init.js], but if the
             # ModelAdmin does not have any inlines, collapse will not work.
             context['media'] = ensure_jquery(context['media'])
-        return super().render_change_form(request, context, add, change, form_url, obj)
+        return super().render_change_form(
+            request, context, add, change, form_url, obj)
 
 
 class BaseInlineMixin(object):

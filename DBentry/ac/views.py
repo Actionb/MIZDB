@@ -47,8 +47,8 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
 
     def get_create_option(self, context, q):
         """Form the correct create_option to append to results."""
-        if (self.display_create_option(context, q) and
-                self.has_add_permission(self.request)):
+        if (self.display_create_option(context, q)
+                and self.has_add_permission(self.request)):
             return self.build_create_option(q)
         return []
 

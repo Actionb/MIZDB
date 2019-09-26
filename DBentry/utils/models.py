@@ -21,8 +21,7 @@ def get_model_from_string(model_name, app_label='DBentry'):
 
 
 def get_model_fields(
-        model, base=True, foreign=True, m2m=True, exclude=(), primary_key=False
-        ):
+        model, base=True, foreign=True, m2m=True, exclude=(), primary_key=False):
     """
     Return a list of concrete model fields of the given model.
 
