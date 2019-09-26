@@ -109,9 +109,9 @@ class AudioForm(forms.ModelForm):
         release_id = str(self.cleaned_data.get('release_id', '') or '')
         discogs_url = self.cleaned_data.get('discogs_url') or ''
         # There is no point in working on empty or invalid data, so return early.
-        if (not (release_id or discogs_url) or
-                'release_id' in self._errors or
-                'discogs_url' in self._errors):
+        if (not (release_id or discogs_url)
+                or 'release_id' in self._errors
+                or 'discogs_url' in self._errors):
             return self.cleaned_data
         match = discogs_release_id_pattern.search(discogs_url)
         if match and len(match.groups()) == 1:

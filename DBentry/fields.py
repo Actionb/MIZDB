@@ -323,9 +323,10 @@ class PartialDateFormField(fields.MultiValueField):
             # Accept widget from the kwargs as a replacement if it's either
             # a subclass or an instance of PartialDateWidget.
             kwarg_widget = kwargs.pop('widget')
-            if (isinstance(kwarg_widget, PartialDateWidget) or (
-                    isinstance(kwarg_widget, type) and
-                    issubclass(kwarg_widget, PartialDateWidget))):
+            is_pd_widget = (isinstance(kwarg_widget, type)
+                    and issubclass(kwarg_widget, PartialDateWidget))
+            if (isinstance(kwarg_widget, PartialDateWidget)
+                or is_pd_widget):
                 widget = kwarg_widget
         super().__init__(
             _fields, widget=widget, require_all_fields=False, **kwargs

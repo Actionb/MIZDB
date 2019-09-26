@@ -106,8 +106,8 @@ class SearchForm(forms.Form):
 # where is a search form initialized with initial data?
 # The changelist view only passes 'data'.
     def get_initial_for_field(self, field, field_name):
-        if (field_name not in self.initial and
-                isinstance(field, forms.MultiValueField)):
+        if (field_name not in self.initial
+                and isinstance(field, forms.MultiValueField)):
             # Only the individual subfields show up in a request payload.
             if isinstance(field, RangeFormField):
                 return field.get_initial(self.initial, field_name)
@@ -169,15 +169,15 @@ class SearchForm(forms.Form):
                         [field_name, LOOKUP_SEP, self.range_upper_bound.lookup_name]
                     )
                     param_value = end
-            elif (isinstance(formfield, forms.BooleanField) and
-                    not isinstance(formfield, forms.NullBooleanField) and
-                    not value):
+            elif (isinstance(formfield, forms.BooleanField)
+                    and not isinstance(formfield, forms.NullBooleanField)
+                    and not value):
                 # value is False on a simple BooleanField;
                 # don't include it in the filter parameters.
                 continue
-            elif (value in formfield.empty_values or
-                    isinstance(value, QuerySet) and
-                    not value.exists()):
+            elif (value in formfield.empty_values
+                    or isinstance(value, QuerySet)
+                    and not value.exists()):
                 # Dont want empty values as filter parameters!
                 continue
 
@@ -290,8 +290,8 @@ class SearchFormFactory:
             formfield_kwargs = {}
             if widgets and path in widgets:
                 formfield_kwargs['widget'] = widgets[path]
-            if (localized_fields == forms.models.ALL_FIELDS or
-                    (localized_fields and path in localized_fields)):
+            if (localized_fields == forms.models.ALL_FIELDS
+                    or (localized_fields and path in localized_fields)):
                 formfield_kwargs['localize'] = True
             if labels and path in labels:
                 formfield_kwargs['label'] = labels[path]

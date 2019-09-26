@@ -172,8 +172,8 @@ class ACCreateable(ACBase):
         """
         creator = creator or self.creator
         created = creator.create(text, preview=True)
-        if (created and
-                getattr(created.get('instance', None), 'pk', None) is None):
+        pk = getattr(created.get('instance', None), 'pk', None)
+        if (created and pk is None):
             return True
         return False
 

@@ -456,8 +456,8 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         # relations?
         backup = []
         for name, decl in cls._meta.pre_declarations.as_dict().items():
-            if (hasattr(decl, 'required') and not decl.required and
-                    name not in kwargs):
+            if (hasattr(decl, 'required') and not decl.required
+                    and name not in kwargs):
                 # This declaration is not required by default and no value fo
                 # it was passed in as kwarg.
                 # Set it to be required so the factory will create data for it.

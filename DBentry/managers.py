@@ -327,8 +327,8 @@ class AusgabeQuerySet(CNQuerySet):
             for pk, val_dict in val_dicts.items():
                 if 'e_datum' in val_dict:
                     obj_date = val_dict.get('e_datum')[-1]
-                elif ('ausgabe_jahr__jahr' not in val_dict or
-                        'ausgabe_monat__monat__ordinal' not in val_dict):
+                elif ('ausgabe_jahr__jahr' not in val_dict
+                        or 'ausgabe_monat__monat__ordinal' not in val_dict):
                     # Need both year and month to build a meaningful date.
                     continue
                 else:
@@ -365,7 +365,8 @@ class AusgabeQuerySet(CNQuerySet):
                 include_empty=False, flatten=False
             )
             for pk, val_dict in val_dicts.items():
-                if 'ausgabe_num__num' not in val_dict or 'ausgabe_jahr__jahr' not in val_dict:
+                if ('ausgabe_num__num' not in val_dict 
+                        or 'ausgabe_jahr__jahr' not in val_dict):
                     continue
 
                 obj_year = min(val_dict['ausgabe_jahr__jahr'])
@@ -375,8 +376,8 @@ class AusgabeQuerySet(CNQuerySet):
                     # number to order it at the end of the year.
                     obj_num = max(val_dict['ausgabe_num__num'])
 
-                if ((obj_num > start_num and obj_year == start_year) or
-                        (obj_num < start_num and obj_year == start_year + 1)):
+                if ((obj_num > start_num and obj_year == start_year)
+                        or (obj_num < start_num and obj_year == start_year + 1)):
                     update_dict[start_jg].append(pk)
                 else:
                     obj_jg = start_jg + obj_year - start_year

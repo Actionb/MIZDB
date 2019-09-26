@@ -250,8 +250,8 @@ def get_relations_between_models(model1, model2):
     for f in model1._meta.get_fields():
         if not f.is_relation:
             continue
-        if ((f.model == model1 and f.related_model == model2) or
-                (f.model == model2 and f.related_model == model1)):
+        if ((f.model == model1 and f.related_model == model2)
+                or (f.model == model2 and f.related_model == model1)):
             if f.concrete:
                 return f, f.remote_field
             else:

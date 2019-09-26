@@ -53,8 +53,8 @@ class FieldGroup:
                 continue
             formfield = self.form.fields[field]
             value = self.form.cleaned_data.get(field, None)
-            if ((isinstance(formfield, forms.BooleanField) and not value) or
-                    value in formfield.empty_values):
+            if ((isinstance(formfield, forms.BooleanField) and not value)
+                    or value in formfield.empty_values):
                 continue
             result += 1
         return result

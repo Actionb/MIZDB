@@ -134,8 +134,8 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
             # Filter out m2m intermediary tables (manually or auto created)
             # and models inherited from other apps.
             lambda model: (
-                issubclass(model, base_models.BaseModel) and
-                not issubclass(model, base_models.BaseM2MModel)),
+                issubclass(model, base_models.BaseModel)
+                and not issubclass(model, base_models.BaseM2MModel)),
             # <model>_alias tables can contain as many duplicates as they want.
             lambda model: not model._meta.model_name.endswith('_alias'),
             lambda model: model._meta.model_name not in self.exclude_models
