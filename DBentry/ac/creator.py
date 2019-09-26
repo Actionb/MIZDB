@@ -44,7 +44,7 @@ class Creator(object):
                 return {}
             # the dal view's post response expects an object with pk and
             # text attribute (which FailedObject emulates).
-            return {'instance': FailedObject(e.message)}
+            return {'instance': FailedObject(str(e))}
         else:
             return created
 
