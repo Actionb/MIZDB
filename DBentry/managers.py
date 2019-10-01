@@ -22,6 +22,9 @@ class MIZQuerySet(models.QuerySet):
         Find any occurence of the search term 'q' in the queryset, depending
         on the search strategy used.
         """
+        # FIXME: the 'ordered' argument is ignored;
+        # the autocomplete views call find() with ordered=True and 
+        # only AusgabeQuerySet.find uses it
         # Find the best strategy to use:
         if getattr(self.model, 'name_field', False):
             strat_class = ValuesDictSearchQuery
