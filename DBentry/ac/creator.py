@@ -1,5 +1,4 @@
 from collections import OrderedDict
-
 from nameparser import HumanName
 
 from DBentry.models import autor, person
@@ -11,7 +10,7 @@ class MultipleObjectsReturnedException(Exception):
 
 
 class FailedObject(object):
-    """An object that immitates an object that is expected by the dal view."""
+    """An object that immitates a result object as expected by the dal view."""
 
     def __init__(self, text):
         self.pk = 0
@@ -22,8 +21,9 @@ class FailedObject(object):
 
 
 class Creator(object):
-    """A helper class that uses a declared `create_<model_name>` method to
-    create a model instance from a given string.
+    """
+    A helper class that uses a declared 'create_<model_name>' method to create
+    a model instance from a given string.
     """
 
     def __init__(self, model, raise_exceptions=False):
@@ -32,40 +32,43 @@ class Creator(object):
         self.creator = getattr(self, 'create_' + model._meta.model_name, None)
 
     def create(self, text, preview=True):
+        """
+        Try to create a model instance from the string 'text'.
+
+        If preview is True, no new database records will be created.
+        """
         if self.creator is None:
             return {}
 
         try:
-            created = self.creator(text, preview)
+            return self.creator(text, preview)
         except MultipleObjectsReturnedException as e:
             if self.raise_exceptions:
                 raise e
             if preview:
                 return {}
-            # the dal view's post response expects an object with pk and
+            # The dal view's post response expects an object with pk and
             # text attribute (which FailedObject emulates).
             return {'instance': FailedObject(str(e))}
-        else:
-            return created
 
     def _get_model_instance(self, model, **data):
         """
-        Query for an existing model instance with `data` and return:
-             - a new unsaved instance if the query did not find anything
-             - the singular model instance found by the query
-        or raise a MultipleObjectsReturnedException to signal that filtering
-        with `data` returned more than one result.
+        Using get(), query for an existing model instance with 'data'.
+
+        If the query returns exactly one instance, return that instance.
+        If the query returned no results, return a new unsaved instance.
+        Otherwise raise a MultipleObjectsReturned exception.
         """
-        possible_instances = list(model.objects.filter(**data))
-        if len(possible_instances) == 0:
+        try:
+            return model.objects.get(**data)
+        except model.DoesNotExist:
             return model(**data)
-        elif len(possible_instances) == 1:
-            return possible_instances[0]
-        else:
+        except model.MultipleObjectsReturned:
             raise MultipleObjectsReturnedException
 
     def create_person(self, text, preview=True):
-        """Create a person instance from `text`.
+        """
+        Get or create a person instance from `text`.
 
         If preview is True, do not save the found instance even if it is new.
 
@@ -85,7 +88,8 @@ class Creator(object):
         ])
 
     def create_autor(self, text, preview=True):
-        """Create an autor instance from `text`.
+        """
+        Get or create an autor instance from `text`.
 
         If preview is True, do not save the found instance even if it is new.
 
