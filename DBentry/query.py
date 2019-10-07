@@ -16,8 +16,6 @@ class BaseSearchQuery(object):
     degrees of accuracy (iexact, istartswith, icontains).
     """
 
-    _results = {}  # FIXME: mutable class attribute (THIS IS NOT USED!)
-
     def __init__(
             self, queryset, search_fields=None, suffix=None, use_suffix=True,
             **kwargs):
@@ -34,7 +32,7 @@ class BaseSearchQuery(object):
         else:
             self.suffix = {}
         self.use_suffix = use_suffix
-        self.exact_match = False  # FIXME: pointless declaration; exact_match is set in search()
+        self.exact_match = False
 
     def get_model_field(self, field_name):
         """Resolve the given field_name into a model field instance."""
