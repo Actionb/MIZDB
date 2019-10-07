@@ -1,6 +1,7 @@
+from django.contrib.admin.views.main import IS_POPUP_VAR, TO_FIELD_VAR
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
-from django.urls import reverse
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.urls import reverse
 
 from dal import autocomplete, forward
 
@@ -8,6 +9,11 @@ from DBentry.utils import get_model_from_string, snake_case_to_spaces
 
 
 class WidgetCaptureMixin(object):
+    """
+    A mixin for the ModelSelect2 widgets that enables the widget to handle
+    reversal of the generic url name 'accapture' which requires reverse kwargs
+    'model_name' and 'create_field'.
+    """
 
     def __init__(self, model_name, *args, **kwargs):
         self.model_name = model_name
@@ -46,6 +52,14 @@ class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multi
 
 
 class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
+    """
+    A class that wraps a given widget to add add/change/delete links and icons.
+
+    Unlike its base class RelatedFieldWidgetWrapper, which is used during the
+    creation of an AdminForm's formfields (BaseModelAdmin.formfield_for_dbfield),
+    this wrapper is used during widget declaration of formfields of a form
+    class.
+    """
 
     class Media:
         js = [
@@ -56,7 +70,8 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             self, widget, related_model, remote_field_name='id',
             can_add_related=True, can_change_related=True,
             can_delete_related=True):
-        # TODO: this is not calling super().init!
+        # FIXME: this could allow adding a change related icon for select
+        # multiple (unlike RelatedFieldWidgetWrapper)
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         self.choices = widget.choices
@@ -68,11 +83,9 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         self.remote_field_name = remote_field_name
 
     def get_related_url(self, info, action, *args):
-        from django.urls import reverse
         return reverse("admin:%s_%s_%s" % (info + (action,)), args=args)
 
     def get_context(self, name, value, attrs):
-        from django.contrib.admin.views.main import IS_POPUP_VAR, TO_FIELD_VAR
         rel_opts = self.related_model._meta
         info = (rel_opts.app_label, rel_opts.model_name)
         self.widget.choices = self.choices
@@ -111,7 +124,20 @@ def make_widget(
         url='accapture', multiple=False, wrap=False, remote_field_name='id',
         can_add_related=True, can_change_related=True, can_delete_related=True,
         **kwargs):
-    # Create a (default: MIZModelSelect2) widget
+    """
+    Factory function that creates autocomplete widgets.
+
+    Arguments:
+        - url: name of the url to the autocomplete view employed by this widget
+        - multiple (boolean): if True, a SelectMultiple variant will be used
+        - wrap (boolean): if True, the widget will be wrapped (using
+            EasyWidgetWrapper) to add icons (add/change/delete related) to the
+            admin interface.
+        - remote_field_name: parameters for the EasyWidgetWrapper
+        - can_x_related (boolean): parameters for the EasyWidgetWrapper
+
+    Any other keyword arguments are passed on to the widget class constructor.
+    """
     widget_opts = {}
     model = kwargs.pop('model', None)
     model_name = kwargs.pop('model_name', '')
@@ -182,7 +208,6 @@ def make_widget(
                 # and not the model field's name.
                 try:
                     # verbose_name default is the field.name.replace('_',' ')
-                    # TODO: model may be None!
                     forwarded_verbose = model._meta.get_field(
                         forwarded.dst or forwarded.src).verbose_name.title()
                 except (AttributeError, FieldDoesNotExist):
@@ -198,6 +223,7 @@ def make_widget(
     widget = widget_class(**widget_opts)
 
     if wrap and remote_field_name:
+        # TODO: if model should be part of the outer condition
         if model:
             return EasyWidgetWrapper(
                 widget, model, remote_field_name,
