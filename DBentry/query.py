@@ -316,9 +316,6 @@ class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
 class ValuesDictSearchQuery(NameFieldSearchQuery):
     """Fetch all the relevant data first and then do a search in memory."""
 
-    # FIXME: init must check that the queryset is an instance of MIZQuerySet:
-    # values_dict must be available.
-
     def get_queryset(self, q):
         # To limit the length of values_dict, exclude any records that do not
         # at least icontain q in any of the search_fields.
