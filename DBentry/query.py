@@ -187,11 +187,12 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
             length, it is padded with hyphens.
     """
 
-    primary_search_fields = []  # FIXME: mutable class attribute (also redundant, init declares this attribute)
     weak_hits_sep = gettext_lazy('weak hits for "{q}"')
     separator_width = 36  # Select2 result box is 36 digits wide
 
-    def __init__(self, queryset, use_separator=True, *args, **kwargs):
+    def __init__(
+            self, queryset, use_separator=True, primary_search_fields=None,
+            *args, **kwargs):
         """
         Instantiate the PrimaryFieldsSearchQuery helper.
 
@@ -211,11 +212,11 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
             - primary_search_fields: a list of queriable field paths
         """
         self.use_separator = use_separator
-        # FIXME: primary_search_fields should be an optional keyword argument
-        if kwargs.get('primary_search_fields'):
-            self.primary_search_fields = kwargs.pop('primary_search_fields')
+        if primary_search_fields:
+            self.primary_search_fields = primary_search_fields
         else:
-            self.primary_search_fields = getattr(queryset.model, 'primary_search_fields', [])
+            self.primary_search_fields = getattr(
+                queryset.model, 'primary_search_fields', [])
         super().__init__(queryset, *args, **kwargs)
         if not self.primary_search_fields:
             self.primary_search_fields = self.search_fields
