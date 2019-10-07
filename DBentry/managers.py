@@ -290,7 +290,10 @@ class AusgabeQuerySet(CNQuerySet):
         strat = ValuesDictSearchQuery(self.all(), **kwargs)
         result, exact_match = strat.search(q)
         if result and ordered and self.ordered:
-            # Restore order that was messed up by the search
+            # FIXME: restoring the order is too tightly coupled to the strat
+            # used: ids_found is required
+            # FIXME: rework these loops, the second one could use a break
+            # Restore order that was messed up by the search.
             ordered_result = []
             for id in self.values_list('pk', flat=True):
                 if id in strat.ids_found:
