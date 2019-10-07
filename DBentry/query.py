@@ -338,38 +338,50 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
         #  pk_2: {}, ...}
         rslt = []
 
+        def filter_func(q):
+            q = self.clean_string(q, search_field)
+            def inner(s):
+                """The filter function for the filter iterator."""
+                s = self.clean_string(s, search_field)
+                if lookup == '__iexact':
+                    return q == s
+                elif lookup == '__istartswith':
+                    return s.startswith(q)
+                return q in s
+            return inner
+
         for pk, data_dict in self.values_dict.copy().items():
             values_list = data_dict.get(search_field, None)
-            # TODO: if not values_list: continue (reduce indentations)
-            if values_list:
-                match = False
-                _q = self.clean_string(q, search_field)  # FIXME: why clean it every iteration?
-                if lookup == '__iexact':
-                    if any(self.clean_string(s, search_field) == _q for s in values_list):
+            if not values_list:
+                continue
+            match = any(filter(filter_func(q), values_list))
+
+            if (not match
+                    and lookup != '__icontains'
+                    and search_field in self.primary_search_fields
+                    and len(q.split()) > 1):
+                # 'q' is more than one word; try an order-independent search.
+                # If a value in values_list contains a match for each word in
+                # 'q', accept the values_list as a match.
+                # 'beep boop' would be found by searching for 'boop beep'.
+                for value in values_list:
+                    for bit in q.split():
+                        if not any(
+                                filter_func(bit)(word)
+                                for word in value.split()):
+                            break
+                    else:
+                        # The inner loop ran without break;
+                        # all words of 'q' can be found in 'value'.
                         match = True
-                elif lookup == '__istartswith':
-                    if any(self.clean_string(s, search_field).startswith(_q) for s in values_list):
-                        match = True
-                else:
-                    if any(_q in self.clean_string(s, search_field) for s in values_list):
-                        match = True
-                if not match and search_field in self.primary_search_fields and len(q.split()) > 1:
-                    # Scramble the order of q, if all bits of it can be found, accept the values_list as a match
-                    partial_match_count = 0
-                    for i in q.split():
-                        i = self.clean_string(i, search_field)
-                        if lookup == '__iexact':
-                            if any(any(i == v for v in self.clean_string(value, search_field).split()) for value in values_list):
-                                partial_match_count += 1
-                        elif lookup == '__istartswith':
-                            if any(any(v.startswith(i) for v in self.clean_string(value, search_field).split()) for value in values_list):
-                                partial_match_count += 1
-                    if partial_match_count == len(q.split()):
-                        match = True
-                if match:
-                    rslt.extend(self.append_suffix([(pk, data_dict.get(self.name_field)[0])], search_field, lookup))
-                    self.ids_found.add(pk)
-                    self.values_dict.pop(pk)
+                        break
+
+            if match:
+                rslt.extend(self.append_suffix(
+                    [(pk, data_dict.get(self.name_field)[0])], search_field, lookup
+                ))
+                self.ids_found.add(pk)
+                self.values_dict.pop(pk)
         return rslt
 
     def search(self, q=None):

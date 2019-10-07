@@ -375,8 +375,14 @@ class TestValuesDictQuery(TestNameFieldQuery):
         self.assertQSValuesList(self.make_query().get_queryset(q = 'Rose'), 'pk', expected)
         
     def test_partial_match(self):
-        # Assert that search can find 'More Roses' via search term 'Roses More'
-        self.assertEqual(self.make_query().search('Roses More'), ([(self.obj5.pk, 'More Roses')], True))
+        # Assert that search can find 'More Roses' via search term 'Roses More'.
+        # Add two more instances to verify that ALL search terms must be in a
+        # result.
+        make(self.model, band_name='Roses')
+        make(self.model, band_name='More')
+        search_results = self.make_query(
+            queryset=self.model.objects.all()).search('Roses More')
+        self.assertEqual(search_results, ([(self.obj5.pk, 'More Roses')], True))
         
     def test_search(self):
         # obj1 = "Guns 'N Roses"
