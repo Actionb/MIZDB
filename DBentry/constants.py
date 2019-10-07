@@ -7,23 +7,21 @@ ZRAUM_ID = 6
 DUPLETTEN_ID = 5
 
 # Model.CharField args
-CF_ARGS = {'max_length' : 200}
-CF_ARGS_B = {'max_length' : 200, 'blank' : True}
+CF_ARGS = {'max_length': 200}
+CF_ARGS_B = {'max_length': 200, 'blank': True}
 
 # attrs specifications for TextArea Formfield
-ATTRS_TEXTAREA = {'rows': 3,'cols': 90}
+ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
 
 # Maximum string length for a concatenated list of M2M values.
 M2M_LIST_MAX_LEN = 50
 
 # Maximum string length for a concatenated list of M2M values to displayed on the changelist.
-LIST_DISPLAY_MAX_LEN = int(M2M_LIST_MAX_LEN/2)
+LIST_DISPLAY_MAX_LEN = int(M2M_LIST_MAX_LEN / 2)
 
 CUR_JAHR = datetime.datetime.now().year
-MAX_JAHR = CUR_JAHR+1
+MAX_JAHR = CUR_JAHR + 1
 MIN_JAHR = 1899
-
-PERM_DENIED_MSG = 'Sie haben nicht die erforderliche Berechtigung diese Seite zu sehen.'
 
 # regex for discogs id validation
 DISCOGS_RELEASE_ID_REGEX = r'discogs.com/.*release/(\d+)'

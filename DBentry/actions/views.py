@@ -1,36 +1,56 @@
+# TODO: code style (200+ long lines, ouch)
 from django import forms
+from django.contrib import messages
 from django.db import transaction
-from django.db.models import ProtectedError, F
-from django.utils.html import format_html, mark_safe
+from django.db.models import ProtectedError, F, Count
 from django.utils.translation import gettext_lazy, gettext
-from django.contrib.admin.utils import get_fields_from_path
 
-from DBentry.utils import (
-    link_list, merge_records, get_updateable_fields, get_obj_link, get_changelist_link, 
-    get_model_from_string, is_protected
+from DBentry import models as _models
+from DBentry.actions.base import (
+    ActionConfirmationView, WizardConfirmationView
 )
-from DBentry.models import ausgabe, magazin, artikel, bestand, lagerort, BrochureYear
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.logging import LoggingMixin, log_addition
-
-from .base import ActionConfirmationView, WizardConfirmationView #TODO: absolute imports
-from .forms import (
-    MergeFormSelectPrimary, MergeConflictsFormSet, 
-    BulkAddBestandForm, BulkEditJahrgangForm, 
+from DBentry.actions.forms import (
+    MergeFormSelectPrimary, MergeConflictsFormSet,
+    BulkAddBestandForm, BulkEditJahrgangForm,
     BrochureActionFormSet, BrochureActionFormOptions
 )
+from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
+from DBentry.logging import LoggingMixin, log_addition
+from DBentry.utils import (
+    link_list, merge_records, get_updateable_fields, get_obj_link,
+    get_changelist_link, get_model_from_string, is_protected
+)
+
+
+def check_same_magazin(view, **kwargs):
+    """
+    Check that all objects in the view's queryset are related to the same magazin.
+    """
+    if view.queryset.values('magazin_id').distinct().count() != 1:
+        view.model_admin.message_user(
+            request=view.request,
+            level=messages.ERROR,
+            message='Aktion abgebrochen: Die ausgewählten %s gehören zu '
+            'unterschiedlichen Magazinen.' % view.opts.verbose_name_plural
+        )
+        return False
+
 
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
+    """
+    View that bulk edits the jahrgang of a collection of ausgabe instances.
+    """
 
     short_description = gettext_lazy("Add issue volume")
     perm_required = ['change']
     action_name = 'bulk_jg'
+    action_allowed_checks = [check_same_magazin]
 
     affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
 
     form_class = BulkEditJahrgangForm
 
-    view_helptext = """ 
+    view_helptext = """
         Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
         Wählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an.
         Die Jahrgangswerte der anderen Ausgaben werden danach in Abständen von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt.
@@ -47,24 +67,24 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
 
     def get_initial(self):
         return {
-            'jahrgang': 1, 
-            'start':self.queryset.values_list('pk', flat = True).first(), 
+            'jahrgang': 1,
+            'start': self.queryset.values_list('pk', flat=True).first(),
         }
 
-    def action_allowed(self):
-        if self.queryset.values('magazin_id').distinct().count() != 1:
-            msg_text = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin."
-            self.model_admin.message_user(self.request, msg_text, 'error')
-            return False
-        return True
-
     def perform_action(self, form_cleaned_data):
+        """
+        Incrementally update the jahrgang for each instance.
+
+        If the user has chosen the integer 0 for jahrgang,
+        delete all jahrgang values instead.
+        """
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
-        start = self.queryset.get(pk = form_cleaned_data.get('start'))
+        start = self.queryset.get(pk=form_cleaned_data.get('start'))
 
         if jg == 0:
-            # User entered 0 for jahrgang. Delete jahrgang data from the selected ausgaben.
+            # User entered 0 for jahrgang.
+            # Delete jahrgang data from the selected ausgaben.
             qs.update(jahrgang=None)
         else:
             qs.increment_jahrgang(start, jg)
@@ -72,6 +92,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
 
 
 class BulkAddBestand(ActionConfirmationView, LoggingMixin):
+    """View that adds a bestand to a given model instances."""
 
     short_description = gettext_lazy("Alter stock")
     perm_required = ['alter_bestand']
@@ -87,299 +108,471 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     def get_initial(self):
         # get initial values for bestand and dublette based on the view's model
-        initial = super().get_initial()
-        if self.model == ausgabe:
-            initial = {'bestand' : lagerort.objects.get(pk=ZRAUM_ID), 'dublette' : lagerort.objects.get(pk=DUPLETTEN_ID)}
-        return initial
+        if self.model == _models.ausgabe:
+            return {
+                'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
+                'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
+            }
+        return super().get_initial()
+
+    def _build_message(self, lagerort_instance, bestand_instances, fkey):
+        base_msg = ("{lagerort}-Bestand zu diesen {count} {verbose_model_name} "
+            "hinzugefügt: {obj_links}")
+        format_dict = {
+            'verbose_model_name': self.opts.verbose_name_plural,
+            'obj_links': link_list(
+                request=self.request,
+                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances]
+            ),
+            'lagerort': str(lagerort_instance),
+            'count': len(bestand_instances)
+        }
+        return base_msg.format(**format_dict)
+
+    def _get_bestand_field(self, model):
+        """Return the ForeignKey field from `bestand` to model `model`."""
+        for field in _models.bestand._meta.get_fields():
+            if field.is_relation and field.related_model == model:
+                return field
 
     def perform_action(self, form_cleaned_data):
-
-        base_msg = "{lagerort}-Bestand zu diesen {count} {verbose_model_name} hinzugefügt: {obj_links}"
-        format_dict = {'verbose_model_name':self.opts.verbose_name_plural}
+        """Add a bestand instance to the given instances."""
 
         bestand_lagerort = form_cleaned_data['bestand']
-        dupletten_lagerort = form_cleaned_data['dublette']
-
+        dubletten_lagerort = form_cleaned_data['dublette']
         bestand_list = []
         dubletten_list = []
         # Get the correct fkey from bestand model to this view's model
-        fkey = get_fields_from_path(self.opts.model, 'bestand')[0].field
+        fkey = self._get_bestand_field(self.model)
 
         for instance in self.queryset:
-            if not bestand.objects.filter(**{fkey.name:instance, 'lagerort':bestand_lagerort}):
-                bestand_list.append(bestand(**{fkey.name:instance, 'lagerort':bestand_lagerort}))
+            filter_kwargs = {fkey.name: instance, 'lagerort': bestand_lagerort}
+            instance_data = {fkey.name: instance}
+            if not _models.bestand.objects.filter(**filter_kwargs).exists():
+                instance_data['lagerort'] = bestand_lagerort
+                bestand_list.append(_models.bestand(**instance_data))
             else:
-                dubletten_list.append(bestand(**{fkey.name:instance, 'lagerort':dupletten_lagerort}))
+                instance_data['lagerort'] = dubletten_lagerort
+                dubletten_list.append(_models.bestand(**instance_data))
 
         with transaction.atomic():
-            if bestand_list:
-                for obj in bestand_list:
+            for lagerort_instance, bestand_instances in (
+                (bestand_lagerort, bestand_list),
+                (dubletten_lagerort, dubletten_list)
+            ):
+                for obj in bestand_instances:
                     obj.save()
                     self.log_addition(getattr(obj, fkey.name), obj)
-                #bestand.objects.bulk_create(bestand_list)
-                obj_links = link_list(self.request, [getattr(z, fkey.name) for z in bestand_list])
-                format_dict.update({'lagerort': str(bestand_lagerort), 'count':len(bestand_list), 'obj_links': obj_links})
-                msg_text = base_msg.format(**format_dict)
-                self.model_admin.message_user(self.request, format_html(msg_text))
+                admin_message = self._build_message(
+                    lagerort_instance=lagerort_instance,
+                    bestand_instances=bestand_instances,
+                    fkey=fkey
+                )
+                self.model_admin.message_user(self.request, admin_message)
 
-            if dubletten_list:
-                for obj in dubletten_list:
-                    obj.save()
-                    self.log_addition(getattr(obj, fkey.name), obj)
-                #bestand.objects.bulk_create(dubletten_list)
-                obj_links = link_list(self.request, [getattr(z, fkey.name) for z in dubletten_list])
-                format_dict.update({'lagerort': str(dupletten_lagerort), 'count':len(dubletten_list), 'obj_links': obj_links})
-                msg_text = base_msg.format(**format_dict)
-                self.model_admin.message_user(self.request, format_html(msg_text))
 
-class MergeViewWizarded(WizardConfirmationView): 
+class MergeViewWizarded(WizardConfirmationView):
+    """View that merges model instances.
+
+    The user selects one instance from the available instances to designate
+    it as the 'primary'.
+    All other instances will be merged into that one instance.
+    Optionally, the user can chose to expand the 'primary' with data from the
+    other instances, for any fields of 'primary' that do not have a value.
+    """
 
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
     perm_required = ['merge']
     action_name = 'merge_records'
+    action_allowed_checks = [
+        '_check_too_few_objects',
+        '_check_different_magazines',
+        '_check_different_ausgaben'
+    ]
+    # Admin message for some failed checks.
+    denied_message = 'Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}.'
 
-    form_list = [MergeFormSelectPrimary, MergeConflictsFormSet] 
+    SELECT_PRIMARY_STEP = '0'
+    CONFLICT_RESOLUTION_STEP = '1'
+    form_list = [
+        (SELECT_PRIMARY_STEP, MergeFormSelectPrimary),
+        (CONFLICT_RESOLUTION_STEP, MergeConflictsFormSet)
+    ]
 
-    _updates = {} 
-
+    # TODO: include this bit in the ACTUAL help page for this action:
+    # Fehlen dem primären Datensatz Grunddaten und wird unten bei der entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
+    # Bereits bestehende Grunddaten des primären Datensatzes werden NICHT überschrieben.
     step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
         Danach werden die sekundären Datensätze GELÖSCHT.
     """
-    #TODO: include this bit in the ACTUAL help page for this action:
-    #    Fehlen dem primären Datensatz Grunddaten und wird unten bei der entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
-    #   Bereits bestehende Grunddaten des primären Datensatzes werden NICHT überschrieben.
-
     step2_helptext = """Für die Erweiterung der Grunddaten des primären Datensatzes stehen widersprüchliche Möglichkeiten zur Verfügung.
         Bitte wählen Sie jeweils eine der Möglichkeiten, die für den primären Datensatz übernommen werden sollen.
     """
 
     view_helptext = {
-        '0':step1_helptext, 
-        '1':step2_helptext, 
+        SELECT_PRIMARY_STEP: step1_helptext,
+        CONFLICT_RESOLUTION_STEP: step2_helptext
     }
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['title'] = gettext('Merge objects: step {}').format(str(int(self.steps.current)+1))
+        # Add the current step to the view's title.
+        context['title'] = gettext(
+            'Merge objects: step {}').format(str(int(self.steps.current) + 1))
         return context
 
-    def action_allowed(self):
-        model = self.opts.model
-        request = self.request
-        queryset = self.queryset
-
-        MERGE_DENIED_MSG = 'Die ausgewählten {} gehören zu unterschiedlichen {}{}.'
-
-        if queryset.count()==1:
-            msg_text = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.' 
-            self.model_admin.message_user(request, msg_text, 'warning')
+    def _check_too_few_objects(view, **kwargs):
+        if view.queryset.count() == 1:
+            view.model_admin.message_user(
+                request=view.request,
+                level=messages.WARNING,
+                message='Es müssen mindestens zwei Objekte aus der Liste '
+                'ausgewählt werden, um diese Aktion durchzuführen.',
+            )
             return False
-        #TODO: move these model specific merge-able tests somewhere else
-        if model == ausgabe and queryset.values_list('magazin').distinct().count()>1:
-            # User is trying to merge ausgaben from different magazines
-            self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, magazin._meta.verbose_name_plural, 'n'), 'error')
-            return False
-        if model == artikel and self.queryset.values('ausgabe').distinct().count()>1:
-            # User is trying to merge artikel from different ausgaben
-            self.model_admin.message_user(request, MERGE_DENIED_MSG.format(self.opts.verbose_name_plural, ausgabe._meta.verbose_name_plural, ''), 'error')
-            return False
-        return True
 
-    @property 
-    def updates(self): 
-        if not self._updates: 
-            step_data = self.storage.get_step_data('0') or {} 
-            self._updates = step_data.get('updates', {}) 
-        return self._updates 
+    def _check_different_magazines(view, **kwargs):
+        if (view.model == _models.ausgabe and
+                view.queryset.values_list('magazin').distinct().count() > 1):
+            # User is trying to merge ausgaben from different magazines.
+            format_dict = {
+                'self_plural': view.opts.verbose_name_plural,
+                # Add a 'n' at the end because german grammar.
+                'other_plural': _models.magazin._meta.verbose_name_plural + 'n'
+            }
+            view.model_admin.message_user(
+                request=view.request,
+                message=view.denied_message.format(**format_dict),
+                level=messages.ERROR
+            )
+            return False
 
-    def process_step(self, form): 
-        data = super().process_step(form) 
-        if isinstance(form, MergeFormSelectPrimary): 
+    def _check_different_ausgaben(view, **kwargs):
+        if (view.model == _models.artikel and
+                view.queryset.values('ausgabe').distinct().count() > 1):
+            # User is trying to merge artikel from different ausgaben.
+            format_dict = {
+                'self_plural': view.opts.verbose_name_plural,
+                'other_plural': _models.ausgabe._meta.verbose_name_plural
+            }
+            view.model_admin.message_user(
+                request=view.request,
+                message=view.denied_message.format(**format_dict),
+                level=messages.ERROR
+            )
+            return False
+
+    @property
+    def updates(self):
+        """Data to update the 'primary' instance with.
+
+        Prepared by `_has_merge_conflicts` during processing the first step
+        (SELECT_PRIMARY_STEP) and then added to the storage by `process_step`,
+        this mapping of field_name: value contains the data to
+        expand 'primary' with.
+        """
+        if not hasattr(self, '_updates'):
+            step_data = self.storage.get_step_data(self.SELECT_PRIMARY_STEP)
+            self._updates = step_data.get('updates', {})
+        return self._updates
+
+    def _has_merge_conflicts(self, data):
+        """Determine if there is going to be a merge conflict.
+
+        If the 'primary' is going to be expanded with values from the other
+        instances and there is more than one possible value for any field,
+        we have a conflict and the user needs to choose what value to keep.
+
+        Parameters:
+            data: the cleaned form data from step 0
+                (i.e. the selection of the 'primary' instance).
+
+        Returns:
+            boolean: whether or not there is a conflict.
+            dict: a dictionary of field_name: new_value for all the updates
+                planned for 'primary'.
+        """
+        # Get the 'primary' object chosen by the user and
+        # exclude it from the queryset we are working with.
+        try:
+            original_pk = data[self.get_form_prefix() + '-primary']
+            primary = self.model.objects.get(pk=original_pk)
+        except (KeyError, self.model.DoesNotExist):
+            return False, None
+        qs = self.queryset.exclude(pk=primary.pk)
+
+        # get_updateable_fields() returns the fields that
+        # may be updated by this merge;
+        # i.e. empty fields without a (default) value.
+        updateable_fields = get_updateable_fields(primary)
+        if not updateable_fields:
+            # No updates can be done on 'primary'.
+            return False, None
+
+        has_conflict = False
+        # Keep track of fields of primary that would be updated.
+        # If there is more than one possible change per field, we
+        # need user input to decide what change to keep.
+        # This is where then the next form MergeConflictsFormSet comes in.
+        updates = {fld_name: set() for fld_name in updateable_fields}
+
+        for other_record_valdict in qs.values(*updateable_fields):
+            for k, v in other_record_valdict.items():
+                if v or isinstance(v, bool):
+                    if len(updates[k]) > 0:
+                        # Another value for this field has already been
+                        # found; we have found a conflict.
+                        has_conflict = True
+                    # Make v both hashable (for the set) and
+                    # serializable (for the session storage).
+                    updates[k].add(str(v))
+
+        # Sets are not JSON serializable (required for session storage):
+        # turn them into lists and remove empty ones.
+        updates = {
+            fld_name: list(value_set)
+            for fld_name, value_set in updates.items()
+            if value_set
+        }
+        return has_conflict, updates
+
+    def process_step(self, form):
+        data = super().process_step(form)  # the form.data for this step
+        if self.steps.current == self.CONFLICT_RESOLUTION_STEP:
+            # No special processing needed for the last step.
+            return data
+        if not form.cleaned_data.get('expand_primary', False):
+            # There can only be conflicts if the primary is to be expanded.
             has_conflict = False
-            # There can only be conflicts if the original is meant to be expanded
-            if form.cleaned_data.get('expand_o', False):
-                prefix = self.get_form_prefix() 
-                data = data.copy() # data is an instance of QueryDict and thus immutable - make it mutable by copying
+        else:
+            has_conflict, updates = self._has_merge_conflicts(data)
+            if updates:
+                # data is an instance of QueryDict and thus immutable;
+                # make it mutable by copying and then add
+                # the updates to it to store them in storage.
+                data = data.copy()
+                data['updates'] = updates
+        if not has_conflict:
+            # No conflict found;
+            # Set the current_step to the CONFLICT_RESOLUTION_STEP
+            # so that the conflict reslution will be skipped.
+            self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
+            # NOTE: this may break self.storage.set_step_files(self.steps.current, self.process_step_files(form)) - the next line - in post()
+        return data
 
-                # Get the 'primary'/'original' object chosen by the user and exclude it from the queryset we are working with.
-                original = self.opts.model.objects.get(pk=data.get(prefix + '-original', 0)) 
-                qs = self.queryset.exclude(pk=original.pk)
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        if step is None:
+            step = self.steps.current
+        form_class = self.form_list[step]
+        prefix = self.get_form_prefix(step, form_class)
+        if step == self.CONFLICT_RESOLUTION_STEP:
+            # There is a conflict.
+            # We need to provide the MergeConflictsFormSet with 'data'
+            # for its fields AND 'choices' for the DynamicChoiceFormMixin.
+            data, choices, total_forms = {}, {}, 0
 
-                updateable_fields = get_updateable_fields(original) # The fields that may be updated by this merge 
-                if updateable_fields: 
-                    # Keep track of any fields of original that would be updated.
-                    # If there is more than one possible change per field, we need user input to decide what change to keep.
-                    # This is where MergeConflictsFormSet, the next form, comes in.
-                    updates = { fld_name : set() for fld_name in updateable_fields}  
+            def add_prefix(key_name):
+                return prefix + '-' + str(total_forms) + '-' + key_name
 
-                    for other_record_valdict in qs.values(*updateable_fields): 
-                        for k, v in other_record_valdict.items(): 
-                            if v or isinstance(v, bool):
-                                if len(updates[k])>0:
-                                    # Another value for this field has already been found, we have found a conflict 
-                                    has_conflict = True
-                                # make v both hashable (for the set) and serializable (for the session)
-                                updates[k].add(str(v)) 
-
-                    # Sets are not JSON serializable, turn them into lists and remove empty ones 
-                    updates = {fld_name:list(value_set) for fld_name, value_set in updates.items() if len(value_set)>0} 
-                    data['updates'] = updates.copy() 
-            if not has_conflict:
-                # no conflict found, we can skip the MergeConflictsFormSet and continue
-                #NOTE: this may break self.storage.set_step_files(self.steps.current, self.process_step_files(form)) - the next line - in post()
-                self.storage.current_step = self.steps.last 
-                # We use this way of skipping a form instead of declaring a condition_dict (the usual procedure for this WizardView),
-                # as the process of finding the actual updates to make already involves looking for any conflicts.
-        return data 
-
-    def get_form_kwargs(self, step=None): 
-        kwargs = super(MergeViewWizarded, self).get_form_kwargs(step) 
-        if step is None: 
-            step = self.steps.current 
-        #TODO: do not rely on the existing order of forms to determine what form we are using
-        # in a given step, maybe WizardView has some get_form_class_for_step method?
-        if step == '1': 
-            # If we are at step 1, then there is a conflict as two or more records are trying to change one of original's fields.
-            # We need to provide the MergeConflictsFormSet with 'data' for its fields AND 'choices' for the DynamicChoiceFormMixin.
-            form_class = self.form_list[step] 
-            prefix = self.get_form_prefix(step, form_class) 
-            data = { 
-                    prefix + '-INITIAL_FORMS': '0', 
-                    prefix + '-MAX_NUM_FORMS': '', 
-            } 
-            choices = {}
-            #form_kwargs['form_kwargs'] = {'choices' : {}} 
-            total_forms = 0 
-
-            def add_prefix(key_name): 
-                return prefix + '-' + str(total_forms) + '-' + key_name 
-
-            for fld_name, values in sorted(self.updates.items()): 
-                if len(values)>1: 
-                    # We do not care about values with len <= 1 as these do not cause merge conflicts (see process_step) 
-                    data.update({ 
-                        add_prefix('original_fld_name') : fld_name,  
-                        add_prefix('verbose_fld_name') : self.opts.get_field(fld_name).verbose_name.capitalize(),  
-                    })
-                    choices.update({ add_prefix('posvals') : [(c, v) for c, v in enumerate(values)]}) 
+            for fld_name, values in sorted(self.updates.items()):
+                if len(values) > 1:
+                    # We do not care about values with len <= 1 do not
+                    # cause merge conflicts (see _has_merge_conflicts).
+                    model_field = self.opts.get_field(fld_name)
+                    verbose_fld_name = model_field.verbose_name.capitalize()
+                    data[add_prefix('original_fld_name')] = fld_name
+                    data[add_prefix('verbose_fld_name')] = verbose_fld_name
+                    choices[add_prefix('posvals')] = [
+                        (c, v) for c, v in enumerate(values)
+                    ]
                     total_forms += 1
 
-            data[prefix + '-TOTAL_FORMS'] = total_forms 
+            management_form_data = {
+                prefix + '-INITIAL_FORMS': '0',
+                prefix + '-MAX_NUM_FORMS': '',
+                prefix + '-TOTAL_FORMS': total_forms
+            }
+            data.update(management_form_data)
             kwargs['data'] = data
-            # In order to pass 'choices' on to the individual forms of the MergeConflictsFormSet, 
-            # we need to wrap it in yet another dict called 'form_kwargs'.
+            # In order to pass 'choices' on to the individual forms of the
+            # MergeConflictsFormSet, we need to wrap it in yet another dict
+            # called 'form_kwargs'.
             # forms.BaseFormSet.__init__ will then do the rest for us.
-            kwargs['form_kwargs'] = {'choices':choices}
-        else: 
-            # MergeFormSelectPrimary form: choices for the selection of primary are objects in the queryset
-            kwargs['choices'] = {forms.ALL_FIELDS: self.queryset}
-            # TODO: replace ALL_FIELDS with the 'original' formfield 
-            #(make the reference to it an attribute on the form?)
-        return kwargs 
+            kwargs['form_kwargs'] = {'choices': choices}
+        elif step == self.SELECT_PRIMARY_STEP:
+            # MergeFormSelectPrimary form:
+            # choices for the selection of primary are objects in the queryset
+            kwargs['choices'] = {
+                prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset
+            }
+        return kwargs
 
-    def perform_action(self, form_cleaned_data = None): 
-        update_data = {} 
-        expand = self.get_cleaned_data_for_step('0').get('expand_o', True) 
-        if expand: 
-            if self.get_cleaned_data_for_step('1'): 
-                # Conflicts were handled 
-                for form_data in self.get_cleaned_data_for_step('1'): 
-                    fld_name = form_data.get('original_fld_name') 
-                    value = self.updates[fld_name][int(form_data.get('posvals'))] 
-                    update_data[fld_name] = value 
-            for fld_name, value in self.updates.items(): 
-                if fld_name not in update_data: 
-                    # This field was not part of conflict handling 
-                    if isinstance(value, (list, tuple)): 
-                        update_data[fld_name] = value[0] 
-                    else: 
-                        update_data[fld_name] = value 
-        original_pk = self.get_cleaned_data_for_step('0').get('original', 0) 
-        original = self.opts.model.objects.get(pk=original_pk) 
-        merge_records(original, self.queryset, update_data, expand, request=self.request)
+    def perform_action(self, form_cleaned_data=None):
+        update_data = {}
+        expand = self.get_cleaned_data_for_step('0').get('expand_primary', True)
+        if expand:
+            if self.get_cleaned_data_for_step('1'):
+                # Conflicts were handled
+                for form_data in self.get_cleaned_data_for_step('1'):
+                    fld_name = form_data.get('original_fld_name')
+                    value = self.updates[fld_name][int(form_data.get('posvals'))]
+                    update_data[fld_name] = value
+            for fld_name, value in self.updates.items():
+                if fld_name not in update_data:
+                    # This field was not part of conflict handling
+                    if isinstance(value, (list, tuple)):
+                        update_data[fld_name] = value[0]
+                    else:
+                        update_data[fld_name] = value
+        original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
+        primary = self.opts.model.objects.get(pk=original_pk)
+        merge_records(primary, self.queryset, update_data, expand, request=self.request)
 
     def done(self, *args, **kwargs):
         try:
             self.perform_action()
         except ProtectedError as e:
-            # The merge could not be completed as there were protected objects in the queryset, all changes were rolled back
-            protected = format_html(link_list(self.request, e.protected_objects))
-            object_name = e.protected_objects.model._meta.verbose_name_plural or 'Objekte' 
-            msg = gettext('Folgende verwandte {object_name} verhinderten die Zusammenführung: ').format(object_name=object_name) + protected
-            self.model_admin.message_user(self.request, format_html(msg), 'error')
-        return None
+            # The merge could not be completed as there were protected objects
+            # in the queryset, all changes were rolled back.
+            object_name = 'Objekte'
+            if e.protected_objects.model._meta.verbose_name_plural:
+                object_name = e.protected_objects.model._meta.verbose_name_plural
+            self.model_admin.message_user(
+                request=self.request,
+                level=messages.ERROR,
+                message="Folgende verwandte {object_name} verhinderten "
+                "die Zusammenführung: {protected}".format(
+                    object_name=object_name,
+                    protected=link_list(self.request, e.protected_objects)
+                )
+            )
+        return
+
 
 class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
+    """Moves a set of ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
+    action_allowed_checks = [
+        check_same_magazin,
+        '_check_protected_artikel',
+    ]
+    # NOTE: MoveToBrochureBase does not declare 'perm_required'
 
     form_class = BrochureActionFormSet
 
     def get_initial(self):
-        fields = ('pk', 'beschreibung', 'bemerkungen', 'magazin_id', 'magazin__magazin_name', 'magazin_beschreibung')
-        values = self.queryset.annotate(magazin_beschreibung = F('magazin__beschreibung')).values_list(*fields)
-        return [
-            {
-                'ausgabe_id': pk, 
-                'titel': magazin_name, 
-                'zusammenfassung': magazin_beschreibung, 
-                'beschreibung': beschreibung, 
-                'bemerkungen': bemerkungen, 
+        fields = (
+            'pk', 'beschreibung', 'bemerkungen', 'magazin_id',
+            'magazin__magazin_name', 'magazin_beschreibung'
+        )
+        values = (
+            self.queryset
+                .annotate(magazin_beschreibung=F('magazin__beschreibung'))
+                .values_list(*fields)
+        )
+        initial = []
+        for (pk, beschreibung, bemerkungen, magazin_id,
+                magazin_name, magazin_beschreibung) in values:
+            initial.append({
+                'ausgabe_id': pk,
+                'titel': magazin_name,
+                'zusammenfassung': magazin_beschreibung,
+                'beschreibung': beschreibung,
+                'bemerkungen': bemerkungen,
                 'magazin_id': magazin_id
-            }
-                for pk, beschreibung, bemerkungen, magazin_id, magazin_name, magazin_beschreibung in values
-        ]
+            })
+        return initial
+
+    @property
+    def magazin_instance(self):
+        """Return the magazin instance common to all queryset objects."""
+        # At this point the checks have run and excluded the possibility
+        # that the queryset contains more than one magazin.
+        if not hasattr(self, '_magazin_instance'):
+            ausgabe_instance = self.queryset.select_related('magazin').first()
+            if ausgabe_instance:
+                self._magazin_instance = ausgabe_instance.magazin
+            else:
+                self._magazin_instance = None
+        return self._magazin_instance
 
     @property
     def can_delete_magazin(self):
-        if not getattr(self, 'mag', None):
-            return False
-        magazin_ausgabe_set = set(self.mag.ausgabe_set.values_list('pk', flat = True))
-        selected_ausgabe_set = set(self.queryset.values_list('pk', flat = True))
-        return magazin_ausgabe_set == selected_ausgabe_set
-
-    def action_allowed(self):
-        if self.queryset.values_list('magazin').distinct().count()>1:
-            # Ausgaben from more than one magazin selected.
-            msg_text = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
-            self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
-            return False
-        from django.db.models import Count
-        ausgaben_with_artikel = self.queryset.annotate(artikel_count = Count('artikel')).filter(artikel_count__gt=0).order_by('magazin')
-        if ausgaben_with_artikel.exists():
-            msg_text = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: {} ({})"
-            msg_text = msg_text.format(
-                link_list(self.request, ausgaben_with_artikel), 
-                get_changelist_link(ausgabe, self.request.user, obj_list = ausgaben_with_artikel)
+        """
+        Assess if the magazin instance can be deleted following the action.
+        """
+        if not hasattr(self, '_can_delete_magazin'):
+            if not self.magazin_instance:
+                # This should be virtually impossible at this stage:
+                # every ausgabe instance must have a magazin and django
+                # enforces that at least one instance be selected from the
+                # changelist to start an action.
+                self._can_delete_magazin = False
+            else:
+                # Compare the set of all ausgabe instances of the magazin with
+                # the set of the selected ausgaben.
+                # If the sets match, all ausgabe instances of magazin will be
+                # moved and the magazin will be open to deletion afterwards.
+                magazin_ausgabe_set = set(
+                    self.magazin_instance.ausgabe_set.values_list('pk', flat=True)
                 )
-            self.model_admin.message_user(self.request, mark_safe(msg_text), 'error')
+                selected = set(
+                    self.queryset.values_list('pk', flat=True)
+                )
+                self._can_delete_magazin = magazin_ausgabe_set == selected
+        return self._can_delete_magazin
+
+    def _check_protected_artikel(view, **kwargs):
+        ausgaben_with_artikel = (
+            view.queryset
+                .annotate(artikel_count=Count('artikel'))
+                .filter(artikel_count__gt=0)
+                .order_by('magazin')
+        )
+        if ausgaben_with_artikel.exists():
+            view.model_admin.message_user(
+                request=view.request,
+                level=messages.ERROR,
+                message="Aktion abgebrochen: Folgende Ausgaben besitzen "
+                "Artikel, die nicht verschoben werden können: {} ({})".format(
+                    link_list(view.request, ausgaben_with_artikel),
+                    get_changelist_link(
+                        model=_models.ausgabe,
+                        user=view.request.user,
+                        obj_list=ausgaben_with_artikel
+                    )
+                )
+            )
             return False
-        self.mag = self.queryset.first().magazin
-        return True
 
     def form_valid(self, form):
-        options_form = self.get_options_form(data = self.request.POST)
+        options_form = self.get_options_form(data=self.request.POST)
         if not options_form.is_valid():
-            context = self.get_context_data(options_form = options_form)
+            context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
         return
 
-    def perform_action(self, form_cleaned_data, options_form_cleaned_data):               
-        protected_ausg = []        
+    def perform_action(self, form_cleaned_data, options_form_cleaned_data):
+        protected_ausg = []
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
-        # brochure_art is guaranteed to be a valid model name due to the form validation.
-        brochure_class = get_model_from_string(options_form_cleaned_data.get('brochure_art', ''))
+        # brochure_art is guaranteed to be a valid
+        # model name due to the form validation.
+        brochure_art = options_form_cleaned_data.get('brochure_art', '')
+        brochure_class = get_model_from_string(brochure_art)
 
         for data in form_cleaned_data:
             if not data.get('accept', False):
                 continue
 
             # Verify that the ausgabe exists and can be deleted
-            ausgabe_instance = ausgabe.objects.filter(pk=data['ausgabe_id']).first()
-            if ausgabe_instance is None:
+            try:
+                ausgabe_instance = _models.ausgabe.objects.get(pk=data['ausgabe_id'])
+            except (_models.ausgabe.DoesNotExist, _models.ausgabe.MultipleObjectsReturned):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -393,43 +586,75 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
 
             try:
                 with transaction.atomic():
-                    new_brochure = brochure_class.objects.create(**instance_data) 
+                    new_brochure = brochure_class.objects.create(**instance_data)
                     # Update the bestand and delete the ausgabe
-                    ausgabe_instance.bestand_set.update(ausgabe_id=None, brochure_id=new_brochure.pk)
+                    ausgabe_instance.bestand_set.update(
+                        ausgabe_id=None, brochure_id=new_brochure.pk
+                    )
                     ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list('jahr', flat=True)
                     for jahr in ausgabe_jahre:
-                        BrochureYear.objects.create(brochure = new_brochure, jahr = jahr)
+                        _models.BrochureYear.objects.create(
+                            brochure=new_brochure, jahr=jahr
+                        )
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                hint = "Hinweis: {verbose_name} wurde automatisch erstellt beim Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
-                changelog_message = hint.format(
-                    verbose_name = brochure_class._meta.verbose_name, 
-                    str_ausgabe = str(ausgabe_instance), str_magazin = str(self.mag)
+                log_addition(
+                    request=self.request,
+                    object=new_brochure,
+                    message="Hinweis: "
+                    "{verbose_name} wurde automatisch erstellt beim Verschieben von "
+                    "Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
+                        verbose_name=brochure_class._meta.verbose_name,
+                        str_ausgabe=str(ausgabe_instance),
+                        str_magazin=str(self.magazin_instance)
+                    )
                 )
-                log_addition(request = self.request, object = new_brochure, message = changelog_message)
-                self.log_update(bestand.objects.filter(brochure_id=new_brochure.pk), ['ausgabe_id', 'brochure_id'])
+                self.log_update(
+                    _models.bestand.objects.filter(brochure_id=new_brochure.pk),
+                    ['ausgabe_id', 'brochure_id']
+                )
                 self.log_deletion(ausgabe_instance)
 
         if protected_ausg:
-            msg = "Folgende Ausgaben konnten nicht gelöscht werden: " + link_list(self.request, protected_ausg) \
-                + ' (%s)' % get_changelist_link(ausgabe, self.request.user, obj_list = protected_ausg)
-            msg += ". Es wurden keine Broschüren für diese Ausgaben erstellt."
-            self.model_admin.message_user(self.request, mark_safe(msg), 'error')
+            self.model_admin.message_user(
+                request=self.request,
+                level=messages.ERROR,
+                message="Folgende Ausgaben konnten nicht gelöscht werden: "
+                "{obj_links} ({cl_link}). Es wurden keine Broschüren für "
+                "diese Ausgaben erstellt.".format(
+                    obj_links=link_list(self.request, protected_ausg),
+                    cl_link=get_changelist_link(
+                        model=_models.ausgabe,
+                        user=self.request.user,
+                        obj_list=protected_ausg
+                    )
+                )
+            )
             return
 
-        # The deletion should not interrupt/rollback the deletion of the ausgabe, hence we do not include it in the ausgabe transaction
+        # The deletion should not interrupt/rollback the deletion of
+        # the ausgabe, hence we do not include it in the ausgabe transaction.
         if delete_magazin:
-                try:
-                    with transaction.atomic():
-                        self.mag.delete()
-                except ProtectedError:
-                    # Seems like the magazin was still protected after all. 
-                    msg = "Magazin konnte nicht gelöscht werden: " + get_obj_link(self.mag, self.request.user, include_name = False)
-                    self.model_admin.message_user(self.request, mark_safe(msg), 'error')
-                else:
-                    self.log_deletion(self.mag)
+            try:
+                with transaction.atomic():
+                    self.magazin_instance.delete()
+            except ProtectedError:
+                # Seems like the magazin was still protected after all.
+                self.model_admin.message_user(
+                    request=self.request,
+                    level=messages.ERROR,
+                    message="Magazin konnte nicht gelöscht werden: {}".format(
+                        get_obj_link(
+                            obj=self.magazin_instance,
+                            user=self.request.user,
+                            include_name=False
+                        )
+                    )
+                )
+            else:
+                self.log_deletion(self.magazin_instance)
 
     def get_options_form(self, **kwargs):
         kwargs['can_delete_magazin'] = self.can_delete_magazin
@@ -438,14 +663,16 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         formset = self.get_form()
-        context['management_form'] = formset.management_form
-        context['forms'] = [
-            (
-                get_obj_link(ausgabe.objects.get(pk=form['ausgabe_id'].initial), self.request.user, include_name = False), 
-                form
+        forms = []
+        for form in formset:
+            link = get_obj_link(
+                obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
+                user=self.request.user,
+                include_name=False
             )
-            for form in formset
-        ]
+            forms.append((link, form))
+        context['forms'] = forms
+        context['management_form'] = formset.management_form
         context['options_form'] = self.get_options_form()
         context.update(kwargs)
         return context

@@ -1,3 +1,5 @@
+from django.core import exceptions
+
 from DBentry import utils, models as _models
 from DBentry.factory import make
 from DBentry.tests.base import MyTestCase
@@ -107,4 +109,29 @@ class TestModelUtils(MyTestCase):
         # related_name
         rel = _models.genre._meta.get_field('ober').remote_field
         self.assertEqual(utils.get_reverse_field_path(rel, 'genre'), 'sub_genres__genre')
+
+    def test_get_fields_and_lookups(self):
+        path = 'ausgabe__e_datum__year__gte'
+        fields, lookups = utils.get_fields_and_lookups(_models.artikel, path)
+        expected_fields = [
+            _models.artikel._meta.get_field('ausgabe'), 
+            _models.ausgabe._meta.get_field('e_datum')
+        ]
+        expected_lookups = ['year', 'gte']
+        self.assertEqual(fields, expected_fields)
+        self.assertEqual(lookups, expected_lookups)
         
+    def test_get_fields_and_lookups_invalid_lookup(self):
+        # Assert that get_fields_and_lookups raises FieldError on
+        # encountering an invalid lookup.
+        with self.assertRaises(exceptions.FieldError):
+            utils.get_fields_and_lookups(_models.artikel, 'schlagzeile__year')
+        with self.assertRaises(exceptions.FieldError):
+            # Kalendar's primary key is a OneToOne to BaseBrochure.
+            utils.get_fields_and_lookups(_models.Kalendar, 'pk__iexact')
+        
+    def test_get_fields_and_lookups_fielddoesnotexist(self):
+        # Assert that get_fields_and_lookups raises FieldDoesNotExist
+        # if the first field is not a model field of the given model.
+        with self.assertRaises(exceptions.FieldDoesNotExist):
+            utils.get_fields_and_lookups(_models.artikel, 'foo__icontains')

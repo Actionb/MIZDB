@@ -1,105 +1,152 @@
 from django import forms
 from django.apps import apps
 
+from DBentry import utils
 from DBentry.base import models as base_models
-from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
-from DBentry.utils import (
-    get_model_fields, get_model_relations, get_reverse_field_path, nfilter
+from DBentry.base.forms import (
+    MIZAdminForm, DynamicChoiceFormMixin, MinMaxRequiredFormMixin
 )
 
-class DuplicateFieldsSelectForm(forms.Form): 
-    #TODO: this doesn't use DynamicChoiceFormMixin despite it assigning choices after creation
-    base = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
-    m2m = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
-    reverse = forms.MultipleChoiceField(widget = forms.CheckboxSelectMultiple, label = '')
-    
-    help_text ='Wähle die Felder, deren Werte in die Suche miteinbezogen werden sollen.'
-    
-    class Media:
-        css = {'all':  ['admin/css/dupes.css']}
-        js = ['admin/js/collapse.js'] #TODO: django changed how it adds events to collapse stuff; check it out
-    
-def get_dupe_fields_for_model(model):    
+
+class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     """
-    Returns two-tuples of (queryable field path, field label) of fields that can be used to find duplicates with.
+    A form to select the model fields that are going to be used in the search
+    for duplicates.
+
+    The model fields are separated into three categories:
+        'base': concrete model fields that are not ManyToManyFields
+        'm2m': concrete model fields that are ManyToManyFields
+        'reverse': reverse ManyToOne relations to this model
+    The choices for each MultipleChoiceField are created with the function
+    'get_dupe_fields_for_model'.
+    """
+
+    base = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        label=''
+    )
+    m2m = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        label=''
+    )
+    reverse = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        label=''
+    )
+    minmax_required = [{'min': 1, 'fields': ['base', 'm2m', 'reverse']}]
+    min_error_message = "Bitte mindestens 1 Häkchen setzen."
+    help_text = ('Wähle die Felder, '
+        'deren Werte in die Suche miteinbezogen werden sollen.')
+
+    class Media:
+        css = {'all': ['admin/css/dupes.css']}
+        js = ['admin/js/collapse.js']
+
+    def __init__(self, *, model, **kwargs):
+        super().__init__(**kwargs)
+        choices = get_dupe_fields_for_model(model)
+        self.fields['base'].choices = choices['base']
+        self.fields['m2m'].choices = choices['m2m']
+        self.fields['reverse'].choices = choices['reverse']
+
+
+def get_dupe_fields_for_model(model):
+    """
+    Prepare the choices for the three categories of DuplicateFieldsSelectForm.
+
+    Returns a dictionary of {category_name: choices}.
     """
     base = [
         (f.name, f.verbose_name.capitalize())
-        for f in get_model_fields(model, base = True, foreign = True,  m2m = False)
+        for f in utils.get_model_fields(model, base=True, foreign=True, m2m=False)
     ]
     m2m = [
-        (f.name, f.verbose_name.capitalize()) 
-        for f in get_model_fields(model, base = False, foreign = False,  m2m = True)
+        (f.name, f.verbose_name.capitalize())
+        for f in utils.get_model_fields(model, base=False, foreign=False, m2m=True)
     ]
-    
+
     # Group the choices by the related_model's verbose_name:
     # ( (<group_name>,(<group_choices>,)), ... )
-    groups = []            
-    for rel in get_model_relations(model, forward= False,  reverse =True):
+    groups = []
+    for rel in utils.get_model_relations(model, forward=False, reverse=True):
         if rel.many_to_many:
             continue
         related_model = rel.related_model
         group_choices = []
-        for field in get_model_fields(related_model, base = True, foreign = True,  m2m = False):
+        model_fields = utils.get_model_fields(
+            related_model,
+            base=True, foreign=True, m2m=False
+        )
+        for field in model_fields:
             if field.remote_field == rel:
-                # This is the foreign key field that brought us here to begin with;
-                # don't include it
+                # This is the foreign key field that brought us here to begin
+                # with; don't include it.
                 continue
-            group_choices.append((get_reverse_field_path(rel, field.name), field.verbose_name.capitalize()))
+            # The value for this choice should be the field path that follows
+            # this reverse relation (i.e. from related model to the field).
+            group_choices.append((
+                utils.get_reverse_field_path(rel, field.name),
+                field.verbose_name.capitalize()
+            ))
         if group_choices:
-            group = (related_model._meta.verbose_name, group_choices)
-            groups.append(group)
+            groups.append((
+                related_model._meta.verbose_name,
+                group_choices
+            ))
     # get_model_relations uses an unordered set() to collect the rels;
-    # We need to sort everything alphabetically again to achieve some order
-    order_by_group_name = lambda group: group[0].lower()
-    groups = sorted(groups, key = order_by_group_name)
+    # We need to sort the group names alphabetically to establish some order.
+    groups = sorted(groups, key=lambda group: group[0].lower())
     return {'base': base, 'm2m': m2m, 'reverse': groups}
 
-def duplicatefieldsform_factory(model, selected_dupe_fields):
-    choices = get_dupe_fields_for_model(model)
-    initial = {
-            'base': [f for f in selected_dupe_fields if f in choices['base']], 
-            'm2m': [f for f in selected_dupe_fields if f in choices['m2m']], 
-            'reverse': [f for f in selected_dupe_fields if f in choices['reverse']], 
-        }
-    form = DuplicateFieldsSelectForm(initial = initial)
-    form.fields['base'].choices = choices['base']
-    form.fields['m2m'].choices = choices['m2m']
-    form.fields['reverse'].choices = choices['reverse']
-    return form
-    
+
 class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
-    
-    def __init__(self, model_filters = None, *args, **kwargs):
-        choices = {'model_select': self.get_model_list(model_filters)}
-        super().__init__(choices = choices, *args, **kwargs)
-    
-    _model_name_excludes = [
-        'Favoriten', 'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat', 
+    """
+    A form to select a model with.
+
+    The choices of the only formfield 'model_select' are the model names and
+    their verbose names as returned by apps.get_models, filtered with filters
+    provided by the form instance's get_model_filters method.
+    The attribute 'exclude_models' is a list of model names that are to be
+    filtered out.
+    """
+
+    model_select = forms.ChoiceField(
+        initial='',
+        label='Bitte das Modell auswählen'
+    )
+    # Exclude some models that are a bit... different.
+    exclude_models = [
+        'Favoriten', 'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat',
     ]
-    
+
+    def __init__(self, exclude=None, app_label='DBentry', *args, **kwargs):
+        if exclude:
+            self.exclude_models = exclude
+        self.app_label = app_label
+        choices = {'model_select': self.get_model_list()}
+        super().__init__(choices=choices, *args, **kwargs)
+
     def get_model_filters(self):
         """
         Prepare filters to apply to the list of models returned by apps.get_models.
         """
         return [
             # Filter out m2m intermediary tables (manually or auto created)
-            # and models inherited from other apps. 
+            # and models inherited from other apps.
             lambda model: (
-                issubclass(model, base_models.BaseModel) and 
-                not issubclass(model, base_models.BaseM2MModel)), 
+                issubclass(model, base_models.BaseModel)
+                and not issubclass(model, base_models.BaseM2MModel)),
             # <model>_alias tables can contain as many duplicates as they want.
             lambda model: not model._meta.model_name.endswith('_alias'),
-            lambda model: model._meta.model_name not in self._model_name_excludes
+            lambda model: model._meta.model_name not in self.exclude_models
         ]
-    
-    def get_model_list(self, filters = None):
+
+    def get_model_list(self):
         """Return the choices for the 'model_select' field."""
-        if filters is None:
-            filters = self.get_model_filters()
+        filters = self.get_model_filters()
         choices = [
             (model._meta.model_name, model._meta.verbose_name)
-            for model in nfilter(filters, apps.get_models('DBentry'))
+            for model in utils.nfilter(filters, apps.get_models(self.app_label))
         ]
         # Sort the choices by verbose_name.
         return sorted(choices, key=lambda tpl: tpl[1])

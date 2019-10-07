@@ -1,20 +1,21 @@
+# TODO: code style
 import DBentry.models as MIZModels
 
 from .registry import register
 from .helptext import ModelAdminHelpText
 
 class MIZModelAdminHelpText(ModelAdminHelpText):
-    
+
     help_items = [('description', 'Beschreibung'), ('fields', 'Felder'), ('inlines', 'Inlines'), ('examples', 'Beispiele')]
-    
-    
+
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         if 'beschreibung' not in self.fields and 'beschreibung' in self.get_form().base_fields:
             self.fields['beschreibung'] = "Hier können etwaige Anmerkungen bezüglich dieses Objektes, die dem Kunden behilflich sein könnten, notiert werden."
         if 'bemerkungen' not in self.fields and 'bemerkungen' in self.get_form().base_fields:
-            self.fields['bemerkungen'] =  """
+            self.fields['bemerkungen'] = """
                 In dieses Feld können Kommentare für Archiv-Mitarbeiter eingetragen werden. Zum Beispiel könnte ein Mitarbeiter eine Erinnerungsnotiz hinterlassen oder Besonderheiten, die für die Bearbeitung dieses Objektes hilfreich sein könnten, vermerken.
                 Dieses Feld wird einem Kunden NICHT angezeigt.
             """
@@ -26,48 +27,48 @@ class ArtikelHelpText(MIZModelAdminHelpText):
 #@register()
 class AudioHelpText(MIZModelAdminHelpText):
     model = MIZModels.audio
-    
+
 @register()
 class AusgabeHelpText(MIZModelAdminHelpText):
     help_items = [('description', 'Beschreibung'), ('fields', 'Felder'), ('inlines', 'Inlines'), ('notes', 'Bemerkung'), ('text', 'Textliche Darstellung')]
-    
+
     model = MIZModels.ausgabe
-    
+
     description = """
         Die volle Korrektheit aller Angaben zu gewährleisten, ist in vielen Fällen nur begrenzt möglich, da für Begriffe wie 'Jahrgang', 'laufende Nummer' oder 'Ausgabennummer' """ + \
         """ keine Standardisierung vorliegt und diese daher von Magazin zu Magazin - und sogar von Ausgabe zu Ausgabe - unterschiedlich gehandhabt werden.
     """
-    
+
     fields = {
-        'status': "Wählen Sie hier den Bearbeitungsstatus im Bezug auf die Erfassung der Artikel dieser Ausgabe.", 
-        'sonderausgabe': "Sonderausgaben fehlen gelegentlich numerische Angaben.", 
-        'e_datum': "Oft ist diese Angabe in der vorangegangenen Ausgabe zu finden. Erlaubte Formate sind 'tt.mm.jjjj' (31.12.1999) oder 'jjjj-mm-tt' (1999-12-31).", 
-        'jahrgang': "Ist auf dem Titelblatt oder in dem Impressum ein Jahrgang vermerkt, so kann dieser hier eingetragen werden. Im Englischen ist dafür der Begriff 'Volume' geläufig.", 
+        'status': "Wählen Sie hier den Bearbeitungsstatus im Bezug auf die Erfassung der Artikel dieser Ausgabe.",
+        'sonderausgabe': "Sonderausgaben fehlen gelegentlich numerische Angaben.",
+        'e_datum': "Oft ist diese Angabe in der vorangegangenen Ausgabe zu finden. Erlaubte Formate sind 'tt.mm.jjjj' (31.12.1999) oder 'jjjj-mm-tt' (1999-12-31).",
+        'jahrgang': "Ist auf dem Titelblatt oder in dem Impressum ein Jahrgang vermerkt, so kann dieser hier eingetragen werden. Im Englischen ist dafür der Begriff 'Volume' geläufig.",
     }
-    
+
     inlines = {
         'Ausgabennummer': "Neben der Jahresangabe ist auf dem Titelblatt oft auch eine weiter Nummer zu finden, welche entweder die Ausgabennummer oder die laufende Nummer darstellt.\n" + \
         "Die Ausgabennummer beschreibt die 'x-te' Ausgabe in einem Jahr, was bedeutet, dass - im Gegensatz zur laufenden Nummer - die Zählung bei einem neuen Jahr/Jahrgang erneut bei 1 beginnt. \n" + \
-        "Häufig kommt diese Nummer auch als Zusatz im Strichcode der Ausgabe vor.",  
-        
+        "Häufig kommt diese Nummer auch als Zusatz im Strichcode der Ausgabe vor.",
+
         'Monate': "Die Monate, die dieser Ausgabe angehören. Sind keine Monate ausdrücklich (z.B. 'Jan/Feb-2002') erwähnt und ist es weiterhin nicht erkenntlich, dass sich Zahlenangaben auf Monate beziehen, sollte davon abgesehn werden, Monate einzutragen.\n" + \
-        "Findet man z.B. Angaben in der Form '12-2001' zu der Ausgabe, ist damit nicht unweigerlich der Monat Dezember gemeint!", 
-        
-        'Laufende Nummer': "Die fortlaufende Nummer in der Gesamtheit aller erschienen Ausgaben dieses Magazines.", 
-        
-        'Jahre': 'Selbsterklärend. Bitte vier-stellige Jahreszahlen verwenden.', 
-        
-        'Musik-Beilagen': 'Liegen der Ausgabe Musik-Medien bei, so können diese hier eingetragen werden. Näheres finden sie unter der <a href="/admin/help/audio/" target="_blank">Audio-Hilfe</a>.', 
+        "Findet man z.B. Angaben in der Form '12-2001' zu der Ausgabe, ist damit nicht unweigerlich der Monat Dezember gemeint!",
+
+        'Laufende Nummer': "Die fortlaufende Nummer in der Gesamtheit aller erschienen Ausgaben dieses Magazines.",
+
+        'Jahre': 'Selbsterklärend. Bitte vier-stellige Jahreszahlen verwenden.',
+
+        'Musik-Beilagen': 'Liegen der Ausgabe Musik-Medien bei, so können diese hier eingetragen werden. Näheres finden sie unter der <a href="/admin/help/audio/" target="_blank">Audio-Hilfe</a>.',
     }
-    
+
     notes = """
         Zu der Ausgabennummer und der laufenden Nummer: wichtig ist, dass man anhand der Angaben in der Datenbank die dazu passende Ausgabe im Lager finden kann.
     """
-    
+
     text = """
     Die textliche Darstellung...
     """
-    
+
 #@register()
 class AusgabeJahrHelpText(MIZModelAdminHelpText):
     model = MIZModels.ausgabe_jahr
@@ -95,12 +96,12 @@ class BandHelpText(MIZModelAdminHelpText):
 #@register()
 class BandAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.band_alias
-    
+
 @register()
 class BestandHelpText(ModelAdminHelpText):
-    
+
     model = MIZModels.bestand
-    
+
     inline_text = 'Hier kann das Objekt im Bestand des Archives registriert werden. Dazu ist eine Angabe des Lagerortes des Objektes erforderlich. \nDazu kann auch noch die Provenienz (Herkunft, Ursprung) des Objektes angegeben werden.'
 
 #@register()
@@ -142,12 +143,12 @@ class FormattypHelpText(MIZModelAdminHelpText):
 #@register()
 class GeberHelpText(MIZModelAdminHelpText):
     model = MIZModels.geber
-    
+
 #@register()
 class GenreHelpText(MIZModelAdminHelpText):
-    
+
     model = MIZModels.genre
-    
+
     inline_text = """
         Genres der ausgewählten Musiker oder Bands müssen hier nicht noch einmal explizit ausgewählt werden.
     """

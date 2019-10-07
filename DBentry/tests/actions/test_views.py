@@ -4,12 +4,12 @@ from .base import ActionViewTestCase #TODO: absolute imports
 from ..base import AdminTestCase, mockv, mockex
 from ..mixins import LoggingTestMixin
 
-from django import forms
 from django.test import tag
 from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import override as translation_override
+from django.urls import reverse
 from django.db.models.deletion import ProtectedError
 
 import DBentry.models as _models
@@ -19,7 +19,7 @@ from DBentry.actions.base import ActionConfirmationView, ConfirmationViewMixin, 
 from DBentry.actions.views import BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
 from DBentry.actions.forms import MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions
 from DBentry.utils import get_obj_link # parameters: obj, user, admin_site
-from DBentry.views import MIZAdminMixin, FixedSessionWizardView
+from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
 from DBentry.sites import miz_site
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 
@@ -55,7 +55,7 @@ class TestConfirmationViewMixin(AdminTestCase):
     def test_dispatch_action_not_allowed(self):
         # dispatch should redirect 'back' (here: return None) if the action is not allowed
         instance = self.get_instance()
-        instance.action_allowed = mockv(False)
+        instance._action_allowed = False
         self.assertIsNone(instance.dispatch(self.get_request()))
 
     @translation_override(language = None)
@@ -69,13 +69,13 @@ class TestConfirmationViewMixin(AdminTestCase):
         self.assertEqual(context.get('title'), 'Mergeaudio')
         self.assertEqual(context.get('breadcrumbs_title'), 'Breads')
         self.assertEqual(context.get('non_reversible_warning'), instance.non_reversible_warning)
-        self.assertEqual(context.get('objects_name'), instance.opts.verbose_name_plural)
+        self.assertEqual(context.get('objects_name'), instance.opts.verbose_name_plural) #TODO: where are all the model instances?!
 
         instance.title = ''
         instance.short_description = 'Testdescription'
         instance.breadcrumbs_title = ''
         instance.action_reversible = True
-        instance.queryset = [1]
+        instance.queryset = Mock(count = Mock(return_value = 1))
         context = instance.get_context_data()
         self.assertEqual(context.get('title'), 'Testdescription')
         self.assertEqual(context.get('breadcrumbs_title'), 'Testdescription')
@@ -200,15 +200,21 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         self.queryset = self.model.objects.exclude(pk=self.obj3.pk)
 
     def test_action_allowed(self):
-        self.assertTrue(self.get_view().action_allowed())
+        self.assertTrue(self.get_view().action_allowed)
 
         request = self.get_request()
-        view = self.get_view(request, queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001))
+        # Objects in this queryset have different magazines.
+        queryset = queryset=self.model.objects.filter(ausgabe_jahr__jahr=2001)
+        view = self.get_view(request, queryset=queryset)
         view.model_admin.message_user = Mock()
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
 
-        expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin." 
-        view.model_admin.message_user.assert_called_once_with(request, expected_message, 'error')
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.' 
+        view.model_admin.message_user.assert_called_once_with(
+            request=request, 
+            message=expected_message, 
+            level=40, # TODO: messages.ERROR
+        )
 
     def test_compile_affected_objects(self):
         # result 0 0 => obj1
@@ -242,7 +248,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         response = self.client.post(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, self.changelist_path)
-        expected_message = "Aktion abgebrochen: ausgewählte Ausgaben stammen von mehr als einem Magazin."
+        expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(response.wsgi_request, expected_message)
 
     def test_post_show_confirmation_page(self):
@@ -306,21 +312,41 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         super().setUpTestData()
 
     def test_compile_affected_objects(self):
-        link_template = 'Bestand: <a href="/admin/DBentry/bestand/{pk}/change/">{lagerort__ort}</a>'
-
+        # Assert that links to the instance's bestand objects are included.
+        def get_bestand_links(obj):
+            view_name = "admin:DBentry_%s_change" % (_models.bestand._meta.model_name)
+            link_template = '<a href="{url}">{lagerort__ort}</a>'
+            template = 'Bestand: {link}'
+            for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
+                url = reverse(view_name, args=[pk])
+                link = link_template.format(url=url, lagerort__ort=lagerort__ort)
+                yield template.format(link=link)
+                
         request = self.get_request()
         view = self.get_view(request)
         link_list = view.compile_affected_objects()
         self.assertEqual(len(link_list), 4)
-        # obj1
-        self.assertFalse(link_list[0][1])
-        # obj2
-        self.assertIn(link_template.format(**self.obj2.bestand_set.values('pk', 'lagerort__ort')[0]), link_list[1][1])
-        # obj3 
-        self.assertIn(link_template.format(**self.obj3.bestand_set.values('pk', 'lagerort__ort')[0]), link_list[2][1])
-        # obj4 
-        self.assertIn(link_template.format(**self.obj4.bestand_set.values('pk', 'lagerort__ort')[0]), link_list[3][1])
-        self.assertIn(link_template.format(**self.obj4.bestand_set.values('pk', 'lagerort__ort')[1]), link_list[3][1])
+        expected = [
+            # obj1 has no bestand, no links expected
+            [],
+        ]
+        # Let the helper function add the expected links for the other objects.
+        expected.extend(
+            get_bestand_links(obj)
+            for obj in self.test_data[1:]
+        )
+        
+        for i, links in enumerate(expected):
+            # The first item of every link_list is the link to the main object.
+            # The second is the sub list of affected objects.
+            with self.subTest(i=i, obj="obj%s" % (i + 1)):
+                if not links:
+                    self.assertFalse(
+                        link_list[i][1],  msg="No bestand links expected."
+                    )
+                for j, link in enumerate(links, 1):
+                    with self.subTest(link_number=str(j)):
+                        self.assertIn(link, link_list[i][1])
 
     @tag('logging') 
     def test_perform_action(self):
@@ -391,19 +417,19 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     def test_action_allowed(self):
         queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view = self.get_view(queryset=queryset)
-        self.assertTrue(view.action_allowed())
+        self.assertTrue(view.action_allowed)
 
     def test_action_allowed_low_qs_count(self):
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.qs_obj1)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Es müssen mindestens zwei Objekte aus der Liste ausgewählt werden, um diese Aktion durchzuführen.'
         self.assertMessageSent(request, expected_message)
 
     def test_action_allowed_different_magazin(self):
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(request, expected_message)
 
@@ -432,7 +458,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -447,7 +473,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -478,7 +504,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        form_data = {'0-original':self.obj1.pk, '0-expand_o':True}
+        form_data = {'0-primary':self.obj1.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
@@ -486,44 +512,45 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(response.url, self.changelist_path)
 
     def test_merge_not_updating_fields_it_should_not(self):
-        # Check that the whole process does *NOT* change already present data of the selected primary/original object 
+        # Check that the whole process does *NOT* change already present data of the selected primary object 
         # spice up obj1 so we can verify that a merge has happened
         self.qs_obj1.update(beschreibung='I really should not be here.')
         request_data = {'action':'merge_records', helpers.ACTION_CHECKBOX_NAME : [self.obj1.pk, self.obj2.pk, self.obj4.pk]}
         management_form = {'merge_view_wizarded-current_step':0}
         request_data.update(management_form)
-        # select obj2 (or obj4) here as original as it already has a value for jahrgang (our only 'source' of conflict)
-        form_data = {'0-original':self.obj2.pk, '0-expand_o':True}
+        # select obj2 (or obj4) here as primary as it already has a value for jahrgang (our only 'source' of conflict)
+        form_data = {'0-primary':self.obj2.pk, '0-expand_primary':True}
         request_data.update(form_data)
 
         response = self.client.post(self.changelist_path, data=request_data)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, self.changelist_path)
+        self.assertEqual(response.status_code, 302, msg = "Redirect expected.")
+        self.assertEqual(response.url, self.changelist_path, msg = "Redirect back to changelist expected.")
 
         self.obj2.refresh_from_db()
         self.assertEqual(self.obj2.jahrgang, 1)
         self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
-
+    
     @patch('DBentry.actions.views.get_updateable_fields', return_value = [])
     @patch.object(SessionWizardView, 'process_step', return_value = {})
     def test_process_step(self, super_process_step, updateable_fields):
         view = self.get_view()
         view.get_form_prefix = mockv('0')
         view.storage = Mock(current_step = '')
-        view.steps = Mock(last='No conflicts->Last step')
+        last_step = MergeViewWizarded.CONFLICT_RESOLUTION_STEP
+        view.steps = Mock(last=last_step)
         form = MergeFormSelectPrimary()
 
-        # if expand_o is False in MergeFormSelectPrimary, there cannot be any conflicts
+        # if expand_primary is False in MergeFormSelectPrimary, there cannot be any conflicts
         # and the last step should be up next
-        form.cleaned_data = {'expand_o':False}
+        form.cleaned_data = {'expand_primary':False}
         self.assertEqual(view.process_step(form), {})
-        self.assertEqual(view.storage.current_step, 'No conflicts->Last step')
+        self.assertEqual(view.storage.current_step, last_step)
 
-        # if the 'original' has no fields that can be updated, the returned dict should not contain 'updates'
-        super_process_step.return_value = {'0-original':self.obj1.pk}
-        form.cleaned_data = {'0-original':self.obj1.pk, 'expand_o':True}
-        self.assertEqual(view.process_step(form), {'0-original':self.obj1.pk})
+        # if the 'primary' has no fields that can be updated, the returned dict should not contain 'updates'
+        super_process_step.return_value = {'0-primary':self.obj1.pk}
+        form.cleaned_data = {'0-primary':self.obj1.pk, 'expand_primary':True}
+        self.assertEqual(view.process_step(form), {'0-primary':self.obj1.pk})
 
         # obj1 can be updated on the field 'jahrgang' with obj2's value
         updateable_fields.return_value = ['jahrgang']
@@ -533,7 +560,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertIn('updates', processed_data)
         self.assertIn('jahrgang', processed_data['updates'])
         self.assertEqual(processed_data['updates']['jahrgang'], ['1'])
-        self.assertEqual(view.storage.current_step, 'No conflicts->Last step')
+        self.assertEqual(view.storage.current_step, last_step)
 
         # same as above, but with a conflict due to involving obj4 as well
         view.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk])
@@ -555,18 +582,23 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(view.get_context_data().get('title'), 'Merge objects: step 23')
 
     @patch.object(WizardView, 'get_form_kwargs', return_value = {})
-    def test_get_form_kwargs(self, super_get_form_kwargs):
+    def test_get_form_kwargs_select_primary(self, super_get_form_kwargs):
         view = self.get_view(queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]))
         # MergeFormSelectPrimary step
+        view.form_list = {MergeViewWizarded.SELECT_PRIMARY_STEP: MergeFormSelectPrimary}
         form_kwargs = view.get_form_kwargs(step = '0')
         self.assertIn('choices', form_kwargs)
+        formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
         self.assertListEqualSorted(
             view.queryset.values_list('pk', flat = True), 
-            form_kwargs['choices'][forms.ALL_FIELDS].values_list('pk', flat = True)
+            form_kwargs['choices'][formfield_name].values_list('pk', flat = True)
         )
 
+    @patch.object(WizardView, 'get_form_kwargs', return_value = {})
+    def test_get_form_kwargs_conflicts(self, super_get_form_kwargs):
+        view = self.get_view(queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk]))
         # MergeConflictsFormSet step
-        view.form_list = {'1':MergeConflictsFormSet}
+        view.form_list = {MergeViewWizarded.CONFLICT_RESOLUTION_STEP: MergeConflictsFormSet}
         view._updates = {'jahrgang':['1', '2'], 'beschreibung':['Test']}
         form_kwargs = view.get_form_kwargs(step = '1')
         self.assertIn('data', form_kwargs)
@@ -599,7 +631,7 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
     def test_action_allowed_different_magazin(self):
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Die ausgewählten Artikel gehören zu unterschiedlichen Ausgaben.'
         self.assertMessageSent(request, expected_message)
 
@@ -631,7 +663,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.obj1.artikel_set.add(make(_models.artikel, ausgabe = self.obj1))
         request = self.post_request()
         view = self.get_view(request = request, queryset = self.queryset)
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht verschoben werden können: "
         expected_message += '<a href="/admin/DBentry/ausgabe/{}/change/">Testausgabe</a>'.format(str(self.obj1.pk))
         self.assertMessageSent(request, expected_message)
@@ -642,13 +674,13 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         make(self.model, magazin__magazin_name = 'The Other')
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.model.objects.all())
-        self.assertFalse(view.action_allowed())
+        self.assertFalse(view.action_allowed)
         expected_message = 'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu unterschiedlichen Magazinen.'
         self.assertMessageSent(request, expected_message)
 
     def test_action_allowed(self):
         view = self.get_view(request = self.post_request(), queryset = self.queryset)
-        self.assertTrue(view.action_allowed())
+        self.assertTrue(view.action_allowed)
 
     def test_get_initial(self):
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
@@ -686,13 +718,13 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         changed_bestand.refresh_from_db()
         self.assertEqual(new_brochure.bestand_set.first(), changed_bestand)
         self.assertIsNone(changed_bestand.ausgabe_id)
-        # Assert that the original was deleted
+        # Assert that the primary was deleted
         self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
 
     def test_perform_action_deletes_magazin(self):
         options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        view.mag = self.mag
+        view._magazin_instance = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertFalse(_models.magazin.objects.filter(pk = self.mag.pk).exists())
@@ -721,7 +753,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             str_ausgabe = str(self.obj1), str_magazin = str(self.obj1.magazin)
         )
         view = self.get_view(request = self.get_request(), queryset = self.queryset)
-        view.mag = self.mag
+        view._magazin_instance = self.mag
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         new_brochure = _models.Brochure.objects.get()
         ct = ContentType.objects.get_for_model(_models.Brochure)
@@ -823,18 +855,19 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     def test_can_delete_magazin(self):
         # Assert that can_delete_magazin returns True when the magazin can be deleted after the action.
         view = self.get_view(self.get_request())
-        view.mag = self.obj1.magazin
+        view._magazin_instance = self.obj1.magazin
         self.assertTrue(view.can_delete_magazin)
 
         # Add another ausgabe to magazin to forbid the deletion of it.
         make(self.model, magazin = self.obj1.magazin)
         view = self.get_view(self.get_request(), queryset = self.model.objects.filter(pk = self.obj1.pk))
-        view.mag = self.obj1.magazin
+        view._magazin_instance = self.obj1.magazin
         self.assertFalse(view.can_delete_magazin)
 
         view = self.get_view(self.get_request())
+        view._magazin_instance = None
         self.assertFalse(view.can_delete_magazin, 
-            msg = "Should return False if can_delete_magazin is called with no 'mag' attribute set."
+            msg = "Should return False if can_delete_magazin is called with no 'magazin_instance' set."
         )
 
     def test_story(self):

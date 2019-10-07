@@ -1,3 +1,5 @@
+from unittest import skip
+
 from .base import HelpViewMixin, ModelHelpViewTestCase
 from ..base import ViewTestCase
 
@@ -6,14 +8,16 @@ from DBentry.admin import ArtikelAdmin
 from DBentry.help.helptext import ModelAdminHelpText, FormViewHelpText
 from DBentry.help.views import HelpIndexView, BaseHelpView, FormHelpView, ModelAdminHelpView
 
-from DBentry.views import MIZAdminPermissionMixin as target_view_base #NOTE: update this if you change FormHelpView.permission_test check to issubclass(UserPassesTestMixin)
 
 class TestHelpIndexView(HelpViewMixin, ViewTestCase):
     
     path = '/admin/help/'
     view_class = HelpIndexView
-    
+
+    @skip("Permission requirements currently disabled")
     def test_get_context_data_forms(self):
+        # TODO: since the removal of MIZAdminPermissionMixin permission testing for help views is 'disabled'
+        # rework this test once it's back online.
         form_help1 = type(
             'FormHelp1', (FormViewHelpText, ), {
                 'form_class': 'so_lazy', # This will determine the index_title for form_help1
@@ -70,7 +74,11 @@ class TestHelpIndexView(HelpViewMixin, ViewTestCase):
         view = self.get_view(request = self.get_request(user = self.noperms_user), registry = self.registry)
         context = view.get_context_data()
         self.assertIn('model_helps', context)
-        self.assertEqual(context['model_helps'], [], msg = "User without any model permissions should not have access to any model helps.")
+        # NOTE: no permission checking, see the TODO
+#        self.assertEqual(
+#            context['model_helps'], [], 
+#            msg = "User without any model permissions should not have access to any model helps."
+#        )
         
         with self.add_urls():
             view = self.get_view(request = self.get_request(path=''), registry = self.registry)
@@ -111,6 +119,7 @@ class TestFormHelpView(ViewTestCase):
     
     view_class = FormHelpView 
     
+    @skip("Permission requirements currently disabled")
     def test_permission_test(self):
         dummy_target_view = self.get_dummy_view_class(bases = target_view_base, attrs = {'permission_test': lambda request: request.user.is_superuser })
         request = self.get_request(user = self.noperms_user)
@@ -129,6 +138,7 @@ class TestModelHelpView(ModelHelpViewTestCase):
     
     helptext_class = type('ArtikelHelpText', (ModelAdminHelpText, ), {'model':artikel})
     
+    @skip("Permission requirements currently disabled")
     def test_permission_test(self):
         request = self.get_request(user = self.noperms_user)
         self.assertFalse(self.view_class.permission_test(request, self.model_admin))

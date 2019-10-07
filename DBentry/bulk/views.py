@@ -1,102 +1,145 @@
-
 from collections import OrderedDict
 from itertools import chain
 from urllib.parse import urlencode
 
-from django import views    
+from django import views
 from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.db import transaction
+from django.db.utils import IntegrityError
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.html import format_html
-from django.db import transaction
-from django.db.utils import IntegrityError
 from django.utils.translation import gettext
 
-from DBentry.views import MIZAdminToolViewMixin
-from DBentry.utils import link_list
-from DBentry.models import ausgabe, audio
-from DBentry.m2m import m2m_audio_ausgabe
+from DBentry import models as _models
+from DBentry import utils
+from DBentry.base.views import MIZAdminMixin
+from DBentry.bulk.forms import BulkFormAusgabe
 from DBentry.logging import LoggingMixin
+from DBentry.m2m import m2m_audio_ausgabe
 from DBentry.sites import register_tool
-from .forms import BulkFormAusgabe
 
-@register_tool
-class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
+
+@register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
+class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
+    """A FormView that creates multiple ausgabe instances from a single form."""
 
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     success_url = 'admin:DBentry_ausgabe_changelist'
-    url_name = 'bulk_ausgabe' # Used in the admin_site.index
-    index_label = 'Ausgaben Erstellung' # label for the tools section on the index page
-
-    _permissions_required = [('add', 'ausgabe')]
+    permission_required = ['DBentry.add_ausgabe']
+    # 'preview_fields' determines what formfields may show up in the preview as
+    # columns and sets their order.
+    preview_fields = [
+        'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio',
+        'audio_lagerort', 'ausgabe_lagerort', 'provenienz'
+    ]
 
     def get_initial(self):
-        # If there was a form 'before' the current one, its data will serve as initial values 
-        # This way, we can track changes to the form the user has made.
+        """
+        Use data of the previously submitted form stored in the current session
+        as this form's initial data.
+        """
         return self.request.session.get('old_form_data', {})
 
-    def get_success_url(self, query_data = None):
-        # Return an url with a query_string composed of data in query_data
+    def get_success_url(self, query_data=None):
+        """Return an url with a query_string composed of data in query_data."""
         if query_data is None:
             return reverse(self.success_url)
-        url = reverse(self.success_url) + '?' + urlencode(query_data)
-        return url
+        return reverse(self.success_url) + '?' + urlencode(query_data)
 
     def post(self, request, *args, **kwargs):
+        """
+        Either:
+            - show the preview for *this* form
+            - save the data from this form and continue to the next form
+            - save the data and return to the changelist
+        """
         context = self.get_context_data(**kwargs)
         form = self.get_form()
+        if not form.is_valid():
+            return self.render_to_response(context)
 
-        if form.is_valid():
-            if form.has_changed() or '_preview' in request.POST:
-                # the form's data differs from initial -- or the user has requested a preview
-                if not '_preview' in request.POST:
-                    # the form has changed and the user did not request a preview, complain about it
-                    messages.warning(request, 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
-                context['preview_headers'], context['preview'] = self.build_preview(request, form)
-            else:
-                if '_continue' in request.POST:
-                    # save the data and redirect back to the changelist
-                    ids, instances, updated = self.save_data(form)
-                    success_url = self.get_success_url(query_data = dict(id__in=','.join(str(id) for id in ids)))
-                    #NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
-                    return redirect(success_url) 
+        if form.has_changed() and '_preview' not in request.POST:
+            # The form has changed and the user did not request a preview:
+            # complain about it.
+            messages.warning(
+                request, 'Angaben haben sich geändert. '
+                'Bitte kontrolliere diese in der Vorschau.'
+            )
+        elif '_addanother' in request.POST:
+            # Save the data, notify the user about changes and prepare the
+            # next view.
+            ids, created, updated = self.save_data(form)
+            if created:
+                # Message about created instances.
+                obj_list = utils.link_list(request, created)
+                messages.success(
+                    request,
+                    format_html('Ausgaben erstellt: {}'.format(obj_list))
+                )
+            if updated:
+                # Message about updated instances.
+                obj_list = utils.link_list(request, updated)
+                messages.success(
+                    request,
+                    format_html('Dubletten hinzugefügt: {}'.format(obj_list))
+                )
+            # Prepare the form for the next view.
+            form = self.form_class(data=self.next_initial_data(form))
+        elif '_continue' in request.POST:
+            # Save the data and redirect back to the changelist.
+            ids, instances, updated = self.save_data(form)
+            success_url = self.get_success_url(
+                query_data={'id__in': ','.join(str(id) for id in ids)}
+            )
+            # NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
+            return redirect(success_url)
 
-                if '_addanother' in request.POST:   
-                    # save the data, notify the user about changes and prepare the next view
-                    ids, created, updated = self.save_data(form)
-
-                    if created:
-                        obj_list = link_list(request, created)
-                        messages.success(request, format_html('Ausgaben erstellt: {}'.format(obj_list)))
-                    if updated:
-                        obj_list = link_list(request, updated)
-                        messages.success(request, format_html('Dubletten hinzugefügt: {}'.format(obj_list)))
-
-                    # Prepare the form for the next view
-                    form = self.form_class(self.next_initial_data(form))
-                    # clean it
-                    form.is_valid()
-                    # and add the preview
-                    context['preview_headers'], context['preview'] = self.build_preview(request, form)
-                    # Add the 'next' form for the next view to render
-                    context['form'] = form
-
-        # Provide the next form with initial so we can track data changes within the form
+        # Add the preview.
+        headers, data = self.build_preview(request, form)
+        context['preview_headers'] = headers
+        context['preview'] = data
+        # Update the 'form' context, in case the variable was replaced
+        # with the 'next' form (see '_addanother').
+        context['form'] = form
+        # Provide the next form with initial so we can track data changes
+        # within the form.
         request.session['old_form_data'] = form.data
         return self.render_to_response(context)
 
     @transaction.atomic()
     def save_data(self, form):
-        ids = [] # contains the pks of instances either created or updated by save_data
-        created = [] # contains instances of objects that were newly created by save_data
-        updated = [] # contains instances that were existed before save_data and were updated by it
+        """
+        Create or update model instances from the form's 'row_data'.
 
-        original = [] # any unique row or the first row in a set of equal rows 
-        dupes = [] # rows in this list are a duplicate of a row in originals, no new objects will be created for duplicate rows, but a 'dubletten' bestand will be added to their originals
-        # Split row_data into rows of duplicates and originals, so we save the originals before any duplicates
-        # This assumes row_data does not contain any nested duplicates
-        # Also filter out rows that resulted in multiple matching existing instances
+        Rows that are duplicates of another row or rows that resolve
+        into multiple similar existing instances will not be used to create new
+        instances.
+        Returns a 3-tuple:
+            - the list of ids of created or updated instances
+            - the list of created instances
+            - the list of updated instances
+        """
+        # Primary keys of instances either created or updated by save_data.
+        ids = []
+        # Instances of objects that were newly created by save_data.
+        created = []
+        # Instances that were existed before save_data and were updated by it.
+        updated = []
+        # Any unique row or the first row in a set of equal rows will be
+        # recorded in 'original'.
+        original = []
+        # Rows in this list are a duplicate of a row in originals.
+        # No new objects will be created for duplicate rows,
+        # but a 'dubletten' bestand will be added to their originals.
+        dupes = []
+
+        # Split row_data into rows of duplicates and originals, so we save the
+        # originals before any duplicates This assumes row_data does not contain
+        # any nested duplicates. Also filter out rows that resulted in multiple
+        # matching existing instances.
         for row in form.row_data:
             if 'multiples' in row:
                 continue
@@ -107,190 +150,246 @@ class BulkAusgabe(MIZAdminToolViewMixin, views.generic.FormView, LoggingMixin):
 
         for row in chain(original, dupes):
             if 'dupe_of' in row:
-                instance = row['dupe_of']['instance'] # this cannot fail, since we've saved all original instances before
-                bestand_data = dict(lagerort=row.get('ausgabe_lagerort')) # since this is a dupe_of another row, form.row_data has set lagerort to dublette
+                instance = row['dupe_of']['instance']
+                # Since this is a duplicate of another row,
+                # form.row_data has set lagerort to dublette.
+                bestand_data = dict(lagerort=row.get('ausgabe_lagerort'))
                 if 'provenienz' in row['dupe_of']:
-                    # Also add the provenienz of the original to this object's bestand
+                    # Also add the provenienz of the original to this object's
+                    # bestand.
                     bestand_data['provenienz'] = row.get('provenienz')
-                b = instance.bestand_set.create(**bestand_data)
-                self.log_addition(instance, b)
+                bestand = instance.bestand_set.create(**bestand_data)
+                self.log_addition(instance, bestand)
                 continue
 
-            instance = row.get('instance', None) or ausgabe(**self.instance_data(row)) 
+            if row.get('instance'):
+                instance = row['instance']
+            else:
+                instance = _models.ausgabe(**self.instance_data(row))
             if not instance.pk:
-                # this is a new instance, mark it as such
+                # This is a new instance, mark it as such.
                 instance.save()
                 self.log_addition(instance)
                 created.append(instance)
             else:
-                # this instance already existed, update it and mark it as such
-                instance_data = {}
+                # This instance already existed, update it and mark it as such.
+                updates = {}
                 for k, v in self.instance_data(row).items():
-                    if k != 'magazin' and v and getattr(instance, k) != v:
-                        # The instance's value for this field differs from the new data, include it in the update
-                        instance_data[k] = v
+                    if k == 'magazin':
+                        # Should and must not update the 'magazin' field.
+                        continue
+                    if v and getattr(instance, k) != v:
+                        # The instance's value for this field differs from
+                        # the new data; include it in the update.
+                        updates[k] = v
 
-                instance.qs().update(**instance_data)
-                self.log_update(instance.qs(), instance_data)
+                instance.qs().update(**updates)
+                self.log_update(instance.qs(), updates)
                 updated.append(instance)
 
-            # Create and/or update sets
-            for fld_name in ['jahr', 'num', 'monat', 'lnum']:
-                set = getattr(instance, "ausgabe_{}_set".format(fld_name))
-                data = row.get(fld_name, None)
-                if data:
-                    if fld_name == 'monat':
-                        # ausgabe_monat is actually a m2m intermediary table between tables ausgabe and monat
-                        fld_name = 'monat_id'
-                    if not isinstance(data, (list, tuple)):
-                        data = [data]
-                    for value in data:
+            # Create and/or update related sets.
+            for field_name in ['jahr', 'num', 'monat', 'lnum']:
+                if not row.get(field_name):
+                    continue
+                data = row[field_name]
+                if not isinstance(data, (list, tuple)):
+                    data = [data]
+                accessor_name = "ausgabe_{}_set".format(field_name)
+                related_manager = getattr(instance, accessor_name)
+                if field_name == 'monat':
+                    # ausgabe_monat is actually a m2m intermediary table
+                    # between tables 'ausgabe' and 'monat'. The form values for
+                    # 'monat' refer to the ordinals of the months.
+                    for i, value in enumerate(data):
                         if value:
-                            try:
-                                with transaction.atomic():
-                                    o = set.create(**{fld_name:value})
-                            except IntegrityError: 
-                                # ignore UNIQUE constraints violations
-                                continue
-                            else:
-                                self.log_addition(instance, o)
+                            data[i] = _models.monat.objects.filter(ordinal=value).first()
+                for value in data:
+                    if not value:
+                        continue
+                    try:
+                        with transaction.atomic():
+                            related_obj = related_manager.create(
+                                **{field_name: value}
+                            )
+                    except IntegrityError:
+                        # Ignore UNIQUE constraints violations.
+                        continue
+                    self.log_addition(instance, related_obj)
 
-            # all the necessary data to construct a proper name should be included now, update the name
+            # All the necessary data to construct a proper name should be
+            # included now, update the name.
             instance.update_name(force_update=True)
 
-            # Audio
+            # Handle related audio objects.
             if 'audio' in row:
-                suffix = instance.__str__()
-                audio_data = dict(titel = 'Musik-Beilage: {}'.format(str(row.get('magazin'))) + " " + suffix, 
-                                                    quelle = 'Magazin', 
-                                                    e_jahr = row.get('jahr')[0],
-                                                    )
-
-                if audio.objects.filter(**audio_data).exists():
-                    audio_instance = audio.objects.filter(**audio_data).first()
-                else:
-                    audio_instance = audio(**audio_data)
+                titel = 'Musik-Beilage: {magazin!s} {suffix!s}'.format(
+                    magazin=row.get('magazin'),
+                    suffix=instance
+                )
+                audio_data = {'titel': titel}
+                # Use the first matching queryset result or create a new instance.
+                audio_instance = _models.audio.objects.filter(**audio_data).first()
+                if audio_instance is None:
+                    audio_instance = _models.audio(**audio_data)
                     audio_instance.save()
                     self.log_addition(audio_instance)
-
-                if not m2m_audio_ausgabe.objects.filter(ausgabe=instance, audio=audio_instance).exists():
-                    # avoid UNIQUE constraints violations
-                    m2m_instance = m2m_audio_ausgabe(ausgabe=instance, audio=audio_instance)
+                # Check if the ausgabe instance is already related to the audio
+                # instance.
+                is_related = m2m_audio_ausgabe.objects.filter(
+                    ausgabe=instance, audio=audio_instance
+                ).exists()
+                if not is_related:
+                    m2m_instance = m2m_audio_ausgabe(
+                        ausgabe=instance,
+                        audio=audio_instance
+                    )
                     m2m_instance.save()
                     self.log_addition(instance, m2m_instance)
                     self.log_addition(audio_instance, m2m_instance)
-
-                bestand_data = dict(lagerort=form.cleaned_data.get('audio_lagerort'))
+                # Add bestand for the audio instance.
+                bestand_data = {
+                    'lagerort': form.cleaned_data.get('audio_lagerort')
+                }
                 if 'provenienz' in row:
                     bestand_data['provenienz'] = row.get('provenienz')
+                bestand = audio_instance.bestand_set.create(**bestand_data)
+                self.log_addition(audio_instance, bestand)
 
-                b = audio_instance.bestand_set.create(**bestand_data)
-                self.log_addition(audio_instance, b)
-
-            # Bestand
-            bestand_data = dict(lagerort=row.get('ausgabe_lagerort'))
+            # Add bestand for the ausgabe instance.
+            bestand_data = {
+                'lagerort': row.get('ausgabe_lagerort')
+            }
             if 'provenienz' in row:
                 bestand_data['provenienz'] = row.get('provenienz')
-            b = instance.bestand_set.create(**bestand_data)
-            self.log_addition(instance, b)
+            bestand = instance.bestand_set.create(**bestand_data)
+            self.log_addition(instance, bestand)
 
             row['instance'] = instance
             ids.append(instance.pk)
         return ids, created, updated
 
     def next_initial_data(self, form):
-        # Using form.cleaned_data would insert model instances into the data we are going to save in request.session... and model instances are not JSON serializable
+        # Use the form's uncleaned data as basis for the next form.
+        # form.cleaned_data contains model instances (from using ModelChoiceFields)
+        # which are not JSON serializable and thus is insuitable for storage
+        # in request.session.
         data = form.data.copy()
-        # Increment jahr and jahrgang
+        # Increment jahr and jahrgang.
         if form.cleaned_data.get('jahr'):
-            data['jahr'] = ", ".join([
-                str(int(j)+len(form.row_data[0].get('jahr'))) for j in form.row_data[0].get('jahr')
-            ]) 
-        if form.cleaned_data.get('jahrgang'):  
-            data['jahrgang'] = form.cleaned_data.get('jahrgang') + 1
+            # Get the values to be incremented from row_data's first row
+            # (all rows share the same values).
+            # 2018,2019 -> 2020,2021
+            jahre = form.row_data[0]['jahr']
+            data['jahr'] = ",".join([
+                str(int(j) + len(jahre))
+                for j in jahre
+            ])
+        if form.cleaned_data.get('jahrgang'):
+            data['jahrgang'] = form.cleaned_data['jahrgang'] + 1
         return data
 
     def instance_data(self, row):
-        rslt = {}
-        rslt['jahrgang'] = row.get('jahrgang', None)
-        rslt['magazin'] = row.get('magazin')
-        rslt['beschreibung'] = row.get('beschreibung', '')
-        rslt['bemerkungen'] = row.get('bemerkungen', '')
-        rslt['status'] = row.get('status')
-        return rslt
+        """
+        Return data suitable to construct a model instance with from a given row.
+        """
+        return {
+            'jahrgang': row.get('jahrgang', None),
+            'magazin': row.get('magazin'),
+            'beschreibung': row.get('beschreibung', ''),
+            'bemerkungen': row.get('bemerkungen', ''),
+            'status': row.get('status')
+        }
 
     def build_preview(self, request, form):
+        """Prepare context variables used in the 'preview' table."""
+        # Check if any of the form's rows constitute one or more already
+        # existing model instances. If so, the preview needs to include the
+        # 'Bereits vorhanden' and 'Datenbank' headers that will contain those
+        # instances and a warning message.
+        any_row_has_instances = any(
+            'instance' in row or 'multiples' in row
+            for row in form.row_data
+        )
+        # Construct the preview row for the form's rows.
         preview_data = []
-        headers = []
-        preview_fields = []
-        multiple_instances_msg = gettext("Es wurden mehrere passende Ausgaben gefunden. Es soll immer nur eine bereits bestehende Ausgabe verändert werden: diese Zeile wird ignoriert.")
-        one_instance_msg = gettext("Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt.")
-
-        has_instances = False # if True, include the 'Bereits vorhanden' and 'Datenbank' headers
-        for row in form.row_data:
-            if 'instance' in row:
-                instances = [row.get('instance')]
-            elif 'multiples' in row:
-                instances = list(row.get('multiples'))
-            else:
-                continue
-            if len(instances):
-                has_instances = True
-                break
-
+        # Keep track of what fields in form.preview_fields are actually showing
+        # up in the preview so that we later do not add headers for columns
+        # that do not exist.
+        preview_fields_used = set()
         for row in form.row_data:
             preview_row = OrderedDict()
-            for fld_name in form.preview_fields:
-                if not fld_name in row:
+            for field_name in self.preview_fields:
+                if field_name not in row:
                     continue
-                if fld_name == 'audio':
-                    img = format_html('<img alt="True" src="/static/admin/img/icon-yes.svg">')
-                    preview_row[fld_name] = img
-                elif fld_name == 'audio_lagerort' and 'audio' not in row:
+                if field_name == 'audio':
+                    # Add the image for a boolean True.
+                    preview_row[field_name] = format_html(
+                        '<img alt="True" src="/static/admin/img/icon-yes.svg">'
+                    )
+                elif field_name == 'audio_lagerort' and 'audio' not in row:
+                    # No need to add anything for column 'audio_lagerort' if
+                    # the user does not wish to add audio instances.
                     continue
                 else:
-                    values_list = row.get(fld_name) or []
+                    values_list = row[field_name] or []
                     if isinstance(values_list, list):
-                        if len(values_list)==1:
-                            preview_row[fld_name] = values_list[0] or ''
+                        if len(values_list) == 1:
+                            preview_row[field_name] = values_list[0] or ''
                         else:
-                            preview_row[fld_name] = ", ".join(values_list)
+                            preview_row[field_name] = ", ".join(values_list)
                     else:
-                        preview_row[fld_name] = values_list or ''
-                preview_fields.append(fld_name) # record the field's appearance for the headers creation    
+                        preview_row[field_name] = values_list or ''
+                # Record the field's appearance for the headers creation.
+                preview_fields_used.add(field_name)
 
+            # Add warning messages if either:
+            # - an already existing instance is going to be updated OR
+            # - this row is going to be ignored as multiple existing instances
+            #   were found using the row's data
             if 'instance' in row:
                 instances = [row.get('instance')]
             else:
                 instances = list(row.get('multiples', []))
-
-            if len(instances)==0:
-                if has_instances:
+            if not instances:
+                if any_row_has_instances:
+                    # This row is not problematic, but some other row(s) are;
+                    # add a placeholder for columns 'Instanz' and 'Datenbank'.
                     preview_row['Instanz'] = '---'
                     preview_row['Datenbank'] = '---'
             else:
-                links = link_list(request, instances)
-                if len(instances)==1:
+                if len(instances) == 1:
+                    # Add a warning icon to warn about updating an existing
+                    # instance.
                     img = '<img alt="False" src="/static/admin/img/icon-alert.svg">'
-                    msg = one_instance_msg
+                    msg = gettext(
+                        "Es wird ein Dubletten-Bestand zu dieser Ausgabe hinzugefügt."
+                    )
                 else:
+                    # Add an error icon to warn that this row will be ignored.
                     img = '<img alt="False" src="/static/admin/img/icon-no.svg">'
-                    msg = multiple_instances_msg
-                preview_row['Instanz'] = format_html(img + links) 
-                preview_row['Datenbank'] = msg 
+                    msg = gettext(
+                        "Es wurden mehrere passende Ausgaben gefunden. Es soll "
+                        "immer nur eine bereits bestehende Ausgabe verändert "
+                        "werden: diese Zeile wird ignoriert."
+                    )
+                preview_row['Instanz'] = utils.link_list(request, instances)
+                preview_row['Datenbank'] = format_html(img + ' ' + msg)
             preview_data.append(preview_row)
-
-        for fld_name in form.preview_fields:
-            if fld_name not in preview_fields:
-                # This field does not appear at least once in preview_data
+        # Build the headers for the preview table.
+        headers = []
+        for field_name in self.preview_fields:
+            if field_name not in preview_fields_used:
+                # This field does not appear at least once in preview_data;
+                # do not include it in the headers.
                 continue
-            if form.fields.get(fld_name).label:
-                headers.append(form.fields.get(fld_name).label.strip(":"))
+            if form.fields[field_name].label:
+                headers.append(form.fields[field_name].label)
             else:
-                headers.append(fld_name)
-        if has_instances:
+                headers.append(field_name)
+        if any_row_has_instances:
             headers += ['Bereits vorhanden', 'Datenbank']
         return headers, preview_data
 
     def get_context_data(self, *args, **kwargs):
-        return super().get_context_data(opts=ausgabe._meta)
+        # Add ausgabe's meta for the template.
+        return super().get_context_data(opts=_models.ausgabe._meta)
