@@ -286,12 +286,10 @@ class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
 
     # TODO: make NameFieldSearchQuery a mixin for ValuesDictSearchQuery
 
-    name_field = None  # FIXME: useless declaration
-
-    def __init__(self, queryset, *args, **kwargs):
+    def __init__(self, queryset, name_field=None, *args, **kwargs):
         # FIXME: name_field should be an optional keyword argument
-        if kwargs.get('name_field'):
-            self.name_field = kwargs.pop('name_field')
+        if name_field:
+            self.name_field = name_field
         else:
             self.name_field = getattr(queryset.model, 'name_field', None)
         super().__init__(queryset, *args, **kwargs)
