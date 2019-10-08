@@ -17,7 +17,7 @@ class BaseSearchQuery(object):
     """
 
     def __init__(
-            self, queryset, search_fields=None, suffix=None, use_suffix=True,
+            self, queryset, search_fields=None, suffixes=None, use_suffix=True,
             **kwargs):
         self.search_fields = search_fields or queryset.model.get_search_fields()
         if isinstance(self.search_fields, str):
@@ -25,12 +25,12 @@ class BaseSearchQuery(object):
         self.search_fields = list(self.search_fields)  # 'cast' into a list
         self._root_queryset = queryset
         self.ids_found = set()
-        if suffix:
-            self.suffix = suffix
+        if suffixes:
+            self.suffixes = suffixes
         elif getattr(queryset.model, 'search_fields_suffixes', None):
-            self.suffix = queryset.model.search_fields_suffixes
+            self.suffixes = queryset.model.search_fields_suffixes
         else:
-            self.suffix = {}
+            self.suffixes = {}
         self.use_suffix = use_suffix
         self.exact_match = False
 
@@ -42,21 +42,27 @@ class BaseSearchQuery(object):
         except FieldDoesNotExist:
             return None
 
-    def clean_string(self, s, field_name):
+    def clean_string(self, s):
         """
         Remove whitespaces from string 's' and prepare it for caseless
-        comparison. If field_name refers to a DateField, make the string
-        date isoformat compliant.
+        comparison.
         """
-        s = str(s).strip().casefold()
+        return str(s).strip().casefold()
+
+    def clean_q(self, q, field_name):
+        """
+        Clean the search term 'q'. If field_name refers to a DateField, make
+        'q' date isoformat compliant.
+        """
+        q = self.clean_string(q)
         if isinstance(self.get_model_field(field_name), models.DateField):
             # Comparisons with DateFields require a string of format 'yyyy-mm-dd'.
-            if '.' in s:
+            if '.' in q:
                 return "-".join(
-                    date_bit.zfill(2) for
-                    date_bit in reversed(s.split('.'))
+                    date_bit.zfill(2)
+                    for date_bit in reversed(q.split('.'))
                 )
-        return s
+        return q
 
     def get_queryset(self, q=None):
         return self._root_queryset.all()
@@ -66,51 +72,55 @@ class BaseSearchQuery(object):
         Return the suffix to append to a search result for the given the field
         name 'field' and the lookup name 'lookup'.
         """
-        if field + lookup in self.suffix:
-            return self.suffix.get(field + lookup)
-        elif field in self.suffix:
-            return self.suffix.get(field)
+        if field + lookup in self.suffixes:
+            return self.suffixes[field + lookup]
+        elif field in self.suffixes:
+            return self.suffixes[field]
         else:
             return ""
 
-    def append_suffix(self, instances, field, lookup=''):
+    def append_suffix(self, label, suffix):
         """
-        Append suffixes to the search results.
-
+        Append the given suffix to the result's label.
         These suffixes (usually just a verbose version of the field name) act
         as hints on why a particular result was found.
+        """
+        if self.use_suffix and suffix:
+            return "%s (%s)" % (label, suffix)
+        return label
+
+    def create_result_list(self, search_results, search_field, lookup=''):
+        """
+        Create the result list and record each results' id.
+
         Returns a list of two-tuples:
             (instance pk, string representation of instance + suffix)
         """
-        # FIXME: append_suffix does more than its name suggests:
-        # it changes the structure of the results
-        # NameFieldSearchQuery.append_suffix override changes nothing about
-        # suffixes but changes the structure of the results even further
-        suffix = self.get_suffix(field, lookup)
+        suffix = self.get_suffix(search_field, lookup)
+        results = []
+        for o in search_results:
+            result = self.create_result_item(o, suffix)
+            self.ids_found.add(result[0])
+            results.append(result)
+        return results
 
-        if self.use_suffix and suffix:
-            suffix = " ({})".format(suffix)
-        return [(o.pk, force_text(o) + suffix) for o in instances]
+    def create_result_item(self, result, suffix):
+        """Append the suffix and return an object for the result list."""
+        pk, name = self.get_values_for_result(result)
+        return pk, self.append_suffix(name, suffix)
+
+    def get_values_for_result(self, result):
+        """Return the id and a name/label from the given result."""
+        return result.pk, force_text(result)
 
     def _do_lookup(self, lookup, search_field, q):
         """
-        Perform the search on the given search_field using lookup.
-
-        Append suffixes and record the ids of the instances found to excluded
-        them from future searches.
-
-        Returns a list of two-tuples:
-            (instance pk, string representation of instance + suffix)
+        Perform a query on the given search_field using lookup and return
+        the results as modified by create_result_list.
         """
-        q = self.clean_string(q, search_field)
-        qs = self.get_queryset()
-        rslt = []
-        search_results = qs.exclude(
+        search_results = self.get_queryset().exclude(
             pk__in=self.ids_found).filter(**{search_field + lookup: q})
-        new_rslts = self.append_suffix(search_results, search_field, lookup)
-        self.ids_found.update([pk for pk, name in new_rslts])
-        rslt.extend(new_rslts)
-        return rslt
+        return self.create_result_list(search_results, search_field, lookup)
 
     def exact_search(self, search_field, q):
         """
@@ -156,10 +166,11 @@ class BaseSearchQuery(object):
         """
         rslt = []
         for search_field in self.search_fields:
+            cleaned_q = self.clean_q(q, search_field)
             rslt.extend(
-                self.exact_search(search_field, q)
-                + self.startsw_search(search_field, q)
-                + self.contains_search(search_field, q)
+                self.exact_search(search_field, cleaned_q)
+                + self.startsw_search(search_field, cleaned_q)
+                + self.contains_search(search_field, cleaned_q)
             )
         return rslt
 
@@ -260,19 +271,22 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         """
         rslt = []
         for search_field in self.primary_search_fields:
+            cleaned_q = self.clean_q(q, search_field)
             rslt.extend(
-                self.exact_search(search_field, q)
-                + self.startsw_search(search_field, q)
-                + self.contains_search(search_field, q)
+                self.exact_search(search_field, cleaned_q)
+                + self.startsw_search(search_field, cleaned_q)
+                + self.contains_search(search_field, cleaned_q)
             )
         for search_field in self.secondary_search_fields:
-            rslt.extend(self.exact_search(search_field, q))
+            cleaned_q = self.clean_q(q, search_field)
+            rslt.extend(self.exact_search(search_field, cleaned_q))
 
         weak_hits = []
         for search_field in self.secondary_search_fields:
+            cleaned_q = self.clean_q(q, search_field)
             weak_hits.extend(
-                self.startsw_search(search_field, q)
-                + self.contains_search(search_field, q)
+                self.startsw_search(search_field, cleaned_q)
+                + self.contains_search(search_field, cleaned_q)
             )
         if weak_hits:
             if self.use_separator and len(rslt):
@@ -282,12 +296,11 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
 
 
 class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
-    """Use the values of the 'name_field' as string representations of the results."""
-
-    # TODO: make NameFieldSearchQuery a mixin for ValuesDictSearchQuery
+    """
+    Use the values of the 'name_field' as string representations of the results.
+    """
 
     def __init__(self, queryset, name_field=None, *args, **kwargs):
-        # FIXME: name_field should be an optional keyword argument
         if name_field:
             self.name_field = name_field
         else:
@@ -300,17 +313,16 @@ class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
                 self.name_field = self.primary_search_fields[0]
             else:
                 self.name_field = self.secondary_search_fields[0]
-        self._root_queryset = self._root_queryset.values_list('pk', self.name_field)
+        self._root_queryset = self._root_queryset.values_list(
+            'pk', self.name_field)
 
-    def append_suffix(self, tuple_list, field, lookup=''):
-        # FIXME: renaming argument tuple_list could be confusing!
-        suffix = self.get_suffix(field, lookup)
-
-        if self.use_suffix and suffix:
-            suffix = " ({})".format(suffix)
-        return [
-            (pk, name + suffix) for pk, name in tuple_list
-        ]
+    def get_values_for_result(self, result):
+        """
+        Return the id and a label from the given result.
+        In the case of NameFieldSearchQuery, the results are two tuples instead
+        of model instances.
+        """
+        return result
 
 
 class ValuesDictSearchQuery(NameFieldSearchQuery):
@@ -318,13 +330,13 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
 
     def get_queryset(self, q):
         # To limit the length of values_dict, exclude any records that do not
-        # at least icontain q in any of the search_fields.
+        # at least icontain one 'word' of 'q' in any of the search_fields.
         qobjects = models.Q()
         for search_field in self.search_fields:
             for i in q.split():
                 qobjects |= models.Q((
                     search_field + '__icontains',
-                    self.clean_string(i, search_field)
+                    self.clean_q(i, search_field)
                 ))
         return self._root_queryset.filter(qobjects)
 
@@ -336,13 +348,13 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
         # values_dict is a dict of dicts of lists!:
         # {pk_1: {field_a: [values,...], field_b: [values...], ...}
         #  pk_2: {}, ...}
-        rslt = []
+        search_results = []
 
         def filter_func(q):
-            q = self.clean_string(q, search_field)
+            q = self.clean_q(q, search_field)
             def inner(s):
                 """The filter function for the filter iterator."""
-                s = self.clean_string(s, search_field)
+                s = self.clean_string(s)
                 if lookup == '__iexact':
                     return q == s
                 elif lookup == '__istartswith':
@@ -377,12 +389,27 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
                         break
 
             if match:
-                rslt.extend(self.append_suffix(
-                    [(pk, data_dict.get(self.name_field)[0])], search_field, lookup
-                ))
-                self.ids_found.add(pk)
-                self.values_dict.pop(pk)
-        return rslt
+                # Create the result list and remove this data_dict from
+                # values_dict for future lookups.
+                search_results.extend(
+                    self.create_result_list(
+                        search_results=[(pk, self.values_dict.pop(pk))],
+                        search_field=search_field,
+                        lookup=lookup
+                    )
+                )
+        return search_results
+    
+    def get_values_for_result(self, result):
+        """
+        Return the id and a name/label from the given result.
+        In the case of ValuesDictSearchQuery, a result is a two-tuple of
+        (pk, dict of values).
+        """
+        pk, data_dict = result
+        # values in the data_dict are tuples;
+        # take the first item of the name_field value as label.
+        return pk, data_dict[self.name_field][0]
 
     def search(self, q=None):
         if q:
