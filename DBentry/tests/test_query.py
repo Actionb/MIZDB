@@ -274,6 +274,17 @@ class TestBaseQuery(QueryTestCase):
         with self.assertNumQueries(len(self.model.get_search_fields())*3):
             query.search(q)
 
+    def test_reorder_results(self):
+        # Assert that the order of the results matches the order of the
+        # initial queryset. NO SEPARATOR.
+        qs_order = list(
+            self.queryset.exclude(pk=self.obj3.pk).values_list('pk', flat=True))
+        query = self.make_query(use_separator=False)
+        ordered_results, _ = query.search('Rose', ordered=True)
+        self.assertEqual(
+            qs_order, [tpl[0] for tpl in ordered_results]
+        )
+
 
 class TestPrimaryFieldsQuery(TestBaseQuery):
 
@@ -282,13 +293,13 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
     @translation_override(language = None)
     def test_get_separator(self):
         q = 'Test'
-        sep = self.make_query().get_separator(q)
-        self.assertEqual(sep, '------- weak hits for "Test" -------')
+        sep = self.make_query().create_separator_item(q)
+        self.assertEqual(sep, (0, '------- weak hits for "Test" -------'))
 
         # with separator_text argument
         separator_text = 'Beep boop "{q}"'
-        sep = self.make_query().get_separator(q, separator_text)
-        self.assertEqual(sep, '--------- Beep boop "Test" ---------')
+        sep = self.make_query().create_separator_item(q, separator_text)
+        self.assertEqual(sep, (0, '--------- Beep boop "Test" ---------'))
 
     def test_exact_search(self):
         # exact_match should stay False if exact_matches for secondary search fields were found
@@ -354,7 +365,7 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         self.assertEqual([search_results[5]], expected)
 
         # weak hits --- a separator followed by secondary startsw and contains matches
-        self.assertEqual(search_results[6], (0, query.get_separator(q)))
+        self.assertEqual(search_results[6], query.create_separator_item(q))
 
         # Then secondary startsw matches
         lookup = '__istartswith'
@@ -367,6 +378,40 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         search_field = 'musiker__kuenstler_name'
         expected = self.append_suffix(query, [self.obj2], search_field, lookup)
         self.assertEqual([search_results[8]], expected)
+
+    def test_reorder_results_with_separator(self):
+        # Assert that the order of the results matches the order of the
+        # initial queryset. WITH SEPARATOR.
+        strong_qs = self.queryset.filter(
+            pk__in=[self.obj1.pk, self.obj4.pk, self.obj5.pk]
+            ).values_list('pk', flat=True)
+        weak_qs = self.queryset.filter(
+            pk__in=[self.obj2.pk, self.obj6.pk]).values_list('pk', flat=True)
+        # band_alias__alias is a primary search field by default; obj6 would be
+        # included in strong results and only obj2 would be left as a weak
+        # result (which makes testing for weak results order pointless).
+        # Remove band_alias__alias from the primary_search_fields.
+        query = self.make_query(
+            use_separator=True, primary_search_fields=['band_name'])
+        # Need to know where the query would put the separator for an unordered
+        # result. Reordering results must only reorder strong results with other
+        # strong results (same for weak results), meaning the index of the
+        # separator must be preserved.
+        unordered_results, _ = query.search('Rose', ordered=False)
+        result_ids = [tpl[0] for tpl in unordered_results]
+        separator_id = query.create_separator_item('')[0]
+        self.assertIn(separator_id,  result_ids, msg = 'Separator expected.')
+        sep_index = result_ids.index(separator_id)
+        # Now get the ordered results.
+        ordered_results, _ = query.search('Rose', ordered=True)
+        result_ids = [tpl[0] for tpl in ordered_results]
+        self.assertIn(separator_id,  result_ids, msg = 'Separator expected.')
+        self.assertEqual(
+            result_ids.index(separator_id), sep_index,
+            msg='Separator index must be preserved.')
+        strong, weak = result_ids[:sep_index], result_ids[sep_index + 1:]
+        self.assertEqual(list(strong_qs), strong)
+        self.assertEqual(list(weak_qs), weak)
 
 
 class TestNameFieldQuery(TestPrimaryFieldsQuery):
@@ -496,7 +541,7 @@ class TestValuesDictQuery(TestNameFieldQuery):
         self.assertEqual([search_results[5]], expected)
 
         # weak hits --- a separator followed by secondary startsw and contains matches
-        self.assertEqual(search_results[6], (0, query.get_separator(q)))
+        self.assertEqual(search_results[6], query.create_separator_item(q))
 
         # Then secondary startsw matches
         lookup = '__istartswith'

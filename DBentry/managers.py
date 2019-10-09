@@ -21,10 +21,11 @@ class MIZQuerySet(models.QuerySet):
         """
         Find any occurence of the search term 'q' in the queryset, depending
         on the search strategy used.
+
+        By default, the order of the results depends on the search strategy.
+        If 'ordered' is True, results will be ordered according to the order
+        established in the queryset instead.
         """
-        # FIXME: the 'ordered' argument is ignored;
-        # the autocomplete views call find() with ordered=True and 
-        # only AusgabeQuerySet.find uses it
         # Find the best strategy to use:
         if getattr(self.model, 'name_field', False):
             strat_class = ValuesDictSearchQuery
@@ -33,7 +34,7 @@ class MIZQuerySet(models.QuerySet):
         else:
             strat_class = BaseSearchQuery
         strat = strat_class(self, **kwargs)
-        result, exact_match = strat.search(q)
+        result, exact_match = strat.search(q, ordered)
         return result
 
     def duplicates(self, *fields):
@@ -287,21 +288,9 @@ class AusgabeQuerySet(CNQuerySet):
         return super().order_by(*args, **kwargs)
 
     def find(self, q, ordered=True, **kwargs):
-        strat = ValuesDictSearchQuery(self.all(), **kwargs)
-        result, exact_match = strat.search(q)
-        if result and ordered and self.ordered:
-            # FIXME: restoring the order is too tightly coupled to the strat
-            # used: ids_found is required
-            # FIXME: rework these loops, the second one could use a break
-            # Restore order that was messed up by the search.
-            ordered_result = []
-            for id in self.values_list('pk', flat=True):
-                if id in strat.ids_found:
-                    for tpl in result:
-                        if tpl[0] == id:
-                            ordered_result.append(tpl)
-            return ordered_result
-        return result
+        # Insist on preserving the chronologic order over the order created
+        # by the search query (exact, startswith, contains).
+        return super().find(q, ordered=ordered, **kwargs)
 
     def increment_jahrgang(self, start_obj, start_jg=1):
         # TODO: increment_jahrgang BADLY needs a doc string and a revision

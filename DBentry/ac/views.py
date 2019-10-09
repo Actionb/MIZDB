@@ -71,13 +71,10 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         # set by a declared MultipleObjectMixin.queryset attribute.
         return qs.order_by(*self.model._meta.ordering)
 
-    def apply_q(self, qs, use_suffix=True, ordered=True):
+    def apply_q(self, qs):
         """Filter the given queryset 'qs' with the view's search term 'q'."""
-        # FIXME: 'ordered' argument is always True?
-        # If only AusgabeQuerySet uses find(ordered=True), why not override
-        # ACAusgabe.apply_q?
         if self.q:
-            return qs.find(self.q, ordered=ordered, use_suffix=use_suffix)
+            return qs.find(self.q)
         elif self.model in Favoriten.get_favorite_models():
             # Add Favoriten to the top of the result queryset
             # if no search term was given.
@@ -136,6 +133,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         """Return the value of a result."""
         if isinstance(result, (list, tuple)):
             if result[0] == 0:
+                # TODO: find a reliable way to know the separator item id.
                 # This may be the 'weak hits' separator,
                 # set it's id to None to make it unselectable
                 return None

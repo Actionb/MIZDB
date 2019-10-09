@@ -141,10 +141,14 @@ class BaseSearchQuery(object):
         """Perform the search using the 'icontains' lookup."""
         return self._do_lookup('__icontains', search_field, q)
 
-    def search(self, q):
+    def search(self, q, ordered=False):
         """
         Start point of the search process. Prepare instance variables for a
         new search and begin the search.
+
+        By default, the order of the results depends on the search strategy.
+        If 'ordered' is True, results will be ordered according to the order
+        established in the queryset instead.
 
         Returns a two-tuple:
             - a list of the results
@@ -156,7 +160,16 @@ class BaseSearchQuery(object):
         self.ids_found = set()
         self.exact_match = False
         rslt = self._search(q)
+        if rslt and ordered and self._root_queryset.ordered:
+            rslt = self.reorder_results(rslt)
         return rslt, self.exact_match
+
+    def reorder_results(self, results, comp_func=None):
+        """
+        Reorder the results according to the order established by the root queryset.
+        """
+        ids = list(self._root_queryset.values_list('pk', flat=True))
+        return sorted(results, key=lambda result_item: ids.index(result_item[0]))
 
     def _search(self, q):
         """
@@ -164,6 +177,8 @@ class BaseSearchQuery(object):
 
         For each field in search_fields perform three lookups.
         """
+        # TODO: it's pointless to do exact/startswith searches when the results
+        # will be reordered afterwards. contains search would suffice.
         rslt = []
         for search_field in self.search_fields:
             cleaned_q = self.clean_q(q, search_field)
@@ -191,12 +206,15 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
 
     Class attributes:
         - weak_hits_sep (str): template for the separator.
+        - separator_item_id (int): the 'id' of the separator item; defaults to 0
+            as no model instance ever has an id of value 0.
         - separator_width (int): the desired length of the separator string
             after formatting. If the separator is shorter than the specified
             length, it is padded with hyphens.
     """
 
     weak_hits_sep = gettext_lazy('weak hits for "{q}"')
+    separator_item_id = 0
     separator_width = 36  # Select2 result box is 36 digits wide
 
     def __init__(
@@ -237,11 +255,17 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
             if field not in self.primary_search_fields
         ]
 
-    def get_separator(self, q, separator_text=None):
-        """Return a string to visually separate results from weak results."""
+    def create_separator_item(self, q, separator_text=None):
+        """
+        Return a result item that visually separates strong results from weak
+        results.
+        """
         separator_text = separator_text or force_text(self.weak_hits_sep)
         separator_text = " " + separator_text.format(q=q).strip() + " "
-        return '{:-^{width}}'.format(separator_text, width=self.separator_width)
+        return (
+            self.separator_item_id,
+            '{:-^{width}}'.format(separator_text, width=self.separator_width)
+        )
 
     def exact_search(self, search_field, q):
         """
@@ -290,9 +314,32 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
             )
         if weak_hits:
             if self.use_separator and len(rslt):
-                weak_hits.insert(0, (0, self.get_separator(q)))
+                weak_hits.insert(0, self.create_separator_item(q))
             rslt.extend(weak_hits)
         return rslt
+
+    def reorder_results(self, results):
+        """
+        Reorder the results according to the order established by the root queryset.
+        Strong and weak results will be ordered within their respective group.
+        (Strong results are only ordered with other strong results, etc.)
+        """
+        ids = list(self._root_queryset.values_list('pk', flat=True))
+        # Find the separator item.
+        result_ids = [result_item[0] for result_item in results]
+        if not self.use_separator or  self.separator_item_id not in result_ids:
+            # No distinction between strong and weak results possible.
+            return super().reorder_results(results)
+        sep_index = result_ids.index( self.separator_item_id)
+        # Now split the results into strong and weak results and order
+        # both groups individually according to the order in the root queryset.
+        strong, weak = results[:sep_index], results[sep_index + 1:]
+        comp_func = lambda result_item: ids.index(result_item[0])
+        ordered_results = sorted(strong, key=comp_func)
+        # Put the separator item back in.
+        ordered_results.append(results[sep_index])
+        ordered_results.extend(sorted(weak, key=comp_func))
+        return ordered_results
 
 
 class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
@@ -411,7 +458,7 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
         # take the first item of the name_field value as label.
         return pk, data_dict[self.name_field][0]
 
-    def search(self, q=None):
+    def search(self, q, *args, **kwargs):
         if q:
             self.values_dict = self.get_queryset(q).values_dict(*self.search_fields)
-        return super().search(q)
+        return super().search(q, *args, **kwargs)

@@ -135,7 +135,8 @@ class TestAusgabeQuerySet(DataTestCase):
         self.assertEqual(qs.query.order_by, tuple(expected))
     
     def test_find_order(self):
-        result_ids = [i[0] for i in self.queryset.chronologic_order().find('2000')]
+        qs = self.queryset.chronologic_order()
+        result_ids = [i[0] for i in qs.find('2000')]
         self.assertEqual(result_ids, self.ordered_ids)
         
         # find() will return a list of [exact_matches] + [startswith_matches] + [contains_matches]
