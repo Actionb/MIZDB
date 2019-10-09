@@ -14,7 +14,6 @@ from DBentry.utils import get_model_from_string
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     """Base view for the autocomplete views of the DBentry app."""
 
-    _search_fields = None
     create_field = None  # NOTE: this already is an attribute of dal.BaseQuerySetView
 
     def dispatch(self, *args, **kwargs):
@@ -53,18 +52,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
                 and self.has_add_permission(self.request)):
             return self.build_create_option(q)
         return []
-
-    @property
-    def search_fields(self):
-        # This is a property so the evaluation of model.get_search_fields can
-        # be delayed for any subclass of ACBase until after the attribute
-        # 'model' has been set with certainty:
-        # either the model attribute is set by the subclass or it is set with
-        # the captured model name during dispatch
-        # FIXME: this is not used by ANYTHING?
-        if not self._search_fields:
-            self._search_fields = self.model.get_search_fields()
-        return self._search_fields
 
     def do_ordering(self, qs):
         # FIXME: reapplying the model's default ordering could remove ordering

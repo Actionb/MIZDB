@@ -50,7 +50,7 @@ class ACViewTestMethodMixin(object):
     def test_apply_q(self):
         # Test that an object can be found through any of its search_fields
         view = self.get_view()
-        search_fields = view.search_fields
+        search_fields = self.model.get_search_fields()
         for search_field in search_fields:
             q = self.qs_obj1.values_list(search_field, flat=True).first()
             if q:
@@ -98,9 +98,6 @@ class ACViewTestMethodMixin(object):
             # expected being empty means that this test has no test_data
             self.warn('Test poorly configured: no test data')
         self.assertListEqualSorted(qs, expected)
-    
-    def test_search_fields_prop(self):
-        self.assertListEqualSorted(self.get_view().search_fields, self.model.get_search_fields())
         
     @translation_override(language = None)
     def test_get_create_option(self):
