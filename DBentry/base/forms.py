@@ -279,9 +279,10 @@ class MIZAdminFormMixin(object):
                     # This results in IntegerField.has_changed('1',1);
                     # returning False.
                     initial_value = field.to_python(initial_value)
-                except:
-                    # FIXME: bare except
-                    pass
+                except ValidationError:
+                    # Always assume data has changed if validation fails.
+                    data.append(name)
+                    continue
             else:
                 initial_prefixed_name = self.add_initial_prefix(name)
                 hidden_widget = field.hidden_widget()
