@@ -17,7 +17,7 @@ from DBentry.utils import leapdays, is_iterable
 
 class MIZQuerySet(models.QuerySet):
 
-    def find(self, q, ordered=False, **kwargs):
+    def find(self, q, ordered=False, strat_class=None, **kwargs):
         """
         Find any occurence of the search term 'q' in the queryset, depending
         on the search strategy used.
@@ -27,7 +27,9 @@ class MIZQuerySet(models.QuerySet):
         established in the queryset instead.
         """
         # Find the best strategy to use:
-        if getattr(self.model, 'name_field', False):
+        if strat_class:
+            strat_class = strat_class
+        elif getattr(self.model, 'name_field', False):
             strat_class = ValuesDictSearchQuery
         elif getattr(self.model, 'primary_search_fields', False):
             strat_class = PrimaryFieldsSearchQuery
