@@ -44,7 +44,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     """
 
     # FIXME: self.get_search_fields access self.search_fields which is not declared
-    # FIXME: googlebtns: unquote the field value => Pascal „Cyrex“ Beniesch: Pascal %u201ECyrex%u201C Beniesch
     # TODO: googlebtns: fields in this list should be wrapped into a custom widget
     # (let the widget render the button instead of the fieldset template)
     googlebtns = []
