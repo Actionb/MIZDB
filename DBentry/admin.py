@@ -100,10 +100,11 @@ class AudioAdmin(MIZModelAdmin):
     list_display = ['__str__', 'formate_string', 'kuenstler_string']
 
     fieldsets = [
-        (None, {'fields': ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender']}),
+        (None, {'fields':
+                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender',
+                'beschreibung', 'bemerkungen']
+        }),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
-        # TODO: add beschreibung, bemerkungen to None fieldset to automatically create a fieldset
-        ('Beschreibung & Bemerkungen', {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']})
     ]
     inlines = [
         PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine,
@@ -481,7 +482,8 @@ class BuchAdmin(MIZModelAdmin):
         (None, {
             'fields': [
                 'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe',
-                ('buchband', 'is_buchband'), 'verlag', 'ISBN', 'EAN', 'sprache'
+                ('buchband', 'is_buchband'), 'verlag', 'ISBN', 'EAN', 'sprache',
+                'beschreibung', 'bemerkungen'
             ]}
         ),
         ('Original Angaben (bei Übersetzung)', {
@@ -489,8 +491,6 @@ class BuchAdmin(MIZModelAdmin):
             'description': "Angaben zum Original eines übersetzten Buches.",
             'classes': ['collapse', 'collapsed'],
         }),
-        # TODO: add beschreibung, bemerkungen to None fieldset to automatically create a fieldset
-        ('Beschreibung & Bemerkungen', {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']}),
     ]
     inlines = [
         HerausgeberInLine, AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine,
