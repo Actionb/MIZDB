@@ -889,26 +889,23 @@ class BaseBrochureAdmin(MIZModelAdmin):
         # django default implementation adds at minimum:
         # [(None, {'fields': self.get_fields()})]
         # Check the default fieldset for (ausgabe, ausgabe__magazin).
-        # FIXME: this assumes the fields are in the default fieldset
-        # it doesn't check if the fieldset is already declared or
-        # if the fields are not (individually) in the 'fields' attribute.
-        # TODO: add (ausgabe, ausgabe__magazin) fieldset unless
-        # excluded (attribute) or a fieldset already exists.
-        # Do not rely on the default fieldset as it uses the 'fields'
-        # attribute for its fields, which is sensitive to changes made by
-        # subclasses.
-        none_fieldsets = list(filter(lambda tpl: tpl[0] is None, fieldsets))
-        if none_fieldsets:
-            fields = none_fieldsets[0][1]['fields']
-            if all(f in fields for f in ('ausgabe__magazin', 'ausgabe')):
-                fields.remove('ausgabe')
-                fields.remove('ausgabe__magazin')
-                fieldset = (
-                    'Beilage von Ausgabe', {
-                        'fields': [('ausgabe__magazin', 'ausgabe')],
-                        'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
-                })
-                fieldsets.insert(1, fieldset)
+        # 'ausgabe__magazin' is returned by get_fields() due to being a base
+        # field of this ModelAdmin's form class.
+        default_fieldset = dict(fieldsets).get(None, None)
+        if not default_fieldset:
+            return fieldsets
+        fields = default_fieldset['fields'].copy()
+        ausgabe_fields = ('ausgabe__magazin', 'ausgabe')
+        if all(f in fields for f in ausgabe_fields):
+            for f in ausgabe_fields:
+                fields.remove(f)
+            fieldset = (
+                'Beilage von Ausgabe', {
+                    'fields': [ausgabe_fields],
+                    'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
+            })
+            fieldsets.insert(1, fieldset)
+            default_fieldset['fields'] = fields
         return fieldsets
 
     def jahr_string(self, obj):
@@ -936,25 +933,22 @@ class BrochureAdmin(BaseBrochureAdmin):
 class KatalogAdmin(BaseBrochureAdmin):
 
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
-    # TODO: swap 'art' and 'zusammenfassung' through the use of 'fields' attribute
 
     def get_fieldsets(self, *args, **kwargs):
         """
-        Swap art and zusammenfassung without having to redeclare the entire
-        fieldsets attribute.
+        Swap fieldset fields 'art' and 'zusammenfassung' without having to
+        redeclare the entire fieldsets attribute.
         """
         fieldsets = super().get_fieldsets(*args, **kwargs)
-        try:
-            none_fieldset = list(filter(lambda tpl: tpl[0] is None, fieldsets))[0]
-            fields = none_fieldset[1]['fields']
+        default_fieldset = dict(fieldsets).get(None, None)
+        if not default_fieldset:
+            return fieldsets
+        fields = default_fieldset['fields'].copy()
+        if all(f in fields for f in ('art', 'zusammenfassung')):
             art = fields.index('art')
             zusammenfassung = fields.index('zusammenfassung')
             fields[art], fields[zusammenfassung] = fields[zusammenfassung], fields[art]
-        except (IndexError, KeyError):
-            # Either there is no 'None' fieldset or
-            # it does not contain any fields or
-            # 'art' and/or 'zusammenfassung' are missing from fields.
-            pass
+            default_fieldset['fields'] = fields
         return fieldsets
 
 

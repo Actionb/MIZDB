@@ -928,17 +928,26 @@ class TestBaseBrochureAdmin(AdminTestCase):
     
     @translation_override(language = None)
     def test_get_fieldsets(self):
-        # Assert that an extra fieldset vor the ausgabe__magazin, ausgabe group was added
+        # Assert that an extra fieldset vor the (ausgabe__magazin, ausgabe)
+        # group was added.
         fieldsets = self.model_admin.get_fieldsets(self.get_request())
-        # Should have three fieldsets: the default 'none', a beschreibung & bemerkungen and the ausgabe & ausgabe__magazin one
+        # Should have three fieldsets:
+        # the default 'none', 
+        # beschreibung & bemerkungen 
+        # and the ausgabe & ausgabe__magazin one.
         self.assertEqual(len(fieldsets), 3)
         self.assertEqual(fieldsets[1][0], 'Beilage von Ausgabe')
         fieldset_options = fieldsets[1][1]
         self.assertIn('fields', fieldset_options)
-        self.assertEqual(fieldset_options['fields'], [('ausgabe__magazin', 'ausgabe')])
+        self.assertEqual(
+            fieldset_options['fields'], [('ausgabe__magazin', 'ausgabe')])
         self.assertIn('description', fieldset_options)
-        self.assertEqual(fieldset_options['description'], 'Geben Sie die Ausgabe an, der dieses Objekt beilag.')
-        
+        self.assertEqual(
+            fieldset_options['description'],
+            'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
+        )
+
+
 class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure

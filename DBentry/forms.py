@@ -51,6 +51,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
+        # NOTE: why the model and fields declarations?
         model = _models.artikel
         fields = '__all__'
         widgets = {
