@@ -1,4 +1,3 @@
-# TODO: inlines should be ordered consistently (alphabetically?)
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User
@@ -95,9 +94,12 @@ class AudioAdmin(MIZModelAdmin):
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     inlines = [
-        PlattenInLine, FormatInLine, DateiInLine, MusikerInLine, BandInLine,
-        GenreInLine, SchlInLine, VeranstaltungInLine, SpielortInLine, OrtInLine,
-        PersonInLine, BestandInLine, AusgabeInLine
+        GenreInLine, SchlInLine,
+        MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        PersonInLine, FormatInLine, PlattenInLine,
+        AusgabeInLine, DateiInLine,
+        BestandInLine
     ]
     search_form_kwargs = {
         'fields': [
@@ -136,7 +138,7 @@ class AusgabenAdmin(MIZModelAdmin):
         model = _models.ausgabe.audio.through
 
     index_category = 'Archivgut'
-    inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, BestandInLine, AudioInLine]
+    inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
 
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -276,7 +278,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
-        AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine,
+        AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine
     ]
     list_display = [
@@ -341,7 +343,7 @@ class BandAdmin(MIZModelAdmin):
 
     googlebtns = ['band_name']
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, OrtInLine, AliasInLine, MusikerInLine]
+    inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
     save_on_top = True
 
@@ -399,8 +401,9 @@ class BildmaterialAdmin(MIZModelAdmin):
     save_on_top = True
 
     inlines = [
-        SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine,
-        VeranstaltungInLine, SpielortInLine, PersonInLine, BestandInLine
+        GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        PersonInLine, BestandInLine
     ]
     search_form_kwargs = {
         'fields': [
@@ -486,8 +489,9 @@ class BuchAdmin(MIZModelAdmin):
         }),
     ]
     inlines = [
-        HerausgeberInLine, AutorInLine, SchlInLine, MusikerInLine, BandInLine, GenreInLine,
-        OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
+        AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        HerausgeberInLine, PersonInLine, BestandInLine
     ]
     list_display = [
         'titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string',
@@ -566,7 +570,7 @@ class MagazinAdmin(MIZModelAdmin):
         model = _models.magazin.genre.through
 
     index_category = 'Stammdaten'
-    inlines = [VerlagInLine, HerausgeberInLine, GenreInLine]
+    inlines = [GenreInLine, VerlagInLine, HerausgeberInLine]
     list_display = ['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
 
     search_form_kwargs = {
@@ -608,7 +612,7 @@ class MusikerAdmin(MIZModelAdmin):
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     googlebtns = ['kuenstler_name']
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, OrtInLine, AliasInLine, BandInLine, InstrInLine]
+    inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
@@ -717,7 +721,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.veranstaltung_alias
 
     collapse_all = True
-    inlines = [GenreInLine, PersonInLine, BandInLine, MusikerInLine, SchlInLine, AliasInLine]
+    inlines = [GenreInLine, SchlInLine, AliasInLine, BandInLine, MusikerInLine, PersonInLine]
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
     save_on_top = True
 
@@ -767,8 +771,8 @@ class VideoAdmin(MIZModelAdmin):
     superuser_only = True
 
     inlines = [
-        BandInLine, MusikerInLine, VeranstaltungInLine, SpielortInLine,
-        GenreInLine, SchlInLine, PersonInLine, BestandInLine
+        GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
     ]
 
 
@@ -856,8 +860,10 @@ class DateiAdmin(MIZModelAdmin):
     superuser_only = True
 
     inlines = [
-        QuelleInLine, BandInLine, MusikerInLine, VeranstaltungInLine,
-        SpielortInLine, GenreInLine, SchlInLine, PersonInLine, OrtInLine
+        QuelleInLine, GenreInLine, SchlInLine,
+        MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        PersonInLine,
     ]
     fieldsets = [
         (None, {'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
