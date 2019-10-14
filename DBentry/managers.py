@@ -248,9 +248,8 @@ def build_date(years, month_ordinals, day=None):
         month_ordinals = [month_ordinals]
 
     # Filter out None values that may have been returned by a values_list call.
-    none_filter = lambda x: x is not None
-    years = list(filter(none_filter, years))
-    month_ordinals = list(filter(none_filter, month_ordinals))
+    years = list(filter(None, years))
+    month_ordinals = list(filter(None, month_ordinals))
 
     if not (years and month_ordinals):
         # Either years or month_ordinals is an empty sequence.

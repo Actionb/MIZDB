@@ -24,8 +24,7 @@ def copy_related_set(obj, *paths):
             continue
         # Get the IDs of the instances to copy to obj.
         obj_qs = obj._meta.model.objects.filter(pk=obj.pk)
-        none_filter = lambda i: i is not None
-        ids = list(filter(none_filter, obj_qs.values_list(path, flat=True)))
+        ids = list(filter(None, obj_qs.values_list(path, flat=True)))
         if ids:
             # Get the instances to copy to obj.
             instances = target_model.objects.filter(pk__in=ids)
