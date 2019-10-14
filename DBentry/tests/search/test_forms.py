@@ -1,7 +1,6 @@
 from itertools import chain
 
 from django import forms
-from django.utils.datastructures import MultiValueDict
 
 from DBentry import models as _models
 from DBentry.ac import widgets as autocomplete_widgets
@@ -202,75 +201,6 @@ class TestSearchForm(MyTestCase):
         expected = PartialDate(2020, 5, 20)
         self.assertEqual(form.cleaned_data['datum'], expected)
         self.assertEqual(form.get_filters_params(), {'datum': expected})
-
-    def test_field_initial_select_multiple_dict(self):
-        # Assert that the form returns the correct initial values from a dict. 
-        form_class =self.factory(_models.bildmaterial, fields=['genre'])
-        initial = {'genre': [1, 2]}
-        form = form_class(initial=initial)
-        formfield = form.fields['genre']
-        self.assertEqual(form.get_initial_for_field(formfield, 'genre'), [1, 2])
-
-    def test_field_initial_select_multiple_MultiValueDict(self):
-        # Assert that the form returns the correct initial values from a MultiValueDict.
-        form_class =self.factory(_models.bildmaterial, fields=['genre'])
-        initial = {'genre': [1, 2]}
-        initial = MultiValueDict(initial)
-        form = form_class(initial = initial)
-        formfield = form.fields['genre']
-        self.assertEqual(form.get_initial_for_field(formfield, 'genre'), [1, 2])
-
-    def test_field_initial_multivaluefield_dict(self):
-        # Assert that the form returns the correct initial values for
-        # MultiValueFields from a dict.
-        form_class = self.factory(_models.bildmaterial, fields=['datum'])
-        initial = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 19}
-        form = form_class(initial=initial)
-        formfield = form.fields['datum']
-        self.assertEqual(
-            form.get_initial_for_field(formfield, 'datum'),
-            PartialDate(2020, 5, 19)
-        )
-
-    def test_field_initial_multivaluefield_MultiValueDict(self):
-        # Assert that the form returns the correct initial values for
-        # MultiValueFields from a MultiValueDict.
-        form_class = self.factory(_models.bildmaterial, fields=['datum'])
-        initial = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 19}
-        initial = MultiValueDict(initial)
-        form = form_class(initial = initial)
-        formfield = form.fields['datum']
-        self.assertEqual(
-            form.get_initial_for_field(formfield, 'datum'),
-            PartialDate(2020, 5, 19)
-        )
-
-    def test_field_initial_rangeformfield_dict(self):
-        # Assert that the form returns the correct initial values for
-        # RangeFormFields from a dict.
-        form_class = self.factory(_models.bildmaterial, fields=['datum__range'])
-        initial = {
-            'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19, 
-            'datum_1_0': 2019, 'datum_1_1': 5, 'datum_1_2': 20
-        }
-        expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]
-        form = form_class(initial=initial)
-        formfield = form.fields['datum']
-        self.assertEqual(form.get_initial_for_field(formfield, 'datum'), expected)
-
-    def test_field_initial_rangeformfield_MultiValueDict(self):
-        # Assert that the form returns the correct initial values for
-        # RangeFormFields from a MultiValueDict.
-        form_class = self.factory(_models.bildmaterial, fields=['datum__range'])
-        initial = {
-            'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19, 
-            'datum_1_0': 2019, 'datum_1_1': 5, 'datum_1_2': 20
-        }
-        expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]
-        initial = MultiValueDict(initial)
-        form = form_class(initial = initial)
-        formfield = form.fields['datum']
-        self.assertEqual(form.get_initial_for_field(formfield, 'datum'), expected)
 
 
 class TestRangeFormField(MyTestCase):

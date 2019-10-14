@@ -6,7 +6,6 @@ from django.core import exceptions
 from django.db.models import lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
-from django.utils.datastructures import MultiValueDict
 
 from DBentry.ac.widgets import make_widget
 from DBentry.forms import MIZAdminFormMixin
@@ -97,40 +96,6 @@ class SearchForm(forms.Form):
             'all': ('admin/css/forms.css', 'admin/css/search_form.css')
         }
         js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.initial = self.prepare_initial(self.initial)
-
-# FIXME: get_initial_for_field and prepare_initial seem pointless:
-# where is a search form initialized with initial data?
-# The changelist view only passes 'data'.
-    def get_initial_for_field(self, field, field_name):
-        if (field_name not in self.initial
-                and isinstance(field, forms.MultiValueField)):
-            # Only the individual subfields show up in a request payload.
-            if isinstance(field, RangeFormField):
-                return field.get_initial(self.initial, field_name)
-            widget_data = field.widget.value_from_datadict(
-                data=self.initial, files=None, name=field_name
-            )
-            return field.compress(widget_data)
-        return super().get_initial_for_field(field, field_name)
-
-    def prepare_initial(self, initial):
-        # initial may contain lists of values;
-        # keep the lists with length > 1 (for SelectMultiple) but flatten all others
-        cleaned = {}
-        if isinstance(initial, MultiValueDict):
-            iterator = initial.lists()
-        else:
-            iterator = initial.items()
-        for k, v in iterator:
-            if isinstance(v, (list, tuple)) and len(v) <= 1:
-                cleaned[k] = v[0] if v else None
-            else:
-                cleaned[k] = v
-        return cleaned
 
     def get_filters_params(self):
         """
