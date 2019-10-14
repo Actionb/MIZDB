@@ -402,7 +402,12 @@ class BildmaterialAdmin(MIZModelAdmin):
         SchlInLine, MusikerInLine, BandInLine, GenreInLine, OrtInLine,
         VeranstaltungInLine, SpielortInLine, PersonInLine, BestandInLine
     ]
-    search_form_kwargs = {'fields': ['genre__in', 'datum__range']}  # TODO: set this properly
+    search_form_kwargs = {
+        'fields': [
+            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe'
+        ],
+        'labels': {'reihe': 'Bildreihe'}
+    }
 
     def datum_localized(self, obj):
         return obj.datum.localize()
