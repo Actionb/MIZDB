@@ -43,7 +43,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             them on the index page.
     """
 
-    # FIXME: self.get_search_fields access self.search_fields which is not declared
     # TODO: googlebtns: fields in this list should be wrapped into a custom widget
     # (let the widget render the button instead of the fieldset template)
     googlebtns = []
