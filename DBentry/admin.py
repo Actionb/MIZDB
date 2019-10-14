@@ -251,8 +251,6 @@ class AutorAdmin(MIZModelAdmin):
 
 @admin.register(_models.artikel, site=miz_site)
 class ArtikelAdmin(MIZModelAdmin):
-    # TODO: the changeform page looks HORRIBLE
-    # 'seitenumfang' looks to be below and off to the site of 'seite'
     class GenreInLine(BaseGenreInline):
         model = _models.artikel.genre.through
     class SchlInLine(BaseSchlagwortInline):
