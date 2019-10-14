@@ -448,7 +448,15 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         
         obj.artikel_set.all().delete()
         self.assertFalse(self.get_crosslinks(obj))
-        
+
+    def test_actions(self):
+        # Assert that bulk_jg, add_bestand, moveto_brochure actions are available.
+        actions = self.model_admin.get_actions(self.get_request())
+        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure'):
+            with self.subTest(action_name=action_name):
+                self.assertIn(action_name, actions)
+
+
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.MagazinAdmin

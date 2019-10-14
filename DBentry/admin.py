@@ -149,9 +149,6 @@ class AusgabenAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, BestandInLine, AudioInLine]
 
-    actions = MIZModelAdmin.actions + [  # TODO: add actions via get_actions()
-        _actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure
-    ]
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
@@ -173,6 +170,21 @@ class AusgabenAdmin(MIZModelAdmin):
             'ausgabe_monat__monat__ordinal__range': 'Monatsnummer'
         }
     }
+
+    def get_actions(self, request):
+        """Add bulk_jg, add_bestand, moveto_brochure actions."""
+        action_funcs = [
+            _actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure]
+        new_actions = []
+        for func in action_funcs:
+            action = self.get_action(func)
+            if action is not None:
+                new_actions.append(action)
+        new_actions = self._filter_actions_by_permissions(request, new_actions)
+        actions = super().get_actions(request)
+        for func, name, desc in new_actions:
+            actions[name] = (func, name, desc)
+        return actions
 
     def get_changelist(self, request, **kwargs):
         from .changelist import AusgabeChangeList
