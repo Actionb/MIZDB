@@ -30,18 +30,6 @@ class BestandInLine(BaseTabularInline):
     verbose_name = _models.bestand._meta.verbose_name
     verbose_name_plural = _models.bestand._meta.verbose_name_plural
 
-# TODO: why are DateiInLine and QuelleInLine not declared within their ModelAdmin?
-class DateiInLine(BaseTabularInline):
-    model = _m2m.m2m_datei_quelle
-    fields = ['datei']
-    verbose_model = _models.datei
-
-
-class QuelleInLine(BaseStackedInline):
-    model = _m2m.m2m_datei_quelle
-    extra = 0
-    description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
-
 
 @admin.register(_models.audio, site=miz_site)
 class AudioAdmin(MIZModelAdmin):
@@ -852,6 +840,10 @@ class DateiAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.datei.veranstaltung.through
         verbose_model = _models.veranstaltung
+    class QuelleInLine(BaseStackedInline):
+        model = _m2m.m2m_datei_quelle
+        extra = 0
+        description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
 
     collapse_all = True
     index_category = 'Archivgut'
