@@ -509,3 +509,8 @@ class HumanNameQuerySet(MIZQuerySet):
     def find(self, q, **kwargs):
         q = self._parse_human_name(q)
         return super().find(q, **kwargs)
+
+
+class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):
+    """Queryset for models where the names of people are primary."""
+    pass
