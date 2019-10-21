@@ -1,6 +1,6 @@
 import re
 
-from DBentry.views import MIZAdminToolViewMixin
+from DBentry.base.views import MIZAdminToolViewMixin
 from .forms import ImportSelectForm, MBFormSet
 from .relational import RelationImport
 from .name_utils import split_name

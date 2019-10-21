@@ -1,5 +1,5 @@
 from django import forms
-from DBentry.forms import MIZAdminForm
+from DBentry.base.forms import MIZAdminForm
 
 class ImportSelectForm(MIZAdminForm):
     import_file = forms.FileField(allow_empty_file=False)

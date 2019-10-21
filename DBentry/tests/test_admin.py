@@ -1,21 +1,19 @@
 import re
-from itertools import chain
 from unittest.mock import patch
 from .base import AdminTestCase, UserTestCase
 
 from django.contrib import admin
+from django.contrib.auth.models import Permission
 from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
-from DBentry.sites import miz_site
 import DBentry.models as _models
 
-from DBentry.sites import MIZAdminSite
+from DBentry.sites import MIZAdminSite, miz_site
 from DBentry.utils import get_model_fields
 from DBentry.factory import make, modelfactory_factory
 from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.templatetags.asf_tag import advanced_search_form as advanced_search_form_tag
 
 class AdminTestMethodsMixin(object):
     
@@ -25,7 +23,8 @@ class AdminTestMethodsMixin(object):
     crosslinks_expected = [] # the data that is expected to be returned by add_crosslinks
     exclude_expected = None # fields to be excluded from the changeview form
     fields_expected = None # fields expected to be on the changeview form
-    
+    search_fields_expected = None # the final search_fields expected
+
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
@@ -146,36 +145,13 @@ class AdminTestMethodsMixin(object):
             self.assertIsInstance(formfield.widget, MIZModelSelect2, msg=fkey_field.name)
         
     def test_get_changelist(self):
-        self.assertEqual(self.model_admin.get_changelist(self.get_request()), MIZChangeList)
-    
+        self.assertEqual(self.model_admin.get_changelist(self.get_request(path = self.changelist_path)), MIZChangeList)
+
     def test_get_search_fields(self):
-        # search fields are largely declared with the models, the admin classes only add the exact =id lookup
-        # (or replace an existing pk_name search field with an exact lookup)
-        pk_name = self.model._meta.pk.name
-        _backup = self.model_admin.search_fields
-        self.assertIn('=pk' , self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = []
-        self.assertIn('=pk' , self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = [pk_name]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertNotIn(pk_name, self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = ["=" + pk_name]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertNotIn("=" + pk_name, self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = ["pk"]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertNotIn("pk", self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = ["beep", pk_name, "baap", "pk", "boop", "=" + pk_name]
-        self.assertIn('=pk', self.model_admin.get_search_fields())
-        self.assertEqual(["beep", "=pk", "baap", "boop"], self.model_admin.get_search_fields())
-        
-        self.model_admin.search_fields = _backup
-        
+        if self.search_fields_expected is None:
+            return
+        self.assertEqual(self.model_admin.get_search_fields(), self.search_fields_expected)
+
     def test_media_prop(self):
         media = self.model_admin.media
         if self.model_admin.googlebtns:
@@ -217,44 +193,26 @@ class AdminTestMethodsMixin(object):
             self.assertGreater(media._js.index(jquery_init), media._js.index(jquery_base), 
                 msg = "jquery base must be loaded before jquery.init")
     
-    def test_lookup_allowed_adv_sf(self):
-        # Assert that all fields and their lookups belonging to advanced search form are allowed
-        request = self.get_request()
-        advsf_dict = advanced_search_form_tag(self.get_changelist(request = request))['asf'] # advsf_dict = dict(selects=[{},...], gtelt=[], simple=[], ac_form=form)
-        for lookup_group_name, lookup_groups in advsf_dict.items():
-            if lookup_group_name in ('selects', 'simple'):
-                lookups = [lookup_group['query_string'] for lookup_group in lookup_groups]
-            elif lookup_group_name == 'gtelt':
-                # gtelt contains two lookups, gte_query_string and lt_query_string, wrangle them into a flattened iterator
-                lookups = chain.from_iterable((lookup_group['gte_query_string'], lookup_group['lt_query_string']) for lookup_group in lookup_groups)
-            elif lookup_group_name == 'ac_form':
-                lookups = lookup_groups.base_fields.keys()
-            else:
-                # Agh, just continue I am bad at computers
-                continue
-                
-            for lookup in lookups:
-                self.assertTrue(self.model_admin.lookup_allowed(lookup = lookup, value = None), msg = 'lookup not allowed: ' + lookup)
-            
 class TestMIZModelAdmin(AdminTestCase):
     
     model_admin_class = _admin.DateiAdmin
     model = _models.datei
     test_data_count = 1
     
-    def test_get_actions(self):
+    def test_get_actions_noperms(self):
         # No permissions: no actions
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
         self.assertEqual(len(actions), 0)
         
+    def test_get_actions_staffuser(self):
         # staff_user has no permissions, so let's give him permission to delete artikel
-        from django.contrib.auth.models import Permission
         p = Permission.objects.get(codename='delete_datei')
         self.staff_user.user_permissions.add(p)
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         self.assertEqual(len(actions), 1)
         self.assertIn('delete_selected', actions.keys())
         
+    def test_get_actions_superuser(self):
         # superuser has all permissions inherently
         actions = self.model_admin.get_actions(self.get_request())
         self.assertEqual(len(actions), 2)   
@@ -275,29 +233,6 @@ class TestMIZModelAdmin(AdminTestCase):
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         self.assertNotIn('action', actions.keys())
         
-    def test_group_fields(self):
-        self.model_admin.fields = None
-        self.assertEqual(self.model_admin.group_fields(), [])
-        
-        self.model_admin.fields = ['seite', 'ausgabe', 'schlagzeile', 'zusammenfassung', 'seitenumfang']
-        self.model_admin.flds_to_group = [
-            ('magazin', 'ausgabe'), ('xyz', 'abc'), ('schlagzeile', 'zusammenfassung'), ('seitenumfang', 'zusammenfassung')
-        ]
-        grouped_fields = self.model_admin.group_fields()
-        
-        # group_fields() should have ignored the nonsensical second tuple
-        self.assertNotIn(('xyz', 'abc'), grouped_fields, msg='bad group was not removed')
-        
-        # the first tuple is expected to have replaced the 'ausgabe' in fields
-        self.assertEqual(grouped_fields[1], ('magazin', 'ausgabe'))
-        self.assertNotIn('ausgabe', grouped_fields, msg='field was not replaced')
-        
-        # by inserting the third tuple, group_fields() should have also removed the now redundant fourth field 'zusammenfassung'
-        self.assertNotIn('zusammenfassung', grouped_fields, msg='redundant field not removed')
-        
-        # group_fields() must not add duplicate fields 
-        self.assertNotIn(('seitenumfang', 'zusammenfassung'), grouped_fields, msg='group_fields() must not add duplicate fields')
-                
     def test_add_extra_context(self):
         # no object_id passed in: add_crosslinks should not be called
         extra = self.model_admin.add_extra_context() 
@@ -306,14 +241,12 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_add_view(self):
         response = self.client.get(self.add_path)
         self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('hint' in response.context)
         self.assertTrue('googlebtns' in response.context)
         self.assertFalse('crosslinks' in response.context, msg='no crosslinks allowed in add views')
         
     def test_change_view(self):
         response = self.client.get(self.change_path.format(pk=self.obj1.pk))
         self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('hint' in response.context)
         self.assertTrue('googlebtns' in response.context)
         self.assertTrue('crosslinks' in response.context)
         
@@ -321,18 +254,6 @@ class TestMIZModelAdmin(AdminTestCase):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
         
-    def test_get_changeform_initial_data_with_changelist_filters(self):
-        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertTrue('ausgabe__magazin' in cf_init_data)
-        self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
-        
-        # assert that the method can handle bad strings
-        request = self.get_request(data={'_changelist_filters':'thisisbad'})
-        with self.assertNotRaises(ValueError):
-            cf_init_data = self.model_admin.get_changeform_initial_data(request)
-            
     def test_construct_m2m_change_message(self):
         # auto created
         obj = self.model.band.through.objects.create(
@@ -366,43 +287,48 @@ class TestMIZModelAdmin(AdminTestCase):
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)), ['Alice Mantest'])
-    
-    def test_get_preserved_filters(self):
-        query_string = '_changelist_filters=sender%3D1'
-        path = self.add_path + '?_changelist_filters=sender=1'
-        request_data = {'_changelist_filters': ['sender=1']}
-        
-        # Ignore requests without POST or or without _changelist_filters in GET
-        request = self.get_request(path = self.add_path)
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, '', msg = 'preserved_filters updated without request.POST and without _changelist_filters in request.GET')
-        
-        request = self.get_request(path = path)
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, query_string, msg = 'preserved_filters updated without request.POST')
-        
-        request = self.get_request(path = self.add_path)
-        request.POST = {'sender':'2'}
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, '', msg = 'preserved_filters updated without _changelist_filters')
-        
-        # Do not use key value pairs from POST data that are not present in GET _changelist_filters 
-        request = self.get_request(path = path, data = request_data)
-        request.POST = {'titel':'Beep boop'}
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, query_string, msg = 'preserved_filters updated for field not present in _changelist_filters')
-        
-        # Update the changelist filters if applicable
-        request = self.get_request(path = path, data = request_data)
-        request.POST = {'sender':'2'}
-        filters = self.model_admin.get_preserved_filters(request)
-        self.assertEqual(filters, '_changelist_filters=sender%3D2', msg = 'preserved_filters not updated')
-       
-    def test_get_search_fields(self):
-        # Assert that get_search_fields does not include a iexact lookup for primary keys that are a relation
-        search_fields = _admin.KatalogAdmin(_models.Katalog, self.admin_site).get_search_fields()
-        self.assertNotIn('=basebrochure_ptr', search_fields)
-                
+
+    def test_add_pk_search_field(self):
+        # Assert that a search field for the primary key is added to the search fields.
+        # For primary keys that are a relation (OneToOneRelation) this should be
+        # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
+        test_data = [
+            ('NoRelation', self.model_admin, 'pk__iexact'), 
+            (
+                'OneToOneRelation',
+                _admin.KatalogAdmin(_models.Katalog, self.admin_site),
+                'pk__pk__iexact'
+            )
+        ]
+        for test_desc, model_admin, expected in test_data:
+            with self.subTest(desc=test_desc):
+                search_fields = model_admin._add_pk_search_field([])
+                self.assertTrue(search_fields, msg = "Expected pk field to be added.")
+                self.assertEqual(len(search_fields), 1, 
+                    msg = "Only one pk search field expected. Got: %s" % str(search_fields))
+                self.assertIn(expected, search_fields)
+
+    def test_add_pk_search_field_does_not_overwrite_existing(self):
+        # Assert that _add_pk_search_field does not overwrite or delete
+        # existing primary key search_fields.
+        pk_name = self.model._meta.pk.name
+        test_data = [
+            ('no prefix', ['pk']), 
+            ('prefixed', ['=pk']), 
+            ('lookup', ['pk__istartswith']), 
+            ('lookup prefixed', ['=pk__istartswith']), 
+            ('pk name', [pk_name]), 
+            ('pk name prefixed', ['=%s' % pk_name]), 
+            ('pk name lookup', ['%s__istartswith' % pk_name]), 
+            ('pk name lookup prefixed', ['=%s__istartswith' % pk_name])
+        ]
+
+        for test_desc, initial_fields in test_data:
+            with self.subTest(desc=test_desc):
+                search_fields = self.model_admin._add_pk_search_field(initial_fields)
+                self.assertEqual(initial_fields, search_fields)
+
+
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.ArtikelAdmin
@@ -437,13 +363,14 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_kuenstler_string(self):
         self.assertEqual(self.model_admin.kuenstler_string(self.obj1), 'Testband, Alice Tester')
         
+    #NOTE: get_changeform_initial_data is now technically part of DBentry.search
     def test_get_changeform_initial_data_with_changelist_filters(self):
         # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in initial for the form
         # from ausgabe__magazin path
-        initial = {'_changelist_filters':'ausgabe__magazin=326&q=asdasd&thisisbad'}
+        initial = {'_changelist_filters':'ausgabe__magazin=%s&q=asdasd&thisisbad' % self.mag.pk}
         request = self.get_request(data=initial)
         cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('ausgabe__magazin'), '326')
+        self.assertEqual(cf_init_data.get('ausgabe__magazin'), self.mag)
 
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     
@@ -467,18 +394,13 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         
     def test_get_changelist(self):
         self.assertEqual(self.model_admin.get_changelist(self.get_request()), AusgabeChangeList)
-    
-    def test_group_fields(self):        
-        # AusgabenAdmin flds_to_group = [('status', 'sonderausgabe')]
-        expected = ['magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
-        request = self.get_request()
-        self.model_admin.get_fields(request)
-        self.assertEqual(self.model_admin.group_fields(), expected)
         
     def test_anz_artikel(self):
-        self.assertEqual(self.model_admin.anz_artikel(self.obj1), 1)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_artikel(obj), 1)
         _models.artikel.objects.all().delete()
-        self.assertEqual(self.model_admin.anz_artikel(self.obj1), 0)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_artikel(obj), 0)
         
     def test_jahr_string(self):
         self.assertEqual(self.model_admin.jahr_string(self.obj1), '2020, 2021, 2022')
@@ -526,7 +448,15 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         
         obj.artikel_set.all().delete()
         self.assertFalse(self.get_crosslinks(obj))
-        
+
+    def test_actions(self):
+        # Assert that bulk_jg, add_bestand, moveto_brochure actions are available.
+        actions = self.model_admin.get_actions(self.get_request())
+        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure'):
+            with self.subTest(action_name=action_name):
+                self.assertIn(action_name, actions)
+
+
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     model_admin_class = _admin.MagazinAdmin
@@ -544,10 +474,11 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     raw_data = [{'ausgabe__extra':1}]
         
     def test_anz_ausgaben(self):
-        self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 1)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_ausgaben(obj), 1)
         self.obj1.ausgabe_set.all().delete()
-        self.obj1.refresh_from_db()
-        self.assertEqual(self.model_admin.anz_ausgaben(self.obj1), 0)
+        obj = self.get_queryset().get(pk=self.obj1.pk)
+        self.assertEqual(self.model_admin.anz_ausgaben(obj), 0)
 
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     
@@ -1005,30 +936,39 @@ class TestBaseBrochureAdmin(AdminTestCase):
     
     @translation_override(language = None)
     def test_get_fieldsets(self):
-        # Assert that an extra fieldset vor the ausgabe__magazin, ausgabe group was added
+        # Assert that an extra fieldset vor the (ausgabe__magazin, ausgabe)
+        # group was added.
         fieldsets = self.model_admin.get_fieldsets(self.get_request())
-        # Should have three fieldsets: the default 'none', a beschreibung & bemerkungen and the ausgabe & ausgabe__magazin one
+        # Should have three fieldsets:
+        # the default 'none', 
+        # beschreibung & bemerkungen 
+        # and the ausgabe & ausgabe__magazin one.
         self.assertEqual(len(fieldsets), 3)
         self.assertEqual(fieldsets[1][0], 'Beilage von Ausgabe')
         fieldset_options = fieldsets[1][1]
         self.assertIn('fields', fieldset_options)
-        self.assertEqual(fieldset_options['fields'], [('ausgabe__magazin', 'ausgabe')])
+        self.assertEqual(
+            fieldset_options['fields'], [('ausgabe__magazin', 'ausgabe')])
         self.assertIn('description', fieldset_options)
-        self.assertEqual(fieldset_options['description'], 'Geben Sie die Ausgabe an, der dieses Objekt beilag.')
-        
+        self.assertEqual(
+            fieldset_options['description'],
+            'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
+        )
+
+
 class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure
     fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'ausgabe__magazin']
     exclude_expected = ['genre', 'schlagwort']
-    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
         
 class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
     fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'art',  'ausgabe__magazin']
     exclude_expected = ['genre']
-    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'art']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'art', 'pk__pk__iexact']
     
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -1045,7 +985,7 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     model = _models.Kalendar
     fields_expected = ['titel',  'zusammenfassung',  'bemerkungen',  'ausgabe',  'beschreibung',  'ausgabe__magazin']
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
-    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung']
+    search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
         
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
@@ -1154,7 +1094,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertNotIn(self.musiker, self.obj1.musiker.all())
         
 class TestAdminSite(UserTestCase):
-    
+
     def test_app_index(self):
         response = self.client.get('/admin/DBentry/')
         self.assertEqual(response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__)
@@ -1167,20 +1107,27 @@ class TestAdminSite(UserTestCase):
         response = miz_site.index(request)
         app_list = response.context_data['app_list']
         
-        # check if there are two 'categories' (fake apps) for app DBentry (app_list was extended by two new app_dicts)
+        # Check for the three categories (fake apps) on the index page.
         app_names = [d.get('name','') for d in app_list]
-        self.assertTrue('Archivgut' in app_names)
-        self.assertTrue('Stammdaten' in app_names)
-        self.assertTrue('Sonstige' in app_names)
+        for category in ['Archivgut', 'Stammdaten', 'Sonstige']:
+            with self.subTest():
+                self.assertIn(category, app_names)
         
     def test_index_admintools(self):
+        # TODO: move the import
+        # TODO: this only tests if the category 'admintools' appears on the index
+        # not that the link is displayed correctly (permissions, etc.)
+        site = MIZAdminSite()
         from DBentry.bulk.views import BulkAusgabe
         tool = BulkAusgabe
-        miz_site.register_tool(tool)
-        
+        site.register_tool(
+            tool,
+            url_name='bulk_ausgabe',
+            index_label='Test',
+            superuser_only=False,
+        )
         request = self.client.get('/admin/').wsgi_request
-        response = miz_site.index(request)
-        
+        response = site.index(request)
         self.assertTrue('admintools' in response.context_data)
         
     def test_get_admin_model(self):
@@ -1188,3 +1135,16 @@ class TestAdminSite(UserTestCase):
         self.assertIsInstance(miz_site.get_admin_model(_models.artikel), expected_model_admin)
         self.assertIsInstance(miz_site.get_admin_model('DBentry.artikel'), expected_model_admin)
         self.assertIsNone(miz_site.get_admin_model('BEEP.BOOP'))
+
+    def test_changelist_availability(self):
+        from django.urls import reverse
+        for model in miz_site._registry:
+            opts = model._meta
+            with self.subTest(model_name = opts.model_name):
+                path = reverse(
+                    "%s:%s_%s_changelist" % 
+                    (miz_site.name, opts.app_label, opts.model_name)
+                )
+                with self.assertNotRaises(Exception):
+                    response = self.client.get(path = path, user = self.super_user)
+                self.assertEqual(response.status_code, 200, msg = path)

@@ -97,18 +97,20 @@ class TestURLs(URLTestCase):
         
     def test_maint_urls(self):
         self.urlconf = maint_urls
-        
-        expected = [
-            ('dupes_select', '/dupes/', (), {}, maint_views.ModelSelectView), 
-            ('dupes', '/dupes/ausgabe/', (), {'model_name':'ausgabe'}, maint_views.DuplicateObjectsView), 
-#            ('unused_select', '/unused/', (), {}, maint_views.ModelSelectView), 
-#            ('unused_objects', '/unused/ausgabe/lte1/', (), {'model_name': 'ausgabe', 'lte': 1}, maint_views.UnusedObjectsView)
+        test_data = [
+            (
+                'dupes_select', '/dupes/', (), {},
+                maint_views.DuplicateModelSelectView
+            ),
+            (
+                'dupes', '/dupes/ausgabe/', (), {'model_name':'ausgabe'},
+                maint_views.DuplicateObjectsView
+            )
         ]
-        with self.collect_fails() as collector:
-            for view_name, url, args, kwargs, view_class in expected:
-                with collector():
-                    self.assertReverses(view_name, url, *args, **kwargs)
-                    self.assertResolves(url, view_class)
-                    
+        for view_name, url, args, kwargs, view_class in test_data:
+            with self.subTest(view_name=view_name):
+                self.assertReverses(view_name, url, *args, **kwargs)
+                self.assertResolves(url, view_class)
+
     def test_miz_site_urls(self):
         pass

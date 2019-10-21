@@ -58,9 +58,11 @@ class CreateViewMixin(object):
     
     def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
         view = self.view_class(**initkwargs)
-        view.request = request
-        view.args = args or []
-        view.kwargs = kwargs or {}
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+        view.setup(request, *args, **kwargs)
         return view
         
     def get_dummy_view_class(self, bases=None, attrs=None):

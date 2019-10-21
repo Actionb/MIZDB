@@ -10,7 +10,6 @@ def dummy_func1():
 dummy_func1.short_description = 'Beep'
 dummy_func1.perm_required = 'Boop'
 
-#NOTE: why is this a SimpleTestCase?
 class TestAddClsAttrsDecorator(SimpleTestCase):
     
     def test_deco_with_cls_attrs_and_no_func_attrs(self):
