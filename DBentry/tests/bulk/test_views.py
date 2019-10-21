@@ -184,10 +184,8 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertLoggedAddition(a, m2m_instance)
         # Check that a value for 'jahrgang' was added and that the addition
         # was logged correctly.
-        # (Note that the 'status' also changes:
-        # from '1' to 'unb'; which mean the same thing)
         self.assertIsNotNone(self.updated.jahrgang)
-        self.assertLoggedChange(self.updated, fields = ['jahrgang', 'status'])
+        self.assertLoggedChange(self.updated, fields = ['jahrgang'])
 
     @tag('logging')
     def test_save_data_created(self):

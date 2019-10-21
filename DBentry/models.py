@@ -204,8 +204,8 @@ class ausgabe(ComputedNameModel):
         (UNBEARBEITET, 'unbearbeitet'), (INBEARBEITUNG, 'in Bearbeitung'),
         (ABGESCHLOSSEN, 'abgeschlossen'), (KEINEBEARBEITUNG, 'keine Bearbeitung vorgesehen')
     ]
-    # FIXME: ausgabe.status: default=1 is wrong
-    status = models.CharField('Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=1)
+    status = models.CharField(
+        'Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=UNBEARBEITET)
     e_datum = models.DateField(
         'Erscheinungsdatum', null=True, blank=True, help_text='Format: tt.mm.jjjj'
     )
