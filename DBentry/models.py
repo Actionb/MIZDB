@@ -13,7 +13,7 @@ from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
-from DBentry.managers import AusgabeQuerySet, PeopleQuerySet
+from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
 from DBentry.utils import concat_limit
 
 
@@ -64,7 +64,7 @@ class musiker(BaseModel):
 
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
-    objects = PeopleQuerySet.as_manager()
+    objects = HumanNameQuerySet.as_manager()
     primary_search_fields = []
     search_fields = [
         'kuenstler_name', 'person__vorname', 'person__nachname',
