@@ -447,8 +447,8 @@ class magazin(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     ort = models.ForeignKey(
-        'ort', models.SET_NULL, null=True, blank=True, verbose_name='Hrsg.Ort',
-        help_text='Angabe für auf eine Region beschränktes Magazin.'
+        'ort', models.SET_NULL, null=True, blank=True, verbose_name='Herausgabeort',
+        help_text='Angabe für auf eine Region beschränktes Magazin.'  # TODO: better help_text magazin.ort
     )
 
     genre = models.ManyToManyField('genre', blank=True, through=_m2m.m2m_magazin_genre)
