@@ -435,7 +435,6 @@ class magazin(BaseModel):
     ]
 
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    erstausgabe = models.CharField(**CF_ARGS_B)  # TODO: wofür?
     turnus = models.CharField(choices=TURNUS_CHOICES, default='u', **CF_ARGS_B)
     magazin_url = models.URLField(verbose_name='Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
