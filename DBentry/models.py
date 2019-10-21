@@ -13,7 +13,7 @@ from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
 from DBentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
-from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet
+from DBentry.managers import AusgabeQuerySet, PeopleQuerySet
 from DBentry.utils import concat_limit
 
 
@@ -26,7 +26,7 @@ class person(ComputedNameModel):
     orte = models.ManyToManyField('ort', blank=True)
 
     name_composing_fields = ['vorname', 'nachname']
-    objects = HumanNameQuerySet.as_manager()
+    objects = PeopleQuerySet.as_manager()
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
@@ -64,7 +64,7 @@ class musiker(BaseModel):
 
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
-    objects = HumanNameQuerySet.as_manager()
+    objects = PeopleQuerySet.as_manager()
     primary_search_fields = []
     search_fields = [
         'kuenstler_name', 'person__vorname', 'person__nachname',
@@ -154,7 +154,7 @@ class autor(ComputedNameModel):
     magazin = models.ManyToManyField('magazin', blank=True, through=_m2m.m2m_autor_magazin)
 
     name_composing_fields = ['person___name', 'kuerzel']
-    objects = HumanNameQuerySet.as_manager()
+    objects = PeopleQuerySet.as_manager()
     primary_search_fields = []
     search_fields = ['kuerzel', 'person___name', 'beschreibung']
     search_fields_suffixes = {'beschreibung': 'Beschreibung'}
