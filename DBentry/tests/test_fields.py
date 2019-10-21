@@ -181,7 +181,27 @@ class StdNumFieldTestsMixin(object):
                         model_form[self.model_field.name].value()
                     )
                     self.assertFalse(model_form.has_changed(), msg = "ModelForm is flagged as changed for using different formats of the same stdnum. " + msg_info)
-   
+
+
+class TestStdNumField(MyTestCase):
+
+    def test_formfield_widget(self):
+        # Assert that the widget of the formfield is always an instance of StdNumWidget.
+        model_field = _models.buch._meta.get_field('ISBN')
+        from django.contrib.admin.widgets import AdminTextInputWidget
+        dummy_widget_class = type('Dummy', (StdNumWidget, ), {})
+        widgets = [
+            None,
+            str, '1',
+            AdminTextInputWidget, AdminTextInputWidget(),
+            dummy_widget_class, dummy_widget_class()
+        ]
+        for widget in widgets:
+            formfield_widget = model_field.formfield(widget=widget).widget
+            with self.subTest(widget=str(widget)):
+                self.assertTrue(isinstance(formfield_widget, StdNumWidget))
+
+
 class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.buch
     model_field = _models.buch._meta.get_field('ISBN')

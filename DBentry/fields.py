@@ -85,18 +85,35 @@ class StdNumField(models.CharField):
             kwargs['max_length'] = self.max_length
         super().__init__(*args, **kwargs)
 
-    def formfield(self, **kwargs):
-        kwargs['min_length'] = self.min_length
-        kwargs['stdnum'] = self.stdnum
-        kwargs['form_class'] = StdNumFormField
-        # Pass this ModelField's validators to the FormField for form-based
-        # validation.
-        kwargs['validators'] = self.default_validators
-        # Pass the format callback function to the widget for a prettier
-        # display of the value.
-        kwargs['widget'] = StdNumWidget(
-            format_callback=self.get_format_callback()
-        )
+    def formfield(self, widget=None, **kwargs):
+        defaults = {
+            'min_length': self.min_length,
+            'stdnum': self.stdnum,
+            'form_class': StdNumFormField,
+            # Pass this ModelField's validators to the FormField for
+            # form-based validation.
+            'validators': self.default_validators,
+        }
+        kwargs = {**defaults, **kwargs}
+
+        widget_class = None
+        # Pass the format callback function to the widget for a
+        # prettier display of the value.
+        widget_kwargs = {'format_callback': self.get_format_callback()}
+        if widget:
+            # django-admin will pass its own widget instance to formfield()
+            # (or whatever the ModelAdmins.formfield_overrides sets).
+            # This means losing the StdNumWidget and its prettier output.
+            if isinstance(widget, type):
+                widget_class = widget
+            else:
+                widget_kwargs['attrs'] = getattr(widget, 'attrs', None)
+                widget_class = widget.__class__
+            if not issubclass(widget_class, StdNumWidget):
+                widget_class = StdNumWidget
+        else:
+            widget_class = StdNumWidget
+        kwargs['widget'] = widget_class(**widget_kwargs)
         return super().formfield(**kwargs)
 
     def get_format_callback(self):
