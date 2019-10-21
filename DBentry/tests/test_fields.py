@@ -303,7 +303,14 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
         '12345670', #InvalidChecksum 
         "1234-5670", #InvalidChecksum
     ]
-    
+
+    def test_min_max_parameter_passed_to_formfield(self):
+        # Assert that the correct min and max length parameters are passed to the field's formfield.
+        formfield = self.model_field.formfield()
+        self.assertEqual(formfield.min_length, self.model_field.min_length)
+        self.assertEqual(formfield.max_length, 17)
+
+
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.buch
     model_field = _models.buch._meta.get_field('EAN')

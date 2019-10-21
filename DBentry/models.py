@@ -447,7 +447,6 @@ class magazin(BaseModel):
     )
     fanzine = models.BooleanField('Fanzine', default=False)
     issn = ISSNField('ISSN', blank=True)  # NOTE: implement this as reverse foreign relation so one magazin can have multiple ISSN numbers?
-    # TODO: accept EAN-13 and issn-7
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 

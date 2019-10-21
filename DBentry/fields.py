@@ -54,15 +54,32 @@ class StdNumFormField(fields.CharField):
         super().__init__(*args, **kwargs)
 
     def to_python(self, value):
+        """Return the compactified python value."""
         value = super().to_python(value)
-        if (value not in self.empty_values and self.stdnum == isbn
-                and isbn.isbn_type(value) == 'ISBN10'):
+        return self.stdnum.compact(value)
+
+
+class ISBNFormField(StdNumFormField):
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        if value not in self.empty_values and isbn.isbn_type(value) == 'ISBN10':
             # Cast the ISBN10 into a ISBN13, so value can match the initial
             # value (which is always ISBN13).
             value = isbn.to_isbn13(value)
-        # To ensure that an initial compact value does not differ from a data
-        # formatted value, compact the data value. See FormField.has_changed.
-        return self.stdnum.compact(value)
+        return value
+
+
+class ISSNFormField(StdNumFormField):
+
+    def to_python(self, value):
+        value = super().to_python(value)
+        if value not in self.empty_values and len(value) == 13:
+            # Compactified value is possibly a EAN-13 number.
+            # Retrieve the ISSN number.
+            value = value[3:-3]
+            value += issn.calc_check_digit(value)
+        return value
 
 
 class StdNumField(models.CharField):
@@ -155,6 +172,10 @@ class ISBNField(StdNumField):
             return isbn.format(value, convert=True)
         return _format
 
+    def formfield(self, **kwargs):
+        defaults = {'form_class': ISBNFormField}
+        return super().formfield(**{**defaults, **kwargs})
+
 
 class ISSNField(StdNumField):
     stdnum = issn
@@ -162,6 +183,14 @@ class ISSNField(StdNumField):
     max_length = 9  # ISSN with dash/space
     default_validators = [ISSNValidator]
     description = 'Cleaned and validated ISSN string of length 8.'
+
+    def formfield(self, **kwargs):
+        defaults = {
+            # Allow for EAN-13 with dashes/spaces as form data
+            'max_length': 17,
+            'form_class': ISSNFormField
+        }
+        return super().formfield(**{**defaults, **kwargs})
 
 
 class EANField(StdNumField):
