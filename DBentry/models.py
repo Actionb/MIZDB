@@ -826,10 +826,6 @@ class audio(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    sender = models.ForeignKey(
-        'sender', models.SET_NULL, blank=True, null=True, help_text='Name des Radio-/Fernsehsenders'
-    )  # TODO: remove this field
-
     plattenfirma = models.ManyToManyField('plattenfirma', through=_m2m.m2m_audio_plattenfirma)
     band = models.ManyToManyField('band', through=_m2m.m2m_audio_band)
     genre = models.ManyToManyField('genre', through=_m2m.m2m_audio_genre)

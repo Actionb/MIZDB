@@ -95,17 +95,16 @@ class TestActionConfirmationView(ActionViewTestCase):
         expected = [[get_obj_link(self.obj1, request.user)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
-        a = make(_models.audio, sender = make(_models.sender), band = self.obj1,format__extra = 2)
+        a = make(_models.audio, band = self.obj1,format__extra = 2)
         view = self.get_view(request, model_admin = AudioAdmin(_models.audio, miz_site), queryset = _models.audio.objects.all())
-        view.affected_fields = ['titel', 'sender', 'band__band_name', 'format___name', 'release_id']
+        view.affected_fields = ['titel', 'band__band_name', 'format___name', 'release_id']
         link_list = view.compile_affected_objects() # [ ['Audio Material: <link>', [<affected objects>]], ]
         self.assertEqual(link_list[0][0], get_obj_link(a, request.user))
         self.assertEqual(link_list[0][1][0], 'Titel: '+ a.titel)
-        self.assertEqual(link_list[0][1][1], get_obj_link(a.sender, request.user))
-        self.assertEqual(link_list[0][1][2], get_obj_link(a.band.first(), request.user))
-        self.assertEqual(link_list[0][1][3], get_obj_link(a.format_set.all()[0], request.user))
-        self.assertEqual(link_list[0][1][4], get_obj_link(a.format_set.all()[1], request.user))
-        self.assertEqual(link_list[0][1][5], 'Release ID (discogs): ---')
+        self.assertEqual(link_list[0][1][1], get_obj_link(a.band.first(), request.user))
+        self.assertEqual(link_list[0][1][2], get_obj_link(a.format_set.all()[0], request.user))
+        self.assertEqual(link_list[0][1][3], get_obj_link(a.format_set.all()[1], request.user))
+        self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
     def test_form_valid(self):
         # form_valid should redirect back to the changelist 
