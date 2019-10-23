@@ -233,7 +233,7 @@ class AutorAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [MagazinInLine]
     list_display = ['__str__', 'person', 'kuerzel', 'magazin_string']
-    search_form_kwargs = {'fields': ['magazin']}
+    search_form_kwargs = {'fields': ['magazin', 'person']}
 
     def magazin_string(self, obj):
         return concat_limit(obj.magazin.all())
