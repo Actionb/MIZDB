@@ -703,11 +703,7 @@ class buch(BaseModel):
     sprache = models.ForeignKey('sprache', models.SET_NULL, null=True, blank=True)
 
     herausgeber = models.ManyToManyField('Herausgeber')
-    autor = models.ManyToManyField(
-        'autor',
-        help_text=("Zur Schnell-Erstellung bitte folgendes Format benutzen: "
-            "Nachname(n), Vorname(n) (Kürzel)")
-    )
+    autor = models.ManyToManyField('autor')
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('person')
