@@ -487,7 +487,7 @@ class verlag(BaseModel):
         ordering = ['verlag_name', 'sitz']
 
 
-# TODO: clean up the model/ort/land/bland
+# TODO: clean up the data of models: ort/land/bland
 class ort(ComputedNameModel):
     stadt = models.CharField(**CF_ARGS_B)
 
