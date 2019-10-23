@@ -1,6 +1,9 @@
 # TODO: allow searching by ISSN
 # TODO: field choices to enums --> ausgabe.UNBEARBEITET -> 'unb'
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
+# TODO: help_text for checkbox widget fields do not have 'margin-left:160;padding-left:10px':
+# forms.css:126 {.aligned label + div.help} overrides the usual intendation of the help_texts
+# TODO: remove CF_ARGS and CF_ARGS_B
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -87,7 +90,7 @@ class musiker_alias(BaseAliasModel):
 class genre(BaseModel):
     genre = models.CharField('Genre', max_length=100, unique=True)
 
-    ober = models.ForeignKey(
+    ober = models.ForeignKey(  # TODO: remove this field
         'self', models.SET_NULL, related_name='sub_genres', verbose_name='Oberbegriff',
         null=True, blank=True,
     )
@@ -435,7 +438,7 @@ class magazin(BaseModel):
     ]
 
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    turnus = models.CharField(choices=TURNUS_CHOICES, default='u', **CF_ARGS_B)
+    turnus = models.CharField(choices=TURNUS_CHOICES, default='u', **CF_ARGS_B)  # TODO: remove this field
     magazin_url = models.URLField(verbose_name='Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', help_text='Das dominante Merkmal der Ausgaben',
@@ -445,7 +448,7 @@ class magazin(BaseModel):
     issn = ISSNField('ISSN', blank=True)  # NOTE: implement this as reverse foreign relation so one magazin can have multiple ISSN numbers?
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
-
+    # TODO: make ort a M2M to 'ort'?
     ort = models.ForeignKey(
         'ort', models.SET_NULL, null=True, blank=True, verbose_name='Herausgabeort',
         help_text='Angabe für auf eine Region beschränktes Magazin.'  # TODO: better help_text magazin.ort
@@ -602,7 +605,7 @@ class land_alias(BaseAliasModel):
 class schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
-    ober = models.ForeignKey(
+    ober = models.ForeignKey(  # TODO: remove this field
         'self', models.SET_NULL, related_name='unterbegriffe',
         verbose_name='Oberbegriff', null=True, blank=True
     )
@@ -680,7 +683,7 @@ class buch(BaseModel):
     # TODO: übersetzer feld
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
-    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)
+    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: rename Seitenanzahl?
     jahr = YearField('Jahr', null=True, blank=True)
     jahr_orig = YearField('Jahr (Original)', null=True, blank=True)
     auflage = models.CharField(**CF_ARGS_B)
@@ -767,7 +770,7 @@ class Herausgeber(ComputedNameModel):
             return person
         return organisation
 
-
+# TODO: remove this model
 class Organisation(BaseModel):
     name = models.CharField(**CF_ARGS)
 
@@ -810,8 +813,8 @@ class audio(BaseModel):
     tracks = models.IntegerField(verbose_name='Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Erscheinungsjahr', blank=True, null=True)
-    quelle = models.CharField(help_text='Broadcast, Live, etc.', **CF_ARGS_B)
-    catalog_nr = models.CharField(verbose_name='Katalog Nummer', **CF_ARGS_B)
+    quelle = models.CharField(help_text='Broadcast, Live, etc.', **CF_ARGS_B)  # TODO: NICHTSSAGEND
+    catalog_nr = models.CharField(verbose_name='Katalog Nummer', **CF_ARGS_B)  # TODO: NICHTSSAGEND WARNING: field missing in admin
     release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
     discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
@@ -819,7 +822,7 @@ class audio(BaseModel):
 
     sender = models.ForeignKey(
         'sender', models.SET_NULL, blank=True, null=True, help_text='Name des Radio-/Fernsehsenders'
-    )
+    )  # TODO: remove this field
 
     plattenfirma = models.ManyToManyField('plattenfirma', through=_m2m.m2m_audio_plattenfirma)
     band = models.ManyToManyField('band', through=_m2m.m2m_audio_band)
@@ -850,13 +853,13 @@ class audio(BaseModel):
 
 class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
-    signatur = models.CharField(unique=True, null=True, **CF_ARGS_B)
+    signatur = models.CharField(unique=True, null=True, **CF_ARGS_B)  # TODO: help_text: frag Birgitt, was genau das ist 
     size = models.CharField(**CF_ARGS_B, verbose_name='Größe')
     datum = PartialDateField()
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    reihe = models.ForeignKey('Bildreihe', models.PROTECT, blank=True, null=True)
+    reihe = models.ForeignKey('Bildreihe', models.PROTECT, blank=True, null=True)  # TODO: add verbose_name 'Bildreihe'
 
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
@@ -937,7 +940,7 @@ class dokument(BaseModel):
             ('alter_bestand_dokument', 'Aktion: Bestand/Dublette hinzufügen.'),
         ]
 
-
+# TODO: remove this model
 class kreis(BaseModel):
     name = models.CharField(**CF_ARGS)
 
@@ -976,7 +979,7 @@ class memorabilien(BaseModel):
             ('alter_bestand_memorabilien', 'Aktion: Bestand/Dublette hinzufügen.'),
         ]
 
-
+# TODO: remove this model
 class sender(BaseModel):
     name = models.CharField(**CF_ARGS)
 
@@ -1015,7 +1018,7 @@ class spielort(BaseModel):
 class spielort_alias(BaseAliasModel):
     parent = models.ForeignKey('spielort', models.CASCADE)
 
-
+# TODO: remove this model
 class sprache(BaseModel):
     sprache = models.CharField(**CF_ARGS)
     abk = models.CharField(max_length=3)
@@ -1110,8 +1113,8 @@ class video(BaseModel):
     titel = models.CharField(**CF_ARGS)
     tracks = models.IntegerField()  # TODO: PositiveSmallIntegerField!
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
-    festplatte = models.CharField(**CF_ARGS_B)
-    quelle = models.CharField(**CF_ARGS_B)
+    festplatte = models.CharField(**CF_ARGS_B)  # TODO: "Speicherort"?? shouldnt this be a relation to Datei then?
+    quelle = models.CharField(**CF_ARGS_B)  # TODO: same as audio.quelle?
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -1298,7 +1301,7 @@ class datei(BaseModel):
     )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
-    quelle = models.CharField(help_text="z.B. Broadcast, Live, etc.", **CF_ARGS_B)
+    quelle = models.CharField(help_text="z.B. Broadcast, Live, etc.", **CF_ARGS_B)  # TODO: remove this field
 
     sender = models.ForeignKey('sender', models.SET_NULL, blank=True, null=True)
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
@@ -1333,12 +1336,12 @@ class Format(ComputedNameModel):
     ]
 
     anzahl = models.PositiveSmallIntegerField(default=1)
-    catalog_nr = models.CharField(verbose_name="Katalog Nummer", **CF_ARGS_B)
-    tape = models.CharField(**CF_ARGS_B)
-    channel = models.CharField(choices=CHANNEL_CHOICES, **CF_ARGS_B)
+    catalog_nr = models.CharField(verbose_name="Katalog Nummer", **CF_ARGS_B)  # TODO: nr for vinyl??
+    tape = models.CharField(**CF_ARGS_B)  # TODO: remove this field --- probably for the type of cassette tape
+    channel = models.CharField(choices=CHANNEL_CHOICES, **CF_ARGS_B)  # TODO: remove this field
     bemerkungen = models.TextField(blank=True)
 
-    noise_red = models.ForeignKey(
+    noise_red = models.ForeignKey(  # TODO: remove this field
         'NoiseRed', models.SET_NULL, verbose_name='Noise Reduction', blank=True, null=True
     )
     audio = models.ForeignKey('audio', models.CASCADE)
