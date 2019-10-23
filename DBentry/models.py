@@ -1330,15 +1330,8 @@ class datei(BaseModel):
 
 
 class Format(ComputedNameModel):
-    # TODO: Format.channel: needed?
-    CHANNEL_CHOICES = [
-        ('Stereo', 'Stereo'), ('Mono', 'Mono'), ('Quad', 'Quadraphonic'),
-        ('Ambi', 'Ambisonic'), ('Multi', 'Multichannel')
-    ]
-
     anzahl = models.PositiveSmallIntegerField(default=1)
     catalog_nr = models.CharField(verbose_name="Katalog Nummer", **CF_ARGS_B)  # TODO: nr for vinyl??
-    channel = models.CharField(choices=CHANNEL_CHOICES, **CF_ARGS_B)  # TODO: remove this field
     bemerkungen = models.TextField(blank=True)
 
     noise_red = models.ForeignKey(  # TODO: remove this field
@@ -1355,7 +1348,7 @@ class Format(ComputedNameModel):
 
     name_composing_fields = [
         'anzahl', 'format_size__size', 'format_typ__typ',
-        'tag__tag', 'channel',
+        'tag__tag',
     ]
 
     class Meta(BaseModel.Meta):
