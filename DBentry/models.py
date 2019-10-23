@@ -638,7 +638,10 @@ class artikel(BaseModel):
 
     schlagzeile = models.CharField(**CF_ARGS)
     seite = models.PositiveSmallIntegerField(verbose_name="Seite")
-    seitenumfang = models.CharField(max_length=3, blank=True, choices=SU_CHOICES, default='')
+    seitenumfang = models.CharField(
+        max_length=3, blank=True, choices=SU_CHOICES, default='',
+        help_text='Zwei Seiten: f; mehr als zwei Seiten: ff.'
+    )
     zusammenfassung = models.TextField(blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Artikels')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
