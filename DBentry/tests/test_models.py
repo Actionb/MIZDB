@@ -643,15 +643,8 @@ class TestModelMusiker(DataTestCase):
     def test_str(self):
         obj = self.model(kuenstler_name='Alice Tester', beschreibung = 'Beep', bemerkungen = 'Boop')
         self.assertEqual(str(obj), 'Alice Tester')
-        
-class TestModelNoiseRed(DataTestCase):
-    
-    model = _models.NoiseRed
-    
-    def test_str(self):
-        obj = self.model(verfahren='Beepboop')
-        self.assertEqual(str(obj), 'Beepboop')
- 
+
+
 @tag("cn")        
 class TestModelOrt(DataTestCase):
 

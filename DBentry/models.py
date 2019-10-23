@@ -1377,15 +1377,6 @@ class Format(ComputedNameModel):
         return qty + format + tags + channel
 
 
-class NoiseRed(BaseModel):
-    verfahren = models.CharField(**CF_ARGS)
-
-    class Meta(BaseModel.Meta):
-        ordering = ['verfahren']
-        verbose_name = 'Noise Reduction Verfahren'
-        verbose_name_plural = 'Noise Reduction Verfahren'
-
-
 class FormatTag(BaseModel):
     tag = models.CharField(**CF_ARGS)
     abk = models.CharField(verbose_name='Abkürzung', **CF_ARGS_B)

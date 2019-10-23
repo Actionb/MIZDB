@@ -206,10 +206,6 @@ class MusikerAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.musiker_alias
 
 #@register()
-class NoiseredHelpText(MIZModelAdminHelpText):
-    model = MIZModels.NoiseRed
-
-#@register()
 class OrganisationHelpText(MIZModelAdminHelpText):
     model = MIZModels.Organisation
 
