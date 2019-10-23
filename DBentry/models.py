@@ -604,7 +604,7 @@ class land(BaseModel):
 class land_alias(BaseAliasModel):
     parent = models.ForeignKey('land', models.CASCADE)
 
-
+# TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
 class schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
