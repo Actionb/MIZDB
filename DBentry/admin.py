@@ -119,7 +119,7 @@ class AudioAdmin(MIZModelAdmin):
 
 
 @admin.register(_models.ausgabe, site=miz_site)
-class AusgabenAdmin(MIZModelAdmin):
+class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only field
     class NumInLine(BaseTabularInline):
         model = _models.ausgabe_num
         extra = 0
