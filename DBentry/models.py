@@ -1338,7 +1338,6 @@ class Format(ComputedNameModel):
 
     anzahl = models.PositiveSmallIntegerField(default=1)
     catalog_nr = models.CharField(verbose_name="Katalog Nummer", **CF_ARGS_B)  # TODO: nr for vinyl??
-    tape = models.CharField(**CF_ARGS_B)  # TODO: remove this field --- probably for the type of cassette tape
     channel = models.CharField(choices=CHANNEL_CHOICES, **CF_ARGS_B)  # TODO: remove this field
     bemerkungen = models.TextField(blank=True)
 
