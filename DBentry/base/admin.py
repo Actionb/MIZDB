@@ -61,8 +61,31 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def check(self, **kwargs):
         errors = super().check(**kwargs)
+        errors.extend(self._check_fieldset_fields(**kwargs))
         errors.extend(self._check_search_fields_lookups(**kwargs))
         errors.extend(self._check_list_item_annotations(**kwargs))
+        return errors
+
+    def _check_fieldset_fields(self, **kwargs):
+        """Check for unknown field names in the fieldsets attribute."""
+        if not self.fieldsets:
+            return []
+        errors = []
+        for fieldset in self.fieldsets:
+            fieldset_name, options = fieldset
+            if 'fields' not in options:
+                continue
+            for field in options['fields']:
+                try:
+                    if isinstance(field, (list, tuple)):
+                        for _field in field:
+                            admin.utils.get_fields_from_path(self.model, _field)
+                    else:
+                        admin.utils.get_fields_from_path(self.model, field)
+                except exceptions.FieldDoesNotExist:
+                    msg = "fieldset %s contains unknown field: %s" % (
+                        fieldset_name, field)
+                    errors.append(checks.Error(msg,obj=self))
         return errors
 
     def _check_search_fields_lookups(self, **kwargs):
