@@ -1501,8 +1501,7 @@ class Katalog(BaseBrochure):
     ]
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Kataloges')
-    # FIXME: Katalog.art.choices: default=1 is wrong
-    art = models.CharField('Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=1)
+    art = models.CharField('Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH)
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
