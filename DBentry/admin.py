@@ -867,7 +867,7 @@ class DateiAdmin(MIZModelAdmin):
     ]
     fieldsets = [
         (None, {'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
-        ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'quelle', 'sender', 'bemerkungen']}),
+        ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'sender', 'bemerkungen']}),
     ]
 
 

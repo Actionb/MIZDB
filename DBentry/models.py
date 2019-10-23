@@ -1307,7 +1307,6 @@ class datei(BaseModel):
     )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
-    quelle = models.CharField(help_text="z.B. Broadcast, Live, etc.", **CF_ARGS_B)  # TODO: remove this field
 
     sender = models.ForeignKey('sender', models.SET_NULL, blank=True, null=True)
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)

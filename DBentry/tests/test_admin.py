@@ -1027,7 +1027,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
     model = _models.datei
-    fields_expected = ['titel',  'media_typ',  'datei_pfad',  'beschreibung',  'bemerkungen',  'quelle',  'sender',  'provenienz']
+    fields_expected = ['titel',  'media_typ',  'datei_pfad',  'beschreibung',  'bemerkungen', 'sender',  'provenienz']
     exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
     
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
