@@ -441,17 +441,20 @@ class magazin(BaseModel):
     turnus = models.CharField(choices=TURNUS_CHOICES, default='u', **CF_ARGS_B)  # TODO: remove this field
     magazin_url = models.URLField(verbose_name='Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
-        'Ausgaben Merkmal', help_text='Das dominante Merkmal der Ausgaben',
-        choices=MERKMAL_CHOICES, **CF_ARGS_B
+        'Ausgaben Merkmal', choices=MERKMAL_CHOICES,
+        help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
+            'Ausgaben in der Änderungsliste.'),
+        **CF_ARGS_B
     )
     fanzine = models.BooleanField('Fanzine', default=False)
-    issn = ISSNField('ISSN', blank=True)  # NOTE: implement this as reverse foreign relation so one magazin can have multiple ISSN numbers?
+    issn = ISSNField('ISSN', blank=True,
+        help_text='EAN (Barcode Nummer) Angaben erlaubt. Die ISSN wird dann daraus ermittelt.')
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
     # TODO: make ort a M2M to 'ort'?
     ort = models.ForeignKey(
         'ort', models.SET_NULL, null=True, blank=True, verbose_name='Herausgabeort',
-        help_text='Angabe für auf eine Region beschränktes Magazin.'  # TODO: better help_text magazin.ort
+        help_text='Wenn das Magazin regional beschränkt ist, kann die Region hier angegeben werden.'
     )
 
     genre = models.ManyToManyField('genre', blank=True, through=_m2m.m2m_magazin_genre)
