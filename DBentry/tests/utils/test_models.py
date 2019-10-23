@@ -96,11 +96,7 @@ class TestModelUtils(MyTestCase):
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen'])
         obj.status = 2
         self.assertNotIn('status', utils.get_updateable_fields(obj))
-        
-        self.assertIn('turnus', utils.get_updateable_fields(obj.magazin))
-        obj.magazin.turnus = 't'
-        self.assertNotIn('turnus', utils.get_updateable_fields(obj.magazin))
-        
+
     def test_get_reverse_field_path(self):
         # no related_query_name or related_name
         rel = _models.ausgabe._meta.get_field('artikel')

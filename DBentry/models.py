@@ -423,12 +423,6 @@ class monat(BaseModel):
 
 
 class magazin(BaseModel):
-    # TODO: is ausgabe.turnus needed?
-    TURNUS_CHOICES = [
-        ('u', 'unbekannt'), ('t', 'täglich'), ('w', 'wöchentlich'),
-        ('w2', 'zwei-wöchentlich'), ('m', 'monatlich'), ('m2', 'zwei-monatlich'),
-        ('q', 'quartalsweise'), ('hj', 'halbjährlich'), ('j', 'jährlich')
-    ]
     NUM = 'num'
     LNUM = 'lnum'
     MONAT = 'monat'
@@ -438,7 +432,6 @@ class magazin(BaseModel):
     ]
 
     magazin_name = models.CharField('Magazin', **CF_ARGS)
-    turnus = models.CharField(choices=TURNUS_CHOICES, default='u', **CF_ARGS_B)  # TODO: remove this field
     magazin_url = models.URLField(verbose_name='Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', choices=MERKMAL_CHOICES,
