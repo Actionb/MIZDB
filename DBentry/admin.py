@@ -62,7 +62,7 @@ class AudioAdmin(MIZModelAdmin):
         extra = 0
         filter_horizontal = ['tag']
         fieldsets = [
-            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr','noise_red']}),
+            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr']}),
             ('Tags', {'fields': ['tag'], 'classes': ['collapse', 'collapsed']}),
             ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']})
         ]

@@ -1334,9 +1334,6 @@ class Format(ComputedNameModel):
     catalog_nr = models.CharField(verbose_name="Katalog Nummer", **CF_ARGS_B)  # TODO: nr for vinyl??
     bemerkungen = models.TextField(blank=True)
 
-    noise_red = models.ForeignKey(  # TODO: remove this field
-        'NoiseRed', models.SET_NULL, verbose_name='Noise Reduction', blank=True, null=True
-    )
     audio = models.ForeignKey('audio', models.CASCADE)
     format_typ = models.ForeignKey('FormatTyp', models.PROTECT, verbose_name='Format Typ')
     format_size = models.ForeignKey(
