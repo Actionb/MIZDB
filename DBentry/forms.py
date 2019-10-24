@@ -93,10 +93,6 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
         }
 
 
-class HerausgeberForm(MinMaxRequiredFormMixin, forms.ModelForm):
-    minmax_required = [{'fields': ['person', 'organisation'], 'min': 1}]
-
-
 class AudioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):

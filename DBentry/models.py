@@ -736,39 +736,17 @@ class buch(BaseModel):
         return str(self.titel)
 
 
-class Herausgeber(ComputedNameModel):
-    person = models.ForeignKey('person', on_delete=models.CASCADE, blank=True, null=True)
-    organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, blank=True, null=True)
+class Herausgeber(BaseModel):
     herausgeber = models.CharField(max_length=200)
 
-    name_composing_fields = ['person___name', 'organisation__name']
+    name_field = 'herausgeber'
+    create_field = 'herausgeber'
 
-    class Meta(ComputedNameModel.Meta):
+    class Meta(BaseModel.Meta):
+        ordering = ['herausgeber']
         verbose_name = 'Herausgeber'
         verbose_name_plural = 'Herausgeber'
 
-    @classmethod
-    def _get_name(cls, **data):
-        """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
-
-        Returns a name in the format of either:
-            - '{person} ({organisation})'
-            - '{person}'
-            - '{organisation}'
-        """
-        person = organisation = ''
-        if 'person___name' in data:
-            person = data['person___name'][0]
-        if 'organisation__name' in data:
-            organisation = data['organisation__name'][0]
-        if person:
-            if organisation:
-                return "{} ({})".format(person, organisation)
-            return person
-        return organisation
 
 # TODO: remove this model
 class Organisation(BaseModel):

@@ -494,8 +494,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     
     crosslinks_expected = [
         {'model_name':'video',          'fld_name':'person', 'label':'Video Materialien (1)'}, 
-        {'model_name':'veranstaltung',  'fld_name':'person', 'label':'Veranstaltungen (1)'}, 
-        {'model_name':'herausgeber',    'fld_name':'person', 'label':'Herausgeber (1)'}, 
+        {'model_name':'veranstaltung',  'fld_name':'person', 'label':'Veranstaltungen (1)'},
         {'model_name':'datei',          'fld_name':'person', 'label':'Dateien (1)'}, 
         {'model_name':'artikel',        'fld_name':'person', 'label':'Artikel (1)'}, 
         {'model_name':'autor',          'fld_name':'person', 'label':'Autoren (1)'}, 
@@ -900,7 +899,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         p1 = make(_models.person, vorname = 'Alice', nachname = 'Testman')
         p2 = make(_models.person, vorname = 'Bob', nachname = 'Mantest')
         cls.obj1 = make(cls.model, 
-            autor__person = [p1, p2], herausgeber__person = [p1, p2],
+            autor__person = [p1, p2], herausgeber__herausgeber = [str(p1), str(p2)],
             schlagwort__schlagwort = ['Testschlagwort1', 'Testschlagwort2'], 
             genre__genre = ['Testgenre1', 'Testgenre2']
         )
@@ -1033,7 +1032,7 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
-    fields_expected = ['person', 'organisation']
+    fields_expected = ['herausgeber']
     
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'}, 

@@ -13,7 +13,7 @@ from DBentry.base.admin import (
     BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
 from DBentry.forms import (
-    ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm,
+    ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
     BildmaterialForm
 )
 from DBentry.sites import miz_site
@@ -877,7 +877,6 @@ class InstrumentAdmin(MIZModelAdmin):
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
-    form = HerausgeberForm
     index_category = 'Stammdaten'
 
 

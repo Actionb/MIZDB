@@ -7,9 +7,9 @@ from django.utils.translation import override as translation_override
 
 from DBentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin
 from DBentry.forms import (
-    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, HerausgeberForm, AudioForm
+    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm
 )
-from DBentry.models import artikel, ausgabe, autor, person, buch, Herausgeber, Organisation, genre, audio
+from DBentry.models import artikel, ausgabe, autor, person, buch, genre, audio
 from DBentry.ac.widgets import EasyWidgetWrapper
 from DBentry.factory import make
 
@@ -125,32 +125,6 @@ class TestBuchForm(ModelFormTestCase):
         form.full_clean()
         self.assertFalse(form.errors)
 
-class TestHerausgeberForm(ModelFormTestCase):
-    form_class = HerausgeberForm
-    fields = ['person', 'organisation']
-    model = Herausgeber
-
-    @translation_override(language = None)
-    def test_clean(self):
-        p = make(person)
-        o = make(Organisation)
-        expected_error_message = 'Bitte mindestens 1 dieser Felder ausfüllen: Person, Organisation.'
-
-        form = self.get_form(data={})
-        form.full_clean()
-        self.assertIn(expected_error_message, form.errors.get('__all__'))
-
-        form = self.get_form(data={'organisation':o.pk})
-        form.full_clean()
-        self.assertFalse(form.errors)
-
-        form = self.get_form(data={'person':p.pk})
-        form.full_clean()
-        self.assertFalse(form.errors)
-
-        form = self.get_form(data={'organisation':o.pk, 'person':p.pk})
-        form.full_clean()
-        self.assertFalse(form.errors)
 
 class TestMIZAdminForm(FormTestCase):
 

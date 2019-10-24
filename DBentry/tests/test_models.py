@@ -539,26 +539,15 @@ class TestModelGenre(DataTestCase):
     def test_str(self):
         obj = self.model(genre='Testgenre')
         self.assertEqual(str(obj), 'Testgenre')
-   
-@tag("cn")      
+
+
 class TestModelHerausgeber(DataTestCase):
-    
+
     model = _models.Herausgeber
-    
-    @translation_override(language=None)
-    def test_get_name(self):
-        test_data = [
-            ({'person___name': ('Alice Test', )}, "Alice Test"),
-            ({'organisation__name': ('Testorga', )}, "Testorga"),
-            (
-                {'person___name': ('Alice Test', ), 'organisation__name': ('Testorga', )},
-                "Alice Test (Testorga)"
-            ),
-        ]
-        for name_data, expected in test_data:
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
+
+    def test_str(self):
+        obj = self.model(herausgeber='Testherausgeber')
+        self.assertEqual(str(obj), 'Testherausgeber')
 
 
 class TestModelInstrument(DataTestCase):
