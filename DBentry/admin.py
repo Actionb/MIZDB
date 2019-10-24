@@ -994,8 +994,7 @@ class SenderAdmin(MIZModelAdmin):
 @admin.register(
     _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma,
     _models.provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
-    _models.FormatTyp, _models.Organisation, _models.schriftenreihe,
-    _models.Bildreihe, _models.Veranstaltungsreihe,
+    _models.FormatTyp, _models.schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):

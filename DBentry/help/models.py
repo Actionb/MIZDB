@@ -206,10 +206,6 @@ class MusikerAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.musiker_alias
 
 #@register()
-class OrganisationHelpText(MIZModelAdminHelpText):
-    model = MIZModels.Organisation
-
-#@register()
 class OrtHelpText(MIZModelAdminHelpText):
     model = MIZModels.ort
 

@@ -748,19 +748,6 @@ class Herausgeber(BaseModel):
         verbose_name_plural = 'Herausgeber'
 
 
-# TODO: remove this model
-class Organisation(BaseModel):
-    name = models.CharField(**CF_ARGS)
-
-    create_field = 'name'
-    name_field = 'name'
-
-    class Meta:
-        ordering = ['name']
-        verbose_name = 'Organisation'
-        verbose_name_plural = 'Organisationen'
-
-
 class instrument(BaseModel):
     instrument = models.CharField(unique=True, **CF_ARGS)
     kuerzel = models.CharField(verbose_name='Kürzel', **CF_ARGS)
