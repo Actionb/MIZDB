@@ -794,8 +794,7 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     
     crosslinks_expected = [
-        {'model_name': 'ort', 'fld_name': 'bland', 'label': 'Orte (1)'}, 
-        {'model_name': 'kreis', 'fld_name': 'bland', 'label': 'Kreise (1)'}
+        {'model_name': 'ort', 'fld_name': 'bland', 'label': 'Orte (1)'}
     ]
         
 class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1009,12 +1008,8 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.video
     fields_expected = ['titel',  'tracks',  'laufzeit',  'festplatte',  'quelle',  'beschreibung',  'bemerkungen',  'sender']
     exclude_expected = ['band',  'genre',  'musiker',  'person',  'schlagwort',  'spielort',  'veranstaltung']
-    
-class TestKreisAdmin(AdminTestMethodsMixin, AdminTestCase):
-    model_admin_class = _admin.KreisAdmin
-    model = _models.kreis
-    fields_expected = ['name', 'bland']
-    
+
+
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.bestand

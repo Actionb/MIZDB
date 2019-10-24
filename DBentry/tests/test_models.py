@@ -560,9 +560,7 @@ class TestModelInstrument(DataTestCase):
         
         obj = self.model(instrument = 'Posaune', kuerzel = '')
         self.assertEqual(str(obj), 'Posaune')
-        
-class TestModelKreis(DataTestCase):
-    pass
+
 
 @tag("cn") 
 class TestModelLagerort(DataTestCase):

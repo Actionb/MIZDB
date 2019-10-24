@@ -901,17 +901,6 @@ class dokument(BaseModel):
             ('alter_bestand_dokument', 'Aktion: Bestand/Dublette hinzufügen.'),
         ]
 
-# TODO: remove this model
-class kreis(BaseModel):
-    name = models.CharField(**CF_ARGS)
-
-    bland = models.ForeignKey('bundesland', models.CASCADE)
-
-    class Meta(BaseModel.Meta):
-        ordering = ['name', 'bland']
-        verbose_name = 'Kreis'
-        verbose_name_plural = 'Kreise'
-
 
 class memorabilien(BaseModel):
     titel = models.CharField(**CF_ARGS)

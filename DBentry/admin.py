@@ -788,11 +788,6 @@ class LandAdmin(MIZModelAdmin):
     pass
 
 
-@admin.register(_models.kreis, site=miz_site)
-class KreisAdmin(MIZModelAdmin):
-    superuser_only = True
-
-
 @admin.register(_models.ort, site=miz_site)
 class OrtAdmin(MIZModelAdmin):
     fields = ['stadt', 'land', 'bland']  # put land before bland

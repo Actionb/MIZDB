@@ -170,10 +170,6 @@ class InstrumentAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.instrument_alias
 
 #@register()
-class KreisHelpText(MIZModelAdminHelpText):
-    model = MIZModels.kreis
-
-#@register()
 class LagerortHelpText(MIZModelAdminHelpText):
     model = MIZModels.lagerort
 
