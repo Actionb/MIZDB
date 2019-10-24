@@ -861,7 +861,7 @@ class DateiAdmin(MIZModelAdmin):
     ]
     fieldsets = [
         (None, {'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
-        ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'sender', 'bemerkungen']}),
+        ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'bemerkungen']}),
     ]
 
 
@@ -976,14 +976,6 @@ class KalendarAdmin(BaseBrochureAdmin):
     inlines = [
         URLInLine, JahrInLine, GenreInLine, SpielortInLine,
         VeranstaltungInLine, BestandInLine]
-
-
-@admin.register(_models.sender, site=miz_site)
-class SenderAdmin(MIZModelAdmin):
-    class AliasInLine(BaseAliasInline):
-        model = _models.sender_alias
-
-    inlines = [AliasInLine]
 
 
 @admin.register(

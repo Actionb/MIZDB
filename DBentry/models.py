@@ -929,21 +929,6 @@ class memorabilien(BaseModel):
             ('alter_bestand_memorabilien', 'Aktion: Bestand/Dublette hinzufügen.'),
         ]
 
-# TODO: remove this model
-class sender(BaseModel):
-    name = models.CharField(**CF_ARGS)
-
-    create_field = 'name'
-    search_fields = ['name', 'sender_alias__alias']
-    search_fields_suffixes = {'spielort_alias__alias': 'Alias'}
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'Sender'
-        verbose_name_plural = 'Sender'
-        ordering = ['name']
-class sender_alias(BaseAliasModel):
-    parent = models.ForeignKey('sender', models.CASCADE)
-
 
 class spielort(BaseModel):
     name = models.CharField(**CF_ARGS)
@@ -1067,8 +1052,6 @@ class video(BaseModel):
     quelle = models.CharField(**CF_ARGS_B)  # TODO: same as audio.quelle?
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
-
-    sender = models.ForeignKey('sender', models.SET_NULL, blank=True, null=True)
 
     band = models.ManyToManyField('band')
     genre = models.ManyToManyField('genre')
@@ -1252,7 +1235,6 @@ class datei(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    sender = models.ForeignKey('sender', models.SET_NULL, blank=True, null=True)
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
 
     genre = models.ManyToManyField('genre')

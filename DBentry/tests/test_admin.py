@@ -1006,7 +1006,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.video
-    fields_expected = ['titel',  'tracks',  'laufzeit',  'festplatte',  'quelle',  'beschreibung',  'bemerkungen',  'sender']
+    fields_expected = ['titel',  'tracks',  'laufzeit',  'festplatte',  'quelle',  'beschreibung',  'bemerkungen']
     exclude_expected = ['band',  'genre',  'musiker',  'person',  'schlagwort',  'spielort',  'veranstaltung']
 
 
@@ -1021,7 +1021,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
     model = _models.datei
-    fields_expected = ['titel',  'media_typ',  'datei_pfad',  'beschreibung',  'bemerkungen', 'sender',  'provenienz']
+    fields_expected = ['titel',  'media_typ',  'datei_pfad',  'beschreibung',  'bemerkungen', 'provenienz']
     exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
     
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):

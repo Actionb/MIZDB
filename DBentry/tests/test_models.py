@@ -696,15 +696,8 @@ class TestModelSchlagwort(DataTestCase):
     def test_str(self):
         obj = self.model(schlagwort='Testschlagwort')
         self.assertEqual(str(obj), 'Testschlagwort')
-        
-class TestModelSender(DataTestCase):
-    
-    model = _models.sender
-    
-    def test_str(self):
-        obj = self.model(name = 'Testsender')
-        self.assertEqual(str(obj), 'Testsender')
-        
+
+
 class TestModelSpielort(DataTestCase):
     
     model = _models.spielort

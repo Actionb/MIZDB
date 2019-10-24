@@ -183,7 +183,6 @@ class VideoMergingDataMixin(object):
         obj1 = make(cls.model, 
             titel = 'Original', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
         )
-        cls.sender_original = obj1.sender
         cls.band_original = obj1.band.get() # get() will complain if there's more than one record
         cls.musiker_original = obj1.musiker.get()
         cls.bestand_original = obj1.bestand_set.get()
@@ -192,7 +191,6 @@ class VideoMergingDataMixin(object):
         obj2 = make(cls.model, 
             titel = 'Merger1', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1, 
         )
-        cls.sender_merger1 = obj2.sender
         cls.band_merger1 = obj2.band.get()
         cls.musiker_merger1 = obj2.musiker.get()
         cls.bestand_merger1 = obj2.bestand_set.get()
@@ -202,7 +200,6 @@ class VideoMergingDataMixin(object):
             titel = 'Merger2', tracks = 3, band__extra = 1, musiker__extra = 1, bestand__extra = 1,
             beschreibung = 'Hello!'
         )
-        cls.sender_merger2 = obj3.sender
         cls.band_merger2 = obj3.band.get()
         cls.musiker_merger2 = obj3.musiker.get()
         cls.bestand_merger2 = obj3.bestand_set.get()
@@ -218,9 +215,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
         # A merge with expanding the original's values
         new_original, update_data = utils.merge_records(self.original, self.qs, expand_original = True, request=self.request)
         self.assertEqual(new_original, self.obj1)
-        
-        self.assertEqual(self.obj1.sender, self.sender_original)
-        
         self.assertEqual(new_original.titel, 'Original')
         self.assertEqual(new_original.tracks, 3)
         self.assertEqual(new_original.beschreibung, 'Hello!')
@@ -229,9 +223,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
         # A merge with expanding the original's values
         new_original, update_data = utils.merge_records(self.original, self.qs, expand_original = False, request=self.request)
         self.assertEqual(new_original, self.obj1)
-        
-        self.assertEqual(self.obj1.sender, self.sender_original)
-        
         self.assertEqual(new_original.titel, 'Original')
         self.assertEqual(new_original.tracks, 3)
         self.assertNotEqual(new_original.beschreibung, 'Hello!')

@@ -439,10 +439,6 @@ class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     ]
     alias_accessor_name = 'instrument_alias_set'
 
-class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.sender
-    alias_accessor_name = 'sender_alias_set'
-    raw_data = [{'sender_alias__alias':'AliasSender'}]
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.spielort

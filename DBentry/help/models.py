@@ -230,14 +230,6 @@ class SchriftenreiheHelpText(MIZModelAdminHelpText):
     model = MIZModels.schriftenreihe
 
 #@register()
-class SenderHelpText(MIZModelAdminHelpText):
-    model = MIZModels.sender
-
-#@register()
-class SenderAliasHelpText(MIZModelAdminHelpText):
-    model = MIZModels.sender_alias
-
-#@register()
 class SpielortHelpText(MIZModelAdminHelpText):
     model = MIZModels.spielort
 

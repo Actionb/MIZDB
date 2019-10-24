@@ -376,41 +376,44 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(fac.buchband, SelfFactory)
 
     def test_check_declarations(self):
-        video = _models.video
-        # Assert that all dynamically created factories are accounted for in the correct declaration sets
-        fac = modelfactory_factory(video)
+        # Assert that all dynamically created factories are accounted for
+        # in the correct declaration sets.
+        buch = _models.buch
+        fac = modelfactory_factory(buch)
         declarations = fac._meta.declarations
         # required base fields
-        for field in get_model_fields(video, foreign = False, m2m = False):
+        for field in get_model_fields(buch, foreign=False, m2m=False):
             if field.has_default() or field.blank:
                 continue
-            self.assertIn(field.name, declarations, msg = '{} not found in base declarations'.format(field.name))
+            self.assertIn(field.name, declarations,
+                msg='{} not found in base declarations'.format(field.name))
         self.assertIn('titel', declarations)
-        self.assertIn('tracks', declarations)
 
         # SubFactories
-        for field in get_model_fields(video, base = False, foreign = True, m2m = False):
-            self.assertIn(field.name, declarations, msg = '{} not found in SubFactory declarations'.format(field.name))
-        self.assertIn('sender', declarations)
+        for field in get_model_fields(buch, base=False, foreign=True, m2m=False):
+            self.assertIn(field.name, declarations,
+                msg='{} not found in SubFactory declarations'.format(field.name))
+        self.assertIn('verlag', declarations)
 
         # RelatedFactories
-        for rel in get_model_relations(video, forward = False):
+        for rel in get_model_relations(buch, forward=False):
             if rel.many_to_many:
                 continue
             name = rel.name
-            self.assertIn(name, declarations, msg = '{} not found in reverse related declarations'.format(name))
+            self.assertIn(name, declarations,
+                msg='{} not found in reverse related declarations'.format(name))
         self.assertIn('bestand', declarations)
-        self.assertIn('m2m_datei_quelle', declarations)
 
         # M2MFactories
-        for rel in get_model_relations(video):
+        for rel in get_model_relations(buch):
             if not rel.many_to_many:
                 continue
-            if rel.field.model == video:
+            if rel.field.model == buch:
                 name = rel.field.name
             else:
                 name = rel.name
-            self.assertIn(name, declarations, msg = '{} not found in M2MFactory declarations'.format(name))
+            self.assertIn(name, declarations,
+                msg='{} not found in M2MFactory declarations'.format(name))
         self.assertIn('genre', declarations)
         self.assertIn('musiker', declarations)
         self.assertIn('schlagwort', declarations)

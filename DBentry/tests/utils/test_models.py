@@ -32,36 +32,36 @@ class TestModelUtils(MyTestCase):
         self.assertIsNone(utils.get_model_from_string('beep boop'))
     
     def test_get_model_relations(self):
-        video = _models.video
-        # model video has the four kinds of relations:
-        # FK from bestand to video
-        # FK from video to sender
-        # ManyToMany auto created band <-> video
-        # ManyToMany intermediary musiker <-> video
-        rev_fk = _models.bestand._meta.get_field('video').remote_field
-        fk = video._meta.get_field('sender').remote_field
-        m2m_inter = video.musiker.rel
-        m2m_auto = video.band.rel
+        buch = _models.buch
+        # model buch has the four kinds of relations:
+        # FK from bestand to buch
+        # FK from buch to verlag
+        # ManyToMany auto created band <-> buch
+        # ManyToMany intermediary musiker <-> buch
+        rev_fk = _models.bestand._meta.get_field('buch').remote_field
+        fk = buch._meta.get_field('verlag').remote_field
+        m2m_inter = buch.musiker.rel
+        m2m_auto = buch.band.rel
         
-        rels = utils.get_model_relations(video)
+        rels = utils.get_model_relations(buch)
         self.assertIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
         
-        rels = utils.get_model_relations(video, reverse = False)
+        rels = utils.get_model_relations(buch, reverse = False)
         self.assertNotIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
         
-        rels = utils.get_model_relations(video, forward = False)
+        rels = utils.get_model_relations(buch, forward = False)
         self.assertIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
         
-        rels = utils.get_model_relations(video, forward = False, reverse = False)
+        rels = utils.get_model_relations(buch, forward = False, reverse = False)
         self.assertNotIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
