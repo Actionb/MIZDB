@@ -739,6 +739,7 @@ class buch(BaseModel):
 class Herausgeber(ComputedNameModel):
     person = models.ForeignKey('person', on_delete=models.CASCADE, blank=True, null=True)
     organisation = models.ForeignKey('Organisation', on_delete=models.CASCADE, blank=True, null=True)
+    herausgeber = models.CharField(max_length=200)
 
     name_composing_fields = ['person___name', 'organisation__name']
 
