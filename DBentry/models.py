@@ -781,7 +781,8 @@ class audio(BaseModel):
     quelle = models.CharField(help_text='Broadcast, Live, etc.', **CF_ARGS_B)  # TODO: NICHTSSAGEND
     catalog_nr = models.CharField(verbose_name='Katalog Nummer', **CF_ARGS_B)  # TODO: NICHTSSAGEND WARNING: field missing in admin
     release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
-    discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True)
+    discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True,
+        help_text="Adresse zur discogs.com Seite dieses Objektes.")
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -816,7 +817,7 @@ class bildmaterial(BaseModel):
     titel = models.CharField(**CF_ARGS)
     signatur = models.CharField(unique=True, null=True, **CF_ARGS_B)  # TODO: help_text: frag Birgitt, was genau das ist 
     size = models.CharField(**CF_ARGS_B, verbose_name='Größe')
-    datum = PartialDateField()
+    datum = PartialDateField()  # TODO: add help_text to make clear this isn't the "entry" date
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
