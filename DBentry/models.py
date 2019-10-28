@@ -682,7 +682,7 @@ class buch(BaseModel):
     # TODO: übersetzer feld
     titel = models.CharField(**CF_ARGS)
     titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
-    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: rename Seitenanzahl?
+    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: Semantik: Seitenanzahl?
     jahr = YearField('Jahr', null=True, blank=True)
     jahr_orig = YearField('Jahr (Original)', null=True, blank=True)
     auflage = models.CharField(**CF_ARGS_B)
@@ -775,7 +775,7 @@ class instrument_alias(BaseAliasModel):
 
 class audio(BaseModel):
     titel = models.CharField(**CF_ARGS)
-    tracks = models.IntegerField(verbose_name='Anz. Tracks', blank=True, null=True)
+    tracks = models.PositiveIntegerField(verbose_name='Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Erscheinungsjahr', blank=True, null=True)
     quelle = models.CharField(help_text='Broadcast, Live, etc.', **CF_ARGS_B)  # TODO: NICHTSSAGEND
