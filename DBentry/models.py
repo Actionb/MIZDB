@@ -702,7 +702,7 @@ class buch(BaseModel):
         verbose_name='Sammelband',
     )
     verlag = models.ForeignKey('verlag', models.SET_NULL, null=True, blank=True)
-    sprache = models.ForeignKey('sprache', models.SET_NULL, null=True, blank=True)
+    sprache = models.CharField(max_length=200, blank=True)
 
     herausgeber = models.ManyToManyField('Herausgeber')
     autor = models.ManyToManyField('autor')
@@ -952,16 +952,6 @@ class spielort(BaseModel):
         ordering = ['name']
 class spielort_alias(BaseAliasModel):
     parent = models.ForeignKey('spielort', models.CASCADE)
-
-# TODO: remove this model
-class sprache(BaseModel):
-    sprache = models.CharField(**CF_ARGS)
-    abk = models.CharField(max_length=3)
-
-    class Meta(BaseModel.Meta):
-        verbose_name = 'Sprache'
-        verbose_name_plural = 'Sprachen'
-        ordering = ['sprache']
 
 
 class technik(BaseModel):

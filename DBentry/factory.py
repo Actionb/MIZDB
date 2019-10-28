@@ -652,12 +652,6 @@ class SchlagwortFactory(MIZModelFactory):
         django_get_or_create = ['schlagwort']
 
 
-class SpracheFactory(MIZModelFactory):
-    class Meta:
-        model = _models.sprache
-    abk = factory.Faker('language_code')
-
-
 def make(model, **kwargs):
     return modelfactory_factory(model)(**kwargs)
 

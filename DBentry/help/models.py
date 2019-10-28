@@ -238,10 +238,6 @@ class SpielortAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.spielort_alias
 
 #@register()
-class SpracheHelpText(MIZModelAdminHelpText):
-    model = MIZModels.sprache
-
-#@register()
 class TechnikHelpText(MIZModelAdminHelpText):
     model = MIZModels.technik
 

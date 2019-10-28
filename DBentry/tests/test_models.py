@@ -706,15 +706,8 @@ class TestModelSpielort(DataTestCase):
         land_object = _models.land.objects.create(land_name = 'Deutschland', code='DE')
         obj = self.model(name = 'Testspielort', ort = _models.ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')
-        
-class TestModelSprache(DataTestCase):
-    
-    model = _models.sprache
-    
-    def test_str(self):
-        obj = self.model(sprache = 'Deutsch', abk = 'de')
-        self.assertEqual(str(obj), 'Deutsch de')
-        
+
+
 class TestModelTechnik(DataTestCase):
     pass
         

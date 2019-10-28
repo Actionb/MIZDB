@@ -499,7 +499,7 @@ class BuchAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': [
             'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band',
-            'person', 'schriftenreihe', 'buchband', 'verlag', 'sprache', 'jahr',
+            'person', 'schriftenreihe', 'buchband', 'verlag', 'jahr',
             'ISBN', 'EAN'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
@@ -979,7 +979,7 @@ class KalendarAdmin(BaseBrochureAdmin):
 
 
 @admin.register(
-    _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma,
+    _models.monat, _models.lagerort, _models.geber, _models.plattenfirma,
     _models.provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
     _models.FormatTyp, _models.schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
     site=miz_site
