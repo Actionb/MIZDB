@@ -820,7 +820,8 @@ class bildmaterial(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    reihe = models.ForeignKey('Bildreihe', models.PROTECT, blank=True, null=True)  # TODO: add verbose_name 'Bildreihe'
+    reihe = models.ForeignKey(
+        'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe')
 
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')
