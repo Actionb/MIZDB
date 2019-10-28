@@ -1,5 +1,4 @@
 # TODO: allow searching by ISSN
-# TODO: field choices to enums --> ausgabe.UNBEARBEITET -> 'unb'
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
 # TODO: help_text for checkbox widget fields do not have 'margin-left:160;padding-left:10px':
 # forms.css:126 {.aligned label + div.help} overrides the usual intendation of the help_texts
@@ -1364,8 +1363,6 @@ class BaseBrochure(BaseModel):
 
     name_field = 'titel'
 
-    # TODO: add verbose_name as this base model's meta options are actually being used
-    # (where exactly? if it's just the permission __str__ then we dont need a verbose_name)
     def __str__(self):
         return str(self.titel)
 
