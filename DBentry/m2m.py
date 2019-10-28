@@ -249,8 +249,6 @@ class m2m_magazin_verlag(BaseM2MModel):
 class m2m_magazin_herausgeber(BaseM2MModel):
     magazin = models.ForeignKey('magazin', models.CASCADE)
     herausgeber = models.ForeignKey('Herausgeber', models.CASCADE)
-    start = models.CharField('von', max_length=123, blank=True)  # TODO: remove this field
-    end = models.CharField('bis', max_length=123, blank=True)  # TODO: remove this field
     class Meta:
         unique_together = ('magazin', 'herausgeber')
         verbose_name = 'Magazin-Herausgeber'
