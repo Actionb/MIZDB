@@ -106,64 +106,11 @@ class MyTestCase(TestCase):
             if msg:
                 fail_txt += ':' + msg
             self.fail(fail_txt)
-    #NOTE: only the bulk tests use these dict assertions
-    def assertDictKeysEqual(self, d1, d2):
-        t = "dict keys missing from {d}: {key_diff}"
-        msg = ''
-        key_diff = set(d1.keys()) - set(d2.keys())
-        if key_diff:
-            msg = t.format(d='d2', key_diff=str(key_diff))
-        
-        key_diff = set(d2.keys()) - set(d1.keys())
-        if key_diff:
-            if msg:
-                msg += '\n'
-            msg +=  t.format(d='d1', key_diff=str(key_diff))
-        if msg:
-            raise AssertionError(msg)
-    
-    def assertDictsEqual(self, dict1, dict2, msg=''):
-        from django.http.request import QueryDict
-        d1 = dict1.copy()
-        d2 = dict2.copy()
-        if isinstance(d1, QueryDict) and not isinstance(d2, QueryDict) or isinstance(d2, QueryDict) and not isinstance(d1, QueryDict):
-            for d in [d1, d2]:
-                # forcefully convert QueryDicts
-                try:
-                    d = d.dict()
-                except:
-                    continue
-        self.assertDictKeysEqual(d1, d2)
-        
-        t = "dict values differ for key {k}: \n{v1} \n!=\n{v2}\n\n\n"
-        msg = ''
-        for k, v in d1.items():
-            v1 = v
-            v2 = d2.get(k)
-            if isinstance(v1, dict) and isinstance(v2, dict):
-                try:
-                    self.assertDictsEqual(v1, v2)
-                except AssertionError as e:
-                    msg += "subdicts for key {k} differ: {msg}\n\n\n".format(k=k, msg=e.args[0])
-            else:
-                v1 = str(v1)
-                v2 = str(v2)
-                if v1 != v2:
-                    msg += t.format(k=k, v1=v1, v2=v2)
-        if msg:
-            raise AssertionError(msg)
-    
+
     def assertListEqualSorted(self, list1, list2, msg=None):
         self.assertListEqual(sorted(list1), sorted(list2), msg)
-     
-    #NOTE: no test uses this assertion
-    def assertAllValues(self, values_list, value, msg=None):
-        """
-        Assert that `value` is equal to all items of `values_list`.
-        """
-        expected = [value for v in values_list]
-        self.assertEqual(values_list, expected, msg)  # delivers more useful information on failure than self.assertTrue(all(v==value for v in values_list))
-      
+
+
 class DataTestCase(TestDataMixin, MyTestCase):
     
     # django's assertQuerysetEqual will transform the queryset's values according to function given by parameter `transform` (assertQuerysetEqual requires hashable objects).
