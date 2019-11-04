@@ -69,11 +69,10 @@ class TestURLs(URLTestCase):
             ('bulk_ausgabe', '/tools/bulk_ausgabe/', bulk_views.BulkAusgabe), 
             ('favoriten', '/tools/favoriten/', dbentry_views.FavoritenView)
         ]
-        with self.collect_fails() as collector:
-            for view_name, url, view_class in expected:
-                with collector():
-                    self.assertReverses(view_name, url)
-                    self.assertResolves(url, view_class)
+        for view_name, url, view_class in expected:
+            with self.subTest(view_name=view_name, url=url):
+                self.assertReverses(view_name, url)
+                self.assertResolves(url, view_class)
         
     def test_autocomplete_urls(self):
         # Tests the urls in DBentry.ac.urls.py
@@ -86,11 +85,10 @@ class TestURLs(URLTestCase):
                 {'model_name': 'musiker', 'create_field': 'kuenstler_name'}, autocomplete_views.ACBase), 
             ('accapture', '/autor/', (), {'model_name': 'autor'}, autocomplete_views.ACCreateable)
         ]
-        with self.collect_fails() as collector:
-            for view_name, url, args, kwargs, view_class in expected:
-                with collector():
-                    self.assertReverses(view_name, url, *args, **kwargs)
-                    self.assertResolves(url, view_class)
+        for view_name, url, args, kwargs, view_class in expected:
+            with self.subTest(view_name=view_name, url=url):
+                self.assertReverses(view_name, url, *args, **kwargs)
+                self.assertResolves(url, view_class)
         
     def test_help_urls(self):
         pass

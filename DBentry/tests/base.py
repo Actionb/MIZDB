@@ -60,35 +60,7 @@ class MyTestCase(TestCase):
     
     def warn(self, message):
         warnings.warn(message)
-    
-    @contextlib.contextmanager
-    def collect_fails(self, msg = None):
-        #TODO: documentation
-        #TODO: check out unittest.case.TestCase.subTest
-        collected = []
-        @contextlib.contextmanager
-        def decorator(*args, **kwargs):
-            try:
-                yield
-            except AssertionError as e:
-                collected.append((e, args, kwargs))
-                
-        yield decorator
-        
-        if collected:
-            fail_txt = "Collected errors:"
-            template = "\nError: {error}"
-            if collected[0][1] or collected[0][2]:
-                # Add args and/or kwargs to the error output, if they contain any data
-                # All items in collected have the same number of args or the same keywords, so we only need to check the first item
-                template += "\ncollected with args: {args} | kwargs: {kwargs}"
-            if msg:
-                fail_txt = msg + '\n' + fail_txt
-            for e, args, kwargs in collected:
-                fail_txt += template.format(error=e, args=args, kwargs=kwargs)
-            self.fail(fail_txt)
-                
-            
+
     @contextlib.contextmanager
     def assertNotRaises(self, exceptions, msg = None):
         """

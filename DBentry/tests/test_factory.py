@@ -628,8 +628,7 @@ class TestMIZModelFactory(MyTestCase):
                 self.assertTrue(getattr(obj, rel.field.name), msg = rel.name)
 
     def test_full_relations(self):
-        with self.collect_fails() as collector:
-            for fac in self.factories:
-                obj = fac.full_relations()
-                with collector():
-                    self.assertAllRelationsUsed(obj)
+        for fac in self.factories:
+            obj = fac.full_relations()
+            with self.subTest(factory=str(fac)):
+                self.assertAllRelationsUsed(obj)

@@ -15,12 +15,11 @@ class TestStdNumValidators(MyTestCase):
     @translation_override(language = None)
     def run_validators(self, validator, invalid):
         msg = "\nUnexpected exception raised. Expected: {}, got: {}"
-        with self.collect_fails() as collector:
-            for invalid_number, exception_class in invalid:
-                with collector():
-                    with self.assertRaises(ValidationError) as cm:
-                        validator(invalid_number)
-                    self.assertEqual(cm.exception.__class__, exception_class, msg = msg.format(cm.exception.__class__.__name__, exception_class.__name__))
+        for invalid_number, exception_class in invalid:
+            with self.subTest(invalid_number=invalid_number):
+                with self.assertRaises(ValidationError) as cm:
+                    validator(invalid_number)
+                self.assertEqual(cm.exception.__class__, exception_class, msg = msg.format(cm.exception.__class__.__name__, exception_class.__name__))
     
     def test_isbn_validator(self):
         invalid = [
