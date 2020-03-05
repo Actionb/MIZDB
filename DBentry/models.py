@@ -1,7 +1,6 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
 # TODO: help_text for checkbox widget fields do not have 'margin-left:160;padding-left:10px':
 # forms.css:126 {.aligned label + div.help} overrides the usual intendation of the help_texts
-# TODO: remove CF_ARGS and CF_ARGS_B
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -10,7 +9,7 @@ from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel,
     AbstractURLModel
 )
-from DBentry.constants import CF_ARGS, CF_ARGS_B, LIST_DISPLAY_MAX_LEN
+from DBentry.constants import LIST_DISPLAY_MAX_LEN
 from DBentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
@@ -19,8 +18,8 @@ from DBentry.utils import concat_limit
 
 
 class person(ComputedNameModel):
-    vorname = models.CharField(**CF_ARGS_B)
-    nachname = models.CharField(**CF_ARGS)
+    vorname = models.CharField(max_length=200, blank=True)
+    nachname = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -53,7 +52,7 @@ class person(ComputedNameModel):
 
 
 class musiker(BaseModel):
-    kuenstler_name = models.CharField('Künstlername', **CF_ARGS)
+    kuenstler_name = models.CharField('Künstlername', max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Musikers')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -112,7 +111,7 @@ class genre_alias(BaseAliasModel):
 
 
 class band(BaseModel):
-    band_name = models.CharField('Bandname', **CF_ARGS)
+    band_name = models.CharField('Bandname', max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -143,7 +142,7 @@ class band_alias(BaseAliasModel):
 
 
 class autor(ComputedNameModel):
-    kuerzel = models.CharField('Kürzel', **CF_ARGS_B)
+    kuerzel = models.CharField('Kürzel', max_length=200, blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -366,7 +365,7 @@ class ausgabe_jahr(BaseModel):
 
 class ausgabe_num(BaseModel):
     num = models.IntegerField('Nummer')
-    kuerzel = models.CharField(**CF_ARGS_B)
+    kuerzel = models.CharField(max_length=200, blank=True)
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
@@ -379,7 +378,7 @@ class ausgabe_num(BaseModel):
 
 class ausgabe_lnum(BaseModel):
     lnum = models.IntegerField('Lfd. Nummer')
-    kuerzel = models.CharField(**CF_ARGS_B)
+    kuerzel = models.CharField(max_length=200, blank=True)
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
@@ -407,8 +406,8 @@ class ausgabe_monat(BaseModel):
 
 
 class monat(BaseModel):
-    monat = models.CharField('Monat', **CF_ARGS)
-    abk = models.CharField('Abk', **CF_ARGS)
+    monat = models.CharField('Monat', max_length=200)
+    abk = models.CharField('Abk', max_length=200)
     ordinal = models.PositiveSmallIntegerField(editable=False)
 
     class Meta(BaseModel.Meta):
@@ -429,13 +428,12 @@ class magazin(BaseModel):
         (NUM, 'Nummer'), (LNUM, 'Lfd.Nummer'), (MONAT, 'Monat'), (E_DATUM, 'Ersch.Datum')
     ]
 
-    magazin_name = models.CharField('Magazin', **CF_ARGS)
+    magazin_name = models.CharField('Magazin', max_length=200)
     magazin_url = models.URLField(verbose_name='Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
-        'Ausgaben Merkmal', choices=MERKMAL_CHOICES,
+        'Ausgaben Merkmal', max_length=200, blank=True, choices=MERKMAL_CHOICES,
         help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
-            'Ausgaben in der Änderungsliste.'),
-        **CF_ARGS_B
+            'Ausgaben in der Änderungsliste.')
     )
     fanzine = models.BooleanField('Fanzine', default=False)
     issn = ISSNField('ISSN', blank=True,
@@ -467,7 +465,7 @@ class magazin(BaseModel):
 
 
 class verlag(BaseModel):
-    verlag_name = models.CharField('Verlag', **CF_ARGS)
+    verlag_name = models.CharField('Verlag', max_length=200)
 
     sitz = models.ForeignKey('ort', models.SET_NULL, null=True, blank=True)
 
@@ -486,7 +484,7 @@ class verlag(BaseModel):
 
 # TODO: clean up the data of models: ort/land/bland
 class ort(ComputedNameModel):
-    stadt = models.CharField(**CF_ARGS_B)
+    stadt = models.CharField(max_length=200, blank=True)
 
     bland = models.ForeignKey(
         'bundesland', models.SET_NULL, verbose_name='Bundesland', null=True, blank=True
@@ -551,7 +549,7 @@ class ort(ComputedNameModel):
 
 
 class bundesland(BaseModel):
-    bland_name = models.CharField('Bundesland', **CF_ARGS)
+    bland_name = models.CharField('Bundesland', max_length=200)
     code = models.CharField(max_length=4, unique=False)
 
     land = models.ForeignKey('land', models.PROTECT, verbose_name='Land')
@@ -630,7 +628,7 @@ class artikel(BaseModel):
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
 
-    schlagzeile = models.CharField(**CF_ARGS)
+    schlagzeile = models.CharField(max_length=200)
     seite = models.PositiveSmallIntegerField(verbose_name="Seite")
     seitenumfang = models.CharField(
         max_length=3, blank=True, choices=SU_CHOICES, default='',
@@ -678,12 +676,12 @@ class artikel(BaseModel):
 
 class buch(BaseModel):
     # TODO: übersetzer feld
-    titel = models.CharField(**CF_ARGS)
-    titel_orig = models.CharField('Titel (Original)', **CF_ARGS_B)
+    titel = models.CharField(max_length=200)
+    titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
     seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: Semantik: Seitenanzahl?
     jahr = YearField('Jahr', null=True, blank=True)
     jahr_orig = YearField('Jahr (Original)', null=True, blank=True)
-    auflage = models.CharField(**CF_ARGS_B)
+    auflage = models.CharField(max_length=200, blank=True)
     EAN = EANField(blank=True)
     ISBN = ISBNField(blank=True)
     is_buchband = models.BooleanField(
@@ -747,8 +745,8 @@ class Herausgeber(BaseModel):
 
 
 class instrument(BaseModel):
-    instrument = models.CharField(unique=True, **CF_ARGS)
-    kuerzel = models.CharField(verbose_name='Kürzel', **CF_ARGS)
+    instrument = models.CharField(unique=True, max_length=200)
+    kuerzel = models.CharField(verbose_name='Kürzel', max_length=200)
 
     name_field = 'instrument'
     primary_search_fields = ['instrument']
@@ -772,12 +770,12 @@ class instrument_alias(BaseAliasModel):
 
 
 class audio(BaseModel):
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     tracks = models.PositiveIntegerField(verbose_name='Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Erscheinungsjahr', blank=True, null=True)
-    quelle = models.CharField(help_text='Broadcast, Live, etc.', **CF_ARGS_B)  # TODO: NICHTSSAGEND
-    catalog_nr = models.CharField(verbose_name='Katalog Nummer', **CF_ARGS_B)  # TODO: NICHTSSAGEND WARNING: field missing in admin
+    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
+    catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')  # WARNING: field missing in admin
     release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
     discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True,
         help_text="Adresse zur discogs.com Seite dieses Objektes.")
@@ -812,9 +810,9 @@ class audio(BaseModel):
 
 
 class bildmaterial(BaseModel):
-    titel = models.CharField(**CF_ARGS)
-    signatur = models.CharField(unique=True, null=True, **CF_ARGS_B)  # TODO: help_text: frag Birgitt, was genau das ist 
-    size = models.CharField(**CF_ARGS_B, verbose_name='Größe')
+    titel = models.CharField(max_length=200)
+    signatur = models.CharField(max_length=200, blank=True, null=True, unique=True)  # TODO: help_text: frag Birgitt, was genau das ist 
+    size = models.CharField(max_length=200, blank=True, verbose_name='Größe')
     datum = PartialDateField()  # TODO: add help_text to make clear this isn't the "entry" date
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -849,7 +847,7 @@ class bildmaterial(BaseModel):
 
 
 class Bildreihe(BaseModel):
-    name = models.CharField(**CF_ARGS)
+    name = models.CharField(max_length=200)
 
     create_field = 'name'
     name_field = 'name'
@@ -862,7 +860,7 @@ class Bildreihe(BaseModel):
 
 
 class schriftenreihe(BaseModel):
-    name = models.CharField(**CF_ARGS)
+    name = models.CharField(max_length=200)
 
     create_field = 'name'
     name_field = 'name'
@@ -875,7 +873,7 @@ class schriftenreihe(BaseModel):
 
 
 class dokument(BaseModel):
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Dokumentes')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -903,7 +901,7 @@ class dokument(BaseModel):
 
 
 class memorabilien(BaseModel):
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Memorabiliums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -931,7 +929,7 @@ class memorabilien(BaseModel):
 
 
 class spielort(BaseModel):
-    name = models.CharField(**CF_ARGS)
+    name = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Spielortes')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -955,7 +953,7 @@ class spielort_alias(BaseAliasModel):
 
 
 class technik(BaseModel):
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Technik')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -983,7 +981,7 @@ class technik(BaseModel):
 
 
 class veranstaltung(BaseModel):
-    name = models.CharField(**CF_ARGS)
+    name = models.CharField(max_length=200)
     datum = PartialDateField(blank=False)
 
     spielort = models.ForeignKey('spielort', models.PROTECT)
@@ -1022,7 +1020,7 @@ class veranstaltung_alias(BaseAliasModel):
 
 
 class Veranstaltungsreihe(BaseModel):
-    name = models.CharField(**CF_ARGS)
+    name = models.CharField(max_length=200)
 
     create_field = 'name'
     name_field = 'name'
@@ -1035,11 +1033,11 @@ class Veranstaltungsreihe(BaseModel):
 
 
 class video(BaseModel):
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     tracks = models.IntegerField()  # TODO: PositiveSmallIntegerField!
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
-    festplatte = models.CharField(**CF_ARGS_B)  # TODO: "Speicherort"?? shouldnt this be a relation to Datei then?
-    quelle = models.CharField(**CF_ARGS_B)  # TODO: same as audio.quelle?
+    festplatte = models.CharField(max_length=200, blank=True)  # TODO: "Speicherort"?? shouldnt this be a relation to Datei then?
+    quelle = models.CharField(max_length=200, blank=True)  # TODO: same as audio.quelle?
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -1095,7 +1093,7 @@ class provenienz(BaseModel):
 
 class geber(BaseModel):
     # TODO: merge with person?
-    name = models.CharField(default='unbekannt', **CF_ARGS)
+    name = models.CharField(default='unbekannt', max_length=200)
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1104,11 +1102,11 @@ class geber(BaseModel):
 
 
 class lagerort(ComputedNameModel):
-    ort = models.CharField(**CF_ARGS)
-    raum = models.CharField(**CF_ARGS_B)
-    regal = models.CharField(**CF_ARGS_B)
-    fach = models.CharField(**CF_ARGS_B)
-    ordner = models.CharField(**CF_ARGS_B)
+    ort = models.CharField(max_length=200)
+    raum = models.CharField(max_length=200, blank=True)
+    regal = models.CharField(max_length=200, blank=True)
+    fach = models.CharField(max_length=200, blank=True)
+    ordner = models.CharField(max_length=200, blank=True)
 
     name_composing_fields = ['ort', 'raum', 'regal', 'fach']
 
@@ -1209,18 +1207,17 @@ class datei(BaseModel):
         (MEDIA_TEXT, 'Text'), (MEDIA_SONSTIGE, 'Sonstige')
     ]
 
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     media_typ = models.CharField(
-        choices=MEDIA_TYP_CHOICES, verbose_name='Media Typ', default='audio', **CF_ARGS
+        max_length=200, choices=MEDIA_TYP_CHOICES, verbose_name='Media Typ', default='audio'
     )
     datei_media = models.FileField(  # Datei Media Server
         verbose_name='Datei', blank=True, null=True, editable=False,
         help_text="Datei auf Datenbank-Server hoch- bzw herunterladen."
     )
     datei_pfad = models.CharField(
-        verbose_name='Datei-Pfad',
-        help_text="Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner.",
-        **CF_ARGS_B
+        verbose_name='Datei-Pfad', max_length=200, blank=True,
+        help_text="Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner."
     )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -1251,7 +1248,7 @@ class datei(BaseModel):
 
 class Format(ComputedNameModel):
     anzahl = models.PositiveSmallIntegerField(default=1)
-    catalog_nr = models.CharField(verbose_name="Katalog Nummer", **CF_ARGS_B)  # TODO: nr for vinyl??
+    catalog_nr = models.CharField(verbose_name="Katalog Nummer", max_length=200, blank=True)  # TODO: nr for vinyl??
     bemerkungen = models.TextField(blank=True)
 
     audio = models.ForeignKey('audio', models.CASCADE)
@@ -1298,8 +1295,8 @@ class Format(ComputedNameModel):
 
 
 class FormatTag(BaseModel):
-    tag = models.CharField(**CF_ARGS)
-    abk = models.CharField(verbose_name='Abkürzung', **CF_ARGS_B)
+    tag = models.CharField(max_length=200)
+    abk = models.CharField(verbose_name='Abkürzung', max_length=200, blank=True)
 
     class Meta(BaseModel.Meta):
         ordering = ['tag']
@@ -1311,7 +1308,7 @@ class FormatTag(BaseModel):
 
 
 class FormatSize(BaseModel):
-    size = models.CharField(**CF_ARGS)
+    size = models.CharField(max_length=200)
 
     class Meta(BaseModel.Meta):
         ordering = ['size']
@@ -1322,7 +1319,7 @@ class FormatSize(BaseModel):
 class FormatTyp(BaseModel):
     """Art des Formats (Vinyl, DVD, Cassette, etc)."""
 
-    typ = models.CharField(**CF_ARGS)
+    typ = models.CharField(max_length=200)
 
     class Meta(BaseModel.Meta):
         ordering = ['typ']
@@ -1331,7 +1328,7 @@ class FormatTyp(BaseModel):
 
 
 class plattenfirma(BaseModel):
-    name = models.CharField(**CF_ARGS)
+    name = models.CharField(max_length=200)
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1350,7 +1347,7 @@ class BrochureURL(AbstractURLModel):
 
 
 class BaseBrochure(BaseModel):
-    titel = models.CharField(**CF_ARGS)
+    titel = models.CharField(max_length=200)
     zusammenfassung = models.TextField(blank=True)
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
