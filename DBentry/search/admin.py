@@ -2,7 +2,6 @@ from urllib.parse import parse_qsl, urlparse, urlunparse
 
 from django.core import exceptions
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
-from django.db.models.constants import LOOKUP_SEP
 from django.http import HttpResponseRedirect, QueryDict
 
 from DBentry import utils
@@ -92,6 +91,7 @@ class AdminSearchFormMixin(object):
 
     def lookup_allowed(self, lookup, value):
         allowed = super().lookup_allowed(lookup, value)
+        # NOTE: super().lookup_allowed seems to always return True.
         if allowed or not hasattr(self, 'search_form'):
             # super() determined the lookup is allowed or
             # this model admin has no search form instance set:
@@ -219,30 +219,9 @@ class ChangelistSearchFormMixin(object):
         self.request = request
         super().__init__(request, *args, **kwargs)
 
-    def get_search_form_filters(self, data):
-        """
-        Prepare and return changelist filter params derived from the search form.
-        """
-        if not isinstance(self.model_admin, AdminSearchFormMixin):
-            return {}
-        result = {}
-        params = self.model_admin.get_search_form(data=data).get_filters_params()
-        for lookup, value in params.items():
-            if 'in' in lookup.split(LOOKUP_SEP):
-                # django admin's prepare_lookup_value() expects an '__in' lookup
-                # to consist of comma separated values.
-                result[lookup] = ",".join(
-                    str(pk)
-                    for pk in value.values_list('pk', flat=True).order_by('pk')
-                )
-            else:
-                result[lookup] = value
-        return result
-
     def get_filters_params(self, params=None):
         """Replace the default filter params with those from the search form."""
-# TODO: why even bother differentiating between POST and GET?
-#        if self.request.method == 'POST':
-#            return {}
         params = super().get_filters_params(params or self.request.GET)
-        return self.get_search_form_filters(params)
+        if not isinstance(self.model_admin, AdminSearchFormMixin):
+            return params
+        return self.model_admin.get_search_form(data=params).get_filters_params()

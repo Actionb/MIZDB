@@ -202,6 +202,18 @@ class TestSearchForm(MyTestCase):
         self.assertEqual(form.cleaned_data['datum'], expected)
         self.assertEqual(form.get_filters_params(), {'datum': expected})
 
+    def test_get_filters_params_in_lookup_with_qs(self):
+        # Assert that get_filters_params creates a comma separated string of
+        # values for the 'in' lookup with querysets.
+        genre1 = make(_models.genre, genre="genre1", pk=1)
+        genre2 = make(_models.genre, genre="genre2", pk=2)
+        form_class = self.factory(_models.bildmaterial, fields=['genre'])
+        form = form_class(data={'genre': [genre1.pk, genre2.pk]})
+        self.assertTrue(form.is_valid(), msg = form.errors)
+        self.assertIn('genre', form.cleaned_data)
+        self.assertEqual(list(form.cleaned_data['genre']), [genre1, genre2])
+        self.assertEqual(form.get_filters_params(), {'genre__in': "1,2"})
+
 
 class TestRangeFormField(MyTestCase):
 
