@@ -1,12 +1,15 @@
-from .base import FormTestCase, ModelFormTestCase
+from .base import FormTestCase, ModelFormTestCase, MyTestCase
 from .mixins import TestDataMixin
 
 from django import forms
-from django.core.exceptions import NON_FIELD_ERRORS
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
 from DBentry import models as _models
-from DBentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin
+from DBentry.base.forms import (
+    DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin,
+    MIZAdminInlineFormBase
+)
 from DBentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, HerausgeberForm, AudioForm
 )
@@ -414,3 +417,76 @@ class TestAudioForm(ModelFormTestCase):
         form = self.get_form(data = {'titel': 'Beep', 'discogs_url': 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181'})
         self.assertNotIn('discogs_url', form.errors)
 
+#x = {
+#    'm2m_band_musiker_set-INITIAL_FORMS': ['1'],
+#    'm2m_band_musiker_set-MIN_NUM_FORMS': ['0'],
+#    'm2m_band_musiker_set-MAX_NUM_FORMS': ['1000'],
+#    'm2m_band_musiker_set-TOTAL_FORMS': ['2'],
+#    
+#    'band_name': ['Test Band'],
+#    
+#    'm2m_band_musiker_set-0-id': ['21348'],
+#    'm2m_band_musiker_set-0-band': ['4449'],
+#    'm2m_band_musiker_set-0-musiker': ['35627'],
+#    'm2m_band_musiker_set-1-id': [''],
+#    'm2m_band_musiker_set-1-band': ['4449']}
+#    'm2m_band_musiker_set-1-musiker': ['35627'],
+#    
+#    'm2m_band_musiker_set-__prefix__-id': [''],
+#    'm2m_band_musiker_set-__prefix__-band': ['4449'],
+#    'm2m_band_musiker_set-__prefix__-musiker': [''],
+#}
+
+class TestMIZAdminInlineFormBase(MyTestCase):
+    form = MIZAdminInlineFormBase
+    model = _models.band.musiker.through
+    fields = ['band', 'musiker']
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.band = make(_models.band)
+        cls.musiker = make(_models.musiker)
+        cls.m2m = _models.band.musiker.through.objects.create(
+            band=cls.band, musiker=cls.musiker)
+        super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        self.formset_class = forms.inlineformset_factory(
+            _models.band, _models.band.musiker.through,
+            form=self.form,
+            fields=forms.ALL_FIELDS,
+            extra=1,
+        )
+
+    def test_validate_unique(self):
+        # Assert that MIZAdminInlineFormBase handles duplicate entries as
+        # expected.
+        data = {
+            'm2m_band_musiker_set-INITIAL_FORMS': '1',
+            'm2m_band_musiker_set-TOTAL_FORMS': '2',
+            'm2m_band_musiker_set-0-id': self.m2m.pk,
+            'm2m_band_musiker_set-0-musiker': self.musiker.pk,
+            'm2m_band_musiker_set-0-band': self.band.pk,
+            'm2m_band_musiker_set-1-id': '',
+            'm2m_band_musiker_set-1-musiker': self.musiker.pk,
+            'm2m_band_musiker_set-1-band': self.band.pk,
+        }
+        formset = self.formset_class(instance=self.band, data=data)
+        for form in formset.forms:
+            self.assertTrue(form.is_valid())
+            self.assertIsNone(
+                form.validate_unique(),
+                msg = "Expected validation on uniqueness to always succeed."
+            )
+            # Assert that the duplicate entry indeed throws a ValidationError
+            # and was then flagged to be deleted:
+            self.assertIn('DELETE', form.cleaned_data)
+            if not form.instance.pk:
+                msg_text = ("Expected instance.validate_unique to throw a "
+                    "ValidationError for duplicate instances.")
+                with self.assertRaises(ValidationError, msg=msg_text):
+                    form.instance.validate_unique()
+                self.assertTrue(form.cleaned_data['DELETE'])
+            else:
+                self.assertFalse(form.cleaned_data['DELETE'])

@@ -346,3 +346,25 @@ class DynamicChoiceFormMixin(object):
                 fld.choices = [(str(obj.pk), str(obj)) for obj in field_choices]
             else:
                 fld.choices = list(field_choices)
+
+
+class MIZAdminInlineFormBase(forms.ModelForm):
+    """
+    A model form class that flags forms for deletion when the form's model
+    instance would violate uniqueness.
+
+    Intended to be used as base form class for inline formsets such as
+    model admin inlines.
+    """
+
+    def validate_unique(self):
+        """
+        Call the instance's validate_unique() method and, if unique validity is
+        violated, plan the deletion of this inline formset form.
+        """
+        exclude = self._get_validation_exclusions()
+        try:
+            self.instance.validate_unique(exclude=exclude)
+        except ValidationError:
+            # Ignore non-unique entries in the same formset.
+            self.cleaned_data['DELETE'] = True

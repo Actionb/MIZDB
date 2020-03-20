@@ -13,6 +13,7 @@ from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
 from DBentry.actions import merge_records
 from DBentry.base.models import ComputedNameModel
+from DBentry.base.forms import MIZAdminInlineFormBase
 from DBentry.changelist import MIZChangeList
 from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
@@ -484,6 +485,7 @@ class BaseInlineMixin(object):
     extra = 1
     classes = ['collapse']
     description = ''
+    form = MIZAdminInlineFormBase
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
