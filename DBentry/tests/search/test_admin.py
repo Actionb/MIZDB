@@ -182,6 +182,67 @@ class TestAdminMixin(AdminTestCase):
                 # assertIn would take up the entire screen should it fail.
                 self.assertTrue(var in response.context)
 
+    def test_update_changelist_context_checks_response_context_data(self):
+        # Assert that update_changelist_context checks that the response has
+        # the attribute 'context_data':
+        self.assertIsNone(
+            self.model_admin.update_changelist_context(response=None),
+            msg = "update_changelist_context should return any response object "
+            "that does not have the attribute 'context_data'."
+        )
+        search_form = mock.Mock(media="dummy_media")
+        patcher = mock.patch.object(
+            _admin.BildmaterialAdmin, 'search_form', search_form, create=True)
+        patcher.start()
+
+        # Assert that a missing 'media' key in context_data is handled:
+        response = self.model_admin.update_changelist_context(
+            response=mock.Mock(context_data={}))
+        self.assertIn(
+            'media', response.context_data,
+            msg = "update_changelist_context should add a media entry if it was"
+            " missing."
+        )
+        self.assertEqual(
+            response.context_data['media'], self.model_admin.search_form.media,
+            msg = "update_changelist_context should add the search form's media"
+            " to the response's context."
+        )
+
+        # Assert that the search_form's media is ADDED to the media already
+        # present in context_data.
+        response = self.model_admin.update_changelist_context(
+            response=mock.Mock(context_data={'media': 'This is '}))
+        self.assertIn(
+            'media', response.context_data,
+            msg = "update_changelist_context should add a media entry if it was"
+            " missing."
+        )
+        self.assertEqual(
+            response.context_data['media'], "This is dummy_media",
+            msg = "update_changelist_context should add the search form's media"
+            " to the response's context."
+        )
+        patcher.stop()
+
+        # Assert that context items from django's default search form tag are
+        # added if 'cl' is present in context_data.
+        mocked_tag = mock.Mock(return_value={'cl': "extra from tag"})
+        patcher = mock.patch(
+            'DBentry.search.admin.search_form_tag_context', mocked_tag)
+        patcher.start()
+        response = self.model_admin.update_changelist_context(
+            response=mock.Mock(context_data={}))
+        self.assertFalse(mocked_tag.called,
+            msg = "search_form tag should only be called if context_data has "
+            "the 'cl' key."
+        )
+        response = self.model_admin.update_changelist_context(
+            response=mock.Mock(context_data={'cl': ""}))
+        self.assertTrue(mocked_tag.called)
+        self.assertEqual(response.context_data['cl'], "extra from tag")
+        patcher.stop()
+
 
 class TestSearchFormChangelist(AdminTestCase):
 

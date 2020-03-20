@@ -73,11 +73,13 @@ class AdminSearchFormMixin(object):
             # Not all responses allow access to the template context post
             # instantiation.
             return response
-        if hasattr(self, 'search_form'):
-            # Add the search form's media to the context.
-            # Explicitly looking for the search form *instance* already created
-            # by get_search_form to avoid recreating another instance.
-            response.context_data['media'] += self.search_form.media
+        if hasattr(self, 'search_form') and hasattr(self.search_form, 'media'):
+            # Add the search form's media to the context (if this model_admin
+            # instance has one).
+            if 'media' in response.context_data:
+                response.context_data['media'] += self.search_form.media
+            else:
+                response.context_data['media'] = self.search_form.media
         # django's search_form tag adds context items (show_result_count, search_var)
         # that are also required by the advanced_search_form template. Since the
         # default tag is not called when an advanced_search_form is available,
