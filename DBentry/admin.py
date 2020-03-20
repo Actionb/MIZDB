@@ -504,7 +504,7 @@ class BuchAdmin(MIZModelAdmin):
             'ISBN', 'EAN'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
-        # 'autor' help_text is for quick item creation which is not allowed in search forms.
+        # 'autor' help_text refers to quick item creation which is not allowed in search forms.
         'help_texts': {'autor': None}
     }
 
