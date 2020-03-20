@@ -106,6 +106,32 @@ class TestSearchFormFactory(MyTestCase):
             search_forms.RangeFormField
         )
 
+    def test_formfield_for_dbfield_form_class(self):
+        # Assert that test_formfield_for_dbfield respects the formfield class
+        # provided in the kwargs.
+        db_field = _models.ausgabe._meta.get_field('jahrgang')
+        self.assertIsInstance(
+            self.factory.formfield_for_dbfield(db_field, form_class=forms.CharField),
+            forms.CharField,
+            msg = "formfield_for_dbfield should respect a provided formfield "
+            "class."
+        )
+        # Default formfield:
+        self.assertIsInstance(
+            self.factory.formfield_for_dbfield(db_field),
+            forms.IntegerField
+        )
+
+    def test_formfield_for_dbfield_fallback_form_class(self):
+        # Assert that formfield_for_dbfield falls back to a forms.CharField
+        # formfield if no formfield instance was created.
+        db_field = _models.ausgabe._meta.get_field('id')
+        self.assertIsInstance(
+            self.factory.formfield_for_dbfield(db_field),
+            forms.CharField
+        )
+
+
 class TestSearchForm(MyTestCase):
 
     model = _models.artikel

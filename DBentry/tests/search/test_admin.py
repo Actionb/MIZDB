@@ -255,6 +255,7 @@ class TestSearchFormChangelist(AdminTestCase):
             'datum__range',  # partial date + range
             'genre',  # m2m
             'reihe',  # FK
+            'id__in',  # primary key
         ]
     }
 
@@ -344,6 +345,16 @@ class TestSearchFormChangelist(AdminTestCase):
         changelist = response.context['cl']
         self.assertEqual(len(changelist.result_list), 1)
         self.assertIn(self.obj3, changelist.result_list)
+
+    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    def test_filter_by_id(self):
+        request_data = {'id': [",".join(str(pk) for pk in [self.obj1.pk, self.obj2.pk])]}
+        response = self.client.get(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        changelist = response.context['cl']
+        self.assertEqual(len(changelist.result_list), 2, msg=changelist.result_list)
+        self.assertIn(self.obj1, changelist.result_list)
+        self.assertIn(self.obj2, changelist.result_list)
 
     @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_get_filters_params_select_multiple_lookup(self):

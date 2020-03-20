@@ -212,7 +212,17 @@ class SearchFormFactory:
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             defaults['widget'] = make_widget(**widget_opts)
-        return db_field.formfield(**{**defaults, **kwargs})
+        # Use the formfield class provided in the kwargs:
+        form_class = kwargs.pop('form_class', None)
+        if form_class:
+            formfield = form_class(**{**defaults, **kwargs})
+        else:
+            formfield = db_field.formfield(**{**defaults, **kwargs})
+        if formfield is None:
+            # AutoField.formfield() returns None; if we want a formfield for the
+            # primary key field, we need to create the field explicitly.
+            return forms.CharField(**{**defaults, **kwargs})
+        return formfield
 
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
