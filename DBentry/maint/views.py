@@ -206,11 +206,14 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
             # dupe_fields uses the order of form.fields and thus shares the
             # same order as the headers.
             values = dict(dupe.values)
-            duplicate_values = [
-                values[field_name][0]
-                for field_name in dupe_fields
-                if field_name in values
-            ]
+            duplicate_values = []
+            for field_name in dupe_fields:
+                if field_name in values:
+                    duplicate_values.append(values[field_name][0])
+                else:
+                    # Don't skip a column! Add an 'empty'.
+                    duplicate_values.append("")
+
             # 'dupe_item' contains the data required to create a 'row' for the
             # table listing the duplicates. It contains the model instance that
             # is part of this 'duplicates group', a link to the instance's change
@@ -229,7 +232,7 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
                 self.opts.app_label, self.opts.model_name
             )
             cl_url = reverse(view_name)
-            cl_url += '?id__in={}'.format(
+            cl_url += '?id__in={}'.format(  # TODO: should be a '?id={}' (or even constant?)
                 ",".join([str(instance.pk) for instance in dupe.instances])
             )
             items.append((dupe_item, cl_url))

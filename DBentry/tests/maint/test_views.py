@@ -134,7 +134,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         link_template = '<a href="{url}">{name}</a>'
 
-        request = self.get_request(data={'base': ['band_name']})
+        request = self.get_request(data={'base': ['band_name', 'beschreibung']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         # A validated and cleaned form is required.
@@ -156,7 +156,10 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         for dupe_item in items[0][0]:
             with self.subTest():
-                self.assertEqual(len(dupe_item), 3)
+                self.assertEqual(
+                    len(dupe_item), 3,
+                    msg = "Each dupe item is expected to have 3 attributes."
+                )
                 self.assertIsInstance(
                     dupe_item[0], self.model,
                     msg="Duplicate object should be an instance of "
@@ -171,7 +174,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                     msg="Should be link to change form of object."
                 )
                 self.assertEqual(
-                    dupe_item[2], ['Beep'],
+                    dupe_item[2], ['Beep', ''],
                     msg="Should be the duplicate object's values of the "
                     "fields the duplicates were found with."
                 )
