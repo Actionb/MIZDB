@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0068_removed_audio_quelle'),
+        ('DBentry', '0067_add_magazin_help_texts'),
     ]
 
     operations = [
