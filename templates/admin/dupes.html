@@ -63,6 +63,7 @@
                     {% endfor %}
                 </tr>
             {% endfor %}
+            {% resetcycle %}
         </table>
         <input type="hidden" name="action" value="{{action_name}}" />
         <input type="submit" name="merge_sub" value="Zusammenfügen"> <a href="{{cl_url}}" class="button" target="_blank">Änderungsliste</a>
