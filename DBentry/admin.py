@@ -87,7 +87,7 @@ class AudioAdmin(MIZModelAdmin):
 
     fieldsets = [
         (None, {'fields':
-                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender',
+                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle',
                 'beschreibung', 'bemerkungen']
         }),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
