@@ -235,7 +235,7 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
                 self.opts.app_label, self.opts.model_name
             )
             cl_url = reverse(view_name)
-            cl_url += '?id__in={}'.format(  # TODO: should be a '?id={}' (or even constant?)
+            cl_url += '?id={}'.format(
                 ",".join([str(instance.pk) for instance in dupe.instances])
             )
             items.append((dupe_item, cl_url))
