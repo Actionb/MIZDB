@@ -45,11 +45,11 @@
         {% csrf_token %}
         <table class="form" style="width:100%">
             <thead><tr>
-                <th>Merge</th>
-                <th>id</th>
-                <th style="min-width: 150px;">link</th>       
+                <th style="width:5%;">Merge</th>
+                <th style="width:7%;">id</th>
+                <th style="width:13%;">link</th>
                 {% for header in headers %}
-                    <th> {{header}} </th>
+                    <th style="width:{{ headers_width }}%;"> {{header}} </th>
                 {% endfor %}
             </tr></thead>
             

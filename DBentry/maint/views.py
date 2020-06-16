@@ -116,6 +116,9 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
         context = self.get_context_data(form, **kwargs)
         if 'get_duplicates' in request.GET and form.is_valid():
             context['headers'] = self.build_duplicates_headers(form)
+            # Calculate the (percentile) width of the headers; 25% of the width
+            # is already taken up by the three headers 'merge','id','link'.
+            context['headers_width'] = str(int(75/len(context['headers'])))
             context['items'] = self.build_duplicates_items(form)
         return self.render_to_response(context)
 
