@@ -793,7 +793,14 @@ class TestDuplicates(DataTestCase):
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertIn(self.obj3, duplicates)
-    
+
+    def test_empty(self):
+        # Assert that duplicates are not found by comparing empty values.
+        duplicates = self.get_duplicate_instances('beschreibung')
+        for obj in self.test_data:
+            with self.subTest(obj=obj):
+                self.assertNotIn(obj, duplicates)
+
     def test_duplicates_m2m(self):
         g1 = make(_models.genre)
         g2 = make(_models.genre)
