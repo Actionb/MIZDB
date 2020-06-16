@@ -112,7 +112,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     model_select = forms.ChoiceField(
         initial='',
-        label='Bitte das Modell auswählen'
+        label='Bitte Tabelle auswählen'
     )
     # Exclude some models that are a bit... different.
     exclude_models = [
