@@ -66,6 +66,26 @@ class ModelSelectView(views.generic.FormView):
         return {'model_name': self.request.GET.get('model_select')}
 
 
+class ModelSelectNextViewMixin(MaintViewMixin):
+    """A mixin that sets up the view following a ModelSelectView."""
+
+    def setup(self, request, *args, **kwargs):
+        super().setup(request, *args, **kwargs)
+        if not kwargs.get('model_name'):
+            raise TypeError("Model not provided.")
+        self.model = utils.get_model_from_string(kwargs['model_name'])
+        if self.model is None:
+            raise ValueError("Unknown model: %s" % kwargs['model_name'])
+        self.opts = self.model._meta
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            breadcrumbs_title=self.opts.verbose_name,
+            title=self.opts.verbose_name,
+            **kwargs
+        )
+
+
 @register_tool(
     url_name='dupes_select',
     index_label='Duplikate finden',
@@ -83,7 +103,7 @@ class DuplicateModelSelectView(MaintViewMixin, ModelSelectView):
     next_view = 'dupes'
 
 
-class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
+class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     """
     A FormView that finds, displays and, if so requested, merges duplicates.
 
@@ -96,19 +116,6 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
 
     template_name = 'admin/dupes.html'
     form_class = DuplicateFieldsSelectForm
-
-    def setup(self, request, *args, **kwargs):
-        super().setup(request, *args, **kwargs)
-        if not kwargs.get('model_name'):
-            raise TypeError("Model not provided.")
-        self.model = utils.get_model_from_string(kwargs['model_name'])
-        if self.model is None:
-            raise ValueError("Unknown model: %s" % kwargs['model_name'])
-        self.opts = self.model._meta
-        # 'title' is a context variable for base_site.html:
-        # together with 'site_title' it makes up the <title> section of a page.
-        self.title = 'Duplikate: ' + self.opts.verbose_name
-        self.breadcrumbs_title = self.opts.verbose_name
 
     def get(self, request, *args, **kwargs):
         """Handle the request to find duplicates."""
@@ -149,6 +156,9 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
         context['media'] = utils.ensure_jquery(media)
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
+        # 'title' is a context variable for base_site.html:
+        # together with 'site_title' it makes up the <title> section of a page.
+        context['title'] = 'Duplikate: ' + self.opts.verbose_name
         return context
 
     def get_form_kwargs(self):
