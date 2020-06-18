@@ -231,6 +231,7 @@ class DuplicateObjectsView(MaintViewMixin, views.generic.FormView):
                 for instance in dupe.instances
             ]
             # Add a link to the changelist page of this group.
+            # TODO: use utils.get_changelist_link?
             view_name = 'admin:{}_{}_changelist'.format(
                 self.opts.app_label, self.opts.model_name
             )
