@@ -1,0 +1,51 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n static %}
+
+
+{% block extrahead %}
+<!-- Extrahead -->
+{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script> 
+{{ form.media }}
+{% endblock extrahead %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+        {% if breadcrumbs_title %} &rsaquo; {{ breadcrumbs_title }}{% endif %}
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Config form -->
+<div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
+<form method="get">
+    {{ form.non_field_errors }}
+
+    {% for fieldset in form %}
+      {% include "admin/includes/fieldset.html" %}
+    {% endfor %}
+    <input type="submit" value="Suchen" name="get_unused">
+</form>
+</div>
+<!-- Config form END -->
+<br>
+
+{% if items %}
+<h1>{{ items|length }} Ergebnisse:</h1>
+    <table class="form" style="width:100%">
+            <thead><tr>
+                <th style="width:20%;">Datensatz</th>
+                <th style="width:80%;">Verwandte Objekte</th>
+            </tr></thead>
+            {% for object_link, result_text in items %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>{{object_link}}</td>
+                    <td>{{result_text}}</td>
+                </tr>
+            {% endfor %}
+    </table>
+{% else %}
+<h1>Keine Ergebnisse gefunden!</h1>
+{% endif %}
+{% endblock content %}

@@ -150,3 +150,9 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         ]
         # Sort the choices by verbose_name.
         return sorted(choices, key=lambda tpl: tpl[1])
+
+
+class UnusedObjectsForm(ModelSelectForm):
+    """Form for UnusedObjectsView."""
+
+    limit = forms.IntegerField(label="Grenzwert", min_value=0)
