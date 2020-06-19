@@ -1,4 +1,4 @@
-from unittest import skip
+from unittest import skip, mock
 
 from .base import MyTestCase, ViewTestCase
 
@@ -7,7 +7,7 @@ from django import forms
 from django.urls import reverse
 
 import DBentry.models as _models
-from DBentry.base.views import OptionalFormView
+from DBentry.base.views import OptionalFormView, FixedSessionWizardView
 from DBentry.views import MIZ_permission_denied_view, FavoritenView
 
 class TestOptionalFormView(ViewTestCase):
@@ -168,3 +168,19 @@ class TestPermissionDeniedView(MyTestCase):
         self.assertEqual(response.context_data['exception'], 'Exception Text')
         
         self.assertTrue('is_popup' in response.context_data)
+
+
+class TestFixedSessionWizardView(ViewTestCase):
+
+    view_class = FixedSessionWizardView
+
+    @mock.patch("DBentry.base.views.SessionWizardView.get_context_data")
+    def test_get_context_data(self, mocked_super_get_context_data):
+        # Make sure that 'form' is passed to SessionWizardView as a positional
+        # argument - unlike other views that accept (only) keyword arguments.
+        view = self.get_view(request=self.get_request())
+        form = "not actually a form"
+        view.get_context_data(form=form)
+        self.assertTrue(mocked_super_get_context_data.called)
+        call_args = mocked_super_get_context_data.call_args
+        self.assertIn(form, call_args[0], msg=call_args)
