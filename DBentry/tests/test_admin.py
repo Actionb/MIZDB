@@ -815,7 +815,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung', 'ort']
     # Note that AudioAdmin specifies a fieldsets attribute, overriding (and removing catalog_nr) the fields for the form that way
     fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
-        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'sender'
+        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen'
     ]
     raw_data = [
         {'band__band_name':'Testband', 'musiker__kuenstler_name':'Alice Tester', 'format__format_typ__typ':['TestTyp1', 'TestTyp2']}
