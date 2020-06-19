@@ -37,8 +37,6 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools.pop('bulk_ausgabe'), 'Ausgaben Erstellung')
         self.assertIn('favoriten', tools)
         self.assertEqual(tools.pop('favoriten'), 'Favoriten Verwaltung')
-        self.assertIn('help_index', tools)
-        self.assertEqual(tools.pop('help_index'), 'Hilfe')
         self.assertFalse(tools)
 
     def test_app_index_returns_DBentry(self):
