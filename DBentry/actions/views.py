@@ -214,8 +214,8 @@ class MergeViewWizarded(WizardConfirmationView):
         CONFLICT_RESOLUTION_STEP: step2_helptext
     }
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         # Add the current step to the view's title.
         context['title'] = gettext(
             'Merge objects: step {}').format(str(int(self.steps.current) + 1))

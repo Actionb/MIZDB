@@ -48,8 +48,8 @@ class ModelSelectView(views.generic.FormView):
     form_class = ModelSelectForm
     next_view = 'admin:index'
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         # Add context variables specific to admin/basic.html:
         context['submit_value'] = self.submit_value
         context['submit_name'] = self.submit_name
@@ -122,7 +122,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     def get(self, request, *args, **kwargs):
         """Handle the request to find duplicates."""
         form = self.get_form()
-        context = self.get_context_data(form, **kwargs)
+        context = self.get_context_data(form=form, **kwargs)
         if 'get_duplicates' in request.GET and form.is_valid():
             context['headers'] = self.build_duplicates_headers(form)
             # Calculate the (percentile) width of the headers; 25% of the width

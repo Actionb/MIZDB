@@ -91,8 +91,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
             return None
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
         defaults = {
             'queryset': self.queryset,
@@ -221,8 +221,8 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
             objs.append(links)
         return objs
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
         context.update({
             'affected_objects': self.compile_affected_objects(),
@@ -243,8 +243,8 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         super(WizardConfirmationView, self).__init__(*args, **kwargs)
         self.qs = self.queryset  # WizardView wants it so
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         if self.steps.current in self.view_helptext:
             context['view_helptext'] = self.view_helptext.get(self.steps.current)
         return context

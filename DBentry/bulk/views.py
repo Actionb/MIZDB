@@ -390,6 +390,6 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             headers += ['Bereits vorhanden', 'Datenbank']
         return headers, preview_data
 
-    def get_context_data(self, *args, **kwargs):
+    def get_context_data(self, **kwargs):
         # Add ausgabe's meta for the template.
         return super().get_context_data(opts=_models.ausgabe._meta)
