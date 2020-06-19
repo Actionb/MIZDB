@@ -1,4 +1,5 @@
 import re
+from unittest import skip
 from unittest.mock import patch
 from .base import AdminTestCase, UserTestCase
 
@@ -987,18 +988,24 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
     search_fields_expected = ['titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
 
+
+@skip("Unfinished model/ModelAdmin")
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
     model = _models.memorabilien
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
 
+
+@skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DokumentAdmin
     model = _models.dokument
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
 
+
+@skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.TechnikAdmin
     model = _models.technik
