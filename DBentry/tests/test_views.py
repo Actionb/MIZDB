@@ -1,13 +1,10 @@
-from unittest import skip, mock
+from unittest import mock
 
-from .base import MyTestCase, ViewTestCase
-
-import django.views as django_views
 from django import forms
 from django.urls import reverse
 
-import DBentry.models as _models
 from DBentry.base.views import OptionalFormView, FixedSessionWizardView
+from DBentry.tests.base import MyTestCase, ViewTestCase
 from DBentry.views import MIZ_permission_denied_view, FavoritenView
 
 
@@ -62,75 +59,6 @@ class TestOptionalFormView(ViewTestCase):
         view = self.get_view(request, success_url='Test', form_class=self.form_class)
         response = view.post(request)
         self.assertEqual(response.status_code, 200)  # no redirect to the success_url
-
-# NOTE: keeping this test (although it's non-functional) to maybe use
-# the methods on the register_tool decorator
-@skip("MIZAdminToolViewMixin was removed")
-class TestMIZAdminToolViewMixin(ViewTestCase):
-    # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin
-
-    # NOTE: MIZAdminToolViewMixin was removed
-    #    view_bases = (MIZAdminToolViewMixin, django_views.generic.TemplateView)
-
-    def test_permission_test_only_staff_required(self):
-        # basic test for user.is_staff as MIZAdminToolView does not set any required permissions
-        view_class = self.get_dummy_view_class(attrs={'model': _models.band})
-        request = self.get_request(user=self.noperms_user)
-        self.assertFalse(view_class.permission_test(request))
-        self.assertFalse(view_class.show_on_index_page(request))
-
-        request = self.get_request(user=self.staff_user)
-        self.assertTrue(view_class.permission_test(request))
-        self.assertTrue(view_class.show_on_index_page(request))
-
-        request = self.get_request()
-        self.assertTrue(view_class.permission_test(request))
-        self.assertTrue(view_class.show_on_index_page(request))
-
-    def test_permission_test_with_explicit_permreq(self):
-        # setting MIZAdminToolView.permission_required
-        # none of the users actually have any permissions set other than is_staff/is_superuser
-        view_class = self.get_dummy_view_class(attrs={'_permissions_required': ['beepboop'], 'model': _models.band})
-        request = self.get_request(user=self.noperms_user)
-        self.assertFalse(view_class.permission_test(request))
-
-        request = self.get_request(user=self.staff_user)
-        self.assertFalse(view_class.permission_test(request))
-
-        request = self.get_request()
-        self.assertTrue(view_class.permission_test(request))
-
-    def test_get_permissions_required(self):
-        # See how get_permissions_required deals with various forms of setting model opts and permissions
-        expected = ['DBentry.perm1_ausgabe', 'DBentry.perm2_ausgabe', 'DBentry.perm3_ausgabe', 'DBentry.perm4_ausgabe']
-        attrs = {'_permissions_required': ['perm1', ('perm2', ), ('perm3', _models.ausgabe), ('perm4', 'ausgabe')]}
-
-        # opts set on view
-        _attrs = attrs.copy()
-        _attrs.update(opts=_models.ausgabe._meta)
-        view_class = self.get_dummy_view_class(attrs=_attrs)
-        self.assertEqual(view_class.get_permissions_required(), expected)
-
-        # model set on view
-        _attrs = attrs.copy()
-        _attrs.update(model=_models.ausgabe)
-        view_class = self.get_dummy_view_class(attrs=_attrs)
-        self.assertEqual(view_class.get_permissions_required(), expected)
-
-        # no opts/model set on view => ImproperlyConfigured exception
-        view_class = self.get_dummy_view_class(attrs=attrs)
-        from django.core.exceptions import ImproperlyConfigured
-        with self.assertRaises(ImproperlyConfigured):
-            view_class.get_permissions_required()
-
-    def test_get_context_data(self):
-        request = self.get_request()
-        context_data = self.get_dummy_view(request=request).get_context_data()
-        self.assertEqual(context_data.get('is_popup', False), False)
-
-        request = self.get_request(data={'_popup': 1})
-        context_data = self.get_dummy_view(request=request).get_context_data()
-        self.assertEqual(context_data.get('is_popup', False), True)
 
 
 class TestFavoritenView(ViewTestCase):
