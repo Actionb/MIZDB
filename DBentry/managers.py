@@ -79,7 +79,8 @@ class MIZQuerySet(models.QuerySet):
         all_values = list(chain(values for pk, values in queried.items()))
         rslt = []
         for elem, count in Counter(all_values).items():
-            if count < 2:
+            if not elem or count < 2:
+                # Do not compare empty with empty, and skip if there are no dupes
                 continue
             # Find all the pks that match these values.
             pks = []
