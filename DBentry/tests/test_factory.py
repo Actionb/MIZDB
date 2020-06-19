@@ -387,20 +387,15 @@ class TestMIZDjangoOptions(MyTestCase):
             with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:
                 opts.add_related_factories()
 
-        self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
-        self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
-        expected_args = ('SomeFactory', )
-        expected_kwargs = {
-            'factory_related_name': 'mocked_field_name',
-            'accessor_name': 'mocked_rel_accessor',
-            'related_model': _models.BaseBrochure
-        }
-        self.assertEqual(mocked_related_factory.call_args, (expected_args, expected_kwargs))
-
-        mocked_get_model_relations.return_value = [_models.genre._meta.get_field('basebrochure')]
-        fac = modelfactory_factory(_models.Kalendar)
-        created = fac(genre__genre='Testgenre')
-        self.assertEqual(list(created.genre.values_list('genre', flat=True)), ['Testgenre'])
+                self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
+                self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
+                expected_args = ('SomeFactory', )
+                expected_kwargs = {
+                    'factory_related_name': 'mocked_field_name',
+                    'accessor_name': 'mocked_rel_accessor',
+                    'related_model': _models.BaseBrochure
+                }
+                self.assertEqual(mocked_related_factory.call_args, (expected_args, expected_kwargs))
 
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly
