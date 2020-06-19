@@ -326,7 +326,8 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
                 continue
 
             # For this relation, get objects that do not exceed the limit.
-            qs = model.objects.annotate(c=Count(query_name)).filter(Q(c__lte=limit))
+            qs = model.objects.order_by().annotate(
+                c=Count(query_name)).filter(Q(c__lte=limit))
             counts = {pk: c for pk, c in qs.values_list('pk', 'c')}
             # Remove the ids of the objects that exceed the limit for this relation.
             unused.difference_update(all_ids.difference(counts))
