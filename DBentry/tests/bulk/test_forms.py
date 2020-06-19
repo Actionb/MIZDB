@@ -269,7 +269,15 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
                     # Assert that row_2, _3, _4 do not have an instance
                     # assigned to them (they represent new instances):
                     self.assertIsNone(row.get('instance', None))
-                self.assertDictsEqual(row, expected[c])
+                if 'multiples' in row and 'multiples' in expected[c]:
+                    # Need to compare the QuerySets of key 'multiples' separately.
+                    # assertQuerysetEqual doesn't transform the second parameter.
+                    self.assertEqual(
+                        list(row.pop('multiples').values_list('pk', flat=True)),
+                        list(expected[c].pop('multiples').values_list('pk', flat=True))
+                    )
+                self.assertEqual(row, expected[c])
+
 
     def test_row_data_prop_invalid(self):
         # If the form is invalid, row_data should return empty

@@ -309,9 +309,12 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         # 'old_form_data' should now contain the data used to stimulate the
         # preview response:
         first_preview_request = first_preview_response.wsgi_request
-        first_preview_initial = first_preview_request.session.get('old_form_data', {})
-        # TODO: rethink the assertDictsEqual methods
-        self.assertDictsEqual(first_preview_initial, first_preview_data)
+        # Call dict(x.items()) to flatten the QueryDict's values.
+        first_preview_initial = dict(
+            first_preview_request.session.get('old_form_data', {}).items())
+        # Convert values from first_preview_data to string so that they match
+        # the type of the values in first_preview_initial.
+        self.assertEqual(first_preview_initial, {k:str(v) for k, v in first_preview_data.items()})
 
         # User changes data without refreshing the preview, complain about it:
         complain_data = self.valid_data.copy()

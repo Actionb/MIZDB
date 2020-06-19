@@ -7,7 +7,10 @@ from django.utils.http import unquote
 from DBentry import models as _models
 from DBentry import utils
 from DBentry.actions.views import MergeViewWizarded
-from DBentry.maint.views import DuplicateObjectsView, ModelSelectView
+from DBentry.factory import make
+from DBentry.maint.views import (
+    DuplicateObjectsView, ModelSelectView, UnusedObjectsView
+)
 from DBentry.tests.base import ViewTestCase
 from DBentry.tests.mixins import TestDataMixin
 
@@ -134,7 +137,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         link_template = '<a href="{url}">{name}</a>'
 
-        request = self.get_request(data={'base': ['band_name']})
+        request = self.get_request(data={'base': ['band_name', 'beschreibung']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         # A validated and cleaned form is required.
@@ -156,7 +159,10 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         for dupe_item in items[0][0]:
             with self.subTest():
-                self.assertEqual(len(dupe_item), 3)
+                self.assertEqual(
+                    len(dupe_item), 3,
+                    msg = "Each dupe item is expected to have 3 attributes."
+                )
                 self.assertIsInstance(
                     dupe_item[0], self.model,
                     msg="Duplicate object should be an instance of "
@@ -171,7 +177,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                     msg="Should be link to change form of object."
                 )
                 self.assertEqual(
-                    dupe_item[2], ['Beep'],
+                    dupe_item[2], ['Beep', ''],
                     msg="Should be the duplicate object's values of the "
                     "fields the duplicates were found with."
                 )
@@ -213,3 +219,38 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         self.assertTrue(form.is_valid())
         headers = view.build_duplicates_headers(form)
         self.assertIn('Alias', headers)
+
+
+class TestUnusedObjectsView(ViewTestCase):
+    
+    view_class = UnusedObjectsView
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.artikel1 = make(_models.artikel)
+        cls.artikel2 = make(_models.artikel)
+
+        cls.unused = make(_models.genre)
+        cls.used_once = make(_models.genre)
+        cls.artikel1.genre.add(cls.used_once)
+        cls.used_twice = make(_models.genre)
+        cls.artikel1.genre.add(cls.used_twice)
+        cls.artikel2.genre.add(cls.used_twice)
+        cls.test_data = [cls.unused, cls.used_once, cls.used_twice]
+        super().setUpTestData()
+
+    def test_get_queryset(self):
+        view = self.get_view(request=self.get_request())
+        for limit in [0, 1, 2]:
+            relations, queryset = view.get_queryset(_models.genre, limit)
+            with self.subTest(limit=limit):
+                self.assertEqual(queryset.count(), limit+1)
+
+    def test_get_queryset_ignores_self_relations(self):
+        view = self.get_view(request=self.get_request())
+        relations, queryset = view.get_queryset(_models.genre, 0)
+        self.assertNotIn(
+            _models.genre._meta.get_field('ober').remote_field,
+            relations
+        )
+        

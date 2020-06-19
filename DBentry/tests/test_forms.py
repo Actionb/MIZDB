@@ -1,15 +1,18 @@
-from .base import FormTestCase, ModelFormTestCase
+from .base import FormTestCase, ModelFormTestCase, MyTestCase
 from .mixins import TestDataMixin
 
 from django import forms
-from django.core.exceptions import NON_FIELD_ERRORS
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
-from DBentry.base.forms import DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin
+from DBentry import models as _models
+from DBentry.base.forms import (
+    DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin,
+    MIZAdminInlineFormBase
+)
 from DBentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm
 )
-from DBentry.models import artikel, ausgabe, autor, person, buch, genre, audio
 from DBentry.ac.widgets import EasyWidgetWrapper
 from DBentry.factory import make
 
@@ -19,7 +22,7 @@ from dal import autocomplete
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 
     form_class = AusgabeMagazinFieldForm
-    model = ausgabe.audio.through
+    model = _models.ausgabe.audio.through
     fields = ['ausgabe']
     test_data_count = 1
 
@@ -40,7 +43,7 @@ class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 class TestArtikelForm(ModelFormTestCase):
 
     form_class = ArtikelForm
-    model = artikel
+    model = _models.artikel
     fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
     test_data_count = 1
 
@@ -74,12 +77,12 @@ class TestArtikelForm(ModelFormTestCase):
 class TestAutorForm(ModelFormTestCase):
     form_class = AutorForm
     fields = ['person', 'kuerzel']
-    model = autor
+    model = _models.autor
 
     @translation_override(language = None)
     def test_clean(self):
         # clean should raise a ValidationError if either kuerzel or person data is missing
-        p = make(person)
+        p = make(_models.person)
         expected_error_message = 'Bitte mindestens 1 dieser Felder ausfüllen: Kürzel, Person.'
 
         form = self.get_form(data={'beschreibung':'Boop'})
@@ -101,12 +104,12 @@ class TestAutorForm(ModelFormTestCase):
 class TestBuchForm(ModelFormTestCase):
     form_class = BuchForm
     fields = ['is_buchband', 'buchband']
-    model = buch
+    model = _models.buch
 
     @translation_override(language = None)
     def test_clean(self):
         # clean should raise a ValidationError if both is_buchband and buchband data is present
-        b = make(buch, is_buchband = True)
+        b = make(_models.buch, is_buchband = True)
         expected_error_message = 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'
 
         form = self.get_form(data={'is_buchband':True, 'buchband':b.pk})
@@ -173,7 +176,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         'cf' : forms.ChoiceField(choices = []), 
         'cf2' : forms.ChoiceField(choices = [])
     }
-    model = genre
+    model = _models.genre
     test_data_count = 3
 
     def test_set_choices(self):
@@ -186,7 +189,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
     def test_set_choices_manager(self):
         # choices is a BaseManager
-        choices = {forms.ALL_FIELDS: genre.objects}
+        choices = {forms.ALL_FIELDS: _models.genre.objects}
         expected = [(str(o.pk), str(o)) for o in self.test_data]
         form = self.get_dummy_form(choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
@@ -194,7 +197,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
     def test_set_choices_queryset(self):
         # choices is a QuerySet
-        choices = {forms.ALL_FIELDS: genre.objects.all()}
+        choices = {forms.ALL_FIELDS: _models.genre.objects.all()}
         expected = [(str(o.pk), str(o)) for o in self.test_data]
         form = self.get_dummy_form(choices=choices)
         self.assertListEqualSorted(form.fields['cf'].choices, expected)
@@ -220,7 +223,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         'favorite_pet' : forms.CharField(), 'favorite_sport' : forms.CharField(), 
     }
     dummy_bases = (MinMaxRequiredFormMixin, forms.Form)         
-    
+
     def test_init_resets_required(self):
         # Assert that __init__ sets any fields declared in minmax_required to not required
         form = self.get_dummy_form()
@@ -228,7 +231,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         minmax_required = [{'min':1, 'fields':['first_name', 'last_name']}]
         form = self.get_dummy_form(attrs = {'minmax_required': minmax_required})
         self.assertFalse(form.fields['last_name'].required)
-        
+
     def test_init_raises_keyerror(self):
         # Assert that __init__ reraises a KeyError if a group's fields contains field names
         # not found on the form.
@@ -236,14 +239,14 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         form_class = self.get_dummy_form_class(attrs = {'minmax_required': minmax_required})
         with self.assertRaises(KeyError):
             form_class()
-            
+
     def test_get_groups_raises_typeerror(self):
         # Assert that get_groups() raises a TypeError from bad kwargs.
         minmax_required = [{'min':1, 'fields':['first_name', 'last_name'], 'bad':'kwarg'}]
         form = self.get_dummy_form(attrs = {'minmax_required': minmax_required})
         with self.assertRaises(TypeError):
             list(form.get_groups())
-            
+
     @translation_override(language = None)
     def test_clean(self):
         attrs = {
@@ -257,14 +260,14 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         form.is_valid()
         self.assertIn('Bitte mindestens 1 dieser Felder ausfüllen: First Name, Last Name.', form.non_field_errors())
         self.assertIn('Bitte höchstens 1 dieser Felder ausfüllen: Favorite Pet, Favorite Sport.', form.non_field_errors())
-        
+
     def test_get_group_error_messages_form_callback(self):
         # Assert that custom callbacks are handled correctly and return 
         # the expected error messages.
         def callback(form, group, error_messages, format_kwargs):
             fields = " or ".join(f.replace('_', ' ').title() for f in group.fields)
             return {'max': "%s! Cannot have both!" % fields}
-            
+
         minmax_required = [{'max': 1, 'fields': ['favorite_pet', 'favorite_sport']}]
         base_attrs = {'minmax_required': minmax_required}
         form_data = {'favorite_pet':'Cat', 'favorite_sport':'Coffee drinking.'}
@@ -286,10 +289,10 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
                 form = self.get_dummy_form(attrs = attrs , data = form_data)
                 self.assertFalse(form.is_valid())
                 self.assertIn(expected, form.non_field_errors())
-                
+
 class TestAudioForm(ModelFormTestCase):
     form_class = AudioForm
-    model = audio
+    model = _models.audio
     fields = ['release_id', 'discogs_url']     
 
     def test_clean_continues_on_empty_data(self):
@@ -388,3 +391,76 @@ class TestAudioForm(ModelFormTestCase):
         form = self.get_form(data = {'titel': 'Beep', 'discogs_url': 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181'})
         self.assertNotIn('discogs_url', form.errors)
 
+#x = {
+#    'm2m_band_musiker_set-INITIAL_FORMS': ['1'],
+#    'm2m_band_musiker_set-MIN_NUM_FORMS': ['0'],
+#    'm2m_band_musiker_set-MAX_NUM_FORMS': ['1000'],
+#    'm2m_band_musiker_set-TOTAL_FORMS': ['2'],
+#    
+#    'band_name': ['Test Band'],
+#    
+#    'm2m_band_musiker_set-0-id': ['21348'],
+#    'm2m_band_musiker_set-0-band': ['4449'],
+#    'm2m_band_musiker_set-0-musiker': ['35627'],
+#    'm2m_band_musiker_set-1-id': [''],
+#    'm2m_band_musiker_set-1-band': ['4449']}
+#    'm2m_band_musiker_set-1-musiker': ['35627'],
+#    
+#    'm2m_band_musiker_set-__prefix__-id': [''],
+#    'm2m_band_musiker_set-__prefix__-band': ['4449'],
+#    'm2m_band_musiker_set-__prefix__-musiker': [''],
+#}
+
+class TestMIZAdminInlineFormBase(MyTestCase):
+    form = MIZAdminInlineFormBase
+    model = _models.band.musiker.through
+    fields = ['band', 'musiker']
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.band = make(_models.band)
+        cls.musiker = make(_models.musiker)
+        cls.m2m = _models.band.musiker.through.objects.create(
+            band=cls.band, musiker=cls.musiker)
+        super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        self.formset_class = forms.inlineformset_factory(
+            _models.band, _models.band.musiker.through,
+            form=self.form,
+            fields=forms.ALL_FIELDS,
+            extra=1,
+        )
+
+    def test_validate_unique(self):
+        # Assert that MIZAdminInlineFormBase handles duplicate entries as
+        # expected.
+        data = {
+            'm2m_band_musiker_set-INITIAL_FORMS': '1',
+            'm2m_band_musiker_set-TOTAL_FORMS': '2',
+            'm2m_band_musiker_set-0-id': self.m2m.pk,
+            'm2m_band_musiker_set-0-musiker': self.musiker.pk,
+            'm2m_band_musiker_set-0-band': self.band.pk,
+            'm2m_band_musiker_set-1-id': '',
+            'm2m_band_musiker_set-1-musiker': self.musiker.pk,
+            'm2m_band_musiker_set-1-band': self.band.pk,
+        }
+        formset = self.formset_class(instance=self.band, data=data)
+        for form in formset.forms:
+            self.assertTrue(form.is_valid())
+            self.assertIsNone(
+                form.validate_unique(),
+                msg = "Expected validation on uniqueness to always succeed."
+            )
+            # Assert that the duplicate entry indeed throws a ValidationError
+            # and was then flagged to be deleted:
+            self.assertIn('DELETE', form.cleaned_data)
+            if not form.instance.pk:
+                msg_text = ("Expected instance.validate_unique to throw a "
+                    "ValidationError for duplicate instances.")
+                with self.assertRaises(ValidationError, msg=msg_text):
+                    form.instance.validate_unique()
+                self.assertTrue(form.cleaned_data['DELETE'])
+            else:
+                self.assertFalse(form.cleaned_data['DELETE'])

@@ -112,7 +112,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     model_select = forms.ChoiceField(
         initial='',
-        label='Bitte das Modell auswählen'
+        label='Bitte Tabelle auswählen'
     )
     # Exclude some models that are a bit... different.
     exclude_models = [
@@ -150,3 +150,9 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         ]
         # Sort the choices by verbose_name.
         return sorted(choices, key=lambda tpl: tpl[1])
+
+
+class UnusedObjectsForm(ModelSelectForm):
+    """Form for UnusedObjectsView."""
+
+    limit = forms.IntegerField(label="Grenzwert", min_value=0)

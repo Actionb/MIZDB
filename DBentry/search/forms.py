@@ -145,6 +145,14 @@ class SearchForm(forms.Form):
                     and not value.exists()):
                 # Dont want empty values as filter parameters!
                 continue
+            elif ('in' in self.lookups.get(field_name, [])
+                and isinstance(value, QuerySet)):
+                    # django admin's prepare_lookup_value() expects an '__in'
+                    # lookup to consist of comma separated values.
+                    param_value = ",".join(
+                        str(pk)
+                        for pk in value.values_list('pk', flat=True).order_by('pk')
+                    )
 
             params[param_key] = param_value
         return params
@@ -204,7 +212,17 @@ class SearchFormFactory:
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             defaults['widget'] = make_widget(**widget_opts)
-        return db_field.formfield(**{**defaults, **kwargs})
+        # Use the formfield class provided in the kwargs:
+        form_class = kwargs.pop('form_class', None)
+        if form_class:
+            formfield = form_class(**{**defaults, **kwargs})
+        else:
+            formfield = db_field.formfield(**{**defaults, **kwargs})
+        if formfield is None:
+            # AutoField.formfield() returns None; if we want a formfield for the
+            # primary key field, we need to create the field explicitly.
+            return forms.CharField(**{**defaults, **kwargs})
+        return formfield
 
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
