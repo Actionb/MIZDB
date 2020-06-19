@@ -127,7 +127,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             context['headers'] = self.build_duplicates_headers(form)
             # Calculate the (percentile) width of the headers; 25% of the width
             # is already taken up by the three headers 'merge','id','link'.
-            context['headers_width'] = str(int(75/len(context['headers'])))
+            context['headers_width'] = str(int(75 / len(context['headers'])))
             context['items'] = self.build_duplicates_items(form)
         return self.render_to_response(context)
 
@@ -337,21 +337,21 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
             }
         return relations, model.objects.filter(pk__in=unused)
 
-
     def build_items(self, model, limit):
         """Build items for the context."""
         items = []
         under_limit_template = '{model_name} ({count!s})'
-        relations,  queryset = self.get_queryset(model, limit)
+        relations, queryset = self.get_queryset(model, limit)
         for obj in queryset:
             under_limit = []
-            for rel, info in relations.items():
+            for info in relations.values():
                 count = info['counts'].get(obj.pk, 0)
                 under_limit.append(
                     under_limit_template.format(
                         model_name=info['related_model']._meta.verbose_name,
                         count=count
-                ))
+                    )
+                )
             items.append((
                 utils.get_obj_link(obj, user=self.request.user, include_name=False),
                 ", ".join(sorted(under_limit))
