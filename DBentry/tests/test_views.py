@@ -10,6 +10,7 @@ import DBentry.models as _models
 from DBentry.base.views import OptionalFormView, FixedSessionWizardView
 from DBentry.views import MIZ_permission_denied_view, FavoritenView
 
+
 class TestOptionalFormView(ViewTestCase):
 
     class DummyView(OptionalFormView):
@@ -17,6 +18,7 @@ class TestOptionalFormView(ViewTestCase):
         def get_template_names(self, *args, **kwargs):
             # So that we do not have to specify a template_name for render_to_response (from form_invalid(form))
             return
+
 
     class DummyForm(forms.Form):
         foo = forms.CharField()
@@ -43,36 +45,36 @@ class TestOptionalFormView(ViewTestCase):
         view = self.get_view(request, success_url='Test')
         self.assertIsNone(view.get_form_class())
         response = view.post(request)
-        self.assertEqual(response.status_code, 302) # default response is a redirect to the success_url
+        self.assertEqual(response.status_code, 302)  # default response is a redirect to the success_url
         self.assertEqual(response.url, 'Test')
 
         # If view.form_class is not None, and...
 
         # the form is valid, post should return form_valid(form)
-        request = self.post_request(data = {'foo':'bar'}) # will make a form without any fields count as 'bound' and therefor as valid
+        request = self.post_request(data={'foo': 'bar'})  # will make a form without any fields count as 'bound' and therefor as valid
         view = self.get_view(request, success_url='Test', form_class=self.form_class)
         response = view.post(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, 'Test')
 
         # the form is invalid, post should return form_invalid(form)
-        request = self.post_request() # no data for the form means it is not bound, and thus not valid
+        request = self.post_request()  # no data for the form means it is not bound, and thus not valid
         view = self.get_view(request, success_url='Test', form_class=self.form_class)
         response = view.post(request)
-        self.assertEqual(response.status_code, 200) # no redirect to the success_url
+        self.assertEqual(response.status_code, 200)  # no redirect to the success_url
 
-# NOTE: keeping this test (although it's non-functional) to maybe use 
+# NOTE: keeping this test (although it's non-functional) to maybe use
 # the methods on the register_tool decorator
 @skip("MIZAdminToolViewMixin was removed")
 class TestMIZAdminToolViewMixin(ViewTestCase):
     # includes tests for the mixins: MIZAdminMixin, MIZAdminPermissionMixin
 
-# NOTE: MIZAdminToolViewMixin was removed
-#    view_bases = (MIZAdminToolViewMixin, django_views.generic.TemplateView)
+    # NOTE: MIZAdminToolViewMixin was removed
+    #    view_bases = (MIZAdminToolViewMixin, django_views.generic.TemplateView)
 
     def test_permission_test_only_staff_required(self):
         # basic test for user.is_staff as MIZAdminToolView does not set any required permissions
-        view_class = self.get_dummy_view_class(attrs = {'model':_models.band})
+        view_class = self.get_dummy_view_class(attrs={'model': _models.band})
         request = self.get_request(user=self.noperms_user)
         self.assertFalse(view_class.permission_test(request))
         self.assertFalse(view_class.show_on_index_page(request))
@@ -86,9 +88,9 @@ class TestMIZAdminToolViewMixin(ViewTestCase):
         self.assertTrue(view_class.show_on_index_page(request))
 
     def test_permission_test_with_explicit_permreq(self):
-        # setting MIZAdminToolView.permission_required 
+        # setting MIZAdminToolView.permission_required
         # none of the users actually have any permissions set other than is_staff/is_superuser
-        view_class = self.get_dummy_view_class(attrs={'_permissions_required':['beepboop'], 'model':_models.band})
+        view_class = self.get_dummy_view_class(attrs={'_permissions_required': ['beepboop'], 'model': _models.band})
         request = self.get_request(user=self.noperms_user)
         self.assertFalse(view_class.permission_test(request))
 
@@ -101,19 +103,19 @@ class TestMIZAdminToolViewMixin(ViewTestCase):
     def test_get_permissions_required(self):
         # See how get_permissions_required deals with various forms of setting model opts and permissions
         expected = ['DBentry.perm1_ausgabe', 'DBentry.perm2_ausgabe', 'DBentry.perm3_ausgabe', 'DBentry.perm4_ausgabe']
-        attrs = {'_permissions_required': ['perm1', ('perm2', ), ('perm3', _models.ausgabe), ('perm4', 'ausgabe')]} 
+        attrs = {'_permissions_required': ['perm1', ('perm2', ), ('perm3', _models.ausgabe), ('perm4', 'ausgabe')]}
 
         # opts set on view
         _attrs = attrs.copy()
         _attrs.update(opts=_models.ausgabe._meta)
         view_class = self.get_dummy_view_class(attrs=_attrs)
-        self.assertEqual(view_class.get_permissions_required(), expected)        
+        self.assertEqual(view_class.get_permissions_required(), expected)
 
         # model set on view
         _attrs = attrs.copy()
         _attrs.update(model=_models.ausgabe)
         view_class = self.get_dummy_view_class(attrs=_attrs)
-        self.assertEqual(view_class.get_permissions_required(), expected)      
+        self.assertEqual(view_class.get_permissions_required(), expected)
 
         # no opts/model set on view => ImproperlyConfigured exception
         view_class = self.get_dummy_view_class(attrs=attrs)
@@ -126,9 +128,10 @@ class TestMIZAdminToolViewMixin(ViewTestCase):
         context_data = self.get_dummy_view(request=request).get_context_data()
         self.assertEqual(context_data.get('is_popup', False), False)
 
-        request = self.get_request(data={'_popup':1})
+        request = self.get_request(data={'_popup': 1})
         context_data = self.get_dummy_view(request=request).get_context_data()
         self.assertEqual(context_data.get('is_popup', False), True)
+
 
 class TestFavoritenView(ViewTestCase):
 
@@ -144,13 +147,14 @@ class TestFavoritenView(ViewTestCase):
         # Test that get_object creates a new entry in the Favoriten table if necessary
         request = self.get_request()
         view = self.get_view(request)
-        view.model.objects.filter(user=request.user).delete() # delete any remnants
+        view.model.objects.filter(user=request.user).delete()  # delete any remnants
 
-        new_entry = view.get_object() # user has no Favoriten yet, create an entry in Favoriten
+        new_entry = view.get_object()  # user has no Favoriten yet, create an entry in Favoriten
         self.assertEqual(new_entry.user, self.super_user)
         self.assertTrue(view.model.objects.filter(user=request.user).exists())
 
-        self.assertEqual(view.get_object(), new_entry) # direct access to Favoriten via queryset
+        self.assertEqual(view.get_object(), new_entry)  # direct access to Favoriten via queryset
+
 
 class TestPermissionDeniedView(MyTestCase):
 
