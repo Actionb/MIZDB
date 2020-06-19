@@ -1,4 +1,3 @@
-# TODO: code style (200+ long lines, ouch)
 from django import forms
 from django.contrib import messages
 from django.db import transaction
@@ -50,15 +49,19 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
 
     form_class = BulkEditJahrgangForm
 
-    view_helptext = """
-        Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen.
-        Wählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an.
-        Die Jahrgangswerte der anderen Ausgaben werden danach in Abständen von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt.
+    view_helptext = (
+        "Sie können hier Jahrgänge zu den ausgewählten Ausgaben hinzufügen."
+        "\nWählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines "
+        "Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an."
+        "\nDie Jahrgangswerte der anderen Ausgaben werden danach in Abständen "
+        "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt."
 
-        Ausgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), werden ignoriert.
-        Wird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge aller ausgewählten Ausgaben gelöscht.
-        Alle bereits vorhandenen Angaben für Jahrgänge werden überschrieben.
-    """
+        "\n\nAusgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), "
+        "werden ignoriert."
+        "\nWird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge "
+        "aller ausgewählten Ausgaben gelöscht."
+        "\nAlle bereits vorhandenen Angaben für Jahrgänge werden überschrieben."
+    )
 
     def get_form_kwargs(self, *args, **kwargs):
         kwargs = super().get_form_kwargs(*args, **kwargs)
@@ -102,9 +105,12 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     form_class = BulkAddBestandForm
 
-    view_helptext = """ Sie können hier Bestände für die ausgewählten Objekte hinzufügen.
-                        Besitzt ein Objekt bereits einen Bestand in der ersten Kategorie ('Lagerort (Bestand)'), so wird stattdessen diesem Objekt ein Bestand in der zweiten Kategorie ('Lagerort (Dublette)') hinzugefügt.
-    """
+    view_helptext = (
+        "Sie können hier Bestände für die ausgewählten Objekte hinzufügen."
+        "\nBesitzt ein Objekt bereits einen Bestand in der ersten Kategorie "
+        "('Lagerort (Bestand)'), so wird stattdessen diesem Objekt ein Bestand "
+        "in der zweiten Kategorie ('Lagerort (Dublette)') hinzugefügt."
+    )
 
     def get_initial(self):
         # get initial values for bestand and dublette based on the view's model
@@ -190,7 +196,9 @@ class MergeViewWizarded(WizardConfirmationView):
         '_check_different_ausgaben'
     ]
     # Admin message for some failed checks.
-    denied_message = 'Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}.'
+    denied_message = (
+        "Die ausgewählten {self_plural} gehören zu unterschiedlichen {other_plural}."
+    )
 
     SELECT_PRIMARY_STEP = '0'
     CONFLICT_RESOLUTION_STEP = '1'
@@ -200,14 +208,23 @@ class MergeViewWizarded(WizardConfirmationView):
     ]
 
     # TODO: include this bit in the ACTUAL help page for this action:
-    # Fehlen dem primären Datensatz Grunddaten und wird unten bei der entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
-    # Bereits bestehende Grunddaten des primären Datensatzes werden NICHT überschrieben.
-    step1_helptext = """Bei der Zusammenfügung werden alle verwandten Objekte der zuvor in der Übersicht ausgewählten Datensätze dem primären Datensatz zugeteilt.
-        Danach werden die sekundären Datensätze GELÖSCHT.
-    """
-    step2_helptext = """Für die Erweiterung der Grunddaten des primären Datensatzes stehen widersprüchliche Möglichkeiten zur Verfügung.
-        Bitte wählen Sie jeweils eine der Möglichkeiten, die für den primären Datensatz übernommen werden sollen.
-    """
+    # Fehlen dem primären Datensatz Grunddaten und wird unten bei der
+    # entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten
+    # nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
+    # Bereits bestehende Grunddaten des primären Datensatzes werden NICHT
+    # überschrieben.
+    step1_helptext = (
+        "Bei der Zusammenfügung werden alle verwandten Objekte der"
+        "zuvor in der Übersicht ausgewählten Datensätze dem primären"
+        "Datensatz zugeteilt."
+        "\nDanach werden die sekundären Datensätze GELÖSCHT."
+    )
+    step2_helptext = (
+        "Für die Erweiterung der Grunddaten des primären Datensatzes stehen"
+        "widersprüchliche Möglichkeiten zur Verfügung."
+        "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären"
+       " Datensatz übernommen werden sollen."
+    )
 
     view_helptext = {
         SELECT_PRIMARY_STEP: step1_helptext,
@@ -232,8 +249,8 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     def _check_different_magazines(view, **kwargs):
-        if (view.model == _models.ausgabe and
-                view.queryset.values_list('magazin').distinct().count() > 1):
+        if (view.model == _models.ausgabe
+                and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
@@ -248,8 +265,8 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     def _check_different_ausgaben(view, **kwargs):
-        if (view.model == _models.artikel and
-                view.queryset.values('ausgabe').distinct().count() > 1):
+        if (view.model == _models.artikel
+                and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
@@ -357,7 +374,8 @@ class MergeViewWizarded(WizardConfirmationView):
             # Set the current_step to the CONFLICT_RESOLUTION_STEP
             # so that the conflict reslution will be skipped.
             self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
-            # NOTE: this may break self.storage.set_step_files(self.steps.current, self.process_step_files(form)) - the next line - in post()
+            # NOTE: this may break the next line in post():
+            # self.storage.set_step_files(self.steps.current, self.process_step_files(form))
         return data
 
     def get_form_kwargs(self, step=None):
@@ -427,7 +445,8 @@ class MergeViewWizarded(WizardConfirmationView):
                         update_data[fld_name] = value
         original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
         primary = self.opts.model.objects.get(pk=original_pk)
-        merge_records(primary, self.queryset, update_data, expand, request=self.request)
+        merge_records(
+            primary, self.queryset, update_data, expand, request=self.request)
 
     def done(self, *args, **kwargs):
         try:
@@ -571,8 +590,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
 
             # Verify that the ausgabe exists and can be deleted
             try:
-                ausgabe_instance = _models.ausgabe.objects.get(pk=data['ausgabe_id'])
-            except (_models.ausgabe.DoesNotExist, _models.ausgabe.MultipleObjectsReturned):
+                ausgabe_instance = _models.ausgabe.objects.get(
+                    pk=data['ausgabe_id'])
+            except (
+                _models.ausgabe.DoesNotExist,
+                _models.ausgabe.MultipleObjectsReturned):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -591,7 +613,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ausgabe_instance.bestand_set.update(
                         ausgabe_id=None, brochure_id=new_brochure.pk
                     )
-                    ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list('jahr', flat=True)
+                    ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list(
+                        'jahr', flat=True)
                     for jahr in ausgabe_jahre:
                         _models.BrochureYear.objects.create(
                             brochure=new_brochure, jahr=jahr
@@ -604,8 +627,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     request=self.request,
                     object=new_brochure,
                     message="Hinweis: "
-                    "{verbose_name} wurde automatisch erstellt beim Verschieben von "
-                    "Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
+                    "{verbose_name} wurde automatisch erstellt beim Verschieben"
+                    " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
                         verbose_name=brochure_class._meta.verbose_name,
                         str_ausgabe=str(ausgabe_instance),
                         str_magazin=str(self.magazin_instance)
