@@ -1351,10 +1351,15 @@ class TestAdminSite(UserTestCase):
                 self.assertIn(category, app_names)
 
     def test_index_admintools(self):
-        # TODO: this only tests if the category 'admintools' appears on the index
-        # not that the link is displayed correctly (permissions, etc.)
+        # Assert that 'admintools' are added correctly to the context of the
+        # index page.
         site = MIZAdminSite()
         tool = BulkAusgabe
+        request = self.client.get('/admin/').wsgi_request
+        response = site.index(request)
+        self.assertIn('admintools', response.context_data)
+        self.assertFalse(response.context_data['admintools'])
+        # Now add an admintool.
         site.register_tool(
             tool,
             url_name='bulk_ausgabe',
@@ -1363,7 +1368,10 @@ class TestAdminSite(UserTestCase):
         )
         request = self.client.get('/admin/').wsgi_request
         response = site.index(request)
-        self.assertTrue('admintools' in response.context_data)
+        self.assertIn('admintools', response.context_data)
+        self.assertIn('bulk_ausgabe', response.context_data['admintools'])
+        self.assertEqual(
+            response.context_data['admintools']['bulk_ausgabe'], 'Test')
 
     def test_changelist_availability(self):
         from django.urls import reverse
