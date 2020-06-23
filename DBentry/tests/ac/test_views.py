@@ -129,13 +129,18 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.create_field, 'this aint no field')
         
     def test_get_result_value(self):
-        # result is a list
+        # Result is a list:
         view = self.get_view()
         self.assertEqual(view.get_result_value(['value', 'label']), 'value')
         
-        # result is a model instance
+        # Result is a model instance:
         instance = make(_models.genre)
         self.assertEqual(view.get_result_value(instance), str(instance.pk))
+    
+        # Result is a list/tuple, the first value is the integer 0 (ID == 0):
+        # (referring to the weak hits separator of PrimaryFieldsSearchQuery.
+        view = self.get_view()
+        self.assertEqual(view.get_result_value([0, 'weak hits separator']), None)
         
     def test_get_result_label(self):
         # result is a list

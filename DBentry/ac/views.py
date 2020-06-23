@@ -120,9 +120,10 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         """Return the value of a result."""
         if isinstance(result, (list, tuple)):
             if result[0] == 0:
-                # TODO: find a reliable way to know the separator item id.
-                # This may be the 'weak hits' separator,
-                # set it's id to None to make it unselectable
+                # The list 'result' contains the IDs of the results.
+                # A '0' ID may be the 'weak hits' separator
+                # (query.PrimaryFieldsSearchQuery).
+                # Set it's id to None to make it unselectable.
                 return None
             return result[0]
         return str(result.pk)
