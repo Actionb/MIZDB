@@ -53,7 +53,6 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
             # invalid if the keyword arguments are incorrect, or if the values
             # are not in the correct type, so we might get FieldError,
             # ValueError, ValidationError, or ?.
-            # TODO: a advsf formfield may throw a ValidationError!
             raise admin.options.IncorrectLookupParameters(e)
 
         if not qs.query.select_related:

@@ -1,5 +1,3 @@
-# TODO: allow searching by ISSN
-# TODO: field choices to enums --> ausgabe.UNBEARBEITET -> 'unb'
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
 from django.core.validators import MinValueValidator
 from django.db import models
