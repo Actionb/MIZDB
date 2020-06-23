@@ -146,7 +146,14 @@ class TestMakeWidget(MyTestCase):
         forwarded = forward.Field(src='beep_boop', dst=None)
         widget = make_widget(model = _models.genre, forward = forwarded)
         self.assertEqual(widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.')
-        
+
+    def test_forwarded_empty_values(self):
+        # Assert that 'empty' values can be handled.
+        for val in [(), [], None, ""]:
+            with self.subTest(value=val):
+                widget = make_widget(model = _models.genre, forward = val)
+                self.assertFalse(widget.forward)
+
     def test_preserves_attrs(self):
         # Assert that make_widget preserves 'attrs' passed in via kwargs even though the forwarded bit messes with that
         class DummyWidget(MIZModelSelect2):
