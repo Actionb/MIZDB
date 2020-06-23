@@ -8,6 +8,7 @@ from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
 import DBentry.models as _models
+from DBentry.bulk.views import BulkAusgabe
 from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
@@ -1350,11 +1351,9 @@ class TestAdminSite(UserTestCase):
                 self.assertIn(category, app_names)
 
     def test_index_admintools(self):
-        # TODO: move the import
         # TODO: this only tests if the category 'admintools' appears on the index
         # not that the link is displayed correctly (permissions, etc.)
         site = MIZAdminSite()
-        from DBentry.bulk.views import BulkAusgabe
         tool = BulkAusgabe
         site.register_tool(
             tool,
