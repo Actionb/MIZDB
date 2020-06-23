@@ -1366,14 +1366,6 @@ class TestAdminSite(UserTestCase):
         response = site.index(request)
         self.assertTrue('admintools' in response.context_data)
 
-    def test_get_admin_model(self):
-        expected_model_admin = _admin.ArtikelAdmin
-        self.assertIsInstance(
-            miz_site.get_admin_model(_models.artikel), expected_model_admin)
-        self.assertIsInstance(
-            miz_site.get_admin_model('DBentry.artikel'), expected_model_admin)
-        self.assertIsNone(miz_site.get_admin_model('BEEP.BOOP'))
-
     def test_changelist_availability(self):
         from django.urls import reverse
         for model in miz_site._registry:
