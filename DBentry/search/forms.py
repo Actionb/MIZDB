@@ -27,13 +27,15 @@ class RangeWidget(forms.MultiWidget):
     def __init__(self, widget, attrs=None):
         super().__init__(widgets=[widget] * 2, attrs=attrs)
 
-    def decompress(self, value):  # TODO: docstring
-        # What is value? Where does it come from?
-        # Why is it okay to assume it's a string?
-        # Why is it okay to assume it only contains one comma?
-        # decompress is only called in get_context which is only used to
-        # render the widget.
-        if value:
+    def decompress(self, value):
+        # Split value into two values (start, end).
+        # forms.MultiValueField.clean calls widget.decompress to get a list of
+        # values. But since RangeFormField.clean uses the clean methods of
+        # its 'subfields', and not the the clean method of MultiValueField,
+        # compress() is only called by widget.get_context (widget rendering)
+        # when value isn't a list already.
+        # In short: RangeWidget.decompress is never really used?
+        if value and isinstance(value, str) and value.count(',') == 1:
             return value.split(',')
         return [None, None]
 
