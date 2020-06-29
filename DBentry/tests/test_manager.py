@@ -13,7 +13,7 @@ from DBentry.query import BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictS
 from .base import DataTestCase, MyTestCase
 
 class TestMIZQuerySet(DataTestCase):
-    
+
     model = _models.band
     raw_data = [
         {'band_name': 'Testband1', }, 
@@ -21,7 +21,7 @@ class TestMIZQuerySet(DataTestCase):
         {'band_name': 'Testband3', 'band_alias__alias':['Juice', 'Water'], 'genre__genre': ['Rock', 'Jazz']}, 
     ]
     fields = ['band_name', 'genre__genre', 'band_alias__alias']
-    
+
     @patch.object(ValuesDictSearchQuery, 'search', return_value = ('ValuesDictSearchQuery', False))
     @patch.object(PrimaryFieldsSearchQuery, 'search', return_value = ('PrimaryFieldsSearchQuery', False))
     @patch.object(BaseSearchQuery, 'search', return_value = ('BaseSearchQuery', False))
@@ -30,15 +30,15 @@ class TestMIZQuerySet(DataTestCase):
         model = Mock(name_field = '', primary_search_fields = [], search_field_suffixes = {})
         model.get_search_fields.return_value = []
         qs = Mock(model = model, find = MIZQuerySet.find)
-        
+
         self.assertEqual(qs.find(qs,'x'), 'BaseSearchQuery')
-        
+
         model.primary_search_fields = ['Something']
         self.assertEqual(qs.find(qs, 'x'), 'PrimaryFieldsSearchQuery')
-        
+
         model.name_field = 'Something again'
         self.assertEqual(qs.find(qs,'x'), 'ValuesDictSearchQuery')
-    
+
     def test_find(self):
         self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
         self.assertIn((self.obj2.pk, str(self.obj2) + ' (Band-Alias)'), self.queryset.find('Coffee'))
@@ -256,9 +256,9 @@ class TestAusgabeChronologicOrder(DataTestCase):
 
 
 class TestAusgabeIncrementJahrgang(DataTestCase):
-    
+
     model = _models.ausgabe
-    
+
     raw_data = [
         { # obj1: start_jg
             'magazin__magazin_name':'Testmagazin', 'ausgabe_jahr__jahr': [2000], 
@@ -293,22 +293,22 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             'ausgabe_num__num' : [6]
         }, 
     ]
-    
+
     def assertIncrementedUpdateDict(self, update_dict):
         self.assertEqual(len(update_dict), 4, msg = str(update_dict))
-        
+
         self.assertIn(9, update_dict)
         self.assertEqual(update_dict[9], [self.obj2.pk, self.obj3.pk])
-        
+
         self.assertIn(10, update_dict)
         self.assertEqual(update_dict[10], [self.obj1.pk, self.obj4.pk, self.obj5.pk])
-        
+
         self.assertIn(11, update_dict)
         self.assertEqual(update_dict[11], [self.obj6.pk])
-        
+
         self.assertIn(12, update_dict)
         self.assertEqual(update_dict[12], [self.obj7.pk])
-        
+
     def assertIncrementedQuerySet(self, queryset):
         self.assertEqual(queryset.get(pk=self.obj1.pk).jahrgang, 10)
         self.assertEqual(queryset.get(pk=self.obj2.pk).jahrgang, 9)
@@ -318,19 +318,19 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.assertEqual(queryset.get(pk=self.obj6.pk).jahrgang, 11)
         self.assertEqual(queryset.get(pk=self.obj7.pk).jahrgang, 12)
         self.assertEqual(queryset.get(pk=self.obj8.pk).jahrgang, None)        
-    
+
     def test_increment_by_date(self):
         update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
         self.assertIncrementedUpdateDict(update_dict)
         self.assertIncrementedQuerySet(self.queryset)
-        
+
     def test_increment_by_month(self):
         self.queryset.update(e_datum = None)
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
         self.assertIncrementedUpdateDict(update_dict)
         self.assertIncrementedQuerySet(self.queryset)
-        
+
     def test_increment_by_num(self):
         self.queryset.update(e_datum = None)
         _models.ausgabe_monat.objects.all().delete()
@@ -338,28 +338,28 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
         self.assertIncrementedUpdateDict(update_dict)
         self.assertIncrementedQuerySet(self.queryset)
-        
+
     def test_increment_by_year(self):
         self.queryset.update(e_datum = None)
         _models.ausgabe_monat.objects.all().delete()
         _models.ausgabe_num.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj = self.obj1, start_jg = 10)
-        
+
         self.assertEqual(len(update_dict), 4, msg = str(update_dict))
-        
+
         self.assertIn(9, update_dict)
         self.assertEqual(update_dict[9], [self.obj3.pk])
-        
+
         self.assertIn(10, update_dict)
         self.assertEqual(update_dict[10], [self.obj1.pk, self.obj2.pk, self.obj4.pk])
-        
+
         self.assertIn(11, update_dict)
         self.assertEqual(update_dict[11], [self.obj5.pk, self.obj6.pk])
-        
+
         self.assertIn(12, update_dict)
         self.assertEqual(update_dict[12], [self.obj7.pk])
-        
+
         queryset = self.queryset
         self.assertEqual(queryset.get(pk=self.obj1.pk).jahrgang, 10)
         self.assertEqual(queryset.get(pk=self.obj2.pk).jahrgang, 10) 
@@ -369,7 +369,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.assertEqual(queryset.get(pk=self.obj6.pk).jahrgang, 11)
         self.assertEqual(queryset.get(pk=self.obj7.pk).jahrgang, 12)
         self.assertEqual(queryset.get(pk=self.obj8.pk).jahrgang, None)  
-        
+
     def test_increment_mixed(self):
         #TODO: test_increment_mixed
         pass
@@ -391,9 +391,9 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 
 @tag("cn")
 class TestCNQuerySet(DataTestCase):
-    
+
     model = _models.ausgabe
-    
+
     @classmethod
     def setUpTestData(cls):
         cls.mag = make(_models.magazin, magazin_name = 'Testmagazin')
@@ -404,7 +404,7 @@ class TestCNQuerySet(DataTestCase):
         )
         cls.test_data = [cls.obj1, cls.obj2]
         super().setUpTestData()
-    
+
     def setUp(self):
         super().setUp()
         # Assign CNQuerySet as the manager for this TestCase
@@ -433,7 +433,7 @@ class TestCNQuerySet(DataTestCase):
         self.queryset.bulk_create([new_obj])
         qs = self.queryset.filter(beschreibung='My Unique Name', sonderausgabe=True)
         self.assertAllQSValuesList(qs, '_changed_flag', True)
-    
+
     def test_values_updates_name(self):
         # Calling values('_name') should cause a call to _update_names.
         with patch.object(CNQuerySet, '_update_names') as mocked_func:
@@ -445,7 +445,7 @@ class TestCNQuerySet(DataTestCase):
         with patch.object(CNQuerySet, '_update_names') as mocked_func:
             list(self.queryset.values('id'))
             self.assertFalse(mocked_func.called)
-    
+
     def test_values_list_updates_name(self):
         # Calling values_list('_name') should cause a call to _update_names.
         with patch.object(CNQuerySet, '_update_names') as mocked_func:
@@ -537,32 +537,32 @@ class TestCNQuerySet(DataTestCase):
         # 3 queries for each call of _update_names from only, filter and values_list + one query for the actual list
         with self.assertNumQueries(4):
             list(self.queryset.only('_name').filter(_name='Testinfo').values_list('_name'))
-        
+
 class TestBuchQuerySet(DataTestCase):
-    
+
     model = _models.buch
     raw_data = [
         {'ISBN': '978-1-234-56789-7', 'EAN': '73513537'}, 
         {'ISBN': '978-4-56-789012-0', 'EAN': "1234567890128"}
     ]
-    
+
     def test_filter_finds_isbn(self):
         isbn_10 = "123456789X"
         self.assertIn(self.obj1, self.queryset.filter(ISBN=isbn_10))
         isbn_10 = "1-234-56789-X"
         self.assertIn(self.obj1, self.queryset.filter(ISBN=isbn_10))
-        
+
         isbn_13 = '9784567890120'
         self.assertIn(self.obj2, self.queryset.filter(ISBN=isbn_13))
         isbn_13 = '978-4-56-789012-0'
         self.assertIn(self.obj2, self.queryset.filter(ISBN=isbn_13))
-        
+
     def test_filter_finds_ean(self):
         ean_8 = '7351-3537'
         self.assertIn(self.obj1, self.queryset.filter(EAN=ean_8))
         ean_13 = '1-234567-890128'
         self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))
-        
+
 class TestValuesDict(DataTestCase):
 
     model = _models.band
@@ -572,7 +572,7 @@ class TestValuesDict(DataTestCase):
         {'band_name': 'Testband3', 'band_alias__alias':['Juice', 'Water'], 'genre__genre': ['Rock', 'Jazz']}, 
     ]
     fields = ['band_name', 'genre__genre', 'band_alias__alias']
-        
+
     def test_values_dict(self):
         values = self.queryset.values_dict(*self.fields)
         expected = [
@@ -586,17 +586,17 @@ class TestValuesDict(DataTestCase):
                 'band_alias__alias': ('Juice', 'Water')
                 })
         ]
-        
+
         for obj_pk, expected_values in expected:
             with self.subTest():
                 self.assertIn(obj_pk, values)
                 self.assertEqual(expected_values, values[obj_pk])
         self.assertEqual(len(values), 3)
-        
+
     def test_values_dict_num_queries(self):
         with self.assertNumQueries(1):
             self.queryset.values_dict(*self.fields)
-        
+
     def test_values_dict_include_empty(self):
         values = self.qs_obj1.values_dict(*self.fields, include_empty = True)
         expected = {
@@ -604,7 +604,7 @@ class TestValuesDict(DataTestCase):
             'band_alias__alias': (None, )
         }
         self.assertEqual(values.get(self.obj1.pk), expected)
-        
+
     def test_values_dict_tuplfy(self):
         values = self.qs_obj2.values_dict(*self.fields, tuplfy = True)
         expected = (
@@ -617,7 +617,7 @@ class TestValuesDict(DataTestCase):
         for expected_values in expected:
             with self.subTest():
                 self.assertIn(expected_values, values.get(self.obj2.pk))
-                
+
     # Patching MIZQuerySet.values to find out how the primary key values are queried.
     @patch.object(MIZQuerySet, 'values')
     def test_values_dict_no_fields(self, mocked_values):
@@ -625,21 +625,21 @@ class TestValuesDict(DataTestCase):
         self.qs_obj1.values_dict()
         self.assertTrue(mocked_values.called)
         self.assertEqual(mocked_values.call_args[0], ()) # caching problem? sometimes this fails, sometimes it doesnt!
-        
+
     @patch.object(MIZQuerySet, 'values')
     def test_values_dict_pk_in_fields(self, mocked_values):
         # Assert that values_dict queries for primary key values with the alias 'pk' if called with it.
         self.qs_obj1.values_dict('band_name', 'pk')
         self.assertTrue(mocked_values.called)
         self.assertIn('pk', mocked_values.call_args[0])
-        
+
     @patch.object(MIZQuerySet, 'values')
     def test_values_dict_meta_pk_in_fields(self, mocked_values):
         # Assert that values_dict keeps the model's pk name if called with it.
         self.qs_obj1.values_dict('band_name', 'id')
         self.assertTrue(mocked_values.called)
         self.assertIn('id', mocked_values.call_args[0])
-        
+
     def test_values_dict_flatten(self):
         # Assert that single values are flattened.
         values = self.qs_obj2.values_dict(*self.fields, flatten = True)
@@ -647,7 +647,7 @@ class TestValuesDict(DataTestCase):
         obj2_values = values.get(self.obj2.pk)
         self.assertIn('band_name', obj2_values)
         self.assertNotIsInstance(obj2_values['band_name'], tuple)
-        
+
     def test_values_dict_flatten_reverse_relation(self):
         # Assert that multiple values (reverse relations) are never flattened.
         # obj2 has a single value for alias; which must not get flattened.
@@ -656,11 +656,11 @@ class TestValuesDict(DataTestCase):
         obj2_values = values.get(self.obj2.pk)
         self.assertIn('band_alias__alias', obj2_values)
         self.assertIsInstance(obj2_values['band_alias__alias'], tuple)
-        
+
         # also test if the multiple genres do not get flattened (however that would work..)
         self.assertIn('genre__genre', obj2_values)
         self.assertIsInstance(obj2_values['genre__genre'], tuple)
-        
+
     def test_values_dict_flatten_no_fields(self):
         # This test just makes sure that values_dict doesn't error when no fields are passed in.
         # The process of finding the fields/field paths to exclude from flattening is dependent
@@ -669,7 +669,7 @@ class TestValuesDict(DataTestCase):
         # i.e. no reverse stuff so everything WILL be flattened.
         with self.assertNotRaises(Exception):
             self.qs_obj2.values_dict(flatten = True)
-            
+
     def test_values_dict_flatten_with_invalid_field(self):
         # django's exception when calling values() with an invalid should be the exception that propagates.
         # No exception should be raised from the process that determines the fields to be excluded
@@ -678,16 +678,16 @@ class TestValuesDict(DataTestCase):
         with patch.object(MIZQuerySet, 'values'):
             with self.assertNotRaises(FieldDoesNotExist):
                 self.queryset.values_dict('thisaintnofield', flatten = True)
-        
+
         # Assert that the much more informative django FieldError is raised.
         with self.assertRaises(FieldError) as cm:
                 self.queryset.values_dict('thisaintnofield', flatten = True)
         self.assertIn('Choices are', cm.exception.args[0])
-    
+
 class TestDuplicates(DataTestCase):
-    
+
     model = _models.musiker
-    
+
     @classmethod
     def setUpTestData(cls):
         cls.test_data = [
@@ -695,15 +695,15 @@ class TestDuplicates(DataTestCase):
             cls.model.objects.create(kuenstler_name = 'Bob'), 
             cls.model.objects.create(kuenstler_name = 'Bob'), 
         ]
-        
+
         super().setUpTestData()
-        
+
     def get_duplicate_instances(self, *fields, queryset = None):
         if queryset is None:
             queryset = self.queryset
         duplicates = queryset.values_dict_dupes(*fields)
         return list(chain(*(dupe.instances for dupe in duplicates)))
-        
+
     def test_a_baseline(self):
         duplicates = self.get_duplicate_instances('kuenstler_name')
         self.assertIn(self.obj1, duplicates)
@@ -720,28 +720,28 @@ class TestDuplicates(DataTestCase):
     def test_duplicates_m2m(self):
         g1 = make(_models.genre)
         g2 = make(_models.genre)
-        
+
         self.obj1.genre.add(g1)
         self.obj2.genre.add(g1)
         duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
-        
+
         self.obj3.genre.add(g2)
         duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
-        
+
         # obj1 and obj2 share a genre, but their total genres are not the same
         self.obj1.genre.add(g2)
         duplicates = self.get_duplicate_instances('kuenstler_name', 'genre')
         self.assertNotIn(self.obj1, duplicates)
         self.assertNotIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
-        
-        
+
+
     def test_duplicates_reverse_fk(self):
         #TODO: this test fails when looking for duplicates with 'musiker_alias';
         # 'musiker_alias' will look up the primary key of the musiker_alias object
@@ -754,19 +754,19 @@ class TestDuplicates(DataTestCase):
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
-        
+
         self.obj3.musiker_alias_set.create(alias='Boop')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
-        
+
         self.obj1.musiker_alias_set.create(alias='Boop')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
         self.assertNotIn(self.obj1, duplicates)
         self.assertNotIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
-        
+
     def test_duplicates_reverse_fk_joins(self):
         # Assert that the number of duplicates found is not affected by table joins.
         self.obj1.musiker_alias_set.create(alias='Beep')
@@ -775,9 +775,9 @@ class TestDuplicates(DataTestCase):
         self.obj2.musiker_alias_set.create(alias='Boop')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
         self.assertEqual(len(duplicates), 2)
-        
+
 class TestHumanNameQuerySet(MyTestCase):
-    
+
     def test_find_person(self):
         obj = make(_models.person, vorname = 'Peter', nachname = 'Lustig')
         for name in ('Peter Lustig', 'Lustig, Peter'):
@@ -785,7 +785,7 @@ class TestHumanNameQuerySet(MyTestCase):
                 results = _models.person.objects.find(name)
                 msg = "Name looked up: %s" % name
                 self.assertIn((obj.pk, 'Peter Lustig'), results, msg = msg)
-    
+
     def test_find_autor(self):
         obj = make(_models.autor, 
             person__vorname = 'Peter', person__nachname = 'Lustig', kuerzel = 'PL')
