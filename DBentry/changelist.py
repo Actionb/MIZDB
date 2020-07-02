@@ -80,4 +80,4 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 class AusgabeChangeList(MIZChangeList):
 
     def apply_ordering(self, request, queryset, ordering):
-        return queryset.chronologic_order(ordering)
+        return queryset.chronologic_order(*ordering)
