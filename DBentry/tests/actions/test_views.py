@@ -3,6 +3,7 @@ from unittest.mock import patch, Mock, PropertyMock
 
 from formtools.wizard.views import SessionWizardView, WizardView
 
+from django.contrib import messages
 from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
@@ -250,7 +251,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         view.model_admin.message_user.assert_called_once_with(
             request=request,
             message=expected_message,
-            level=40,  # TODO: messages.ERROR
+            level=messages.ERROR
         )
 
     def test_compile_affected_objects(self):
