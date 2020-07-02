@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.admin import helpers
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.deletion import ProtectedError
+from django.db import models
 from django.test import tag
 from django.utils.translation import override as translation_override
 from django.urls import reverse
@@ -471,7 +471,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
 class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     # Note that tests concerning logging for this view are done on
     # test_utils.merge_records directly.
-    # TODO: there is no unit test for MergeViewWizarded.perform_action
+
     view_class = MergeViewWizarded
     model = _models.ausgabe
     model_admin_class = AusgabenAdmin
@@ -721,7 +721,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     @translation_override(language=None)
     @patch.object(
         MergeViewWizarded, 'perform_action',
-        new=mockex(ProtectedError('msg', _models.artikel.objects.all()))
+        new=mockex(
+            models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
     )
     def test_done(self):
         # Assert that an admin message is send to user upon encountering a
@@ -737,6 +738,39 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         view = self.get_view()
         self.assertTrue(hasattr(view, 'allowed_permissions'))
         self.assertEqual(view.allowed_permissions, ['merge'])
+
+    @patch('DBentry.actions.views.merge_records')
+    @patch.object(MergeViewWizarded, 'get_cleaned_data_for_step')
+    def test_perform_action_no_expand(self, mocked_step_data, mocked_merge_records):
+        # Assert that merge_records is called with the correct arguments.
+        # Also check that no 'updates' are passed to merge_records if
+        # expand_primary is False.
+        step_data = {'primary': self.obj1.pk, 'expand_primary': False}
+        mocked_step_data.return_value = step_data
+
+        view = self.get_view(queryset=self.queryset)
+        # Set the property's private attribute:
+        view._updates = {'some_update': 'that_should not be used'}
+        view.perform_action()
+        self.assertTrue(mocked_merge_records.called)
+        args, kwargs = mocked_merge_records.call_args
+        self.assertEqual(
+            args[0], self.obj1,
+            msg="First argument to merge_records should be the primary model instance."
+        )
+        self.assertIsInstance(
+            args[1], models.QuerySet,
+            msg="Second argument should be the queryset."
+        )
+        self.assertFalse(
+            args[2],
+            msg="Third argument 'update_data' should be empty if "
+                "expand_primary is False."
+        )
+        self.assertFalse(
+            args[3],
+            msg="Fourth argument 'expand' should be False."
+        )
 
 
 class TestMergeViewWizardedArtikel(ActionViewTestCase):
