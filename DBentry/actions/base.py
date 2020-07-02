@@ -20,9 +20,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
             an operation that is not easily reversed.
         short_description (str): label for the action in the changelist
             dropdown menu.
-        perm_required (list or tuple): list of permission codewords required to
-            access the action.
-            See DBentry.admin.base.MIZModelAdmin.get_actions().
         action_name (str): context variable that will be used on the template
             so django redirects back here through response_action
             (line contrib.admin.options:1255)
@@ -37,7 +34,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
     non_reversible_warning = gettext_lazy("Warning: This action is NOT reversible!")
     action_reversible = False
     short_description = ''
-    perm_required = ()
     action_name = None
     view_helptext = ''
     action_allowed_checks = ()

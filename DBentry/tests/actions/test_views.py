@@ -291,6 +291,13 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         for obj in self.queryset.all():
             self.assertLoggedChange(obj, 'jahrgang')
 
+    def test_permissions_required(self):
+        # Assert that specific permissions are required to access this action.
+        view = self.get_view()
+        self.assertTrue(hasattr(view, 'allowed_permissions'))
+        self.assertEqual(view.allowed_permissions, ['change'])
+
+
 class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
 
     view_class = BulkAddBestand
@@ -400,6 +407,12 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         self.assertEqual(initial.get('bestand'), self.bestand_lagerort)
         self.assertTrue('dublette' in initial)
         self.assertEqual(initial.get('dublette'), self.dubletten_lagerort)
+
+    def test_permissions_required(self):
+        # Assert that specific permissions are required to access this action.
+        view = self.get_view()
+        self.assertTrue(hasattr(view, 'allowed_permissions'))
+        self.assertEqual(view.allowed_permissions, ['alter_bestand'])
 
 class TestMergeViewWizardedAusgabe(ActionViewTestCase): 
     # Note that tests concerning logging for this view are done on test_utils.merge_records directly.
@@ -619,6 +632,12 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         view = self.get_view(request = request)
         view.done()
         self.assertMessageSent(request, 'Folgende verwandte Artikel verhinderten die Zusammenführung:')
+
+    def test_permissions_required(self):
+        # Assert that specific permissions are required to access this action.
+        view = self.get_view()
+        self.assertTrue(hasattr(view, 'allowed_permissions'))
+        self.assertEqual(view.allowed_permissions, ['merge'])
 
 
 class TestMergeViewWizardedArtikel(ActionViewTestCase): 
@@ -869,6 +888,12 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertFalse(view.can_delete_magazin, 
             msg = "Should return False if can_delete_magazin is called with no 'magazin_instance' set."
         )
+
+    def test_permissions_required(self):
+        # Assert that specific permissions are required to access this action.
+        view = self.get_view()
+        self.assertTrue(hasattr(view, 'allowed_permissions'))
+        self.assertEqual(view.allowed_permissions, ['delete'])
 
     def test_story(self):
         other_mag = make(_models.magazin)

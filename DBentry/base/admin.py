@@ -156,34 +156,17 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         """
         return self.index_category
 
-    def get_actions(self, request):
-        """
-        Return a dictionary mapping of action_name: (callable, name, description)
-        for this ModelAdmin for every action that the user has access to.
-        """
-        # TODO: django has _filter_actions_by_permissions
-        actions = super().get_actions(request)
+    def has_merge_permission(self, request):
+        """Check that the user has permission to merge records."""
+        codename = get_permission_codename('merge', self.opts)
+        return request.user.has_perm(
+            '{}.{}'.format(self.opts.app_label, codename))
 
-        for func, name, _desc in actions.copy().values():
-            if name == 'delete_selected':
-                # The builtin action 'delete_selected' is set by the admin site.
-                perm_required = ['delete']
-            else:
-                perm_required = getattr(func, 'perm_required', [])
-
-            for p in perm_required:
-                perm_passed = False
-                if callable(p):
-                    perm_passed = p(self, request)
-                else:
-                    perm = '{}.{}'.format(
-                        self.opts.app_label,
-                        get_permission_codename(p, self.opts)
-                    )
-                    perm_passed = request.user.has_perm(perm)
-                if not perm_passed:
-                    del actions[name]
-        return actions
+    def has_alter_bestand_permission(self, request):
+        """Check that the user has permission to change inventory quantities."""
+        codename = get_permission_codename('alter_bestand', self.opts)
+        return request.user.has_perm(
+            '{}.{}'.format(self.opts.app_label, codename))
 
     def get_exclude(self, request, obj=None):
         """Exclude all concrete M2M fields as those are handled by inlines."""

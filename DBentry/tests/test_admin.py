@@ -3,6 +3,7 @@ from unittest import skip
 from unittest.mock import patch
 
 from django.contrib import admin
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.utils.translation import override as translation_override
 
@@ -251,43 +252,41 @@ class TestMIZModelAdmin(AdminTestCase):
     model = _models.datei
     test_data_count = 1
 
-    def test_get_actions_noperms(self):
-        # No permissions: no actions
-        actions = self.model_admin.get_actions(
-            self.get_request(user=self.noperms_user))
-        self.assertEqual(len(actions), 0)
+    def test_has_merge_permission(self):
+        codename = get_permission_codename('merge', self.model._meta)
+        self.staff_user.user_permissions.add(
+            Permission.objects.get(codename=codename))
+        self.assertFalse(
+            self.model_admin.has_merge_permission(
+                request=self.get_request(user=self.noperms_user)
+        ))
+        self.assertTrue(
+            self.model_admin.has_merge_permission(
+                request=self.get_request(user=self.staff_user)
+        ))
+        self.assertTrue(
+            self.model_admin.has_merge_permission(
+                request=self.get_request(user=self.super_user)
+        ))
 
-    def test_get_actions_staffuser(self):
-        # staff_user has no permissions, so let's give him permission to delete artikel
-        p = Permission.objects.get(codename='delete_datei')
-        self.staff_user.user_permissions.add(p)
-        actions = self.model_admin.get_actions(
-            self.get_request(user=self.staff_user))
-        self.assertEqual(len(actions), 1)
-        self.assertIn('delete_selected', actions.keys())
-
-    def test_get_actions_superuser(self):
-        # superuser has all permissions inherently
-        actions = self.model_admin.get_actions(self.get_request())
-        self.assertEqual(len(actions), 2)
-        self.assertIn('delete_selected', actions.keys())
-        self.assertIn('merge_records', actions.keys())
-
-        # permission is a callable
-        def perm(i, request):
-            return request.user == self.noperms_user
-        def action(model_admin, request, queryset):
-            pass
-        action.perm_required = [perm]
-
-        self.model_admin.actions.append(action)
-        actions = self.model_admin.get_actions(
-            self.get_request(user=self.noperms_user))
-        self.assertIn('action', actions.keys())
-
-        actions = self.model_admin.get_actions(
-            self.get_request(user=self.staff_user))
-        self.assertNotIn('action', actions.keys())
+    def test_has_alter_bestand_permission(self):
+        # Note: _models.datei._meta doesn't set 'alter_bestand_datei' permission
+        model_admin = _admin.VideoAdmin(_models.video, self.admin_site)
+        codename = get_permission_codename('alter_bestand', _models.video._meta)
+        self.staff_user.user_permissions.add(
+            Permission.objects.get(codename=codename))
+        self.assertFalse(
+            model_admin.has_alter_bestand_permission(
+                request=self.get_request(user=self.noperms_user)
+        ))
+        self.assertTrue(
+            model_admin.has_alter_bestand_permission(
+                request=self.get_request(user=self.staff_user)
+        ))
+        self.assertTrue(
+            model_admin.has_alter_bestand_permission(
+                request=self.get_request(user=self.super_user)
+        ))
 
     def test_add_extra_context(self):
         # No object_id passed in: add_crosslinks should not be called.
@@ -560,10 +559,30 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj.artikel_set.all().delete()
         self.assertFalse(self.get_crosslinks(obj))
 
-    def test_actions(self):
-        # Assert that bulk_jg, add_bestand, moveto_brochure actions are available.
-        actions = self.model_admin.get_actions(self.get_request())
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure'):
+    def test_actions_noperms(self):
+        # Assert that certain actions are not available to user without permissions.
+        actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
+        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+            with self.subTest(action_name=action_name):
+                self.assertNotIn(action_name, actions)
+
+    def test_actions_staff_user(self):
+        # Assert that certain actions are available for staff users with the
+        # proper permissions.
+        for perm_name in ('change', 'alter_bestand', 'delete', 'merge'):
+            # bulk_jg requires 'change' and moveto_brochure requires 'delete'
+            codename = get_permission_codename(perm_name, self.model._meta)
+            self.staff_user.user_permissions.add(
+                Permission.objects.get(codename=codename))
+        actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
+        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+            with self.subTest(action_name=action_name):
+                self.assertIn(action_name, actions)
+
+    def test_actions_super_user(self):
+        # Assert that certain actions are available for super users.
+        actions = self.model_admin.get_actions(self.get_request(user=self.super_user))
+        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 

@@ -41,7 +41,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     """
 
     short_description = gettext_lazy("Add issue volume")
-    perm_required = ['change']
+    allowed_permissions = ['change']
     action_name = 'bulk_jg'
     action_allowed_checks = [check_same_magazin]
 
@@ -98,7 +98,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
     """View that adds a bestand to a given model instances."""
 
     short_description = gettext_lazy("Alter stock")
-    perm_required = ['alter_bestand']
+    allowed_permissions = ['alter_bestand']
     action_name = 'add_bestand'
 
     affected_fields = ['bestand']
@@ -188,7 +188,7 @@ class MergeViewWizarded(WizardConfirmationView):
     """
 
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
-    perm_required = ['merge']
+    allowed_permissions = ['merge']
     action_name = 'merge_records'
     action_allowed_checks = [
         '_check_too_few_objects',
@@ -475,11 +475,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
+    allowed_permissions = ['delete']
     action_allowed_checks = [
         check_same_magazin,
         '_check_protected_artikel',
     ]
-    # NOTE: MoveToBrochureBase does not declare 'perm_required'
 
     form_class = BrochureActionFormSet
 
