@@ -9,7 +9,7 @@ from DBentry.constants import discogs_release_id_pattern
 from DBentry.validators import DiscogsURLValidator
 
 
-class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mixin?
+class AusgabeMagazinFieldForm(forms.ModelForm):
     """
     An abstract model form that adds a 'ausgabe__magazin' field which is used
     to limit (forward) the choices available to the widget of a field 'ausgabe'.
