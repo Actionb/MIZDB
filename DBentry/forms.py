@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
 from DBentry.base.forms import MIZAdminFormMixin, MinMaxRequiredFormMixin
-from DBentry.constants import ATTRS_TEXTAREA, discogs_release_id_pattern
+from DBentry.constants import discogs_release_id_pattern
 from DBentry.validators import DiscogsURLValidator
 
 
@@ -51,15 +51,12 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
-        # NOTE: why the model and fields declarations?
         model = _models.artikel
         fields = '__all__'
         widgets = {
             'ausgabe': make_widget(
                 model_name='ausgabe', forward=['ausgabe__magazin']),
             'schlagzeile': forms.Textarea(attrs={'rows': 2, 'cols': 90}),
-            'zusammenfassung': forms.Textarea(attrs=ATTRS_TEXTAREA),
-            'info': forms.Textarea(attrs=ATTRS_TEXTAREA),
         }
 
 
