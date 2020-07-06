@@ -284,23 +284,6 @@ class ArtikelAdmin(MIZModelAdmin):
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
 
-    def get_queryset(self, request):
-        # TODO: rethink this now that we have chronologic_order for ausgabe
-        # (also monat_id should not longer used)
-        # NOTE: what actually uses ModelAdmin.get_queryset? Because the changelist's results are
-        # ordered via chronologic_order.
-        qs = super(ArtikelAdmin, self).get_queryset(request)
-        qs = qs.annotate(
-            jahre=Min('ausgabe__ausgabe_jahr__jahr'),
-            nums=Min('ausgabe__ausgabe_num__num'),
-            lnums=Min('ausgabe__ausgabe_lnum__lnum'),
-            monate=Min('ausgabe__ausgabe_monat__monat_id'),
-        ).order_by(
-            'ausgabe__magazin__magazin_name', 'jahre', 'nums',
-            'lnums', 'monate', 'seite', 'pk'
-        )
-        return qs
-
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
             return ''
