@@ -663,7 +663,7 @@ class artikel(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
-        ordering = ['seite', 'ausgabe', 'pk']
+        ordering = ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'pk']
 
     def __str__(self):
         if self.schlagzeile:
