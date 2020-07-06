@@ -191,11 +191,6 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(
             self.model_admin.get_search_fields(), self.search_fields_expected)
 
-    def test_media_prop(self):
-        media = self.model_admin.media
-        if self.model_admin.googlebtns:
-            self.assertIn('admin/js/utils.js', media._js)
-
     @patch.object(admin.ModelAdmin, 'render_change_form')
     def test_changeform_media_context_collapse_after_jquery(self, mock):
         # Assert that a ModelAdmin's add/changeform loads jquery before collapse.
@@ -296,7 +291,6 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_add_view(self):
         response = self.client.get(self.add_path)
         self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('googlebtns' in response.context)
         self.assertFalse(
             'crosslinks' in response.context,
             msg='no crosslinks allowed in add views'
@@ -305,7 +299,6 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_change_view(self):
         response = self.client.get(self.change_path.format(pk=self.obj1.pk))
         self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('googlebtns' in response.context)
         self.assertTrue('crosslinks' in response.context)
 
     def test_get_changeform_initial_data_no_initial(self):

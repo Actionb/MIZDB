@@ -30,9 +30,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     Base ModelAdmin for this app.
 
     Attributes:
-        googlebtns (list): a list of formfield names that get a button that
-            opens a google search page with the field's value.
-            (Used on BandAdmin and MusikerAdmin)
         crosslink_labels (dict): mapping of related_model_name: custom_label
             used to give crosslinks custom labels.
         collapse_all (bool): context variable used in the inline templates.
@@ -44,9 +41,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             them on the index page.
     """
 
-    # TODO: googlebtns: fields in this list should be wrapped into a custom widget
-    # (let the widget render the button instead of the fieldset template)
-    googlebtns = []
     crosslink_labels = {}
     collapse_all = False
     superuser_only = False
@@ -318,20 +312,13 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     @property
     def media(self):
-        media = super().media
-        if self.googlebtns:
-            # utils.js contains the googlebtns script
-            # TODO: remove this bit once googlebtns are handled by widgets
-            return media + forms.Media(js=['admin/js/utils.js'])
-        return ensure_jquery(media)
+        return ensure_jquery(super().media)
 
     def add_extra_context(self, request=None, extra_context=None, object_id=None):
         new_extra = extra_context or {}
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
-        # TODO: remove this once googlebtns are handled by widgets
-        new_extra['googlebtns'] = self.googlebtns
         if request:
             # TODO: why do we need 'request' in the context?
             new_extra['request'] = request

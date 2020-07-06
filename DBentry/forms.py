@@ -102,6 +102,16 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
         }
 
 
+class MusikerForm(forms.ModelForm):
+    class Meta:
+        widgets = {'kuenstler_name': GoogleBtnWidget()}
+
+
+class BandForm(forms.ModelForm):
+    class Meta:
+        widgets = {'band_name': GoogleBtnWidget()}
+
+
 class HerausgeberForm(MinMaxRequiredFormMixin, forms.ModelForm):
     minmax_required = [{'fields': ['person', 'organisation'], 'min': 1}]
 

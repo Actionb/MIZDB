@@ -14,7 +14,7 @@ from DBentry.base.admin import (
 )
 from DBentry.forms import (
     ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm,
-    BildmaterialForm
+    BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
 from DBentry.utils import concat_limit
@@ -315,7 +315,7 @@ class BandAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.band.orte.through
 
-    googlebtns = ['band_name']
+    form = BandForm
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
@@ -583,8 +583,8 @@ class MusikerAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.musiker.orte.through
 
+    form = MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
-    googlebtns = ['kuenstler_name']
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
