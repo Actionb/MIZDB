@@ -9,6 +9,18 @@ from DBentry.constants import discogs_release_id_pattern
 from DBentry.validators import DiscogsURLValidator
 
 
+class GoogleBtnWidget(forms.widgets.TextInput):
+    """
+    A TextInput widget with a button which opens a google search for what is
+    typed into the TextInput.
+    """
+
+    template_name = 'googlebuttonwidget.html'
+
+    class Media:
+        js = ('admin/js/googlebtn.js', )
+
+
 class AusgabeMagazinFieldForm(forms.ModelForm):
     """
     An abstract model form that adds a 'ausgabe__magazin' field which is used
