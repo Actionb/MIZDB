@@ -28,9 +28,6 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
     )
 
     class Meta:
-        # TODO: add the ausgabe widget during __new__?
-        # That way, classes inheriting from this wouldn't have to redeclare
-        # the widget.
         widgets = {
             'ausgabe': make_widget(
                 model_name='ausgabe',
