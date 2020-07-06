@@ -931,7 +931,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         logentry = LogEntry.objects.get(object_id=new_brochure.pk, content_type=ct)
         self.assertEqual(logentry.get_change_message(), expected)
 
-    @expectedFailure
+    @expectedFailure  # see the comment in the method
     def test_perform_action_katalog(self):
         options_form_cleaned_data = {'brochure_art': 'katalog'}
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
