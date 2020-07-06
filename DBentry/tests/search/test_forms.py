@@ -1,6 +1,7 @@
 from itertools import chain
 
 from django import forms
+from django.db.models.fields import BLANK_CHOICE_DASH
 
 from DBentry import models as _models
 from DBentry.ac import widgets as autocomplete_widgets
@@ -130,6 +131,14 @@ class TestSearchFormFactory(MyTestCase):
             self.factory.formfield_for_dbfield(db_field),
             forms.CharField
         )
+
+    def test_formfield_choices(self):
+        # Assert that the choice formfield includes an 'empty' choice even if
+        # the model field's choices does not include one.
+        db_field = _models.ausgabe._meta.get_field('status')
+        formfield = self.factory.formfield_for_dbfield(db_field)
+        choices = formfield.choices
+        self.assertIn(BLANK_CHOICE_DASH[0], choices)
 
 
 class TestSearchForm(MyTestCase):

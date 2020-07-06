@@ -214,6 +214,9 @@ class SearchFormFactory:
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             defaults['widget'] = make_widget(**widget_opts)
+        if db_field.choices and not db_field.blank:
+            # Always include an 'empty' choice in the choices.
+            defaults['choices'] = db_field.get_choices(include_blank=True)
         # Use the formfield class provided in the kwargs:
         form_class = kwargs.pop('form_class', None)
         if form_class:
