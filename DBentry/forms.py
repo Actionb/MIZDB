@@ -72,8 +72,11 @@ class BrochureForm(AusgabeMagazinFieldForm):
 
 class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
     minmax_required = [{
-        'max': 1, 'fields': ['is_buchband', 'buchband'],
-        'error_messages': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
+        'max': 1,
+        'fields': ['is_buchband', 'buchband'],
+        'error_messages': {
+            'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'
+        }
     }]
 
     class Meta:
@@ -138,8 +141,10 @@ class BildmaterialForm(forms.ModelForm):
 
     copy_related = forms.BooleanField(
         label='Bands/Musiker kopieren',
-        help_text=('Setzen Sie das Häkchen, um Bands und Musiker der '
-            'Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.'),
+        help_text=(
+            'Setzen Sie das Häkchen, um Bands und Musiker der '
+            'Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.'
+        ),
         required=False
     )
 
