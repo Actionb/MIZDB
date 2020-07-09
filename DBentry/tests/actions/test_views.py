@@ -1,4 +1,3 @@
-from unittest import expectedFailure
 from unittest.mock import patch, Mock, PropertyMock
 
 from formtools.wizard.views import SessionWizardView, WizardView
@@ -930,7 +929,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         logentry = LogEntry.objects.get(object_id=new_brochure.pk, content_type=ct)
         self.assertEqual(logentry.get_change_message(), expected)
 
-    @expectedFailure  # see the comment in the method
     def test_perform_action_katalog(self):
         options_form_cleaned_data = {'brochure_art': 'katalog'}
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
@@ -939,8 +937,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Katalog.objects.count(), 1)
-        # The next line will fail until ModelChanges is merged:
-        # Katalog.art default is 1 instead of 'merch
         self.assertEqual(_models.Katalog.objects.get().art, 'merch')
 
     def test_perform_action_kalendar(self):
