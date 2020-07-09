@@ -18,11 +18,14 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
     qs = qs.exclude(pk=original.pk)
     model = original._meta.model
     original_qs = model.objects.filter(pk=original.pk)
+    updateable_fields = get_updateable_fields(original)
     # Get the first value found in the other objects to replace empty values
     # of original.
-    if expand_original and update_data is None:
+    if expand_original and updateable_fields and update_data is None:
+        # If updateable_fields is empty the following query will include ALL
+        # values including the primary key, etc. which obviously must not be
+        # allowed to happen.
         update_data = {}
-        updateable_fields = get_updateable_fields(original)
         for other_record_valdict in qs.values(*updateable_fields):
             for k, v in other_record_valdict.items():
                 if v and k not in update_data:
@@ -30,7 +33,7 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
 
     with transaction.atomic():
         # Update the original object with the additional data and log the changes.
-        if expand_original:
+        if expand_original and update_data:
             original_qs.update(**update_data)
             logger.log_update(original_qs, update_data)
 
