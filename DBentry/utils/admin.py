@@ -68,7 +68,7 @@ def get_changelist_link(model, user, site_name='admin', obj_list=None):
     if not user.has_perm(perm):
         return ''
     if obj_list:
-        url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))  # TODO: should be '?in='
+        url += '?id={}'.format(",".join([str(obj.pk) for obj in obj_list]))
     return format_html('<a href="{}">Liste</a>', url)
 
 
