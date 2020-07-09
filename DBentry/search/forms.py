@@ -27,13 +27,15 @@ class RangeWidget(forms.MultiWidget):
     def __init__(self, widget, attrs=None):
         super().__init__(widgets=[widget] * 2, attrs=attrs)
 
-    def decompress(self, value):  # TODO: docstring
-        # What is value? Where does it come from?
-        # Why is it okay to assume it's a string?
-        # Why is it okay to assume it only contains one comma?
-        # decompress is only called in get_context which is only used to
-        # render the widget.
-        if value:
+    def decompress(self, value):
+        # Split value into two values (start, end).
+        # forms.MultiValueField.clean calls widget.decompress to get a list of
+        # values. But since RangeFormField.clean uses the clean methods of
+        # its 'subfields', and not the the clean method of MultiValueField,
+        # compress() is only called by widget.get_context (widget rendering)
+        # when value isn't a list already.
+        # In short: RangeWidget.decompress is never really used?
+        if value and isinstance(value, str) and value.count(',') == 1:
             return value.split(',')
         return [None, None]
 
@@ -145,6 +147,14 @@ class SearchForm(forms.Form):
                     and not value.exists()):
                 # Dont want empty values as filter parameters!
                 continue
+            elif ('in' in self.lookups.get(field_name, [])
+                and isinstance(value, QuerySet)):
+                    # django admin's prepare_lookup_value() expects an '__in'
+                    # lookup to consist of comma separated values.
+                    param_value = ",".join(
+                        str(pk)
+                        for pk in value.values_list('pk', flat=True).order_by('pk')
+                    )
 
             params[param_key] = param_value
         return params
@@ -204,7 +214,20 @@ class SearchFormFactory:
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
             defaults['widget'] = make_widget(**widget_opts)
-        return db_field.formfield(**{**defaults, **kwargs})
+        if db_field.choices and not db_field.blank:
+            # Always include an 'empty' choice in the choices.
+            defaults['choices'] = db_field.get_choices(include_blank=True)
+        # Use the formfield class provided in the kwargs:
+        form_class = kwargs.pop('form_class', None)
+        if form_class:
+            formfield = form_class(**{**defaults, **kwargs})
+        else:
+            formfield = db_field.formfield(**{**defaults, **kwargs})
+        if formfield is None:
+            # AutoField.formfield() returns None; if we want a formfield for the
+            # primary key field, we need to create the field explicitly.
+            return forms.CharField(**{**defaults, **kwargs})
+        return formfield
 
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,

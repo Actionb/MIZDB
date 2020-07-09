@@ -20,9 +20,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
             an operation that is not easily reversed.
         short_description (str): label for the action in the changelist
             dropdown menu.
-        perm_required (list or tuple): list of permission codewords required to
-            access the action.
-            See DBentry.admin.base.MIZModelAdmin.get_actions().
         action_name (str): context variable that will be used on the template
             so django redirects back here through response_action
             (line contrib.admin.options:1255)
@@ -37,7 +34,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
     non_reversible_warning = gettext_lazy("Warning: This action is NOT reversible!")
     action_reversible = False
     short_description = ''
-    perm_required = ()
     action_name = None
     view_helptext = ''
     action_allowed_checks = ()
@@ -91,8 +87,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
             return None
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
         defaults = {
             'queryset': self.queryset,
@@ -221,8 +217,8 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
             objs.append(links)
         return objs
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
         context.update({
             'affected_objects': self.compile_affected_objects(),
@@ -243,8 +239,8 @@ class WizardConfirmationView(ConfirmationViewMixin, FixedSessionWizardView):
         super(WizardConfirmationView, self).__init__(*args, **kwargs)
         self.qs = self.queryset  # WizardView wants it so
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         if self.steps.current in self.view_helptext:
             context['view_helptext'] = self.view_helptext.get(self.steps.current)
         return context

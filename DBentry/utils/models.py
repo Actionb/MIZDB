@@ -334,3 +334,37 @@ def get_fields_and_lookups(model, field_path):
                 # Update opts to follow the relation.
                 opts = field.get_path_info()[-1].to_opts
     return fields, lookups
+
+
+def validate_model_data(model):
+    """Validate the data of a given model."""
+
+    invalid = []
+    instances = list(model.objects.all())
+    for instance in instances:
+        try:
+            instance.full_clean()
+        except exceptions.ValidationError as e:
+            invalid.append((instance, e))
+    return invalid
+
+
+def validate_all_model_data(*models):
+    """
+    Validate the data of given models or of all models that inherit from
+    superclass DBentry.base.models.BaseModel.
+    """
+
+    invalid = {}
+    if not models:
+        from DBentry.base.models import BaseModel  # avoid circular imports
+        models = [m for m in apps.get_models('DBentry') if issubclass(m, BaseModel)]
+    for model in models:
+        print("Validating %s... " % model._meta.model_name, end='')
+        inv = validate_model_data(model)
+        if inv:
+            print('Invalid data found.')
+            invalid[model._meta.model_name] = inv
+        else:
+            print('All data valid.')
+    return invalid

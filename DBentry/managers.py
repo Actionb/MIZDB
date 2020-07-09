@@ -79,7 +79,8 @@ class MIZQuerySet(models.QuerySet):
         all_values = list(chain(values for pk, values in queried.items()))
         rslt = []
         for elem, count in Counter(all_values).items():
-            if count < 2:
+            if not elem or count < 2:
+                # Do not compare empty with empty, and skip if there are no dupes
                 continue
             # Find all the pks that match these values.
             pks = []
@@ -406,32 +407,28 @@ class AusgabeQuerySet(CNQuerySet):
 
         return update_dict
 
-    # TODO: rename chronologic_order to chronological_order ??
-    # TODO: revise chronologic_order
-    def chronologic_order(self, ordering=None):
+    def chronologic_order(self, *ordering):
         """Return this queryset chronologically ordered."""
         if self.chronologically_ordered:
+            # Already ordered!
             return self
+
         # A chronologic order is (mostly) consistent ONLY within
         # the ausgabe_set of one particular magazin. If the queryset contains
         # the ausgaben of more than one magazin, we may end up replacing one
         # 'poor' ordering (the default one) with another poor chronologic one.
-
-        # The if condition could also be:
-        #   if self.model._meta.get_field('magazin') not in [child.lhs.target for child in self.query.where.children]
-        # Which would not hit the database.
-        # But I am not sure if lhs.target really specifies the field that was filtered on.
         if self.only('magazin').distinct().values_list('magazin').count() != 1:
             # This condition is also True if self is an empty queryset.
-            if ordering is not None:
+            if ordering:
                 return self.order_by(*ordering)
             return self.order_by(*self.model._meta.ordering)
 
         default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
-        if ordering is None:
-            ordering = default_ordering
-        else:
+        if ordering:
+            ordering = list(ordering)
             ordering.extend(default_ordering)
+        else:
+            ordering = default_ordering
 
         pk_name = self.model._meta.pk.name
         # Retrieve the first item in ordering that refers to the primary key,
@@ -464,14 +461,13 @@ class AusgabeQuerySet(CNQuerySet):
         # Count the presence of the different criteria and sort them accordingly.
         # NOTE: tests succeed with or without distinct = True
         counted = self.aggregate(
-            num__sum=Count('ausgabe_num', distinct=True),
-            monat__sum=Count('ausgabe_monat', distinct=True),
+            e_datum__sum=Count('e_datum', distinct=True),
             lnum__sum=Count('ausgabe_lnum', distinct=True),
-            e_datum__sum=Count('e_datum', distinct=True)
+            monat__sum=Count('ausgabe_monat', distinct=True),
+            num__sum=Count('ausgabe_num', distinct=True),
         )
-        # TODO: this should be the default (due to chronologic accuracy):
-        default_criteria_ordering = ['e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
-        default_criteria_ordering = ['num__sum', 'monat__sum', 'lnum__sum', 'e_datum__sum']
+        default_criteria_ordering = [
+            'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
 
         # Tuples are sorted lexicographically in ascending order. If any item
         # of two tuples is the same, it goes on to the next item:
@@ -481,7 +477,9 @@ class AusgabeQuerySet(CNQuerySet):
         # the order of sum_names in the defaults decides.
         criteria = sorted(
             counted.items(),
-            key=lambda itemtpl: (-itemtpl[1], default_criteria_ordering.index(itemtpl[0]))
+            key=lambda itemtpl: (
+                -itemtpl[1], default_criteria_ordering.index(itemtpl[0])
+            )
         )
         result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])

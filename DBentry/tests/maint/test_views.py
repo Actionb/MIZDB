@@ -7,7 +7,10 @@ from django.utils.http import unquote
 from DBentry import models as _models
 from DBentry import utils
 from DBentry.actions.views import MergeViewWizarded
-from DBentry.maint.views import DuplicateObjectsView, ModelSelectView
+from DBentry.factory import make
+from DBentry.maint.views import (
+    DuplicateObjectsView, ModelSelectView, UnusedObjectsView
+)
 from DBentry.tests.base import ViewTestCase
 from DBentry.tests.mixins import TestDataMixin
 
@@ -89,21 +92,21 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
 
     def test_post_redirects_to_self_after_merging(self):
         # Assert that post redirects back to itself after a merge.
-        path = reverse('dupes', kwargs = {'model_name': 'band'})
-        request = self.post_request(path, data = {ACTION_CHECKBOX_NAME: ['1', '2']})
+        path = reverse('dupes', kwargs={'model_name': 'band'})
+        request = self.post_request(path, data={ACTION_CHECKBOX_NAME: ['1', '2']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         # patch the as_view method of MergeViewWizarded to return None,
         # thereby emulating a successful merge without conflicts.
         def mocked_as_view(*args, **kwargs):
-            return Mock(return_value = None)
-        with patch.object(MergeViewWizarded, 'as_view', new = mocked_as_view):
+            return Mock(return_value=None)
+        with patch.object(MergeViewWizarded, 'as_view', new=mocked_as_view):
             response = view.post(request)
             self.assertEqual(response.url, path)
 
     def test_post_calls_merge_view(self):
-       # Assert that a post request will call the merge view.
+        # Assert that a post request will call the merge view.
         model_admin = utils.get_model_admin_for_model(self.model)
-        request = self.post_request(data = {ACTION_CHECKBOX_NAME: ['1', '2']})
+        request = self.post_request(data={ACTION_CHECKBOX_NAME: ['1', '2']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
 
         with patch.object(MergeViewWizarded, 'as_view') as mocked_as_view:
@@ -121,7 +124,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
     def test_post_does_not_call_merge_view_with_no_selects(self):
         # Assert that a post request will NOT call the merge view when no items
         # in a sub list are selected for a merge.
-        request = self.post_request(data = {ACTION_CHECKBOX_NAME: []})
+        request = self.post_request(data={ACTION_CHECKBOX_NAME: []})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         with patch.object(MergeViewWizarded, 'as_view') as mocked_as_view:
             view.post(request)
@@ -134,7 +137,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         link_template = '<a href="{url}">{name}</a>'
 
-        request = self.get_request(data={'base': ['band_name']})
+        request = self.get_request(data={'base': ['band_name', 'beschreibung']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         # A validated and cleaned form is required.
@@ -143,20 +146,23 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         items = view.build_duplicates_items(form)
         self.assertEqual(
             len(items), 1,
-            msg = "There should be only one set of duplicate objects."
+            msg="There should be only one set of duplicate objects."
         )
         self.assertEqual(
             len(items[0]), 2,
-            msg = "Should contain one set of duplicate objects and the url to "
+            msg="Should contain one set of duplicate objects and the url to "
             "their changelist."
         )
         self.assertEqual(
             len(items[0][0]), 3,
-            msg = "Should contain the three duplicate objects."
+            msg="Should contain the three duplicate objects."
         )
         for dupe_item in items[0][0]:
             with self.subTest():
-                self.assertEqual(len(dupe_item), 3)
+                self.assertEqual(
+                    len(dupe_item), 3,
+                    msg="Each dupe item is expected to have 3 attributes."
+                )
                 self.assertIsInstance(
                     dupe_item[0], self.model,
                     msg="Duplicate object should be an instance of "
@@ -171,7 +177,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                     msg="Should be link to change form of object."
                 )
                 self.assertEqual(
-                    dupe_item[2], ['Beep'],
+                    dupe_item[2], ['Beep', ''],
                     msg="Should be the duplicate object's values of the "
                     "fields the duplicates were found with."
                 )
@@ -213,3 +219,41 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         self.assertTrue(form.is_valid())
         headers = view.build_duplicates_headers(form)
         self.assertIn('Alias', headers)
+
+
+class TestUnusedObjectsView(ViewTestCase):
+
+    view_class = UnusedObjectsView
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.artikel1 = make(_models.artikel)
+        cls.artikel2 = make(_models.artikel)
+
+        cls.unused = make(_models.genre)
+        cls.used_once = make(_models.genre)
+        cls.artikel1.genre.add(cls.used_once)
+        cls.used_twice = make(_models.genre)
+        cls.artikel1.genre.add(cls.used_twice)
+        cls.artikel2.genre.add(cls.used_twice)
+        cls.test_data = [cls.unused, cls.used_once, cls.used_twice]
+        super().setUpTestData()
+
+    def test_get_queryset(self):
+        # Assert that the returned querysets return the correct amount of
+        # 'unused' records.
+        view = self.get_view(request=self.get_request())
+        for limit in [0, 1, 2]:
+            relations, queryset = view.get_queryset(_models.genre, limit)
+            with self.subTest(limit=limit):
+                self.assertEqual(queryset.count(), limit + 1)
+
+    def test_get_queryset_ignores_self_relations(self):
+        # Assert that self relations are not included in the relations that are
+        # queried.
+        view = self.get_view(request=self.get_request())
+        relations, queryset = view.get_queryset(_models.genre, 0)
+        self.assertNotIn(
+            _models.genre._meta.get_field('ober').remote_field,
+            relations
+        )

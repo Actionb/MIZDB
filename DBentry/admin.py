@@ -14,7 +14,7 @@ from DBentry.base.admin import (
 )
 from DBentry.forms import (
     ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm,
-    BildmaterialForm
+    BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
 from DBentry.utils import concat_limit
@@ -105,6 +105,7 @@ class AudioAdmin(MIZModelAdmin):
         'fields': [
             'musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma',
             'format__format_size', 'format__format_typ', 'format__tag', 'release_id',
+            'id__in'
         ],
         'labels': {'format__tag': 'Tags'}
     }
@@ -152,7 +153,7 @@ class AusgabenAdmin(MIZModelAdmin):
         'fields': [
             'magazin', 'status', 'ausgabe_jahr__jahr__range', 'ausgabe_num__num__range',
             'ausgabe_lnum__lnum__range', 'ausgabe_monat__monat__ordinal__range',
-            'jahrgang', 'sonderausgabe'
+            'jahrgang', 'sonderausgabe', 'id__in'
         ],
         'labels': {
             'ausgabe_jahr__jahr__range': 'Jahr',
@@ -162,20 +163,10 @@ class AusgabenAdmin(MIZModelAdmin):
         }
     }
 
-    def get_actions(self, request):
-        """Add bulk_jg, add_bestand, moveto_brochure actions."""
-        action_funcs = [
-            _actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure]
-        new_actions = []
-        for func in action_funcs:
-            action = self.get_action(func)
-            if action is not None:
-                new_actions.append(action)
-        new_actions = self._filter_actions_by_permissions(request, new_actions)
-        actions = super().get_actions(request)
-        for func, name, desc in new_actions:
-            actions[name] = (func, name, desc)
-        return actions
+    actions = [
+        _actions.merge_records, _actions.bulk_jg, _actions.add_bestand,
+        _actions.moveto_brochure
+    ]
 
     def get_changelist(self, request, **kwargs):
         from .changelist import AusgabeChangeList
@@ -233,7 +224,7 @@ class AutorAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [MagazinInLine]
     list_display = ['__str__', 'person', 'kuerzel', 'magazin_string']
-    search_form_kwargs = {'fields': ['magazin']}
+    search_form_kwargs = {'fields': ['magazin', 'person', 'id__in']}
 
     def magazin_string(self, obj):
         return concat_limit(obj.magazin.all())
@@ -288,27 +279,10 @@ class ArtikelAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band',
-            'musiker', 'autor', 'seite__range'
+            'musiker', 'autor', 'seite__range', 'id__in'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
-
-    def get_queryset(self, request):
-        # TODO: rethink this now that we have chronologic_order for ausgabe
-        # (also monat_id should not longer used)
-        # NOTE: what actually uses ModelAdmin.get_queryset? Because the changelist's results are
-        # ordered via chronologic_order.
-        qs = super(ArtikelAdmin, self).get_queryset(request)
-        qs = qs.annotate(
-            jahre=Min('ausgabe__ausgabe_jahr__jahr'),
-            nums=Min('ausgabe__ausgabe_num__num'),
-            lnums=Min('ausgabe__ausgabe_lnum__lnum'),
-            monate=Min('ausgabe__ausgabe_monat__monat_id'),
-        ).order_by(
-            'ausgabe__magazin__magazin_name', 'jahre', 'nums',
-            'lnums', 'monate', 'seite', 'pk'
-        )
-        return qs
 
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
@@ -341,14 +315,14 @@ class BandAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.band.orte.through
 
-    googlebtns = ['band_name']
+    form = BandForm
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
     save_on_top = True
 
     search_form_kwargs = {
-        'fields': ['musiker', 'genre', 'orte__land', 'orte'],
+        'fields': ['musiker', 'genre', 'orte__land', 'orte', 'id__in'],
         'labels': {'musiker': 'Mitglied'}
     }
 
@@ -407,7 +381,7 @@ class BildmaterialAdmin(MIZModelAdmin):
     ]
     search_form_kwargs = {
         'fields': [
-            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe'
+            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe', 'id__in'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -501,10 +475,10 @@ class BuchAdmin(MIZModelAdmin):
         'fields': [
             'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band',
             'person', 'schriftenreihe', 'buchband', 'verlag', 'sprache', 'jahr',
-            'ISBN', 'EAN'
+            'ISBN', 'EAN', 'id__in'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
-        # 'autor' help_text is for quick item creation which is not allowed in search forms.
+        # 'autor' help_text refers to quick item creation which is not allowed in search forms.
         'help_texts': {'autor': None}
     }
 
@@ -574,7 +548,7 @@ class MagazinAdmin(MIZModelAdmin):
     list_display = ['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
 
     search_form_kwargs = {
-        'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine'],
+        'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine', 'id__in'],
         'labels': {'ort': 'Herausgabeort'},
     }
 
@@ -609,13 +583,13 @@ class MusikerAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.musiker.orte.through
 
+    form = MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
-    googlebtns = ['kuenstler_name']
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
     save_on_top = True
-    search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
+    search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte', 'id__in']}
 
     def band_string(self, obj):
         return concat_limit(obj.band_set.all())
@@ -642,7 +616,7 @@ class PersonAdmin(MIZModelAdmin):
     list_display_links = ['vorname', 'nachname']
 
     search_form_kwargs = {
-        'fields': ['orte', 'orte__land', 'orte__bland'],
+        'fields': ['orte', 'orte__land', 'orte__bland', 'id__in'],
         'forwards': {'orte__bland': 'orte__land'}
     }
 
@@ -734,7 +708,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
 class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
     search_form_kwargs = {
-        'fields': ['sitz', 'sitz__land', 'sitz__bland'],
+        'fields': ['sitz', 'sitz__land', 'sitz__bland', 'id__in'],
         'labels': {'sitz': 'Sitz'}
     }
 
@@ -780,7 +754,7 @@ class VideoAdmin(MIZModelAdmin):
 class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
     search_form_kwargs = {
-        'fields': ['ort__land'],
+        'fields': ['ort__land', 'id__in'],
     }
 
 
@@ -800,7 +774,7 @@ class OrtAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
-    search_form_kwargs = {'fields': ['land', 'bland']}
+    search_form_kwargs = {'fields': ['land', 'bland', 'id__in']}
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field == self.opts.get_field('bland'):
@@ -894,7 +868,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
-    search_form_kwargs = {'fields': ['genre', 'jahre__jahr']}
+    search_form_kwargs = {'fields': ['genre', 'jahre__jahr', 'id__in']}
 
     def get_fieldsets(self, request, obj=None):
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""

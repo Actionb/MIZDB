@@ -5,11 +5,23 @@ from django.core.exceptions import ValidationError
 from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
 from DBentry.base.forms import MIZAdminFormMixin, MinMaxRequiredFormMixin
-from DBentry.constants import ATTRS_TEXTAREA, discogs_release_id_pattern
+from DBentry.constants import discogs_release_id_pattern
 from DBentry.validators import DiscogsURLValidator
 
 
-class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mixin?
+class GoogleBtnWidget(forms.widgets.TextInput):
+    """
+    A TextInput widget with a button which opens a google search for what is
+    typed into the TextInput.
+    """
+
+    template_name = 'googlebuttonwidget.html'
+
+    class Media:
+        js = ('admin/js/googlebtn.js', )
+
+
+class AusgabeMagazinFieldForm(forms.ModelForm):
     """
     An abstract model form that adds a 'ausgabe__magazin' field which is used
     to limit (forward) the choices available to the widget of a field 'ausgabe'.
@@ -28,9 +40,6 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
     )
 
     class Meta:
-        # TODO: add the ausgabe widget during __new__?
-        # That way, classes inheriting from this wouldn't have to redeclare
-        # the widget.
         widgets = {
             'ausgabe': make_widget(
                 model_name='ausgabe',
@@ -51,15 +60,12 @@ class AusgabeMagazinFieldForm(forms.ModelForm):  # TODO: shouldn't this be a mix
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
-        # NOTE: why the model and fields declarations?
         model = _models.artikel
         fields = '__all__'
         widgets = {
             'ausgabe': make_widget(
                 model_name='ausgabe', forward=['ausgabe__magazin']),
             'schlagzeile': forms.Textarea(attrs={'rows': 2, 'cols': 90}),
-            'zusammenfassung': forms.Textarea(attrs=ATTRS_TEXTAREA),
-            'info': forms.Textarea(attrs=ATTRS_TEXTAREA),
         }
 
 
@@ -78,8 +84,11 @@ class BrochureForm(AusgabeMagazinFieldForm):
 
 class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
     minmax_required = [{
-        'max': 1, 'fields': ['is_buchband', 'buchband'],
-        'error_messages': {'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'}
+        'max': 1,
+        'fields': ['is_buchband', 'buchband'],
+        'error_messages': {
+            'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'
+        }
     }]
 
     class Meta:
@@ -91,6 +100,16 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
                 can_delete_related=False
             ),
         }
+
+
+class MusikerForm(forms.ModelForm):
+    class Meta:
+        widgets = {'kuenstler_name': GoogleBtnWidget()}
+
+
+class BandForm(forms.ModelForm):
+    class Meta:
+        widgets = {'band_name': GoogleBtnWidget()}
 
 
 class HerausgeberForm(MinMaxRequiredFormMixin, forms.ModelForm):
@@ -144,8 +163,10 @@ class BildmaterialForm(forms.ModelForm):
 
     copy_related = forms.BooleanField(
         label='Bands/Musiker kopieren',
-        help_text=('Setzen Sie das Häkchen, um Bands und Musiker der '
-            'Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.'),
+        help_text=(
+            'Setzen Sie das Häkchen, um Bands und Musiker der '
+            'Veranstaltungen direkt zu diesem Datensatz hinzuzufügen.'
+        ),
         required=False
     )
 

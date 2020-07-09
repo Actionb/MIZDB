@@ -179,7 +179,8 @@ def make_widget(
         widget_opts['forward'] = []
 
         for forwarded in _forward:
-            # TODO: filter out 'false' forwarded (i.e. None)
+            if not forwarded:
+                continue
             if isinstance(forwarded, str):
                 dst = forwarded.split('__')[-1]
                 forwarded = forward.Field(src=forwarded, dst=dst)
