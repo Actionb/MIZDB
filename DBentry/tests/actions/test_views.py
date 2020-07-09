@@ -987,7 +987,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
             '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'
-            ' (<a href="/admin/DBentry/ausgabe/?id__in={pk}">Liste</a>)'
+            ' (<a href="/admin/DBentry/ausgabe/?id={pk}">Liste</a>)'
             '. Es wurden keine Broschüren für diese Ausgaben erstellt.'
         ).format(pk=self.obj1.pk, name=str(self.obj1))
         self.assertMessageSent(request, expected_message)
