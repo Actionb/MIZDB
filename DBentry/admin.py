@@ -636,19 +636,8 @@ class SchlagwortAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
-    list_display = ['schlagwort', 'alias_string', 'ober_string', 'sub_string']
-    # Remove the 'ober__schlagwort' field from search_fields
-    # (useful for dal searches, not so much on changelists):
-    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias']
-
-    def ober_string(self, obj):
-        return str(obj.ober) if obj.ober else ''
-    ober_string.short_description = 'Oberbegriff'
-    ober_string.admin_order_field = 'ober'
-
-    def sub_string(self, obj):
-        return concat_limit(obj.unterbegriffe.all())
-    sub_string.short_description = 'Unterbegriffe'
+    list_display = ['schlagwort', 'alias_string']
+    search_fields = ['schlagwort', 'schlagwort_alias__alias']
 
     def alias_string(self, obj):
         return concat_limit(obj.schlagwort_alias_set.all())

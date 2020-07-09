@@ -732,14 +732,12 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.schlagwort
-    fields_expected = ['schlagwort', 'ober']
+    fields_expected = ['schlagwort']
 
     raw_data = [
-        {'schlagwort': 'Topobject'},
         {
             'schlagwort': 'Subobject',
             'schlagwort_alias__alias': ['Alias1', 'Alias2'],
-            'ober__schlagwort': 'Topobject'
         }
     ]
 
@@ -750,7 +748,6 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'brochure', 'fld_name': 'schlagwort', 'label': 'Broschüren (1)'},
         {'model_name': 'buch', 'fld_name': 'schlagwort', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'schlagwort', 'label': 'Dateien (1)'},
-        {'model_name': 'schlagwort', 'fld_name': 'ober', 'label': 'Unterbegriffe (1)'},
         {'model_name': 'dokument', 'fld_name': 'schlagwort', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'schlagwort', 'label': 'Memorabilien (1)'},
         {'model_name': 'technik', 'fld_name': 'schlagwort', 'label': 'Technik (1)'},
@@ -758,41 +755,8 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'video', 'fld_name': 'schlagwort', 'label': 'Video Materialien (1)'},
     ]
 
-    def test_search_finds_alias(self):
-        # check if an object can be found via its alias
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertIn(self.obj2, result)
-
-    def test_search_for_sub_finds_top(self):
-        # check if a search for a subobject finds its topobject
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertIn(self.obj1, result)
-
-    def test_search_for_top_not_finds_sub(self):
-        # check if a search for a topobject does not find its subobjects
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Topobject')
-        self.assertNotIn(self.obj2, result)
-
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj2), 'Alias1, Alias2')
-
-    def test_ober_string(self):
-        self.assertEqual(self.model_admin.ober_string(self.obj1), '')
-        self.assertEqual(self.model_admin.ober_string(self.obj2), 'Topobject')
-
-    def test_sub_string(self):
-        self.assertEqual(self.model_admin.sub_string(self.obj1), 'Subobject')
-        self.assertEqual(self.model_admin.sub_string(self.obj2), '')
-
-    def test_get_search_fields(self):
-        # genre/schlagwort admin removes the search field that results in all
-        # subobjects of a topobject being present in a search for topobject.
-        # This would be useful for dal, but not for searches on the changelist
-        super().test_get_search_fields()
-        self.assertNotIn('ober__schlagwort', self.model_admin.get_search_fields())
+        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
 
 
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):

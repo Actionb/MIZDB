@@ -590,23 +590,13 @@ class land_alias(BaseAliasModel):
 class schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
-    ober = models.ForeignKey(  # TODO: remove this field
-        'self', models.SET_NULL, related_name='unterbegriffe',
-        verbose_name='Oberbegriff', null=True, blank=True
-    )
-
     create_field = 'schlagwort'
     name_field = 'schlagwort'
     primary_search_fields = []
     search_fields = [
-        'schlagwort', 'unterbegriffe__schlagwort', 'ober__schlagwort',
-        'schlagwort_alias__alias'
+        'schlagwort', 'schlagwort_alias__alias'
     ]
-    search_fields_suffixes = {
-        'unterbegriffe__schlagwort': 'Oberbegriff',
-        'ober__schlagwort': 'Unterbegriff',
-        'schlagwort_alias__alias': 'Alias'
-    }
+    search_fields_suffixes = {'schlagwort_alias__alias': 'Alias'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'

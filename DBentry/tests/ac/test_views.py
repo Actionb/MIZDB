@@ -572,13 +572,7 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.schlagwort
     alias_accessor_name = 'schlagwort_alias_set'
-    raw_data = [
-        {
-            'unterbegriffe__extra': 1,
-            'ober__schlagwort': 'Oberbegriff',
-            'schlagwort_alias__alias': 'AliasSchlagwort'
-        }
-    ]
+    raw_data = [{'schlagwort_alias__alias': 'AliasSchlagwort'}]
 
     def test_apply_q_favorites(self):
         request = self.get_request()
