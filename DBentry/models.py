@@ -697,10 +697,10 @@ class buch(BaseModel):
         related_name='buch_set', help_text='Der Sammelband, der diesen Aufsatz enthält.',
         verbose_name='Sammelband',
     )
-    verlag = models.ForeignKey('verlag', models.SET_NULL, null=True, blank=True)
     sprache = models.CharField(max_length=200, blank=True)
 
     herausgeber = models.ManyToManyField('Herausgeber')
+    verlag = models.ManyToManyField('verlag')
     autor = models.ManyToManyField('autor')
     genre = models.ManyToManyField('genre')
     schlagwort = models.ManyToManyField('schlagwort')

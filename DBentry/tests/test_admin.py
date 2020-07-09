@@ -1052,13 +1052,13 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BuchAdmin
     model = _models.buch
     exclude_expected = [
-        'herausgeber', 'autor', 'genre', 'schlagwort', 'person', 'band',
+        'herausgeber', 'verlag', 'autor', 'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
     ]
     fields_expected = [
         'titel', 'titel_orig', 'seitenumfang', 'jahr', 'jahr_orig', 'auflage',
         'EAN', 'ISBN', 'is_buchband', 'beschreibung', 'bemerkungen',
-        'schriftenreihe', 'buchband', 'verlag', 'sprache',
+        'schriftenreihe', 'buchband', 'sprache',
     ]
 
     crosslinks_expected = [

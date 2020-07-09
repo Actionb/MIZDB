@@ -39,7 +39,7 @@ class TestModelUtils(MyTestCase):
         # ManyToMany auto created band <-> buch
         # ManyToMany intermediary musiker <-> buch
         rev_fk = _models.bestand._meta.get_field('buch').remote_field
-        fk = buch._meta.get_field('verlag').remote_field
+        fk = buch._meta.get_field('schriftenreihe').remote_field
         m2m_inter = buch.musiker.rel
         m2m_auto = buch.band.rel
         

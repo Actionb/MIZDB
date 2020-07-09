@@ -439,6 +439,9 @@ class BuchAdmin(MIZModelAdmin):
     class HerausgeberInLine(BaseTabularInline):
         model = _models.buch.herausgeber.through
         verbose_model = _models.Herausgeber
+    class VerlagInLine(BaseTabularInline):
+        model = _models.buch.verlag.through
+        verbose_model = _models.verlag
 
     collapse_all = True
     # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
@@ -451,7 +454,7 @@ class BuchAdmin(MIZModelAdmin):
         (None, {
             'fields': [
                 'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe',
-                ('buchband', 'is_buchband'), 'verlag', 'ISBN', 'EAN', 'sprache',
+                ('buchband', 'is_buchband'), 'ISBN', 'EAN', 'sprache',
                 'beschreibung', 'bemerkungen'
             ]}
         ),
@@ -464,11 +467,11 @@ class BuchAdmin(MIZModelAdmin):
     inlines = [
         AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
-        HerausgeberInLine, PersonInLine, BestandInLine
+        HerausgeberInLine, VerlagInLine, PersonInLine, BestandInLine
     ]
     list_display = [
-        'titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string',
-        'herausgeber_string', 'schlagwort_string', 'genre_string'
+        'titel', 'auflage', 'schriftenreihe', 'autoren_string',
+        'herausgeber_string', 'verlag_string', 'schlagwort_string', 'genre_string'
     ]
     search_form_kwargs = {
         'fields': [
@@ -488,6 +491,10 @@ class BuchAdmin(MIZModelAdmin):
     def herausgeber_string(self, obj):
         return concat_limit(obj.herausgeber.all())
     herausgeber_string.short_description = 'Herausgeber'
+
+    def verlag_string(self, obj):
+        return concat_limit(obj.verlag.all())
+    herausgeber_string.short_description = 'verlag'
 
     def schlagwort_string(self, obj):
         return concat_limit(obj.schlagwort.all())
