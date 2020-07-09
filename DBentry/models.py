@@ -1075,7 +1075,7 @@ class provenienz(BaseModel):
     ]
 
     typ = models.CharField(
-        'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=TYP_CHOICES[0][0]
+        'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=SCHENK
     )
 
     geber = models.ForeignKey('geber', models.PROTECT)
@@ -1209,7 +1209,8 @@ class datei(BaseModel):
 
     titel = models.CharField(max_length=200)
     media_typ = models.CharField(
-        max_length=200, choices=MEDIA_TYP_CHOICES, verbose_name='Media Typ', default='audio'
+        max_length=200, choices=MEDIA_TYP_CHOICES, verbose_name='Media Typ',
+        default=MEDIA_AUDIO
     )
     datei_media = models.FileField(  # Datei Media Server
         verbose_name='Datei', blank=True, null=True, editable=False,
