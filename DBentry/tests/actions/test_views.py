@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.test import tag
 from django.utils.translation import override as translation_override
+from django.utils.safestring import SafeText
 from django.urls import reverse
 
 import DBentry.models as _models
@@ -404,6 +405,23 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
                     with self.subTest(link_number=str(j)):
                         self.assertIn(link, link_list[i][1])
 
+    @patch("DBentry.actions.views.link_list")
+    def test_build_message(self, mocked_link_list):
+        # Assert that build_message creates a SafeText string.
+        mocked_link_list.return_value = "Beep, Boop"
+        mocked_fkey = Mock()
+        mocked_fkey.name = "whatever"
+        message = self.get_view()._build_message(
+            lagerort_instance="Attic",
+            bestand_instances=[Mock(), Mock()],
+            fkey=mocked_fkey,  # passed to mocked_link_list
+        )
+        self.assertIsInstance(message, SafeText)
+        self.assertEqual(
+            message,
+            "Attic-Bestand zu diesen 2 Ausgaben hinzugefügt: Beep, Boop"
+        )
+
     @tag('logging')
     def test_perform_action(self):
         # Record the bestand of the objects before the action
@@ -720,7 +738,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     @translation_override(language=None)
     @patch.object(
-        MergeViewWizarded, 'perform_action',
+        MergeViewWizarded,
+        'perform_action',
         new=mockex(
             models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
     )
