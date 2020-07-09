@@ -1,8 +1,9 @@
 from collections import OrderedDict
 
-from django.apps import apps
 from django.contrib import admin
 from django.views.decorators.cache import never_cache
+
+from DBentry import utils
 
 
 class MIZAdminSite(admin.AdminSite):
@@ -72,7 +73,8 @@ class MIZAdminSite(admin.AdminSite):
 
         # Divide the models into their categories.
         for m in model_list:
-            model_admin = self.get_admin_model(m.get('object_name'))
+            model_admin =  utils.get_model_admin_for_model(
+                m.get('object_name'), self)
             model_category = model_admin.get_index_category()
             if model_category not in categories:
                 categories['Sonstige'] = [m]
@@ -101,21 +103,6 @@ class MIZAdminSite(admin.AdminSite):
         if new_app_list:
             response.context_data['app_list'] = new_app_list
         return response
-
-    def get_admin_model(self, model):
-        """
-        Return the ModelAdmin instance that represents the given 'model'.
-        'model' can be a model class or the name of a model.
-        """
-        # TODO: does the same as utils.admin.get_model_admin_for_model
-        if isinstance(model, str):
-            model_name = model.split('.')[-1]
-            try:
-                model = apps.get_model('DBentry', model_name)
-            except LookupError:
-                return None
-        return self._registry.get(model, None)
-
 
 miz_site = MIZAdminSite()
 

@@ -1,12 +1,12 @@
-# TODO: code style
 from collections import OrderedDict
 
 from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
-from django.utils.text import capfirst
 from django.utils.html import format_html, mark_safe
+from django.utils.text import capfirst
 
 from DBentry.utils import get_model_admin_for_model, is_iterable
+
 
 def formfield_to_modelfield(model, formfield_name, formfield=None):
     if formfield_name in [field.name for field in model._meta.get_fields()]:
@@ -16,14 +16,19 @@ def formfield_to_modelfield(model, formfield_name, formfield=None):
     except FieldDoesNotExist:
         pass
 
+
 class HTMLWrapper(object):
     """
-    Wraps the help item to provide the two methods sidenav() and html() for use on the template.
+    Wraps the help item to provide the two methods sidenav() and html() for use
+    on the template.
     """
 
     def __init__(self, id, val, label=None):
-        self.id = id # the id of the html element
-        self.val = val # either a string representing the help text or a list of dictionaries of: 'list item header': 'list item help text'
+        # the id of the html element
+        self.id = id
+        # either a string representing the help text or a list of dictionaries
+        # of: 'list item header': 'list item help text'
+        self.val = val
         if label is None:
             self.label = id
         else:
@@ -36,24 +41,28 @@ class HTMLWrapper(object):
         return "id:{}, label:{}, val:{}".format(self.id, self.label, self.val)
 
     def sidenav(self):
-        """Returns side navigation bookmarks to the help item(s)."""
-        help_item_bookmark = format_html('<a href="#{id}">{label}</a>', id=self.id, label=capfirst(self.label))
+        """Return side navigation bookmarks to the help item(s)."""
+        help_item_bookmark = format_html(
+            '<a href="#{id}">{label}</a>', id=self.id, label=capfirst(self.label))
         if not is_iterable(self.val):
             return help_item_bookmark
         # This help item contains a sublist.
-        return mark_safe(help_item_bookmark + self.html(template='<li><a href="#{id}">{label}</a></li>'))
+        return mark_safe(
+            help_item_bookmark + self.html(template='<li><a href="#{id}">{label}</a></li>'))
 
     def html(self, template=None):
         """
-        Returns a html representation of the help item.
-        If the help item is simple text, it will surround the the text with <span> elements,
-        otherwise an unordered list is used, with the text bits as list items.
+        Return a html representation of the help item.
+        If the help item is simple text, it will surround the the text with
+        <span> elements, otherwise an unordered list is used, with the text
+        bits as list items.
         """
         if not is_iterable(self.val):
             # self.val is either a string or another primitive type
             if not isinstance(self.val, str):
                 self.val = str(self.val)
-            return format_html('<span id={id}>{text}</span>', id=self.id, text=mark_safe(self.val.strip()))
+            return format_html(
+                '<span id={id}>{text}</span>', id=self.id, text=mark_safe(self.val.strip()))
 
         # self.val is an iterable, i.e. list or tuple, etc.
         if template is None:
@@ -75,7 +84,8 @@ class HTMLWrapper(object):
                 if v.get('classes'):
                     d['classes'] = "".join(c for c in v.get('classes'))
             iterator.append(d)
-        return mark_safe("<ul>" + "".join([format_html(template, **i) for i in iterator]) + "</ul>")
+        return mark_safe(
+            "<ul>" + "".join([format_html(template, **i) for i in iterator]) + "</ul>")
 
 
 class BaseHelpText(object):
@@ -84,8 +94,9 @@ class BaseHelpText(object):
 
     Attributes:
         - index_title: the title used for this help text on the index page
-        - help_items: an iterable that contains the attribute names of help texts declared on this instance.
-                These names can either be simple strings or 2-tuples containing the name of the attribute and a label.
+        - help_items: an iterable that contains the attribute names of help
+            texts declared on this instance. These names can either be simple
+            strings or 2-tuples containing the name of the attribute and a label.
     """
 
     index_title = ''
@@ -99,7 +110,7 @@ class BaseHelpText(object):
         if not isinstance(self.help_items, OrderedDict):
             # Force the help_items into an OrderedDict for easier lookups
             help_items = OrderedDict()
-            for index, item in enumerate(self.help_items):
+            for _index, item in enumerate(self.help_items):
                 if not isinstance(item, (list, tuple)):
                     # Assume item is just a single string
                     help_items[item] = item
@@ -108,7 +119,6 @@ class BaseHelpText(object):
                 else:
                     help_items[item[0]] = item[0]
             self.help_items = help_items
-
 
     def for_context(self, **kwargs):
         """
@@ -133,19 +143,23 @@ class BaseHelpText(object):
             context['breadcrumbs_title'] = self.breadcrumbs_title
         return context
 
+
 class FormViewHelpText(BaseHelpText):
     """
     The basic container for help texts to a form view.
 
-    It gathers help texts for each formfield from this instance's 'fields' mapping or the formfield's helptext attribute.
-    Note that this means that any additional help text for fields that are not declared on the form will be ignored.
-    The fields' helptexts will be inserted as the second item, unless specifically set otherwise in 'help_items'.
+    It gathers help texts for each formfield from this instance's 'fields'
+    mapping or the formfield's helptext attribute. Note that this means that
+    any additional help text for fields that are not declared on the form will
+    be ignored. The fields' helptexts will be inserted as the second item,
+    unless specifically set otherwise in 'help_items'.
 
     Attributes:
         - fields: a mapping of formfield name to a help text
         - form_class: the class of the form this HelpText object is based off
         - target_view_class: the view this HelpText object is based off
     """
+
     fields = None
 
     form_class = None
@@ -168,11 +182,14 @@ class FormViewHelpText(BaseHelpText):
             # Add the form's fields to the help items
             self.help_items['fields'] = 'fields'
             if len(self.help_items) > 2:
-                # Assuming that the deriving HelpText object contains at least a basic 'description' of sorts as the first item,
-                # add the field helptexts directly after that description
+                # Assuming that the deriving HelpText object contains at least
+                # a basic 'description' of sorts as the first item, add the
+                # field helptexts directly after that description.
                 first_help_item_key = list(self.help_items.keys())[0]
-                self.help_items.move_to_end('fields', last=False) # move fields to the top
-                self.help_items.move_to_end(first_help_item_key, last=False) # and move the original first item back to the top
+                # move fields to the top:
+                self.help_items.move_to_end('fields', last=False)
+                # and move the original first item back to the top:
+                self.help_items.move_to_end(first_help_item_key, last=False)
 
     @property
     def field_helptexts(self):
@@ -198,8 +215,9 @@ class FormViewHelpText(BaseHelpText):
 
     def get_helptext_for_field(self, field_name, formfield):
         """
-        Returns the help text for a particular formfield.
-        First, it looks up the formfield's name in the local 'fields' mapping, failing that, it uses the formfield's helptext.
+        Return the help text for a particular formfield.
+        First, look up the formfield's name in the local 'fields' mapping,
+        failing that, use the formfield's helptext.
         """
         field_helptext = self.fields.get(field_name, '')
         if not field_helptext and formfield.help_text:
@@ -208,8 +226,13 @@ class FormViewHelpText(BaseHelpText):
 
     def for_context(self, **kwargs):
         if self.field_helptexts:
-            kwargs['fields'] = HTMLWrapper(id='fields', label=self.help_items.get('fields', 'fields'), val=self.field_helptexts)
+            kwargs['fields'] = HTMLWrapper(
+                id='fields',
+                label=self.help_items.get('fields', 'fields'),
+                val=self.field_helptexts
+            )
         return super().for_context(**kwargs)
+
 
 class ModelAdminHelpText(FormViewHelpText):
     """
@@ -218,9 +241,12 @@ class ModelAdminHelpText(FormViewHelpText):
 
     Attributes:
         - model: duh
-        - inlines: a mapping of inline model (or the inline's verbose_model) to a help text
-        - inline_text: a short help text for when this model is viewed as an inline by another model admin
+        - inlines: a mapping of inline model (or the inline's verbose_model) to
+            a help text
+        - inline_text: a short help text for when this model is viewed as an
+            inline by another model admin
     """
+
     model = None
 
     inlines = None
@@ -258,20 +284,22 @@ class ModelAdminHelpText(FormViewHelpText):
     def inline_helptexts(self):
         """
         Collect the help texts for each inline of the model admin.
-        If the inline's model cannot be found in this instance's 'inlines' mapping, attempt to get the *inline* version of
-        the help text of that model from the registered help texts.
+        If the inline's model cannot be found in this instance's 'inlines'
+        mapping, attempt to get the *inline* version of the help text of that
+        model from the registered help texts.
         """
         if self._inline_helptexts is None:
             self._inline_helptexts = []
             for inline in self.model_admin.get_inline_instances(self.request):
                 inline_model = inline.model
                 if getattr(inline, 'verbose_model', False):
-                    # inlines that use BaseInlineMixin can have a verbose_model attribute set to the
-                    # 'target' model of a m2m relationship
+                    # inlines that use BaseInlineMixin can have a verbose_model
+                    # attribute set to the 'target' model of a m2m relationship.
                     inline_model = inline.verbose_model
                 if inline_model._meta.verbose_name_plural in self.inlines:
                     text = self.inlines[inline_model._meta.verbose_name_plural]
-                elif self.registry.helptext_for_model(inline_model) and self.registry.helptext_for_model(inline_model).as_inline(self.request):
+                elif (self.registry.helptext_for_model(inline_model)
+                        and self.registry.helptext_for_model(inline_model).as_inline(self.request)):
                     text = self.registry.helptext_for_model(inline_model).as_inline(self.request)
                 else:
                     continue

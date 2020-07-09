@@ -14,7 +14,7 @@ from DBentry.base.admin import (
 )
 from DBentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    BildmaterialForm
+    BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
 from DBentry.utils import concat_limit
@@ -162,20 +162,10 @@ class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only fi
         }
     }
 
-    def get_actions(self, request):
-        """Add bulk_jg, add_bestand, moveto_brochure actions."""
-        action_funcs = [
-            _actions.bulk_jg, _actions.add_bestand, _actions.moveto_brochure]
-        new_actions = []
-        for func in action_funcs:
-            action = self.get_action(func)
-            if action is not None:
-                new_actions.append(action)
-        new_actions = self._filter_actions_by_permissions(request, new_actions)
-        actions = super().get_actions(request)
-        for func, name, desc in new_actions:
-            actions[name] = (func, name, desc)
-        return actions
+    actions = [
+        _actions.merge_records, _actions.bulk_jg, _actions.add_bestand,
+        _actions.moveto_brochure
+    ]
 
     def get_changelist(self, request, **kwargs):
         from .changelist import AusgabeChangeList
@@ -293,23 +283,6 @@ class ArtikelAdmin(MIZModelAdmin):
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
 
-    def get_queryset(self, request):
-        # TODO: rethink this now that we have chronologic_order for ausgabe
-        # (also monat_id should not longer used)
-        # NOTE: what actually uses ModelAdmin.get_queryset? Because the changelist's results are
-        # ordered via chronologic_order.
-        qs = super(ArtikelAdmin, self).get_queryset(request)
-        qs = qs.annotate(
-            jahre=Min('ausgabe__ausgabe_jahr__jahr'),
-            nums=Min('ausgabe__ausgabe_num__num'),
-            lnums=Min('ausgabe__ausgabe_lnum__lnum'),
-            monate=Min('ausgabe__ausgabe_monat__monat_id'),
-        ).order_by(
-            'ausgabe__magazin__magazin_name', 'jahre', 'nums',
-            'lnums', 'monate', 'seite', 'pk'
-        )
-        return qs
-
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
             return ''
@@ -341,7 +314,7 @@ class BandAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.band.orte.through
 
-    googlebtns = ['band_name']
+    form = BandForm
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
@@ -609,8 +582,8 @@ class MusikerAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.musiker.orte.through
 
+    form = MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
-    googlebtns = ['kuenstler_name']
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']

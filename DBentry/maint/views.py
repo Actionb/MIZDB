@@ -48,8 +48,8 @@ class ModelSelectView(views.generic.FormView):
     form_class = ModelSelectForm
     next_view = 'admin:index'
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(*args, **kwargs)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         # Add context variables specific to admin/basic.html:
         context['submit_value'] = self.submit_value
         context['submit_name'] = self.submit_name
@@ -122,12 +122,12 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     def get(self, request, *args, **kwargs):
         """Handle the request to find duplicates."""
         form = self.get_form()
-        context = self.get_context_data(form, **kwargs)
+        context = self.get_context_data(form=form, **kwargs)
         if 'get_duplicates' in request.GET and form.is_valid():
             context['headers'] = self.build_duplicates_headers(form)
             # Calculate the (percentile) width of the headers; 25% of the width
             # is already taken up by the three headers 'merge','id','link'.
-            context['headers_width'] = str(int(75/len(context['headers'])))
+            context['headers_width'] = str(int(75 / len(context['headers'])))
             context['items'] = self.build_duplicates_items(form)
         return self.render_to_response(context)
 
@@ -326,7 +326,8 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
                 continue
 
             # For this relation, get objects that do not exceed the limit.
-            qs = model.objects.annotate(c=Count(query_name)).filter(Q(c__lte=limit))
+            qs = model.objects.order_by().annotate(
+                c=Count(query_name)).filter(Q(c__lte=limit))
             counts = {pk: c for pk, c in qs.values_list('pk', 'c')}
             # Remove the ids of the objects that exceed the limit for this relation.
             unused.difference_update(all_ids.difference(counts))
@@ -336,21 +337,21 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
             }
         return relations, model.objects.filter(pk__in=unused)
 
-
     def build_items(self, model, limit):
         """Build items for the context."""
         items = []
         under_limit_template = '{model_name} ({count!s})'
-        relations,  queryset = self.get_queryset(model, limit)
+        relations, queryset = self.get_queryset(model, limit)
         for obj in queryset:
             under_limit = []
-            for rel, info in relations.items():
+            for info in relations.values():
                 count = info['counts'].get(obj.pk, 0)
                 under_limit.append(
                     under_limit_template.format(
                         model_name=info['related_model']._meta.verbose_name,
                         count=count
-                ))
+                    )
+                )
             items.append((
                 utils.get_obj_link(obj, user=self.request.user, include_name=False),
                 ", ".join(sorted(under_limit))

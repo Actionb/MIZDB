@@ -25,9 +25,6 @@
                     {% if field.field.help_text %}
                         <div class="help">{{ field.field.help_text|safe }}</div>
                     {% endif %}
-                    {% if field.field.name in googlebtns %}
-                     <button id="btn-google-me" type="button" onclick="googleMe( '{{field.field.name}}' )">Google Me!</button> 
-                    {% endif %}
                 </div>
             {% endfor %}
         </div>

@@ -7,7 +7,7 @@ def add_cls_attrs(view_cls):
     have these set:
         - 'short_description' (str) which is used as label for the action in
             the changelist drop down menu.
-        - 'perm_required', list of permission codewords required to access
+        - 'allowed_permissions', list of permission codewords required to access
             the action.
             See DBentry.admin.base.MIZModelAdmin.get_actions().
     """
@@ -15,8 +15,8 @@ def add_cls_attrs(view_cls):
         if (not hasattr(func, 'short_description')
                 and hasattr(view_cls, 'short_description')):
             func.short_description = view_cls.short_description
-        if (not hasattr(func, 'perm_required')
-                and hasattr(view_cls, 'perm_required')):
-            func.perm_required = view_cls.perm_required
+        if (not hasattr(func, 'allowed_permissions')
+                and hasattr(view_cls, 'allowed_permissions')):
+            func.allowed_permissions = view_cls.allowed_permissions
         return func
     return wrap

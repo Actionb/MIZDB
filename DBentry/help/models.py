@@ -1,4 +1,3 @@
-# TODO: code style
 import DBentry.models as MIZModels
 
 from .registry import register

@@ -30,9 +30,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     Base ModelAdmin for this app.
 
     Attributes:
-        googlebtns (list): a list of formfield names that get a button that
-            opens a google search page with the field's value.
-            (Used on BandAdmin and MusikerAdmin)
         crosslink_labels (dict): mapping of related_model_name: custom_label
             used to give crosslinks custom labels.
         collapse_all (bool): context variable used in the inline templates.
@@ -44,9 +41,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             them on the index page.
     """
 
-    # TODO: googlebtns: fields in this list should be wrapped into a custom widget
-    # (let the widget render the button instead of the fieldset template)
-    googlebtns = []
     crosslink_labels = {}
     collapse_all = False
     superuser_only = False
@@ -179,34 +173,17 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         """
         return self.index_category
 
-    def get_actions(self, request):
-        """
-        Return a dictionary mapping of action_name: (callable, name, description)
-        for this ModelAdmin for every action that the user has access to.
-        """
-        # TODO: django has _filter_actions_by_permissions
-        actions = super().get_actions(request)
+    def has_merge_permission(self, request):
+        """Check that the user has permission to merge records."""
+        codename = get_permission_codename('merge', self.opts)
+        return request.user.has_perm(
+            '{}.{}'.format(self.opts.app_label, codename))
 
-        for func, name, _desc in actions.copy().values():
-            if name == 'delete_selected':
-                # The builtin action 'delete_selected' is set by the admin site.
-                perm_required = ['delete']
-            else:
-                perm_required = getattr(func, 'perm_required', [])
-
-            for p in perm_required:
-                perm_passed = False
-                if callable(p):
-                    perm_passed = p(self, request)
-                else:
-                    perm = '{}.{}'.format(
-                        self.opts.app_label,
-                        get_permission_codename(p, self.opts)
-                    )
-                    perm_passed = request.user.has_perm(perm)
-                if not perm_passed:
-                    del actions[name]
-        return actions
+    def has_alter_bestand_permission(self, request):
+        """Check that the user has permission to change inventory quantities."""
+        codename = get_permission_codename('alter_bestand', self.opts)
+        return request.user.has_perm(
+            '{}.{}'.format(self.opts.app_label, codename))
 
     def get_exclude(self, request, obj=None):
         """Exclude all concrete M2M fields as those are handled by inlines."""
@@ -358,20 +335,13 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     @property
     def media(self):
-        media = super().media
-        if self.googlebtns:
-            # utils.js contains the googlebtns script
-            # TODO: remove this bit once googlebtns are handled by widgets
-            return media + forms.Media(js=['admin/js/utils.js'])
-        return ensure_jquery(media)
+        return ensure_jquery(super().media)
 
     def add_extra_context(self, request=None, extra_context=None, object_id=None):
         new_extra = extra_context or {}
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
-        # TODO: remove this once googlebtns are handled by widgets
-        new_extra['googlebtns'] = self.googlebtns
         if request:
             # TODO: why do we need 'request' in the context?
             new_extra['request'] = request
