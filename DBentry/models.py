@@ -773,7 +773,7 @@ class audio(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveIntegerField(verbose_name='Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
-    e_jahr = YearField('Erscheinungsjahr', blank=True, null=True)
+    e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
     catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')  # WARNING: field missing in admin
     release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
