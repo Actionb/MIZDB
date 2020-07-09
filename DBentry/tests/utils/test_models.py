@@ -103,8 +103,8 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
         
         # related_name
-        rel = _models.genre._meta.get_field('ober').remote_field
-        self.assertEqual(utils.get_reverse_field_path(rel, 'genre'), 'sub_genres__genre')
+        rel = _models.buch._meta.get_field('buchband').remote_field
+        self.assertEqual(utils.get_reverse_field_path(rel, 'titel'), 'buch_set__titel')
 
     def test_get_fields_and_lookups(self):
         path = 'ausgabe__e_datum__year__gte'

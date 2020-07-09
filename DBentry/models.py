@@ -87,18 +87,11 @@ class musiker_alias(BaseAliasModel):
 class genre(BaseModel):
     genre = models.CharField('Genre', max_length=100, unique=True)
 
-    ober = models.ForeignKey(  # TODO: remove this field
-        'self', models.SET_NULL, related_name='sub_genres', verbose_name='Oberbegriff',
-        null=True, blank=True,
-    )
-
     create_field = 'genre'
     name_field = 'genre'
     primary_search_fields = ['genre']
-    search_fields = ['genre', 'ober__genre', 'sub_genres__genre', 'genre_alias__alias']
+    search_fields = ['genre', 'genre_alias__alias']
     search_fields_suffixes = {
-        'ober__genre': 'Subgenre',
-        'sub_genres__genre': 'Oberbegriff',
         'genre_alias__alias': 'Alias'
     }
 

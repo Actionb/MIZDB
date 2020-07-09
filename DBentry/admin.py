@@ -519,19 +519,8 @@ class GenreAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
-    list_display = ['genre', 'alias_string', 'ober_string', 'sub_string']
-    # Remove the 'ober__genre' field from search_fields
-    # (useful for dal searches, not so much on changelists):
-    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias']
-
-    def ober_string(self, obj):
-        return str(obj.ober) if obj.ober else ''
-    ober_string.short_description = 'Obergenre'
-    ober_string.admin_order_field = 'ober'
-
-    def sub_string(self, obj):
-        return concat_limit(obj.sub_genres.all())
-    sub_string.short_description = 'Subgenres'
+    list_display = ['genre', 'alias_string']
+    search_fields = ['genre', 'genre_alias__alias']
 
     def alias_string(self, obj):
         return concat_limit(obj.genre_alias_set.all())

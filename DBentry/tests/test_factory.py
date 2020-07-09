@@ -67,32 +67,32 @@ class TestUniqueFaker(MyTestCase):
 class TestSelfFactory(MyTestCase):
 
     def test_evaluate(self):
-        GenreFactory = modelfactory_factory(_models.genre)
-        created = GenreFactory(ober=None)
-        self.assertIsNone(created.ober)
+        BuchFactory = modelfactory_factory(_models.buch)
+        created = BuchFactory(buchband=None)
+        self.assertIsNone(created.buchband)
 
-        created = GenreFactory(ober__ober__ober=None)
-        self.assertIsNotNone(created.ober)
-        self.assertIsNotNone(created.ober.ober)
-        self.assertIsNone(created.ober.ober.ober)
+        created = BuchFactory(buchband__buchband__buchband=None)
+        self.assertIsNotNone(created.buchband)
+        self.assertIsNotNone(created.buchband.buchband)
+        self.assertIsNone(created.buchband.buchband.buchband)
 
         # Assert that SelfFactory creates exactly no related object when no params are given
         # and does not get stuck in infinity recursion.
-        created = GenreFactory()
-        self.assertIsNone(created.ober)
+        created = BuchFactory()
+        self.assertIsNone(created.buchband)
 
         # And now with actual data:
-        ober = GenreFactory(genre='Obergenre')
-        sub = GenreFactory(genre='Subgenre', ober=ober)
-        self.assertEqual(sub.ober, ober)
-        self.assertIn(sub, ober.sub_genres.all())
+        buchband = BuchFactory(titel='Buchband')
+        aufsatz = BuchFactory(titel='Aufsatz', buchband=buchband)
+        self.assertEqual(aufsatz.buchband, buchband)
+        self.assertIn(aufsatz, buchband.buch_set.all())
 
         # Assert that SelfFactory creates one related object if it is required.
-        GenreFactory.ober.required = True
-        created = GenreFactory()
-        self.assertIsNotNone(created.ober)
-        self.assertIsNone(created.ober.ober)
-        GenreFactory.ober.required = False
+        BuchFactory.buchband.required = True
+        created = BuchFactory()
+        self.assertIsNotNone(created.buchband)
+        self.assertIsNone(created.buchband.buchband)
+        BuchFactory.buchband.required = False
 
 
 class TestRelatedFactory(MyTestCase):

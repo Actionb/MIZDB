@@ -425,14 +425,6 @@ class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):
 class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
     model = _models.genre
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = make(cls.model, genre='Original')
-        cls.obj2 = make(cls.model, genre='Merger1', ober=cls.obj1)
-        cls.obj3 = make(cls.model, genre='Merger2')
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
-        super().setUpTestData()
-
 
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
     model = _models.schlagwort

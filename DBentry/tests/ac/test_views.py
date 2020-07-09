@@ -545,13 +545,7 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.genre
     alias_accessor_name = 'genre_alias_set'
-    raw_data = [
-        {
-            'genre_alias__alias': 'Beep',
-            'sub_genres__extra': 1,
-            'ober__genre': 'Obergenre'
-        }
-    ]
+    raw_data = [{'genre_alias__alias': 'Beep'}]
 
     def test_apply_q_favorites(self):
         request = self.get_request()

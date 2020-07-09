@@ -699,15 +699,12 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.GenreAdmin
     model = _models.genre
-    test_data_count = 1
-    fields_expected = ['genre', 'ober']
+    fields_expected = ['genre']
 
     raw_data = [
-        {'genre': 'Topobject'},
         {
             'genre': 'Subobject',
             'genre_alias__alias': ['Alias1', 'Alias2'],
-            'ober__genre': 'Topobject'
         }
     ]
 
@@ -718,7 +715,6 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'bildmaterial', 'fld_name': 'genre', 'label': 'Bild Materialien (1)'},
         {'model_name': 'buch', 'fld_name': 'genre', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'genre', 'label': 'Dateien (1)'},
-        {'model_name': 'genre', 'fld_name': 'ober',  'label': 'Sub Genres (1)'},
         {'model_name': 'magazin', 'fld_name': 'genre', 'label': 'Magazine (1)'},
         {'model_name': 'dokument', 'fld_name': 'genre', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'genre', 'label': 'Memorabilien (1)'},
@@ -728,41 +724,8 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'video', 'fld_name': 'genre', 'label': 'Video Materialien (1)'},
     ]
 
-    def test_search_finds_alias(self):
-        # check if an object can be found via its alias
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertIn(self.obj2, result)
-
-    def test_search_for_sub_finds_top(self):
-        # check if a search for a subobject finds its topobject
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertIn(self.obj1, result)
-
-    def test_search_for_top_not_finds_sub(self):
-        # check if a search for a topobject does not find its subobjects
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Topobject')
-        self.assertNotIn(self.obj2, result)
-
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj2), 'Alias1, Alias2')
-
-    def test_ober_string(self):
-        self.assertEqual(self.model_admin.ober_string(self.obj1), '')
-        self.assertEqual(self.model_admin.ober_string(self.obj2), 'Topobject')
-
-    def test_sub_string(self):
-        self.assertEqual(self.model_admin.sub_string(self.obj1), 'Subobject')
-        self.assertEqual(self.model_admin.sub_string(self.obj2), '')
-
-    def test_get_search_fields(self):
-        # genre/schlagwort admin removes the search field that results in all
-        # subobjects of a topobject being present in a search for topobject.
-        # This would be useful for dal, but not for searches on the changelist
-        super().test_get_search_fields()
-        self.assertNotIn('ober__genre', self.model_admin.get_search_fields())
+        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
 
 
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
