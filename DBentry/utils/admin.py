@@ -47,9 +47,9 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
     return format_html('<a href="{}">{}</a>', admin_url, obj)
 
 
-def get_changelist_link(model, user, site_name='admin', obj_list=None):
+def get_changelist_url(model, user, site_name='admin', obj_list=None):
     """
-    Return a safe link to the changelist of 'model'.
+    Return an url to the changelist of 'model'.
 
     If 'obj_list' is given, the url to the changelist will include a query
     param to filter to records in that list.
@@ -68,8 +68,23 @@ def get_changelist_link(model, user, site_name='admin', obj_list=None):
     if not user.has_perm(perm):
         return ''
     if obj_list:
-        url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))  # TODO: should be '?in='
-    return format_html('<a href="{}">Liste</a>', url)
+        url += '?id={}'.format(",".join([str(obj.pk) for obj in obj_list]))
+    return url
+
+
+def get_changelist_link(model, user, site_name='admin', obj_list=None):
+    """
+    Return a safe link to the changelist of 'model'.
+
+    If 'obj_list' is given, the url to the changelist will include a query
+    param to filter to records in that list.
+    """
+    return format_html(
+        '<a href="{}">Liste</a>',
+        get_changelist_url(
+            model, user, site_name='admin', obj_list=obj_list
+        )
+    )
 
 
 def link_list(request, obj_list, sep=", "):

@@ -11,7 +11,7 @@ from django.urls import reverse
 from DBentry import utils
 from DBentry.actions.views import MergeViewWizarded
 from DBentry.base.views import MIZAdminMixin
-from DBentry.sites import register_tool, miz_site
+from DBentry.sites import register_tool
 from DBentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
@@ -137,7 +137,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         if selected:
             # Items to be merged are selected, call the MergeViewWizarded view.
             response = MergeViewWizarded.as_view(
-                model_admin=miz_site.get_admin_model(self.model),
+                model_admin=utils.get_model_admin_for_model(self.model),
                 queryset=self.model.objects.filter(pk__in=selected)
             )(request)
             if response:
@@ -243,14 +243,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                 for instance in dupe.instances
             ]
             # Add a link to the changelist page of this group.
-            # TODO: use utils.get_changelist_link?
-            view_name = 'admin:{}_{}_changelist'.format(
-                self.opts.app_label, self.opts.model_name
-            )
-            cl_url = reverse(view_name)
-            cl_url += '?id={}'.format(
-                ",".join([str(instance.pk) for instance in dupe.instances])
-            )
+            cl_url = utils.get_changelist_url(
+                self.model, self.request.user, obj_list=dupe.instances)
             items.append((dupe_item, cl_url))
         return items
 
