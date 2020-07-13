@@ -465,7 +465,7 @@ class TestCNQuerySet(DataTestCase):
             magazin=self.mag, beschreibung='My Unique Name', sonderausgabe=True)
         self.queryset.bulk_create([new_obj])
         qs = self.queryset.filter(beschreibung='My Unique Name', sonderausgabe=True)
-        self.assertAllQSValuesList(qs, '_changed_flag', True)
+        self.assertTrue(qs.filter(_changed_flag=True).exists())
 
     def test_values_updates_name(self):
         # Calling values('_name') should cause a call to _update_names.
@@ -552,7 +552,9 @@ class TestCNQuerySet(DataTestCase):
             self.assertFalse(mocked_func.called)
 
     def test_update_names_num_queries_empty(self):
-        self.assertAllQSValuesList(self.queryset, '_changed_flag', False)
+        # Assert that only a single query (filtering for _changed_flag) is run
+        # when the no row in queryset has _changed_flag=True.
+        self.queryset.update(_changed_flag=False)
         with self.assertNumQueries(1):
             self.queryset._update_names()
 

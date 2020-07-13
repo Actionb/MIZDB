@@ -263,9 +263,11 @@ class TestBaseQuery(QueryTestCase):
         self.assertTrue(exact_match)
 
     def test_search_returns_qs_on_no_q(self):
-        search_results, exact_match = self.make_query().search(q=None)
-        expected = list(self.queryset.values_list('pk', flat=True))
-        self.assertQSValuesList(search_results, 'pk', expected)
+        # Assert that search returns the root queryset when q is 'False'.
+        query = self.make_query()
+        query._root_queryset = "This isn't a queryset!"
+        search_results, _exact_match = query.search(q=None)
+        self.assertEqual(search_results, "This isn't a queryset!")
 
     def test_num_queries(self):
         # len(self.model.get_search_fields()) * (iexact,istartswith,icontains)
@@ -475,10 +477,13 @@ class TestValuesDictQuery(TestNameFieldQuery):
         )
 
     def test_get_queryset(self):
-        # ValuesDictSearchQuery.get_queryset filters the _root_queryset to limit the amount of records
-        # fetched by values_dict()
-        expected = list(self.queryset.exclude(band_name='Rolling Stones').values_list('pk', flat=True))
-        self.assertQSValuesList(self.make_query().get_queryset(q = 'Rose'), 'pk', expected)
+        # Assert that ValuesDictSearchQuery.get_queryset applies a
+        # '__icontains=q' filter to the root queryset to limit the amount of
+        # records fetched by values_dict().
+        queryset = self.make_query().get_queryset(q='Rose')
+        # "Rolling Stones" should never be found and thus should not be included
+        # in the root queryset.
+        self.assertFalse(queryset.filter(band_name="Rolling Stones").exists())
 
     def test_partial_match(self):
         # Assert that search can find 'More Roses' via search term 'Roses More'.

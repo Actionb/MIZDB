@@ -135,23 +135,8 @@ class DataTestCase(TestDataMixin, MyTestCase):
                 
         expected = [value] * queryset.count() if queryset.count() else [value]  # an empty queryset should assert as not equal to [value] and not as equal to [] 
         self.assertQSValues(queryset, fields, expected, msg)
-    
-    #NOTE: test_signals, test_query,test_models, test_manager use these two
-    def assertQSValuesList(self, queryset, fields, values, msg=None):
-        if isinstance(fields, str):
-            fields = [fields]
-        if not isinstance(values, (list, tuple)):
-            values = [values]
-        values_list = list(queryset.values_list(*fields, flat=len(fields)==1))
-        self.assertListEqualSorted(values_list, values, msg)
-        
-    def assertAllQSValuesList(self, queryset, fields, value, transform=str, ordered=False, msg=None):
-        if isinstance(fields, str):
-            fields = [fields]
-        expected = [value] * queryset.count() if queryset.count() else [value]  # an empty queryset should assert as not equal to [value] and not as equal to [] 
-        self.assertQSValuesList(queryset, fields, expected, msg)
-        
-         
+
+
 class UserTestCase(MyTestCase):
     
     @classmethod
