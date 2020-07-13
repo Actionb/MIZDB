@@ -103,38 +103,6 @@ class DataTestCase(TestDataMixin, MyTestCase):
         if isinstance(values, QuerySet):
             values = map(transform, values)
         return super().assertQuerysetEqual(queryset, values, transform, ordered, msg)
-        
-    def assertPKListEqual(self, pk_list1, pk_list2):
-        if isinstance(pk_list1, QuerySet):
-            pk_list1 = list(pk_list1.values_list('pk', flat=True))
-        if isinstance(pk_list2, QuerySet):
-            pk_list2 = list(pk_list2.values_list('pk', flat=True))
-        self.assertListEqualSorted(pk_list1, pk_list2)
-    
-    #NOTE: only test_manager cases use assertQSValues
-    def assertQSValues(self, queryset, fields, values, msg=None):
-        if isinstance(fields, str):
-            fields = [fields]
-        if not isinstance(values, (list, tuple)):
-            # A list of tuples of (field, value) is expected.
-            values = list(zip(fields, [values]*len(fields)))
-            
-        # Still call queryset.values(), but convert the results from a list of dicts to a list of tuples for easier comparison.
-        qs_list = [tuple(*i.items()) for i in queryset.values(*fields)]
-        self.assertListEqualSorted(qs_list, values, msg)
-        
-    def assertAllQSValues(self, queryset, fields, value, msg=None):
-        from collections import Iterable
-        if isinstance(fields, str):
-            fields = [fields]
-        if isinstance(value, str) or not isinstance(value, Iterable):
-            if len(fields)==1:
-                value = (fields, value)
-            else:
-                raise TypeError("argument value must be an iterable")
-                
-        expected = [value] * queryset.count() if queryset.count() else [value]  # an empty queryset should assert as not equal to [value] and not as equal to [] 
-        self.assertQSValues(queryset, fields, expected, msg)
 
 
 class UserTestCase(MyTestCase):
