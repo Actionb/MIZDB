@@ -100,6 +100,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # Use follow = False to get the redirect response.
         response = self.client.post(self.path, data=data, follow=False)
         self.assertEqual(response.status_code, 302)
+        self.assertIn("admin/DBentry/ausgabe/?id=", response.url)
 
     def test_post_save_and_addanother_preview(self):
         # Assert that after succesful 'add_another' post, the preview with
@@ -399,11 +400,11 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
 
         # The user presses _continue and leaves the view successfully;
         # redirected back to the ausgabe changelist filtered to the set of
-        # recently created instances: ?id__in
+        # recently created instances: "?id="
         del continue_data['_preview']
         continue_data['_continue'] = True
         continue_response = self.client.post(self.path, data=continue_data)
         self.assertEqual(continue_response.status_code, 302)
         changelist_url = reverse("admin:DBentry_ausgabe_changelist")
         self.assertTrue(continue_response.url.startswith(changelist_url))
-        self.assertIn('id__in', continue_response.url)
+        self.assertIn('id', continue_response.url)
