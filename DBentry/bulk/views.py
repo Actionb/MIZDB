@@ -68,14 +68,24 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 obj_list = utils.link_list(request, created)
                 messages.success(
                     request,
-                    format_html('Ausgaben erstellt: {}'.format(obj_list))
+                    format_html('Ausgaben erstellt: {}', obj_list)
                 )
             if updated:
                 # Message about updated instances.
                 obj_list = utils.link_list(request, updated)
                 messages.success(
                     request,
-                    format_html('Dubletten hinzugefügt: {}'.format(obj_list))
+                    format_html('Dubletten hinzugefügt: {}', obj_list)
+                )
+            if created or updated:
+                changelist_link = utils.get_changelist_link(
+                    _models.ausgabe,
+                    request.user,
+                    obj_list=[*created, *updated]
+                )
+                messages.success(
+                    request,
+                    format_html('Zur Ausgabenübersicht: {}', changelist_link)
                 )
             # Prepare the form for the next view.
             form = self.form_class(data=self.next_initial_data(form))
