@@ -465,7 +465,7 @@ class TestCNQuerySet(DataTestCase):
             magazin=self.mag, beschreibung='My Unique Name', sonderausgabe=True)
         self.queryset.bulk_create([new_obj])
         qs = self.queryset.filter(beschreibung='My Unique Name', sonderausgabe=True)
-        self.assertAllQSValuesList(qs, '_changed_flag', True)
+        self.assertTrue(qs.filter(_changed_flag=True).exists())
 
     def test_values_updates_name(self):
         # Calling values('_name') should cause a call to _update_names.
@@ -552,7 +552,9 @@ class TestCNQuerySet(DataTestCase):
             self.assertFalse(mocked_func.called)
 
     def test_update_names_num_queries_empty(self):
-        self.assertAllQSValuesList(self.queryset, '_changed_flag', False)
+        # Assert that only a single query (filtering for _changed_flag) is run
+        # when the no row in queryset has _changed_flag=True.
+        self.queryset.update(_changed_flag=False)
         with self.assertNumQueries(1):
             self.queryset._update_names()
 
@@ -847,3 +849,27 @@ class TestHumanNameQuerySet(MyTestCase):
                 results = _models.autor.objects.find(name)
                 msg = "Name looked up: %s" % name
                 self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg=msg)
+
+
+class TestFindSpecialCases(DataTestCase):
+
+    model = _models.band
+    raw_data = [{'band_name': 'Ümlautße'}]
+
+    def test_find_sharp_s(self):
+        # Assert that a 'ß' search term is handled properly.
+        # ('ß'.casefold() performed in clean_string() results in 'ss')
+        results = self.model.objects.find('ß')
+        self.assertTrue(
+            results, msg="Expected to find the instance with 'ß' in its name.")
+
+    def test_find_umlaute(self):
+        # SQLlite performs case sensitive searches for strings containing chars
+        # outside the ASCII range (such as Umlaute ä, ö, ü).
+        for q in ('ü', 'Ü'):
+            with self.subTest(q=q):
+                results = self.model.objects.find(q)
+                self.assertTrue(
+                    results,
+                    msg="Expected to find matches regardless of case of Umlaut."
+                )

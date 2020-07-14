@@ -1,6 +1,5 @@
 from collections import OrderedDict
 from itertools import chain
-from urllib.parse import urlencode
 
 from django import views
 from django.contrib import messages
@@ -8,7 +7,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
 from django.db.utils import IntegrityError
 from django.shortcuts import redirect
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext
 
@@ -27,7 +25,6 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
-    success_url = 'admin:DBentry_ausgabe_changelist'
     permission_required = ['DBentry.add_ausgabe']
     # 'preview_fields' determines what formfields may show up in the preview as
     # columns and sets their order.
@@ -42,12 +39,6 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         as this form's initial data.
         """
         return self.request.session.get('old_form_data', {})
-
-    def get_success_url(self, query_data=None):
-        """Return an url with a query_string composed of data in query_data."""
-        if query_data is None:
-            return reverse(self.success_url)
-        return reverse(self.success_url) + '?' + urlencode(query_data)
 
     def post(self, request, *args, **kwargs):
         """
@@ -77,25 +68,37 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 obj_list = utils.link_list(request, created)
                 messages.success(
                     request,
-                    format_html('Ausgaben erstellt: {}'.format(obj_list))
+                    format_html('Ausgaben erstellt: {}', obj_list)
                 )
             if updated:
                 # Message about updated instances.
                 obj_list = utils.link_list(request, updated)
                 messages.success(
                     request,
-                    format_html('Dubletten hinzugefügt: {}'.format(obj_list))
+                    format_html('Dubletten hinzugefügt: {}', obj_list)
+                )
+            if created or updated:
+                changelist_link = utils.get_changelist_link(
+                    _models.ausgabe,
+                    request.user,
+                    obj_list=[*created, *updated]
+                )
+                messages.success(
+                    request,
+                    format_html('Zur Ausgabenübersicht: {}', changelist_link)
                 )
             # Prepare the form for the next view.
             form = self.form_class(data=self.next_initial_data(form))
         elif '_continue' in request.POST:
             # Save the data and redirect back to the changelist.
             ids, instances, updated = self.save_data(form)
-            success_url = self.get_success_url(
-                query_data={'id__in': ','.join(str(id) for id in ids)}
+            return redirect(
+                utils.get_changelist_url(
+                    model=_models.ausgabe,
+                    user=request.user,
+                    obj_list=[*instances, *updated]
+                )
             )
-            # NOTE: make the changelist open in a popup/new tab and have *this* tab produce the next form (maybe with JSON response?)
-            return redirect(success_url)
 
         # Add the preview.
         headers, data = self.build_preview(request, form)

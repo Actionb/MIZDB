@@ -243,12 +243,6 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIn('datum', dir(fac))
         self.assertIn('spielort', dir(fac))
 
-    def test_accounts_for_unique_constraints(self):
-        # MIZDjangoOptions should make sure that declarations (base or SubFactory) return unique
-        # values if the model field has the unique flag.
-        # TODO: write this test
-        pass
-
     def test_add_m2m_factories(self):
         # Assert that the created m2m factories are following the relation correctly.
         fac = modelfactory_factory(_models.artikel)
@@ -448,14 +442,6 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIn('person', declarations)
         self.assertIn('band', declarations)
         self.assertIn('veranstaltung', declarations)
-
-
-class TestModelFactoryFactory(MyTestCase):
-
-    def test_meta_kwargs(self):
-        # Assert that the correct options class is created for the model factory.
-        # TODO: write this test
-        pass
 
 
 class ModelFactoryTestCase(MyTestCase):
