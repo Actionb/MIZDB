@@ -199,7 +199,7 @@ class TestModelAusgabe(DataTestCase):
         self.assertEqual(
             self.model._get_name(**name_data),
             'Test-Info',
-            msg = 'sonderausgabe + beschreibung => beschreibung'
+            msg='sonderausgabe + beschreibung => beschreibung'
         )
         # sonderausgabe + beschreibung + any other data => beschreibung
         name_data.update({
@@ -210,7 +210,14 @@ class TestModelAusgabe(DataTestCase):
         self.assertEqual(
             self.model._get_name(**name_data),
             'Test-Info',
-            msg = 'sonderausgabe + beschreibung + any other data => beschreibung'
+            msg='sonderausgabe + beschreibung + any other data => beschreibung'
+        )
+        name_data['sonderausgabe'] = (False, )
+        self.assertNotEqual(
+            self.model._get_name(**name_data),
+            'Test-Info',
+            msg=('With sonderausgabe=False, the name should not be according to '
+                'beschreibung.')
         )
 
     @translation_override(language=None)
