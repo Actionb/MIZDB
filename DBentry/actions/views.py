@@ -337,13 +337,13 @@ class MergeViewWizarded(WizardConfirmationView):
         for other_record_valdict in qs.values(*updateable_fields):
             for k, v in other_record_valdict.items():
                 if v or isinstance(v, bool):
-                    if len(updates[k]) > 0:
-                        # Another value for this field has already been
-                        # found; we have found a conflict.
-                        has_conflict = True
                     # Make v both hashable (for the set) and
                     # serializable (for the session storage).
                     updates[k].add(str(v))
+                    if len(updates[k]) > 1:
+                        # Another value for this field has already been
+                        # found; we have found a conflict.
+                        has_conflict = True
 
         # Sets are not JSON serializable (required for session storage):
         # turn them into lists and remove empty ones.

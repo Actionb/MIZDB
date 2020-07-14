@@ -247,13 +247,3 @@ class TestUnusedObjectsView(ViewTestCase):
             relations, queryset = view.get_queryset(_models.genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
-
-    def test_get_queryset_ignores_self_relations(self):
-        # Assert that self relations are not included in the relations that are
-        # queried.
-        view = self.get_view(request=self.get_request())
-        relations, queryset = view.get_queryset(_models.genre, 0)
-        self.assertNotIn(
-            _models.genre._meta.get_field('ober').remote_field,
-            relations
-        )

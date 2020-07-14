@@ -13,7 +13,7 @@ from DBentry.base.admin import (
     BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
 from DBentry.forms import (
-    ArtikelForm, AutorForm, BuchForm, HerausgeberForm, BrochureForm, AudioForm,
+    ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
     BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
@@ -62,8 +62,7 @@ class AudioAdmin(MIZModelAdmin):
         extra = 0
         filter_horizontal = ['tag']
         fieldsets = [
-            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr', 'tape',
-                'channel', 'noise_red']}),
+            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr']}),
             ('Tags', {'fields': ['tag'], 'classes': ['collapse', 'collapsed']}),
             ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']})
         ]
@@ -88,7 +87,7 @@ class AudioAdmin(MIZModelAdmin):
 
     fieldsets = [
         (None, {'fields':
-                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'sender',
+                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle',
                 'beschreibung', 'bemerkungen']
         }),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
@@ -120,7 +119,7 @@ class AudioAdmin(MIZModelAdmin):
 
 
 @admin.register(_models.ausgabe, site=miz_site)
-class AusgabenAdmin(MIZModelAdmin):
+class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only field
     class NumInLine(BaseTabularInline):
         model = _models.ausgabe_num
         extra = 0
@@ -440,6 +439,9 @@ class BuchAdmin(MIZModelAdmin):
     class HerausgeberInLine(BaseTabularInline):
         model = _models.buch.herausgeber.through
         verbose_model = _models.Herausgeber
+    class VerlagInLine(BaseTabularInline):
+        model = _models.buch.verlag.through
+        verbose_model = _models.verlag
 
     collapse_all = True
     # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
@@ -452,7 +454,7 @@ class BuchAdmin(MIZModelAdmin):
         (None, {
             'fields': [
                 'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe',
-                ('buchband', 'is_buchband'), 'verlag', 'ISBN', 'EAN', 'sprache',
+                ('buchband', 'is_buchband'), 'ISBN', 'EAN', 'sprache',
                 'beschreibung', 'bemerkungen'
             ]}
         ),
@@ -465,16 +467,16 @@ class BuchAdmin(MIZModelAdmin):
     inlines = [
         AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
-        HerausgeberInLine, PersonInLine, BestandInLine
+        HerausgeberInLine, VerlagInLine, PersonInLine, BestandInLine
     ]
     list_display = [
-        'titel', 'auflage', 'schriftenreihe', 'verlag', 'autoren_string',
-        'herausgeber_string', 'schlagwort_string', 'genre_string'
+        'titel', 'auflage', 'schriftenreihe', 'autoren_string',
+        'herausgeber_string', 'verlag_string', 'schlagwort_string', 'genre_string'
     ]
     search_form_kwargs = {
         'fields': [
             'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band',
-            'person', 'schriftenreihe', 'buchband', 'verlag', 'sprache', 'jahr',
+            'person', 'schriftenreihe', 'buchband', 'verlag', 'jahr',
             'ISBN', 'EAN', 'id__in'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
@@ -489,6 +491,10 @@ class BuchAdmin(MIZModelAdmin):
     def herausgeber_string(self, obj):
         return concat_limit(obj.herausgeber.all())
     herausgeber_string.short_description = 'Herausgeber'
+
+    def verlag_string(self, obj):
+        return concat_limit(obj.verlag.all())
+    herausgeber_string.short_description = 'verlag'
 
     def schlagwort_string(self, obj):
         return concat_limit(obj.schlagwort.all())
@@ -513,19 +519,8 @@ class GenreAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
-    list_display = ['genre', 'alias_string', 'ober_string', 'sub_string']
-    # Remove the 'ober__genre' field from search_fields
-    # (useful for dal searches, not so much on changelists):
-    search_fields = ['genre', 'sub_genres__genre', 'genre_alias__alias']
-
-    def ober_string(self, obj):
-        return str(obj.ober) if obj.ober else ''
-    ober_string.short_description = 'Obergenre'
-    ober_string.admin_order_field = 'ober'
-
-    def sub_string(self, obj):
-        return concat_limit(obj.sub_genres.all())
-    sub_string.short_description = 'Subgenres'
+    list_display = ['genre', 'alias_string']
+    search_fields = ['genre', 'genre_alias__alias']
 
     def alias_string(self, obj):
         return concat_limit(obj.genre_alias_set.all())
@@ -641,19 +636,8 @@ class SchlagwortAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
-    list_display = ['schlagwort', 'alias_string', 'ober_string', 'sub_string']
-    # Remove the 'ober__schlagwort' field from search_fields
-    # (useful for dal searches, not so much on changelists):
-    search_fields = ['schlagwort', 'unterbegriffe__schlagwort', 'schlagwort_alias__alias']
-
-    def ober_string(self, obj):
-        return str(obj.ober) if obj.ober else ''
-    ober_string.short_description = 'Oberbegriff'
-    ober_string.admin_order_field = 'ober'
-
-    def sub_string(self, obj):
-        return concat_limit(obj.unterbegriffe.all())
-    sub_string.short_description = 'Unterbegriffe'
+    list_display = ['schlagwort', 'alias_string']
+    search_fields = ['schlagwort', 'schlagwort_alias__alias']
 
     def alias_string(self, obj):
         return concat_limit(obj.schlagwort_alias_set.all())
@@ -763,11 +747,6 @@ class LandAdmin(MIZModelAdmin):
     pass
 
 
-@admin.register(_models.kreis, site=miz_site)
-class KreisAdmin(MIZModelAdmin):
-    superuser_only = True
-
-
 @admin.register(_models.ort, site=miz_site)
 class OrtAdmin(MIZModelAdmin):
     fields = ['stadt', 'land', 'bland']  # put land before bland
@@ -841,7 +820,7 @@ class DateiAdmin(MIZModelAdmin):
     ]
     fieldsets = [
         (None, {'fields': ['titel', 'media_typ', 'datei_pfad', 'provenienz']}),
-        ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'quelle', 'sender', 'bemerkungen']}),
+        ('Allgemeine Beschreibung', {'fields': ['beschreibung', 'bemerkungen']}),
     ]
 
 
@@ -852,7 +831,6 @@ class InstrumentAdmin(MIZModelAdmin):
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
-    form = HerausgeberForm
     index_category = 'Stammdaten'
 
 
@@ -959,19 +937,10 @@ class KalendarAdmin(BaseBrochureAdmin):
         VeranstaltungInLine, BestandInLine]
 
 
-@admin.register(_models.sender, site=miz_site)
-class SenderAdmin(MIZModelAdmin):
-    class AliasInLine(BaseAliasInline):
-        model = _models.sender_alias
-
-    inlines = [AliasInLine]
-
-
 @admin.register(
-    _models.monat, _models.lagerort, _models.geber, _models.sprache, _models.plattenfirma,
+    _models.monat, _models.lagerort, _models.geber, _models.plattenfirma,
     _models.provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
-    _models.FormatTyp, _models.NoiseRed, _models.Organisation, _models.schriftenreihe,
-    _models.Bildreihe, _models.Veranstaltungsreihe,
+    _models.FormatTyp, _models.schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):

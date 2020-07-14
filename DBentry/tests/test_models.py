@@ -546,26 +546,15 @@ class TestModelGenre(DataTestCase):
     def test_str(self):
         obj = self.model(genre='Testgenre')
         self.assertEqual(str(obj), 'Testgenre')
-   
-@tag("cn")      
+
+
 class TestModelHerausgeber(DataTestCase):
-    
+
     model = _models.Herausgeber
-    
-    @translation_override(language=None)
-    def test_get_name(self):
-        test_data = [
-            ({'person___name': ('Alice Test', )}, "Alice Test"),
-            ({'organisation__name': ('Testorga', )}, "Testorga"),
-            (
-                {'person___name': ('Alice Test', ), 'organisation__name': ('Testorga', )},
-                "Alice Test (Testorga)"
-            ),
-        ]
-        for name_data, expected in test_data:
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
+
+    def test_str(self):
+        obj = self.model(herausgeber='Testherausgeber')
+        self.assertEqual(str(obj), 'Testherausgeber')
 
 
 class TestModelInstrument(DataTestCase):
@@ -578,9 +567,7 @@ class TestModelInstrument(DataTestCase):
         
         obj = self.model(instrument = 'Posaune', kuerzel = '')
         self.assertEqual(str(obj), 'Posaune')
-        
-class TestModelKreis(DataTestCase):
-    pass
+
 
 @tag("cn") 
 class TestModelLagerort(DataTestCase):
@@ -650,15 +637,8 @@ class TestModelMusiker(DataTestCase):
     def test_str(self):
         obj = self.model(kuenstler_name='Alice Tester', beschreibung = 'Beep', bemerkungen = 'Boop')
         self.assertEqual(str(obj), 'Alice Tester')
-        
-class TestModelNoiseRed(DataTestCase):
-    
-    model = _models.NoiseRed
-    
-    def test_str(self):
-        obj = self.model(verfahren='Beepboop')
-        self.assertEqual(str(obj), 'Beepboop')
- 
+
+
 @tag("cn")        
 class TestModelOrt(DataTestCase):
 
@@ -723,15 +703,8 @@ class TestModelSchlagwort(DataTestCase):
     def test_str(self):
         obj = self.model(schlagwort='Testschlagwort')
         self.assertEqual(str(obj), 'Testschlagwort')
-        
-class TestModelSender(DataTestCase):
-    
-    model = _models.sender
-    
-    def test_str(self):
-        obj = self.model(name = 'Testsender')
-        self.assertEqual(str(obj), 'Testsender')
-        
+
+
 class TestModelSpielort(DataTestCase):
     
     model = _models.spielort
@@ -740,15 +713,8 @@ class TestModelSpielort(DataTestCase):
         land_object = _models.land.objects.create(land_name = 'Deutschland', code='DE')
         obj = self.model(name = 'Testspielort', ort = _models.ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')
-        
-class TestModelSprache(DataTestCase):
-    
-    model = _models.sprache
-    
-    def test_str(self):
-        obj = self.model(sprache = 'Deutsch', abk = 'de')
-        self.assertEqual(str(obj), 'Deutsch de')
-        
+
+
 class TestModelTechnik(DataTestCase):
     pass
         

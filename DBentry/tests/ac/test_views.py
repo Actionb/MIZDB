@@ -498,12 +498,6 @@ class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'instrument_alias_set'
 
 
-class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.sender
-    alias_accessor_name = 'sender_alias_set'
-    raw_data = [{'sender_alias__alias': 'AliasSender'}]
-
-
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.spielort
     alias_accessor_name = 'spielort_alias_set'
@@ -551,13 +545,7 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.genre
     alias_accessor_name = 'genre_alias_set'
-    raw_data = [
-        {
-            'genre_alias__alias': 'Beep',
-            'sub_genres__extra': 1,
-            'ober__genre': 'Obergenre'
-        }
-    ]
+    raw_data = [{'genre_alias__alias': 'Beep'}]
 
     def test_apply_q_favorites(self):
         request = self.get_request()
@@ -584,13 +572,7 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.schlagwort
     alias_accessor_name = 'schlagwort_alias_set'
-    raw_data = [
-        {
-            'unterbegriffe__extra': 1,
-            'ober__schlagwort': 'Oberbegriff',
-            'schlagwort_alias__alias': 'AliasSchlagwort'
-        }
-    ]
+    raw_data = [{'schlagwort_alias__alias': 'AliasSchlagwort'}]
 
     def test_apply_q_favorites(self):
         request = self.get_request()

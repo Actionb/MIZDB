@@ -1,4 +1,5 @@
-from django.core import checks
+from django.contrib import admin
+from django.core import checks, exceptions
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -97,6 +98,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        # TODO: add 'view' permission (primarily for SchlagwortAdmin)
         default_permissions = ('add', 'change', 'delete', 'merge')
 
 
@@ -232,12 +234,24 @@ class ComputedNameModel(BaseModel):
 
     @classmethod
     def _check_name_composing_fields(cls, **kwargs):
+        """
+        Check that name_composing_fields is set and does not contain invalid
+        fields.
+        """
         if not cls.name_composing_fields:
             return [checks.Warning(
                 "You must specify the fields that make up the name by "
                 "listing them in name_composing_fields."
             )]
-        return []
+        errors = []
+        for field in cls.name_composing_fields:
+            try:
+                admin.utils.get_fields_from_path(cls, field)
+            except exceptions.FieldDoesNotExist:
+                msg = ("name_composing_fields attribute contains unknown "
+                    "field: %s" % field)
+                errors.append(checks.Error(msg,obj=cls.__name__))
+        return errors
 
     def save(self, update=True, *args, **kwargs):
         super().save(*args, **kwargs)

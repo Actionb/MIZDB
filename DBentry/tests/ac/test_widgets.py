@@ -145,25 +145,25 @@ class TestMakeWidget(MyTestCase):
         # The values for forward are wrapped in a forward.Field object.
 
         # Assert that make_widget can handle non-list 'forward' values
-        widget = make_widget(model=_models.genre, forward='ober')
-        self.assertEqual(widget.forward[0].src, 'ober')
+        widget = make_widget(model=_models.ausgabe, forward='magazin')
+        self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(
-            widget.attrs['data-placeholder'], "Bitte zuerst Oberbegriff auswählen.")
+            widget.attrs['data-placeholder'], "Bitte zuerst Magazin auswählen.")
 
         widget = make_widget(
-            model=_models.genre, forward='ober', attrs={'data-placeholder': 'Go home!'})
-        self.assertEqual(widget.forward[0].src, 'ober')
+            model=_models.genre, forward='magazin', attrs={'data-placeholder': 'Go home!'})
+        self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(widget.attrs['data-placeholder'], 'Go home!')
 
         # Assert that forward values can also be forward.Field objects
-        forwarded = forward.Field(src='ober', dst='genre')
-        widget = make_widget(model=_models.genre, forward=forwarded)
+        forwarded = forward.Field(src='magazin', dst='ausgabe')
+        widget = make_widget(model=_models.ausgabe, forward=forwarded)
         self.assertEqual(widget.forward[0], forwarded)
 
         # Assert that the placeholder text defaults to forward's src if no model
         # field corresponds to src or dst.
         forwarded = forward.Field(src='beep_boop', dst=None)
-        widget = make_widget(model=_models.genre, forward=forwarded)
+        widget = make_widget(model=_models.ausgabe, forward=forwarded)
         self.assertEqual(
             widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.')
 
@@ -181,8 +181,8 @@ class TestMakeWidget(MyTestCase):
             def __init__(self, *args, **kwargs):
                 self.untouched = kwargs.get('attrs', {}).pop('untouched', None)
         widget = make_widget(
-            model=_models.genre, widget_class=DummyWidget,
-            forward='ober', attrs={'data-placeholder': 'Go home!', 'untouched': 1}
+            model=_models.ausgabe, widget_class=DummyWidget,
+            forward='magazin', attrs={'data-placeholder': 'Go home!', 'untouched': 1}
         )
         self.assertEqual(widget.untouched, 1)
 

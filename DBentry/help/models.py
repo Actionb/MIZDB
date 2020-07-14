@@ -169,10 +169,6 @@ class InstrumentAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.instrument_alias
 
 #@register()
-class KreisHelpText(MIZModelAdminHelpText):
-    model = MIZModels.kreis
-
-#@register()
 class LagerortHelpText(MIZModelAdminHelpText):
     model = MIZModels.lagerort
 
@@ -205,14 +201,6 @@ class MusikerAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.musiker_alias
 
 #@register()
-class NoiseredHelpText(MIZModelAdminHelpText):
-    model = MIZModels.NoiseRed
-
-#@register()
-class OrganisationHelpText(MIZModelAdminHelpText):
-    model = MIZModels.Organisation
-
-#@register()
 class OrtHelpText(MIZModelAdminHelpText):
     model = MIZModels.ort
 
@@ -241,24 +229,12 @@ class SchriftenreiheHelpText(MIZModelAdminHelpText):
     model = MIZModels.schriftenreihe
 
 #@register()
-class SenderHelpText(MIZModelAdminHelpText):
-    model = MIZModels.sender
-
-#@register()
-class SenderAliasHelpText(MIZModelAdminHelpText):
-    model = MIZModels.sender_alias
-
-#@register()
 class SpielortHelpText(MIZModelAdminHelpText):
     model = MIZModels.spielort
 
 #@register()
 class SpielortAliasHelpText(MIZModelAdminHelpText):
     model = MIZModels.spielort_alias
-
-#@register()
-class SpracheHelpText(MIZModelAdminHelpText):
-    model = MIZModels.sprache
 
 #@register()
 class TechnikHelpText(MIZModelAdminHelpText):

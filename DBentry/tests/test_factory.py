@@ -67,32 +67,32 @@ class TestUniqueFaker(MyTestCase):
 class TestSelfFactory(MyTestCase):
 
     def test_evaluate(self):
-        GenreFactory = modelfactory_factory(_models.genre)
-        created = GenreFactory(ober=None)
-        self.assertIsNone(created.ober)
+        BuchFactory = modelfactory_factory(_models.buch)
+        created = BuchFactory(buchband=None)
+        self.assertIsNone(created.buchband)
 
-        created = GenreFactory(ober__ober__ober=None)
-        self.assertIsNotNone(created.ober)
-        self.assertIsNotNone(created.ober.ober)
-        self.assertIsNone(created.ober.ober.ober)
+        created = BuchFactory(buchband__buchband__buchband=None)
+        self.assertIsNotNone(created.buchband)
+        self.assertIsNotNone(created.buchband.buchband)
+        self.assertIsNone(created.buchband.buchband.buchband)
 
         # Assert that SelfFactory creates exactly no related object when no params are given
         # and does not get stuck in infinity recursion.
-        created = GenreFactory()
-        self.assertIsNone(created.ober)
+        created = BuchFactory()
+        self.assertIsNone(created.buchband)
 
         # And now with actual data:
-        ober = GenreFactory(genre='Obergenre')
-        sub = GenreFactory(genre='Subgenre', ober=ober)
-        self.assertEqual(sub.ober, ober)
-        self.assertIn(sub, ober.sub_genres.all())
+        buchband = BuchFactory(titel='Buchband')
+        aufsatz = BuchFactory(titel='Aufsatz', buchband=buchband)
+        self.assertEqual(aufsatz.buchband, buchband)
+        self.assertIn(aufsatz, buchband.buch_set.all())
 
         # Assert that SelfFactory creates one related object if it is required.
-        GenreFactory.ober.required = True
-        created = GenreFactory()
-        self.assertIsNotNone(created.ober)
-        self.assertIsNone(created.ober.ober)
-        GenreFactory.ober.required = False
+        BuchFactory.buchband.required = True
+        created = BuchFactory()
+        self.assertIsNotNone(created.buchband)
+        self.assertIsNone(created.buchband.buchband)
+        BuchFactory.buchband.required = False
 
 
 class TestRelatedFactory(MyTestCase):
@@ -359,7 +359,6 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.schriftenreihe)
         self.assertEqual(fac.buchband.factory._meta.model, _models.buch)
         self.assertEqual(fac.verlag.factory._meta.model, _models.verlag)
-        self.assertEqual(fac.sprache.factory._meta.model, _models.sprache)
 
     @patch('DBentry.factory.get_model_relations')
     def test_add_related_factories_inherited_relation(self, mocked_get_model_relations):
@@ -382,20 +381,15 @@ class TestMIZDjangoOptions(MyTestCase):
             with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:
                 opts.add_related_factories()
 
-        self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
-        self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
-        expected_args = ('SomeFactory', )
-        expected_kwargs = {
-            'factory_related_name': 'mocked_field_name',
-            'accessor_name': 'mocked_rel_accessor',
-            'related_model': _models.BaseBrochure
-        }
-        self.assertEqual(mocked_related_factory.call_args, (expected_args, expected_kwargs))
-
-        mocked_get_model_relations.return_value = [_models.genre._meta.get_field('basebrochure')]
-        fac = modelfactory_factory(_models.Kalendar)
-        created = fac(genre__genre='Testgenre')
-        self.assertEqual(list(created.genre.values_list('genre', flat=True)), ['Testgenre'])
+                self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
+                self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
+                expected_args = ('SomeFactory', )
+                expected_kwargs = {
+                    'factory_related_name': 'mocked_field_name',
+                    'accessor_name': 'mocked_rel_accessor',
+                    'related_model': _models.BaseBrochure
+                }
+                self.assertEqual(mocked_related_factory.call_args, (expected_args, expected_kwargs))
 
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly
@@ -403,46 +397,44 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(fac.buchband, SelfFactory)
 
     def test_check_declarations(self):
-        # Assert that all dynamically created factories are accounted for in the correct
-        # declaration sets.
-        video = _models.video
-        fac = modelfactory_factory(video)
+        # Assert that all dynamically created factories are accounted for
+        # in the correct declaration sets.
+        buch = _models.buch
+        fac = modelfactory_factory(buch)
         declarations = fac._meta.declarations
         # required base fields
-        for field in get_model_fields(video, foreign=False, m2m=False):
+        for field in get_model_fields(buch, foreign=False, m2m=False):
             if field.has_default() or field.blank:
                 continue
-            msg = '{} not found in base declarations'.format(field.name)
-            self.assertIn(field.name, declarations, msg=msg)
+            self.assertIn(field.name, declarations,
+                msg='{} not found in base declarations'.format(field.name))
         self.assertIn('titel', declarations)
-        self.assertIn('tracks', declarations)
 
         # SubFactories
-        for field in get_model_fields(video, base=False, foreign=True, m2m=False):
-            msg = '{} not found in SubFactory declarations'.format(field.name)
-            self.assertIn(field.name, declarations, msg=msg)
-        self.assertIn('sender', declarations)
+        for field in get_model_fields(buch, base=False, foreign=True, m2m=False):
+            self.assertIn(field.name, declarations,
+                msg='{} not found in SubFactory declarations'.format(field.name))
+        self.assertIn('verlag', declarations)
 
         # RelatedFactories
-        for rel in get_model_relations(video, forward=False):
+        for rel in get_model_relations(buch, forward=False):
             if rel.many_to_many:
                 continue
             name = rel.name
-            msg = '{} not found in reverse related declarations'.format(name)
-            self.assertIn(name, declarations, msg=msg)
+            self.assertIn(name, declarations,
+                msg='{} not found in reverse related declarations'.format(name))
         self.assertIn('bestand', declarations)
-        self.assertIn('m2m_datei_quelle', declarations)
 
         # M2MFactories
-        for rel in get_model_relations(video):
+        for rel in get_model_relations(buch):
             if not rel.many_to_many:
                 continue
-            if rel.field.model == video:
+            if rel.field.model == buch:
                 name = rel.field.name
             else:
                 name = rel.name
-            msg = '{} not found in M2MFactory declarations'.format(name)
-            self.assertIn(name, declarations, msg=msg)
+            self.assertIn(name, declarations,
+                msg='{} not found in M2MFactory declarations'.format(name))
         self.assertIn('genre', declarations)
         self.assertIn('musiker', declarations)
         self.assertIn('schlagwort', declarations)

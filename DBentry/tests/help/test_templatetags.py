@@ -28,7 +28,7 @@ class TestHelpLinks(HelpRegistryMixin, RequestTestCase):
                 self.assertEqual(help_link({'request': request, 'is_popup': True}), expected)
                 
                 # No help page for that model
-                request = self.get_request('/admin/DBentry/sender/add', follow = True)
+                request = self.get_request('/admin/DBentry/spielort/add', follow = True)
                 self.assertEqual(help_link({'request': request, 'is_popup': False}), '')
         
     def test_help_links_form(self):

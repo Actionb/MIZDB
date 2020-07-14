@@ -1,7 +1,7 @@
 from .base import HelpRegistryMixin
 from ..base import MyTestCase
 
-from DBentry.models import artikel, sender
+from DBentry.models import artikel, spielort
 from DBentry.help.views import HelpIndexView, FormHelpView, ModelAdminHelpView
 from DBentry.help.helptext import BaseHelpText, ModelAdminHelpText, FormViewHelpText
 from DBentry.help.registry import register
@@ -26,7 +26,7 @@ class TestHelpRegistry(HelpRegistryMixin, MyTestCase):
         # Get the right ModelAdmin instance for the lookup
         registered_model_admin = get_model_admin_for_model(artikel)
         # Get a ModelAdmin instance that does not have a registered helptext
-        unregistered_model_admin = get_model_admin_for_model(sender)
+        unregistered_model_admin = get_model_admin_for_model(spielort)
         with self.add_urls():
             self.assertEqual(self.registry.help_url_for_view(registered_model_admin), '/admin/help/artikel/')
             self.assertEqual(self.registry.help_url_for_view(unregistered_model_admin), '')
