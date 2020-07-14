@@ -267,7 +267,7 @@ class ausgabe(ComputedNameModel):
                 width=LIST_DISPLAY_MAX_LEN + 5,
                 sep=" "
             )
-        if data.get('sonderausgabe', False) and beschreibung:
+        if ('sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung):
             # Special issues may be a bit... 'special' in their numerical values.
             # Just use the 'beschreibung' for such an issue.
             return beschreibung
