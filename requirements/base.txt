@@ -22,3 +22,6 @@ python-stdnum==1.8.1
 
 # DBentry's own factory
 factory-boy==2.11.1
+
+# PostgreSQL Python
+psycopg2==2.8.5
