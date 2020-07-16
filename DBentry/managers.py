@@ -409,6 +409,9 @@ class AusgabeQuerySet(CNQuerySet):
 
     def chronologic_order(self, *ordering):
         """Return this queryset chronologically ordered."""
+        # TODO: check out nulls_first and nulls_last parameters of
+        # Expression.asc() and desc() (added in 1.11) to fix the nulls messing
+        # up the ordering.
         if self.chronologically_ordered:
             # Already ordered!
             return self
