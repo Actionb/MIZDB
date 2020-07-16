@@ -1,5 +1,6 @@
 from itertools import chain
 
+from django.contrib.contenttypes.models import ContentType
 from django.test import tag
 
 from DBentry import utils, models as _models
@@ -499,8 +500,11 @@ class VideoMergingDataMixin(object):
         cls.obj3 = obj3
 
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
-
         super().setUpTestData()
+
+    def setUp(self):
+        super().setUp()
+        ContentType.objects.clear_cache()
 
 
 class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
