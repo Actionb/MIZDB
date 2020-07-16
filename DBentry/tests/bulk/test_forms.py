@@ -263,7 +263,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         self.assertEqual(len(form.row_data), len(expected))
 
         for c, row in enumerate(form.row_data):
-            row_name = 'row_%s' % c
+            row_name = 'row_%s' % (c + 1)
             with self.subTest(row=row_name):
                 if c in [1, 2, 3]:
                     # Assert that row_2, _3, _4 do not have an instance
