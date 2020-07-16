@@ -622,17 +622,17 @@ class TestValuesDict(DataTestCase):
         expected = [
             (self.obj1.pk, {'band_name': ('Testband1', )}),
             (self.obj2.pk, {
-                'band_name': ('Testband2', ), 'genre__genre': ('Rock', 'Jazz'),
+                'band_name': ('Testband2', ), 'genre__genre': ('Jazz', 'Rock'),
                 'band_alias__alias': ('Coffee', )
             }),
             (self.obj3.pk, {
-                'band_name': ('Testband3', ), 'genre__genre': ('Rock', 'Jazz'),
+                'band_name': ('Testband3', ), 'genre__genre': ('Jazz', 'Rock'),
                 'band_alias__alias': ('Juice', 'Water')
             })
         ]
 
         for obj_pk, expected_values in expected:
-            with self.subTest():
+            with self.subTest(obj_pk=obj_pk):
                 self.assertIn(obj_pk, values)
                 self.assertEqual(expected_values, values[obj_pk])
         self.assertEqual(len(values), 3)
