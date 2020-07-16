@@ -127,16 +127,30 @@ class TestActionConfirmationView(ActionViewTestCase):
             'titel', 'band__band_name', 'format___name', 'release_id']
         link_list = view.compile_affected_objects()
         # link_list should have a structure like this:
-        # [ ['Audio Material: <link>', [<affected objects>]], ]
-        self.assertEqual(link_list[0][0], get_obj_link(a, request.user))
+        # [
+        #       ['Audio Material: <link of obj1>', [<affected objects>]],
+        #       ['Audio Material: <link of obj2>', [<affected objects>]],
+        #       ...
+        # ]
+        # In this case here, the list only has one object (first index==0).
+        self.assertEqual(
+            link_list[0][0], get_obj_link(a, request.user),
+            msg="First item should be the link to the audio object."
+        )
+        # Evaluating the list of 'affected objects'. This list is determined by
+        # view.affected_fields.
+        # First item should just be the titel of 'a'.
         self.assertEqual(link_list[0][1][0], 'Titel: ' + a.titel)
-        self.assertEqual(link_list[0][1][1], get_obj_link(a.band.first(), request.user))
-        # Next two items should be the related format objects:
-        expected = sorted([
-            get_obj_link(a.format_set.all()[0], request.user),
-            get_obj_link(a.format_set.all()[1], request.user)
-        ])
-        self.assertEqual(sorted(link_list[0][1][2:4]), expected)
+        # Second item should a link to the band object:
+        self.assertEqual(
+            link_list[0][1][1], get_obj_link(a.band.first(), request.user))
+        # The next two items should be links to the Format objects:
+        format_set = a.format_set.all().order_by('_name')
+        self.assertEqual(
+            link_list[0][1][2], get_obj_link(format_set[0], request.user))
+        self.assertEqual(
+            link_list[0][1][3], get_obj_link(format_set[1], request.user))
+        # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
     def test_form_valid(self):
@@ -268,7 +282,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
 
-        view = self.get_view(request, queryset=self.queryset)
+        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
         result = view.compile_affected_objects()
         expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
@@ -310,8 +324,11 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         request = self.get_request()
         view = self.get_view(request)
         view.perform_action({'jahrgang': 31416, 'start': self.obj1.pk})
-        new_jg = self.queryset.values_list(
-            'jahrgang', flat=True).exclude(jahrgang=None).distinct()
+        new_jg = (self.queryset
+            .values_list('jahrgang', flat=True)
+            .exclude(jahrgang=None)
+            .order_by('jahrgang')
+            .distinct())
         self.assertEqual(list(new_jg), [31416, 31417, 31418])
         for obj in self.queryset.all():
             self.assertLoggedChange(obj, 'jahrgang')
@@ -380,7 +397,9 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
                 yield template.format(link=link)
 
         request = self.get_request()
-        view = self.get_view(request)
+        # We are expecting the link_list to be ordered according to the order
+        # in which we created the test objects; order by 'pk'.
+        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
         link_list = view.compile_affected_objects()
         self.assertEqual(len(link_list), 4)
         expected = [
