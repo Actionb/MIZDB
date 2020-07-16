@@ -153,7 +153,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
     def test_chronologic_order_multiple_magazine(self):
         # Assert that chronologic_order is not attempt for a queryset with
         # multiple magazines.
-        make(_models.ausgabe, magazin__magazin_name='Bad')
+        make(_models.ausgabe, magazin__magazin_name='Bad', id=1002)
         queryset = self.model.objects.all()
         with self.assertNumQueries(1):
             queryset = queryset.chronologic_order()
