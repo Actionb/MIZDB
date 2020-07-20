@@ -235,6 +235,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
         Returns an updated copy of the passed in search_fields list.
         """
+        # TODO: remove _add_pk_search_field? (search forms now have a pk field)
         search_fields = search_fields.copy()
         pk_field = self.model._meta.pk
         for search_field in search_fields:
