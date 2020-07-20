@@ -85,7 +85,7 @@ class BaseModel(models.Model):
     def get_search_fields(cls, foreign=False, m2m=False):
         """Return the model's fields that are used in searches."""
         if cls.search_fields:
-            return cls.search_fields
+            return list(cls.search_fields)
         return [
             field.name
             for field in get_model_fields(cls, foreign=foreign, m2m=m2m)
