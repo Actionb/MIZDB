@@ -79,7 +79,7 @@ class musiker(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
-        ordering = ['kuenstler_name', 'person']
+        ordering = ['kuenstler_name']
 class musiker_alias(BaseAliasModel):
     parent = models.ForeignKey('musiker', models.CASCADE)
 
@@ -646,7 +646,10 @@ class artikel(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
-        ordering = ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'pk']
+        ordering = [
+            'ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite',
+            'schlagzeile'
+        ]
 
     def __str__(self):
         if self.schlagzeile:
@@ -930,7 +933,7 @@ class spielort(BaseModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
-        ordering = ['name']
+        ordering = ['name', 'ort']
 class spielort_alias(BaseAliasModel):
     parent = models.ForeignKey('spielort', models.CASCADE)
 
@@ -1096,7 +1099,7 @@ class lagerort(ComputedNameModel):
     class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
         verbose_name_plural = 'Lagerorte'
-        ordering = ['ort']
+        ordering = ['_name']
 
     @classmethod
     def _get_name(cls, **data):
@@ -1223,6 +1226,7 @@ class datei(BaseModel):
     search_fields_suffixes = {'beschreibung': 'Beschreibung'}
 
     class Meta(BaseModel.Meta):
+        ordering = ['titel']
         verbose_name = 'Datei'
         verbose_name_plural = 'Dateien'
 
@@ -1250,6 +1254,7 @@ class Format(ComputedNameModel):
     ]
 
     class Meta(BaseModel.Meta):
+        ordering = ['_name']
         verbose_name = 'Format'
         verbose_name_plural = 'Formate'
 

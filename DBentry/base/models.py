@@ -182,6 +182,7 @@ class BaseAliasModel(BaseModel):
     parent = None   # the field that will hold the ForeignKey
 
     class Meta(BaseModel.Meta):
+        ordering = ['alias']
         verbose_name = 'Alias'
         verbose_name = 'Alias'
         abstract = True
