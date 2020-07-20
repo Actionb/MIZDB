@@ -380,7 +380,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         PersonInLine, BestandInLine
     ]
     search_form_kwargs = {
-        'fields': [
+        'fields': [  # TODO: add signatur field to search form
             'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe', 'id__in'
         ],
         'labels': {'reihe': 'Bildreihe'}

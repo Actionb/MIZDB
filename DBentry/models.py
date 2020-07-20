@@ -583,6 +583,7 @@ class land(BaseModel):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
+# TODO: land_alias model unused!
 class land_alias(BaseAliasModel):
     parent = models.ForeignKey('land', models.CASCADE)
 
@@ -751,6 +752,7 @@ class instrument(BaseModel):
         if self.kuerzel:
             return "{} ({})".format(str(self.instrument), str(self.kuerzel))
         return str(self.instrument)
+# TODO: instrument_alias model unused!
 class instrument_alias(BaseAliasModel):
     parent = models.ForeignKey('instrument', models.CASCADE)
 
