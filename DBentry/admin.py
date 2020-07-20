@@ -1,3 +1,4 @@
+# FIXME: text in some Texareas ('beschreibung') take up too much space in the changelist
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User
