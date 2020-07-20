@@ -9,11 +9,12 @@ from DBentry import fields as _fields
 from DBentry.m2m import m2m_audio_musiker
 from DBentry.factory import make
 
+
 class TestBaseModel(DataTestCase):
 
     model = _models.artikel
     add_relations = True
-    test_data_count = 1        
+    test_data_count = 1
 
     def test_qs(self):
         self.assertIsInstance(self.obj1.qs(), django_models.QuerySet)
@@ -23,38 +24,42 @@ class TestBaseModel(DataTestCase):
     def test_qs_exception(self):
         with self.assertRaises(TypeError):
             self.model.qs(self.model)
-            
+
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(_models.video, titel = "lotsa testing", tracks = 1, quelle = "from the computer")
+        obj = make(_models.video, titel="lotsa testing", tracks=1, quelle="from the computer")
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")
-        
-        # Assert that, if no name_field is set, __str__ defaults to the old method of gathering values from applicable fields to form a string
+
+        # Assert that, if no name_field is set, __str__ defaults to the old
+        # method of gathering values from applicable fields to form a string.
         obj.name_field = None
         self.assertEqual(obj.__str__(), "lotsa testing 1 from the computer")
-        
 
     def test_get_search_fields(self):
         expected = ['schlagzeile', 'zusammenfassung', 'beschreibung']
         self.assertListEqualSorted(self.model.get_search_fields(True), expected)
-        
+
+
 class TestBaseM2MModel(DataTestCase):
-    
+
     model = m2m_audio_musiker
     raw_data = [
-        {'audio__titel':'Testaudio', 'musiker__kuenstler_name':'Alice Test'}, 
-        {'audio__titel':'Testaudio', 'musiker__kuenstler_name':'Alice Test', 'instrument__instrument':'Piano'}, 
+        {'audio__titel': 'Testaudio', 'musiker__kuenstler_name': 'Alice Test'},
+        {
+            'audio__titel': 'Testaudio', 'musiker__kuenstler_name': 'Alice Test',
+            'instrument__instrument': 'Piano'
+        },
     ]
-    
+
     def test_str(self):
         expected = "Testaudio (Alice Test)"
         self.assertEqual(self.obj1.__str__(), expected)
         self.assertEqual(self.obj2.__str__(), expected)
-    
 
-@tag("cn")    
+
+@tag("cn")
 class TestComputedNameModel(DataTestCase):
 
     model = _models.ausgabe
@@ -89,25 +94,34 @@ class TestComputedNameModel(DataTestCase):
         self.assertEqual(str(self.obj1), self.default)
 
     def test_update_name_notexplodes_on_no_pk_and_forced(self):
-        # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
+        # Unsaved instances should be ignored, as update_name relies on filtering
+        # queries with the instance's pk.
         obj = _models.ausgabe(magazin=self.mag)
-        self.assertFalse(obj.update_name(force_update = True))
+        self.assertFalse(obj.update_name(force_update=True))
 
     def test_update_name_aborts_on_no_pk(self):
-        # Unsaved instances should be ignored, as update_name relies on filtering queries with the instance's pk.
+        # Unsaved instances should be ignored, as update_name relies on
+        # filtering queries with the instance's pk.
         obj = _models.ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name())
 
     def test_update_name_aborts_on_name_deferred(self):
         # Do not allow updating the name if it is deferred
-        # Pretend as if '_name' is deferred by removing it from __dict__: see get_deferred_fields in django.db.models.base.py
+        # Pretend as if '_name' is deferred by removing it from __dict__:
+        # see get_deferred_fields in django.db.models.base.py
         self.obj2.__dict__.pop('_name')
         self.assertFalse(self.obj2.update_name())
 
     def test_update_name_on_name_not_deferred(self):
         # Allow updating the name if it is not deferred
-        # Pretend as if everything but '_name' is deferred by removing keys from __dict__: see get_deferred_fields in django.db.models.base.py
-        keys_to_pop = [k for k in self.obj2.__dict__.keys() if not (k.startswith('_') or k in ('id', ))] # preserve id and private attributes
+        # Pretend as if everything but '_name' is deferred by removing keys from
+        # __dict__: see get_deferred_fields in django.db.models.base.py
+        keys_to_pop = [
+            k
+            for k in self.obj2.__dict__.keys()
+            #  preserve id and private attributes
+            if not (k.startswith('_') or k in ('id', ))
+        ]
         for k in keys_to_pop:
             self.obj2.__dict__.pop(k)
 
@@ -122,7 +136,7 @@ class TestComputedNameModel(DataTestCase):
         self.obj2._changed_flag = True
         self.assertTrue(self.obj2.update_name())
         self.assertFalse(self.obj2._changed_flag)
-        
+
     def test_update_name_resets_change_flag_same_update(self):
         # Assert that the update_name resets the changed flag with the same
         # query that is used to update the name.
@@ -135,7 +149,8 @@ class TestComputedNameModel(DataTestCase):
         self.assertFalse(self.obj2._changed_flag)
 
     def test_update_name__always_resets_change_flag(self):
-        # Even if the _name does not need changing, the _changed_flag should still be set to False
+        # Even if the _name does not need changing, the _changed_flag should
+        # still be set to False.
         self.qs_obj1.update(_changed_flag=True)
         self.obj1.refresh_from_db()
         self.assertFalse(self.obj1.update_name())
@@ -147,7 +162,8 @@ class TestComputedNameModel(DataTestCase):
         self.assertFalse(self.obj1.update_name())
 
     def test_update_name_changed_flag_deferred(self):
-        # _changed_flag attribute is deferred, instead of using refresh_from_db, get the value from the database
+        # _changed_flag attribute is deferred, instead of using refresh_from_db,
+        # get the value from the database.
         obj = self.qs_obj1.defer('_changed_flag').first()
         with self.assertNumQueries(1):
             obj.update_name()
@@ -173,20 +189,37 @@ class TestModelArtikel(DataTestCase):
 
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), str(self.obj1.schlagzeile))
-        self.obj1.schlagzeile=''
+        self.obj1.schlagzeile = ''
         self.assertEqual(self.obj1.__str__(), 'Keine Schlagzeile gegeben!')
-        self.obj1.zusammenfassung='Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
-        self.assertEqual(self.obj1.__str__(), 'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.')
+        self.obj1.zusammenfassung = (
+            'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.')
+        self.assertEqual(
+            self.obj1.__str__(),
+            'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+        )
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(
+            self.model._meta.ordering,
+            ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
+        )
+
 
 class TestModelAudio(DataTestCase):
 
     model = _models.audio
-    raw_data = [{'titel' : 'Testaudio'}]
-    
+    raw_data = [{'titel': 'Testaudio'}]
+
     def test_str(self):
         self.assertEqual(self.obj1.__str__(), 'Testaudio')
- 
-@tag("cn")        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+
+@tag("cn")
 class TestModelAusgabe(DataTestCase):
 
     model = _models.ausgabe
@@ -216,8 +249,10 @@ class TestModelAusgabe(DataTestCase):
         self.assertNotEqual(
             self.model._get_name(**name_data),
             'Test-Info',
-            msg=('With sonderausgabe=False, the name should not be according to '
-                'beschreibung.')
+            msg=(
+                'With sonderausgabe=False, the name should not be according to '
+                'beschreibung.'
+            )
         )
 
     @translation_override(language=None)
@@ -307,14 +342,14 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_ausgaben_merkmal(self):
         # Check the results of get_name with ausgaben_merkmal override set.
         name_data = {
-            'ausgabe_jahr__jahr': ('2020', ), 
-            'ausgabe_monat__monat__abk': ('Dez', ), 
-            'ausgabe_lnum__lnum': ('21', ), 
-            'ausgabe_num__num': ('20', ), 
-            'e_datum': ('02.05.2018', ), 
+            'ausgabe_jahr__jahr': ('2020', ),
+            'ausgabe_monat__monat__abk': ('Dez', ),
+            'ausgabe_lnum__lnum': ('21', ),
+            'ausgabe_num__num': ('20', ),
+            'e_datum': ('02.05.2018', ),
         }
         test_data = [
-            ('e_datum','02.05.2018'),
+            ('e_datum', '02.05.2018'),
             ('monat', '2020-Dez'),
             ('num', '2020-20'),
             ('lnum', '21 (2020)'),
@@ -332,12 +367,12 @@ class TestModelAusgabe(DataTestCase):
         }
         self.assertEqual(
             self.model._get_name(**name_data), '21',
-            msg = "get_name should just return the lnum if ausgaben_merkmal is"
+            msg="get_name should just return the lnum if ausgaben_merkmal is"
             " set to lnum and neither jahr nor jahrgang are set."
         )
         name_data = {
             'magazin__ausgaben_merkmal': ('num', ),
-            'beschreibung' : ('Woops!', )
+            'beschreibung': ('Woops!', )
         }
         self.assertEqual(
             self.model._get_name(**name_data), 'Woops!',
@@ -348,11 +383,11 @@ class TestModelAusgabe(DataTestCase):
     @translation_override(language=None)
     def test_get_name_ausgaben_merkmal_multiple_values(self):
         # Check the results of get_name with ausgaben_merkmal override set.
-        name_data =  {
-            'ausgabe_jahr__jahr': ('2021', '2020'), 
-            'ausgabe_monat__monat__abk': ('Jan', 'Dez'), 
-            'ausgabe_lnum__lnum': ('22', '21'), 
-            'ausgabe_num__num': ('21', '20'), 
+        name_data = {
+            'ausgabe_jahr__jahr': ('2021', '2020'),
+            'ausgabe_monat__monat__abk': ('Jan', 'Dez'),
+            'ausgabe_lnum__lnum': ('22', '21'),
+            'ausgabe_num__num': ('21', '20'),
         }
         test_data = [
             ('monat', '2020/21-Jan/Dez'),
@@ -365,40 +400,64 @@ class TestModelAusgabe(DataTestCase):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['magazin'])
+
 
 class TestModelAusgabeJahr(DataTestCase):
-    
+
     model = _models.ausgabe_jahr
-    
+
     def test_str(self):
         obj = make(self.model, jahr=2018)
         self.assertEqual(str(obj), '2018')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['jahr'])
+
+
 class TestModelAusgabeLnum(DataTestCase):
-    
+
     model = _models.ausgabe_lnum
-    
+
     def test_str(self):
         obj = make(self.model, lnum=21)
         self.assertEqual(str(obj), '21')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['lnum'])
+
+
 class TestModelAusgabeMonat(DataTestCase):
-    
+
     model = _models.ausgabe_monat
-    
+
     def test_str(self):
         obj = make(self.model, monat__monat='Dezember')
         self.assertEqual(str(obj), 'Dez')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['monat'])
+
+
 class TestModelAusgabeNum(DataTestCase):
-    
+
     model = _models.ausgabe_num
-    
+
     def test_str(self):
-        obj = make(self.model, num = 20)
+        obj = make(self.model, num=20)
         self.assertEqual(str(obj), '20')
 
-@tag("cn") 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['num'])
+
+
+@tag("cn")
 class TestModelAutor(DataTestCase):
 
     model = _models.autor
@@ -428,39 +487,71 @@ class TestModelAutor(DataTestCase):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['_name'])
+
 
 class TestModelBand(DataTestCase):
 
     model = _models.band
-    
+
     def test_str(self):
-        obj = make(self.model, band_name='Testband', beschreibung = 'Beep', bemerkungen = 'Boop')
+        obj = make(self.model, band_name='Testband', beschreibung='Beep', bemerkungen='Boop')
         self.assertEqual(str(obj), 'Testband')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['band_name'])
+
+
+class TestModelBandAlias(DataTestCase):
+
+    model = _models.band_alias
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
+
 class TestModelBestand(DataTestCase):
     pass
 
+
 class TestModelBildmaterial(DataTestCase):
-    
+
     model = _models.bildmaterial
-    
+
     def test_str(self):
         obj = make(self.model, titel='Testbild')
         self.assertEqual(str(obj), 'Testbild')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+
 class TestModelBuch(DataTestCase):
-    pass
-    
-class TestModelBuchSerie(DataTestCase):
-    pass
-        
+
+    model = _models.buch
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+
 class TestModelBundesland(DataTestCase):
-    
+
     model = _models.bundesland
-    
+
     def test_str(self):
-        obj = make(self.model, bland_name ='Hessen', code = 'HE')
+        obj = make(self.model, bland_name='Hessen', code='HE')
         self.assertEqual(str(obj), 'Hessen HE')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['land', 'bland_name'])
+
 
 class TestModelDatei(DataTestCase):
 
@@ -469,15 +560,21 @@ class TestModelDatei(DataTestCase):
     def test_str(self):
         obj = self.model(titel='Testdatei')
         self.assertEqual(str(obj), 'Testdatei')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+
 class TestModelDokument(DataTestCase):
     pass
 
-@tag("cn") 
+
+@tag("cn")
 class TestModelFormat(DataTestCase):
-    
+
     model = _models.Format
-    
+
     @translation_override(language=None)
     def test_get_name(self):
         name_data = {'format_size__size': ('LP', )}
@@ -485,7 +582,7 @@ class TestModelFormat(DataTestCase):
             ({}, 'LP'),
             ({'anzahl': (1, )}, 'LP'),
             ({'anzahl': (2, )}, '2xLP'),
-            ({'channel': ('Mono', )},'2xLP, Mono'),
+            ({'channel': ('Mono', )}, '2xLP, Mono'),
             (
                 {'tag__tag': ('Compilation', 'Album')},
                 '2xLP, Album, Compilation, Mono'
@@ -506,14 +603,23 @@ class TestModelFormat(DataTestCase):
         name_data.update({'format_size__size': ('LP', )})
         self.assertEqual(self.model._get_name(**name_data), 'LP')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['_name'])
+
 
 class TestModelFormatSize(DataTestCase):
-    
+
     model = _models.FormatSize
-    
+
     def test_str(self):
         obj = self.model(size='LP')
         self.assertEqual(str(obj), 'LP')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['size'])
+
 
 class TestModelFormatTag(DataTestCase):
 
@@ -522,30 +628,58 @@ class TestModelFormatTag(DataTestCase):
     def test_str(self):
         obj = self.model(tag='Testtag')
         self.assertEqual(str(obj), 'Testtag')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['tag'])
+
+
 class TestModelFormatTyp(DataTestCase):
-    
+
     model = _models.FormatTyp
-    
+
     def test_str(self):
         obj = self.model(typ='Test')
         self.assertEqual(str(obj), 'Test')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['typ'])
+
+
 class TestModelGeber(DataTestCase):
-    
+
     model = _models.geber
-    
+
     def test_str(self):
         obj = self.model(name='Testgeber')
         self.assertEqual(str(obj), 'Testgeber')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+
 class TestModelGenre(DataTestCase):
 
     model = _models.genre
-    
+
     def test_str(self):
         obj = self.model(genre='Testgenre')
         self.assertEqual(str(obj), 'Testgenre')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['genre'])
+
+
+class TestModelGenreAlias(DataTestCase):
+
+    model = _models.genre_alias
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
 class TestModelHerausgeber(DataTestCase):
@@ -556,20 +690,28 @@ class TestModelHerausgeber(DataTestCase):
         obj = self.model(herausgeber='Testherausgeber')
         self.assertEqual(str(obj), 'Testherausgeber')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['herausgeber'])
+
 
 class TestModelInstrument(DataTestCase):
 
     model = _models.instrument
 
     def test_str(self):
-        obj = self.model(instrument = 'Posaune', kuerzel = 'pos')
+        obj = self.model(instrument='Posaune', kuerzel='pos')
         self.assertEqual(str(obj), 'Posaune (pos)')
-        
-        obj = self.model(instrument = 'Posaune', kuerzel = '')
+
+        obj = self.model(instrument='Posaune', kuerzel='')
         self.assertEqual(str(obj), 'Posaune')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
 
-@tag("cn") 
+
+@tag("cn")
 class TestModelLagerort(DataTestCase):
 
     model = _models.lagerort
@@ -590,7 +732,7 @@ class TestModelLagerort(DataTestCase):
 
     @translation_override(language=None)
     def test_get_name_with_raum(self):
-        name_data ={'ort': ('Testort', ), 'raum': ('Testraum', )}
+        name_data = {'ort': ('Testort', ), 'raum': ('Testraum', )}
         test_data = [
             ({}, 'Testraum (Testort)'),
             ({'regal': ('Testregal', )}, 'Testraum-Testregal (Testort)'),
@@ -602,48 +744,82 @@ class TestModelLagerort(DataTestCase):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['_name'])
+
 
 class TestModelLand(DataTestCase):
-    
+
     model = _models.land
-    
+
     def test_str(self):
-        obj = self.model(land_name = 'Deutschland', code='DE')
+        obj = self.model(land_name='Deutschland', code='DE')
         self.assertEqual(str(obj), 'Deutschland DE')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['land_name'])
+
 
 class TestModelMagazin(DataTestCase):
 
     model = _models.magazin
-    
+
     def test_str(self):
         obj = self.model(magazin_name='Testmagazin')
         self.assertEqual(str(obj), 'Testmagazin')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['magazin_name'])
+
+
 class TestModelMemorabilien(DataTestCase):
     pass
-        
+
+
 class TestModelMonat(DataTestCase):
-    
+
     model = _models.monat
-    
+
     def test_str(self):
         obj = self.model(monat='Dezember', abk='Dez')
         self.assertEqual(str(obj), 'Dezember')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['ordinal'])
+
 
 class TestModelMusiker(DataTestCase):
 
     model = _models.musiker
 
     def test_str(self):
-        obj = self.model(kuenstler_name='Alice Tester', beschreibung = 'Beep', bemerkungen = 'Boop')
+        obj = self.model(
+            kuenstler_name='Alice Tester', beschreibung='Beep', bemerkungen='Boop')
         self.assertEqual(str(obj), 'Alice Tester')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
 
-@tag("cn")        
+
+class TestModelMusikerAlias(DataTestCase):
+
+    model = _models.musiker_alias
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
+
+@tag("cn")
 class TestModelOrt(DataTestCase):
 
     model = _models.ort
-        
+
     @translation_override(language=None)
     def test_get_name(self):
         name_data = {'land__land_name': ('Deutschland', )}
@@ -659,8 +835,12 @@ class TestModelOrt(DataTestCase):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
 
-@tag("cn")       
+
+@tag("cn")
 class TestModelPerson(DataTestCase):
 
     model = _models.person
@@ -679,71 +859,114 @@ class TestModelPerson(DataTestCase):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['_name'])
+
 
 class TestModelPlattenfirma(DataTestCase):
-    
+
     model = _models.plattenfirma
-    
+
     def test_str(self):
         obj = self.model(name='Testfirma')
         self.assertEqual(str(obj), 'Testfirma')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+
 class TestModelProvenienz(DataTestCase):
 
     model = _models.provenienz
 
     def test_str(self):
-        obj = make(self.model, geber__name = 'TestGeber', typ = 'Fund')
+        obj = make(self.model, geber__name='TestGeber', typ='Fund')
         self.assertEqual(str(obj), 'TestGeber (Fund)')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
+
+
 class TestModelSchlagwort(DataTestCase):
 
     model = _models.schlagwort
-    
+
     def test_str(self):
         obj = self.model(schlagwort='Testschlagwort')
         self.assertEqual(str(obj), 'Testschlagwort')
 
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['schlagwort'])
+
+
+class TestModelSchlagwortAlias(DataTestCase):
+
+    model = _models.schlagwort_alias
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
 
 class TestModelSpielort(DataTestCase):
-    
+
     model = _models.spielort
-    
+
     def test_str(self):
-        land_object = _models.land.objects.create(land_name = 'Deutschland', code='DE')
-        obj = self.model(name = 'Testspielort', ort = _models.ort.objects.create(land=land_object))
+        land_object = _models.land.objects.create(land_name='Deutschland', code='DE')
+        obj = self.model(
+            name='Testspielort', ort=_models.ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['name', 'ort'])
 
 
 class TestModelTechnik(DataTestCase):
     pass
-        
+
+
 class TestModelVeranstaltung(DataTestCase):
-    
+
     model = _models.veranstaltung
-    
+
     def test_str(self):
         obj = self.model(name='Testveranstaltung')
-        # __str__ should handle a 'datum' instance attribute that is not 
+        # __str__ should handle a 'datum' instance attribute that is not
         # a PartialDate:
         obj.datum = '02.05.2018'
         self.assertEqual(str(obj), 'Testveranstaltung (02.05.2018)')
-        
+
         # And it should localize the date if it is a PartialDate
         obj.datum = _fields.PartialDate.from_string('2018-05-02')
         self.assertEqual(str(obj), 'Testveranstaltung (02 Mai 2018)')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['name', 'datum', 'spielort'])
+
+
 class TestModelVerlag(DataTestCase):
-    
+
     model = _models.verlag
-    
+
     def test_str(self):
         obj = self.model(verlag_name='Testverlag')
         self.assertEqual(str(obj), 'Testverlag')
-        
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
+
+
 class TestModelVideo(DataTestCase):
     pass
-    
+
 
 class TestModelFavoriten(DataTestCase, UserTestCase):
 
@@ -751,7 +974,7 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        super().setUpTestData() # create the users
+        super().setUpTestData()  # create the users
         cls.obj1 = cls.model.objects.create(user=cls.super_user)
         genre, schlagwort = (_models.genre, _models.schlagwort)
         cls.obj1.fav_genres.add(genre.objects.create(genre='Testgenre1'))
@@ -765,9 +988,9 @@ class TestModelFavoriten(DataTestCase, UserTestCase):
         self.assertEqual(str(self.obj1), 'Favoriten von superuser')
 
     def test_get_favorites(self):
-        # If no model is provided, return all favorites as a dict 
+        # If no model is provided, return all favorites as a dict
         genre, schlagwort = (_models.genre, _models.schlagwort)
-        expected = {genre : self.obj1.fav_genres.all(), schlagwort : self.obj1.fav_schl.all()}
+        expected = {genre: self.obj1.fav_genres.all(), schlagwort: self.obj1.fav_schl.all()}
         favorites = self.obj1.get_favorites()
         self.assertIn(genre, favorites)
         self.assertQuerysetEqual(favorites[genre], expected[genre])
