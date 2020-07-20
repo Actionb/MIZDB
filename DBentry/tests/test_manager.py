@@ -331,7 +331,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.assertEqual(update_dict[9], [self.obj2.pk, self.obj3.pk])
 
         self.assertIn(10, update_dict)
-        self.assertEqual(update_dict[10], [self.obj1.pk, self.obj4.pk, self.obj5.pk])
+        self.assertEqual(sorted(update_dict[10]), [self.obj1.pk, self.obj4.pk, self.obj5.pk])
 
         self.assertIn(11, update_dict)
         self.assertEqual(update_dict[11], [self.obj6.pk])
@@ -630,12 +630,17 @@ class TestValuesDict(DataTestCase):
                 'band_alias__alias': ('Juice', 'Water')
             })
         ]
-
+        self.assertEqual(len(values), 3)
         for obj_pk, expected_values in expected:
             with self.subTest(obj_pk=obj_pk):
                 self.assertIn(obj_pk, values)
-                self.assertEqual(expected_values, values[obj_pk])
-        self.assertEqual(len(values), 3)
+                value_dict = values[obj_pk]
+                for field_name, _values in expected_values.items():
+                    with self.subTest(field_name=field_name, values=_values):
+                        self.assertIn(field_name, value_dict)
+                        self.assertEqual(
+                            sorted(value_dict[field_name]), sorted(_values)
+                        )
 
     def test_values_dict_num_queries(self):
         with self.assertNumQueries(1):
