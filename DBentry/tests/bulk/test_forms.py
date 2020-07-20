@@ -273,8 +273,8 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
                     # Need to compare the QuerySets of key 'multiples' separately.
                     # assertQuerysetEqual doesn't transform the second parameter.
                     self.assertEqual(
-                        list(row.pop('multiples').values_list('pk', flat=True)),
-                        list(expected[c].pop('multiples').values_list('pk', flat=True))
+                        sorted(list(row.pop('multiples').values_list('pk', flat=True))),
+                        sorted(list(expected[c].pop('multiples').values_list('pk', flat=True)))
                     )
                 self.assertEqual(row, expected[c])
 
