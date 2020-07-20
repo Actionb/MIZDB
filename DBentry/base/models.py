@@ -45,11 +45,6 @@ class BaseModel(models.Model):
 
     objects = MIZQuerySet.as_manager()
 
-    def __init__(self, *args, **kwargs):
-        if self.search_fields_suffixes is None:
-            self.search_fields_suffixes = {}
-        super().__init__(*args, **kwargs)
-
     def __str__(self):
         """
         Return a string representation of this instance.
