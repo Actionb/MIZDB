@@ -8,7 +8,6 @@ import DBentry.models as _models
 import DBentry.m2m as _m2m
 import DBentry.actions as _actions
 from DBentry.ac.widgets import make_widget
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline,
     BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
@@ -196,22 +195,6 @@ class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only fi
                 obj.ausgabe_monat_set.values_list('monat__abk', flat=True)
             )
     monat_string.short_description = 'Monate'
-
-    # TODO: replace zbestand/dbestand with just a count of bestand
-    # (zbestand should be 1 at all times anyway)
-    def zbestand(self, obj):
-        return obj.bestand_set.filter(
-            lagerort=_models.lagerort.objects.filter(pk=ZRAUM_ID).first()
-        ).exists()
-    zbestand.short_description = 'Bestand: ZRaum'
-    zbestand.boolean = True
-
-    def dbestand(self, obj):
-        return obj.bestand_set.filter(
-            lagerort=_models.lagerort.objects.filter(pk=DUPLETTEN_ID).first()
-        ).exists()
-    dbestand.short_description = 'Bestand: Dublette'
-    dbestand.boolean = True
 
 
 @admin.register(_models.autor, site=miz_site)

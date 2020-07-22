@@ -505,16 +505,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_monat_string(self):
         self.assertEqual(self.model_admin.monat_string(self.obj1), 'Jan, Feb')
 
-    def test_zbestand(self):
-        self.assertTrue(self.model_admin.zbestand(self.obj1))
-        self.obj1.bestand_set.all().delete()
-        self.assertFalse(self.model_admin.zbestand(self.obj1))
-
-    def test_dbestand(self):
-        self.assertTrue(self.model_admin.dbestand(self.obj1))
-        self.obj1.bestand_set.all().delete()
-        self.assertFalse(self.model_admin.dbestand(self.obj1))
-
     def test_add_crosslinks_custom(self):
         obj = make(
             _models.ausgabe,
