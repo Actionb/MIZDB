@@ -1,4 +1,3 @@
-# FIXME: text in some Texareas ('beschreibung') take up too much space in the changelist
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User
@@ -524,7 +523,7 @@ class MagazinAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [GenreInLine, VerlagInLine, HerausgeberInLine]
-    list_display = ['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
+    list_display = ['__str__', 'short_beschreibung', 'anz_ausgaben', 'ort']
 
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine', 'id__in'],
@@ -536,6 +535,10 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.short_description = 'Anz. Ausgaben'
     anz_ausgaben.admin_order_field = 'anz_ausgabe'
     anz_ausgaben.annotation = Count('ausgabe')
+
+    def short_beschreibung(self, obj):
+        return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
+    short_beschreibung.short_description = 'Beschreibung'
 
 
 @admin.register(_models.memorabilien, site=miz_site)
