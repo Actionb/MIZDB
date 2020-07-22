@@ -528,16 +528,13 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         }
         self.assertInCrosslinks(expected, links)
 
-        _related_name = _models.ausgabe.artikel_set.rel.related_name
-        # WARNING: dangerous operation, the change persists beyond the test!:
-        _models.ausgabe.artikel_set.rel.related_name = 'Boop beep'
-        links = self.get_crosslinks(obj)
-        expected = {
-            'model_name': 'artikel', 'fld_name': 'ausgabe',
-            'label': 'Boop Beep (1)', 'pk': str(obj.pk)
-        }  # Note the capitalization of each starting letter!
-        self.assertInCrosslinks(expected, links)
-        _models.ausgabe.artikel_set.rel.related_name = _related_name
+        with patch.object(_models.ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
+            links = self.get_crosslinks(obj)
+            expected = {
+                'model_name': 'artikel', 'fld_name': 'ausgabe',
+                'label': 'Boop Beep (1)', 'pk': str(obj.pk)
+            }  # Note the capitalization of each starting letter!
+            self.assertInCrosslinks(expected, links)
 
         obj.artikel_set.all().delete()
         self.assertFalse(self.get_crosslinks(obj))
