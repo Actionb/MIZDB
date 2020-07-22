@@ -165,20 +165,12 @@ class InstrumentHelpText(MIZModelAdminHelpText):
     model = MIZModels.instrument
 
 #@register()
-class InstrumentAliasHelpText(MIZModelAdminHelpText):
-    model = MIZModels.instrument_alias
-
-#@register()
 class LagerortHelpText(MIZModelAdminHelpText):
     model = MIZModels.lagerort
 
 #@register()
 class LandHelpText(MIZModelAdminHelpText):
     model = MIZModels.land
-
-#@register()
-class LandAliasHelpText(MIZModelAdminHelpText):
-    model = MIZModels.land_alias
 
 #@register()
 class MagazinHelpText(MIZModelAdminHelpText):

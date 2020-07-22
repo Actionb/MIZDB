@@ -553,9 +553,6 @@ class land(BaseModel):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
-# TODO: land_alias model unused!
-class land_alias(BaseAliasModel):
-    parent = models.ForeignKey('land', models.CASCADE)
 
 # TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
 class schlagwort(BaseModel):
@@ -716,9 +713,6 @@ class instrument(BaseModel):
         if self.kuerzel:
             return "{} ({})".format(str(self.instrument), str(self.kuerzel))
         return str(self.instrument)
-# TODO: instrument_alias model unused!
-class instrument_alias(BaseAliasModel):
-    parent = models.ForeignKey('instrument', models.CASCADE)
 
 
 class audio(BaseModel):
@@ -727,7 +721,8 @@ class audio(BaseModel):
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
-    catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')  # WARNING: field missing in admin
+    # TODO: field 'catalog_nr' is missing in AudioAdmin -- Format.catalog_nr does that job??
+    catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')
     release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
     discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True,
         help_text="Adresse zur discogs.com Seite dieses Objektes.")

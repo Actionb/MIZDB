@@ -1,4 +1,3 @@
-# FIXME: text in some Texareas ('beschreibung') take up too much space in the changelist
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User
@@ -8,7 +7,6 @@ import DBentry.models as _models
 import DBentry.m2m as _m2m
 import DBentry.actions as _actions
 from DBentry.ac.widgets import make_widget
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline,
     BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
@@ -197,22 +195,6 @@ class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only fi
             )
     monat_string.short_description = 'Monate'
 
-    # TODO: replace zbestand/dbestand with just a count of bestand
-    # (zbestand should be 1 at all times anyway)
-    def zbestand(self, obj):
-        return obj.bestand_set.filter(
-            lagerort=_models.lagerort.objects.filter(pk=ZRAUM_ID).first()
-        ).exists()
-    zbestand.short_description = 'Bestand: ZRaum'
-    zbestand.boolean = True
-
-    def dbestand(self, obj):
-        return obj.bestand_set.filter(
-            lagerort=_models.lagerort.objects.filter(pk=DUPLETTEN_ID).first()
-        ).exists()
-    dbestand.short_description = 'Bestand: Dublette'
-    dbestand.boolean = True
-
 
 @admin.register(_models.autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):
@@ -380,8 +362,8 @@ class BildmaterialAdmin(MIZModelAdmin):
         PersonInLine, BestandInLine
     ]
     search_form_kwargs = {
-        'fields': [  # TODO: add signatur field to search form
-            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe', 'id__in'
+        'fields': [
+            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe', 'signatur', 'id__in'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -541,7 +523,7 @@ class MagazinAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [GenreInLine, VerlagInLine, HerausgeberInLine]
-    list_display = ['__str__', 'beschreibung', 'anz_ausgaben', 'ort']
+    list_display = ['__str__', 'short_beschreibung', 'anz_ausgaben', 'ort']
 
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine', 'id__in'],
@@ -553,6 +535,10 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.short_description = 'Anz. Ausgaben'
     anz_ausgaben.admin_order_field = 'anz_ausgabe'
     anz_ausgaben.annotation = Count('ausgabe')
+
+    def short_beschreibung(self, obj):
+        return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
+    short_beschreibung.short_description = 'Beschreibung'
 
 
 @admin.register(_models.memorabilien, site=miz_site)
