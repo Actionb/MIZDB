@@ -721,7 +721,8 @@ class audio(BaseModel):
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
-    catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')  # WARNING: field missing in admin
+    # TODO: field 'catalog_nr' is missing in AudioAdmin -- Format.catalog_nr does that job??
+    catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')
     release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")
     discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True,
         help_text="Adresse zur discogs.com Seite dieses Objektes.")
