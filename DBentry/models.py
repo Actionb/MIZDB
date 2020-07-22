@@ -716,9 +716,6 @@ class instrument(BaseModel):
         if self.kuerzel:
             return "{} ({})".format(str(self.instrument), str(self.kuerzel))
         return str(self.instrument)
-# TODO: instrument_alias model unused!
-class instrument_alias(BaseAliasModel):
-    parent = models.ForeignKey('instrument', models.CASCADE)
 
 
 class audio(BaseModel):
