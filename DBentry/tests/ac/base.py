@@ -52,21 +52,31 @@ class ACViewTestMethodMixin(object):
         view = self.get_view()
         search_fields = self.model.get_search_fields()
         for search_field in search_fields:
-            q = self.qs_obj1.values_list(search_field, flat=True).first()
-            if q:
-                view.q = str(q)
-                result = view.apply_q(self.queryset)
-                if isinstance(result, list):
-                    if isinstance(result[-1], (list, tuple)):
-                        result = (o[0] for o in result)
+            with self.subTest(search_field=search_field):
+                q = self.qs_obj1.values_list(search_field, flat=True).first()
+                if q:
+                    view.q = str(q)
+                    result = view.apply_q(self.queryset)
+                    if not result:
+                        fail_msg = (
+                            "Could not find test object by querying for field {} "
+                            "with search term {}".format(search_field, str(q))
+                        )
+                        self.fail(fail_msg)
+                    if isinstance(result, list):
+                        if isinstance(result[-1], (list, tuple)):
+                            result = (o[0] for o in result)
+                        else:
+                            result = (o.pk for o in result)
                     else:
-                        result = (o.pk for o in result)
+                        result = result.values_list('pk', flat = True)
+                    self.assertIn(self.obj1.pk, result, 
+                        msg="search_field: {}, q: {}".format(search_field, str(q)))
                 else:
-                    result = result.values_list('pk', flat = True)
-                self.assertIn(self.obj1.pk, result, 
-                    msg="search_field: {}, q: {}".format(search_field, str(q)))
-            else:
-                self.warn('Test poorly configured: no test data for search field: ' + search_field)
+                    self.warn(
+                        'Test poorly configured: no test data for search field: {}'.format(
+                            search_field)
+                    )
            
     def test_apply_q_alias(self):
         # Assert that an object can be found through its aliases.

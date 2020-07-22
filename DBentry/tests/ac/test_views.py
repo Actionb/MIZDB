@@ -460,13 +460,13 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.person
     has_alias = False
-    raw_data = [{'beschreibung': 'Klingt komisch, ist aber so', 'bemerkungen': 'Abschalten!'}]
+    raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.autor
     # 'beschreibung' is a search_field and needs some data!
-    raw_data = [{'beschreibung': 'ABC'}, {'beschreibung': 'DEF'}, {'beschreibung': 'GHI'}]
+    raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
 
 
@@ -476,26 +476,22 @@ class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     raw_data = [
         {
             'musiker_alias__alias': 'John',
-            'person__nachname': 'James',
-            'beschreibung': 'Description'
+            'beschreibung': 'Description',
+            'bemerkungen': 'Stuff'
         }
     ]
 
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.land
-    raw_data = [{'land_alias__alias': 'Dschland'}]
-    alias_accessor_name = 'land_alias_set'
+    raw_data = [{'land_name': 'Dschland', 'code': 'DE'}]
+    has_alias = False
 
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.instrument
-    raw_data = [
-        {'instrument_alias__alias': 'Klavier'},
-        {'instrument_alias__alias': 'Laute Tröte'},
-        {'instrument_alias__alias': 'Hau Drauf'},
-    ]
-    alias_accessor_name = 'instrument_alias_set'
+    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
+    has_alias = False
 
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
@@ -503,7 +499,8 @@ class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'spielort_alias_set'
     raw_data = [{
         'spielort_alias__alias': 'AliasSpielort',
-        'beschreibung': "If it beeps like a boop, it's probably a test."
+        'beschreibung': "If it beeps like a boop, it's probably a test.",
+        'bemerkungen': 'Stuff and Things.'
     }]
 
 
@@ -512,7 +509,8 @@ class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'veranstaltung_alias_set'
     raw_data = [{
         'veranstaltung_alias__alias': 'AliasVeranstaltung',
-        'beschreibung': "If it beeps like a boop, it's probably a test."
+        'beschreibung': "If it beeps like a boop, it's probably a test.",
+        'bemerkungen': 'Stuff and Things.'
     }]
 
 

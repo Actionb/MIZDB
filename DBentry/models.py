@@ -26,6 +26,10 @@ class person(ComputedNameModel):
     orte = models.ManyToManyField('ort', blank=True)
 
     name_composing_fields = ['vorname', 'nachname']
+    primary_search_fields = ['_name']
+    search_fields = ['_name', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+
     objects = PeopleQuerySet.as_manager()
 
     class Meta(ComputedNameModel.Meta):
@@ -65,15 +69,12 @@ class musiker(BaseModel):
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
     objects = HumanNameQuerySet.as_manager()
-    primary_search_fields = []
-    search_fields = [
-        'kuenstler_name', 'person__vorname', 'person__nachname',
-        'musiker_alias__alias', 'beschreibung'
-    ]
+    primary_search_fields = ['kuenstler_name']
+    search_fields = ['kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'person__vorname': 'Vorname',
-        'person__nachname': 'Nachname',
-        'musiker_alias__alias': 'Alias'
+        'musiker_alias__alias': 'Alias',
+        'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
     }
 
     class Meta(BaseModel.Meta):
@@ -114,16 +115,12 @@ class band(BaseModel):
 
     create_field = 'band_name'
     name_field = 'band_name'
-    primary_search_fields = ['band_name', 'band_alias__alias']
-    search_fields = [
-        'band_name', 'band_alias__alias', 'musiker__kuenstler_name',
-        'musiker__musiker_alias__alias', 'beschreibung'
-    ]
+    primary_search_fields = ['band_name']
+    search_fields = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'band_alias__alias': 'Band-Alias',
-        'musiker__kuenstler_name': 'Band-Mitglied',
-        'musiker__musiker_alias__alias': 'Mitglied-Alias',
-        'beschreibung': 'Beschreibung'
+        'band_alias__alias': 'Alias',
+        'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
     }
 
     class Meta(BaseModel.Meta):
@@ -145,9 +142,9 @@ class autor(ComputedNameModel):
 
     name_composing_fields = ['person___name', 'kuerzel']
     objects = PeopleQuerySet.as_manager()
-    primary_search_fields = []
-    search_fields = ['kuerzel', 'person___name', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['_name']
+    search_fields = ['_name', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'
@@ -220,22 +217,8 @@ class ausgabe(ComputedNameModel):
     ]
     objects = AusgabeQuerySet.as_manager()
     primary_search_fields = ['_name']
-    search_fields = [
-        'ausgabe_num__num', 'ausgabe_lnum__lnum', 'ausgabe_jahr__jahr', 'e_datum',
-        'ausgabe_monat__monat__monat', 'ausgabe_monat__monat__abk', 'jahrgang',
-        'beschreibung', 'bemerkungen'
-    ]
-    search_fields_suffixes = {
-        'ausgabe_monat__monat__monat': 'Monat',
-        'ausgabe_lnum__lnum': 'lfd. Num',
-        'e_datum': 'E.datum',
-        'ausgabe_num__num': 'Num',
-        'jahrgang': 'Jahrgang',
-        'ausgabe_monat__monat__abk': 'Monat Abk.',
-        'ausgabe_jahr__jahr': 'Jahr',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen',
-    }
+    search_fields = ['_name', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ausgabe'
@@ -445,8 +428,9 @@ class magazin(BaseModel):
 
     create_field = 'magazin_name'
     name_field = 'magazin_name'
-    search_fields = ['magazin_name', 'beschreibung', 'issn']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'issn': 'ISSN'}
+    primary_search_fields = ['magazin_name']
+    search_fields = ['magazin_name', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Magazin'
@@ -464,10 +448,7 @@ class verlag(BaseModel):
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
-    search_fields = [
-        'verlag_name', 'sitz___name', 'sitz__land__land_name',
-        'sitz__bland__bland_name'
-    ]
+    search_fields = ['verlag_name']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
@@ -487,14 +468,7 @@ class ort(ComputedNameModel):
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
     ]
-    primary_search_fields = []
-    search_fields = ['stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code']
-    search_fields_suffixes = {
-        'land__code': 'Land-Code',
-        'bland__code': 'Bundesland-Code',
-        'bland__bland_name': 'Bundesland',
-        'land_name': 'Land'
-    }
+    search_fields = ['_name']
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ort'
@@ -569,12 +543,8 @@ class land(BaseModel):
     code = models.CharField(max_length=4, unique=True)
 
     name_field = 'land_name'
-    primary_search_fields = ['land_name', 'code']
-    search_fields = ['land_name', 'code', 'land_alias__alias']
-    search_fields_suffixes = {
-        'code': 'Land-Code',
-        'land_alias__alias': 'Land-Alias',
-    }
+    search_fields = ['land_name', 'code']
+    search_fields_suffixes = {'code': 'Land-Code'}
 
     def __str__(self):
         return "{} {}".format(self.land_name, self.code).strip()
@@ -638,10 +608,11 @@ class artikel(BaseModel):
 
     name_field = 'schlagzeile'
     primary_search_fields = ['schlagzeile']
-    search_fields = ['schlagzeile', 'zusammenfassung', 'beschreibung']
+    search_fields = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
         'zusammenfassung': 'Zusammenfassung',
-        'beschreibung': 'Beschreibung'
+        'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
     }
 
     class Meta(BaseModel.Meta):
@@ -699,13 +670,9 @@ class buch(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung', 'ISBN', 'EAN']
-    search_fields_suffixes = {
-        'beschreibung': 'Beschreibung',
-        'ISBN': 'ISBN',
-        'EAN': 'EAN',
-    }
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -737,11 +704,8 @@ class instrument(BaseModel):
 
     name_field = 'instrument'
     primary_search_fields = ['instrument']
-    search_fields = ['instrument', 'instrument_alias__alias', 'kuerzel']
-    search_fields_suffixes = {
-        'instrument_alias__alias': 'Alias',
-        'kuerzel': 'Kürzel'
-    }
+    search_fields = ['instrument', 'kuerzel']
+    search_fields_suffixes = {'kuerzel': 'Kürzel'}
 
     class Meta(BaseModel.Meta):
         ordering = ['instrument', 'kuerzel']
@@ -781,9 +745,9 @@ class audio(BaseModel):
     ort = models.ManyToManyField('ort', through=_m2m.m2m_audio_ort)
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -818,12 +782,9 @@ class bildmaterial(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = ['titel', 'signatur']
-    search_fields = ['titel', 'signatur', 'beschreibung']
-    search_fields_suffixes = {
-        'signatur': 'Signatur',
-        'beschreibung': 'Beschreibung',
-    }
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -875,9 +836,9 @@ class dokument(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -903,9 +864,9 @@ class memorabilien(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Memorabilia'
@@ -925,11 +886,11 @@ class spielort(BaseModel):
 
     name_field = 'name'
     primary_search_fields = ['name']
-    search_fields = ['name', 'spielort_alias__alias', 'ort___name', 'beschreibung']
+    search_fields = ['name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
         'spielort_alias__alias': 'Alias',
-        'ort___name': 'Ort',
         'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
     }
 
     class Meta(BaseModel.Meta):
@@ -955,9 +916,9 @@ class technik(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
@@ -986,10 +947,11 @@ class veranstaltung(BaseModel):
 
     name_field = 'name'
     primary_search_fields = ['name']
-    search_fields = ['name', 'veranstaltung_alias__alias', 'beschreibung']
+    search_fields = ['name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
         'veranstaltung_alias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
     }
 
     class Meta(BaseModel.Meta):
@@ -1038,9 +1000,9 @@ class video(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
@@ -1223,9 +1185,9 @@ class datei(BaseModel):
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
-    primary_search_fields = []
-    search_fields = ['titel', 'beschreibung']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung'}
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1363,6 +1325,14 @@ class Brochure(BaseBrochure):
 
     schlagwort = models.ManyToManyField('schlagwort')
 
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {
+        'zusammenfassung': 'Zusammenfassung',
+        'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
+    }
+
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
@@ -1373,6 +1343,14 @@ class Kalendar(BaseBrochure):  # TODO: spelling: Kalender
 
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
+
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {
+        'zusammenfassung': 'Zusammenfassung',
+        'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
+    }
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
@@ -1392,6 +1370,14 @@ class Katalog(BaseBrochure):
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Kataloges')
     art = models.CharField('Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH)
+
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {
+        'zusammenfassung': 'Zusammenfassung',
+        'beschreibung': 'Beschreibung',
+        'bemerkungen': 'Bemerkungen'
+    }
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'

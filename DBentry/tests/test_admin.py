@@ -1078,7 +1078,7 @@ class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     ]
     exclude_expected = ['genre', 'schlagwort']
     search_fields_expected = [
-        'titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
+        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
 
 
 class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
@@ -1090,8 +1090,7 @@ class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     ]
     exclude_expected = ['genre']
     search_fields_expected = [
-        'titel', 'zusammenfassung', 'bemerkungen', 'beschreibung',
-        'art', 'pk__pk__iexact'
+        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact'
     ]
 
     def test_get_fieldsets(self):
@@ -1114,7 +1113,7 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
     search_fields_expected = [
-        'titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
+        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")

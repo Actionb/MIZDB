@@ -1,13 +1,14 @@
-from .base import DataTestCase, UserTestCase
+from unittest.mock import patch
 
-from django.test import tag
 from django.db import models as django_models
+from django.test import tag
 from django.utils.translation import override as translation_override
 
 import DBentry.models as _models
 from DBentry import fields as _fields
 from DBentry.m2m import m2m_audio_musiker
 from DBentry.factory import make
+from DBentry.tests.base import DataTestCase, UserTestCase
 
 
 class TestBaseModel(DataTestCase):
@@ -19,7 +20,7 @@ class TestBaseModel(DataTestCase):
     def test_qs(self):
         self.assertIsInstance(self.obj1.qs(), django_models.QuerySet)
         self.assertEqual(self.obj1.qs().count(), 1)
-        self.assertListEqualSorted(self.obj1.qs(), self.queryset.filter(pk=self.obj1.pk))
+        self.assertIn(self.obj1, self.obj1.qs())
 
     def test_qs_exception(self):
         with self.assertRaises(TypeError):
@@ -36,10 +37,6 @@ class TestBaseModel(DataTestCase):
         # method of gathering values from applicable fields to form a string.
         obj.name_field = None
         self.assertEqual(obj.__str__(), "lotsa testing 1 from the computer")
-
-    def test_get_search_fields(self):
-        expected = ['schlagzeile', 'zusammenfassung', 'beschreibung']
-        self.assertListEqualSorted(self.model.get_search_fields(True), expected)
 
 
 class TestBaseM2MModel(DataTestCase):
@@ -87,8 +84,8 @@ class TestComputedNameModel(DataTestCase):
         self.assertNotIn('_changed_flag', self.model.get_search_fields())
 
         # _name should always be the first field in search_fields
-        self.model.search_fields += ['_name']
-        self.assertEqual(self.model.get_search_fields()[0], '_name')
+        with patch.object(self.model, 'search_fields', new=['field', '_name']):
+            self.assertEqual(self.model.get_search_fields()[0], '_name')
 
     def test_name_default(self):
         self.assertEqual(str(self.obj1), self.default)
@@ -205,6 +202,22 @@ class TestModelArtikel(DataTestCase):
             ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
         )
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'zusammenfassung': 'Zusammenfassung',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
+
 
 class TestModelAudio(DataTestCase):
 
@@ -217,6 +230,18 @@ class TestModelAudio(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
 
 
 @tag("cn")
@@ -404,6 +429,18 @@ class TestModelAusgabe(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['magazin'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['_name', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
 
 class TestModelAusgabeJahr(DataTestCase):
 
@@ -442,6 +479,12 @@ class TestModelAusgabeMonat(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['monat'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['monat__monat', 'monat__abk'])
+        )
 
 
 class TestModelAusgabeNum(DataTestCase):
@@ -491,6 +534,18 @@ class TestModelAutor(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['_name', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
 
 class TestModelBand(DataTestCase):
 
@@ -503,6 +558,22 @@ class TestModelBand(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['band_name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'band_alias__alias': 'Alias',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
 
 
 class TestModelBandAlias(DataTestCase):
@@ -530,6 +601,53 @@ class TestModelBildmaterial(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
+
+class TestModelBildreihe(DataTestCase):
+
+    model = _models.Bildreihe
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['name'])
+
+
+class TestModelBrochure(DataTestCase):
+
+    model = _models.Brochure
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'zusammenfassung': 'Zusammenfassung',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
+
 
 class TestModelBuch(DataTestCase):
 
@@ -538,6 +656,29 @@ class TestModelBuch(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
+
+class TestModelSchriftenreihe(DataTestCase):
+
+    model = _models.schriftenreihe
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['name'])
 
 
 class TestModelBundesland(DataTestCase):
@@ -552,6 +693,15 @@ class TestModelBundesland(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['land', 'bland_name'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['bland_name', 'code'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(self.model.search_fields_suffixes, {'code': 'Bundesland-Code'})
+
 
 class TestModelDatei(DataTestCase):
 
@@ -565,9 +715,37 @@ class TestModelDatei(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
 
 class TestModelDokument(DataTestCase):
-    pass
+
+    model = _models.dokument
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
 
 
 @tag("cn")
@@ -659,6 +837,12 @@ class TestModelGeber(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['name'])
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 class TestModelGenre(DataTestCase):
 
@@ -671,6 +855,15 @@ class TestModelGenre(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['genre'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['genre', 'genre_alias__alias'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(self.model.search_fields_suffixes, {'genre_alias__alias': 'Alias'})
 
 
 class TestModelGenreAlias(DataTestCase):
@@ -694,6 +887,9 @@ class TestModelHerausgeber(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['herausgeber'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['herausgeber'])
+
 
 class TestModelInstrument(DataTestCase):
 
@@ -709,6 +905,63 @@ class TestModelInstrument(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['instrument', 'kuerzel'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(self.model.search_fields_suffixes, {'kuerzel': 'Kürzel'})
+
+
+class TestModelKalender(DataTestCase):
+
+    model = _models.Kalendar
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'zusammenfassung': 'Zusammenfassung',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
+
+
+class TestModelKatalog(DataTestCase):
+
+    model = _models.Katalog
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'zusammenfassung': 'Zusammenfassung',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
 
 
 @tag("cn")
@@ -748,6 +1001,15 @@ class TestModelLagerort(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['_name', 'ort', 'raum', 'regal', 'fach', 'ordner'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 class TestModelLand(DataTestCase):
 
@@ -760,6 +1022,15 @@ class TestModelLand(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['land_name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['land_name', 'code'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(self.model.search_fields_suffixes, {'code': 'Land-Code'})
 
 
 class TestModelMagazin(DataTestCase):
@@ -774,9 +1045,38 @@ class TestModelMagazin(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['magazin_name'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['magazin_name', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
+
 
 class TestModelMemorabilien(DataTestCase):
-    pass
+
+    model = _models.memorabilien
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
 
 
 class TestModelMonat(DataTestCase):
@@ -791,6 +1091,15 @@ class TestModelMonat(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['ordinal'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['monat', 'abk', 'ordinal'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 class TestModelMusiker(DataTestCase):
 
@@ -804,6 +1113,22 @@ class TestModelMusiker(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'musiker_alias__alias': 'Alias',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
 
 
 class TestModelMusikerAlias(DataTestCase):
@@ -839,6 +1164,12 @@ class TestModelOrt(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['_name'])
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 @tag("cn")
 class TestModelPerson(DataTestCase):
@@ -863,6 +1194,18 @@ class TestModelPerson(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['_name', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
+
 
 class TestModelPlattenfirma(DataTestCase):
 
@@ -875,6 +1218,12 @@ class TestModelPlattenfirma(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['name'])
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
 
 
 class TestModelProvenienz(DataTestCase):
@@ -889,6 +1238,12 @@ class TestModelProvenienz(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['geber__name'])
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 class TestModelSchlagwort(DataTestCase):
 
@@ -901,6 +1256,16 @@ class TestModelSchlagwort(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['schlagwort'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['schlagwort', 'schlagwort_alias__alias'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes, {'schlagwort_alias__alias': 'Alias'})
 
 
 class TestModelSchlagwortAlias(DataTestCase):
@@ -926,9 +1291,50 @@ class TestModelSpielort(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name', 'ort'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'spielort_alias__alias': 'Alias',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
+
+
+class TestModelSpielortAlias(DataTestCase):
+
+    model = _models.spielort_alias
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
 
 class TestModelTechnik(DataTestCase):
-    pass
+
+    model = _models.technik
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
 
 
 class TestModelVeranstaltung(DataTestCase):
@@ -950,6 +1356,45 @@ class TestModelVeranstaltung(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name', 'datum', 'spielort'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {
+                'veranstaltung_alias__alias': 'Alias',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
+        )
+
+
+class TestModelVeranstaltungAlias(DataTestCase):
+
+    model = _models.veranstaltung_alias
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
+
+class TestModelVeranstaltungsreihe(DataTestCase):
+
+    model = _models.Veranstaltungsreihe
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['name'])
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 class TestModelVerlag(DataTestCase):
 
@@ -963,9 +1408,31 @@ class TestModelVerlag(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
 
+    def test_get_search_fields(self):
+        self.assertEqual(self.model.get_search_fields(), ['verlag_name'])
+
+    def test_search_fields_suffixes(self):
+        self.assertFalse(self.model.search_fields_suffixes)
+
 
 class TestModelVideo(DataTestCase):
-    pass
+
+    model = _models.video
+
+    def test_meta_ordering(self):
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_get_search_fields(self):
+        self.assertEqual(
+            sorted(self.model.get_search_fields()),
+            sorted(['titel', 'beschreibung', 'bemerkungen'])
+        )
+
+    def test_search_fields_suffixes(self):
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+        )
 
 
 class TestModelFavoriten(DataTestCase, UserTestCase):

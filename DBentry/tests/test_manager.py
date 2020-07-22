@@ -60,7 +60,7 @@ class TestMIZQuerySet(DataTestCase):
     def test_find(self):
         self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
         self.assertIn(
-            (self.obj2.pk, str(self.obj2) + ' (Band-Alias)'),
+            (self.obj2.pk, str(self.obj2) + ' (Alias)'),
             self.queryset.find('Coffee')
         )
         self.assertFalse(self.queryset.find('Jazz'))
@@ -858,7 +858,7 @@ class TestFindSpecialCases(DataTestCase):
 
     def test_find_sharp_s(self):
         # Assert that a 'ß' search term is handled properly.
-        # ('ß'.casefold() performed in clean_string() results in 'ss')
+        # ('ß'.casefold() performed in BaseSearchQuery.clean_string() results in 'ss')
         results = self.model.objects.find('ß')
         self.assertTrue(
             results, msg="Expected to find the instance with 'ß' in its name.")
