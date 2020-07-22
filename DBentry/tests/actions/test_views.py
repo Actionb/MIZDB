@@ -131,10 +131,12 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertEqual(link_list[0][0], get_obj_link(a, request.user))
         self.assertEqual(link_list[0][1][0], 'Titel: ' + a.titel)
         self.assertEqual(link_list[0][1][1], get_obj_link(a.band.first(), request.user))
-        self.assertEqual(
-            link_list[0][1][2], get_obj_link(a.format_set.all()[0], request.user))
-        self.assertEqual(
-            link_list[0][1][3], get_obj_link(a.format_set.all()[1], request.user))
+        # Next two items should be the related format objects:
+        expected = sorted([
+            get_obj_link(a.format_set.all()[0], request.user),
+            get_obj_link(a.format_set.all()[1], request.user)
+        ])
+        self.assertEqual(sorted(link_list[0][1][2:4]), expected)
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
     def test_form_valid(self):
