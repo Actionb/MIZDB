@@ -553,9 +553,6 @@ class land(BaseModel):
         verbose_name = 'Land'
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
-# TODO: land_alias model unused!
-class land_alias(BaseAliasModel):
-    parent = models.ForeignKey('land', models.CASCADE)
 
 # TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
 class schlagwort(BaseModel):

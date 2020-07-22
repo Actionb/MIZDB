@@ -173,10 +173,6 @@ class LandHelpText(MIZModelAdminHelpText):
     model = MIZModels.land
 
 #@register()
-class LandAliasHelpText(MIZModelAdminHelpText):
-    model = MIZModels.land_alias
-
-#@register()
 class MagazinHelpText(MIZModelAdminHelpText):
     model = MIZModels.magazin
 
