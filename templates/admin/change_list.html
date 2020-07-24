@@ -7,7 +7,6 @@
     <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}" />{% if cl.formset %}
     <link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}" />{% endif %}{% if cl.formset or action_form %}
     <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>{% endif %}
-    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/filter_top.css' %}?{% now 'U' %}" />
     {{ media.css }}
     {% if not actions_on_top and not actions_on_bottom %}<style>#changelist table thead th:first-child {width: inherit}</style>{% endif %}
 <!-- Extrastyle end -->
@@ -57,16 +56,7 @@
     <div class="module" id="changelist">
 <!-- ADMIN FILTERS --->
       {% block filters %}
-      {% if not cl.model_admin.has_search_form and cl.model_admin.list_filter %}
-      <div id="changelist-filter">
-        <h2>{% trans 'Filter' %}</h2>
-        {% for spec in cl.filter_specs %}
-            <div class="changelist-filter-col">
-                {% admin_list_filter cl spec %}
-            </div>
-        {% endfor %}
-      </div>
-      {% endif %}
+        {{ block.super }}
       {% endblock %}
 <!-- ADMIN SEARCH FORM --->
     {% block search %}
