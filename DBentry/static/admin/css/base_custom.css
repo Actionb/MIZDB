@@ -6,11 +6,6 @@ select {
     width: 9em;
 }
 
-.module caption, .inline-group h2 {
-    font-size: 12px;
-    letter-spacing: 0.5px;
-}
-
 fieldset[class^="module aligned"] .fieldset-name{
     font-size: 13px;
     letter-spacing: 0;
