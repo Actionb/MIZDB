@@ -2,36 +2,6 @@ select {
     min-width: 260px;
 }
 
-.selector {
-    width: 768px;
-}
-
-.selector ul.selector-chooser{
-    width: 3%;
-}
-
-.selector-available, .selector-chosen{
-    width: 45%;
-}
-
-.selector select{
-    width: 100%;
-}
-
-.selector .selector-available input{
-    width: 85%;
-}
-
-.collapsible:hover {
-    cursor:pointer;
-}
-
-.inline-related h3:hover{
-    border-style: solid;
-    cursor: pointer;
-    border-color:#79aec8;
-}
-
 .vIntegerField{
     width: 9em;
 }
