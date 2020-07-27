@@ -6,6 +6,9 @@ select {
     width: 9em;
 }
 
+/*
+Set rules for the h2 element displaying the 'name' of a fieldset.
+*/
 fieldset[class^="module aligned"] .fieldset-name{
     font-size: 13px;
     letter-spacing: 0;
@@ -14,11 +17,41 @@ fieldset[class^="module aligned"] .fieldset-name{
     color:#447e9b;
 }
 
-fieldset.collapsed h2 {
-    background: #79aec8 none repeat scroll 0 0;
-    color: #fff;
+/*
+Set some rules for the form of a stacked inline.
+*/
+.inline-related .stacked-inline-collapsible {
+    border: 1px groove lightgrey;
+    margin-bottom: 5px;
 }
 
+.collapsible:hover {
+    cursor:pointer;
+}
+
+/*
+forms.css:217 overrides forms.css:213 display: none; to display: block; 
+for h2 elements and for collapsed fieldsets INSIDE a collapsed fieldset.
+We want everything inside a collapsed fieldset to be hidden:
+*/
+fieldset.collapsed * {
+    display: none;
+}
+
+/*
+Add a pointer and change the border of the h3 element in a StackedInline group
+to make it apparent that it can be collapsed.
+*/
+.inline-related h3:hover{
+    border-style: solid;
+    cursor: pointer;
+    border-color:#79aec8;
+}
+
+/*
+forms.css:227 sets collapsed h2 elements to white background with black
+text color. Set it to the default of uncollapsed h2 elements instead.
+*/
 fieldset.collapsed h2 {
     background: #79aec8 none repeat scroll 0 0;
     color: #fff;
@@ -32,69 +65,28 @@ fieldset.collapsed h2 {
 }
 
 /*
-fieldset.collapsed h3{
-    display:block;
-}*/
-
-fieldset.collapsed h3 * {
-    display:inline;
-}
-
-.stacked-inline-collapsible.collapsed fieldset{
-    display:none;
-}
-
-fieldset.collapsed h2, fieldset.collapsed {
-    display: block;
-}
-
-fieldset.collapsed * {
-    display: none;
-}
-
-fieldset div[class^="inline-related"] {
-    /* Allows padding etc of forms of stacked formsets */
-    margin-bottom: 5px;
-    padding: 0;
-}
-
-
-.inline-related .stacked-inline-collapsible {
-    border: 1px groove lightgrey;
-    margin-bottom: 5px;
-}
-
-/*
-fieldset.module fieldset .fieldset-name {
-    background: lightcyan none repeat scroll 0 0;
-    color:#447e9b;
-}
-
-.aligned .vCheckboxLabel {
-    /* Actually swaps a Checkbox with its Label */
-    display: block;
-    float: left;
-    line-height: 1;
-    padding: 4px 10px 0 0;
-    width: 160px;
-    word-wrap: break-word;
-}
+Adds a bit of padding above the preview bit of the Ausgaben Erstellung view.
+TODO: add this to the div itself and then delete this
 */
-
 .preview {
     padding-top: 30px;
 }
 
-div .help_text {
-    padding: 10px;
-}
-
+/*
+Add 5px to the bottom padding to a description element for a django fieldset.
+(see fieldset.html)
+*/
 .description {
     padding: 5px 0 5px 12px;
 }
 
+
+/**
+    ACTION CONFIRMATION
+*/
+
 /*
-* — ACTION CONFIRMATION —
+Paint the submit button in a slighter darker red when hovered over or focussed.
 */
 .action-confirmation form input[type="submit"][name^="action_confirmed"] {
     background: #ba2121 none repeat scroll 0 0;
@@ -117,6 +109,9 @@ div .help_text {
     vertical-align: middle;
 }
 
+/*
+Move the radio buttons 'up' a little bit to bring them in line with the label.
+*/
 .aligned .form-row input[type="radio"]{
     margin-bottom: 5px;
 }
