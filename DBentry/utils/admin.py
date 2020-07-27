@@ -131,6 +131,7 @@ def make_simple_link(url, label, is_popup, as_listitem=False):
     If as_listitem is True, the link is wrapped in <li> tags.
     """
     if is_popup:
+        # FIXME: Does return popup(this) actually do ANYTHING?
         template = '<a href="{url}?_popup=1" onclick="return popup(this)">{label}</a>'
     else:
         template = '<a href="{url}" target="_blank">{label}</a>'
