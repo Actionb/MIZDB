@@ -396,3 +396,9 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
     def get_context_data(self, **kwargs):
         # Add ausgabe's meta for the template.
         return super().get_context_data(opts=_models.ausgabe._meta)
+
+
+class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):
+    """A very basic view containing some text explaining the BulkAusgabe view."""
+
+    template_name = 'admin/help_bulk_ausgabe.html'
