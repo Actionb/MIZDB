@@ -65,14 +65,6 @@ fieldset.collapsed h2 {
 }
 
 /*
-Adds a bit of padding above the preview bit of the Ausgaben Erstellung view.
-TODO: add this to the div itself and then delete this
-*/
-.preview {
-    padding-top: 30px;
-}
-
-/*
 Add 5px to the bottom padding to a description element for a django fieldset.
 (see fieldset.html)
 */
