@@ -122,24 +122,6 @@ def has_admin_permission(request, model_admin):
     return True in model_admin.get_model_perms(request).values()
 
 
-def make_simple_link(url, label, is_popup, as_listitem=False):
-    """
-    Return a safe link to 'url'.
-
-    If is_popup is True, the link will include an 'onclick' attribute that calls
-    'popup(this)'.
-    If as_listitem is True, the link is wrapped in <li> tags.
-    """
-    if is_popup:
-        # FIXME: Does return popup(this) actually do ANYTHING?
-        template = '<a href="{url}?_popup=1" onclick="return popup(this)">{label}</a>'
-    else:
-        template = '<a href="{url}" target="_blank">{label}</a>'
-    if as_listitem:
-        template = '<li>' + template + '</li>'
-    return format_html(template, url=url, label=label)
-
-
 def resolve_list_display_item(model_admin, item):
     """
     A ModelAdmin's list_display may contain any of the following:

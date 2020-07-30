@@ -70,16 +70,3 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         request = self.get_request(user = self.super_user)
         model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
         self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for superuser on a superuser-only model admin.")
-            
-    def test_make_simple_link(self):
-        # No popup
-        expected = '<a href="/test/beep/" target="_blank">TestLink</a>'
-        self.assertEqual(utils.make_simple_link(url = "/test/beep/", label = "TestLink", is_popup = False, as_listitem = False), expected)
-        expected = '<li><a href="/test/beep/" target="_blank">TestLink</a></li>'
-        self.assertEqual(utils.make_simple_link(url = "/test/beep/", label = "TestLink", is_popup = False, as_listitem = True), expected)
-        
-        # As popups
-        expected = '<a href="/test/beep/?_popup=1" onclick="return popup(this)">TestLink</a>'
-        self.assertEqual(utils.make_simple_link(url = "/test/beep/", label = "TestLink", is_popup = True, as_listitem = False), expected)
-        expected = '<li><a href="/test/beep/?_popup=1" onclick="return popup(this)">TestLink</a></li>'
-        self.assertEqual(utils.make_simple_link(url = "/test/beep/", label = "TestLink", is_popup = True, as_listitem = True), expected)
