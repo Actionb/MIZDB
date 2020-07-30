@@ -1,5 +1,6 @@
 import re
 
+from django.urls import NoReverseMatch
 from django.utils.encoding import force_text
 
 from DBentry import utils, models as _models
@@ -12,20 +13,25 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     model = _models.band
     test_data_count = 3
     opts = model._meta
-    
+
+    def test_get_obj_url(self):
+        self.assertEqual(
+            utils.get_obj_url(self.obj1),
+            '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
+        )
+
     def test_get_obj_link_noperms(self):
         # Users without change permission should not get an edit link
         link = utils.get_obj_link(self.obj1, self.noperms_user)
         self.assertEqual(link, "{}: {}".format(self.opts.verbose_name, force_text(self.obj1)))
-    
+
     def test_get_obj_link_noreversematch(self):
         # If there is no reverse match, no link should be displayed
         # get_obj_link uses the site_name argument to get the app's namespace
-        from django.urls import NoReverseMatch
         with self.assertNotRaises(NoReverseMatch):
             link = utils.get_obj_link(self.obj1, self.super_user, site_name='BEEP BOOP')
         self.assertEqual(link, "{}: {}".format(self.opts.verbose_name, force_text(self.obj1)))
-    
+
     def test_get_obj_link(self):
         link = utils.get_obj_link(self.obj1, self.super_user)
         url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)

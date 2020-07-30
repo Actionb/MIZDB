@@ -9,6 +9,17 @@ from django.utils.text import capfirst
 from DBentry.utils.models import get_model_from_string
 
 
+def get_obj_url(obj, site_name='admin'):
+    """
+    Return the url to the change page of 'obj'.
+
+    Raises a NoReverseMatch if the change page does not exist.
+    """
+    opts = obj._meta
+    viewname = '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name)
+    return reverse(viewname, args=[quote(obj.pk)])
+
+
 def get_obj_link(obj, user, site_name='admin', include_name=True):
     """
     Return a safe link to the change page of 'obj'.
@@ -21,12 +32,7 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))
     try:
-        viewname = '%s:%s_%s_change' % (
-            site_name,
-            opts.app_label,
-            opts.model_name
-        )
-        admin_url = reverse(viewname, args=[quote(obj.pk)])
+        admin_url = get_obj_url(obj, site_name)
     except NoReverseMatch:
         return no_edit_link
 
@@ -36,7 +42,6 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
     )
     if not user.has_perm(perm):
         return no_edit_link
-
     if include_name:
         return format_html(
             '{}: <a href="{}">{}</a>',
