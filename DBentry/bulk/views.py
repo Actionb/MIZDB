@@ -25,6 +25,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
+    title = "Ausgaben Erstellung"
     permission_required = ['DBentry.add_ausgabe']
     # 'preview_fields' determines what formfields may show up in the preview as
     # columns and sets their order.
@@ -402,3 +403,4 @@ class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):
     """A very basic view containing some text explaining the BulkAusgabe view."""
 
     template_name = 'admin/help_bulk_ausgabe.html'
+    title = "Hilfe: Ausgaben Erstellung"

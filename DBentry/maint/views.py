@@ -101,7 +101,7 @@ class DuplicateModelSelectView(MaintViewMixin, ModelSelectView):
     redirects to the DuplicateObjectsView.
     """
 
-    site_title = 'Duplikate finden'
+    title = 'Duplikate finden'
     next_view = 'dupes'
 
 
@@ -262,7 +262,7 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
 
     form_class = UnusedObjectsForm
     template_name = 'admin/find_unused.html'
-    breadcrumbs_title = site_title = 'Selten verwendete Datensätze finden'
+    breadcrumbs_title = title = 'Selten verwendete Datensätze finden'
 
     def get(self, request, *args, **kwargs):
         """Handle the request to find unused objects."""
