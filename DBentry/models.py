@@ -1377,25 +1377,3 @@ class Katalog(BaseBrochure):
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'
-
-
-class Favoriten(models.Model):
-    user = models.OneToOneField('auth.User', models.CASCADE, editable=False)
-    fav_genres = models.ManyToManyField('genre', verbose_name='Favoriten Genre', blank=True)
-    fav_schl = models.ManyToManyField('schlagwort', verbose_name='Favoriten Schlagworte', blank=True)
-
-    def __str__(self):
-        return 'Favoriten von {}'.format(self.user)
-
-    def get_favorites(self, model=None):
-        rslt = {
-            fld.related_model: getattr(self, fld.name).all()
-            for fld in Favoriten._meta.many_to_many
-        }
-        if model:
-            return rslt.get(model, Favoriten.objects.none())
-        return rslt
-
-    @classmethod
-    def get_favorite_models(cls):
-        return [fld.related_model for fld in cls._meta.many_to_many]

@@ -1,11 +1,10 @@
 from unittest import mock
 
 from django import forms
-from django.urls import reverse
 
 from DBentry.base.views import OptionalFormView, FixedSessionWizardView
 from DBentry.tests.base import MyTestCase, ViewTestCase
-from DBentry.views import MIZ_permission_denied_view, FavoritenView
+from DBentry.views import MIZ_permission_denied_view
 
 
 class TestOptionalFormView(ViewTestCase):
@@ -59,29 +58,6 @@ class TestOptionalFormView(ViewTestCase):
         view = self.get_view(request, success_url='Test', form_class=self.form_class)
         response = view.post(request)
         self.assertEqual(response.status_code, 200)  # no redirect to the success_url
-
-
-class TestFavoritenView(ViewTestCase):
-
-    view_class = FavoritenView
-    path = reverse("favoriten")
-
-    def test_get_success_url(self):
-        request = self.get_request()
-        view = self.get_view(request)
-        self.assertEqual(view.get_success_url(), '')
-
-    def test_get_object(self):
-        # Test that get_object creates a new entry in the Favoriten table if necessary
-        request = self.get_request()
-        view = self.get_view(request)
-        view.model.objects.filter(user=request.user).delete()  # delete any remnants
-
-        new_entry = view.get_object()  # user has no Favoriten yet, create an entry in Favoriten
-        self.assertEqual(new_entry.user, self.super_user)
-        self.assertTrue(view.model.objects.filter(user=request.user).exists())
-
-        self.assertEqual(view.get_object(), new_entry)  # direct access to Favoriten via queryset
 
 
 class TestPermissionDeniedView(MyTestCase):

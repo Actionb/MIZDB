@@ -1,7 +1,7 @@
 from django.urls import reverse, resolve
 from django.urls.exceptions import NoReverseMatch, Resolver404
 
-from DBentry import urls as dbentry_urls, views as dbentry_views
+from DBentry import urls as dbentry_urls
 from DBentry.ac import urls as autocomplete_urls, views as autocomplete_views
 from DBentry.bulk import views as bulk_views
 from DBentry.maint import urls as maint_urls, views as maint_views
@@ -68,7 +68,6 @@ class TestURLs(URLTestCase):
 
         expected = [
             ('bulk_ausgabe', '/tools/bulk_ausgabe/', bulk_views.BulkAusgabe),
-            ('favoriten', '/tools/favoriten/', dbentry_views.FavoritenView)
         ]
         for view_name, url, view_class in expected:
             with self.subTest(view_name=view_name, url=url):

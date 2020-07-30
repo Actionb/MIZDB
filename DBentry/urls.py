@@ -1,11 +1,9 @@
 from django.urls import path, include
 
 from DBentry.bulk.views import BulkAusgabe, BulkAusgabeHelp
-from DBentry.views import FavoritenView
 
 admin_tools_urls = [
     path('bulk_ausgabe/', BulkAusgabe.as_view(), name='bulk_ausgabe'),
-    path('favoriten/', FavoritenView.as_view(), name='favoriten'),
 ]
 
 help_urls = [

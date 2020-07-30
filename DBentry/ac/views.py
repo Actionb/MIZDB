@@ -6,7 +6,7 @@ from django.utils.translation import gettext
 from dal import autocomplete
 
 from DBentry.ac.creator import Creator
-from DBentry.models import Favoriten, ausgabe, buch
+from DBentry.models import ausgabe, buch
 from DBentry.logging import LoggingMixin
 from DBentry.utils import get_model_from_string
 
@@ -62,16 +62,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         """Filter the given queryset 'qs' with the view's search term 'q'."""
         if self.q:
             return qs.find(self.q)
-        elif self.model in Favoriten.get_favorite_models():
-            # Add Favoriten to the top of the result queryset
-            # if no search term was given.
-            try:
-                favorites = Favoriten.objects.get(user=self.request.user)
-            except Favoriten.DoesNotExist:
-                return qs
-            # If there are no favorites for the model an empty queryset will
-            # be returned by get_favorites.
-            return list(favorites.get_favorites(self.model)) + list(qs)
         else:
             return qs
 

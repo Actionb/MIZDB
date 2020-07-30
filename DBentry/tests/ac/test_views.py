@@ -545,49 +545,9 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'genre_alias_set'
     raw_data = [{'genre_alias__alias': 'Beep'}]
 
-    def test_apply_q_favorites(self):
-        request = self.get_request()
-        view = self.get_view(request=request)
-
-        result = view.apply_q(self.queryset)
-        # If the user has no favorites, it should return the untouched queryset
-        self.assertEqual(list(result), list(self.queryset))
-
-        # Create a favorite for the user
-        fav = _models.Favoriten.objects.create(user=request.user)
-        fav.fav_genres.add(self.obj1)
-        # Create an object that should be displayed as the first in the results
-        # following default ordering.
-        make(self.model, genre='A')
-
-        # self.obj1 will show up twice in an unfiltered result; once as part of
-        # favorites and then as part of the qs.
-        result = view.apply_q(self.model.objects.all())
-        self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
-
 
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.schlagwort
     alias_accessor_name = 'schlagwort_alias_set'
     raw_data = [{'schlagwort_alias__alias': 'AliasSchlagwort'}]
-
-    def test_apply_q_favorites(self):
-        request = self.get_request()
-        view = self.get_view(request=request)
-
-        result = view.apply_q(self.queryset)
-        # If the user has no favorites, it should return the untouched queryset
-        self.assertEqual(list(result), list(self.queryset))
-
-        # Create a favorite for the user
-        fav = _models.Favoriten.objects.create(user=request.user)
-        fav.fav_schl.add(self.obj1)
-        # Create an object that should be displayed as the first in the results
-        # following default ordering.
-        make(self.model, schlagwort='A')
-
-        # self.obj1 will show up twice in an unfiltered result; once as part of
-        # favorites and then as part of the qs.
-        result = view.apply_q(self.model.objects.all())
-        self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))

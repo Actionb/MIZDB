@@ -316,8 +316,6 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
                 # A reverse m2o relation.
                 query_name = rel.name
                 related_model = rel.related_model
-            if related_model._meta.model_name == 'favoriten':
-                continue
 
             # For this relation, get objects that do not exceed the limit.
             qs = model.objects.order_by().annotate(
