@@ -14,8 +14,6 @@ from DBentry.utils import get_model_from_string
 class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
     """Base view for the autocomplete views of the DBentry app."""
 
-    create_field = None  # NOTE: this already is an attribute of dal.BaseQuerySetView
-
     def dispatch(self, *args, **kwargs):
         if not self.model:
             model_name = kwargs.pop('model_name', '')
