@@ -17,8 +17,6 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools['favoriten'], 'Favoriten Verwaltung')
         self.assertIn('dupes_select', tools)
         self.assertEqual(tools['dupes_select'], 'Duplikate finden')
-        self.assertIn('help_index', tools)
-        self.assertEqual(tools['help_index'], 'Hilfe')
         self.assertNotIn('import_select', tools)
 
     def test_index_tools_mitarbeiter(self):

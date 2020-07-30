@@ -1,7 +1,6 @@
 from django.urls import reverse, exceptions
 from django.template import Library
 
-from DBentry.help.templatetags import help_link
 from DBentry.utils import make_simple_link
 
 register = Library()
@@ -20,6 +19,3 @@ def favorites_link(context):
         is_popup=context.get('is_popup', False),
         as_listitem=True
     )
-
-
-register.simple_tag(takes_context=True)(help_link)
