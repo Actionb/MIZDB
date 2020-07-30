@@ -158,8 +158,6 @@ class ACCreateable(ACBase):
         # TODO: use a get_creator() method to avoid having to declare
         # self.creator in dispatch()
         self.creator = Creator(self.model, raise_exceptions=False)
-        # TODO: super().dispatch() also sets create_field
-        self.create_field = self.create_field or kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
 
     def createable(self, text, creator=None):
