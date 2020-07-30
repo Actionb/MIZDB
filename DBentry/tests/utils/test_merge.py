@@ -474,7 +474,7 @@ class VideoMergingDataMixin(object):
             cls.model, titel='Original', tracks=3, band__extra=1,
             musiker__extra=1, bestand__extra=1,
         )
-        cls.band_original = obj1.band.get() # get() will complain if there's more than one record
+        cls.band_original = obj1.band.get()
         cls.musiker_original = obj1.musiker.get()
         cls.bestand_original = obj1.bestand_set.get()
         cls.obj1 = obj1

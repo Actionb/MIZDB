@@ -8,6 +8,7 @@ from DBentry.sites import miz_site
 from DBentry.tests.base import RequestTestCase
 from DBentry.tests.mixins import TestDataMixin
 
+
 class TestAdminUtils(TestDataMixin, RequestTestCase):
 
     model = _models.band
@@ -47,7 +48,8 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         request = self.get_request()
         links = utils.link_list(request, self.test_data)
         for i, (url, label) in enumerate(re.findall(r'<a href="(.*?)">(.*?)</a>', links)):
-            self.assertEqual(url, '/admin/DBentry/band/{}/change/'.format(self.test_data[i].pk))
+            self.assertEqual(
+                url, '/admin/DBentry/band/{}/change/'.format(self.test_data[i].pk))
             self.assertEqual(label, str(self.test_data[i]))
 
     def test_get_model_admin_for_model(self):
@@ -58,21 +60,36 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
 
     def test_has_admin_permission(self):
         from DBentry.admin import ArtikelAdmin, BildmaterialAdmin
-        request = self.get_request(user = self.noperms_user)
+        request = self.get_request(user=self.noperms_user)
         model_admin = ArtikelAdmin(_models.artikel, miz_site)
-        self.assertFalse(utils.has_admin_permission(request, model_admin), msg = "Should return False for a user with no permissions.")
+        self.assertFalse(
+            utils.has_admin_permission(request, model_admin),
+            msg="Should return False for a user with no permissions."
+        )
 
         from django.contrib.auth.models import Permission
         perms = Permission.objects.filter(codename__in=('add_artikel', ))
         self.staff_user.user_permissions.set(perms)
-        request = self.get_request(user = self.staff_user)
+        request = self.get_request(user=self.staff_user)
         model_admin = ArtikelAdmin(_models.artikel, miz_site)
-        self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for a user with at least some permissions for that model admin.")
+        self.assertTrue(
+            utils.has_admin_permission(request, model_admin),
+            msg=(
+                "Should return True for a user with at least some permissions "
+                "for that model admin."
+            )
+        )
 
-        request = self.get_request(user = self.staff_user)
+        request = self.get_request(user=self.staff_user)
         model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
-        self.assertFalse(utils.has_admin_permission(request, model_admin), msg = "Should return False for non-superusers on a superuser only model admin.")
+        self.assertFalse(
+            utils.has_admin_permission(request, model_admin),
+            msg="Should return False for non-superusers on a superuser only model admin."
+        )
 
-        request = self.get_request(user = self.super_user)
+        request = self.get_request(user=self.super_user)
         model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
-        self.assertTrue(utils.has_admin_permission(request, model_admin), msg = "Should return True for superuser on a superuser-only model admin.")
+        self.assertTrue(
+            utils.has_admin_permission(request, model_admin),
+            msg="Should return True for superuser on a superuser-only model admin."
+        )

@@ -4,6 +4,7 @@ from DBentry import utils, models as _models
 from DBentry.factory import make
 from DBentry.tests.base import MyTestCase
 
+
 class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
@@ -49,19 +50,19 @@ class TestModelUtils(MyTestCase):
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
 
-        rels = utils.get_model_relations(buch, reverse = False)
+        rels = utils.get_model_relations(buch, reverse=False)
         self.assertNotIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
 
-        rels = utils.get_model_relations(buch, forward = False)
+        rels = utils.get_model_relations(buch, forward=False)
         self.assertIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
 
-        rels = utils.get_model_relations(buch, forward = False, reverse = False)
+        rels = utils.get_model_relations(buch, forward=False, reverse=False)
         self.assertNotIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
@@ -70,30 +71,38 @@ class TestModelUtils(MyTestCase):
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
-        self.assertListEqualSorted(required_field_names(_models.person), ['nachname'])
-        self.assertListEqualSorted(required_field_names(_models.musiker), ['kuenstler_name'])
-        self.assertListEqualSorted(required_field_names(_models.genre), ['genre'])
-        self.assertListEqualSorted(required_field_names(_models.band), ['band_name'])
-        self.assertListEqualSorted(required_field_names(_models.autor), [])
-        self.assertListEqualSorted(required_field_names(_models.ausgabe), ['magazin'])
-        self.assertListEqualSorted(required_field_names(_models.magazin), ['magazin_name'])
-        self.assertListEqualSorted(required_field_names(_models.ort), ['land'])
-        self.assertListEqualSorted(required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])
-        self.assertListEqualSorted(required_field_names(_models.geber), []) # 'name' field is required but has a default
-        self.assertListEqualSorted(required_field_names(_models.bestand), ['lagerort'])
+        self.assertEqual(required_field_names(_models.person), ['nachname'])
+        self.assertEqual(required_field_names(_models.musiker), ['kuenstler_name'])
+        self.assertEqual(required_field_names(_models.genre), ['genre'])
+        self.assertEqual(required_field_names(_models.band), ['band_name'])
+        self.assertEqual(required_field_names(_models.autor), [])
+        self.assertEqual(required_field_names(_models.ausgabe), ['magazin'])
+        self.assertEqual(required_field_names(_models.magazin), ['magazin_name'])
+        self.assertEqual(required_field_names(_models.ort), ['land'])
+        self.assertEqual(
+            required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])
+        # _models.geber.name field is required but has a default:
+        self.assertEqual(required_field_names(_models.geber), [])
+        self.assertEqual(required_field_names(_models.bestand), ['lagerort'])
 
     def test_get_updateable_fields(self):
         obj = make(_models.artikel)
-        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
+        self.assertEqual(
+            utils.get_updateable_fields(obj),
+            ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen']
+        )
 
         obj.seitenumfang = 'f'
         obj.beschreibung = 'Beep'
-        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen', 'zusammenfassung'])
+        self.assertEqual(utils.get_updateable_fields(obj), [ 'zusammenfassung', 'bemerkungen'])
         obj.zusammenfassung = 'Boop'
-        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen'])
+        self.assertEqual(utils.get_updateable_fields(obj), ['bemerkungen'])
 
         obj = make(_models.ausgabe)
-        self.assertListEqualSorted(utils.get_updateable_fields(obj), ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen'])
+        self.assertEqual(
+            utils.get_updateable_fields(obj),
+            ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
+        )
         obj.status = 2
         self.assertNotIn('status', utils.get_updateable_fields(obj))
 
@@ -110,7 +119,7 @@ class TestModelUtils(MyTestCase):
         path = 'ausgabe__e_datum__year__gte'
         fields, lookups = utils.get_fields_and_lookups(_models.artikel, path)
         expected_fields = [
-            _models.artikel._meta.get_field('ausgabe'), 
+            _models.artikel._meta.get_field('ausgabe'),
             _models.ausgabe._meta.get_field('e_datum')
         ]
         expected_lookups = ['year', 'gte']

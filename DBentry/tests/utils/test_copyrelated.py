@@ -2,6 +2,7 @@ from DBentry import utils, models as _models
 from DBentry.factory import make
 from DBentry.tests.base import DataTestCase
 
+
 class TestCopyRelated(DataTestCase):
 
     model = _models.bildmaterial
@@ -11,11 +12,11 @@ class TestCopyRelated(DataTestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.band1 = make(_models.band, band_name = 'Band1')
-        cls.band2 = make(_models.band, band_name = 'Band2')
+        cls.band1 = make(_models.band, band_name='Band1')
+        cls.band2 = make(_models.band, band_name='Band2')
 
-        cls.v1 = make(_models.veranstaltung, band = [cls.band1])
-        cls.v2 = make(_models.veranstaltung, band = [cls.band2])
+        cls.v1 = make(_models.veranstaltung, band=[cls.band1])
+        cls.v2 = make(_models.veranstaltung, band=[cls.band2])
         cls.v3 = make(_models.veranstaltung)
 
         cls.obj1.veranstaltung.add(cls.v1, cls.v2, cls.v3)
@@ -29,7 +30,7 @@ class TestCopyRelated(DataTestCase):
 
     def test_no_duplicates(self):
         # Assert that copy_related_set does not create duplicate related records.
-        # The models actually do not allow that so we can test for an IntegrityError. 
+        # The models actually do not allow that so we can test for an IntegrityError.
         self.obj1.band.add(self.band1)
         from django.db.utils import IntegrityError
         with self.assertNotRaises(IntegrityError):
@@ -65,4 +66,3 @@ class TestCopyRelated(DataTestCase):
         # on their own, no action should be taken.
         with self.assertNumQueries(0):
             utils.copy_related_set(self.obj1, 'veranstaltung__reihe')
-
