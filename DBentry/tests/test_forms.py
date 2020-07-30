@@ -183,24 +183,30 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         choices = {forms.ALL_FIELDS: [('1', '1'), ('2', '3'), ('3', '0')]}
         expected = [('1', '1'), ('2', '3'), ('3', '0')]
         form = self.get_dummy_form(choices=choices)
-        self.assertListEqualSorted(form.fields['cf'].choices, expected)
-        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        self.assertEqual(form.fields['cf'].choices, expected)
+        self.assertEqual(form.fields['cf2'].choices, expected)
 
     def test_set_choices_manager(self):
         # choices is a BaseManager
         choices = {forms.ALL_FIELDS: _models.genre.objects}
-        expected = [(str(o.pk), str(o)) for o in self.test_data]
+        expected = sorted(
+            [(str(o.pk), str(o)) for o in self.test_data],
+            key=lambda tpl: tpl[1]  # sort by the genre just like the queryset/manager
+        )
         form = self.get_dummy_form(choices=choices)
-        self.assertListEqualSorted(form.fields['cf'].choices, expected)
-        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        self.assertEqual(form.fields['cf'].choices, expected)
+        self.assertEqual(form.fields['cf2'].choices, expected)
 
     def test_set_choices_queryset(self):
         # choices is a QuerySet
         choices = {forms.ALL_FIELDS: _models.genre.objects.all()}
-        expected = [(str(o.pk), str(o)) for o in self.test_data]
+        expected = sorted(
+            [(str(o.pk), str(o)) for o in self.test_data],
+            key=lambda tpl: tpl[1]  # sort by the genre just like the queryset/manager
+        )
         form = self.get_dummy_form(choices=choices)
-        self.assertListEqualSorted(form.fields['cf'].choices, expected)
-        self.assertListEqualSorted(form.fields['cf2'].choices, expected)
+        self.assertEqual(form.fields['cf'].choices, expected)
+        self.assertEqual(form.fields['cf2'].choices, expected)
 
     def test_set_choices_preserved(self):
         # preset choices are preserved
@@ -211,8 +217,8 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         choices = {forms.ALL_FIELDS: [(i,i) for i in ['1', '2', '3']]}
         expected = [('1', '1'), ('2', '2'), ('3', '3')]
         form = self.get_dummy_form(attrs = fields, choices=choices)
-        self.assertListEqualSorted(form.fields['cf'].choices, expected)
-        self.assertListEqualSorted(form.fields['cf2'].choices, [('1', 'a')])
+        self.assertEqual(form.fields['cf'].choices, expected)
+        self.assertEqual(form.fields['cf2'].choices, [('1', 'a')])
 
 
 class TestMinMaxRequiredFormMixin(FormTestCase):

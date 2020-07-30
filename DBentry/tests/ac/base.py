@@ -107,7 +107,7 @@ class ACViewTestMethodMixin(object):
         if not expected:
             # expected being empty means that this test has no test_data
             self.warn('Test poorly configured: no test data')
-        self.assertListEqualSorted(qs, expected)
+        self.assertEqual(sorted(list(qs)), sorted(list(expected)))
         
     @translation_override(language = None)
     def test_get_create_option(self):
