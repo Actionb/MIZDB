@@ -5,7 +5,7 @@ from DBentry.factory import make
 from DBentry.tests.base import MyTestCase
 
 class TestModelUtils(MyTestCase):
-    
+
     def test_get_relations_between_models_many_to_one(self):
         from DBentry.models import ausgabe, magazin
         expected = (ausgabe._meta.get_field('magazin'), magazin._meta.get_field('ausgabe'))
@@ -13,7 +13,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual((utils.get_relations_between_models(magazin, ausgabe)), expected)
         self.assertEqual((utils.get_relations_between_models('ausgabe', 'magazin')), expected)
         self.assertEqual((utils.get_relations_between_models('magazin', 'ausgabe')), expected)
-    
+
     def test_get_relations_between_models_many_to_many(self):
         from DBentry.models import Format, FormatTag
         expected = (Format._meta.get_field('tag'), FormatTag._meta.get_field('format'))
@@ -21,16 +21,16 @@ class TestModelUtils(MyTestCase):
         self.assertEqual((utils.get_relations_between_models(FormatTag, Format)), expected)
         self.assertEqual((utils.get_relations_between_models('Format', 'FormatTag')), expected)
         self.assertEqual((utils.get_relations_between_models('FormatTag', 'Format')), expected)
-        
+
     def test_is_protected(self):
         art = make(_models.artikel)
         self.assertIsNotNone(utils.is_protected([art.ausgabe]))
         self.assertIsNone(utils.is_protected([art]))
-        
+
     def test_get_model_from_string(self):
         self.assertEqual(_models.ausgabe, utils.get_model_from_string('ausgabe'))
         self.assertIsNone(utils.get_model_from_string('beep boop'))
-    
+
     def test_get_model_relations(self):
         buch = _models.buch
         # model buch has the four kinds of relations:
@@ -42,31 +42,31 @@ class TestModelUtils(MyTestCase):
         fk = buch._meta.get_field('schriftenreihe').remote_field
         m2m_inter = buch.musiker.rel
         m2m_auto = buch.band.rel
-        
+
         rels = utils.get_model_relations(buch)
         self.assertIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
-        
+
         rels = utils.get_model_relations(buch, reverse = False)
         self.assertNotIn(rev_fk, rels)
         self.assertIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
-        
+
         rels = utils.get_model_relations(buch, forward = False)
         self.assertIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
-        
+
         rels = utils.get_model_relations(buch, forward = False, reverse = False)
         self.assertNotIn(rev_fk, rels)
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
-        
+
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
@@ -91,7 +91,7 @@ class TestModelUtils(MyTestCase):
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen', 'zusammenfassung'])
         obj.zusammenfassung = 'Boop'
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['bemerkungen'])
-        
+
         obj = make(_models.ausgabe)
         self.assertListEqualSorted(utils.get_updateable_fields(obj), ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen'])
         obj.status = 2
@@ -101,7 +101,7 @@ class TestModelUtils(MyTestCase):
         # no related_query_name or related_name
         rel = _models.ausgabe._meta.get_field('artikel')
         self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
-        
+
         # related_name
         rel = _models.buch._meta.get_field('buchband').remote_field
         self.assertEqual(utils.get_reverse_field_path(rel, 'titel'), 'buch_set__titel')
@@ -116,7 +116,7 @@ class TestModelUtils(MyTestCase):
         expected_lookups = ['year', 'gte']
         self.assertEqual(fields, expected_fields)
         self.assertEqual(lookups, expected_lookups)
-        
+
     def test_get_fields_and_lookups_invalid_lookup(self):
         # Assert that get_fields_and_lookups raises FieldError on
         # encountering an invalid lookup.
@@ -125,7 +125,7 @@ class TestModelUtils(MyTestCase):
         with self.assertRaises(exceptions.FieldError):
             # Kalendar's primary key is a OneToOne to BaseBrochure.
             utils.get_fields_and_lookups(_models.Kalendar, 'pk__iexact')
-        
+
     def test_get_fields_and_lookups_fielddoesnotexist(self):
         # Assert that get_fields_and_lookups raises FieldDoesNotExist
         # if the first field is not a model field of the given model.
