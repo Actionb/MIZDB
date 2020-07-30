@@ -21,7 +21,9 @@ def get_model_from_string(model_name, app_label='DBentry'):
 
 
 def get_model_fields(
-        model, base=True, foreign=True, m2m=True, exclude=(), primary_key=False):
+        model, base=True, foreign=True, m2m=True,
+        exclude=(), primary_key=False
+    ):
     """
     Return a list of concrete model fields of the given model.
 
@@ -59,11 +61,11 @@ def get_model_relations(model, forward=True, reverse=True):
     ManyToManyRels are always included as they are symmetrical (they can be
     considered both as forward and reverse relations).
     """
-    intermediary_models = set(
+    intermediary_models = {
         f.remote_field.through if f.concrete else f.through
         for f in model._meta.get_fields()
         if f.many_to_many
-    )
+    }
 
     result = []
     for f in model._meta.get_fields():
@@ -107,8 +109,8 @@ def get_relation_info_to(model, rel):
     on that m2m model.
     If rel is a ManyToOneRel, the returned model is rel.related_model and the
     field is the ForeignKey rel.field.
-    In any case, the returned model can be queried for related objects of 'model'
-    using the name of the returned field.
+    In any case, the returned model can be queried for related objects of
+    'model' using the name of the returned field.
     """
     # (used in utils.merge)
     if rel.many_to_many:
@@ -186,11 +188,13 @@ def get_related_manager(instance, rel):
 
 def get_updateable_fields(instance):
     """
-    Return the names of 'instance's fields that are empty or have their default value.
+    Return the names of 'instance's fields that are empty or have their default
+    value.
     """
     # (used by merge_records)
     rslt = []
-    fields = get_model_fields(instance._meta.model, m2m=False, primary_key=False)
+    fields = get_model_fields(
+        instance._meta.model, m2m=False, primary_key=False)
     for fld in fields:
         if not fld.concrete or fld.name.startswith('_'):
             # Exclude 'private' fields
@@ -308,7 +312,7 @@ def get_fields_and_lookups(model, field_path):
 
     opts = model._meta
     prev_field = None
-    for i, part in enumerate(parts):
+    for _, part in enumerate(parts):
         if part == 'pk':
             part = opts.pk.name
         try:
@@ -358,7 +362,10 @@ def validate_all_model_data(*models):
     invalid = {}
     if not models:
         from DBentry.base.models import BaseModel  # avoid circular imports
-        models = [m for m in apps.get_models('DBentry') if issubclass(m, BaseModel)]
+        models = [
+            m for m in apps.get_models('DBentry')
+            if issubclass(m, BaseModel)
+        ]
     for model in models:
         print("Validating %s... " % model._meta.model_name, end='')
         inv = validate_model_data(model)

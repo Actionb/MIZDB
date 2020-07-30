@@ -29,7 +29,8 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase):
     def setUp(self):
         super().setUp()
         self.request = self.get_request()
-        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records]
+        self.ids = [self.original.pk]
+        self.ids += [merge_record.pk for merge_record in self.merge_records]
         self.qs = self.model.objects.filter(pk__in=self.ids)
         # These are the related objects that belong to original:
         self.original_related = {}

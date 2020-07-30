@@ -108,8 +108,9 @@ class BaseM2MModel(BaseModel):
         """
         data = [
             # Collect the string representations of related objects.
-            # getattr(self, fk_field.attname) and fk_field.value_from_object(self)
-            # would only return the primary key of the related object.
+            # getattr(self, fk_field.attname) and
+            # fk_field.value_from_object(self) would only return the primary
+            # key of the related object.
             str(getattr(self, fk_field.name))
             for fk_field in get_model_fields(
                 self._meta.model, base=False, foreign=True, m2m=False
@@ -244,9 +245,11 @@ class ComputedNameModel(BaseModel):
             try:
                 admin.utils.get_fields_from_path(cls, field)
             except exceptions.FieldDoesNotExist:
-                msg = ("name_composing_fields attribute contains unknown "
-                    "field: %s" % field)
-                errors.append(checks.Error(msg,obj=cls.__name__))
+                msg = (
+                    "name_composing_fields attribute contains unknown "
+                    "field: %s" % field
+                )
+                errors.append(checks.Error(msg, obj=cls.__name__))
         return errors
 
     def save(self, update=True, *args, **kwargs):
@@ -279,8 +282,10 @@ class ComputedNameModel(BaseModel):
         """
         Update the _name, if _changed_flag or force_update is True.
 
-        If the update is not aborted, the _changed_flag is always reset to False.
-        Deferring the _name field will avoid an update, unless force_update is True.
+        If the update is not aborted, the _changed_flag is always reset to
+        False. Deferring the _name field will avoid an update, unless
+        force_update is True.
+
         Returns True when the _name was updated.
         """
         deferred = self.get_deferred_fields()

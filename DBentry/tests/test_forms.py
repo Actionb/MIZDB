@@ -408,7 +408,10 @@ class TestAudioForm(ModelFormTestCase):
         form = self.get_form(data={'titel': 'Beep', 'discogs_url': 'notavalidurl'})
         self.assertIn('discogs_url', form.errors)
         self.assertIn('Enter a valid URL.', form.errors['discogs_url'])
-        self.assertIn("Bitte nur Adressen von discogs.com eingeben.", form.errors['discogs_url'])
+        self.assertIn(
+            "Bitte nur Adressen von discogs.com eingeben.",
+            form.errors['discogs_url']
+        )
 
     @translation_override(language=None)
     def test_urls_only_valid_from_discogs(self):

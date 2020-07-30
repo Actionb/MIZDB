@@ -18,9 +18,9 @@ class TestItemHandler(TestCase):
         # Assert that init sets self.regex to a compiled regex.
         regex_type = type(re.compile(''))
         test_data = [
-                ('regex', 'regex was string'),
-                (re.compile('regex'), 'regex was already compiled')
-            ]
+            ('regex', 'regex was string'),
+            (re.compile('regex'), 'regex was already compiled')
+        ]
         for regex, test_info in test_data:
             with self.subTest(info=test_info):
                 handler = ItemHandler(regex=regex)

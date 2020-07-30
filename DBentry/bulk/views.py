@@ -400,7 +400,9 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
 
 class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):
-    """A very basic view containing some text explaining the BulkAusgabe view."""
+    """
+    A very basic view containing some text explaining the BulkAusgabe view.
+    """
 
     template_name = 'admin/help_bulk_ausgabe.html'
     title = "Hilfe: Ausgaben Erstellung"

@@ -77,7 +77,8 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # posted without having request a preview.
         response = self.client.post(self.path, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
-        expected_message = 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.'
+        expected_message = (
+            'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
         self.assertMessageSent(response.wsgi_request, expected_message)
 
     def test_post_preview_in_POST(self):
@@ -186,7 +187,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # Check that a value for 'jahrgang' was added and that the addition
         # was logged correctly.
         self.assertIsNotNone(self.updated.jahrgang)
-        self.assertLoggedChange(self.updated, fields = ['jahrgang'])
+        self.assertLoggedChange(self.updated, fields=['jahrgang'])
 
     @tag('logging')
     def test_save_data_created(self):
@@ -315,7 +316,8 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
             first_preview_request.session.get('old_form_data', {}).items())
         # Convert values from first_preview_data to string so that they match
         # the type of the values in first_preview_initial.
-        self.assertEqual(first_preview_initial, {k:str(v) for k, v in first_preview_data.items()})
+        self.assertEqual(
+            first_preview_initial, {k: str(v) for k, v in first_preview_data.items()})
 
         # User changes data without refreshing the preview, complain about it:
         complain_data = self.valid_data.copy()

@@ -4,9 +4,7 @@ from django.db import transaction
 
 
 def copy_related_set(obj, *paths):
-    """
-    Add the related_objects in 'paths' to an equivalent relation of 'obj'.
-    """
+    """Add the related_objects in 'paths' to an equivalent relation of 'obj'."""
     for path in paths:
         try:
             fields = get_fields_from_path(obj, path)

@@ -94,7 +94,8 @@ def get_changelist_link(model, user, site_name='admin', obj_list=None):
 
 def link_list(request, obj_list, sep=", "):
     """
-    Return links to the change page of each object in 'obj_list', separated by 'sep'.
+    Return links to the change page of each object in 'obj_list', separated by
+    'sep'.
     """
     links = []
     for obj in obj_list:
@@ -104,8 +105,8 @@ def link_list(request, obj_list, sep=", "):
 
 def get_model_admin_for_model(model, *admin_sites):
     """
-    Check the registries of 'admin_sites' for a ModelAdmin that represents 'model'.
-    Return the first ModelAdmin found.
+    Check the registries of 'admin_sites' for a ModelAdmin that represents
+    'model' and return the first ModelAdmin found.
     """
     from DBentry.sites import miz_site
     if isinstance(model, str):
@@ -130,12 +131,13 @@ def has_admin_permission(request, model_admin):
 def resolve_list_display_item(model_admin, item):
     """
     A ModelAdmin's list_display may contain any of the following:
-        name of a model field
-        callable
-        name of a method of model_admin
-        name of a method or attribute of model_admin.model
+        - name of a model field
+        - callable
+        - name of a method of model_admin
+        - name of a method or attribute of model_admin.model
     This helper function takes an item of list_display and returns the first
-    object that matches any of the possiblities given above (or None if no match).
+    object that matches any of the possiblities given above
+    (or None if no match).
     """
     # (used in base.admin as a helper to annotate sortable list_display items)
     try:

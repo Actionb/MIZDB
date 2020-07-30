@@ -94,7 +94,7 @@ class TestModelUtils(MyTestCase):
 
         obj.seitenumfang = 'f'
         obj.beschreibung = 'Beep'
-        self.assertEqual(utils.get_updateable_fields(obj), [ 'zusammenfassung', 'bemerkungen'])
+        self.assertEqual(utils.get_updateable_fields(obj), ['zusammenfassung', 'bemerkungen'])
         obj.zusammenfassung = 'Boop'
         self.assertEqual(utils.get_updateable_fields(obj), ['bemerkungen'])
 
