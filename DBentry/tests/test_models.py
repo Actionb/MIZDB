@@ -1058,7 +1058,6 @@ class TestModelMagazin(DataTestCase):
         )
 
 
-
 class TestModelMemorabilien(DataTestCase):
 
     model = _models.memorabilien

@@ -35,7 +35,7 @@ class TestMIZAdminSite(RequestTestCase):
         # The response's app_list should contain additional 'fake' apps
         # like 'Archivgut' etc:
         request = self.get_request(reverse('admin:index'))
-        response = miz_site.app_index(request, app_label = 'DBentry')
+        response = miz_site.app_index(request, app_label='DBentry')
         app_list = response.context_data['app_list']
         app_names = [d.get('name') for d in app_list if d.get('name')]
         self.assertIn('Archivgut', app_names)

@@ -130,7 +130,7 @@ class TestBaseQuery(QueryTestCase):
             results = query._do_lookup(lookup, 'e_datum', q)
             with self.subTest(lookup=lookup, q=q):
                 self.assertEqual(
-                    sorted([i[0] for i in results]),
+                    sorted(i[0] for i in results),
                     sorted(expected)
                 )
 
@@ -204,7 +204,7 @@ class TestBaseQuery(QueryTestCase):
             ids = []
             for result in search_results:
                 if isinstance(result, tuple):
-                   ids.append(result[0]) 
+                    ids.append(result[0])
                 else:
                     ids.append(result.pk)
             return sorted(ids)
@@ -243,7 +243,7 @@ class TestBaseQuery(QueryTestCase):
         # len(self.model.get_search_fields()) * (iexact,istartswith,icontains)
         q = 'Rose'
         query = self.make_query()
-        with self.assertNumQueries(len(self.model.get_search_fields())*3):
+        with self.assertNumQueries(len(self.model.get_search_fields()) * 3):
             query.search(q)
 
     def test_reorder_results(self):
@@ -277,7 +277,8 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         self.assertEqual(sep, (0, '--------- Beep boop "Test" ---------'))
 
     def test_exact_search(self):
-        # exact_match should stay False if exact_matches for secondary search fields were found
+        # exact_match should stay False if exact_matches for secondary search
+        # fields were found.
         q = 'Rosewood'
         query = self.make_query()
         search_field = 'band_name'
@@ -305,7 +306,7 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
             _models.band, band_name='NoName', band_alias__alias='Roseman')
 
         q = 'Rose'
-        query= self.make_query()
+        query = self.make_query()
         search_results, exact_match = query.search(q)
 
         self.assertEqual(len(search_results), 9)
@@ -406,7 +407,7 @@ class TestNameFieldQuery(TestPrimaryFieldsQuery):
 
     def test_init(self):
         # Set name_field from primary_search_fields or seconary_search_fields
-        self.assertEqual(self.make_query(name_field = '').name_field, 'band_name')
+        self.assertEqual(self.make_query(name_field='').name_field, 'band_name')
         self.assertEqual(self.make_query(primary_search_fields=[]).name_field, 'band_name')
 
 
@@ -414,14 +415,14 @@ class TestValuesDictQuery(TestNameFieldQuery):
 
     query_class = ValuesDictSearchQuery
 
-    def make_query(self, values_dict = None, **kwargs):
+    def make_query(self, values_dict=None, **kwargs):
         query = super().make_query(**kwargs)
         query.values_dict = values_dict
         if values_dict is None:
             if 'queryset' in kwargs:
                 query.values_dict = kwargs['queryset'].values_dict(*query.search_fields)
             else:
-                query.values_dict = self.queryset.values_dict(*query.search_fields) 
+                query.values_dict = self.queryset.values_dict(*query.search_fields)
         return query
 
     def append_suffix(self, query, objs, search_field, lookup):
@@ -475,8 +476,9 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # obj5 = 'More Roses'
         # obj6 = 'Beep', alias = 'Booproses'
         # Check that the results are ordered according to the _search query
-        # Compared to PrimaryFieldsSearchQuery, the order changes a little as we are able to split up the search term and look 
-        # for bits of it in the search_fields
+        # Compared to PrimaryFieldsSearchQuery, the order changes a little as
+        # we are able to split up the search term and look for bits of it in
+        # the search_fields.
         rose_band = _models.band.objects.create(band_name='Rose')
         some_other_band = make(
             _models.band, band_name='Boop', band_alias__alias='Rose')
@@ -486,7 +488,7 @@ class TestValuesDictQuery(TestNameFieldQuery):
             _models.band, band_name="SomethingContainingRoses")
 
         q = 'Rose'
-        query= self.make_query()
+        query = self.make_query()
         search_results, exact_match = query.search(q)
 
         self.assertEqual(len(search_results), 10)
@@ -499,17 +501,20 @@ class TestValuesDictQuery(TestNameFieldQuery):
 
         # No partial primary exact found
 
-        # Then startsw matches + partial startsw matches (which are weighted equally and ordered)
-        # "Guns N' Roses", 'More Roses', 'Rosewood'
+        # Then startsw matches + partial startsw matches
+        # (which are weighted equally and ordered)
+        # => "Guns N' Roses", 'More Roses', 'Rosewood'
         lookup = '__istartswith'
         search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj4, self.obj1, self.obj5], search_field, lookup)
+        expected = self.append_suffix(
+            query, [self.obj4, self.obj1, self.obj5], search_field, lookup)
         self.assertEqual(search_results[1:4], expected)
 
         # Then primary contains matches
         lookup = '__icontains'
         search_field = 'band_name'
-        expected = self.append_suffix(query, [should_have_setup_this_better], search_field, lookup)
+        expected = self.append_suffix(
+            query, [should_have_setup_this_better], search_field, lookup)
         self.assertEqual([search_results[4]], expected)
 
         # Then secondary exact_matches
@@ -538,14 +543,14 @@ class TestValuesDictQuery(TestNameFieldQuery):
         self.assertEqual([search_results[9]], expected)
 
     def test_search_resets_values_dict(self):
-        # Assert that the strategy's values_dict is reset 
+        # Assert that the strategy's values_dict is reset
         query = self.make_query()
-        query.values_dict = {1:'invalid'}
+        query.values_dict = {1: 'invalid'}
         rslt = query.search('rose')
-        self.assertTrue(len(rslt)>1)
+        self.assertTrue(len(rslt) > 1)
 
     def test_num_queries(self):
         q = 'Rose'
-        query = self.make_query(use_separator = False)
+        query = self.make_query(use_separator=False)
         with self.assertNumQueries(1):
             query.search(q)
