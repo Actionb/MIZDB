@@ -56,8 +56,31 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def check(self, **kwargs):
         errors = super().check(**kwargs)
+        errors.extend(self._check_fieldset_fields(**kwargs))
         errors.extend(self._check_search_fields_lookups(**kwargs))
         errors.extend(self._check_list_item_annotations(**kwargs))
+        return errors
+
+    def _check_fieldset_fields(self, **kwargs):
+        """Check for unknown field names in the fieldsets attribute."""
+        if not self.fieldsets:
+            return []
+        errors = []
+        for fieldset in self.fieldsets:
+            fieldset_name, options = fieldset
+            if 'fields' not in options:
+                continue
+            for field in options['fields']:
+                try:
+                    if isinstance(field, (list, tuple)):
+                        for _field in field:
+                            admin.utils.get_fields_from_path(self.model, _field)
+                    else:
+                        admin.utils.get_fields_from_path(self.model, field)
+                except exceptions.FieldDoesNotExist:
+                    msg = "fieldset %s contains unknown field: %s" % (
+                        fieldset_name, field)
+                    errors.append(checks.Error(msg, obj=self))
         return errors
 
     def _check_search_fields_lookups(self, **kwargs):
@@ -212,6 +235,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
         Returns an updated copy of the passed in search_fields list.
         """
+        # TODO: remove _add_pk_search_field? (search forms now have a pk field)
         search_fields = search_fields.copy()
         pk_field = self.model._meta.pk
         for search_field in search_fields:
@@ -421,15 +445,18 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if 'media' in context:
             # Fix jquery load order during the add/change view process. If the
             # ModelAdmin does not have inlines, collapse elements will not work:
-            # django's Fieldsets will include just 'collapse.js' if collapse is in the
-            # fieldset's classes. django's AdminForm then scoops up all the Fieldsets
-            # and merges their media with its own (which may just be nothing).
-            # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...]
-            # with that of the AdminForm. Since merging/sorting is now stable the
-            # result will be [jquery.js, collapse.js, jquery_init.js, ...].
-            # Usually this faulty load order is then later fixed by media mergers on the
-            # inlines which mostly only have [jquery.js, jquery_init.js], but if the
-            # ModelAdmin does not have any inlines, collapse will not work.
+            # django's Fieldsets will include just 'collapse.js' if collapse is
+            # in the fieldset's classes. django's AdminForm then scoops up all
+            # the fieldsets and merges their media with its own (which may just
+            # be nothing).
+            # Finally, this ModelAdmin will merge its media:
+            # [jquery.js, jquery_init.js, ...]
+            # with that of the AdminForm. Since merging/sorting is now stable
+            # the result will be: [jquery.js, collapse.js, jquery_init.js, ...].
+            # Usually this faulty load order is then later fixed by media
+            # mergers on the inlines which mostly only have
+            # [jquery.js, jquery_init.js], but if the ModelAdmin does not have
+            # any inlines, collapse will not work.
             context['media'] = ensure_jquery(context['media'])
         return super().render_change_form(
             request, context, add, change, form_url, obj)

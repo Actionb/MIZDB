@@ -1,4 +1,3 @@
-from unittest import expectedFailure
 from unittest.mock import patch, Mock, PropertyMock
 
 from formtools.wizard.views import SessionWizardView, WizardView
@@ -10,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.test import tag
 from django.utils.translation import override as translation_override
+from django.utils.safestring import SafeText
 from django.urls import reverse
 
 import DBentry.models as _models
@@ -117,26 +117,27 @@ class TestActionConfirmationView(ActionViewTestCase):
         expected = [[get_obj_link(self.obj1, request.user)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
-        a = make(_models.audio, sender=make(_models.sender), band=self.obj1, format__extra=2)
+        a = make(_models.audio, band=self.obj1, format__extra=2)
         view = self.get_view(
             request,
             model_admin=AudioAdmin(_models.audio, miz_site),
             queryset=_models.audio.objects.all()
         )
         view.affected_fields = [
-            'titel', 'sender', 'band__band_name', 'format___name', 'release_id']
+            'titel', 'band__band_name', 'format___name', 'release_id']
         link_list = view.compile_affected_objects()
         # link_list should have a structure like this:
         # [ ['Audio Material: <link>', [<affected objects>]], ]
         self.assertEqual(link_list[0][0], get_obj_link(a, request.user))
         self.assertEqual(link_list[0][1][0], 'Titel: ' + a.titel)
-        self.assertEqual(link_list[0][1][1], get_obj_link(a.sender, request.user))
-        self.assertEqual(link_list[0][1][2], get_obj_link(a.band.first(), request.user))
-        self.assertEqual(
-            link_list[0][1][3], get_obj_link(a.format_set.all()[0], request.user))
-        self.assertEqual(
-            link_list[0][1][4], get_obj_link(a.format_set.all()[1], request.user))
-        self.assertEqual(link_list[0][1][5], 'Release ID (discogs): ---')
+        self.assertEqual(link_list[0][1][1], get_obj_link(a.band.first(), request.user))
+        # Next two items should be the related format objects:
+        expected = sorted([
+            get_obj_link(a.format_set.all()[0], request.user),
+            get_obj_link(a.format_set.all()[1], request.user)
+        ])
+        self.assertEqual(sorted(link_list[0][1][2:4]), expected)
+        self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
     def test_form_valid(self):
         # form_valid should redirect back to the changelist
@@ -403,6 +404,23 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
                 for j, link in enumerate(links, 1):
                     with self.subTest(link_number=str(j)):
                         self.assertIn(link, link_list[i][1])
+
+    @patch("DBentry.actions.views.link_list")
+    def test_build_message(self, mocked_link_list):
+        # Assert that build_message creates a SafeText string.
+        mocked_link_list.return_value = "Beep, Boop"
+        mocked_fkey = Mock()
+        mocked_fkey.name = "whatever"
+        message = self.get_view()._build_message(
+            lagerort_instance="Attic",
+            bestand_instances=[Mock(), Mock()],
+            fkey=mocked_fkey,  # passed to mocked_link_list
+        )
+        self.assertIsInstance(message, SafeText)
+        self.assertEqual(
+            message,
+            "Attic-Bestand zu diesen 2 Ausgaben hinzugefügt: Beep, Boop"
+        )
 
     @tag('logging')
     def test_perform_action(self):
@@ -672,7 +690,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         processed_data = view.process_step(form)
         self.assertIn('updates', processed_data)
         self.assertIn('jahrgang', processed_data['updates'])
-        self.assertListEqualSorted(processed_data['updates']['jahrgang'], ['1', '2'])
+        self.assertEqual(sorted(processed_data['updates']['jahrgang']), ['1', '2'])
         self.assertEqual(view.storage.current_step, '')
 
     @translation_override(language=None)
@@ -694,9 +712,9 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         form_kwargs = view.get_form_kwargs(step='0')
         self.assertIn('choices', form_kwargs)
         formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
-        self.assertListEqualSorted(
-            view.queryset.values_list('pk', flat=True),
-            form_kwargs['choices'][formfield_name].values_list('pk', flat=True)
+        self.assertEqual(
+            sorted(list(view.queryset.values_list('pk', flat=True))),
+            sorted(list(form_kwargs['choices'][formfield_name].values_list('pk', flat=True)))
         )
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
@@ -720,7 +738,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     @translation_override(language=None)
     @patch.object(
-        MergeViewWizarded, 'perform_action',
+        MergeViewWizarded,
+        'perform_action',
         new=mockex(
             models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
     )
@@ -931,7 +950,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         logentry = LogEntry.objects.get(object_id=new_brochure.pk, content_type=ct)
         self.assertEqual(logentry.get_change_message(), expected)
 
-    @expectedFailure  # see the comment in the method
     def test_perform_action_katalog(self):
         options_form_cleaned_data = {'brochure_art': 'katalog'}
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
@@ -940,8 +958,6 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Katalog.objects.count(), 1)
-        # The next line will fail until ModelChanges is merged:
-        # Katalog.art default is 1 instead of 'merch
         self.assertEqual(_models.Katalog.objects.get().art, 'merch')
 
     def test_perform_action_kalendar(self):
@@ -968,7 +984,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
             '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'
-            ' (<a href="/admin/DBentry/ausgabe/?id__in={pk}">Liste</a>)'
+            ' (<a href="/admin/DBentry/ausgabe/?id={pk}">Liste</a>)'
             '. Es wurden keine Broschüren für diese Ausgaben erstellt.'
         ).format(pk=self.obj1.pk, name=str(self.obj1))
         self.assertMessageSent(request, expected_message)

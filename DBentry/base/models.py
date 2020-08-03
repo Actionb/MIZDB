@@ -1,4 +1,5 @@
-from django.core import checks
+from django.contrib import admin
+from django.core import checks, exceptions
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -44,11 +45,6 @@ class BaseModel(models.Model):
 
     objects = MIZQuerySet.as_manager()
 
-    def __init__(self, *args, **kwargs):
-        if self.search_fields_suffixes is None:
-            self.search_fields_suffixes = {}
-        super().__init__(*args, **kwargs)
-
     def __str__(self):
         """
         Return a string representation of this instance.
@@ -89,7 +85,7 @@ class BaseModel(models.Model):
     def get_search_fields(cls, foreign=False, m2m=False):
         """Return the model's fields that are used in searches."""
         if cls.search_fields:
-            return cls.search_fields
+            return list(cls.search_fields)
         return [
             field.name
             for field in get_model_fields(cls, foreign=foreign, m2m=m2m)
@@ -97,6 +93,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        # TODO: add 'view' permission (primarily for SchlagwortAdmin)
         default_permissions = ('add', 'change', 'delete', 'merge')
 
 
@@ -111,8 +108,9 @@ class BaseM2MModel(BaseModel):
         """
         data = [
             # Collect the string representations of related objects.
-            # getattr(self, fk_field.attname) and fk_field.value_from_object(self)
-            # would only return the primary key of the related object.
+            # getattr(self, fk_field.attname) and
+            # fk_field.value_from_object(self) would only return the primary
+            # key of the related object.
             str(getattr(self, fk_field.name))
             for fk_field in get_model_fields(
                 self._meta.model, base=False, foreign=True, m2m=False
@@ -180,6 +178,7 @@ class BaseAliasModel(BaseModel):
     parent = None   # the field that will hold the ForeignKey
 
     class Meta(BaseModel.Meta):
+        ordering = ['alias']
         verbose_name = 'Alias'
         verbose_name = 'Alias'
         abstract = True
@@ -232,12 +231,26 @@ class ComputedNameModel(BaseModel):
 
     @classmethod
     def _check_name_composing_fields(cls, **kwargs):
+        """
+        Check that name_composing_fields is set and does not contain invalid
+        fields.
+        """
         if not cls.name_composing_fields:
             return [checks.Warning(
                 "You must specify the fields that make up the name by "
                 "listing them in name_composing_fields."
             )]
-        return []
+        errors = []
+        for field in cls.name_composing_fields:
+            try:
+                admin.utils.get_fields_from_path(cls, field)
+            except exceptions.FieldDoesNotExist:
+                msg = (
+                    "name_composing_fields attribute contains unknown "
+                    "field: %s" % field
+                )
+                errors.append(checks.Error(msg, obj=cls.__name__))
+        return errors
 
     def save(self, update=True, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -269,8 +282,10 @@ class ComputedNameModel(BaseModel):
         """
         Update the _name, if _changed_flag or force_update is True.
 
-        If the update is not aborted, the _changed_flag is always reset to False.
-        Deferring the _name field will avoid an update, unless force_update is True.
+        If the update is not aborted, the _changed_flag is always reset to
+        False. Deferring the _name field will avoid an update, unless
+        force_update is True.
+
         Returns True when the _name was updated.
         """
         deferred = self.get_deferred_fields()

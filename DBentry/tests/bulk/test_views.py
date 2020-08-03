@@ -77,7 +77,8 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # posted without having request a preview.
         response = self.client.post(self.path, data=self.valid_data)
         self.assertEqual(response.status_code, 200)
-        expected_message = 'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.'
+        expected_message = (
+            'Angaben haben sich geändert. Bitte kontrolliere diese in der Vorschau.')
         self.assertMessageSent(response.wsgi_request, expected_message)
 
     def test_post_preview_in_POST(self):
@@ -100,6 +101,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # Use follow = False to get the redirect response.
         response = self.client.post(self.path, data=data, follow=False)
         self.assertEqual(response.status_code, 302)
+        self.assertIn("admin/DBentry/ausgabe/?id=", response.url)
 
     def test_post_save_and_addanother_preview(self):
         # Assert that after succesful 'add_another' post, the preview with
@@ -109,8 +111,8 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.session['old_form_data'] = data.copy()
         self.session.save()
         response = self.client.post(self.path, data=data)
-#        self.assertMessageSent(response.wsgi_request, 'Ausgaben erstellt:')
-#        self.assertMessageSent(response.wsgi_request, 'Dubletten hinzugefügt:')
+        self.assertMessageSent(response.wsgi_request, 'Ausgaben erstellt:')
+        self.assertMessageSent(response.wsgi_request, 'Dubletten hinzugefügt:')
         self.assertTrue('preview_headers' in response.context)
         self.assertTrue('preview' in response.context)
         self.assertEqual(response.status_code, 200)
@@ -184,10 +186,8 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertLoggedAddition(a, m2m_instance)
         # Check that a value for 'jahrgang' was added and that the addition
         # was logged correctly.
-        # (Note that the 'status' also changes:
-        # from '1' to 'unb'; which mean the same thing)
         self.assertIsNotNone(self.updated.jahrgang)
-        self.assertLoggedChange(self.updated, fields = ['jahrgang', 'status'])
+        self.assertLoggedChange(self.updated, fields=['jahrgang'])
 
     @tag('logging')
     def test_save_data_created(self):
@@ -316,7 +316,8 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
             first_preview_request.session.get('old_form_data', {}).items())
         # Convert values from first_preview_data to string so that they match
         # the type of the values in first_preview_initial.
-        self.assertEqual(first_preview_initial, {k:str(v) for k, v in first_preview_data.items()})
+        self.assertEqual(
+            first_preview_initial, {k: str(v) for k, v in first_preview_data.items()})
 
         # User changes data without refreshing the preview, complain about it:
         complain_data = self.valid_data.copy()
@@ -399,11 +400,11 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
 
         # The user presses _continue and leaves the view successfully;
         # redirected back to the ausgabe changelist filtered to the set of
-        # recently created instances: ?id__in
+        # recently created instances: "?id="
         del continue_data['_preview']
         continue_data['_continue'] = True
         continue_response = self.client.post(self.path, data=continue_data)
         self.assertEqual(continue_response.status_code, 302)
         changelist_url = reverse("admin:DBentry_ausgabe_changelist")
         self.assertTrue(continue_response.url.startswith(changelist_url))
-        self.assertIn('id__in', continue_response.url)
+        self.assertIn('id', continue_response.url)

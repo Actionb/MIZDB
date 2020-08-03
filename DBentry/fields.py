@@ -194,7 +194,7 @@ class ISSNField(StdNumField):
 
 
 class EANField(StdNumField):
-    stdnum = ean  # NOTE: the ean module does not have a 'format' function
+    stdnum = ean  # Note that the ean module does not have a 'format' function
     min_length = 8  # EAN-8
     max_length = 17  # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]

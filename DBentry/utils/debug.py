@@ -13,7 +13,7 @@ def timethis(func, *args, **kwargs):
 
 
 def num_queries(func=None, *args, **kwargs):
-    """Exposes the functionality of assertNumQueries to use outside of tests."""
+    """Expose the functionality of assertNumQueries to use outside of tests."""
     using = kwargs.pop("using", DEFAULT_DB_ALIAS)
     conn = connections[using]
 

@@ -1,0 +1,46 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+        <p>
+        Dieses Formular dient zur schnellen Eingabe vieler Ausgaben.<br>
+        Dabei gilt die Regel, dass allen Ausgaben dasselbe Jahr und derselbe Jahrgang zugewiesen werden. Es ist also nicht möglich, mehrere 'Jahrgänge' auf einmal einzugeben.<br>
+        Liegt allen Ausgaben eine Musik-CD, o.ä. bei, setze den Haken bei dem Feld 'Musik-Beilage'. Ein entsprechender Datensatz wird dann in der Audiotabelle erstellt und mit der jeweiligen Ausgabe verknüpft.
+        </p>
+        <p>
+        Mit den Auswahlfeldern zu Lagerort und Dublettenlagerort kann festgelegt werden, wo diese Ausgaben (und eventuelle Dubletten) gelagert werden.<br>
+        Sollte eine der im Formular angegebenen Ausgaben bereits einen Bestand in der Datenbank haben, so wird automatisch ein Dublettenbestand hinzugefügt und die vorhandene Ausgabe erscheint im Vorschau-Bereich 'Bereits vorhanden'. Bitte kontrolliert die Korrektheit eurer Angaben, sollte dies der Fall sein.
+        </p>
+        <p>Monate bitte als Nummern angeben und Leerzeichen vermeiden!</p>
+        <p>
+        In der Vorschau könnt ihr die resultierenden Ausgaben eurer Angaben überprüfen.<br>
+        <span style="color:red;">WICHTIG</span>: Es wird abgespeichert was in dem Formular steht, nicht was in der Vorschau gezeigt wird! Erstellt ihr eine Vorschau zu einer Reihe von Angaben und ändert dann die Angaben wieder, werden die gespeicherten Ausgaben NICHT der Vorschau entsprechen.<br>
+        Es ist also am besten, immer erst eine Vorschau nach jeder Änderung zu erstellen und danach abzuspeichern!</p>
+        <h3> Erlaubte Zeichen </h3>
+        <p><ul>
+            <li> "," (Trennzeichen)<br>Ein Komma trennt einzelne Gruppierungen von Angaben voneinander: 1,3,6-8 = 1,3,6,7,8</li>
+            <li> "-" (von bis)<br>Das Minus-Zeichen stellt eine Reihe von Angaben dar: 1-4 = 1,2,3,4</li>
+            <li> "/" (einfache Gruppierung)<br>Das Slash-Zeichen weist einer einzelnen Ausgabe mehrere Angaben zu: 1,3,6/7 = 1,3,6 UND 7</li>
+            <li> "*" (mehrfache Gruppierung)<br>Das Sternchen erlaubt Zuweisung mehrerer Angaben zu einer Reihe (Kombination von "-" und "/"): 1-4*2 = 1/2, 3/4 oder 1-6*3 = 1/2/3, 4/5/6</li>
+            </ul></p>
+        <h3> Beispiele </h3>
+        <p>
+            Eine Ausgabe mit der Nummer 6 und den Monaten April und Mai:<br>
+            Nummer-Feld: 6<br>
+            Monat-Feld: 4/5
+        </p>
+        <p>
+            Zwei Ausgaben mit den laufenden Nummern 253 und 255:<br>
+            Laufende Nummer: 253, 255</p>
+        <p>
+            Drei Ausgaben mit Nummern 3 bis 5 und Monaten Januar/Februar und März/April und Mai/Juni:<br>
+            Nummer: 3-5 (oder natürlich auch 3,4,5)<br>        Monat: 1-6*2 (oder auch 1/2, 3/4, 5/6)
+        </p>
+        <p>
+            Ein ganzer Jahrgang von 11 Ausgaben mit Monaten Jan bis Dez, wobei im Juli und August eine zwei-monatige Ausgabe erschienen ist:<br>
+            Monat: 1-6, 7/8, 9-12 (oder auch 1,2,3,4,5,6,7/8,9,10,11,12)
+        </p>
+        <p>
+            Eine jahresübergreifende Ausgabe mit dem Monat Dezember im Jahre 2000 und dem Monat Januar im Jahre 2001:<br>
+            Jahr: 2000,2001 (oder 2000/2001)<br>
+            Monat: 12/1
+        </p>
+{% endblock content %}

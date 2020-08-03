@@ -11,11 +11,12 @@ from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
 
 class AdminSearchFormMixin(object):
     """
-    A mixin for ModelAdmin classes that adds more search options to its changelist.
+    A mixin for ModelAdmin classes that adds more search options to its
+    changelist.
 
     Attributes:
-        - search_form_kwargs (dict): the keyword arguments for searchform_factory
-            to create a search form class with.
+        - search_form_kwargs (dict): the keyword arguments for
+            searchform_factory to create a search form class with.
             These are *not* the arguments for form initialization!
     """
 
@@ -24,10 +25,11 @@ class AdminSearchFormMixin(object):
 
     def has_search_form(self):
         """
-        Return True if a non-empty search form class was created for this instance.
+        Return True if a non-empty search form class was created for this
+        instance.
 
-        A search form class would be empty if the instance's 'search_form_kwargs'
-        did not specify any 'fields'.
+        A search form class would be empty if the instance's
+        'search_form_kwargs' did not specify any 'fields'.
         """
         if isinstance(self.search_form_kwargs, dict):
             return bool(self.search_form_kwargs.get('fields'))
@@ -79,10 +81,11 @@ class AdminSearchFormMixin(object):
                 response.context_data['media'] += self.search_form.media
             else:
                 response.context_data['media'] = self.search_form.media
-        # django's search_form tag adds context items (show_result_count, search_var)
-        # that are also required by the advanced_search_form template. Since the
-        # default tag is not called when an advanced_search_form is available,
-        # we need to add these context items explicitly.
+        # django's search_form tag adds context items
+        # (show_result_count, search_var) that are also required by the
+        # advanced_search_form template. Since the default tag is not called
+        # when an advanced_search_form is available, we need to add these
+        # context items explicitly.
         if 'cl' in response.context_data:
             extra = search_form_tag_context(response.context_data['cl'])
             response.context_data.update(extra)
@@ -103,7 +106,8 @@ class AdminSearchFormMixin(object):
             _, lookups = utils.get_fields_and_lookups(self.model, lookup)
         except (exceptions.FieldDoesNotExist, exceptions.FieldError):
             return False
-        # Remove all lookups from the field_path to end up with just a relational path:
+        # Remove all lookups from the field_path to end up with just a
+        # relational path:
         field_path = search_utils.strip_lookups_from_path(lookup, lookups)
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
@@ -136,14 +140,17 @@ class AdminSearchFormMixin(object):
             django.contrib.admin.templatetags.admin_urls.add_preserved_filters
         to tack on the changelist filters to the redirect url.
         (add_preserved_filters is also used to modify the links of result items)
-        However, add_preserved_filters drops multiple values from a SelectMultiple by
-        calling dict() on a parsed querystring with multiple values:
-            ?_changelist_filters=genre%3D176%26genre%3D594
-            becomes:
-            ?genre=176
-            when it should be:
-            ?genre=176&genre=594
-        To preserve all the filters, we must readd these dropped values to the query string.
+
+        However, add_preserved_filters drops multiple values from a SelectMultiple
+        by calling dict() on a parsed querystring with multiple values:
+            '?_changelist_filters=genre%3D176%26genre%3D594'
+        becomes:
+            '?genre=176'
+        when it should be:
+            '?genre=176&genre=594'
+
+        To preserve all the filters, we must readd these dropped values to the
+        query string.
         """
         # Get the '_changelist_filters' part of the querystring.
         preserved_filters = self.get_preserved_filters(request)

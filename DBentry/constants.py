@@ -6,10 +6,6 @@ ZRAUM_ID = 6
 # ID für den Lagerort, der das Duplettenlager darstellt
 DUPLETTEN_ID = 5
 
-# Model.CharField args
-CF_ARGS = {'max_length': 200}
-CF_ARGS_B = {'max_length': 200, 'blank': True}
-
 # attrs specifications for TextArea Formfield
 ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
 

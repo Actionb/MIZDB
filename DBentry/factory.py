@@ -450,10 +450,6 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         """
         Create a model instance with a related object for each possible relation.
         """
-        # NOTE: is this actually that useful? We are NOT providing values for
-        # base fields of that instance. This is also not covered by tests.
-        # NOTE: check that pre_declarations/post_declaration only contains
-        # relations?
         backup = []
         for name, decl in cls._meta.pre_declarations.as_dict().items():
             if (hasattr(decl, 'required') and not decl.required
@@ -650,12 +646,6 @@ class SchlagwortFactory(MIZModelFactory):
     class Meta:
         model = _models.schlagwort
         django_get_or_create = ['schlagwort']
-
-
-class SpracheFactory(MIZModelFactory):
-    class Meta:
-        model = _models.sprache
-    abk = factory.Faker('language_code')
 
 
 def make(model, **kwargs):

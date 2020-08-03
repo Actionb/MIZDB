@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, F, Count
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
 
 from DBentry import models as _models
@@ -133,7 +134,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
             'lagerort': str(lagerort_instance),
             'count': len(bestand_instances)
         }
-        return base_msg.format(**format_dict)
+        return format_html(base_msg, **format_dict)
 
     def _get_bestand_field(self, model):
         """Return the ForeignKey field from `bestand` to model `model`."""
@@ -336,13 +337,13 @@ class MergeViewWizarded(WizardConfirmationView):
         for other_record_valdict in qs.values(*updateable_fields):
             for k, v in other_record_valdict.items():
                 if v or isinstance(v, bool):
-                    if len(updates[k]) > 0:
-                        # Another value for this field has already been
-                        # found; we have found a conflict.
-                        has_conflict = True
                     # Make v both hashable (for the set) and
                     # serializable (for the session storage).
                     updates[k].add(str(v))
+                    if len(updates[k]) > 1:
+                        # Another value for this field has already been
+                        # found; we have found a conflict.
+                        has_conflict = True
 
         # Sets are not JSON serializable (required for session storage):
         # turn them into lists and remove empty ones.
@@ -455,13 +456,15 @@ class MergeViewWizarded(WizardConfirmationView):
             # The merge could not be completed as there were protected objects
             # in the queryset, all changes were rolled back.
             object_name = 'Objekte'
+            msg_template = ("Folgende verwandte {object_name} verhinderten "
+                "die Zusammenführung: {protected}")
             if e.protected_objects.model._meta.verbose_name_plural:
                 object_name = e.protected_objects.model._meta.verbose_name_plural
             self.model_admin.message_user(
                 request=self.request,
                 level=messages.ERROR,
-                message="Folgende verwandte {object_name} verhinderten "
-                "die Zusammenführung: {protected}".format(
+                message=format_html(
+                    msg_template,
                     object_name=object_name,
                     protected=link_list(self.request, e.protected_objects)
                 )
@@ -553,11 +556,15 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 .order_by('magazin')
         )
         if ausgaben_with_artikel.exists():
+            msg_template = (
+                'Aktion abgebrochen: Folgende Ausgaben besitzen '
+                'Artikel, die nicht verschoben werden können: {} ({})'
+            )
             view.model_admin.message_user(
                 request=view.request,
                 level=messages.ERROR,
-                message="Aktion abgebrochen: Folgende Ausgaben besitzen "
-                "Artikel, die nicht verschoben werden können: {} ({})".format(
+                message= format_html(
+                    msg_template,
                     link_list(view.request, ausgaben_with_artikel),
                     get_changelist_link(
                         model=_models.ausgabe,
@@ -641,12 +648,16 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 self.log_deletion(ausgabe_instance)
 
         if protected_ausg:
+            msg_template = (
+                "Folgende Ausgaben konnten nicht gelöscht werden: "
+                "{obj_links} ({cl_link}). Es wurden keine Broschüren für "
+                "diese Ausgaben erstellt."
+            )
             self.model_admin.message_user(
                 request=self.request,
                 level=messages.ERROR,
-                message="Folgende Ausgaben konnten nicht gelöscht werden: "
-                "{obj_links} ({cl_link}). Es wurden keine Broschüren für "
-                "diese Ausgaben erstellt.".format(
+                message=format_html(
+                    msg_template,
                     obj_links=link_list(self.request, protected_ausg),
                     cl_link=get_changelist_link(
                         model=_models.ausgabe,
@@ -668,7 +679,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 self.model_admin.message_user(
                     request=self.request,
                     level=messages.ERROR,
-                    message="Magazin konnte nicht gelöscht werden: {}".format(
+                    message=format_html(
+                        "Magazin konnte nicht gelöscht werden: {}",
                         get_obj_link(
                             obj=self.magazin_instance,
                             user=self.request.user,

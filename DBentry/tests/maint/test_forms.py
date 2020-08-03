@@ -20,7 +20,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         # Get the group
         self.assertEqual(
             len(reverse), 1,
-            msg = "There should be only reverse dupe fields group for musiker."
+            msg="There should be only reverse dupe fields group for musiker."
         )
         musiker_alias_group = reverse[0]
         self.assertIsInstance(musiker_alias_group, (list, tuple))
@@ -28,22 +28,22 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         # Get the group's name and choices
         self.assertEqual(
             len(musiker_alias_group), 2,
-            msg = "Should have group name and group choices."
+            msg="Should have group name and group choices."
         )
         group_name, group_choices = musiker_alias_group
-        self.assertIsInstance(group_name, str, msg = "Should be the group name.")
+        self.assertIsInstance(group_name, str, msg="Should be the group name.")
         self.assertIsInstance(group_choices, (list, tuple))
 
         # Get the choice's label and id
         self.assertEqual(
             len(group_choices), 1,
-            msg = "Should only contain one tuple of choices."
+            msg="Should only contain one tuple of choices."
         )
         choice = group_choices[0]
         self.assertIsInstance(choice, (list, tuple))
-        self.assertEqual(len(choice), 2, msg = "Should be a two-tuple with label, id.")
-        self.assertIsInstance(choice[0], str, msg = "Should be choice label.")
-        self.assertIsInstance(choice[1], str, msg = "Should be choice id.")
+        self.assertEqual(len(choice), 2, msg="Should be a two-tuple with label, id.")
+        self.assertIsInstance(choice[0], str, msg="Should be choice label.")
+        self.assertIsInstance(choice[1], str, msg="Should be choice id.")
 
     def test_get_dupefields_excludes_reverse_fk_field(self):
         # Assert that the reverse choices do not contain the ForeignKey field

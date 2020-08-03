@@ -1,5 +1,5 @@
 {% extends 'admin/base_site.html' %}
-{% load i18n static object_tools %}
+{% load i18n static %}
 
 {% block extrahead %}
 <!-- Extrahead -->
@@ -13,9 +13,7 @@
 
 <!-- Help -->
 {% block object-tools %}
-    <ul class="object-tools">
-        {% help_link %}
-    </ul>
+    <ul class="object-tools"><li><a href="{% url 'help_bulk_ausgabe' %}" target="_blank">Hilfe</a></li></ul>
 {% endblock object-tools %}
 
 <!-- Form -->
@@ -30,7 +28,7 @@
 
 {% block preview %}
  {% if preview %}
-        <div class="preview module aligned">
+        <div class="module aligned" style="padding-top: 30px;">
         <h2 class="fieldset-name">Vorschau</h2>
         <table id="preview_list">
             <thead>

@@ -1,27 +1,16 @@
 from unittest import mock
 
 from django import forms
-from django.urls import reverse
 
 from DBentry.base.views import OptionalFormView, FixedSessionWizardView
 from DBentry.tests.base import MyTestCase, ViewTestCase
-from DBentry.views import MIZ_permission_denied_view, FavoritenView
+from DBentry.views import MIZ_permission_denied_view
 
 
 class TestOptionalFormView(ViewTestCase):
 
-    class DummyView(OptionalFormView):
-
-        def get_template_names(self, *args, **kwargs):
-            # So that we do not have to specify a template_name for render_to_response (from form_invalid(form))
-            return
-
-
-    class DummyForm(forms.Form):
-        foo = forms.CharField()
-
-    view_class = DummyView
-    form_class = DummyForm
+    view_class = OptionalFormView
+    form_class = forms.Form
 
     def test_get_form(self):
         # OptionalFormView should return a form of the given form_class
@@ -36,52 +25,39 @@ class TestOptionalFormView(ViewTestCase):
         # Pass a dummy form_class to get_form(), it should still prioritize being optional
         self.assertIsNone(view.get_form(self.form_class))
 
-    def test_post(self):
-        # If view.form_class is None, post should treat the form as optional and return form_valid(form) (as per default).
+    @mock.patch.object(OptionalFormView, 'form_valid')
+    @mock.patch.object(OptionalFormView, 'form_invalid')
+    def test_post_no_form_class(self, mocked_invalid, mocked_valid):
+        # If view.form_class is None, post should treat the form as optional
+        # and call form_valid().
         request = self.post_request()
-        view = self.get_view(request, success_url='Test')
+        view = self.get_view(request)
         self.assertIsNone(view.get_form_class())
-        response = view.post(request)
-        self.assertEqual(response.status_code, 302)  # default response is a redirect to the success_url
-        self.assertEqual(response.url, 'Test')
+        view.post(request)
+        self.assertTrue(mocked_valid.called)
 
-        # If view.form_class is not None, and...
+    @mock.patch.object(OptionalFormView, 'form_valid')
+    @mock.patch.object(OptionalFormView, 'form_invalid')
+    def test_post_form_valid(self, mocked_invalid, mocked_valid):
+        # Assert that post calls form_valid if a form_class is set and the form
+        # is valid.
+        # A form without any fields + any data = bound empty form => form valid.
+        request = self.post_request(data={'foo': 'bar'})
+        view = self.get_view(request, form_class=self.form_class)
+        view.post(request)
+        self.assertTrue(mocked_valid.called)
 
-        # the form is valid, post should return form_valid(form)
-        request = self.post_request(data={'foo': 'bar'})  # will make a form without any fields count as 'bound' and therefor as valid
-        view = self.get_view(request, success_url='Test', form_class=self.form_class)
-        response = view.post(request)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, 'Test')
-
-        # the form is invalid, post should return form_invalid(form)
-        request = self.post_request()  # no data for the form means it is not bound, and thus not valid
-        view = self.get_view(request, success_url='Test', form_class=self.form_class)
-        response = view.post(request)
-        self.assertEqual(response.status_code, 200)  # no redirect to the success_url
-
-
-class TestFavoritenView(ViewTestCase):
-
-    view_class = FavoritenView
-    path = reverse("favoriten")
-
-    def test_get_success_url(self):
-        request = self.get_request()
-        view = self.get_view(request)
-        self.assertEqual(view.get_success_url(), '')
-
-    def test_get_object(self):
-        # Test that get_object creates a new entry in the Favoriten table if necessary
-        request = self.get_request()
-        view = self.get_view(request)
-        view.model.objects.filter(user=request.user).delete()  # delete any remnants
-
-        new_entry = view.get_object()  # user has no Favoriten yet, create an entry in Favoriten
-        self.assertEqual(new_entry.user, self.super_user)
-        self.assertTrue(view.model.objects.filter(user=request.user).exists())
-
-        self.assertEqual(view.get_object(), new_entry)  # direct access to Favoriten via queryset
+    @mock.patch.object(OptionalFormView, 'form_valid')
+    @mock.patch.object(OptionalFormView, 'form_invalid')
+    def test_post_form_invalid(self, mocked_invalid, mocked_valid):
+        # Assert that post calls form_invalid if the form is not valid and
+        # get_form() is not None.
+        form_class = type('Form', (forms.Form, ), {'foo': forms.CharField()})
+        # no data for the form:
+        request = self.post_request()
+        view = self.get_view(request, form_class=form_class)
+        view.post(request)
+        self.assertTrue(mocked_invalid.called)
 
 
 class TestPermissionDeniedView(MyTestCase):

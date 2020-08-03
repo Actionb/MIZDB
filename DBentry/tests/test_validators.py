@@ -79,4 +79,5 @@ class TestDiscogsURLValidator(MyTestCase):
 
     def test_discogs_url_without_slug(self):
         with self.assertNotRaises(ValidationError):
-            self.validator('https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181')
+            self.validator(
+                'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181')

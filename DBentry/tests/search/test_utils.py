@@ -10,15 +10,21 @@ class TestUtils(MyTestCase):
     def test_get_dbfield_from_path(self):
         func = utils.get_dbfield_from_path
         test_data = [
-            (_models.ausgabe, 'ausgabe_monat__monat__monat__contains',
-            (_models.monat._meta.get_field('monat'), ['contains'])),
-            (_models.ausgabe, 'e_datum__year__gte',
-            (_models.ausgabe._meta.get_field('e_datum'), ['year', 'gte'])),
-            (_models.artikel, 'seite__gt',
-            (_models.artikel._meta.get_field('seite'), ['gt']))
+            (
+                _models.ausgabe, 'ausgabe_monat__monat__monat__contains',
+                (_models.monat._meta.get_field('monat'), ['contains'])
+            ),
+            (
+                _models.ausgabe, 'e_datum__year__gte',
+                (_models.ausgabe._meta.get_field('e_datum'), ['year', 'gte'])
+            ),
+            (
+                _models.artikel, 'seite__gt',
+                (_models.artikel._meta.get_field('seite'), ['gt'])
+            )
         ]
         for model, path, expected in test_data:
-            with self.subTest(path = path):
+            with self.subTest(path=path):
                 self.assertEqual(func(model, path), expected)
 
     def test_get_dbfield_from_path_returns_concrete_field(self):

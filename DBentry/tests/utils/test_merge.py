@@ -29,7 +29,8 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase):
     def setUp(self):
         super().setUp()
         self.request = self.get_request()
-        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records]
+        self.ids = [self.original.pk]
+        self.ids += [merge_record.pk for merge_record in self.merge_records]
         self.qs = self.model.objects.filter(pk__in=self.ids)
         # These are the related objects that belong to original:
         self.original_related = {}
@@ -425,14 +426,6 @@ class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):
 class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
     model = _models.genre
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = make(cls.model, genre='Original')
-        cls.obj2 = make(cls.model, genre='Merger1', ober=cls.obj1)
-        cls.obj3 = make(cls.model, genre='Merger2')
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
-        super().setUpTestData()
-
 
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
     model = _models.schlagwort
@@ -482,7 +475,6 @@ class VideoMergingDataMixin(object):
             cls.model, titel='Original', tracks=3, band__extra=1,
             musiker__extra=1, bestand__extra=1,
         )
-        cls.sender_original = obj1.sender
         cls.band_original = obj1.band.get()
         cls.musiker_original = obj1.musiker.get()
         cls.bestand_original = obj1.bestand_set.get()
@@ -492,7 +484,6 @@ class VideoMergingDataMixin(object):
             cls.model, titel='Merger1', tracks=3, band__extra=1,
             musiker__extra=1, bestand__extra=1,
         )
-        cls.sender_merger1 = obj2.sender
         cls.band_merger1 = obj2.band.get()
         cls.musiker_merger1 = obj2.musiker.get()
         cls.bestand_merger1 = obj2.bestand_set.get()
@@ -503,7 +494,6 @@ class VideoMergingDataMixin(object):
             musiker__extra=1, bestand__extra=1,
             beschreibung='Hello!'
         )
-        cls.sender_merger2 = obj3.sender
         cls.band_merger2 = obj3.band.get()
         cls.musiker_merger2 = obj3.musiker.get()
         cls.bestand_merger2 = obj3.bestand_set.get()
@@ -525,7 +515,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
             request=self.request
         )
         self.assertEqual(new_original, self.obj1)
-        self.assertEqual(self.obj1.sender, self.sender_original)
         self.assertEqual(new_original.titel, 'Original')
         self.assertEqual(new_original.tracks, 3)
         self.assertEqual(new_original.beschreibung, 'Hello!')
@@ -539,7 +528,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
             request=self.request
         )
         self.assertEqual(new_original, self.obj1)
-        self.assertEqual(self.obj1.sender, self.sender_original)
         self.assertEqual(new_original.titel, 'Original')
         self.assertEqual(new_original.tracks, 3)
         self.assertNotEqual(new_original.beschreibung, 'Hello!')

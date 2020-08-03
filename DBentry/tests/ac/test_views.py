@@ -460,13 +460,13 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.person
     has_alias = False
-    raw_data = [{'beschreibung': 'Klingt komisch, ist aber so', 'bemerkungen': 'Abschalten!'}]
+    raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.autor
     # 'beschreibung' is a search_field and needs some data!
-    raw_data = [{'beschreibung': 'ABC'}, {'beschreibung': 'DEF'}, {'beschreibung': 'GHI'}]
+    raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
 
 
@@ -476,32 +476,22 @@ class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     raw_data = [
         {
             'musiker_alias__alias': 'John',
-            'person__nachname': 'James',
-            'beschreibung': 'Description'
+            'beschreibung': 'Description',
+            'bemerkungen': 'Stuff'
         }
     ]
 
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.land
-    raw_data = [{'land_alias__alias': 'Dschland'}]
-    alias_accessor_name = 'land_alias_set'
+    raw_data = [{'land_name': 'Dschland', 'code': 'DE'}]
+    has_alias = False
 
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.instrument
-    raw_data = [
-        {'instrument_alias__alias': 'Klavier'},
-        {'instrument_alias__alias': 'Laute Tröte'},
-        {'instrument_alias__alias': 'Hau Drauf'},
-    ]
-    alias_accessor_name = 'instrument_alias_set'
-
-
-class TestACSender(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.sender
-    alias_accessor_name = 'sender_alias_set'
-    raw_data = [{'sender_alias__alias': 'AliasSender'}]
+    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
+    has_alias = False
 
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
@@ -509,7 +499,8 @@ class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'spielort_alias_set'
     raw_data = [{
         'spielort_alias__alias': 'AliasSpielort',
-        'beschreibung': "If it beeps like a boop, it's probably a test."
+        'beschreibung': "If it beeps like a boop, it's probably a test.",
+        'bemerkungen': 'Stuff and Things.'
     }]
 
 
@@ -518,7 +509,8 @@ class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     alias_accessor_name = 'veranstaltung_alias_set'
     raw_data = [{
         'veranstaltung_alias__alias': 'AliasVeranstaltung',
-        'beschreibung': "If it beeps like a boop, it's probably a test."
+        'beschreibung': "If it beeps like a boop, it's probably a test.",
+        'bemerkungen': 'Stuff and Things.'
     }]
 
 
@@ -551,63 +543,11 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.genre
     alias_accessor_name = 'genre_alias_set'
-    raw_data = [
-        {
-            'genre_alias__alias': 'Beep',
-            'sub_genres__extra': 1,
-            'ober__genre': 'Obergenre'
-        }
-    ]
-
-    def test_apply_q_favorites(self):
-        request = self.get_request()
-        view = self.get_view(request=request)
-
-        result = view.apply_q(self.queryset)
-        # If the user has no favorites, it should return the untouched queryset
-        self.assertEqual(list(result), list(self.queryset))
-
-        # Create a favorite for the user
-        fav = _models.Favoriten.objects.create(user=request.user)
-        fav.fav_genres.add(self.obj1)
-        # Create an object that should be displayed as the first in the results
-        # following default ordering.
-        make(self.model, genre='A')
-
-        # self.obj1 will show up twice in an unfiltered result; once as part of
-        # favorites and then as part of the qs.
-        result = view.apply_q(self.model.objects.all())
-        self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
+    raw_data = [{'genre_alias__alias': 'Beep'}]
 
 
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.schlagwort
     alias_accessor_name = 'schlagwort_alias_set'
-    raw_data = [
-        {
-            'unterbegriffe__extra': 1,
-            'ober__schlagwort': 'Oberbegriff',
-            'schlagwort_alias__alias': 'AliasSchlagwort'
-        }
-    ]
-
-    def test_apply_q_favorites(self):
-        request = self.get_request()
-        view = self.get_view(request=request)
-
-        result = view.apply_q(self.queryset)
-        # If the user has no favorites, it should return the untouched queryset
-        self.assertEqual(list(result), list(self.queryset))
-
-        # Create a favorite for the user
-        fav = _models.Favoriten.objects.create(user=request.user)
-        fav.fav_schl.add(self.obj1)
-        # Create an object that should be displayed as the first in the results
-        # following default ordering.
-        make(self.model, schlagwort='A')
-
-        # self.obj1 will show up twice in an unfiltered result; once as part of
-        # favorites and then as part of the qs.
-        result = view.apply_q(self.model.objects.all())
-        self.assertEqual(list(result), [self.obj1] + list(self.model.objects.all()))
+    raw_data = [{'schlagwort_alias__alias': 'AliasSchlagwort'}]

@@ -47,7 +47,7 @@ class BaseSearchQuery(object):
         Remove whitespaces from string 's' and prepare it for caseless
         comparison.
         """
-        return str(s).strip().casefold()
+        return str(s).strip().lower()
 
     def clean_q(self, q, field_name):
         """

@@ -101,7 +101,7 @@ class DuplicateModelSelectView(MaintViewMixin, ModelSelectView):
     redirects to the DuplicateObjectsView.
     """
 
-    site_title = 'Duplikate finden'
+    title = 'Duplikate finden'
     next_view = 'dupes'
 
 
@@ -243,14 +243,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                 for instance in dupe.instances
             ]
             # Add a link to the changelist page of this group.
-            # TODO: use utils.get_changelist_link?
-            view_name = 'admin:{}_{}_changelist'.format(
-                self.opts.app_label, self.opts.model_name
-            )
-            cl_url = reverse(view_name)
-            cl_url += '?id={}'.format(
-                ",".join([str(instance.pk) for instance in dupe.instances])
-            )
+            cl_url = utils.get_changelist_url(
+                self.model, self.request.user, obj_list=dupe.instances)
             items.append((dupe_item, cl_url))
         return items
 
@@ -268,7 +262,7 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
 
     form_class = UnusedObjectsForm
     template_name = 'admin/find_unused.html'
-    breadcrumbs_title = site_title = 'Selten verwendete Datensätze finden'
+    breadcrumbs_title = title = 'Selten verwendete Datensätze finden'
 
     def get(self, request, *args, **kwargs):
         """Handle the request to find unused objects."""
@@ -322,8 +316,6 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
                 # A reverse m2o relation.
                 query_name = rel.name
                 related_model = rel.related_model
-            if related_model._meta.model_name == 'favoriten':
-                continue
 
             # For this relation, get objects that do not exceed the limit.
             qs = model.objects.order_by().annotate(

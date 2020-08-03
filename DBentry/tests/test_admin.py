@@ -253,16 +253,16 @@ class TestMIZModelAdmin(AdminTestCase):
             Permission.objects.get(codename=codename))
         self.assertFalse(
             self.model_admin.has_merge_permission(
-                request=self.get_request(user=self.noperms_user)
-        ))
+                request=self.get_request(user=self.noperms_user))
+        )
         self.assertTrue(
             self.model_admin.has_merge_permission(
-                request=self.get_request(user=self.staff_user)
-        ))
+                request=self.get_request(user=self.staff_user))
+        )
         self.assertTrue(
             self.model_admin.has_merge_permission(
-                request=self.get_request(user=self.super_user)
-        ))
+                request=self.get_request(user=self.super_user))
+        )
 
     def test_has_alter_bestand_permission(self):
         # Note: _models.datei._meta doesn't set 'alter_bestand_datei' permission
@@ -272,16 +272,16 @@ class TestMIZModelAdmin(AdminTestCase):
             Permission.objects.get(codename=codename))
         self.assertFalse(
             model_admin.has_alter_bestand_permission(
-                request=self.get_request(user=self.noperms_user)
-        ))
+                request=self.get_request(user=self.noperms_user))
+        )
         self.assertTrue(
             model_admin.has_alter_bestand_permission(
-                request=self.get_request(user=self.staff_user)
-        ))
+                request=self.get_request(user=self.staff_user))
+        )
         self.assertTrue(
             model_admin.has_alter_bestand_permission(
-                request=self.get_request(user=self.super_user)
-        ))
+                request=self.get_request(user=self.super_user))
+        )
 
     def test_add_extra_context(self):
         # No object_id passed in: add_crosslinks should not be called.
@@ -505,16 +505,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_monat_string(self):
         self.assertEqual(self.model_admin.monat_string(self.obj1), 'Jan, Feb')
 
-    def test_zbestand(self):
-        self.assertTrue(self.model_admin.zbestand(self.obj1))
-        self.obj1.bestand_set.all().delete()
-        self.assertFalse(self.model_admin.zbestand(self.obj1))
-
-    def test_dbestand(self):
-        self.assertTrue(self.model_admin.dbestand(self.obj1))
-        self.obj1.bestand_set.all().delete()
-        self.assertFalse(self.model_admin.dbestand(self.obj1))
-
     def test_add_crosslinks_custom(self):
         obj = make(
             _models.ausgabe,
@@ -538,16 +528,13 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         }
         self.assertInCrosslinks(expected, links)
 
-        _related_name = _models.ausgabe.artikel_set.rel.related_name
-        # WARNING: dangerous operation, the change persists beyond the test!:
-        _models.ausgabe.artikel_set.rel.related_name = 'Boop beep'
-        links = self.get_crosslinks(obj)
-        expected = {
-            'model_name': 'artikel', 'fld_name': 'ausgabe',
-            'label': 'Boop Beep (1)', 'pk': str(obj.pk)
-        }  # Note the capitalization of each starting letter!
-        self.assertInCrosslinks(expected, links)
-        _models.ausgabe.artikel_set.rel.related_name = _related_name
+        with patch.object(_models.ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
+            links = self.get_crosslinks(obj)
+            expected = {
+                'model_name': 'artikel', 'fld_name': 'ausgabe',
+                'label': 'Boop Beep (1)', 'pk': str(obj.pk)
+            }  # Note the capitalization of each starting letter!
+            self.assertInCrosslinks(expected, links)
 
         obj.artikel_set.all().delete()
         self.assertFalse(self.get_crosslinks(obj))
@@ -586,8 +573,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.magazin
     exclude_expected = ['genre', 'verlag', 'herausgeber']
     fields_expected = [
-        'magazin_name', 'erstausgabe', 'turnus', 'magazin_url',
-        'ausgaben_merkmal', 'fanzine', 'issn',
+        'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
         'beschreibung', 'bemerkungen', 'ort',
     ]
 
@@ -622,7 +608,6 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     crosslinks_expected = [
         {'model_name': 'video', 'fld_name': 'person', 'label': 'Video Materialien (1)'},
         {'model_name': 'veranstaltung', 'fld_name': 'person', 'label': 'Veranstaltungen (1)'},
-        {'model_name': 'herausgeber', 'fld_name': 'person', 'label': 'Herausgeber (1)'},
         {'model_name': 'datei', 'fld_name': 'person', 'label': 'Dateien (1)'},
         {'model_name': 'artikel', 'fld_name': 'person', 'label': 'Artikel (1)'},
         {'model_name': 'autor', 'fld_name': 'person', 'label': 'Autoren (1)'},
@@ -702,15 +687,12 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.GenreAdmin
     model = _models.genre
-    test_data_count = 1
-    fields_expected = ['genre', 'ober']
+    fields_expected = ['genre']
 
     raw_data = [
-        {'genre': 'Topobject'},
         {
             'genre': 'Subobject',
             'genre_alias__alias': ['Alias1', 'Alias2'],
-            'ober__genre': 'Topobject'
         }
     ]
 
@@ -721,7 +703,6 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'bildmaterial', 'fld_name': 'genre', 'label': 'Bild Materialien (1)'},
         {'model_name': 'buch', 'fld_name': 'genre', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'genre', 'label': 'Dateien (1)'},
-        {'model_name': 'genre', 'fld_name': 'ober',  'label': 'Sub Genres (1)'},
         {'model_name': 'magazin', 'fld_name': 'genre', 'label': 'Magazine (1)'},
         {'model_name': 'dokument', 'fld_name': 'genre', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'genre', 'label': 'Memorabilien (1)'},
@@ -731,55 +712,20 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'video', 'fld_name': 'genre', 'label': 'Video Materialien (1)'},
     ]
 
-    def test_search_finds_alias(self):
-        # check if an object can be found via its alias
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertIn(self.obj2, result)
-
-    def test_search_for_sub_finds_top(self):
-        # check if a search for a subobject finds its topobject
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertIn(self.obj1, result)
-
-    def test_search_for_top_not_finds_sub(self):
-        # check if a search for a topobject does not find its subobjects
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Topobject')
-        self.assertNotIn(self.obj2, result)
-
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj2), 'Alias1, Alias2')
-
-    def test_ober_string(self):
-        self.assertEqual(self.model_admin.ober_string(self.obj1), '')
-        self.assertEqual(self.model_admin.ober_string(self.obj2), 'Topobject')
-
-    def test_sub_string(self):
-        self.assertEqual(self.model_admin.sub_string(self.obj1), 'Subobject')
-        self.assertEqual(self.model_admin.sub_string(self.obj2), '')
-
-    def test_get_search_fields(self):
-        # genre/schlagwort admin removes the search field that results in all
-        # subobjects of a topobject being present in a search for topobject.
-        # This would be useful for dal, but not for searches on the changelist
-        super().test_get_search_fields()
-        self.assertNotIn('ober__genre', self.model_admin.get_search_fields())
+        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
 
 
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.schlagwort
-    fields_expected = ['schlagwort', 'ober']
+    fields_expected = ['schlagwort']
 
     raw_data = [
-        {'schlagwort': 'Topobject'},
         {
             'schlagwort': 'Subobject',
             'schlagwort_alias__alias': ['Alias1', 'Alias2'],
-            'ober__schlagwort': 'Topobject'
         }
     ]
 
@@ -790,7 +736,6 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'brochure', 'fld_name': 'schlagwort', 'label': 'Broschüren (1)'},
         {'model_name': 'buch', 'fld_name': 'schlagwort', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'schlagwort', 'label': 'Dateien (1)'},
-        {'model_name': 'schlagwort', 'fld_name': 'ober', 'label': 'Unterbegriffe (1)'},
         {'model_name': 'dokument', 'fld_name': 'schlagwort', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'schlagwort', 'label': 'Memorabilien (1)'},
         {'model_name': 'technik', 'fld_name': 'schlagwort', 'label': 'Technik (1)'},
@@ -798,41 +743,8 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'video', 'fld_name': 'schlagwort', 'label': 'Video Materialien (1)'},
     ]
 
-    def test_search_finds_alias(self):
-        # check if an object can be found via its alias
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Alias1')
-        self.assertIn(self.obj2, result)
-
-    def test_search_for_sub_finds_top(self):
-        # check if a search for a subobject finds its topobject
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Subobject')
-        self.assertIn(self.obj1, result)
-
-    def test_search_for_top_not_finds_sub(self):
-        # check if a search for a topobject does not find its subobjects
-        result, use_distinct = self.model_admin.get_search_results(
-            request=None, queryset=self.queryset, search_term='Topobject')
-        self.assertNotIn(self.obj2, result)
-
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj2), 'Alias1, Alias2')
-
-    def test_ober_string(self):
-        self.assertEqual(self.model_admin.ober_string(self.obj1), '')
-        self.assertEqual(self.model_admin.ober_string(self.obj2), 'Topobject')
-
-    def test_sub_string(self):
-        self.assertEqual(self.model_admin.sub_string(self.obj1), 'Subobject')
-        self.assertEqual(self.model_admin.sub_string(self.obj2), '')
-
-    def test_get_search_fields(self):
-        # genre/schlagwort admin removes the search field that results in all
-        # subobjects of a topobject being present in a search for topobject.
-        # This would be useful for dal, but not for searches on the changelist
-        super().test_get_search_fields()
-        self.assertNotIn('ober__schlagwort', self.model_admin.get_search_fields())
+        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
 
 
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -954,8 +866,7 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
 
     crosslinks_expected = [
-        {'model_name': 'ort', 'fld_name': 'bland', 'label': 'Orte (1)'},
-        {'model_name': 'kreis', 'fld_name': 'bland', 'label': 'Kreise (1)'}
+        {'model_name': 'ort', 'fld_name': 'bland', 'label': 'Orte (1)'}
     ]
 
 
@@ -980,10 +891,10 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'spielort', 'veranstaltung', 'ort'
     ]
     # Note that AudioAdmin specifies a fieldsets attribute, overriding
-    # (and removing catalog_nr) the fields for the form that way.
+    # (and removing catalog_nr) the fields for the form that way
     fields_expected = [
         'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
-        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'sender'
+        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen'
     ]
     raw_data = [
         {
@@ -1061,13 +972,13 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BuchAdmin
     model = _models.buch
     exclude_expected = [
-        'herausgeber', 'autor', 'genre', 'schlagwort', 'person', 'band',
+        'herausgeber', 'verlag', 'autor', 'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
     ]
     fields_expected = [
         'titel', 'titel_orig', 'seitenumfang', 'jahr', 'jahr_orig', 'auflage',
         'EAN', 'ISBN', 'is_buchband', 'beschreibung', 'bemerkungen',
-        'schriftenreihe', 'buchband', 'verlag', 'sprache',
+        'schriftenreihe', 'buchband', 'sprache',
     ]
 
     crosslinks_expected = [
@@ -1080,7 +991,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         p2 = make(_models.person, vorname='Bob', nachname='Mantest')
         cls.obj1 = make(
             cls.model,
-            autor__person=[p1, p2], herausgeber__person=[p1, p2],
+            autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
             genre__genre=['Testgenre1', 'Testgenre2']
         )
@@ -1161,7 +1072,7 @@ class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     ]
     exclude_expected = ['genre', 'schlagwort']
     search_fields_expected = [
-        'titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
+        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
 
 
 class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
@@ -1173,8 +1084,7 @@ class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
     ]
     exclude_expected = ['genre']
     search_fields_expected = [
-        'titel', 'zusammenfassung', 'bemerkungen', 'beschreibung',
-        'art', 'pk__pk__iexact'
+        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact'
     ]
 
     def test_get_fieldsets(self):
@@ -1197,7 +1107,7 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
     search_fields_expected = [
-        'titel', 'zusammenfassung', 'bemerkungen', 'beschreibung', 'pk__pk__iexact']
+        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1237,27 +1147,17 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.video
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung',
-        'bemerkungen', 'sender'
-    ]
+        'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
     exclude_expected = [
-        'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort',
-        'veranstaltung'
-    ]
-
-
-class TestKreisAdmin(AdminTestMethodsMixin, AdminTestCase):
-    model_admin_class = _admin.KreisAdmin
-    model = _models.kreis
-    fields_expected = ['name', 'bland']
+        'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung']
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.bestand
     fields_expected = [
-        'bestand_art',  'lagerort',  'provenienz',  'audio',  'ausgabe',  'bildmaterial',
-        'brochure',  'buch',  'dokument',  'memorabilien',  'technik',  'video'
+        'bestand_art', 'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
+        'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
 
 
@@ -1265,9 +1165,7 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
     model = _models.datei
     fields_expected = [
-        'titel', 'media_typ', 'datei_pfad', 'beschreibung', 'bemerkungen',
-        'quelle', 'sender', 'provenienz'
-    ]
+        'titel', 'media_typ', 'datei_pfad', 'beschreibung', 'bemerkungen', 'provenienz']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
@@ -1277,7 +1175,7 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
-    fields_expected = ['person', 'organisation']
+    fields_expected = ['herausgeber']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'},
@@ -1296,8 +1194,8 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         'bemerkungen', 'reihe', 'copy_related'
     ]
     exclude_expected = [
-        'genre',  'schlagwort',  'person',  'band',
-        'musiker',  'ort',  'spielort',  'veranstaltung'
+        'genre', 'schlagwort', 'person', 'band',
+        'musiker', 'ort', 'spielort', 'veranstaltung'
     ]
 
     @classmethod

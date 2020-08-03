@@ -22,24 +22,26 @@ from DBentry.tests.base import MyTestCase, DataTestCase
 class TestYearField(MyTestCase):
 
     def test_formfield(self):
-        # Assert that formfield() passes the MaxValue and the MinValue validators on to the formfield.
+        # Assert that formfield() passes the MaxValue and the MinValue
+        # validators on to the formfield.
         formfield = YearField().formfield()
         self.assertEqual(len(formfield.validators), 2)
         if isinstance(formfield.validators[0], MinValueValidator):
-            min, max = formfield.validators
+            min_validator, max_validator = formfield.validators
         else:
-            max, min = formfield.validators
-        self.assertIsInstance(min, MinValueValidator)
-        self.assertEqual(min.limit_value, MIN_JAHR)
-        self.assertIsInstance(max, MaxValueValidator)
-        self.assertEqual(max.limit_value, MAX_JAHR)
+            max_validator, min_validator = formfield.validators
+        self.assertIsInstance(min_validator, MinValueValidator)
+        self.assertEqual(min_validator.limit_value, MIN_JAHR)
+        self.assertIsInstance(max_validator, MaxValueValidator)
+        self.assertEqual(max_validator.limit_value, MAX_JAHR)
 
 
 # Reminder: the field's cleaning methods will reraise any ValidationError subtypes as a new
 # ValidationError, meaning we cannot test for the correct subtype here.
 class StdNumFieldTestsMixin(object):
 
-    prototype_data = None  # the data necessary to create a partial prototype of a model instance.
+    # the data necessary to create a partial prototype of a model instance:
+    prototype_data = None
 
     def create_model_instance(self, **kwargs):
         if self.prototype_data is not None:
@@ -65,7 +67,8 @@ class StdNumFieldTestsMixin(object):
     def test_no_save_with_invalid_data(self):
         # Assert that no records can be saved with invalid data.
         for invalid_number in self.invalid:
-            model_instance = self.create_model_instance(**{self.model_field.name: invalid_number})
+            model_instance = self.create_model_instance(
+                **{self.model_field.name: invalid_number})
             with self.subTest(invalid_number=invalid_number):
                 with transaction.atomic():
                     msg = "for invalid input: %s" % invalid_number
@@ -81,7 +84,8 @@ class StdNumFieldTestsMixin(object):
                     self.model.objects.filter(**{self.model_field.name: invalid_number})
 
     def test_query_with_any_format(self):
-        # Assert queries are possible regardless of the format (pretty/compact) of the valid input.
+        # Assert queries are possible regardless of the format (pretty/compact)
+        # of the valid input.
         for valid_number in self.valid:
             with self.subTest(valid_number=valid_number):
                 msg = "for valid input: %s" % valid_number
@@ -91,7 +95,8 @@ class StdNumFieldTestsMixin(object):
     def test_query_with_any_format_returns_results(self):
         # Assert that the correct results are returned by querying for a std number no matter
         # the format of the input.
-        # For this test to make any real sense, it is required that test_saves_as_compact passes.
+        # For this test to make any real sense, it is required that
+        # test_saves_as_compact passes.
         valid_seen = set()
         for valid_number in self.valid:
             # Save as compact, query with pretty format
@@ -107,69 +112,83 @@ class StdNumFieldTestsMixin(object):
             model_instance.save()
             qs = self.model.objects.filter(**{self.model_field.name: pretty})
             with self.subTest(valid_number=valid_number):
-                msg = ("Query returned unexpected number of records."
+                msg = (
+                    "Query returned unexpected number of records."
                     "Querying for {filter_kwargs}\nIn database: {values}\n".format(
                         filter_kwargs={self.model_field.name: pretty},
-                        values=list(self.model.objects.values_list(self.model_field.name, flat=True))
+                        values=list(
+                            self.model.objects.values_list(self.model_field.name, flat=True))
                     ))
                 self.assertEqual(qs.count(), 1, msg=msg)
-                self.assertEqual(qs.get(), model_instance, msg="Query returned unexpected record.")
+                self.assertEqual(
+                    qs.get(), model_instance,
+                    msg="Query returned unexpected record."
+                )
             model_instance.delete()
 
     def test_saves_as_compact(self):
         # Assert that all std number are saved to the db in their compact format.
         for valid_number in self.valid:
-            model_instance = self.create_model_instance(**{self.model_field.name: valid_number})
+            model_instance = self.create_model_instance(
+                **{self.model_field.name: valid_number})
             model_instance.save()
             model_instance.refresh_from_db()
             with self.subTest(valid_number=valid_number):
                 self.assertNotIn('-', getattr(model_instance, self.model_field.name))
 
     def test_modelform_uses_pretty_format(self):
-        # Assert that the value displayed on a modelform is the 'pretty' and not the compact version (if applicable).
-        # We're using str(boundfield) for this as this renders the widget for the formfield.
-        # Note that this test will always succeed for EAN fields as they have nothing but compact.
+        # Assert that the value displayed on a modelform is the 'pretty' and
+        # not the compact version (if applicable).
+        # We're using str(boundfield) for this as this renders the widget for
+        # the formfield. Note that this test will always succeed for EAN fields
+        # as they have nothing but compact.
         model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
         for valid_number in self.valid:
-            model_instance = self.create_model_instance(**{self.model_field.name: valid_number})
+            formatted_number = self.model_field.get_format_callback()(valid_number)
+            model_instance = self.create_model_instance(
+                **{self.model_field.name: valid_number})
             model_instance.save()
             model_instance.refresh_from_db()
             model_form = model_form_class(instance=model_instance)
             with self.subTest(valid_number=valid_number):
-                value_displayed = 'value="%s"' % self.model_field.get_format_callback()(valid_number)
+                value_displayed = 'value="%s"' % formatted_number
                 self.assertIn(value_displayed, str(model_form[self.model_field.name]))
 
     def test_min_max_parameter_passed_to_formfield(self):
-        # Assert that the correct min and max length parameters are passed to the field's formfield.
+        # Assert that the correct min and max length parameters are passed to
+        # the field's formfield.
         formfield = self.model_field.formfield()
         self.assertEqual(formfield.min_length, self.model_field.min_length)
         self.assertEqual(formfield.max_length, self.model_field.max_length)
 
     def test_widget_class_passed_to_formfield(self):
-        # Assert that the widget class needed to render the value in the correct format is provided
-        # to the formfield.
+        # Assert that the widget class needed to render the value in the
+        # correct format is provided to the formfield.
         formfield = self.model_field.formfield()
         self.assertIsInstance(formfield.widget, StdNumWidget)
 
     def test_modelform_handles_formats_as_the_same_data(self):
-        # Assert that a model form is not flagged as 'changed' when field's initial value is of
-        # another format than the bound data.
+        # Assert that a model form is not flagged as 'changed' when field's
+        # initial value is of another format than the bound data.
         model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
         for valid_number in self.valid:
-            if self.model_field.get_format_callback()(valid_number) == valid_number:
+            formatted_number = self.model_field.get_format_callback()(valid_number)
+            if formatted_number == valid_number:
                 # No point in checking if valid_number is already 'pretty'
                 continue
-            model_instance = self.create_model_instance(**{self.model_field.name: valid_number})
+            model_instance = self.create_model_instance(
+                **{self.model_field.name: valid_number})
             # This should save the compact form of the number
             model_instance.save()
             model_instance.refresh_from_db()
             # Create the model form with the number's pretty format as initial value.
             model_form = model_form_class(
-                data={self.model_field.name: self.model_field.get_format_callback()(valid_number)},
+                data={self.model_field.name: formatted_number},
                 instance=model_instance
             )
             with self.subTest(valid_number=valid_number):
-                msg = ("ModelForm is flagged as changed for using different formats of the same "
+                msg = (
+                    "ModelForm is flagged as changed for using different formats of the same "
                     "stdnum.\nform initial: {},\nform data: {}\n".format(
                         model_form[self.model_field.name].initial,
                         model_form[self.model_field.name].value()
@@ -247,8 +266,9 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
                 instance=model_instance
             )
             with self.subTest(valid_number=valid_number):
-                msg = ("ModelForm is flagged as changed for using different ISBN types of the same "
-                    "stdnum.\nform initial: {},\nform data: {}\n".format(
+                msg = (
+                    "ModelForm is flagged as changed for using different ISBN types of "
+                    "the same stdnum.\nform initial: {},\nform data: {}\n".format(
                         model_form[self.model_field.name].initial,
                         model_form[self.model_field.name].value()
                     ))
@@ -267,7 +287,8 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
     def test_converts_isbn10_to_isbn13_on_save(self):
         # Assert that only numbers of the isbn13 standard are saved
         for valid_number in self.valid:
-            model_instance = self.create_model_instance(**{self.model_field.name: valid_number})
+            model_instance = self.create_model_instance(
+                **{self.model_field.name: valid_number})
             model_instance.save()
             model_instance.refresh_from_db()
             with self.subTest(valid_number=valid_number):
@@ -280,7 +301,8 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
         isbn_10 = '123456789X'
         self.create_model_instance(ISBN=isbn.to_isbn13(isbn_10)).save()
         qs = self.model.objects.filter(ISBN=isbn_10)
-        msg = ("Querying for ISBN10 did not return records with equivalent ISBN13."
+        msg = (
+            "Querying for ISBN10 did not return records with equivalent ISBN13."
             "\nISBN10: {}, in database: {}\n".format(
                 isbn_10, list(self.model.objects.values_list('ISBN', flat=True))
             ))
@@ -301,7 +323,8 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
     ]
 
     def test_min_max_parameter_passed_to_formfield(self):
-        # Assert that the correct min and max length parameters are passed to the field's formfield.
+        # Assert that the correct min and max length parameters are passed
+        # to the field's formfield.
         formfield = self.model_field.formfield()
         self.assertEqual(formfield.min_length, self.model_field.min_length)
         self.assertEqual(formfield.max_length, 17)
@@ -366,32 +389,51 @@ class TestPartialDate(MyTestCase):
 
     def test_new_with_string_kwargs(self):
         # Full date
-        self.assertAttrsSet(PartialDate(year='2019', month='5', day='20'), 2019, 5, 20, '%d %b %Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', month='5', day='20'), 2019, 5, 20, '%d %b %Y')
         # year and month
-        self.assertAttrsSet(PartialDate(year='2019', month='05'), 2019, 5, None, '%b %Y')
-        self.assertAttrsSet(PartialDate(year='2019', month='05', day='0'), 2019, 5, None, '%b %Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', month='05'), 2019, 5, None, '%b %Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', month='05', day='0'), 2019, 5, None, '%b %Y')
         # year and day
-        self.assertAttrsSet(PartialDate(year='2019', day='20'), 2019, None, 20, '%d %Y')
-        self.assertAttrsSet(PartialDate(year='2019', month='0', day='20'), 2019, None, 20, '%d %Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', day='20'), 2019, None, 20, '%d %Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', month='0', day='20'), 2019, None, 20, '%d %Y')
         # month and day
-        self.assertAttrsSet(PartialDate(month='5', day='20'), None, 5, 20, '%d %b')
-        self.assertAttrsSet(PartialDate(year='0000', month='5', day='20'), None, 5, 20, '%d %b')
+        self.assertAttrsSet(
+            PartialDate(month='5', day='20'), None, 5, 20, '%d %b')
+        self.assertAttrsSet(
+            PartialDate(year='0000', month='5', day='20'), None, 5, 20, '%d %b')
         # year only
-        self.assertAttrsSet(PartialDate(year='2019'), 2019, None, None, '%Y')
-        self.assertAttrsSet(PartialDate(year='2019', month='00'), 2019, None, None, '%Y')
-        self.assertAttrsSet(PartialDate(year='2019', month='00', day='0'), 2019, None, None, '%Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019'), 2019, None, None, '%Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', month='00'), 2019, None, None, '%Y')
+        self.assertAttrsSet(
+            PartialDate(year='2019', month='00', day='0'), 2019, None, None, '%Y')
         # month only
-        self.assertAttrsSet(PartialDate(month='5'), None, 5, None, '%b')
-        self.assertAttrsSet(PartialDate(year='0', month='05'), None, 5, None, '%b')
-        self.assertAttrsSet(PartialDate(year='0000', month='05', day='00'), None, 5, None, '%b')
+        self.assertAttrsSet(
+            PartialDate(month='5'), None, 5, None, '%b')
+        self.assertAttrsSet(
+            PartialDate(year='0', month='05'), None, 5, None, '%b')
+        self.assertAttrsSet(
+            PartialDate(year='0000', month='05', day='00'), None, 5, None, '%b')
         # day only
-        self.assertAttrsSet(PartialDate(day='20'), None, None, 20, '%d')
-        self.assertAttrsSet(PartialDate(month='00', day='20'), None, None, 20, '%d')
-        self.assertAttrsSet(PartialDate(year='0000', month='00', day='20'), None, None, 20, '%d')
+        self.assertAttrsSet(
+            PartialDate(day='20'), None, None, 20, '%d')
+        self.assertAttrsSet(
+            PartialDate(month='00', day='20'), None, None, 20, '%d')
+        self.assertAttrsSet(
+            PartialDate(year='0000', month='00', day='20'), None, None, 20, '%d')
         # empty
-        self.assertAttrsSet(PartialDate(day='0'), None, None, None, '')
-        self.assertAttrsSet(PartialDate(month='0', day='0'), None, None, None, '')
-        self.assertAttrsSet(PartialDate(year='0', month='0', day='0'), None, None, None, '')
+        self.assertAttrsSet(
+            PartialDate(day='0'), None, None, None, '')
+        self.assertAttrsSet(
+            PartialDate(month='0', day='0'), None, None, None, '')
+        self.assertAttrsSet(
+            PartialDate(year='0', month='0', day='0'), None, None, None, '')
 
     def test_new_with_string(self):
         # Full date
@@ -421,8 +463,10 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate.from_string('0000-00-00'), None, None, None, '')
 
     def test_new_with_date(self):
-        self.assertAttrsSet(PartialDate.from_date(datetime.date(2019, 5, 20)), 2019, 5, 20, '%d %b %Y')
-        self.assertAttrsSet(PartialDate.from_date(datetime.datetime(2019, 5, 20)), 2019, 5, 20, '%d %b %Y')
+        self.assertAttrsSet(
+            PartialDate.from_date(datetime.date(2019, 5, 20)), 2019, 5, 20, '%d %b %Y')
+        self.assertAttrsSet(
+            PartialDate.from_date(datetime.datetime(2019, 5, 20)), 2019, 5, 20, '%d %b %Y')
 
     def test_new_validates_date(self):
         # Assert that PartialDate does not accept invalid dates (31st of February, etc.).
@@ -472,8 +516,10 @@ class TestPartialDate(MyTestCase):
         date = '2019-05-20'
         self.assertTrue(PartialDate.from_string(date).__eq__(PartialDate.from_string(date)))
         self.assertTrue(PartialDate(*date.split('-')).__eq__(PartialDate(*date.split('-'))))
-        msg = ("A partial date created explicitly with the 'default' values should "
-            "not equate to an empty partial date.")
+        msg = (
+            "A partial date created explicitly with the 'default' values should "
+            "not equate to an empty partial date."
+        )
         self.assertFalse(PartialDate(4, 1, 1).__eq__(PartialDate()), msg=msg)
 
     def test_equality_string_to_partial_date(self):
@@ -485,8 +531,10 @@ class TestPartialDate(MyTestCase):
             PartialDate.from_string(date).__eq__('Nota-valid-date'),
             msg='Invalid string should equate to false.'
         )
-        msg = ("A partial date created explicitly with the 'default' values should "
-            "not equate to an empty string.")
+        msg = (
+            "A partial date created explicitly with the 'default' values should "
+            "not equate to an empty string."
+        )
         self.assertFalse(PartialDate(4, 1, 1).__eq__(''), msg=msg)
 
     def test_equality_partial_date_to_date(self):
@@ -525,7 +573,8 @@ class TestPartialDateField(MyTestCase):
     def test_from_db(self):
         # Assert that a value read from the db becomes a PartialDate.
         # (from_db_value)
-        from_db = PartialDateField().from_db_value(value='2019-05-20', expression=None, connection=None)
+        from_db = PartialDateField().from_db_value(
+            value='2019-05-20', expression=None, connection=None)
         self.assertIsInstance(from_db, PartialDate)
 
     def test_to_db(self):
@@ -746,7 +795,8 @@ class TestPartialDateFormField(MyTestCase):
 
     @patch.object(forms.MultiValueField, '__init__')
     def test_widget_kwarg(self, mocked_init):
-        # Assert that only subclasses/instances of PartialDateWidget are accepted as a custom widget.
+        # Assert that only subclasses/instances of PartialDateWidget are
+        # accepted as a custom widget.
         for valid_widget in (PartialDateWidget, PartialDateWidget()):
             with self.subTest():
                 PartialDateFormField(widget=valid_widget)

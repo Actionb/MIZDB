@@ -95,10 +95,9 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         path = reverse('dupes', kwargs={'model_name': 'band'})
         request = self.post_request(path, data={ACTION_CHECKBOX_NAME: ['1', '2']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
-        # patch the as_view method of MergeViewWizarded to return None,
+        # Patch the as_view method of MergeViewWizarded to return None,
         # thereby emulating a successful merge without conflicts.
-        def mocked_as_view(*args, **kwargs):
-            return Mock(return_value=None)
+        mocked_as_view = Mock(return_value=Mock(return_value=None))
         with patch.object(MergeViewWizarded, 'as_view', new=mocked_as_view):
             response = view.post(request)
             self.assertEqual(response.url, path)
@@ -247,13 +246,3 @@ class TestUnusedObjectsView(ViewTestCase):
             relations, queryset = view.get_queryset(_models.genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
-
-    def test_get_queryset_ignores_self_relations(self):
-        # Assert that self relations are not included in the relations that are
-        # queried.
-        view = self.get_view(request=self.get_request())
-        relations, queryset = view.get_queryset(_models.genre, 0)
-        self.assertNotIn(
-            _models.genre._meta.get_field('ober').remote_field,
-            relations
-        )

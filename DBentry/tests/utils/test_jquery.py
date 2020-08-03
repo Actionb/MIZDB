@@ -28,7 +28,7 @@ class TestEnsureJQuery(MyTestCase):
         self.assertEqual(
             utils.ensure_jquery(media)._js,
             [self.jquery_base, self.jquery_init],
-            msg = "ensure_jquery should add jquery to empty media"
+            msg="ensure_jquery should add jquery to empty media"
         )
 
         for js in self.test_js:
@@ -74,4 +74,3 @@ class TestEnsureJQuery(MyTestCase):
                     utils.ensure_jquery(prop).fget(1)._js,
                     self.expected
                 )
-
