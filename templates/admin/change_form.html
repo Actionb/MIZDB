@@ -1,4 +1,15 @@
 {% extends "admin/change_form.html" %}
+{% load admin_modify %}
+
+{% block object-tools %}
+{% if change %}
+  <ul class="object-tools">
+    {% block object-tools-items %}
+      {% change_form_object_tools %}
+    {% endblock %}
+  </ul>
+{% endif %}
+{% endblock %}
 
 {% block after_field_sets %}
     {% include "admin/includes/crosslinks.html"%}
