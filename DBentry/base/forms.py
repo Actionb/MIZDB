@@ -223,7 +223,8 @@ class MinMaxRequiredFormMixin(object):
     def get_default_error_messages(self, format_kwargs):
         messages = {}
         for error_type in ('min', 'max'):
-            message = self.default_error_messages[error_type].format(**format_kwargs)
+            message = self.default_error_messages[error_type].format(
+                **format_kwargs)
             messages[error_type] = message
         return messages
 
@@ -287,8 +288,11 @@ class MIZAdminFormMixin(object):
                 initial_prefixed_name = self.add_initial_prefix(name)
                 hidden_widget = field.hidden_widget()
                 try:
-                    initial_value = field.to_python(hidden_widget.value_from_datadict(
-                        self.data, self.files, initial_prefixed_name))
+                    initial_value = field.to_python(
+                        hidden_widget.value_from_datadict(
+                            self.data, self.files, initial_prefixed_name
+                        )
+                    )
                 except ValidationError:
                     # Always assume data has changed if validation fails.
                     data.append(name)

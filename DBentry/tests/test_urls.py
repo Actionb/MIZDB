@@ -1,7 +1,7 @@
 from django.urls import reverse, resolve
 from django.urls.exceptions import NoReverseMatch, Resolver404
 
-from DBentry import urls as dbentry_urls, views as dbentry_views
+from DBentry import urls as dbentry_urls
 from DBentry.ac import urls as autocomplete_urls, views as autocomplete_views
 from DBentry.bulk import views as bulk_views
 from DBentry.maint import urls as maint_urls, views as maint_views
@@ -27,12 +27,12 @@ class URLTestCase(MyTestCase):
             current_app = self.current_app
 
         try:
-            reversed = reverse(
+            _reversed = reverse(
                 view_name, args=args, kwargs=kwargs, urlconf=urlconf, current_app=current_app)
         except NoReverseMatch as e:
             raise AssertionError(e.args[0])
         if expected is not None:
-            self.assertEqual(reversed, expected)
+            self.assertEqual(_reversed, expected)
 
     def assertResolves(self, url, expected=None, **kwargs):
         if 'urlconf' in kwargs:
@@ -57,7 +57,8 @@ class TestURLs(URLTestCase):
         # Tests the root urls in MIZDB.urls.py.
         self.urlconf = mizdb_urls
         self.assertReverses('admin:index', '/admin/')
-        self.assertResolves('/admin/', miz_site.index.__func__)  # miz_site.index is a bound function
+        # miz_site.index is a bound function:
+        self.assertResolves('/admin/', miz_site.index.__func__)
 
         self.assertReverses('admin:app_list', app_label='DBentry')
         self.assertResolves('/admin/DBentry/', miz_site.app_index.__func__)
@@ -68,7 +69,6 @@ class TestURLs(URLTestCase):
 
         expected = [
             ('bulk_ausgabe', '/tools/bulk_ausgabe/', bulk_views.BulkAusgabe),
-            ('favoriten', '/tools/favoriten/', dbentry_views.FavoritenView)
         ]
         for view_name, url, view_class in expected:
             with self.subTest(view_name=view_name, url=url):
@@ -86,7 +86,11 @@ class TestURLs(URLTestCase):
                 {'model_name': 'musiker', 'create_field': 'kuenstler_name'},
                 autocomplete_views.ACBase
             ),
-            ('accapture', '/autor/', (), {'model_name': 'autor'}, autocomplete_views.ACCreateable)
+            (
+                'accapture', '/autor/', (),
+                {'model_name': 'autor'},
+                autocomplete_views.ACCreateable
+            )
         ]
         for view_name, url, args, kwargs, view_class in expected:
             with self.subTest(view_name=view_name, url=url):

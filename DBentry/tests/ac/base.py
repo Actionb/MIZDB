@@ -7,23 +7,27 @@ from django.utils.translation import override as translation_override
 
 from DBentry.ac.views import ACBase
 
+
 @tag("dal")
 class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
-    
+
     path = 'accapture'
     model = None
     create_field = None
-    
+
     def get_path(self):
         # Needed for the RequestTestCase
         if self.path != 'accapture':
             return super().get_path()
-        reverse_kwargs = {'model_name':self.model._meta.model_name}
+        reverse_kwargs = {'model_name': self.model._meta.model_name}
         if self.model.create_field:
             reverse_kwargs['create_field'] = self.model.create_field
         return reverse(self.path, kwargs=reverse_kwargs)
-    
-    def get_view(self, request=None, args=None, kwargs=None, model = None, create_field = None, forwarded = None, q = None):
+
+    def get_view(
+            self, request=None, args=None, kwargs=None, model=None,
+            create_field=None, forwarded=None, q=None
+        ):
         # DBentry.ac.views behave slightly different in their as_view() method
         view = super(ACViewTestCase, self).get_view(request, args, kwargs)
         view.model = model or self.model
@@ -32,21 +36,23 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
         view.q = q or ''
         return view
 
+
 @tag("dal")
 class ACViewTestMethodMixin(object):
-    
+
     view_class = ACBase
     test_data_count = 0
     has_alias = True
     alias_accessor_name = ''
-    
+
     def test_do_ordering(self):
-        # Assert that the ordering of the queryset returned by the view matches the ordering of the model.
+        # Assert that the ordering of the queryset returned by the view matches
+        # the ordering of the model.
         view = self.get_view()
         expected = self.model._meta.ordering
         qs_order = list(view.do_ordering(self.queryset).query.order_by)
         self.assertEqual(qs_order, expected)
-        
+
     def test_apply_q(self):
         # Test that an object can be found through any of its search_fields
         view = self.get_view()
@@ -69,15 +75,17 @@ class ACViewTestMethodMixin(object):
                         else:
                             result = (o.pk for o in result)
                     else:
-                        result = result.values_list('pk', flat = True)
-                    self.assertIn(self.obj1.pk, result, 
-                        msg="search_field: {}, q: {}".format(search_field, str(q)))
+                        result = result.values_list('pk', flat=True)
+                    self.assertIn(
+                        self.obj1.pk, result,
+                        msg="search_field: {}, q: {}".format(search_field, str(q))
+                    )
                 else:
                     self.warn(
                         'Test poorly configured: no test data for search field: {}'.format(
                             search_field)
                     )
-           
+
     def test_apply_q_alias(self):
         # Assert that an object can be found through its aliases.
         if not self.has_alias:
@@ -86,7 +94,7 @@ class ACViewTestMethodMixin(object):
             # No point in running this test
             self.warn('Test aborted: no alias accessor name set.')
             return
-                
+
         # Find an object through its alias
         alias = getattr(self.obj1, self.alias_accessor_name).first()
         if alias is None:
@@ -95,21 +103,27 @@ class ACViewTestMethodMixin(object):
         view = self.get_view()
         view.q = str(alias)
         result = [pk for pk, str_repr in view.apply_q(self.queryset)]
-        self.assertTrue(result, msg = 'View returned no results when querying for alias: ' + view.q)
+        self.assertTrue(
+            result,
+            msg='View returned no results when querying for alias: ' + view.q
+        )
         self.assertIn(self.obj1.pk, result)
-        
+
     def test_get_queryset(self):
-        # Note that ordering does not matter here, testing for the correct order is the job of `test_do_ordering` and apply_q would mess it up anyhow
+        # Note that ordering does not matter here, testing for the correct
+        # order is the job of `test_do_ordering` and apply_q would mess it up anyhow.
         request = self.get_request()
         view = self.get_view(request)
-        qs = view.get_queryset().values_list('pk', flat=True) #Isnt this just comparing the starting qs with an unfiltered qs returned by the view?
+        # NOTE: Isn't this just comparing the starting qs with an unfiltered qs
+        # returned by the view?
+        qs = view.get_queryset().values_list('pk', flat=True)
         expected = self.queryset.values_list('pk', flat=True)
         if not expected:
             # expected being empty means that this test has no test_data
             self.warn('Test poorly configured: no test data')
-        self.assertListEqualSorted(qs, expected)
-        
-    @translation_override(language = None)
+        self.assertEqual(sorted(list(qs)), sorted(list(expected)))
+
+    @translation_override(language=None)
     def test_get_create_option(self):
         request = self.get_request()
         view = self.get_view(request)
@@ -121,7 +135,7 @@ class ACViewTestMethodMixin(object):
             self.assertTrue(create_option[0].get('create_id'))
         else:
             self.assertEqual(len(create_option), 0)
-        
+
     @tag('logging')
     def test_create_object_no_log_entry(self):
         # no request set on view, no log entry should be created
@@ -129,8 +143,8 @@ class ACViewTestMethodMixin(object):
         if view.has_create_field():
             obj = view.create_object('Beep')
             with self.assertRaises(AssertionError):
-                self.assertLoggedAddition(obj)    
-        
+                self.assertLoggedAddition(obj)
+
     @tag('logging')
     def test_create_object_with_log_entry(self):
         # request set on view, log entry should be created
@@ -138,4 +152,4 @@ class ACViewTestMethodMixin(object):
         view = self.get_view(request)
         if view.has_create_field():
             obj = view.create_object('Boop')
-            self.assertLoggedAddition(obj)   
+            self.assertLoggedAddition(obj)

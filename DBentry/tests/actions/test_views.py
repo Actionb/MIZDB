@@ -709,7 +709,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         processed_data = view.process_step(form)
         self.assertIn('updates', processed_data)
         self.assertIn('jahrgang', processed_data['updates'])
-        self.assertListEqualSorted(processed_data['updates']['jahrgang'], ['1', '2'])
+        self.assertEqual(sorted(processed_data['updates']['jahrgang']), ['1', '2'])
         self.assertEqual(view.storage.current_step, '')
 
     @translation_override(language=None)
@@ -731,9 +731,9 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         form_kwargs = view.get_form_kwargs(step='0')
         self.assertIn('choices', form_kwargs)
         formfield_name = '0-' + MergeFormSelectPrimary.PRIMARY_FIELD_NAME
-        self.assertListEqualSorted(
-            view.queryset.values_list('pk', flat=True),
-            form_kwargs['choices'][formfield_name].values_list('pk', flat=True)
+        self.assertEqual(
+            sorted(list(view.queryset.values_list('pk', flat=True))),
+            sorted(list(form_kwargs['choices'][formfield_name].values_list('pk', flat=True)))
         )
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})

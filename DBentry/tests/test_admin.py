@@ -253,16 +253,16 @@ class TestMIZModelAdmin(AdminTestCase):
             Permission.objects.get(codename=codename))
         self.assertFalse(
             self.model_admin.has_merge_permission(
-                request=self.get_request(user=self.noperms_user)
-        ))
+                request=self.get_request(user=self.noperms_user))
+        )
         self.assertTrue(
             self.model_admin.has_merge_permission(
-                request=self.get_request(user=self.staff_user)
-        ))
+                request=self.get_request(user=self.staff_user))
+        )
         self.assertTrue(
             self.model_admin.has_merge_permission(
-                request=self.get_request(user=self.super_user)
-        ))
+                request=self.get_request(user=self.super_user))
+        )
 
     def test_has_alter_bestand_permission(self):
         # Note: _models.datei._meta doesn't set 'alter_bestand_datei' permission
@@ -272,16 +272,16 @@ class TestMIZModelAdmin(AdminTestCase):
             Permission.objects.get(codename=codename))
         self.assertFalse(
             model_admin.has_alter_bestand_permission(
-                request=self.get_request(user=self.noperms_user)
-        ))
+                request=self.get_request(user=self.noperms_user))
+        )
         self.assertTrue(
             model_admin.has_alter_bestand_permission(
-                request=self.get_request(user=self.staff_user)
-        ))
+                request=self.get_request(user=self.staff_user))
+        )
         self.assertTrue(
             model_admin.has_alter_bestand_permission(
-                request=self.get_request(user=self.super_user)
-        ))
+                request=self.get_request(user=self.super_user))
+        )
 
     def test_add_extra_context(self):
         # No object_id passed in: add_crosslinks should not be called.
@@ -572,8 +572,9 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MagazinAdmin
     model = _models.magazin
     exclude_expected = ['genre', 'verlag', 'herausgeber']
-    fields_expected = ['magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn', 
-        'beschreibung', 'bemerkungen', 'ort', 
+    fields_expected = [
+        'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
+        'beschreibung', 'bemerkungen', 'ort',
     ]
 
     crosslinks_expected = [
@@ -885,9 +886,14 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AudioAdmin
     model = _models.audio
-    exclude_expected = ['plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung', 'ort']
-    # Note that AudioAdmin specifies a fieldsets attribute, overriding (and removing catalog_nr) the fields for the form that way
-    fields_expected = ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
+    exclude_expected = [
+        'plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort',
+        'spielort', 'veranstaltung', 'ort'
+    ]
+    # Note that AudioAdmin specifies a fieldsets attribute, overriding
+    # (and removing catalog_nr) the fields for the form that way
+    fields_expected = [
+        'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
         'release_id', 'discogs_url', 'beschreibung', 'bemerkungen'
     ]
     raw_data = [
@@ -981,12 +987,13 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        p1 = make(_models.person, vorname = 'Alice', nachname = 'Testman')
-        p2 = make(_models.person, vorname = 'Bob', nachname = 'Mantest')
-        cls.obj1 = make(cls.model, 
-            autor__person = [p1, p2], herausgeber__herausgeber = [str(p1), str(p2)],
-            schlagwort__schlagwort = ['Testschlagwort1', 'Testschlagwort2'], 
-            genre__genre = ['Testgenre1', 'Testgenre2']
+        p1 = make(_models.person, vorname='Alice', nachname='Testman')
+        p2 = make(_models.person, vorname='Bob', nachname='Mantest')
+        cls.obj1 = make(
+            cls.model,
+            autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],
+            schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
+            genre__genre=['Testgenre1', 'Testgenre2']
         )
         cls.test_data = [cls.obj1]
         super().setUpTestData()
@@ -1139,30 +1146,37 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.video
-    fields_expected = ['titel',  'tracks',  'laufzeit',  'festplatte',  'quelle',  'beschreibung',  'bemerkungen']
-    exclude_expected = ['band',  'genre',  'musiker',  'person',  'schlagwort',  'spielort',  'veranstaltung']
+    fields_expected = [
+        'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
+    exclude_expected = [
+        'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung']
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.bestand
     fields_expected = [
-        'bestand_art',  'lagerort',  'provenienz',  'audio',  'ausgabe',  'bildmaterial',
-        'brochure',  'buch',  'dokument',  'memorabilien',  'technik',  'video'
+        'bestand_art', 'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
+        'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
 
 
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
     model = _models.datei
-    fields_expected = ['titel',  'media_typ',  'datei_pfad',  'beschreibung',  'bemerkungen', 'provenienz']
-    exclude_expected = ['genre',  'schlagwort',  'person',  'band',  'musiker',  'ort',  'spielort',  'veranstaltung']
-    
+    fields_expected = [
+        'titel', 'media_typ', 'datei_pfad', 'beschreibung', 'bemerkungen', 'provenienz']
+    exclude_expected = [
+        'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
+        'veranstaltung'
+    ]
+
+
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
-    
+
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'},
         {'model_name': 'magazin', 'fld_name': 'herausgeber', 'label': 'Magazine (1)'}
@@ -1180,8 +1194,8 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         'bemerkungen', 'reihe', 'copy_related'
     ]
     exclude_expected = [
-        'genre',  'schlagwort',  'person',  'band',
-        'musiker',  'ort',  'spielort',  'veranstaltung'
+        'genre', 'schlagwort', 'person', 'band',
+        'musiker', 'ort', 'spielort', 'veranstaltung'
     ]
 
     @classmethod

@@ -15,15 +15,15 @@ class TestBulkForm(FormTestCase):
 
     form_class = BulkForm
     dummy_attrs = {
-            'some_fld': django_forms.CharField(required=False),
-            'some_bulkfield': BulkField(required=False, label='num'),
-            'req_fld': BulkJahrField(required=False),
-            'another': django_forms.CharField(required=False),
-            'model': _models.ausgabe,
-            'each_fields': ['another', 'some_fld'],
-            'split_fields': ['req_fld', 'some_bulkfield'],
-            'field_order': ['some_fld', 'some_bulkfield', 'req_fld', 'another'],
-        }
+        'some_fld': django_forms.CharField(required=False),
+        'some_bulkfield': BulkField(required=False, label='num'),
+        'req_fld': BulkJahrField(required=False),
+        'another': django_forms.CharField(required=False),
+        'model': _models.ausgabe,
+        'each_fields': ['another', 'some_fld'],
+        'split_fields': ['req_fld', 'some_bulkfield'],
+        'field_order': ['some_fld', 'some_bulkfield', 'req_fld', 'another'],
+    }
     dummy_bases = (BulkForm, )
 
     def test_init_sets_fieldsets(self):
@@ -278,7 +278,6 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
                     )
                 self.assertEqual(row, expected[c])
 
-
     def test_row_data_prop_invalid(self):
         # If the form is invalid, row_data should return empty
         form = self.get_form()
@@ -294,7 +293,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         self.assertFormValid(form)
         self.assertFalse(all('homeless' in row for row in form.row_data))
 
-    @translation_override(language = None)
+    @translation_override(language=None)
     def test_clean_handles_month_gt_12(self):
         data = self.valid_data.copy()
         data['monat'] = '13'

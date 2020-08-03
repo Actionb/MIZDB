@@ -24,7 +24,7 @@ class TestAdminMixin(AdminTestCase):
         labels = {'datum': 'Das Datum!'}
         with mock.patch.object(
                 self.model_admin, 'search_form_kwargs', search_form_kwargs):
-            self.model_admin.get_search_form_class(labels =labels)
+            self.model_admin.get_search_form_class(labels=labels)
             self.assertTrue(mocked_factory.called)
             args, kwargs = mocked_factory.call_args
             expected = {'labels': labels, **search_form_kwargs}
@@ -47,7 +47,7 @@ class TestAdminMixin(AdminTestCase):
     )
     def test_context_updated_with_form_media(self):
         # Assert that the context for the response contains the form's media.
-        response = self.client.get(path = self.changelist_path)
+        response = self.client.get(path=self.changelist_path)
         self.assertIn('media', response.context)
         media = response.context['media']
         expected_js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
@@ -130,14 +130,14 @@ class TestAdminMixin(AdminTestCase):
         # Disable the inlines so we do not have to provide all the post data for them:
         patcher = mock.patch.object(_admin.BildmaterialAdmin, 'inlines', [])
         patcher.start()
-        for filter_type, filter in filters:
-            changelist_filters = urlencode(filter, doseq=True)
+        for filter_type, filter_kwargs in filters:
+            changelist_filters = urlencode(filter_kwargs, doseq=True)
             preserved_filters = urlencode({preserved_filters_name: changelist_filters})
             with self.subTest(filter_type=filter_type):
                 response = self.client.post(
-                    path = self.change_path.format(pk=obj.pk) + '?' + preserved_filters,
-                    data = {'_save': True, 'titel': 'irrelevant'},
-                    follow = True
+                    path=self.change_path.format(pk=obj.pk) + '?' + preserved_filters,
+                    data={'_save': True, 'titel': 'irrelevant'},
+                    follow=True
                 )
                 request = response.wsgi_request
                 self.assertEqual(response.status_code, 200)
@@ -149,7 +149,7 @@ class TestAdminMixin(AdminTestCase):
                 )
                 # Check that the request contains the data necessary to restore
                 # the filters.
-                for lookup, value in filter.items():
+                for lookup, value in filter_kwargs.items():
                     with self.subTest(lookup=lookup):
                         self.assertIn(lookup, request.GET)
                         if isinstance(value, list):
@@ -187,7 +187,7 @@ class TestAdminMixin(AdminTestCase):
         # the attribute 'context_data':
         self.assertIsNone(
             self.model_admin.update_changelist_context(response=None),
-            msg = "update_changelist_context should return any response object "
+            msg="update_changelist_context should return any response object "
             "that does not have the attribute 'context_data'."
         )
         search_form = mock.Mock(media="dummy_media")
@@ -200,12 +200,12 @@ class TestAdminMixin(AdminTestCase):
             response=mock.Mock(context_data={}))
         self.assertIn(
             'media', response.context_data,
-            msg = "update_changelist_context should add a media entry if it was"
+            msg="update_changelist_context should add a media entry if it was"
             " missing."
         )
         self.assertEqual(
             response.context_data['media'], self.model_admin.search_form.media,
-            msg = "update_changelist_context should add the search form's media"
+            msg="update_changelist_context should add the search form's media"
             " to the response's context."
         )
 
@@ -215,12 +215,12 @@ class TestAdminMixin(AdminTestCase):
             response=mock.Mock(context_data={'media': 'This is '}))
         self.assertIn(
             'media', response.context_data,
-            msg = "update_changelist_context should add a media entry if it was"
+            msg="update_changelist_context should add a media entry if it was"
             " missing."
         )
         self.assertEqual(
             response.context_data['media'], "This is dummy_media",
-            msg = "update_changelist_context should add the search form's media"
+            msg="update_changelist_context should add the search form's media"
             " to the response's context."
         )
         patcher.stop()
@@ -233,9 +233,12 @@ class TestAdminMixin(AdminTestCase):
         patcher.start()
         response = self.model_admin.update_changelist_context(
             response=mock.Mock(context_data={}))
-        self.assertFalse(mocked_tag.called,
-            msg = "search_form tag should only be called if context_data has "
-            "the 'cl' key."
+        self.assertFalse(
+            mocked_tag.called,
+            msg=(
+                "search_form tag should only be called if context_data has "
+                "the 'cl' key."
+            )
         )
         response = self.model_admin.update_changelist_context(
             response=mock.Mock(context_data={'cl': ""}))
@@ -265,16 +268,16 @@ class TestSearchFormChangelist(AdminTestCase):
         cls.reihe = make(_models.Bildreihe)
         cls.test_data = [
             make(
-                _models.bildmaterial, titel = 'Object1', datum = '2019-05-19',
-                genre = [cls.genre1, cls.genre2]
+                _models.bildmaterial, titel='Object1', datum='2019-05-19',
+                genre=[cls.genre1, cls.genre2]
             ),
             make(
-                _models.bildmaterial, titel = 'Object2',  datum = '2019-05-20',
-                genre = [cls.genre1]
+                _models.bildmaterial, titel='Object2',  datum='2019-05-20',
+                genre=[cls.genre1]
             ),
             make(
-                _models.bildmaterial, titel = 'Object3',  datum = '2019-05-21',
-                reihe = cls.reihe,
+                _models.bildmaterial, titel='Object3',  datum='2019-05-21',
+                reihe=cls.reihe,
             ),
         ]
         super().setUpTestData()
@@ -395,7 +398,7 @@ class TestSearchFormChangelist(AdminTestCase):
         form_data = {
             'datum_1_0': 2020, 'datum_1_1': 5, 'datum_1_2': 22
         }
-        request = self.get_request(path = self.changelist_path)
+        request = self.get_request(path=self.changelist_path)
         changelist = self.get_changelist(request)
         params = changelist.get_filters_params(form_data)
         self.assertNotIn('datum__range', params)
@@ -410,7 +413,7 @@ class TestSearchFormChangelist(AdminTestCase):
         form_data = {
             'datum_0_0': 2020, 'datum_0_1': 5, 'datum_0_2': 20,
         }
-        request = self.get_request(path = self.changelist_path)
+        request = self.get_request(path=self.changelist_path)
         changelist = self.get_changelist(request)
         params = changelist.get_filters_params(form_data)
         self.assertNotIn('datum__range', params)
@@ -425,7 +428,7 @@ class TestSearchFormChangelist(AdminTestCase):
             _admin.BildmaterialAdmin, 'search_form_kwargs', {'fields': ['datum']}
         )
         patcher.start()
-        request = self.get_request(path = self.changelist_path)
+        request = self.get_request(path=self.changelist_path)
         changelist = self.get_changelist(request)
 
         expected = PartialDate(2020, 5, 20)
@@ -451,11 +454,11 @@ class TestSearchFormChangelist(AdminTestCase):
             ('fk', {'reihe': str(self.reihe.pk)}),
             ('m2m', {'genre': [self.genre1.pk, self.genre2.pk]}),
         ]
-        for filter_type, filter in filters:
+        for filter_type, filter_kwargs in filters:
             with self.subTest(filter_type=filter_type):
-                response = self.client.get(path=self.changelist_path, data=filter)
+                response = self.client.get(path=self.changelist_path, data=filter_kwargs)
                 expected = urlencode({
-                    preserved_filters_name: urlencode(filter)
+                    preserved_filters_name: urlencode(filter_kwargs)
                 })
                 for result in response.context['results']:
                     if 'href=' not in result:

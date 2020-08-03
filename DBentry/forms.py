@@ -168,13 +168,3 @@ class BildmaterialForm(forms.ModelForm):
 
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
-
-
-class FavoritenForm(MIZAdminFormMixin, forms.ModelForm):
-    class Meta:
-        model = _models.Favoriten
-        fields = '__all__'
-        widgets = {
-            'fav_genres': FilteredSelectMultiple('Genres', False),
-            'fav_schl': FilteredSelectMultiple('Schlagworte', False),
-        }

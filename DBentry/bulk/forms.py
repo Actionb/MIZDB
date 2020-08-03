@@ -231,7 +231,8 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
 
     def lookup_instance(self, row):
         """
-        For given data of a row, apply queryset filtering to find a matching instance.
+        For given data of a row, apply queryset filtering to find a matching
+        instance.
 
         Returns a queryset instance with the results.
         """
@@ -279,7 +280,8 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         if not self.has_changed() and self._row_data:
             # Only (re)calculate if the form has changed or _row_data is empty.
             return self._row_data
-        # Form is valid: split_data and total_count have been computed in clean().
+        # Form is valid: split_data and total_count have been
+        # computed in clean().
         for c in range(self.total_count):
             row = {}
             for field_name, _formfield in self.fields.items():

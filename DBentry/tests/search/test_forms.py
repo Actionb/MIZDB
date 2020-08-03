@@ -39,14 +39,14 @@ class TestSearchFormFactory(MyTestCase):
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2Multiple)
         self.assertEqual(widget.model_name, _models.genre._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
-        self.assertFalse(widget.create_field, msg = msg)
+        self.assertFalse(widget.create_field, msg=msg)
         self.assertEqual(formfield.queryset.model, _models.genre)
         self.assertFalse(formfield.required)
 
     def test_formfield_for_dbfield_dal_with_forward(self):
         # Assert that dal forwards are added.
         dbfield = _models.ausgabe._meta.get_field('magazin')
-        formfield = self.factory.formfield_for_dbfield(dbfield, forward = ['ausgabe'])
+        formfield = self.factory.formfield_for_dbfield(dbfield, forward=['ausgabe'])
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2)
         self.assertTrue(widget.forward)
@@ -245,7 +245,7 @@ class TestSearchForm(MyTestCase):
         genre2 = make(_models.genre, genre="genre2", pk=2)
         form_class = self.factory(_models.bildmaterial, fields=['genre'])
         form = form_class(data={'genre': [genre1.pk, genre2.pk]})
-        self.assertTrue(form.is_valid(), msg = form.errors)
+        self.assertTrue(form.is_valid(), msg=form.errors)
         self.assertIn('genre', form.cleaned_data)
         self.assertEqual(list(form.cleaned_data['genre']), [genre1, genre2])
         self.assertEqual(form.get_filters_params(), {'genre__in': "1,2"})

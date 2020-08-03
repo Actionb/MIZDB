@@ -87,9 +87,6 @@ class MyTestCase(TestCase):
                 fail_txt += ':' + msg
             self.fail(fail_txt)
 
-    def assertListEqualSorted(self, list1, list2, msg=None):
-        self.assertListEqual(sorted(list1), sorted(list2), msg)
-
 
 class DataTestCase(TestDataMixin, MyTestCase):
 

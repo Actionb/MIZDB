@@ -80,7 +80,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 except exceptions.FieldDoesNotExist:
                     msg = "fieldset %s contains unknown field: %s" % (
                         fieldset_name, field)
-                    errors.append(checks.Error(msg,obj=self))
+                    errors.append(checks.Error(msg, obj=self))
         return errors
 
     def _check_search_fields_lookups(self, **kwargs):
@@ -445,15 +445,18 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if 'media' in context:
             # Fix jquery load order during the add/change view process. If the
             # ModelAdmin does not have inlines, collapse elements will not work:
-            # django's Fieldsets will include just 'collapse.js' if collapse is in the
-            # fieldset's classes. django's AdminForm then scoops up all the Fieldsets
-            # and merges their media with its own (which may just be nothing).
-            # Finally, this ModelAdmin will merge its media [jquery.js, jquery_init.js, ...]
-            # with that of the AdminForm. Since merging/sorting is now stable the
-            # result will be [jquery.js, collapse.js, jquery_init.js, ...].
-            # Usually this faulty load order is then later fixed by media mergers on the
-            # inlines which mostly only have [jquery.js, jquery_init.js], but if the
-            # ModelAdmin does not have any inlines, collapse will not work.
+            # django's Fieldsets will include just 'collapse.js' if collapse is
+            # in the fieldset's classes. django's AdminForm then scoops up all
+            # the fieldsets and merges their media with its own (which may just
+            # be nothing).
+            # Finally, this ModelAdmin will merge its media:
+            # [jquery.js, jquery_init.js, ...]
+            # with that of the AdminForm. Since merging/sorting is now stable
+            # the result will be: [jquery.js, collapse.js, jquery_init.js, ...].
+            # Usually this faulty load order is then later fixed by media
+            # mergers on the inlines which mostly only have
+            # [jquery.js, jquery_init.js], but if the ModelAdmin does not have
+            # any inlines, collapse will not work.
             context['media'] = ensure_jquery(context['media'])
         return super().render_change_form(
             request, context, add, change, form_url, obj)

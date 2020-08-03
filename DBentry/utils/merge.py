@@ -3,13 +3,14 @@ from django.db.utils import IntegrityError
 
 from DBentry.logging import get_logger
 from DBentry.utils.models import (
-    get_model_relations, get_relation_info_to, get_updateable_fields, is_protected
+    get_model_relations, get_relation_info_to, get_updateable_fields,
+    is_protected
 )
 
 
 def merge_records(original, qs, update_data=None, expand_original=True, request=None):
     """
-    Merges 'original' object with all other objects in 'qs' and updates
+    Merge 'original' object with all other objects in 'qs' and update
     'original's values with those in 'update_data' if 'expand_original' is True.
 
     Returns the updated 'original' instance.
@@ -32,7 +33,8 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                     update_data[k] = v
 
     with transaction.atomic():
-        # Update the original object with the additional data and log the changes.
+        # Update the original object with the additional data and
+        # log the changes.
         if expand_original and update_data:
             original_qs.update(**update_data)
             logger.log_update(original_qs, update_data)
@@ -64,9 +66,11 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                     unique_together.remove(related_field.name)
                     if not unique_together:
                         continue
-                for values in related_model.objects.filter(
-                        **{related_field.name: original}
-                    ).values(*unique_together):
+                for values in (
+                        related_model.objects
+                        .filter(**{related_field.name: original})
+                        .values(*unique_together)
+                    ):
                     # Exclude all values that would violate the unique
                     # constraints (i.e. values that original has already):
                     qs_to_be_updated = qs_to_be_updated.exclude(**values)

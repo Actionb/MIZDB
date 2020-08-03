@@ -16,7 +16,7 @@ from DBentry.forms import (
     BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
-from DBentry.utils import concat_limit
+from DBentry.utils import concat_limit, copy_related_set
 
 
 class BestandInLine(BaseTabularInline):
@@ -378,7 +378,6 @@ class BildmaterialAdmin(MIZModelAdmin):
     veranstaltung_string.short_description = 'Veranstaltungen'
 
     def copy_related(self, obj):
-        from DBentry.utils import copy_related_set
         copy_related_set(obj, 'veranstaltung__band', 'veranstaltung__musiker')
 
     def response_add(self, request, obj, post_url_continue=None):

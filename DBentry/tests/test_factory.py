@@ -20,8 +20,8 @@ class TestRuntimeFactoryMixin(MyTestCase):
     local_factory_module = 'DBentry.factory'  # the module modelfactory_factory lives in
     base_factory_module = 'factory.base'
 
-    # We are subclassing factory.SubFactory as the mixin's functionality should not depend on any
-    # custom factories for these tests.
+    # We are subclassing factory.SubFactory as the mixin's functionality should
+    # not depend on any custom factories for these tests.
     dummy_factory = type('Dummy', (RuntimeFactoryMixin, factory.SubFactory), {})
 
     def test_existing_factory(self):
@@ -39,8 +39,8 @@ class TestRuntimeFactoryMixin(MyTestCase):
         self.assertIn('technik', factory._cache)
 
     def test_new_factory_wo_related_model(self):
-        # factory property should raise an AttributeError if the factory's related_model attribute
-        # is None and a new factory has to be created.
+        # factory property should raise an AttributeError if the factory's
+        # related_model attribute is None and a new factory has to be created.
         fac = self.dummy_factory(self.local_factory_module + 'beep', related_model=None)
         with self.assertRaises(AttributeError):
             fac.factory
@@ -66,32 +66,32 @@ class TestUniqueFaker(MyTestCase):
 class TestSelfFactory(MyTestCase):
 
     def test_evaluate(self):
-        BuchFactory = modelfactory_factory(_models.buch)
-        created = BuchFactory(buchband=None)
+        buch_factory = modelfactory_factory(_models.buch)
+        created = buch_factory(buchband=None)
         self.assertIsNone(created.buchband)
 
-        created = BuchFactory(buchband__buchband__buchband=None)
+        created = buch_factory(buchband__buchband__buchband=None)
         self.assertIsNotNone(created.buchband)
         self.assertIsNotNone(created.buchband.buchband)
         self.assertIsNone(created.buchband.buchband.buchband)
 
         # Assert that SelfFactory creates exactly no related object when no params are given
         # and does not get stuck in infinity recursion.
-        created = BuchFactory()
+        created = buch_factory()
         self.assertIsNone(created.buchband)
 
         # And now with actual data:
-        buchband = BuchFactory(titel='Buchband')
-        aufsatz = BuchFactory(titel='Aufsatz', buchband=buchband)
+        buchband = buch_factory(titel='Buchband')
+        aufsatz = buch_factory(titel='Aufsatz', buchband=buchband)
         self.assertEqual(aufsatz.buchband, buchband)
         self.assertIn(aufsatz, buchband.buch_set.all())
 
         # Assert that SelfFactory creates one related object if it is required.
-        BuchFactory.buchband.required = True
-        created = BuchFactory()
+        buch_factory.buchband.required = True
+        created = buch_factory()
         self.assertIsNotNone(created.buchband)
         self.assertIsNone(created.buchband.buchband)
-        BuchFactory.buchband.required = False
+        buch_factory.buchband.required = False
 
 
 class TestRelatedFactory(MyTestCase):
@@ -299,15 +299,16 @@ class TestMIZDjangoOptions(MyTestCase):
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
         opts.model = _models.Kalendar
-
-        with patch.object(opts, '_get_factory_name_for_model', new=Mock(return_value='SomeFactory')):
+        mocked_factory_name = Mock(return_value='SomeFactory')
+        with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
                 opts.add_m2m_factories()
 
         self.assertTrue(hasattr(opts.factory, 'mocked_field_name'))
         self.assertIsInstance(opts.factory.mocked_field_name, Mock)
         expected_args = ('SomeFactory', )
-        expected_kwargs = {'descriptor_name': 'mocked_field_name', 'related_model': _models.genre}
+        expected_kwargs = {
+            'descriptor_name': 'mocked_field_name', 'related_model': _models.genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
         # Relation from genre to BaseBrochure inherited by Kalendar; expected:
@@ -323,15 +324,16 @@ class TestMIZDjangoOptions(MyTestCase):
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
         opts.model = _models.Kalendar
-
-        with patch.object(opts, '_get_factory_name_for_model', new=Mock(return_value='SomeFactory')):
+        mocked_factory_name = Mock(return_value='SomeFactory')
+        with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
                 opts.add_m2m_factories()
 
         self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
         self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
         expected_args = ('SomeFactory', )
-        expected_kwargs = {'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.genre}
+        expected_kwargs = {
+            'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
     @patch('DBentry.factory.get_model_relations')
@@ -375,8 +377,8 @@ class TestMIZDjangoOptions(MyTestCase):
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
         opts.model = _models.Kalendar
-
-        with patch.object(opts, '_get_factory_name_for_model', new=Mock(return_value='SomeFactory')):
+        mocked_factory_name = Mock(return_value='SomeFactory')
+        with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:
                 opts.add_related_factories()
 
@@ -388,7 +390,8 @@ class TestMIZDjangoOptions(MyTestCase):
                     'accessor_name': 'mocked_rel_accessor',
                     'related_model': _models.BaseBrochure
                 }
-                self.assertEqual(mocked_related_factory.call_args, (expected_args, expected_kwargs))
+                self.assertEqual(
+                    mocked_related_factory.call_args, (expected_args, expected_kwargs))
 
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly
@@ -405,14 +408,18 @@ class TestMIZDjangoOptions(MyTestCase):
         for field in get_model_fields(buch, foreign=False, m2m=False):
             if field.has_default() or field.blank:
                 continue
-            self.assertIn(field.name, declarations,
-                msg='{} not found in base declarations'.format(field.name))
+            self.assertIn(
+                field.name, declarations,
+                msg='{} not found in base declarations'.format(field.name)
+            )
         self.assertIn('titel', declarations)
 
         # SubFactories
         for field in get_model_fields(buch, base=False, foreign=True, m2m=False):
-            self.assertIn(field.name, declarations,
-                msg='{} not found in SubFactory declarations'.format(field.name))
+            self.assertIn(
+                field.name, declarations,
+                msg='{} not found in SubFactory declarations'.format(field.name)
+            )
         self.assertIn('verlag', declarations)
 
         # RelatedFactories
@@ -420,8 +427,10 @@ class TestMIZDjangoOptions(MyTestCase):
             if rel.many_to_many:
                 continue
             name = rel.name
-            self.assertIn(name, declarations,
-                msg='{} not found in reverse related declarations'.format(name))
+            self.assertIn(
+                name, declarations,
+                msg='{} not found in reverse related declarations'.format(name)
+            )
         self.assertIn('bestand', declarations)
 
         # M2MFactories
@@ -432,8 +441,10 @@ class TestMIZDjangoOptions(MyTestCase):
                 name = rel.field.name
             else:
                 name = rel.name
-            self.assertIn(name, declarations,
-                msg='{} not found in M2MFactory declarations'.format(name))
+            self.assertIn(
+                name, declarations,
+                msg='{} not found in M2MFactory declarations'.format(name)
+            )
         self.assertIn('genre', declarations)
         self.assertIn('musiker', declarations)
         self.assertIn('schlagwort', declarations)
@@ -511,12 +522,16 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         self.assertEqual(a.ausgabe_lnum_set.count(), 2)
 
     def test_ausgabe_monat(self):
-        januar, _ = _models.monat.objects.get_or_create(monat='Januar', abk='Jan', ordinal=1)
-        februar, _ = _models.monat.objects.get_or_create(monat='Februar', abk='Feb', ordinal=2)
+        januar, _ = _models.monat.objects.get_or_create(
+            monat='Januar', abk='Jan', ordinal=1)
+        februar, _ = _models.monat.objects.get_or_create(
+            monat='Februar', abk='Feb', ordinal=2)
 
         a = self.factory_class(ausgabe_monat__monat__monat='Januar')
         self.assertIn(
-            (januar.pk, 'Januar'), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat'))
+            (januar.pk, 'Januar'),
+            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+        )
         self.assertEqual(a.ausgabe_monat_set.count(), 1)
 
         a = self.factory_class(ausgabe_monat__monat__ordinal=1)
@@ -528,9 +543,13 @@ class TestAusgabeFactory(ModelFactoryTestCase):
 
         a = self.factory_class(ausgabe_monat__monat__monat=['Januar', 'Februar'])
         self.assertIn(
-            (januar.pk, 'Januar'), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat'))
+            (januar.pk, 'Januar'),
+            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+        )
         self.assertIn(
-            (februar.pk, 'Februar'), a.ausgabe_monat_set.values_list('monat__id', 'monat__monat'))
+            (februar.pk, 'Februar'),
+            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+        )
         self.assertEqual(a.ausgabe_monat_set.count(), 2)
 
         a = self.factory_class(ausgabe_monat__monat__ordinal=[1, 2])
@@ -654,10 +673,16 @@ class TestMIZModelFactory(MyTestCase):
                     # field is declared on obj
                     self.assertTrue(getattr(obj, rel.field.name).all().exists(), msg=rel.name)
                 elif rel.model == obj._meta.model:
-                    self.assertTrue(getattr(obj, rel.get_accessor_name()).all().exists(), msg=rel.name)
+                    self.assertTrue(
+                        getattr(obj, rel.get_accessor_name()).all().exists(),
+                        msg=rel.name
+                    )
             elif rel.model == obj._meta.model:
                 # reverse foreign to obj
-                self.assertTrue(getattr(obj, rel.get_accessor_name()).all().exists(), msg=rel.name)
+                self.assertTrue(
+                    getattr(obj, rel.get_accessor_name()).all().exists(),
+                    msg=rel.name
+                )
             else:
                 self.assertTrue(getattr(obj, rel.field.name), msg=rel.name)
 

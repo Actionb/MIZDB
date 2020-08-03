@@ -96,7 +96,7 @@ class TestBulkField(MyTestCase):
 
 class TestBulkJahrField(MyTestCase):
 
-    @translation_override(language = None)
+    @translation_override(language=None)
     def test_four_digits_year_validator(self):
         field = BulkJahrField()
         with self.assertRaises(ValidationError) as cm:

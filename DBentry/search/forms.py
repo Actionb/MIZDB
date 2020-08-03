@@ -147,14 +147,16 @@ class SearchForm(forms.Form):
                     and not value.exists()):
                 # Dont want empty values as filter parameters!
                 continue
-            elif ('in' in self.lookups.get(field_name, [])
-                and isinstance(value, QuerySet)):
-                    # django admin's prepare_lookup_value() expects an '__in'
-                    # lookup to consist of comma separated values.
-                    param_value = ",".join(
-                        str(pk)
-                        for pk in value.values_list('pk', flat=True).order_by('pk')
-                    )
+            elif (
+                    'in' in self.lookups.get(field_name, [])
+                    and isinstance(value, QuerySet)
+                ):
+                # django admin's prepare_lookup_value() expects an '__in'
+                # lookup to consist of comma separated values.
+                param_value = ",".join(
+                    str(pk)
+                    for pk in value.values_list('pk', flat=True).order_by('pk')
+                )
 
             params[param_key] = param_value
         return params

@@ -8,7 +8,8 @@ from DBentry.sites import miz_site
 class MIZAdminMixin(object):
     """Add admin_site specific context (each_context) to the view."""
 
-    site_title = None
+    title = None
+    site_title = 'MIZDB'
     breadcrumbs_title = None
     admin_site = miz_site
 
@@ -18,6 +19,10 @@ class MIZAdminMixin(object):
         context.update(self.admin_site.each_context(self.request))
         # Enable popups behaviour for custom views.
         context['is_popup'] = '_popup' in self.request.GET
+        # Context variables title & site_title for the html document's title.
+        # (used by admin/base_site.html)
+        if self.title:
+            context['title'] = self.title
         if self.site_title:
             context['site_title'] = self.site_title
         if self.breadcrumbs_title:

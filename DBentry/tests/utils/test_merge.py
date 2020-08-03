@@ -30,7 +30,8 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase):
     def setUp(self):
         super().setUp()
         self.request = self.get_request()
-        self.ids = [self.original.pk] + [merge_record.pk for merge_record in self.merge_records]
+        self.ids = [self.original.pk]
+        self.ids += [merge_record.pk for merge_record in self.merge_records]
         self.qs = self.model.objects.filter(pk__in=self.ids)
         # These are the related objects that belong to original:
         self.original_related = {}
@@ -475,7 +476,7 @@ class VideoMergingDataMixin(object):
             cls.model, titel='Original', tracks=3, band__extra=1,
             musiker__extra=1, bestand__extra=1,
         )
-        cls.band_original = obj1.band.get() # get() will complain if there's more than one record
+        cls.band_original = obj1.band.get()
         cls.musiker_original = obj1.musiker.get()
         cls.bestand_original = obj1.bestand_set.get()
         cls.obj1 = obj1

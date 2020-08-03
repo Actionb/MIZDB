@@ -95,10 +95,9 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         path = reverse('dupes', kwargs={'model_name': 'band'})
         request = self.post_request(path, data={ACTION_CHECKBOX_NAME: ['1', '2']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
-        # patch the as_view method of MergeViewWizarded to return None,
+        # Patch the as_view method of MergeViewWizarded to return None,
         # thereby emulating a successful merge without conflicts.
-        def mocked_as_view(*args, **kwargs):
-            return Mock(return_value=None)
+        mocked_as_view = Mock(return_value=Mock(return_value=None))
         with patch.object(MergeViewWizarded, 'as_view', new=mocked_as_view):
             response = view.post(request)
             self.assertEqual(response.url, path)
