@@ -195,8 +195,8 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
             for field_path in self.affected_fields:
                 field = get_fields_from_path(self.opts.model, field_path)[0]
                 if field.is_relation:
-                    related_pks = self.queryset.filter(
-                        pk=obj.pk).values_list(field.name, flat=True)
+                    related_pks = self.queryset.filter(pk=obj.pk).values_list(
+                        field.name, flat=True).order_by(field.name)
                     for pk in related_pks:
                         if not pk:
                             # values_list() will also gather None values
