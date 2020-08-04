@@ -151,14 +151,11 @@ class ACCreateable(ACBase):
     Creator helper object.
     """
 
-    def dispatch(self, *args, **kwargs):
-        if not self.model:
-            model_name = kwargs.pop('model_name', '')
-            self.model = get_model_from_string(model_name)
-        # TODO: use a get_creator() method to avoid having to declare
-        # self.creator in dispatch()
-        self.creator = Creator(self.model, raise_exceptions=False)
-        return super().dispatch(*args, **kwargs)
+    @property
+    def creator(self):
+        if not hasattr(self, '_creator'):
+            self._creator = Creator(self.model, raise_exceptions=False)
+        return self._creator
 
     def createable(self, text, creator=None):
         """
