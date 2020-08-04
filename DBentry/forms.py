@@ -1,10 +1,9 @@
 from django import forms
-from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ValidationError
 
 from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
-from DBentry.base.forms import MIZAdminFormMixin, MinMaxRequiredFormMixin
+from DBentry.base.forms import MinMaxRequiredFormMixin
 from DBentry.constants import discogs_release_id_pattern
 from DBentry.validators import DiscogsURLValidator
 
