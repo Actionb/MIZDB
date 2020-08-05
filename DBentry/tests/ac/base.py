@@ -6,7 +6,7 @@ from django.utils.translation import override as translation_override
 
 from DBentry.ac.views import ACBase
 from DBentry.tests.base import ViewTestCase
-from DBentry.test.mixins import TestDataMixin, LoggingTestMixin
+from DBentry.tests.mixins import TestDataMixin, LoggingTestMixin
 
 
 @tag("dal")
