@@ -114,12 +114,15 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
     )
 
     def get_initial(self):
-        # get initial values for bestand and dublette based on the view's model
+        """Provide initial values for bestand and dublette fields."""
         if self.model == _models.ausgabe:
-            return {
-                'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
-                'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
-            }
+            try:
+                return {
+                    'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
+                    'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
+                }
+            except _models.lagerort.DoesNotExist:
+                pass
         return super().get_initial()
 
     def _build_message(self, lagerort_instance, bestand_instances, fkey):
