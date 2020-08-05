@@ -102,6 +102,11 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view(request)
         view.forwarded = {'genre': self.genre.pk}
         self.assertEqual(list(view.get_queryset()), [self.obj1])
+        other_musiker = make(_models.musiker)
+        view.forwarded['musiker'] = other_musiker.pk
+        self.assertFalse(view.get_queryset().exists())
+        other_musiker.band_set.add(self.obj1)
+        self.assertTrue(view.get_queryset().exists())
 
         # get_queryset should filter out useless empty forward values and return
         # an empty qs instead.

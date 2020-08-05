@@ -1,6 +1,5 @@
 from django import http
 from django.contrib.auth import get_permission_codename
-from django.db.models import Q
 from django.utils.translation import gettext
 
 from dal import autocomplete
@@ -79,15 +78,15 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
             qs = self.queryset
 
         if self.forwarded:
-            if any(k and v for k, v in self.forwarded.items()):
-                qobjects = Q()
-                for k, v in self.forwarded.items():
-                    if k and v:
-                        qobjects |= Q((k, v))
-                qs = qs.filter(qobjects)
-            else:
-                # All forwarded values were None, return an empty queryset.
+            forward_filter = {}
+            for k, v in self.forwarded.items():
+                # Remove 'empty' forward items.
+                if k and v:
+                    forward_filter[k] = v
+            if not forward_filter:
+                # All forwarded items were empty; return an empty queryset.
                 return self.model.objects.none()
+            qs = qs.filter(**forward_filter)
 
         qs = self.do_ordering(qs)
         qs = self.apply_q(qs)
