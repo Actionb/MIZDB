@@ -343,9 +343,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
-        if request:
-            # TODO: why do we need 'request' in the context?
-            new_extra['request'] = request
         return new_extra
 
     def add_view(self, request, form_url='', extra_context=None):
