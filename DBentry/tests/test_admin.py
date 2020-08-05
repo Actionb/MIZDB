@@ -154,7 +154,7 @@ class AdminTestMethodsMixin(object):
 
     def test_get_exclude(self):
         expected = self.exclude_expected or []
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
+        self.assertEqual(self.model_admin.get_exclude(self.get_request()), expected)
 
     def test_get_fields(self):
         expected = self.fields_expected or []
@@ -615,6 +615,21 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.obj1.ausgabe_set.all().delete()
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_ausgaben(obj), 0)
+
+    def test_ausgaben_merkmal_excluded(self):
+        # Assert that field 'ausgaben_merkmal' is only included for superusers.
+        codename = get_permission_codename('change', self.model._meta)
+        self.staff_user.user_permissions.add(Permission.objects.get(codename=codename))
+        request = Mock(user=self.staff_user)
+        self.assertIn(
+            'ausgaben_merkmal', self.model_admin.get_exclude(request),
+            msg="Non-superuser users should not have access to field 'ausgaben_merkmal'."
+        )
+        request = Mock(user=self.super_user)
+        self.assertNotIn(
+            'ausgaben_merkmal', self.model_admin.get_exclude(request),
+            msg="Superusers users should have access to field 'ausgaben_merkmal'."
+        )
 
 
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):

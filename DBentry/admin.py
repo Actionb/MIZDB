@@ -118,7 +118,7 @@ class AudioAdmin(MIZModelAdmin):
 
 
 @admin.register(_models.ausgabe, site=miz_site)
-class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only field
+class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
         model = _models.ausgabe_num
         extra = 0
@@ -538,6 +538,17 @@ class MagazinAdmin(MIZModelAdmin):
     def short_beschreibung(self, obj):
         return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
     short_beschreibung.short_description = 'Beschreibung'
+
+    def get_exclude(self, request, obj=None):
+        """
+        Exclude 'ausgaben_merkmal' from the add/change page if the current
+        user is not a superuser.
+        """
+        exclude = super().get_exclude(request, obj) or []
+        if not request.user.is_superuser:
+            exclude = list(exclude)  # Copy the iterable.
+            exclude.append('ausgaben_merkmal')
+        return exclude
 
 
 @admin.register(_models.memorabilien, site=miz_site)
