@@ -51,8 +51,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
     }
-    # TODO: let the MIZ changelist template extend the default one
-    # change_list_template = 'miz_changelist.html'
 
     def check(self, **kwargs):
         errors = super().check(**kwargs)
