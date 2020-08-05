@@ -222,10 +222,9 @@ def make_widget(
 
     widget = widget_class(**widget_opts)
 
-    if wrap and remote_field_name:
-        # TODO: if model should be part of the outer condition
-        if model:
-            return EasyWidgetWrapper(
-                widget, model, remote_field_name,
-                can_add_related, can_change_related, can_delete_related)
+    if model and wrap and remote_field_name:
+        return EasyWidgetWrapper(
+            widget, model, remote_field_name,
+            can_add_related, can_change_related, can_delete_related
+        )
     return widget
