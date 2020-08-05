@@ -30,6 +30,8 @@ class FailedObject(object):
 
 class Creator(object):
     """
+    Create a model instance from a text input.
+
     A helper class that uses a declared 'create_<model_name>' method to create
     a model instance from a given string.
     """
