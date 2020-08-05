@@ -117,20 +117,6 @@ class ACViewTestMethodMixin(object):
         )
         self.assertIn(self.obj1.pk, result)
 
-    def test_get_queryset(self):
-        # Note that ordering does not matter here, testing for the correct
-        # order is the job of `test_do_ordering` and apply_q would mess it up anyhow.
-        request = self.get_request()
-        view = self.get_view(request)
-        # NOTE: Isn't this just comparing the starting qs with an unfiltered qs
-        # returned by the view?
-        qs = view.get_queryset().values_list('pk', flat=True)
-        expected = self.queryset.values_list('pk', flat=True)
-        if not expected:
-            # expected being empty means that this test has no test_data
-            self.warn('Test poorly configured: no test data')
-        self.assertEqual(sorted(list(qs)), sorted(list(expected)))
-
     @translation_override(language=None)
     def test_get_create_option(self):
         request = self.get_request()
