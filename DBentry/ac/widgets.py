@@ -70,15 +70,14 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             self, widget, related_model, remote_field_name='id',
             can_add_related=True, can_change_related=True,
             can_delete_related=True):
-        # FIXME: this could allow adding a change related icon for select
-        # multiple (unlike RelatedFieldWidgetWrapper)
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         self.choices = widget.choices
         self.widget = widget
-        self.can_add_related = can_add_related
-        self.can_change_related = can_change_related
-        self.can_delete_related = can_delete_related
+        multiple = getattr(widget, 'allow_multiple_selected', False)
+        self.can_add_related = not multiple and can_add_related
+        self.can_change_related = not multiple and can_change_related
+        self.can_delete_related = not multiple and can_delete_related
         self.related_model = related_model
         self.remote_field_name = remote_field_name
 
