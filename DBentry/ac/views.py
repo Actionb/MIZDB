@@ -50,10 +50,19 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
             return self.build_create_option(q)
         return []
 
-    def do_ordering(self, qs):
-        # FIXME: reapplying the model's default ordering could remove ordering
-        # set by a declared MultipleObjectMixin.queryset attribute.
-        return qs.order_by(*self.model._meta.ordering)
+    def do_ordering(self, queryset):
+        """
+        Apply ordering to the queryset.
+
+        Use the model's default ordering if the view's get_ordering method does
+        not return anything to order with.
+        """
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            return queryset.order_by(*ordering)
+        return queryset.order_by(*self.model._meta.ordering)
 
     def apply_q(self, qs):
         """Filter the given queryset 'qs' with the view's search term 'q'."""
@@ -139,8 +148,8 @@ class ACAusgabe(ACBase):
 
     model = ausgabe
 
-    def do_ordering(self, qs):
-        return qs.chronologic_order()
+    def do_ordering(self, queryset):
+        return queryset.chronologic_order()
 
 
 class ACCreateable(ACBase):

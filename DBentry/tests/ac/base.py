@@ -1,11 +1,12 @@
-from ..base import ViewTestCase
-from ..mixins import TestDataMixin, LoggingTestMixin
+from unittest.mock import patch, Mock
 
 from django.test import tag
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
 from DBentry.ac.views import ACBase
+from DBentry.tests.base import ViewTestCase
+from DBentry.test.mixins import TestDataMixin, LoggingTestMixin
 
 
 @tag("dal")
@@ -47,11 +48,18 @@ class ACViewTestMethodMixin(object):
 
     def test_do_ordering(self):
         # Assert that the ordering of the queryset returned by the view matches
-        # the ordering of the model.
+        # the ordering of get_ordering() OR the model.
         view = self.get_view()
-        expected = self.model._meta.ordering
         qs_order = list(view.do_ordering(self.queryset).query.order_by)
-        self.assertEqual(qs_order, expected)
+        self.assertEqual(qs_order, self.model._meta.ordering)
+        # Test that do_ordering can deal with get_ordering returning a simple
+        # string value instead of a list:
+        with patch.object(view, 'get_ordering', new=Mock(return_value="-pk")):
+            qs_order = list(view.do_ordering(self.queryset).query.order_by)
+            self.assertEqual(qs_order, ["-pk"])
+        with patch.object(view, 'get_ordering', new=Mock(return_value=["-pk"])):
+            qs_order = list(view.do_ordering(self.queryset).query.order_by)
+            self.assertEqual(qs_order, ["-pk"])
 
     def test_apply_q(self):
         # Test that an object can be found through any of its search_fields
