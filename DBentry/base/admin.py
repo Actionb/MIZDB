@@ -227,14 +227,22 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def _add_pk_search_field(self, search_fields):
         """
-        Add a search field ('pk__iexact') for the primary key to the
-        search fields if it is missing.
-        If the primary key is a OneToOneRelation, add 'pk__pk__iexact' instead.
+        Add a search field for the primary key to search_fields if missing.
 
-        Returns an updated copy of the passed in search_fields list.
+        Unless the ModelAdmin instance has a search form (which is presumed to
+        take over the duty of filtering for primary keys), 'pk__iexact' is added
+        to the given list 'search_fields'.
+        If the primary key is a OneToOneRelation, 'pk__pk__iexact' is added
+        instead.
+
+        Returns a copy of the passed in search_fields list.
         """
-        # TODO: remove _add_pk_search_field? (search forms now have a pk field)
-        search_fields = search_fields.copy()
+        search_fields = list(search_fields)
+        if self.has_search_form():
+            # This ModelAdmin instance has a search form. Assume that the form
+            # contains a field to search for primary keys; no need to add
+            # another primary key search field.
+            return search_fields
         pk_field = self.model._meta.pk
         for search_field in search_fields:
             if LOOKUP_SEP in search_field:

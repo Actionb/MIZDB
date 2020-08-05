@@ -1,6 +1,6 @@
 import re
 from unittest import skip
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
@@ -362,14 +362,17 @@ class TestMIZModelAdmin(AdminTestCase):
                 'pk__pk__iexact'
             )
         ]
+        mocked_has_search_form = Mock(return_value=False)
         for test_desc, model_admin, expected in test_data:
-            with self.subTest(desc=test_desc):
-                search_fields = model_admin._add_pk_search_field([])
-                self.assertTrue(search_fields, msg="Expected pk field to be added.")
-                self.assertEqual(
-                    len(search_fields), 1,
-                    msg="Only one pk search field expected. Got: %s" % str(search_fields))
-                self.assertIn(expected, search_fields)
+            with patch.object(model_admin, 'has_search_form', new=mocked_has_search_form):
+                with self.subTest(desc=test_desc):
+                    search_fields = model_admin._add_pk_search_field([])
+                    self.assertTrue(search_fields, msg="Expected pk field to be added.")
+                    self.assertEqual(
+                        len(search_fields), 1,
+                        msg="Only one pk search field expected. Got: %s" % str(search_fields)
+                    )
+                    self.assertIn(expected, search_fields)
 
     def test_add_pk_search_field_does_not_overwrite_existing(self):
         # Assert that _add_pk_search_field does not overwrite or delete
@@ -390,6 +393,25 @@ class TestMIZModelAdmin(AdminTestCase):
             with self.subTest(desc=test_desc):
                 search_fields = self.model_admin._add_pk_search_field(initial_fields)
                 self.assertEqual(initial_fields, search_fields)
+
+    def test_add_pk_search_field_with_search_form(self):
+        # Assert that _add_pk_search_field only adds a pk search field if the
+        # model admin does NOT have a search form.
+        with patch.object(self.model_admin, 'has_search_form') as mocked_has_search_form:
+            mocked_has_search_form.return_value = False
+            search_fields = self.model_admin._add_pk_search_field([])
+            self.assertTrue(
+                search_fields,
+                msg="ModelAdmin instances without a search_form should add a"
+                    "primary key search field."
+            )
+            mocked_has_search_form.return_value = True
+            search_fields = self.model_admin._add_pk_search_field([])
+            self.assertFalse(
+                search_fields,
+                msg="ModelAdmin instances with a search_form should not add a "
+                    "primary key search field."
+            )
 
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1032,6 +1054,7 @@ class BaseBrochureMixin(object):
     search_fields_expected = None
 
     def test_get_search_fields(self):
+        # FIXME: this test method/mixin is identical to AdminTestMethodsMixin!
         if self.search_fields_expected is None:
             return
         self.assertEqual(self.model_admin.get_search_fields(), self.search_fields_expected)
@@ -1071,8 +1094,7 @@ class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'schlagwort']
-    search_fields_expected = [
-        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
+    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
 
 class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
@@ -1083,9 +1105,7 @@ class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
         'art', 'ausgabe__magazin'
     ]
     exclude_expected = ['genre']
-    search_fields_expected = [
-        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact'
-    ]
+    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -1106,8 +1126,7 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
-    search_fields_expected = [
-        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
+    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
 
 @skip("Unfinished model/ModelAdmin")
