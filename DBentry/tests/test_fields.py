@@ -10,7 +10,6 @@ from django.db import transaction
 from django.test import tag
 
 from DBentry import models as _models
-from DBentry.constants import MIN_JAHR, MAX_JAHR
 from DBentry.factory import make
 from DBentry.fields import (
     StdNumWidget, YearField,
@@ -24,16 +23,17 @@ class TestYearField(MyTestCase):
     def test_formfield(self):
         # Assert that formfield() passes the MaxValue and the MinValue
         # validators on to the formfield.
-        formfield = YearField().formfield()
+        model_field = YearField()
+        formfield = model_field.formfield()
         self.assertEqual(len(formfield.validators), 2)
         if isinstance(formfield.validators[0], MinValueValidator):
             min_validator, max_validator = formfield.validators
         else:
             max_validator, min_validator = formfield.validators
         self.assertIsInstance(min_validator, MinValueValidator)
-        self.assertEqual(min_validator.limit_value, MIN_JAHR)
+        self.assertEqual(min_validator.limit_value, model_field.MIN_YEAR)
         self.assertIsInstance(max_validator, MaxValueValidator)
-        self.assertEqual(max_validator.limit_value, MAX_JAHR)
+        self.assertEqual(max_validator.limit_value, model_field.MAX_YEAR)
 
 
 # Reminder: the field's cleaning methods will reraise any ValidationError subtypes as a new

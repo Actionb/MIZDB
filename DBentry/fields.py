@@ -8,20 +8,21 @@ from django.db import models
 from django.forms import widgets, fields
 from django.utils import formats
 
-from DBentry.constants import MIN_JAHR, MAX_JAHR
 from DBentry.validators import ISSNValidator, ISBNValidator, EANValidator
 
 
 class YearField(models.IntegerField):
     """
-    An IntegerField that validates against min and max values given by
-    constants.MIN_JAHR/MAX_JAHR.
+    An IntegerField that validates against min and max values for year numbers.
     """
+
+    MAX_YEAR = 3000
+    MIN_YEAR = 1800
 
     def formfield(self, **kwargs):
         kwargs['validators'] = [
-            MaxValueValidator(MAX_JAHR),
-            MinValueValidator(MIN_JAHR)
+            MaxValueValidator(self.MAX_YEAR),
+            MinValueValidator(self.MIN_YEAR)
         ]
         return super().formfield(**kwargs)
 
