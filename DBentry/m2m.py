@@ -1,5 +1,6 @@
 from django.db import models
 from DBentry.base.models import BaseM2MModel
+from DBentry.utils.models import get_model_fields
 
 
 # ================================= #
@@ -335,8 +336,9 @@ class m2m_datei_quelle(BaseM2MModel):
 
     def get_quelle_art(self, as_field=True):
         return None
-        # TODO: get_foreignfields no longer exists!
-        for fld in m2m_datei_quelle.get_foreignfields():
+        foreignkey_fields =  get_model_fields(
+            m2m_datei_quelle, base=False, foreign=True, m2m=False)
+        for fld in foreignkey_fields:
             if fld.name != 'datei' and fld.value_from_object(self):
                 if as_field:
                     return fld
