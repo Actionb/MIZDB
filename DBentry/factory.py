@@ -259,7 +259,6 @@ class M2MFactory(RelatedFactory):
             source = related_manager.target_field_name
             target = related_manager.source_field_name
 
-        # self.name = source  # TODO: why is this commented out?
         # Add the relation.
         for related_object in super().call(instance, step, context):
             related_manager.through.objects.create(
