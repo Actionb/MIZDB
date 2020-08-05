@@ -1066,20 +1066,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-class BaseBrochureMixin(object):
-    # BaseBrochure and its descendants use a OneToOneField as primary key which
-    # does not support the 'iexact' lookup that
-    # django's ModelAdmin.get_search_results.construct_search replaces the '=' with.
-    # admin.get_search_fields thus does not add a primary key search field
-    # for BaseBrochure or its children.
-    search_fields_expected = None
-
-    def test_get_search_fields(self):
-        # FIXME: this test method/mixin is identical to AdminTestMethodsMixin!
-        if self.search_fields_expected is None:
-            return
-        self.assertEqual(self.model_admin.get_search_fields(), self.search_fields_expected)
-
 
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
@@ -1107,7 +1093,7 @@ class TestBaseBrochureAdmin(AdminTestCase):
         )
 
 
-class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure
     fields_expected = [
@@ -1118,7 +1104,7 @@ class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
     search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
 
-class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
     fields_expected = [
@@ -1139,7 +1125,7 @@ class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue(art_index < z_index)
 
 
-class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+class TestKalendarAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KalendarAdmin
     model = _models.Kalendar
     fields_expected = [
