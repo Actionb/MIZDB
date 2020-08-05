@@ -46,7 +46,11 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     superuser_only = False
     index_category = 'Sonstige'
 
-    actions = [merge_records]  # TODO: use AdminSite.add_action (see docs)?
+    # Add the merge_records action to all MIZModelAdmin classes.
+    # Using miz_site.add_action to add that action to all model admin instances
+    # would also add merge_records to Group/UserAdmin, which is neither
+    # desired nor functional (they'd need a has_merge_permission func).
+    actions = [merge_records]
 
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
