@@ -177,8 +177,6 @@ class BaseSearchQuery(object):
 
         For each field in search_fields perform three lookups.
         """
-        # TODO: it's pointless to do exact/startswith searches when the results
-        # will be reordered afterwards. contains search would suffice.
         rslt = []
         for search_field in self.search_fields:
             cleaned_q = self.clean_q(q, search_field)
