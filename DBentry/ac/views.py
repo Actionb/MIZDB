@@ -80,7 +80,6 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
 
     def get_queryset(self):
         """Return the ordered and filtered queryset for this view."""
-        # TODO: rely on MultipleObjectMixin.get_queryset ?
         if self.queryset is None:
             qs = self.model.objects.all()
         else:
