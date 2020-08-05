@@ -124,46 +124,6 @@ class BaseM2MModel(BaseModel):
             template = "{}" + " ({})" * (len(data) - 1)
             return template.format(*data)
 
-    @classmethod
-    def check(cls, **kwargs):
-        errors = super().check(**kwargs)
-        errors.extend(cls._check_has_m2m_field(**kwargs))
-        return errors
-
-    @classmethod
-    def _check_has_m2m_field(cls, **kwargs):
-        """
-        Check for at least one of the related models of this intermediary
-        table declaring a ManyToManyField through this table. While the
-        ManyToManyField is not required for m2m to work, some features rely
-        on there being an explicit field on at least one side
-        """
-        # TODO: which features need an explicit ManyToManyField + BaseM2MModel.
-        fk_fields = [
-            f for f in cls._meta.get_fields()
-            if isinstance(f, models.ForeignKey)
-        ]
-        # Walk through the ForeignKeys of this model and check if this model
-        # represents the intermediary table for any of the related model's
-        # ManyToManyFields.
-        for fk_field in fk_fields:
-            m2m_fields = (
-                f for f in fk_field.related_model._meta.get_fields()
-                if isinstance(f, models.ManyToManyField)
-            )
-            if any(field.remote_field.through == cls for field in m2m_fields):
-                break
-        else:
-            # The loop completed without breaking:
-            # no related model defines this model as an intermediary
-            # for a ManyToMany relation.
-            return [checks.Info(
-                "{model_name} represents an intermediary many-to-many table "
-                "but no related model declares a ManyToManyField through "
-                "this model.".format(model_name=cls._meta.model_name)
-            )]
-        return []
-
     class Meta(BaseModel.Meta):
         abstract = True
 
