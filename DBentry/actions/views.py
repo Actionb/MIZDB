@@ -56,7 +56,6 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         "Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an."
         "\nDie Jahrgangswerte der anderen Ausgaben werden danach in Abständen "
         "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt."
-
         "\n\nAusgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), "
         "werden ignoriert."
         "\nWird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge "
@@ -211,23 +210,23 @@ class MergeViewWizarded(WizardConfirmationView):
         (CONFLICT_RESOLUTION_STEP, MergeConflictsFormSet)
     ]
 
-    # TODO: include this bit in the ACTUAL help page for this action:
-    # Fehlen dem primären Datensatz Grunddaten und wird unten bei der
-    # entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten
-    # nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
-    # Bereits bestehende Grunddaten des primären Datensatzes werden NICHT
-    # überschrieben.
     step1_helptext = (
-        "Bei der Zusammenfügung werden alle verwandten Objekte der"
-        "zuvor in der Übersicht ausgewählten Datensätze dem primären"
+        "Bei der Zusammenfügung werden alle verwandten Objekte der "
+        "zuvor in der Übersicht ausgewählten Datensätze dem primären "
         "Datensatz zugeteilt."
+        "\nFehlen dem primären Datensatz Grunddaten und wird unten bei der "
+        "entsprechenden Option ('Primären Datensatz erweitern') der Haken "
+        "gesetzt, so werden die fehlenden Daten "
+        "nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt. "
+        "Bereits bestehende Grunddaten des primären Datensatzes werden NICHT "
+        "überschrieben."
         "\nDanach werden die sekundären Datensätze GELÖSCHT."
     )
     step2_helptext = (
-        "Für die Erweiterung der Grunddaten des primären Datensatzes stehen"
+        "Für die Erweiterung der Grunddaten des primären Datensatzes stehen "
         "widersprüchliche Möglichkeiten zur Verfügung."
-        "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären"
-       " Datensatz übernommen werden sollen."
+        "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären "
+       "Datensatz übernommen werden sollen."
     )
 
     view_helptext = {
