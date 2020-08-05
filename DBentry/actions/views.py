@@ -375,8 +375,6 @@ class MergeViewWizarded(WizardConfirmationView):
             # Set the current_step to the CONFLICT_RESOLUTION_STEP
             # so that the conflict reslution will be skipped.
             self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
-            # NOTE: this may break the next line in post():
-            # self.storage.set_step_files(self.steps.current, self.process_step_files(form))
         return data
 
     def get_form_kwargs(self, step=None):
