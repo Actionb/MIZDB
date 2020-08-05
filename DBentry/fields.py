@@ -221,7 +221,6 @@ class PartialDate(datetime.date):
         constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
         date_format = []
         iterator = zip(
-            # TODO: %d. (dot) for 20. May 2019?
             ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
         )
         for name, value, format in iterator:
@@ -408,16 +407,11 @@ class PartialDateField(models.CharField):
 
     def to_python(self, value):
         if not value:
-            return PartialDate()  # TODO: or return None?
+            return PartialDate()
         if isinstance(value, str):
             try:
                 pd = PartialDate.from_string(value)
             except ValueError:
-                # TODO: raise a different exception in from_string:
-                # - invalid format for regex (--> code 'invalid')
-                # - invalid date (--> code 'invalid_date')
-                # Since PartialDateField uses a MultiValueField, though,
-                # the user does not get a choice on what format to use.
                 # Either from_string could not match its regex or
                 # the date produced is invalid (e.g. 02-31)
                 raise ValidationError(
