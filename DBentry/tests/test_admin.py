@@ -426,6 +426,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'),
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
+    search_fields_expected = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     @classmethod
     def setUpTestData(cls):
@@ -484,6 +485,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
     ]
+    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
 
@@ -598,6 +600,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
         'beschreibung', 'bemerkungen', 'ort',
     ]
+    search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'ausgabe', 'fld_name': 'magazin', 'label': 'Ausgaben (1)'},
@@ -620,6 +623,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.person
     exclude_expected = ['orte']
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     # one extra 'empty' object without relations for Ist_Autor/Ist_Musiker:
     test_data_count = 1
 
@@ -665,6 +669,8 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
+    search_fields_expected = [
+        'kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
 
     raw_data = [
         {},
@@ -710,6 +716,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.genre
     fields_expected = ['genre']
+    search_fields_expected = ['genre', 'genre_alias__alias', 'pk__iexact']
 
     raw_data = [
         {
@@ -743,6 +750,7 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.schlagwort
     fields_expected = ['schlagwort']
+    search_fields_expected = ['schlagwort', 'schlagwort_alias__alias', 'pk__iexact']
 
     raw_data = [
         {
@@ -775,6 +783,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band_alias__alias': ['Alias1', 'Alias2'],
@@ -822,6 +831,7 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
+    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     raw_data = [
         {'magazin__magazin_name': ['Testmagazin1', 'Testmagazin2']}
     ]
@@ -843,6 +853,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.OrtAdmin
     model = _models.ort
     fields_expected = ['stadt', 'land', 'bland']
+    search_fields_expected = ['_name']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -872,6 +883,7 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.LandAdmin
     model = _models.land
     fields_expected = ['land_name', 'code']
+    search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -885,6 +897,7 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BlandAdmin
     model = _models.bundesland
     fields_expected = ['bland_name', 'code', 'land']
+    search_fields_expected = ['bland_name', 'code']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -897,6 +910,7 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.InstrumentAdmin
     model = _models.instrument
     fields_expected = ['instrument', 'kuerzel']
+    search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -918,6 +932,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
         'release_id', 'discogs_url', 'beschreibung', 'bemerkungen'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band__band_name': 'Testband',
@@ -941,6 +956,8 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SpielortAdmin
     model = _models.spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
+    search_fields_expected = [
+        'name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -964,6 +981,8 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
+    search_fields_expected = [
+        'name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -984,6 +1003,7 @@ class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VerlagAdmin
     model = _models.verlag
     fields_expected = ['verlag_name', 'sitz']
+    search_fields_expected = ['verlag_name']
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'verlag', 'label': 'Bücher (1)'},
         {'model_name': 'magazin', 'fld_name': 'verlag', 'label': 'Magazine (1)'}
@@ -1002,6 +1022,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         'EAN', 'ISBN', 'is_buchband', 'beschreibung', 'bemerkungen',
         'schriftenreihe', 'buchband', 'sprache',
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Aufsätze (1)'},
@@ -1138,6 +1159,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1149,6 +1171,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1160,6 +1183,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1167,6 +1191,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.video
     fields_expected = [
         'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung']
 
@@ -1189,12 +1214,14 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
+    search_fields_expected = ['herausgeber', 'pk__iexact']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'},
@@ -1212,6 +1239,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'signatur', 'size', 'datum', 'beschreibung',
         'bemerkungen', 'reihe', 'copy_related'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
