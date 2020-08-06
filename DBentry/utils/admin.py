@@ -20,12 +20,13 @@ def get_obj_url(obj, site_name='admin'):
     return reverse(viewname, args=[quote(obj.pk)])
 
 
-def get_obj_link(obj, user, site_name='admin'):
+def get_obj_link(obj, user, site_name='admin', blank=False):
     """
     Return a safe link to the change page of 'obj'.
 
     If no change page exists or the user has no change permission,
     A simple string representation of 'obj' is returned.
+    If 'blank' is True, the link will include a target="_blank" attribute.
     """
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))
@@ -40,7 +41,11 @@ def get_obj_link(obj, user, site_name='admin'):
     )
     if not user.has_perm(perm):
         return no_edit_link
-    return format_html('<a href="{}">{}</a>', admin_url, obj)
+    if blank:
+        template = '<a href="{}" target="_blank">{}</a>'
+    else:
+        template = '<a href="{}">{}</a>'
+    return format_html(template, admin_url, obj)
 
 
 def get_changelist_url(model, user, site_name='admin', obj_list=None):
