@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import ValidationError
 from django.db.models.query import QuerySet
 from django.db.models.manager import BaseManager
@@ -242,13 +243,8 @@ class MIZAdminFormMixin(object):
             self, 'fieldsets',
             [(None, {'fields': list(self.fields.keys())})]
         )
-
-        from DBentry.helper import MIZFieldset
         for name, options in fieldsets:
-            yield MIZFieldset(
-                self, name,
-                **options
-            )
+            yield Fieldset(self, name, **options)
 
     @property
     def media(self):

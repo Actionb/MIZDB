@@ -2,6 +2,7 @@ from .base import FormTestCase, ModelFormTestCase, MyTestCase
 from .mixins import TestDataMixin
 
 from django import forms
+from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
@@ -144,11 +145,8 @@ class TestMIZAdminForm(FormTestCase):
 
     def test_iter(self):
         form = self.get_dummy_form()
-        from django.contrib.admin.helpers import Fieldset
-        from DBentry.helper import MIZFieldset
         for fs in form:
             self.assertIsInstance(fs, Fieldset)
-            self.assertIsInstance(fs, MIZFieldset)
 
     def test_media_prop(self):
         # Make sure jquery is loaded in the right order:

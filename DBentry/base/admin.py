@@ -17,7 +17,6 @@ from DBentry.base.forms import MIZAdminInlineFormBase
 from DBentry.changelist import MIZChangeList
 from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
-from DBentry.helper import MIZAdminFormWrapper
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import (
     get_model_relations, ensure_jquery, get_fields_and_lookups,
@@ -444,9 +443,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             form.instance.update_name(force_update=True)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if 'adminform' in context:
-            # Move checkbox widget to the right of its label.
-            context['adminform'] = MIZAdminFormWrapper(context['adminform'])
         if 'media' in context:
             # Fix jquery load order during the add/change view process. If the
             # ModelAdmin does not have inlines, collapse elements will not work:
