@@ -424,8 +424,18 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.assertEqual(queryset.get(pk=self.obj10.pk).jahrgang, 7)
 
     def test_increment_mixed(self):
-        # TODO: test_increment_mixed
-        pass
+        # Test increment_jahrgang with a mixed bag of values.
+        # Remove the e_datum and month values from obj4 to obj7.
+        ids = [self.obj4.pk, self.obj5.pk, self.obj6.pk, self.obj7.pk]
+        _models.ausgabe_monat.objects.filter(ausgabe_id__in=ids).delete()
+        _models.ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
+        # Also remove num values from obj6 and obj7.
+        _models.ausgabe_num.objects.filter(
+            ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
+
+        update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
+        self.assertIncrementedUpdateDict(update_dict)
+        self.assertIncrementedQuerySet(self.queryset)
 
     def test_build_date(self):
         self.assertEqual(build_date([2000], [1], 31), datetime.date(2000, 1, 31))
