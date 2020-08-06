@@ -681,11 +681,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     level=messages.ERROR,
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
-                        get_obj_link(
-                            obj=self.magazin_instance,
-                            user=self.request.user,
-                            include_name=False
-                        )
+                        get_obj_link(obj=self.magazin_instance,user=self.request.user)
                     )
                 )
             else:
@@ -702,8 +698,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         for form in formset:
             link = get_obj_link(
                 obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
-                user=self.request.user,
-                include_name=False
+                user=self.request.user
             )
             forms.append((link, form))
         context['forms'] = forms

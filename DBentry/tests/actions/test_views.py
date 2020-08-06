@@ -114,7 +114,7 @@ class TestActionConfirmationView(ActionViewTestCase):
     def test_compile_affected_objects(self):
         request = self.get_request()
         view = self.get_view(request=request)
-        expected = [[get_obj_link(self.obj1, request.user)]]
+        expected = [['Band: '+ get_obj_link(self.obj1, request.user)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
         a = make(_models.audio, band=self.obj1, format__extra=2)
@@ -134,7 +134,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         # ]
         # In this case here, the list only has one object (first index==0).
         self.assertEqual(
-            link_list[0][0], get_obj_link(a, request.user),
+            link_list[0][0], 'Audio Material: '+ get_obj_link(a, request.user),
             msg="First item should be the link to the audio object."
         )
         # Evaluating the list of 'affected objects'. This list is determined by
@@ -143,13 +143,13 @@ class TestActionConfirmationView(ActionViewTestCase):
         self.assertEqual(link_list[0][1][0], 'Titel: ' + a.titel)
         # Second item should a link to the band object:
         self.assertEqual(
-            link_list[0][1][1], get_obj_link(a.band.first(), request.user))
+            link_list[0][1][1], 'Band: ' + get_obj_link(a.band.first(), request.user))
         # The next two items should be links to the Format objects:
         format_set = a.format_set.all().order_by('_name')
         self.assertEqual(
-            link_list[0][1][2], get_obj_link(format_set[0], request.user))
+            link_list[0][1][2], 'Format: ' + get_obj_link(format_set[0], request.user))
         self.assertEqual(
-            link_list[0][1][3], get_obj_link(format_set[1], request.user))
+            link_list[0][1][3], 'Format: '+ get_obj_link(format_set[1], request.user))
         # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 

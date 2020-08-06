@@ -36,13 +36,13 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_obj_link(self):
         link = utils.get_obj_link(self.obj1, self.super_user)
         url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
-        expected = 'Band: <a href="{}">{}</a>'.format(url, force_text(self.obj1))
-        self.assertEqual(link, expected)
-
-        link = utils.get_obj_link(self.obj1, self.super_user, include_name=False)
-        url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
         expected = '<a href="{}">{}</a>'.format(url, force_text(self.obj1))
         self.assertEqual(link, expected)
+
+#        link = utils.get_obj_link(self.obj1, self.super_user, blank=True)
+#        url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
+#        expected = '<a href="{}" target="_blank">{}</a>'.format(url, force_text(self.obj1))
+#        self.assertEqual(link, expected)
 
     def test_link_list(self):
         request = self.get_request()

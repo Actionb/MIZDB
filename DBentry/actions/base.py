@@ -1,8 +1,10 @@
 from django import views
 from django.contrib.admin import helpers
 from django.contrib.admin.utils import get_fields_from_path
-from django.utils.translation import gettext_lazy
 from django.utils.encoding import force_text
+from django.utils.html import format_html
+from django.utils.text import capfirst
+from django.utils.translation import gettext_lazy
 
 from DBentry.utils import get_obj_link
 from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
@@ -180,9 +182,20 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         objects, present those values as a nested list.
         """
         def linkify(obj):
-            return get_obj_link(
-                obj, self.request.user, self.model_admin.admin_site.name
-            )
+            object_link = get_obj_link(
+                obj, self.request.user, self.model_admin.admin_site.name)
+            if "</a>" in object_link:
+                # get_obj_link returned a full link;
+                # add the model's verbose_name.
+                return format_html(
+                    '{model_name}: {object_link}',
+                    model_name=capfirst(obj._meta.verbose_name),
+                    object_link=object_link
+                )
+            else:
+                # get_obj_link couldn't create a link and has simply returned
+                # {model_name}: force_text(obj)
+                return object_link
 
         objs = []
         for obj in self.queryset:

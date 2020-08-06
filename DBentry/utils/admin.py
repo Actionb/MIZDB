@@ -20,12 +20,10 @@ def get_obj_url(obj, site_name='admin'):
     return reverse(viewname, args=[quote(obj.pk)])
 
 
-def get_obj_link(obj, user, site_name='admin', include_name=True):
+def get_obj_link(obj, user, site_name='admin'):
     """
     Return a safe link to the change page of 'obj'.
 
-    If include_name is True, the verbose_name of the obj's model is prepended
-    to the link.
     If no change page exists or the user has no change permission,
     A simple string representation of 'obj' is returned.
     """
@@ -42,13 +40,6 @@ def get_obj_link(obj, user, site_name='admin', include_name=True):
     )
     if not user.has_perm(perm):
         return no_edit_link
-    if include_name:
-        return format_html(
-            '{}: <a href="{}">{}</a>',
-            capfirst(opts.verbose_name),
-            admin_url,
-            obj
-        )
     return format_html('<a href="{}">{}</a>', admin_url, obj)
 
 
@@ -99,7 +90,7 @@ def link_list(request, obj_list, sep=", "):
     """
     links = []
     for obj in obj_list:
-        links.append(get_obj_link(obj, request.user, include_name=False))
+        links.append(get_obj_link(obj, request.user))
     return format_html(sep.join(links))
 
 
