@@ -295,7 +295,17 @@ class AusgabeQuerySet(CNQuerySet):
         return super().find(q, ordered=ordered, **kwargs)
 
     def increment_jahrgang(self, start_obj, start_jg=1):
-        # TODO: increment_jahrgang BADLY needs a doc string and a revision
+        """
+        Alter the 'jahrgang' values using 'start_obj' as anchor.
+
+        Set the 'jahrgang' (i.e. the volume) value for 'start_obj' to 'start_jg'
+        and then alter the jahrgang values of the other ausgabe objects in this
+        queryset according to whether they lie temporally before or after the
+        jahrgang of 'start_obj'.
+        The time/jahrgang difference of other objects to 'start_obj' is
+        calculated using either (partial) dates, 'num' or simply the year values
+        of the other objects; depending on the available data and in that order.
+        """
         start = start_obj or self.chronologic_order().first()
         start_date = start.e_datum
         years = start.ausgabe_jahr_set.values_list('jahr', flat=True)
@@ -337,10 +347,11 @@ class AusgabeQuerySet(CNQuerySet):
                     # If the obj_date lies before start_date the obj_jg will
                     # always be start_jg - 1 plus the year difference between
                     # the two dates.
-                    # If obj_date is equal to start_date expect for the year, obj_date marks
-                    # the exact BEGINNING of the obj_jg, thus we need to handle
-                    # it inclusively (subtracting 1 from the day difference,
-                    # thereby requiring 366 days difference)
+                    # If obj_date is equal to start_date except for the year
+                    # (same day, same month, different year), then obj_date
+                    # marks the exact BEGINNING of the obj_jg, thus we need to
+                    # handle it inclusively (subtracting 1 from the day
+                    # difference, thereby requiring 366 days difference).
                     days = (start_date - obj_date).days - leapdays(start_date, obj_date) - 1
                     obj_jg = start_jg - 1 + int(days / 365)
                 else:
@@ -356,7 +367,6 @@ class AusgabeQuerySet(CNQuerySet):
         if nums and start_year:
             queryset = queryset.exclude(pk__in=ids_seen)
             start_num = min(nums)
-
             val_dicts = queryset.values_dict(
                 'ausgabe_num__num', 'ausgabe_jahr__jahr',
                 include_empty=False, flatten=False
@@ -375,6 +385,11 @@ class AusgabeQuerySet(CNQuerySet):
 
                 if ((obj_num > start_num and obj_year == start_year)
                         or (obj_num < start_num and obj_year == start_year + 1)):
+                    # The object was released either:
+                    #   - after the start object and within the same year
+                    #   - *numerically* before the start object but in the year
+                    #       following the start year (i.e. temporally after).
+                    # Either way it still belongs to the same volume as start.
                     update_dict[start_jg].append(pk)
                 else:
                     obj_jg = start_jg + obj_year - start_year
