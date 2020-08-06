@@ -305,6 +305,9 @@ class AusgabeQuerySet(CNQuerySet):
         The time/jahrgang difference of other objects to 'start_obj' is
         calculated using either (partial) dates, 'num' or simply the year values
         of the other objects; depending on the available data and in that order.
+
+        Returns a dictionary that was used to update the jahrgang values;
+        it maps jahrgang to list of ids.
         """
         start = start_obj or self.chronologic_order().first()
         start_date = start.e_datum
