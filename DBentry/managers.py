@@ -3,7 +3,6 @@ import datetime
 from itertools import chain
 from collections import Counter, OrderedDict, namedtuple
 
-from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import models, transaction
@@ -69,33 +68,6 @@ class MIZQuerySet(models.QuerySet):
             instances = self.model.objects.filter(pk__in=pks)
             rslt.append(Dupe(instances, elem))
         return rslt
-
-    def exclude_empty(self, *fields):
-        """
-        Exclude any record whose value for field in fields is 'empty'
-        (either '' or None). If a field in fields is a path, then also exclude
-        empty values of every step on this path.
-        """
-        filters = models.Q()
-        for field_name in fields:
-            lookup_path = ''
-            # Follow the path and add a filter for each piece.
-            for field in get_fields_from_path(self.model, field_name):
-                if isinstance(field, (models.CharField, models.TextField)):
-                    lookup = lookup_value = ''
-                else:
-                    lookup = '__isnull'
-                    lookup_value = True
-                if lookup_path:
-                    lookup_path += LOOKUP_SEP
-                lookup_path += field.name
-                q = models.Q(**{lookup_path + lookup: lookup_value})
-
-                # Avoid having duplicates of the same filter
-                # (though I don't think having them would actually hurt?)
-                if q.children[0] not in filters:
-                    filters |= q
-        return self.exclude(filters)
 
     def values_dict(self, *fields, include_empty=False, flatten=False,
             tuplfy=False, **expressions):
