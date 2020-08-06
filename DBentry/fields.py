@@ -1,5 +1,6 @@
 import datetime
 import re
+from functools import total_ordering
 from stdnum import issn, isbn, ean
 
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -209,6 +210,7 @@ django-partial-date: https://github.com/ktowen/django_partial_date
 https://stackoverflow.com/q/2971198
 https://stackoverflow.com/a/30186603
 """
+@total_ordering
 class PartialDate(datetime.date):
     """A datetime.date that allows constructor arguments to be optional."""
 
@@ -312,16 +314,10 @@ class PartialDate(datetime.date):
                 return False
         return super().__eq__(other)
 
-# TODO: rich comparison => functools.total_ordering
-#    def __gt__(self, other):
-#        if isinstance(other, str):
-#            return self.__str__().__gt__(other)
-#        return super().__gt__(other)
-#
-#    def __ge__(self, other):
-#        if isinstance(other, str):
-#            return self.__str__().__ge__(other)
-#        return super().__ge__(other)
+    def __gt__(self, other):
+        if isinstance(other, str):
+            return self.__str__().__gt__(other)
+        return super().__gt__(other)
 
 
 class PartialDateWidget(widgets.MultiWidget):
