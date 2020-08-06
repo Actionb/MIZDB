@@ -674,7 +674,6 @@ class TestValuesDict(DataTestCase):
         # fields (implicitly querying all fields).
         self.qs_obj1.values_dict()
         self.assertTrue(mocked_values.called)
-        # FIXME: caching problem? sometimes this fails, sometimes it doesnt!
         self.assertEqual(mocked_values.call_args[0], ())
 
     @patch.object(MIZQuerySet, 'values')
@@ -796,11 +795,6 @@ class TestDuplicates(DataTestCase):
         self.assertNotIn(self.obj3, duplicates)
 
     def test_duplicates_reverse_fk(self):
-        # TODO: this test fails when looking for duplicates with 'musiker_alias';
-        # 'musiker_alias' will look up the primary key of the musiker_alias object
-        # every musiker_alias object can only have one musiker
-        # so musiker_alias breaks duplicate search
-        # Need to query for a non-unique field(s)...
         self.obj1.musiker_alias_set.create(alias='Beep')
         self.obj2.musiker_alias_set.create(alias='Beep')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
