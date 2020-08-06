@@ -787,7 +787,7 @@ class TestDuplicates(DataTestCase):
     def get_duplicate_instances(self, *fields, queryset=None):
         if queryset is None:
             queryset = self.queryset
-        duplicates = queryset.values_dict_dupes(*fields)
+        duplicates = queryset.duplicates(*fields)
         return list(chain(*(dupe.instances for dupe in duplicates)))
 
     def test_a_baseline(self):
