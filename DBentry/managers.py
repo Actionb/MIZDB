@@ -353,7 +353,7 @@ class AusgabeQuerySet(CNQuerySet):
                     # handle it inclusively (subtracting 1 from the day
                     # difference, thereby requiring 366 days difference).
                     days = (start_date - obj_date).days - leapdays(start_date, obj_date) - 1
-                    obj_jg = start_jg - 1 + int(days / 365)
+                    obj_jg = start_jg - 1 - int(days / 365)
                 else:
                     days = (obj_date - start_date).days - leapdays(start_date, obj_date)
                     obj_jg = start_jg + int(days / 365)
