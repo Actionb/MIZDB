@@ -3,6 +3,8 @@ import datetime
 from itertools import chain
 from collections import Counter, OrderedDict, namedtuple
 
+from nameparser import HumanName
+
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import models, transaction
@@ -19,16 +21,17 @@ class MIZQuerySet(models.QuerySet):
 
     def find(self, q, ordered=False, strat_class=None, **kwargs):
         """
+        Return a list of instances that contain search term 'q'.
+
         Find any occurence of the search term 'q' in the queryset, depending
         on the search strategy used.
-
         By default, the order of the results depends on the search strategy.
         If 'ordered' is True, results will be ordered according to the order
         established in the queryset instead.
         """
-        # Find the best strategy to use:
         if strat_class:
             strat_class = strat_class
+        # Use the most accurate strategy possible:
         elif getattr(self.model, 'name_field', False):
             strat_class = ValuesDictSearchQuery
         elif getattr(self.model, 'primary_search_fields', False):
@@ -72,7 +75,7 @@ class MIZQuerySet(models.QuerySet):
     def values_dict(self, *fields, include_empty=False, flatten=False,
             tuplfy=False, **expressions):
         """
-        An extension of QuerySet.values().
+        An extension of QuerySet.values() that merges the results.
 
         For a pizza with two toppings and two sizes:
         values('pk', 'pizza__topping', 'pizza__size'):
@@ -85,10 +88,14 @@ class MIZQuerySet(models.QuerySet):
 
         values_dict('pk','pizza__topping', 'pizza__size'):
                 {
-                    '1' : {'pizza__topping' : ('Onions', 'Bacon' ), 'pizza__size': ('Tiny', 'God')},
+                    '1' : {
+                        'pizza__topping' : ('Onions', 'Bacon' ),
+                        'pizza__size': ('Tiny', 'God')
+                    },
                 }
         """
-        # pk_name is the variable that will refer to this query's primary key values.
+        # pk_name is the variable that will refer to this query's primary key
+        # values.
         pk_name = self.model._meta.pk.name
 
         # Make sure the query includes the model's primary key values as we
@@ -198,7 +205,7 @@ class CNQuerySet(MIZQuerySet):
 
     def _update_names(self):
         """
-        Update the names of all rows of this queryset where _changed_flag is True.
+        Update the names of rows where _changed_flag is True.
         """
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
             values = self.filter(
@@ -497,13 +504,15 @@ class HumanNameQuerySet(MIZQuerySet):
     """Extension of MIZQuerySet that enables searches for 'human names'."""
 
     def _parse_human_name(self, text):
-        from nameparser import HumanName
         try:
             return str(HumanName(text))
         except:
             return text
 
     def find(self, q, **kwargs):
+        # Parse 'q' through HumanName first to 'combine' the various ways one
+        # could write a human name.
+        # (f.ex. 'first name surname' or 'surname, first name')
         q = self._parse_human_name(q)
         return super().find(q, **kwargs)
 
