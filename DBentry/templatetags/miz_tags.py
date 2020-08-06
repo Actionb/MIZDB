@@ -7,13 +7,19 @@ register = Library()
 
 
 @register.filter
-def tabindex(value, index):
+def tabindex(bound_field, index):
     """
     Add a tabindex attribute to the widget for a bound field.
+
+    Arguments:
+        - bound_field: the django.forms.BoundField instance whose widget will
+            get a tabindex attribute
+        - index (int): the tabindex
+
     Credit for idea to: Gareth Reese (stackoverflow)
     """
-    value.field.widget.attrs['tabindex'] = index
-    return value
+    bound_field.field.widget.attrs['tabindex'] = index
+    return bound_field
 
 
 @register.simple_tag
