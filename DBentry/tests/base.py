@@ -1,11 +1,15 @@
 import contextlib
 import sys
 import warnings
+from importlib import import_module
 from unittest.mock import Mock
 
 from django import forms
+from django.contrib.admin import helpers
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.conf import settings
+from django.conf.urls import url, include
 from django.db.models.query import QuerySet
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -45,9 +49,6 @@ def override_urls(url_patterns):
 
 @contextlib.contextmanager
 def add_urls(url_patterns, regex=''):
-    from django.conf import settings
-    from django.conf.urls import url, include
-    from importlib import import_module
     try:
         urls = import_module(settings.ROOT_URLCONF).urlpatterns
     except AttributeError as e:
@@ -179,7 +180,6 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
     def call_action(self, action_name, objs, data=None):
         if isinstance(objs, QuerySet):
             objs = objs.values_list('pk', flat=True)
-        from django.contrib.admin import helpers
         request_data = {'action': action_name, helpers.ACTION_CHECKBOX_NAME: objs}
         for other_dict in data or []:
             request_data.update(other_dict)
