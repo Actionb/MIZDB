@@ -114,7 +114,7 @@ class TestActionConfirmationView(ActionViewTestCase):
     def test_compile_affected_objects(self):
         request = self.get_request()
         view = self.get_view(request=request)
-        expected = [['Band: '+ get_obj_link(self.obj1, request.user)]]
+        expected = [['Band: '+ get_obj_link(self.obj1, request.user, blank=True)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
         a = make(_models.audio, band=self.obj1, format__extra=2)
@@ -133,8 +133,9 @@ class TestActionConfirmationView(ActionViewTestCase):
         #       ...
         # ]
         # In this case here, the list only has one object (first index==0).
+        expected = 'Audio Material: '+ get_obj_link(a, request.user, blank=True)
         self.assertEqual(
-            link_list[0][0], 'Audio Material: '+ get_obj_link(a, request.user),
+            link_list[0][0], expected,
             msg="First item should be the link to the audio object."
         )
         # Evaluating the list of 'affected objects'. This list is determined by
@@ -142,14 +143,14 @@ class TestActionConfirmationView(ActionViewTestCase):
         # First item should just be the titel of 'a'.
         self.assertEqual(link_list[0][1][0], 'Titel: ' + a.titel)
         # Second item should a link to the band object:
-        self.assertEqual(
-            link_list[0][1][1], 'Band: ' + get_obj_link(a.band.first(), request.user))
+        expected = 'Band: ' + get_obj_link(a.band.first(), request.user, blank=True)
+        self.assertEqual(link_list[0][1][1], expected)
         # The next two items should be links to the Format objects:
         format_set = a.format_set.all().order_by('_name')
-        self.assertEqual(
-            link_list[0][1][2], 'Format: ' + get_obj_link(format_set[0], request.user))
-        self.assertEqual(
-            link_list[0][1][3], 'Format: '+ get_obj_link(format_set[1], request.user))
+        expected = 'Format: ' + get_obj_link(format_set[0], request.user, blank=True)
+        self.assertEqual(link_list[0][1][2], expected)
+        expected = 'Format: '+ get_obj_link(format_set[1], request.user, blank=True)
+        self.assertEqual(link_list[0][1][3], expected)
         # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
@@ -389,7 +390,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         # Assert that links to the instance's bestand objects are included.
         def get_bestand_links(obj):
             view_name = "admin:DBentry_%s_change" % (_models.bestand._meta.model_name)
-            link_template = '<a href="{url}">{lagerort__ort}</a>'
+            link_template = '<a href="{url}" target="_blank">{lagerort__ort}</a>'
             template = 'Bestand: {link}'
             for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
                 url = reverse(view_name, args=[pk])
@@ -1002,9 +1003,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
-            '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'
-            ' (<a href="/admin/DBentry/ausgabe/?id={pk}">Liste</a>)'
-            '. Es wurden keine Broschüren für diese Ausgaben erstellt.'
+            '<a href="/admin/DBentry/ausgabe/{pk}/change/" target="_blank">{name}</a> '
+            '(<a href="/admin/DBentry/ausgabe/?id={pk}" target="_blank">Liste</a>). '
+            'Es wurden keine Broschüren für diese Ausgaben erstellt.'
         ).format(pk=self.obj1.pk, name=str(self.obj1))
         self.assertMessageSent(request, expected_message)
 

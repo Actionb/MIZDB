@@ -52,6 +52,22 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
                 url, '/admin/DBentry/band/{}/change/'.format(self.test_data[i].pk))
             self.assertEqual(label, str(self.test_data[i]))
 
+    def test_link_list_blank(self):
+        # Assert that all links contain target="_blank" when calling link_list
+        # with blank=True.
+        sep="§"  # use an unusual separator so the links can be split 'securily'
+        links = utils.link_list(self.get_request(), self.test_data, sep=sep, blank=True)
+        for link in links.split(sep):
+            with self.subTest(link=link):
+                self.assertIn('target="_blank"', link)
+
+    def test_get_changelist_link(self):
+        request = self.get_request()
+        link = utils.get_changelist_link(_models.artikel, request.user)
+        self.assertEqual(link, '<a href="/admin/DBentry/artikel/">Liste</a>')
+        link = utils.get_changelist_link(_models.artikel, request.user, blank=True)
+        self.assertEqual(link, '<a href="/admin/DBentry/artikel/" target="_blank">Liste</a>')
+
     def test_get_model_admin_for_model(self):
         from DBentry.admin import ArtikelAdmin
         self.assertIsInstance(utils.get_model_admin_for_model('artikel'), ArtikelAdmin)

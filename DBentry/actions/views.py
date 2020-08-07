@@ -125,13 +125,17 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
         return super().get_initial()
 
     def _build_message(self, lagerort_instance, bestand_instances, fkey):
+        """
+        Create the message about bestand objects having been added successfully.
+        """
         base_msg = ("{lagerort}-Bestand zu diesen {count} {verbose_model_name} "
             "hinzugefügt: {obj_links}")
         format_dict = {
             'verbose_model_name': self.opts.verbose_name_plural,
             'obj_links': link_list(
                 request=self.request,
-                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances]
+                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances],
+                blank=True
             ),
             'lagerort': str(lagerort_instance),
             'count': len(bestand_instances)
@@ -569,7 +573,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     get_changelist_link(
                         model=_models.ausgabe,
                         user=view.request.user,
-                        obj_list=ausgaben_with_artikel
+                        obj_list=ausgaben_with_artikel,
+                        blank=True
                     )
                 )
             )
@@ -658,11 +663,12 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 level=messages.ERROR,
                 message=format_html(
                     msg_template,
-                    obj_links=link_list(self.request, protected_ausg),
+                    obj_links=link_list(self.request, protected_ausg, blank=True),
                     cl_link=get_changelist_link(
                         model=_models.ausgabe,
                         user=self.request.user,
-                        obj_list=protected_ausg
+                        obj_list=protected_ausg,
+                        blank=True
                     )
                 )
             )
@@ -681,7 +687,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     level=messages.ERROR,
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
-                        get_obj_link(obj=self.magazin_instance,user=self.request.user)
+                        get_obj_link(
+                            obj=self.magazin_instance,user=self.request.user, blank=True)
                     )
                 )
             else:
@@ -698,7 +705,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         for form in formset:
             link = get_obj_link(
                 obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
-                user=self.request.user
+                user=self.request.user,
+                blank=True
             )
             forms.append((link, form))
         context['forms'] = forms

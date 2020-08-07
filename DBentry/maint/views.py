@@ -236,7 +236,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             dupe_item = [
                 (
                     instance,
-                    utils.get_obj_link(instance, self.request.user),
+                    utils.get_obj_link(instance, self.request.user, blank=True),
                     duplicate_values
                 )
                 for instance in dupe.instances

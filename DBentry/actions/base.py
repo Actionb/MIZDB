@@ -183,7 +183,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         """
         def linkify(obj):
             object_link = get_obj_link(
-                obj, self.request.user, self.model_admin.admin_site.name)
+                obj, self.request.user, self.model_admin.admin_site.name, blank=True)
             if "</a>" in object_link:
                 # get_obj_link returned a full link;
                 # add the model's verbose_name.

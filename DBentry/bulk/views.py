@@ -66,14 +66,14 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             ids, created, updated = self.save_data(form)
             if created:
                 # Message about created instances.
-                obj_list = utils.link_list(request, created)
+                obj_list = utils.link_list(request, created, blank=True)
                 messages.success(
                     request,
                     format_html('Ausgaben erstellt: {}', obj_list)
                 )
             if updated:
                 # Message about updated instances.
-                obj_list = utils.link_list(request, updated)
+                obj_list = utils.link_list(request, updated, blank=True)
                 messages.success(
                     request,
                     format_html('Dubletten hinzugefügt: {}', obj_list)
@@ -82,7 +82,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 changelist_link = utils.get_changelist_link(
                     _models.ausgabe,
                     request.user,
-                    obj_list=[*created, *updated]
+                    obj_list=[*created, *updated],
+                    blank=True
                 )
                 messages.success(
                     request,
@@ -376,7 +377,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                         "immer nur eine bereits bestehende Ausgabe verändert "
                         "werden: diese Zeile wird ignoriert."
                     )
-                preview_row['Instanz'] = utils.link_list(request, instances)
+                preview_row['Instanz'] = utils.link_list(request, instances, blank=True)
                 preview_row['Datenbank'] = format_html(img + ' ' + msg)
             preview_data.append(preview_row)
         # Build the headers for the preview table.

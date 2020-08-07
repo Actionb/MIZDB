@@ -9,6 +9,17 @@ from django.utils.text import capfirst
 from DBentry.utils.models import get_model_from_string
 
 
+def create_hyperlink(url, content, **attrs):
+    """Return a safe <a> element."""
+    attrs = list(attrs.items())
+    attrs.insert(0, ('href', url))
+    return format_html(
+        '<a {attrs}>{content}</a>',
+        attrs=format_html(' '.join('{}="{}"'.format(k, v) for k, v in attrs)),
+        content=content
+    )
+
+
 def get_obj_url(obj, site_name='admin'):
     """
     Return the url to the change page of 'obj'.
@@ -42,10 +53,8 @@ def get_obj_link(obj, user, site_name='admin', blank=False):
     if not user.has_perm(perm):
         return no_edit_link
     if blank:
-        template = '<a href="{}" target="_blank">{}</a>'
-    else:
-        template = '<a href="{}">{}</a>'
-    return format_html(template, admin_url, obj)
+        return create_hyperlink(admin_url, obj, target='_blank')
+    return create_hyperlink(admin_url, obj)
 
 
 def get_changelist_url(model, user, site_name='admin', obj_list=None):
@@ -73,29 +82,35 @@ def get_changelist_url(model, user, site_name='admin', obj_list=None):
     return url
 
 
-def get_changelist_link(model, user, site_name='admin', obj_list=None):
+def get_changelist_link(
+        model, user, site_name='admin', obj_list=None, content='Liste', blank=False):
     """
     Return a safe link to the changelist of 'model'.
 
-    If 'obj_list' is given, the url to the changelist will include a query
-    param to filter to records in that list.
+    Optional arguments:
+        - site_name (default 'admin'): namespace of the site/app
+        - obj_list: an iterable of model instances
+            if given, the changelist will only include those instances
+        - content: string for the 'content' between the <a> tags
+        - blank: if True, the link will include a target="_blank" attribute
     """
-    return format_html(
-        '<a href="{}">Liste</a>',
-        get_changelist_url(
-            model, user, site_name='admin', obj_list=obj_list
-        )
+    url = get_changelist_url(
+        model, user, site_name=site_name, obj_list=obj_list
     )
+    if blank:
+        return create_hyperlink(url, content, target='_blank')
+    return create_hyperlink(url, content)
 
 
-def link_list(request, obj_list, sep=", "):
+def link_list(request, obj_list, sep=", ", blank=False):
     """
     Return links to the change page of each object in 'obj_list', separated by
     'sep'.
+    If 'blank' is True, the links will include a target="_blank" attribute.
     """
     links = []
     for obj in obj_list:
-        links.append(get_obj_link(obj, request.user))
+        links.append(get_obj_link(obj, request.user, blank=blank))
     return format_html(sep.join(links))
 
 
