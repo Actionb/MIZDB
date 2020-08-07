@@ -15,7 +15,6 @@ from DBentry.tests.base import DataTestCase
 class TestBaseModel(DataTestCase):
 
     model = _models.artikel
-    add_relations = True
     test_data_count = 1
 
     def test_qs(self):
