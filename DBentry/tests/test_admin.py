@@ -305,7 +305,7 @@ class TestMIZModelAdmin(AdminTestCase):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
 
-    def test_construct_m2m_change_message(self):
+    def test_get_change_message_dict(self):
         # auto created
         obj = self.model.band.through.objects.create(
             band=_models.band.objects.create(band_name='Testband'),
@@ -313,7 +313,7 @@ class TestMIZModelAdmin(AdminTestCase):
         )
         expected = {'name': 'Band', 'object': 'Testband'}
         self.assertEqual(
-            self.model_admin._construct_m2m_change_message(obj), expected)
+            self.model_admin._get_m2m_change_message_dict(obj), expected)
 
         # not auto created
         obj = self.model.musiker.through.objects.create(
@@ -322,7 +322,7 @@ class TestMIZModelAdmin(AdminTestCase):
         )
         expected = {'name': 'Musiker', 'object': 'Testmusiker'}
         self.assertEqual(
-            self.model_admin._construct_m2m_change_message(obj), expected)
+            self.model_admin._get_m2m_change_message_dict(obj), expected)
 
     def test_save_model(self):
         # save_model should not update the _name of a ComputedNameModel object.
