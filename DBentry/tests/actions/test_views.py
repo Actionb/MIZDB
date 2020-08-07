@@ -25,7 +25,7 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make
 from DBentry.sites import miz_site
 from DBentry.tests.actions.base import ActionViewTestCase
-from DBentry.tests.base import AdminTestCase, mockv, mockex
+from DBentry.tests.base import AdminTestCase, mockv
 from DBentry.tests.mixins import LoggingTestMixin
 from DBentry.utils import get_obj_link  # parameters: obj, user, admin_site
 
@@ -760,8 +760,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     @patch.object(
         MergeViewWizarded,
         'perform_action',
-        new=mockex(
-            models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
+        new=Mock(
+            side_effect=models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
     )
     def test_done(self):
         # Assert that an admin message is send to user upon encountering a

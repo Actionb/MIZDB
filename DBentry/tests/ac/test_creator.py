@@ -1,9 +1,9 @@
-
-from ..base import DataTestCase, mockv, mockex
+from unittest.mock import Mock
 
 import DBentry.models as _models
-from DBentry.factory import make
 from DBentry.ac.creator import Creator, MultipleObjectsReturnedException, FailedObject
+from DBentry.factory import make
+from DBentry.tests.base import DataTestCase, mockv
 
 
 class TestCreator(DataTestCase):
@@ -52,7 +52,7 @@ class TestCreator(DataTestCase):
     def test_create_reraises_or_failed_object(self):
         creator = Creator(model=_models.person, raise_exceptions=True)
 
-        creator.creator = mockex(MultipleObjectsReturnedException())
+        creator.creator = Mock(side_effect=MultipleObjectsReturnedException())
         msg = (
             "create(preview = False): MultipleObjectsReturnedException "
             "exceptions should bubble up"

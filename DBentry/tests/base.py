@@ -32,10 +32,6 @@ def mockv(value, **kwargs):
     return Mock(return_value=value, **kwargs)
 
 
-def mockex(exception, **kwargs):
-    return Mock(side_effect=exception, **kwargs)
-
-
 @contextlib.contextmanager
 def override_urls(url_patterns):
     dummy_module = type(
