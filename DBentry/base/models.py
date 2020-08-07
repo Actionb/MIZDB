@@ -106,6 +106,8 @@ class BaseM2MModel(BaseModel):
 
         Combines the values of the ForeignKey fields of this model.
         """
+        if self.name_field:
+            return str(getattr(self, self.name_field))
         data = [
             # Collect the string representations of related objects.
             # getattr(self, fk_field.attname) and
@@ -119,7 +121,7 @@ class BaseM2MModel(BaseModel):
         ]
         if len(data) < 2:
             # Cannot build a meaningful representation.
-            return "---"
+            return super().__str__()
         else:
             template = "{}" + " ({})" * (len(data) - 1)
             return template.format(*data)
