@@ -13,21 +13,18 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import url,  include
-from django.contrib import admin
-from DBentry.admin import miz_site
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import include, path
 
+from DBentry.sites import miz_site
+
 urlpatterns = [
-    path('mizdb/', include('DBentry.urls')), # fallback?
-    path('admin/', miz_site.urls), 
+    path('admin/', miz_site.urls),
     path('admin/', include('DBentry.urls'))
 ]
 
-from django.conf import settings
-from django.conf.urls.static import static
-
 if settings.DEBUG:
-    urlpatterns += static(prefix = settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler403 = 'DBentry.views.MIZ_permission_denied_view'
