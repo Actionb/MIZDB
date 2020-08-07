@@ -118,12 +118,11 @@ class LoggingMixin(object):
         relation and the change of the field of related_obj on the source of
         the relation.
         """
-        logs = []
-        # TODO: is this even necessary? ausgabe.bestand_set: the ausgabe
-        # history should contain additions.
-        logs.append(self.log_addition(obj, related_obj))
-        logs.append(self.log_change(related_obj, rel.field.name))
-        return logs
+        # (this method is not called *anywhere*)
+        return [
+            self.log_addition(obj, related_obj),
+            self.log_change(related_obj, rel.field.name)
+        ]
 
     def log_delete(self, queryset):
         """Logging deletes on a queryset."""
