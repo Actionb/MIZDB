@@ -1,14 +1,15 @@
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from django.db import models as django_models
 from django.test import tag
 from django.utils.translation import override as translation_override
 
+import DBentry.m2m as _m2m
 import DBentry.models as _models
 from DBentry import fields as _fields
-from DBentry.m2m import m2m_audio_musiker
+from DBentry.base.models import BaseModel
 from DBentry.factory import make
-from DBentry.tests.base import DataTestCase, UserTestCase
+from DBentry.tests.base import DataTestCase
 
 
 class TestBaseModel(DataTestCase):
@@ -41,19 +42,24 @@ class TestBaseModel(DataTestCase):
 
 class TestBaseM2MModel(DataTestCase):
 
-    model = m2m_audio_musiker
-    raw_data = [
-        {'audio__titel': 'Testaudio', 'musiker__kuenstler_name': 'Alice Test'},
-        {
-            'audio__titel': 'Testaudio', 'musiker__kuenstler_name': 'Alice Test',
-            'instrument__instrument': 'Piano'
-        },
-    ]
+    model = _m2m.m2m_audio_musiker
+    raw_data = [{'audio__titel': 'Testaudio', 'musiker__kuenstler_name': 'Alice Test'}]
 
     def test_str(self):
-        expected = "Testaudio (Alice Test)"
-        self.assertEqual(self.obj1.__str__(), expected)
-        self.assertEqual(self.obj2.__str__(), expected)
+        # With name_field.
+        self.assertEqual(self.obj1.__str__(), "Alice Test")
+        # Without name_field.
+        self.obj1.name_field = None
+        self.assertEqual(self.obj1.__str__(), "Testaudio (Alice Test)")
+        # Without 'sufficient' data.
+        # Patch get_model_fields so that it only returns one field with null=True.
+        # This way the data used to build the string representation out of is
+        # empty and __str__ calls super().
+        with patch('DBentry.base.models.get_model_fields') as mocked_get_fields:
+            with patch.object(BaseModel, '__str__') as mocked_super:
+                mocked_get_fields.return_value = [Mock(null=True)]
+                self.obj1.__str__()
+                self.assertTrue(mocked_super.called)
 
 
 @tag("cn")
