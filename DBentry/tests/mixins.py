@@ -1,5 +1,5 @@
-
 from django.contrib.admin.models import LogEntry, ContentType, ADDITION, CHANGE, DELETION
+from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
 
 from DBentry.factory import make, batch
@@ -127,52 +127,21 @@ class LoggingTestMixin(object):
     """
     Provide TestCases with assertions that verify that a change to model
     objects is being logged.
-
-    enfore uniqueness (bool): enforce uniqueness of LogEntry objects?
-        (set to False when str(obj) would result in the same string for two
-        different objects)
     """
 
-    enforce_uniqueness = True
-
     def assertLogged(self, objects, action_flag, **kwargs):
-        from django.contrib.admin.options import get_content_type_for_model
-
         if not LogEntry.objects.exists():
             raise AssertionError("LogEntry table is empty!")
-
         unlogged = []
         if not isinstance(objects, (list, tuple, set)):
             objects = [objects]
 
         # We need the content_type as a filter parameter here, or we're going
         # to match everything.
-        # If objects contains model instances, they will set the content_type
-        # to their respective type.
-        content_type = kwargs.pop('content_type', None)
-        if content_type is None:
-            model = kwargs.pop('model', None) or getattr(self, 'model', None)
-            if model is None:
-                from django import models
-                if not isinstance(objects[0], models.Model):
-                    error_msg = (
-                        "You must provide a model class either through kwargs or by "
-                        "setting a model attribute on the TestCase."
-                    )
-                    raise AttributeError(error_msg)
-                else:
-                    model = objects[0].__class__
-            content_type = get_content_type_for_model(model)
-
         for obj in objects:
-            if isinstance(obj, int):
-                pk = obj
-            else:
-                pk = obj.pk
-                # obj is a model instance, use its model class to get the correct content_type
-                # NOTE: this is overriding everything we have done above:
-                content_type = get_content_type_for_model(obj._meta.model)
-
+            pk = obj.pk
+            model = obj._meta.model
+            content_type = get_content_type_for_model(model)
             filter_params = {
                 'object_id': pk,
                 'content_type__pk': content_type.pk,
@@ -183,7 +152,7 @@ class LoggingTestMixin(object):
             if not qs.exists():
                 unlogged.append((obj, filter_params))
                 continue
-            if qs.count() > 1 and self.enforce_uniqueness:
+            if qs.count() > 1:
                 msg = (
                     "Could not verify uniqueness of LogEntry for object {object}."
                     "\nNumber of matching logs: {count}."
@@ -235,10 +204,7 @@ class LoggingTestMixin(object):
                 msg += "\nchange_messages: "
                 for l in LogEntry.objects.order_by('pk'):
                     msg += "\n{}: {}".format(str(l.pk), l.get_change_message())
-            if hasattr(self, 'fail'):
-                self.fail(msg)
-            else:
-                raise AssertionError(msg)
+            self.fail(msg)
 
     def assertLoggedAddition(self, obj, related_obj=None, **kwargs):
         """Assert that `obj` has a LogEntry with action_flag == ADDITION."""

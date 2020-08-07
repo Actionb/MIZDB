@@ -566,4 +566,4 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
 
 # Using the more complex MergeTestMethodsMixin
 class TestMergingVideo(VideoMergingDataMixin, MergingTestCase, MergeTestMethodsMixin):
-    enforce_uniqueness = False
+    pass
