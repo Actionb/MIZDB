@@ -20,17 +20,6 @@ def create_hyperlink(url, content, **attrs):
     )
 
 
-def get_obj_url(obj, site_name='admin'):
-    """
-    Return the url to the change page of 'obj'.
-
-    Raises a NoReverseMatch if the change page does not exist.
-    """
-    opts = obj._meta
-    viewname = '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name)
-    return reverse(viewname, args=[quote(obj.pk)])
-
-
 def get_obj_link(obj, user, site_name='admin', blank=False):
     """
     Return a safe link to the change page of 'obj'.
@@ -42,16 +31,17 @@ def get_obj_link(obj, user, site_name='admin', blank=False):
     opts = obj._meta
     no_edit_link = '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))
     try:
-        admin_url = get_obj_url(obj, site_name)
+        admin_url = reverse(
+            '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
+            args=[quote(obj.pk)]
+        )
     except NoReverseMatch:
         return no_edit_link
 
-    perm = '%s.%s' % (
-        opts.app_label,
-        get_permission_codename('change', opts)
-    )
+    perm = '%s.%s' % (opts.app_label,get_permission_codename('change', opts))
     if not user.has_perm(perm):
         return no_edit_link
+
     if blank:
         return create_hyperlink(admin_url, obj, target='_blank')
     return create_hyperlink(admin_url, obj)
@@ -67,16 +57,14 @@ def get_changelist_url(model, user, site_name='admin', obj_list=None):
     opts = model._meta
     try:
         url = reverse(
-            '%s:%s_%s_changelist' % (site_name, opts.app_label, opts.model_name)
-        )
+            '%s:%s_%s_changelist' % (site_name, opts.app_label, opts.model_name))
     except NoReverseMatch:
         return ''
-    perm = '%s.%s' % (
-        opts.app_label,
-        get_permission_codename('changelist', opts)
-    )
+
+    perm = '%s.%s' % (opts.app_label, get_permission_codename('changelist', opts))
     if not user.has_perm(perm):
         return ''
+
     if obj_list:
         url += '?id={}'.format(",".join([str(obj.pk) for obj in obj_list]))
     return url
