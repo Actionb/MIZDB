@@ -23,7 +23,6 @@ def _showwarning(message, category=Warning, *args, **kwargs):
 if not sys.warnoptions:
     import os
     # Change the filter in this process
-    # TODO: check out TextTestRunner.warnings attribute
     warnings.simplefilter("always")
     os.environ["PYTHONWARNINGS"] = "always"  # Also affect subprocesses
     warnings.showwarning = _showwarning
@@ -67,7 +66,7 @@ class TestNotImplementedError(AssertionError):
 
 
 class MyTestCase(TestCase):
-
+    warnings = 'always'
     def warn(self, message):
         warnings.warn(message)
 
