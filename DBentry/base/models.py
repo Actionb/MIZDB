@@ -64,7 +64,7 @@ class BaseModel(models.Model):
                 )
                 if fld.value_from_object(self)
             ])
-        return rslt.strip() or "---"
+        return rslt.strip() or super().__str__()
 
     def qs(self):
         """Return a queryset that contains the current instance only."""
