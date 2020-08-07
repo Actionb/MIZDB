@@ -97,9 +97,6 @@ class TestURLs(URLTestCase):
                 self.assertReverses(view_name, url, *args, **kwargs)
                 self.assertResolves(url, view_class)
 
-    def test_help_urls(self):
-        pass
-
     def test_maint_urls(self):
         self.urlconf = maint_urls
         test_data = [
@@ -116,6 +113,3 @@ class TestURLs(URLTestCase):
             with self.subTest(view_name=view_name):
                 self.assertReverses(view_name, url, *args, **kwargs)
                 self.assertResolves(url, view_class)
-
-    def test_miz_site_urls(self):
-        pass
