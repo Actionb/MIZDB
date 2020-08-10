@@ -1,4 +1,3 @@
-# TODO: save user name instead of user pk
 # TODO: log_X functions should fail silently, not the mixin methods?
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
