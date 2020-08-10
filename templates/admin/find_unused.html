@@ -1,35 +1,7 @@
-{% extends 'admin/base_site.html' %}
-{% load i18n static %}
-
-
-{% block extrahead %}
-<!-- Extrahead -->
-{{ block.super }}
-<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script> 
-{{ form.media }}
-{% endblock extrahead %}
-
-{% block breadcrumbs %}
-    <div class="breadcrumbs">
-        <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-        {% if breadcrumbs_title %} &rsaquo; {{ breadcrumbs_title }}{% endif %}
-    </div>
-{% endblock %}
+{% extends 'admin/basic_form.html' %}
 
 {% block content %}
-<!-- Config form -->
-<div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
-<form method="get">
-    {{ form.non_field_errors }}
-
-    {% for fieldset in form %}
-      {% include "admin/includes/fieldset.html" %}
-    {% endfor %}
-    <input type="submit" value="Suchen" name="get_unused">
-</form>
-</div>
-<!-- Config form END -->
-<br>
+{{ block.super }}
 
 {% if items %}
 <h1>{{ items|length }} Ergebnisse:</h1>

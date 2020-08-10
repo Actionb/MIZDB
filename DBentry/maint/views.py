@@ -41,9 +41,10 @@ class ModelSelectView(views.generic.FormView):
     """
 
     template_name = 'admin/basic.html'  # a very generic template
+
+    form_method = 'get'
     submit_value = 'Weiter'
     submit_name = 'submit'
-    form_method = 'get'
 
     form_class = ModelSelectForm
     next_view = 'admin:index'
@@ -253,7 +254,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     index_label='Selten verwendete Datensätze finden',
     superuser_only=True
 )
-class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
+class UnusedObjectsView(MaintViewMixin, ModelSelectView):
     """
     View that enables finding objects of a given model that are referenced by
     reversed related models less than a given limit.
@@ -261,12 +262,16 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
 
     form_class = UnusedObjectsForm
     template_name = 'admin/find_unused.html'
+
+    form_method = 'get'
+    submit_name = 'get_unused'
+    submit_value = 'Suchen'
     breadcrumbs_title = title = 'Selten verwendete Datensätze finden'
 
     def get_form_kwargs(self):
         """Use request.GET as form data instead of request.POST."""
         kwargs = super().get_form_kwargs()
-        if 'get_unused' in self.request.GET:
+        if self.submit_name in self.request.GET:
             # Only include data when the search button has been pressed to
             # suppress validation on the first visit on this page.
             kwargs['data'] = self.request.GET
@@ -275,7 +280,7 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
     def get(self, request, *args, **kwargs):
         """Handle the request to find unused objects."""
         context = self.get_context_data(**kwargs)
-        if 'get_unused' in request.GET:
+        if self.submit_name in request.GET:
             form = self.get_form()
             if form.is_valid():
                 model_name = form.cleaned_data['model_select']
