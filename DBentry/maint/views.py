@@ -344,7 +344,7 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
                     )
                 )
             items.append((
-                utils.get_obj_link(obj, user=self.request.user),
+                utils.get_obj_link(obj, user=self.request.user, blank=True),
                 ", ".join(sorted(under_limit))
             ))
         return items
