@@ -263,16 +263,23 @@ class UnusedObjectsView(MaintViewMixin, views.generic.FormView):
     template_name = 'admin/find_unused.html'
     breadcrumbs_title = title = 'Selten verwendete Datensätze finden'
 
+    def get_form_kwargs(self):
+        """Use request.GET as form data instead of request.POST."""
+        kwargs = super().get_form_kwargs()
+        if 'get_unused' in self.request.GET:
+            # Only include data when the search button has been pressed to
+            # suppress validation on the first visit on this page.
+            kwargs['data'] = self.request.GET
+        return kwargs
+
     def get(self, request, *args, **kwargs):
         """Handle the request to find unused objects."""
         context = self.get_context_data(**kwargs)
         if 'get_unused' in request.GET:
-            form = self.form_class(data=request.GET)
+            form = self.get_form()
             if form.is_valid():
                 model_name = form.cleaned_data['model_select']
                 model = utils.get_model_from_string(model_name)
-                if model is None:
-                    raise ValueError("Unknown model: %s" % model_name)
                 context_kwargs = {
                     'form': form,
                     'items': self.build_items(model, form.cleaned_data['limit'])

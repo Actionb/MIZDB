@@ -246,3 +246,31 @@ class TestUnusedObjectsView(ViewTestCase):
             relations, queryset = view.get_queryset(_models.genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
+
+    @patch.object(UnusedObjectsView, 'build_items')
+    @patch.object(UnusedObjectsView, 'render_to_response')
+    def test_get_form_invalid(self, mocked_render, mocked_build_items):
+        # Assert that the get response with an invalid form does not contain
+        # the context variable 'items'.
+        data={'get_unused': True, 'model_select': 'NotAModel', 'limit': 0}
+        request = self.get_request(data=data)
+        view = self.get_view(request=request)
+        self.assertFalse(view.get_form().is_valid())
+        view.get(request=request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertNotIn('items', context.keys())
+
+    @patch.object(UnusedObjectsView, 'build_items')
+    @patch.object(UnusedObjectsView, 'render_to_response')
+    def test_get_form_valid(self, mocked_render, mocked_build_items):
+        # Assert that the get response with a valid form not contains the
+        # context variable 'items'.
+        data={'get_unused': True, 'model_select': 'artikel', 'limit': 0}
+        request = self.get_request(data=data)
+        view = self.get_view(request=request)
+        self.assertTrue(view.get_form().is_valid())
+        view.get(request=request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertIn('items', context.keys())
