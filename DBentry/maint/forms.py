@@ -155,4 +155,4 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 class UnusedObjectsForm(ModelSelectForm):
     """Form for UnusedObjectsView."""
 
-    limit = forms.IntegerField(label="Grenzwert", min_value=0)
+    limit = forms.IntegerField(label="Grenzwert", min_value=0, initial=0)
