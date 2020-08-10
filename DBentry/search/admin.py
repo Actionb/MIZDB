@@ -94,7 +94,6 @@ class AdminSearchFormMixin(object):
 
     def lookup_allowed(self, lookup, value):
         allowed = super().lookup_allowed(lookup, value)
-        # NOTE: super().lookup_allowed seems to always return True.
         if allowed or not hasattr(self, 'search_form'):
             # super() determined the lookup is allowed or
             # this model admin has no search form instance set:
