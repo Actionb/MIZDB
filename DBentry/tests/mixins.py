@@ -81,8 +81,8 @@ class CreateFormMixin(object):
 
     form_class = None
     dummy_bases = None
-    dummy_attrs = {}
-    valid_data = {}
+    dummy_attrs = None
+    valid_data = None
 
     def get_form_class(self):
         return self.form_class
@@ -100,13 +100,16 @@ class CreateFormMixin(object):
         return form
 
     def get_dummy_form_class(self, bases=None, attrs=None):
-        # TODO: for forms the order of fields in attrs may matter! allow attrs
-        # to be a list and transform into OrderedDict?
         if bases is None:
             bases = self.dummy_bases or (object, )
-        class_attrs = self.dummy_attrs.copy()
-        if attrs is not None:
-            class_attrs.update(attrs)
+        if attrs and self.dummy_attrs:
+            class_attrs = {**self.dummy_attrs, **attrs}
+        elif attrs:
+            class_attrs = attrs.copy()
+        elif self.dummy_attrs:
+            class_attrs = self.dummy_attrs.copy()
+        else:
+            class_attrs = {}
         return type('DummyForm', bases, class_attrs)
 
     def get_dummy_form(self, bases=None, attrs=None, **form_initkwargs):
