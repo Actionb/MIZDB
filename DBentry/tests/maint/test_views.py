@@ -134,7 +134,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         changeform_url = unquote(
             reverse('admin:DBentry_band_change', args=['{pk}'])
         )
-        link_template = '<a href="{url}">{name}</a>'
+        link_template = '<a href="{url}" target="_blank">{name}</a>'
 
         request = self.get_request(data={'base': ['band_name', 'beschreibung']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
