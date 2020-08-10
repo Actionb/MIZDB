@@ -70,17 +70,12 @@ class MyTestCase(TestCase):
     @contextlib.contextmanager
     def assertNotRaises(self, exceptions, msg=None):
         """Assert that the body does NOT raise one of the passed exceptions."""
-        # NOTE: what if the body raises more than one exception?
-        raised = None
         try:
             yield
-        except Exception as e:
-            raised = e
-
-        if raised and issubclass(raised.__class__, exceptions):
-            fail_txt = "{} raised.".format(raised.__class__.__name__)
+        except exceptions as e:
+            fail_txt = "{} raised.".format(e.__class__.__name__)
             if msg:
-                fail_txt += ':' + msg
+                fail_txt += '\n' + msg
             self.fail(fail_txt)
 
 
