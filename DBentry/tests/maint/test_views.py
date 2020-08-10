@@ -290,7 +290,7 @@ class TestUnusedObjectsView(ViewTestCase):
         # Check the contents of the list that build_items returns.
         items = self.get_view(self.get_request()).build_items(model=_models.genre, limit=1)
         self.assertEqual(len(items), 2)
-        unused, used_once = items
+        unused, used_once = sorted(items, key=lambda tpl: tpl[0])
         url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])
         self.assertIn(url, unused[0])
         self.assertIn("Artikel (0)", unused[1])
