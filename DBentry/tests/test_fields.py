@@ -591,7 +591,8 @@ class TestPartialDateField(MyTestCase):
                 self.assertEqual(prepped_value, data)
 
     def test_to_python_takes_None(self):
-        # NOTE: should only be allowed if null=True; which it shouldn't if it's a CharField
+        # Note that None should only be allowed if null=True;
+        # which it shouldn't if it's a CharField.
         with self.assertNotRaises(Exception):
             value = PartialDateField().to_python(None)
         self.assertEqual(value, PartialDate())
