@@ -413,6 +413,22 @@ class TestMIZModelAdmin(AdminTestCase):
                     "primary key search field."
             )
 
+    def test_change_message_capitalized_fields(self):
+        # Assert that the LogEntry/history change message uses the field labels.
+        model_admin = _admin.ArtikelAdmin(_models.artikel, miz_site)
+        obj = make(_models.artikel)
+        form_class = model_admin.get_form(self.get_request(), obj=obj, change=True)
+        form = form_class(data={}, instance=obj)
+        change_message = model_admin.construct_change_message(
+            request=None, form=form, formsets=None)[0]
+
+        self.assertIn('changed', change_message)
+        self.assertIn('fields', change_message['changed'])
+        changed_fields = change_message['changed']['fields']
+        for field in ('Ausgabe', 'Magazin'):
+            with self.subTest(field=field):
+                self.assertIn(field, changed_fields)
+
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 

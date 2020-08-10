@@ -373,13 +373,12 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         Translations are deactivated so that strings are stored untranslated.
         Translation happens later on LogEntry access.
         """
-        # TODO: ugly change message when change ausgabe on artikel:
-        # "Ausgabe__magazin und ausgabe geändert."
         change_message = []
         if add:
             change_message.append({'added': {}})
         elif form.changed_data:
-            change_message.append({'changed': {'fields': form.changed_data}})
+            changed_fields = [form.fields[field].label for field in form.changed_data]
+            change_message.append({'changed': {'fields': changed_fields}})
         # Handle m2m changes:
         if formsets:
             with translation_override(None):
