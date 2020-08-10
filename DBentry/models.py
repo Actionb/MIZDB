@@ -1,6 +1,4 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
-# TODO: help_text for checkbox widget fields do not have 'margin-left:160;padding-left:10px':
-# forms.css:126 {.aligned label + div.help} overrides the usual intendation of the help_texts
 # FIXME: a few fields ('kuerzel') shouldn't be max_length=200
 from django.core.validators import MinValueValidator
 from django.db import models
