@@ -274,3 +274,15 @@ class TestUnusedObjectsView(ViewTestCase):
         self.assertTrue(mocked_render.called)
         context = mocked_render.call_args[0][0]
         self.assertIn('items', context.keys())
+
+    def test_build_items(self):
+        # Check the contents of the list that build_items returns.
+        items = self.get_view(self.get_request()).build_items(model=_models.genre, limit=1)
+        self.assertEqual(len(items), 2)
+        unused, used_once = items
+        url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])
+        self.assertIn(url, unused[0])
+        self.assertIn("Artikel (0)", unused[1])
+        url = reverse("admin:DBentry_genre_change",args=[self.used_once.pk])
+        self.assertIn(url, used_once[0])
+        self.assertIn("Artikel (1)", used_once[1])
