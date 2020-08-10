@@ -245,7 +245,9 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             # Add a link to the changelist page of this group.
             cl_url = utils.get_changelist_url(
                 self.model, self.request.user, obj_list=dupe.instances)
-            items.append((dupe_item, cl_url))
+            hyperlink_attrs = {'target': '_blank', 'class': 'button'}
+            link = utils.create_hyperlink(cl_url, 'Änderungsliste', **hyperlink_attrs)
+            items.append((dupe_item, link))
         return items
 
 
