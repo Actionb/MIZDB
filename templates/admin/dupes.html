@@ -1,15 +1,5 @@
-{% extends 'admin/base_site.html' %}
-{% load i18n static admin_urls %}
-
-{% comment %}
-{% endcomment %}
-{% block extrahead %}
-<!-- Extrahead -->
-    {{ block.super }}
-    <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
-    {{media}}
-{% endblock extrahead %}
-
+{% extends 'admin/basic_form.html' %}
+{% load i18n admin_urls %}
 
 {% block breadcrumbs %}
     <div class="breadcrumbs">
@@ -19,9 +9,9 @@
         {% if breadcrumbs_title %} &rsaquo; {{ breadcrumbs_title }}{% endif %}
     </div>
 {% endblock %}
-    
+
 {% block content %}
-<!-- Model Field Selection -->
+{% block form %}
 <div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
 <h2 class="collapsible">Felder</h2>
 <form name="fields_select" method="get">
@@ -33,14 +23,14 @@
         <input type="submit" name="get_duplicates" value="Suchen">
 </form>
 </div>
-<!-- Model Field Selection END -->
+{% endblock form %}
 <br>
 
 <!-- Duplicates -->
+<div id="duplicates">
 {% if items %}
 <h1>{{ items|length }} Duplikate gefunden!</h1>
 {% for dupe_item, cl_url in items %}
-    
     <form method="post">
         {% csrf_token %}
         <table class="form" style="width:100%">
@@ -52,7 +42,7 @@
                     <th style="width:{{ headers_width }}%;"> {{header}} </th>
                 {% endfor %}
             </tr></thead>
-            
+
             {% for object, object_link, fields in dupe_item %}
                 <tr class="{% cycle 'row1' 'row2' %}">
                     <td><input type="checkbox" name="{{ action_checkbox_name }}" value="{{object.pk}}" checked /></td>
@@ -71,7 +61,8 @@
     <br><hr><br>
 {% endfor %}
 {% else %}
-<h1>Keine Duplikate gefunden!</h1>
+    <h1>Keine Duplikate gefunden!</h1>
 {% endif %}
 <!-- Duplicates END -->
+</div>
 {% endblock content %}
