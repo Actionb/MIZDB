@@ -481,16 +481,6 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
             'Testband, Alice Tester'
         )
 
-    # NOTE: get_changeform_initial_data is now technically part of DBentry.search
-    def test_get_changeform_initial_data_with_changelist_filters(self):
-        # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in
-        # initial for the form from ausgabe__magazin path
-        initial = {
-            '_changelist_filters': 'ausgabe__magazin=%s&q=asdasd&thisisbad' % self.mag.pk}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('ausgabe__magazin'), self.mag)
-
 
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
