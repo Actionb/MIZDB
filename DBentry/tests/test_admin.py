@@ -2,10 +2,13 @@ import re
 from unittest import skip
 from unittest.mock import patch, Mock
 
+from django.db import connections
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
+from django.test.utils import CaptureQueriesContext
 from django.utils.translation import override as translation_override
+
 
 import DBentry.admin as _admin
 import DBentry.models as _models
@@ -239,6 +242,21 @@ class AdminTestMethodsMixin(object):
                 media._js.index(jquery_base),
                 msg="jquery base must be loaded before jquery.init"
             )
+
+    def test_changelist_queries(self):
+        # Assert that the number of queries needed for the changelist remains
+        # constant and doesn't depend on the number of records fetched.
+        # (which points to an unoptimized query / no prefetch)
+        with CaptureQueriesContext(connections['default']) as queries:
+            self.client.get(self.changelist_path)
+        n = len(queries.captured_queries)
+        make(self.model)
+        with CaptureQueriesContext(connections['default']) as queries:
+            self.client.get(self.changelist_path)
+        self.assertEqual(
+            n, len(queries.captured_queries),
+            msg="Number of queries for changelist depends on number of records!"
+        )
 
 
 class TestMIZModelAdmin(AdminTestCase):
@@ -1085,7 +1103,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.model_admin.genre_string(self.obj1),
             'Testgenre1, Testgenre2'
         )
-
 
 
 class TestBaseBrochureAdmin(AdminTestCase):
