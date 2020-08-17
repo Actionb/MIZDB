@@ -6,6 +6,7 @@ from django.db import connections
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
+from django.core import checks
 from django.test.utils import CaptureQueriesContext
 from django.utils.translation import override as translation_override
 
@@ -446,6 +447,53 @@ class TestMIZModelAdmin(AdminTestCase):
         for field in ('Ausgabe', 'Magazin'):
             with self.subTest(field=field):
                 self.assertIn(field, changed_fields)
+
+    def test_check_list_prefetch_related(self):
+        # Assert that check_list_prefetch_related returns an empty list if the
+        # class attribute 'list_prefetch_related' is unset or None.
+        self.assertEqual(
+            # object obviously doesn't have the attribute:
+            self.model_admin_class._check_list_prefetch_related(object), [])
+        with patch.object(self.model_admin, 'list_prefetch_related', new=None, create=True):
+            self.assertEqual(self.model_admin._check_list_prefetch_related(), [])
+            # list_prefetch_related must be a list or tuple:
+            self.model_admin.list_prefetch_related = 'Not a list!'
+            checked = self.model_admin._check_list_prefetch_related()
+            self.assertEqual(len(checked), 1)
+            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertEqual(
+                checked[0].msg,
+                "{}.list_prefetch_related attribute must be a list or a tuple.".format(
+                    self.model_admin_class.__name__)
+            )
+            self.model_admin.list_prefetch_related = []
+            self.assertFalse(self.model_admin._check_list_prefetch_related())
+            self.model_admin.list_prefetch_related = ()
+            self.assertFalse(self.model_admin._check_list_prefetch_related())
+            # Every item in list_prefetch_related must be an attribute of the
+            # ModelAdmin's model.
+            self.model_admin.list_prefetch_related = [
+                'musiker', 'musiker_set', 'band', 'band_set']
+            checked = self.model_admin._check_list_prefetch_related()
+            self.assertEqual(len(checked), 2)
+            msg_template = (
+                "Invalid item in {model_admin}.list_prefetch_related: "
+                "cannot find '{field_name}' on {model_name} object"
+            )
+            template_kwargs = {
+                'model_admin': self.model_admin_class.__name__,
+                'model_name': self.model._meta.model_name
+            }
+            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertEqual(
+                checked[0].msg,
+                msg_template.format(field_name='musiker_set', **template_kwargs)
+            )
+            self.assertIsInstance(checked[1], checks.Critical)
+            self.assertEqual(
+                checked[1].msg,
+                msg_template.format(field_name='band_set', **template_kwargs)
+            )
 
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
