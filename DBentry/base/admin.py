@@ -59,6 +59,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         errors.extend(self._check_fieldset_fields(**kwargs))
         errors.extend(self._check_search_fields_lookups(**kwargs))
         errors.extend(self._check_list_item_annotations(**kwargs))
+        errors.extend(self._check_list_prefetch_related(**kwargs))
         return errors
 
     def _check_fieldset_fields(self, **kwargs):
@@ -126,6 +127,33 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                         'annotation': type(annotation)
                     }
                 ))
+        return errors
+
+    def _check_list_prefetch_related(self, **kwargs):
+        """
+        Check that items in 'list_prefetch_related' are valid arguments for
+        prefetch_related.
+        """
+        if not getattr(self, 'list_prefetch_related', None):
+            return []
+        if not isinstance(self.list_prefetch_related, (list, tuple)):
+            return [checks.Critical(
+                "%s.list_prefetch_related attribute must be a list or a tuple." % (
+                    self.__class__.__name__, )
+            )]
+        errors = []
+        for field_name in self.list_prefetch_related:
+            if not hasattr(self.model, field_name):
+                errors.append(
+                    checks.Critical(
+                        "Invalid item in {model_admin}.list_prefetch_related: "
+                        "cannot find '{field_name}' on {model_name} object".format(
+                            model_admin=self.__class__.__name__,
+                            field_name=field_name,
+                            model_name=self.opts.model_name
+                        )
+                    )
+                )
         return errors
 
     def _annotate_for_list_display(self, request, queryset):

@@ -4,7 +4,13 @@ from DBentry.search.admin import ChangelistSearchFormMixin
 
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
-    pass
+
+    def get_queryset(self, request):
+        # Add queryset optimization:
+        if getattr(self.model_admin, 'list_prefetch_related', None):
+            return super().get_queryset(request).prefetch_related(
+                *self.model_admin.list_prefetch_related)
+        return super().get_queryset(request)
 
 
 class AusgabeChangeList(MIZChangeList):
