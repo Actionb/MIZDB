@@ -2,6 +2,7 @@ from .base import ViewTestCase
 
 from django import views
 from django.utils.encoding import force_text
+from django.utils.text import capfirst
 from django.utils.translation import override as translation_override
 
 import DBentry.models as _models
@@ -34,7 +35,7 @@ class TestLoggingMixin(ViewTestCase):
         logs = view.log_add(self.ort, rel, self.obj2)
         self.assertEqual(logs[0].get_change_message(), 'Added Band "Testband".')
         self.assertEqual(logs[0].action_flag, ADDITION)
-        self.assertEqual(logs[1].get_change_message(), 'Changed orte.')
+        self.assertEqual(logs[1].get_change_message(), 'Changed Orte.')
         self.assertEqual(logs[1].action_flag, CHANGE)
 
     @translation_override(language=None)
@@ -43,7 +44,7 @@ class TestLoggingMixin(ViewTestCase):
 
         view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
-        self.assertEqual(logs[1].get_change_message(), 'Changed orte.')
+        self.assertEqual(logs[1].get_change_message(), 'Changed Orte.')
         self.assertEqual(logs[1].action_flag, CHANGE)
 
     @translation_override(language=None)
@@ -66,17 +67,17 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_change(self):
         view = self.get_dummy_view(request=self.get_request())
         log_entry = view.log_change(self.obj1, ['band_name'])
-        self.assertEqual(log_entry.get_change_message(), 'Changed band_name.')
+        self.assertEqual(log_entry.get_change_message(), 'Changed Bandname.')
         self.assertEqual(log_entry.action_flag, CHANGE)
 
     @translation_override(language=None)
     def test_log_change_fields_is_no_list(self):
         view = self.get_dummy_view(request=self.get_request())
         log_entry = view.log_change(self.obj1, 'band_name')
-        self.assertEqual(log_entry.get_change_message(), 'Changed band_name.')
+        self.assertEqual(log_entry.get_change_message(), 'Changed Bandname.')
         self.assertEqual(log_entry.action_flag, CHANGE)
         log_entry = view.log_change(self.obj1, {'band_name': 'Boop'})
-        self.assertEqual(log_entry.get_change_message(), 'Changed band_name.')
+        self.assertEqual(log_entry.get_change_message(), 'Changed Bandname.')
         self.assertEqual(log_entry.action_flag, CHANGE)
 
     @translation_override(language=None)
@@ -84,7 +85,7 @@ class TestLoggingMixin(ViewTestCase):
         view = self.get_dummy_view(request=self.get_request())
         log_entry = view.log_change(self.obj1, ['genre'], self.m2m)
         expected = 'Changed {fields} for {name} "{object}".'.format(
-            fields=self.m2m._meta.get_field('genre').name,
+            fields=capfirst(self.m2m._meta.get_field('genre').verbose_name),
             name=self.m2m._meta.verbose_name,
             object=force_text(self.m2m)
         )
@@ -112,9 +113,9 @@ class TestLoggingMixin(ViewTestCase):
     def test_log_update(self):
         view = self.get_dummy_view(request=self.get_request())
         qs = self.model.objects.all()
-        update_data = dict(beschreibung='No update.', ort=self.ort)
+        update_data = dict(beschreibung='No update.', orte=self.ort)
         logs = view.log_update(qs, update_data)
-        expected = 'Changed beschreibung and ort.'
+        expected = 'Changed Beschreibung and Orte.'
         for l in logs:
             self.assertEqual(l.get_change_message(), expected)
             self.assertEqual(l.action_flag, CHANGE)
@@ -125,7 +126,7 @@ class TestLoggingMixin(ViewTestCase):
         logger = get_logger(request)
         self.assertEqual(logger.request, request)
         log_entry = logger.log_change(self.obj1, ['band_name'])
-        self.assertEqual(log_entry.get_change_message(), 'Changed band_name.')
+        self.assertEqual(log_entry.get_change_message(), 'Changed Bandname.')
         self.assertEqual(log_entry.action_flag, CHANGE)
 
     def test_get_logger_addition_fails_silently(self):

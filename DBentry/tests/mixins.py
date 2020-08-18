@@ -1,6 +1,7 @@
 from django.contrib.admin.models import LogEntry, ContentType, ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
+from django.utils.text import capfirst
 
 from DBentry.factory import make, batch
 
@@ -231,7 +232,8 @@ class LoggingTestMixin(object):
                     fields = [fields]
                 if not isinstance(fields, list):
                     fields = list(fields)
-                msg = {'changed': {'fields': sorted(fields)}}
+                msg = {'changed': {'fields': sorted(
+                    [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])}}
                 if related_obj:
                     msg['changed'].update({
                         'name': force_text(related_obj._meta.verbose_name),

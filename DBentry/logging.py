@@ -2,6 +2,7 @@
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
+from django.utils.text import capfirst
 
 
 def log_addition(request, object, message='[{"added": {}}]'):
@@ -94,12 +95,15 @@ class LoggingMixin(object):
         # TODO: log_change should also log the old value
         if isinstance(fields, str):
             fields = [fields]
-        if not isinstance(fields, (list, tuple)):
-            fields = list(fields)
-        msg = {'changed': {'fields': sorted(fields)}}
+        msg = {
+            'changed': {
+                'fields': sorted(
+                    [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])
+            }
+        }
         if related_obj:
             msg['changed'].update({
-                'name': force_text(related_obj._meta.verbose_name),
+                'name': capfirst(force_text(related_obj._meta.verbose_name)),
                 'object': force_text(related_obj),
             })
         return log_change(self.request, obj, [msg])
