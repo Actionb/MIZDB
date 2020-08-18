@@ -179,7 +179,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         'cf2': forms.ChoiceField(choices=[])
     }
     model = _models.genre
-    test_data_count = 3
+    raw_data = [{'genre': 'Very Last'}, {'genre': 'First'}, {'genre': 'Middle'}]
 
     def test_set_choices(self):
         # choices is list of iterables with len == 2 - ideal case
@@ -192,10 +192,10 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
     def test_set_choices_manager(self):
         # choices is a BaseManager
         choices = {forms.ALL_FIELDS: _models.genre.objects}
-        expected = sorted(
-            ((str(o.pk), str(o)) for o in self.test_data),
-            key=lambda tpl: tpl[1]  # sort by the genre just like the queryset/manager
-        )
+        expected = [
+            (str(o.pk), str(o))
+            for o in [self.obj2, self.obj3, self.obj1]
+        ]
         form = self.get_dummy_form(choices=choices)
         self.assertEqual(form.fields['cf'].choices, expected)
         self.assertEqual(form.fields['cf2'].choices, expected)
@@ -203,10 +203,10 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
     def test_set_choices_queryset(self):
         # choices is a QuerySet
         choices = {forms.ALL_FIELDS: _models.genre.objects.all()}
-        expected = sorted(
-            ((str(o.pk), str(o)) for o in self.test_data),
-            key=lambda tpl: tpl[1]  # sort by the genre just like the queryset/manager
-        )
+        expected = [
+            (str(o.pk), str(o))
+            for o in [self.obj2, self.obj3, self.obj1]
+        ]
         form = self.get_dummy_form(choices=choices)
         self.assertEqual(form.fields['cf'].choices, expected)
         self.assertEqual(form.fields['cf2'].choices, expected)
