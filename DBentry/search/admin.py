@@ -1,6 +1,6 @@
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
-from django.core import exceptions
+from django.core import checks, exceptions
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
 from django.http import HttpResponseRedirect, QueryDict
 
@@ -187,9 +187,6 @@ class AdminSearchFormMixin(object):
 
     def _check_search_form_fields(self, **kwargs):
         """Check the fields given in self.search_form_kwargs."""
-        # local imports in case I decide to remove this check later
-        from DBentry.search.utils import get_dbfield_from_path
-        from django.core import checks
         if not self.has_search_form():
             return []
         errors = []
@@ -202,7 +199,7 @@ class AdminSearchFormMixin(object):
             msg = "Ignored '{model_admin}' search form field: '{field}'. %s."
             msg = msg.format(model_admin=self.__class__.__name__, field=field_path)
             try:
-                get_dbfield_from_path(self.model, field_path)
+                search_utils.get_dbfield_from_path(self.model, field_path)
             except exceptions.FieldDoesNotExist:
                 errors.append(checks.Info(msg % "Field does not exist"))
             except exceptions.FieldError:
