@@ -193,6 +193,11 @@ class AdminSearchFormMixin(object):
         if not self.has_search_form():
             return []
         errors = []
+        # Relation fields defined by the model should be in the search form:
+        rel_fields = [
+            field.name
+            for field in utils.get_model_fields(self.model, base=False, foreign=True, m2m=True)
+        ]
         for field_path in self.search_form_kwargs.get('fields', []):
             msg = "Ignored '{model_admin}' search form field: '{field}'. %s."
             msg = msg.format(model_admin=self.__class__.__name__, field=field_path)
@@ -202,6 +207,18 @@ class AdminSearchFormMixin(object):
                 errors.append(checks.Info(msg % "Field does not exist"))
             except exceptions.FieldError:
                 errors.append(checks.Info(msg % "Field is a reverse relation"))
+            else:
+                try:
+                    rel_fields.remove(field_path.split('__')[0])
+                except:
+                    pass
+        if rel_fields:
+            errors.append(
+                checks.Info(
+                    "%s changelist search form is missing fields for relations:\n\t%s" %
+                    (self.__class__.__name__, rel_fields)
+                )
+            )
         return errors
 
 
