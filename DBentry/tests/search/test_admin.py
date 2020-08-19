@@ -122,8 +122,12 @@ class TestAdminMixin(AdminTestCase):
         preserved_filters_name = '_changelist_filters'
         obj = make(self.model)
         filters = [
-            ('single_date', {'datum_0': '2019-05-19'}),
-            ('date_range', {'datum_0': '2019-05-19', 'datum_1': '2019-05-20'}),
+            # datum_0_2=19&datum_0_1=05&datum_0_0=2019
+            ('single_date', {'datum_0_0': '2019', 'datum_0_1': '5', 'datum_0_2': '19'}),
+            ('date_range', {
+                'datum_0_0': '2019', 'datum_0_1': '5', 'datum_0_2': '19',
+                'datum_1_0': '2019', 'datum_1_1': '5', 'datum_1_2': '20'
+            }),
             ('fk', {'reihe': '1'}),
             ('m2m', {'genre': ['1', '2']})
         ]
@@ -381,7 +385,7 @@ class TestSearchFormChangelist(AdminTestCase):
             'datum_0_0': 2020, 'datum_0_1': 5, 'datum_0_2': 20,
             'datum_1_0': 2020, 'datum_1_1': 5, 'datum_1_2': 22
         }
-        request = self.get_request(path=self.changelist_path)
+        request = self.get_request(path=self.changelist_path, data=form_data)
         changelist = self.get_changelist(request)
         params = changelist.get_filters_params(form_data)
         self.assertIn('datum__range', params)
@@ -398,7 +402,7 @@ class TestSearchFormChangelist(AdminTestCase):
         form_data = {
             'datum_1_0': 2020, 'datum_1_1': 5, 'datum_1_2': 22
         }
-        request = self.get_request(path=self.changelist_path)
+        request = self.get_request(path=self.changelist_path, data=form_data)
         changelist = self.get_changelist(request)
         params = changelist.get_filters_params(form_data)
         self.assertNotIn('datum__range', params)
@@ -413,7 +417,7 @@ class TestSearchFormChangelist(AdminTestCase):
         form_data = {
             'datum_0_0': 2020, 'datum_0_1': 5, 'datum_0_2': 20,
         }
-        request = self.get_request(path=self.changelist_path)
+        request = self.get_request(path=self.changelist_path, data=form_data)
         changelist = self.get_changelist(request)
         params = changelist.get_filters_params(form_data)
         self.assertNotIn('datum__range', params)
@@ -428,7 +432,7 @@ class TestSearchFormChangelist(AdminTestCase):
             _admin.BildmaterialAdmin, 'search_form_kwargs', {'fields': ['datum']}
         )
         patcher.start()
-        request = self.get_request(path=self.changelist_path)
+        request = self.get_request(path=self.changelist_path, data=form_data)
         changelist = self.get_changelist(request)
 
         expected = PartialDate(2020, 5, 20)

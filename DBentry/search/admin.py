@@ -227,7 +227,16 @@ class ChangelistSearchFormMixin(object):
 
     def get_filters_params(self, params=None):
         """Replace the default filter params with those from the search form."""
-        params = super().get_filters_params(params or self.request.GET)
+        params = super().get_filters_params(params)
         if not isinstance(self.model_admin, AdminSearchFormMixin):
             return params
-        return self.model_admin.get_search_form(data=params).get_filters_params()
+        # If the ModelAdmin instance has a search form, let the form come up
+        # with filter parameters.
+        # Should the request contain query parameters that a part of the search
+        # form, prioritize params returned by the form over the params included
+        # in the request.
+        search_form_params = self.model_admin.get_search_form(
+            data=self.request.GET).get_filters_params()
+        if search_form_params:
+            return search_form_params
+        return params
