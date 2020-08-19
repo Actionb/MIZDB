@@ -179,10 +179,10 @@ class TestAusgabeChronologicOrder(DataTestCase):
                 queryset = self.model.objects.chronologic_order(*ordering)
                 if not ordering:
                     self.assertEqual(
-                        queryset.query.order_by[-1], '-pk',
+                        queryset.query.order_by[-1], '-%s' % self.model._meta.pk.name,
                         msg=(
                             "If no ordering is specified, the last ordering "
-                            "entry should default to '-pk'."
+                            "entry should default to '-{pk_name}'."
                         )
                     )
                 else:
@@ -233,7 +233,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
         )
         expected = (
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
-            'e_datum', 'lnum', 'monat', 'num', '-pk'
+            'e_datum', 'lnum', 'monat', 'num', '-id'
         )
         self.assertEqual(queryset.chronologic_order().query.order_by, expected)
 
@@ -255,7 +255,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
             # Note that jahrgang objects have 'num' values, this means that
             # the 'num' criterion coming first.
-            'num', 'e_datum', 'lnum', 'monat', '-pk'
+            'num', 'e_datum', 'lnum', 'monat', '-id'
         )
         self.model.objects.update(_changed_flag=True)
         queryset = self.model.objects.chronologic_order()

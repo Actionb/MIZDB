@@ -446,8 +446,8 @@ class AusgabeQuerySet(CNQuerySet):
             pk_order_item = next(filter(filter_func, ordering))
             ordering.remove(pk_order_item)
         except StopIteration:
-            # No primary key in ordering, use '-pk' as default.
-            pk_order_item = '-pk'
+            # No primary key in ordering, use a default.
+            pk_order_item = '-%s' % pk_name
 
         # Determine if jahr should come before jahrgang in ordering.
         jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))
