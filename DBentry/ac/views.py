@@ -1,6 +1,5 @@
 from django import http
 from django.contrib.auth import get_permission_codename
-from django.db.models import Q
 from django.utils.translation import gettext
 
 from dal import autocomplete
@@ -51,10 +50,19 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
             return self.build_create_option(q)
         return []
 
-    def do_ordering(self, qs):
-        # FIXME: reapplying the model's default ordering could remove ordering
-        # set by a declared MultipleObjectMixin.queryset attribute.
-        return qs.order_by(*self.model._meta.ordering)
+    def do_ordering(self, queryset):
+        """
+        Apply ordering to the queryset.
+
+        Use the model's default ordering if the view's get_ordering method does
+        not return anything to order with.
+        """
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            return queryset.order_by(*ordering)
+        return queryset.order_by(*self.model._meta.ordering)
 
     def apply_q(self, qs):
         """Filter the given queryset 'qs' with the view's search term 'q'."""
@@ -72,22 +80,21 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
 
     def get_queryset(self):
         """Return the ordered and filtered queryset for this view."""
-        # TODO: rely on MultipleObjectMixin.get_queryset ?
         if self.queryset is None:
             qs = self.model.objects.all()
         else:
             qs = self.queryset
 
         if self.forwarded:
-            if any(k and v for k, v in self.forwarded.items()):
-                qobjects = Q()
-                for k, v in self.forwarded.items():
-                    if k and v:
-                        qobjects |= Q((k, v))
-                qs = qs.filter(qobjects)
-            else:
-                # All forwarded values were None, return an empty queryset.
+            forward_filter = {}
+            for k, v in self.forwarded.items():
+                # Remove 'empty' forward items.
+                if k and v:
+                    forward_filter[k] = v
+            if not forward_filter:
+                # All forwarded items were empty; return an empty queryset.
                 return self.model.objects.none()
+            qs = qs.filter(**forward_filter)
 
         qs = self.do_ordering(qs)
         qs = self.apply_q(qs)
@@ -140,8 +147,8 @@ class ACAusgabe(ACBase):
 
     model = ausgabe
 
-    def do_ordering(self, qs):
-        return qs.chronologic_order()
+    def do_ordering(self, queryset):
+        return queryset.chronologic_order()
 
 
 class ACCreateable(ACBase):
@@ -151,14 +158,11 @@ class ACCreateable(ACBase):
     Creator helper object.
     """
 
-    def dispatch(self, *args, **kwargs):
-        if not self.model:
-            model_name = kwargs.pop('model_name', '')
-            self.model = get_model_from_string(model_name)
-        # TODO: use a get_creator() method to avoid having to declare
-        # self.creator in dispatch()
-        self.creator = Creator(self.model, raise_exceptions=False)
-        return super().dispatch(*args, **kwargs)
+    @property
+    def creator(self):
+        if not hasattr(self, '_creator'):
+            self._creator = Creator(self.model, raise_exceptions=False)
+        return self._creator
 
     def createable(self, text, creator=None):
         """

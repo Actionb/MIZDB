@@ -83,6 +83,7 @@ class AudioAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     save_on_top = True
     list_display = ['__str__', 'formate_string', 'kuenstler_string']
+    list_prefetch_related = ['band', 'musiker', 'format_set']
 
     fieldsets = [
         (None, {'fields':
@@ -101,9 +102,10 @@ class AudioAdmin(MIZModelAdmin):
     ]
     search_form_kwargs = {
         'fields': [
-            'musiker', 'band', 'genre', 'spielort', 'veranstaltung', 'plattenfirma',
-            'format__format_size', 'format__format_typ', 'format__tag', 'release_id',
-            'id__in'
+            'musiker', 'band', 'person', 'genre', 'schlagwort',
+            'ort', 'spielort', 'veranstaltung', 'plattenfirma',
+            'format__format_size', 'format__format_typ', 'format__tag',
+            'release_id', 'id__in'
         ],
         'labels': {'format__tag': 'Tags'}
     }
@@ -118,7 +120,7 @@ class AudioAdmin(MIZModelAdmin):
 
 
 @admin.register(_models.ausgabe, site=miz_site)
-class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only field
+class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
         model = _models.ausgabe_num
         extra = 0
@@ -138,6 +140,8 @@ class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only fi
 
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
+    list_prefetch_related = [
+        'ausgabe_jahr_set', 'ausgabe_num_set', 'ausgabe_lnum_set', 'ausgabe_monat_set']
 
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -151,13 +155,14 @@ class AusgabenAdmin(MIZModelAdmin):  # TODO: make ausgaben_merkmal admin only fi
         'fields': [
             'magazin', 'status', 'ausgabe_jahr__jahr__range', 'ausgabe_num__num__range',
             'ausgabe_lnum__lnum__range', 'ausgabe_monat__monat__ordinal__range',
-            'jahrgang', 'sonderausgabe', 'id__in'
+            'jahrgang', 'sonderausgabe', 'audio', 'id__in'
         ],
         'labels': {
             'ausgabe_jahr__jahr__range': 'Jahr',
             'ausgabe_num__num__range': 'Nummer',
             'ausgabe_lnum__lnum__range': 'Lfd. Nummer',
-            'ausgabe_monat__monat__ordinal__range': 'Monatsnummer'
+            'ausgabe_monat__monat__ordinal__range': 'Monatsnummer',
+            'audio': 'Audio (Beilagen)'
         }
     }
 
@@ -206,6 +211,7 @@ class AutorAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [MagazinInLine]
     list_display = ['__str__', 'person', 'kuerzel', 'magazin_string']
+    list_prefetch_related = ['magazin', 'person']
     search_form_kwargs = {'fields': ['magazin', 'person', 'id__in']}
 
     def magazin_string(self, obj):
@@ -258,10 +264,13 @@ class ArtikelAdmin(MIZModelAdmin):
         '__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string',
         'ausgabe', 'artikel_magazin', 'kuenstler_string'
     ]
+    list_prefetch_related = ['schlagwort', 'musiker', 'band']
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band',
-            'musiker', 'autor', 'seite__range', 'id__in'
+            'musiker', 'autor', 'person',
+            'ort', 'spielort', 'veranstaltung',
+            'seite__range', 'id__in'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
@@ -301,6 +310,7 @@ class BandAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
+    list_prefetch_related = ['genre', 'musiker', 'band_alias_set', 'orte']
     save_on_top = True
 
     search_form_kwargs = {
@@ -354,6 +364,7 @@ class BildmaterialAdmin(MIZModelAdmin):
     form = BildmaterialForm
     index_category = 'Archivgut'
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
+    list_prefetch_related = ['veranstaltung']
     save_on_top = True
 
     inlines = [
@@ -363,7 +374,8 @@ class BildmaterialAdmin(MIZModelAdmin):
     ]
     search_form_kwargs = {
         'fields': [
-            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'reihe', 'signatur', 'id__in'
+            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'person',
+            'ort', 'spielort', 'veranstaltung', 'reihe', 'signatur', 'id__in'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -455,11 +467,12 @@ class BuchAdmin(MIZModelAdmin):
         'titel', 'auflage', 'schriftenreihe', 'autoren_string',
         'herausgeber_string', 'verlag_string', 'schlagwort_string', 'genre_string'
     ]
+    list_prefetch_related = ['autor', 'herausgeber', 'verlag', 'schlagwort', 'genre']
     search_form_kwargs = {
         'fields': [
-            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band',
-            'person', 'schriftenreihe', 'buchband', 'verlag', 'jahr',
-            'ISBN', 'EAN', 'id__in'
+            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person',
+            'schriftenreihe', 'buchband', 'verlag', 'ort', 'spielort', 'veranstaltung',
+            'jahr', 'ISBN', 'EAN', 'id__in'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
         # 'autor' help_text refers to quick item creation which is not allowed in search forms.
@@ -502,6 +515,7 @@ class GenreAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
+    list_prefetch_related = ['genre_alias_set']
     search_fields = ['genre', 'genre_alias__alias']
 
     def alias_string(self, obj):
@@ -539,6 +553,17 @@ class MagazinAdmin(MIZModelAdmin):
         return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
     short_beschreibung.short_description = 'Beschreibung'
 
+    def get_exclude(self, request, obj=None):
+        """
+        Exclude 'ausgaben_merkmal' from the add/change page if the current
+        user is not a superuser.
+        """
+        exclude = super().get_exclude(request, obj) or []
+        if not request.user.is_superuser:
+            exclude = list(exclude)  # Copy the iterable.
+            exclude.append('ausgaben_merkmal')
+        return exclude
+
 
 @admin.register(_models.memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
@@ -569,6 +594,7 @@ class MusikerAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
+    list_prefetch_related = ['band_set', 'genre', 'orte']
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte', 'id__in']}
 
@@ -595,6 +621,7 @@ class PersonAdmin(MIZModelAdmin):
     inlines = [OrtInLine]
     list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
     list_display_links = ['vorname', 'nachname']
+    list_prefetch_related = ['musiker_set', 'autor_set', 'orte']
 
     search_form_kwargs = {
         'fields': ['orte', 'orte__land', 'orte__bland', 'id__in'],
@@ -623,6 +650,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
+    list_prefetch_related = ['schlagwort_alias_set']
     search_fields = ['schlagwort', 'schlagwort_alias__alias']
 
     def alias_string(self, obj):
@@ -667,6 +695,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     collapse_all = True
     inlines = [GenreInLine, SchlInLine, AliasInLine, BandInLine, MusikerInLine, PersonInLine]
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
+    list_prefetch_related = ['band', 'musiker']
     save_on_top = True
 
     def kuenstler_string(self, obj):
@@ -724,7 +753,7 @@ class VideoAdmin(MIZModelAdmin):
 class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
     search_form_kwargs = {
-        'fields': ['ort__land', 'id__in'],
+        'fields': ['land', 'id__in'],
     }
 
 
@@ -756,6 +785,10 @@ class BestandAdmin(MIZModelAdmin):
     list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['bestand_art', 'lagerort']}
     superuser_only = True
+
+    def _check_search_form_fields(self, **kwargs):
+        # Ignore the search form fields check for BestandAdmin.
+        return []
 
 
 @admin.register(_models.datei, site=miz_site)
@@ -832,7 +865,9 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
-    search_form_kwargs = {'fields': ['genre', 'jahre__jahr', 'id__in']}
+    list_prefetch_related = ['jahre']
+    search_form_kwargs = {
+        'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr', 'id__in']}
 
     def get_fieldsets(self, request, obj=None):
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
@@ -878,6 +913,12 @@ class BrochureAdmin(BaseBrochureAdmin):
         model = _models.BrochureURL
 
     inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, BestandInLine]
+    search_form_kwargs = {
+        'fields': [
+            'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
+            'jahre__jahr', 'id__in'
+        ]
+    }
 
 
 @admin.register(_models.Katalog, site=miz_site)
@@ -921,6 +962,12 @@ class KalendarAdmin(BaseBrochureAdmin):
     inlines = [
         URLInLine, JahrInLine, GenreInLine, SpielortInLine,
         VeranstaltungInLine, BestandInLine]
+    search_form_kwargs = {
+        'fields': [
+            'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
+            'jahre__jahr', 'id__in'
+        ]
+    }
 
 
 @admin.register(

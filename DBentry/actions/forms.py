@@ -33,7 +33,6 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
 class BulkAddBestandForm(MIZAdminForm):
     """The form to add a 'bestand' to a model instance."""
 
-    # TODO: BulkAddBestandForm is probably outdated?
     bestand = forms.ModelChoiceField(
         required=True,
         label="Lagerort (Bestand)",

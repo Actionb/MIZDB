@@ -1,3 +1,4 @@
+import re
 from unittest.mock import patch, Mock
 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
@@ -134,7 +135,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         changeform_url = unquote(
             reverse('admin:DBentry_band_change', args=['{pk}'])
         )
-        link_template = '<a href="{url}">{name}</a>'
+        link_template = '<a href="{url}" target="_blank">{name}</a>'
 
         request = self.get_request(data={'base': ['band_name', 'beschreibung']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
@@ -149,7 +150,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         self.assertEqual(
             len(items[0]), 2,
-            msg="Should contain one set of duplicate objects and the url to "
+            msg="Should contain one set of duplicate objects and the link to "
             "their changelist."
         )
         self.assertEqual(
@@ -180,16 +181,26 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                     msg="Should be the duplicate object's values of the "
                     "fields the duplicates were found with."
                 )
-        self.assertIsInstance(
-            items[0][1], str,
-            msg="Should be the url to the changelist of the duplicate objects."
-        )
-        self.assertIn(
-            '?', items[0][1],
-            msg="Changelist url should be of format <changelist>?id__in=[ids]"
-        )
-        cl_url, _query_params = items[0][1].split('?')
-        self.assertEqual(cl_url, reverse('admin:DBentry_band_changelist'))
+        # Investigate the link to the changelist:
+        cl_link = items[0][1]
+        self.assertIsInstance(cl_link, str)
+        match = re.match(r'<a (.*)>(\w+)</a>', cl_link)
+        self.assertTrue(
+            match, msg="Should be the link to the changelist of the duplicate objects.")
+        attrs, content = match.groups()
+        self.assertEqual(content, 'Änderungsliste')
+        attrs = dict(attr.replace('"', '').split("=", 1) for attr in attrs.split(" "))
+        self.assertIn("href", attrs)
+        self.assertEqual(
+            attrs['href'].count('?'), 1,
+            msg="Changelist url should be of format <changelist>?id__in=[ids]")
+        cl_url, query_params = attrs['href'].split('?')
+        self.assertEqual(reverse('admin:DBentry_band_changelist'), cl_url)
+        self.assertEqual("id=" + ",".join(str(o.pk) for o in self.test_data), query_params)
+        self.assertIn("target", attrs)
+        self.assertEqual(attrs['target'], '_blank')
+        self.assertIn("class", attrs)
+        self.assertEqual(attrs["class"], "button")
 
     def test_build_duplicates_headers(self):
         # Assert that the correct (field.verbose_name capitalized) headers are
@@ -246,3 +257,43 @@ class TestUnusedObjectsView(ViewTestCase):
             relations, queryset = view.get_queryset(_models.genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
+
+    @patch.object(UnusedObjectsView, 'build_items')
+    @patch.object(UnusedObjectsView, 'render_to_response')
+    def test_get_form_invalid(self, mocked_render, mocked_build_items):
+        # Assert that the get response with an invalid form does not contain
+        # the context variable 'items'.
+        data={'get_unused': True, 'model_select': 'NotAModel', 'limit': 0}
+        request = self.get_request(data=data)
+        view = self.get_view(request=request)
+        self.assertFalse(view.get_form().is_valid())
+        view.get(request=request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertNotIn('items', context.keys())
+
+    @patch.object(UnusedObjectsView, 'build_items')
+    @patch.object(UnusedObjectsView, 'render_to_response')
+    def test_get_form_valid(self, mocked_render, mocked_build_items):
+        # Assert that the get response with a valid form not contains the
+        # context variable 'items'.
+        data={'get_unused': True, 'model_select': 'artikel', 'limit': 0}
+        request = self.get_request(data=data)
+        view = self.get_view(request=request)
+        self.assertTrue(view.get_form().is_valid())
+        view.get(request=request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertIn('items', context.keys())
+
+    def test_build_items(self):
+        # Check the contents of the list that build_items returns.
+        items = self.get_view(self.get_request()).build_items(model=_models.genre, limit=1)
+        self.assertEqual(len(items), 2)
+        unused, used_once = sorted(items, key=lambda tpl: tpl[0])
+        url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])
+        self.assertIn(url, unused[0])
+        self.assertIn("Artikel (0)", unused[1])
+        url = reverse("admin:DBentry_genre_change",args=[self.used_once.pk])
+        self.assertIn(url, used_once[0])
+        self.assertIn("Artikel (1)", used_once[1])

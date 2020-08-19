@@ -153,7 +153,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
     def test_chronologic_order_multiple_magazine(self):
         # Assert that chronologic_order is not attempt for a queryset with
         # multiple magazines.
-        make(_models.ausgabe, magazin__magazin_name='Bad')
+        make(_models.ausgabe, magazin__magazin_name='Bad', id=1002)
         queryset = self.model.objects.all()
         with self.assertNumQueries(1):
             queryset = queryset.chronologic_order()
@@ -179,10 +179,10 @@ class TestAusgabeChronologicOrder(DataTestCase):
                 queryset = self.model.objects.chronologic_order(*ordering)
                 if not ordering:
                     self.assertEqual(
-                        queryset.query.order_by[-1], '-pk',
+                        queryset.query.order_by[-1], '-%s' % self.model._meta.pk.name,
                         msg=(
                             "If no ordering is specified, the last ordering "
-                            "entry should default to '-pk'."
+                            "entry should default to '-{pk_name}'."
                         )
                     )
                 else:
@@ -233,7 +233,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
         )
         expected = (
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
-            'e_datum', 'lnum', 'monat', 'num', '-pk'
+            'e_datum', 'lnum', 'monat', 'num', '-id'
         )
         self.assertEqual(queryset.chronologic_order().query.order_by, expected)
 
@@ -255,7 +255,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
             # Note that jahrgang objects have 'num' values, this means that
             # the 'num' criterion coming first.
-            'num', 'e_datum', 'lnum', 'monat', '-pk'
+            'num', 'e_datum', 'lnum', 'monat', '-id'
         )
         self.model.objects.update(_changed_flag=True)
         queryset = self.model.objects.chronologic_order()
@@ -289,16 +289,20 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             'ausgabe_num__num': [6],
         },
         {  # obj2: start_jg - 1
+            # Should belong to the previous jahrgang.
             'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000],
             'e_datum': '2000-05-01', 'ausgabe_monat__monat__ordinal': [5],
             'ausgabe_num__num': [5],
         },
         {  # obj3: start_jg - 1
+            # This object *starts* the jahrgang that obj2 also belongs to.
             'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1999],
             'e_datum': '1999-06-01', 'ausgabe_monat__monat__ordinal': [6],
             'ausgabe_num__num': [6],
         },
         {  # obj4: start_jg
+            # Test the differentation of jahr/num/monat values when the object
+            # spans more than one year.
             'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001],
             'e_datum': '2000-12-31', 'ausgabe_monat__monat__ordinal': [12, 1],
             'ausgabe_num__num': [12, 1],
@@ -309,6 +313,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             'ausgabe_num__num': [5],
         },
         {  # obj6: start_jg + 1
+            # This object begins the jahrgang following the starting jahrgang.
             'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
             'e_datum': '2001-06-01', 'ausgabe_monat__monat__ordinal': [6],
             'ausgabe_num__num': [6],
@@ -322,24 +327,38 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             'magazin__magazin_name': 'Testmagazin', 'ausgabe_monat__monat__ordinal': [6],
             'ausgabe_num__num': [6]
         },
+        {  # obj9: start_jg - 2
+            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1998],
+            'e_datum': '1998-06-01', 'ausgabe_monat__monat__ordinal': [6],
+            'ausgabe_num__num': [6],
+        },
+        {  # obj10: start_jg - 3
+            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1997],
+            'e_datum': '1997-06-01', 'ausgabe_monat__monat__ordinal': [6],
+            'ausgabe_num__num': [6],
+        },
     ]
 
     def assertIncrementedUpdateDict(self, update_dict):
-        self.assertEqual(len(update_dict), 4, msg=str(update_dict))
+        # Check the dict 'update_dict' returned by increment_jahrgang for the
+        # expected values.
+        self.assertEqual(len(update_dict), 6, msg=str(update_dict))
 
+        self.assertIn(7, update_dict)
+        self.assertEqual(update_dict[7], [self.obj10.pk])
+        self.assertIn(8, update_dict)
+        self.assertEqual(update_dict[8], [self.obj9.pk])
         self.assertIn(9, update_dict)
         self.assertEqual(update_dict[9], [self.obj2.pk, self.obj3.pk])
-
         self.assertIn(10, update_dict)
-        self.assertEqual(update_dict[10], [self.obj1.pk, self.obj4.pk, self.obj5.pk])
-
+        self.assertEqual(sorted(update_dict[10]), [self.obj1.pk, self.obj4.pk, self.obj5.pk])
         self.assertIn(11, update_dict)
         self.assertEqual(update_dict[11], [self.obj6.pk])
-
         self.assertIn(12, update_dict)
         self.assertEqual(update_dict[12], [self.obj7.pk])
 
     def assertIncrementedQuerySet(self, queryset):
+        # Check the instance values.
         self.assertEqual(queryset.get(pk=self.obj1.pk).jahrgang, 10)
         self.assertEqual(queryset.get(pk=self.obj2.pk).jahrgang, 9)
         self.assertEqual(queryset.get(pk=self.obj3.pk).jahrgang, 9)
@@ -348,6 +367,8 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.assertEqual(queryset.get(pk=self.obj6.pk).jahrgang, 11)
         self.assertEqual(queryset.get(pk=self.obj7.pk).jahrgang, 12)
         self.assertEqual(queryset.get(pk=self.obj8.pk).jahrgang, None)
+        self.assertEqual(queryset.get(pk=self.obj9.pk).jahrgang, 8)
+        self.assertEqual(queryset.get(pk=self.obj10.pk).jahrgang, 7)
 
     def test_increment_by_date(self):
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
@@ -376,17 +397,17 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
 
-        self.assertEqual(len(update_dict), 4, msg=str(update_dict))
-
+        self.assertEqual(len(update_dict), 6, msg=str(update_dict))
+        self.assertIn(7, update_dict)
+        self.assertEqual(update_dict[7], [self.obj10.pk])
+        self.assertIn(8, update_dict)
+        self.assertEqual(update_dict[8], [self.obj9.pk])
         self.assertIn(9, update_dict)
         self.assertEqual(update_dict[9], [self.obj3.pk])
-
         self.assertIn(10, update_dict)
         self.assertEqual(update_dict[10], [self.obj1.pk, self.obj2.pk, self.obj4.pk])
-
         self.assertIn(11, update_dict)
         self.assertEqual(update_dict[11], [self.obj5.pk, self.obj6.pk])
-
         self.assertIn(12, update_dict)
         self.assertEqual(update_dict[12], [self.obj7.pk])
 
@@ -399,10 +420,22 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         self.assertEqual(queryset.get(pk=self.obj6.pk).jahrgang, 11)
         self.assertEqual(queryset.get(pk=self.obj7.pk).jahrgang, 12)
         self.assertEqual(queryset.get(pk=self.obj8.pk).jahrgang, None)
+        self.assertEqual(queryset.get(pk=self.obj9.pk).jahrgang, 8)
+        self.assertEqual(queryset.get(pk=self.obj10.pk).jahrgang, 7)
 
     def test_increment_mixed(self):
-        # TODO: test_increment_mixed
-        pass
+        # Test increment_jahrgang with a mixed bag of values.
+        # Remove the e_datum and month values from obj4 to obj7.
+        ids = [self.obj4.pk, self.obj5.pk, self.obj6.pk, self.obj7.pk]
+        _models.ausgabe_monat.objects.filter(ausgabe_id__in=ids).delete()
+        _models.ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
+        # Also remove num values from obj6 and obj7.
+        _models.ausgabe_num.objects.filter(
+            ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
+
+        update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
+        self.assertIncrementedUpdateDict(update_dict)
+        self.assertIncrementedQuerySet(self.queryset)
 
     def test_build_date(self):
         self.assertEqual(build_date([2000], [1], 31), datetime.date(2000, 1, 31))
@@ -622,20 +655,25 @@ class TestValuesDict(DataTestCase):
         expected = [
             (self.obj1.pk, {'band_name': ('Testband1', )}),
             (self.obj2.pk, {
-                'band_name': ('Testband2', ), 'genre__genre': ('Rock', 'Jazz'),
+                'band_name': ('Testband2', ), 'genre__genre': ('Jazz', 'Rock'),
                 'band_alias__alias': ('Coffee', )
             }),
             (self.obj3.pk, {
-                'band_name': ('Testband3', ), 'genre__genre': ('Rock', 'Jazz'),
+                'band_name': ('Testband3', ), 'genre__genre': ('Jazz', 'Rock'),
                 'band_alias__alias': ('Juice', 'Water')
             })
         ]
-
-        for obj_pk, expected_values in expected:
-            with self.subTest():
-                self.assertIn(obj_pk, values)
-                self.assertEqual(expected_values, values[obj_pk])
         self.assertEqual(len(values), 3)
+        for obj_pk, expected_values in expected:
+            with self.subTest(obj_pk=obj_pk):
+                self.assertIn(obj_pk, values)
+                value_dict = values[obj_pk]
+                for field_name, _values in expected_values.items():
+                    with self.subTest(field_name=field_name, values=_values):
+                        self.assertIn(field_name, value_dict)
+                        self.assertEqual(
+                            sorted(value_dict[field_name]), sorted(_values)
+                        )
 
     def test_values_dict_num_queries(self):
         with self.assertNumQueries(1):
@@ -669,7 +707,6 @@ class TestValuesDict(DataTestCase):
         # fields (implicitly querying all fields).
         self.qs_obj1.values_dict()
         self.assertTrue(mocked_values.called)
-        # FIXME: caching problem? sometimes this fails, sometimes it doesnt!
         self.assertEqual(mocked_values.call_args[0], ())
 
     @patch.object(MIZQuerySet, 'values')
@@ -750,7 +787,7 @@ class TestDuplicates(DataTestCase):
     def get_duplicate_instances(self, *fields, queryset=None):
         if queryset is None:
             queryset = self.queryset
-        duplicates = queryset.values_dict_dupes(*fields)
+        duplicates = queryset.duplicates(*fields)
         return list(chain(*(dupe.instances for dupe in duplicates)))
 
     def test_a_baseline(self):
@@ -791,11 +828,6 @@ class TestDuplicates(DataTestCase):
         self.assertNotIn(self.obj3, duplicates)
 
     def test_duplicates_reverse_fk(self):
-        # TODO: this test fails when looking for duplicates with 'musiker_alias';
-        # 'musiker_alias' will look up the primary key of the musiker_alias object
-        # every musiker_alias object can only have one musiker
-        # so musiker_alias breaks duplicate search
-        # Need to query for a non-unique field(s)...
         self.obj1.musiker_alias_set.create(alias='Beep')
         self.obj2.musiker_alias_set.create(alias='Beep')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')

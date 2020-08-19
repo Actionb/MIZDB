@@ -1,11 +1,15 @@
 import re
 from unittest import skip
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
+from django.db import connections
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
+from django.core import checks
+from django.test.utils import CaptureQueriesContext
 from django.utils.translation import override as translation_override
+
 
 import DBentry.admin as _admin
 import DBentry.models as _models
@@ -154,7 +158,7 @@ class AdminTestMethodsMixin(object):
 
     def test_get_exclude(self):
         expected = self.exclude_expected or []
-        self.assertEqual(self.model_admin.get_exclude(None), expected)
+        self.assertEqual(self.model_admin.get_exclude(self.get_request()), expected)
 
     def test_get_fields(self):
         expected = self.fields_expected or []
@@ -240,6 +244,21 @@ class AdminTestMethodsMixin(object):
                 msg="jquery base must be loaded before jquery.init"
             )
 
+    def test_changelist_queries(self):
+        # Assert that the number of queries needed for the changelist remains
+        # constant and doesn't depend on the number of records fetched.
+        # (which points to an unoptimized query / no prefetch)
+        with CaptureQueriesContext(connections['default']) as queries:
+            self.client.get(self.changelist_path)
+        n = len(queries.captured_queries)
+        make(self.model)
+        with CaptureQueriesContext(connections['default']) as queries:
+            self.client.get(self.changelist_path)
+        self.assertEqual(
+            n, len(queries.captured_queries),
+            msg="Number of queries for changelist depends on number of records!"
+        )
+
 
 class TestMIZModelAdmin(AdminTestCase):
 
@@ -305,7 +324,7 @@ class TestMIZModelAdmin(AdminTestCase):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
 
-    def test_construct_m2m_change_message(self):
+    def test_get_change_message_dict(self):
         # auto created
         obj = self.model.band.through.objects.create(
             band=_models.band.objects.create(band_name='Testband'),
@@ -313,7 +332,7 @@ class TestMIZModelAdmin(AdminTestCase):
         )
         expected = {'name': 'Band', 'object': 'Testband'}
         self.assertEqual(
-            self.model_admin._construct_m2m_change_message(obj), expected)
+            self.model_admin._get_m2m_change_message_dict(obj), expected)
 
         # not auto created
         obj = self.model.musiker.through.objects.create(
@@ -322,7 +341,7 @@ class TestMIZModelAdmin(AdminTestCase):
         )
         expected = {'name': 'Musiker', 'object': 'Testmusiker'}
         self.assertEqual(
-            self.model_admin._construct_m2m_change_message(obj), expected)
+            self.model_admin._get_m2m_change_message_dict(obj), expected)
 
     def test_save_model(self):
         # save_model should not update the _name of a ComputedNameModel object.
@@ -362,14 +381,17 @@ class TestMIZModelAdmin(AdminTestCase):
                 'pk__pk__iexact'
             )
         ]
+        mocked_has_search_form = Mock(return_value=False)
         for test_desc, model_admin, expected in test_data:
-            with self.subTest(desc=test_desc):
-                search_fields = model_admin._add_pk_search_field([])
-                self.assertTrue(search_fields, msg="Expected pk field to be added.")
-                self.assertEqual(
-                    len(search_fields), 1,
-                    msg="Only one pk search field expected. Got: %s" % str(search_fields))
-                self.assertIn(expected, search_fields)
+            with patch.object(model_admin, 'has_search_form', new=mocked_has_search_form):
+                with self.subTest(desc=test_desc):
+                    search_fields = model_admin._add_pk_search_field([])
+                    self.assertTrue(search_fields, msg="Expected pk field to be added.")
+                    self.assertEqual(
+                        len(search_fields), 1,
+                        msg="Only one pk search field expected. Got: %s" % str(search_fields)
+                    )
+                    self.assertIn(expected, search_fields)
 
     def test_add_pk_search_field_does_not_overwrite_existing(self):
         # Assert that _add_pk_search_field does not overwrite or delete
@@ -391,6 +413,88 @@ class TestMIZModelAdmin(AdminTestCase):
                 search_fields = self.model_admin._add_pk_search_field(initial_fields)
                 self.assertEqual(initial_fields, search_fields)
 
+    def test_add_pk_search_field_with_search_form(self):
+        # Assert that _add_pk_search_field only adds a pk search field if the
+        # model admin does NOT have a search form.
+        with patch.object(self.model_admin, 'has_search_form') as mocked_has_search_form:
+            mocked_has_search_form.return_value = False
+            search_fields = self.model_admin._add_pk_search_field([])
+            self.assertTrue(
+                search_fields,
+                msg="ModelAdmin instances without a search_form should add a"
+                    "primary key search field."
+            )
+            mocked_has_search_form.return_value = True
+            search_fields = self.model_admin._add_pk_search_field([])
+            self.assertFalse(
+                search_fields,
+                msg="ModelAdmin instances with a search_form should not add a "
+                    "primary key search field."
+            )
+
+    def test_change_message_capitalized_fields(self):
+        # Assert that the LogEntry/history change message uses the field labels.
+        model_admin = _admin.ArtikelAdmin(_models.artikel, miz_site)
+        obj = make(_models.artikel)
+        form_class = model_admin.get_form(self.get_request(), obj=obj, change=True)
+        form = form_class(data={}, instance=obj)
+        change_message = model_admin.construct_change_message(
+            request=None, form=form, formsets=None)[0]
+
+        self.assertIn('changed', change_message)
+        self.assertIn('fields', change_message['changed'])
+        changed_fields = change_message['changed']['fields']
+        for field in ('Ausgabe', 'Magazin'):
+            with self.subTest(field=field):
+                self.assertIn(field, changed_fields)
+
+    def test_check_list_prefetch_related(self):
+        # Assert that check_list_prefetch_related returns an empty list if the
+        # class attribute 'list_prefetch_related' is unset or None.
+        self.assertEqual(
+            # object obviously doesn't have the attribute:
+            self.model_admin_class._check_list_prefetch_related(object), [])
+        with patch.object(self.model_admin, 'list_prefetch_related', new=None, create=True):
+            self.assertEqual(self.model_admin._check_list_prefetch_related(), [])
+            # list_prefetch_related must be a list or tuple:
+            self.model_admin.list_prefetch_related = 'Not a list!'
+            checked = self.model_admin._check_list_prefetch_related()
+            self.assertEqual(len(checked), 1)
+            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertEqual(
+                checked[0].msg,
+                "{}.list_prefetch_related attribute must be a list or a tuple.".format(
+                    self.model_admin_class.__name__)
+            )
+            self.model_admin.list_prefetch_related = []
+            self.assertFalse(self.model_admin._check_list_prefetch_related())
+            self.model_admin.list_prefetch_related = ()
+            self.assertFalse(self.model_admin._check_list_prefetch_related())
+            # Every item in list_prefetch_related must be an attribute of the
+            # ModelAdmin's model.
+            self.model_admin.list_prefetch_related = [
+                'musiker', 'musiker_set', 'band', 'band_set']
+            checked = self.model_admin._check_list_prefetch_related()
+            self.assertEqual(len(checked), 2)
+            msg_template = (
+                "Invalid item in {model_admin}.list_prefetch_related: "
+                "cannot find '{field_name}' on {model_name} object"
+            )
+            template_kwargs = {
+                'model_admin': self.model_admin_class.__name__,
+                'model_name': self.model._meta.model_name
+            }
+            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertEqual(
+                checked[0].msg,
+                msg_template.format(field_name='musiker_set', **template_kwargs)
+            )
+            self.assertIsInstance(checked[1], checks.Critical)
+            self.assertEqual(
+                checked[1].msg,
+                msg_template.format(field_name='band_set', **template_kwargs)
+            )
+
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -404,6 +508,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'),
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
+    search_fields_expected = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     @classmethod
     def setUpTestData(cls):
@@ -442,16 +547,6 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
             'Testband, Alice Tester'
         )
 
-    # NOTE: get_changeform_initial_data is now technically part of DBentry.search
-    def test_get_changeform_initial_data_with_changelist_filters(self):
-        # ArtikelAdmin.get_changeform_initial_data makes sure 'magazin' is in
-        # initial for the form from ausgabe__magazin path
-        initial = {
-            '_changelist_filters': 'ausgabe__magazin=%s&q=asdasd&thisisbad' % self.mag.pk}
-        request = self.get_request(data=initial)
-        cf_init_data = self.model_admin.get_changeform_initial_data(request)
-        self.assertEqual(cf_init_data.get('ausgabe__magazin'), self.mag)
-
 
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -462,6 +557,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
     ]
+    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
 
@@ -576,6 +672,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
         'beschreibung', 'bemerkungen', 'ort',
     ]
+    search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'ausgabe', 'fld_name': 'magazin', 'label': 'Ausgaben (1)'},
@@ -591,6 +688,21 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_ausgaben(obj), 0)
 
+    def test_ausgaben_merkmal_excluded(self):
+        # Assert that field 'ausgaben_merkmal' is only included for superusers.
+        codename = get_permission_codename('change', self.model._meta)
+        self.staff_user.user_permissions.add(Permission.objects.get(codename=codename))
+        request = Mock(user=self.staff_user)
+        self.assertIn(
+            'ausgaben_merkmal', self.model_admin.get_exclude(request),
+            msg="Non-superuser users should not have access to field 'ausgaben_merkmal'."
+        )
+        request = Mock(user=self.super_user)
+        self.assertNotIn(
+            'ausgaben_merkmal', self.model_admin.get_exclude(request),
+            msg="Superusers users should have access to field 'ausgaben_merkmal'."
+        )
+
 
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -598,6 +710,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.person
     exclude_expected = ['orte']
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     # one extra 'empty' object without relations for Ist_Autor/Ist_Musiker:
     test_data_count = 1
 
@@ -643,6 +756,8 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
+    search_fields_expected = [
+        'kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
 
     raw_data = [
         {},
@@ -688,6 +803,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.genre
     fields_expected = ['genre']
+    search_fields_expected = ['genre', 'genre_alias__alias', 'pk__iexact']
 
     raw_data = [
         {
@@ -721,6 +837,7 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.schlagwort
     fields_expected = ['schlagwort']
+    search_fields_expected = ['schlagwort', 'schlagwort_alias__alias', 'pk__iexact']
 
     raw_data = [
         {
@@ -753,6 +870,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band_alias__alias': ['Alias1', 'Alias2'],
@@ -800,6 +918,7 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
+    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     raw_data = [
         {'magazin__magazin_name': ['Testmagazin1', 'Testmagazin2']}
     ]
@@ -821,6 +940,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.OrtAdmin
     model = _models.ort
     fields_expected = ['stadt', 'land', 'bland']
+    search_fields_expected = ['_name']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -850,6 +970,7 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.LandAdmin
     model = _models.land
     fields_expected = ['land_name', 'code']
+    search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -863,6 +984,7 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BlandAdmin
     model = _models.bundesland
     fields_expected = ['bland_name', 'code', 'land']
+    search_fields_expected = ['bland_name', 'code']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -875,6 +997,7 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.InstrumentAdmin
     model = _models.instrument
     fields_expected = ['instrument', 'kuerzel']
+    search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -896,6 +1019,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
         'release_id', 'discogs_url', 'beschreibung', 'bemerkungen'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band__band_name': 'Testband',
@@ -919,6 +1043,8 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SpielortAdmin
     model = _models.spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
+    search_fields_expected = [
+        'name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -942,6 +1068,8 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
+    search_fields_expected = [
+        'name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -962,6 +1090,7 @@ class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VerlagAdmin
     model = _models.verlag
     fields_expected = ['verlag_name', 'sitz']
+    search_fields_expected = ['verlag_name']
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'verlag', 'label': 'Bücher (1)'},
         {'model_name': 'magazin', 'fld_name': 'verlag', 'label': 'Magazine (1)'}
@@ -980,6 +1109,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         'EAN', 'ISBN', 'is_buchband', 'beschreibung', 'bemerkungen',
         'schriftenreihe', 'buchband', 'sprache',
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Aufsätze (1)'},
@@ -1023,20 +1153,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-class BaseBrochureMixin(object):
-    # BaseBrochure and its descendants use a OneToOneField as primary key which
-    # does not support the 'iexact' lookup that
-    # django's ModelAdmin.get_search_results.construct_search replaces the '=' with.
-    # admin.get_search_fields thus does not add a primary key search field
-    # for BaseBrochure or its children.
-    search_fields_expected = None
-
-    def test_get_search_fields(self):
-        if self.search_fields_expected is None:
-            return
-        self.assertEqual(self.model_admin.get_search_fields(), self.search_fields_expected)
-
-
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
@@ -1063,7 +1179,7 @@ class TestBaseBrochureAdmin(AdminTestCase):
         )
 
 
-class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure
     fields_expected = [
@@ -1071,11 +1187,10 @@ class TestBrochureAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'schlagwort']
-    search_fields_expected = [
-        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
+    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
 
-class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
     fields_expected = [
@@ -1083,9 +1198,7 @@ class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
         'art', 'ausgabe__magazin'
     ]
     exclude_expected = ['genre']
-    search_fields_expected = [
-        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact'
-    ]
+    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -1098,7 +1211,7 @@ class TestKatalogAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue(art_index < z_index)
 
 
-class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase):
+class TestKalendarAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KalendarAdmin
     model = _models.Kalendar
     fields_expected = [
@@ -1106,8 +1219,7 @@ class TestKalendarAdmin(BaseBrochureMixin, AdminTestMethodsMixin, AdminTestCase)
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
-    search_fields_expected = [
-        'titel', 'zusammenfassung', 'beschreibung', 'bemerkungen', 'pk__pk__iexact']
+    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1119,6 +1231,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1130,6 +1243,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1141,6 +1255,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1148,6 +1263,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.video
     fields_expected = [
         'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung']
 
@@ -1170,12 +1286,14 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
+    search_fields_expected = ['herausgeber', 'pk__iexact']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'},
@@ -1193,6 +1311,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'signatur', 'size', 'datum', 'beschreibung',
         'bemerkungen', 'reihe', 'copy_related'
     ]
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'

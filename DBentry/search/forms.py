@@ -8,7 +8,7 @@ from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 
 from DBentry.ac.widgets import make_widget
-from DBentry.forms import MIZAdminFormMixin
+from DBentry.base.forms import MIZAdminFormMixin
 from DBentry.search import utils as search_utils
 
 

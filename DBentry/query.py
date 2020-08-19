@@ -2,7 +2,6 @@
 This module contains helper classes that facilitate querying a queryset for a
 search term in various degrees of accuracy.
 """
-# TODO: the search strategies do not check/catch if a lookup is allowed
 from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
@@ -177,8 +176,6 @@ class BaseSearchQuery(object):
 
         For each field in search_fields perform three lookups.
         """
-        # TODO: it's pointless to do exact/startswith searches when the results
-        # will be reordered afterwards. contains search would suffice.
         rslt = []
         for search_field in self.search_fields:
             cleaned_q = self.clean_q(q, search_field)

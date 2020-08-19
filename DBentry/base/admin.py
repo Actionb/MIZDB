@@ -6,7 +6,6 @@ from django.db import models
 from django.db.models.constants import LOOKUP_SEP
 from django.urls import reverse, NoReverseMatch
 from django.utils.translation import override as translation_override
-from django.utils.encoding import force_text
 from django.utils.text import capfirst
 
 from DBentry import models as _models
@@ -17,7 +16,6 @@ from DBentry.base.forms import MIZAdminInlineFormBase
 from DBentry.changelist import MIZChangeList
 from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
-from DBentry.helper import MIZAdminFormWrapper
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import (
     get_model_relations, ensure_jquery, get_fields_and_lookups,
@@ -46,19 +44,22 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     superuser_only = False
     index_category = 'Sonstige'
 
+    # Add the merge_records action to all MIZModelAdmin classes.
+    # Using miz_site.add_action to add that action to all model admin instances
+    # would also add merge_records to Group/UserAdmin, which is neither
+    # desired nor functional (they'd need a has_merge_permission func).
     actions = [merge_records]
 
     formfield_overrides = {
         models.TextField: {'widget': forms.Textarea(attrs=ATTRS_TEXTAREA)},
     }
-    # TODO: let the MIZ changelist template extend the default one
-    # change_list_template = 'miz_changelist.html'
 
     def check(self, **kwargs):
         errors = super().check(**kwargs)
         errors.extend(self._check_fieldset_fields(**kwargs))
         errors.extend(self._check_search_fields_lookups(**kwargs))
         errors.extend(self._check_list_item_annotations(**kwargs))
+        errors.extend(self._check_list_prefetch_related(**kwargs))
         return errors
 
     def _check_fieldset_fields(self, **kwargs):
@@ -126,6 +127,33 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                         'annotation': type(annotation)
                     }
                 ))
+        return errors
+
+    def _check_list_prefetch_related(self, **kwargs):
+        """
+        Check that items in 'list_prefetch_related' are valid arguments for
+        prefetch_related.
+        """
+        if not getattr(self, 'list_prefetch_related', None):
+            return []
+        if not isinstance(self.list_prefetch_related, (list, tuple)):
+            return [checks.Critical(
+                "%s.list_prefetch_related attribute must be a list or a tuple." % (
+                    self.__class__.__name__, )
+            )]
+        errors = []
+        for field_name in self.list_prefetch_related:
+            if not hasattr(self.model, field_name):
+                errors.append(
+                    checks.Critical(
+                        "Invalid item in {model_admin}.list_prefetch_related: "
+                        "cannot find '{field_name}' on {model_name} object".format(
+                            model_admin=self.__class__.__name__,
+                            field_name=field_name,
+                            model_name=self.opts.model_name
+                        )
+                    )
+                )
         return errors
 
     def _annotate_for_list_display(self, request, queryset):
@@ -229,14 +257,22 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def _add_pk_search_field(self, search_fields):
         """
-        Add a search field ('pk__iexact') for the primary key to the
-        search fields if it is missing.
-        If the primary key is a OneToOneRelation, add 'pk__pk__iexact' instead.
+        Add a search field for the primary key to search_fields if missing.
 
-        Returns an updated copy of the passed in search_fields list.
+        Unless the ModelAdmin instance has a search form (which is presumed to
+        take over the duty of filtering for primary keys), 'pk__iexact' is added
+        to the given list 'search_fields'.
+        If the primary key is a OneToOneRelation, 'pk__pk__iexact' is added
+        instead.
+
+        Returns a copy of the passed in search_fields list.
         """
-        # TODO: remove _add_pk_search_field? (search forms now have a pk field)
-        search_fields = search_fields.copy()
+        search_fields = list(search_fields)
+        if self.has_search_form():
+            # This ModelAdmin instance has a search form. Assume that the form
+            # contains a field to search for primary keys; no need to add
+            # another primary key search field.
+            return search_fields
         pk_field = self.model._meta.pk
         for search_field in search_fields:
             if LOOKUP_SEP in search_field:
@@ -343,9 +379,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
-        if request:
-            # TODO: why do we need 'request' in the context?
-            new_extra['request'] = request
         return new_extra
 
     def add_view(self, request, form_url='', extra_context=None):
@@ -368,50 +401,51 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         Translations are deactivated so that strings are stored untranslated.
         Translation happens later on LogEntry access.
         """
-        # TODO: WIP
         change_message = []
         if add:
             change_message.append({'added': {}})
         elif form.changed_data:
-            change_message.append(
-                {'changed': {'fields': form.changed_data}}
-            )
-
+            changed_fields = [form.fields[field].label for field in form.changed_data]
+            change_message.append({'changed': {'fields': changed_fields}})
+        # Handle m2m changes:
         if formsets:
             with translation_override(None):
                 for formset in formsets:
                     for added_object in formset.new_objects:
-                        msg = self._construct_m2m_change_message(added_object)
+                        msg = self._get_m2m_change_message_dict(added_object)
                         change_message.append({'added': msg})
                     for changed_object, changed_fields in formset.changed_objects:
-                        msg = self._construct_m2m_change_message(changed_object)
+                        msg = self._get_m2m_change_message_dict(changed_object)
                         msg['fields'] = changed_fields
                         change_message.append({'changed': msg})
                     for deleted_object in formset.deleted_objects:
-                        msg = self._construct_m2m_change_message(deleted_object)
+                        msg = self._get_m2m_change_message_dict(deleted_object)
                         change_message.append({'deleted': msg})
         return change_message
 
-    def _construct_m2m_change_message(self, obj):
-        """
-        Construct a more useful change message for m2m objects of auto created models.
-        """
-        # TODO: WIP
+    def _get_m2m_change_message_dict(self, obj):
+        """Create the change message JSON for related m2m objects."""
         if obj._meta.auto_created:
-            # An auto_created m2m through table only has two relation fields
+            # An auto_created m2m through table only has two relation fields;
+            # one is the field pointing at *this* model and the other is the one
+            # we are looking for here.
             relation_field = [
                 fld
                 for fld in obj._meta.get_fields()
                 if fld.is_relation and fld.related_model != self.model
             ][0]
             return {
-                'name': force_text(relation_field.related_model._meta.verbose_name),
-                'object': force_text(getattr(obj, relation_field.name)),
+                # Use the verbose_name of the model on the other end of the m2m
+                # relation as 'name'.
+                'name': str(relation_field.related_model._meta.verbose_name),
+                # Use the other related object directly instead of the record
+                # in the auto created through table.
+                'object': str(getattr(obj, relation_field.name)),
             }
         else:
             return {
-                'name': force_text(obj._meta.verbose_name),
-                'object': force_text(obj),
+                'name': str(obj._meta.verbose_name),
+                'object': str(obj),
             }
 
     def has_module_permission(self, request):
@@ -426,7 +460,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             # Delay the update of the _name until ModelAdmin._changeform_view
             # has saved the related objects via save_related. This is to avoid
             # update_name building a name with outdated related objects.
-            # TODO: set obj._changed_flag = False to disable updates entirely?
             obj.save(update=False)
         else:
             super().save_model(request, obj, form, change)
@@ -435,13 +468,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         super().save_related(request, form, formsets, change)
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
-            # TODO: use the form and formsets to figure out if an update is required
             form.instance.update_name(force_update=True)
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if 'adminform' in context:
-            # Move checkbox widget to the right of its label.
-            context['adminform'] = MIZAdminFormWrapper(context['adminform'])
         if 'media' in context:
             # Fix jquery load order during the add/change view process. If the
             # ModelAdmin does not have inlines, collapse elements will not work:

@@ -1,6 +1,6 @@
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
-from django.core import exceptions
+from django.core import checks, exceptions
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
 from django.http import HttpResponseRedirect, QueryDict
 
@@ -94,7 +94,6 @@ class AdminSearchFormMixin(object):
 
     def lookup_allowed(self, lookup, value):
         allowed = super().lookup_allowed(lookup, value)
-        # NOTE: super().lookup_allowed seems to always return True.
         if allowed or not hasattr(self, 'search_form'):
             # super() determined the lookup is allowed or
             # this model admin has no search form instance set:
@@ -188,21 +187,35 @@ class AdminSearchFormMixin(object):
 
     def _check_search_form_fields(self, **kwargs):
         """Check the fields given in self.search_form_kwargs."""
-        # local imports in case I decide to remove this check later
-        from DBentry.search.utils import get_dbfield_from_path
-        from django.core import checks
         if not self.has_search_form():
             return []
         errors = []
+        # Relation fields defined by the model should be in the search form:
+        rel_fields = [
+            field.name
+            for field in utils.get_model_fields(self.model, base=False, foreign=True, m2m=True)
+        ]
         for field_path in self.search_form_kwargs.get('fields', []):
             msg = "Ignored '{model_admin}' search form field: '{field}'. %s."
             msg = msg.format(model_admin=self.__class__.__name__, field=field_path)
             try:
-                get_dbfield_from_path(self.model, field_path)
+                search_utils.get_dbfield_from_path(self.model, field_path)
             except exceptions.FieldDoesNotExist:
                 errors.append(checks.Info(msg % "Field does not exist"))
             except exceptions.FieldError:
                 errors.append(checks.Info(msg % "Field is a reverse relation"))
+            else:
+                try:
+                    rel_fields.remove(field_path.split('__')[0])
+                except:
+                    pass
+        if rel_fields:
+            errors.append(
+                checks.Info(
+                    "%s changelist search form is missing fields for relations:\n\t%s" %
+                    (self.__class__.__name__, rel_fields)
+                )
+            )
         return errors
 
 
@@ -228,7 +241,16 @@ class ChangelistSearchFormMixin(object):
 
     def get_filters_params(self, params=None):
         """Replace the default filter params with those from the search form."""
-        params = super().get_filters_params(params or self.request.GET)
+        params = super().get_filters_params(params)
         if not isinstance(self.model_admin, AdminSearchFormMixin):
             return params
-        return self.model_admin.get_search_form(data=params).get_filters_params()
+        # If the ModelAdmin instance has a search form, let the form come up
+        # with filter parameters.
+        # Should the request contain query parameters that a part of the search
+        # form, prioritize params returned by the form over the params included
+        # in the request.
+        search_form_params = self.model_admin.get_search_form(
+            data=self.request.GET).get_filters_params()
+        if search_form_params:
+            return search_form_params
+        return params

@@ -1,8 +1,8 @@
-# TODO: save user name instead of user pk
 # TODO: log_X functions should fail silently, not the mixin methods?
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
+from django.utils.text import capfirst
 
 
 def log_addition(request, object, message='[{"added": {}}]'):
@@ -95,12 +95,15 @@ class LoggingMixin(object):
         # TODO: log_change should also log the old value
         if isinstance(fields, str):
             fields = [fields]
-        if not isinstance(fields, (list, tuple)):
-            fields = list(fields)
-        msg = {'changed': {'fields': sorted(fields)}}
+        msg = {
+            'changed': {
+                'fields': sorted(
+                    [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])
+            }
+        }
         if related_obj:
             msg['changed'].update({
-                'name': force_text(related_obj._meta.verbose_name),
+                'name': capfirst(force_text(related_obj._meta.verbose_name)),
                 'object': force_text(related_obj),
             })
         return log_change(self.request, obj, [msg])
@@ -118,12 +121,11 @@ class LoggingMixin(object):
         relation and the change of the field of related_obj on the source of
         the relation.
         """
-        logs = []
-        # TODO: is this even necessary? ausgabe.bestand_set: the ausgabe
-        # history should contain additions.
-        logs.append(self.log_addition(obj, related_obj))
-        logs.append(self.log_change(related_obj, rel.field.name))
-        return logs
+        # (this method is not called *anywhere*)
+        return [
+            self.log_addition(obj, related_obj),
+            self.log_change(related_obj, rel.field.name)
+        ]
 
     def log_delete(self, queryset):
         """Logging deletes on a queryset."""

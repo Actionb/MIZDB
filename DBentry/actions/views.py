@@ -56,7 +56,6 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         "Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an."
         "\nDie Jahrgangswerte der anderen Ausgaben werden danach in Abständen "
         "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt."
-
         "\n\nAusgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), "
         "werden ignoriert."
         "\nWird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge "
@@ -114,22 +113,29 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
     )
 
     def get_initial(self):
-        # get initial values for bestand and dublette based on the view's model
+        """Provide initial values for bestand and dublette fields."""
         if self.model == _models.ausgabe:
-            return {
-                'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
-                'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
-            }
+            try:
+                return {
+                    'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
+                    'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
+                }
+            except _models.lagerort.DoesNotExist:
+                pass
         return super().get_initial()
 
     def _build_message(self, lagerort_instance, bestand_instances, fkey):
+        """
+        Create the message about bestand objects having been added successfully.
+        """
         base_msg = ("{lagerort}-Bestand zu diesen {count} {verbose_model_name} "
             "hinzugefügt: {obj_links}")
         format_dict = {
             'verbose_model_name': self.opts.verbose_name_plural,
             'obj_links': link_list(
                 request=self.request,
-                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances]
+                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances],
+                blank=True
             ),
             'lagerort': str(lagerort_instance),
             'count': len(bestand_instances)
@@ -208,23 +214,23 @@ class MergeViewWizarded(WizardConfirmationView):
         (CONFLICT_RESOLUTION_STEP, MergeConflictsFormSet)
     ]
 
-    # TODO: include this bit in the ACTUAL help page for this action:
-    # Fehlen dem primären Datensatz Grunddaten und wird unten bei der
-    # entsprechenden Option der Haken gesetzt, so werden die fehlenden Daten
-    # nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt.
-    # Bereits bestehende Grunddaten des primären Datensatzes werden NICHT
-    # überschrieben.
     step1_helptext = (
-        "Bei der Zusammenfügung werden alle verwandten Objekte der"
-        "zuvor in der Übersicht ausgewählten Datensätze dem primären"
+        "Bei der Zusammenfügung werden alle verwandten Objekte der "
+        "zuvor in der Übersicht ausgewählten Datensätze dem primären "
         "Datensatz zugeteilt."
+        "\nFehlen dem primären Datensatz Grunddaten und wird unten bei der "
+        "entsprechenden Option ('Primären Datensatz erweitern') der Haken "
+        "gesetzt, so werden die fehlenden Daten "
+        "nach Möglichkeit durch Daten aus den sekundären Datensätzen ergänzt. "
+        "Bereits bestehende Grunddaten des primären Datensatzes werden NICHT "
+        "überschrieben."
         "\nDanach werden die sekundären Datensätze GELÖSCHT."
     )
     step2_helptext = (
-        "Für die Erweiterung der Grunddaten des primären Datensatzes stehen"
+        "Für die Erweiterung der Grunddaten des primären Datensatzes stehen "
         "widersprüchliche Möglichkeiten zur Verfügung."
-        "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären"
-       " Datensatz übernommen werden sollen."
+        "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären "
+       "Datensatz übernommen werden sollen."
     )
 
     view_helptext = {
@@ -375,8 +381,6 @@ class MergeViewWizarded(WizardConfirmationView):
             # Set the current_step to the CONFLICT_RESOLUTION_STEP
             # so that the conflict reslution will be skipped.
             self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
-            # NOTE: this may break the next line in post():
-            # self.storage.set_step_files(self.steps.current, self.process_step_files(form))
         return data
 
     def get_form_kwargs(self, step=None):
@@ -569,7 +573,8 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     get_changelist_link(
                         model=_models.ausgabe,
                         user=view.request.user,
-                        obj_list=ausgaben_with_artikel
+                        obj_list=ausgaben_with_artikel,
+                        blank=True
                     )
                 )
             )
@@ -658,11 +663,12 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 level=messages.ERROR,
                 message=format_html(
                     msg_template,
-                    obj_links=link_list(self.request, protected_ausg),
+                    obj_links=link_list(self.request, protected_ausg, blank=True),
                     cl_link=get_changelist_link(
                         model=_models.ausgabe,
                         user=self.request.user,
-                        obj_list=protected_ausg
+                        obj_list=protected_ausg,
+                        blank=True
                     )
                 )
             )
@@ -682,10 +688,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
                         get_obj_link(
-                            obj=self.magazin_instance,
-                            user=self.request.user,
-                            include_name=False
-                        )
+                            obj=self.magazin_instance,user=self.request.user, blank=True)
                     )
                 )
             else:
@@ -703,7 +706,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             link = get_obj_link(
                 obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
                 user=self.request.user,
-                include_name=False
+                blank=True
             )
             forms.append((link, form))
         context['forms'] = forms

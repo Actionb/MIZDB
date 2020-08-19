@@ -15,12 +15,6 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     test_data_count = 3
     opts = model._meta
 
-    def test_get_obj_url(self):
-        self.assertEqual(
-            utils.get_obj_url(self.obj1),
-            '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
-        )
-
     def test_get_obj_link_noperms(self):
         # Users without change permission should not get an edit link
         link = utils.get_obj_link(self.obj1, self.noperms_user)
@@ -36,12 +30,12 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_obj_link(self):
         link = utils.get_obj_link(self.obj1, self.super_user)
         url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
-        expected = 'Band: <a href="{}">{}</a>'.format(url, force_text(self.obj1))
+        expected = '<a href="{}">{}</a>'.format(url, force_text(self.obj1))
         self.assertEqual(link, expected)
 
-        link = utils.get_obj_link(self.obj1, self.super_user, include_name=False)
+        link = utils.get_obj_link(self.obj1, self.super_user, blank=True)
         url = '/admin/DBentry/band/{}/change/'.format(self.obj1.pk)
-        expected = '<a href="{}">{}</a>'.format(url, force_text(self.obj1))
+        expected = '<a href="{}" target="_blank">{}</a>'.format(url, force_text(self.obj1))
         self.assertEqual(link, expected)
 
     def test_link_list(self):
@@ -51,6 +45,22 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(
                 url, '/admin/DBentry/band/{}/change/'.format(self.test_data[i].pk))
             self.assertEqual(label, str(self.test_data[i]))
+
+    def test_link_list_blank(self):
+        # Assert that all links contain target="_blank" when calling link_list
+        # with blank=True.
+        sep="§"  # use an unusual separator so the links can be split 'securily'
+        links = utils.link_list(self.get_request(), self.test_data, sep=sep, blank=True)
+        for link in links.split(sep):
+            with self.subTest(link=link):
+                self.assertIn('target="_blank"', link)
+
+    def test_get_changelist_link(self):
+        request = self.get_request()
+        link = utils.get_changelist_link(_models.artikel, request.user)
+        self.assertEqual(link, '<a href="/admin/DBentry/artikel/">Liste</a>')
+        link = utils.get_changelist_link(_models.artikel, request.user, blank=True)
+        self.assertEqual(link, '<a href="/admin/DBentry/artikel/" target="_blank">Liste</a>')
 
     def test_get_model_admin_for_model(self):
         from DBentry.admin import ArtikelAdmin

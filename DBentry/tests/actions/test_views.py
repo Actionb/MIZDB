@@ -25,7 +25,7 @@ from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make
 from DBentry.sites import miz_site
 from DBentry.tests.actions.base import ActionViewTestCase
-from DBentry.tests.base import AdminTestCase, mockv, mockex
+from DBentry.tests.base import AdminTestCase, mockv
 from DBentry.tests.mixins import LoggingTestMixin
 from DBentry.utils import get_obj_link  # parameters: obj, user, admin_site
 
@@ -114,7 +114,7 @@ class TestActionConfirmationView(ActionViewTestCase):
     def test_compile_affected_objects(self):
         request = self.get_request()
         view = self.get_view(request=request)
-        expected = [[get_obj_link(self.obj1, request.user)]]
+        expected = [['Band: '+ get_obj_link(self.obj1, request.user, blank=True)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
         a = make(_models.audio, band=self.obj1, format__extra=2)
@@ -127,16 +127,31 @@ class TestActionConfirmationView(ActionViewTestCase):
             'titel', 'band__band_name', 'format___name', 'release_id']
         link_list = view.compile_affected_objects()
         # link_list should have a structure like this:
-        # [ ['Audio Material: <link>', [<affected objects>]], ]
-        self.assertEqual(link_list[0][0], get_obj_link(a, request.user))
+        # [
+        #       ['Audio Material: <link of obj1>', [<affected objects>]],
+        #       ['Audio Material: <link of obj2>', [<affected objects>]],
+        #       ...
+        # ]
+        # In this case here, the list only has one object (first index==0).
+        expected = 'Audio Material: '+ get_obj_link(a, request.user, blank=True)
+        self.assertEqual(
+            link_list[0][0], expected,
+            msg="First item should be the link to the audio object."
+        )
+        # Evaluating the list of 'affected objects'. This list is determined by
+        # view.affected_fields.
+        # First item should just be the titel of 'a'.
         self.assertEqual(link_list[0][1][0], 'Titel: ' + a.titel)
-        self.assertEqual(link_list[0][1][1], get_obj_link(a.band.first(), request.user))
-        # Next two items should be the related format objects:
-        expected = sorted([
-            get_obj_link(a.format_set.all()[0], request.user),
-            get_obj_link(a.format_set.all()[1], request.user)
-        ])
-        self.assertEqual(sorted(link_list[0][1][2:4]), expected)
+        # Second item should a link to the band object:
+        expected = 'Band: ' + get_obj_link(a.band.first(), request.user, blank=True)
+        self.assertEqual(link_list[0][1][1], expected)
+        # The next two items should be links to the Format objects:
+        format_set = a.format_set.all().order_by('_name')
+        expected = 'Format: ' + get_obj_link(format_set[0], request.user, blank=True)
+        self.assertEqual(link_list[0][1][2], expected)
+        expected = 'Format: '+ get_obj_link(format_set[1], request.user, blank=True)
+        self.assertEqual(link_list[0][1][3], expected)
+        # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
     def test_form_valid(self):
@@ -268,7 +283,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
 
-        view = self.get_view(request, queryset=self.queryset)
+        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
         result = view.compile_affected_objects()
         expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
         self.assertEqual(result[0][1], expected)
@@ -310,8 +325,11 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         request = self.get_request()
         view = self.get_view(request)
         view.perform_action({'jahrgang': 31416, 'start': self.obj1.pk})
-        new_jg = self.queryset.values_list(
-            'jahrgang', flat=True).exclude(jahrgang=None).distinct()
+        new_jg = (self.queryset
+            .values_list('jahrgang', flat=True)
+            .exclude(jahrgang=None)
+            .order_by('jahrgang')
+            .distinct())
         self.assertEqual(list(new_jg), [31416, 31417, 31418])
         for obj in self.queryset.all():
             self.assertLoggedChange(obj, 'jahrgang')
@@ -372,7 +390,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
         # Assert that links to the instance's bestand objects are included.
         def get_bestand_links(obj):
             view_name = "admin:DBentry_%s_change" % (_models.bestand._meta.model_name)
-            link_template = '<a href="{url}">{lagerort__ort}</a>'
+            link_template = '<a href="{url}" target="_blank">{lagerort__ort}</a>'
             template = 'Bestand: {link}'
             for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
                 url = reverse(view_name, args=[pk])
@@ -380,7 +398,9 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
                 yield template.format(link=link)
 
         request = self.get_request()
-        view = self.get_view(request)
+        # We are expecting the link_list to be ordered according to the order
+        # in which we created the test objects; order by 'pk'.
+        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
         link_list = view.compile_affected_objects()
         self.assertEqual(len(link_list), 4)
         expected = [
@@ -740,8 +760,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     @patch.object(
         MergeViewWizarded,
         'perform_action',
-        new=mockex(
-            models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
+        new=Mock(
+            side_effect=models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
     )
     def test_done(self):
         # Assert that an admin message is send to user upon encountering a
@@ -983,9 +1003,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
-            '<a href="/admin/DBentry/ausgabe/{pk}/change/">{name}</a>'
-            ' (<a href="/admin/DBentry/ausgabe/?id={pk}">Liste</a>)'
-            '. Es wurden keine Broschüren für diese Ausgaben erstellt.'
+            '<a href="/admin/DBentry/ausgabe/{pk}/change/" target="_blank">{name}</a> '
+            '(<a href="/admin/DBentry/ausgabe/?id={pk}" target="_blank">Liste</a>). '
+            'Es wurden keine Broschüren für diese Ausgaben erstellt.'
         ).format(pk=self.obj1.pk, name=str(self.obj1))
         self.assertMessageSent(request, expected_message)
 

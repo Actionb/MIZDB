@@ -1,8 +1,10 @@
 import calendar
 import datetime
+from itertools import chain
 from collections import Counter, OrderedDict, namedtuple
 
-from django.contrib.admin.utils import get_fields_from_path
+from nameparser import HumanName
+
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import models, transaction
@@ -19,16 +21,17 @@ class MIZQuerySet(models.QuerySet):
 
     def find(self, q, ordered=False, strat_class=None, **kwargs):
         """
+        Return a list of instances that contain search term 'q'.
+
         Find any occurence of the search term 'q' in the queryset, depending
         on the search strategy used.
-
         By default, the order of the results depends on the search strategy.
         If 'ordered' is True, results will be ordered according to the order
         established in the queryset instead.
         """
-        # Find the best strategy to use:
         if strat_class:
             strat_class = strat_class
+        # Use the most accurate strategy possible:
         elif getattr(self.model, 'name_field', False):
             strat_class = ValuesDictSearchQuery
         elif getattr(self.model, 'primary_search_fields', False):
@@ -40,47 +43,25 @@ class MIZQuerySet(models.QuerySet):
         return result
 
     def duplicates(self, *fields):
-        # NOTE: make required_fields implicitly part of fields?
-        return self.values_dict_dupes(*fields)
-
-    def exclude_empty(self, *fields):
         """
-        Exclude any record whose value for field in fields is 'empty'
-        (either '' or None). If a field in fields is a path, then also exclude
-        empty values of every step on this path.
+        Find records that share values in the given fields.
+
+        Returns a list of 'Dupe' named tuples.
+        'Dupe' has two attributes:
+            - instances: a queryset of records that share some values
+            - values: the values that are shared
         """
-        filters = models.Q()
-        for field_name in fields:
-            lookup_path = ''
-            # Follow the path and add a filter for each piece.
-            for field in get_fields_from_path(self.model, field_name):
-                if isinstance(field, (models.CharField, models.TextField)):
-                    lookup = lookup_value = ''
-                else:
-                    lookup = '__isnull'
-                    lookup_value = True
-                if lookup_path:
-                    lookup_path += LOOKUP_SEP
-                lookup_path += field.name
-                q = models.Q(**{lookup_path + lookup: lookup_value})
-
-                # Avoid having duplicates of the same filter
-                # (though I don't think having them would actually hurt?)
-                if q.children[0] not in filters:
-                    filters |= q
-        return self.exclude(filters)
-
-    def values_dict_dupes(self, *fields):
         Dupe = namedtuple('Dupe', ['instances', 'values'])
 
         queried = self.values_dict(*fields, tuplfy=True)
-        # chain all the values in queried to later count over them
-        from itertools import chain
+        # chain all the values in queried to be able to later count over them.
         all_values = list(chain(values for pk, values in queried.items()))
         rslt = []
+        # Walk through the values, looking for non-empty values that appeared
+        # more than once.
         for elem, count in Counter(all_values).items():
             if not elem or count < 2:
-                # Do not compare empty with empty, and skip if there are no dupes
+                # Do not compare empty with empty.
                 continue
             # Find all the pks that match these values.
             pks = []
@@ -94,7 +75,7 @@ class MIZQuerySet(models.QuerySet):
     def values_dict(self, *fields, include_empty=False, flatten=False,
             tuplfy=False, **expressions):
         """
-        An extension of QuerySet.values().
+        An extension of QuerySet.values() that merges the results.
 
         For a pizza with two toppings and two sizes:
         values('pk', 'pizza__topping', 'pizza__size'):
@@ -107,10 +88,14 @@ class MIZQuerySet(models.QuerySet):
 
         values_dict('pk','pizza__topping', 'pizza__size'):
                 {
-                    '1' : {'pizza__topping' : ('Onions', 'Bacon' ), 'pizza__size': ('Tiny', 'God')},
+                    '1' : {
+                        'pizza__topping' : ('Onions', 'Bacon' ),
+                        'pizza__size': ('Tiny', 'God')
+                    },
                 }
         """
-        # pk_name is the variable that will refer to this query's primary key values.
+        # pk_name is the variable that will refer to this query's primary key
+        # values.
         pk_name = self.model._meta.pk.name
 
         # Make sure the query includes the model's primary key values as we
@@ -220,7 +205,7 @@ class CNQuerySet(MIZQuerySet):
 
     def _update_names(self):
         """
-        Update the names of all rows of this queryset where _changed_flag is True.
+        Update the names of rows where _changed_flag is True.
         """
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
             values = self.filter(
@@ -295,7 +280,20 @@ class AusgabeQuerySet(CNQuerySet):
         return super().find(q, ordered=ordered, **kwargs)
 
     def increment_jahrgang(self, start_obj, start_jg=1):
-        # TODO: increment_jahrgang BADLY needs a doc string and a revision
+        """
+        Alter the 'jahrgang' values using 'start_obj' as anchor.
+
+        Set the 'jahrgang' (i.e. the volume) value for 'start_obj' to 'start_jg'
+        and then alter the jahrgang values of the other ausgabe objects in this
+        queryset according to whether they lie temporally before or after the
+        jahrgang of 'start_obj'.
+        The time/jahrgang difference of other objects to 'start_obj' is
+        calculated using either (partial) dates, 'num' or simply the year values
+        of the other objects; depending on the available data and in that order.
+
+        Returns a dictionary that was used to update the jahrgang values;
+        it maps jahrgang to list of ids.
+        """
         start = start_obj or self.chronologic_order().first()
         start_date = start.e_datum
         years = start.ausgabe_jahr_set.values_list('jahr', flat=True)
@@ -337,12 +335,13 @@ class AusgabeQuerySet(CNQuerySet):
                     # If the obj_date lies before start_date the obj_jg will
                     # always be start_jg - 1 plus the year difference between
                     # the two dates.
-                    # If obj_date is equal to start_date expect for the year, obj_date marks
-                    # the exact BEGINNING of the obj_jg, thus we need to handle
-                    # it inclusively (subtracting 1 from the day difference,
-                    # thereby requiring 366 days difference)
+                    # If obj_date is equal to start_date except for the year
+                    # (same day, same month, different year), then obj_date
+                    # marks the exact BEGINNING of the obj_jg, thus we need to
+                    # handle it inclusively (subtracting 1 from the day
+                    # difference, thereby requiring 366 days difference).
                     days = (start_date - obj_date).days - leapdays(start_date, obj_date) - 1
-                    obj_jg = start_jg - 1 + int(days / 365)
+                    obj_jg = start_jg - 1 - int(days / 365)
                 else:
                     days = (obj_date - start_date).days - leapdays(start_date, obj_date)
                     obj_jg = start_jg + int(days / 365)
@@ -356,7 +355,6 @@ class AusgabeQuerySet(CNQuerySet):
         if nums and start_year:
             queryset = queryset.exclude(pk__in=ids_seen)
             start_num = min(nums)
-
             val_dicts = queryset.values_dict(
                 'ausgabe_num__num', 'ausgabe_jahr__jahr',
                 include_empty=False, flatten=False
@@ -375,6 +373,11 @@ class AusgabeQuerySet(CNQuerySet):
 
                 if ((obj_num > start_num and obj_year == start_year)
                         or (obj_num < start_num and obj_year == start_year + 1)):
+                    # The object was released either:
+                    #   - after the start object and within the same year
+                    #   - *numerically* before the start object but in the year
+                    #       following the start year (i.e. temporally after).
+                    # Either way it still belongs to the same volume as start.
                     update_dict[start_jg].append(pk)
                 else:
                     obj_jg = start_jg + obj_year - start_year
@@ -443,8 +446,8 @@ class AusgabeQuerySet(CNQuerySet):
             pk_order_item = next(filter(filter_func, ordering))
             ordering.remove(pk_order_item)
         except StopIteration:
-            # No primary key in ordering, use '-pk' as default.
-            pk_order_item = '-pk'
+            # No primary key in ordering, use a default.
+            pk_order_item = '-%s' % pk_name
 
         # Determine if jahr should come before jahrgang in ordering.
         jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))
@@ -501,13 +504,15 @@ class HumanNameQuerySet(MIZQuerySet):
     """Extension of MIZQuerySet that enables searches for 'human names'."""
 
     def _parse_human_name(self, text):
-        from nameparser import HumanName
         try:
             return str(HumanName(text))
         except:
             return text
 
     def find(self, q, **kwargs):
+        # Parse 'q' through HumanName first to 'combine' the various ways one
+        # could write a human name.
+        # (f.ex. 'first name surname' or 'surname, first name')
         q = self._parse_human_name(q)
         return super().find(q, **kwargs)
 

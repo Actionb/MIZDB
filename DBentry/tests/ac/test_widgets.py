@@ -65,6 +65,22 @@ class TestEasyWidgetWrapper(MyTestCase):
         # Assert that the wrapped widget includes the RelatedObjectLookups.js
         self.assertIn('admin/js/admin/RelatedObjectLookups.js', self.widget.media._js)
 
+    def test_no_related_links_for_multiple(self):
+        # Assert that no add/change/delete links/icons for related objects
+        # are added if the widget is a form of SelectMultiple.
+        widget = EasyWidgetWrapper(
+            widget=widgets.SelectMultiple(),
+            related_model=_models.ausgabe,
+            can_add_related=True,
+            can_change_related=True,
+            can_delete_related=True
+        )
+        context = widget.get_context('Beep', ['1'], {'id': 1})
+        for attr in ('can_add_related', 'can_change_related', 'can_delete_related'):
+            with self.subTest(attr=attr):
+                self.assertFalse(getattr(widget, attr))
+                self.assertFalse(context.get(attr, False))
+
 
 class TestWidgetCaptureMixin(MyTestCase):
 

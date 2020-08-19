@@ -10,7 +10,15 @@ class MultipleObjectsReturnedException(Exception):
 
 
 class FailedObject(object):
-    """An object that immitates a result object as expected by the dal view."""
+    """
+    A dummy object that immitates a result object should creation fail.
+
+    dal views expect _some_ object with a pk attribute and string representation
+    further down the chain (get_result_label, etc.).
+    When the saving of a new (unique) model instance fails due to a
+    MultipleObjectsReturned exception, and when that exception is not allowed
+    to bubble up, a FailedObject will be created instead.
+    """
 
     def __init__(self, text):
         self.pk = 0
@@ -22,6 +30,8 @@ class FailedObject(object):
 
 class Creator(object):
     """
+    Create a model instance from a text input.
+
     A helper class that uses a declared 'create_<model_name>' method to create
     a model instance from a given string.
     """

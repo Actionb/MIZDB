@@ -8,8 +8,7 @@ import DBentry.models as _models
 from DBentry.base.models import BaseModel, BaseM2MModel
 from DBentry.factory import (
     factory, RuntimeFactoryMixin, UniqueFaker, modelfactory_factory, make,
-    SelfFactory, M2MFactory, MIZDjangoOptions, MIZModelFactory,
-    AutorFactory, MagazinFactory
+    SelfFactory, M2MFactory, MIZDjangoOptions, AutorFactory, MagazinFactory
 )
 from DBentry.models import BaseBrochure
 from DBentry.tests.base import MyTestCase
@@ -665,10 +664,7 @@ class TestMIZModelFactory(MyTestCase):
             if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, BaseBrochure))
         ]
         for model in models:
-            kwargs = {'Meta': type('Options', (MIZDjangoOptions,), {'model': model})}
-            factory_name = model._meta.model_name.capitalize() + 'Factory'
-            fac = type(factory_name, (MIZModelFactory, ), kwargs)
-            cls.factories.append(fac)
+            cls.factories.append(modelfactory_factory(model))
 
     def assertAllRelationsUsed(self, obj):
         for rel in get_model_relations(obj._meta.model):

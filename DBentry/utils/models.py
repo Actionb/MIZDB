@@ -308,11 +308,9 @@ def get_fields_and_lookups(model, field_path):
     """
     # (used by the changelist search forms to figure out search fields)
     fields, lookups = [], []
-    parts = field_path.split(models.constants.LOOKUP_SEP)
-
     opts = model._meta
     prev_field = None
-    for _, part in enumerate(parts):
+    for part in field_path.split(models.constants.LOOKUP_SEP):
         if part == 'pk':
             part = opts.pk.name
         try:

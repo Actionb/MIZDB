@@ -259,7 +259,6 @@ class M2MFactory(RelatedFactory):
             source = related_manager.target_field_name
             target = related_manager.source_field_name
 
-        # self.name = source  # TODO: why is this commented out?
         # Add the relation.
         for related_object in super().call(instance, step, context):
             related_manager.through.objects.create(
@@ -602,7 +601,12 @@ class LandFactory(MIZModelFactory):
         model = _models.land
         django_get_or_create = ['land_name', 'code']
     land_name = UniqueFaker('country')
-    code = UniqueFaker('country_code')
+    # land.code has unique=True and max_length of 4.
+    # If we were to use a UniqueFaker that max_length might be exceeded
+    # depending on the sequence counter (even with a faker that returns very
+    # short strings such as 'country_code').
+    # So just use the last four chars from the land_name:
+    code = factory.LazyAttribute(lambda o: o.land_name[-4:])
 
 
 class MagazinFactory(MIZModelFactory):

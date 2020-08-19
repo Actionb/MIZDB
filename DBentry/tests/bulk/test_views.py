@@ -136,7 +136,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
 
         # Store the currently existing pks and check that these pks
         # correspond to the pks of our 'special objects'.
-        before_save_ids = list(self.queryset.values_list('pk', flat=True))
+        before_save_ids = sorted(list(self.queryset.values_list('pk', flat=True)))
         self.assertEqual(len(before_save_ids), 3)
         self.assertEqual(before_save_ids, [self.updated.pk, self.multi1.pk, self.multi2.pk])
 
@@ -195,7 +195,10 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # Store the currently existing pks.
         before_save_ids = list(self.queryset.values_list('pk', flat=True))
         self.assertEqual(len(before_save_ids), 3)
-        self.assertEqual(before_save_ids, [self.updated.pk, self.multi1.pk, self.multi2.pk])
+        self.assertEqual(
+            sorted(before_save_ids),
+            sorted([self.updated.pk, self.multi1.pk, self.multi2.pk])
+        )
 
         form = self.get_valid_form()
         request = self.post_request()

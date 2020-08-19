@@ -81,14 +81,12 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db/db.sqlite3'),
-        #TODO: Declaring a test database like this seems smiliar to using --settings=MIZDB.test_settings.py
-        # for the idea of using a dedicated, persistent test database.
-        # Have a more detailed look at it and discard test_settings.py if possible. (Dont forget to adjust the bash commands)
-        #'TEST': {
-        #    'NAME': os.path.join(BASE_DIR, 'db/mytestdb.sqlite3')
-        #}
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'mizdb',
+        'USER': 'mizdb_user',
+        'PASSWORD': 'm!zdb_2017',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
 

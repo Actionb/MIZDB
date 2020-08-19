@@ -1,6 +1,6 @@
 -c constraints.txt
 # django base
-Django==2.2
+Django==2.2.13
 
 # django extensions/apps
 django-test-without-migrations==0.6
@@ -22,3 +22,6 @@ python-stdnum==1.8.1
 
 # DBentry's own factory
 factory-boy==2.11.1
+
+# PostgreSQL Python
+psycopg2==2.8.5

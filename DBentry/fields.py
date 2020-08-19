@@ -1,5 +1,6 @@
 import datetime
 import re
+from functools import total_ordering
 from stdnum import issn, isbn, ean
 
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -8,20 +9,21 @@ from django.db import models
 from django.forms import widgets, fields
 from django.utils import formats
 
-from DBentry.constants import MIN_JAHR, MAX_JAHR
 from DBentry.validators import ISSNValidator, ISBNValidator, EANValidator
 
 
 class YearField(models.IntegerField):
     """
-    An IntegerField that validates against min and max values given by
-    constants.MIN_JAHR/MAX_JAHR.
+    An IntegerField that validates against min and max values for year numbers.
     """
+
+    MAX_YEAR = 3000
+    MIN_YEAR = 1800
 
     def formfield(self, **kwargs):
         kwargs['validators'] = [
-            MaxValueValidator(MAX_JAHR),
-            MinValueValidator(MIN_JAHR)
+            MaxValueValidator(self.MAX_YEAR),
+            MinValueValidator(self.MIN_YEAR)
         ]
         return super().formfield(**kwargs)
 
@@ -208,6 +210,7 @@ django-partial-date: https://github.com/ktowen/django_partial_date
 https://stackoverflow.com/q/2971198
 https://stackoverflow.com/a/30186603
 """
+@total_ordering
 class PartialDate(datetime.date):
     """A datetime.date that allows constructor arguments to be optional."""
 
@@ -220,7 +223,6 @@ class PartialDate(datetime.date):
         constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
         date_format = []
         iterator = zip(
-            # TODO: %d. (dot) for 20. May 2019?
             ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
         )
         for name, value, format in iterator:
@@ -312,16 +314,10 @@ class PartialDate(datetime.date):
                 return False
         return super().__eq__(other)
 
-# TODO: rich comparison => functools.total_ordering
-#    def __gt__(self, other):
-#        if isinstance(other, str):
-#            return self.__str__().__gt__(other)
-#        return super().__gt__(other)
-#
-#    def __ge__(self, other):
-#        if isinstance(other, str):
-#            return self.__str__().__ge__(other)
-#        return super().__ge__(other)
+    def __gt__(self, other):
+        if isinstance(other, str):
+            return self.__str__().__gt__(other)
+        return super().__gt__(other)
 
 
 class PartialDateWidget(widgets.MultiWidget):
@@ -407,16 +403,11 @@ class PartialDateField(models.CharField):
 
     def to_python(self, value):
         if not value:
-            return PartialDate()  # TODO: or return None?
+            return PartialDate()
         if isinstance(value, str):
             try:
                 pd = PartialDate.from_string(value)
             except ValueError:
-                # TODO: raise a different exception in from_string:
-                # - invalid format for regex (--> code 'invalid')
-                # - invalid date (--> code 'invalid_date')
-                # Since PartialDateField uses a MultiValueField, though,
-                # the user does not get a choice on what format to use.
                 # Either from_string could not match its regex or
                 # the date produced is invalid (e.g. 02-31)
                 raise ValidationError(
