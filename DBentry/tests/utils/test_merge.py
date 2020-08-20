@@ -448,7 +448,7 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
         cls.model.genre.through.objects.create(genre=cls.genre_original, magazin=cls.obj1)
         cls.model.genre.through.objects.create(genre=cls.genre_merger1, magazin=cls.obj2)
         cls.model.genre.through.objects.create(genre=cls.genre_merger2, magazin=cls.obj3)
-        autor_instance = _models.autor.objects.create(kuerzel='Merger1-Autor')
+        autor_instance = _models.autor.objects.create(kuerzel='M1-Aut')
         cls.model.autor_set.through.objects.create(autor=autor_instance, magazin=cls.obj2)
         cls.ausgabe_original = _models.ausgabe.objects.create(
             beschreibung='Original-Ausgabe', sonderausgabe=True, magazin=cls.obj1
