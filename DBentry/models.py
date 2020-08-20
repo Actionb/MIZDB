@@ -979,7 +979,7 @@ class Veranstaltungsreihe(BaseModel):
 
 class video(BaseModel):
     titel = models.CharField(max_length=200)
-    tracks = models.IntegerField()  # TODO: PositiveSmallIntegerField!
+    tracks = models.PositiveSmallIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     festplatte = models.CharField(max_length=200, blank=True)  # TODO: "Speicherort"?? shouldnt this be a relation to Datei then?
     quelle = models.CharField(max_length=200, blank=True)  # TODO: same as audio.quelle?
