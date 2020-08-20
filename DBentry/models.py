@@ -761,7 +761,7 @@ class bildmaterial(BaseModel):
     titel = models.CharField(max_length=200)
     signatur = models.CharField(max_length=200, blank=True, null=True, unique=True)  # TODO: help_text: frag Birgitt, was genau das ist 
     size = models.CharField('Größe', max_length=200, blank=True)
-    datum = PartialDateField()  # TODO: add help_text to make clear this isn't the "entry" date
+    datum = PartialDateField('Zeitangabe')
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
