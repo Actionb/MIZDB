@@ -23,7 +23,7 @@ class person(ComputedNameModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    orte = models.ManyToManyField('ort', blank=True)  # FIXME: ManyToManyField with blank=True
+    orte = models.ManyToManyField('ort')
 
     name_composing_fields = ['vorname', 'nachname']
     primary_search_fields = ['_name']
@@ -64,7 +64,7 @@ class musiker(BaseModel):
 
     genre = models.ManyToManyField('genre', through=_m2m.m2m_musiker_genre)
     instrument = models.ManyToManyField('instrument', through=_m2m.m2m_musiker_instrument)
-    orte = models.ManyToManyField('ort', blank=True)  # FIXME: ManyToManyField with blank=True
+    orte = models.ManyToManyField('ort')
 
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
@@ -112,7 +112,7 @@ class band(BaseModel):
 
     genre = models.ManyToManyField('genre', through=_m2m.m2m_band_genre)
     musiker = models.ManyToManyField('musiker', through=_m2m.m2m_band_musiker)
-    orte = models.ManyToManyField('ort', blank=True)  # FIXME: ManyToManyField with blank=True
+    orte = models.ManyToManyField('ort')
 
     create_field = 'band_name'
     name_field = 'band_name'
@@ -139,7 +139,7 @@ class autor(ComputedNameModel):
 
     person = models.ForeignKey('person', models.SET_NULL, null=True, blank=True)
 
-    magazin = models.ManyToManyField('magazin', blank=True, through=_m2m.m2m_autor_magazin)   # FIXME: ManyToManyField with blank=True
+    magazin = models.ManyToManyField('magazin', through=_m2m.m2m_autor_magazin)
 
     name_composing_fields = ['person___name', 'kuerzel']
     primary_search_fields = ['_name']
@@ -209,7 +209,7 @@ class ausgabe(ComputedNameModel):
 
     magazin = models.ForeignKey('magazin', models.PROTECT)
 
-    audio = models.ManyToManyField('audio', through=_m2m.m2m_audio_ausgabe, blank=True)  # FIXME: ManyToManyField with blank=True
+    audio = models.ManyToManyField('audio', through=_m2m.m2m_audio_ausgabe)
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
@@ -426,7 +426,7 @@ class magazin(BaseModel):
         help_text='Wenn das Magazin regional beschränkt ist, kann die Region hier angegeben werden.'
     )
 
-    genre = models.ManyToManyField('genre', blank=True, through=_m2m.m2m_magazin_genre)  # FIXME: ManyToManyField with blank=True
+    genre = models.ManyToManyField('genre', through=_m2m.m2m_magazin_genre)
     verlag = models.ManyToManyField('verlag', through=_m2m.m2m_magazin_verlag)
     herausgeber = models.ManyToManyField('Herausgeber', through=_m2m.m2m_magazin_herausgeber)
 
@@ -1207,8 +1207,9 @@ class Format(ComputedNameModel):
         'FormatSize', models.SET_NULL, verbose_name='Format Größe',
         help_text='LP, 12", Mini-Disc, etc.', blank=True, null=True
     )
-
-    tag = models.ManyToManyField('FormatTag', verbose_name='Tags', blank=True)  # FIXME: ManyToManyField with blank=True
+    # The field 'tag' is used in a stacked inline on audio.
+    # blank must be True or the inline requires a tag to be submitted.
+    tag = models.ManyToManyField('FormatTag', verbose_name='Tags', blank=True)
 
     name_composing_fields = [
         'anzahl', 'format_size__size', 'format_typ__typ',
