@@ -1,5 +1,5 @@
 from django.dispatch import receiver
-
+# TODO: delete signals.py (multi_sender isn't used anywhere)
 
 def multi_sender(signal, senders, **kwargs):
     """A decorator that adds a reciever for every sender in senders."""
