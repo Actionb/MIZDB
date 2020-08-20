@@ -464,8 +464,8 @@ class BuchAdmin(MIZModelAdmin):
         HerausgeberInLine, VerlagInLine, PersonInLine, BestandInLine
     ]
     list_display = [
-        'titel', 'auflage', 'schriftenreihe', 'autoren_string',
-        'herausgeber_string', 'verlag_string', 'schlagwort_string', 'genre_string'
+        'titel', 'autoren_string', 'herausgeber_string', 'verlag_string',
+        'schlagwort_string', 'genre_string'
     ]
     list_prefetch_related = ['autor', 'herausgeber', 'verlag', 'schlagwort', 'genre']
     search_form_kwargs = {
@@ -489,7 +489,7 @@ class BuchAdmin(MIZModelAdmin):
 
     def verlag_string(self, obj):
         return concat_limit(obj.verlag.all())
-    herausgeber_string.short_description = 'verlag'
+    verlag_string.short_description = 'Verlag'
 
     def schlagwort_string(self, obj):
         return concat_limit(obj.schlagwort.all())
