@@ -1013,7 +1013,10 @@ class TestModelLagerort(DataTestCase):
         )
 
     def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
+        self.assertEqual(
+            self.model.search_fields_suffixes,
+            {'fach': 'Fach', 'ordner': 'Ordner', 'regal': 'Regal', 'raum': 'Raum'}
+        )
 
 
 class TestModelLand(DataTestCase):

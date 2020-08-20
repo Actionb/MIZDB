@@ -1,5 +1,4 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
-# TODO: add search_fields to all models to reduce calculation in get_search_fields?
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -333,6 +332,8 @@ class ausgabe_jahr(BaseModel):
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
+    search_fields = ['ausgabe']
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Jahr'
         verbose_name_plural = 'Jahre'
@@ -345,6 +346,8 @@ class ausgabe_num(BaseModel):
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
+    search_fields = ['num']
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Nummer'
         verbose_name_plural = 'Ausgabennummer'
@@ -356,6 +359,8 @@ class ausgabe_lnum(BaseModel):
     lnum = models.IntegerField('Lfd. Nummer')
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+
+    search_fields = ['lnum']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'lfd. Nummer'
@@ -384,6 +389,8 @@ class monat(BaseModel):
     monat = models.CharField('Monat', max_length=200)
     abk = models.CharField('Abk', max_length=200)
     ordinal = models.PositiveSmallIntegerField(editable=False)
+
+    search_fields = ['monat', 'abk', 'ordinal']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
@@ -685,6 +692,7 @@ class Herausgeber(BaseModel):
 
     name_field = 'herausgeber'
     create_field = 'herausgeber'
+    search_fields = ['herausgeber']
 
     class Meta(BaseModel.Meta):
         ordering = ['herausgeber']
@@ -1039,6 +1047,9 @@ class provenienz(BaseModel):
 class geber(BaseModel):
     name = models.CharField(max_length=200)
 
+    name_field = create_field = 'name'
+    search_fields = ['name']
+
     class Meta(BaseModel.Meta):
         ordering = ['name']
         verbose_name = 'Geber'
@@ -1053,6 +1064,8 @@ class lagerort(ComputedNameModel):
     ordner = models.CharField(max_length=200, blank=True)
 
     name_composing_fields = ['ort', 'raum', 'regal', 'fach']
+    search_fields = ['ort', 'raum', 'regal', 'fach', 'ordner']
+    search_fields_suffixes = {'raum': 'Raum', 'regal': 'Regal', 'fach': 'Fach', 'ordner': 'Ordner'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
@@ -1277,6 +1290,9 @@ class FormatTyp(BaseModel):
 
 class plattenfirma(BaseModel):
     name = models.CharField(max_length=200)
+
+    name_field = create_field = 'name'
+    search_fields = ['name']
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
