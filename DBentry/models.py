@@ -409,7 +409,7 @@ class magazin(BaseModel):
     magazin_name = models.CharField('Magazin', max_length=200)
     magazin_url = models.URLField('Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
-        'Ausgaben Merkmal', max_length=200, blank=True, choices=MERKMAL_CHOICES,  # TODO: reduce max_length
+        'Ausgaben Merkmal', max_length=8, blank=True, choices=MERKMAL_CHOICES,
         help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
             'Ausgaben in der Änderungsliste.')
     )
