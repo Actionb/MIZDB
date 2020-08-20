@@ -1194,7 +1194,7 @@ class datei(BaseModel):
 
 class Format(ComputedNameModel):
     anzahl = models.PositiveSmallIntegerField(default=1)
-    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)  # TODO: nr for vinyl??
+    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)  # TODO: nr for vinyl?? http://mikiwiki.org/wiki/Nummern_auf_Schallplatten
     bemerkungen = models.TextField(blank=True)
 
     audio = models.ForeignKey('audio', models.CASCADE)
