@@ -133,7 +133,7 @@ class band_alias(BaseAliasModel):
 
 
 class autor(ComputedNameModel):
-    kuerzel = models.CharField('Kürzel', max_length=200, blank=True)  # TODO: reduce max_length
+    kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
