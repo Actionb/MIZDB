@@ -1040,8 +1040,7 @@ class provenienz(BaseModel):
 
 
 class geber(BaseModel):
-    # TODO: merge with person?
-    name = models.CharField(default='unbekannt', max_length=200)  # TODO: remove default; geber isn't required anywhere
+    name = models.CharField(max_length=200)
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
