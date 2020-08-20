@@ -697,7 +697,7 @@ class Herausgeber(BaseModel):
 # TODO: instrument contains a lot of nonsense instruments + kuerzel
 class instrument(BaseModel):
     instrument = models.CharField(unique=True, max_length=200)
-    kuerzel = models.CharField('Kürzel', max_length=200)  # TODO: reduce max_length
+    kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
 
     name_field = 'instrument'
     primary_search_fields = ['instrument']
