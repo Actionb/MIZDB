@@ -1289,13 +1289,11 @@ class plattenfirma(BaseModel):
 
 
 class BrochureYear(AbstractJahrModel):
-    brochure = models.ForeignKey(
-        'BaseBrochure', models.CASCADE, related_name='jahre', blank=True, null=True
-    )
+    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='jahre')
 
 
 class BrochureURL(AbstractURLModel):
-    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='urls', blank=True)  # TODO: blank=True but null=False??
+    brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='urls')
 
 # FIXME: crosslinks to BaseBrochure do not work
 #   - add a genre to a Brochure
