@@ -1,5 +1,4 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
-# FIXME: a few fields ('kuerzel') shouldn't be max_length=200
 # TODO: add search_fields to all models to reduce calculation in get_search_fields?
 from django.core.validators import MinValueValidator
 from django.db import models
