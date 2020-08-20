@@ -342,27 +342,25 @@ class ausgabe_jahr(BaseModel):
 
 class ausgabe_num(BaseModel):
     num = models.IntegerField('Nummer')
-    kuerzel = models.CharField(max_length=200, blank=True)  # TODO: remove this field, completely unused
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Nummer'
         verbose_name_plural = 'Ausgabennummer'
-        unique_together = ('num', 'ausgabe', 'kuerzel')
+        unique_together = ('num', 'ausgabe')
         ordering = ['num']
 
 
 class ausgabe_lnum(BaseModel):
     lnum = models.IntegerField('Lfd. Nummer')
-    kuerzel = models.CharField(max_length=200, blank=True)  # TODO: remove this field, completely unused
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'lfd. Nummer'
         verbose_name_plural = 'Laufende Nummer'
-        unique_together = ('lnum', 'ausgabe', 'kuerzel')
+        unique_together = ('lnum', 'ausgabe')
         ordering = ['lnum']
 
 
