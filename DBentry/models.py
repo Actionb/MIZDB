@@ -203,11 +203,11 @@ class ausgabe(ComputedNameModel):
         'Erscheinungsdatum', null=True, blank=True, help_text='Format: tt.mm.jjjj')
     jahrgang = models.PositiveSmallIntegerField(
         null=True, blank=True, verbose_name="Jahrgang", validators=[MinValueValidator(1)])
-    sonderausgabe = models.BooleanField(default=False, verbose_name='Sonderausgabe')  # TODO: kwarg verbose_name not needed
+    sonderausgabe = models.BooleanField('Sonderausgabe', default=False)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Ausgabe')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    magazin = models.ForeignKey('magazin', models.PROTECT, verbose_name='Magazin')  # TODO: kwarg verbose_name not needed
+    magazin = models.ForeignKey('magazin', models.PROTECT)
 
     audio = models.ManyToManyField('audio', through=_m2m.m2m_audio_ausgabe, blank=True)  # FIXME: ManyToManyField with blank=True
 
@@ -407,7 +407,7 @@ class magazin(BaseModel):
     ]
 
     magazin_name = models.CharField('Magazin', max_length=200)
-    magazin_url = models.URLField(verbose_name='Webpage', blank=True)  # TODO: kwarg verbose_name not needed
+    magazin_url = models.URLField('Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', max_length=200, blank=True, choices=MERKMAL_CHOICES,  # TODO: reduce max_length
         help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
@@ -467,7 +467,7 @@ class ort(ComputedNameModel):
     bland = models.ForeignKey(
         'bundesland', models.SET_NULL, verbose_name='Bundesland', null=True, blank=True
     )
-    land = models.ForeignKey('land', models.PROTECT, verbose_name='Land')  # TODO: kwarg verbose_name not needed
+    land = models.ForeignKey('land', models.PROTECT)
 
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
@@ -523,7 +523,7 @@ class bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', max_length=200)
     code = models.CharField(max_length=4, unique=False)
 
-    land = models.ForeignKey('land', models.PROTECT, verbose_name='Land')  # TODO: kwarg verbose_name not needed
+    land = models.ForeignKey('land', models.PROTECT)
 
     name_field = 'bland_name'
     primary_search_fields = []
@@ -582,7 +582,7 @@ class artikel(BaseModel):
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
 
     schlagzeile = models.CharField(max_length=200)
-    seite = models.PositiveSmallIntegerField(verbose_name="Seite")  # TODO: kwarg verbose_name not needed
+    seite = models.PositiveSmallIntegerField()
     seitenumfang = models.CharField(
         max_length=3, blank=True, choices=SU_CHOICES, default='',
         help_text='Zwei Seiten: f; mehr als zwei Seiten: ff.'
@@ -593,10 +593,8 @@ class artikel(BaseModel):
 
     ausgabe = models.ForeignKey('ausgabe', models.PROTECT)
 
-    genre = models.ManyToManyField('genre', through=_m2m.m2m_artikel_genre, verbose_name='Genre')  # TODO: ?kwarg verbose_name not needed?
-    schlagwort = models.ManyToManyField(
-        'schlagwort', through=_m2m.m2m_artikel_schlagwort, verbose_name='Schlagwort'  # TODO: ?kwarg verbose_name not needed?
-    )
+    genre = models.ManyToManyField('genre', through=_m2m.m2m_artikel_genre)
+    schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_artikel_schlagwort)
     person = models.ManyToManyField('person', through=_m2m.m2m_artikel_person)
     autor = models.ManyToManyField('autor', through=_m2m.m2m_artikel_autor)
     band = models.ManyToManyField('band', through=_m2m.m2m_artikel_band)
@@ -699,7 +697,7 @@ class Herausgeber(BaseModel):
 
 class instrument(BaseModel):
     instrument = models.CharField(unique=True, max_length=200)
-    kuerzel = models.CharField(verbose_name='Kürzel', max_length=200)  # TODO: kwarg verbose_name not needed  # TODO: reduce max_length
+    kuerzel = models.CharField('Kürzel', max_length=200)  # TODO: reduce max_length
 
     name_field = 'instrument'
     primary_search_fields = ['instrument']
@@ -719,15 +717,17 @@ class instrument(BaseModel):
 
 class audio(BaseModel):
     titel = models.CharField(max_length=200)
-    tracks = models.PositiveIntegerField(verbose_name='Anz. Tracks', blank=True, null=True)  # TODO: kwarg verbose_name not needed
+    tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
     e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
     # TODO: field 'catalog_nr' is missing in AudioAdmin -- Format.catalog_nr does that job??
-    catalog_nr = models.CharField(max_length=200, blank=True, verbose_name='Katalog Nummer')  # TODO: kwarg verbose_name not needed
-    release_id = models.PositiveIntegerField(blank=True, null=True, verbose_name="Release ID (discogs)")  # TODO: kwarg verbose_name not needed
-    discogs_url = models.URLField(verbose_name="Link discogs.com", blank=True,  # TODO: kwarg verbose_name not needed
-        help_text="Adresse zur discogs.com Seite dieses Objektes.")
+    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)
+    release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
+    discogs_url = models.URLField(
+        'Link discogs.com', blank=True,
+        help_text="Adresse zur discogs.com Seite dieses Objektes."
+    )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -761,7 +761,7 @@ class audio(BaseModel):
 class bildmaterial(BaseModel):
     titel = models.CharField(max_length=200)
     signatur = models.CharField(max_length=200, blank=True, null=True, unique=True)  # TODO: help_text: frag Birgitt, was genau das ist 
-    size = models.CharField(max_length=200, blank=True, verbose_name='Größe')  # TODO: kwarg verbose_name not needed
+    size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField()  # TODO: add help_text to make clear this isn't the "entry" date
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -1157,15 +1157,15 @@ class datei(BaseModel):
 
     titel = models.CharField(max_length=200)
     media_typ = models.CharField(
-        max_length=200, choices=MEDIA_TYP_CHOICES, verbose_name='Media Typ',  # TODO: kwarg verbose_name not needed
+        'Media Typ', max_length=200, choices=MEDIA_TYP_CHOICES,
         default=MEDIA_AUDIO
     )
     datei_media = models.FileField(  # Datei Media Server
-        verbose_name='Datei', blank=True, null=True, editable=False,  # TODO: kwarg verbose_name not needed
+        'Datei', blank=True, null=True, editable=False,
         help_text="Datei auf Datenbank-Server hoch- bzw herunterladen."
     )
     datei_pfad = models.CharField(
-        verbose_name='Datei-Pfad', max_length=200, blank=True,  # TODO: kwarg verbose_name not needed
+        'Datei-Pfad', max_length=200, blank=True,
         help_text="Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner."
     )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
@@ -1198,7 +1198,7 @@ class datei(BaseModel):
 
 class Format(ComputedNameModel):
     anzahl = models.PositiveSmallIntegerField(default=1)
-    catalog_nr = models.CharField(verbose_name="Katalog Nummer", max_length=200, blank=True)  # TODO: nr for vinyl??  # TODO: kwarg verbose_name not needed
+    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)  # TODO: nr for vinyl??
     bemerkungen = models.TextField(blank=True)
 
     audio = models.ForeignKey('audio', models.CASCADE)
@@ -1247,7 +1247,7 @@ class Format(ComputedNameModel):
 
 class FormatTag(BaseModel):
     tag = models.CharField(max_length=200)
-    abk = models.CharField(verbose_name='Abkürzung', max_length=200, blank=True)  # TODO: kwarg verbose_name not needed
+    abk = models.CharField('Abkürzung', max_length=200, blank=True)
 
     class Meta(BaseModel.Meta):
         ordering = ['tag']
