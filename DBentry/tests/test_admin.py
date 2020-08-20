@@ -1069,7 +1069,9 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'datum', 'veranstaltung_alias__alias',
+        'beschreibung', 'bemerkungen', 'pk__iexact'
+    ]
     test_data_count = 1
 
     crosslinks_expected = [

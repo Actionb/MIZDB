@@ -949,10 +949,11 @@ class veranstaltung(BaseModel):
 
     name_field = 'name'
     primary_search_fields = ['name']
-    # TODO: add 'datum' to search_fields for autocomplete?
-    search_fields = ['name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = [
+        'name', 'datum', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
         'veranstaltung_alias__alias': 'Alias',
+        'datum': 'Datum',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
