@@ -404,7 +404,7 @@ class magazin(BaseModel):
     ]
 
     magazin_name = models.CharField('Magazin', max_length=200)
-    magazin_url = models.URLField(verbose_name='Webpage', blank=True)
+    magazin_url = models.URLField(verbose_name='Webpage', blank=True)  # TODO: magazin_url: make M2M
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', max_length=200, blank=True, choices=MERKMAL_CHOICES,
         help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
@@ -1293,7 +1293,9 @@ class BrochureYear(AbstractJahrModel):
 class BrochureURL(AbstractURLModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='urls', blank=True)
 
-
+# FIXME: crosslinks to BaseBrochure do not work
+#   - add a genre to a Brochure
+#   - no Brochure crosslink in that genre
 class BaseBrochure(BaseModel):
     titel = models.CharField(max_length=200)
     zusammenfassung = models.TextField(blank=True)

@@ -250,7 +250,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             items.append((dupe_item, link))
         return items
 
-
+# TODO: call this "unreferenzierte Datensätze"?
+# TODO: the result page needs a changelist link!
 @register_tool(
     url_name='find_unused',
     index_label='Selten verwendete Datensätze finden',
