@@ -342,7 +342,7 @@ class ausgabe_jahr(BaseModel):
 
 
 class ausgabe_num(BaseModel):
-    num = models.IntegerField('Nummer')
+    num = models.IntegerField('Nummer')  # TODO: PositiveIntegerField!
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
@@ -356,7 +356,7 @@ class ausgabe_num(BaseModel):
 
 
 class ausgabe_lnum(BaseModel):
-    lnum = models.IntegerField('Lfd. Nummer')
+    lnum = models.IntegerField('Lfd. Nummer')  # TODO: PositiveIntegerField!
 
     ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
 
