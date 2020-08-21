@@ -424,15 +424,11 @@ class magazin(BaseModel):
     )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
-    # TODO: make ort a M2M to 'ort'?
-    ort = models.ForeignKey(
-        'ort', models.SET_NULL, null=True, blank=True, verbose_name='Herausgabeort',
-        help_text='Wenn das Magazin regional beschränkt ist, kann die Region hier angegeben werden.'
-    )
 
     genre = models.ManyToManyField('genre', through=_m2m.m2m_magazin_genre)
     verlag = models.ManyToManyField('verlag', through=_m2m.m2m_magazin_verlag)
     herausgeber = models.ManyToManyField('Herausgeber', through=_m2m.m2m_magazin_herausgeber)
+    orte = models.ManyToManyField('ort')
 
     create_field = 'magazin_name'
     name_field = 'magazin_name'
