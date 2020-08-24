@@ -93,8 +93,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-        # TODO: add 'view' permission (primarily for SchlagwortAdmin)
-        default_permissions = ('add', 'change', 'delete', 'merge')
+        default_permissions = ('add', 'change', 'delete', 'merge', 'view')
 
 
 class BaseM2MModel(BaseModel):
