@@ -690,7 +690,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.magazin
     exclude_expected = ['genre', 'verlag', 'herausgeber', 'orte']
     fields_expected = [
-        'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
+        'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',
         'beschreibung', 'bemerkungen',
     ]
     search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']

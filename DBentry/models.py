@@ -411,7 +411,6 @@ class magazin(BaseModel):
     ]
 
     magazin_name = models.CharField('Magazin', max_length=200)
-    magazin_url = models.URLField('Webpage', blank=True)
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', max_length=8, blank=True, choices=MERKMAL_CHOICES,
         help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
@@ -443,6 +442,9 @@ class magazin(BaseModel):
 
     def __str__(self):
         return str(self.magazin_name)
+
+class MagazinURL(AbstractURLModel):
+    magazin = models.ForeignKey('magazin', models.CASCADE, related_name='urls')
 
 
 class verlag(BaseModel):

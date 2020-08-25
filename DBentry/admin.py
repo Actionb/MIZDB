@@ -525,6 +525,8 @@ class GenreAdmin(MIZModelAdmin):
 
 @admin.register(_models.magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
+    class URLInLine(BaseTabularInline):
+        model = _models.MagazinURL
     class VerlagInLine(BaseTabularInline):
         model = _m2m.m2m_magazin_verlag
         verbose_model = _models.verlag
@@ -537,7 +539,7 @@ class MagazinAdmin(MIZModelAdmin):
         model = _models.magazin.orte.through
 
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
+    inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
     list_display = ['__str__', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
     list_prefetch_related = ['orte']
 
