@@ -766,7 +766,7 @@ class bildmaterial(BaseModel):
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
         help_text=('Kürzel bestehend aus Angabe zur Größe und '
-            'einer 5-stelligen fortlaufenden Nummer. Z.B.: A200395')
+            'einer 5-stelligen fortlaufenden Nummer. Z.B.: DINA2-00395')
     )
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')

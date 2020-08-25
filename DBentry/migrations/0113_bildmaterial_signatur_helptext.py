@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='bildmaterial',
             name='signatur',
-            field=models.CharField(blank=True, help_text='Kürzel bestehend aus Angabe zur Größe und einer 5-stelligen fortlaufenden Nummer. Z.B.: A200395', max_length=200, null=True, unique=True),
+            field=models.CharField(blank=True, help_text='Kürzel bestehend aus Angabe zur Größe und einer 5-stelligen fortlaufenden Nummer. Z.B.: DINA2-00395', max_length=200, null=True, unique=True),
         ),
     ]
