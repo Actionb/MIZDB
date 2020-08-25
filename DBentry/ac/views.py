@@ -145,7 +145,7 @@ class ACAusgabe(ACBase):
     the results.
     """
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     def do_ordering(self, queryset):
         return queryset.chronologic_order()

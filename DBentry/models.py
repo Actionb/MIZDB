@@ -185,7 +185,7 @@ class Autor(ComputedNameModel):
             return kuerzel or cls._name_default % {'verbose_name': cls._meta.verbose_name}
 
 
-class ausgabe(ComputedNameModel):
+class Ausgabe(ComputedNameModel):
     UNBEARBEITET = 'unb'
     INBEARBEITUNG = 'iB'
     ABGESCHLOSSEN = 'abg'
@@ -330,7 +330,7 @@ class ausgabe(ComputedNameModel):
 class ausgabe_jahr(BaseModel):
     jahr = YearField('Jahr')
 
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['ausgabe']
 
@@ -344,7 +344,7 @@ class ausgabe_jahr(BaseModel):
 class ausgabe_num(BaseModel):
     num = models.PositiveSmallIntegerField('Nummer')
 
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['num']
 
@@ -358,7 +358,7 @@ class ausgabe_num(BaseModel):
 class ausgabe_lnum(BaseModel):
     lnum = models.PositiveSmallIntegerField('Lfd. Nummer')
 
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['lnum']
 
@@ -370,7 +370,7 @@ class ausgabe_lnum(BaseModel):
 
 
 class ausgabe_monat(BaseModel):
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
     monat = models.ForeignKey('monat', models.CASCADE)
 
     search_fields = ['monat__monat', 'monat__abk']
@@ -593,7 +593,7 @@ class artikel(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Artikels')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    ausgabe = models.ForeignKey('ausgabe', models.PROTECT)
+    ausgabe = models.ForeignKey('Ausgabe', models.PROTECT)
 
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_artikel_genre)
     schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_artikel_schlagwort)
@@ -1124,7 +1124,7 @@ class bestand(BaseModel):
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
 
     audio = models.ForeignKey('audio', models.CASCADE, blank=True, null=True)
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE, blank=True, null=True)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
     bildmaterial = models.ForeignKey('bildmaterial', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
     buch = models.ForeignKey('buch', models.CASCADE, blank=True, null=True)

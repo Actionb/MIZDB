@@ -271,7 +271,7 @@ class MergeTestMethodsMixin(object):
 
 class TestMergingAusgabe(MergingTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
     test_data_count = 0
 
     @classmethod
@@ -450,10 +450,10 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
         cls.model.genre.through.objects.create(genre=cls.genre_merger2, magazin=cls.obj3)
         autor_instance = _models.Autor.objects.create(kuerzel='M1-Aut')
         cls.model.autor_set.through.objects.create(autor=autor_instance, magazin=cls.obj2)
-        cls.ausgabe_original = _models.ausgabe.objects.create(
+        cls.ausgabe_original = _models.Ausgabe.objects.create(
             beschreibung='Original-Ausgabe', sonderausgabe=True, magazin=cls.obj1
         )
-        cls.ausgabe_merger = _models.ausgabe.objects.create(
+        cls.ausgabe_merger = _models.Ausgabe.objects.create(
             beschreibung='Merger1-Ausgabe', sonderausgabe=True, magazin=cls.obj2
         )
 

@@ -129,7 +129,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     """The BulkForm to bulk create instances for model 'ausgabe' with."""
 
     # BulkForm attributes:
-    model = _models.ausgabe
+    model = _models.Ausgabe
     each_fields = [
         'magazin', 'jahrgang', 'jahr', 'audio', 'audio_lagerort',
         'ausgabe_lagerort', 'dublette', 'provenienz', 'beschreibung',
@@ -195,7 +195,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         label='Bemerkungen'
     )
     status = forms.ChoiceField(
-        choices=_models.ausgabe.STATUS_CHOICES,
+        choices=_models.Ausgabe.STATUS_CHOICES,
         initial=1,
         label='Bearbeitungsstatus'
     )

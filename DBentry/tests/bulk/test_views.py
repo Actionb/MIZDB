@@ -10,7 +10,7 @@ from DBentry.tests.mixins import TestDataMixin, CreateFormViewMixin, LoggingTest
 
 class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
     path = reverse_lazy('bulk_ausgabe')
 
     @classmethod

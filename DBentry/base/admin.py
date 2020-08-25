@@ -565,7 +565,7 @@ class BaseSchlagwortInline(BaseTabularInline):
 
 class BaseAusgabeInline(BaseTabularInline):
     form = AusgabeMagazinFieldForm
-    verbose_model = _models.ausgabe
+    verbose_model = _models.Ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
 
 

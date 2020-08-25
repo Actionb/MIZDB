@@ -9,7 +9,7 @@ from DBentry.utils.models import get_model_fields
 
 class m2m_audio_ausgabe(BaseM2MModel):
     audio = models.ForeignKey('audio', models.CASCADE)
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     name_field = 'ausgabe'
 

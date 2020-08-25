@@ -19,7 +19,7 @@ class TestBulkForm(FormTestCase):
         'some_bulkfield': BulkField(required=False, label='num'),
         'req_fld': BulkJahrField(required=False),
         'another': django_forms.CharField(required=False),
-        'model': _models.ausgabe,
+        'model': _models.Ausgabe,
         'each_fields': ['another', 'some_fld'],
         'split_fields': ['req_fld', 'some_bulkfield'],
         'field_order': ['some_fld', 'some_bulkfield', 'req_fld', 'another'],
@@ -85,7 +85,7 @@ class TestBulkForm(FormTestCase):
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
 
     form_class = BulkFormAusgabe
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):

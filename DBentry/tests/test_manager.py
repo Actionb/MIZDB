@@ -68,7 +68,7 @@ class TestMIZQuerySet(DataTestCase):
 
 class TestAusgabeChronologicOrder(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):
@@ -153,7 +153,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
     def test_chronologic_order_multiple_magazine(self):
         # Assert that chronologic_order is not attempt for a queryset with
         # multiple magazines.
-        make(_models.ausgabe, magazin__magazin_name='Bad', id=1002)
+        make(_models.Ausgabe, magazin__magazin_name='Bad', id=1002)
         queryset = self.model.objects.all()
         with self.assertNumQueries(1):
             queryset = queryset.chronologic_order()
@@ -280,7 +280,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
 
 class TestAusgabeIncrementJahrgang(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     raw_data = [
         {  # obj1: start_jg
@@ -428,7 +428,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         # Remove the e_datum and month values from obj4 to obj7.
         ids = [self.obj4.pk, self.obj5.pk, self.obj6.pk, self.obj7.pk]
         _models.ausgabe_monat.objects.filter(ausgabe_id__in=ids).delete()
-        _models.ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
+        _models.Ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
         # Also remove num values from obj6 and obj7.
         _models.ausgabe_num.objects.filter(
             ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
@@ -456,7 +456,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 @tag("cn")
 class TestCNQuerySet(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):

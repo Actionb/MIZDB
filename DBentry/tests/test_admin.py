@@ -551,7 +551,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AusgabenAdmin
-    model = _models.ausgabe
+    model = _models.Ausgabe
     exclude_expected = ['audio']
     fields_expected = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -564,7 +564,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(
-            _models.ausgabe,
+            _models.Ausgabe,
             magazin__magazin_name='Testmagazin',
             ausgabe_jahr__jahr=[2020, 2021, 2022],
             ausgabe_num__num=[10, 11, 12],
@@ -603,7 +603,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_add_crosslinks_custom(self):
         obj = make(
-            _models.ausgabe,
+            _models.Ausgabe,
             ausgabe_num__extra=1, ausgabe_lnum__extra=1, ausgabe_monat__extra=1,
             ausgabe_jahr__extra=1,
             artikel__extra=1, audio__extra=1, bestand__extra=1,
@@ -624,7 +624,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         }
         self.assertInCrosslinks(expected, links)
 
-        with patch.object(_models.ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
+        with patch.object(_models.Ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
             links = self.get_crosslinks(obj)
             expected = {
                 'model_name': 'artikel', 'fld_name': 'ausgabe',

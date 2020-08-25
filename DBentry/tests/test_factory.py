@@ -488,7 +488,7 @@ class TestMagazinFactory(ModelFactoryTestCase):
 
 class TestAusgabeFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.ausgabe)
+    factory_class = modelfactory_factory(_models.Ausgabe)
 
     def test_ausgabe_jahr(self):
         a = self.factory_class(ausgabe_jahr__jahr=2001)

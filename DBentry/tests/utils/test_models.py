@@ -9,17 +9,17 @@ class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
         expected = (
-            _models.ausgabe._meta.get_field('magazin'),
+            _models.Ausgabe._meta.get_field('magazin'),
             _models.magazin._meta.get_field('ausgabe')
         )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.ausgabe, _models.magazin)), expected)
+            (utils.get_relations_between_models(_models.Ausgabe, _models.magazin)), expected)
         self.assertEqual(
-            (utils.get_relations_between_models(_models.magazin, _models.ausgabe)), expected)
+            (utils.get_relations_between_models(_models.magazin, _models.Ausgabe)), expected)
         self.assertEqual(
-            (utils.get_relations_between_models('ausgabe', 'magazin')), expected)
+            (utils.get_relations_between_models('Ausgabe', 'magazin')), expected)
         self.assertEqual(
-            (utils.get_relations_between_models('magazin', 'ausgabe')), expected)
+            (utils.get_relations_between_models('magazin', 'Ausgabe')), expected)
 
     def test_get_relations_between_models_many_to_many(self):
         expected = (
@@ -39,7 +39,7 @@ class TestModelUtils(MyTestCase):
         self.assertIsNone(utils.is_protected([art]))
 
     def test_get_model_from_string(self):
-        self.assertEqual(_models.ausgabe, utils.get_model_from_string('ausgabe'))
+        self.assertEqual(_models.Ausgabe, utils.get_model_from_string('Ausgabe'))
         self.assertIsNone(utils.get_model_from_string('beep boop'))
 
     def test_get_model_relations(self):
@@ -86,7 +86,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Genre), ['genre'])
         self.assertEqual(required_field_names(_models.Band), ['band_name'])
         self.assertEqual(required_field_names(_models.Autor), [])
-        self.assertEqual(required_field_names(_models.ausgabe), ['magazin'])
+        self.assertEqual(required_field_names(_models.Ausgabe), ['magazin'])
         self.assertEqual(required_field_names(_models.magazin), ['magazin_name'])
         self.assertEqual(required_field_names(_models.ort), ['land'])
         self.assertEqual(
@@ -108,7 +108,7 @@ class TestModelUtils(MyTestCase):
         obj.zusammenfassung = 'Boop'
         self.assertEqual(utils.get_updateable_fields(obj), ['bemerkungen'])
 
-        obj = make(_models.ausgabe)
+        obj = make(_models.Ausgabe)
         self.assertEqual(
             utils.get_updateable_fields(obj),
             ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
@@ -118,7 +118,7 @@ class TestModelUtils(MyTestCase):
 
     def test_get_reverse_field_path(self):
         # no related_query_name or related_name
-        rel = _models.ausgabe._meta.get_field('artikel')
+        rel = _models.Ausgabe._meta.get_field('artikel')
         self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
 
         # related_name
@@ -130,7 +130,7 @@ class TestModelUtils(MyTestCase):
         fields, lookups = utils.get_fields_and_lookups(_models.artikel, path)
         expected_fields = [
             _models.artikel._meta.get_field('ausgabe'),
-            _models.ausgabe._meta.get_field('e_datum')
+            _models.Ausgabe._meta.get_field('e_datum')
         ]
         expected_lookups = ['year', 'gte']
         self.assertEqual(fields, expected_fields)

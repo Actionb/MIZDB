@@ -354,7 +354,7 @@ class TestACCreateable(ACViewTestCase):
 
 class TestACAusgabe(ACViewTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
     path = 'acausgabe'
     view_class = ACAusgabe
 

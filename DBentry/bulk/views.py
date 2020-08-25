@@ -80,7 +80,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 )
             if created or updated:
                 changelist_link = utils.get_changelist_link(
-                    _models.ausgabe,
+                    _models.Ausgabe,
                     request.user,
                     obj_list=[*created, *updated],
                     blank=True
@@ -96,7 +96,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             ids, instances, updated = self.save_data(form)
             return redirect(
                 utils.get_changelist_url(
-                    model=_models.ausgabe,
+                    model=_models.Ausgabe,
                     user=request.user,
                     obj_list=[*instances, *updated]
                 )
@@ -170,7 +170,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if row.get('instance'):
                 instance = row['instance']
             else:
-                instance = _models.ausgabe(**self.instance_data(row))
+                instance = _models.Ausgabe(**self.instance_data(row))
             if not instance.pk:
                 # This is a new instance, mark it as such.
                 instance.save()
@@ -397,7 +397,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     def get_context_data(self, **kwargs):
         # Add ausgabe's meta for the template.
-        return super().get_context_data(opts=_models.ausgabe._meta)
+        return super().get_context_data(opts=_models.Ausgabe._meta)
 
 
 class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):

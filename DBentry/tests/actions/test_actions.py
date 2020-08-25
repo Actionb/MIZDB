@@ -19,7 +19,7 @@ class TestAdminActionsArtikel(AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        ausg = make(_models.ausgabe)
+        ausg = make(_models.Ausgabe)
         cls.obj1 = make(cls.model, ausgabe=ausg)
         cls.obj2 = make(cls.model, ausgabe=ausg)
         cls.obj3 = make(cls.model)
@@ -58,7 +58,7 @@ class TestAdminActionsArtikel(AdminTestCase):
 class TestAdminActionAusgabe(AdminTestCase):
 
     model_admin_class = AusgabenAdmin
-    model = _models.ausgabe
+    model = _models.Ausgabe
     raw_data = [
         {'magazin__magazin_name': 'Testmagazin'},
         {'magazin__magazin_name': 'Testmagazin'},

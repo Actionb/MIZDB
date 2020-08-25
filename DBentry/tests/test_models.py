@@ -64,7 +64,7 @@ class TestBaseM2MModel(DataTestCase):
 @tag("cn")
 class TestComputedNameModel(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
     default = model._name_default % {'verbose_name': model._meta.verbose_name}
 
     @classmethod
@@ -98,13 +98,13 @@ class TestComputedNameModel(DataTestCase):
     def test_update_name_notexplodes_on_no_pk_and_forced(self):
         # Unsaved instances should be ignored, as update_name relies on filtering
         # queries with the instance's pk.
-        obj = _models.ausgabe(magazin=self.mag)
+        obj = _models.Ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name(force_update=True))
 
     def test_update_name_aborts_on_no_pk(self):
         # Unsaved instances should be ignored, as update_name relies on
         # filtering queries with the instance's pk.
-        obj = _models.ausgabe(magazin=self.mag)
+        obj = _models.Ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name())
 
     def test_update_name_aborts_on_name_deferred(self):
@@ -252,7 +252,7 @@ class TestModelAudio(DataTestCase):
 @tag("cn")
 class TestModelAusgabe(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @translation_override(language=None)
     def test_get_name_sonderausgabe(self):

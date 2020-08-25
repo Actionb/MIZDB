@@ -72,7 +72,7 @@ class AudioAdmin(MIZModelAdmin):
         model = _models.audio.plattenfirma.through
         verbose_model = _models.plattenfirma
     class AusgabeInLine(BaseAusgabeInline):
-        model = _models.ausgabe.audio.through
+        model = _models.Ausgabe.audio.through
     class DateiInLine(BaseTabularInline):
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
@@ -119,7 +119,7 @@ class AudioAdmin(MIZModelAdmin):
     formate_string.short_description = 'Format'
 
 
-@admin.register(_models.ausgabe, site=miz_site)
+@admin.register(_models.Ausgabe, site=miz_site)
 class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
         model = _models.ausgabe_num
@@ -136,7 +136,7 @@ class AusgabenAdmin(MIZModelAdmin):
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
     class AudioInLine(BaseTabularInline):
-        model = _models.ausgabe.audio.through
+        model = _models.Ausgabe.audio.through
 
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]

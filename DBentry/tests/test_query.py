@@ -110,9 +110,9 @@ class TestBaseQuery(QueryTestCase):
         self.assertEqual(len(query.ids_found), 1)
 
     def test_date_lookup(self):
-        a1 = make(_models.ausgabe, e_datum='1986-08-15')
-        a2 = make(_models.ausgabe, e_datum='1986-08-18')
-        a3 = make(_models.ausgabe, e_datum='1986-09-18')
+        a1 = make(_models.Ausgabe, e_datum='1986-08-15')
+        a2 = make(_models.Ausgabe, e_datum='1986-08-18')
+        a3 = make(_models.Ausgabe, e_datum='1986-09-18')
         test_data = [
             ('__iexact', '1986-08-15', [a1.pk]),
             ('__iexact', '15.08.1986', [a1.pk]),
@@ -125,7 +125,7 @@ class TestBaseQuery(QueryTestCase):
         ]
         for lookup, q, expected in test_data:
             query = self.make_query(
-                queryset=_models.ausgabe.objects, search_fields=['_name', 'e_datum'])
+                queryset=_models.Ausgabe.objects, search_fields=['_name', 'e_datum'])
             q = query.clean_q(q, 'e_datum')
             results = query._do_lookup(lookup, 'e_datum', q)
             with self.subTest(lookup=lookup, q=q):

@@ -11,12 +11,12 @@ class TestUtils(MyTestCase):
         func = utils.get_dbfield_from_path
         test_data = [
             (
-                _models.ausgabe, 'ausgabe_monat__monat__monat__contains',
+                _models.Ausgabe, 'ausgabe_monat__monat__monat__contains',
                 (_models.monat._meta.get_field('monat'), ['contains'])
             ),
             (
-                _models.ausgabe, 'e_datum__year__gte',
-                (_models.ausgabe._meta.get_field('e_datum'), ['year', 'gte'])
+                _models.Ausgabe, 'e_datum__year__gte',
+                (_models.Ausgabe._meta.get_field('e_datum'), ['year', 'gte'])
             ),
             (
                 _models.artikel, 'seite__gt',
@@ -31,12 +31,12 @@ class TestUtils(MyTestCase):
         # Assert that get_dbfield_from_path only returns concrete model fields.
         # ausgabe__artikel would return the reverse ManyToOneRel.
         with self.assertRaises(exceptions.FieldError) as cm:
-            utils.get_dbfield_from_path(_models.ausgabe, 'artikel')
+            utils.get_dbfield_from_path(_models.Ausgabe, 'artikel')
         expected = "Reverse relations not supported."
         self.assertEqual(cm.exception.args[0], expected)
 
     def test_get_dbfield_from_path_raises_fielddoesnotexist_on_invalid_path(self):
         with self.assertRaises(exceptions.FieldDoesNotExist) as cm:
-            utils.get_dbfield_from_path(_models.ausgabe, 'not__a__valid__path')
-        expected = "ausgabe has no field named 'not'"
+            utils.get_dbfield_from_path(_models.Ausgabe, 'not__a__valid__path')
+        expected = "Ausgabe has no field named 'not'"
         self.assertEqual(cm.exception.args[0], expected)

@@ -213,7 +213,7 @@ class TestWizardConfirmationView(ActionViewTestCase):
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
     view_class = BulkEditJahrgang
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [
         {  # obj1: jg + 0
@@ -366,7 +366,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
 
     view_class = BulkAddBestand
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
 
     @classmethod
@@ -511,7 +511,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     # test_utils.merge_records directly.
 
     view_class = MergeViewWizarded
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [
         {'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000]},
@@ -830,7 +830,7 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
 class TestMoveToBrochureBase(ActionViewTestCase):
 
     view_class = MoveToBrochureBase
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
 
     raw_data = [

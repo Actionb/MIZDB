@@ -114,7 +114,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     def get_initial(self):
         """Provide initial values for bestand and dublette fields."""
-        if self.model == _models.ausgabe:
+        if self.model == _models.Ausgabe:
             try:
                 return {
                     'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
@@ -256,7 +256,7 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     def _check_different_magazines(view, **kwargs):
-        if (view.model == _models.ausgabe
+        if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
             format_dict = {
@@ -277,7 +277,7 @@ class MergeViewWizarded(WizardConfirmationView):
             # User is trying to merge artikel from different ausgaben.
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
-                'other_plural': _models.ausgabe._meta.verbose_name_plural
+                'other_plural': _models.Ausgabe._meta.verbose_name_plural
             }
             view.model_admin.message_user(
                 request=view.request,
@@ -571,7 +571,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     msg_template,
                     link_list(view.request, ausgaben_with_artikel),
                     get_changelist_link(
-                        model=_models.ausgabe,
+                        model=_models.Ausgabe,
                         user=view.request.user,
                         obj_list=ausgaben_with_artikel,
                         blank=True
@@ -602,11 +602,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
 
             # Verify that the ausgabe exists and can be deleted
             try:
-                ausgabe_instance = _models.ausgabe.objects.get(
+                ausgabe_instance = _models.Ausgabe.objects.get(
                     pk=data['ausgabe_id'])
             except (
-                _models.ausgabe.DoesNotExist,
-                _models.ausgabe.MultipleObjectsReturned):
+                _models.Ausgabe.DoesNotExist,
+                _models.Ausgabe.MultipleObjectsReturned):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -665,7 +665,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     msg_template,
                     obj_links=link_list(self.request, protected_ausg, blank=True),
                     cl_link=get_changelist_link(
-                        model=_models.ausgabe,
+                        model=_models.Ausgabe,
                         user=self.request.user,
                         obj_list=protected_ausg,
                         blank=True
@@ -704,7 +704,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         forms = []
         for form in formset:
             link = get_obj_link(
-                obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
+                obj=_models.Ausgabe.objects.get(pk=form['ausgabe_id'].initial),
                 user=self.request.user,
                 blank=True
             )

@@ -22,7 +22,7 @@ class TestEasyWidgetWrapper(MyTestCase):
         super().setUp()
         form = ArtikelForm()
         self.widget = EasyWidgetWrapper(
-            form.fields['ausgabe'].widget, _models.ausgabe, 'id')
+            form.fields['ausgabe'].widget, _models.Ausgabe, 'id')
         rel_opts = self.widget.related_model._meta
         self.info = (rel_opts.app_label, rel_opts.model_name)
 
@@ -70,7 +70,7 @@ class TestEasyWidgetWrapper(MyTestCase):
         # are added if the widget is a form of SelectMultiple.
         widget = EasyWidgetWrapper(
             widget=widgets.SelectMultiple(),
-            related_model=_models.ausgabe,
+            related_model=_models.Ausgabe,
             can_add_related=True,
             can_change_related=True,
             can_delete_related=True
@@ -161,7 +161,7 @@ class TestMakeWidget(MyTestCase):
         # The values for forward are wrapped in a forward.Field object.
 
         # Assert that make_widget can handle non-list 'forward' values
-        widget = make_widget(model=_models.ausgabe, forward='magazin')
+        widget = make_widget(model=_models.Ausgabe, forward='magazin')
         self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(
             widget.attrs['data-placeholder'], "Bitte zuerst Magazin auswählen.")
@@ -173,13 +173,13 @@ class TestMakeWidget(MyTestCase):
 
         # Assert that forward values can also be forward.Field objects
         forwarded = forward.Field(src='magazin', dst='ausgabe')
-        widget = make_widget(model=_models.ausgabe, forward=forwarded)
+        widget = make_widget(model=_models.Ausgabe, forward=forwarded)
         self.assertEqual(widget.forward[0], forwarded)
 
         # Assert that the placeholder text defaults to forward's src if no model
         # field corresponds to src or dst.
         forwarded = forward.Field(src='beep_boop', dst=None)
-        widget = make_widget(model=_models.ausgabe, forward=forwarded)
+        widget = make_widget(model=_models.Ausgabe, forward=forwarded)
         self.assertEqual(
             widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.')
 
@@ -197,7 +197,7 @@ class TestMakeWidget(MyTestCase):
             def __init__(self, *args, **kwargs):
                 self.untouched = kwargs.get('attrs', {}).pop('untouched', None)
         widget = make_widget(
-            model=_models.ausgabe, widget_class=DummyWidget,
+            model=_models.Ausgabe, widget_class=DummyWidget,
             forward='magazin', attrs={'data-placeholder': 'Go home!', 'untouched': 1}
         )
         self.assertEqual(widget.untouched, 1)

@@ -23,7 +23,7 @@ from dal import autocomplete
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 
     form_class = AusgabeMagazinFieldForm
-    model = _models.ausgabe.audio.through
+    model = _models.Ausgabe.audio.through
     fields = ['ausgabe']
     test_data_count = 1
 
