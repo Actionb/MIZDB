@@ -8,18 +8,28 @@ from DBentry.tests.base import MyTestCase
 class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
-        from DBentry.models import ausgabe, magazin
-        expected = (ausgabe._meta.get_field('magazin'), magazin._meta.get_field('ausgabe'))
-        self.assertEqual((utils.get_relations_between_models(ausgabe, magazin)), expected)
-        self.assertEqual((utils.get_relations_between_models(magazin, ausgabe)), expected)
-        self.assertEqual((utils.get_relations_between_models('ausgabe', 'magazin')), expected)
-        self.assertEqual((utils.get_relations_between_models('magazin', 'ausgabe')), expected)
+        expected = (
+            _models.ausgabe._meta.get_field('magazin'),
+            _models.magazin._meta.get_field('ausgabe')
+        )
+        self.assertEqual(
+            (utils.get_relations_between_models(_models.ausgabe, _models.magazin)), expected)
+        self.assertEqual(
+            (utils.get_relations_between_models(_models.magazin, _models.ausgabe)), expected)
+        self.assertEqual(
+            (utils.get_relations_between_models('ausgabe', 'magazin')), expected)
+        self.assertEqual(
+            (utils.get_relations_between_models('magazin', 'ausgabe')), expected)
 
     def test_get_relations_between_models_many_to_many(self):
-        from DBentry.models import Format, FormatTag
-        expected = (Format._meta.get_field('tag'), FormatTag._meta.get_field('format'))
-        self.assertEqual((utils.get_relations_between_models(Format, FormatTag)), expected)
-        self.assertEqual((utils.get_relations_between_models(FormatTag, Format)), expected)
+        expected = (
+            _models.Format._meta.get_field('tag'),
+            _models.FormatTag._meta.get_field('format')
+        )
+        self.assertEqual(
+            (utils.get_relations_between_models(_models.Format, _models.FormatTag)), expected)
+        self.assertEqual(
+            (utils.get_relations_between_models(_models.FormatTag, _models.Format)), expected)
         self.assertEqual((utils.get_relations_between_models('Format', 'FormatTag')), expected)
         self.assertEqual((utils.get_relations_between_models('FormatTag', 'Format')), expected)
 

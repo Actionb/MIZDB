@@ -10,7 +10,6 @@ from DBentry.factory import (
     factory, RuntimeFactoryMixin, UniqueFaker, modelfactory_factory, make,
     SelfFactory, M2MFactory, MIZDjangoOptions, AutorFactory, MagazinFactory
 )
-from DBentry.models import BaseBrochure
 from DBentry.tests.base import MyTestCase
 from DBentry.utils import get_model_relations, get_model_fields
 
@@ -661,7 +660,7 @@ class TestMIZModelFactory(MyTestCase):
         models = [
             m
             for m in apps.get_models('DBentry')
-            if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, BaseBrochure))
+            if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, _models.BaseBrochure))
         ]
         for model in models:
             cls.factories.append(modelfactory_factory(model))

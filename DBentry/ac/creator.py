@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from nameparser import HumanName
 
-from DBentry.models import autor, Person
+from DBentry import models as _models
 from DBentry.utils import parse_name
 
 
@@ -88,7 +88,7 @@ class Creator(object):
         # parse_name will join first and middle names
         vorname, nachname = parse_name(text)
         person_instance = self._get_model_instance(
-            Person, vorname=vorname, nachname=nachname
+            _models.Person, vorname=vorname, nachname=nachname
         )
         if not preview and person_instance.pk is None:
             person_instance.save()
@@ -112,7 +112,7 @@ class Creator(object):
         p = self.create_person(name, preview)
         person_instance = p.get('instance')
         autor_instance = self._get_model_instance(
-            autor, person=person_instance, kuerzel=kuerzel
+            _models.autor, person=person_instance, kuerzel=kuerzel
         )
         if not preview and autor_instance.pk is None:
             if autor_instance.person.pk is None:
