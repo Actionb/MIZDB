@@ -278,7 +278,7 @@ class m2m_band_musiker(BaseM2MModel):
 
 class m2m_autor_magazin(BaseM2MModel):
     autor = models.ForeignKey('Autor', models.CASCADE)
-    magazin = models.ForeignKey('magazin', models.CASCADE)
+    magazin = models.ForeignKey('Magazin', models.CASCADE)
 
     name_field = 'magazin'
 
@@ -289,7 +289,7 @@ class m2m_autor_magazin(BaseM2MModel):
         verbose_name_plural = 'Autor-Magazine'
 
 class m2m_magazin_genre(BaseM2MModel):
-    magazin = models.ForeignKey('magazin', models.CASCADE)
+    magazin = models.ForeignKey('Magazin', models.CASCADE)
     genre = models.ForeignKey('Genre', models.CASCADE)
 
     name_field = 'genre'
@@ -301,7 +301,7 @@ class m2m_magazin_genre(BaseM2MModel):
         verbose_name_plural = 'Magazin-Genres'
 
 class m2m_magazin_verlag(BaseM2MModel):
-    magazin = models.ForeignKey('magazin', models.CASCADE)
+    magazin = models.ForeignKey('Magazin', models.CASCADE)
     verlag = models.ForeignKey('verlag', models.CASCADE)
 
     name_field = 'verlag'
@@ -315,7 +315,7 @@ class m2m_magazin_verlag(BaseM2MModel):
         return str(self.verlag)
 
 class m2m_magazin_herausgeber(BaseM2MModel):
-    magazin = models.ForeignKey('magazin', models.CASCADE)
+    magazin = models.ForeignKey('Magazin', models.CASCADE)
     herausgeber = models.ForeignKey('Herausgeber', models.CASCADE)
 
     name_field = 'herausgeber'

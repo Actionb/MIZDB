@@ -150,7 +150,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     # Field declarations:
     magazin = forms.ModelChoiceField(
         required=True,
-        queryset=_models.magazin.objects.all(),
+        queryset=_models.Magazin.objects.all(),
         widget=make_widget(model_name='magazin', wrap=True)
     )
     jahrgang = forms.IntegerField(required=False, min_value=1)

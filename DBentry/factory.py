@@ -611,7 +611,7 @@ class LandFactory(MIZModelFactory):
 
 class MagazinFactory(MIZModelFactory):
     class Meta:
-        model = _models.magazin
+        model = _models.Magazin
         django_get_or_create = ['magazin_name']
     magazin_name = factory.Sequence(lambda n: 'TestMagazin' + str(n))
     issn = ISSNFaker()

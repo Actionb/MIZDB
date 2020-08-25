@@ -466,7 +466,7 @@ class ModelFactoryTestCase(MyTestCase):
 
 class TestMagazinFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.magazin)
+    factory_class = modelfactory_factory(_models.Magazin)
 
     def test_magazin_name_field(self):
         self.assertEqual(self.factory_class().magazin_name, 'TestMagazin0')

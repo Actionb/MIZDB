@@ -32,9 +32,9 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
     ausgabe__magazin = forms.ModelChoiceField(
         required=False,
         label="Magazin",
-        queryset=_models.magazin.objects.all(),
+        queryset=_models.Magazin.objects.all(),
         widget=make_widget(
-            model=_models.magazin, wrap=True, can_delete_related=False
+            model=_models.Magazin, wrap=True, can_delete_related=False
         )
     )
 

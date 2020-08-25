@@ -310,8 +310,8 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
 
 
 class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
-    model = _models.magazin
-    model_field = _models.magazin._meta.get_field('issn')
+    model = _models.Magazin
+    model_field = _models.Magazin._meta.get_field('issn')
     prototype_data = {'magazin_name': 'Testmagazin'}
 
     valid = ["12345679", "1234-5679"]

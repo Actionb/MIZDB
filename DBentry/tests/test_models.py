@@ -69,7 +69,7 @@ class TestComputedNameModel(DataTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin)
+        cls.mag = make(_models.Magazin)
         cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(cls.model, magazin=cls.mag)
         cls.test_data = [cls.obj1, cls.obj2]
@@ -1043,7 +1043,7 @@ class TestModelLand(DataTestCase):
 
 class TestModelMagazin(DataTestCase):
 
-    model = _models.magazin
+    model = _models.Magazin
 
     def test_str(self):
         obj = self.model(magazin_name='Testmagazin')

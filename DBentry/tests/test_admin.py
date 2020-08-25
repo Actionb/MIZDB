@@ -512,7 +512,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj1 = make(
             _models.artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
@@ -687,7 +687,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.MagazinAdmin
-    model = _models.magazin
+    model = _models.Magazin
     exclude_expected = ['genre', 'verlag', 'herausgeber', 'orte']
     fields_expected = [
         'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',

@@ -360,7 +360,7 @@ class TestACAusgabe(ACViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj_num = make(
             cls.model, magazin=cls.mag, ausgabejahr__jahr=2020, ausgabenum__num=10)
         cls.obj_lnum = make(

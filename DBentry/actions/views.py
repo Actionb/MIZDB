@@ -262,7 +262,7 @@ class MergeViewWizarded(WizardConfirmationView):
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
                 # Add a 'n' at the end because german grammar.
-                'other_plural': _models.magazin._meta.verbose_name_plural + 'n'
+                'other_plural': _models.Magazin._meta.verbose_name_plural + 'n'
             }
             view.model_admin.message_user(
                 request=view.request,

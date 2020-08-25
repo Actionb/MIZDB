@@ -373,7 +373,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def setUpTestData(cls):
         cls.bestand_lagerort = make(_models.lagerort, pk=ZRAUM_ID, ort='Bestand')
         cls.dubletten_lagerort = make(_models.lagerort, pk=DUPLETTEN_ID, ort='Dublette')
-        mag = make(_models.magazin, magazin_name='Testmagazin')
+        mag = make(_models.Magazin, magazin_name='Testmagazin')
 
         cls.obj1 = make(cls.model, magazin=mag)
         cls.obj2 = make(cls.model, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
@@ -933,7 +933,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view._magazin_instance = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
-        self.assertFalse(_models.magazin.objects.filter(pk=self.mag.pk).exists())
+        self.assertFalse(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
     def test_perform_action_not_deletes_magazin(self):
         options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': False}
@@ -941,7 +941,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view.mag = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
-        self.assertTrue(_models.magazin.objects.filter(pk=self.mag.pk).exists())
+        self.assertTrue(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
     def test_perform_action_moves_jahre(self):
         options_form_cleaned_data = {'brochure_art': 'brochure'}
@@ -1031,7 +1031,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertFalse(self.model.objects.filter(pk=ausgabe_id).exists())
-        self.assertTrue(_models.magazin.objects.filter(pk=magazin_id).exists())
+        self.assertTrue(_models.Magazin.objects.filter(pk=magazin_id).exists())
 
     def test_perform_action_not_accepted(self):
         # Assert that an ausgabe is not changed if the user unticks 'accept'.
@@ -1099,7 +1099,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(view.allowed_permissions, ['delete'])
 
     def test_story(self):
-        other_mag = make(_models.magazin)
+        other_mag = make(_models.Magazin)
         other = make(self.model, magazin=other_mag)
         management_form_data = {
             'form-TOTAL_FORMS': '2', 'form-INITIAL_FORMS': '0', 'form-MAX_NUM_FORMS': ''
@@ -1160,7 +1160,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         post_data.update(changelist_post_data)
         post_data.update(management_form_data)
         response = self.client.post(path=self.changelist_path, data=post_data)
-        self.assertTrue(_models.magazin.objects.filter(pk=self.mag.pk).exists())
+        self.assertTrue(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)
@@ -1181,7 +1181,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         post_data.update(changelist_post_data)
         post_data.update(management_form_data)
         response = self.client.post(path=self.changelist_path, data=post_data)
-        self.assertFalse(_models.magazin.objects.filter(pk=other_mag.pk).exists())
+        self.assertFalse(_models.Magazin.objects.filter(pk=other_mag.pk).exists())
 
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)

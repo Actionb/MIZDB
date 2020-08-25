@@ -10,16 +10,16 @@ class TestModelUtils(MyTestCase):
     def test_get_relations_between_models_many_to_one(self):
         expected = (
             _models.Ausgabe._meta.get_field('magazin'),
-            _models.magazin._meta.get_field('ausgabe')
+            _models.Magazin._meta.get_field('ausgabe')
         )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.Ausgabe, _models.magazin)), expected)
+            (utils.get_relations_between_models(_models.Ausgabe, _models.Magazin)), expected)
         self.assertEqual(
-            (utils.get_relations_between_models(_models.magazin, _models.Ausgabe)), expected)
+            (utils.get_relations_between_models(_models.Magazin, _models.Ausgabe)), expected)
         self.assertEqual(
             (utils.get_relations_between_models('Ausgabe', 'magazin')), expected)
         self.assertEqual(
-            (utils.get_relations_between_models('magazin', 'Ausgabe')), expected)
+            (utils.get_relations_between_models('Magazin', 'Ausgabe')), expected)
 
     def test_get_relations_between_models_many_to_many(self):
         expected = (
@@ -87,7 +87,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Band), ['band_name'])
         self.assertEqual(required_field_names(_models.Autor), [])
         self.assertEqual(required_field_names(_models.Ausgabe), ['magazin'])
-        self.assertEqual(required_field_names(_models.magazin), ['magazin_name'])
+        self.assertEqual(required_field_names(_models.Magazin), ['magazin_name'])
         self.assertEqual(required_field_names(_models.ort), ['land'])
         self.assertEqual(
             required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])

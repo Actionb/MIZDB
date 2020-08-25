@@ -24,10 +24,10 @@ class TestSearchFormFactory(MyTestCase):
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2)
-        self.assertEqual(widget.model_name, _models.magazin._meta.model_name)
+        self.assertEqual(widget.model_name, _models.Magazin._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
         self.assertFalse(widget.create_field, msg=msg)
-        self.assertEqual(formfield.queryset.model, _models.magazin)
+        self.assertEqual(formfield.queryset.model, _models.Magazin)
         self.assertFalse(formfield.required)
 
     def test_formfield_for_dbfield_dal_m2m(self):
@@ -161,7 +161,7 @@ class TestSearchForm(MyTestCase):
         # Assert that get_filters_params does not return empty query values.
         data = {
             'seite': 1,
-            'ausgabe__magazin': make(_models.magazin).pk,
+            'ausgabe__magazin': make(_models.Magazin).pk,
             'musiker': []
         }
         form_class = self.factory(self.model, fields=data.keys())

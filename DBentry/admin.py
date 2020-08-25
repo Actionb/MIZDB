@@ -523,7 +523,7 @@ class GenreAdmin(MIZModelAdmin):
     alias_string.short_description = 'Aliase'
 
 
-@admin.register(_models.magazin, site=miz_site)
+@admin.register(_models.Magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):
         model = _models.MagazinURL
@@ -534,9 +534,9 @@ class MagazinAdmin(MIZModelAdmin):
         model = _m2m.m2m_magazin_herausgeber
         verbose_model = _models.Herausgeber
     class GenreInLine(BaseGenreInline):
-        model = _models.magazin.genre.through
+        model = _models.Magazin.genre.through
     class OrtInLine(BaseOrtInLine):
-        model = _models.magazin.orte.through
+        model = _models.Magazin.orte.through
 
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]

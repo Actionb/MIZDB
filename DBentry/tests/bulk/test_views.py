@@ -15,7 +15,7 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.zraum = make(_models.lagerort, ort='Bestand LO')
         cls.dublette = make(_models.lagerort, ort='Dubletten LO')
         cls.audio_lo = make(_models.lagerort)

@@ -434,7 +434,7 @@ class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
 
 class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
 
-    model = _models.magazin
+    model = _models.Magazin
     test_data_count = 0
 
     @classmethod

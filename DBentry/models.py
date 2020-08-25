@@ -137,7 +137,7 @@ class Autor(ComputedNameModel):
 
     person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
-    magazin = models.ManyToManyField('magazin', through=_m2m.m2m_autor_magazin)
+    magazin = models.ManyToManyField('Magazin', through=_m2m.m2m_autor_magazin)
 
     name_composing_fields = ['person___name', 'kuerzel']
     primary_search_fields = ['_name']
@@ -205,7 +205,7 @@ class Ausgabe(ComputedNameModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Ausgabe')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    magazin = models.ForeignKey('magazin', models.PROTECT)
+    magazin = models.ForeignKey('Magazin', models.PROTECT)
 
     audio = models.ManyToManyField('audio', through=_m2m.m2m_audio_ausgabe)
 
@@ -401,7 +401,7 @@ class Monat(BaseModel):
         return self.monat
 
 
-class magazin(BaseModel):
+class Magazin(BaseModel):
     NUM = 'num'
     LNUM = 'lnum'
     MONAT = 'monat'
@@ -444,7 +444,7 @@ class magazin(BaseModel):
         return str(self.magazin_name)
 
 class MagazinURL(AbstractURLModel):
-    magazin = models.ForeignKey('magazin', models.CASCADE, related_name='urls')
+    magazin = models.ForeignKey('Magazin', models.CASCADE, related_name='urls')
 
 
 class verlag(BaseModel):

@@ -87,7 +87,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
         cls.e_datum, cls.num, cls.lnum, cls.monat, cls.jg = (
             [], [], [], [], []
         )
-        cls.mag = make(_models.magazin)
+        cls.mag = make(_models.Magazin)
 
         for jg, year in enumerate(range(1999, 2005), start=1):
             for i in range(1, 13):
@@ -460,7 +460,7 @@ class TestCNQuerySet(DataTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(
             cls.model, magazin=cls.mag, ausgabemonat__monat__monat='Dezember',
