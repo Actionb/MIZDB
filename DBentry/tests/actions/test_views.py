@@ -107,7 +107,7 @@ class TestConfirmationViewMixin(AdminTestCase):
 class TestActionConfirmationView(ActionViewTestCase):
 
     view_class = ActionConfirmationView
-    model = _models.band
+    model = _models.Band
     model_admin_class = BandAdmin
     test_data_count = 1
 

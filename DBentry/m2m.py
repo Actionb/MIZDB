@@ -21,7 +21,7 @@ class m2m_audio_ausgabe(BaseM2MModel):
 
 class m2m_audio_band(BaseM2MModel):
     audio = models.ForeignKey('audio', models.CASCADE)
-    band = models.ForeignKey('band', models.CASCADE)
+    band = models.ForeignKey('Band', models.CASCADE)
 
     name_field = 'band'
 
@@ -148,7 +148,7 @@ class m2m_artikel_autor(BaseM2MModel):
 
 class m2m_artikel_band(BaseM2MModel):
     artikel = models.ForeignKey('artikel', models.CASCADE)
-    band = models.ForeignKey('band', models.CASCADE)
+    band = models.ForeignKey('Band', models.CASCADE)
 
     name_field = 'band'
 
@@ -248,7 +248,7 @@ class m2m_artikel_veranstaltung(BaseM2MModel):
 # ================================= #
 
 class m2m_band_genre(BaseM2MModel):
-    band = models.ForeignKey('band', models.CASCADE)
+    band = models.ForeignKey('Band', models.CASCADE)
     genre = models.ForeignKey('Genre', models.CASCADE)
 
     name_field = 'genre'
@@ -260,7 +260,7 @@ class m2m_band_genre(BaseM2MModel):
         verbose_name_plural = 'Band-Genres'
 
 class m2m_band_musiker(BaseM2MModel):
-    band = models.ForeignKey('band', models.CASCADE)
+    band = models.ForeignKey('Band', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
 
     name_field = 'musiker'

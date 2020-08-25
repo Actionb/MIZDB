@@ -327,7 +327,7 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_get_change_message_dict(self):
         # auto created
         obj = self.model.band.through.objects.create(
-            band=_models.band.objects.create(band_name='Testband'),
+            band=_models.Band.objects.create(band_name='Testband'),
             datei=self.obj1
         )
         expected = {'name': 'Band', 'object': 'Testband'}
@@ -909,7 +909,7 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.BandAdmin
-    model = _models.band
+    model = _models.Band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
     search_fields_expected = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
@@ -1365,7 +1365,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.band = make(_models.band)
+        cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
         cls.veranstaltung = make(
             _models.veranstaltung, band=[cls.band], musiker=[cls.musiker])

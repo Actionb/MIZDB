@@ -16,7 +16,7 @@ from DBentry.query import (
 
 class TestMIZQuerySet(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     raw_data = [
         {'band_name': 'Testband1'},
         {
@@ -636,7 +636,7 @@ class TestBuchQuerySet(DataTestCase):
 
 class TestValuesDict(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     raw_data = [
         {'band_name': 'Testband1', },
         {
@@ -885,7 +885,7 @@ class TestHumanNameQuerySet(MyTestCase):
 
 class TestFindSpecialCases(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     raw_data = [{'band_name': 'Ümlautße'}]
 
     def test_find_sharp_s(self):

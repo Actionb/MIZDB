@@ -248,7 +248,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.schlagwort.factory._meta.model, _models.schlagwort)
         self.assertEqual(fac.person.factory._meta.model, _models.Person)
         self.assertEqual(fac.autor.factory._meta.model, _models.autor)
-        self.assertEqual(fac.band.factory._meta.model, _models.band)
+        self.assertEqual(fac.band.factory._meta.model, _models.Band)
         self.assertEqual(fac.musiker.factory._meta.model, _models.Musiker)
         self.assertEqual(fac.ort.factory._meta.model, _models.ort)
         self.assertEqual(fac.spielort.factory._meta.model, _models.spielort)
@@ -268,7 +268,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.buch.factory._meta.model, _models.buch)
         self.assertEqual(fac.instrument.factory._meta.model, _models.instrument)
-        self.assertEqual(fac.band.factory._meta.model, _models.band)
+        self.assertEqual(fac.band.factory._meta.model, _models.Band)
 
     def get_mocked_field(self, field_name, model, related_model):
         mocked_field = Mock(model=model, related_model=related_model)

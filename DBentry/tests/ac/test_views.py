@@ -15,7 +15,7 @@ from DBentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     view_class = ACBase
-    model = _models.band
+    model = _models.Band
     create_field = 'band_name'
     alias_accessor_name = 'band_alias_set'
 

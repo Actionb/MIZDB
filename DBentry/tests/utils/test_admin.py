@@ -11,7 +11,7 @@ from DBentry.tests.mixins import TestDataMixin
 
 class TestAdminUtils(TestDataMixin, RequestTestCase):
 
-    model = _models.band
+    model = _models.Band
     test_data_count = 3
     opts = model._meta
 

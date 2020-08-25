@@ -459,21 +459,21 @@ class TestAudioForm(ModelFormTestCase):
 
 class TestMIZAdminInlineFormBase(MyTestCase):
     form = MIZAdminInlineFormBase
-    model = _models.band.musiker.through
+    model = _models.Band.musiker.through
     fields = ['band', 'musiker']
 
     @classmethod
     def setUpTestData(cls):
-        cls.band = make(_models.band)
+        cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
-        cls.m2m = _models.band.musiker.through.objects.create(
+        cls.m2m = _models.Band.musiker.through.objects.create(
             band=cls.band, musiker=cls.musiker)
         super().setUpTestData()
 
     def setUp(self):
         super().setUp()
         self.formset_class = forms.inlineformset_factory(
-            _models.band, _models.band.musiker.through,
+            _models.Band, _models.Band.musiker.through,
             form=self.form,
             fields=forms.ALL_FIELDS,
             extra=1,

@@ -49,7 +49,7 @@ class AudioAdmin(MIZModelAdmin):
         ]
     class BandInLine(BaseTabularInline):
         model = _models.audio.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class SpielortInLine(BaseTabularInline):
         model = _models.audio.spielort.through
         verbose_model = _models.spielort
@@ -236,7 +236,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
         model = _models.artikel.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.artikel.ort.through
         verbose_model = _models.ort
@@ -295,16 +295,16 @@ class ArtikelAdmin(MIZModelAdmin):
     kuenstler_string.short_description = 'Künstler'
 
 
-@admin.register(_models.band, site=miz_site)
+@admin.register(_models.Band, site=miz_site)
 class BandAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.band.genre.through
+        model = _models.Band.genre.through
     class MusikerInLine(BaseTabularInline):
-        model = _models.band.musiker.through
+        model = _models.Band.musiker.through
     class AliasInLine(BaseAliasInline):
         model = _models.band_alias
     class OrtInLine(BaseOrtInLine):
-        model = _models.band.orte.through
+        model = _models.Band.orte.through
 
     form = BandForm
     index_category = 'Stammdaten'
@@ -349,7 +349,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
         model = _models.bildmaterial.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.bildmaterial.ort.through
         verbose_model = _models.ort
@@ -420,7 +420,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
         model = _models.buch.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.buch.ort.through
         verbose_model = _models.ort
@@ -585,7 +585,7 @@ class MusikerAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Musiker.genre.through
     class BandInLine(BaseTabularInline):
-        model = _models.band.musiker.through
+        model = _models.Band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
     class AliasInLine(BaseAliasInline):
@@ -688,7 +688,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.veranstaltung.genre.through
     class BandInLine(BaseTabularInline):
         model = _models.veranstaltung.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class PersonInLine(BaseTabularInline):
         model = _models.veranstaltung.person.through
         verbose_model = _models.Person
@@ -740,7 +740,7 @@ class VideoAdmin(MIZModelAdmin):
         ]
     class BandInLine(BaseTabularInline):
         model = _models.video.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class SpielortInLine(BaseTabularInline):
         model = _models.video.spielort.through
         verbose_model = _models.spielort
@@ -819,7 +819,7 @@ class DateiAdmin(MIZModelAdmin):
         ]
     class BandInLine(BaseTabularInline):
         model = _models.datei.band.through
-        verbose_model = _models.band
+        verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.datei.ort.through
         verbose_model = _models.ort

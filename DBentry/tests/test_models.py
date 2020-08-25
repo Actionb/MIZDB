@@ -554,7 +554,7 @@ class TestModelAutor(DataTestCase):
 
 class TestModelBand(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
 
     def test_str(self):
         obj = make(self.model, band_name='Testband', beschreibung='Beep', bemerkungen='Boop')

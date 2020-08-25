@@ -577,7 +577,7 @@ class AutorFactory(MIZModelFactory):
 
 class BandFactory(MIZModelFactory):
     class Meta:
-        model = _models.band
+        model = _models.Band
         django_get_or_create = ['band_name']
     band_name = factory.Faker('company')
 

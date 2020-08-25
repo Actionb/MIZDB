@@ -11,7 +11,7 @@ from DBentry.tests.base import DataTestCase
 
 class QueryTestCase(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     query_class = None
 
     @classmethod
@@ -299,11 +299,11 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         # obj5 = 'More Roses'
         # obj6 = 'Beep', alias = 'Booproses'
         # Check that the results are ordered according to the _search query
-        rose_band = _models.band.objects.create(band_name='Rose')
+        rose_band = _models.Band.objects.create(band_name='Rose')
         some_other_band = make(
-            _models.band, band_name='Boop', band_alias__alias='Rose')
+            _models.Band, band_name='Boop', band_alias__alias='Rose')
         yet_another_band = make(
-            _models.band, band_name='NoName', band_alias__alias='Roseman')
+            _models.Band, band_name='NoName', band_alias__alias='Roseman')
 
         q = 'Rose'
         query = self.make_query()
@@ -479,13 +479,13 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # Compared to PrimaryFieldsSearchQuery, the order changes a little as
         # we are able to split up the search term and look for bits of it in
         # the search_fields.
-        rose_band = _models.band.objects.create(band_name='Rose')
+        rose_band = _models.Band.objects.create(band_name='Rose')
         some_other_band = make(
-            _models.band, band_name='Boop', band_alias__alias='Rose')
+            _models.Band, band_name='Boop', band_alias__alias='Rose')
         yet_another_band = make(
-            _models.band, band_name='NoName', band_alias__alias='Roseman')
+            _models.Band, band_name='NoName', band_alias__alias='Roseman')
         should_have_setup_this_better = make(
-            _models.band, band_name="SomethingContainingRoses")
+            _models.Band, band_name="SomethingContainingRoses")
 
         q = 'Rose'
         query = self.make_query()

@@ -409,7 +409,7 @@ class TestMergingArtikel(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingBand(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.band
+    model = _models.Band
 
 
 class TestMergingMusiker(MergingTestCase, MergeTestMethodsMixin):

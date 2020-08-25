@@ -56,7 +56,7 @@ class TestModelSelectView(ViewTestCase):
 
 class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
 
-    model = _models.band
+    model = _models.Band
     view_class = DuplicateObjectsView
 
     @classmethod
@@ -65,7 +65,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         # get_or_create; calling make(band_name = 'X') repeatedly will always
         # return the same band object.
         cls.test_data = [
-            _models.band.objects.create(id=i, band_name='Beep')
+            _models.Band.objects.create(id=i, band_name='Beep')
             for i in range(1, 4)
         ]
         super().setUpTestData()

@@ -12,7 +12,7 @@ from DBentry.factory import make
 
 class TestLoggingMixin(ViewTestCase):
 
-    model = _models.band
+    model = _models.Band
     view_bases = (LoggingMixin, views.View)
 
     @classmethod
