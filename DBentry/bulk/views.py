@@ -207,7 +207,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     # 'monat' refer to the ordinals of the months.
                     for i, value in enumerate(data):
                         if value:
-                            data[i] = _models.monat.objects.filter(ordinal=value).first()
+                            data[i] = _models.Monat.objects.filter(ordinal=value).first()
                 for value in data:
                     if not value:
                         continue

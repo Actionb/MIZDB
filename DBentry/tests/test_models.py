@@ -1088,7 +1088,7 @@ class TestModelMemorabilien(DataTestCase):
 
 class TestModelMonat(DataTestCase):
 
-    model = _models.monat
+    model = _models.Monat
 
     def test_str(self):
         obj = self.model(monat='Dezember', abk='Dez')

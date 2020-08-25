@@ -371,7 +371,7 @@ class AusgabeLnum(BaseModel):
 
 class AusgabeMonat(BaseModel):
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
-    monat = models.ForeignKey('monat', models.CASCADE)
+    monat = models.ForeignKey('Monat', models.CASCADE)
 
     search_fields = ['monat__monat', 'monat__abk']
 
@@ -385,7 +385,7 @@ class AusgabeMonat(BaseModel):
         return self.monat.abk
 
 
-class monat(BaseModel):
+class Monat(BaseModel):
     monat = models.CharField('Monat', max_length=200)
     abk = models.CharField('Abk', max_length=200)
     ordinal = models.PositiveSmallIntegerField(editable=False)

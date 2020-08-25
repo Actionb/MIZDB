@@ -411,7 +411,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(expected, view.apply_q(self.queryset))
 
         # search for Jan/Feb
-        self.obj_monat.ausgabemonat_set.create(monat=make(_models.monat, monat='Februar'))
+        self.obj_monat.ausgabemonat_set.create(monat=make(_models.Monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
         expected = (self.obj_monat.pk, force_text(self.obj_monat))

@@ -388,7 +388,7 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         continue_data = self.valid_data.copy()
         continue_data['num'] = ''
         # A saved monat record is required:
-        jan = make(_models.monat, monat='Januar')
+        jan = make(_models.Monat, monat='Januar')
         continue_data['monat'] = [str(jan.pk)]
         continue_data['jahr'] = ['2018']
         continue_data['jahrgang'] = ''

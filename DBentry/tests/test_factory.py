@@ -521,9 +521,9 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         self.assertEqual(a.ausgabelnum_set.count(), 2)
 
     def test_ausgabemonat(self):
-        januar, _ = _models.monat.objects.get_or_create(
+        januar, _ = _models.Monat.objects.get_or_create(
             monat='Januar', abk='Jan', ordinal=1)
-        februar, _ = _models.monat.objects.get_or_create(
+        februar, _ = _models.Monat.objects.get_or_create(
             monat='Februar', abk='Feb', ordinal=2)
 
         a = self.factory_class(ausgabemonat__monat__monat='Januar')
@@ -636,7 +636,7 @@ class TestAutorFactory(ModelFactoryTestCase):
 
 class TestMonatFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.monat)
+    factory_class = modelfactory_factory(_models.Monat)
 
     def test_abk_field(self):
         # Assert that abk depends on the monat's 'name'.

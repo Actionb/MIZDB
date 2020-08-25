@@ -619,7 +619,7 @@ class MagazinFactory(MIZModelFactory):
 
 class MonatFactory(MIZModelFactory):
     class Meta:
-        model = _models.monat
+        model = _models.Monat
         django_get_or_create = ['monat', 'abk', 'ordinal']
     monat = factory.Faker('month_name')
     abk = factory.LazyAttribute(lambda o: o.monat[:3])

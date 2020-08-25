@@ -12,7 +12,7 @@ class TestUtils(MyTestCase):
         test_data = [
             (
                 _models.Ausgabe, 'ausgabemonat__monat__monat__contains',
-                (_models.monat._meta.get_field('monat'), ['contains'])
+                (_models.Monat._meta.get_field('monat'), ['contains'])
             ),
             (
                 _models.Ausgabe, 'e_datum__year__gte',
