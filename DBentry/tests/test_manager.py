@@ -20,15 +20,15 @@ class TestMIZQuerySet(DataTestCase):
     raw_data = [
         {'band_name': 'Testband1'},
         {
-            'band_name': 'Testband2', 'band_alias__alias': 'Coffee',
+            'band_name': 'Testband2', 'bandalias__alias': 'Coffee',
             'genre__genre': ['Rock', 'Jazz']
         },
         {
-            'band_name': 'Testband3', 'band_alias__alias': ['Juice', 'Water'],
+            'band_name': 'Testband3', 'bandalias__alias': ['Juice', 'Water'],
             'genre__genre': ['Rock', 'Jazz']
         },
     ]
-    fields = ['band_name', 'genre__genre', 'band_alias__alias']
+    fields = ['band_name', 'genre__genre', 'bandalias__alias']
 
     @patch.object(
         ValuesDictSearchQuery, 'search',
@@ -640,15 +640,15 @@ class TestValuesDict(DataTestCase):
     raw_data = [
         {'band_name': 'Testband1', },
         {
-            'band_name': 'Testband2', 'band_alias__alias': 'Coffee',
+            'band_name': 'Testband2', 'bandalias__alias': 'Coffee',
             'genre__genre': ['Rock', 'Jazz']
         },
         {
-            'band_name': 'Testband3', 'band_alias__alias': ['Juice', 'Water'],
+            'band_name': 'Testband3', 'bandalias__alias': ['Juice', 'Water'],
             'genre__genre': ['Rock', 'Jazz']
         },
     ]
-    fields = ['band_name', 'genre__genre', 'band_alias__alias']
+    fields = ['band_name', 'genre__genre', 'bandalias__alias']
 
     def test_values_dict(self):
         values = self.queryset.values_dict(*self.fields)
@@ -656,11 +656,11 @@ class TestValuesDict(DataTestCase):
             (self.obj1.pk, {'band_name': ('Testband1', )}),
             (self.obj2.pk, {
                 'band_name': ('Testband2', ), 'genre__genre': ('Jazz', 'Rock'),
-                'band_alias__alias': ('Coffee', )
+                'bandalias__alias': ('Coffee', )
             }),
             (self.obj3.pk, {
                 'band_name': ('Testband3', ), 'genre__genre': ('Jazz', 'Rock'),
-                'band_alias__alias': ('Juice', 'Water')
+                'bandalias__alias': ('Juice', 'Water')
             })
         ]
         self.assertEqual(len(values), 3)
@@ -683,7 +683,7 @@ class TestValuesDict(DataTestCase):
         values = self.qs_obj1.values_dict(*self.fields, include_empty=True)
         expected = {
             'band_name': ('Testband1', ), 'genre__genre': (None, ),
-            'band_alias__alias': (None, )
+            'bandalias__alias': (None, )
         }
         self.assertEqual(values.get(self.obj1.pk), expected)
 
@@ -691,7 +691,7 @@ class TestValuesDict(DataTestCase):
         values = self.qs_obj2.values_dict(*self.fields, tuplfy=True)
         expected = (
             ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')),
-            ('band_alias__alias', ('Coffee',))
+            ('bandalias__alias', ('Coffee',))
         )
         # Iterate through the expected_values and compare them individuallly;
         # full tuple comparison includes order equality - and we can't predict
@@ -738,8 +738,8 @@ class TestValuesDict(DataTestCase):
         values = self.qs_obj2.values_dict(*self.fields, flatten=True)
         self.assertIn(self.obj2.pk, values)
         obj2_values = values.get(self.obj2.pk)
-        self.assertIn('band_alias__alias', obj2_values)
-        self.assertIsInstance(obj2_values['band_alias__alias'], tuple)
+        self.assertIn('bandalias__alias', obj2_values)
+        self.assertIsInstance(obj2_values['bandalias__alias'], tuple)
 
         # also test if the multiple genres do not get flattened (however that would work..)
         self.assertIn('genre__genre', obj2_values)

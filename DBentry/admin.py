@@ -302,7 +302,7 @@ class BandAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):
         model = _models.Band.musiker.through
     class AliasInLine(BaseAliasInline):
-        model = _models.band_alias
+        model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):
         model = _models.Band.orte.through
 
@@ -310,7 +310,7 @@ class BandAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
-    list_prefetch_related = ['genre', 'musiker', 'band_alias_set', 'orte']
+    list_prefetch_related = ['genre', 'musiker', 'bandalias_set', 'orte']
     save_on_top = True
 
     search_form_kwargs = {
@@ -327,7 +327,7 @@ class BandAdmin(MIZModelAdmin):
     musiker_string.short_description = 'Mitglieder'
 
     def alias_string(self, obj):
-        return concat_limit(obj.band_alias_set.all())
+        return concat_limit(obj.bandalias_set.all())
     alias_string.short_description = 'Aliase'
 
     def orte_string(self, obj):

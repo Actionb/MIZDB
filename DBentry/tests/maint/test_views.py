@@ -208,7 +208,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         test_data = [
             ({'base': ['band_name']}, 'Bandname'),
             ({'m2m': ['genre']}, 'Genre'),
-            ({'reverse': ['band_alias__alias']}, 'Alias')
+            ({'reverse': ['bandalias__alias']}, 'Alias')
         ]
         for request_data, expected in test_data:
             with self.subTest(data=request_data):
@@ -220,11 +220,11 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                 self.assertIn(expected, headers)
 
     def test_build_duplicates_headers_grouped_choices(self):
-        request = self.get_request(data={'reverse': ['band_alias__alias']})
+        request = self.get_request(data={'reverse': ['bandalias__alias']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         form.fields['reverse'].choices = [
-            ('Alias', [('band_alias__alias', 'Alias')])
+            ('Alias', [('bandalias__alias', 'Alias')])
         ]
         self.assertTrue(form.is_valid())
         headers = view.build_duplicates_headers(form)

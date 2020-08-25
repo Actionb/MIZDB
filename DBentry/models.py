@@ -115,9 +115,9 @@ class Band(BaseModel):
     create_field = 'band_name'
     name_field = 'band_name'
     primary_search_fields = ['band_name']
-    search_fields = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'band_alias__alias': 'Alias',
+        'bandalias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -126,7 +126,7 @@ class Band(BaseModel):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
-class band_alias(BaseAliasModel):
+class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)  # TODO: add a related_name
 
 

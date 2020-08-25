@@ -17,18 +17,18 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     view_class = ACBase
     model = _models.Band
     create_field = 'band_name'
-    alias_accessor_name = 'band_alias_set'
+    alias_accessor_name = 'bandalias_set'
 
     @classmethod
     def setUpTestData(cls):
         cls.genre = make(_models.Genre, genre='Testgenre')
         cls.obj1 = make(
             cls.model, band_name='Boop', genre=cls.genre,
-            musiker__extra=1, band_alias__alias='Voltaire'
+            musiker__extra=1, bandalias__alias='Voltaire'
         )
-        cls.obj2 = make(cls.model, band_name='Aleboop', band_alias__alias='Nietsche')
-        cls.obj3 = make(cls.model, band_name='notfound', band_alias__alias='Descartes')
-        cls.obj4 = make(cls.model, band_name='Boopband', band_alias__alias='Kant')
+        cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietsche')
+        cls.obj3 = make(cls.model, band_name='notfound', bandalias__alias='Descartes')
+        cls.obj4 = make(cls.model, band_name='Boopband', bandalias__alias='Kant')
 
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
 

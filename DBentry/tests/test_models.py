@@ -567,14 +567,14 @@ class TestModelBand(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
             self.model.search_fields_suffixes,
             {
-                'band_alias__alias': 'Alias',
+                'bandalias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -583,7 +583,7 @@ class TestModelBand(DataTestCase):
 
 class TestModelBandAlias(DataTestCase):
 
-    model = _models.band_alias
+    model = _models.BandAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.

@@ -912,10 +912,10 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
-    search_fields_expected = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
-            'band_alias__alias': ['Alias1', 'Alias2'],
+            'bandalias__alias': ['Alias1', 'Alias2'],
             'genre__genre': ['Testgenre1', 'Testgenre2'],
             'musiker__kuenstler_name': ['Testkuenstler1', 'Testkuenstler2']
         }
