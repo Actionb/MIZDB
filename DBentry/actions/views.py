@@ -272,7 +272,7 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     def _check_different_ausgaben(view, **kwargs):
-        if (view.model == _models.artikel
+        if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
             format_dict = {

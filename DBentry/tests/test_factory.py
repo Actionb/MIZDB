@@ -243,7 +243,7 @@ class TestMIZDjangoOptions(MyTestCase):
 
     def test_add_m2m_factories(self):
         # Assert that the created m2m factories are following the relation correctly.
-        fac = modelfactory_factory(_models.artikel)
+        fac = modelfactory_factory(_models.Artikel)
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.schlagwort.factory._meta.model, _models.Schlagwort)
         self.assertEqual(fac.person.factory._meta.model, _models.Person)
@@ -257,7 +257,7 @@ class TestMIZDjangoOptions(MyTestCase):
         fac = modelfactory_factory(_models.Musiker)
         self.assertEqual(fac.audio.factory._meta.model, _models.audio)
         self.assertEqual(fac.orte.factory._meta.model, _models.Ort)
-        self.assertEqual(fac.artikel.factory._meta.model, _models.artikel)
+        self.assertEqual(fac.artikel.factory._meta.model, _models.Artikel)
         self.assertEqual(fac.memorabilien.factory._meta.model, _models.memorabilien)
         self.assertEqual(fac.datei.factory._meta.model, _models.datei)
         self.assertEqual(fac.technik.factory._meta.model, _models.technik)

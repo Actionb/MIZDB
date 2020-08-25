@@ -761,7 +761,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         MergeViewWizarded,
         'perform_action',
         new=Mock(
-            side_effect=models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
+            side_effect=models.deletion.ProtectedError('msg', _models.Artikel.objects.all()))
     )
     def test_done(self):
         # Assert that an admin message is send to user upon encountering a
@@ -815,7 +815,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 class TestMergeViewWizardedArtikel(ActionViewTestCase):
 
     view_class = MergeViewWizarded
-    model = _models.artikel
+    model = _models.Artikel
     model_admin_class = ArtikelAdmin
     test_data_count = 2
 
@@ -853,7 +853,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
     @translation_override(language=None)
     def test_action_allowed_has_artikels(self):
-        self.obj1.artikel_set.add(make(_models.artikel, ausgabe=self.obj1))
+        self.obj1.artikel_set.add(make(_models.Artikel, ausgabe=self.obj1))
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
         self.assertFalse(view.action_allowed)
@@ -994,7 +994,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         mocked_model_from_string.return_value = _models.Brochure
         options_form_cleaned_data = {'brochure_art': 'brochure'}
 
-        self.obj1.artikel_set.add(make(_models.artikel, ausgabe_id=self.obj1.pk))
+        self.obj1.artikel_set.add(make(_models.Artikel, ausgabe_id=self.obj1.pk))
         request = self.get_request()
         view = self.get_view(request=request, queryset=self.queryset)
         view.mag = self.mag

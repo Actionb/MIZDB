@@ -219,32 +219,32 @@ class AutorAdmin(MIZModelAdmin):
     magazin_string.short_description = 'Magazin(e)'
 
 
-@admin.register(_models.artikel, site=miz_site)
+@admin.register(_models.Artikel, site=miz_site)
 class ArtikelAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.artikel.genre.through
+        model = _models.Artikel.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.artikel.schlagwort.through
+        model = _models.Artikel.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.artikel.person.through
+        model = _models.Artikel.person.through
         verbose_model = _models.Person
     class AutorInLine(BaseTabularInline):
-        model = _models.artikel.autor.through
+        model = _models.Artikel.autor.through
         verbose_model = _models.Autor
     class MusikerInLine(BaseTabularInline):
-        model = _models.artikel.musiker.through
+        model = _models.Artikel.musiker.through
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
-        model = _models.artikel.band.through
+        model = _models.Artikel.band.through
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
-        model = _models.artikel.ort.through
+        model = _models.Artikel.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
-        model = _models.artikel.spielort.through
+        model = _models.Artikel.spielort.through
         verbose_model = _models.spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.artikel.veranstaltung.through
+        model = _models.Artikel.veranstaltung.through
         verbose_model = _models.veranstaltung
 
     form = ArtikelForm

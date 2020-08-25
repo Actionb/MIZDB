@@ -14,7 +14,7 @@ from DBentry.tests.base import DataTestCase
 
 class TestBaseModel(DataTestCase):
 
-    model = _models.artikel
+    model = _models.Artikel
     test_data_count = 1
 
     def test_qs(self):
@@ -186,7 +186,7 @@ class TestComputedNameModel(DataTestCase):
 
 class TestModelArtikel(DataTestCase):
 
-    model = _models.artikel
+    model = _models.Artikel
     test_data_count = 1
 
     def test_str(self):

@@ -15,7 +15,7 @@ from DBentry.factory import make
 class TestAdminActionsArtikel(AdminTestCase):
 
     model_admin_class = ArtikelAdmin
-    model = _models.artikel
+    model = _models.Artikel
 
     @classmethod
     def setUpTestData(cls):

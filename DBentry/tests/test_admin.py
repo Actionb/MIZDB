@@ -434,8 +434,8 @@ class TestMIZModelAdmin(AdminTestCase):
 
     def test_change_message_capitalized_fields(self):
         # Assert that the LogEntry/history change message uses the field labels.
-        model_admin = _admin.ArtikelAdmin(_models.artikel, miz_site)
-        obj = make(_models.artikel)
+        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
+        obj = make(_models.Artikel)
         form_class = model_admin.get_form(self.get_request(), obj=obj, change=True)
         form = form_class(data={}, instance=obj)
         change_message = model_admin.construct_change_message(
@@ -499,7 +499,7 @@ class TestMIZModelAdmin(AdminTestCase):
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.ArtikelAdmin
-    model = _models.artikel
+    model = _models.Artikel
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort',
         'spielort', 'veranstaltung'
@@ -514,7 +514,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj1 = make(
-            _models.artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',
+            _models.Artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
             musiker__kuenstler_name='Alice Tester', band__band_name='Testband'
         )
@@ -585,7 +585,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_anz_artikel(self):
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_artikel(obj), 1)
-        _models.artikel.objects.all().delete()
+        _models.Artikel.objects.all().delete()
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_artikel(obj), 0)
 

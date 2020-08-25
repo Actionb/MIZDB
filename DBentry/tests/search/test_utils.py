@@ -19,8 +19,8 @@ class TestUtils(MyTestCase):
                 (_models.Ausgabe._meta.get_field('e_datum'), ['year', 'gte'])
             ),
             (
-                _models.artikel, 'seite__gt',
-                (_models.artikel._meta.get_field('seite'), ['gt'])
+                _models.Artikel, 'seite__gt',
+                (_models.Artikel._meta.get_field('seite'), ['gt'])
             )
         ]
         for model, path, expected in test_data:

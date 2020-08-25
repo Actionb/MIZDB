@@ -578,7 +578,7 @@ class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)  # TODO: add a related_name
 
 
-class artikel(BaseModel):
+class Artikel(BaseModel):
     F = 'f'
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]

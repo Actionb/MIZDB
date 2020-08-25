@@ -45,7 +45,7 @@ class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 class TestArtikelForm(ModelFormTestCase):
 
     form_class = ArtikelForm
-    model = _models.artikel
+    model = _models.Artikel
     fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
     test_data_count = 1
 

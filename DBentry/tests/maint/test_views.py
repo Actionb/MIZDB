@@ -237,8 +237,8 @@ class TestUnusedObjectsView(ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.artikel1 = make(_models.artikel)
-        cls.artikel2 = make(_models.artikel)
+        cls.artikel1 = make(_models.Artikel)
+        cls.artikel2 = make(_models.Artikel)
 
         cls.unused = make(_models.Genre)
         cls.used_once = make(_models.Genre)

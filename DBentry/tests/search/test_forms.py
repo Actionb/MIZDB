@@ -33,7 +33,7 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_for_dbfield_dal_m2m(self):
         # Assert that formfield_for_dbfield prepares an
         # autocomplete ready formfield for many to many relations.
-        dbfield = _models.artikel._meta.get_field('genre')
+        dbfield = _models.Artikel._meta.get_field('genre')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2Multiple)
@@ -59,7 +59,7 @@ class TestSearchFormFactory(MyTestCase):
         ]
         valid = ['seite', 'seitenumfang', 'genre__genre']
         invalid = ['notafield', 'schlagwort', 'schlagwort__notalookup']
-        form_fields = self.factory(_models.artikel, fields).base_fields
+        form_fields = self.factory(_models.Artikel, fields).base_fields
         for field_name in chain(valid, invalid):
             should_be_valid = field_name in valid
             with self.subTest(valid=should_be_valid, field_name=field_name):
@@ -73,7 +73,7 @@ class TestSearchFormFactory(MyTestCase):
         # and that it uses that to create formfields for dbfields.
         callback = lambda dbfield: forms.DateField()
         form_class = self.factory(
-            model=_models.artikel,
+            model=_models.Artikel,
             formfield_callback=callback,
             fields=['seite']
         )
@@ -83,12 +83,12 @@ class TestSearchFormFactory(MyTestCase):
     def test_takes_formfield_callback_callable(self):
         # A callback that is not a callable should raise a TypeError.
         with self.assertRaises(TypeError):
-            self.factory(_models.artikel, formfield_callback=1)
+            self.factory(_models.Artikel, formfield_callback=1)
 
     def test_factory_forward(self):
         # Assert that 'forward' arguments to the factory are respected.
         form_class = self.factory(
-            model=_models.artikel,
+            model=_models.Artikel,
             fields=['ausgabe'],
             forwards={'ausgabe': 'magazin'}
         )
@@ -144,7 +144,7 @@ class TestSearchFormFactory(MyTestCase):
 
 class TestSearchForm(MyTestCase):
 
-    model = _models.artikel
+    model = _models.Artikel
 
     def setUp(self):
         super().setUp()

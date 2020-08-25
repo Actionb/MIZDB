@@ -59,7 +59,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
-        model = _models.artikel
+        model = _models.Artikel
         fields = '__all__'
         widgets = {
             'ausgabe': make_widget(

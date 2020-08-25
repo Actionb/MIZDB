@@ -405,7 +405,7 @@ class TestMergingOrt(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingArtikel(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.artikel
+    model = _models.Artikel
 
 
 class TestMergingBand(MergingTestCase, MergeTestMethodsMixin):

@@ -34,7 +34,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual((utils.get_relations_between_models('FormatTag', 'Format')), expected)
 
     def test_is_protected(self):
-        art = make(_models.artikel)
+        art = make(_models.Artikel)
         self.assertIsNotNone(utils.is_protected([art.ausgabe]))
         self.assertIsNone(utils.is_protected([art]))
 
@@ -90,13 +90,13 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Magazin), ['magazin_name'])
         self.assertEqual(required_field_names(_models.Ort), ['land'])
         self.assertEqual(
-            required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])
+            required_field_names(_models.Artikel), ['schlagzeile', 'seite', 'ausgabe'])
         # _models.Format.anzahl field is required but has a default:
         self.assertEqual(required_field_names(_models.Format), ['audio', 'format_typ'])
         self.assertEqual(required_field_names(_models.bestand), ['lagerort'])
 
     def test_get_updateable_fields(self):
-        obj = make(_models.artikel)
+        obj = make(_models.Artikel)
         self.assertEqual(
             utils.get_updateable_fields(obj),
             ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen']
@@ -127,9 +127,9 @@ class TestModelUtils(MyTestCase):
 
     def test_get_fields_and_lookups(self):
         path = 'ausgabe__e_datum__year__gte'
-        fields, lookups = utils.get_fields_and_lookups(_models.artikel, path)
+        fields, lookups = utils.get_fields_and_lookups(_models.Artikel, path)
         expected_fields = [
-            _models.artikel._meta.get_field('ausgabe'),
+            _models.Artikel._meta.get_field('ausgabe'),
             _models.Ausgabe._meta.get_field('e_datum')
         ]
         expected_lookups = ['year', 'gte']
@@ -140,7 +140,7 @@ class TestModelUtils(MyTestCase):
         # Assert that get_fields_and_lookups raises FieldError on
         # encountering an invalid lookup.
         with self.assertRaises(exceptions.FieldError):
-            utils.get_fields_and_lookups(_models.artikel, 'schlagzeile__year')
+            utils.get_fields_and_lookups(_models.Artikel, 'schlagzeile__year')
         with self.assertRaises(exceptions.FieldError):
             # Kalendar's primary key is a OneToOne to BaseBrochure.
             utils.get_fields_and_lookups(_models.Kalendar, 'pk__iexact')
@@ -149,4 +149,4 @@ class TestModelUtils(MyTestCase):
         # Assert that get_fields_and_lookups raises FieldDoesNotExist
         # if the first field is not a model field of the given model.
         with self.assertRaises(exceptions.FieldDoesNotExist):
-            utils.get_fields_and_lookups(_models.artikel, 'foo__icontains')
+            utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')

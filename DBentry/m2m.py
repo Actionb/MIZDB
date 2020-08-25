@@ -135,7 +135,7 @@ class m2m_audio_veranstaltung(BaseM2MModel):
 # ================================= #
 
 class m2m_artikel_autor(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     autor = models.ForeignKey('Autor', models.CASCADE)
 
     name_field = 'autor'
@@ -147,7 +147,7 @@ class m2m_artikel_autor(BaseM2MModel):
         verbose_name_plural = 'Artikel-Autoren'
 
 class m2m_artikel_band(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     band = models.ForeignKey('Band', models.CASCADE)
 
     name_field = 'band'
@@ -159,7 +159,7 @@ class m2m_artikel_band(BaseM2MModel):
         verbose_name_plural = 'Artikel-Bands'
 
 class m2m_artikel_genre(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     genre = models.ForeignKey('Genre', models.CASCADE)
 
     name_field = 'genre'
@@ -171,7 +171,7 @@ class m2m_artikel_genre(BaseM2MModel):
         verbose_name_plural = 'Artikel-Genres'
 
 class m2m_artikel_musiker(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
 
     name_field = 'musiker'
@@ -183,7 +183,7 @@ class m2m_artikel_musiker(BaseM2MModel):
         verbose_name_plural = 'Artikel-Musiker'
 
 class m2m_artikel_ort(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     ort = models.ForeignKey('Ort', models.CASCADE)
 
     name_field = 'ort'
@@ -195,7 +195,7 @@ class m2m_artikel_ort(BaseM2MModel):
         verbose_name_plural = 'Artikel-Orte'
 
 class m2m_artikel_person(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     person = models.ForeignKey('Person', models.CASCADE)
 
     name_field = 'person'
@@ -207,7 +207,7 @@ class m2m_artikel_person(BaseM2MModel):
         verbose_name_plural = 'Artikel-Personen'
 
 class m2m_artikel_schlagwort(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     schlagwort = models.ForeignKey('Schlagwort', models.CASCADE)
 
     name_field = 'schlagwort'
@@ -219,7 +219,7 @@ class m2m_artikel_schlagwort(BaseM2MModel):
         verbose_name_plural = 'Artikel-Schlagwörter'
 
 class m2m_artikel_spielort(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     spielort = models.ForeignKey('spielort', models.CASCADE)
 
     name_field = 'spielort'
@@ -231,7 +231,7 @@ class m2m_artikel_spielort(BaseM2MModel):
         verbose_name_plural = 'Artikel-Spielorte'
 
 class m2m_artikel_veranstaltung(BaseM2MModel):
-    artikel = models.ForeignKey('artikel', models.CASCADE)
+    artikel = models.ForeignKey('Artikel', models.CASCADE)
     veranstaltung = models.ForeignKey('veranstaltung', models.CASCADE)
 
     name_field = 'veranstaltung'
