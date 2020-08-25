@@ -1024,7 +1024,7 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.BlandAdmin
-    model = _models.bundesland
+    model = _models.Bundesland
     fields_expected = ['bland_name', 'code', 'land']
     search_fields_expected = ['bland_name', 'code']
     test_data_count = 1

@@ -757,7 +757,7 @@ class VideoAdmin(MIZModelAdmin):
     ]
 
 
-@admin.register(_models.bundesland, site=miz_site)
+@admin.register(_models.Bundesland, site=miz_site)
 class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
     search_form_kwargs = {

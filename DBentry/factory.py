@@ -584,7 +584,7 @@ class BandFactory(MIZModelFactory):
 
 class BundeslandFactory(MIZModelFactory):
     class Meta:
-        model = _models.bundesland
+        model = _models.Bundesland
         django_get_or_create = ['bland_name', 'code']
     bland_name = factory.Faker('state')
     code = factory.Faker('state_abbr')

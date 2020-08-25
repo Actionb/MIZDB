@@ -521,7 +521,7 @@ class Ort(ComputedNameModel):
                 return land
 
 
-class bundesland(BaseModel):
+class Bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', max_length=200)
     code = models.CharField(max_length=4, unique=False)
 

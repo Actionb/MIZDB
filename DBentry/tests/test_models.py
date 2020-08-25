@@ -688,7 +688,7 @@ class TestModelSchriftenreihe(DataTestCase):
 
 class TestModelBundesland(DataTestCase):
 
-    model = _models.bundesland
+    model = _models.Bundesland
 
     def test_str(self):
         obj = make(self.model, bland_name='Hessen', code='HE')
