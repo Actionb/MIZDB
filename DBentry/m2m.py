@@ -136,7 +136,7 @@ class m2m_audio_veranstaltung(BaseM2MModel):
 
 class m2m_artikel_autor(BaseM2MModel):
     artikel = models.ForeignKey('artikel', models.CASCADE)
-    autor = models.ForeignKey('autor', models.CASCADE)
+    autor = models.ForeignKey('Autor', models.CASCADE)
 
     name_field = 'autor'
 
@@ -277,7 +277,7 @@ class m2m_band_musiker(BaseM2MModel):
 # ================================= #
 
 class m2m_autor_magazin(BaseM2MModel):
-    autor = models.ForeignKey('autor', models.CASCADE)
+    autor = models.ForeignKey('Autor', models.CASCADE)
     magazin = models.ForeignKey('magazin', models.CASCADE)
 
     name_field = 'magazin'

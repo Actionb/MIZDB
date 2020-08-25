@@ -201,10 +201,10 @@ class AusgabenAdmin(MIZModelAdmin):
     monat_string.short_description = 'Monate'
 
 
-@admin.register(_models.autor, site=miz_site)
+@admin.register(_models.Autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
-        model = _models.autor.magazin.through
+        model = _models.Autor.magazin.through
         extra = 1
 
     form = AutorForm
@@ -230,7 +230,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Person
     class AutorInLine(BaseTabularInline):
         model = _models.artikel.autor.through
-        verbose_model = _models.autor
+        verbose_model = _models.Autor
     class MusikerInLine(BaseTabularInline):
         model = _models.artikel.musiker.through
         verbose_model = _models.Musiker
@@ -414,7 +414,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Person
     class AutorInLine(BaseTabularInline):
         model = _models.buch.autor.through
-        verbose_model = _models.autor
+        verbose_model = _models.Autor
     class MusikerInLine(BaseTabularInline):
         model = _models.buch.musiker.through
         verbose_model = _models.Musiker

@@ -957,7 +957,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AutorAdmin
-    model = _models.autor
+    model = _models.Autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']

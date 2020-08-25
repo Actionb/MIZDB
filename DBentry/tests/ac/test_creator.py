@@ -7,7 +7,7 @@ from DBentry.tests.base import DataTestCase, mockv
 
 
 class TestCreator(DataTestCase):
-    model = _models.autor
+    model = _models.Autor
 
     @classmethod
     def setUpTestData(cls):

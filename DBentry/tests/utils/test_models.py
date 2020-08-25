@@ -85,7 +85,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Musiker), ['kuenstler_name'])
         self.assertEqual(required_field_names(_models.Genre), ['genre'])
         self.assertEqual(required_field_names(_models.Band), ['band_name'])
-        self.assertEqual(required_field_names(_models.autor), [])
+        self.assertEqual(required_field_names(_models.Autor), [])
         self.assertEqual(required_field_names(_models.ausgabe), ['magazin'])
         self.assertEqual(required_field_names(_models.magazin), ['magazin_name'])
         self.assertEqual(required_field_names(_models.ort), ['land'])

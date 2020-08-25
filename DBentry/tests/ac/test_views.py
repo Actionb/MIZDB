@@ -168,7 +168,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACCreateable(ACViewTestCase):
 
-    model = _models.autor
+    model = _models.Autor
     view_class = ACCreateable
 
     def test_creator_property(self):
@@ -450,7 +450,7 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.autor
+    model = _models.Autor
     # 'beschreibung' is a search_field and needs some data!
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False

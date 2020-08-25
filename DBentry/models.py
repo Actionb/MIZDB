@@ -130,7 +130,7 @@ class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)  # TODO: add a related_name
 
 
-class autor(ComputedNameModel):
+class Autor(ComputedNameModel):
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -598,7 +598,7 @@ class artikel(BaseModel):
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_artikel_genre)
     schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_artikel_schlagwort)
     person = models.ManyToManyField('Person', through=_m2m.m2m_artikel_person)
-    autor = models.ManyToManyField('autor', through=_m2m.m2m_artikel_autor)
+    autor = models.ManyToManyField('Autor', through=_m2m.m2m_artikel_autor)
     band = models.ManyToManyField('Band', through=_m2m.m2m_artikel_band)
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_artikel_musiker)
     ort = models.ManyToManyField('ort', through=_m2m.m2m_artikel_ort)
@@ -658,7 +658,7 @@ class buch(BaseModel):
 
     herausgeber = models.ManyToManyField('Herausgeber')
     verlag = models.ManyToManyField('verlag')
-    autor = models.ManyToManyField('autor')
+    autor = models.ManyToManyField('Autor')
     genre = models.ManyToManyField('Genre')
     schlagwort = models.ManyToManyField('schlagwort')
     person = models.ManyToManyField('Person')

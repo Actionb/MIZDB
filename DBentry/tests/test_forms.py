@@ -80,7 +80,7 @@ class TestArtikelForm(ModelFormTestCase):
 class TestAutorForm(ModelFormTestCase):
     form_class = AutorForm
     fields = ['person', 'kuerzel']
-    model = _models.autor
+    model = _models.Autor
 
     @translation_override(language=None)
     def test_clean(self):

@@ -247,7 +247,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.schlagwort.factory._meta.model, _models.schlagwort)
         self.assertEqual(fac.person.factory._meta.model, _models.Person)
-        self.assertEqual(fac.autor.factory._meta.model, _models.autor)
+        self.assertEqual(fac.autor.factory._meta.model, _models.Autor)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)
         self.assertEqual(fac.musiker.factory._meta.model, _models.Musiker)
         self.assertEqual(fac.ort.factory._meta.model, _models.ort)
@@ -616,7 +616,7 @@ class TestAusgabeFactory(ModelFactoryTestCase):
 
 class TestAutorFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.autor)
+    factory_class = modelfactory_factory(_models.Autor)
 
     def test_kuerzel_field(self):
         # Assert that kuerzel depends on the Person's name.

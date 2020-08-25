@@ -869,7 +869,7 @@ class TestHumanNameQuerySet(MyTestCase):
 
     def test_find_autor(self):
         obj = make(
-            _models.autor,
+            _models.Autor,
             person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
         )
         names = (
@@ -878,7 +878,7 @@ class TestHumanNameQuerySet(MyTestCase):
         )
         for name in names:
             with self.subTest():
-                results = _models.autor.objects.find(name)
+                results = _models.Autor.objects.find(name)
                 msg = "Name looked up: %s" % name
                 self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg=msg)
 

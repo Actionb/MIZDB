@@ -112,7 +112,7 @@ class Creator(object):
         p = self.create_person(name, preview)
         person_instance = p.get('instance')
         autor_instance = self._get_model_instance(
-            _models.autor, person=person_instance, kuerzel=kuerzel
+            _models.Autor, person=person_instance, kuerzel=kuerzel
         )
         if not preview and autor_instance.pk is None:
             if autor_instance.person.pk is None:

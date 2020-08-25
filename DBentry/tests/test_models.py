@@ -508,7 +508,7 @@ class TestModelAusgabeNum(DataTestCase):
 @tag("cn")
 class TestModelAutor(DataTestCase):
 
-    model = _models.autor
+    model = _models.Autor
 
     @translation_override(language=None)
     def test_get_name(self):

@@ -563,7 +563,7 @@ def modelfactory_factory(model, **kwargs):
 
 class AutorFactory(MIZModelFactory):
     class Meta:
-        model = _models.autor
+        model = _models.Autor
     person = SubFactory('DBentry.factory.PersonFactory', required=True)
 
     @factory.lazy_attribute
