@@ -311,8 +311,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         labels = labels or {}
 
         inline_models = {i.model for i in self.inlines}
-        # Walk through all reverse relations and create a crosslink for any
-        # relation that is not covered by inlines.
+        # Walk through all reverse relations and collect the model and
+        # model field to query against as well as the assigned name for the
+        # relation -- unless an inline is covering that reverse relation.
+        relations = []
         for rel in get_model_relations(self.model, forward=False, reverse=True):
             if rel.many_to_many:
                 inline_model = rel.through
@@ -329,18 +331,34 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 # (unless it's a self relation).
                 query_model = rel.model
                 query_field = rel.name
+            if rel.related_model == _models.BaseBrochure:
+                # Handle a special case of model inheritance.
+                # Add crosslinks to the children of BaseBrochure rather than
+                # to BaseBrochure itself as it does not have a changelist:
+                # reversing for an url would fail.
+                # Ugly code! MIZModelAdmin shouldn't have to know BaseBrochure!
+                relations.extend([
+                    (_models.Brochure, rel.remote_field.name, None),
+                    (_models.Kalendar, rel.remote_field.name, None),
+                    (_models.Katalog, rel.remote_field.name, None)
+                ])
+            else:
+                relations.append((query_model, query_field, rel.related_name))
 
+        # Create the context data for the crosslinks.
+        for query_model, query_field, related_name in relations:
             opts = query_model._meta
-            count = query_model.objects.filter(**{query_field: object_id}).count()
-            if not count:
-                # No point showing an empty changelist.
-                continue
             try:
                 url = reverse(
                     "admin:{}_{}_changelist".format(opts.app_label, opts.model_name)
                 )
             except NoReverseMatch:
                 # NoReverseMatch, no link that leads anywhere!
+                continue
+
+            count = query_model.objects.filter(**{query_field: object_id}).count()
+            if not count:
+                # No point showing an empty changelist.
                 continue
             # Add the query string to the url:
             url += "?{field}={val}".format(
@@ -355,11 +373,11 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             #    - the verbose_name_plural of the related_model
             if opts.model_name in labels:
                 label = labels[opts.model_name]
-            elif rel.related_name:
+            elif related_name:
                 # Automatically created related_names won't look pretty!
                 label = " ".join(
                     capfirst(s)
-                    for s in rel.related_name.replace('_', ' ').split()
+                    for s in related_name.replace('_', ' ').split()
                 )
             else:
                 label = opts.verbose_name_plural
