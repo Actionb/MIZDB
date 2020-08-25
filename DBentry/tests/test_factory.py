@@ -96,16 +96,16 @@ class TestSelfFactory(MyTestCase):
 class TestRelatedFactory(MyTestCase):
 
     def test_rf_string_direct(self):
-        g = make(_models.Genre, genre='TestGenre0', genre_alias__alias='Alias1')
-        self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
+        g = make(_models.Genre, genre='TestGenre0', genrealias__alias='Alias1')
+        self.assertIn('Alias1', g.genrealias_set.values_list('alias', flat=True))
 
     def test_rf_string_single_list(self):
-        g = make(_models.Genre, genre='TestGenre0', genre_alias__alias=['Alias1'])
-        self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
+        g = make(_models.Genre, genre='TestGenre0', genrealias__alias=['Alias1'])
+        self.assertIn('Alias1', g.genrealias_set.values_list('alias', flat=True))
 
     def test_rf_string_list(self):
-        g = make(_models.Genre, genre='TestGenre0', genre_alias__alias=['Alias1', 'Alias2'])
-        self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
+        g = make(_models.Genre, genre='TestGenre0', genrealias__alias=['Alias1', 'Alias2'])
+        self.assertIn('Alias1', g.genrealias_set.values_list('alias', flat=True))
 
     def test_rf_instance_direct(self):
         m1 = make(_models.Musiker)
@@ -125,8 +125,8 @@ class TestRelatedFactory(MyTestCase):
         self.assertIn(m2, p.musiker_set.all())
 
     def test_rf_extra(self):
-        g = make(_models.Genre, genre='TestGenre0', genre_alias__extra=3)
-        self.assertEqual(g.genre_alias_set.count(), 3)
+        g = make(_models.Genre, genre='TestGenre0', genrealias__extra=3)
+        self.assertEqual(g.genrealias_set.count(), 3)
 
 
 class TestM2MFactory(MyTestCase):

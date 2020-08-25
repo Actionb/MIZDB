@@ -824,12 +824,12 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
     fields_expected = ['genre']
-    search_fields_expected = ['genre', 'genre_alias__alias', 'pk__iexact']
+    search_fields_expected = ['genre', 'genrealias__alias', 'pk__iexact']
 
     raw_data = [
         {
             'genre': 'Subobject',
-            'genre_alias__alias': ['Alias1', 'Alias2'],
+            'genrealias__alias': ['Alias1', 'Alias2'],
         }
     ]
 

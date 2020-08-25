@@ -510,16 +510,16 @@ class DokumentAdmin(MIZModelAdmin):
 @admin.register(_models.Genre, site=miz_site)
 class GenreAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
-        model = _models.genre_alias
+        model = _models.GenreAlias
 
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
-    list_prefetch_related = ['genre_alias_set']
-    search_fields = ['genre', 'genre_alias__alias']
+    list_prefetch_related = ['genrealias_set']
+    search_fields = ['genre', 'genrealias__alias']
 
     def alias_string(self, obj):
-        return concat_limit(obj.genre_alias_set.all())
+        return concat_limit(obj.genrealias_set.all())
     alias_string.short_description = 'Aliase'
 
 

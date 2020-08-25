@@ -528,8 +528,8 @@ class TestACBuchband(ACViewTestCase):
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.Genre
-    alias_accessor_name = 'genre_alias_set'
-    raw_data = [{'genre_alias__alias': 'Beep'}]
+    alias_accessor_name = 'genrealias_set'
+    raw_data = [{'genrealias__alias': 'Beep'}]
 
 
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):

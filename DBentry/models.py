@@ -90,16 +90,16 @@ class Genre(BaseModel):
     create_field = 'genre'
     name_field = 'genre'
     primary_search_fields = ['genre']
-    search_fields = ['genre', 'genre_alias__alias']
+    search_fields = ['genre', 'genrealias__alias']
     search_fields_suffixes = {
-        'genre_alias__alias': 'Alias'
+        'genrealias__alias': 'Alias'
     }
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
-class genre_alias(BaseAliasModel):
+class GenreAlias(BaseAliasModel):
     parent = models.ForeignKey('Genre', models.CASCADE)  # TODO: add a related_name
 
 

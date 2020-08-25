@@ -864,16 +864,16 @@ class TestModelGenre(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['genre', 'genre_alias__alias'])
+            sorted(['genre', 'genrealias__alias'])
         )
 
     def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'genre_alias__alias': 'Alias'})
+        self.assertEqual(self.model.search_fields_suffixes, {'genrealias__alias': 'Alias'})
 
 
 class TestModelGenreAlias(DataTestCase):
 
-    model = _models.genre_alias
+    model = _models.GenreAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
