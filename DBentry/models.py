@@ -1341,7 +1341,7 @@ class Brochure(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta(BaseBrochure.Meta):
+    class Meta:
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
 
@@ -1360,7 +1360,7 @@ class Kalendar(BaseBrochure):  # TODO: spelling: Kalender
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta(BaseBrochure.Meta):
+    class Meta:
         verbose_name = 'Programmheft'
         verbose_name_plural = 'Programmhefte'
 
@@ -1387,6 +1387,6 @@ class Katalog(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta(BaseBrochure.Meta):
+    class Meta:
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'
