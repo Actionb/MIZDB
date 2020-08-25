@@ -1,4 +1,3 @@
-# TODO: log_X functions should fail silently, not the mixin methods?
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
@@ -92,7 +91,6 @@ class LoggingMixin(object):
         Logging of the change(s) to a model instance or, if related_obj is
         given, of change(s) to a M2M relation.
         """
-        # TODO: log_change should also log the old value
         if isinstance(fields, str):
             fields = [fields]
         msg = {
