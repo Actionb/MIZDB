@@ -652,17 +652,17 @@ class PersonAdmin(MIZModelAdmin):
 @admin.register(_models.Schlagwort, site=miz_site)
 class SchlagwortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
-        model = _models.schlagwort_alias
+        model = _models.SchlagwortAlias
         extra = 1
 
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
-    list_prefetch_related = ['schlagwort_alias_set']
-    search_fields = ['schlagwort', 'schlagwort_alias__alias']
+    list_prefetch_related = ['schlagwortalias_set']
+    search_fields = ['schlagwort', 'schlagwortalias__alias']
 
     def alias_string(self, obj):
-        return concat_limit(obj.schlagwort_alias_set.all())
+        return concat_limit(obj.schlagwortalias_set.all())
     alias_string.short_description = 'Aliase'
 
 

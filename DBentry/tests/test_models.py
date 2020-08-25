@@ -1267,17 +1267,17 @@ class TestModelSchlagwort(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['schlagwort', 'schlagwort_alias__alias'])
+            sorted(['schlagwort', 'schlagwortalias__alias'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
-            self.model.search_fields_suffixes, {'schlagwort_alias__alias': 'Alias'})
+            self.model.search_fields_suffixes, {'schlagwortalias__alias': 'Alias'})
 
 
 class TestModelSchlagwortAlias(DataTestCase):
 
-    model = _models.schlagwort_alias
+    model = _models.SchlagwortAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.

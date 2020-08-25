@@ -535,5 +535,5 @@ class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.Schlagwort
-    alias_accessor_name = 'schlagwort_alias_set'
-    raw_data = [{'schlagwort_alias__alias': 'AliasSchlagwort'}]
+    alias_accessor_name = 'schlagwortalias_set'
+    raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]

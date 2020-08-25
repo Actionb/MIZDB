@@ -879,12 +879,12 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
     fields_expected = ['schlagwort']
-    search_fields_expected = ['schlagwort', 'schlagwort_alias__alias', 'pk__iexact']
+    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__iexact']
 
     raw_data = [
         {
             'schlagwort': 'Subobject',
-            'schlagwort_alias__alias': ['Alias1', 'Alias2'],
+            'schlagwortalias__alias': ['Alias1', 'Alias2'],
         }
     ]
 

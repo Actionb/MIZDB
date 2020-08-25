@@ -567,14 +567,14 @@ class Schlagwort(BaseModel):
     create_field = 'schlagwort'
     name_field = 'schlagwort'
     primary_search_fields = []
-    search_fields = ['schlagwort', 'schlagwort_alias__alias']
-    search_fields_suffixes = {'schlagwort_alias__alias': 'Alias'}
+    search_fields = ['schlagwort', 'schlagwortalias__alias']
+    search_fields_suffixes = {'schlagwortalias__alias': 'Alias'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
-class schlagwort_alias(BaseAliasModel):
+class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)  # TODO: add a related_name
 
 
