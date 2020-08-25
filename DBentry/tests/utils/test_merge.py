@@ -425,7 +425,7 @@ class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.genre
+    model = _models.Genre
 
 
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
@@ -442,9 +442,9 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
         cls.obj1 = cls.model.objects.create(magazin_name='Original-Magazin')
         cls.obj2 = cls.model.objects.create(magazin_name='Merger1-Magazin')
         cls.obj3 = cls.model.objects.create(magazin_name='Merger2-Magazin')
-        cls.genre_original = _models.genre.objects.create(genre='Original-Genre')
-        cls.genre_merger1 = _models.genre.objects.create(genre='Merger1-Genre')
-        cls.genre_merger2 = _models.genre.objects.create(genre='Merger2-Genre')
+        cls.genre_original = _models.Genre.objects.create(genre='Original-Genre')
+        cls.genre_merger1 = _models.Genre.objects.create(genre='Merger1-Genre')
+        cls.genre_merger2 = _models.Genre.objects.create(genre='Merger2-Genre')
         cls.model.genre.through.objects.create(genre=cls.genre_original, magazin=cls.obj1)
         cls.model.genre.through.objects.create(genre=cls.genre_merger1, magazin=cls.obj2)
         cls.model.genre.through.objects.create(genre=cls.genre_merger2, magazin=cls.obj3)

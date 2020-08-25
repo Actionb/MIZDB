@@ -507,7 +507,7 @@ class DokumentAdmin(MIZModelAdmin):
     superuser_only = True
 
 
-@admin.register(_models.genre, site=miz_site)
+@admin.register(_models.Genre, site=miz_site)
 class GenreAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.genre_alias

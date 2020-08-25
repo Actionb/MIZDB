@@ -592,7 +592,7 @@ class BundeslandFactory(MIZModelFactory):
 
 class GenreFactory(MIZModelFactory):
     class Meta:
-        model = _models.genre
+        model = _models.Genre
         django_get_or_create = ['genre']
 
 

@@ -178,7 +178,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         'cf': forms.ChoiceField(choices=[]),
         'cf2': forms.ChoiceField(choices=[])
     }
-    model = _models.genre
+    model = _models.Genre
     raw_data = [{'genre': 'Very Last'}, {'genre': 'First'}, {'genre': 'Middle'}]
 
     def test_set_choices(self):
@@ -191,7 +191,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
     def test_set_choices_manager(self):
         # choices is a BaseManager
-        choices = {forms.ALL_FIELDS: _models.genre.objects}
+        choices = {forms.ALL_FIELDS: _models.Genre.objects}
         expected = [
             (str(o.pk), str(o))
             for o in [self.obj2, self.obj3, self.obj1]
@@ -202,7 +202,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
     def test_set_choices_queryset(self):
         # choices is a QuerySet
-        choices = {forms.ALL_FIELDS: _models.genre.objects.all()}
+        choices = {forms.ALL_FIELDS: _models.Genre.objects.all()}
         expected = [
             (str(o.pk), str(o))
             for o in [self.obj2, self.obj3, self.obj1]

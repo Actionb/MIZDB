@@ -804,8 +804,8 @@ class TestDuplicates(DataTestCase):
                 self.assertNotIn(obj, duplicates)
 
     def test_duplicates_m2m(self):
-        g1 = make(_models.genre)
-        g2 = make(_models.genre)
+        g1 = make(_models.Genre)
+        g2 = make(_models.Genre)
 
         self.obj1.genre.add(g1)
         self.obj2.genre.add(g1)

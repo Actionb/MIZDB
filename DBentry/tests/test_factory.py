@@ -96,15 +96,15 @@ class TestSelfFactory(MyTestCase):
 class TestRelatedFactory(MyTestCase):
 
     def test_rf_string_direct(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__alias='Alias1')
+        g = make(_models.Genre, genre='TestGenre0', genre_alias__alias='Alias1')
         self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
 
     def test_rf_string_single_list(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__alias=['Alias1'])
+        g = make(_models.Genre, genre='TestGenre0', genre_alias__alias=['Alias1'])
         self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
 
     def test_rf_string_list(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__alias=['Alias1', 'Alias2'])
+        g = make(_models.Genre, genre='TestGenre0', genre_alias__alias=['Alias1', 'Alias2'])
         self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
 
     def test_rf_instance_direct(self):
@@ -125,7 +125,7 @@ class TestRelatedFactory(MyTestCase):
         self.assertIn(m2, p.musiker_set.all())
 
     def test_rf_extra(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__extra=3)
+        g = make(_models.Genre, genre='TestGenre0', genre_alias__extra=3)
         self.assertEqual(g.genre_alias_set.count(), 3)
 
 
@@ -145,18 +145,18 @@ class TestM2MFactory(MyTestCase):
         self.assertIn('TestGenre2', m.genre.values_list('genre', flat=True))
 
     def test_m2m_instance_direct(self):
-        g1 = make(_models.genre)
+        g1 = make(_models.Genre)
         m = make(_models.Musiker, genre=g1)
         self.assertIn(g1, m.genre.all())
 
     def test_m2m_instance_single_list(self):
-        g1 = make(_models.genre)
+        g1 = make(_models.Genre)
         m = make(_models.Musiker, genre=[g1])
         self.assertIn(g1, m.genre.all())
 
     def test_m2m_instance_list(self):
-        g1 = make(_models.genre)
-        g2 = make(_models.genre)
+        g1 = make(_models.Genre)
+        g2 = make(_models.Genre)
         m = make(_models.Musiker, genre=[g1, g2])
         self.assertIn(g1, m.genre.all())
         self.assertIn(g2, m.genre.all())
@@ -165,8 +165,8 @@ class TestM2MFactory(MyTestCase):
         m = make(_models.Musiker, genre__extra=3)
         self.assertEqual(m.genre.count(), 3)
 
-        g1 = make(_models.genre)
-        g2 = make(_models.genre)
+        g1 = make(_models.Genre)
+        g2 = make(_models.Genre)
         m = make(_models.Musiker, genre=[g1, g2], genre__extra=2)
         self.assertIn(g1, m.genre.all())
         self.assertIn(g2, m.genre.all())
@@ -176,7 +176,7 @@ class TestM2MFactory(MyTestCase):
         m2m = M2MFactory(
             'DBentry.factory.whatever',
             accessor_name='beep boop',
-            related_model=_models.genre
+            related_model=_models.Genre
         )
         self.assertIsNone(m2m.accessor_name)
 
@@ -244,7 +244,7 @@ class TestMIZDjangoOptions(MyTestCase):
     def test_add_m2m_factories(self):
         # Assert that the created m2m factories are following the relation correctly.
         fac = modelfactory_factory(_models.artikel)
-        self.assertEqual(fac.genre.factory._meta.model, _models.genre)
+        self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.schlagwort.factory._meta.model, _models.schlagwort)
         self.assertEqual(fac.person.factory._meta.model, _models.Person)
         self.assertEqual(fac.autor.factory._meta.model, _models.autor)
@@ -265,7 +265,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.video.factory._meta.model, _models.video)
         self.assertEqual(fac.dokument.factory._meta.model, _models.dokument)
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
-        self.assertEqual(fac.genre.factory._meta.model, _models.genre)
+        self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.buch.factory._meta.model, _models.buch)
         self.assertEqual(fac.instrument.factory._meta.model, _models.instrument)
         self.assertEqual(fac.band.factory._meta.model, _models.band)
@@ -288,11 +288,11 @@ class TestMIZDjangoOptions(MyTestCase):
 
         # Relation from BaseBrochure to genre inherited by Kalendar; expected:
         # declaration name and descriptor_name = 'mocked_field_name'
-        # related_model = _models.genre
+        # related_model = _models.Genre
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.genre)
+                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.Genre)
         )
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
@@ -307,17 +307,17 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(opts.factory.mocked_field_name, Mock)
         expected_args = ('SomeFactory', )
         expected_kwargs = {
-            'descriptor_name': 'mocked_field_name', 'related_model': _models.genre}
+            'descriptor_name': 'mocked_field_name', 'related_model': _models.Genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
         # Relation from genre to BaseBrochure inherited by Kalendar; expected:
         # declaration name = 'mocked_rel_name';
         # descriptor_name = 'mocked_rel_accessor';
-        # related_model = _models.genre
+        # related_model = _models.Genre
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.genre, related_model=_models.BaseBrochure)
+                'mocked_field_name', model=_models.Genre, related_model=_models.BaseBrochure)
         )
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
@@ -332,7 +332,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
         expected_args = ('SomeFactory', )
         expected_kwargs = {
-            'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.genre}
+            'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.Genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
     @patch('DBentry.factory.get_model_relations')
@@ -368,8 +368,8 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.genre),
-            many_to_many=False, model=_models.genre, related_model=_models.BaseBrochure
+                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.Genre),
+            many_to_many=False, model=_models.Genre, related_model=_models.BaseBrochure
         )
         mocked_get_model_relations.return_value = [mocked_rel]
 

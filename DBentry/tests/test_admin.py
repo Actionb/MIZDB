@@ -822,7 +822,7 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.GenreAdmin
-    model = _models.genre
+    model = _models.Genre
     fields_expected = ['genre']
     search_fields_expected = ['genre', 'genre_alias__alias', 'pk__iexact']
 

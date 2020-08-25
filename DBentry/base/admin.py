@@ -556,7 +556,7 @@ class BaseAliasInline(BaseTabularInline):
 
 
 class BaseGenreInline(BaseTabularInline):
-    verbose_model = _models.genre
+    verbose_model = _models.Genre
 
 
 class BaseSchlagwortInline(BaseTabularInline):

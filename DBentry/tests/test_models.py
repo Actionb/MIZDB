@@ -851,7 +851,7 @@ class TestModelGeber(DataTestCase):
 
 class TestModelGenre(DataTestCase):
 
-    model = _models.genre
+    model = _models.Genre
 
     def test_str(self):
         obj = self.model(genre='Testgenre')

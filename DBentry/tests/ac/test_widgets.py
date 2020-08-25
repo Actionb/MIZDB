@@ -133,9 +133,9 @@ class TestMakeWidget(MyTestCase):
 
     def test_selectmultiple(self):
         self.assertIsInstance(
-            make_widget(model=_models.genre, multiple=False), MIZModelSelect2)
+            make_widget(model=_models.Genre, multiple=False), MIZModelSelect2)
         self.assertIsInstance(
-            make_widget(model=_models.genre, multiple=True), MIZModelSelect2Multiple)
+            make_widget(model=_models.Genre, multiple=True), MIZModelSelect2Multiple)
 
     def test_exception_on_no_model(self):
         with self.assertRaises(ImproperlyConfigured) as cm:
@@ -144,7 +144,7 @@ class TestMakeWidget(MyTestCase):
         self.assertEqual(cm.exception.args[0], expected_error_msg)
 
     def test_assigns_create_field(self):
-        widget = make_widget(model=_models.genre)
+        widget = make_widget(model=_models.Genre)
         self.assertEqual(widget.create_field, 'genre')
 
     def test_does_not_assign_url_to_not_dal_widgets(self):
@@ -153,7 +153,7 @@ class TestMakeWidget(MyTestCase):
         widget = make_widget(widget_class=widgets.TextInput)
         self.assertFalse(hasattr(widget, '_url'))
 
-        widget = make_widget(model=_models.genre, widget_class=autocomplete.ModelSelect2)
+        widget = make_widget(model=_models.Genre, widget_class=autocomplete.ModelSelect2)
         self.assertTrue(hasattr(widget, '_url'))
 
     @translation_override(language=None)
@@ -167,7 +167,7 @@ class TestMakeWidget(MyTestCase):
             widget.attrs['data-placeholder'], "Bitte zuerst Magazin auswählen.")
 
         widget = make_widget(
-            model=_models.genre, forward='magazin', attrs={'data-placeholder': 'Go home!'})
+            model=_models.Genre, forward='magazin', attrs={'data-placeholder': 'Go home!'})
         self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(widget.attrs['data-placeholder'], 'Go home!')
 
@@ -187,7 +187,7 @@ class TestMakeWidget(MyTestCase):
         # Assert that 'empty' values can be handled.
         for val in [(), [], None, ""]:
             with self.subTest(value=val):
-                widget = make_widget(model=_models.genre, forward=val)
+                widget = make_widget(model=_models.Genre, forward=val)
                 self.assertFalse(widget.forward)
 
     def test_preserves_attrs(self):
@@ -203,7 +203,7 @@ class TestMakeWidget(MyTestCase):
         self.assertEqual(widget.untouched, 1)
 
     def test_wraps(self):
-        widget = make_widget(model=_models.genre, multiple=False, wrap=False)
+        widget = make_widget(model=_models.Genre, multiple=False, wrap=False)
         self.assertIsInstance(widget, MIZModelSelect2)
-        widget = make_widget(model=_models.genre, multiple=False, wrap=True)
+        widget = make_widget(model=_models.Genre, multiple=False, wrap=True)
         self.assertIsInstance(widget, EasyWidgetWrapper)

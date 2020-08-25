@@ -268,7 +268,7 @@ class TestSearchFormChangelist(AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.genre1, cls.genre2 = batch(_models.genre, 2)
+        cls.genre1, cls.genre2 = batch(_models.Genre, 2)
         cls.reihe = make(_models.Bildreihe)
         cls.test_data = [
             make(

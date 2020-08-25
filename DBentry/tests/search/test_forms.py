@@ -37,10 +37,10 @@ class TestSearchFormFactory(MyTestCase):
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2Multiple)
-        self.assertEqual(widget.model_name, _models.genre._meta.model_name)
+        self.assertEqual(widget.model_name, _models.Genre._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
         self.assertFalse(widget.create_field, msg=msg)
-        self.assertEqual(formfield.queryset.model, _models.genre)
+        self.assertEqual(formfield.queryset.model, _models.Genre)
         self.assertFalse(formfield.required)
 
     def test_formfield_for_dbfield_dal_with_forward(self):
@@ -241,8 +241,8 @@ class TestSearchForm(MyTestCase):
     def test_get_filters_params_in_lookup_with_qs(self):
         # Assert that get_filters_params creates a comma separated string of
         # values for the 'in' lookup with querysets.
-        genre1 = make(_models.genre, genre="genre1", pk=1)
-        genre2 = make(_models.genre, genre="genre2", pk=2)
+        genre1 = make(_models.Genre, genre="genre1", pk=1)
+        genre2 = make(_models.Genre, genre="genre2", pk=2)
         form_class = self.factory(_models.bildmaterial, fields=['genre'])
         form = form_class(data={'genre': [genre1.pk, genre2.pk]})
         self.assertTrue(form.is_valid(), msg=form.errors)

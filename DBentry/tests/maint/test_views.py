@@ -240,10 +240,10 @@ class TestUnusedObjectsView(ViewTestCase):
         cls.artikel1 = make(_models.artikel)
         cls.artikel2 = make(_models.artikel)
 
-        cls.unused = make(_models.genre)
-        cls.used_once = make(_models.genre)
+        cls.unused = make(_models.Genre)
+        cls.used_once = make(_models.Genre)
         cls.artikel1.genre.add(cls.used_once)
-        cls.used_twice = make(_models.genre)
+        cls.used_twice = make(_models.Genre)
         cls.artikel1.genre.add(cls.used_twice)
         cls.artikel2.genre.add(cls.used_twice)
         cls.test_data = [cls.unused, cls.used_once, cls.used_twice]
@@ -254,7 +254,7 @@ class TestUnusedObjectsView(ViewTestCase):
         # 'unused' records.
         view = self.get_view(request=self.get_request())
         for limit in [0, 1, 2]:
-            relations, queryset = view.get_queryset(_models.genre, limit)
+            relations, queryset = view.get_queryset(_models.Genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
 
@@ -288,7 +288,7 @@ class TestUnusedObjectsView(ViewTestCase):
 
     def test_build_items(self):
         # Check the contents of the list that build_items returns.
-        items = self.get_view(self.get_request()).build_items(model=_models.genre, limit=1)
+        items = self.get_view(self.get_request()).build_items(model=_models.Genre, limit=1)
         self.assertEqual(len(items), 2)
         unused, used_once = sorted(items, key=lambda tpl: tpl[0])
         url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])

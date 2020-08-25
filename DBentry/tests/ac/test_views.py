@@ -21,7 +21,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.genre = make(_models.genre, genre='Testgenre')
+        cls.genre = make(_models.Genre, genre='Testgenre')
         cls.obj1 = make(
             cls.model, band_name='Boop', genre=cls.genre,
             musiker__extra=1, band_alias__alias='Voltaire'
@@ -148,7 +148,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_value(['value', 'label']), 'value')
 
         # Result is a model instance:
-        instance = make(_models.genre)
+        instance = make(_models.Genre)
         self.assertEqual(view.get_result_value(instance), str(instance.pk))
 
         # Result is a list/tuple, the first value is the integer 0 (ID == 0):
@@ -162,7 +162,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_label(['value', 'label']), 'label')
 
         # result is a model instance
-        instance = make(_models.genre, genre='All this testing')
+        instance = make(_models.Genre, genre='All this testing')
         self.assertEqual(view.get_result_label(instance), 'All this testing')
 
 
@@ -527,7 +527,7 @@ class TestACBuchband(ACViewTestCase):
 
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 
-    model = _models.genre
+    model = _models.Genre
     alias_accessor_name = 'genre_alias_set'
     raw_data = [{'genre_alias__alias': 'Beep'}]
 
