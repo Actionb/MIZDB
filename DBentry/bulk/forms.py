@@ -243,9 +243,9 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
             return qs
 
         for fld_name, field_path in [
-                ('num', 'ausgabe_num__num'),
-                ('lnum', 'ausgabe_lnum__lnum'),
-                ('monat', 'ausgabe_monat__monat__ordinal')]:
+                ('num', 'ausgabenum__num'),
+                ('lnum', 'ausgabelnum__lnum'),
+                ('monat', 'ausgabemonat__monat__ordinal')]:
             row_data = row.get(fld_name, [])
             if isinstance(row_data, str):
                 row_data = [row_data]
@@ -258,18 +258,18 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         if isinstance(jahre, str):
             jahre = [jahre]
         if jg and jahre:
-            if qs.filter(jahrgang=jg, ausgabe_jahr__jahr__in=jahre).exists():
-                qs = qs.filter(jahrgang=jg, ausgabe_jahr__jahr__in=jahre)
+            if qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre).exists():
+                qs = qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre)
             else:
                 # Do not shadow possible duplicates that
                 # only have one of (jg, jahre) by using OR.
                 qs = qs.filter(
-                    Q(('jahrgang', jg)) | Q(('ausgabe_jahr__jahr__in', jahre))
+                    Q(('jahrgang', jg)) | Q(('ausgabejahr__jahr__in', jahre))
                 )
         elif jg:
             qs = qs.filter(jahrgang=jg)
         elif jahre:
-            qs = qs.filter(ausgabe_jahr__jahr__in=jahre)
+            qs = qs.filter(ausgabejahr__jahr__in=jahre)
         return qs.distinct()
 
     @property

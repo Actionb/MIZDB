@@ -97,14 +97,14 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         cls.updated = make(
             cls.model,
             magazin=cls.mag,
-            ausgabe_jahr__jahr=[2000, 2001],
-            ausgabe_num__num=1
+            ausgabejahr__jahr=[2000, 2001],
+            ausgabenum__num=1
         )
         cls.multi1, cls.multi2 = batch(
             cls.model, 2,
             magazin=cls.mag,
-            ausgabe_jahr__jahr=[2000, 2001],
-            ausgabe_num__num=5
+            ausgabejahr__jahr=[2000, 2001],
+            ausgabenum__num=5
         )
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         super().setUpTestData()
@@ -177,8 +177,8 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             self.model,
             magazin=self.mag,
             jahrgang=1,
-            ausgabe_num__num=5,
-            ausgabe_jahr__jahr=2002
+            ausgabenum__num=5,
+            ausgabejahr__jahr=2002
         )
         row_data = {'jahrgang': '1', 'num': '5'}
         lookuped = form.lookup_instance(row_data)
@@ -200,16 +200,16 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             self.model,
             magazin=self.mag,
             jahrgang=2,
-            ausgabe_num__num=5,
-            ausgabe_jahr__jahr=2002
+            ausgabenum__num=5,
+            ausgabejahr__jahr=2002
         )
         # Create a control instance that should not be included in the result.
         make(
             self.model,
             magazin=self.mag,
             jahrgang=2,
-            ausgabe_num__num=5,
-            ausgabe_jahr__jahr=2003
+            ausgabenum__num=5,
+            ausgabejahr__jahr=2003
         )
         row_data = {'jahrgang': '2', 'num': '5', 'jahr': '2002'}
         lookuped = form.lookup_instance(row_data)

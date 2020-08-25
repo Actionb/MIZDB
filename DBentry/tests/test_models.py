@@ -267,8 +267,8 @@ class TestModelAusgabe(DataTestCase):
         # sonderausgabe + beschreibung + any other data => beschreibung
         name_data.update({
             'jahrgang': ('2', ),
-            'ausgabe_jahr__jahr': ('2020', ),
-            'ausgabe_monat__monat__abk': ('Dez', )
+            'ausgabejahr__jahr': ('2020', ),
+            'ausgabemonat__monat__abk': ('Dez', )
         })
         self.assertEqual(
             self.model._get_name(**name_data),
@@ -288,12 +288,12 @@ class TestModelAusgabe(DataTestCase):
     @translation_override(language=None)
     def test_get_name_jahr(self):
         # Check the results of get_name if 'jahr' is given.
-        name_data = {'ausgabe_jahr__jahr': ('2020', )}
+        name_data = {'ausgabejahr__jahr': ('2020', )}
         test_data = [
-            ({'ausgabe_monat__monat__abk': ('Dez', )}, "2020-Dez"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "2020-Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabe_lnum__lnum': ('21', )}, "21 (2020)"),
-            ({'ausgabe_num__num': ('20', )}, '2020-20'),
+            ({'ausgabelnum__lnum': ('21', )}, "21 (2020)"),
+            ({'ausgabenum__num': ('20', )}, '2020-20'),
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -305,14 +305,14 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_jahr_multiple_values(self):
         # Check the results of get_name if multiple values for 'jahr'
         # (or other attributes) are given.
-        name_data = {'ausgabe_jahr__jahr': ('2021', '2020')}
+        name_data = {'ausgabejahr__jahr': ('2021', '2020')}
         test_data = [
             (
-                {'ausgabe_monat__monat__abk': ('Jan', 'Dez')},
+                {'ausgabemonat__monat__abk': ('Jan', 'Dez')},
                 "2020/21-Jan/Dez"
             ),
-            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22 (2020/21)"),
-            ({'ausgabe_num__num': ('21', '20')}, "2020/21-20/21"),
+            ({'ausgabelnum__lnum': ('22', '21')}, "21/22 (2020/21)"),
+            ({'ausgabenum__num': ('21', '20')}, "2020/21-20/21"),
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -325,13 +325,13 @@ class TestModelAusgabe(DataTestCase):
         # Check the results of get_name if 'jahrgang' and no 'jahr' is given.
         name_data = {'jahrgang': ('2', )}
         test_data = [
-            ({'ausgabe_monat__monat__abk': ('Dez', )}, "Jg. 2-Dez"),
-            ({'ausgabe_monat__monat__abk': ('Jan', 'Dez')}, "Jg. 2-Jan/Dez"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "Jg. 2-Dez"),
+            ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "Jg. 2-Jan/Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabe_lnum__lnum': ('21', )}, "21 (Jg. 2)"),
-            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22 (Jg. 2)"),
-            ({'ausgabe_num__num': ('20', )}, "Jg. 2-20"),
-            ({'ausgabe_num__num': ('21', '20')}, "Jg. 2-20/21")
+            ({'ausgabelnum__lnum': ('21', )}, "21 (Jg. 2)"),
+            ({'ausgabelnum__lnum': ('22', '21')}, "21/22 (Jg. 2)"),
+            ({'ausgabenum__num': ('20', )}, "Jg. 2-20"),
+            ({'ausgabenum__num': ('21', '20')}, "Jg. 2-20/21")
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -343,13 +343,13 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_no_jahr_or_jahrgang(self):
         # Check the results of get_name if no 'jahrgang' or 'jahr' is given.
         test_data = [
-            ({'ausgabe_monat__monat__abk': ('Dez', )}, "k.A.-Dez"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "k.A.-Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabe_lnum__lnum': ('21', )}, "21"),
-            ({'ausgabe_num__num': ('20', )}, "k.A.-20"),
-            ({'ausgabe_monat__monat__abk': ('Jan', 'Dez')}, "k.A.-Jan/Dez"),
-            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22"),
-            ({'ausgabe_num__num': ('21', '20')}, "k.A.-20/21")
+            ({'ausgabelnum__lnum': ('21', )}, "21"),
+            ({'ausgabenum__num': ('20', )}, "k.A.-20"),
+            ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "k.A.-Jan/Dez"),
+            ({'ausgabelnum__lnum': ('22', '21')}, "21/22"),
+            ({'ausgabenum__num': ('21', '20')}, "k.A.-20/21")
         ]
         for name_data, expected in test_data:
             with self.subTest(name_data=name_data):
@@ -372,10 +372,10 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_ausgaben_merkmal(self):
         # Check the results of get_name with ausgaben_merkmal override set.
         name_data = {
-            'ausgabe_jahr__jahr': ('2020', ),
-            'ausgabe_monat__monat__abk': ('Dez', ),
-            'ausgabe_lnum__lnum': ('21', ),
-            'ausgabe_num__num': ('20', ),
+            'ausgabejahr__jahr': ('2020', ),
+            'ausgabemonat__monat__abk': ('Dez', ),
+            'ausgabelnum__lnum': ('21', ),
+            'ausgabenum__num': ('20', ),
             'e_datum': ('02.05.2018', ),
         }
         test_data = [
@@ -393,7 +393,7 @@ class TestModelAusgabe(DataTestCase):
         # Some edge case tests:
         name_data = {
             'magazin__ausgaben_merkmal': ('lnum', ),
-            'ausgabe_lnum__lnum': ('21', )
+            'ausgabelnum__lnum': ('21', )
         }
         self.assertEqual(
             self.model._get_name(**name_data), '21',
@@ -414,10 +414,10 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_ausgaben_merkmal_multiple_values(self):
         # Check the results of get_name with ausgaben_merkmal override set.
         name_data = {
-            'ausgabe_jahr__jahr': ('2021', '2020'),
-            'ausgabe_monat__monat__abk': ('Jan', 'Dez'),
-            'ausgabe_lnum__lnum': ('22', '21'),
-            'ausgabe_num__num': ('21', '20'),
+            'ausgabejahr__jahr': ('2021', '2020'),
+            'ausgabemonat__monat__abk': ('Jan', 'Dez'),
+            'ausgabelnum__lnum': ('22', '21'),
+            'ausgabenum__num': ('21', '20'),
         }
         test_data = [
             ('monat', '2020/21-Jan/Dez'),
@@ -449,7 +449,7 @@ class TestModelAusgabe(DataTestCase):
 
 class TestModelAusgabeJahr(DataTestCase):
 
-    model = _models.ausgabe_jahr
+    model = _models.AusgabeJahr
 
     def test_str(self):
         obj = make(self.model, jahr=2018)
@@ -462,7 +462,7 @@ class TestModelAusgabeJahr(DataTestCase):
 
 class TestModelAusgabeLnum(DataTestCase):
 
-    model = _models.ausgabe_lnum
+    model = _models.AusgabeLnum
 
     def test_str(self):
         obj = make(self.model, lnum=21)
@@ -475,7 +475,7 @@ class TestModelAusgabeLnum(DataTestCase):
 
 class TestModelAusgabeMonat(DataTestCase):
 
-    model = _models.ausgabe_monat
+    model = _models.AusgabeMonat
 
     def test_str(self):
         obj = make(self.model, monat__monat='Dezember')
@@ -494,7 +494,7 @@ class TestModelAusgabeMonat(DataTestCase):
 
 class TestModelAusgabeNum(DataTestCase):
 
-    model = _models.ausgabe_num
+    model = _models.AusgabeNum
 
     def test_str(self):
         obj = make(self.model, num=20)

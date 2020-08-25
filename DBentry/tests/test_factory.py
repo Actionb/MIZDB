@@ -490,77 +490,77 @@ class TestAusgabeFactory(ModelFactoryTestCase):
 
     factory_class = modelfactory_factory(_models.Ausgabe)
 
-    def test_ausgabe_jahr(self):
-        a = self.factory_class(ausgabe_jahr__jahr=2001)
-        self.assertIn(2001, a.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertEqual(a.ausgabe_jahr_set.count(), 1)
+    def test_ausgabejahr(self):
+        a = self.factory_class(ausgabejahr__jahr=2001)
+        self.assertIn(2001, a.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertEqual(a.ausgabejahr_set.count(), 1)
 
-        a = self.factory_class(ausgabe_jahr__jahr=[2001, 2002])
-        self.assertIn(2001, a.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(2002, a.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertEqual(a.ausgabe_jahr_set.count(), 2)
+        a = self.factory_class(ausgabejahr__jahr=[2001, 2002])
+        self.assertIn(2001, a.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(2002, a.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertEqual(a.ausgabejahr_set.count(), 2)
 
-    def test_ausgabe_num(self):
-        a = self.factory_class(ausgabe_num__num=21)
-        self.assertIn(21, a.ausgabe_num_set.values_list('num', flat=True))
-        self.assertEqual(a.ausgabe_num_set.count(), 1)
+    def test_ausgabenum(self):
+        a = self.factory_class(ausgabenum__num=21)
+        self.assertIn(21, a.ausgabenum_set.values_list('num', flat=True))
+        self.assertEqual(a.ausgabenum_set.count(), 1)
 
-        a = self.factory_class(ausgabe_num__num=[21, 22])
-        self.assertIn(21, a.ausgabe_num_set.values_list('num', flat=True))
-        self.assertIn(22, a.ausgabe_num_set.values_list('num', flat=True))
-        self.assertEqual(a.ausgabe_num_set.count(), 2)
+        a = self.factory_class(ausgabenum__num=[21, 22])
+        self.assertIn(21, a.ausgabenum_set.values_list('num', flat=True))
+        self.assertIn(22, a.ausgabenum_set.values_list('num', flat=True))
+        self.assertEqual(a.ausgabenum_set.count(), 2)
 
-    def test_ausgabe_lnum(self):
-        a = self.factory_class(ausgabe_lnum__lnum=21)
-        self.assertIn(21, a.ausgabe_lnum_set.values_list('lnum', flat=True))
-        self.assertEqual(a.ausgabe_lnum_set.count(), 1)
+    def test_ausgabelnum(self):
+        a = self.factory_class(ausgabelnum__lnum=21)
+        self.assertIn(21, a.ausgabelnum_set.values_list('lnum', flat=True))
+        self.assertEqual(a.ausgabelnum_set.count(), 1)
 
-        a = self.factory_class(ausgabe_lnum__lnum=[21, 22])
-        self.assertIn(21, a.ausgabe_lnum_set.values_list('lnum', flat=True))
-        self.assertIn(22, a.ausgabe_lnum_set.values_list('lnum', flat=True))
-        self.assertEqual(a.ausgabe_lnum_set.count(), 2)
+        a = self.factory_class(ausgabelnum__lnum=[21, 22])
+        self.assertIn(21, a.ausgabelnum_set.values_list('lnum', flat=True))
+        self.assertIn(22, a.ausgabelnum_set.values_list('lnum', flat=True))
+        self.assertEqual(a.ausgabelnum_set.count(), 2)
 
-    def test_ausgabe_monat(self):
+    def test_ausgabemonat(self):
         januar, _ = _models.monat.objects.get_or_create(
             monat='Januar', abk='Jan', ordinal=1)
         februar, _ = _models.monat.objects.get_or_create(
             monat='Februar', abk='Feb', ordinal=2)
 
-        a = self.factory_class(ausgabe_monat__monat__monat='Januar')
+        a = self.factory_class(ausgabemonat__monat__monat='Januar')
         self.assertIn(
             (januar.pk, 'Januar'),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 1)
+        self.assertEqual(a.ausgabemonat_set.count(), 1)
 
-        a = self.factory_class(ausgabe_monat__monat__ordinal=1)
+        a = self.factory_class(ausgabemonat__monat__ordinal=1)
         self.assertIn(
             (januar.pk, 'Januar', 1),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 1)
+        self.assertEqual(a.ausgabemonat_set.count(), 1)
 
-        a = self.factory_class(ausgabe_monat__monat__monat=['Januar', 'Februar'])
+        a = self.factory_class(ausgabemonat__monat__monat=['Januar', 'Februar'])
         self.assertIn(
             (januar.pk, 'Januar'),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat')
         )
         self.assertIn(
             (februar.pk, 'Februar'),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 2)
+        self.assertEqual(a.ausgabemonat_set.count(), 2)
 
-        a = self.factory_class(ausgabe_monat__monat__ordinal=[1, 2])
+        a = self.factory_class(ausgabemonat__monat__ordinal=[1, 2])
         self.assertIn(
             (januar.pk, 'Januar', 1),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
         )
         self.assertIn(
             (februar.pk, 'Februar', 2),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 2)
+        self.assertEqual(a.ausgabemonat_set.count(), 2)
 
     def test_ausgabe_magazin(self):
         a = self.factory_class(magazin__magazin_name='Testmagazin')
@@ -574,31 +574,31 @@ class TestAusgabeFactory(ModelFactoryTestCase):
 
         obj1 = self.factory_class(
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=2000, ausgabe_num__num=1,
+            ausgabejahr__jahr=2000, ausgabenum__num=1,
             bestand__lagerort=lagerort_1, bestand__provenienz=prov
         )
         obj2 = self.factory_class(
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=2000, ausgabe_num__num=2,
+            ausgabejahr__jahr=2000, ausgabenum__num=2,
             bestand__lagerort=[lagerort_1, lagerort_2],
             bestand__provenienz=[None, prov],
         )
         obj3 = self.factory_class(
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=2000, ausgabe_num__num=3,
+            ausgabejahr__jahr=2000, ausgabenum__num=3,
             bestand__lagerort=lagerort_2,
         )
 
         self.assertEqual(obj1.magazin.magazin_name, 'Testmagazin')
-        self.assertIn(2000, obj1.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(1, obj1.ausgabe_num_set.values_list('num', flat=True))
+        self.assertIn(2000, obj1.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(1, obj1.ausgabenum_set.values_list('num', flat=True))
         self.assertEqual(obj1.bestand_set.count(), 1)
         self.assertEqual(obj1.bestand_set.first().lagerort, lagerort_1)
         self.assertEqual(obj1.bestand_set.first().provenienz, prov)
 
         self.assertEqual(obj2.magazin.magazin_name, 'Testmagazin')
-        self.assertIn(2000, obj2.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(2, obj2.ausgabe_num_set.values_list('num', flat=True))
+        self.assertIn(2000, obj2.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(2, obj2.ausgabenum_set.values_list('num', flat=True))
         self.assertEqual(obj2.bestand_set.count(), 2)
         b1, b2 = obj2.bestand_set.all()
         self.assertEqual(b1.lagerort, lagerort_1)
@@ -607,8 +607,8 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         self.assertEqual(b2.provenienz, prov)
 
         self.assertEqual(obj3.magazin.magazin_name, 'Testmagazin')
-        self.assertIn(2000, obj3.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(3, obj3.ausgabe_num_set.values_list('num', flat=True))
+        self.assertIn(2000, obj3.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(3, obj3.ausgabenum_set.values_list('num', flat=True))
         self.assertEqual(obj3.bestand_set.count(), 1)
         self.assertEqual(obj3.bestand_set.first().lagerort, lagerort_2)
         self.assertIsNone(obj3.bestand_set.first().provenienz)

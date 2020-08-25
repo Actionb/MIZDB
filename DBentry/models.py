@@ -211,8 +211,8 @@ class Ausgabe(ComputedNameModel):
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
-        'magazin__ausgaben_merkmal', 'ausgabe_jahr__jahr', 'ausgabe_num__num',
-        'ausgabe_lnum__lnum', 'ausgabe_monat__monat__abk'
+        'magazin__ausgaben_merkmal', 'ausgabejahr__jahr', 'ausgabenum__num',
+        'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
@@ -250,13 +250,13 @@ class Ausgabe(ComputedNameModel):
         jahre = jahrgang = ''
         if 'jahrgang' in data:
             jahrgang = data['jahrgang'][0]
-        if 'ausgabe_jahr__jahr' in data:
+        if 'ausgabejahr__jahr' in data:
             # Concatenate the years given.
             # Use four digits for the first year,
             # use only the last two digits for the rest.
             jahre = [
                 str(jahr)[2:] if i else str(jahr)
-                for i, jahr in enumerate(sorted(data['ausgabe_jahr__jahr']))
+                for i, jahr in enumerate(sorted(data['ausgabejahr__jahr']))
             ]
             jahre = concat_limit(jahre, sep="/")
         if not jahre:
@@ -269,26 +269,26 @@ class Ausgabe(ComputedNameModel):
         e_datum = nums = lnums = monate = ''
         if 'e_datum' in data:
             e_datum = data['e_datum'][0]
-        if 'ausgabe_num__num' in data:
+        if 'ausgabenum__num' in data:
             nums = concat_limit(
-                sorted(data['ausgabe_num__num']),
+                sorted(data['ausgabenum__num']),
                 sep="/",
                 z=2
             )
-        if 'ausgabe_lnum__lnum' in data:
+        if 'ausgabelnum__lnum' in data:
             lnums = concat_limit(
-                sorted(data['ausgabe_lnum__lnum']),
+                sorted(data['ausgabelnum__lnum']),
                 sep="/",
                 z=2
             )
-        if 'ausgabe_monat__monat__abk' in data:
+        if 'ausgabemonat__monat__abk' in data:
             monat_ordering = [
                 'Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep',
                 'Okt', 'Nov', 'Dez'
             ]
             # Sort the month abbreviations according to the calendar.
             monate = sorted(
-                data['ausgabe_monat__monat__abk'],
+                data['ausgabemonat__monat__abk'],
                 key=lambda abk:
                     monat_ordering.index(abk) + 1 if abk in monat_ordering else 0
             )
@@ -327,10 +327,10 @@ class Ausgabe(ComputedNameModel):
         return cls._name_default % {'verbose_name': cls._meta.verbose_name}
 
 
-class ausgabe_jahr(BaseModel):
+class AusgabeJahr(BaseModel):
     jahr = YearField('Jahr')
 
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
 
     search_fields = ['ausgabe']
 
@@ -341,10 +341,10 @@ class ausgabe_jahr(BaseModel):
         ordering = ['jahr']
 
 
-class ausgabe_num(BaseModel):
+class AusgabeNum(BaseModel):
     num = models.PositiveSmallIntegerField('Nummer')
 
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
 
     search_fields = ['num']
 
@@ -355,10 +355,10 @@ class ausgabe_num(BaseModel):
         ordering = ['num']
 
 
-class ausgabe_lnum(BaseModel):
+class AusgabeLnum(BaseModel):
     lnum = models.PositiveSmallIntegerField('Lfd. Nummer')
 
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
 
     search_fields = ['lnum']
 
@@ -369,8 +369,8 @@ class ausgabe_lnum(BaseModel):
         ordering = ['lnum']
 
 
-class ausgabe_monat(BaseModel):
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
+class AusgabeMonat(BaseModel):
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
     monat = models.ForeignKey('monat', models.CASCADE)
 
     search_fields = ['monat__monat', 'monat__abk']

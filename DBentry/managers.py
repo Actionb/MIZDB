@@ -296,7 +296,7 @@ class AusgabeQuerySet(CNQuerySet):
         """
         start = start_obj or self.chronologic_order().first()
         start_date = start.e_datum
-        years = start.ausgabe_jahr_set.values_list('jahr', flat=True)
+        years = start.ausgabejahr_set.values_list('jahr', flat=True)
         if start_date:
             start_year = start_date.year
         elif years:
@@ -310,26 +310,26 @@ class AusgabeQuerySet(CNQuerySet):
 
         # Increment jahrgang using a (partial) date.
         if start_date is None:
-            month_ordinals = start.ausgabe_monat_set.values_list(
+            month_ordinals = start.ausgabemonat_set.values_list(
                 'monat__ordinal', flat=True)
             start_date = build_date(years, month_ordinals)
 
         if start_date:
             val_dicts = queryset.values_dict(
-                'e_datum', 'ausgabe_jahr__jahr', 'ausgabe_monat__monat__ordinal',
+                'e_datum', 'ausgabejahr__jahr', 'ausgabemonat__monat__ordinal',
                 include_empty=False, flatten=False
             )
             for pk, val_dict in val_dicts.items():
                 if 'e_datum' in val_dict:
                     obj_date = val_dict.get('e_datum')[-1]
-                elif ('ausgabe_jahr__jahr' not in val_dict
-                        or 'ausgabe_monat__monat__ordinal' not in val_dict):
+                elif ('ausgabejahr__jahr' not in val_dict
+                        or 'ausgabemonat__monat__ordinal' not in val_dict):
                     # Need both year and month to build a meaningful date.
                     continue
                 else:
                     obj_date = build_date(
-                        val_dict['ausgabe_jahr__jahr'],
-                        val_dict['ausgabe_monat__monat__ordinal']
+                        val_dict['ausgabejahr__jahr'],
+                        val_dict['ausgabemonat__monat__ordinal']
                     )
                 if obj_date < start_date:
                     # If the obj_date lies before start_date the obj_jg will
@@ -351,25 +351,25 @@ class AusgabeQuerySet(CNQuerySet):
                 ids_seen.add(pk)
 
         # Increment jahrgang using the ausgabe's num.
-        nums = start.ausgabe_num_set.values_list('num', flat=True)
+        nums = start.ausgabenum_set.values_list('num', flat=True)
         if nums and start_year:
             queryset = queryset.exclude(pk__in=ids_seen)
             start_num = min(nums)
             val_dicts = queryset.values_dict(
-                'ausgabe_num__num', 'ausgabe_jahr__jahr',
+                'ausgabenum__num', 'ausgabejahr__jahr',
                 include_empty=False, flatten=False
             )
             for pk, val_dict in val_dicts.items():
-                if ('ausgabe_num__num' not in val_dict
-                        or 'ausgabe_jahr__jahr' not in val_dict):
+                if ('ausgabenum__num' not in val_dict
+                        or 'ausgabejahr__jahr' not in val_dict):
                     continue
 
-                obj_year = min(val_dict['ausgabe_jahr__jahr'])
-                obj_num = min(val_dict['ausgabe_num__num'])
-                if len(val_dict['ausgabe_jahr__jahr']) > 1:
+                obj_year = min(val_dict['ausgabejahr__jahr'])
+                obj_num = min(val_dict['ausgabenum__num'])
+                if len(val_dict['ausgabejahr__jahr']) > 1:
                     # The ausgabe spans two years, choose the highest num
                     # number to order it at the end of the year.
-                    obj_num = max(val_dict['ausgabe_num__num'])
+                    obj_num = max(val_dict['ausgabenum__num'])
 
                 if ((obj_num > start_num and obj_year == start_year)
                         or (obj_num < start_num and obj_year == start_year + 1)):
@@ -393,12 +393,12 @@ class AusgabeQuerySet(CNQuerySet):
         if start_year:
             queryset = queryset.exclude(pk__in=ids_seen)
             val_dicts = queryset.values_dict(
-                'ausgabe_jahr__jahr', include_empty=False, flatten=False
+                'ausgabejahr__jahr', include_empty=False, flatten=False
             )
             for pk, val_dict in val_dicts.items():
-                if 'ausgabe_jahr__jahr' not in val_dict:
+                if 'ausgabejahr__jahr' not in val_dict:
                     continue
-                obj_jg = start_jg + min(val_dict['ausgabe_jahr__jahr']) - start_year
+                obj_jg = start_jg + min(val_dict['ausgabejahr__jahr']) - start_year
                 if obj_jg not in update_dict:
                     update_dict[obj_jg] = []
                 update_dict[obj_jg].append(pk)
@@ -450,7 +450,7 @@ class AusgabeQuerySet(CNQuerySet):
             pk_order_item = '-%s' % pk_name
 
         # Determine if jahr should come before jahrgang in ordering.
-        jj_values = list(self.values_list('ausgabe_jahr', 'jahrgang'))
+        jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
         jahr_values, jahrgang_values = (
             list(filter(lambda x: x is not None, l)) for l in zip(*jj_values)
@@ -468,9 +468,9 @@ class AusgabeQuerySet(CNQuerySet):
         # NOTE: tests succeed with or without distinct = True
         counted = self.aggregate(
             e_datum__sum=Count('e_datum', distinct=True),
-            lnum__sum=Count('ausgabe_lnum', distinct=True),
-            monat__sum=Count('ausgabe_monat', distinct=True),
-            num__sum=Count('ausgabe_num', distinct=True),
+            lnum__sum=Count('ausgabelnum', distinct=True),
+            monat__sum=Count('ausgabemonat', distinct=True),
+            num__sum=Count('ausgabenum', distinct=True),
         )
         default_criteria_ordering = [
             'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
@@ -491,10 +491,10 @@ class AusgabeQuerySet(CNQuerySet):
         ordering.extend(result_ordering + [pk_order_item])
 
         clone = self.annotate(
-            num=Max('ausgabe_num__num'),
-            monat=Max('ausgabe_monat__monat__ordinal'),
-            lnum=Max('ausgabe_lnum__lnum'),
-            jahr=Min('ausgabe_jahr__jahr')
+            num=Max('ausgabenum__num'),
+            monat=Max('ausgabemonat__monat__ordinal'),
+            lnum=Max('ausgabelnum__lnum'),
+            jahr=Min('ausgabejahr__jahr')
         ).order_by(*ordering)
         clone.chronologically_ordered = True
         return clone

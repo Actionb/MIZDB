@@ -93,23 +93,23 @@ class TestAusgabeChronologicOrder(DataTestCase):
             for i in range(1, 13):
                 cls.e_datum.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    e_datum=get_date(i, year), ausgabe_jahr__jahr=year
+                    e_datum=get_date(i, year), ausgabejahr__jahr=year
                 ))
                 cls.num.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_num__num=i, ausgabe_jahr__jahr=year
+                    ausgabenum__num=i, ausgabejahr__jahr=year
                 ))
                 cls.lnum.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_lnum__lnum=i, ausgabe_jahr__jahr=year
+                    ausgabelnum__lnum=i, ausgabejahr__jahr=year
                 ))
                 cls.monat.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_monat__monat__ordinal=i, ausgabe_jahr__jahr=year
+                    ausgabemonat__monat__ordinal=i, ausgabejahr__jahr=year
                 ))
                 cls.jg.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_num__num=i, jahrgang=jg
+                    ausgabenum__num=i, jahrgang=jg
                 ))
         cls.all = cls.e_datum + cls.num + cls.lnum + cls.monat + cls.jg
         super().setUpTestData()
@@ -240,7 +240,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
     def test_find_keeps_order(self):
         # Assert that filtering the queryset via MIZQuerySet.find(ordered=True)
         # maintains the ordering established by chronologic_order.
-        queryset = self.model.objects.filter(ausgabe_jahr__jahr=2000).chronologic_order()
+        queryset = self.model.objects.filter(ausgabejahr__jahr=2000).chronologic_order()
         found_ids = [
             pk for pk, str_repr in queryset.find('2000', ordered=True)
         ]
@@ -284,58 +284,58 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 
     raw_data = [
         {  # obj1: start_jg
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000],
-            'e_datum': '2000-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000],
+            'e_datum': '2000-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj2: start_jg - 1
             # Should belong to the previous jahrgang.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000],
-            'e_datum': '2000-05-01', 'ausgabe_monat__monat__ordinal': [5],
-            'ausgabe_num__num': [5],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000],
+            'e_datum': '2000-05-01', 'ausgabemonat__monat__ordinal': [5],
+            'ausgabenum__num': [5],
         },
         {  # obj3: start_jg - 1
             # This object *starts* the jahrgang that obj2 also belongs to.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1999],
-            'e_datum': '1999-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [1999],
+            'e_datum': '1999-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj4: start_jg
             # Test the differentation of jahr/num/monat values when the object
             # spans more than one year.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001],
-            'e_datum': '2000-12-31', 'ausgabe_monat__monat__ordinal': [12, 1],
-            'ausgabe_num__num': [12, 1],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000, 2001],
+            'e_datum': '2000-12-31', 'ausgabemonat__monat__ordinal': [12, 1],
+            'ausgabenum__num': [12, 1],
         },
         {  # obj5: start_jg
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
-            'e_datum': '2001-05-01', 'ausgabe_monat__monat__ordinal': [5],
-            'ausgabe_num__num': [5],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
+            'e_datum': '2001-05-01', 'ausgabemonat__monat__ordinal': [5],
+            'ausgabenum__num': [5],
         },
         {  # obj6: start_jg + 1
             # This object begins the jahrgang following the starting jahrgang.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
-            'e_datum': '2001-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
+            'e_datum': '2001-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj7: start_jg + 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002],
-            'e_datum': '2002-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
+            'e_datum': '2002-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj8: ignored
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6]
         },
         {  # obj9: start_jg - 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1998],
-            'e_datum': '1998-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [1998],
+            'e_datum': '1998-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj10: start_jg - 3
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1997],
-            'e_datum': '1997-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [1997],
+            'e_datum': '1997-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
     ]
 
@@ -384,7 +384,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 
     def test_increment_by_num(self):
         self.queryset.update(e_datum=None)
-        _models.ausgabe_monat.objects.all().delete()
+        _models.AusgabeMonat.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
         self.assertIncrementedUpdateDict(update_dict)
@@ -392,8 +392,8 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 
     def test_increment_by_year(self):
         self.queryset.update(e_datum=None)
-        _models.ausgabe_monat.objects.all().delete()
-        _models.ausgabe_num.objects.all().delete()
+        _models.AusgabeMonat.objects.all().delete()
+        _models.AusgabeNum.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
 
@@ -427,10 +427,10 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         # Test increment_jahrgang with a mixed bag of values.
         # Remove the e_datum and month values from obj4 to obj7.
         ids = [self.obj4.pk, self.obj5.pk, self.obj6.pk, self.obj7.pk]
-        _models.ausgabe_monat.objects.filter(ausgabe_id__in=ids).delete()
+        _models.AusgabeMonat.objects.filter(ausgabe_id__in=ids).delete()
         _models.Ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
         # Also remove num values from obj6 and obj7.
-        _models.ausgabe_num.objects.filter(
+        _models.AusgabeNum.objects.filter(
             ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
 
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
@@ -463,8 +463,8 @@ class TestCNQuerySet(DataTestCase):
         cls.mag = make(_models.magazin, magazin_name='Testmagazin')
         cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(
-            cls.model, magazin=cls.mag, ausgabe_monat__monat__monat='Dezember',
-            ausgabe_lnum__lnum=12, ausgabe_num__num=12, ausgabe_jahr__jahr=2000
+            cls.model, magazin=cls.mag, ausgabemonat__monat__monat='Dezember',
+            ausgabelnum__lnum=12, ausgabenum__num=12, ausgabejahr__jahr=2000
         )
         cls.test_data = [cls.obj1, cls.obj2]
         super().setUpTestData()

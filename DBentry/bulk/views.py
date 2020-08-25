@@ -199,10 +199,10 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 data = row[field_name]
                 if not isinstance(data, (list, tuple)):
                     data = [data]
-                accessor_name = "ausgabe_{}_set".format(field_name)
+                accessor_name = "ausgabe{}_set".format(field_name)
                 related_manager = getattr(instance, accessor_name)
                 if field_name == 'monat':
-                    # ausgabe_monat is actually a m2m intermediary table
+                    # ausgabemonat is actually a m2m intermediary table
                     # between tables 'ausgabe' and 'monat'. The form values for
                     # 'monat' refer to the ordinals of the months.
                     for i, value in enumerate(data):

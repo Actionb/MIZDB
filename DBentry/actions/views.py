@@ -46,7 +46,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     action_name = 'bulk_jg'
     action_allowed_checks = [check_same_magazin]
 
-    affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
+    affected_fields = ['jahrgang', 'ausgabejahr__jahr']
 
     form_class = BulkEditJahrgangForm
 
@@ -625,9 +625,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ausgabe_instance.bestand_set.update(
                         ausgabe_id=None, brochure_id=new_brochure.pk
                     )
-                    ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list(
+                    ausgabejahre = ausgabe_instance.ausgabejahr_set.values_list(
                         'jahr', flat=True)
-                    for jahr in ausgabe_jahre:
+                    for jahr in ausgabejahre:
                         _models.BrochureYear.objects.create(
                             brochure=new_brochure, jahr=jahr
                         )

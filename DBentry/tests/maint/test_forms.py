@@ -57,10 +57,10 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
     def test_get_dupefields_sorts_reverse_choices(self):
         # Assert that get_dupe_fields_for_model sorts the reverse choices by
         # group name (lower()). ausgabe has the following 7 reverse rels:
-        # <ManyToOneRel: DBentry.bestand>, <ManyToOneRel: DBentry.ausgabe_jahr>,
-        # <ManyToOneRel: DBentry.ausgabe_lnum>, <ManyToOneRel: DBentry.artikel>,
-        # <ManyToOneRel: DBentry.basebrochure>, <ManyToOneRel: DBentry.ausgabe_num>,
-        # <ManyToOneRel: DBentry.ausgabe_monat>]
+        # <ManyToOneRel: DBentry.bestand>, <ManyToOneRel: DBentry.ausgabejahr>,
+        # <ManyToOneRel: DBentry.ausgabelnum>, <ManyToOneRel: DBentry.artikel>,
+        # <ManyToOneRel: DBentry.basebrochure>, <ManyToOneRel: DBentry.ausgabenum>,
+        # <ManyToOneRel: DBentry.ausgabemonat>]
         dupe_fields = get_dupe_fields_for_model(_models.Ausgabe)
         self.assertIn('reverse', dupe_fields)
         reverse = dupe_fields['reverse']

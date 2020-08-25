@@ -566,10 +566,10 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1 = make(
             _models.Ausgabe,
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=[2020, 2021, 2022],
-            ausgabe_num__num=[10, 11, 12],
-            ausgabe_lnum__lnum=[10, 11, 12],
-            ausgabe_monat__monat__monat=['Januar', 'Februar'],
+            ausgabejahr__jahr=[2020, 2021, 2022],
+            ausgabenum__num=[10, 11, 12],
+            ausgabelnum__lnum=[10, 11, 12],
+            ausgabemonat__monat__monat=['Januar', 'Februar'],
             artikel__schlagzeile='Test', artikel__seite=1,
             bestand__lagerort__pk=[ZRAUM_ID, DUPLETTEN_ID],
         )
@@ -604,8 +604,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_add_crosslinks_custom(self):
         obj = make(
             _models.Ausgabe,
-            ausgabe_num__extra=1, ausgabe_lnum__extra=1, ausgabe_monat__extra=1,
-            ausgabe_jahr__extra=1,
+            ausgabenum__extra=1, ausgabelnum__extra=1, ausgabemonat__extra=1,
+            ausgabejahr__extra=1,
             artikel__extra=1, audio__extra=1, bestand__extra=1,
         )
         # Only artikel should show up in the crosslinks as audio is present in the inlines.

@@ -122,17 +122,17 @@ class AudioAdmin(MIZModelAdmin):
 @admin.register(_models.Ausgabe, site=miz_site)
 class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
-        model = _models.ausgabe_num
+        model = _models.AusgabeNum
         extra = 0
     class MonatInLine(BaseTabularInline):
-        model = _models.ausgabe_monat
+        model = _models.AusgabeMonat
         verbose_model = _models.monat
         extra = 0
     class LNumInLine(BaseTabularInline):
-        model = _models.ausgabe_lnum
+        model = _models.AusgabeLnum
         extra = 0
     class JahrInLine(BaseTabularInline):
-        model = _models.ausgabe_jahr
+        model = _models.AusgabeJahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
     class AudioInLine(BaseTabularInline):
@@ -141,7 +141,7 @@ class AusgabenAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
     list_prefetch_related = [
-        'ausgabe_jahr_set', 'ausgabe_num_set', 'ausgabe_lnum_set', 'ausgabe_monat_set']
+        'ausgabejahr_set', 'ausgabenum_set', 'ausgabelnum_set', 'ausgabemonat_set']
 
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -153,15 +153,15 @@ class AusgabenAdmin(MIZModelAdmin):
     )
     search_form_kwargs = {
         'fields': [
-            'magazin', 'status', 'ausgabe_jahr__jahr__range', 'ausgabe_num__num__range',
-            'ausgabe_lnum__lnum__range', 'ausgabe_monat__monat__ordinal__range',
+            'magazin', 'status', 'ausgabejahr__jahr__range', 'ausgabenum__num__range',
+            'ausgabelnum__lnum__range', 'ausgabemonat__monat__ordinal__range',
             'jahrgang', 'sonderausgabe', 'audio', 'id__in'
         ],
         'labels': {
-            'ausgabe_jahr__jahr__range': 'Jahr',
-            'ausgabe_num__num__range': 'Nummer',
-            'ausgabe_lnum__lnum__range': 'Lfd. Nummer',
-            'ausgabe_monat__monat__ordinal__range': 'Monatsnummer',
+            'ausgabejahr__jahr__range': 'Jahr',
+            'ausgabenum__num__range': 'Nummer',
+            'ausgabelnum__lnum__range': 'Lfd. Nummer',
+            'ausgabemonat__monat__ordinal__range': 'Monatsnummer',
             'audio': 'Audio (Beilagen)'
         }
     }
@@ -182,21 +182,21 @@ class AusgabenAdmin(MIZModelAdmin):
     anz_artikel.annotation = Count('artikel', distinct=True)
 
     def jahr_string(self, obj):
-        return concat_limit(obj.ausgabe_jahr_set.all())
+        return concat_limit(obj.ausgabejahr_set.all())
     jahr_string.short_description = 'Jahre'
 
     def num_string(self, obj):
-        return concat_limit(obj.ausgabe_num_set.all())
+        return concat_limit(obj.ausgabenum_set.all())
     num_string.short_description = 'Nummer'
 
     def lnum_string(self, obj):
-        return concat_limit(obj.ausgabe_lnum_set.all())
+        return concat_limit(obj.ausgabelnum_set.all())
     lnum_string.short_description = 'lfd. Nummer'
 
     def monat_string(self, obj):
-        if obj.ausgabe_monat_set.exists():
+        if obj.ausgabemonat_set.exists():
             return concat_limit(
-                obj.ausgabe_monat_set.values_list('monat__abk', flat=True)
+                obj.ausgabemonat_set.values_list('monat__abk', flat=True)
             )
     monat_string.short_description = 'Monate'
 

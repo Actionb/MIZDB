@@ -116,7 +116,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
     )
     # Exclude some models that are a bit... different.
     exclude_models = [
-        'ausgabe_num', 'ausgabe_lnum', 'ausgabe_monat',
+        'ausgabenum', 'ausgabelnum', 'ausgabemonat',
     ]
 
     def __init__(self, exclude=None, app_label='DBentry', *args, **kwargs):

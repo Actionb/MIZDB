@@ -277,10 +277,10 @@ class TestMergingAusgabe(MergingTestCase):
     @classmethod
     def setUpTestData(cls):
         default = {
-            'ausgabe_jahr__extra': 1,
-            'ausgabe_num__extra': 1,
-            'ausgabe_lnum__extra': 1,
-            'ausgabe_monat__extra': 1,
+            'ausgabejahr__extra': 1,
+            'ausgabenum__extra': 1,
+            'ausgabelnum__extra': 1,
+            'ausgabemonat__extra': 1,
             'bestand__extra': 1
         }
         cls.obj1 = make(cls.model, **default)
@@ -379,7 +379,7 @@ class TestMergingAusgabe(MergingTestCase):
             expand_original=False,
             request=self.request
         )
-        self.original.ausgabe_num_set.all().delete()
+        self.original.ausgabenum_set.all().delete()
         with self.assertRaises(AssertionError) as context_manager:
             self.assertRelatedChanges()
         self.assertTrue(context_manager.exception.args[0].startswith(
@@ -393,7 +393,7 @@ class TestMergingAusgabe(MergingTestCase):
             expand_original=False,
             request=self.request
         )
-        make(_models.ausgabe_num, num=42, ausgabe=self.original)
+        make(_models.AusgabeNum, num=42, ausgabe=self.original)
         with self.assertRaises(AssertionError) as context_manager:
             self.assertRelatedChanges()
         self.assertTrue(context_manager.exception.args[0].startswith(

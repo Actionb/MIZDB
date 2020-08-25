@@ -217,32 +217,32 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     model_admin_class = AusgabenAdmin
     raw_data = [
         {  # obj1: jg + 0
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001],
-            'e_datum': '2000-06-12', 'ausgabe_monat__monat__ordinal': [6]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000, 2001],
+            'e_datum': '2000-06-12', 'ausgabemonat__monat__ordinal': [6]
         },
         {  # obj2: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
-            'e_datum': '2001-06-12', 'ausgabe_monat__monat__ordinal': [6]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
+            'e_datum': '2001-06-12', 'ausgabemonat__monat__ordinal': [6]
         },
         {  # obj3: ignored
-            'magazin__magazin_name': 'Bad', 'jahrgang': 20, 'ausgabe_jahr__jahr': [2001]
+            'magazin__magazin_name': 'Bad', 'jahrgang': 20, 'ausgabejahr__jahr': [2001]
         },
         {  # obj4: ignored?
             'magazin__magazin_name': 'Testmagazin'
         },
         {  # obj5: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002],
-            'e_datum': '2002-05-11', 'ausgabe_monat__monat__ordinal': [5],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
+            'e_datum': '2002-05-11', 'ausgabemonat__monat__ordinal': [5],
         },
         {  # obj6: jg + 2 when using e_datum, jg + 1 when using monat
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002],
-            'e_datum': '2002-06-12', 'ausgabe_monat__monat__ordinal': [5]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
+            'e_datum': '2002-06-12', 'ausgabemonat__monat__ordinal': [5]
         },
         {  # obj7: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001]
         },
         {  # obj8: jg + 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002]
         },
     ]
 
@@ -255,7 +255,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
         request = self.get_request()
         # Objects in this queryset have different magazines.
-        queryset = self.model.objects.filter(ausgabe_jahr__jahr=2001)
+        queryset = self.model.objects.filter(ausgabejahr__jahr=2001)
         view = self.get_view(request, queryset=queryset)
         view.model_admin.message_user = Mock()
         self.assertFalse(view.action_allowed)
@@ -275,7 +275,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # result 0 1 => obj1.affected_fields
         # result 1 0 => obj2
         # result 1 1 => obj2.affected_fields
-        # affected_fields for this view: ['jahrgang','ausgabe_jahr__jahr']
+        # affected_fields for this view: ['jahrgang','ausgabejahr__jahr']
         request = self.get_request()
 
         view = self.get_view(request, queryset=self.qs_obj1)
@@ -514,9 +514,9 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000]},
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001], 'jahrgang':1},
-        {'magazin__magazin_name': 'Bad', 'ausgabe_jahr__jahr': [2001], 'jahrgang': 20},
+        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000]},
+        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001], 'jahrgang':1},
+        {'magazin__magazin_name': 'Bad', 'ausgabejahr__jahr': [2001], 'jahrgang': 20},
         {'magazin__magazin_name': 'Testmagazin', 'jahrgang': 2}
     ]
 
@@ -837,7 +837,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         {
             'beschreibung': 'Testausgabe', 'bemerkungen': 'Testbemerkung',
             'sonderausgabe': True, 'bestand__extra': 1,
-            'ausgabe_jahr__jahr': [2000, 2001],
+            'ausgabejahr__jahr': [2000, 2001],
             'magazin__magazin_name': 'Testmagazin', 'magazin__beschreibung': 'Beep boop'
         }
     ]

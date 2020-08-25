@@ -11,7 +11,7 @@ class TestUtils(MyTestCase):
         func = utils.get_dbfield_from_path
         test_data = [
             (
-                _models.Ausgabe, 'ausgabe_monat__monat__monat__contains',
+                _models.Ausgabe, 'ausgabemonat__monat__monat__contains',
                 (_models.monat._meta.get_field('monat'), ['contains'])
             ),
             (

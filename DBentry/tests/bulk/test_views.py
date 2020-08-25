@@ -23,14 +23,14 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
         cls.updated = make(
             cls.model,
             magazin=cls.mag,
-            ausgabe_jahr__jahr=[2000, 2001],
-            ausgabe_num__num=1
+            ausgabejahr__jahr=[2000, 2001],
+            ausgabenum__num=1
         )
         cls.multi1, cls.multi2 = batch(
             cls.model, 2,
             magazin=cls.mag,
-            ausgabe_jahr__jahr=[2000, 2001],
-            ausgabe_num__num=5
+            ausgabejahr__jahr=[2000, 2001],
+            ausgabenum__num=5
         )
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         super().setUpTestData()
@@ -209,7 +209,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertEqual(len(created), 3)
         for n in [2, 3, 4]:
             with self.subTest(num=n):
-                qs = self.queryset.filter(ausgabe_num__num=n)
+                qs = self.queryset.filter(ausgabenum__num=n)
                 self.assertEqual(qs.count(), 1)
                 self.assertIn(qs.first(), created)
                 self.assertNotIn(
@@ -226,12 +226,12 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
                 self.assertEqual(instance.jahrgang, 11)
                 self.assertFalse(instance.beschreibung)
                 self.assertEqual(instance.status, 'unb')
-                jahre = instance.ausgabe_jahr_set.values_list('jahr', flat=True)
+                jahre = instance.ausgabejahr_set.values_list('jahr', flat=True)
                 self.assertEqual(list(jahre), [2000, 2001])
-                nums = instance.ausgabe_num_set.values_list('num', flat=True)
+                nums = instance.ausgabenum_set.values_list('num', flat=True)
                 self.assertEqual(list(nums), [expected_num])
-                self.assertFalse(instance.ausgabe_lnum_set.exists())
-                self.assertFalse(instance.ausgabe_monat_set.exists())
+                self.assertFalse(instance.ausgabelnum_set.exists())
+                self.assertFalse(instance.ausgabemonat_set.exists())
                 self.assertEqual(instance.audio.count(), 1)
                 self.assertEqual(instance.audio.first().bestand_set.count(), 1)
                 self.assertEqual(
@@ -257,9 +257,9 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
                 )
                 # Assert that the creation of the objects was logged properly.
                 self.assertLoggedAddition(instance)
-                for j in instance.ausgabe_jahr_set.all():
+                for j in instance.ausgabejahr_set.all():
                     self.assertLoggedAddition(instance, j)
-                for n in instance.ausgabe_num_set.all():
+                for n in instance.ausgabenum_set.all():
                     self.assertLoggedAddition(instance, n)
                 a = instance.audio.first()
                 m2m = self.model.audio.through.objects.get(ausgabe=instance, audio=a)

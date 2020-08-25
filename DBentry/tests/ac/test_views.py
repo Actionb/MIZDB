@@ -362,18 +362,18 @@ class TestACAusgabe(ACViewTestCase):
     def setUpTestData(cls):
         cls.mag = make(_models.magazin, magazin_name='Testmagazin')
         cls.obj_num = make(
-            cls.model, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_num__num=10)
+            cls.model, magazin=cls.mag, ausgabejahr__jahr=2020, ausgabenum__num=10)
         cls.obj_lnum = make(
-            cls.model, magazin=cls.mag, ausgabe_jahr__jahr=2020, ausgabe_lnum__lnum=10)
+            cls.model, magazin=cls.mag, ausgabejahr__jahr=2020, ausgabelnum__lnum=10)
         cls.obj_monat = make(
-            cls.model, magazin=cls.mag, ausgabe_jahr__jahr=2020,
-            ausgabe_monat__monat__monat='Januar'
+            cls.model, magazin=cls.mag, ausgabejahr__jahr=2020,
+            ausgabemonat__monat__monat='Januar'
         )
         cls.obj_sonder = make(
             cls.model, magazin=cls.mag, sonderausgabe=True,
             beschreibung='Special Edition'
         )
-        cls.obj_jahrg = make(cls.model, magazin=cls.mag, jahrgang=12, ausgabe_num__num=13)
+        cls.obj_jahrg = make(cls.model, magazin=cls.mag, jahrgang=12, ausgabenum__num=13)
         cls.obj_datum = make(cls.model, magazin=cls.mag, e_datum='1986-08-18')
 
         cls.test_data = [
@@ -387,7 +387,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(expected, view.apply_q(self.queryset))
 
         # search for 10/11
-        self.obj_num.ausgabe_num_set.create(num=11)
+        self.obj_num.ausgabenum_set.create(num=11)
         self.obj_num.refresh_from_db()
         view = self.get_view(q=self.obj_num.__str__())
         expected = (self.obj_num.pk, force_text(self.obj_num))
@@ -399,7 +399,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(expected, view.apply_q(self.queryset))
 
         # search for 10/11
-        self.obj_lnum.ausgabe_lnum_set.create(lnum=11)
+        self.obj_lnum.ausgabelnum_set.create(lnum=11)
         self.obj_lnum.refresh_from_db()
         view = self.get_view(q=self.obj_lnum.__str__())
         expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
@@ -411,7 +411,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(expected, view.apply_q(self.queryset))
 
         # search for Jan/Feb
-        self.obj_monat.ausgabe_monat_set.create(monat=make(_models.monat, monat='Februar'))
+        self.obj_monat.ausgabemonat_set.create(monat=make(_models.monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
         expected = (self.obj_monat.pk, force_text(self.obj_monat))
