@@ -765,7 +765,7 @@ class BlandAdmin(MIZModelAdmin):
     }
 
 
-@admin.register(_models.land, site=miz_site)
+@admin.register(_models.Land, site=miz_site)
 class LandAdmin(MIZModelAdmin):
     pass
 

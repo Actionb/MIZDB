@@ -469,7 +469,7 @@ class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.land
+    model = _models.Land
     raw_data = [{'land_name': 'Dschland', 'code': 'DE'}]
     has_alias = False
 

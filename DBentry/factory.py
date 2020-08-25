@@ -598,7 +598,7 @@ class GenreFactory(MIZModelFactory):
 
 class LandFactory(MIZModelFactory):
     class Meta:
-        model = _models.land
+        model = _models.Land
         django_get_or_create = ['land_name', 'code']
     land_name = UniqueFaker('country')
     # land.code has unique=True and max_length of 4.

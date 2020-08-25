@@ -1021,7 +1021,7 @@ class TestModelLagerort(DataTestCase):
 
 class TestModelLand(DataTestCase):
 
-    model = _models.land
+    model = _models.Land
 
     def test_str(self):
         obj = self.model(land_name='Deutschland', code='DE')
@@ -1289,7 +1289,7 @@ class TestModelSpielort(DataTestCase):
     model = _models.spielort
 
     def test_str(self):
-        land_object = _models.land.objects.create(land_name='Deutschland', code='DE')
+        land_object = _models.Land.objects.create(land_name='Deutschland', code='DE')
         obj = self.model(
             name='Testspielort', ort=_models.Ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')

@@ -1010,7 +1010,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.LandAdmin
-    model = _models.land
+    model = _models.Land
     fields_expected = ['land_name', 'code']
     search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1

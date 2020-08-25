@@ -469,7 +469,7 @@ class Ort(ComputedNameModel):
     bland = models.ForeignKey(
         'bundesland', models.SET_NULL, verbose_name='Bundesland', null=True, blank=True
     )
-    land = models.ForeignKey('land', models.PROTECT)
+    land = models.ForeignKey('Land', models.PROTECT)
 
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
@@ -525,7 +525,7 @@ class Bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', max_length=200)
     code = models.CharField(max_length=4, unique=False)
 
-    land = models.ForeignKey('land', models.PROTECT)
+    land = models.ForeignKey('Land', models.PROTECT)
 
     name_field = 'bland_name'
     primary_search_fields = []
@@ -544,7 +544,7 @@ class Bundesland(BaseModel):
         ordering = ['land', 'bland_name']
 
 
-class land(BaseModel):
+class Land(BaseModel):
     land_name = models.CharField('Land', max_length=100, unique=True)
     code = models.CharField(max_length=4, unique=True)
 
