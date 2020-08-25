@@ -223,7 +223,7 @@ class PartialDate(datetime.date):
         constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
         date_format = []
         iterator = zip(
-            ('day', 'month', 'year'), (day, month, year), ('%d', '%b', '%Y')
+            ('day', 'month', 'year'), (day, month, year), ('%d', '%B', '%Y')
         )
         for name, value, format in iterator:
             if value is None:
@@ -279,7 +279,10 @@ class PartialDate(datetime.date):
 
     def localize(self):
         if self.date_format:
-            return formats.date_format(self, self.date_format.replace('%', ''))
+            # Fun fact: python's format code for month textual long is %B.
+            # django's is %F (%B isn't even implemented?).
+            return formats.date_format(
+                self, self.date_format.replace('%B', '%F').replace('%', ''))
         return ''
 
     def __iter__(self):

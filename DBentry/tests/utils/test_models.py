@@ -81,8 +81,8 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.ort), ['land'])
         self.assertEqual(
             required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])
-        # _models.geber.name field is required but has a default:
-        self.assertEqual(required_field_names(_models.geber), [])
+        # _models.Format.anzahl field is required but has a default:
+        self.assertEqual(required_field_names(_models.Format), ['audio', 'format_typ'])
         self.assertEqual(required_field_names(_models.bestand), ['lagerort'])
 
     def test_get_updateable_fields(self):

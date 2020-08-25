@@ -688,10 +688,10 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.MagazinAdmin
     model = _models.magazin
-    exclude_expected = ['genre', 'verlag', 'herausgeber']
+    exclude_expected = ['genre', 'verlag', 'herausgeber', 'orte']
     fields_expected = [
-        'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
-        'beschreibung', 'bemerkungen', 'ort',
+        'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',
+        'beschreibung', 'bemerkungen',
     ]
     search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']
 
@@ -993,7 +993,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'buch', 'fld_name': 'ort', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'ort', 'label': 'Dateien (1)'},
         {'model_name': 'dokument', 'fld_name': 'ort', 'label': 'Dokumente (1)'},
-        {'model_name': 'magazin', 'fld_name': 'ort', 'label': 'Magazine (1)'},
+        {'model_name': 'magazin', 'fld_name': 'orte', 'label': 'Magazine (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'ort', 'label': 'Memorabilien (1)'},
         {'model_name': 'musiker', 'fld_name': 'orte', 'label': 'Musiker (1)'},
         {'model_name': 'person', 'fld_name': 'orte', 'label': 'Personen (1)'},
@@ -1111,7 +1111,9 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'datum', 'veranstaltung_alias__alias',
+        'beschreibung', 'bemerkungen', 'pk__iexact'
+    ]
     test_data_count = 1
 
     crosslinks_expected = [
