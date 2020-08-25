@@ -1110,7 +1110,7 @@ class TestModelMonat(DataTestCase):
 
 class TestModelMusiker(DataTestCase):
 
-    model = _models.musiker
+    model = _models.Musiker
 
     def test_str(self):
         obj = self.model(

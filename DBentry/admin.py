@@ -42,7 +42,7 @@ class AudioAdmin(MIZModelAdmin):
         model = _models.audio.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
         fieldsets = [
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
@@ -233,7 +233,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.autor
     class MusikerInLine(BaseTabularInline):
         model = _models.artikel.musiker.through
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
         model = _models.artikel.band.through
         verbose_model = _models.band
@@ -346,7 +346,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         verbose_model = _models.Person
     class MusikerInLine(BaseTabularInline):
         model = _models.bildmaterial.musiker.through
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
         model = _models.bildmaterial.band.through
         verbose_model = _models.band
@@ -417,7 +417,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.autor
     class MusikerInLine(BaseTabularInline):
         model = _models.buch.musiker.through
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
         model = _models.buch.band.through
         verbose_model = _models.band
@@ -580,10 +580,10 @@ class MemoAdmin(MIZModelAdmin):
     superuser_only = True
 
 
-@admin.register(_models.musiker, site=miz_site)
+@admin.register(_models.Musiker, site=miz_site)
 class MusikerAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.musiker.genre.through
+        model = _models.Musiker.genre.through
     class BandInLine(BaseTabularInline):
         model = _models.band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
@@ -591,11 +591,11 @@ class MusikerAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.musiker_alias
     class InstrInLine(BaseTabularInline):
-        model = _models.musiker.instrument.through
+        model = _models.Musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
     class OrtInLine(BaseOrtInLine):
-        model = _models.musiker.orte.through
+        model = _models.Musiker.orte.through
 
     form = MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
@@ -696,7 +696,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.veranstaltung.schlagwort.through
     class MusikerInLine(BaseTabularInline):
         model = _models.veranstaltung.musiker.through
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
     class AliasInLine(BaseAliasInline):
         model = _models.veranstaltung_alias
 
@@ -733,7 +733,7 @@ class VideoAdmin(MIZModelAdmin):
         model = _models.video.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
         fieldsets = [
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
@@ -812,7 +812,7 @@ class DateiAdmin(MIZModelAdmin):
         model = _models.datei.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
-        verbose_model = _models.musiker
+        verbose_model = _models.Musiker
         fieldsets = [
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),

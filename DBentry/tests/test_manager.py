@@ -772,7 +772,7 @@ class TestValuesDict(DataTestCase):
 
 class TestDuplicates(DataTestCase):
 
-    model = _models.musiker
+    model = _models.Musiker
 
     @classmethod
     def setUpTestData(cls):

@@ -12,7 +12,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
 
     def test_get_dupefields_reverse_choices_are_grouped(self):
         # Assert that the reverse dupe fields are grouped by their related model.
-        dupe_fields = get_dupe_fields_for_model(_models.musiker)
+        dupe_fields = get_dupe_fields_for_model(_models.Musiker)
         self.assertIn('reverse', dupe_fields)
         reverse = dupe_fields['reverse']
         self.assertIsInstance(reverse, (list, tuple))
@@ -20,7 +20,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         # Get the group
         self.assertEqual(
             len(reverse), 1,
-            msg="There should be only reverse dupe fields group for musiker."
+            msg="There should be only reverse dupe fields group for Musiker."
         )
         musiker_alias_group = reverse[0]
         self.assertIsInstance(musiker_alias_group, (list, tuple))
@@ -48,7 +48,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
     def test_get_dupefields_excludes_reverse_fk_field(self):
         # Assert that the reverse choices do not contain the ForeignKey field
         # of that reverse relation.
-        dupe_fields = get_dupe_fields_for_model(_models.musiker)
+        dupe_fields = get_dupe_fields_for_model(_models.Musiker)
         self.assertIn('reverse', dupe_fields)
         self.assertIn('Alias', dict(dupe_fields['reverse']))
         musiker_alias_fields = dict(dupe_fields['reverse'])['Alias']

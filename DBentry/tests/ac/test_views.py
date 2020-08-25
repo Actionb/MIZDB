@@ -102,7 +102,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view(request)
         view.forwarded = {'genre': self.genre.pk}
         self.assertEqual(list(view.get_queryset()), [self.obj1])
-        other_musiker = make(_models.musiker)
+        other_musiker = make(_models.Musiker)
         view.forwarded['musiker'] = other_musiker.pk
         self.assertFalse(view.get_queryset().exists())
         other_musiker.band_set.add(self.obj1)
@@ -457,7 +457,7 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.musiker
+    model = _models.Musiker
     alias_accessor_name = 'musiker_alias_set'
     raw_data = [
         {

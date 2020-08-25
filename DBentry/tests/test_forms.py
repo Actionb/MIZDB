@@ -465,7 +465,7 @@ class TestMIZAdminInlineFormBase(MyTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.band = make(_models.band)
-        cls.musiker = make(_models.musiker)
+        cls.musiker = make(_models.Musiker)
         cls.m2m = _models.band.musiker.through.objects.create(
             band=cls.band, musiker=cls.musiker)
         super().setUpTestData()

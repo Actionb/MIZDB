@@ -628,7 +628,7 @@ class MonatFactory(MIZModelFactory):
 
 class MusikerFactory(MIZModelFactory):
     class Meta:
-        model = _models.musiker
+        model = _models.Musiker
         django_get_or_create = ['kuenstler_name']
     kuenstler_name = factory.Sequence(lambda n: 'TestMusiker' + str(n))
 

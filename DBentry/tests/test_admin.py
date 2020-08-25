@@ -336,7 +336,7 @@ class TestMIZModelAdmin(AdminTestCase):
 
         # not auto created
         obj = self.model.musiker.through.objects.create(
-            musiker=_models.musiker.objects.create(kuenstler_name='Testmusiker'),
+            musiker=_models.Musiker.objects.create(kuenstler_name='Testmusiker'),
             datei=self.obj1
         )
         expected = {'name': 'Musiker', 'object': 'Testmusiker'}
@@ -773,7 +773,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.MusikerAdmin
-    model = _models.musiker
+    model = _models.Musiker
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
@@ -1366,7 +1366,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         super().setUpTestData()
 
         cls.band = make(_models.band)
-        cls.musiker = make(_models.musiker)
+        cls.musiker = make(_models.Musiker)
         cls.veranstaltung = make(
             _models.veranstaltung, band=[cls.band], musiker=[cls.musiker])
         cls.obj1.veranstaltung.add(cls.veranstaltung)

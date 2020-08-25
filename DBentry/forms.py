@@ -152,7 +152,7 @@ class BildmaterialForm(forms.ModelForm):
     """
     The form for the bildmaterial's admin add/change page.
     A BooleanField is added with which the user can request to copy all related
-    musiker/band objects of the related veranstaltung instances to this
+    Musiker/Band objects of the related veranstaltung instances to this
     bildmaterial instance.
     """
 

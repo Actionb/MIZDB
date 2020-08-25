@@ -48,7 +48,7 @@ class TestModelUtils(MyTestCase):
         # FK from bestand to buch
         # FK from buch to verlag
         # ManyToMany auto created band <-> buch
-        # ManyToMany intermediary musiker <-> buch
+        # ManyToMany intermediary Musiker <-> buch
         rev_fk = _models.bestand._meta.get_field('buch').remote_field
         fk = buch._meta.get_field('schriftenreihe').remote_field
         m2m_inter = buch.musiker.rel
@@ -82,7 +82,7 @@ class TestModelUtils(MyTestCase):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
         self.assertEqual(required_field_names(_models.Person), ['nachname'])
-        self.assertEqual(required_field_names(_models.musiker), ['kuenstler_name'])
+        self.assertEqual(required_field_names(_models.Musiker), ['kuenstler_name'])
         self.assertEqual(required_field_names(_models.genre), ['genre'])
         self.assertEqual(required_field_names(_models.band), ['band_name'])
         self.assertEqual(required_field_names(_models.autor), [])

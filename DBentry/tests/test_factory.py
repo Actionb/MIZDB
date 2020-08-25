@@ -108,18 +108,18 @@ class TestRelatedFactory(MyTestCase):
         self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
 
     def test_rf_instance_direct(self):
-        m1 = make(_models.musiker)
+        m1 = make(_models.Musiker)
         p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=m1)
         self.assertIn(m1, p.musiker_set.all())
 
     def test_rf_instance_single_list(self):
-        m1 = make(_models.musiker)
+        m1 = make(_models.Musiker)
         p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=[m1])
         self.assertIn(m1, p.musiker_set.all())
 
     def test_rf_instance_list(self):
-        m1 = make(_models.musiker)
-        m2 = make(_models.musiker)
+        m1 = make(_models.Musiker)
+        m2 = make(_models.Musiker)
         p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=[m1, m2])
         self.assertIn(m1, p.musiker_set.all())
         self.assertIn(m2, p.musiker_set.all())
@@ -132,42 +132,42 @@ class TestRelatedFactory(MyTestCase):
 class TestM2MFactory(MyTestCase):
 
     def test_m2m_string_direct(self):
-        m = make(_models.musiker, genre__genre='TestGenre1')
+        m = make(_models.Musiker, genre__genre='TestGenre1')
         self.assertIn('TestGenre1', m.genre.values_list('genre', flat=True))
 
     def test_m2m_string_single_list(self):
-        m = make(_models.musiker, genre__genre=['TestGenre1'])
+        m = make(_models.Musiker, genre__genre=['TestGenre1'])
         self.assertIn('TestGenre1', m.genre.values_list('genre', flat=True))
 
     def test_m2m_string_list(self):
-        m = make(_models.musiker, genre__genre=['TestGenre1', 'TestGenre2'])
+        m = make(_models.Musiker, genre__genre=['TestGenre1', 'TestGenre2'])
         self.assertIn('TestGenre1', m.genre.values_list('genre', flat=True))
         self.assertIn('TestGenre2', m.genre.values_list('genre', flat=True))
 
     def test_m2m_instance_direct(self):
         g1 = make(_models.genre)
-        m = make(_models.musiker, genre=g1)
+        m = make(_models.Musiker, genre=g1)
         self.assertIn(g1, m.genre.all())
 
     def test_m2m_instance_single_list(self):
         g1 = make(_models.genre)
-        m = make(_models.musiker, genre=[g1])
+        m = make(_models.Musiker, genre=[g1])
         self.assertIn(g1, m.genre.all())
 
     def test_m2m_instance_list(self):
         g1 = make(_models.genre)
         g2 = make(_models.genre)
-        m = make(_models.musiker, genre=[g1, g2])
+        m = make(_models.Musiker, genre=[g1, g2])
         self.assertIn(g1, m.genre.all())
         self.assertIn(g2, m.genre.all())
 
     def test_m2m_extra(self):
-        m = make(_models.musiker, genre__extra=3)
+        m = make(_models.Musiker, genre__extra=3)
         self.assertEqual(m.genre.count(), 3)
 
         g1 = make(_models.genre)
         g2 = make(_models.genre)
-        m = make(_models.musiker, genre=[g1, g2], genre__extra=2)
+        m = make(_models.Musiker, genre=[g1, g2], genre__extra=2)
         self.assertIn(g1, m.genre.all())
         self.assertIn(g2, m.genre.all())
         self.assertEqual(m.genre.count(), 4)
@@ -249,12 +249,12 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.person.factory._meta.model, _models.Person)
         self.assertEqual(fac.autor.factory._meta.model, _models.autor)
         self.assertEqual(fac.band.factory._meta.model, _models.band)
-        self.assertEqual(fac.musiker.factory._meta.model, _models.musiker)
+        self.assertEqual(fac.musiker.factory._meta.model, _models.Musiker)
         self.assertEqual(fac.ort.factory._meta.model, _models.ort)
         self.assertEqual(fac.spielort.factory._meta.model, _models.spielort)
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
 
-        fac = modelfactory_factory(_models.musiker)
+        fac = modelfactory_factory(_models.Musiker)
         self.assertEqual(fac.audio.factory._meta.model, _models.audio)
         self.assertEqual(fac.orte.factory._meta.model, _models.ort)
         self.assertEqual(fac.artikel.factory._meta.model, _models.artikel)

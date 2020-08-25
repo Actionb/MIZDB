@@ -45,7 +45,7 @@ class m2m_audio_genre(BaseM2MModel):
 
 class m2m_audio_musiker(BaseM2MModel):
     audio = models.ForeignKey('audio', models.CASCADE)
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
         'instrument', verbose_name='Instrumente', blank=True
     )
@@ -172,7 +172,7 @@ class m2m_artikel_genre(BaseM2MModel):
 
 class m2m_artikel_musiker(BaseM2MModel):
     artikel = models.ForeignKey('artikel', models.CASCADE)
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
 
     name_field = 'musiker'
 
@@ -261,7 +261,7 @@ class m2m_band_genre(BaseM2MModel):
 
 class m2m_band_musiker(BaseM2MModel):
     band = models.ForeignKey('band', models.CASCADE)
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
 
     name_field = 'musiker'
 
@@ -334,7 +334,7 @@ class m2m_magazin_herausgeber(BaseM2MModel):
 # ================================= #
 
 class m2m_musiker_genre(BaseM2MModel):
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
     genre = models.ForeignKey('genre', models.CASCADE)
 
     name_field = 'genre'
@@ -346,7 +346,7 @@ class m2m_musiker_genre(BaseM2MModel):
         verbose_name_plural = 'Musiker-Genres'
 
 class m2m_musiker_instrument(BaseM2MModel):
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ForeignKey('instrument', models.CASCADE)
 
     name_field = 'instrument'
@@ -364,7 +364,7 @@ class m2m_musiker_instrument(BaseM2MModel):
 
 class m2m_video_musiker(BaseM2MModel):
     video = models.ForeignKey('video', models.CASCADE)
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
         'instrument', verbose_name='Instrumente', blank=True
     )
@@ -384,7 +384,7 @@ class m2m_video_musiker(BaseM2MModel):
 
 class m2m_datei_musiker(BaseM2MModel):
     datei = models.ForeignKey('datei', models.CASCADE)
-    musiker = models.ForeignKey('musiker', models.CASCADE)
+    musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
         'instrument', verbose_name='Instrumente', blank=True
     )
