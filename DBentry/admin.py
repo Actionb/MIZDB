@@ -589,7 +589,7 @@ class MusikerAdmin(MIZModelAdmin):
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
     class AliasInLine(BaseAliasInline):
-        model = _models.musiker_alias
+        model = _models.MusikerAlias
     class InstrInLine(BaseTabularInline):
         model = _models.Musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'

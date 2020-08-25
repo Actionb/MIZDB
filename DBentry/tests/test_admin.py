@@ -778,7 +778,7 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
+        'kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
 
     raw_data = [
         {},

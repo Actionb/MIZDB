@@ -67,9 +67,9 @@ class Musiker(BaseModel):
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
     primary_search_fields = ['kuenstler_name']
-    search_fields = ['kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = ['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'musiker_alias__alias': 'Alias',
+        'musikeralias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -80,8 +80,8 @@ class Musiker(BaseModel):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
-class musiker_alias(BaseAliasModel):
-    parent = models.ForeignKey('Musiker', models.CASCADE)
+class MusikerAlias(BaseAliasModel):
+    parent = models.ForeignKey('Musiker', models.CASCADE)  # TODO: add a related_name
 
 
 class genre(BaseModel):
@@ -100,7 +100,7 @@ class genre(BaseModel):
         verbose_name_plural = 'Genres'
         ordering = ['genre']
 class genre_alias(BaseAliasModel):
-    parent = models.ForeignKey('genre', models.CASCADE)
+    parent = models.ForeignKey('genre', models.CASCADE)  # TODO: add a related_name
 
 
 class band(BaseModel):
@@ -127,7 +127,7 @@ class band(BaseModel):
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
 class band_alias(BaseAliasModel):
-    parent = models.ForeignKey('band', models.CASCADE)
+    parent = models.ForeignKey('band', models.CASCADE)  # TODO: add a related_name
 
 
 class autor(ComputedNameModel):
@@ -575,7 +575,7 @@ class schlagwort(BaseModel):
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
 class schlagwort_alias(BaseAliasModel):
-    parent = models.ForeignKey('schlagwort', models.CASCADE)
+    parent = models.ForeignKey('schlagwort', models.CASCADE)  # TODO: add a related_name
 
 
 class artikel(BaseModel):
@@ -902,7 +902,7 @@ class spielort(BaseModel):
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
 class spielort_alias(BaseAliasModel):
-    parent = models.ForeignKey('spielort', models.CASCADE)
+    parent = models.ForeignKey('spielort', models.CASCADE)  # TODO: add a related_name
 
 
 class technik(BaseModel):
@@ -972,7 +972,7 @@ class veranstaltung(BaseModel):
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
 class veranstaltung_alias(BaseAliasModel):
-    parent = models.ForeignKey('veranstaltung', models.CASCADE)
+    parent = models.ForeignKey('veranstaltung', models.CASCADE)  # TODO: add a related_name
 
 
 class Veranstaltungsreihe(BaseModel):

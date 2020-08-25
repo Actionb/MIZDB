@@ -458,10 +458,10 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Musiker
-    alias_accessor_name = 'musiker_alias_set'
+    alias_accessor_name = 'musikeralias_set'
     raw_data = [
         {
-            'musiker_alias__alias': 'John',
+            'musikeralias__alias': 'John',
             'beschreibung': 'Description',
             'bemerkungen': 'Stuff'
         }

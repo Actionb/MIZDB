@@ -828,32 +828,32 @@ class TestDuplicates(DataTestCase):
         self.assertNotIn(self.obj3, duplicates)
 
     def test_duplicates_reverse_fk(self):
-        self.obj1.musiker_alias_set.create(alias='Beep')
-        self.obj2.musiker_alias_set.create(alias='Beep')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj1.musikeralias_set.create(alias='Beep')
+        self.obj2.musikeralias_set.create(alias='Beep')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
-        self.obj3.musiker_alias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj3.musikeralias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
-        self.obj1.musiker_alias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj1.musikeralias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertNotIn(self.obj1, duplicates)
         self.assertNotIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
     def test_duplicates_reverse_fk_joins(self):
         # Assert that the number of duplicates found is not affected by table joins.
-        self.obj1.musiker_alias_set.create(alias='Beep')
-        self.obj2.musiker_alias_set.create(alias='Beep')
-        self.obj1.musiker_alias_set.create(alias='Boop')
-        self.obj2.musiker_alias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj1.musikeralias_set.create(alias='Beep')
+        self.obj2.musikeralias_set.create(alias='Beep')
+        self.obj1.musikeralias_set.create(alias='Boop')
+        self.obj2.musikeralias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertEqual(len(duplicates), 2)
 
 

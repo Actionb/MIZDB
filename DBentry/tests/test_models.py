@@ -1124,14 +1124,14 @@ class TestModelMusiker(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
             self.model.search_fields_suffixes,
             {
-                'musiker_alias__alias': 'Alias',
+                'musikeralias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1140,7 +1140,7 @@ class TestModelMusiker(DataTestCase):
 
 class TestModelMusikerAlias(DataTestCase):
 
-    model = _models.musiker_alias
+    model = _models.MusikerAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
