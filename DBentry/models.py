@@ -763,7 +763,11 @@ class audio(BaseModel):
 
 class bildmaterial(BaseModel):
     titel = models.CharField(max_length=200)
-    signatur = models.CharField(max_length=200, blank=True, null=True, unique=True)  # TODO: help_text: frag Birgitt, was genau das ist 
+    signatur = models.CharField(
+        max_length=200, blank=True, null=True, unique=True,
+        help_text=('Kürzel bestehend aus Angabe zur Größe und '
+            'einer 5-stelligen fortlaufenden Nummer. Z.B.: A200395')
+    )
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
