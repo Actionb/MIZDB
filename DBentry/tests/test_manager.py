@@ -860,10 +860,10 @@ class TestDuplicates(DataTestCase):
 class TestHumanNameQuerySet(MyTestCase):
 
     def test_find_person(self):
-        obj = make(_models.person, vorname='Peter', nachname='Lustig')
+        obj = make(_models.Person, vorname='Peter', nachname='Lustig')
         for name in ('Peter Lustig', 'Lustig, Peter'):
             with self.subTest():
-                results = _models.person.objects.find(name)
+                results = _models.Person.objects.find(name)
                 msg = "Name looked up: %s" % name
                 self.assertIn((obj.pk, 'Peter Lustig'), results, msg=msg)
 

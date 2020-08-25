@@ -462,7 +462,7 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingPerson(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.person
+    model = _models.Person
 
 
 class VideoMergingDataMixin(object):

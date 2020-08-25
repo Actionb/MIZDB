@@ -444,7 +444,7 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.person
+    model = _models.Person
     has_alias = False
     raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 

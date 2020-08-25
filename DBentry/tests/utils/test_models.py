@@ -71,7 +71,7 @@ class TestModelUtils(MyTestCase):
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
-        self.assertEqual(required_field_names(_models.person), ['nachname'])
+        self.assertEqual(required_field_names(_models.Person), ['nachname'])
         self.assertEqual(required_field_names(_models.musiker), ['kuenstler_name'])
         self.assertEqual(required_field_names(_models.genre), ['genre'])
         self.assertEqual(required_field_names(_models.band), ['band_name'])

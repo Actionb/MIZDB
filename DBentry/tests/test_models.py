@@ -1181,7 +1181,7 @@ class TestModelOrt(DataTestCase):
 @tag("cn")
 class TestModelPerson(DataTestCase):
 
-    model = _models.person
+    model = _models.Person
 
     @translation_override(language=None)
     def test_get_name(self):

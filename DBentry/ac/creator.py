@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from nameparser import HumanName
 
-from DBentry.models import autor, person
+from DBentry.models import autor, Person
 from DBentry.utils import parse_name
 
 
@@ -78,7 +78,7 @@ class Creator(object):
 
     def create_person(self, text, preview=True):
         """
-        Get or create a person instance from `text`.
+        Get or create a Person instance from `text`.
 
         If preview is True, do not save the found instance even if it is new.
 
@@ -88,7 +88,7 @@ class Creator(object):
         # parse_name will join first and middle names
         vorname, nachname = parse_name(text)
         person_instance = self._get_model_instance(
-            person, vorname=vorname, nachname=nachname
+            Person, vorname=vorname, nachname=nachname
         )
         if not preview and person_instance.pk is None:
             person_instance.save()

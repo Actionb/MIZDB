@@ -641,7 +641,7 @@ class OrtFactory(MIZModelFactory):
 
 class PersonFactory(MIZModelFactory):
     class Meta:
-        model = _models.person
+        model = _models.Person
     vorname = factory.Faker('first_name')
     nachname = factory.Faker('last_name')
 

@@ -72,7 +72,7 @@ class m2m_audio_ort(BaseM2MModel):
 
 class m2m_audio_person(BaseM2MModel):
     audio = models.ForeignKey('audio', models.CASCADE)
-    person = models.ForeignKey('person', models.CASCADE)
+    person = models.ForeignKey('Person', models.CASCADE)
 
     name_field = 'person'
 
@@ -196,7 +196,7 @@ class m2m_artikel_ort(BaseM2MModel):
 
 class m2m_artikel_person(BaseM2MModel):
     artikel = models.ForeignKey('artikel', models.CASCADE)
-    person = models.ForeignKey('person', models.CASCADE)
+    person = models.ForeignKey('Person', models.CASCADE)
 
     name_field = 'person'
 

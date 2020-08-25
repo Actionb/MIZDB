@@ -37,7 +37,7 @@ class AudioAdmin(MIZModelAdmin):
         model = _models.audio.schlagwort.through
     class PersonInLine(BaseTabularInline):
         model = _models.audio.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class MusikerInLine(BaseStackedInline):
         model = _models.audio.musiker.through
         extra = 0
@@ -227,7 +227,7 @@ class ArtikelAdmin(MIZModelAdmin):
         model = _models.artikel.schlagwort.through
     class PersonInLine(BaseTabularInline):
         model = _models.artikel.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class AutorInLine(BaseTabularInline):
         model = _models.artikel.autor.through
         verbose_model = _models.autor
@@ -343,7 +343,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         model = _models.bildmaterial.schlagwort.through
     class PersonInLine(BaseTabularInline):
         model = _models.bildmaterial.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class MusikerInLine(BaseTabularInline):
         model = _models.bildmaterial.musiker.through
         verbose_model = _models.musiker
@@ -411,7 +411,7 @@ class BuchAdmin(MIZModelAdmin):
         model = _models.buch.schlagwort.through
     class PersonInLine(BaseTabularInline):
         model = _models.buch.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class AutorInLine(BaseTabularInline):
         model = _models.buch.autor.through
         verbose_model = _models.autor
@@ -619,10 +619,10 @@ class MusikerAdmin(MIZModelAdmin):
     orte_string.short_description = 'Orte'
 
 
-@admin.register(_models.person, site=miz_site)
+@admin.register(_models.Person, site=miz_site)
 class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
-        model = _models.person.orte.through
+        model = _models.Person.orte.through
 
     fields = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
@@ -691,7 +691,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         verbose_model = _models.band
     class PersonInLine(BaseTabularInline):
         model = _models.veranstaltung.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class SchlInLine(BaseSchlagwortInline):
         model = _models.veranstaltung.schlagwort.through
     class MusikerInLine(BaseTabularInline):
@@ -728,7 +728,7 @@ class VideoAdmin(MIZModelAdmin):
         model = _models.video.schlagwort.through
     class PersonInLine(BaseTabularInline):
         model = _models.video.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class MusikerInLine(BaseStackedInline):
         model = _models.video.musiker.through
         extra = 0
@@ -807,7 +807,7 @@ class DateiAdmin(MIZModelAdmin):
         model = _models.datei.schlagwort.through
     class PersonInLine(BaseTabularInline):
         model = _models.datei.person.through
-        verbose_model = _models.person
+        verbose_model = _models.Person
     class MusikerInLine(BaseStackedInline):
         model = _models.datei.musiker.through
         extra = 0

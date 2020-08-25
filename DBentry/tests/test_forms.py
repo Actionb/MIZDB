@@ -85,7 +85,7 @@ class TestAutorForm(ModelFormTestCase):
     @translation_override(language=None)
     def test_clean(self):
         # clean should raise a ValidationError if either kuerzel or person data is missing
-        p = make(_models.person)
+        p = make(_models.Person)
         expected_error_message = 'Bitte mindestens 1 dieser Felder ausfüllen: Kürzel, Person.'
 
         form = self.get_form(data={'beschreibung': 'Boop'})

@@ -345,10 +345,10 @@ class TestMIZModelAdmin(AdminTestCase):
 
     def test_save_model(self):
         # save_model should not update the _name of a ComputedNameModel object.
-        obj = make(_models.person, vorname='Alice', nachname='Testman')
+        obj = make(_models.Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
         self.model_admin.save_model(None, obj, None, None)
-        obj_queryset = _models.person.objects.filter(pk=obj.pk)
+        obj_queryset = _models.Person.objects.filter(pk=obj.pk)
         self.assertEqual(
             list(obj_queryset.values_list('_name', flat=True)),
             ['Alice Testman']
@@ -357,7 +357,7 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_save_related(self):
         # save_related should for an update of the _name of a ComputedNameModel
         # object.
-        obj = make(_models.person, vorname='Alice', nachname='Testman')
+        obj = make(_models.Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
         obj.save(update=False)
         fake_form = type(
@@ -365,7 +365,7 @@ class TestMIZModelAdmin(AdminTestCase):
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(
-            list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
+            list(_models.Person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
             ['Alice Mantest']
         )
 
@@ -728,7 +728,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.PersonAdmin
-    model = _models.person
+    model = _models.Person
     exclude_expected = ['orte']
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
@@ -1161,8 +1161,8 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        p1 = make(_models.person, vorname='Alice', nachname='Testman')
-        p2 = make(_models.person, vorname='Bob', nachname='Mantest')
+        p1 = make(_models.Person, vorname='Alice', nachname='Testman')
+        p2 = make(_models.Person, vorname='Bob', nachname='Mantest')
         cls.obj1 = make(
             cls.model,
             autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],

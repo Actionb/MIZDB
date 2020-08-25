@@ -11,9 +11,9 @@ class TestCreator(DataTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.alice = make(_models.person, vorname='Alice', nachname='Testman')
-        cls.bob1 = make(_models.person, vorname='Bob', nachname='Testman')
-        cls.bob2 = make(_models.person, vorname='Bob', nachname='Testman')
+        cls.alice = make(_models.Person, vorname='Alice', nachname='Testman')
+        cls.bob1 = make(_models.Person, vorname='Bob', nachname='Testman')
+        cls.bob2 = make(_models.Person, vorname='Bob', nachname='Testman')
         cls.alice_autor = make(cls.model, person=cls.alice, kuerzel='AT')
         cls.bob1_autor = make(cls.model, person=cls.bob1, kuerzel='bob1')
         cls.bob2_autor = make(cls.model, person=cls.bob2, kuerzel='bob2')
@@ -24,7 +24,7 @@ class TestCreator(DataTestCase):
         super().setUpTestData()
 
     def test_create(self):
-        creator = Creator(model=_models.person)
+        creator = Creator(model=_models.Person)
         created = creator.create('Charlie Testman', preview=False)
         self.assertIn('instance', created)
         self.assertIsNotNone(
@@ -50,7 +50,7 @@ class TestCreator(DataTestCase):
         )
 
     def test_create_reraises_or_failed_object(self):
-        creator = Creator(model=_models.person, raise_exceptions=True)
+        creator = Creator(model=_models.Person, raise_exceptions=True)
 
         creator.creator = Mock(side_effect=MultipleObjectsReturnedException())
         msg = (
@@ -77,7 +77,7 @@ class TestCreator(DataTestCase):
             )
 
     def test_create_preview(self):
-        creator = Creator(model=_models.person, raise_exceptions=False)
+        creator = Creator(model=_models.Person, raise_exceptions=False)
         self.assertEqual(
             creator.create('Bob Testman', preview=True), {},
             msg=(
@@ -90,26 +90,26 @@ class TestCreator(DataTestCase):
 
     def test_get_model_instance(self):
         # _get_model_instance should return a new unsaved model object if no matches are found
-        creator = Creator(model=_models.person)
-        inst = creator._get_model_instance(_models.person, nachname='Nobody')
-        self.assertIsInstance(inst, _models.person)
+        creator = Creator(model=_models.Person)
+        inst = creator._get_model_instance(_models.Person, nachname='Nobody')
+        self.assertIsInstance(inst, _models.Person)
         self.assertIsNone(inst.pk)
         self.assertEqual(inst.nachname, 'Nobody')
 
         # _get_model_instance should return an existing model object if there is only one match
         alice_data = dict(vorname='Alice', nachname='Testman')
-        inst = creator._get_model_instance(_models.person, **alice_data)
+        inst = creator._get_model_instance(_models.Person, **alice_data)
         self.assertEqual(inst, self.alice)
 
         # _get_model_instance should raise a
         # MultipleObjectsReturnedException if there is more than one match
         bob_data = dict(vorname='Bob', nachname='Testman')
         with self.assertRaises(MultipleObjectsReturnedException):
-            creator._get_model_instance(_models.person, **bob_data)
+            creator._get_model_instance(_models.Person, **bob_data)
 
     def test_create_person(self):
         # return value is an OrderedDict with keys ('Vorname','Nachname','instance')
-        creator = Creator(model=_models.person)
+        creator = Creator(model=_models.Person)
 
         created = creator.create_person('Bob Tester', preview=True)
         self.assertIn(
@@ -146,7 +146,7 @@ class TestCreator(DataTestCase):
         self.assertIn('instance', created)
         self.assertIsNotNone(
             created['instance'],
-            msg="create_person(preview = False): a person instance is expected"
+            msg="create_person(preview = False): a Person instance is expected"
         )
         self.assertIsNotNone(
             created['instance'].pk,
@@ -171,7 +171,7 @@ class TestCreator(DataTestCase):
         self.assertIn('instance', created['Person'])
         self.assertIsNotNone(
             created['Person']['instance'],
-            msg="create_autor(preview = True): must return a person instance"
+            msg="create_autor(preview = True): must return a Person instance"
         )
         self.assertIsNone(
             created['Person']['instance'].pk,
@@ -194,7 +194,7 @@ class TestCreator(DataTestCase):
         self.assertIn('instance', created['Person'])
         self.assertIsNotNone(
             created['Person']['instance'],
-            msg="create_autor(preview = False): must return a person instance"
+            msg="create_autor(preview = False): must return a Person instance"
         )
         self.assertIn(
             'Kürzel', created,
@@ -214,7 +214,7 @@ class TestCreator(DataTestCase):
         self.assertEqual(created['instance'].person, created['Person']['instance'])
         self.assertEqual(created['instance'].kuerzel, 'BT')
 
-        # Assert that create_autor uses an existing person object to find a
+        # Assert that create_autor uses an existing Person object to find a
         # matching autor object:
         creator.create_person = mockv({'instance': self.alice})
         creator._get_model_instance = mockv(self.alice_autor)

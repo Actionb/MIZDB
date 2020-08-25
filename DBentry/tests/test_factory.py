@@ -110,18 +110,18 @@ class TestRelatedFactory(MyTestCase):
 
     def test_rf_instance_direct(self):
         m1 = make(_models.musiker)
-        p = make(_models.person, vorname='Alice', nachname='Testman', musiker=m1)
+        p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=m1)
         self.assertIn(m1, p.musiker_set.all())
 
     def test_rf_instance_single_list(self):
         m1 = make(_models.musiker)
-        p = make(_models.person, vorname='Alice', nachname='Testman', musiker=[m1])
+        p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=[m1])
         self.assertIn(m1, p.musiker_set.all())
 
     def test_rf_instance_list(self):
         m1 = make(_models.musiker)
         m2 = make(_models.musiker)
-        p = make(_models.person, vorname='Alice', nachname='Testman', musiker=[m1, m2])
+        p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=[m1, m2])
         self.assertIn(m1, p.musiker_set.all())
         self.assertIn(m2, p.musiker_set.all())
 
@@ -247,7 +247,7 @@ class TestMIZDjangoOptions(MyTestCase):
         fac = modelfactory_factory(_models.artikel)
         self.assertEqual(fac.genre.factory._meta.model, _models.genre)
         self.assertEqual(fac.schlagwort.factory._meta.model, _models.schlagwort)
-        self.assertEqual(fac.person.factory._meta.model, _models.person)
+        self.assertEqual(fac.person.factory._meta.model, _models.Person)
         self.assertEqual(fac.autor.factory._meta.model, _models.autor)
         self.assertEqual(fac.band.factory._meta.model, _models.band)
         self.assertEqual(fac.musiker.factory._meta.model, _models.musiker)
@@ -620,7 +620,7 @@ class TestAutorFactory(ModelFactoryTestCase):
     factory_class = modelfactory_factory(_models.autor)
 
     def test_kuerzel_field(self):
-        # Assert that kuerzel depends on the person's name.
+        # Assert that kuerzel depends on the Person's name.
         a = self.factory_class()
         expected = a.person.vorname[0] + a.person.nachname[0]
         self.assertEqual(a.kuerzel, expected)
