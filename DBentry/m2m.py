@@ -302,7 +302,7 @@ class m2m_magazin_genre(BaseM2MModel):
 
 class m2m_magazin_verlag(BaseM2MModel):
     magazin = models.ForeignKey('Magazin', models.CASCADE)
-    verlag = models.ForeignKey('verlag', models.CASCADE)
+    verlag = models.ForeignKey('Verlag', models.CASCADE)
 
     name_field = 'verlag'
 

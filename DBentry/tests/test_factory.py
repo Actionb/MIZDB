@@ -358,7 +358,7 @@ class TestMIZDjangoOptions(MyTestCase):
         fac = modelfactory_factory(_models.buch)
         self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.schriftenreihe)
         self.assertEqual(fac.buchband.factory._meta.model, _models.buch)
-        self.assertEqual(fac.verlag.factory._meta.model, _models.verlag)
+        self.assertEqual(fac.verlag.factory._meta.model, _models.Verlag)
 
     @patch('DBentry.factory.get_model_relations')
     def test_add_related_factories_inherited_relation(self, mocked_get_model_relations):

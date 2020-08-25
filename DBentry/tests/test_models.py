@@ -1406,7 +1406,7 @@ class TestModelVeranstaltungsreihe(DataTestCase):
 
 class TestModelVerlag(DataTestCase):
 
-    model = _models.verlag
+    model = _models.Verlag
 
     def test_str(self):
         obj = self.model(verlag_name='Testverlag')

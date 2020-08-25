@@ -435,7 +435,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Herausgeber
     class VerlagInLine(BaseTabularInline):
         model = _models.buch.verlag.through
-        verbose_model = _models.verlag
+        verbose_model = _models.Verlag
 
     collapse_all = True
     # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
@@ -529,7 +529,7 @@ class MagazinAdmin(MIZModelAdmin):
         model = _models.MagazinURL
     class VerlagInLine(BaseTabularInline):
         model = _m2m.m2m_magazin_verlag
-        verbose_model = _models.verlag
+        verbose_model = _models.Verlag
     class HerausgeberInLine(BaseTabularInline):
         model = _m2m.m2m_magazin_herausgeber
         verbose_model = _models.Herausgeber
@@ -711,7 +711,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     kuenstler_string.short_description = 'Künstler'
 
 
-@admin.register(_models.verlag, site=miz_site)
+@admin.register(_models.Verlag, site=miz_site)
 class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
     search_form_kwargs = {

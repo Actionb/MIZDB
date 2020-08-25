@@ -425,7 +425,7 @@ class Magazin(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_magazin_genre)
-    verlag = models.ManyToManyField('verlag', through=_m2m.m2m_magazin_verlag)
+    verlag = models.ManyToManyField('Verlag', through=_m2m.m2m_magazin_verlag)
     herausgeber = models.ManyToManyField('Herausgeber', through=_m2m.m2m_magazin_herausgeber)
     orte = models.ManyToManyField('ort')
 
@@ -447,7 +447,7 @@ class MagazinURL(AbstractURLModel):
     magazin = models.ForeignKey('Magazin', models.CASCADE, related_name='urls')
 
 
-class verlag(BaseModel):
+class Verlag(BaseModel):
     verlag_name = models.CharField('Verlag', max_length=200)
 
     sitz = models.ForeignKey('ort', models.SET_NULL, null=True, blank=True)
@@ -657,7 +657,7 @@ class buch(BaseModel):
     sprache = models.CharField(max_length=200, blank=True)
 
     herausgeber = models.ManyToManyField('Herausgeber')
-    verlag = models.ManyToManyField('verlag')
+    verlag = models.ManyToManyField('Verlag')
     autor = models.ManyToManyField('Autor')
     genre = models.ManyToManyField('Genre')
     schlagwort = models.ManyToManyField('schlagwort')

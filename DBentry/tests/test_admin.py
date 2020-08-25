@@ -1132,7 +1132,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VerlagAdmin
-    model = _models.verlag
+    model = _models.Verlag
     fields_expected = ['verlag_name', 'sitz']
     search_fields_expected = ['verlag_name']
     crosslinks_expected = [
