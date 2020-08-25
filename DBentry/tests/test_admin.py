@@ -662,6 +662,27 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 
+    def test_brochure_crosslink(self):
+        # Assert that crosslinks to all of the BaseBrochure children are displayed.
+        # Do note that factory full_relations only creates one related object
+        # instead of three for each BaseBrochure child.
+        obj = make(self.model)
+        make(_models.Brochure, ausgabe=obj)
+        make(_models.Kalendar, ausgabe=obj)
+        make(_models.Katalog, ausgabe=obj)
+        crosslinks = self.get_crosslinks(obj, labels={})
+        data = {'fld_name': 'ausgabe', 'pk': str(obj.pk)}
+        labels = {
+            'brochure': 'Broschüren (1)',
+            'kalendar': 'Programmhefte (1)',
+            'katalog': 'Warenkataloge (1)'
+        }
+        for model_name in ('brochure', 'kalendar', 'katalog'):
+            with self.subTest(model=model_name):
+                data['model_name'] = model_name
+                data['label'] = labels[model_name]
+                self.assertInCrosslinks(data, crosslinks)
+
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -830,6 +851,27 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_alias_string(self):
         self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
+
+    def test_brochure_crosslink(self):
+        # Assert that crosslinks to all of the BaseBrochure children are displayed.
+        # Do note that factory full_relations only creates one related object
+        # instead of three for each BaseBrochure child.
+        obj = make(self.model)
+        make(_models.Brochure, genre=obj)
+        make(_models.Kalendar, genre=obj)
+        make(_models.Katalog, genre=obj)
+        crosslinks = self.get_crosslinks(obj, labels={})
+        data = {'fld_name': 'genre', 'pk': str(obj.pk)}
+        labels = {
+            'brochure': 'Broschüren (1)',
+            'kalendar': 'Programmhefte (1)',
+            'katalog': 'Warenkataloge (1)'
+        }
+        for model_name in ('brochure', 'kalendar', 'katalog'):
+            with self.subTest(model=model_name):
+                data['model_name'] = model_name
+                data['label'] = labels[model_name]
+                self.assertInCrosslinks(data, crosslinks)
 
 
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
