@@ -94,6 +94,10 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 search_field = search_field[1:]
             try:
                 get_fields_and_lookups(self.model, search_field)
+            # TODO: Give this check error a proper message.
+            # This produces a pretty pointless error msg at the moment:
+            #   "?: Musiker has no field named 'musiker_alias'"
+            # It's not immediately clear what is wrong.
             except exceptions.FieldDoesNotExist as e:
                 errors.append(checks.Critical(e.args[0]))
             except exceptions.FieldError as e:
