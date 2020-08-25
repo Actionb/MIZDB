@@ -67,7 +67,7 @@ class AudioAdmin(MIZModelAdmin):
         ]
     class OrtInLine(BaseTabularInline):
         model = _models.audio.ort.through
-        verbose_model = _models.ort
+        verbose_model = _models.Ort
     class PlattenInLine(BaseTabularInline):
         model = _models.audio.plattenfirma.through
         verbose_model = _models.plattenfirma
@@ -239,7 +239,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.artikel.ort.through
-        verbose_model = _models.ort
+        verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.artikel.spielort.through
         verbose_model = _models.spielort
@@ -352,7 +352,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.bildmaterial.ort.through
-        verbose_model = _models.ort
+        verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.bildmaterial.spielort.through
         verbose_model = _models.spielort
@@ -423,7 +423,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.buch.ort.through
-        verbose_model = _models.ort
+        verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.buch.spielort.through
         verbose_model = _models.spielort
@@ -770,7 +770,7 @@ class LandAdmin(MIZModelAdmin):
     pass
 
 
-@admin.register(_models.ort, site=miz_site)
+@admin.register(_models.Ort, site=miz_site)
 class OrtAdmin(MIZModelAdmin):
     fields = ['stadt', 'land', 'bland']  # put land before bland
     index_category = 'Stammdaten'
@@ -822,7 +822,7 @@ class DateiAdmin(MIZModelAdmin):
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
         model = _models.datei.ort.through
-        verbose_model = _models.ort
+        verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.datei.spielort.through
         verbose_model = _models.spielort

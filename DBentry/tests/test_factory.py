@@ -250,13 +250,13 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.autor.factory._meta.model, _models.Autor)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)
         self.assertEqual(fac.musiker.factory._meta.model, _models.Musiker)
-        self.assertEqual(fac.ort.factory._meta.model, _models.ort)
+        self.assertEqual(fac.ort.factory._meta.model, _models.Ort)
         self.assertEqual(fac.spielort.factory._meta.model, _models.spielort)
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
 
         fac = modelfactory_factory(_models.Musiker)
         self.assertEqual(fac.audio.factory._meta.model, _models.audio)
-        self.assertEqual(fac.orte.factory._meta.model, _models.ort)
+        self.assertEqual(fac.orte.factory._meta.model, _models.Ort)
         self.assertEqual(fac.artikel.factory._meta.model, _models.artikel)
         self.assertEqual(fac.memorabilien.factory._meta.model, _models.memorabilien)
         self.assertEqual(fac.datei.factory._meta.model, _models.datei)
@@ -344,7 +344,7 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.ort, related_model=_models.instrument),
+                'mocked_field_name', model=_models.Ort, related_model=_models.instrument),
             many_to_many=True,
         )
         mocked_get_model_relations.return_value = [mocked_rel]

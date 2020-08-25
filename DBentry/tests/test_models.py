@@ -1150,7 +1150,7 @@ class TestModelMusikerAlias(DataTestCase):
 @tag("cn")
 class TestModelOrt(DataTestCase):
 
-    model = _models.ort
+    model = _models.Ort
 
     @translation_override(language=None)
     def test_get_name(self):
@@ -1291,7 +1291,7 @@ class TestModelSpielort(DataTestCase):
     def test_str(self):
         land_object = _models.land.objects.create(land_name='Deutschland', code='DE')
         obj = self.model(
-            name='Testspielort', ort=_models.ort.objects.create(land=land_object))
+            name='Testspielort', ort=_models.Ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')
 
     def test_meta_ordering(self):

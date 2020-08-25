@@ -401,7 +401,7 @@ class TestMergingAusgabe(MergingTestCase):
 
 
 class TestMergingOrt(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.ort
+    model = _models.Ort
 
 
 class TestMergingArtikel(MergingTestCase, MergeTestMethodsMixin):

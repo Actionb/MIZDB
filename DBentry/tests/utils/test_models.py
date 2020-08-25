@@ -88,7 +88,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Autor), [])
         self.assertEqual(required_field_names(_models.Ausgabe), ['magazin'])
         self.assertEqual(required_field_names(_models.Magazin), ['magazin_name'])
-        self.assertEqual(required_field_names(_models.ort), ['land'])
+        self.assertEqual(required_field_names(_models.Ort), ['land'])
         self.assertEqual(
             required_field_names(_models.artikel), ['schlagzeile', 'seite', 'ausgabe'])
         # _models.Format.anzahl field is required but has a default:

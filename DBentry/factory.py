@@ -635,7 +635,7 @@ class MusikerFactory(MIZModelFactory):
 
 class OrtFactory(MIZModelFactory):
     class Meta:
-        model = _models.ort
+        model = _models.Ort
     stadt = factory.Faker('city')
 
 

@@ -21,7 +21,7 @@ class TestLoggingMixin(ViewTestCase):
         cls.obj2 = make(cls.model, band_name='Testband', beschreibung='This is a test.')
         cls.m2m = cls.model.genre.through.objects.get(band=cls.obj1)
 
-        cls.ort = make(_models.ort)
+        cls.ort = make(_models.Ort)
 
         cls.test_data = [cls.obj1, cls.obj2, cls.m2m, cls.ort]
 
@@ -29,7 +29,7 @@ class TestLoggingMixin(ViewTestCase):
 
     @translation_override(language=None)
     def test_log_add_add(self):
-        rel = _models.ort.band_set.rel
+        rel = _models.Ort.band_set.rel
 
         view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)
@@ -40,7 +40,7 @@ class TestLoggingMixin(ViewTestCase):
 
     @translation_override(language=None)
     def test_log_add_change(self):
-        rel = _models.ort.band_set.rel
+        rel = _models.Ort.band_set.rel
 
         view = self.get_dummy_view(request=self.get_request())
         logs = view.log_add(self.ort, rel, self.obj2)

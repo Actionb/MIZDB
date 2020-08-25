@@ -764,7 +764,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj1), '')
-        o = make(_models.ort, stadt='Dortmund', land__code='XYZ')
+        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
@@ -813,7 +813,7 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj2), '')
-        o = make(_models.ort, stadt='Dortmund', land__code='XYZ')
+        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj2.orte.add(o)
         self.obj2.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
@@ -948,7 +948,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj1), '')
-        o = make(_models.ort, stadt='Dortmund', land__code='XYZ')
+        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
@@ -980,7 +980,7 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.OrtAdmin
-    model = _models.ort
+    model = _models.Ort
     fields_expected = ['stadt', 'land', 'bland']
     search_fields_expected = ['_name']
     test_data_count = 1
