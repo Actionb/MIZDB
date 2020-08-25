@@ -245,7 +245,7 @@ class TestMIZDjangoOptions(MyTestCase):
         # Assert that the created m2m factories are following the relation correctly.
         fac = modelfactory_factory(_models.artikel)
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
-        self.assertEqual(fac.schlagwort.factory._meta.model, _models.schlagwort)
+        self.assertEqual(fac.schlagwort.factory._meta.model, _models.Schlagwort)
         self.assertEqual(fac.person.factory._meta.model, _models.Person)
         self.assertEqual(fac.autor.factory._meta.model, _models.Autor)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)

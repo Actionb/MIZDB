@@ -560,7 +560,7 @@ class BaseGenreInline(BaseTabularInline):
 
 
 class BaseSchlagwortInline(BaseTabularInline):
-    verbose_model = _models.schlagwort
+    verbose_model = _models.Schlagwort
 
 
 class BaseAusgabeInline(BaseTabularInline):

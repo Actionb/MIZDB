@@ -1254,7 +1254,7 @@ class TestModelProvenienz(DataTestCase):
 
 class TestModelSchlagwort(DataTestCase):
 
-    model = _models.schlagwort
+    model = _models.Schlagwort
 
     def test_str(self):
         obj = self.model(schlagwort='Testschlagwort')

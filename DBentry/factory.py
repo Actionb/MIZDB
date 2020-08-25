@@ -648,7 +648,7 @@ class PersonFactory(MIZModelFactory):
 
 class SchlagwortFactory(MIZModelFactory):
     class Meta:
-        model = _models.schlagwort
+        model = _models.Schlagwort
         django_get_or_create = ['schlagwort']
 
 

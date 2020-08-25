@@ -429,7 +429,7 @@ class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.schlagwort
+    model = _models.Schlagwort
 
 
 class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):

@@ -649,7 +649,7 @@ class PersonAdmin(MIZModelAdmin):
     orte_string.short_description = 'Orte'
 
 
-@admin.register(_models.schlagwort, site=miz_site)
+@admin.register(_models.Schlagwort, site=miz_site)
 class SchlagwortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.schlagwort_alias

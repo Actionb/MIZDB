@@ -877,7 +877,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.SchlagwortAdmin
-    model = _models.schlagwort
+    model = _models.Schlagwort
     fields_expected = ['schlagwort']
     search_fields_expected = ['schlagwort', 'schlagwort_alias__alias', 'pk__iexact']
 

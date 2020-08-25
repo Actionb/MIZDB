@@ -561,7 +561,7 @@ class Land(BaseModel):
         ordering = ['land_name']
 
 # TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
-class schlagwort(BaseModel):
+class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
     create_field = 'schlagwort'
@@ -575,7 +575,7 @@ class schlagwort(BaseModel):
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
 class schlagwort_alias(BaseAliasModel):
-    parent = models.ForeignKey('schlagwort', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Schlagwort', models.CASCADE)  # TODO: add a related_name
 
 
 class artikel(BaseModel):
@@ -596,7 +596,7 @@ class artikel(BaseModel):
     ausgabe = models.ForeignKey('Ausgabe', models.PROTECT)
 
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_artikel_genre)
-    schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_artikel_schlagwort)
+    schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_artikel_schlagwort)
     person = models.ManyToManyField('Person', through=_m2m.m2m_artikel_person)
     autor = models.ManyToManyField('Autor', through=_m2m.m2m_artikel_autor)
     band = models.ManyToManyField('Band', through=_m2m.m2m_artikel_band)
@@ -660,7 +660,7 @@ class buch(BaseModel):
     verlag = models.ManyToManyField('Verlag')
     autor = models.ManyToManyField('Autor')
     genre = models.ManyToManyField('Genre')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
@@ -739,7 +739,7 @@ class audio(BaseModel):
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_audio_genre)
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_audio_musiker)
     person = models.ManyToManyField('Person', through=_m2m.m2m_audio_person)
-    schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_audio_schlagwort)
+    schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_audio_schlagwort)
     spielort = models.ManyToManyField('spielort', through=_m2m.m2m_audio_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through=_m2m.m2m_audio_veranstaltung)
     ort = models.ManyToManyField('Ort', through=_m2m.m2m_audio_ort)
@@ -777,7 +777,7 @@ class bildmaterial(BaseModel):
         'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe')
 
     genre = models.ManyToManyField('Genre')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
@@ -831,7 +831,7 @@ class dokument(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     genre = models.ManyToManyField('Genre')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
@@ -859,7 +859,7 @@ class memorabilien(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     genre = models.ManyToManyField('Genre')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
@@ -911,7 +911,7 @@ class technik(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     genre = models.ManyToManyField('Genre')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
@@ -946,7 +946,7 @@ class veranstaltung(BaseModel):
     genre = models.ManyToManyField('Genre')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     musiker = models.ManyToManyField('Musiker')
 
     name_field = 'name'
@@ -1001,7 +1001,7 @@ class video(BaseModel):
     genre = models.ManyToManyField('Genre')
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_video_musiker)
     person = models.ManyToManyField('Person')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     spielort = models.ManyToManyField('spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
@@ -1186,7 +1186,7 @@ class datei(BaseModel):
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
 
     genre = models.ManyToManyField('Genre')
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
     person = models.ManyToManyField('Person')
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_datei_musiker)
@@ -1337,7 +1337,7 @@ class BaseBrochure(BaseModel):
 class Brochure(BaseBrochure):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Broschüre')
 
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']

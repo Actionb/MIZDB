@@ -95,7 +95,7 @@ class m2m_audio_plattenfirma(BaseM2MModel):
 
 class m2m_audio_schlagwort(BaseM2MModel):
     audio = models.ForeignKey('audio', models.CASCADE)
-    schlagwort = models.ForeignKey('schlagwort', models.CASCADE)
+    schlagwort = models.ForeignKey('Schlagwort', models.CASCADE)
 
     name_field = 'schlagwort'
 
@@ -208,7 +208,7 @@ class m2m_artikel_person(BaseM2MModel):
 
 class m2m_artikel_schlagwort(BaseM2MModel):
     artikel = models.ForeignKey('artikel', models.CASCADE)
-    schlagwort = models.ForeignKey('schlagwort', models.CASCADE)
+    schlagwort = models.ForeignKey('Schlagwort', models.CASCADE)
 
     name_field = 'schlagwort'
 
