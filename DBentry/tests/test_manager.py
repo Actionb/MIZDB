@@ -610,7 +610,7 @@ class TestCNQuerySet(DataTestCase):
 
 class TestBuchQuerySet(DataTestCase):
 
-    model = _models.buch
+    model = _models.Buch
     raw_data = [
         {'ISBN': '978-1-234-56789-7', 'EAN': '73513537'},
         {'ISBN': '978-4-56-789012-0', 'EAN': "1234567890128"}

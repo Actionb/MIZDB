@@ -95,7 +95,7 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
             'titel_orig': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
             'buchband': make_widget(
-                url='acbuchband', model=_models.buch, wrap=False,
+                url='acbuchband', model=_models.Buch, wrap=False,
                 can_delete_related=False
             ),
         }

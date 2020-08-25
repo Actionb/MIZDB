@@ -65,7 +65,7 @@ class TestUniqueFaker(MyTestCase):
 class TestSelfFactory(MyTestCase):
 
     def test_evaluate(self):
-        buch_factory = modelfactory_factory(_models.buch)
+        buch_factory = modelfactory_factory(_models.Buch)
         created = buch_factory(buchband=None)
         self.assertIsNone(created.buchband)
 
@@ -266,7 +266,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.dokument.factory._meta.model, _models.dokument)
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
-        self.assertEqual(fac.buch.factory._meta.model, _models.buch)
+        self.assertEqual(fac.buch.factory._meta.model, _models.Buch)
         self.assertEqual(fac.instrument.factory._meta.model, _models.instrument)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)
 
@@ -349,15 +349,15 @@ class TestMIZDjangoOptions(MyTestCase):
         )
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
-        opts.model = _models.buch
+        opts.model = _models.Buch
         with self.assertRaises(TypeError):
             opts.add_m2m_factories()
 
     def test_add_related_factories(self):
         # Assert that the created related factories are following the relation correctly.
-        fac = modelfactory_factory(_models.buch)
+        fac = modelfactory_factory(_models.Buch)
         self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.schriftenreihe)
-        self.assertEqual(fac.buchband.factory._meta.model, _models.buch)
+        self.assertEqual(fac.buchband.factory._meta.model, _models.Buch)
         self.assertEqual(fac.verlag.factory._meta.model, _models.Verlag)
 
     @patch('DBentry.factory.get_model_relations')
@@ -394,13 +394,13 @@ class TestMIZDjangoOptions(MyTestCase):
 
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly
-        fac = modelfactory_factory(_models.buch)
+        fac = modelfactory_factory(_models.Buch)
         self.assertIsInstance(fac.buchband, SelfFactory)
 
     def test_check_declarations(self):
         # Assert that all dynamically created factories are accounted for
         # in the correct declaration sets.
-        buch = _models.buch
+        buch = _models.Buch
         fac = modelfactory_factory(buch)
         declarations = fac._meta.declarations
         # required base fields

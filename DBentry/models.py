@@ -631,7 +631,7 @@ class Artikel(BaseModel):
             return 'Keine Schlagzeile gegeben!'
 
 
-class buch(BaseModel):
+class Buch(BaseModel):
     # TODO: übersetzer feld
     titel = models.CharField(max_length=200)
     titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
@@ -1127,7 +1127,7 @@ class bestand(BaseModel):
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
     bildmaterial = models.ForeignKey('bildmaterial', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
-    buch = models.ForeignKey('buch', models.CASCADE, blank=True, null=True)
+    buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
     dokument = models.ForeignKey('dokument', models.CASCADE, blank=True, null=True)
     memorabilien = models.ForeignKey('memorabilien', models.CASCADE, blank=True, null=True)
     technik = models.ForeignKey('technik', models.CASCADE, blank=True, null=True)

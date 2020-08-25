@@ -109,13 +109,13 @@ class TestAutorForm(ModelFormTestCase):
 class TestBuchForm(ModelFormTestCase):
     form_class = BuchForm
     fields = ['is_buchband', 'buchband']
-    model = _models.buch
+    model = _models.Buch
 
     @translation_override(language=None)
     def test_clean(self):
         # clean should raise a ValidationError if both is_buchband and buchband
         # data is present.
-        b = make(_models.buch, is_buchband=True)
+        b = make(_models.Buch, is_buchband=True)
         expected_error_message = 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'
 
         form = self.get_form(data={'is_buchband': True, 'buchband': b.pk})

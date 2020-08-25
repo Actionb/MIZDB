@@ -135,8 +135,8 @@ class ACBuchband(ACBase):
     Autocomplete view that queries buch instances that are defined as 'buchband'.
     """
 
-    model = _models.buch
-    queryset = _models.buch.objects.filter(is_buchband=True)
+    model = _models.Buch
+    queryset = _models.Buch.objects.filter(is_buchband=True)
 
 
 class ACAusgabe(ACBase):

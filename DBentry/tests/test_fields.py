@@ -200,7 +200,7 @@ class TestStdNumField(MyTestCase):
 
     def test_formfield_widget(self):
         # Assert that the widget of the formfield is always an instance of StdNumWidget.
-        model_field = _models.buch._meta.get_field('ISBN')
+        model_field = _models.Buch._meta.get_field('ISBN')
         dummy_widget_class = type('Dummy', (StdNumWidget, ), {})
         widgets = [
             None,
@@ -215,8 +215,8 @@ class TestStdNumField(MyTestCase):
 
 
 class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
-    model = _models.buch
-    model_field = _models.buch._meta.get_field('ISBN')
+    model = _models.Buch
+    model_field = _models.Buch._meta.get_field('ISBN')
     prototype_data = {'titel': 'Testbuch'}
 
     valid = [
@@ -331,8 +331,8 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
 
 
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
-    model = _models.buch
-    model_field = _models.buch._meta.get_field('EAN')
+    model = _models.Buch
+    model_field = _models.Buch._meta.get_field('EAN')
     prototype_data = {'titel': 'Testbuch'}
 
     valid = ['73513537', "1234567890128"]

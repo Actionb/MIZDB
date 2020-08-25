@@ -501,7 +501,7 @@ class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACBuchband(ACViewTestCase):
-    model = _models.buch
+    model = _models.Buch
     view_class = ACBuchband
 
     @classmethod

@@ -403,38 +403,38 @@ class BildmaterialAdmin(MIZModelAdmin):
         return super().response_change(request, obj)
 
 
-@admin.register(_models.buch, site=miz_site)
+@admin.register(_models.Buch, site=miz_site)
 class BuchAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.buch.genre.through
+        model = _models.Buch.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.buch.schlagwort.through
+        model = _models.Buch.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.buch.person.through
+        model = _models.Buch.person.through
         verbose_model = _models.Person
     class AutorInLine(BaseTabularInline):
-        model = _models.buch.autor.through
+        model = _models.Buch.autor.through
         verbose_model = _models.Autor
     class MusikerInLine(BaseTabularInline):
-        model = _models.buch.musiker.through
+        model = _models.Buch.musiker.through
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
-        model = _models.buch.band.through
+        model = _models.Buch.band.through
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
-        model = _models.buch.ort.through
+        model = _models.Buch.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
-        model = _models.buch.spielort.through
+        model = _models.Buch.spielort.through
         verbose_model = _models.spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.buch.veranstaltung.through
+        model = _models.Buch.veranstaltung.through
         verbose_model = _models.veranstaltung
     class HerausgeberInLine(BaseTabularInline):
-        model = _models.buch.herausgeber.through
+        model = _models.Buch.herausgeber.through
         verbose_model = _models.Herausgeber
     class VerlagInLine(BaseTabularInline):
-        model = _models.buch.verlag.through
+        model = _models.Buch.verlag.through
         verbose_model = _models.Verlag
 
     collapse_all = True

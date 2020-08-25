@@ -1143,7 +1143,7 @@ class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BuchAdmin
-    model = _models.buch
+    model = _models.Buch
     exclude_expected = [
         'herausgeber', 'verlag', 'autor', 'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'

@@ -43,7 +43,7 @@ class TestModelUtils(MyTestCase):
         self.assertIsNone(utils.get_model_from_string('beep boop'))
 
     def test_get_model_relations(self):
-        buch = _models.buch
+        buch = _models.Buch
         # model buch has the four kinds of relations:
         # FK from bestand to buch
         # FK from buch to verlag
@@ -122,7 +122,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
 
         # related_name
-        rel = _models.buch._meta.get_field('buchband').remote_field
+        rel = _models.Buch._meta.get_field('buchband').remote_field
         self.assertEqual(utils.get_reverse_field_path(rel, 'titel'), 'buch_set__titel')
 
     def test_get_fields_and_lookups(self):

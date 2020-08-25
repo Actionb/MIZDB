@@ -656,7 +656,7 @@ class TestModelBrochure(DataTestCase):
 
 class TestModelBuch(DataTestCase):
 
-    model = _models.buch
+    model = _models.Buch
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
