@@ -324,7 +324,7 @@ class TestACCreateable(ACViewTestCase):
         # Assert that post raises an AttributeError exception if self.creator
         # is unset and self.create_field is unset.
         expected_error_msg = 'Missing creator object or "create_field"'
-        request = self.post_request(data={'text': 'Alice Testman (AT)'})
+        request = self.post_request(data={'text': 'Alice'})
         view = self.get_view()
         _default_creator = view.creator
 
@@ -350,10 +350,6 @@ class TestACCreateable(ACViewTestCase):
         view._creator = _default_creator
         with self.assertNotRaises(AttributeError) as cm:
             view.post(request)
-        filter_kwargs = dict(
-            person__vorname='Alice', person__nachname='Testman', kuerzel='AT'
-        )
-        self.assertTrue(self.model.objects.filter(**filter_kwargs).exists())
 
 
 class TestACAusgabe(ACViewTestCase):

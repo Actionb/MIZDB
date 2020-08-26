@@ -662,15 +662,36 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 
+    def test_brochure_crosslink(self):
+        # Assert that crosslinks to all of the BaseBrochure children are displayed.
+        # Do note that factory full_relations only creates one related object
+        # instead of three for each BaseBrochure child.
+        obj = make(self.model)
+        make(_models.Brochure, ausgabe=obj)
+        make(_models.Kalendar, ausgabe=obj)
+        make(_models.Katalog, ausgabe=obj)
+        crosslinks = self.get_crosslinks(obj, labels={})
+        data = {'fld_name': 'ausgabe', 'pk': str(obj.pk)}
+        labels = {
+            'brochure': 'Broschüren (1)',
+            'kalendar': 'Programmhefte (1)',
+            'katalog': 'Warenkataloge (1)'
+        }
+        for model_name in ('brochure', 'kalendar', 'katalog'):
+            with self.subTest(model=model_name):
+                data['model_name'] = model_name
+                data['label'] = labels[model_name]
+                self.assertInCrosslinks(data, crosslinks)
+
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.MagazinAdmin
     model = _models.magazin
-    exclude_expected = ['genre', 'verlag', 'herausgeber']
+    exclude_expected = ['genre', 'verlag', 'herausgeber', 'orte']
     fields_expected = [
-        'magazin_name', 'magazin_url', 'ausgaben_merkmal', 'fanzine', 'issn',
-        'beschreibung', 'bemerkungen', 'ort',
+        'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',
+        'beschreibung', 'bemerkungen',
     ]
     search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']
 
@@ -831,6 +852,27 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_alias_string(self):
         self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
 
+    def test_brochure_crosslink(self):
+        # Assert that crosslinks to all of the BaseBrochure children are displayed.
+        # Do note that factory full_relations only creates one related object
+        # instead of three for each BaseBrochure child.
+        obj = make(self.model)
+        make(_models.Brochure, genre=obj)
+        make(_models.Kalendar, genre=obj)
+        make(_models.Katalog, genre=obj)
+        crosslinks = self.get_crosslinks(obj, labels={})
+        data = {'fld_name': 'genre', 'pk': str(obj.pk)}
+        labels = {
+            'brochure': 'Broschüren (1)',
+            'kalendar': 'Programmhefte (1)',
+            'katalog': 'Warenkataloge (1)'
+        }
+        for model_name in ('brochure', 'kalendar', 'katalog'):
+            with self.subTest(model=model_name):
+                data['model_name'] = model_name
+                data['label'] = labels[model_name]
+                self.assertInCrosslinks(data, crosslinks)
+
 
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -951,7 +993,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'buch', 'fld_name': 'ort', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'ort', 'label': 'Dateien (1)'},
         {'model_name': 'dokument', 'fld_name': 'ort', 'label': 'Dokumente (1)'},
-        {'model_name': 'magazin', 'fld_name': 'ort', 'label': 'Magazine (1)'},
+        {'model_name': 'magazin', 'fld_name': 'orte', 'label': 'Magazine (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'ort', 'label': 'Memorabilien (1)'},
         {'model_name': 'musiker', 'fld_name': 'orte', 'label': 'Musiker (1)'},
         {'model_name': 'person', 'fld_name': 'orte', 'label': 'Personen (1)'},
@@ -1069,7 +1111,9 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'name', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'datum', 'veranstaltung_alias__alias',
+        'beschreibung', 'bemerkungen', 'pk__iexact'
+    ]
     test_data_count = 1
 
     crosslinks_expected = [

@@ -236,6 +236,8 @@ class ChangelistSearchFormMixin(object):
         # The changelist attribute 'param' is insufficient as it destroys
         # the multiple values of a MultiValueDict by calling items() instead
         # of lists(): self.params = dict(request.GET.items())
+        # django's changelist does not inherit the base View class that sets
+        # self.request during setup().
         self.request = request
         super().__init__(request, *args, **kwargs)
 

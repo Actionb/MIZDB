@@ -525,6 +525,8 @@ class GenreAdmin(MIZModelAdmin):
 
 @admin.register(_models.magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
+    class URLInLine(BaseTabularInline):
+        model = _models.MagazinURL
     class VerlagInLine(BaseTabularInline):
         model = _m2m.m2m_magazin_verlag
         verbose_model = _models.verlag
@@ -533,14 +535,16 @@ class MagazinAdmin(MIZModelAdmin):
         verbose_model = _models.Herausgeber
     class GenreInLine(BaseGenreInline):
         model = _models.magazin.genre.through
+    class OrtInLine(BaseOrtInLine):
+        model = _models.magazin.orte.through
 
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, VerlagInLine, HerausgeberInLine]
-    list_display = ['__str__', 'short_beschreibung', 'anz_ausgaben', 'ort']
+    inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
+    list_display = ['__str__', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
+    list_prefetch_related = ['orte']
 
     search_form_kwargs = {
-        'fields': ['verlag', 'herausgeber', 'ort', 'genre', 'issn', 'fanzine', 'id__in'],
-        'labels': {'ort': 'Herausgabeort'},
+        'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine', 'id__in'],
     }
 
     def anz_ausgaben(self, obj):
@@ -548,6 +552,10 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.short_description = 'Anz. Ausgaben'
     anz_ausgaben.admin_order_field = 'anz_ausgabe'
     anz_ausgaben.annotation = Count('ausgabe')
+
+    def orte_string(self, obj):
+        return concat_limit(obj.orte.all())
+    orte_string.short_description = 'Orte'
 
     def short_beschreibung(self, obj):
         return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
