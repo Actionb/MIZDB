@@ -197,7 +197,9 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 if not row.get(field_name):
                     continue
                 data = row[field_name]
-                if not isinstance(data, (list, tuple)):
+                if isinstance(data, tuple):
+                    data = list(data)
+                if not isinstance(data, list):
                     data = [data]
                 accessor_name = "ausgabe{}_set".format(field_name)
                 related_manager = getattr(instance, accessor_name)
