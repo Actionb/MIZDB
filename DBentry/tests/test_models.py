@@ -898,7 +898,7 @@ class TestModelHerausgeber(DataTestCase):
 
 class TestModelInstrument(DataTestCase):
 
-    model = _models.instrument
+    model = _models.Instrument
 
     def test_str(self):
         obj = self.model(instrument='Posaune', kuerzel='pos')

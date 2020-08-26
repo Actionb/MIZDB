@@ -61,7 +61,7 @@ class Musiker(BaseModel):
     person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_musiker_genre)
-    instrument = models.ManyToManyField('instrument', through=_m2m.m2m_musiker_instrument)
+    instrument = models.ManyToManyField('Instrument', through=_m2m.m2m_musiker_instrument)
     orte = models.ManyToManyField('Ort')
 
     create_field = 'kuenstler_name'
@@ -698,7 +698,7 @@ class Herausgeber(BaseModel):
         verbose_name_plural = 'Herausgeber'
 
 # TODO: instrument contains a lot of nonsense instruments + kuerzel
-class instrument(BaseModel):
+class Instrument(BaseModel):
     instrument = models.CharField(unique=True, max_length=200)
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
 

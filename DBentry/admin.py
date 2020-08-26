@@ -851,7 +851,7 @@ class DateiAdmin(MIZModelAdmin):
     ]
 
 
-@admin.register(_models.instrument, site=miz_site)
+@admin.register(_models.Instrument, site=miz_site)
 class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
 

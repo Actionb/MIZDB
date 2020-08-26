@@ -347,7 +347,7 @@ class m2m_musiker_genre(BaseM2MModel):
 
 class m2m_musiker_instrument(BaseM2MModel):
     musiker = models.ForeignKey('Musiker', models.CASCADE)
-    instrument = models.ForeignKey('instrument', models.CASCADE)
+    instrument = models.ForeignKey('Instrument', models.CASCADE)
 
     name_field = 'instrument'
 

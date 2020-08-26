@@ -267,7 +267,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.buch.factory._meta.model, _models.Buch)
-        self.assertEqual(fac.instrument.factory._meta.model, _models.instrument)
+        self.assertEqual(fac.instrument.factory._meta.model, _models.Instrument)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)
 
     def get_mocked_field(self, field_name, model, related_model):
@@ -344,7 +344,7 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.Ort, related_model=_models.instrument),
+                'mocked_field_name', model=_models.Ort, related_model=_models.Instrument),
             many_to_many=True,
         )
         mocked_get_model_relations.return_value = [mocked_rel]

@@ -475,7 +475,7 @@ class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.instrument
+    model = _models.Instrument
     raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
     has_alias = False
 

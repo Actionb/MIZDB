@@ -1037,7 +1037,7 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.InstrumentAdmin
-    model = _models.instrument
+    model = _models.Instrument
     fields_expected = ['instrument', 'kuerzel']
     search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
