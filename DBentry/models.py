@@ -1034,7 +1034,7 @@ class Provenienz(BaseModel):
         'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=SCHENK
     )
 
-    geber = models.ForeignKey('geber', models.PROTECT)
+    geber = models.ForeignKey('Geber', models.PROTECT)
 
     search_fields = ['geber__name']
 
@@ -1047,7 +1047,7 @@ class Provenienz(BaseModel):
         return "{0} ({1})".format(str(self.geber.name), str(self.typ))
 
 
-class geber(BaseModel):
+class Geber(BaseModel):
     name = models.CharField(max_length=200)
 
     name_field = create_field = 'name'

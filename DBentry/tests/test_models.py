@@ -832,7 +832,7 @@ class TestModelFormatTyp(DataTestCase):
 
 class TestModelGeber(DataTestCase):
 
-    model = _models.geber
+    model = _models.Geber
 
     def test_str(self):
         obj = self.model(name='Testgeber')
