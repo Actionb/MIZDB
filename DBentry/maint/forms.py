@@ -145,7 +145,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         """Return the choices for the 'model_select' field."""
         filters = self.get_model_filters()
         choices = [
-            (model._meta.model_name, model._meta.verbose_name)
+            (model._meta.model_name, model._meta.object_name)
             for model in utils.nfilter(filters, apps.get_models(self.app_label))
         ]
         # Sort the choices by verbose_name.
