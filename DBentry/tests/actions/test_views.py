@@ -32,7 +32,7 @@ from DBentry.utils import get_obj_link  # parameters: obj, user, admin_site
 
 class TestConfirmationViewMixin(AdminTestCase):
 
-    model = _models.audio
+    model = _models.Audio
     model_admin_class = AudioAdmin
 
     def get_instance(self, **kwargs):
@@ -117,11 +117,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         expected = [['Band: '+ get_obj_link(self.obj1, request.user, blank=True)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
-        a = make(_models.audio, band=self.obj1, format__extra=2)
+        a = make(_models.Audio, band=self.obj1, format__extra=2)
         view = self.get_view(
             request,
-            model_admin=AudioAdmin(_models.audio, miz_site),
-            queryset=_models.audio.objects.all()
+            model_admin=AudioAdmin(_models.Audio, miz_site),
+            queryset=_models.Audio.objects.all()
         )
         view.affected_fields = [
             'titel', 'band__band_name', 'format___name', 'release_id']
@@ -165,7 +165,7 @@ class TestActionConfirmationView(ActionViewTestCase):
 class TestWizardConfirmationView(ActionViewTestCase):
 
     view_class = WizardConfirmationView
-    model = _models.audio
+    model = _models.Audio
     model_admin_class = AudioAdmin
 
     @patch.object(ConfirmationViewMixin, 'get_context_data', return_value={})

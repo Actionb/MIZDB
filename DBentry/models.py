@@ -207,7 +207,7 @@ class Ausgabe(ComputedNameModel):
 
     magazin = models.ForeignKey('Magazin', models.PROTECT)
 
-    audio = models.ManyToManyField('audio', through=_m2m.m2m_audio_ausgabe)
+    audio = models.ManyToManyField('Audio', through=_m2m.m2m_audio_ausgabe)
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
@@ -718,7 +718,7 @@ class Instrument(BaseModel):
         return str(self.instrument)
 
 
-class audio(BaseModel):
+class Audio(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
@@ -1123,7 +1123,7 @@ class bestand(BaseModel):
     lagerort = models.ForeignKey('lagerort', models.PROTECT)
     provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
 
-    audio = models.ForeignKey('audio', models.CASCADE, blank=True, null=True)
+    audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
     bildmaterial = models.ForeignKey('bildmaterial', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
@@ -1213,7 +1213,7 @@ class Format(ComputedNameModel):
     catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)  # TODO: nr for vinyl?? http://mikiwiki.org/wiki/Nummern_auf_Schallplatten
     bemerkungen = models.TextField(blank=True)
 
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     format_typ = models.ForeignKey('FormatTyp', models.PROTECT, verbose_name='Format Typ')
     format_size = models.ForeignKey(
         'FormatSize', models.SET_NULL, verbose_name='Format Größe',

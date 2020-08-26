@@ -8,7 +8,7 @@ from DBentry.utils.models import get_model_fields
 # ================================= #
 
 class m2m_audio_ausgabe(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     name_field = 'ausgabe'
@@ -20,7 +20,7 @@ class m2m_audio_ausgabe(BaseM2MModel):
         verbose_name_plural = 'Musik-Beilagen'
 
 class m2m_audio_band(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     band = models.ForeignKey('Band', models.CASCADE)
 
     name_field = 'band'
@@ -32,7 +32,7 @@ class m2m_audio_band(BaseM2MModel):
         verbose_name_plural = 'Audio-Bands'
 
 class m2m_audio_genre(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     genre = models.ForeignKey('Genre', models.CASCADE)
 
     name_field = 'genre'
@@ -44,7 +44,7 @@ class m2m_audio_genre(BaseM2MModel):
         verbose_name_plural = 'Audio-Genres'
 
 class m2m_audio_musiker(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
         'instrument', verbose_name='Instrumente', blank=True
@@ -59,7 +59,7 @@ class m2m_audio_musiker(BaseM2MModel):
         verbose_name_plural = 'Audio-Musiker'
 
 class m2m_audio_ort(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     ort = models.ForeignKey('Ort', models.CASCADE)
 
     name_field = 'ort'
@@ -71,7 +71,7 @@ class m2m_audio_ort(BaseM2MModel):
         verbose_name_plural = 'Audio-Orte'
 
 class m2m_audio_person(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     person = models.ForeignKey('Person', models.CASCADE)
 
     name_field = 'person'
@@ -83,7 +83,7 @@ class m2m_audio_person(BaseM2MModel):
         verbose_name_plural = 'Audio-Personen'
 
 class m2m_audio_plattenfirma(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     plattenfirma = models.ForeignKey('plattenfirma', models.CASCADE)
 
     name_field = 'plattenfirma'
@@ -94,7 +94,7 @@ class m2m_audio_plattenfirma(BaseM2MModel):
         verbose_name_plural = 'Audio-Plattenfirmen'
 
 class m2m_audio_schlagwort(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     schlagwort = models.ForeignKey('Schlagwort', models.CASCADE)
 
     name_field = 'schlagwort'
@@ -106,7 +106,7 @@ class m2m_audio_schlagwort(BaseM2MModel):
         verbose_name_plural = 'Audio-Schlagworte'
 
 class m2m_audio_spielort(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     spielort = models.ForeignKey('spielort', models.CASCADE)
 
     name_field = 'spielort'
@@ -118,7 +118,7 @@ class m2m_audio_spielort(BaseM2MModel):
         verbose_name_plural = 'Audio-Spielorte'
 
 class m2m_audio_veranstaltung(BaseM2MModel):
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     veranstaltung = models.ForeignKey('veranstaltung', models.CASCADE)
 
     name_field = 'veranstaltung'
@@ -404,7 +404,7 @@ class m2m_datei_quelle(BaseM2MModel):
     # TODO: rework this, you should only ever be able to select one relation to
     # a non-datei object (OneToOne?)
     datei = models.ForeignKey('datei', models.CASCADE)
-    audio = models.ForeignKey('audio', models.SET_NULL, blank=True, null=True)
+    audio = models.ForeignKey('Audio', models.SET_NULL, blank=True, null=True)
     bildmaterial = models.ForeignKey('bildmaterial', models.SET_NULL, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.SET_NULL, blank=True, null=True)
     dokument = models.ForeignKey('dokument', models.SET_NULL, blank=True, null=True)

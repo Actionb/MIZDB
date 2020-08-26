@@ -255,7 +255,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
 
         fac = modelfactory_factory(_models.Musiker)
-        self.assertEqual(fac.audio.factory._meta.model, _models.audio)
+        self.assertEqual(fac.audio.factory._meta.model, _models.Audio)
         self.assertEqual(fac.orte.factory._meta.model, _models.Ort)
         self.assertEqual(fac.artikel.factory._meta.model, _models.Artikel)
         self.assertEqual(fac.memorabilien.factory._meta.model, _models.memorabilien)

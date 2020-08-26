@@ -29,17 +29,17 @@ class BestandInLine(BaseTabularInline):
     verbose_name_plural = _models.bestand._meta.verbose_name_plural
 
 
-@admin.register(_models.audio, site=miz_site)
+@admin.register(_models.Audio, site=miz_site)
 class AudioAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.audio.genre.through
+        model = _models.Audio.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.audio.schlagwort.through
+        model = _models.Audio.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.audio.person.through
+        model = _models.Audio.person.through
         verbose_model = _models.Person
     class MusikerInLine(BaseStackedInline):
-        model = _models.audio.musiker.through
+        model = _models.Audio.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
         verbose_model = _models.Musiker
@@ -48,13 +48,13 @@ class AudioAdmin(MIZModelAdmin):
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
     class BandInLine(BaseTabularInline):
-        model = _models.audio.band.through
+        model = _models.Audio.band.through
         verbose_model = _models.Band
     class SpielortInLine(BaseTabularInline):
-        model = _models.audio.spielort.through
+        model = _models.Audio.spielort.through
         verbose_model = _models.spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.audio.veranstaltung.through
+        model = _models.Audio.veranstaltung.through
         verbose_model = _models.veranstaltung
     class FormatInLine(BaseStackedInline):
         model = _models.Format
@@ -66,10 +66,10 @@ class AudioAdmin(MIZModelAdmin):
             ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']})
         ]
     class OrtInLine(BaseTabularInline):
-        model = _models.audio.ort.through
+        model = _models.Audio.ort.through
         verbose_model = _models.Ort
     class PlattenInLine(BaseTabularInline):
-        model = _models.audio.plattenfirma.through
+        model = _models.Audio.plattenfirma.through
         verbose_model = _models.plattenfirma
     class AusgabeInLine(BaseAusgabeInline):
         model = _models.Ausgabe.audio.through

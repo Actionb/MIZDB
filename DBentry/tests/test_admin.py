@@ -1050,7 +1050,7 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AudioAdmin
-    model = _models.audio
+    model = _models.Audio
     exclude_expected = [
         'plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort',
         'spielort', 'veranstaltung', 'ort'

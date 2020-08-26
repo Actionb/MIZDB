@@ -226,7 +226,7 @@ class TestModelArtikel(DataTestCase):
 
 class TestModelAudio(DataTestCase):
 
-    model = _models.audio
+    model = _models.Audio
     raw_data = [{'titel': 'Testaudio'}]
 
     def test_str(self):

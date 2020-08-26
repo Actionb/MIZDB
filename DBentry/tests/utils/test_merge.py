@@ -417,7 +417,7 @@ class TestMergingMusiker(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingAudio(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.audio
+    model = _models.Audio
 
 
 class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):

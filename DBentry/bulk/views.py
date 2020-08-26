@@ -233,9 +233,9 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 )
                 audio_data = {'titel': titel}
                 # Use the first matching queryset result or create a new instance.
-                audio_instance = _models.audio.objects.filter(**audio_data).first()
+                audio_instance = _models.Audio.objects.filter(**audio_data).first()
                 if audio_instance is None:
-                    audio_instance = _models.audio(**audio_data)
+                    audio_instance = _models.Audio(**audio_data)
                     audio_instance.save()
                     self.log_addition(audio_instance)
                 # Check if the ausgabe instance is already related to the audio

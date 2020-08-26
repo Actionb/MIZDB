@@ -308,7 +308,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
 
 class TestAudioForm(ModelFormTestCase):
     form_class = AudioForm
-    model = _models.audio
+    model = _models.Audio
     fields = ['release_id', 'discogs_url']
 
     def test_clean_continues_on_empty_data(self):
