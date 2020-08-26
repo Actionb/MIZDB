@@ -1019,7 +1019,7 @@ class Video(BaseModel):
         ]
 
 
-class provenienz(BaseModel):
+class Provenienz(BaseModel):
     SCHENK = 'Schenkung'
     SPENDE = 'Spende'
     FUND = 'Fund'
@@ -1121,7 +1121,7 @@ class bestand(BaseModel):
         'Bestand-Art', max_length=20, choices=BESTAND_CHOICES, blank=False, default='ausgabe')
 
     lagerort = models.ForeignKey('lagerort', models.PROTECT)
-    provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
+    provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
@@ -1183,7 +1183,7 @@ class datei(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
+    provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
     genre = models.ManyToManyField('Genre')
     schlagwort = models.ManyToManyField('Schlagwort')

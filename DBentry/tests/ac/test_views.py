@@ -438,7 +438,7 @@ class TestACAusgabe(ACViewTestCase):
 
 
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.provenienz
+    model = _models.Provenienz
     has_alias = False
     test_data_count = 1
 

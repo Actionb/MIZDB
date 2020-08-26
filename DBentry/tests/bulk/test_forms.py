@@ -93,7 +93,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         cls.zraum = make(_models.lagerort, ort='Bestand LO')
         cls.dublette = make(_models.lagerort, ort='Dubletten LO')
         cls.audio_lo = make(_models.lagerort)
-        cls.prov = make(_models.provenienz)
+        cls.prov = make(_models.Provenienz)
         cls.updated = make(
             cls.model,
             magazin=cls.mag,

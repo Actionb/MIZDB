@@ -181,7 +181,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     )
     provenienz = forms.ModelChoiceField(
         required=False,
-        queryset=_models.provenienz.objects.all(),
+        queryset=_models.Provenienz.objects.all(),
         widget=make_widget(model_name='provenienz', wrap=True)
     )
     beschreibung = forms.CharField(

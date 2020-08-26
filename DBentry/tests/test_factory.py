@@ -570,7 +570,7 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         lagerort_factory = modelfactory_factory(_models.lagerort)
         lagerort_1 = lagerort_factory(ort='TestLagerOrt')
         lagerort_2 = lagerort_factory(ort='TestLagerOrt2')
-        prov = modelfactory_factory(_models.provenienz)(geber__name='TestCase')
+        prov = modelfactory_factory(_models.Provenienz)(geber__name='TestCase')
 
         obj1 = self.factory_class(
             magazin__magazin_name='Testmagazin',

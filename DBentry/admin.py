@@ -980,7 +980,7 @@ class KalendarAdmin(BaseBrochureAdmin):
 
 @admin.register(
     _models.Monat, _models.lagerort, _models.geber, _models.plattenfirma,
-    _models.provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
+    _models.Provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
     _models.FormatTyp, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
     site=miz_site
 )

@@ -1235,7 +1235,7 @@ class TestModelPlattenfirma(DataTestCase):
 
 class TestModelProvenienz(DataTestCase):
 
-    model = _models.provenienz
+    model = _models.Provenienz
 
     def test_str(self):
         obj = make(self.model, geber__name='TestGeber', typ='Fund')
