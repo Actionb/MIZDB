@@ -492,9 +492,9 @@ class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Veranstaltung
-    alias_accessor_name = 'veranstaltung_alias_set'
+    alias_accessor_name = 'veranstaltungalias_set'
     raw_data = [{
-        'veranstaltung_alias__alias': 'AliasVeranstaltung',
+        'veranstaltungalias__alias': 'AliasVeranstaltung',
         'beschreibung': "If it beeps like a boop, it's probably a test.",
         'bemerkungen': 'Stuff and Things.'
     }]

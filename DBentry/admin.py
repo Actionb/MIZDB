@@ -698,7 +698,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.Veranstaltung.musiker.through
         verbose_model = _models.Musiker
     class AliasInLine(BaseAliasInline):
-        model = _models.veranstaltung_alias
+        model = _models.VeranstaltungAlias
 
     collapse_all = True
     inlines = [GenreInLine, SchlInLine, AliasInLine, BandInLine, MusikerInLine, PersonInLine]

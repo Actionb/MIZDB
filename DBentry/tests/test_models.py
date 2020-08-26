@@ -1366,7 +1366,7 @@ class TestModelVeranstaltung(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['name', 'datum', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
@@ -1374,7 +1374,7 @@ class TestModelVeranstaltung(DataTestCase):
             self.model.search_fields_suffixes,
             {
                 'datum': 'Datum',
-                'veranstaltung_alias__alias': 'Alias',
+                'veranstaltungalias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1383,7 +1383,7 @@ class TestModelVeranstaltung(DataTestCase):
 
 class TestModelVeranstaltungAlias(DataTestCase):
 
-    model = _models.veranstaltung_alias
+    model = _models.VeranstaltungAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.

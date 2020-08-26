@@ -952,9 +952,9 @@ class Veranstaltung(BaseModel):
     name_field = 'name'
     primary_search_fields = ['name']
     search_fields = [
-        'name', 'datum', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen']
+        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'veranstaltung_alias__alias': 'Alias',
+        'veranstaltungalias__alias': 'Alias',
         'datum': 'Datum',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
@@ -971,7 +971,7 @@ class Veranstaltung(BaseModel):
         else:
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
-class veranstaltung_alias(BaseAliasModel):
+class VeranstaltungAlias(BaseAliasModel):
     parent = models.ForeignKey('Veranstaltung', models.CASCADE)  # TODO: add a related_name
 
 
