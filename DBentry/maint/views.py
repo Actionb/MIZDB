@@ -288,9 +288,15 @@ class UnusedObjectsView(MaintViewMixin, ModelSelectView):
             if form.is_valid():
                 model_name = form.cleaned_data['model_select']
                 model = utils.get_model_from_string(model_name)
+                relations, queryset = self.get_queryset(model, form.cleaned_data['limit'])
+                cl_url = utils.get_changelist_url(model, request.user, obj_list=queryset)
                 context_kwargs = {
                     'form': form,
-                    'items': self.build_items(model, form.cleaned_data['limit'])
+                    'items': self.build_items(relations, queryset),
+                    'changelist_link': utils.create_hyperlink(
+                        url=cl_url, content='Änderungsliste',
+                        **{'target': '_blank', 'class': 'button'}
+                    )
                 }
                 context.update(**context_kwargs)
         return self.render_to_response(context)
@@ -343,11 +349,10 @@ class UnusedObjectsView(MaintViewMixin, ModelSelectView):
             }
         return relations, model.objects.filter(pk__in=unused)
 
-    def build_items(self, model, limit):
+    def build_items(self, relations, queryset):
         """Build items for the context."""
         items = []
         under_limit_template = '{model_name} ({count!s})'
-        relations, queryset = self.get_queryset(model, limit)
         for obj in queryset:
             under_limit = []
             for info in relations.values():

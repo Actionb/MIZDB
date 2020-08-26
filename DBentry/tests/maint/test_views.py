@@ -1,5 +1,6 @@
 import re
 from unittest.mock import patch, Mock
+from collections import OrderedDict
 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse, resolve
@@ -275,7 +276,7 @@ class TestUnusedObjectsView(ViewTestCase):
     @patch.object(UnusedObjectsView, 'build_items')
     @patch.object(UnusedObjectsView, 'render_to_response')
     def test_get_form_valid(self, mocked_render, mocked_build_items):
-        # Assert that the get response with a valid form not contains the
+        # Assert that the get response with a valid form contains the
         # context variable 'items'.
         data={'get_unused': True, 'model_select': 'artikel', 'limit': 0}
         request = self.get_request(data=data)
@@ -288,12 +289,38 @@ class TestUnusedObjectsView(ViewTestCase):
 
     def test_build_items(self):
         # Check the contents of the list that build_items returns.
-        items = self.get_view(self.get_request()).build_items(model=_models.Genre, limit=1)
+        relations = OrderedDict()
+        relations['artikel_rel'] = {
+            'related_model': _models.Artikel,
+            'counts': {self.unused.pk: '0', self.used_once.pk: '1'}
+        }
+        queryset = _models.Genre.objects.filter(pk__in=[self.unused.pk, self.used_once.pk])
+
+        items = self.get_view(self.get_request()).build_items(relations, queryset)
         self.assertEqual(len(items), 2)
+        # Sort via the links to the change pages (lower ID should come first):
         unused, used_once = sorted(items, key=lambda tpl: tpl[0])
-        url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])
+        url = reverse("admin:DBentry_genre_change", args=[self.unused.pk])
         self.assertIn(url, unused[0])
         self.assertIn("Artikel (0)", unused[1])
-        url = reverse("admin:DBentry_genre_change",args=[self.used_once.pk])
+        url = reverse("admin:DBentry_genre_change", args=[self.used_once.pk])
         self.assertIn(url, used_once[0])
         self.assertIn("Artikel (1)", used_once[1])
+
+    @patch.object(UnusedObjectsView, 'build_items')
+    @patch.object(UnusedObjectsView, 'render_to_response')
+    def test_get_changelist_link(self, mocked_render, mocked_build_items):
+        # Assert that the response's context contains a link to the changelist
+        # listing all the unused objects.
+        data={'get_unused': True, 'model_select': 'genre', 'limit': 0}
+        request = self.get_request(data=data)
+        view = self.get_view(request=request)
+        self.assertTrue(view.get_form().is_valid())
+        view.get(request=request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertIn('changelist_link', context.keys())
+        link = context['changelist_link']
+        cl_url = reverse('admin:DBentry_genre_changelist') + "?id=" + str(self.unused.pk)
+        # Too lazy to unpack the html element with regex to check its other attributes.
+        self.assertIn(cl_url, link)
