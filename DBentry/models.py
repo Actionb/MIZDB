@@ -1310,9 +1310,7 @@ class BrochureYear(AbstractJahrModel):
 class BrochureURL(AbstractURLModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='urls')
 
-# FIXME: crosslinks to BaseBrochure do not work
-#   - add a genre to a Brochure
-#   - no Brochure crosslink in that genre
+
 class BaseBrochure(BaseModel):
     titel = models.CharField(max_length=200)
     zusammenfassung = models.TextField(blank=True)
