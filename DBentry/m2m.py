@@ -363,7 +363,7 @@ class m2m_musiker_instrument(BaseM2MModel):
 # ================================= #
 
 class m2m_video_musiker(BaseM2MModel):
-    video = models.ForeignKey('video', models.CASCADE)
+    video = models.ForeignKey('Video', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
         'instrument', verbose_name='Instrumente', blank=True
@@ -409,7 +409,7 @@ class m2m_datei_quelle(BaseM2MModel):
     buch = models.ForeignKey('Buch', models.SET_NULL, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.SET_NULL, blank=True, null=True)
     memorabilien = models.ForeignKey('Memorabilien', models.SET_NULL, blank=True, null=True)
-    video = models.ForeignKey('video', models.SET_NULL, blank=True, null=True)
+    video = models.ForeignKey('Video', models.SET_NULL, blank=True, null=True)
     class Meta:
         db_table = 'DBentry_datei_quelle'
         verbose_name = 'Datei-Quelle'

@@ -28,7 +28,7 @@ class TestBaseModel(DataTestCase):
 
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(_models.video, titel="lotsa testing", tracks=1, quelle="from the computer")
+        obj = make(_models.Video, titel="lotsa testing", tracks=1, quelle="from the computer")
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")
@@ -1425,7 +1425,7 @@ class TestModelVerlag(DataTestCase):
 
 class TestModelVideo(DataTestCase):
 
-    model = _models.video
+    model = _models.Video
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])

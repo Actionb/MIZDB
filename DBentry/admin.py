@@ -720,17 +720,17 @@ class VerlagAdmin(MIZModelAdmin):
     }
 
 
-@admin.register(_models.video, site=miz_site)
+@admin.register(_models.Video, site=miz_site)
 class VideoAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.video.genre.through
+        model = _models.Video.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.video.schlagwort.through
+        model = _models.Video.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.video.person.through
+        model = _models.Video.person.through
         verbose_model = _models.Person
     class MusikerInLine(BaseStackedInline):
-        model = _models.video.musiker.through
+        model = _models.Video.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
         verbose_model = _models.Musiker
@@ -739,13 +739,13 @@ class VideoAdmin(MIZModelAdmin):
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
     class BandInLine(BaseTabularInline):
-        model = _models.video.band.through
+        model = _models.Video.band.through
         verbose_model = _models.Band
     class SpielortInLine(BaseTabularInline):
-        model = _models.video.spielort.through
+        model = _models.Video.spielort.through
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.video.veranstaltung.through
+        model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
 
     index_category = 'Archivgut'

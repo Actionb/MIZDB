@@ -467,7 +467,7 @@ class TestMergingPerson(MergingTestCase, MergeTestMethodsMixin):
 
 class VideoMergingDataMixin(object):
 
-    model = _models.video
+    model = _models.Video
     test_data_count = 0
 
     @classmethod

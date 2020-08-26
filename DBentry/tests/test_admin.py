@@ -285,8 +285,8 @@ class TestMIZModelAdmin(AdminTestCase):
 
     def test_has_alter_bestand_permission(self):
         # Note: _models.datei._meta doesn't set 'alter_bestand_datei' permission
-        model_admin = _admin.VideoAdmin(_models.video, self.admin_site)
-        codename = get_permission_codename('alter_bestand', _models.video._meta)
+        model_admin = _admin.VideoAdmin(_models.Video, self.admin_site)
+        codename = get_permission_codename('alter_bestand', _models.Video._meta)
         self.staff_user.user_permissions.add(
             Permission.objects.get(codename=codename))
         self.assertFalse(
@@ -1304,7 +1304,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
-    model = _models.video
+    model = _models.Video
     fields_expected = [
         'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']

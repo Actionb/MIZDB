@@ -988,7 +988,7 @@ class Veranstaltungsreihe(BaseModel):
         verbose_name_plural = 'Veranstaltungsreihen'
 
 
-class video(BaseModel):
+class Video(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveSmallIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
@@ -1131,7 +1131,7 @@ class bestand(BaseModel):
     dokument = models.ForeignKey('Dokument', models.CASCADE, blank=True, null=True)
     memorabilien = models.ForeignKey('Memorabilien', models.CASCADE, blank=True, null=True)
     technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
-    video = models.ForeignKey('video', models.CASCADE, blank=True, null=True)
+    video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
