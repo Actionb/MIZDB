@@ -129,7 +129,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     """The BulkForm to bulk create instances for model 'ausgabe' with."""
 
     # BulkForm attributes:
-    model = _models.ausgabe
+    model = _models.Ausgabe
     each_fields = [
         'magazin', 'jahrgang', 'jahr', 'audio', 'audio_lagerort',
         'ausgabe_lagerort', 'dublette', 'provenienz', 'beschreibung',
@@ -150,7 +150,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     # Field declarations:
     magazin = forms.ModelChoiceField(
         required=True,
-        queryset=_models.magazin.objects.all(),
+        queryset=_models.Magazin.objects.all(),
         widget=make_widget(model_name='magazin', wrap=True)
     )
     jahrgang = forms.IntegerField(required=False, min_value=1)
@@ -161,27 +161,27 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     audio = forms.BooleanField(required=False, label='Musik Beilage:')
     audio_lagerort = forms.ModelChoiceField(
         required=False,
-        queryset=_models.lagerort.objects.all(),
+        queryset=_models.Lagerort.objects.all(),
         widget=make_widget(model_name='lagerort', wrap=True),
         label='Lagerort f. Musik Beilage'
     )
     ausgabe_lagerort = forms.ModelChoiceField(
         required=True,
-        queryset=_models.lagerort.objects.all(),
+        queryset=_models.Lagerort.objects.all(),
         widget=make_widget(model_name='lagerort', wrap=True),
         initial=ZRAUM_ID,
         label='Lagerort f. Ausgaben'
     )
     dublette = forms.ModelChoiceField(
         required=True,
-        queryset=_models.lagerort.objects.all(),
+        queryset=_models.Lagerort.objects.all(),
         widget=make_widget(model_name='lagerort', wrap=True),
         initial=DUPLETTEN_ID,
         label='Lagerort f. Dubletten'
     )
     provenienz = forms.ModelChoiceField(
         required=False,
-        queryset=_models.provenienz.objects.all(),
+        queryset=_models.Provenienz.objects.all(),
         widget=make_widget(model_name='provenienz', wrap=True)
     )
     beschreibung = forms.CharField(
@@ -195,7 +195,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         label='Bemerkungen'
     )
     status = forms.ChoiceField(
-        choices=_models.ausgabe.STATUS_CHOICES,
+        choices=_models.Ausgabe.STATUS_CHOICES,
         initial=1,
         label='Bearbeitungsstatus'
     )
@@ -243,9 +243,9 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
             return qs
 
         for fld_name, field_path in [
-                ('num', 'ausgabe_num__num'),
-                ('lnum', 'ausgabe_lnum__lnum'),
-                ('monat', 'ausgabe_monat__monat__ordinal')]:
+                ('num', 'ausgabenum__num'),
+                ('lnum', 'ausgabelnum__lnum'),
+                ('monat', 'ausgabemonat__monat__ordinal')]:
             row_data = row.get(fld_name, [])
             if isinstance(row_data, str):
                 row_data = [row_data]
@@ -258,18 +258,18 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         if isinstance(jahre, str):
             jahre = [jahre]
         if jg and jahre:
-            if qs.filter(jahrgang=jg, ausgabe_jahr__jahr__in=jahre).exists():
-                qs = qs.filter(jahrgang=jg, ausgabe_jahr__jahr__in=jahre)
+            if qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre).exists():
+                qs = qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre)
             else:
                 # Do not shadow possible duplicates that
                 # only have one of (jg, jahre) by using OR.
                 qs = qs.filter(
-                    Q(('jahrgang', jg)) | Q(('ausgabe_jahr__jahr__in', jahre))
+                    Q(('jahrgang', jg)) | Q(('ausgabejahr__jahr__in', jahre))
                 )
         elif jg:
             qs = qs.filter(jahrgang=jg)
         elif jahre:
-            qs = qs.filter(ausgabe_jahr__jahr__in=jahre)
+            qs = qs.filter(ausgabejahr__jahr__in=jahre)
         return qs.distinct()
 
     @property

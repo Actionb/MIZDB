@@ -563,7 +563,7 @@ def modelfactory_factory(model, **kwargs):
 
 class AutorFactory(MIZModelFactory):
     class Meta:
-        model = _models.autor
+        model = _models.Autor
     person = SubFactory('DBentry.factory.PersonFactory', required=True)
 
     @factory.lazy_attribute
@@ -577,14 +577,14 @@ class AutorFactory(MIZModelFactory):
 
 class BandFactory(MIZModelFactory):
     class Meta:
-        model = _models.band
+        model = _models.Band
         django_get_or_create = ['band_name']
     band_name = factory.Faker('company')
 
 
 class BundeslandFactory(MIZModelFactory):
     class Meta:
-        model = _models.bundesland
+        model = _models.Bundesland
         django_get_or_create = ['bland_name', 'code']
     bland_name = factory.Faker('state')
     code = factory.Faker('state_abbr')
@@ -592,13 +592,13 @@ class BundeslandFactory(MIZModelFactory):
 
 class GenreFactory(MIZModelFactory):
     class Meta:
-        model = _models.genre
+        model = _models.Genre
         django_get_or_create = ['genre']
 
 
 class LandFactory(MIZModelFactory):
     class Meta:
-        model = _models.land
+        model = _models.Land
         django_get_or_create = ['land_name', 'code']
     land_name = UniqueFaker('country')
     # land.code has unique=True and max_length of 4.
@@ -611,7 +611,7 @@ class LandFactory(MIZModelFactory):
 
 class MagazinFactory(MIZModelFactory):
     class Meta:
-        model = _models.magazin
+        model = _models.Magazin
         django_get_or_create = ['magazin_name']
     magazin_name = factory.Sequence(lambda n: 'TestMagazin' + str(n))
     issn = ISSNFaker()
@@ -619,7 +619,7 @@ class MagazinFactory(MIZModelFactory):
 
 class MonatFactory(MIZModelFactory):
     class Meta:
-        model = _models.monat
+        model = _models.Monat
         django_get_or_create = ['monat', 'abk', 'ordinal']
     monat = factory.Faker('month_name')
     abk = factory.LazyAttribute(lambda o: o.monat[:3])
@@ -628,27 +628,27 @@ class MonatFactory(MIZModelFactory):
 
 class MusikerFactory(MIZModelFactory):
     class Meta:
-        model = _models.musiker
+        model = _models.Musiker
         django_get_or_create = ['kuenstler_name']
     kuenstler_name = factory.Sequence(lambda n: 'TestMusiker' + str(n))
 
 
 class OrtFactory(MIZModelFactory):
     class Meta:
-        model = _models.ort
+        model = _models.Ort
     stadt = factory.Faker('city')
 
 
 class PersonFactory(MIZModelFactory):
     class Meta:
-        model = _models.person
+        model = _models.Person
     vorname = factory.Faker('first_name')
     nachname = factory.Faker('last_name')
 
 
 class SchlagwortFactory(MIZModelFactory):
     class Meta:
-        model = _models.schlagwort
+        model = _models.Schlagwort
         django_get_or_create = ['schlagwort']
 
 

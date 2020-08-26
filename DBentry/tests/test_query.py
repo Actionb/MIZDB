@@ -11,16 +11,16 @@ from DBentry.tests.base import DataTestCase
 
 class QueryTestCase(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     query_class = None
 
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(
-            cls.model, band_name="Guns 'N Roses", band_alias__alias='Guns and Roses')
+            cls.model, band_name="Guns 'N Roses", bandalias__alias='Guns and Roses')
         # obj2 beschreibung starts with 'Roses'.
         cls.obj2 = make(
-            cls.model, band_name="AC/DC", band_alias__alias='ACDC',
+            cls.model, band_name="AC/DC", bandalias__alias='ACDC',
             beschreibung='Roses are red.'
         )
         # obj3 is meant to never be found
@@ -30,7 +30,7 @@ class QueryTestCase(DataTestCase):
         # obj5 contains 'Rose'
         cls.obj5 = make(cls.model, band_name='More Roses')
         # obj6's alias icontains 'Rose'
-        cls.obj6 = make(cls.model, band_name='Beep', band_alias__alias='Booproses')
+        cls.obj6 = make(cls.model, band_name='Beep', bandalias__alias='Booproses')
 
         cls.test_data = [
             cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.obj5, cls.obj6]
@@ -102,7 +102,7 @@ class TestBaseQuery(QueryTestCase):
     def test_do_lookup(self):
         q = 'Boop'
         lookup = '__icontains'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = [(self.obj6.pk, "Beep (Alias)")]
         query = self.make_query()
         self.assertEqual(query._do_lookup(lookup, search_field, q), expected)
@@ -110,9 +110,9 @@ class TestBaseQuery(QueryTestCase):
         self.assertEqual(len(query.ids_found), 1)
 
     def test_date_lookup(self):
-        a1 = make(_models.ausgabe, e_datum='1986-08-15')
-        a2 = make(_models.ausgabe, e_datum='1986-08-18')
-        a3 = make(_models.ausgabe, e_datum='1986-09-18')
+        a1 = make(_models.Ausgabe, e_datum='1986-08-15')
+        a2 = make(_models.Ausgabe, e_datum='1986-08-18')
+        a3 = make(_models.Ausgabe, e_datum='1986-09-18')
         test_data = [
             ('__iexact', '1986-08-15', [a1.pk]),
             ('__iexact', '15.08.1986', [a1.pk]),
@@ -125,7 +125,7 @@ class TestBaseQuery(QueryTestCase):
         ]
         for lookup, q, expected in test_data:
             query = self.make_query(
-                queryset=_models.ausgabe.objects, search_fields=['_name', 'e_datum'])
+                queryset=_models.Ausgabe.objects, search_fields=['_name', 'e_datum'])
             q = query.clean_q(q, 'e_datum')
             results = query._do_lookup(lookup, 'e_datum', q)
             with self.subTest(lookup=lookup, q=q):
@@ -140,7 +140,7 @@ class TestBaseQuery(QueryTestCase):
         q = 'AC/DC'
         expected = []
         query = self.make_query()
-        self.assertFalse(query.exact_search('band_alias__alias', q))
+        self.assertFalse(query.exact_search('bandalias__alias', q))
         self.assertFalse(query.exact_match)
 
         q = 'AC/DC'
@@ -152,7 +152,7 @@ class TestBaseQuery(QueryTestCase):
 
         q = 'ACDC'
         query = self.make_query()
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [self.obj2], search_field, lookup)
         self.assertEqual(sorted(query.exact_search(search_field, q)), sorted(expected))
         self.assertTrue(query.exact_match)
@@ -176,7 +176,7 @@ class TestBaseQuery(QueryTestCase):
 
         q = 'ACD'
         query = self.make_query()
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [self.obj2], search_field, lookup)
         self.assertEqual(sorted(query.startsw_search(search_field, q)), sorted(expected))
 
@@ -195,7 +195,7 @@ class TestBaseQuery(QueryTestCase):
 
         q = 'CD'
         query = self.make_query()
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [self.obj2], search_field, lookup)
         self.assertEqual(sorted(query.contains_search(search_field, q)), sorted(expected))
 
@@ -287,7 +287,7 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
 
         q = 'ACDC'
         query = self.make_query()
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         query.exact_search(search_field, q)
         self.assertFalse(query.exact_match)
 
@@ -299,11 +299,11 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         # obj5 = 'More Roses'
         # obj6 = 'Beep', alias = 'Booproses'
         # Check that the results are ordered according to the _search query
-        rose_band = _models.band.objects.create(band_name='Rose')
+        rose_band = _models.Band.objects.create(band_name='Rose')
         some_other_band = make(
-            _models.band, band_name='Boop', band_alias__alias='Rose')
+            _models.Band, band_name='Boop', bandalias__alias='Rose')
         yet_another_band = make(
-            _models.band, band_name='NoName', band_alias__alias='Roseman')
+            _models.Band, band_name='NoName', bandalias__alias='Roseman')
 
         q = 'Rose'
         query = self.make_query()
@@ -331,7 +331,7 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
 
         # Then secondary exact_matches
         lookup = '__iexact'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [some_other_band], search_field, lookup)
         self.assertEqual([search_results[4]], expected)
 
@@ -340,13 +340,13 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
 
         # Then secondary startsw matches
         lookup = '__istartswith'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [yet_another_band], search_field, lookup)
         self.assertEqual([search_results[6]], expected)
 
         # Finally, secondary contains matches
         lookup = '__icontains'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [self.obj6], search_field, lookup)
         self.assertEqual([search_results[7]], expected)
         lookup = '__icontains'
@@ -479,13 +479,13 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # Compared to PrimaryFieldsSearchQuery, the order changes a little as
         # we are able to split up the search term and look for bits of it in
         # the search_fields.
-        rose_band = _models.band.objects.create(band_name='Rose')
+        rose_band = _models.Band.objects.create(band_name='Rose')
         some_other_band = make(
-            _models.band, band_name='Boop', band_alias__alias='Rose')
+            _models.Band, band_name='Boop', bandalias__alias='Rose')
         yet_another_band = make(
-            _models.band, band_name='NoName', band_alias__alias='Roseman')
+            _models.Band, band_name='NoName', bandalias__alias='Roseman')
         should_have_setup_this_better = make(
-            _models.band, band_name="SomethingContainingRoses")
+            _models.Band, band_name="SomethingContainingRoses")
 
         q = 'Rose'
         query = self.make_query()
@@ -519,7 +519,7 @@ class TestValuesDictQuery(TestNameFieldQuery):
 
         # Then secondary exact_matches
         lookup = '__iexact'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [some_other_band], search_field, lookup)
         self.assertEqual([search_results[5]], expected)
 
@@ -528,13 +528,13 @@ class TestValuesDictQuery(TestNameFieldQuery):
 
         # Then secondary startsw matches
         lookup = '__istartswith'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [yet_another_band], search_field, lookup)
         self.assertEqual([search_results[7]], expected)
 
         # Finally, secondary contains matches
         lookup = '__icontains'
-        search_field = 'band_alias__alias'
+        search_field = 'bandalias__alias'
         expected = self.append_suffix(query, [self.obj6], search_field, lookup)
         self.assertEqual([search_results[8]], expected)
         lookup = '__icontains'

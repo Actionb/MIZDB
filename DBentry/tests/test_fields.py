@@ -200,7 +200,7 @@ class TestStdNumField(MyTestCase):
 
     def test_formfield_widget(self):
         # Assert that the widget of the formfield is always an instance of StdNumWidget.
-        model_field = _models.buch._meta.get_field('ISBN')
+        model_field = _models.Buch._meta.get_field('ISBN')
         dummy_widget_class = type('Dummy', (StdNumWidget, ), {})
         widgets = [
             None,
@@ -215,8 +215,8 @@ class TestStdNumField(MyTestCase):
 
 
 class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
-    model = _models.buch
-    model_field = _models.buch._meta.get_field('ISBN')
+    model = _models.Buch
+    model_field = _models.Buch._meta.get_field('ISBN')
     prototype_data = {'titel': 'Testbuch'}
 
     valid = [
@@ -310,8 +310,8 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
 
 
 class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
-    model = _models.magazin
-    model_field = _models.magazin._meta.get_field('issn')
+    model = _models.Magazin
+    model_field = _models.Magazin._meta.get_field('issn')
     prototype_data = {'magazin_name': 'Testmagazin'}
 
     valid = ["12345679", "1234-5679"]
@@ -331,8 +331,8 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
 
 
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
-    model = _models.buch
-    model_field = _models.buch._meta.get_field('EAN')
+    model = _models.Buch
+    model_field = _models.Buch._meta.get_field('EAN')
     prototype_data = {'titel': 'Testbuch'}
 
     valid = ['73513537', "1234567890128"]
@@ -634,7 +634,7 @@ class TestPartialDateField(MyTestCase):
 @tag("partial_date")
 class TestPartialDateFieldQueries(DataTestCase):
     # Test various queries using PartialDateField.
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
 
     def test_constructor_partial_date(self):
         # Assert that a model instance can be created with a PartialDate.
@@ -772,14 +772,14 @@ class TestPartialDateFormField(MyTestCase):
                 self.assertFalse(form(data=self.prepare_form_data(data)).errors, msg=data)
 
     def test_as_modelform_required(self):
-        form = forms.modelform_factory(model=_models.veranstaltung, fields=['datum'])
+        form = forms.modelform_factory(model=_models.Veranstaltung, fields=['datum'])
         self.assertNoFormErrors(form, 'datum')
         for data in ({'datum': [None] * 3}, {'datum': [''] * 3}):
             with self.subTest():
                 self.assertTrue(form(data=self.prepare_form_data(data)).errors, msg=data)
 
     def test_as_modelform_not_required(self):
-        form = forms.modelform_factory(model=_models.bildmaterial, fields=['datum'])
+        form = forms.modelform_factory(model=_models.Bildmaterial, fields=['datum'])
         self.assertNoFormErrors(form, 'datum')
         # Test 'empty'
         for data in ({'datum': [None] * 3}, {'datum': [''] * 3}):

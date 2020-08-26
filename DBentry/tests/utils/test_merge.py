@@ -271,16 +271,16 @@ class MergeTestMethodsMixin(object):
 
 class TestMergingAusgabe(MergingTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
     test_data_count = 0
 
     @classmethod
     def setUpTestData(cls):
         default = {
-            'ausgabe_jahr__extra': 1,
-            'ausgabe_num__extra': 1,
-            'ausgabe_lnum__extra': 1,
-            'ausgabe_monat__extra': 1,
+            'ausgabejahr__extra': 1,
+            'ausgabenum__extra': 1,
+            'ausgabelnum__extra': 1,
+            'ausgabemonat__extra': 1,
             'bestand__extra': 1
         }
         cls.obj1 = make(cls.model, **default)
@@ -379,7 +379,7 @@ class TestMergingAusgabe(MergingTestCase):
             expand_original=False,
             request=self.request
         )
-        self.original.ausgabe_num_set.all().delete()
+        self.original.ausgabenum_set.all().delete()
         with self.assertRaises(AssertionError) as context_manager:
             self.assertRelatedChanges()
         self.assertTrue(context_manager.exception.args[0].startswith(
@@ -393,7 +393,7 @@ class TestMergingAusgabe(MergingTestCase):
             expand_original=False,
             request=self.request
         )
-        make(_models.ausgabe_num, num=42, ausgabe=self.original)
+        make(_models.AusgabeNum, num=42, ausgabe=self.original)
         with self.assertRaises(AssertionError) as context_manager:
             self.assertRelatedChanges()
         self.assertTrue(context_manager.exception.args[0].startswith(
@@ -401,40 +401,40 @@ class TestMergingAusgabe(MergingTestCase):
 
 
 class TestMergingOrt(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.ort
+    model = _models.Ort
 
 
 class TestMergingArtikel(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.artikel
+    model = _models.Artikel
 
 
 class TestMergingBand(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.band
+    model = _models.Band
 
 
 class TestMergingMusiker(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.musiker
+    model = _models.Musiker
 
 
 class TestMergingAudio(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.audio
+    model = _models.Audio
 
 
 class TestMergingAutor(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.autor
+    model = _models.Autor
 
 
 class TestMergingGenre(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.genre
+    model = _models.Genre
 
 
 class TestMergingSchlagwort(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.schlagwort
+    model = _models.Schlagwort
 
 
 class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
 
-    model = _models.magazin
+    model = _models.Magazin
     test_data_count = 0
 
     @classmethod
@@ -442,18 +442,18 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
         cls.obj1 = cls.model.objects.create(magazin_name='Original-Magazin')
         cls.obj2 = cls.model.objects.create(magazin_name='Merger1-Magazin')
         cls.obj3 = cls.model.objects.create(magazin_name='Merger2-Magazin')
-        cls.genre_original = _models.genre.objects.create(genre='Original-Genre')
-        cls.genre_merger1 = _models.genre.objects.create(genre='Merger1-Genre')
-        cls.genre_merger2 = _models.genre.objects.create(genre='Merger2-Genre')
+        cls.genre_original = _models.Genre.objects.create(genre='Original-Genre')
+        cls.genre_merger1 = _models.Genre.objects.create(genre='Merger1-Genre')
+        cls.genre_merger2 = _models.Genre.objects.create(genre='Merger2-Genre')
         cls.model.genre.through.objects.create(genre=cls.genre_original, magazin=cls.obj1)
         cls.model.genre.through.objects.create(genre=cls.genre_merger1, magazin=cls.obj2)
         cls.model.genre.through.objects.create(genre=cls.genre_merger2, magazin=cls.obj3)
-        autor_instance = _models.autor.objects.create(kuerzel='M1-Aut')
+        autor_instance = _models.Autor.objects.create(kuerzel='M1-Aut')
         cls.model.autor_set.through.objects.create(autor=autor_instance, magazin=cls.obj2)
-        cls.ausgabe_original = _models.ausgabe.objects.create(
+        cls.ausgabe_original = _models.Ausgabe.objects.create(
             beschreibung='Original-Ausgabe', sonderausgabe=True, magazin=cls.obj1
         )
-        cls.ausgabe_merger = _models.ausgabe.objects.create(
+        cls.ausgabe_merger = _models.Ausgabe.objects.create(
             beschreibung='Merger1-Ausgabe', sonderausgabe=True, magazin=cls.obj2
         )
 
@@ -462,12 +462,12 @@ class TestMergingMagazin(MergingTestCase, MergeTestMethodsMixin):
 
 
 class TestMergingPerson(MergingTestCase, MergeTestMethodsMixin):
-    model = _models.person
+    model = _models.Person
 
 
 class VideoMergingDataMixin(object):
 
-    model = _models.video
+    model = _models.Video
     test_data_count = 0
 
     @classmethod

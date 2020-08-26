@@ -560,16 +560,16 @@ class BaseAliasInline(BaseTabularInline):
 
 
 class BaseGenreInline(BaseTabularInline):
-    verbose_model = _models.genre
+    verbose_model = _models.Genre
 
 
 class BaseSchlagwortInline(BaseTabularInline):
-    verbose_model = _models.schlagwort
+    verbose_model = _models.Schlagwort
 
 
 class BaseAusgabeInline(BaseTabularInline):
     form = AusgabeMagazinFieldForm
-    verbose_model = _models.ausgabe
+    verbose_model = _models.Ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
 
 

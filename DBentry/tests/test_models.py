@@ -14,7 +14,7 @@ from DBentry.tests.base import DataTestCase
 
 class TestBaseModel(DataTestCase):
 
-    model = _models.artikel
+    model = _models.Artikel
     test_data_count = 1
 
     def test_qs(self):
@@ -28,7 +28,7 @@ class TestBaseModel(DataTestCase):
 
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(_models.video, titel="lotsa testing", tracks=1, quelle="from the computer")
+        obj = make(_models.Video, titel="lotsa testing", tracks=1, quelle="from the computer")
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")
@@ -64,12 +64,12 @@ class TestBaseM2MModel(DataTestCase):
 @tag("cn")
 class TestComputedNameModel(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
     default = model._name_default % {'verbose_name': model._meta.verbose_name}
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin)
+        cls.mag = make(_models.Magazin)
         cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(cls.model, magazin=cls.mag)
         cls.test_data = [cls.obj1, cls.obj2]
@@ -98,13 +98,13 @@ class TestComputedNameModel(DataTestCase):
     def test_update_name_notexplodes_on_no_pk_and_forced(self):
         # Unsaved instances should be ignored, as update_name relies on filtering
         # queries with the instance's pk.
-        obj = _models.ausgabe(magazin=self.mag)
+        obj = _models.Ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name(force_update=True))
 
     def test_update_name_aborts_on_no_pk(self):
         # Unsaved instances should be ignored, as update_name relies on
         # filtering queries with the instance's pk.
-        obj = _models.ausgabe(magazin=self.mag)
+        obj = _models.Ausgabe(magazin=self.mag)
         self.assertFalse(obj.update_name())
 
     def test_update_name_aborts_on_name_deferred(self):
@@ -186,7 +186,7 @@ class TestComputedNameModel(DataTestCase):
 
 class TestModelArtikel(DataTestCase):
 
-    model = _models.artikel
+    model = _models.Artikel
     test_data_count = 1
 
     def test_str(self):
@@ -226,7 +226,7 @@ class TestModelArtikel(DataTestCase):
 
 class TestModelAudio(DataTestCase):
 
-    model = _models.audio
+    model = _models.Audio
     raw_data = [{'titel': 'Testaudio'}]
 
     def test_str(self):
@@ -252,7 +252,7 @@ class TestModelAudio(DataTestCase):
 @tag("cn")
 class TestModelAusgabe(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @translation_override(language=None)
     def test_get_name_sonderausgabe(self):
@@ -267,8 +267,8 @@ class TestModelAusgabe(DataTestCase):
         # sonderausgabe + beschreibung + any other data => beschreibung
         name_data.update({
             'jahrgang': ('2', ),
-            'ausgabe_jahr__jahr': ('2020', ),
-            'ausgabe_monat__monat__abk': ('Dez', )
+            'ausgabejahr__jahr': ('2020', ),
+            'ausgabemonat__monat__abk': ('Dez', )
         })
         self.assertEqual(
             self.model._get_name(**name_data),
@@ -288,12 +288,12 @@ class TestModelAusgabe(DataTestCase):
     @translation_override(language=None)
     def test_get_name_jahr(self):
         # Check the results of get_name if 'jahr' is given.
-        name_data = {'ausgabe_jahr__jahr': ('2020', )}
+        name_data = {'ausgabejahr__jahr': ('2020', )}
         test_data = [
-            ({'ausgabe_monat__monat__abk': ('Dez', )}, "2020-Dez"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "2020-Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabe_lnum__lnum': ('21', )}, "21 (2020)"),
-            ({'ausgabe_num__num': ('20', )}, '2020-20'),
+            ({'ausgabelnum__lnum': ('21', )}, "21 (2020)"),
+            ({'ausgabenum__num': ('20', )}, '2020-20'),
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -305,14 +305,14 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_jahr_multiple_values(self):
         # Check the results of get_name if multiple values for 'jahr'
         # (or other attributes) are given.
-        name_data = {'ausgabe_jahr__jahr': ('2021', '2020')}
+        name_data = {'ausgabejahr__jahr': ('2021', '2020')}
         test_data = [
             (
-                {'ausgabe_monat__monat__abk': ('Jan', 'Dez')},
+                {'ausgabemonat__monat__abk': ('Jan', 'Dez')},
                 "2020/21-Jan/Dez"
             ),
-            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22 (2020/21)"),
-            ({'ausgabe_num__num': ('21', '20')}, "2020/21-20/21"),
+            ({'ausgabelnum__lnum': ('22', '21')}, "21/22 (2020/21)"),
+            ({'ausgabenum__num': ('21', '20')}, "2020/21-20/21"),
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -325,13 +325,13 @@ class TestModelAusgabe(DataTestCase):
         # Check the results of get_name if 'jahrgang' and no 'jahr' is given.
         name_data = {'jahrgang': ('2', )}
         test_data = [
-            ({'ausgabe_monat__monat__abk': ('Dez', )}, "Jg. 2-Dez"),
-            ({'ausgabe_monat__monat__abk': ('Jan', 'Dez')}, "Jg. 2-Jan/Dez"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "Jg. 2-Dez"),
+            ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "Jg. 2-Jan/Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabe_lnum__lnum': ('21', )}, "21 (Jg. 2)"),
-            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22 (Jg. 2)"),
-            ({'ausgabe_num__num': ('20', )}, "Jg. 2-20"),
-            ({'ausgabe_num__num': ('21', '20')}, "Jg. 2-20/21")
+            ({'ausgabelnum__lnum': ('21', )}, "21 (Jg. 2)"),
+            ({'ausgabelnum__lnum': ('22', '21')}, "21/22 (Jg. 2)"),
+            ({'ausgabenum__num': ('20', )}, "Jg. 2-20"),
+            ({'ausgabenum__num': ('21', '20')}, "Jg. 2-20/21")
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -343,13 +343,13 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_no_jahr_or_jahrgang(self):
         # Check the results of get_name if no 'jahrgang' or 'jahr' is given.
         test_data = [
-            ({'ausgabe_monat__monat__abk': ('Dez', )}, "k.A.-Dez"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "k.A.-Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabe_lnum__lnum': ('21', )}, "21"),
-            ({'ausgabe_num__num': ('20', )}, "k.A.-20"),
-            ({'ausgabe_monat__monat__abk': ('Jan', 'Dez')}, "k.A.-Jan/Dez"),
-            ({'ausgabe_lnum__lnum': ('22', '21')}, "21/22"),
-            ({'ausgabe_num__num': ('21', '20')}, "k.A.-20/21")
+            ({'ausgabelnum__lnum': ('21', )}, "21"),
+            ({'ausgabenum__num': ('20', )}, "k.A.-20"),
+            ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "k.A.-Jan/Dez"),
+            ({'ausgabelnum__lnum': ('22', '21')}, "21/22"),
+            ({'ausgabenum__num': ('21', '20')}, "k.A.-20/21")
         ]
         for name_data, expected in test_data:
             with self.subTest(name_data=name_data):
@@ -372,10 +372,10 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_ausgaben_merkmal(self):
         # Check the results of get_name with ausgaben_merkmal override set.
         name_data = {
-            'ausgabe_jahr__jahr': ('2020', ),
-            'ausgabe_monat__monat__abk': ('Dez', ),
-            'ausgabe_lnum__lnum': ('21', ),
-            'ausgabe_num__num': ('20', ),
+            'ausgabejahr__jahr': ('2020', ),
+            'ausgabemonat__monat__abk': ('Dez', ),
+            'ausgabelnum__lnum': ('21', ),
+            'ausgabenum__num': ('20', ),
             'e_datum': ('02.05.2018', ),
         }
         test_data = [
@@ -393,7 +393,7 @@ class TestModelAusgabe(DataTestCase):
         # Some edge case tests:
         name_data = {
             'magazin__ausgaben_merkmal': ('lnum', ),
-            'ausgabe_lnum__lnum': ('21', )
+            'ausgabelnum__lnum': ('21', )
         }
         self.assertEqual(
             self.model._get_name(**name_data), '21',
@@ -414,10 +414,10 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_ausgaben_merkmal_multiple_values(self):
         # Check the results of get_name with ausgaben_merkmal override set.
         name_data = {
-            'ausgabe_jahr__jahr': ('2021', '2020'),
-            'ausgabe_monat__monat__abk': ('Jan', 'Dez'),
-            'ausgabe_lnum__lnum': ('22', '21'),
-            'ausgabe_num__num': ('21', '20'),
+            'ausgabejahr__jahr': ('2021', '2020'),
+            'ausgabemonat__monat__abk': ('Jan', 'Dez'),
+            'ausgabelnum__lnum': ('22', '21'),
+            'ausgabenum__num': ('21', '20'),
         }
         test_data = [
             ('monat', '2020/21-Jan/Dez'),
@@ -449,7 +449,7 @@ class TestModelAusgabe(DataTestCase):
 
 class TestModelAusgabeJahr(DataTestCase):
 
-    model = _models.ausgabe_jahr
+    model = _models.AusgabeJahr
 
     def test_str(self):
         obj = make(self.model, jahr=2018)
@@ -462,7 +462,7 @@ class TestModelAusgabeJahr(DataTestCase):
 
 class TestModelAusgabeLnum(DataTestCase):
 
-    model = _models.ausgabe_lnum
+    model = _models.AusgabeLnum
 
     def test_str(self):
         obj = make(self.model, lnum=21)
@@ -475,7 +475,7 @@ class TestModelAusgabeLnum(DataTestCase):
 
 class TestModelAusgabeMonat(DataTestCase):
 
-    model = _models.ausgabe_monat
+    model = _models.AusgabeMonat
 
     def test_str(self):
         obj = make(self.model, monat__monat='Dezember')
@@ -494,7 +494,7 @@ class TestModelAusgabeMonat(DataTestCase):
 
 class TestModelAusgabeNum(DataTestCase):
 
-    model = _models.ausgabe_num
+    model = _models.AusgabeNum
 
     def test_str(self):
         obj = make(self.model, num=20)
@@ -508,7 +508,7 @@ class TestModelAusgabeNum(DataTestCase):
 @tag("cn")
 class TestModelAutor(DataTestCase):
 
-    model = _models.autor
+    model = _models.Autor
 
     @translation_override(language=None)
     def test_get_name(self):
@@ -554,7 +554,7 @@ class TestModelAutor(DataTestCase):
 
 class TestModelBand(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
 
     def test_str(self):
         obj = make(self.model, band_name='Testband', beschreibung='Beep', bemerkungen='Boop')
@@ -567,14 +567,14 @@ class TestModelBand(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
             self.model.search_fields_suffixes,
             {
-                'band_alias__alias': 'Alias',
+                'bandalias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -583,7 +583,7 @@ class TestModelBand(DataTestCase):
 
 class TestModelBandAlias(DataTestCase):
 
-    model = _models.band_alias
+    model = _models.BandAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -596,7 +596,7 @@ class TestModelBestand(DataTestCase):
 
 class TestModelBildmaterial(DataTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
 
     def test_str(self):
         obj = make(self.model, titel='Testbild')
@@ -656,7 +656,7 @@ class TestModelBrochure(DataTestCase):
 
 class TestModelBuch(DataTestCase):
 
-    model = _models.buch
+    model = _models.Buch
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -677,7 +677,7 @@ class TestModelBuch(DataTestCase):
 
 class TestModelSchriftenreihe(DataTestCase):
 
-    model = _models.schriftenreihe
+    model = _models.Schriftenreihe
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['name'])
@@ -688,7 +688,7 @@ class TestModelSchriftenreihe(DataTestCase):
 
 class TestModelBundesland(DataTestCase):
 
-    model = _models.bundesland
+    model = _models.Bundesland
 
     def test_str(self):
         obj = make(self.model, bland_name='Hessen', code='HE')
@@ -710,7 +710,7 @@ class TestModelBundesland(DataTestCase):
 
 class TestModelDatei(DataTestCase):
 
-    model = _models.datei
+    model = _models.Datei
 
     def test_str(self):
         obj = self.model(titel='Testdatei')
@@ -735,7 +735,7 @@ class TestModelDatei(DataTestCase):
 
 class TestModelDokument(DataTestCase):
 
-    model = _models.dokument
+    model = _models.Dokument
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
@@ -832,7 +832,7 @@ class TestModelFormatTyp(DataTestCase):
 
 class TestModelGeber(DataTestCase):
 
-    model = _models.geber
+    model = _models.Geber
 
     def test_str(self):
         obj = self.model(name='Testgeber')
@@ -851,7 +851,7 @@ class TestModelGeber(DataTestCase):
 
 class TestModelGenre(DataTestCase):
 
-    model = _models.genre
+    model = _models.Genre
 
     def test_str(self):
         obj = self.model(genre='Testgenre')
@@ -864,16 +864,16 @@ class TestModelGenre(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['genre', 'genre_alias__alias'])
+            sorted(['genre', 'genrealias__alias'])
         )
 
     def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'genre_alias__alias': 'Alias'})
+        self.assertEqual(self.model.search_fields_suffixes, {'genrealias__alias': 'Alias'})
 
 
 class TestModelGenreAlias(DataTestCase):
 
-    model = _models.genre_alias
+    model = _models.GenreAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -898,7 +898,7 @@ class TestModelHerausgeber(DataTestCase):
 
 class TestModelInstrument(DataTestCase):
 
-    model = _models.instrument
+    model = _models.Instrument
 
     def test_str(self):
         obj = self.model(instrument='Posaune', kuerzel='pos')
@@ -972,7 +972,7 @@ class TestModelKatalog(DataTestCase):
 @tag("cn")
 class TestModelLagerort(DataTestCase):
 
-    model = _models.lagerort
+    model = _models.Lagerort
 
     @translation_override(language=None)
     def test_get_name(self):
@@ -1021,7 +1021,7 @@ class TestModelLagerort(DataTestCase):
 
 class TestModelLand(DataTestCase):
 
-    model = _models.land
+    model = _models.Land
 
     def test_str(self):
         obj = self.model(land_name='Deutschland', code='DE')
@@ -1043,7 +1043,7 @@ class TestModelLand(DataTestCase):
 
 class TestModelMagazin(DataTestCase):
 
-    model = _models.magazin
+    model = _models.Magazin
 
     def test_str(self):
         obj = self.model(magazin_name='Testmagazin')
@@ -1068,7 +1068,7 @@ class TestModelMagazin(DataTestCase):
 
 class TestModelMemorabilien(DataTestCase):
 
-    model = _models.memorabilien
+    model = _models.Memorabilien
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
@@ -1088,7 +1088,7 @@ class TestModelMemorabilien(DataTestCase):
 
 class TestModelMonat(DataTestCase):
 
-    model = _models.monat
+    model = _models.Monat
 
     def test_str(self):
         obj = self.model(monat='Dezember', abk='Dez')
@@ -1110,7 +1110,7 @@ class TestModelMonat(DataTestCase):
 
 class TestModelMusiker(DataTestCase):
 
-    model = _models.musiker
+    model = _models.Musiker
 
     def test_str(self):
         obj = self.model(
@@ -1124,14 +1124,14 @@ class TestModelMusiker(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
             self.model.search_fields_suffixes,
             {
-                'musiker_alias__alias': 'Alias',
+                'musikeralias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1140,7 +1140,7 @@ class TestModelMusiker(DataTestCase):
 
 class TestModelMusikerAlias(DataTestCase):
 
-    model = _models.musiker_alias
+    model = _models.MusikerAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -1150,7 +1150,7 @@ class TestModelMusikerAlias(DataTestCase):
 @tag("cn")
 class TestModelOrt(DataTestCase):
 
-    model = _models.ort
+    model = _models.Ort
 
     @translation_override(language=None)
     def test_get_name(self):
@@ -1181,7 +1181,7 @@ class TestModelOrt(DataTestCase):
 @tag("cn")
 class TestModelPerson(DataTestCase):
 
-    model = _models.person
+    model = _models.Person
 
     @translation_override(language=None)
     def test_get_name(self):
@@ -1216,7 +1216,7 @@ class TestModelPerson(DataTestCase):
 
 class TestModelPlattenfirma(DataTestCase):
 
-    model = _models.plattenfirma
+    model = _models.Plattenfirma
 
     def test_str(self):
         obj = self.model(name='Testfirma')
@@ -1235,7 +1235,7 @@ class TestModelPlattenfirma(DataTestCase):
 
 class TestModelProvenienz(DataTestCase):
 
-    model = _models.provenienz
+    model = _models.Provenienz
 
     def test_str(self):
         obj = make(self.model, geber__name='TestGeber', typ='Fund')
@@ -1254,7 +1254,7 @@ class TestModelProvenienz(DataTestCase):
 
 class TestModelSchlagwort(DataTestCase):
 
-    model = _models.schlagwort
+    model = _models.Schlagwort
 
     def test_str(self):
         obj = self.model(schlagwort='Testschlagwort')
@@ -1267,17 +1267,17 @@ class TestModelSchlagwort(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['schlagwort', 'schlagwort_alias__alias'])
+            sorted(['schlagwort', 'schlagwortalias__alias'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
-            self.model.search_fields_suffixes, {'schlagwort_alias__alias': 'Alias'})
+            self.model.search_fields_suffixes, {'schlagwortalias__alias': 'Alias'})
 
 
 class TestModelSchlagwortAlias(DataTestCase):
 
-    model = _models.schlagwort_alias
+    model = _models.SchlagwortAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -1286,12 +1286,12 @@ class TestModelSchlagwortAlias(DataTestCase):
 
 class TestModelSpielort(DataTestCase):
 
-    model = _models.spielort
+    model = _models.Spielort
 
     def test_str(self):
-        land_object = _models.land.objects.create(land_name='Deutschland', code='DE')
+        land_object = _models.Land.objects.create(land_name='Deutschland', code='DE')
         obj = self.model(
-            name='Testspielort', ort=_models.ort.objects.create(land=land_object))
+            name='Testspielort', ort=_models.Ort.objects.create(land=land_object))
         self.assertEqual(str(obj), 'Testspielort')
 
     def test_meta_ordering(self):
@@ -1301,14 +1301,14 @@ class TestModelSpielort(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
             self.model.search_fields_suffixes,
             {
-                'spielort_alias__alias': 'Alias',
+                'spielortalias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1317,7 +1317,7 @@ class TestModelSpielort(DataTestCase):
 
 class TestModelSpielortAlias(DataTestCase):
 
-    model = _models.spielort_alias
+    model = _models.SpielortAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -1326,7 +1326,7 @@ class TestModelSpielortAlias(DataTestCase):
 
 class TestModelTechnik(DataTestCase):
 
-    model = _models.technik
+    model = _models.Technik
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
@@ -1346,7 +1346,7 @@ class TestModelTechnik(DataTestCase):
 
 class TestModelVeranstaltung(DataTestCase):
 
-    model = _models.veranstaltung
+    model = _models.Veranstaltung
 
     def test_str(self):
         obj = self.model(name='Testveranstaltung')
@@ -1366,7 +1366,7 @@ class TestModelVeranstaltung(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['name', 'datum', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
@@ -1374,7 +1374,7 @@ class TestModelVeranstaltung(DataTestCase):
             self.model.search_fields_suffixes,
             {
                 'datum': 'Datum',
-                'veranstaltung_alias__alias': 'Alias',
+                'veranstaltungalias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1383,7 +1383,7 @@ class TestModelVeranstaltung(DataTestCase):
 
 class TestModelVeranstaltungAlias(DataTestCase):
 
-    model = _models.veranstaltung_alias
+    model = _models.VeranstaltungAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
@@ -1406,7 +1406,7 @@ class TestModelVeranstaltungsreihe(DataTestCase):
 
 class TestModelVerlag(DataTestCase):
 
-    model = _models.verlag
+    model = _models.Verlag
 
     def test_str(self):
         obj = self.model(verlag_name='Testverlag')
@@ -1425,7 +1425,7 @@ class TestModelVerlag(DataTestCase):
 
 class TestModelVideo(DataTestCase):
 
-    model = _models.video
+    model = _models.Video
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])

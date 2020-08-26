@@ -56,7 +56,7 @@ class TestModelSelectView(ViewTestCase):
 
 class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
 
-    model = _models.band
+    model = _models.Band
     view_class = DuplicateObjectsView
 
     @classmethod
@@ -65,7 +65,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         # get_or_create; calling make(band_name = 'X') repeatedly will always
         # return the same band object.
         cls.test_data = [
-            _models.band.objects.create(id=i, band_name='Beep')
+            _models.Band.objects.create(id=i, band_name='Beep')
             for i in range(1, 4)
         ]
         super().setUpTestData()
@@ -208,7 +208,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         test_data = [
             ({'base': ['band_name']}, 'Bandname'),
             ({'m2m': ['genre']}, 'Genre'),
-            ({'reverse': ['band_alias__alias']}, 'Alias')
+            ({'reverse': ['bandalias__alias']}, 'Alias')
         ]
         for request_data, expected in test_data:
             with self.subTest(data=request_data):
@@ -220,11 +220,11 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                 self.assertIn(expected, headers)
 
     def test_build_duplicates_headers_grouped_choices(self):
-        request = self.get_request(data={'reverse': ['band_alias__alias']})
+        request = self.get_request(data={'reverse': ['bandalias__alias']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         form.fields['reverse'].choices = [
-            ('Alias', [('band_alias__alias', 'Alias')])
+            ('Alias', [('bandalias__alias', 'Alias')])
         ]
         self.assertTrue(form.is_valid())
         headers = view.build_duplicates_headers(form)
@@ -237,13 +237,13 @@ class TestUnusedObjectsView(ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.artikel1 = make(_models.artikel)
-        cls.artikel2 = make(_models.artikel)
+        cls.artikel1 = make(_models.Artikel)
+        cls.artikel2 = make(_models.Artikel)
 
-        cls.unused = make(_models.genre)
-        cls.used_once = make(_models.genre)
+        cls.unused = make(_models.Genre)
+        cls.used_once = make(_models.Genre)
         cls.artikel1.genre.add(cls.used_once)
-        cls.used_twice = make(_models.genre)
+        cls.used_twice = make(_models.Genre)
         cls.artikel1.genre.add(cls.used_twice)
         cls.artikel2.genre.add(cls.used_twice)
         cls.test_data = [cls.unused, cls.used_once, cls.used_twice]
@@ -254,7 +254,7 @@ class TestUnusedObjectsView(ViewTestCase):
         # 'unused' records.
         view = self.get_view(request=self.get_request())
         for limit in [0, 1, 2]:
-            relations, queryset = view.get_queryset(_models.genre, limit)
+            relations, queryset = view.get_queryset(_models.Genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
 
@@ -288,7 +288,7 @@ class TestUnusedObjectsView(ViewTestCase):
 
     def test_build_items(self):
         # Check the contents of the list that build_items returns.
-        items = self.get_view(self.get_request()).build_items(model=_models.genre, limit=1)
+        items = self.get_view(self.get_request()).build_items(model=_models.Genre, limit=1)
         self.assertEqual(len(items), 2)
         unused, used_once = sorted(items, key=lambda tpl: tpl[0])
         url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])

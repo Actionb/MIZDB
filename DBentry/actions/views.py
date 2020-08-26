@@ -46,7 +46,7 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     action_name = 'bulk_jg'
     action_allowed_checks = [check_same_magazin]
 
-    affected_fields = ['jahrgang', 'ausgabe_jahr__jahr']
+    affected_fields = ['jahrgang', 'ausgabejahr__jahr']
 
     form_class = BulkEditJahrgangForm
 
@@ -114,13 +114,13 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     def get_initial(self):
         """Provide initial values for bestand and dublette fields."""
-        if self.model == _models.ausgabe:
+        if self.model == _models.Ausgabe:
             try:
                 return {
-                    'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
-                    'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
+                    'bestand': _models.Lagerort.objects.get(pk=ZRAUM_ID),
+                    'dublette': _models.Lagerort.objects.get(pk=DUPLETTEN_ID)
                 }
-            except _models.lagerort.DoesNotExist:
+            except _models.Lagerort.DoesNotExist:
                 pass
         return super().get_initial()
 
@@ -144,7 +144,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     def _get_bestand_field(self, model):
         """Return the ForeignKey field from `bestand` to model `model`."""
-        for field in _models.bestand._meta.get_fields():
+        for field in _models.Bestand._meta.get_fields():
             if field.is_relation and field.related_model == model:
                 return field
 
@@ -161,12 +161,12 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
         for instance in self.queryset:
             filter_kwargs = {fkey.name: instance, 'lagerort': bestand_lagerort}
             instance_data = {fkey.name: instance}
-            if not _models.bestand.objects.filter(**filter_kwargs).exists():
+            if not _models.Bestand.objects.filter(**filter_kwargs).exists():
                 instance_data['lagerort'] = bestand_lagerort
-                bestand_list.append(_models.bestand(**instance_data))
+                bestand_list.append(_models.Bestand(**instance_data))
             else:
                 instance_data['lagerort'] = dubletten_lagerort
-                dubletten_list.append(_models.bestand(**instance_data))
+                dubletten_list.append(_models.Bestand(**instance_data))
 
         with transaction.atomic():
             for lagerort_instance, bestand_instances in (
@@ -256,13 +256,13 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     def _check_different_magazines(view, **kwargs):
-        if (view.model == _models.ausgabe
+        if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
                 # Add a 'n' at the end because german grammar.
-                'other_plural': _models.magazin._meta.verbose_name_plural + 'n'
+                'other_plural': _models.Magazin._meta.verbose_name_plural + 'n'
             }
             view.model_admin.message_user(
                 request=view.request,
@@ -272,12 +272,12 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
 
     def _check_different_ausgaben(view, **kwargs):
-        if (view.model == _models.artikel
+        if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
-                'other_plural': _models.ausgabe._meta.verbose_name_plural
+                'other_plural': _models.Ausgabe._meta.verbose_name_plural
             }
             view.model_admin.message_user(
                 request=view.request,
@@ -571,7 +571,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     msg_template,
                     link_list(view.request, ausgaben_with_artikel),
                     get_changelist_link(
-                        model=_models.ausgabe,
+                        model=_models.Ausgabe,
                         user=view.request.user,
                         obj_list=ausgaben_with_artikel,
                         blank=True
@@ -602,11 +602,11 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
 
             # Verify that the ausgabe exists and can be deleted
             try:
-                ausgabe_instance = _models.ausgabe.objects.get(
+                ausgabe_instance = _models.Ausgabe.objects.get(
                     pk=data['ausgabe_id'])
             except (
-                _models.ausgabe.DoesNotExist,
-                _models.ausgabe.MultipleObjectsReturned):
+                _models.Ausgabe.DoesNotExist,
+                _models.Ausgabe.MultipleObjectsReturned):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -625,9 +625,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ausgabe_instance.bestand_set.update(
                         ausgabe_id=None, brochure_id=new_brochure.pk
                     )
-                    ausgabe_jahre = ausgabe_instance.ausgabe_jahr_set.values_list(
+                    ausgabejahre = ausgabe_instance.ausgabejahr_set.values_list(
                         'jahr', flat=True)
-                    for jahr in ausgabe_jahre:
+                    for jahr in ausgabejahre:
                         _models.BrochureYear.objects.create(
                             brochure=new_brochure, jahr=jahr
                         )
@@ -647,7 +647,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     )
                 )
                 self.log_update(
-                    _models.bestand.objects.filter(brochure_id=new_brochure.pk),
+                    _models.Bestand.objects.filter(brochure_id=new_brochure.pk),
                     ['ausgabe_id', 'brochure_id']
                 )
                 self.log_deletion(ausgabe_instance)
@@ -665,7 +665,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     msg_template,
                     obj_links=link_list(self.request, protected_ausg, blank=True),
                     cl_link=get_changelist_link(
-                        model=_models.ausgabe,
+                        model=_models.Ausgabe,
                         user=self.request.user,
                         obj_list=protected_ausg,
                         blank=True
@@ -704,7 +704,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         forms = []
         for form in formset:
             link = get_obj_link(
-                obj=_models.ausgabe.objects.get(pk=form['ausgabe_id'].initial),
+                obj=_models.Ausgabe.objects.get(pk=form['ausgabe_id'].initial),
                 user=self.request.user,
                 blank=True
             )

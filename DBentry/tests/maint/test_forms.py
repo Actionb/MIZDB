@@ -12,7 +12,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
 
     def test_get_dupefields_reverse_choices_are_grouped(self):
         # Assert that the reverse dupe fields are grouped by their related model.
-        dupe_fields = get_dupe_fields_for_model(_models.musiker)
+        dupe_fields = get_dupe_fields_for_model(_models.Musiker)
         self.assertIn('reverse', dupe_fields)
         reverse = dupe_fields['reverse']
         self.assertIsInstance(reverse, (list, tuple))
@@ -20,7 +20,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         # Get the group
         self.assertEqual(
             len(reverse), 1,
-            msg="There should be only reverse dupe fields group for musiker."
+            msg="There should be only reverse dupe fields group for Musiker."
         )
         musiker_alias_group = reverse[0]
         self.assertIsInstance(musiker_alias_group, (list, tuple))
@@ -48,7 +48,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
     def test_get_dupefields_excludes_reverse_fk_field(self):
         # Assert that the reverse choices do not contain the ForeignKey field
         # of that reverse relation.
-        dupe_fields = get_dupe_fields_for_model(_models.musiker)
+        dupe_fields = get_dupe_fields_for_model(_models.Musiker)
         self.assertIn('reverse', dupe_fields)
         self.assertIn('Alias', dict(dupe_fields['reverse']))
         musiker_alias_fields = dict(dupe_fields['reverse'])['Alias']
@@ -57,11 +57,11 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
     def test_get_dupefields_sorts_reverse_choices(self):
         # Assert that get_dupe_fields_for_model sorts the reverse choices by
         # group name (lower()). ausgabe has the following 7 reverse rels:
-        # <ManyToOneRel: DBentry.bestand>, <ManyToOneRel: DBentry.ausgabe_jahr>,
-        # <ManyToOneRel: DBentry.ausgabe_lnum>, <ManyToOneRel: DBentry.artikel>,
-        # <ManyToOneRel: DBentry.basebrochure>, <ManyToOneRel: DBentry.ausgabe_num>,
-        # <ManyToOneRel: DBentry.ausgabe_monat>]
-        dupe_fields = get_dupe_fields_for_model(_models.ausgabe)
+        # <ManyToOneRel: DBentry.bestand>, <ManyToOneRel: DBentry.ausgabejahr>,
+        # <ManyToOneRel: DBentry.ausgabelnum>, <ManyToOneRel: DBentry.artikel>,
+        # <ManyToOneRel: DBentry.basebrochure>, <ManyToOneRel: DBentry.ausgabenum>,
+        # <ManyToOneRel: DBentry.ausgabemonat>]
+        dupe_fields = get_dupe_fields_for_model(_models.Ausgabe)
         self.assertIn('reverse', dupe_fields)
         reverse = dupe_fields['reverse']
         self.assertEqual(len(reverse), 7)
@@ -76,7 +76,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         # Assert that whatever is returned by get_dupe_fields_for_model can
         # actually be used in query.
         # Using get_fields_from_path to assert the ... queryability
-        dupe_fields = get_dupe_fields_for_model(_models.ausgabe)
+        dupe_fields = get_dupe_fields_for_model(_models.Ausgabe)
         reverse = dupe_fields['reverse']
         all_choices = list(chain(
             *(group_choices for group_name, group_choices in reverse)
@@ -84,7 +84,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         failed = []
         for field_path, _label in all_choices:
             try:
-                get_fields_from_path(_models.ausgabe, field_path)
+                get_fields_from_path(_models.Ausgabe, field_path)
             except FieldDoesNotExist:
                 failed.append(field_path)
         if failed:

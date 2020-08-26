@@ -20,32 +20,32 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_for_dbfield_dal(self):
         # Assert that formfield_for_dbfield prepares an
         # autocomplete ready formfield for many to one relations.
-        dbfield = _models.ausgabe._meta.get_field('magazin')
+        dbfield = _models.Ausgabe._meta.get_field('magazin')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2)
-        self.assertEqual(widget.model_name, _models.magazin._meta.model_name)
+        self.assertEqual(widget.model_name, _models.Magazin._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
         self.assertFalse(widget.create_field, msg=msg)
-        self.assertEqual(formfield.queryset.model, _models.magazin)
+        self.assertEqual(formfield.queryset.model, _models.Magazin)
         self.assertFalse(formfield.required)
 
     def test_formfield_for_dbfield_dal_m2m(self):
         # Assert that formfield_for_dbfield prepares an
         # autocomplete ready formfield for many to many relations.
-        dbfield = _models.artikel._meta.get_field('genre')
+        dbfield = _models.Artikel._meta.get_field('genre')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2Multiple)
-        self.assertEqual(widget.model_name, _models.genre._meta.model_name)
+        self.assertEqual(widget.model_name, _models.Genre._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
         self.assertFalse(widget.create_field, msg=msg)
-        self.assertEqual(formfield.queryset.model, _models.genre)
+        self.assertEqual(formfield.queryset.model, _models.Genre)
         self.assertFalse(formfield.required)
 
     def test_formfield_for_dbfield_dal_with_forward(self):
         # Assert that dal forwards are added.
-        dbfield = _models.ausgabe._meta.get_field('magazin')
+        dbfield = _models.Ausgabe._meta.get_field('magazin')
         formfield = self.factory.formfield_for_dbfield(dbfield, forward=['ausgabe'])
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2)
@@ -59,7 +59,7 @@ class TestSearchFormFactory(MyTestCase):
         ]
         valid = ['seite', 'seitenumfang', 'genre__genre']
         invalid = ['notafield', 'schlagwort', 'schlagwort__notalookup']
-        form_fields = self.factory(_models.artikel, fields).base_fields
+        form_fields = self.factory(_models.Artikel, fields).base_fields
         for field_name in chain(valid, invalid):
             should_be_valid = field_name in valid
             with self.subTest(valid=should_be_valid, field_name=field_name):
@@ -73,7 +73,7 @@ class TestSearchFormFactory(MyTestCase):
         # and that it uses that to create formfields for dbfields.
         callback = lambda dbfield: forms.DateField()
         form_class = self.factory(
-            model=_models.artikel,
+            model=_models.Artikel,
             formfield_callback=callback,
             fields=['seite']
         )
@@ -83,12 +83,12 @@ class TestSearchFormFactory(MyTestCase):
     def test_takes_formfield_callback_callable(self):
         # A callback that is not a callable should raise a TypeError.
         with self.assertRaises(TypeError):
-            self.factory(_models.artikel, formfield_callback=1)
+            self.factory(_models.Artikel, formfield_callback=1)
 
     def test_factory_forward(self):
         # Assert that 'forward' arguments to the factory are respected.
         form_class = self.factory(
-            model=_models.artikel,
+            model=_models.Artikel,
             fields=['ausgabe'],
             forwards={'ausgabe': 'magazin'}
         )
@@ -99,7 +99,7 @@ class TestSearchFormFactory(MyTestCase):
         # Assert that the factory recognizes range lookups in a field's path
         # and creates a RangeFormField for it.
         form_class = self.factory(
-            model=_models.ausgabe,
+            model=_models.Ausgabe,
             fields=['jahrgang__range'],
         )
         self.assertIn('jahrgang', form_class.base_fields)
@@ -111,7 +111,7 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_for_dbfield_form_class(self):
         # Assert that test_formfield_for_dbfield respects the formfield class
         # provided in the kwargs.
-        db_field = _models.ausgabe._meta.get_field('jahrgang')
+        db_field = _models.Ausgabe._meta.get_field('jahrgang')
         self.assertIsInstance(
             self.factory.formfield_for_dbfield(db_field, form_class=forms.CharField),
             forms.CharField,
@@ -127,7 +127,7 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_for_dbfield_fallback_form_class(self):
         # Assert that formfield_for_dbfield falls back to a forms.CharField
         # formfield if no formfield instance was created.
-        db_field = _models.ausgabe._meta.get_field('id')
+        db_field = _models.Ausgabe._meta.get_field('id')
         self.assertIsInstance(
             self.factory.formfield_for_dbfield(db_field),
             forms.CharField
@@ -136,7 +136,7 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_choices(self):
         # Assert that the choice formfield includes an 'empty' choice even if
         # the model field's choices does not include one.
-        db_field = _models.ausgabe._meta.get_field('status')
+        db_field = _models.Ausgabe._meta.get_field('status')
         formfield = self.factory.formfield_for_dbfield(db_field)
         choices = formfield.choices
         self.assertIn(BLANK_CHOICE_DASH[0], choices)
@@ -144,7 +144,7 @@ class TestSearchFormFactory(MyTestCase):
 
 class TestSearchForm(MyTestCase):
 
-    model = _models.artikel
+    model = _models.Artikel
 
     def setUp(self):
         super().setUp()
@@ -161,7 +161,7 @@ class TestSearchForm(MyTestCase):
         # Assert that get_filters_params does not return empty query values.
         data = {
             'seite': 1,
-            'ausgabe__magazin': make(_models.magazin).pk,
+            'ausgabe__magazin': make(_models.Magazin).pk,
             'musiker': []
         }
         form_class = self.factory(self.model, fields=data.keys())
@@ -174,7 +174,7 @@ class TestSearchForm(MyTestCase):
 
     def test_get_filters_params_boolean_false(self):
         # Assert that an unchecked BooleanField is not evaluated as False.
-        form_class = self.factory(_models.ausgabe, fields=['sonderausgabe'])
+        form_class = self.factory(_models.Ausgabe, fields=['sonderausgabe'])
         form = form_class(data={})
         self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
@@ -182,7 +182,7 @@ class TestSearchForm(MyTestCase):
 
     def test_get_filters_params_boolean_true(self):
         # Assert that an checked BooleanField is evaluated as True.
-        form_class = self.factory(_models.ausgabe, fields=['sonderausgabe'])
+        form_class = self.factory(_models.Ausgabe, fields=['sonderausgabe'])
         form = form_class(data={'sonderausgabe': True})
         self.assertTrue(form.is_valid(), msg=form.errors)
         filter_params = form.get_filters_params()
@@ -230,7 +230,7 @@ class TestSearchForm(MyTestCase):
         self.assertIn('seite__lte', filter_params)
 
     def test_get_filters_params(self):
-        form_class = self.factory(_models.bildmaterial, fields=['datum'])
+        form_class = self.factory(_models.Bildmaterial, fields=['datum'])
         form = form_class(data={'datum_0': 2020, 'datum_1': 5, 'datum_2': 20})
         self.assertTrue(form.is_valid())
         self.assertIn('datum', form.cleaned_data)
@@ -241,9 +241,9 @@ class TestSearchForm(MyTestCase):
     def test_get_filters_params_in_lookup_with_qs(self):
         # Assert that get_filters_params creates a comma separated string of
         # values for the 'in' lookup with querysets.
-        genre1 = make(_models.genre, genre="genre1", pk=1)
-        genre2 = make(_models.genre, genre="genre2", pk=2)
-        form_class = self.factory(_models.bildmaterial, fields=['genre'])
+        genre1 = make(_models.Genre, genre="genre1", pk=1)
+        genre2 = make(_models.Genre, genre="genre2", pk=2)
+        form_class = self.factory(_models.Bildmaterial, fields=['genre'])
         form = form_class(data={'genre': [genre1.pk, genre2.pk]})
         self.assertTrue(form.is_valid(), msg=form.errors)
         self.assertIn('genre', form.cleaned_data)

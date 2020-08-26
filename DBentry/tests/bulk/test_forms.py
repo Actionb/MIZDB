@@ -19,7 +19,7 @@ class TestBulkForm(FormTestCase):
         'some_bulkfield': BulkField(required=False, label='num'),
         'req_fld': BulkJahrField(required=False),
         'another': django_forms.CharField(required=False),
-        'model': _models.ausgabe,
+        'model': _models.Ausgabe,
         'each_fields': ['another', 'some_fld'],
         'split_fields': ['req_fld', 'some_bulkfield'],
         'field_order': ['some_fld', 'some_bulkfield', 'req_fld', 'another'],
@@ -85,26 +85,26 @@ class TestBulkForm(FormTestCase):
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
 
     form_class = BulkFormAusgabe
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
-        cls.zraum = make(_models.lagerort, ort='Bestand LO')
-        cls.dublette = make(_models.lagerort, ort='Dubletten LO')
-        cls.audio_lo = make(_models.lagerort)
-        cls.prov = make(_models.provenienz)
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
+        cls.zraum = make(_models.Lagerort, ort='Bestand LO')
+        cls.dublette = make(_models.Lagerort, ort='Dubletten LO')
+        cls.audio_lo = make(_models.Lagerort)
+        cls.prov = make(_models.Provenienz)
         cls.updated = make(
             cls.model,
             magazin=cls.mag,
-            ausgabe_jahr__jahr=[2000, 2001],
-            ausgabe_num__num=1
+            ausgabejahr__jahr=[2000, 2001],
+            ausgabenum__num=1
         )
         cls.multi1, cls.multi2 = batch(
             cls.model, 2,
             magazin=cls.mag,
-            ausgabe_jahr__jahr=[2000, 2001],
-            ausgabe_num__num=5
+            ausgabejahr__jahr=[2000, 2001],
+            ausgabenum__num=5
         )
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         super().setUpTestData()
@@ -177,8 +177,8 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             self.model,
             magazin=self.mag,
             jahrgang=1,
-            ausgabe_num__num=5,
-            ausgabe_jahr__jahr=2002
+            ausgabenum__num=5,
+            ausgabejahr__jahr=2002
         )
         row_data = {'jahrgang': '1', 'num': '5'}
         lookuped = form.lookup_instance(row_data)
@@ -200,16 +200,16 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             self.model,
             magazin=self.mag,
             jahrgang=2,
-            ausgabe_num__num=5,
-            ausgabe_jahr__jahr=2002
+            ausgabenum__num=5,
+            ausgabejahr__jahr=2002
         )
         # Create a control instance that should not be included in the result.
         make(
             self.model,
             magazin=self.mag,
             jahrgang=2,
-            ausgabe_num__num=5,
-            ausgabe_jahr__jahr=2003
+            ausgabenum__num=5,
+            ausgabejahr__jahr=2003
         )
         row_data = {'jahrgang': '2', 'num': '5', 'jahr': '2002'}
         lookuped = form.lookup_instance(row_data)
