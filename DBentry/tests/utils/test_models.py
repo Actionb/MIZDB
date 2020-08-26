@@ -142,8 +142,8 @@ class TestModelUtils(MyTestCase):
         with self.assertRaises(exceptions.FieldError):
             utils.get_fields_and_lookups(_models.Artikel, 'schlagzeile__year')
         with self.assertRaises(exceptions.FieldError):
-            # Kalendar's primary key is a OneToOne to BaseBrochure.
-            utils.get_fields_and_lookups(_models.Kalendar, 'pk__iexact')
+            # Kalender's primary key is a OneToOne to BaseBrochure.
+            utils.get_fields_and_lookups(_models.Kalender, 'pk__iexact')
 
     def test_get_fields_and_lookups_fielddoesnotexist(self):
         # Assert that get_fields_and_lookups raises FieldDoesNotExist

@@ -180,7 +180,7 @@ class BrochureActionFormOptions(MIZAdminForm):
         return [
             (_models.Brochure._meta.model_name, _models.Brochure._meta.verbose_name),
             (_models.Katalog._meta.model_name, _models.Katalog._meta.verbose_name),
-            (_models.Kalendar._meta.model_name, _models.Kalendar._meta.verbose_name)
+            (_models.Kalender._meta.model_name, _models.Kalender._meta.verbose_name)
         ]
 
     brochure_art = forms.ChoiceField(

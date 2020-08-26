@@ -1350,7 +1350,7 @@ class Brochure(BaseBrochure):
         verbose_name_plural = 'Broschüren'
 
 
-class Kalendar(BaseBrochure):  # TODO: spelling: Kalender
+class Kalender(BaseBrochure):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Programmheftes')
 
     spielort = models.ManyToManyField('Spielort')

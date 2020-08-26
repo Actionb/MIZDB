@@ -343,7 +343,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 # Ugly code! MIZModelAdmin shouldn't have to know BaseBrochure!
                 relations.extend([
                     (_models.Brochure, rel.remote_field.name, None),
-                    (_models.Kalendar, rel.remote_field.name, None),
+                    (_models.Kalender, rel.remote_field.name, None),
                     (_models.Katalog, rel.remote_field.name, None)
                 ])
             else:

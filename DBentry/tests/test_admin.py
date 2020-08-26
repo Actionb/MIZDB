@@ -668,16 +668,16 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         # instead of three for each BaseBrochure child.
         obj = make(self.model)
         make(_models.Brochure, ausgabe=obj)
-        make(_models.Kalendar, ausgabe=obj)
+        make(_models.Kalender, ausgabe=obj)
         make(_models.Katalog, ausgabe=obj)
         crosslinks = self.get_crosslinks(obj, labels={})
         data = {'fld_name': 'ausgabe', 'pk': str(obj.pk)}
         labels = {
             'brochure': 'Broschüren (1)',
-            'kalendar': 'Programmhefte (1)',
+            'kalender': 'Programmhefte (1)',
             'katalog': 'Warenkataloge (1)'
         }
-        for model_name in ('brochure', 'kalendar', 'katalog'):
+        for model_name in ('brochure', 'kalender', 'katalog'):
             with self.subTest(model=model_name):
                 data['model_name'] = model_name
                 data['label'] = labels[model_name]
@@ -858,16 +858,16 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         # instead of three for each BaseBrochure child.
         obj = make(self.model)
         make(_models.Brochure, genre=obj)
-        make(_models.Kalendar, genre=obj)
+        make(_models.Kalender, genre=obj)
         make(_models.Katalog, genre=obj)
         crosslinks = self.get_crosslinks(obj, labels={})
         data = {'fld_name': 'genre', 'pk': str(obj.pk)}
         labels = {
             'brochure': 'Broschüren (1)',
-            'kalendar': 'Programmhefte (1)',
+            'kalender': 'Programmhefte (1)',
             'katalog': 'Warenkataloge (1)'
         }
-        for model_name in ('brochure', 'kalendar', 'katalog'):
+        for model_name in ('brochure', 'kalender', 'katalog'):
             with self.subTest(model=model_name):
                 data['model_name'] = model_name
                 data['label'] = labels[model_name]
@@ -1093,7 +1093,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'dokument', 'fld_name': 'spielort', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'spielort', 'label': 'Memorabilien (1)'},
         {'model_name': 'video', 'fld_name': 'spielort', 'label': 'Video Materialien (1)'},
-        {'model_name': 'kalendar', 'fld_name': 'spielort', 'label': 'Programmhefte (1)'},
+        {'model_name': 'kalender', 'fld_name': 'spielort', 'label': 'Programmhefte (1)'},
         {'model_name': 'buch', 'fld_name': 'spielort', 'label': 'Bücher (1)'},
         {'model_name': 'bildmaterial', 'fld_name': 'spielort', 'label': 'Bild Materialien (1)'},
         {'model_name': 'datei', 'fld_name': 'spielort', 'label': 'Dateien (1)'},
@@ -1121,7 +1121,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'dokument', 'fld_name': 'veranstaltung', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'veranstaltung', 'label': 'Memorabilien (1)'},
         {'model_name': 'video', 'fld_name': 'veranstaltung', 'label': 'Video Materialien (1)'},
-        {'model_name': 'kalendar', 'fld_name': 'veranstaltung', 'label': 'Programmhefte (1)'},
+        {'model_name': 'kalender', 'fld_name': 'veranstaltung', 'label': 'Programmhefte (1)'},
         {'model_name': 'buch', 'fld_name': 'veranstaltung', 'label': 'Bücher (1)'},
         {'model_name': 'bildmaterial', 'fld_name': 'veranstaltung', 'label': 'Bild Materialien (1)'},
         {'model_name': 'datei', 'fld_name': 'veranstaltung', 'label': 'Dateien (1)'},
@@ -1255,9 +1255,9 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue(art_index < z_index)
 
 
-class TestKalendarAdmin(AdminTestMethodsMixin, AdminTestCase):
-    model_admin_class = _admin.KalendarAdmin
-    model = _models.Kalendar
+class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.KalenderAdmin
+    model = _models.Kalender
     fields_expected = [
         'titel', 'zusammenfassung', 'bemerkungen', 'ausgabe', 'beschreibung',
         'ausgabe__magazin'

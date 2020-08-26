@@ -286,7 +286,7 @@ class TestMIZDjangoOptions(MyTestCase):
         # Pretend factory has no attributes, so add_m2m_factories will try to add one:
         mocked_factory = Mock(spec=[])
 
-        # Relation from BaseBrochure to genre inherited by Kalendar; expected:
+        # Relation from BaseBrochure to genre inherited by Kalender; expected:
         # declaration name and descriptor_name = 'mocked_field_name'
         # related_model = _models.Genre
         mocked_rel = self.get_mocked_rel(
@@ -297,7 +297,7 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
-        opts.model = _models.Kalendar
+        opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
@@ -310,7 +310,7 @@ class TestMIZDjangoOptions(MyTestCase):
             'descriptor_name': 'mocked_field_name', 'related_model': _models.Genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
-        # Relation from genre to BaseBrochure inherited by Kalendar; expected:
+        # Relation from genre to BaseBrochure inherited by Kalender; expected:
         # declaration name = 'mocked_rel_name';
         # descriptor_name = 'mocked_rel_accessor';
         # related_model = _models.Genre
@@ -322,7 +322,7 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
-        opts.model = _models.Kalendar
+        opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
@@ -375,7 +375,7 @@ class TestMIZDjangoOptions(MyTestCase):
 
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
-        opts.model = _models.Kalendar
+        opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:

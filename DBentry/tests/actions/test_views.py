@@ -980,14 +980,14 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 1)
         self.assertEqual(_models.Katalog.objects.get().art, 'merch')
 
-    def test_perform_action_kalendar(self):
-        options_form_cleaned_data = {'brochure_art': 'kalendar'}
+    def test_perform_action_kalender(self):
+        options_form_cleaned_data = {'brochure_art': 'kalender'}
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
         view.mag = self.mag
 
-        self.assertEqual(_models.Kalendar.objects.count(), 0)
+        self.assertEqual(_models.Kalender.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
-        self.assertEqual(_models.Kalendar.objects.count(), 1)
+        self.assertEqual(_models.Kalender.objects.count(), 1)
 
     @patch('DBentry.actions.views.get_model_from_string')
     def test_perform_action_protected_ausgabe(self, mocked_model_from_string):

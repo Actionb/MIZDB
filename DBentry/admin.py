@@ -952,17 +952,17 @@ class KatalogAdmin(BaseBrochureAdmin):
         return fieldsets
 
 
-@admin.register(_models.Kalendar, site=miz_site)
-class KalendarAdmin(BaseBrochureAdmin):
+@admin.register(_models.Kalender, site=miz_site)
+class KalenderAdmin(BaseBrochureAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
     class JahrInLine(BaseTabularInline):
         model = _models.BrochureYear
     class SpielortInLine(BaseTabularInline):
-        model = _models.Kalendar.spielort.through
+        model = _models.Kalender.spielort.through
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.Kalendar.veranstaltung.through
+        model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
     class URLInLine(BaseTabularInline):
         model = _models.BrochureURL

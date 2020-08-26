@@ -923,7 +923,7 @@ class TestModelInstrument(DataTestCase):
 
 class TestModelKalender(DataTestCase):
 
-    model = _models.Kalendar
+    model = _models.Kalender
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
