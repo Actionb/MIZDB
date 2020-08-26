@@ -481,7 +481,7 @@ class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.spielort
+    model = _models.Spielort
     alias_accessor_name = 'spielort_alias_set'
     raw_data = [{
         'spielort_alias__alias': 'AliasSpielort',

@@ -52,7 +52,7 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Band
     class SpielortInLine(BaseTabularInline):
         model = _models.Audio.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.veranstaltung
@@ -242,7 +242,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.Artikel.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Artikel.veranstaltung.through
         verbose_model = _models.veranstaltung
@@ -355,7 +355,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.Bildmaterial.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Bildmaterial.veranstaltung.through
         verbose_model = _models.veranstaltung
@@ -426,7 +426,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.Buch.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Buch.veranstaltung.through
         verbose_model = _models.veranstaltung
@@ -666,7 +666,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     alias_string.short_description = 'Aliase'
 
 
-@admin.register(_models.spielort, site=miz_site)
+@admin.register(_models.Spielort, site=miz_site)
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.spielort_alias
@@ -743,7 +743,7 @@ class VideoAdmin(MIZModelAdmin):
         verbose_model = _models.Band
     class SpielortInLine(BaseTabularInline):
         model = _models.video.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.video.veranstaltung.through
         verbose_model = _models.veranstaltung
@@ -825,7 +825,7 @@ class DateiAdmin(MIZModelAdmin):
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.datei.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.datei.veranstaltung.through
         verbose_model = _models.veranstaltung
@@ -960,7 +960,7 @@ class KalendarAdmin(BaseBrochureAdmin):
         model = _models.BrochureYear
     class SpielortInLine(BaseTabularInline):
         model = _models.Kalendar.spielort.through
-        verbose_model = _models.spielort
+        verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Kalendar.veranstaltung.through
         verbose_model = _models.veranstaltung

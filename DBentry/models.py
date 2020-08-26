@@ -602,7 +602,7 @@ class Artikel(BaseModel):
     band = models.ManyToManyField('Band', through=_m2m.m2m_artikel_band)
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_artikel_musiker)
     ort = models.ManyToManyField('Ort', through=_m2m.m2m_artikel_ort)
-    spielort = models.ManyToManyField('spielort', through=_m2m.m2m_artikel_spielort)
+    spielort = models.ManyToManyField('Spielort', through=_m2m.m2m_artikel_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through=_m2m.m2m_artikel_veranstaltung)
 
     name_field = 'schlagzeile'
@@ -665,7 +665,7 @@ class Buch(BaseModel):
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
     ort = models.ManyToManyField('Ort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -740,7 +740,7 @@ class Audio(BaseModel):
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_audio_musiker)
     person = models.ManyToManyField('Person', through=_m2m.m2m_audio_person)
     schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_audio_schlagwort)
-    spielort = models.ManyToManyField('spielort', through=_m2m.m2m_audio_spielort)
+    spielort = models.ManyToManyField('Spielort', through=_m2m.m2m_audio_spielort)
     veranstaltung = models.ManyToManyField('veranstaltung', through=_m2m.m2m_audio_veranstaltung)
     ort = models.ManyToManyField('Ort', through=_m2m.m2m_audio_ort)
 
@@ -782,7 +782,7 @@ class Bildmaterial(BaseModel):
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
     ort = models.ManyToManyField('Ort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -836,7 +836,7 @@ class Dokument(BaseModel):
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
     ort = models.ManyToManyField('Ort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -864,7 +864,7 @@ class Memorabilien(BaseModel):
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
     ort = models.ManyToManyField('Ort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -881,7 +881,7 @@ class Memorabilien(BaseModel):
         ]
 
 
-class spielort(BaseModel):
+class Spielort(BaseModel):
     name = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Spielortes')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -902,7 +902,7 @@ class spielort(BaseModel):
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
 class spielort_alias(BaseAliasModel):
-    parent = models.ForeignKey('spielort', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Spielort', models.CASCADE)  # TODO: add a related_name
 
 
 class technik(BaseModel):
@@ -916,7 +916,7 @@ class technik(BaseModel):
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker')
     ort = models.ManyToManyField('Ort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -937,7 +937,7 @@ class veranstaltung(BaseModel):
     name = models.CharField(max_length=200)
     datum = PartialDateField(blank=False)
 
-    spielort = models.ForeignKey('spielort', models.PROTECT)
+    spielort = models.ForeignKey('Spielort', models.PROTECT)
     reihe = models.ForeignKey('Veranstaltungsreihe', models.PROTECT, blank=True, null=True)
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Veranstaltung')
@@ -1002,7 +1002,7 @@ class video(BaseModel):
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_video_musiker)
     person = models.ManyToManyField('Person')
     schlagwort = models.ManyToManyField('Schlagwort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -1191,7 +1191,7 @@ class datei(BaseModel):
     band = models.ManyToManyField('Band')
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_datei_musiker)
     ort = models.ManyToManyField('Ort')
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     name_field = 'titel'
@@ -1355,7 +1355,7 @@ class Brochure(BaseBrochure):
 class Kalendar(BaseBrochure):  # TODO: spelling: Kalender
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Programmheftes')
 
-    spielort = models.ManyToManyField('spielort')
+    spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('veranstaltung')
 
     primary_search_fields = ['titel']

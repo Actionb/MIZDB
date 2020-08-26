@@ -1083,7 +1083,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.SpielortAdmin
-    model = _models.spielort
+    model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
         'name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']

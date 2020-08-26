@@ -1286,7 +1286,7 @@ class TestModelSchlagwortAlias(DataTestCase):
 
 class TestModelSpielort(DataTestCase):
 
-    model = _models.spielort
+    model = _models.Spielort
 
     def test_str(self):
         land_object = _models.Land.objects.create(land_name='Deutschland', code='DE')

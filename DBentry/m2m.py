@@ -107,7 +107,7 @@ class m2m_audio_schlagwort(BaseM2MModel):
 
 class m2m_audio_spielort(BaseM2MModel):
     audio = models.ForeignKey('Audio', models.CASCADE)
-    spielort = models.ForeignKey('spielort', models.CASCADE)
+    spielort = models.ForeignKey('Spielort', models.CASCADE)
 
     name_field = 'spielort'
 
@@ -220,7 +220,7 @@ class m2m_artikel_schlagwort(BaseM2MModel):
 
 class m2m_artikel_spielort(BaseM2MModel):
     artikel = models.ForeignKey('Artikel', models.CASCADE)
-    spielort = models.ForeignKey('spielort', models.CASCADE)
+    spielort = models.ForeignKey('Spielort', models.CASCADE)
 
     name_field = 'spielort'
 
