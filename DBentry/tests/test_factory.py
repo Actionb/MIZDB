@@ -236,7 +236,7 @@ class TestMIZDjangoOptions(MyTestCase):
         # A dynamically created factory *must* include model fields that are required.
         # Model veranstaltung has three required fields:
         # name (CharField), datum (DateField), spielort (ForeignKey(spielort))
-        fac = modelfactory_factory(_models.veranstaltung)
+        fac = modelfactory_factory(_models.Veranstaltung)
         self.assertIn('name', dir(fac))
         self.assertIn('datum', dir(fac))
         self.assertIn('spielort', dir(fac))
@@ -252,7 +252,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.musiker.factory._meta.model, _models.Musiker)
         self.assertEqual(fac.ort.factory._meta.model, _models.Ort)
         self.assertEqual(fac.spielort.factory._meta.model, _models.Spielort)
-        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
+        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.Veranstaltung)
 
         fac = modelfactory_factory(_models.Musiker)
         self.assertEqual(fac.audio.factory._meta.model, _models.Audio)
@@ -264,7 +264,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.bildmaterial.factory._meta.model, _models.Bildmaterial)
         self.assertEqual(fac.video.factory._meta.model, _models.video)
         self.assertEqual(fac.dokument.factory._meta.model, _models.Dokument)
-        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
+        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.Veranstaltung)
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.buch.factory._meta.model, _models.Buch)
         self.assertEqual(fac.instrument.factory._meta.model, _models.Instrument)

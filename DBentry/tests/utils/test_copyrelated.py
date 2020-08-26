@@ -15,9 +15,9 @@ class TestCopyRelated(DataTestCase):
         cls.band1 = make(_models.Band, band_name='Band1')
         cls.band2 = make(_models.Band, band_name='Band2')
 
-        cls.v1 = make(_models.veranstaltung, band=[cls.band1])
-        cls.v2 = make(_models.veranstaltung, band=[cls.band2])
-        cls.v3 = make(_models.veranstaltung)
+        cls.v1 = make(_models.Veranstaltung, band=[cls.band1])
+        cls.v2 = make(_models.Veranstaltung, band=[cls.band2])
+        cls.v3 = make(_models.Veranstaltung)
 
         cls.obj1.veranstaltung.add(cls.v1, cls.v2, cls.v3)
 

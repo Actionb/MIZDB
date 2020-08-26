@@ -119,7 +119,7 @@ class m2m_audio_spielort(BaseM2MModel):
 
 class m2m_audio_veranstaltung(BaseM2MModel):
     audio = models.ForeignKey('Audio', models.CASCADE)
-    veranstaltung = models.ForeignKey('veranstaltung', models.CASCADE)
+    veranstaltung = models.ForeignKey('Veranstaltung', models.CASCADE)
 
     name_field = 'veranstaltung'
 
@@ -232,7 +232,7 @@ class m2m_artikel_spielort(BaseM2MModel):
 
 class m2m_artikel_veranstaltung(BaseM2MModel):
     artikel = models.ForeignKey('Artikel', models.CASCADE)
-    veranstaltung = models.ForeignKey('veranstaltung', models.CASCADE)
+    veranstaltung = models.ForeignKey('Veranstaltung', models.CASCADE)
 
     name_field = 'veranstaltung'
 

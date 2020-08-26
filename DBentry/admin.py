@@ -55,7 +55,7 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Audio.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
     class FormatInLine(BaseStackedInline):
         model = _models.Format
         extra = 0
@@ -245,7 +245,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Artikel.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
 
     form = ArtikelForm
     index_category = 'Archivgut'
@@ -358,7 +358,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Bildmaterial.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
 
     collapse_all = True
     form = BildmaterialForm
@@ -429,7 +429,7 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Buch.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
     class HerausgeberInLine(BaseTabularInline):
         model = _models.Buch.herausgeber.through
         verbose_model = _models.Herausgeber
@@ -682,20 +682,20 @@ class TechnikAdmin(MIZModelAdmin):
     superuser_only = True
 
 
-@admin.register(_models.veranstaltung, site=miz_site)
+@admin.register(_models.Veranstaltung, site=miz_site)
 class VeranstaltungAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.veranstaltung.genre.through
+        model = _models.Veranstaltung.genre.through
     class BandInLine(BaseTabularInline):
-        model = _models.veranstaltung.band.through
+        model = _models.Veranstaltung.band.through
         verbose_model = _models.Band
     class PersonInLine(BaseTabularInline):
-        model = _models.veranstaltung.person.through
+        model = _models.Veranstaltung.person.through
         verbose_model = _models.Person
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.veranstaltung.schlagwort.through
+        model = _models.Veranstaltung.schlagwort.through
     class MusikerInLine(BaseTabularInline):
-        model = _models.veranstaltung.musiker.through
+        model = _models.Veranstaltung.musiker.through
         verbose_model = _models.Musiker
     class AliasInLine(BaseAliasInline):
         model = _models.veranstaltung_alias
@@ -746,7 +746,7 @@ class VideoAdmin(MIZModelAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.video.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
 
     index_category = 'Archivgut'
     superuser_only = True
@@ -828,7 +828,7 @@ class DateiAdmin(MIZModelAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.datei.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
     class QuelleInLine(BaseStackedInline):
         model = _m2m.m2m_datei_quelle
         extra = 0
@@ -963,7 +963,7 @@ class KalendarAdmin(BaseBrochureAdmin):
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Kalendar.veranstaltung.through
-        verbose_model = _models.veranstaltung
+        verbose_model = _models.Veranstaltung
     class URLInLine(BaseTabularInline):
         model = _models.BrochureURL
 

@@ -1346,7 +1346,7 @@ class TestModelTechnik(DataTestCase):
 
 class TestModelVeranstaltung(DataTestCase):
 
-    model = _models.veranstaltung
+    model = _models.Veranstaltung
 
     def test_str(self):
         obj = self.model(name='Testveranstaltung')

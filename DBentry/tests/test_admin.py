@@ -1107,7 +1107,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.VeranstaltungAdmin
-    model = _models.veranstaltung
+    model = _models.Veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
@@ -1368,7 +1368,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
         cls.veranstaltung = make(
-            _models.veranstaltung, band=[cls.band], musiker=[cls.musiker])
+            _models.Veranstaltung, band=[cls.band], musiker=[cls.musiker])
         cls.obj1.veranstaltung.add(cls.veranstaltung)
 
     def test_copy_related_set(self):

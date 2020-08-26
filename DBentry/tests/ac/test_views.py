@@ -491,7 +491,7 @@ class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
 
 
 class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.veranstaltung
+    model = _models.Veranstaltung
     alias_accessor_name = 'veranstaltung_alias_set'
     raw_data = [{
         'veranstaltung_alias__alias': 'AliasVeranstaltung',

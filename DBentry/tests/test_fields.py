@@ -772,7 +772,7 @@ class TestPartialDateFormField(MyTestCase):
                 self.assertFalse(form(data=self.prepare_form_data(data)).errors, msg=data)
 
     def test_as_modelform_required(self):
-        form = forms.modelform_factory(model=_models.veranstaltung, fields=['datum'])
+        form = forms.modelform_factory(model=_models.Veranstaltung, fields=['datum'])
         self.assertNoFormErrors(form, 'datum')
         for data in ({'datum': [None] * 3}, {'datum': [''] * 3}):
             with self.subTest():
