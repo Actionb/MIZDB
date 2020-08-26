@@ -356,7 +356,7 @@ class TestMIZDjangoOptions(MyTestCase):
     def test_add_related_factories(self):
         # Assert that the created related factories are following the relation correctly.
         fac = modelfactory_factory(_models.Buch)
-        self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.schriftenreihe)
+        self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.Schriftenreihe)
         self.assertEqual(fac.buchband.factory._meta.model, _models.Buch)
         self.assertEqual(fac.verlag.factory._meta.model, _models.Verlag)
 

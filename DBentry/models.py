@@ -648,7 +648,7 @@ class Buch(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Buches')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    schriftenreihe = models.ForeignKey('schriftenreihe', models.SET_NULL, null=True, blank=True)
+    schriftenreihe = models.ForeignKey('Schriftenreihe', models.SET_NULL, null=True, blank=True)
     buchband = models.ForeignKey(
         'self', models.PROTECT, null=True, blank=True, limit_choices_to={'is_buchband': True},
         related_name='buch_set', help_text='Der Sammelband, der diesen Aufsatz enthält.',
@@ -812,7 +812,7 @@ class Bildreihe(BaseModel):
         verbose_name_plural = 'Bildreihen'
 
 
-class schriftenreihe(BaseModel):
+class Schriftenreihe(BaseModel):
     name = models.CharField(max_length=200)
 
     create_field = 'name'

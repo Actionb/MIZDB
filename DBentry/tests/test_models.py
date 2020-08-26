@@ -677,7 +677,7 @@ class TestModelBuch(DataTestCase):
 
 class TestModelSchriftenreihe(DataTestCase):
 
-    model = _models.schriftenreihe
+    model = _models.Schriftenreihe
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['name'])
