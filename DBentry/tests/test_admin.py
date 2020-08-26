@@ -1269,7 +1269,7 @@ class TestKalendarAdmin(AdminTestMethodsMixin, AdminTestCase):
 @skip("Unfinished model/ModelAdmin")
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
-    model = _models.memorabilien
+    model = _models.Memorabilien
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',

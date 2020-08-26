@@ -1068,7 +1068,7 @@ class TestModelMagazin(DataTestCase):
 
 class TestModelMemorabilien(DataTestCase):
 
-    model = _models.memorabilien
+    model = _models.Memorabilien
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])

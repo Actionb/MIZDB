@@ -573,7 +573,7 @@ class MagazinAdmin(MIZModelAdmin):
         return exclude
 
 
-@admin.register(_models.memorabilien, site=miz_site)
+@admin.register(_models.Memorabilien, site=miz_site)
 class MemoAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]

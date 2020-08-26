@@ -853,7 +853,7 @@ class Dokument(BaseModel):
         ]
 
 
-class memorabilien(BaseModel):
+class Memorabilien(BaseModel):
     titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Memorabiliums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -1129,7 +1129,7 @@ class bestand(BaseModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.CASCADE, blank=True, null=True)
-    memorabilien = models.ForeignKey('memorabilien', models.CASCADE, blank=True, null=True)
+    memorabilien = models.ForeignKey('Memorabilien', models.CASCADE, blank=True, null=True)
     technik = models.ForeignKey('technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('video', models.CASCADE, blank=True, null=True)
 

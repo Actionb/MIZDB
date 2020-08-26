@@ -408,7 +408,7 @@ class m2m_datei_quelle(BaseM2MModel):
     bildmaterial = models.ForeignKey('Bildmaterial', models.SET_NULL, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.SET_NULL, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.SET_NULL, blank=True, null=True)
-    memorabilien = models.ForeignKey('memorabilien', models.SET_NULL, blank=True, null=True)
+    memorabilien = models.ForeignKey('Memorabilien', models.SET_NULL, blank=True, null=True)
     video = models.ForeignKey('video', models.SET_NULL, blank=True, null=True)
     class Meta:
         db_table = 'DBentry_datei_quelle'
