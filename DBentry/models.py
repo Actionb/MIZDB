@@ -734,7 +734,7 @@ class Audio(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    plattenfirma = models.ManyToManyField('plattenfirma', through=_m2m.m2m_audio_plattenfirma)
+    plattenfirma = models.ManyToManyField('Plattenfirma', through=_m2m.m2m_audio_plattenfirma)
     band = models.ManyToManyField('Band', through=_m2m.m2m_audio_band)
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_audio_genre)
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_audio_musiker)
@@ -1291,7 +1291,7 @@ class FormatTyp(BaseModel):
         verbose_name_plural = 'Format-Typen'
 
 
-class plattenfirma(BaseModel):
+class Plattenfirma(BaseModel):
     name = models.CharField(max_length=200)
 
     name_field = create_field = 'name'

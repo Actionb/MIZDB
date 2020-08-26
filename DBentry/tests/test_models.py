@@ -1216,7 +1216,7 @@ class TestModelPerson(DataTestCase):
 
 class TestModelPlattenfirma(DataTestCase):
 
-    model = _models.plattenfirma
+    model = _models.Plattenfirma
 
     def test_str(self):
         obj = self.model(name='Testfirma')

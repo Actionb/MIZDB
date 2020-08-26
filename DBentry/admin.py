@@ -70,7 +70,7 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Ort
     class PlattenInLine(BaseTabularInline):
         model = _models.Audio.plattenfirma.through
-        verbose_model = _models.plattenfirma
+        verbose_model = _models.Plattenfirma
     class AusgabeInLine(BaseAusgabeInline):
         model = _models.Ausgabe.audio.through
     class DateiInLine(BaseTabularInline):
@@ -979,7 +979,7 @@ class KalendarAdmin(BaseBrochureAdmin):
 
 
 @admin.register(
-    _models.Monat, _models.Lagerort, _models.Geber, _models.plattenfirma,
+    _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
     _models.Provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
     _models.FormatTyp, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
     site=miz_site

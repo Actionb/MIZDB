@@ -84,7 +84,7 @@ class m2m_audio_person(BaseM2MModel):
 
 class m2m_audio_plattenfirma(BaseM2MModel):
     audio = models.ForeignKey('Audio', models.CASCADE)
-    plattenfirma = models.ForeignKey('plattenfirma', models.CASCADE)
+    plattenfirma = models.ForeignKey('Plattenfirma', models.CASCADE)
 
     name_field = 'plattenfirma'
 
