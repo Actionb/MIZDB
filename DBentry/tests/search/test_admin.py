@@ -13,7 +13,7 @@ from DBentry.tests.base import AdminTestCase
 
 class TestAdminMixin(AdminTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     model_admin_class = _admin.BildmaterialAdmin
 
     @mock.patch('DBentry.search.admin.searchform_factory')
@@ -253,7 +253,7 @@ class TestAdminMixin(AdminTestCase):
 
 class TestSearchFormChangelist(AdminTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     model_admin_class = _admin.BildmaterialAdmin
 
     search_form_kwargs = {
@@ -272,15 +272,15 @@ class TestSearchFormChangelist(AdminTestCase):
         cls.reihe = make(_models.Bildreihe)
         cls.test_data = [
             make(
-                _models.bildmaterial, titel='Object1', datum='2019-05-19',
+                _models.Bildmaterial, titel='Object1', datum='2019-05-19',
                 genre=[cls.genre1, cls.genre2]
             ),
             make(
-                _models.bildmaterial, titel='Object2',  datum='2019-05-20',
+                _models.Bildmaterial, titel='Object2',  datum='2019-05-20',
                 genre=[cls.genre1]
             ),
             make(
-                _models.bildmaterial, titel='Object3',  datum='2019-05-21',
+                _models.Bildmaterial, titel='Object3',  datum='2019-05-21',
                 reihe=cls.reihe,
             ),
         ]

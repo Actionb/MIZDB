@@ -1348,7 +1348,7 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.BildmaterialAdmin
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     test_data_count = 1
 
     fields_expected = [

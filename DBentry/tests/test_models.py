@@ -596,7 +596,7 @@ class TestModelBestand(DataTestCase):
 
 class TestModelBildmaterial(DataTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
 
     def test_str(self):
         obj = make(self.model, titel='Testbild')

@@ -91,14 +91,14 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         )
 
         request = self.get_request(user=self.staff_user)
-        model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
+        model_admin = BildmaterialAdmin(_models.Bildmaterial, miz_site)
         self.assertFalse(
             utils.has_admin_permission(request, model_admin),
             msg="Should return False for non-superusers on a superuser only model admin."
         )
 
         request = self.get_request(user=self.super_user)
-        model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
+        model_admin = BildmaterialAdmin(_models.Bildmaterial, miz_site)
         self.assertTrue(
             utils.has_admin_permission(request, model_admin),
             msg="Should return True for superuser on a superuser-only model admin."

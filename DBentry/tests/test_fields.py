@@ -634,7 +634,7 @@ class TestPartialDateField(MyTestCase):
 @tag("partial_date")
 class TestPartialDateFieldQueries(DataTestCase):
     # Test various queries using PartialDateField.
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
 
     def test_constructor_partial_date(self):
         # Assert that a model instance can be created with a PartialDate.
@@ -779,7 +779,7 @@ class TestPartialDateFormField(MyTestCase):
                 self.assertTrue(form(data=self.prepare_form_data(data)).errors, msg=data)
 
     def test_as_modelform_not_required(self):
-        form = forms.modelform_factory(model=_models.bildmaterial, fields=['datum'])
+        form = forms.modelform_factory(model=_models.Bildmaterial, fields=['datum'])
         self.assertNoFormErrors(form, 'datum')
         # Test 'empty'
         for data in ({'datum': [None] * 3}, {'datum': [''] * 3}):

@@ -761,7 +761,7 @@ class Audio(BaseModel):
         return str(self.titel)
 
 
-class bildmaterial(BaseModel):
+class Bildmaterial(BaseModel):
     titel = models.CharField(max_length=200)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
@@ -1125,7 +1125,7 @@ class bestand(BaseModel):
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
-    bildmaterial = models.ForeignKey('bildmaterial', models.CASCADE, blank=True, null=True)
+    bildmaterial = models.ForeignKey('Bildmaterial', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
     dokument = models.ForeignKey('dokument', models.CASCADE, blank=True, null=True)

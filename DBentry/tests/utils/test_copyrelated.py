@@ -5,7 +5,7 @@ from DBentry.tests.base import DataTestCase
 
 class TestCopyRelated(DataTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     test_data_count = 1
 
     @classmethod

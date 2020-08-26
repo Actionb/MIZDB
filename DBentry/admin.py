@@ -335,29 +335,29 @@ class BandAdmin(MIZModelAdmin):
     orte_string.short_description = 'Orte'
 
 
-@admin.register(_models.bildmaterial, site=miz_site)
+@admin.register(_models.Bildmaterial, site=miz_site)
 class BildmaterialAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.bildmaterial.genre.through
+        model = _models.Bildmaterial.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.bildmaterial.schlagwort.through
+        model = _models.Bildmaterial.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.bildmaterial.person.through
+        model = _models.Bildmaterial.person.through
         verbose_model = _models.Person
     class MusikerInLine(BaseTabularInline):
-        model = _models.bildmaterial.musiker.through
+        model = _models.Bildmaterial.musiker.through
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
-        model = _models.bildmaterial.band.through
+        model = _models.Bildmaterial.band.through
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
-        model = _models.bildmaterial.ort.through
+        model = _models.Bildmaterial.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
-        model = _models.bildmaterial.spielort.through
+        model = _models.Bildmaterial.spielort.through
         verbose_model = _models.spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.bildmaterial.veranstaltung.through
+        model = _models.Bildmaterial.veranstaltung.through
         verbose_model = _models.veranstaltung
 
     collapse_all = True
