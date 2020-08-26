@@ -90,9 +90,9 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
-        cls.zraum = make(_models.lagerort, ort='Bestand LO')
-        cls.dublette = make(_models.lagerort, ort='Dubletten LO')
-        cls.audio_lo = make(_models.lagerort)
+        cls.zraum = make(_models.Lagerort, ort='Bestand LO')
+        cls.dublette = make(_models.Lagerort, ort='Dubletten LO')
+        cls.audio_lo = make(_models.Lagerort)
         cls.prov = make(_models.Provenienz)
         cls.updated = make(
             cls.model,

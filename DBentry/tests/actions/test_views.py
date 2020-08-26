@@ -371,8 +371,8 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
 
     @classmethod
     def setUpTestData(cls):
-        cls.bestand_lagerort = make(_models.lagerort, pk=ZRAUM_ID, ort='Bestand')
-        cls.dubletten_lagerort = make(_models.lagerort, pk=DUPLETTEN_ID, ort='Dublette')
+        cls.bestand_lagerort = make(_models.Lagerort, pk=ZRAUM_ID, ort='Bestand')
+        cls.dubletten_lagerort = make(_models.Lagerort, pk=DUPLETTEN_ID, ort='Dublette')
         mag = make(_models.Magazin, magazin_name='Testmagazin')
 
         cls.obj1 = make(cls.model, magazin=mag)

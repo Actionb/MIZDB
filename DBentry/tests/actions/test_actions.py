@@ -71,7 +71,7 @@ class TestAdminActionAusgabe(AdminTestCase):
 
     def test_add_bestand(self):
         from DBentry.constants import ZRAUM_ID,  DUPLETTEN_ID
-        _models.lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand')
-        _models.lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dublette')
+        _models.Lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand')
+        _models.Lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dublette')
         response = self.call_action('add_bestand', self.queryset)
         self.assertEqual(response.status_code, 200)

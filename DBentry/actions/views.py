@@ -117,10 +117,10 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
         if self.model == _models.Ausgabe:
             try:
                 return {
-                    'bestand': _models.lagerort.objects.get(pk=ZRAUM_ID),
-                    'dublette': _models.lagerort.objects.get(pk=DUPLETTEN_ID)
+                    'bestand': _models.Lagerort.objects.get(pk=ZRAUM_ID),
+                    'dublette': _models.Lagerort.objects.get(pk=DUPLETTEN_ID)
                 }
-            except _models.lagerort.DoesNotExist:
+            except _models.Lagerort.DoesNotExist:
                 pass
         return super().get_initial()
 

@@ -36,14 +36,14 @@ class BulkAddBestandForm(MIZAdminForm):
     bestand = forms.ModelChoiceField(
         required=True,
         label="Lagerort (Bestand)",
-        queryset=_models.lagerort.objects.all(),
-        widget=make_widget(model=_models.lagerort, wrap=True)
+        queryset=_models.Lagerort.objects.all(),
+        widget=make_widget(model=_models.Lagerort, wrap=True)
     )
     dublette = forms.ModelChoiceField(
         required=True,
         label="Lagerort (Dublette)",
-        queryset=_models.lagerort.objects.all(),
-        widget=make_widget(model=_models.lagerort, wrap=True)
+        queryset=_models.Lagerort.objects.all(),
+        widget=make_widget(model=_models.Lagerort, wrap=True)
     )
 
 

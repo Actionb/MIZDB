@@ -972,7 +972,7 @@ class TestModelKatalog(DataTestCase):
 @tag("cn")
 class TestModelLagerort(DataTestCase):
 
-    model = _models.lagerort
+    model = _models.Lagerort
 
     @translation_override(language=None)
     def test_get_name(self):

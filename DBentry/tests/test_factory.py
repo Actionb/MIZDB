@@ -567,7 +567,7 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         self.assertEqual(a.magazin.magazin_name, 'Testmagazin')
 
     def test_complex_creation(self):
-        lagerort_factory = modelfactory_factory(_models.lagerort)
+        lagerort_factory = modelfactory_factory(_models.Lagerort)
         lagerort_1 = lagerort_factory(ort='TestLagerOrt')
         lagerort_2 = lagerort_factory(ort='TestLagerOrt2')
         prov = modelfactory_factory(_models.Provenienz)(geber__name='TestCase')

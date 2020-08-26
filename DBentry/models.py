@@ -1059,7 +1059,7 @@ class Geber(BaseModel):
         verbose_name_plural = 'Geber'
 
 
-class lagerort(ComputedNameModel):
+class Lagerort(ComputedNameModel):
     ort = models.CharField(max_length=200)
     raum = models.CharField(max_length=200, blank=True)
     regal = models.CharField(max_length=200, blank=True)
@@ -1120,7 +1120,7 @@ class bestand(BaseModel):
     bestand_art = models.CharField(
         'Bestand-Art', max_length=20, choices=BESTAND_CHOICES, blank=False, default='ausgabe')
 
-    lagerort = models.ForeignKey('lagerort', models.PROTECT)
+    lagerort = models.ForeignKey('Lagerort', models.PROTECT)
     provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)

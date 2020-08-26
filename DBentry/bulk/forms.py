@@ -161,20 +161,20 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
     audio = forms.BooleanField(required=False, label='Musik Beilage:')
     audio_lagerort = forms.ModelChoiceField(
         required=False,
-        queryset=_models.lagerort.objects.all(),
+        queryset=_models.Lagerort.objects.all(),
         widget=make_widget(model_name='lagerort', wrap=True),
         label='Lagerort f. Musik Beilage'
     )
     ausgabe_lagerort = forms.ModelChoiceField(
         required=True,
-        queryset=_models.lagerort.objects.all(),
+        queryset=_models.Lagerort.objects.all(),
         widget=make_widget(model_name='lagerort', wrap=True),
         initial=ZRAUM_ID,
         label='Lagerort f. Ausgaben'
     )
     dublette = forms.ModelChoiceField(
         required=True,
-        queryset=_models.lagerort.objects.all(),
+        queryset=_models.Lagerort.objects.all(),
         widget=make_widget(model_name='lagerort', wrap=True),
         initial=DUPLETTEN_ID,
         label='Lagerort f. Dubletten'
