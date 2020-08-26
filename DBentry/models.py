@@ -890,9 +890,9 @@ class Spielort(BaseModel):
 
     name_field = 'name'
     primary_search_fields = ['name']
-    search_fields = ['name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = ['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'spielort_alias__alias': 'Alias',
+        'spielortalias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -901,7 +901,7 @@ class Spielort(BaseModel):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
-class spielort_alias(BaseAliasModel):
+class SpielortAlias(BaseAliasModel):
     parent = models.ForeignKey('Spielort', models.CASCADE)  # TODO: add a related_name
 
 

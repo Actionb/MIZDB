@@ -1301,14 +1301,14 @@ class TestModelSpielort(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen'])
+            sorted(['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
     def test_search_fields_suffixes(self):
         self.assertEqual(
             self.model.search_fields_suffixes,
             {
-                'spielort_alias__alias': 'Alias',
+                'spielortalias__alias': 'Alias',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1317,7 +1317,7 @@ class TestModelSpielort(DataTestCase):
 
 class TestModelSpielortAlias(DataTestCase):
 
-    model = _models.spielort_alias
+    model = _models.SpielortAlias
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.

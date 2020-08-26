@@ -669,7 +669,7 @@ class SchlagwortAdmin(MIZModelAdmin):
 @admin.register(_models.Spielort, site=miz_site)
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
-        model = _models.spielort_alias
+        model = _models.SpielortAlias
 
     list_display = ['name', 'ort']
     inlines = [AliasInLine]

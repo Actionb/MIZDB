@@ -482,9 +482,9 @@ class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Spielort
-    alias_accessor_name = 'spielort_alias_set'
+    alias_accessor_name = 'spielortalias_set'
     raw_data = [{
-        'spielort_alias__alias': 'AliasSpielort',
+        'spielortalias__alias': 'AliasSpielort',
         'beschreibung': "If it beeps like a boop, it's probably a test.",
         'bemerkungen': 'Stuff and Things.'
     }]

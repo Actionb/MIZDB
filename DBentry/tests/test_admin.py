@@ -1086,7 +1086,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
-        'name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
