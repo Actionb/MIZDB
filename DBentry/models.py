@@ -1109,7 +1109,7 @@ class Lagerort(ComputedNameModel):
             return ort
 
 
-class bestand(BaseModel):
+class Bestand(BaseModel):
     BESTAND_CHOICES = [
         ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),
         ('buch', 'Buch'), ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
@@ -1153,7 +1153,7 @@ class bestand(BaseModel):
         for fld_name, _choice in self.BESTAND_CHOICES:
             if getattr(self, fld_name):
                 self.bestand_art = fld_name
-        super(bestand, self).save(force_insert, force_update, using, update_fields)
+        super().save(force_insert, force_update, using, update_fields)
 
 
 class datei(BaseModel):

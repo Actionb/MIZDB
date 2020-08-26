@@ -1314,7 +1314,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
-    model = _models.bestand
+    model = _models.Bestand
     fields_expected = [
         'bestand_art', 'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'

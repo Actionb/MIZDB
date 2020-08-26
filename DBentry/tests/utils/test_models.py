@@ -49,7 +49,7 @@ class TestModelUtils(MyTestCase):
         # FK from buch to verlag
         # ManyToMany auto created band <-> buch
         # ManyToMany intermediary Musiker <-> buch
-        rev_fk = _models.bestand._meta.get_field('buch').remote_field
+        rev_fk = _models.Bestand._meta.get_field('buch').remote_field
         fk = buch._meta.get_field('schriftenreihe').remote_field
         m2m_inter = buch.musiker.rel
         m2m_auto = buch.band.rel
@@ -93,7 +93,7 @@ class TestModelUtils(MyTestCase):
             required_field_names(_models.Artikel), ['schlagzeile', 'seite', 'ausgabe'])
         # _models.Format.anzahl field is required but has a default:
         self.assertEqual(required_field_names(_models.Format), ['audio', 'format_typ'])
-        self.assertEqual(required_field_names(_models.bestand), ['lagerort'])
+        self.assertEqual(required_field_names(_models.Bestand), ['lagerort'])
 
     def test_get_updateable_fields(self):
         obj = make(_models.Artikel)

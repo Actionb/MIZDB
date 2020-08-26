@@ -144,7 +144,7 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
 
     def _get_bestand_field(self, model):
         """Return the ForeignKey field from `bestand` to model `model`."""
-        for field in _models.bestand._meta.get_fields():
+        for field in _models.Bestand._meta.get_fields():
             if field.is_relation and field.related_model == model:
                 return field
 
@@ -161,12 +161,12 @@ class BulkAddBestand(ActionConfirmationView, LoggingMixin):
         for instance in self.queryset:
             filter_kwargs = {fkey.name: instance, 'lagerort': bestand_lagerort}
             instance_data = {fkey.name: instance}
-            if not _models.bestand.objects.filter(**filter_kwargs).exists():
+            if not _models.Bestand.objects.filter(**filter_kwargs).exists():
                 instance_data['lagerort'] = bestand_lagerort
-                bestand_list.append(_models.bestand(**instance_data))
+                bestand_list.append(_models.Bestand(**instance_data))
             else:
                 instance_data['lagerort'] = dubletten_lagerort
-                dubletten_list.append(_models.bestand(**instance_data))
+                dubletten_list.append(_models.Bestand(**instance_data))
 
         with transaction.atomic():
             for lagerort_instance, bestand_instances in (
@@ -647,7 +647,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     )
                 )
                 self.log_update(
-                    _models.bestand.objects.filter(brochure_id=new_brochure.pk),
+                    _models.Bestand.objects.filter(brochure_id=new_brochure.pk),
                     ['ausgabe_id', 'brochure_id']
                 )
                 self.log_deletion(ausgabe_instance)

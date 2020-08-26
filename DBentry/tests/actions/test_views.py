@@ -389,7 +389,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects(self):
         # Assert that links to the instance's bestand objects are included.
         def get_bestand_links(obj):
-            view_name = "admin:DBentry_%s_change" % (_models.bestand._meta.model_name)
+            view_name = "admin:DBentry_%s_change" % (_models.Bestand._meta.model_name)
             link_template = '<a href="{url}" target="_blank">{lagerort__ort}</a>'
             template = 'Bestand: {link}'
             for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):

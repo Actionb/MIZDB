@@ -20,13 +20,13 @@ from DBentry.utils import concat_limit, copy_related_set
 
 
 class BestandInLine(BaseTabularInline):
-    model = _models.bestand
+    model = _models.Bestand
     # This allows inlines.js to copy the last selected bestand to a new row.
     classes = ['copylast']
     fields = ['signatur', 'lagerort', 'provenienz']
     readonly_fields = ['signatur']
-    verbose_name = _models.bestand._meta.verbose_name
-    verbose_name_plural = _models.bestand._meta.verbose_name_plural
+    verbose_name = _models.Bestand._meta.verbose_name
+    verbose_name_plural = _models.Bestand._meta.verbose_name_plural
 
 
 @admin.register(_models.Audio, site=miz_site)
@@ -784,7 +784,7 @@ class OrtAdmin(MIZModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-@admin.register(_models.bestand, site=miz_site)
+@admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
 #    readonly_fields = [
 #        'audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch',
