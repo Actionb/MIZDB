@@ -263,7 +263,7 @@ class AdminTestMethodsMixin(object):
 class TestMIZModelAdmin(AdminTestCase):
 
     model_admin_class = _admin.DateiAdmin
-    model = _models.datei
+    model = _models.Datei
     test_data_count = 1
 
     def test_has_merge_permission(self):
@@ -284,7 +284,7 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_has_alter_bestand_permission(self):
-        # Note: _models.datei._meta doesn't set 'alter_bestand_datei' permission
+        # Note: _models.Datei._meta doesn't set 'alter_bestand_datei' permission
         model_admin = _admin.VideoAdmin(_models.Video, self.admin_site)
         codename = get_permission_codename('alter_bestand', _models.Video._meta)
         self.staff_user.user_permissions.add(
@@ -1323,7 +1323,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
-    model = _models.datei
+    model = _models.Datei
     fields_expected = [
         'titel', 'media_typ', 'datei_pfad', 'beschreibung', 'bemerkungen', 'provenienz']
     exclude_expected = [

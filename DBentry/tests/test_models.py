@@ -710,7 +710,7 @@ class TestModelBundesland(DataTestCase):
 
 class TestModelDatei(DataTestCase):
 
-    model = _models.datei
+    model = _models.Datei
 
     def test_str(self):
         obj = self.model(titel='Testdatei')

@@ -76,7 +76,7 @@ class AudioAdmin(MIZModelAdmin):
     class DateiInLine(BaseTabularInline):
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
-        verbose_model = _models.datei
+        verbose_model = _models.Datei
 
     collapse_all = True
     form = AudioForm
@@ -799,17 +799,17 @@ class BestandAdmin(MIZModelAdmin):
         return []
 
 
-@admin.register(_models.datei, site=miz_site)
+@admin.register(_models.Datei, site=miz_site)
 class DateiAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.datei.genre.through
+        model = _models.Datei.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.datei.schlagwort.through
+        model = _models.Datei.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.datei.person.through
+        model = _models.Datei.person.through
         verbose_model = _models.Person
     class MusikerInLine(BaseStackedInline):
-        model = _models.datei.musiker.through
+        model = _models.Datei.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
         verbose_model = _models.Musiker
@@ -818,16 +818,16 @@ class DateiAdmin(MIZModelAdmin):
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
     class BandInLine(BaseTabularInline):
-        model = _models.datei.band.through
+        model = _models.Datei.band.through
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
-        model = _models.datei.ort.through
+        model = _models.Datei.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
-        model = _models.datei.spielort.through
+        model = _models.Datei.spielort.through
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.datei.veranstaltung.through
+        model = _models.Datei.veranstaltung.through
         verbose_model = _models.Veranstaltung
     class QuelleInLine(BaseStackedInline):
         model = _m2m.m2m_datei_quelle

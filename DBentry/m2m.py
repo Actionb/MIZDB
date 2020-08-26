@@ -383,7 +383,7 @@ class m2m_video_musiker(BaseM2MModel):
 # ================================= #
 
 class m2m_datei_musiker(BaseM2MModel):
-    datei = models.ForeignKey('datei', models.CASCADE)
+    datei = models.ForeignKey('Datei', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
         'instrument', verbose_name='Instrumente', blank=True
@@ -403,7 +403,7 @@ class m2m_datei_musiker(BaseM2MModel):
 class m2m_datei_quelle(BaseM2MModel):
     # TODO: rework this, you should only ever be able to select one relation to
     # a non-datei object (OneToOne?)
-    datei = models.ForeignKey('datei', models.CASCADE)
+    datei = models.ForeignKey('Datei', models.CASCADE)
     audio = models.ForeignKey('Audio', models.SET_NULL, blank=True, null=True)
     bildmaterial = models.ForeignKey('Bildmaterial', models.SET_NULL, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.SET_NULL, blank=True, null=True)

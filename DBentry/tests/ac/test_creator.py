@@ -39,7 +39,7 @@ class TestCreator(DataTestCase):
         self.assertEqual(created['instance'].nachname, 'Testman')
 
     def test_create_creator_func_is_none(self):
-        creator = Creator(model=_models.datei)
+        creator = Creator(model=_models.Datei)
         created = creator.create('text', preview=True)
         self.assertFalse(
             created,

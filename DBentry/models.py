@@ -1156,7 +1156,7 @@ class Bestand(BaseModel):
         super().save(force_insert, force_update, using, update_fields)
 
 
-class datei(BaseModel):
+class Datei(BaseModel):
     MEDIA_AUDIO = 'audio'
     MEDIA_BILD = 'bild'
     MEDIA_SONSTIGE = 'sonstige'
