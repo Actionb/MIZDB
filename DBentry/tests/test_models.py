@@ -735,7 +735,7 @@ class TestModelDatei(DataTestCase):
 
 class TestModelDokument(DataTestCase):
 
-    model = _models.dokument
+    model = _models.Dokument
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])

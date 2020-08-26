@@ -500,7 +500,7 @@ class BuchAdmin(MIZModelAdmin):
     genre_string.short_description = 'Genres'
 
 
-@admin.register(_models.dokument, site=miz_site)
+@admin.register(_models.Dokument, site=miz_site)
 class DokumentAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]

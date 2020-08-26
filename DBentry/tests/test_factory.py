@@ -263,7 +263,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.technik.factory._meta.model, _models.technik)
         self.assertEqual(fac.bildmaterial.factory._meta.model, _models.Bildmaterial)
         self.assertEqual(fac.video.factory._meta.model, _models.video)
-        self.assertEqual(fac.dokument.factory._meta.model, _models.dokument)
+        self.assertEqual(fac.dokument.factory._meta.model, _models.Dokument)
         self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
         self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
         self.assertEqual(fac.buch.factory._meta.model, _models.Buch)

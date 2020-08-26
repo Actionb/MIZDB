@@ -1281,7 +1281,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
 @skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DokumentAdmin
-    model = _models.dokument
+    model = _models.Dokument
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
