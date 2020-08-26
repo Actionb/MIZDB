@@ -32,8 +32,8 @@ class TestRuntimeFactoryMixin(MyTestCase):
     def test_new_factory(self):
         # Assert that the factory property can create a new factory if needed.
         fac = self.dummy_factory(
-            self.local_factory_module + '.DoesNotExit', related_model=_models.technik)
-        self.assertEqual(fac.factory._meta.model, _models.technik)
+            self.local_factory_module + '.DoesNotExit', related_model=_models.Technik)
+        self.assertEqual(fac.factory._meta.model, _models.Technik)
         from DBentry import factory
         self.assertIn('technik', factory._cache)
 
@@ -260,7 +260,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.artikel.factory._meta.model, _models.Artikel)
         self.assertEqual(fac.memorabilien.factory._meta.model, _models.Memorabilien)
         self.assertEqual(fac.datei.factory._meta.model, _models.datei)
-        self.assertEqual(fac.technik.factory._meta.model, _models.technik)
+        self.assertEqual(fac.technik.factory._meta.model, _models.Technik)
         self.assertEqual(fac.bildmaterial.factory._meta.model, _models.Bildmaterial)
         self.assertEqual(fac.video.factory._meta.model, _models.video)
         self.assertEqual(fac.dokument.factory._meta.model, _models.Dokument)

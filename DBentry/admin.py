@@ -675,7 +675,7 @@ class SpielortAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
 
 
-@admin.register(_models.technik, site=miz_site)
+@admin.register(_models.Technik, site=miz_site)
 class TechnikAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]

@@ -1293,7 +1293,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
 @skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.TechnikAdmin
-    model = _models.technik
+    model = _models.Technik
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',

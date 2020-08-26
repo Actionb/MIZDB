@@ -1326,7 +1326,7 @@ class TestModelSpielortAlias(DataTestCase):
 
 class TestModelTechnik(DataTestCase):
 
-    model = _models.technik
+    model = _models.Technik
 
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])

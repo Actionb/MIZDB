@@ -905,7 +905,7 @@ class SpielortAlias(BaseAliasModel):
     parent = models.ForeignKey('Spielort', models.CASCADE)  # TODO: add a related_name
 
 
-class technik(BaseModel):
+class Technik(BaseModel):
     titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Technik')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -1130,7 +1130,7 @@ class bestand(BaseModel):
     buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.CASCADE, blank=True, null=True)
     memorabilien = models.ForeignKey('Memorabilien', models.CASCADE, blank=True, null=True)
-    technik = models.ForeignKey('technik', models.CASCADE, blank=True, null=True)
+    technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('video', models.CASCADE, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
