@@ -495,6 +495,128 @@ class TestMIZModelAdmin(AdminTestCase):
                 msg_template.format(field_name='band_set', **template_kwargs)
             )
 
+    def test_check_fieldset_fields(self):
+        # Assert that _check_fieldset_fields finds invalid field declarations.
+        with patch.object(self.model_admin, 'fieldsets'):
+            # Should ignore an empty fieldsets attribute or fieldsets without a
+            # 'fields' item:
+            self.model_admin.fieldsets = None
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            self.model_admin.fieldsets = [('name', {'nofields': 'item'})]
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            # 'titel' is a valid field:
+            self.model_admin.fieldsets = [(None, {'fields': ['titel']})]
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            # Now use an invalid field:
+            msg_template = "fieldset %s contains unknown field: %s"
+            self.model_admin.fieldsets = [(None, {'fields': ['titel', 'thisisnofield']})]
+            errors = self.model_admin._check_fieldset_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(errors[0].msg, msg_template % ('None', 'thisisnofield'))
+            # Also check in the case when a field is actually a tuple
+            # (which would be a 'forward pair' for dal):
+            self.model_admin.fieldsets = [(None, {'fields': [('titel', 'media_typ')]})]
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            self.model_admin.fieldsets = [('Beep', {'fields': [('titel', 'thisisnofield')]})]
+            errors = self.model_admin._check_fieldset_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(errors[0].msg, msg_template % ('Beep', ('titel', 'thisisnofield')))
+
+    def test_check_search_fields_lookups(self):
+        # Assert that _check_search_fields_lookups finds invalid search fields
+        # and/or lookups correctly.
+        with patch.object(self.model_admin, 'get_search_fields'):
+            self.model_admin.get_search_fields.return_value = ['titel__iexact']
+            self.assertFalse(self.model_admin._check_search_fields_lookups())
+            # Check for invalid field:
+            self.model_admin.get_search_fields.return_value = ['thisisnofield']
+            errors = self.model_admin._check_search_fields_lookups()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Critical)
+            self.assertEqual(
+                errors[0].msg,
+                "%s has no field named '%s'" % (self.model._meta.object_name, 'thisisnofield')
+            )
+            # Check for invalid lookups:
+            self.model_admin.get_search_fields.return_value = ['genre__genre__year']
+            errors = self.model_admin._check_search_fields_lookups()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Critical)
+            self.assertEqual(
+                errors[0].msg,
+                'Invalid lookup: %s for %s.' % ('year', 'CharField')
+            )
+
+    def test_check_search_fields_lookups_lookup_shortcuts(self):
+        # Assert that _check_search_fields_lookups handles lookup shortcuts
+        # such as '=', '^', '@' (for django's ModelAdmin.construct_search).
+        # Check each valid prefix twice: once with a valid field and once with
+        # an invalid one. If only the invalid fields fail the check, the problem
+        # can't be the prefix.
+        msg_template = "%s has no field named '%s'"
+        with patch.object(self.model_admin, 'get_search_fields'):
+            for prefix in ('=', '^', '@'):
+                for invalid, field in enumerate(('titel', 'thisisnofield')):
+                    self.model_admin.get_search_fields.return_value = [prefix + field]
+                    with self.subTest(prefix=prefix, field=field):
+                        if invalid:
+                            errors = self.model_admin._check_search_fields_lookups()
+                            self.assertTrue(errors)
+                            self.assertEqual(len(errors), 1)
+                            self.assertIsInstance(errors[0], checks.Critical)
+                            expected_msg = msg_template % (self.model._meta.object_name, field)
+                            self.assertEqual(errors[0].msg, expected_msg)
+                        else:
+                            self.assertFalse(self.model_admin._check_search_fields_lookups())
+            # Any other prefix should receive no special treatment:
+            for field in ('_thisisnofield', '&nofieldeither'):
+                with self.subTest(field=field):
+                    self.model_admin.get_search_fields.return_value = [field]
+                    errors = self.model_admin._check_search_fields_lookups()
+                    self.assertTrue(errors)
+                    self.assertEqual(len(errors), 1)
+                    self.assertIsInstance(errors[0], checks.Critical)
+                    # The 'prefix' should be included in the error message.
+                    expected_msg = msg_template % (self.model._meta.object_name, field)
+                    self.assertEqual(errors[0].msg, expected_msg)
+
+    @patch("DBentry.base.admin.resolve_list_display_item")
+    def test_check_list_item_annotations(self, mocked_resolve):
+        # Assert that _check_list_item_annotations checks that annotations
+        # declared on a list_display item are Aggregations.
+        with patch.object(self.model_admin, 'list_display'):
+            # First: some special conditions where _check_list_item_annotations
+            # just continues looping through the list_display items.
+            # resolve_list_display_item could not resolve the item and
+            # returned None:
+            self.model_admin.list_display = ['thisisnofield']
+            mocked_resolve.return_value = None
+            self.assertFalse(self.model_admin._check_list_item_annotations())
+            # The func returned by resolve_list_display_item does not have
+            # a 'admin_order_field' attribute:
+            some_func = lambda x: x
+            mocked_resolve.return_value = some_func
+            self.assertFalse(self.model_admin._check_list_item_annotations())
+            # The func returned by resolve_list_display_item does not have
+            # a 'annotations' attribute.
+            setattr(some_func, 'admin_order_field', 'beep')
+            self.assertFalse(self.model_admin._check_list_item_annotations())
+            # Add an invalid 'annotation' attribute to our dummy func:
+            setattr(some_func, 'annotation', 'not_an_aggregate_instance')
+            expected_msg = "%s.%s.annotation is not an aggregate: %s" % (
+                    self.model_admin_class.__name__, some_func.__name__, type(''))
+            errors = self.model_admin._check_list_item_annotations()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Critical)
+            self.assertEqual(errors[0].msg, expected_msg)
+
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
