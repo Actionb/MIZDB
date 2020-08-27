@@ -697,7 +697,7 @@ class Herausgeber(BaseModel):
         verbose_name = 'Herausgeber'
         verbose_name_plural = 'Herausgeber'
 
-# TODO: instrument contains a lot of nonsense instruments + kuerzel
+
 class Instrument(BaseModel):
     instrument = models.CharField(unique=True, max_length=200)
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
