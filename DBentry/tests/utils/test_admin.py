@@ -103,3 +103,23 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             utils.has_admin_permission(request, model_admin),
             msg="Should return True for superuser on a superuser-only model admin."
         )
+
+    def test_get_changelist_url(self):
+        kwargs = {'model': self.model, 'user': self.super_user}
+        for obj_list in (None, [self.obj1], self.test_data):
+            kwargs['obj_list'] = obj_list
+            expected = '/admin/DBentry/band/'
+            if obj_list:
+                expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
+            with self.subTest(obj_list=obj_list):
+                self.assertEqual(utils.get_changelist_url(**kwargs), expected)
+
+    def test_get_changelist_url_no_perms(self):
+        # Assert that an empty string is returned if the user has no permission
+        # to access the requested changelist.
+        self.assertEqual(utils.get_changelist_url(self.model, self.noperms_user), "")
+
+    def test_get_changelist_url_no_reverse(self):
+        # Assert that an empty string is returned if the requested changelist
+        # cannot be resolved.
+        self.assertEqual(utils.get_changelist_url(_models.BaseBrochure, self.super_user), "")

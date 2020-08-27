@@ -101,7 +101,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # Use follow = False to get the redirect response.
         response = self.client.post(self.path, data=data, follow=False)
         self.assertEqual(response.status_code, 302)
-        self.assertIn("admin/DBentry/ausgabe/?id=", response.url)
+        self.assertIn("admin/DBentry/ausgabe/?id__in=", response.url)
 
     def test_post_save_and_addanother_preview(self):
         # Assert that after succesful 'add_another' post, the preview with

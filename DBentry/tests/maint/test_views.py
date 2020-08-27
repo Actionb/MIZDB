@@ -197,7 +197,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             msg="Changelist url should be of format <changelist>?id__in=[ids]")
         cl_url, query_params = attrs['href'].split('?')
         self.assertEqual(reverse('admin:DBentry_band_changelist'), cl_url)
-        self.assertEqual("id=" + ",".join(str(o.pk) for o in self.test_data), query_params)
+        self.assertEqual("id__in=" + ",".join(str(o.pk) for o in self.test_data), query_params)
         self.assertIn("target", attrs)
         self.assertEqual(attrs['target'], '_blank')
         self.assertIn("class", attrs)
@@ -321,6 +321,6 @@ class TestUnusedObjectsView(ViewTestCase):
         context = mocked_render.call_args[0][0]
         self.assertIn('changelist_link', context.keys())
         link = context['changelist_link']
-        cl_url = reverse('admin:DBentry_genre_changelist') + "?id=" + str(self.unused.pk)
+        cl_url = reverse('admin:DBentry_genre_changelist') + "?id__in=" + str(self.unused.pk)
         # Too lazy to unpack the html element with regex to check its other attributes.
         self.assertIn(cl_url, link)
