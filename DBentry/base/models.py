@@ -197,20 +197,25 @@ class ComputedNameModel(BaseModel):
         fields.
         """
         if not cls.name_composing_fields:
-            return [checks.Warning(
-                "You must specify the fields that make up the name by "
-                "listing them in name_composing_fields."
-            )]
+            return [
+                checks.Warning(
+                    "You must specify the fields that make up the name by "
+                    "listing them in name_composing_fields.",
+                    obj=cls.__name__
+                )
+            ]
         errors = []
         for field in cls.name_composing_fields:
             try:
                 admin.utils.get_fields_from_path(cls, field)
             except exceptions.FieldDoesNotExist:
-                msg = (
-                    "name_composing_fields attribute contains unknown "
-                    "field: %s" % field
+                errors.append(
+                    checks.Error(
+                        "name_composing_fields attribute contains unknown "
+                        "field: '%s'" % field,
+                        obj=cls
+                    )
                 )
-                errors.append(checks.Error(msg, obj=cls.__name__))
         return errors
 
     def save(self, update=True, *args, **kwargs):

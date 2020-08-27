@@ -460,7 +460,7 @@ class TestMIZModelAdmin(AdminTestCase):
             self.model_admin.list_prefetch_related = 'Not a list!'
             checked = self.model_admin._check_list_prefetch_related()
             self.assertEqual(len(checked), 1)
-            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertIsInstance(checked[0], checks.Error)
             self.assertEqual(
                 checked[0].msg,
                 "{}.list_prefetch_related attribute must be a list or a tuple.".format(
@@ -478,18 +478,18 @@ class TestMIZModelAdmin(AdminTestCase):
             self.assertEqual(len(checked), 2)
             msg_template = (
                 "Invalid item in {model_admin}.list_prefetch_related: "
-                "cannot find '{field_name}' on {model_name} object"
+                "cannot find '{field_name}' on model {object_name}"
             )
             template_kwargs = {
                 'model_admin': self.model_admin_class.__name__,
-                'model_name': self.model._meta.model_name
+                'object_name': self.model._meta.object_name
             }
-            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertIsInstance(checked[0], checks.Error)
             self.assertEqual(
                 checked[0].msg,
                 msg_template.format(field_name='musiker_set', **template_kwargs)
             )
-            self.assertIsInstance(checked[1], checks.Critical)
+            self.assertIsInstance(checked[1], checks.Error)
             self.assertEqual(
                 checked[1].msg,
                 msg_template.format(field_name='band_set', **template_kwargs)
@@ -508,7 +508,7 @@ class TestMIZModelAdmin(AdminTestCase):
             self.model_admin.fieldsets = [(None, {'fields': ['titel']})]
             self.assertFalse(self.model_admin._check_fieldset_fields())
             # Now use an invalid field:
-            msg_template = "fieldset %s contains unknown field: %s"
+            msg_template = "fieldset '%s' contains unknown field: '%s'"
             self.model_admin.fieldsets = [(None, {'fields': ['titel', 'thisisnofield']})]
             errors = self.model_admin._check_fieldset_fields()
             self.assertTrue(errors)
@@ -537,20 +537,22 @@ class TestMIZModelAdmin(AdminTestCase):
             errors = self.model_admin._check_search_fields_lookups()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Critical)
+            self.assertIsInstance(errors[0], checks.Error)
             self.assertEqual(
                 errors[0].msg,
-                "%s has no field named '%s'" % (self.model._meta.object_name, 'thisisnofield')
+                "Invalid search field '{0}': {1} has no field named '{0}'".format(
+                    'thisisnofield', self.model._meta.object_name)
             )
             # Check for invalid lookups:
             self.model_admin.get_search_fields.return_value = ['genre__genre__year']
             errors = self.model_admin._check_search_fields_lookups()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Critical)
+            self.assertIsInstance(errors[0], checks.Error)
             self.assertEqual(
                 errors[0].msg,
-                'Invalid lookup: %s for %s.' % ('year', 'CharField')
+                "Invalid search field '%s': Invalid lookup: %s for %s." % (
+                    'genre__genre__year', 'year', 'CharField')
             )
 
     def test_check_search_fields_lookups_lookup_shortcuts(self):
@@ -559,7 +561,7 @@ class TestMIZModelAdmin(AdminTestCase):
         # Check each valid prefix twice: once with a valid field and once with
         # an invalid one. If only the invalid fields fail the check, the problem
         # can't be the prefix.
-        msg_template = "%s has no field named '%s'"
+        msg_template = "Invalid search field '{0}': {1} has no field named '{0}'"
         with patch.object(self.model_admin, 'get_search_fields'):
             for prefix in ('=', '^', '@'):
                 for invalid, field in enumerate(('titel', 'thisisnofield')):
@@ -569,8 +571,8 @@ class TestMIZModelAdmin(AdminTestCase):
                             errors = self.model_admin._check_search_fields_lookups()
                             self.assertTrue(errors)
                             self.assertEqual(len(errors), 1)
-                            self.assertIsInstance(errors[0], checks.Critical)
-                            expected_msg = msg_template % (self.model._meta.object_name, field)
+                            self.assertIsInstance(errors[0], checks.Error)
+                            expected_msg = msg_template.format(field, self.model._meta.object_name)
                             self.assertEqual(errors[0].msg, expected_msg)
                         else:
                             self.assertFalse(self.model_admin._check_search_fields_lookups())
@@ -581,9 +583,9 @@ class TestMIZModelAdmin(AdminTestCase):
                     errors = self.model_admin._check_search_fields_lookups()
                     self.assertTrue(errors)
                     self.assertEqual(len(errors), 1)
-                    self.assertIsInstance(errors[0], checks.Critical)
+                    self.assertIsInstance(errors[0], checks.Error)
                     # The 'prefix' should be included in the error message.
-                    expected_msg = msg_template % (self.model._meta.object_name, field)
+                    expected_msg = msg_template.format(field, self.model._meta.object_name)
                     self.assertEqual(errors[0].msg, expected_msg)
 
     @patch("DBentry.base.admin.resolve_list_display_item")
@@ -614,7 +616,7 @@ class TestMIZModelAdmin(AdminTestCase):
             errors = self.model_admin._check_list_item_annotations()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Critical)
+            self.assertIsInstance(errors[0], checks.Error)
             self.assertEqual(errors[0].msg, expected_msg)
 
 
