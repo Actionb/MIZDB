@@ -507,14 +507,31 @@ class TestMIZModelAdmin(AdminTestCase):
             # 'titel' is a valid field:
             self.model_admin.fieldsets = [(None, {'fields': ['titel']})]
             self.assertFalse(self.model_admin._check_fieldset_fields())
-            # Now use an invalid field:
-            msg_template = "fieldset '%s' contains unknown field: '%s'"
+            # Now use a field that doesn't exist:
+            msg_template = "fieldset '%s' contains invalid item: '%s'. %s"
             self.model_admin.fieldsets = [(None, {'fields': ['titel', 'thisisnofield']})]
             errors = self.model_admin._check_fieldset_fields()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(errors[0].msg, msg_template % ('None', 'thisisnofield'))
+            self.assertEqual(
+                errors[0].msg,
+                msg_template % (
+                    'None', 'thisisnofield', "Datei has no field named 'thisisnofield'"
+                )
+            )
+            # And an invalid lookup:
+            self.model_admin.fieldsets = [(None, {'fields': ['titel__beep']})]
+            errors = self.model_admin._check_fieldset_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                msg_template % (
+                    'None', 'titel__beep', "Invalid lookup: beep for CharField."
+                )
+            )
             # Also check in the case when a field is actually a tuple
             # (which would be a 'forward pair' for dal):
             self.model_admin.fieldsets = [(None, {'fields': [('titel', 'media_typ')]})]
@@ -524,7 +541,11 @@ class TestMIZModelAdmin(AdminTestCase):
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(errors[0].msg, msg_template % ('Beep', ('titel', 'thisisnofield')))
+            self.assertEqual(
+                errors[0].msg, msg_template % (
+                    'Beep', ('titel', 'thisisnofield'), "Datei has no field named 'thisisnofield'"
+                )
+            )
 
     def test_check_search_fields_lookups(self):
         # Assert that _check_search_fields_lookups finds invalid search fields

@@ -75,14 +75,14 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 try:
                     if isinstance(field, (list, tuple)):
                         for _field in field:
-                            admin.utils.get_fields_from_path(self.model, _field)
+                            get_fields_and_lookups(self.model, _field)
                     else:
-                        admin.utils.get_fields_from_path(self.model, field)
-                except exceptions.FieldDoesNotExist:
+                        get_fields_and_lookups(self.model, field)
+                except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                     errors.append(
                         checks.Error(
-                            "fieldset '%s' contains unknown field: '%s'" % (
-                                fieldset_name, field),
+                            "fieldset '%s' contains invalid item: '%s'. %s" % (
+                                fieldset_name, field, e.args[0]),
                             obj=self.__class__
                         )
                     )
