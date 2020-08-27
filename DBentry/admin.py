@@ -105,7 +105,7 @@ class AudioAdmin(MIZModelAdmin):
             'musiker', 'band', 'person', 'genre', 'schlagwort',
             'ort', 'spielort', 'veranstaltung', 'plattenfirma',
             'format__format_size', 'format__format_typ', 'format__tag',
-            'release_id', 'id__in'
+            'release_id'
         ],
         'labels': {'format__tag': 'Tags'}
     }
@@ -155,7 +155,7 @@ class AusgabenAdmin(MIZModelAdmin):
         'fields': [
             'magazin', 'status', 'ausgabejahr__jahr__range', 'ausgabenum__num__range',
             'ausgabelnum__lnum__range', 'ausgabemonat__monat__ordinal__range',
-            'jahrgang', 'sonderausgabe', 'audio', 'id__in'
+            'jahrgang', 'sonderausgabe', 'audio'
         ],
         'labels': {
             'ausgabejahr__jahr__range': 'Jahr',
@@ -212,7 +212,7 @@ class AutorAdmin(MIZModelAdmin):
     inlines = [MagazinInLine]
     list_display = ['__str__', 'person', 'kuerzel', 'magazin_string']
     list_prefetch_related = ['magazin', 'person']
-    search_form_kwargs = {'fields': ['magazin', 'person', 'id__in']}
+    search_form_kwargs = {'fields': ['magazin', 'person']}
 
     def magazin_string(self, obj):
         return concat_limit(obj.magazin.all())
@@ -269,8 +269,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band',
             'musiker', 'autor', 'person',
-            'ort', 'spielort', 'veranstaltung',
-            'seite__range', 'id__in'
+            'ort', 'spielort', 'veranstaltung', 'seite__range'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
@@ -314,7 +313,7 @@ class BandAdmin(MIZModelAdmin):
     save_on_top = True
 
     search_form_kwargs = {
-        'fields': ['musiker', 'genre', 'orte__land', 'orte', 'id__in'],
+        'fields': ['musiker', 'genre', 'orte__land', 'orte'],
         'labels': {'musiker': 'Mitglied'}
     }
 
@@ -375,7 +374,7 @@ class BildmaterialAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': [
             'datum__range', 'schlagwort', 'genre', 'band','musiker', 'person',
-            'ort', 'spielort', 'veranstaltung', 'reihe', 'signatur', 'id__in'
+            'ort', 'spielort', 'veranstaltung', 'reihe', 'signatur'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -472,7 +471,7 @@ class BuchAdmin(MIZModelAdmin):
         'fields': [
             'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person',
             'schriftenreihe', 'buchband', 'verlag', 'ort', 'spielort', 'veranstaltung',
-            'jahr', 'ISBN', 'EAN', 'id__in'
+            'jahr', 'ISBN', 'EAN'
         ],
         'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
         # 'autor' help_text refers to quick item creation which is not allowed in search forms.
@@ -544,7 +543,7 @@ class MagazinAdmin(MIZModelAdmin):
     list_prefetch_related = ['orte']
 
     search_form_kwargs = {
-        'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine', 'id__in'],
+        'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
     def anz_ausgaben(self, obj):
@@ -604,7 +603,7 @@ class MusikerAdmin(MIZModelAdmin):
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
     list_prefetch_related = ['band_set', 'genre', 'orte']
     save_on_top = True
-    search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte', 'id__in']}
+    search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
 
     def band_string(self, obj):
         return concat_limit(obj.band_set.all())
@@ -632,7 +631,7 @@ class PersonAdmin(MIZModelAdmin):
     list_prefetch_related = ['musiker_set', 'autor_set', 'orte']
 
     search_form_kwargs = {
-        'fields': ['orte', 'orte__land', 'orte__bland', 'id__in'],
+        'fields': ['orte', 'orte__land', 'orte__bland'],
         'forwards': {'orte__bland': 'orte__land'}
     }
 
@@ -715,7 +714,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
 class VerlagAdmin(MIZModelAdmin):
     list_display = ['verlag_name', 'sitz']
     search_form_kwargs = {
-        'fields': ['sitz', 'sitz__land', 'sitz__bland', 'id__in'],
+        'fields': ['sitz', 'sitz__land', 'sitz__bland'],
         'labels': {'sitz': 'Sitz'}
     }
 
@@ -761,7 +760,7 @@ class VideoAdmin(MIZModelAdmin):
 class BlandAdmin(MIZModelAdmin):
     list_display = ['bland_name', 'code', 'land']
     search_form_kwargs = {
-        'fields': ['land', 'id__in'],
+        'fields': ['land'],
     }
 
 
@@ -776,7 +775,7 @@ class OrtAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
-    search_form_kwargs = {'fields': ['land', 'bland', 'id__in']}
+    search_form_kwargs = {'fields': ['land', 'bland']}
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field == self.opts.get_field('bland'):
@@ -875,7 +874,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     list_prefetch_related = ['jahre']
     search_form_kwargs = {
-        'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr', 'id__in']}
+        'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr']}
 
     def get_fieldsets(self, request, obj=None):
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
@@ -924,7 +923,7 @@ class BrochureAdmin(BaseBrochureAdmin):
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
-            'jahre__jahr', 'id__in'
+            'jahre__jahr'
         ]
     }
 
@@ -973,7 +972,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
-            'jahre__jahr', 'id__in'
+            'jahre__jahr'
         ]
     }
 

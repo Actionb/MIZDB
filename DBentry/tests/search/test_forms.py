@@ -71,7 +71,7 @@ class TestSearchFormFactory(MyTestCase):
     def test_takes_formfield_callback(self):
         # Assert that custom formfield_callback can be passed to the factory
         # and that it uses that to create formfields for dbfields.
-        callback = lambda dbfield: forms.DateField()
+        callback = lambda dbfield, **kwargs: forms.DateField(**kwargs)
         form_class = self.factory(
             model=_models.Artikel,
             formfield_callback=callback,
@@ -140,6 +140,26 @@ class TestSearchFormFactory(MyTestCase):
         formfield = self.factory.formfield_for_dbfield(db_field)
         choices = formfield.choices
         self.assertIn(BLANK_CHOICE_DASH[0], choices)
+
+    def test_factory_adds_pk_field(self):
+        # Assert that the factory adds a search field for the primary key field.
+        form_class = self.factory(
+            model=_models.Ausgabe,
+            fields=['magazin']
+        )
+        self.assertIn('id__in', form_class.base_fields)
+        # Make sure that there is no extra lookup registered to this field.
+        self.assertNotIn('id', form_class.lookups)
+        self.assertNotIn('id__in', form_class.lookups)
+
+        # The factory should not overwrite an explicit primary key search field.
+        form_class = self.factory(
+            model=_models.Ausgabe,
+            fields=['magazin', 'id__in']
+        )
+        self.assertIn('id', form_class.base_fields)
+        self.assertIn('id', form_class.lookups)
+        self.assertEqual(form_class.lookups['id'], ['in'])
 
 
 class TestSearchForm(MyTestCase):
