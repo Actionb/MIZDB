@@ -81,7 +81,7 @@ class Musiker(BaseModel):
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
 class MusikerAlias(BaseAliasModel):
-    parent = models.ForeignKey('Musiker', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Musiker', models.CASCADE)
 
 
 class Genre(BaseModel):
@@ -100,7 +100,7 @@ class Genre(BaseModel):
         verbose_name_plural = 'Genres'
         ordering = ['genre']
 class GenreAlias(BaseAliasModel):
-    parent = models.ForeignKey('Genre', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Genre', models.CASCADE)
 
 
 class Band(BaseModel):
@@ -127,7 +127,7 @@ class Band(BaseModel):
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
 class BandAlias(BaseAliasModel):
-    parent = models.ForeignKey('Band', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Band', models.CASCADE)
 
 
 class Autor(ComputedNameModel):
@@ -330,7 +330,7 @@ class Ausgabe(ComputedNameModel):
 class AusgabeJahr(BaseModel):
     jahr = YearField('Jahr')
 
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['ausgabe']
 
@@ -344,7 +344,7 @@ class AusgabeJahr(BaseModel):
 class AusgabeNum(BaseModel):
     num = models.PositiveSmallIntegerField('Nummer')
 
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['num']
 
@@ -358,7 +358,7 @@ class AusgabeNum(BaseModel):
 class AusgabeLnum(BaseModel):
     lnum = models.PositiveSmallIntegerField('Lfd. Nummer')
 
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['lnum']
 
@@ -370,7 +370,7 @@ class AusgabeLnum(BaseModel):
 
 
 class AusgabeMonat(BaseModel):
-    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)  # TODO: add a related_name
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
     monat = models.ForeignKey('Monat', models.CASCADE)
 
     search_fields = ['monat__monat', 'monat__abk']
@@ -575,7 +575,7 @@ class Schlagwort(BaseModel):
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
 class SchlagwortAlias(BaseAliasModel):
-    parent = models.ForeignKey('Schlagwort', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Schlagwort', models.CASCADE)
 
 
 class Artikel(BaseModel):
@@ -902,7 +902,7 @@ class Spielort(BaseModel):
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
 class SpielortAlias(BaseAliasModel):
-    parent = models.ForeignKey('Spielort', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Spielort', models.CASCADE)
 
 
 class Technik(BaseModel):
