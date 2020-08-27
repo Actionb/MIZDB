@@ -88,9 +88,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         """Check that all search fields and their lookups are valid."""
         errors = []
         for search_field in self.get_search_fields(request=None):
-            if not search_field[0].isalpha() and search_field[0] != '_':
-                # Lookup alias prefixes for ModelAdmin.construct_search:
-                # '=', '^', '@' etc.
+            if search_field[0] in ('=', '^', '@'):
+                # Lookup shortcut prefixes for ModelAdmin.construct_search.
                 search_field = search_field[1:]
             try:
                 get_fields_and_lookups(self.model, search_field)
