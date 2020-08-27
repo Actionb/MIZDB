@@ -250,11 +250,10 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             items.append((dupe_item, link))
         return items
 
-# TODO: call this "unreferenzierte Datensätze"?
-# TODO: the result page needs a changelist link!
+
 @register_tool(
     url_name='find_unused',
-    index_label='Selten verwendete Datensätze finden',
+    index_label='Unreferenzierte Datensätze',
     superuser_only=True
 )
 class UnusedObjectsView(MaintViewMixin, ModelSelectView):
@@ -269,7 +268,7 @@ class UnusedObjectsView(MaintViewMixin, ModelSelectView):
     form_method = 'get'
     submit_name = 'get_unused'
     submit_value = 'Suchen'
-    breadcrumbs_title = title = 'Selten verwendete Datensätze finden'
+    breadcrumbs_title = title = 'Unreferenzierte Datensätze'
 
     def get_form_kwargs(self):
         """Use request.GET as form data instead of request.POST."""
