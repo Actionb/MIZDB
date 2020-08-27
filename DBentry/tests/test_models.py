@@ -1,5 +1,6 @@
 from unittest.mock import patch, Mock
 
+from django.core import checks
 from django.db import models as django_models
 from django.test import tag
 from django.utils.translation import override as translation_override
@@ -183,6 +184,45 @@ class TestComputedNameModel(DataTestCase):
         self.assertEqual(self.obj2._name, "Testinfo")
         self.assertEqual(str(self.obj2), "Testinfo")
 
+    def test_check_name_composing_fields(self):
+        # Assert that _check_name_composing_fields identifies invalid fields in
+        # 'name_composing_fields'.
+        msg_template = "Attribute 'name_composing_fields' contains invalid item: '%s'. %s"
+        with patch.object(self.model, 'name_composing_fields'):
+            # Invalid field:
+            self.model.name_composing_fields = ['beep']
+            errors = self.model._check_name_composing_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                msg_template % ('beep', "Ausgabe has no field named 'beep'")
+            )
+            # Invalid lookup:
+            self.model.name_composing_fields = ['magazin__year']
+            errors = self.model._check_name_composing_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                msg_template % ('magazin__year', "Invalid lookup: year for ForeignKey.")
+            )
+
+    def test_check_name_composing_fields_no_attribute(self):
+        # Assert that _check_name_composing_fields issues a warning if the
+        # attribute 'name_composing_fields' is not set.
+        with patch.object(self.model, 'name_composing_fields', new=None):
+            errors = self.model._check_name_composing_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Warning)
+            self.assertEqual(
+                errors[0].msg,
+                "You must specify the fields that make up the name by " 
+                "listing them in name_composing_fields."
+            )
 
 class TestModelArtikel(DataTestCase):
 
