@@ -13,6 +13,8 @@ class TestMIZAdminSite(RequestTestCase):
         tools = response.context_data.get('admintools')
         self.assertIn('bulk_ausgabe', tools)
         self.assertEqual(tools['bulk_ausgabe'], 'Ausgaben Erstellung')
+        self.assertIn('site_search', tools)
+        self.assertEqual(tools['site_search'], 'Datenbank durchsuchen')
         self.assertIn('dupes_select', tools)
         self.assertEqual(tools['dupes_select'], 'Duplikate finden')
         self.assertNotIn('import_select', tools)
@@ -28,6 +30,8 @@ class TestMIZAdminSite(RequestTestCase):
 
         self.assertIn('bulk_ausgabe', tools)
         self.assertEqual(tools.pop('bulk_ausgabe'), 'Ausgaben Erstellung')
+        self.assertIn('site_search', tools)
+        self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
     def test_app_index_returns_DBentry(self):

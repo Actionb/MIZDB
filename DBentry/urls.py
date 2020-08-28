@@ -1,5 +1,6 @@
 from django.urls import path, include
 
+from DBentry.views import SiteSearchView
 from DBentry.bulk.views import BulkAusgabe, BulkAusgabeHelp
 
 admin_tools_urls = [
@@ -11,6 +12,7 @@ help_urls = [
 ]
 
 urlpatterns = [
+    path('search', SiteSearchView.as_view(), name='site_search'),
     path('ac/', include('DBentry.ac.urls')),
     path('tools/', include(admin_tools_urls)),
     path('maint/', include('DBentry.maint.urls')),

@@ -2,9 +2,10 @@ from unittest import mock
 
 from django import forms
 
+from DBentry import models as _models
 from DBentry.base.views import OptionalFormView, FixedSessionWizardView
 from DBentry.tests.base import MyTestCase, ViewTestCase
-from DBentry.views import MIZ_permission_denied_view
+from DBentry.views import MIZ_permission_denied_view, SiteSearchView
 
 
 class TestOptionalFormView(ViewTestCase):
@@ -92,3 +93,65 @@ class TestFixedSessionWizardView(ViewTestCase):
         self.assertTrue(mocked_super_get_context_data.called)
         call_args = mocked_super_get_context_data.call_args
         self.assertIn(form, call_args[0], msg=call_args)
+
+
+class TestSiteSearchView(ViewTestCase):
+
+    view_class = SiteSearchView
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = _models.Musiker.objects.create(kuenstler_name='Sharon Silva')
+        super().setUpTestData()
+
+    def test_get_result_list(self):
+        view = self.get_view(request=self.get_request())
+        results = view.get_result_list('Silva')
+        self.assertTrue(results)
+        self.assertEqual(len(results), 1)
+        self.assertIn(str(self.obj1.pk), results[0])
+        self.assertIn('Musiker (1)', results[0])
+
+    def test_get_result_list_noperms(self):
+        # Assert that get_result_list doesn't return changelist links for users
+        # who have no permission to view those changelists.
+        view = self.get_view(request=self.get_request(user=self.noperms_user))
+        results = view.get_result_list('Silva')
+        self.assertFalse(results)
+
+    def test_get_result_list_sorted(self):
+        # Assert that the result list is sorted alphabetically by the models'
+        # object names.
+        _models.Band.objects.create(band_name='Silva')
+        view = self.get_view(request=self.get_request())
+        results = view.get_result_list('Silva')
+        self.assertTrue(results)
+        self.assertEqual(len(results), 2)
+        self.assertIn('Bands (1)', results[0])
+        self.assertIn('Musiker (1)', results[1])
+
+    @mock.patch.object(SiteSearchView, 'render_to_response')
+    def test_get(self, mocked_render):
+        request_data = {'q': 'Silva'}
+        request = self.get_request(data=request_data)
+        self.get_view(request).get(request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertIn('q', context.keys())
+        self.assertEqual(context['q'], 'Silva')
+        self.assertIn('results', context.keys())
+        results = context['results']
+        self.assertTrue(results)
+        self.assertEqual(len(results), 1)
+        self.assertIn(str(self.obj1.pk), results[0])
+        self.assertIn('Musiker (1)', results[0])
+
+    @mock.patch.object(SiteSearchView, 'get_result_list')
+    @mock.patch.object(SiteSearchView, 'render_to_response')
+    def test_get_no_q(self, mocked_render, mocked_get_result_list):
+        # get_result_list should not be called when no search term was provided.
+        for data in ({}, {'q': ''}):
+            with self.subTest(request_data=data):
+                request = self.get_request(data=data)
+                self.get_view(request).get(request)
+                self.assertFalse(mocked_get_result_list.called)
