@@ -3,32 +3,17 @@ from collections import OrderedDict
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.urls import reverse
 
 from DBentry import utils
 from DBentry.actions.views import MergeViewWizarded
-from DBentry.base.views import MIZAdminMixin
+from DBentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from DBentry.sites import register_tool
 from DBentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
-
-
-class MaintViewMixin(MIZAdminMixin, UserPassesTestMixin):
-    """
-    Simple mixin that provides django-admin looks from MIZAdminMixin and access
-    restrictions from UserPassesTestMixin.
-    """
-
-    def test_func(self):
-        """
-        test_func for UserPassesTestMixin.
-        Only allow superusers to access the view.
-        """
-        return self.request.user.is_superuser
 
 
 class ModelSelectView(views.generic.FormView):
@@ -51,7 +36,7 @@ class ModelSelectView(views.generic.FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add context variables specific to admin/basic.html:
+        # Add context variables specific to admin/basic_form.html:
         context['submit_value'] = self.submit_value
         context['submit_name'] = self.submit_name
         context['form_method'] = self.form_method
@@ -69,7 +54,7 @@ class ModelSelectView(views.generic.FormView):
         return {'model_name': self.request.GET.get('model_select')}
 
 
-class ModelSelectNextViewMixin(MaintViewMixin):
+class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
     """A mixin that sets up the view following a ModelSelectView."""
 
     def setup(self, request, *args, **kwargs):
@@ -94,7 +79,7 @@ class ModelSelectNextViewMixin(MaintViewMixin):
     index_label='Duplikate finden',
     superuser_only=True
 )
-class DuplicateModelSelectView(MaintViewMixin, ModelSelectView):
+class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
     Main entry point for the duplicates search.
 
@@ -256,7 +241,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     index_label='Unreferenzierte Datensätze',
     superuser_only=True
 )
-class UnusedObjectsView(MaintViewMixin, ModelSelectView):
+class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
     View that enables finding objects of a given model that are referenced by
     reversed related models less than a given limit.
