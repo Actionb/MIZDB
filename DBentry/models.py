@@ -332,7 +332,7 @@ class AusgabeJahr(BaseModel):
 
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
-    search_fields = ['ausgabe']
+    search_fields = ['jahr']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Jahr'
