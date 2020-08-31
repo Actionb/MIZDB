@@ -241,11 +241,13 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     self.log_addition(audio_instance)
                 # Check if the ausgabe instance is already related to the audio
                 # instance.
-                is_related = m2m_audio_ausgabe.objects.filter(  # FIXME: Fix once the m2m relation is reestablished
-                    ausgabe=instance, audio=audio_instance
-                ).exists()
+                is_related = (
+                    _models.audio.ausgabe.through.objects
+                    .filter(ausgabe=instance, audio=audio_instance)
+                    .exists()
+                )
                 if not is_related:
-                    m2m_instance = m2m_audio_ausgabe(
+                    m2m_instance = _models.audio.ausgabe.through(
                         ausgabe=instance,
                         audio=audio_instance
                     )
