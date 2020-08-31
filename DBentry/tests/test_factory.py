@@ -10,7 +10,6 @@ from DBentry.factory import (
     factory, RuntimeFactoryMixin, UniqueFaker, modelfactory_factory, make,
     SelfFactory, M2MFactory, MIZDjangoOptions, AutorFactory, MagazinFactory
 )
-from DBentry.models import BaseBrochure
 from DBentry.tests.base import MyTestCase
 from DBentry.utils import get_model_relations, get_model_fields
 
@@ -33,8 +32,8 @@ class TestRuntimeFactoryMixin(MyTestCase):
     def test_new_factory(self):
         # Assert that the factory property can create a new factory if needed.
         fac = self.dummy_factory(
-            self.local_factory_module + '.DoesNotExit', related_model=_models.technik)
-        self.assertEqual(fac.factory._meta.model, _models.technik)
+            self.local_factory_module + '.DoesNotExit', related_model=_models.Technik)
+        self.assertEqual(fac.factory._meta.model, _models.Technik)
         from DBentry import factory
         self.assertIn('technik', factory._cache)
 
@@ -66,7 +65,7 @@ class TestUniqueFaker(MyTestCase):
 class TestSelfFactory(MyTestCase):
 
     def test_evaluate(self):
-        buch_factory = modelfactory_factory(_models.buch)
+        buch_factory = modelfactory_factory(_models.Buch)
         created = buch_factory(buchband=None)
         self.assertIsNone(created.buchband)
 
@@ -97,78 +96,78 @@ class TestSelfFactory(MyTestCase):
 class TestRelatedFactory(MyTestCase):
 
     def test_rf_string_direct(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__alias='Alias1')
-        self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
+        g = make(_models.Genre, genre='TestGenre0', genrealias__alias='Alias1')
+        self.assertIn('Alias1', g.genrealias_set.values_list('alias', flat=True))
 
     def test_rf_string_single_list(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__alias=['Alias1'])
-        self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
+        g = make(_models.Genre, genre='TestGenre0', genrealias__alias=['Alias1'])
+        self.assertIn('Alias1', g.genrealias_set.values_list('alias', flat=True))
 
     def test_rf_string_list(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__alias=['Alias1', 'Alias2'])
-        self.assertIn('Alias1', g.genre_alias_set.values_list('alias', flat=True))
+        g = make(_models.Genre, genre='TestGenre0', genrealias__alias=['Alias1', 'Alias2'])
+        self.assertIn('Alias1', g.genrealias_set.values_list('alias', flat=True))
 
     def test_rf_instance_direct(self):
-        m1 = make(_models.musiker)
-        p = make(_models.person, vorname='Alice', nachname='Testman', musiker=m1)
+        m1 = make(_models.Musiker)
+        p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=m1)
         self.assertIn(m1, p.musiker_set.all())
 
     def test_rf_instance_single_list(self):
-        m1 = make(_models.musiker)
-        p = make(_models.person, vorname='Alice', nachname='Testman', musiker=[m1])
+        m1 = make(_models.Musiker)
+        p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=[m1])
         self.assertIn(m1, p.musiker_set.all())
 
     def test_rf_instance_list(self):
-        m1 = make(_models.musiker)
-        m2 = make(_models.musiker)
-        p = make(_models.person, vorname='Alice', nachname='Testman', musiker=[m1, m2])
+        m1 = make(_models.Musiker)
+        m2 = make(_models.Musiker)
+        p = make(_models.Person, vorname='Alice', nachname='Testman', musiker=[m1, m2])
         self.assertIn(m1, p.musiker_set.all())
         self.assertIn(m2, p.musiker_set.all())
 
     def test_rf_extra(self):
-        g = make(_models.genre, genre='TestGenre0', genre_alias__extra=3)
-        self.assertEqual(g.genre_alias_set.count(), 3)
+        g = make(_models.Genre, genre='TestGenre0', genrealias__extra=3)
+        self.assertEqual(g.genrealias_set.count(), 3)
 
 
 class TestM2MFactory(MyTestCase):
 
     def test_m2m_string_direct(self):
-        m = make(_models.musiker, genre__genre='TestGenre1')
+        m = make(_models.Musiker, genre__genre='TestGenre1')
         self.assertIn('TestGenre1', m.genre.values_list('genre', flat=True))
 
     def test_m2m_string_single_list(self):
-        m = make(_models.musiker, genre__genre=['TestGenre1'])
+        m = make(_models.Musiker, genre__genre=['TestGenre1'])
         self.assertIn('TestGenre1', m.genre.values_list('genre', flat=True))
 
     def test_m2m_string_list(self):
-        m = make(_models.musiker, genre__genre=['TestGenre1', 'TestGenre2'])
+        m = make(_models.Musiker, genre__genre=['TestGenre1', 'TestGenre2'])
         self.assertIn('TestGenre1', m.genre.values_list('genre', flat=True))
         self.assertIn('TestGenre2', m.genre.values_list('genre', flat=True))
 
     def test_m2m_instance_direct(self):
-        g1 = make(_models.genre)
-        m = make(_models.musiker, genre=g1)
+        g1 = make(_models.Genre)
+        m = make(_models.Musiker, genre=g1)
         self.assertIn(g1, m.genre.all())
 
     def test_m2m_instance_single_list(self):
-        g1 = make(_models.genre)
-        m = make(_models.musiker, genre=[g1])
+        g1 = make(_models.Genre)
+        m = make(_models.Musiker, genre=[g1])
         self.assertIn(g1, m.genre.all())
 
     def test_m2m_instance_list(self):
-        g1 = make(_models.genre)
-        g2 = make(_models.genre)
-        m = make(_models.musiker, genre=[g1, g2])
+        g1 = make(_models.Genre)
+        g2 = make(_models.Genre)
+        m = make(_models.Musiker, genre=[g1, g2])
         self.assertIn(g1, m.genre.all())
         self.assertIn(g2, m.genre.all())
 
     def test_m2m_extra(self):
-        m = make(_models.musiker, genre__extra=3)
+        m = make(_models.Musiker, genre__extra=3)
         self.assertEqual(m.genre.count(), 3)
 
-        g1 = make(_models.genre)
-        g2 = make(_models.genre)
-        m = make(_models.musiker, genre=[g1, g2], genre__extra=2)
+        g1 = make(_models.Genre)
+        g2 = make(_models.Genre)
+        m = make(_models.Musiker, genre=[g1, g2], genre__extra=2)
         self.assertIn(g1, m.genre.all())
         self.assertIn(g2, m.genre.all())
         self.assertEqual(m.genre.count(), 4)
@@ -177,7 +176,7 @@ class TestM2MFactory(MyTestCase):
         m2m = M2MFactory(
             'DBentry.factory.whatever',
             accessor_name='beep boop',
-            related_model=_models.genre
+            related_model=_models.Genre
         )
         self.assertIsNone(m2m.accessor_name)
 
@@ -237,39 +236,39 @@ class TestMIZDjangoOptions(MyTestCase):
         # A dynamically created factory *must* include model fields that are required.
         # Model veranstaltung has three required fields:
         # name (CharField), datum (DateField), spielort (ForeignKey(spielort))
-        fac = modelfactory_factory(_models.veranstaltung)
+        fac = modelfactory_factory(_models.Veranstaltung)
         self.assertIn('name', dir(fac))
         self.assertIn('datum', dir(fac))
         self.assertIn('spielort', dir(fac))
 
     def test_add_m2m_factories(self):
         # Assert that the created m2m factories are following the relation correctly.
-        fac = modelfactory_factory(_models.artikel)
-        self.assertEqual(fac.genre.factory._meta.model, _models.genre)
-        self.assertEqual(fac.schlagwort.factory._meta.model, _models.schlagwort)
-        self.assertEqual(fac.person.factory._meta.model, _models.person)
-        self.assertEqual(fac.autor.factory._meta.model, _models.autor)
-        self.assertEqual(fac.band.factory._meta.model, _models.band)
-        self.assertEqual(fac.musiker.factory._meta.model, _models.musiker)
-        self.assertEqual(fac.ort.factory._meta.model, _models.ort)
-        self.assertEqual(fac.spielort.factory._meta.model, _models.spielort)
-        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
+        fac = modelfactory_factory(_models.Artikel)
+        self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
+        self.assertEqual(fac.schlagwort.factory._meta.model, _models.Schlagwort)
+        self.assertEqual(fac.person.factory._meta.model, _models.Person)
+        self.assertEqual(fac.autor.factory._meta.model, _models.Autor)
+        self.assertEqual(fac.band.factory._meta.model, _models.Band)
+        self.assertEqual(fac.musiker.factory._meta.model, _models.Musiker)
+        self.assertEqual(fac.ort.factory._meta.model, _models.Ort)
+        self.assertEqual(fac.spielort.factory._meta.model, _models.Spielort)
+        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.Veranstaltung)
 
-        fac = modelfactory_factory(_models.musiker)
-        self.assertEqual(fac.audio.factory._meta.model, _models.audio)
-        self.assertEqual(fac.orte.factory._meta.model, _models.ort)
-        self.assertEqual(fac.artikel.factory._meta.model, _models.artikel)
-        self.assertEqual(fac.memorabilien.factory._meta.model, _models.memorabilien)
-        self.assertEqual(fac.datei.factory._meta.model, _models.datei)
-        self.assertEqual(fac.technik.factory._meta.model, _models.technik)
-        self.assertEqual(fac.bildmaterial.factory._meta.model, _models.bildmaterial)
-        self.assertEqual(fac.video.factory._meta.model, _models.video)
-        self.assertEqual(fac.dokument.factory._meta.model, _models.dokument)
-        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.veranstaltung)
-        self.assertEqual(fac.genre.factory._meta.model, _models.genre)
-        self.assertEqual(fac.buch.factory._meta.model, _models.buch)
-        self.assertEqual(fac.instrument.factory._meta.model, _models.instrument)
-        self.assertEqual(fac.band.factory._meta.model, _models.band)
+        fac = modelfactory_factory(_models.Musiker)
+        self.assertEqual(fac.audio.factory._meta.model, _models.Audio)
+        self.assertEqual(fac.orte.factory._meta.model, _models.Ort)
+        self.assertEqual(fac.artikel.factory._meta.model, _models.Artikel)
+        self.assertEqual(fac.memorabilien.factory._meta.model, _models.Memorabilien)
+        self.assertEqual(fac.datei.factory._meta.model, _models.Datei)
+        self.assertEqual(fac.technik.factory._meta.model, _models.Technik)
+        self.assertEqual(fac.bildmaterial.factory._meta.model, _models.Bildmaterial)
+        self.assertEqual(fac.video.factory._meta.model, _models.Video)
+        self.assertEqual(fac.dokument.factory._meta.model, _models.Dokument)
+        self.assertEqual(fac.veranstaltung.factory._meta.model, _models.Veranstaltung)
+        self.assertEqual(fac.genre.factory._meta.model, _models.Genre)
+        self.assertEqual(fac.buch.factory._meta.model, _models.Buch)
+        self.assertEqual(fac.instrument.factory._meta.model, _models.Instrument)
+        self.assertEqual(fac.band.factory._meta.model, _models.Band)
 
     def get_mocked_field(self, field_name, model, related_model):
         mocked_field = Mock(model=model, related_model=related_model)
@@ -287,18 +286,18 @@ class TestMIZDjangoOptions(MyTestCase):
         # Pretend factory has no attributes, so add_m2m_factories will try to add one:
         mocked_factory = Mock(spec=[])
 
-        # Relation from BaseBrochure to genre inherited by Kalendar; expected:
+        # Relation from BaseBrochure to genre inherited by Kalender; expected:
         # declaration name and descriptor_name = 'mocked_field_name'
-        # related_model = _models.genre
+        # related_model = _models.Genre
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.genre)
+                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.Genre)
         )
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
-        opts.model = _models.Kalendar
+        opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
@@ -308,22 +307,22 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(opts.factory.mocked_field_name, Mock)
         expected_args = ('SomeFactory', )
         expected_kwargs = {
-            'descriptor_name': 'mocked_field_name', 'related_model': _models.genre}
+            'descriptor_name': 'mocked_field_name', 'related_model': _models.Genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
-        # Relation from genre to BaseBrochure inherited by Kalendar; expected:
+        # Relation from genre to BaseBrochure inherited by Kalender; expected:
         # declaration name = 'mocked_rel_name';
         # descriptor_name = 'mocked_rel_accessor';
-        # related_model = _models.genre
+        # related_model = _models.Genre
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.genre, related_model=_models.BaseBrochure)
+                'mocked_field_name', model=_models.Genre, related_model=_models.BaseBrochure)
         )
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
-        opts.model = _models.Kalendar
+        opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
@@ -333,7 +332,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
         expected_args = ('SomeFactory', )
         expected_kwargs = {
-            'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.genre}
+            'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.Genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
     @patch('DBentry.factory.get_model_relations')
@@ -345,21 +344,21 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.ort, related_model=_models.instrument),
+                'mocked_field_name', model=_models.Ort, related_model=_models.Instrument),
             many_to_many=True,
         )
         mocked_get_model_relations.return_value = [mocked_rel]
         opts = MIZDjangoOptions()
-        opts.model = _models.buch
+        opts.model = _models.Buch
         with self.assertRaises(TypeError):
             opts.add_m2m_factories()
 
     def test_add_related_factories(self):
         # Assert that the created related factories are following the relation correctly.
-        fac = modelfactory_factory(_models.buch)
-        self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.schriftenreihe)
-        self.assertEqual(fac.buchband.factory._meta.model, _models.buch)
-        self.assertEqual(fac.verlag.factory._meta.model, _models.verlag)
+        fac = modelfactory_factory(_models.Buch)
+        self.assertEqual(fac.schriftenreihe.factory._meta.model, _models.Schriftenreihe)
+        self.assertEqual(fac.buchband.factory._meta.model, _models.Buch)
+        self.assertEqual(fac.verlag.factory._meta.model, _models.Verlag)
 
     @patch('DBentry.factory.get_model_relations')
     def test_add_related_factories_inherited_relation(self, mocked_get_model_relations):
@@ -369,14 +368,14 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_rel = self.get_mocked_rel(
             'mocked_rel_name', 'mocked_rel_accessor',
             field=self.get_mocked_field(
-                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.genre),
-            many_to_many=False, model=_models.genre, related_model=_models.BaseBrochure
+                'mocked_field_name', model=_models.BaseBrochure, related_model=_models.Genre),
+            many_to_many=False, model=_models.Genre, related_model=_models.BaseBrochure
         )
         mocked_get_model_relations.return_value = [mocked_rel]
 
         opts = MIZDjangoOptions()
         opts.factory = mocked_factory
-        opts.model = _models.Kalendar
+        opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
             with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:
@@ -395,13 +394,13 @@ class TestMIZDjangoOptions(MyTestCase):
 
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly
-        fac = modelfactory_factory(_models.buch)
+        fac = modelfactory_factory(_models.Buch)
         self.assertIsInstance(fac.buchband, SelfFactory)
 
     def test_check_declarations(self):
         # Assert that all dynamically created factories are accounted for
         # in the correct declaration sets.
-        buch = _models.buch
+        buch = _models.Buch
         fac = modelfactory_factory(buch)
         declarations = fac._meta.declarations
         # required base fields
@@ -467,7 +466,7 @@ class ModelFactoryTestCase(MyTestCase):
 
 class TestMagazinFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.magazin)
+    factory_class = modelfactory_factory(_models.Magazin)
 
     def test_magazin_name_field(self):
         self.assertEqual(self.factory_class().magazin_name, 'TestMagazin0')
@@ -489,117 +488,117 @@ class TestMagazinFactory(ModelFactoryTestCase):
 
 class TestAusgabeFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.ausgabe)
+    factory_class = modelfactory_factory(_models.Ausgabe)
 
-    def test_ausgabe_jahr(self):
-        a = self.factory_class(ausgabe_jahr__jahr=2001)
-        self.assertIn(2001, a.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertEqual(a.ausgabe_jahr_set.count(), 1)
+    def test_ausgabejahr(self):
+        a = self.factory_class(ausgabejahr__jahr=2001)
+        self.assertIn(2001, a.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertEqual(a.ausgabejahr_set.count(), 1)
 
-        a = self.factory_class(ausgabe_jahr__jahr=[2001, 2002])
-        self.assertIn(2001, a.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(2002, a.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertEqual(a.ausgabe_jahr_set.count(), 2)
+        a = self.factory_class(ausgabejahr__jahr=[2001, 2002])
+        self.assertIn(2001, a.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(2002, a.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertEqual(a.ausgabejahr_set.count(), 2)
 
-    def test_ausgabe_num(self):
-        a = self.factory_class(ausgabe_num__num=21)
-        self.assertIn(21, a.ausgabe_num_set.values_list('num', flat=True))
-        self.assertEqual(a.ausgabe_num_set.count(), 1)
+    def test_ausgabenum(self):
+        a = self.factory_class(ausgabenum__num=21)
+        self.assertIn(21, a.ausgabenum_set.values_list('num', flat=True))
+        self.assertEqual(a.ausgabenum_set.count(), 1)
 
-        a = self.factory_class(ausgabe_num__num=[21, 22])
-        self.assertIn(21, a.ausgabe_num_set.values_list('num', flat=True))
-        self.assertIn(22, a.ausgabe_num_set.values_list('num', flat=True))
-        self.assertEqual(a.ausgabe_num_set.count(), 2)
+        a = self.factory_class(ausgabenum__num=[21, 22])
+        self.assertIn(21, a.ausgabenum_set.values_list('num', flat=True))
+        self.assertIn(22, a.ausgabenum_set.values_list('num', flat=True))
+        self.assertEqual(a.ausgabenum_set.count(), 2)
 
-    def test_ausgabe_lnum(self):
-        a = self.factory_class(ausgabe_lnum__lnum=21)
-        self.assertIn(21, a.ausgabe_lnum_set.values_list('lnum', flat=True))
-        self.assertEqual(a.ausgabe_lnum_set.count(), 1)
+    def test_ausgabelnum(self):
+        a = self.factory_class(ausgabelnum__lnum=21)
+        self.assertIn(21, a.ausgabelnum_set.values_list('lnum', flat=True))
+        self.assertEqual(a.ausgabelnum_set.count(), 1)
 
-        a = self.factory_class(ausgabe_lnum__lnum=[21, 22])
-        self.assertIn(21, a.ausgabe_lnum_set.values_list('lnum', flat=True))
-        self.assertIn(22, a.ausgabe_lnum_set.values_list('lnum', flat=True))
-        self.assertEqual(a.ausgabe_lnum_set.count(), 2)
+        a = self.factory_class(ausgabelnum__lnum=[21, 22])
+        self.assertIn(21, a.ausgabelnum_set.values_list('lnum', flat=True))
+        self.assertIn(22, a.ausgabelnum_set.values_list('lnum', flat=True))
+        self.assertEqual(a.ausgabelnum_set.count(), 2)
 
-    def test_ausgabe_monat(self):
-        januar, _ = _models.monat.objects.get_or_create(
+    def test_ausgabemonat(self):
+        januar, _ = _models.Monat.objects.get_or_create(
             monat='Januar', abk='Jan', ordinal=1)
-        februar, _ = _models.monat.objects.get_or_create(
+        februar, _ = _models.Monat.objects.get_or_create(
             monat='Februar', abk='Feb', ordinal=2)
 
-        a = self.factory_class(ausgabe_monat__monat__monat='Januar')
+        a = self.factory_class(ausgabemonat__monat__monat='Januar')
         self.assertIn(
             (januar.pk, 'Januar'),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 1)
+        self.assertEqual(a.ausgabemonat_set.count(), 1)
 
-        a = self.factory_class(ausgabe_monat__monat__ordinal=1)
+        a = self.factory_class(ausgabemonat__monat__ordinal=1)
         self.assertIn(
             (januar.pk, 'Januar', 1),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 1)
+        self.assertEqual(a.ausgabemonat_set.count(), 1)
 
-        a = self.factory_class(ausgabe_monat__monat__monat=['Januar', 'Februar'])
+        a = self.factory_class(ausgabemonat__monat__monat=['Januar', 'Februar'])
         self.assertIn(
             (januar.pk, 'Januar'),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat')
         )
         self.assertIn(
             (februar.pk, 'Februar'),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 2)
+        self.assertEqual(a.ausgabemonat_set.count(), 2)
 
-        a = self.factory_class(ausgabe_monat__monat__ordinal=[1, 2])
+        a = self.factory_class(ausgabemonat__monat__ordinal=[1, 2])
         self.assertIn(
             (januar.pk, 'Januar', 1),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
         )
         self.assertIn(
             (februar.pk, 'Februar', 2),
-            a.ausgabe_monat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
+            a.ausgabemonat_set.values_list('monat__id', 'monat__monat', 'monat__ordinal')
         )
-        self.assertEqual(a.ausgabe_monat_set.count(), 2)
+        self.assertEqual(a.ausgabemonat_set.count(), 2)
 
     def test_ausgabe_magazin(self):
         a = self.factory_class(magazin__magazin_name='Testmagazin')
         self.assertEqual(a.magazin.magazin_name, 'Testmagazin')
 
     def test_complex_creation(self):
-        lagerort_factory = modelfactory_factory(_models.lagerort)
+        lagerort_factory = modelfactory_factory(_models.Lagerort)
         lagerort_1 = lagerort_factory(ort='TestLagerOrt')
         lagerort_2 = lagerort_factory(ort='TestLagerOrt2')
-        prov = modelfactory_factory(_models.provenienz)(geber__name='TestCase')
+        prov = modelfactory_factory(_models.Provenienz)(geber__name='TestCase')
 
         obj1 = self.factory_class(
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=2000, ausgabe_num__num=1,
+            ausgabejahr__jahr=2000, ausgabenum__num=1,
             bestand__lagerort=lagerort_1, bestand__provenienz=prov
         )
         obj2 = self.factory_class(
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=2000, ausgabe_num__num=2,
+            ausgabejahr__jahr=2000, ausgabenum__num=2,
             bestand__lagerort=[lagerort_1, lagerort_2],
             bestand__provenienz=[None, prov],
         )
         obj3 = self.factory_class(
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=2000, ausgabe_num__num=3,
+            ausgabejahr__jahr=2000, ausgabenum__num=3,
             bestand__lagerort=lagerort_2,
         )
 
         self.assertEqual(obj1.magazin.magazin_name, 'Testmagazin')
-        self.assertIn(2000, obj1.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(1, obj1.ausgabe_num_set.values_list('num', flat=True))
+        self.assertIn(2000, obj1.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(1, obj1.ausgabenum_set.values_list('num', flat=True))
         self.assertEqual(obj1.bestand_set.count(), 1)
         self.assertEqual(obj1.bestand_set.first().lagerort, lagerort_1)
         self.assertEqual(obj1.bestand_set.first().provenienz, prov)
 
         self.assertEqual(obj2.magazin.magazin_name, 'Testmagazin')
-        self.assertIn(2000, obj2.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(2, obj2.ausgabe_num_set.values_list('num', flat=True))
+        self.assertIn(2000, obj2.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(2, obj2.ausgabenum_set.values_list('num', flat=True))
         self.assertEqual(obj2.bestand_set.count(), 2)
         b1, b2 = obj2.bestand_set.all()
         self.assertEqual(b1.lagerort, lagerort_1)
@@ -608,8 +607,8 @@ class TestAusgabeFactory(ModelFactoryTestCase):
         self.assertEqual(b2.provenienz, prov)
 
         self.assertEqual(obj3.magazin.magazin_name, 'Testmagazin')
-        self.assertIn(2000, obj3.ausgabe_jahr_set.values_list('jahr', flat=True))
-        self.assertIn(3, obj3.ausgabe_num_set.values_list('num', flat=True))
+        self.assertIn(2000, obj3.ausgabejahr_set.values_list('jahr', flat=True))
+        self.assertIn(3, obj3.ausgabenum_set.values_list('num', flat=True))
         self.assertEqual(obj3.bestand_set.count(), 1)
         self.assertEqual(obj3.bestand_set.first().lagerort, lagerort_2)
         self.assertIsNone(obj3.bestand_set.first().provenienz)
@@ -617,10 +616,10 @@ class TestAusgabeFactory(ModelFactoryTestCase):
 
 class TestAutorFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.autor)
+    factory_class = modelfactory_factory(_models.Autor)
 
     def test_kuerzel_field(self):
-        # Assert that kuerzel depends on the person's name.
+        # Assert that kuerzel depends on the Person's name.
         a = self.factory_class()
         expected = a.person.vorname[0] + a.person.nachname[0]
         self.assertEqual(a.kuerzel, expected)
@@ -637,7 +636,7 @@ class TestAutorFactory(ModelFactoryTestCase):
 
 class TestMonatFactory(ModelFactoryTestCase):
 
-    factory_class = modelfactory_factory(_models.monat)
+    factory_class = modelfactory_factory(_models.Monat)
 
     def test_abk_field(self):
         # Assert that abk depends on the monat's 'name'.
@@ -661,7 +660,7 @@ class TestMIZModelFactory(MyTestCase):
         models = [
             m
             for m in apps.get_models('DBentry')
-            if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, BaseBrochure))
+            if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, _models.BaseBrochure))
         ]
         for model in models:
             cls.factories.append(modelfactory_factory(model))

@@ -66,7 +66,7 @@ def get_changelist_url(model, user, site_name='admin', obj_list=None):
         return ''
 
     if obj_list:
-        url += '?id={}'.format(",".join([str(obj.pk) for obj in obj_list]))
+        url += '?id__in={}'.format(",".join([str(obj.pk) for obj in obj_list]))
     return url
 
 

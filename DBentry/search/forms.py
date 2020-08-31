@@ -234,9 +234,9 @@ class SearchFormFactory:
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
             widgets=None, localized_fields=None, labels=None, help_texts=None,
-            error_messages=None, field_classes=None,
-            forwards=None,
-            range_lookup=django_lookups.Range):
+            error_messages=None, field_classes=None, forwards=None,
+            range_lookup=django_lookups.Range
+        ):
         """
         Create and return a search form class for a given model.
 
@@ -270,11 +270,14 @@ class SearchFormFactory:
         # Create the formfields.
         attrs = OrderedDict()
         lookup_mapping = {}
+        includes_pk = False  # True if 'fields' included the primary key of this model.
         for path in (fields or []):
             try:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError):
                 continue
+            if model._meta.pk == db_field:
+                includes_pk = True
 
             formfield_kwargs = {}
             if widgets and path in widgets:
@@ -307,6 +310,18 @@ class SearchFormFactory:
             if not lookups:
                 lookups = self.get_default_lookup(formfield)
             lookup_mapping[formfield_name] = lookups
+        if not includes_pk:
+            # A search field for the primary key was not included;
+            # add a basic formfield.
+            # By including the lookup in the field name data (instead of
+            # registering it separately in the lookup_mapping), the name meshes
+            # with the query string created by utils.get_changelist_url
+            # (which uses 'id__in').
+            db_field = model._meta.pk
+            if db_field.is_relation:
+                # Assuming OneToOneRelation:
+                db_field = db_field.target_field
+            attrs['id__in'] = formfield_callback(db_field, label='ID')
 
         base_form = form or SearchForm
         attrs['lookups'] = lookup_mapping

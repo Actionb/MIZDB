@@ -5,19 +5,19 @@ from DBentry.tests.base import DataTestCase
 
 class TestCopyRelated(DataTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     test_data_count = 1
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.band1 = make(_models.band, band_name='Band1')
-        cls.band2 = make(_models.band, band_name='Band2')
+        cls.band1 = make(_models.Band, band_name='Band1')
+        cls.band2 = make(_models.Band, band_name='Band2')
 
-        cls.v1 = make(_models.veranstaltung, band=[cls.band1])
-        cls.v2 = make(_models.veranstaltung, band=[cls.band2])
-        cls.v3 = make(_models.veranstaltung)
+        cls.v1 = make(_models.Veranstaltung, band=[cls.band1])
+        cls.v2 = make(_models.Veranstaltung, band=[cls.band2])
+        cls.v3 = make(_models.Veranstaltung)
 
         cls.obj1.veranstaltung.add(cls.v1, cls.v2, cls.v3)
 
@@ -41,7 +41,7 @@ class TestCopyRelated(DataTestCase):
         self.assertIn(self.band2, bands)
 
     def test_preserves_own_bands(self):
-        other_band = make(_models.band)
+        other_band = make(_models.Band)
         self.obj1.band.add(other_band)
 
         utils.copy_related_set(self.obj1, 'veranstaltung__band')

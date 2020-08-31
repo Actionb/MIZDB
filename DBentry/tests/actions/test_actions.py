@@ -7,19 +7,19 @@ from ..base import AdminTestCase
 
 from django.utils.translation import override as translation_override
 
+from DBentry import models as _models
 from DBentry.admin import ArtikelAdmin, AusgabenAdmin
-from DBentry.models import artikel, ausgabe, lagerort
 from DBentry.factory import make
 
 
 class TestAdminActionsArtikel(AdminTestCase):
 
     model_admin_class = ArtikelAdmin
-    model = artikel
+    model = _models.Artikel
 
     @classmethod
     def setUpTestData(cls):
-        ausg = make(ausgabe)
+        ausg = make(_models.Ausgabe)
         cls.obj1 = make(cls.model, ausgabe=ausg)
         cls.obj2 = make(cls.model, ausgabe=ausg)
         cls.obj3 = make(cls.model)
@@ -58,7 +58,7 @@ class TestAdminActionsArtikel(AdminTestCase):
 class TestAdminActionAusgabe(AdminTestCase):
 
     model_admin_class = AusgabenAdmin
-    model = ausgabe
+    model = _models.Ausgabe
     raw_data = [
         {'magazin__magazin_name': 'Testmagazin'},
         {'magazin__magazin_name': 'Testmagazin'},
@@ -71,7 +71,7 @@ class TestAdminActionAusgabe(AdminTestCase):
 
     def test_add_bestand(self):
         from DBentry.constants import ZRAUM_ID,  DUPLETTEN_ID
-        lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand')
-        lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dublette')
+        _models.Lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand')
+        _models.Lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dublette')
         response = self.call_action('add_bestand', self.queryset)
         self.assertEqual(response.status_code, 200)

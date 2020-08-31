@@ -1,6 +1,7 @@
 from unittest import mock
 from urllib.parse import urlparse
 
+from django.core import checks
 from django.http.request import QueryDict
 from django.urls import reverse
 from django.utils.http import urlencode
@@ -13,7 +14,7 @@ from DBentry.tests.base import AdminTestCase
 
 class TestAdminMixin(AdminTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     model_admin_class = _admin.BildmaterialAdmin
 
     @mock.patch('DBentry.search.admin.searchform_factory')
@@ -250,10 +251,66 @@ class TestAdminMixin(AdminTestCase):
         self.assertEqual(response.context_data['cl'], "extra from tag")
         patcher.stop()
 
+    def test_check_search_form_fields(self):
+        # Assert that _check_search_form_fields correctly ignores search fields
+        # that cannot be resolved to a model field.
+        # patch get_model_fields so the returned error list does not contain
+        # items pertaining to missing search fields:
+        patcher = mock.patch(
+            'DBentry.search.admin.utils.get_model_fields', new=mock.Mock(return_value=[]))
+        patcher.start()
+        with mock.patch.object(self.model_admin, 'search_form_kwargs'):
+            # A search field that doesn't exist:
+            self.model_admin.search_form_kwargs = {'fields': ['BeepBoop']}
+            errors = self.model_admin._check_search_form_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Info)
+            self.assertEqual(
+                errors[0].msg,
+                "Ignored search form field: 'BeepBoop'. "
+                "Bildmaterial has no field named 'BeepBoop'"
+            )
+            # A valid search field with an invalid lookup:
+            self.model_admin.search_form_kwargs = {'fields': ['titel__beep']}
+            errors = self.model_admin._check_search_form_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Info)
+            self.assertEqual(
+                errors[0].msg,
+                "Ignored search form field: 'titel__beep'. "
+                "Invalid lookup: beep for CharField."
+            )
+        patcher.stop()
+
+    def test_check_search_form_fields_missing_fields(self):
+        # Assert that _check_search_form_fields complains about missing search
+        # fields.
+        patch_config = {
+            'target': 'DBentry.search.admin.utils.get_model_fields',
+            'new': mock.Mock(
+                return_value=[
+                    self.model._meta.get_field('genre'),
+                    self.model._meta.get_field('schlagwort')
+                ]
+            )
+        }
+        with mock.patch(**patch_config):
+            with mock.patch.object(self.model_admin, 'search_form_kwargs'):
+                self.model_admin.search_form_kwargs = {'fields': ['schlagwort']}
+                errors = self.model_admin._check_search_form_fields()
+                self.assertTrue(errors)
+                self.assertEqual(len(errors), 1)
+                self.assertIsInstance(errors[0], checks.Info)
+                self.assertEqual(
+                    errors[0].msg,
+                    "Changelist search form is missing fields for relations:\n\t['genre']"
+                )
 
 class TestSearchFormChangelist(AdminTestCase):
 
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     model_admin_class = _admin.BildmaterialAdmin
 
     search_form_kwargs = {
@@ -268,19 +325,19 @@ class TestSearchFormChangelist(AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.genre1, cls.genre2 = batch(_models.genre, 2)
+        cls.genre1, cls.genre2 = batch(_models.Genre, 2)
         cls.reihe = make(_models.Bildreihe)
         cls.test_data = [
             make(
-                _models.bildmaterial, titel='Object1', datum='2019-05-19',
+                _models.Bildmaterial, titel='Object1', datum='2019-05-19',
                 genre=[cls.genre1, cls.genre2]
             ),
             make(
-                _models.bildmaterial, titel='Object2',  datum='2019-05-20',
+                _models.Bildmaterial, titel='Object2',  datum='2019-05-20',
                 genre=[cls.genre1]
             ),
             make(
-                _models.bildmaterial, titel='Object3',  datum='2019-05-21',
+                _models.Bildmaterial, titel='Object3',  datum='2019-05-21',
                 reihe=cls.reihe,
             ),
         ]

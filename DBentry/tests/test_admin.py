@@ -263,7 +263,7 @@ class AdminTestMethodsMixin(object):
 class TestMIZModelAdmin(AdminTestCase):
 
     model_admin_class = _admin.DateiAdmin
-    model = _models.datei
+    model = _models.Datei
     test_data_count = 1
 
     def test_has_merge_permission(self):
@@ -284,9 +284,9 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_has_alter_bestand_permission(self):
-        # Note: _models.datei._meta doesn't set 'alter_bestand_datei' permission
-        model_admin = _admin.VideoAdmin(_models.video, self.admin_site)
-        codename = get_permission_codename('alter_bestand', _models.video._meta)
+        # Note: _models.Datei._meta doesn't set 'alter_bestand_datei' permission
+        model_admin = _admin.VideoAdmin(_models.Video, self.admin_site)
+        codename = get_permission_codename('alter_bestand', _models.Video._meta)
         self.staff_user.user_permissions.add(
             Permission.objects.get(codename=codename))
         self.assertFalse(
@@ -327,7 +327,7 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_get_change_message_dict(self):
         # auto created
         obj = self.model.band.through.objects.create(
-            band=_models.band.objects.create(band_name='Testband'),
+            band=_models.Band.objects.create(band_name='Testband'),
             datei=self.obj1
         )
         expected = {'name': 'Band', 'object': 'Testband'}
@@ -336,7 +336,7 @@ class TestMIZModelAdmin(AdminTestCase):
 
         # not auto created
         obj = self.model.musiker.through.objects.create(
-            musiker=_models.musiker.objects.create(kuenstler_name='Testmusiker'),
+            musiker=_models.Musiker.objects.create(kuenstler_name='Testmusiker'),
             datei=self.obj1
         )
         expected = {'name': 'Musiker', 'object': 'Testmusiker'}
@@ -345,10 +345,10 @@ class TestMIZModelAdmin(AdminTestCase):
 
     def test_save_model(self):
         # save_model should not update the _name of a ComputedNameModel object.
-        obj = make(_models.person, vorname='Alice', nachname='Testman')
+        obj = make(_models.Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
         self.model_admin.save_model(None, obj, None, None)
-        obj_queryset = _models.person.objects.filter(pk=obj.pk)
+        obj_queryset = _models.Person.objects.filter(pk=obj.pk)
         self.assertEqual(
             list(obj_queryset.values_list('_name', flat=True)),
             ['Alice Testman']
@@ -357,7 +357,7 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_save_related(self):
         # save_related should for an update of the _name of a ComputedNameModel
         # object.
-        obj = make(_models.person, vorname='Alice', nachname='Testman')
+        obj = make(_models.Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
         obj.save(update=False)
         fake_form = type(
@@ -365,7 +365,7 @@ class TestMIZModelAdmin(AdminTestCase):
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(
-            list(_models.person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
+            list(_models.Person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
             ['Alice Mantest']
         )
 
@@ -434,8 +434,8 @@ class TestMIZModelAdmin(AdminTestCase):
 
     def test_change_message_capitalized_fields(self):
         # Assert that the LogEntry/history change message uses the field labels.
-        model_admin = _admin.ArtikelAdmin(_models.artikel, miz_site)
-        obj = make(_models.artikel)
+        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
+        obj = make(_models.Artikel)
         form_class = model_admin.get_form(self.get_request(), obj=obj, change=True)
         form = form_class(data={}, instance=obj)
         change_message = model_admin.construct_change_message(
@@ -460,7 +460,7 @@ class TestMIZModelAdmin(AdminTestCase):
             self.model_admin.list_prefetch_related = 'Not a list!'
             checked = self.model_admin._check_list_prefetch_related()
             self.assertEqual(len(checked), 1)
-            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertIsInstance(checked[0], checks.Error)
             self.assertEqual(
                 checked[0].msg,
                 "{}.list_prefetch_related attribute must be a list or a tuple.".format(
@@ -478,28 +478,173 @@ class TestMIZModelAdmin(AdminTestCase):
             self.assertEqual(len(checked), 2)
             msg_template = (
                 "Invalid item in {model_admin}.list_prefetch_related: "
-                "cannot find '{field_name}' on {model_name} object"
+                "cannot find '{field_name}' on model {object_name}"
             )
             template_kwargs = {
                 'model_admin': self.model_admin_class.__name__,
-                'model_name': self.model._meta.model_name
+                'object_name': self.model._meta.object_name
             }
-            self.assertIsInstance(checked[0], checks.Critical)
+            self.assertIsInstance(checked[0], checks.Error)
             self.assertEqual(
                 checked[0].msg,
                 msg_template.format(field_name='musiker_set', **template_kwargs)
             )
-            self.assertIsInstance(checked[1], checks.Critical)
+            self.assertIsInstance(checked[1], checks.Error)
             self.assertEqual(
                 checked[1].msg,
                 msg_template.format(field_name='band_set', **template_kwargs)
             )
 
+    def test_check_fieldset_fields(self):
+        # Assert that _check_fieldset_fields finds invalid field declarations.
+        with patch.object(self.model_admin, 'fieldsets'):
+            # Should ignore an empty fieldsets attribute or fieldsets without a
+            # 'fields' item:
+            self.model_admin.fieldsets = None
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            self.model_admin.fieldsets = [('name', {'nofields': 'item'})]
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            # 'titel' is a valid field:
+            self.model_admin.fieldsets = [(None, {'fields': ['titel']})]
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            # Now use a field that doesn't exist:
+            msg_template = "fieldset '%s' contains invalid item: '%s'. %s"
+            self.model_admin.fieldsets = [(None, {'fields': ['titel', 'thisisnofield']})]
+            errors = self.model_admin._check_fieldset_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                msg_template % (
+                    'None', 'thisisnofield', "Datei has no field named 'thisisnofield'"
+                )
+            )
+            # And an invalid lookup:
+            self.model_admin.fieldsets = [(None, {'fields': ['titel__beep']})]
+            errors = self.model_admin._check_fieldset_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                msg_template % (
+                    'None', 'titel__beep', "Invalid lookup: beep for CharField."
+                )
+            )
+            # Also check in the case when a field is actually a tuple
+            # (which would be a 'forward pair' for dal):
+            self.model_admin.fieldsets = [(None, {'fields': [('titel', 'media_typ')]})]
+            self.assertFalse(self.model_admin._check_fieldset_fields())
+            self.model_admin.fieldsets = [('Beep', {'fields': [('titel', 'thisisnofield')]})]
+            errors = self.model_admin._check_fieldset_fields()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg, msg_template % (
+                    'Beep', ('titel', 'thisisnofield'), "Datei has no field named 'thisisnofield'"
+                )
+            )
+
+    def test_check_search_fields_lookups(self):
+        # Assert that _check_search_fields_lookups finds invalid search fields
+        # and/or lookups correctly.
+        with patch.object(self.model_admin, 'get_search_fields'):
+            self.model_admin.get_search_fields.return_value = ['titel__iexact']
+            self.assertFalse(self.model_admin._check_search_fields_lookups())
+            # Check for invalid field:
+            self.model_admin.get_search_fields.return_value = ['thisisnofield']
+            errors = self.model_admin._check_search_fields_lookups()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                "Invalid search field '{0}': {1} has no field named '{0}'".format(
+                    'thisisnofield', self.model._meta.object_name)
+            )
+            # Check for invalid lookups:
+            self.model_admin.get_search_fields.return_value = ['genre__genre__year']
+            errors = self.model_admin._check_search_fields_lookups()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(
+                errors[0].msg,
+                "Invalid search field '%s': Invalid lookup: %s for %s." % (
+                    'genre__genre__year', 'year', 'CharField')
+            )
+
+    def test_check_search_fields_lookups_lookup_shortcuts(self):
+        # Assert that _check_search_fields_lookups handles lookup shortcuts
+        # such as '=', '^', '@' (for django's ModelAdmin.construct_search).
+        # Check each valid prefix twice: once with a valid field and once with
+        # an invalid one. If only the invalid fields fail the check, the problem
+        # can't be the prefix.
+        msg_template = "Invalid search field '{0}': {1} has no field named '{0}'"
+        with patch.object(self.model_admin, 'get_search_fields'):
+            for prefix in ('=', '^', '@'):
+                for invalid, field in enumerate(('titel', 'thisisnofield')):
+                    self.model_admin.get_search_fields.return_value = [prefix + field]
+                    with self.subTest(prefix=prefix, field=field):
+                        if invalid:
+                            errors = self.model_admin._check_search_fields_lookups()
+                            self.assertTrue(errors)
+                            self.assertEqual(len(errors), 1)
+                            self.assertIsInstance(errors[0], checks.Error)
+                            expected_msg = msg_template.format(field, self.model._meta.object_name)
+                            self.assertEqual(errors[0].msg, expected_msg)
+                        else:
+                            self.assertFalse(self.model_admin._check_search_fields_lookups())
+            # Any other prefix should receive no special treatment:
+            for field in ('_thisisnofield', '&nofieldeither'):
+                with self.subTest(field=field):
+                    self.model_admin.get_search_fields.return_value = [field]
+                    errors = self.model_admin._check_search_fields_lookups()
+                    self.assertTrue(errors)
+                    self.assertEqual(len(errors), 1)
+                    self.assertIsInstance(errors[0], checks.Error)
+                    # The 'prefix' should be included in the error message.
+                    expected_msg = msg_template.format(field, self.model._meta.object_name)
+                    self.assertEqual(errors[0].msg, expected_msg)
+
+    @patch("DBentry.base.admin.resolve_list_display_item")
+    def test_check_list_item_annotations(self, mocked_resolve):
+        # Assert that _check_list_item_annotations checks that annotations
+        # declared on a list_display item are Aggregations.
+        with patch.object(self.model_admin, 'list_display'):
+            # First: some special conditions where _check_list_item_annotations
+            # just continues looping through the list_display items.
+            # resolve_list_display_item could not resolve the item and
+            # returned None:
+            self.model_admin.list_display = ['thisisnofield']
+            mocked_resolve.return_value = None
+            self.assertFalse(self.model_admin._check_list_item_annotations())
+            # The func returned by resolve_list_display_item does not have
+            # a 'admin_order_field' attribute:
+            some_func = lambda x: x
+            mocked_resolve.return_value = some_func
+            self.assertFalse(self.model_admin._check_list_item_annotations())
+            # The func returned by resolve_list_display_item does not have
+            # a 'annotations' attribute.
+            setattr(some_func, 'admin_order_field', 'beep')
+            self.assertFalse(self.model_admin._check_list_item_annotations())
+            # Add an invalid 'annotation' attribute to our dummy func:
+            setattr(some_func, 'annotation', 'not_an_aggregate_instance')
+            expected_msg = "%s.%s.annotation is not an aggregate: %s" % (
+                    self.model_admin_class.__name__, some_func.__name__, type(''))
+            errors = self.model_admin._check_list_item_annotations()
+            self.assertTrue(errors)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
+            self.assertEqual(errors[0].msg, expected_msg)
+
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.ArtikelAdmin
-    model = _models.artikel
+    model = _models.Artikel
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'autor', 'band', 'musiker', 'ort',
         'spielort', 'veranstaltung'
@@ -512,9 +657,9 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj1 = make(
-            _models.artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',
+            _models.Artikel, ausgabe__magazin=cls.mag, seite=1, schlagzeile='Test!',
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
             musiker__kuenstler_name='Alice Tester', band__band_name='Testband'
         )
@@ -551,7 +696,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AusgabenAdmin
-    model = _models.ausgabe
+    model = _models.Ausgabe
     exclude_expected = ['audio']
     fields_expected = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -564,12 +709,12 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     @classmethod
     def setUpTestData(cls):
         cls.obj1 = make(
-            _models.ausgabe,
+            _models.Ausgabe,
             magazin__magazin_name='Testmagazin',
-            ausgabe_jahr__jahr=[2020, 2021, 2022],
-            ausgabe_num__num=[10, 11, 12],
-            ausgabe_lnum__lnum=[10, 11, 12],
-            ausgabe_monat__monat__monat=['Januar', 'Februar'],
+            ausgabejahr__jahr=[2020, 2021, 2022],
+            ausgabenum__num=[10, 11, 12],
+            ausgabelnum__lnum=[10, 11, 12],
+            ausgabemonat__monat__monat=['Januar', 'Februar'],
             artikel__schlagzeile='Test', artikel__seite=1,
             bestand__lagerort__pk=[ZRAUM_ID, DUPLETTEN_ID],
         )
@@ -585,7 +730,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_anz_artikel(self):
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_artikel(obj), 1)
-        _models.artikel.objects.all().delete()
+        _models.Artikel.objects.all().delete()
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_artikel(obj), 0)
 
@@ -603,9 +748,9 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_add_crosslinks_custom(self):
         obj = make(
-            _models.ausgabe,
-            ausgabe_num__extra=1, ausgabe_lnum__extra=1, ausgabe_monat__extra=1,
-            ausgabe_jahr__extra=1,
+            _models.Ausgabe,
+            ausgabenum__extra=1, ausgabelnum__extra=1, ausgabemonat__extra=1,
+            ausgabejahr__extra=1,
             artikel__extra=1, audio__extra=1, bestand__extra=1,
         )
         # Only artikel should show up in the crosslinks as audio is present in the inlines.
@@ -624,7 +769,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         }
         self.assertInCrosslinks(expected, links)
 
-        with patch.object(_models.ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
+        with patch.object(_models.Ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
             links = self.get_crosslinks(obj)
             expected = {
                 'model_name': 'artikel', 'fld_name': 'ausgabe',
@@ -668,16 +813,16 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         # instead of three for each BaseBrochure child.
         obj = make(self.model)
         make(_models.Brochure, ausgabe=obj)
-        make(_models.Kalendar, ausgabe=obj)
+        make(_models.Kalender, ausgabe=obj)
         make(_models.Katalog, ausgabe=obj)
         crosslinks = self.get_crosslinks(obj, labels={})
         data = {'fld_name': 'ausgabe', 'pk': str(obj.pk)}
         labels = {
             'brochure': 'Broschüren (1)',
-            'kalendar': 'Programmhefte (1)',
+            'kalender': 'Programmhefte (1)',
             'katalog': 'Warenkataloge (1)'
         }
-        for model_name in ('brochure', 'kalendar', 'katalog'):
+        for model_name in ('brochure', 'kalender', 'katalog'):
             with self.subTest(model=model_name):
                 data['model_name'] = model_name
                 data['label'] = labels[model_name]
@@ -687,7 +832,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.MagazinAdmin
-    model = _models.magazin
+    model = _models.Magazin
     exclude_expected = ['genre', 'verlag', 'herausgeber', 'orte']
     fields_expected = [
         'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',
@@ -728,7 +873,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.PersonAdmin
-    model = _models.person
+    model = _models.Person
     exclude_expected = ['orte']
     fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
@@ -764,7 +909,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj1), '')
-        o = make(_models.ort, stadt='Dortmund', land__code='XYZ')
+        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
@@ -773,12 +918,12 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.MusikerAdmin
-    model = _models.musiker
+    model = _models.Musiker
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
+        'kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
 
     raw_data = [
         {},
@@ -813,7 +958,7 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj2), '')
-        o = make(_models.ort, stadt='Dortmund', land__code='XYZ')
+        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj2.orte.add(o)
         self.obj2.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
@@ -822,14 +967,14 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.GenreAdmin
-    model = _models.genre
+    model = _models.Genre
     fields_expected = ['genre']
-    search_fields_expected = ['genre', 'genre_alias__alias', 'pk__iexact']
+    search_fields_expected = ['genre', 'genrealias__alias', 'pk__iexact']
 
     raw_data = [
         {
             'genre': 'Subobject',
-            'genre_alias__alias': ['Alias1', 'Alias2'],
+            'genrealias__alias': ['Alias1', 'Alias2'],
         }
     ]
 
@@ -858,16 +1003,16 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         # instead of three for each BaseBrochure child.
         obj = make(self.model)
         make(_models.Brochure, genre=obj)
-        make(_models.Kalendar, genre=obj)
+        make(_models.Kalender, genre=obj)
         make(_models.Katalog, genre=obj)
         crosslinks = self.get_crosslinks(obj, labels={})
         data = {'fld_name': 'genre', 'pk': str(obj.pk)}
         labels = {
             'brochure': 'Broschüren (1)',
-            'kalendar': 'Programmhefte (1)',
+            'kalender': 'Programmhefte (1)',
             'katalog': 'Warenkataloge (1)'
         }
-        for model_name in ('brochure', 'kalendar', 'katalog'):
+        for model_name in ('brochure', 'kalender', 'katalog'):
             with self.subTest(model=model_name):
                 data['model_name'] = model_name
                 data['label'] = labels[model_name]
@@ -877,14 +1022,14 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.SchlagwortAdmin
-    model = _models.schlagwort
+    model = _models.Schlagwort
     fields_expected = ['schlagwort']
-    search_fields_expected = ['schlagwort', 'schlagwort_alias__alias', 'pk__iexact']
+    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__iexact']
 
     raw_data = [
         {
             'schlagwort': 'Subobject',
-            'schlagwort_alias__alias': ['Alias1', 'Alias2'],
+            'schlagwortalias__alias': ['Alias1', 'Alias2'],
         }
     ]
 
@@ -909,13 +1054,13 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.BandAdmin
-    model = _models.band
+    model = _models.Band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
-    search_fields_expected = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields_expected = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
-            'band_alias__alias': ['Alias1', 'Alias2'],
+            'bandalias__alias': ['Alias1', 'Alias2'],
             'genre__genre': ['Testgenre1', 'Testgenre2'],
             'musiker__kuenstler_name': ['Testkuenstler1', 'Testkuenstler2']
         }
@@ -948,7 +1093,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         self.assertEqual(self.model_admin.orte_string(self.obj1), '')
-        o = make(_models.ort, stadt='Dortmund', land__code='XYZ')
+        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         self.obj1.refresh_from_db()
         self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
@@ -957,7 +1102,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AutorAdmin
-    model = _models.autor
+    model = _models.Autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
@@ -980,7 +1125,7 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.OrtAdmin
-    model = _models.ort
+    model = _models.Ort
     fields_expected = ['stadt', 'land', 'bland']
     search_fields_expected = ['_name']
     test_data_count = 1
@@ -1010,7 +1155,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.LandAdmin
-    model = _models.land
+    model = _models.Land
     fields_expected = ['land_name', 'code']
     search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1
@@ -1024,7 +1169,7 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.BlandAdmin
-    model = _models.bundesland
+    model = _models.Bundesland
     fields_expected = ['bland_name', 'code', 'land']
     search_fields_expected = ['bland_name', 'code']
     test_data_count = 1
@@ -1037,7 +1182,7 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.InstrumentAdmin
-    model = _models.instrument
+    model = _models.Instrument
     fields_expected = ['instrument', 'kuerzel']
     search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
@@ -1050,7 +1195,7 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AudioAdmin
-    model = _models.audio
+    model = _models.Audio
     exclude_expected = [
         'plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort',
         'spielort', 'veranstaltung', 'ort'
@@ -1083,17 +1228,17 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.SpielortAdmin
-    model = _models.spielort
+    model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
-        'name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
 
     crosslinks_expected = [
         {'model_name': 'dokument', 'fld_name': 'spielort', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'spielort', 'label': 'Memorabilien (1)'},
         {'model_name': 'video', 'fld_name': 'spielort', 'label': 'Video Materialien (1)'},
-        {'model_name': 'kalendar', 'fld_name': 'spielort', 'label': 'Programmhefte (1)'},
+        {'model_name': 'kalender', 'fld_name': 'spielort', 'label': 'Programmhefte (1)'},
         {'model_name': 'buch', 'fld_name': 'spielort', 'label': 'Bücher (1)'},
         {'model_name': 'bildmaterial', 'fld_name': 'spielort', 'label': 'Bild Materialien (1)'},
         {'model_name': 'datei', 'fld_name': 'spielort', 'label': 'Dateien (1)'},
@@ -1107,11 +1252,11 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.VeranstaltungAdmin
-    model = _models.veranstaltung
+    model = _models.Veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'name', 'datum', 'veranstaltung_alias__alias',
+        'name', 'datum', 'veranstaltungalias__alias',
         'beschreibung', 'bemerkungen', 'pk__iexact'
     ]
     test_data_count = 1
@@ -1121,7 +1266,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'dokument', 'fld_name': 'veranstaltung', 'label': 'Dokumente (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'veranstaltung', 'label': 'Memorabilien (1)'},
         {'model_name': 'video', 'fld_name': 'veranstaltung', 'label': 'Video Materialien (1)'},
-        {'model_name': 'kalendar', 'fld_name': 'veranstaltung', 'label': 'Programmhefte (1)'},
+        {'model_name': 'kalender', 'fld_name': 'veranstaltung', 'label': 'Programmhefte (1)'},
         {'model_name': 'buch', 'fld_name': 'veranstaltung', 'label': 'Bücher (1)'},
         {'model_name': 'bildmaterial', 'fld_name': 'veranstaltung', 'label': 'Bild Materialien (1)'},
         {'model_name': 'datei', 'fld_name': 'veranstaltung', 'label': 'Dateien (1)'},
@@ -1132,7 +1277,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VerlagAdmin
-    model = _models.verlag
+    model = _models.Verlag
     fields_expected = ['verlag_name', 'sitz']
     search_fields_expected = ['verlag_name']
     crosslinks_expected = [
@@ -1143,7 +1288,7 @@ class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BuchAdmin
-    model = _models.buch
+    model = _models.Buch
     exclude_expected = [
         'herausgeber', 'verlag', 'autor', 'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
@@ -1161,8 +1306,8 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        p1 = make(_models.person, vorname='Alice', nachname='Testman')
-        p2 = make(_models.person, vorname='Bob', nachname='Mantest')
+        p1 = make(_models.Person, vorname='Alice', nachname='Testman')
+        p2 = make(_models.Person, vorname='Bob', nachname='Mantest')
         cls.obj1 = make(
             cls.model,
             autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],
@@ -1255,9 +1400,9 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue(art_index < z_index)
 
 
-class TestKalendarAdmin(AdminTestMethodsMixin, AdminTestCase):
-    model_admin_class = _admin.KalendarAdmin
-    model = _models.Kalendar
+class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
+    model_admin_class = _admin.KalenderAdmin
+    model = _models.Kalender
     fields_expected = [
         'titel', 'zusammenfassung', 'bemerkungen', 'ausgabe', 'beschreibung',
         'ausgabe__magazin'
@@ -1269,7 +1414,7 @@ class TestKalendarAdmin(AdminTestMethodsMixin, AdminTestCase):
 @skip("Unfinished model/ModelAdmin")
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
-    model = _models.memorabilien
+    model = _models.Memorabilien
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
@@ -1281,7 +1426,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
 @skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DokumentAdmin
-    model = _models.dokument
+    model = _models.Dokument
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
@@ -1293,7 +1438,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
 @skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.TechnikAdmin
-    model = _models.technik
+    model = _models.Technik
     fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
@@ -1304,7 +1449,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
-    model = _models.video
+    model = _models.Video
     fields_expected = [
         'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
@@ -1314,7 +1459,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
-    model = _models.bestand
+    model = _models.Bestand
     fields_expected = [
         'bestand_art', 'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
@@ -1323,7 +1468,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
-    model = _models.datei
+    model = _models.Datei
     fields_expected = [
         'titel', 'media_typ', 'datei_pfad', 'beschreibung', 'bemerkungen', 'provenienz']
     exclude_expected = [
@@ -1348,7 +1493,7 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.BildmaterialAdmin
-    model = _models.bildmaterial
+    model = _models.Bildmaterial
     test_data_count = 1
 
     fields_expected = [
@@ -1365,10 +1510,10 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         super().setUpTestData()
 
-        cls.band = make(_models.band)
-        cls.musiker = make(_models.musiker)
+        cls.band = make(_models.Band)
+        cls.musiker = make(_models.Musiker)
         cls.veranstaltung = make(
-            _models.veranstaltung, band=[cls.band], musiker=[cls.musiker])
+            _models.Veranstaltung, band=[cls.band], musiker=[cls.musiker])
         cls.obj1.veranstaltung.add(cls.veranstaltung)
 
     def test_copy_related_set(self):

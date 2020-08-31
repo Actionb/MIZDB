@@ -23,7 +23,7 @@ from dal import autocomplete
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 
     form_class = AusgabeMagazinFieldForm
-    model = _models.ausgabe.audio.through
+    model = _models.Ausgabe.audio.through
     fields = ['ausgabe']
     test_data_count = 1
 
@@ -45,7 +45,7 @@ class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 class TestArtikelForm(ModelFormTestCase):
 
     form_class = ArtikelForm
-    model = _models.artikel
+    model = _models.Artikel
     fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
     test_data_count = 1
 
@@ -80,12 +80,12 @@ class TestArtikelForm(ModelFormTestCase):
 class TestAutorForm(ModelFormTestCase):
     form_class = AutorForm
     fields = ['person', 'kuerzel']
-    model = _models.autor
+    model = _models.Autor
 
     @translation_override(language=None)
     def test_clean(self):
         # clean should raise a ValidationError if either kuerzel or person data is missing
-        p = make(_models.person)
+        p = make(_models.Person)
         expected_error_message = 'Bitte mindestens 1 dieser Felder ausfüllen: Kürzel, Person.'
 
         form = self.get_form(data={'beschreibung': 'Boop'})
@@ -109,13 +109,13 @@ class TestAutorForm(ModelFormTestCase):
 class TestBuchForm(ModelFormTestCase):
     form_class = BuchForm
     fields = ['is_buchband', 'buchband']
-    model = _models.buch
+    model = _models.Buch
 
     @translation_override(language=None)
     def test_clean(self):
         # clean should raise a ValidationError if both is_buchband and buchband
         # data is present.
-        b = make(_models.buch, is_buchband=True)
+        b = make(_models.Buch, is_buchband=True)
         expected_error_message = 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'
 
         form = self.get_form(data={'is_buchband': True, 'buchband': b.pk})
@@ -178,7 +178,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         'cf': forms.ChoiceField(choices=[]),
         'cf2': forms.ChoiceField(choices=[])
     }
-    model = _models.genre
+    model = _models.Genre
     raw_data = [{'genre': 'Very Last'}, {'genre': 'First'}, {'genre': 'Middle'}]
 
     def test_set_choices(self):
@@ -191,7 +191,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
     def test_set_choices_manager(self):
         # choices is a BaseManager
-        choices = {forms.ALL_FIELDS: _models.genre.objects}
+        choices = {forms.ALL_FIELDS: _models.Genre.objects}
         expected = [
             (str(o.pk), str(o))
             for o in [self.obj2, self.obj3, self.obj1]
@@ -202,7 +202,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
     def test_set_choices_queryset(self):
         # choices is a QuerySet
-        choices = {forms.ALL_FIELDS: _models.genre.objects.all()}
+        choices = {forms.ALL_FIELDS: _models.Genre.objects.all()}
         expected = [
             (str(o.pk), str(o))
             for o in [self.obj2, self.obj3, self.obj1]
@@ -308,7 +308,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
 
 class TestAudioForm(ModelFormTestCase):
     form_class = AudioForm
-    model = _models.audio
+    model = _models.Audio
     fields = ['release_id', 'discogs_url']
 
     def test_clean_continues_on_empty_data(self):
@@ -459,21 +459,21 @@ class TestAudioForm(ModelFormTestCase):
 
 class TestMIZAdminInlineFormBase(MyTestCase):
     form = MIZAdminInlineFormBase
-    model = _models.band.musiker.through
+    model = _models.Band.musiker.through
     fields = ['band', 'musiker']
 
     @classmethod
     def setUpTestData(cls):
-        cls.band = make(_models.band)
-        cls.musiker = make(_models.musiker)
-        cls.m2m = _models.band.musiker.through.objects.create(
+        cls.band = make(_models.Band)
+        cls.musiker = make(_models.Musiker)
+        cls.m2m = _models.Band.musiker.through.objects.create(
             band=cls.band, musiker=cls.musiker)
         super().setUpTestData()
 
     def setUp(self):
         super().setUp()
         self.formset_class = forms.inlineformset_factory(
-            _models.band, _models.band.musiker.through,
+            _models.Band, _models.Band.musiker.through,
             form=self.form,
             fields=forms.ALL_FIELDS,
             extra=1,

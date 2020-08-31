@@ -32,9 +32,9 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
     ausgabe__magazin = forms.ModelChoiceField(
         required=False,
         label="Magazin",
-        queryset=_models.magazin.objects.all(),
+        queryset=_models.Magazin.objects.all(),
         widget=make_widget(
-            model=_models.magazin, wrap=True, can_delete_related=False
+            model=_models.Magazin, wrap=True, can_delete_related=False
         )
     )
 
@@ -59,7 +59,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
 
 class ArtikelForm(AusgabeMagazinFieldForm):
     class Meta:
-        model = _models.artikel
+        model = _models.Artikel
         fields = '__all__'
         widgets = {
             'ausgabe': make_widget(
@@ -95,7 +95,7 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
             'titel_orig': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
             'buchband': make_widget(
-                url='acbuchband', model=_models.buch, wrap=False,
+                url='acbuchband', model=_models.Buch, wrap=False,
                 can_delete_related=False
             ),
         }
@@ -152,7 +152,7 @@ class BildmaterialForm(forms.ModelForm):
     """
     The form for the bildmaterial's admin add/change page.
     A BooleanField is added with which the user can request to copy all related
-    musiker/band objects of the related veranstaltung instances to this
+    Musiker/Band objects of the related veranstaltung instances to this
     bildmaterial instance.
     """
 

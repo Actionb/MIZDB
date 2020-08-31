@@ -11,7 +11,7 @@ from DBentry.tests.mixins import TestDataMixin
 
 class TestAdminUtils(TestDataMixin, RequestTestCase):
 
-    model = _models.band
+    model = _models.Band
     test_data_count = 3
     opts = model._meta
 
@@ -57,21 +57,21 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
 
     def test_get_changelist_link(self):
         request = self.get_request()
-        link = utils.get_changelist_link(_models.artikel, request.user)
+        link = utils.get_changelist_link(_models.Artikel, request.user)
         self.assertEqual(link, '<a href="/admin/DBentry/artikel/">Liste</a>')
-        link = utils.get_changelist_link(_models.artikel, request.user, blank=True)
+        link = utils.get_changelist_link(_models.Artikel, request.user, blank=True)
         self.assertEqual(link, '<a href="/admin/DBentry/artikel/" target="_blank">Liste</a>')
 
     def test_get_model_admin_for_model(self):
         from DBentry.admin import ArtikelAdmin
-        self.assertIsInstance(utils.get_model_admin_for_model('artikel'), ArtikelAdmin)
-        self.assertIsInstance(utils.get_model_admin_for_model(_models.artikel), ArtikelAdmin)
+        self.assertIsInstance(utils.get_model_admin_for_model('Artikel'), ArtikelAdmin)
+        self.assertIsInstance(utils.get_model_admin_for_model(_models.Artikel), ArtikelAdmin)
         self.assertIsNone(utils.get_model_admin_for_model('beepboop'))
 
     def test_has_admin_permission(self):
         from DBentry.admin import ArtikelAdmin, BildmaterialAdmin
         request = self.get_request(user=self.noperms_user)
-        model_admin = ArtikelAdmin(_models.artikel, miz_site)
+        model_admin = ArtikelAdmin(_models.Artikel, miz_site)
         self.assertFalse(
             utils.has_admin_permission(request, model_admin),
             msg="Should return False for a user with no permissions."
@@ -81,7 +81,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         perms = Permission.objects.filter(codename__in=('add_artikel', ))
         self.staff_user.user_permissions.set(perms)
         request = self.get_request(user=self.staff_user)
-        model_admin = ArtikelAdmin(_models.artikel, miz_site)
+        model_admin = ArtikelAdmin(_models.Artikel, miz_site)
         self.assertTrue(
             utils.has_admin_permission(request, model_admin),
             msg=(
@@ -91,15 +91,35 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         )
 
         request = self.get_request(user=self.staff_user)
-        model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
+        model_admin = BildmaterialAdmin(_models.Bildmaterial, miz_site)
         self.assertFalse(
             utils.has_admin_permission(request, model_admin),
             msg="Should return False for non-superusers on a superuser only model admin."
         )
 
         request = self.get_request(user=self.super_user)
-        model_admin = BildmaterialAdmin(_models.bildmaterial, miz_site)
+        model_admin = BildmaterialAdmin(_models.Bildmaterial, miz_site)
         self.assertTrue(
             utils.has_admin_permission(request, model_admin),
             msg="Should return True for superuser on a superuser-only model admin."
         )
+
+    def test_get_changelist_url(self):
+        kwargs = {'model': self.model, 'user': self.super_user}
+        for obj_list in (None, [self.obj1], self.test_data):
+            kwargs['obj_list'] = obj_list
+            expected = '/admin/DBentry/band/'
+            if obj_list:
+                expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
+            with self.subTest(obj_list=obj_list):
+                self.assertEqual(utils.get_changelist_url(**kwargs), expected)
+
+    def test_get_changelist_url_no_perms(self):
+        # Assert that an empty string is returned if the user has no permission
+        # to access the requested changelist.
+        self.assertEqual(utils.get_changelist_url(self.model, self.noperms_user), "")
+
+    def test_get_changelist_url_no_reverse(self):
+        # Assert that an empty string is returned if the requested changelist
+        # cannot be resolved.
+        self.assertEqual(utils.get_changelist_url(_models.BaseBrochure, self.super_user), "")

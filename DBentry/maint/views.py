@@ -3,32 +3,17 @@ from collections import OrderedDict
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.urls import reverse
 
 from DBentry import utils
 from DBentry.actions.views import MergeViewWizarded
-from DBentry.base.views import MIZAdminMixin
+from DBentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from DBentry.sites import register_tool
 from DBentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
-
-
-class MaintViewMixin(MIZAdminMixin, UserPassesTestMixin):
-    """
-    Simple mixin that provides django-admin looks from MIZAdminMixin and access
-    restrictions from UserPassesTestMixin.
-    """
-
-    def test_func(self):
-        """
-        test_func for UserPassesTestMixin.
-        Only allow superusers to access the view.
-        """
-        return self.request.user.is_superuser
 
 
 class ModelSelectView(views.generic.FormView):
@@ -40,7 +25,7 @@ class ModelSelectView(views.generic.FormView):
         next_view (str): reverseable view name of the next view.
     """
 
-    template_name = 'admin/basic.html'  # a very generic template
+    template_name = 'admin/basic_form.html'
 
     form_method = 'get'
     submit_value = 'Weiter'
@@ -51,7 +36,7 @@ class ModelSelectView(views.generic.FormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add context variables specific to admin/basic.html:
+        # Add context variables specific to admin/basic_form.html:
         context['submit_value'] = self.submit_value
         context['submit_name'] = self.submit_name
         context['form_method'] = self.form_method
@@ -69,7 +54,7 @@ class ModelSelectView(views.generic.FormView):
         return {'model_name': self.request.GET.get('model_select')}
 
 
-class ModelSelectNextViewMixin(MaintViewMixin):
+class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
     """A mixin that sets up the view following a ModelSelectView."""
 
     def setup(self, request, *args, **kwargs):
@@ -94,7 +79,7 @@ class ModelSelectNextViewMixin(MaintViewMixin):
     index_label='Duplikate finden',
     superuser_only=True
 )
-class DuplicateModelSelectView(MaintViewMixin, ModelSelectView):
+class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
     Main entry point for the duplicates search.
 
@@ -250,14 +235,13 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             items.append((dupe_item, link))
         return items
 
-# TODO: call this "unreferenzierte Datensätze"?
-# TODO: the result page needs a changelist link!
+
 @register_tool(
     url_name='find_unused',
-    index_label='Selten verwendete Datensätze finden',
+    index_label='Unreferenzierte Datensätze',
     superuser_only=True
 )
-class UnusedObjectsView(MaintViewMixin, ModelSelectView):
+class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     """
     View that enables finding objects of a given model that are referenced by
     reversed related models less than a given limit.
@@ -269,7 +253,7 @@ class UnusedObjectsView(MaintViewMixin, ModelSelectView):
     form_method = 'get'
     submit_name = 'get_unused'
     submit_value = 'Suchen'
-    breadcrumbs_title = title = 'Selten verwendete Datensätze finden'
+    breadcrumbs_title = title = 'Unreferenzierte Datensätze'
 
     def get_form_kwargs(self):
         """Use request.GET as form data instead of request.POST."""
@@ -288,9 +272,15 @@ class UnusedObjectsView(MaintViewMixin, ModelSelectView):
             if form.is_valid():
                 model_name = form.cleaned_data['model_select']
                 model = utils.get_model_from_string(model_name)
+                relations, queryset = self.get_queryset(model, form.cleaned_data['limit'])
+                cl_url = utils.get_changelist_url(model, request.user, obj_list=queryset)
                 context_kwargs = {
                     'form': form,
-                    'items': self.build_items(model, form.cleaned_data['limit'])
+                    'items': self.build_items(relations, queryset),
+                    'changelist_link': utils.create_hyperlink(
+                        url=cl_url, content='Änderungsliste',
+                        **{'target': '_blank', 'class': 'button'}
+                    )
                 }
                 context.update(**context_kwargs)
         return self.render_to_response(context)
@@ -343,11 +333,10 @@ class UnusedObjectsView(MaintViewMixin, ModelSelectView):
             }
         return relations, model.objects.filter(pk__in=unused)
 
-    def build_items(self, model, limit):
+    def build_items(self, relations, queryset):
         """Build items for the context."""
         items = []
         under_limit_template = '{model_name} ({count!s})'
-        relations, queryset = self.get_queryset(model, limit)
         for obj in queryset:
             under_limit = []
             for info in relations.values():

@@ -16,19 +16,19 @@ from DBentry.query import (
 
 class TestMIZQuerySet(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     raw_data = [
         {'band_name': 'Testband1'},
         {
-            'band_name': 'Testband2', 'band_alias__alias': 'Coffee',
+            'band_name': 'Testband2', 'bandalias__alias': 'Coffee',
             'genre__genre': ['Rock', 'Jazz']
         },
         {
-            'band_name': 'Testband3', 'band_alias__alias': ['Juice', 'Water'],
+            'band_name': 'Testband3', 'bandalias__alias': ['Juice', 'Water'],
             'genre__genre': ['Rock', 'Jazz']
         },
     ]
-    fields = ['band_name', 'genre__genre', 'band_alias__alias']
+    fields = ['band_name', 'genre__genre', 'bandalias__alias']
 
     @patch.object(
         ValuesDictSearchQuery, 'search',
@@ -68,7 +68,7 @@ class TestMIZQuerySet(DataTestCase):
 
 class TestAusgabeChronologicOrder(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):
@@ -87,29 +87,29 @@ class TestAusgabeChronologicOrder(DataTestCase):
         cls.e_datum, cls.num, cls.lnum, cls.monat, cls.jg = (
             [], [], [], [], []
         )
-        cls.mag = make(_models.magazin)
+        cls.mag = make(_models.Magazin)
 
         for jg, year in enumerate(range(1999, 2005), start=1):
             for i in range(1, 13):
                 cls.e_datum.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    e_datum=get_date(i, year), ausgabe_jahr__jahr=year
+                    e_datum=get_date(i, year), ausgabejahr__jahr=year
                 ))
                 cls.num.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_num__num=i, ausgabe_jahr__jahr=year
+                    ausgabenum__num=i, ausgabejahr__jahr=year
                 ))
                 cls.lnum.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_lnum__lnum=i, ausgabe_jahr__jahr=year
+                    ausgabelnum__lnum=i, ausgabejahr__jahr=year
                 ))
                 cls.monat.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_monat__monat__ordinal=i, ausgabe_jahr__jahr=year
+                    ausgabemonat__monat__ordinal=i, ausgabejahr__jahr=year
                 ))
                 cls.jg.append(make(
                     cls.model, pk=get_random_pk(), magazin=cls.mag,
-                    ausgabe_num__num=i, jahrgang=jg
+                    ausgabenum__num=i, jahrgang=jg
                 ))
         cls.all = cls.e_datum + cls.num + cls.lnum + cls.monat + cls.jg
         super().setUpTestData()
@@ -153,7 +153,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
     def test_chronologic_order_multiple_magazine(self):
         # Assert that chronologic_order is not attempt for a queryset with
         # multiple magazines.
-        make(_models.ausgabe, magazin__magazin_name='Bad', id=1002)
+        make(_models.Ausgabe, magazin__magazin_name='Bad', id=1002)
         queryset = self.model.objects.all()
         with self.assertNumQueries(1):
             queryset = queryset.chronologic_order()
@@ -240,7 +240,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
     def test_find_keeps_order(self):
         # Assert that filtering the queryset via MIZQuerySet.find(ordered=True)
         # maintains the ordering established by chronologic_order.
-        queryset = self.model.objects.filter(ausgabe_jahr__jahr=2000).chronologic_order()
+        queryset = self.model.objects.filter(ausgabejahr__jahr=2000).chronologic_order()
         found_ids = [
             pk for pk, str_repr in queryset.find('2000', ordered=True)
         ]
@@ -280,62 +280,62 @@ class TestAusgabeChronologicOrder(DataTestCase):
 
 class TestAusgabeIncrementJahrgang(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     raw_data = [
         {  # obj1: start_jg
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000],
-            'e_datum': '2000-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000],
+            'e_datum': '2000-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj2: start_jg - 1
             # Should belong to the previous jahrgang.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000],
-            'e_datum': '2000-05-01', 'ausgabe_monat__monat__ordinal': [5],
-            'ausgabe_num__num': [5],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000],
+            'e_datum': '2000-05-01', 'ausgabemonat__monat__ordinal': [5],
+            'ausgabenum__num': [5],
         },
         {  # obj3: start_jg - 1
             # This object *starts* the jahrgang that obj2 also belongs to.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1999],
-            'e_datum': '1999-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [1999],
+            'e_datum': '1999-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj4: start_jg
             # Test the differentation of jahr/num/monat values when the object
             # spans more than one year.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001],
-            'e_datum': '2000-12-31', 'ausgabe_monat__monat__ordinal': [12, 1],
-            'ausgabe_num__num': [12, 1],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000, 2001],
+            'e_datum': '2000-12-31', 'ausgabemonat__monat__ordinal': [12, 1],
+            'ausgabenum__num': [12, 1],
         },
         {  # obj5: start_jg
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
-            'e_datum': '2001-05-01', 'ausgabe_monat__monat__ordinal': [5],
-            'ausgabe_num__num': [5],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
+            'e_datum': '2001-05-01', 'ausgabemonat__monat__ordinal': [5],
+            'ausgabenum__num': [5],
         },
         {  # obj6: start_jg + 1
             # This object begins the jahrgang following the starting jahrgang.
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
-            'e_datum': '2001-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
+            'e_datum': '2001-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj7: start_jg + 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002],
-            'e_datum': '2002-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
+            'e_datum': '2002-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj8: ignored
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6]
         },
         {  # obj9: start_jg - 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1998],
-            'e_datum': '1998-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [1998],
+            'e_datum': '1998-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
         {  # obj10: start_jg - 3
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [1997],
-            'e_datum': '1997-06-01', 'ausgabe_monat__monat__ordinal': [6],
-            'ausgabe_num__num': [6],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [1997],
+            'e_datum': '1997-06-01', 'ausgabemonat__monat__ordinal': [6],
+            'ausgabenum__num': [6],
         },
     ]
 
@@ -384,7 +384,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 
     def test_increment_by_num(self):
         self.queryset.update(e_datum=None)
-        _models.ausgabe_monat.objects.all().delete()
+        _models.AusgabeMonat.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
         self.assertIncrementedUpdateDict(update_dict)
@@ -392,8 +392,8 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 
     def test_increment_by_year(self):
         self.queryset.update(e_datum=None)
-        _models.ausgabe_monat.objects.all().delete()
-        _models.ausgabe_num.objects.all().delete()
+        _models.AusgabeMonat.objects.all().delete()
+        _models.AusgabeNum.objects.all().delete()
         self.obj1.refresh_from_db()
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
 
@@ -427,10 +427,10 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
         # Test increment_jahrgang with a mixed bag of values.
         # Remove the e_datum and month values from obj4 to obj7.
         ids = [self.obj4.pk, self.obj5.pk, self.obj6.pk, self.obj7.pk]
-        _models.ausgabe_monat.objects.filter(ausgabe_id__in=ids).delete()
-        _models.ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
+        _models.AusgabeMonat.objects.filter(ausgabe_id__in=ids).delete()
+        _models.Ausgabe.objects.filter(pk__in=ids).update(e_datum=None)
         # Also remove num values from obj6 and obj7.
-        _models.ausgabe_num.objects.filter(
+        _models.AusgabeNum.objects.filter(
             ausgabe_id__in=[self.obj6.pk, self.obj7.pk]).delete()
 
         update_dict = self.queryset.increment_jahrgang(start_obj=self.obj1, start_jg=10)
@@ -456,15 +456,15 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
 @tag("cn")
 class TestCNQuerySet(DataTestCase):
 
-    model = _models.ausgabe
+    model = _models.Ausgabe
 
     @classmethod
     def setUpTestData(cls):
-        cls.mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.mag = make(_models.Magazin, magazin_name='Testmagazin')
         cls.obj1 = make(cls.model, magazin=cls.mag)
         cls.obj2 = make(
-            cls.model, magazin=cls.mag, ausgabe_monat__monat__monat='Dezember',
-            ausgabe_lnum__lnum=12, ausgabe_num__num=12, ausgabe_jahr__jahr=2000
+            cls.model, magazin=cls.mag, ausgabemonat__monat__monat='Dezember',
+            ausgabelnum__lnum=12, ausgabenum__num=12, ausgabejahr__jahr=2000
         )
         cls.test_data = [cls.obj1, cls.obj2]
         super().setUpTestData()
@@ -610,7 +610,7 @@ class TestCNQuerySet(DataTestCase):
 
 class TestBuchQuerySet(DataTestCase):
 
-    model = _models.buch
+    model = _models.Buch
     raw_data = [
         {'ISBN': '978-1-234-56789-7', 'EAN': '73513537'},
         {'ISBN': '978-4-56-789012-0', 'EAN': "1234567890128"}
@@ -636,19 +636,19 @@ class TestBuchQuerySet(DataTestCase):
 
 class TestValuesDict(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     raw_data = [
         {'band_name': 'Testband1', },
         {
-            'band_name': 'Testband2', 'band_alias__alias': 'Coffee',
+            'band_name': 'Testband2', 'bandalias__alias': 'Coffee',
             'genre__genre': ['Rock', 'Jazz']
         },
         {
-            'band_name': 'Testband3', 'band_alias__alias': ['Juice', 'Water'],
+            'band_name': 'Testband3', 'bandalias__alias': ['Juice', 'Water'],
             'genre__genre': ['Rock', 'Jazz']
         },
     ]
-    fields = ['band_name', 'genre__genre', 'band_alias__alias']
+    fields = ['band_name', 'genre__genre', 'bandalias__alias']
 
     def test_values_dict(self):
         values = self.queryset.values_dict(*self.fields)
@@ -656,11 +656,11 @@ class TestValuesDict(DataTestCase):
             (self.obj1.pk, {'band_name': ('Testband1', )}),
             (self.obj2.pk, {
                 'band_name': ('Testband2', ), 'genre__genre': ('Jazz', 'Rock'),
-                'band_alias__alias': ('Coffee', )
+                'bandalias__alias': ('Coffee', )
             }),
             (self.obj3.pk, {
                 'band_name': ('Testband3', ), 'genre__genre': ('Jazz', 'Rock'),
-                'band_alias__alias': ('Juice', 'Water')
+                'bandalias__alias': ('Juice', 'Water')
             })
         ]
         self.assertEqual(len(values), 3)
@@ -683,7 +683,7 @@ class TestValuesDict(DataTestCase):
         values = self.qs_obj1.values_dict(*self.fields, include_empty=True)
         expected = {
             'band_name': ('Testband1', ), 'genre__genre': (None, ),
-            'band_alias__alias': (None, )
+            'bandalias__alias': (None, )
         }
         self.assertEqual(values.get(self.obj1.pk), expected)
 
@@ -691,7 +691,7 @@ class TestValuesDict(DataTestCase):
         values = self.qs_obj2.values_dict(*self.fields, tuplfy=True)
         expected = (
             ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')),
-            ('band_alias__alias', ('Coffee',))
+            ('bandalias__alias', ('Coffee',))
         )
         # Iterate through the expected_values and compare them individuallly;
         # full tuple comparison includes order equality - and we can't predict
@@ -738,8 +738,8 @@ class TestValuesDict(DataTestCase):
         values = self.qs_obj2.values_dict(*self.fields, flatten=True)
         self.assertIn(self.obj2.pk, values)
         obj2_values = values.get(self.obj2.pk)
-        self.assertIn('band_alias__alias', obj2_values)
-        self.assertIsInstance(obj2_values['band_alias__alias'], tuple)
+        self.assertIn('bandalias__alias', obj2_values)
+        self.assertIsInstance(obj2_values['bandalias__alias'], tuple)
 
         # also test if the multiple genres do not get flattened (however that would work..)
         self.assertIn('genre__genre', obj2_values)
@@ -772,7 +772,7 @@ class TestValuesDict(DataTestCase):
 
 class TestDuplicates(DataTestCase):
 
-    model = _models.musiker
+    model = _models.Musiker
 
     @classmethod
     def setUpTestData(cls):
@@ -804,8 +804,8 @@ class TestDuplicates(DataTestCase):
                 self.assertNotIn(obj, duplicates)
 
     def test_duplicates_m2m(self):
-        g1 = make(_models.genre)
-        g2 = make(_models.genre)
+        g1 = make(_models.Genre)
+        g2 = make(_models.Genre)
 
         self.obj1.genre.add(g1)
         self.obj2.genre.add(g1)
@@ -828,48 +828,48 @@ class TestDuplicates(DataTestCase):
         self.assertNotIn(self.obj3, duplicates)
 
     def test_duplicates_reverse_fk(self):
-        self.obj1.musiker_alias_set.create(alias='Beep')
-        self.obj2.musiker_alias_set.create(alias='Beep')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj1.musikeralias_set.create(alias='Beep')
+        self.obj2.musikeralias_set.create(alias='Beep')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
-        self.obj3.musiker_alias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj3.musikeralias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertIn(self.obj1, duplicates)
         self.assertIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
-        self.obj1.musiker_alias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj1.musikeralias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertNotIn(self.obj1, duplicates)
         self.assertNotIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
     def test_duplicates_reverse_fk_joins(self):
         # Assert that the number of duplicates found is not affected by table joins.
-        self.obj1.musiker_alias_set.create(alias='Beep')
-        self.obj2.musiker_alias_set.create(alias='Beep')
-        self.obj1.musiker_alias_set.create(alias='Boop')
-        self.obj2.musiker_alias_set.create(alias='Boop')
-        duplicates = self.get_duplicate_instances('kuenstler_name', 'musiker_alias__alias')
+        self.obj1.musikeralias_set.create(alias='Beep')
+        self.obj2.musikeralias_set.create(alias='Beep')
+        self.obj1.musikeralias_set.create(alias='Boop')
+        self.obj2.musikeralias_set.create(alias='Boop')
+        duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertEqual(len(duplicates), 2)
 
 
 class TestHumanNameQuerySet(MyTestCase):
 
     def test_find_person(self):
-        obj = make(_models.person, vorname='Peter', nachname='Lustig')
+        obj = make(_models.Person, vorname='Peter', nachname='Lustig')
         for name in ('Peter Lustig', 'Lustig, Peter'):
             with self.subTest():
-                results = _models.person.objects.find(name)
+                results = _models.Person.objects.find(name)
                 msg = "Name looked up: %s" % name
                 self.assertIn((obj.pk, 'Peter Lustig'), results, msg=msg)
 
     def test_find_autor(self):
         obj = make(
-            _models.autor,
+            _models.Autor,
             person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
         )
         names = (
@@ -878,14 +878,14 @@ class TestHumanNameQuerySet(MyTestCase):
         )
         for name in names:
             with self.subTest():
-                results = _models.autor.objects.find(name)
+                results = _models.Autor.objects.find(name)
                 msg = "Name looked up: %s" % name
                 self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg=msg)
 
 
 class TestFindSpecialCases(DataTestCase):
 
-    model = _models.band
+    model = _models.Band
     raw_data = [{'band_name': 'Ümlautße'}]
 
     def test_find_sharp_s(self):

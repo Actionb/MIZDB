@@ -1,0 +1,26 @@
+{% extends 'admin/basic_form.html' %}
+{% load i18n static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}">
+{% endblock extrahead %}
+
+{% block content %}
+{% block form %}
+<div id="changelist"><div id="toolbar"> {# divs are needed for enabling some changelists.css rules/looks #}
+<form method="get">
+    <fieldset id="search-input">
+        <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" style="vertical-align:middle; margin-right:4px;"/></label>
+        <input type="text" size="40" name="q" value="{{q}}" id="searchbar" autofocus />
+        <input type="submit" value="{% trans 'Search' %}" />
+    </fieldset>
+</form>
+</div></div>
+{% endblock form %}
+{% if results %}
+    {% for link in results %}
+        <p>{{link}}</p>
+    {% endfor %}
+{% endif %}
+{% endblock content %}

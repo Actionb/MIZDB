@@ -4,8 +4,8 @@ from django.utils.translation import gettext
 
 from dal import autocomplete
 
+from DBentry import models as _models
 from DBentry.ac.creator import Creator
-from DBentry.models import ausgabe, buch
 from DBentry.logging import LoggingMixin
 from DBentry.utils import get_model_from_string
 
@@ -135,8 +135,8 @@ class ACBuchband(ACBase):
     Autocomplete view that queries buch instances that are defined as 'buchband'.
     """
 
-    model = buch
-    queryset = buch.objects.filter(is_buchband=True)
+    model = _models.Buch
+    queryset = _models.Buch.objects.filter(is_buchband=True)
 
 
 class ACAusgabe(ACBase):
@@ -145,7 +145,7 @@ class ACAusgabe(ACBase):
     the results.
     """
 
-    model = ausgabe
+    model = _models.Ausgabe
 
     def do_ordering(self, queryset):
         return queryset.chronologic_order()

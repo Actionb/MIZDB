@@ -1,11 +1,10 @@
-from django.contrib import admin
 from django.core import checks, exceptions
 from django.db import models
 from django.utils.translation import gettext_lazy
 
 from DBentry.fields import YearField
 from DBentry.managers import CNQuerySet, MIZQuerySet
-from DBentry.utils import get_model_fields
+from DBentry.utils import get_model_fields, get_fields_and_lookups
 
 
 class BaseModel(models.Model):
@@ -197,20 +196,25 @@ class ComputedNameModel(BaseModel):
         fields.
         """
         if not cls.name_composing_fields:
-            return [checks.Warning(
-                "You must specify the fields that make up the name by "
-                "listing them in name_composing_fields."
-            )]
+            return [
+                checks.Warning(
+                    "You must specify the fields that make up the name by "
+                    "listing them in name_composing_fields.",
+                    obj=cls.__name__
+                )
+            ]
         errors = []
         for field in cls.name_composing_fields:
             try:
-                admin.utils.get_fields_from_path(cls, field)
-            except exceptions.FieldDoesNotExist:
-                msg = (
-                    "name_composing_fields attribute contains unknown "
-                    "field: %s" % field
+                get_fields_and_lookups(cls, field)
+            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
+                errors.append(
+                    checks.Error(
+                        "Attribute 'name_composing_fields' contains invalid item: "
+                        "'%s'. %s" % (field, e),
+                        obj=cls
+                    )
                 )
-                errors.append(checks.Error(msg, obj=cls.__name__))
         return errors
 
     def save(self, update=True, *args, **kwargs):

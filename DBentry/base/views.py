@@ -1,4 +1,5 @@
 from django import views
+from django.contrib.auth.mixins import UserPassesTestMixin
 
 from formtools.wizard.views import SessionWizardView
 
@@ -76,3 +77,11 @@ class FixedSessionWizardView(SessionWizardView):
         data = data or kwargs.get('data', None)
         files = files or kwargs.get('files', None)
         return super().get_form(step, data, files)
+
+
+class SuperUserOnlyMixin(UserPassesTestMixin):
+    """Only allow superusers to access the view."""
+
+    def test_func(self):
+        """test_func for UserPassesTestMixin."""
+        return self.request.user.is_superuser

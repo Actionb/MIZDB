@@ -80,7 +80,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 )
             if created or updated:
                 changelist_link = utils.get_changelist_link(
-                    _models.ausgabe,
+                    _models.Ausgabe,
                     request.user,
                     obj_list=[*created, *updated],
                     blank=True
@@ -96,7 +96,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             ids, instances, updated = self.save_data(form)
             return redirect(
                 utils.get_changelist_url(
-                    model=_models.ausgabe,
+                    model=_models.Ausgabe,
                     user=request.user,
                     obj_list=[*instances, *updated]
                 )
@@ -170,7 +170,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if row.get('instance'):
                 instance = row['instance']
             else:
-                instance = _models.ausgabe(**self.instance_data(row))
+                instance = _models.Ausgabe(**self.instance_data(row))
             if not instance.pk:
                 # This is a new instance, mark it as such.
                 instance.save()
@@ -197,17 +197,19 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 if not row.get(field_name):
                     continue
                 data = row[field_name]
-                if not isinstance(data, (list, tuple)):
+                if isinstance(data, tuple):
+                    data = list(data)
+                if not isinstance(data, list):
                     data = [data]
-                accessor_name = "ausgabe_{}_set".format(field_name)
+                accessor_name = "ausgabe{}_set".format(field_name)
                 related_manager = getattr(instance, accessor_name)
                 if field_name == 'monat':
-                    # ausgabe_monat is actually a m2m intermediary table
+                    # ausgabemonat is actually a m2m intermediary table
                     # between tables 'ausgabe' and 'monat'. The form values for
                     # 'monat' refer to the ordinals of the months.
                     for i, value in enumerate(data):
                         if value:
-                            data[i] = _models.monat.objects.filter(ordinal=value).first()
+                            data[i] = _models.Monat.objects.filter(ordinal=value).first()
                 for value in data:
                     if not value:
                         continue
@@ -233,9 +235,9 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 )
                 audio_data = {'titel': titel}
                 # Use the first matching queryset result or create a new instance.
-                audio_instance = _models.audio.objects.filter(**audio_data).first()
+                audio_instance = _models.Audio.objects.filter(**audio_data).first()
                 if audio_instance is None:
-                    audio_instance = _models.audio(**audio_data)
+                    audio_instance = _models.Audio(**audio_data)
                     audio_instance.save()
                     self.log_addition(audio_instance)
                 # Check if the ausgabe instance is already related to the audio
@@ -397,7 +399,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     def get_context_data(self, **kwargs):
         # Add ausgabe's meta for the template.
-        return super().get_context_data(opts=_models.ausgabe._meta)
+        return super().get_context_data(opts=_models.Ausgabe._meta)
 
 
 class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):

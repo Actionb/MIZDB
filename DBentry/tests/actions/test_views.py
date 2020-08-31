@@ -32,7 +32,7 @@ from DBentry.utils import get_obj_link  # parameters: obj, user, admin_site
 
 class TestConfirmationViewMixin(AdminTestCase):
 
-    model = _models.audio
+    model = _models.Audio
     model_admin_class = AudioAdmin
 
     def get_instance(self, **kwargs):
@@ -107,7 +107,7 @@ class TestConfirmationViewMixin(AdminTestCase):
 class TestActionConfirmationView(ActionViewTestCase):
 
     view_class = ActionConfirmationView
-    model = _models.band
+    model = _models.Band
     model_admin_class = BandAdmin
     test_data_count = 1
 
@@ -117,11 +117,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         expected = [['Band: '+ get_obj_link(self.obj1, request.user, blank=True)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
-        a = make(_models.audio, band=self.obj1, format__extra=2)
+        a = make(_models.Audio, band=self.obj1, format__extra=2)
         view = self.get_view(
             request,
-            model_admin=AudioAdmin(_models.audio, miz_site),
-            queryset=_models.audio.objects.all()
+            model_admin=AudioAdmin(_models.Audio, miz_site),
+            queryset=_models.Audio.objects.all()
         )
         view.affected_fields = [
             'titel', 'band__band_name', 'format___name', 'release_id']
@@ -165,7 +165,7 @@ class TestActionConfirmationView(ActionViewTestCase):
 class TestWizardConfirmationView(ActionViewTestCase):
 
     view_class = WizardConfirmationView
-    model = _models.audio
+    model = _models.Audio
     model_admin_class = AudioAdmin
 
     @patch.object(ConfirmationViewMixin, 'get_context_data', return_value={})
@@ -213,36 +213,36 @@ class TestWizardConfirmationView(ActionViewTestCase):
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
     view_class = BulkEditJahrgang
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [
         {  # obj1: jg + 0
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000, 2001],
-            'e_datum': '2000-06-12', 'ausgabe_monat__monat__ordinal': [6]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000, 2001],
+            'e_datum': '2000-06-12', 'ausgabemonat__monat__ordinal': [6]
         },
         {  # obj2: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001],
-            'e_datum': '2001-06-12', 'ausgabe_monat__monat__ordinal': [6]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001],
+            'e_datum': '2001-06-12', 'ausgabemonat__monat__ordinal': [6]
         },
         {  # obj3: ignored
-            'magazin__magazin_name': 'Bad', 'jahrgang': 20, 'ausgabe_jahr__jahr': [2001]
+            'magazin__magazin_name': 'Bad', 'jahrgang': 20, 'ausgabejahr__jahr': [2001]
         },
         {  # obj4: ignored?
             'magazin__magazin_name': 'Testmagazin'
         },
         {  # obj5: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002],
-            'e_datum': '2002-05-11', 'ausgabe_monat__monat__ordinal': [5],
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
+            'e_datum': '2002-05-11', 'ausgabemonat__monat__ordinal': [5],
         },
         {  # obj6: jg + 2 when using e_datum, jg + 1 when using monat
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002],
-            'e_datum': '2002-06-12', 'ausgabe_monat__monat__ordinal': [5]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002],
+            'e_datum': '2002-06-12', 'ausgabemonat__monat__ordinal': [5]
         },
         {  # obj7: jg + 1
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001]
         },
         {  # obj8: jg + 2
-            'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2002]
+            'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2002]
         },
     ]
 
@@ -255,7 +255,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
         request = self.get_request()
         # Objects in this queryset have different magazines.
-        queryset = self.model.objects.filter(ausgabe_jahr__jahr=2001)
+        queryset = self.model.objects.filter(ausgabejahr__jahr=2001)
         view = self.get_view(request, queryset=queryset)
         view.model_admin.message_user = Mock()
         self.assertFalse(view.action_allowed)
@@ -275,7 +275,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # result 0 1 => obj1.affected_fields
         # result 1 0 => obj2
         # result 1 1 => obj2.affected_fields
-        # affected_fields for this view: ['jahrgang','ausgabe_jahr__jahr']
+        # affected_fields for this view: ['jahrgang','ausgabejahr__jahr']
         request = self.get_request()
 
         view = self.get_view(request, queryset=self.qs_obj1)
@@ -366,14 +366,14 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
 
     view_class = BulkAddBestand
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
 
     @classmethod
     def setUpTestData(cls):
-        cls.bestand_lagerort = make(_models.lagerort, pk=ZRAUM_ID, ort='Bestand')
-        cls.dubletten_lagerort = make(_models.lagerort, pk=DUPLETTEN_ID, ort='Dublette')
-        mag = make(_models.magazin, magazin_name='Testmagazin')
+        cls.bestand_lagerort = make(_models.Lagerort, pk=ZRAUM_ID, ort='Bestand')
+        cls.dubletten_lagerort = make(_models.Lagerort, pk=DUPLETTEN_ID, ort='Dublette')
+        mag = make(_models.Magazin, magazin_name='Testmagazin')
 
         cls.obj1 = make(cls.model, magazin=mag)
         cls.obj2 = make(cls.model, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
@@ -389,7 +389,7 @@ class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
     def test_compile_affected_objects(self):
         # Assert that links to the instance's bestand objects are included.
         def get_bestand_links(obj):
-            view_name = "admin:DBentry_%s_change" % (_models.bestand._meta.model_name)
+            view_name = "admin:DBentry_%s_change" % (_models.Bestand._meta.model_name)
             link_template = '<a href="{url}" target="_blank">{lagerort__ort}</a>'
             template = 'Bestand: {link}'
             for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
@@ -511,12 +511,12 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     # test_utils.merge_records directly.
 
     view_class = MergeViewWizarded
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
     raw_data = [
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2000]},
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabe_jahr__jahr': [2001], 'jahrgang':1},
-        {'magazin__magazin_name': 'Bad', 'ausgabe_jahr__jahr': [2001], 'jahrgang': 20},
+        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000]},
+        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001], 'jahrgang':1},
+        {'magazin__magazin_name': 'Bad', 'ausgabejahr__jahr': [2001], 'jahrgang': 20},
         {'magazin__magazin_name': 'Testmagazin', 'jahrgang': 2}
     ]
 
@@ -761,7 +761,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         MergeViewWizarded,
         'perform_action',
         new=Mock(
-            side_effect=models.deletion.ProtectedError('msg', _models.artikel.objects.all()))
+            side_effect=models.deletion.ProtectedError('msg', _models.Artikel.objects.all()))
     )
     def test_done(self):
         # Assert that an admin message is send to user upon encountering a
@@ -815,7 +815,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 class TestMergeViewWizardedArtikel(ActionViewTestCase):
 
     view_class = MergeViewWizarded
-    model = _models.artikel
+    model = _models.Artikel
     model_admin_class = ArtikelAdmin
     test_data_count = 2
 
@@ -830,14 +830,14 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
 class TestMoveToBrochureBase(ActionViewTestCase):
 
     view_class = MoveToBrochureBase
-    model = _models.ausgabe
+    model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
 
     raw_data = [
         {
             'beschreibung': 'Testausgabe', 'bemerkungen': 'Testbemerkung',
             'sonderausgabe': True, 'bestand__extra': 1,
-            'ausgabe_jahr__jahr': [2000, 2001],
+            'ausgabejahr__jahr': [2000, 2001],
             'magazin__magazin_name': 'Testmagazin', 'magazin__beschreibung': 'Beep boop'
         }
     ]
@@ -853,7 +853,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
     @translation_override(language=None)
     def test_action_allowed_has_artikels(self):
-        self.obj1.artikel_set.add(make(_models.artikel, ausgabe=self.obj1))
+        self.obj1.artikel_set.add(make(_models.Artikel, ausgabe=self.obj1))
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
         self.assertFalse(view.action_allowed)
@@ -933,7 +933,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view._magazin_instance = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
-        self.assertFalse(_models.magazin.objects.filter(pk=self.mag.pk).exists())
+        self.assertFalse(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
     def test_perform_action_not_deletes_magazin(self):
         options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': False}
@@ -941,7 +941,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view.mag = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
-        self.assertTrue(_models.magazin.objects.filter(pk=self.mag.pk).exists())
+        self.assertTrue(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
     def test_perform_action_moves_jahre(self):
         options_form_cleaned_data = {'brochure_art': 'brochure'}
@@ -980,21 +980,21 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(_models.Katalog.objects.count(), 1)
         self.assertEqual(_models.Katalog.objects.get().art, 'merch')
 
-    def test_perform_action_kalendar(self):
-        options_form_cleaned_data = {'brochure_art': 'kalendar'}
+    def test_perform_action_kalender(self):
+        options_form_cleaned_data = {'brochure_art': 'kalender'}
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
         view.mag = self.mag
 
-        self.assertEqual(_models.Kalendar.objects.count(), 0)
+        self.assertEqual(_models.Kalender.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
-        self.assertEqual(_models.Kalendar.objects.count(), 1)
+        self.assertEqual(_models.Kalender.objects.count(), 1)
 
     @patch('DBentry.actions.views.get_model_from_string')
     def test_perform_action_protected_ausgabe(self, mocked_model_from_string):
         mocked_model_from_string.return_value = _models.Brochure
         options_form_cleaned_data = {'brochure_art': 'brochure'}
 
-        self.obj1.artikel_set.add(make(_models.artikel, ausgabe_id=self.obj1.pk))
+        self.obj1.artikel_set.add(make(_models.Artikel, ausgabe_id=self.obj1.pk))
         request = self.get_request()
         view = self.get_view(request=request, queryset=self.queryset)
         view.mag = self.mag
@@ -1004,7 +1004,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
             '<a href="/admin/DBentry/ausgabe/{pk}/change/" target="_blank">{name}</a> '
-            '(<a href="/admin/DBentry/ausgabe/?id={pk}" target="_blank">Liste</a>). '
+            '(<a href="/admin/DBentry/ausgabe/?id__in={pk}" target="_blank">Liste</a>). '
             'Es wurden keine Broschüren für diese Ausgaben erstellt.'
         ).format(pk=self.obj1.pk, name=str(self.obj1))
         self.assertMessageSent(request, expected_message)
@@ -1031,7 +1031,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertFalse(self.model.objects.filter(pk=ausgabe_id).exists())
-        self.assertTrue(_models.magazin.objects.filter(pk=magazin_id).exists())
+        self.assertTrue(_models.Magazin.objects.filter(pk=magazin_id).exists())
 
     def test_perform_action_not_accepted(self):
         # Assert that an ausgabe is not changed if the user unticks 'accept'.
@@ -1099,7 +1099,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(view.allowed_permissions, ['delete'])
 
     def test_story(self):
-        other_mag = make(_models.magazin)
+        other_mag = make(_models.Magazin)
         other = make(self.model, magazin=other_mag)
         management_form_data = {
             'form-TOTAL_FORMS': '2', 'form-INITIAL_FORMS': '0', 'form-MAX_NUM_FORMS': ''
@@ -1160,7 +1160,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         post_data.update(changelist_post_data)
         post_data.update(management_form_data)
         response = self.client.post(path=self.changelist_path, data=post_data)
-        self.assertTrue(_models.magazin.objects.filter(pk=self.mag.pk).exists())
+        self.assertTrue(_models.Magazin.objects.filter(pk=self.mag.pk).exists())
 
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)
@@ -1181,7 +1181,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         post_data.update(changelist_post_data)
         post_data.update(management_form_data)
         response = self.client.post(path=self.changelist_path, data=post_data)
-        self.assertFalse(_models.magazin.objects.filter(pk=other_mag.pk).exists())
+        self.assertFalse(_models.Magazin.objects.filter(pk=other_mag.pk).exists())
 
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)

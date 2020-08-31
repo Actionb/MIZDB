@@ -1,5 +1,6 @@
 import re
 from unittest.mock import patch, Mock
+from collections import OrderedDict
 
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse, resolve
@@ -56,7 +57,7 @@ class TestModelSelectView(ViewTestCase):
 
 class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
 
-    model = _models.band
+    model = _models.Band
     view_class = DuplicateObjectsView
 
     @classmethod
@@ -65,7 +66,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         # get_or_create; calling make(band_name = 'X') repeatedly will always
         # return the same band object.
         cls.test_data = [
-            _models.band.objects.create(id=i, band_name='Beep')
+            _models.Band.objects.create(id=i, band_name='Beep')
             for i in range(1, 4)
         ]
         super().setUpTestData()
@@ -196,7 +197,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             msg="Changelist url should be of format <changelist>?id__in=[ids]")
         cl_url, query_params = attrs['href'].split('?')
         self.assertEqual(reverse('admin:DBentry_band_changelist'), cl_url)
-        self.assertEqual("id=" + ",".join(str(o.pk) for o in self.test_data), query_params)
+        self.assertEqual("id__in=" + ",".join(str(o.pk) for o in self.test_data), query_params)
         self.assertIn("target", attrs)
         self.assertEqual(attrs['target'], '_blank')
         self.assertIn("class", attrs)
@@ -208,7 +209,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         test_data = [
             ({'base': ['band_name']}, 'Bandname'),
             ({'m2m': ['genre']}, 'Genre'),
-            ({'reverse': ['band_alias__alias']}, 'Alias')
+            ({'reverse': ['bandalias__alias']}, 'Alias')
         ]
         for request_data, expected in test_data:
             with self.subTest(data=request_data):
@@ -220,11 +221,11 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                 self.assertIn(expected, headers)
 
     def test_build_duplicates_headers_grouped_choices(self):
-        request = self.get_request(data={'reverse': ['band_alias__alias']})
+        request = self.get_request(data={'reverse': ['bandalias__alias']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         form.fields['reverse'].choices = [
-            ('Alias', [('band_alias__alias', 'Alias')])
+            ('Alias', [('bandalias__alias', 'Alias')])
         ]
         self.assertTrue(form.is_valid())
         headers = view.build_duplicates_headers(form)
@@ -237,13 +238,13 @@ class TestUnusedObjectsView(ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.artikel1 = make(_models.artikel)
-        cls.artikel2 = make(_models.artikel)
+        cls.artikel1 = make(_models.Artikel)
+        cls.artikel2 = make(_models.Artikel)
 
-        cls.unused = make(_models.genre)
-        cls.used_once = make(_models.genre)
+        cls.unused = make(_models.Genre)
+        cls.used_once = make(_models.Genre)
         cls.artikel1.genre.add(cls.used_once)
-        cls.used_twice = make(_models.genre)
+        cls.used_twice = make(_models.Genre)
         cls.artikel1.genre.add(cls.used_twice)
         cls.artikel2.genre.add(cls.used_twice)
         cls.test_data = [cls.unused, cls.used_once, cls.used_twice]
@@ -254,7 +255,7 @@ class TestUnusedObjectsView(ViewTestCase):
         # 'unused' records.
         view = self.get_view(request=self.get_request())
         for limit in [0, 1, 2]:
-            relations, queryset = view.get_queryset(_models.genre, limit)
+            relations, queryset = view.get_queryset(_models.Genre, limit)
             with self.subTest(limit=limit):
                 self.assertEqual(queryset.count(), limit + 1)
 
@@ -275,7 +276,7 @@ class TestUnusedObjectsView(ViewTestCase):
     @patch.object(UnusedObjectsView, 'build_items')
     @patch.object(UnusedObjectsView, 'render_to_response')
     def test_get_form_valid(self, mocked_render, mocked_build_items):
-        # Assert that the get response with a valid form not contains the
+        # Assert that the get response with a valid form contains the
         # context variable 'items'.
         data={'get_unused': True, 'model_select': 'artikel', 'limit': 0}
         request = self.get_request(data=data)
@@ -288,12 +289,38 @@ class TestUnusedObjectsView(ViewTestCase):
 
     def test_build_items(self):
         # Check the contents of the list that build_items returns.
-        items = self.get_view(self.get_request()).build_items(model=_models.genre, limit=1)
+        relations = OrderedDict()
+        relations['artikel_rel'] = {
+            'related_model': _models.Artikel,
+            'counts': {self.unused.pk: '0', self.used_once.pk: '1'}
+        }
+        queryset = _models.Genre.objects.filter(pk__in=[self.unused.pk, self.used_once.pk])
+
+        items = self.get_view(self.get_request()).build_items(relations, queryset)
         self.assertEqual(len(items), 2)
+        # Sort via the links to the change pages (lower ID should come first):
         unused, used_once = sorted(items, key=lambda tpl: tpl[0])
-        url = reverse("admin:DBentry_genre_change",args=[self.unused.pk])
+        url = reverse("admin:DBentry_genre_change", args=[self.unused.pk])
         self.assertIn(url, unused[0])
         self.assertIn("Artikel (0)", unused[1])
-        url = reverse("admin:DBentry_genre_change",args=[self.used_once.pk])
+        url = reverse("admin:DBentry_genre_change", args=[self.used_once.pk])
         self.assertIn(url, used_once[0])
         self.assertIn("Artikel (1)", used_once[1])
+
+    @patch.object(UnusedObjectsView, 'build_items')
+    @patch.object(UnusedObjectsView, 'render_to_response')
+    def test_get_changelist_link(self, mocked_render, mocked_build_items):
+        # Assert that the response's context contains a link to the changelist
+        # listing all the unused objects.
+        data={'get_unused': True, 'model_select': 'genre', 'limit': 0}
+        request = self.get_request(data=data)
+        view = self.get_view(request=request)
+        self.assertTrue(view.get_form().is_valid())
+        view.get(request=request)
+        self.assertTrue(mocked_render.called)
+        context = mocked_render.call_args[0][0]
+        self.assertIn('changelist_link', context.keys())
+        link = context['changelist_link']
+        cl_url = reverse('admin:DBentry_genre_changelist') + "?id__in=" + str(self.unused.pk)
+        # Too lazy to unpack the html element with regex to check its other attributes.
+        self.assertIn(cl_url, link)

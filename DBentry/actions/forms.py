@@ -1,9 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
+from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
 from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
-from DBentry.models import lagerort
 from DBentry.utils import get_model_from_string
 
 
@@ -36,14 +36,14 @@ class BulkAddBestandForm(MIZAdminForm):
     bestand = forms.ModelChoiceField(
         required=True,
         label="Lagerort (Bestand)",
-        queryset=lagerort.objects.all(),
-        widget=make_widget(model=lagerort, wrap=True)
+        queryset=_models.Lagerort.objects.all(),
+        widget=make_widget(model=_models.Lagerort, wrap=True)
     )
     dublette = forms.ModelChoiceField(
         required=True,
         label="Lagerort (Dublette)",
-        queryset=lagerort.objects.all(),
-        widget=make_widget(model=lagerort, wrap=True)
+        queryset=_models.Lagerort.objects.all(),
+        widget=make_widget(model=_models.Lagerort, wrap=True)
     )
 
 
@@ -177,11 +177,10 @@ class BrochureActionFormOptions(MIZAdminForm):
     """
 
     def brochure_choices():
-        from DBentry.models import Brochure, Kalendar, Katalog
         return [
-            (Brochure._meta.model_name, Brochure._meta.verbose_name),
-            (Katalog._meta.model_name, Katalog._meta.verbose_name),
-            (Kalendar._meta.model_name, Kalendar._meta.verbose_name),
+            (_models.Brochure._meta.model_name, _models.Brochure._meta.verbose_name),
+            (_models.Katalog._meta.model_name, _models.Katalog._meta.verbose_name),
+            (_models.Kalender._meta.model_name, _models.Kalender._meta.verbose_name)
         ]
 
     brochure_art = forms.ChoiceField(

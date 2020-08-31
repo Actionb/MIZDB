@@ -75,33 +75,36 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 try:
                     if isinstance(field, (list, tuple)):
                         for _field in field:
-                            admin.utils.get_fields_from_path(self.model, _field)
+                            get_fields_and_lookups(self.model, _field)
                     else:
-                        admin.utils.get_fields_from_path(self.model, field)
-                except exceptions.FieldDoesNotExist:
-                    msg = "fieldset %s contains unknown field: %s" % (
-                        fieldset_name, field)
-                    errors.append(checks.Error(msg, obj=self))
+                        get_fields_and_lookups(self.model, field)
+                except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
+                    errors.append(
+                        checks.Error(
+                            "fieldset '%s' contains invalid item: '%s'. %s" % (
+                                fieldset_name, field, e.args[0]),
+                            obj=self.__class__
+                        )
+                    )
         return errors
 
     def _check_search_fields_lookups(self, **kwargs):
         """Check that all search fields and their lookups are valid."""
         errors = []
+        msg_template = "Invalid search field '%s': %s"
         for search_field in self.get_search_fields(request=None):
-            if not search_field[0].isalpha() and search_field[0] != '_':
-                # Lookup alias prefixes for ModelAdmin.construct_search:
-                # '=', '^', '@' etc.
+            if search_field[0] in ('=', '^', '@'):
+                # Lookup shortcut prefixes for ModelAdmin.construct_search.
                 search_field = search_field[1:]
             try:
                 get_fields_and_lookups(self.model, search_field)
-            # TODO: Give this check error a proper message.
-            # This produces a pretty pointless error msg at the moment:
-            #   "?: Musiker has no field named 'musiker_alias'"
-            # It's not immediately clear what is wrong.
-            except exceptions.FieldDoesNotExist as e:
-                errors.append(checks.Critical(e.args[0]))
-            except exceptions.FieldError as e:
-                errors.append(checks.Critical(e.args[0]))
+            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
+                errors.append(
+                    checks.Error(
+                        msg_template % (search_field, e.args[0]),
+                        obj=self.__class__
+                    )
+                )
         return errors
 
     def _check_list_item_annotations(self, **kwargs):
@@ -123,14 +126,17 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 # 'admin_order_field' and 'annotation' are declared.
                 continue
             elif not isinstance(annotation, models.Aggregate):
-                errors.append(checks.Critical(
-                    "%(model_admin)s.%(func)s.annotation "
-                    "is not an aggregate: %(annotation)s" % {
-                        'model_admin': self.__class__.__name__,
-                        'func': func.__name__,
-                        'annotation': type(annotation)
-                    }
-                ))
+                errors.append(
+                    checks.Error(
+                        "%(model_admin)s.%(func)s.annotation "
+                        "is not an aggregate: %(annotation)s" % {
+                            'model_admin': self.__class__.__name__,
+                            'func': func.__name__,
+                            'annotation': type(annotation)
+                        }, 
+                        obj=self.__class__
+                    )
+                )
         return errors
 
     def _check_list_prefetch_related(self, **kwargs):
@@ -141,21 +147,25 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if not getattr(self, 'list_prefetch_related', None):
             return []
         if not isinstance(self.list_prefetch_related, (list, tuple)):
-            return [checks.Critical(
-                "%s.list_prefetch_related attribute must be a list or a tuple." % (
-                    self.__class__.__name__, )
-            )]
+            return [
+                checks.Error(
+                    "%s.list_prefetch_related attribute must be a list or a "
+                    "tuple." % (self.__class__.__name__, ),
+                    obj=self.__class__
+                )
+            ]
         errors = []
         for field_name in self.list_prefetch_related:
             if not hasattr(self.model, field_name):
                 errors.append(
-                    checks.Critical(
+                    checks.Error(
                         "Invalid item in {model_admin}.list_prefetch_related: "
-                        "cannot find '{field_name}' on {model_name} object".format(
+                        "cannot find '{field_name}' on model {object_name}".format(
                             model_admin=self.__class__.__name__,
                             field_name=field_name,
-                            model_name=self.opts.model_name
-                        )
+                            object_name=self.opts.object_name
+                        ),
+                        obj=self.__class__
                     )
                 )
         return errors
@@ -343,7 +353,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 # Ugly code! MIZModelAdmin shouldn't have to know BaseBrochure!
                 relations.extend([
                     (_models.Brochure, rel.remote_field.name, None),
-                    (_models.Kalendar, rel.remote_field.name, None),
+                    (_models.Kalender, rel.remote_field.name, None),
                     (_models.Katalog, rel.remote_field.name, None)
                 ])
             else:
@@ -560,16 +570,16 @@ class BaseAliasInline(BaseTabularInline):
 
 
 class BaseGenreInline(BaseTabularInline):
-    verbose_model = _models.genre
+    verbose_model = _models.Genre
 
 
 class BaseSchlagwortInline(BaseTabularInline):
-    verbose_model = _models.schlagwort
+    verbose_model = _models.Schlagwort
 
 
 class BaseAusgabeInline(BaseTabularInline):
     form = AusgabeMagazinFieldForm
-    verbose_model = _models.ausgabe
+    verbose_model = _models.Ausgabe
     fields = ['ausgabe__magazin', 'ausgabe']
 
 

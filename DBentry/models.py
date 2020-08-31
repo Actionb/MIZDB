@@ -15,13 +15,13 @@ from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
 from DBentry.utils import concat_limit
 
 
-class person(ComputedNameModel):
+class Person(ComputedNameModel):
     vorname = models.CharField(max_length=200, blank=True)
     nachname = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    orte = models.ManyToManyField('ort')
+    orte = models.ManyToManyField('Ort')
 
     name_composing_fields = ['vorname', 'nachname']
     primary_search_fields = ['_name']
@@ -53,23 +53,23 @@ class person(ComputedNameModel):
         return cls._name_default % {'verbose_name': cls._meta.verbose_name}
 
 
-class musiker(BaseModel):
+class Musiker(BaseModel):
     kuenstler_name = models.CharField('Künstlername', max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Musikers')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    person = models.ForeignKey(person, models.SET_NULL, null=True, blank=True)
+    person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
-    genre = models.ManyToManyField('genre', through=_m2m.m2m_musiker_genre)
-    instrument = models.ManyToManyField('instrument', through=_m2m.m2m_musiker_instrument)
-    orte = models.ManyToManyField('ort')
+    genre = models.ManyToManyField('Genre', through=_m2m.m2m_musiker_genre)
+    instrument = models.ManyToManyField('Instrument', through=_m2m.m2m_musiker_instrument)
+    orte = models.ManyToManyField('Ort')
 
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
     primary_search_fields = ['kuenstler_name']
-    search_fields = ['kuenstler_name', 'musiker_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = ['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'musiker_alias__alias': 'Alias',
+        'musikeralias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -80,44 +80,44 @@ class musiker(BaseModel):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
-class musiker_alias(BaseAliasModel):
-    parent = models.ForeignKey('musiker', models.CASCADE)
+class MusikerAlias(BaseAliasModel):
+    parent = models.ForeignKey('Musiker', models.CASCADE)
 
 
-class genre(BaseModel):
+class Genre(BaseModel):
     genre = models.CharField('Genre', max_length=100, unique=True)
 
     create_field = 'genre'
     name_field = 'genre'
     primary_search_fields = ['genre']
-    search_fields = ['genre', 'genre_alias__alias']
+    search_fields = ['genre', 'genrealias__alias']
     search_fields_suffixes = {
-        'genre_alias__alias': 'Alias'
+        'genrealias__alias': 'Alias'
     }
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
-class genre_alias(BaseAliasModel):
-    parent = models.ForeignKey('genre', models.CASCADE)
+class GenreAlias(BaseAliasModel):
+    parent = models.ForeignKey('Genre', models.CASCADE)
 
 
-class band(BaseModel):
+class Band(BaseModel):
     band_name = models.CharField('Bandname', max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre', through=_m2m.m2m_band_genre)
-    musiker = models.ManyToManyField('musiker', through=_m2m.m2m_band_musiker)
-    orte = models.ManyToManyField('ort')
+    genre = models.ManyToManyField('Genre', through=_m2m.m2m_band_genre)
+    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_band_musiker)
+    orte = models.ManyToManyField('Ort')
 
     create_field = 'band_name'
     name_field = 'band_name'
     primary_search_fields = ['band_name']
-    search_fields = ['band_name', 'band_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'band_alias__alias': 'Alias',
+        'bandalias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -126,18 +126,18 @@ class band(BaseModel):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
-class band_alias(BaseAliasModel):
-    parent = models.ForeignKey('band', models.CASCADE)
+class BandAlias(BaseAliasModel):
+    parent = models.ForeignKey('Band', models.CASCADE)
 
 
-class autor(ComputedNameModel):
+class Autor(ComputedNameModel):
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    person = models.ForeignKey('person', models.SET_NULL, null=True, blank=True)
+    person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
-    magazin = models.ManyToManyField('magazin', through=_m2m.m2m_autor_magazin)
+    magazin = models.ManyToManyField('Magazin', through=_m2m.m2m_autor_magazin)
 
     name_composing_fields = ['person___name', 'kuerzel']
     primary_search_fields = ['_name']
@@ -168,8 +168,8 @@ class autor(ComputedNameModel):
         if 'person___name' in data:
             person_name = data['person___name'][0]
             # The person_name should not be a default value:
-            person_default = person._name_default % {
-                'verbose_name': person._meta.verbose_name
+            person_default = Person._name_default % {
+                'verbose_name': Person._meta.verbose_name
             }
             if person_name in (person_default, 'unbekannt'):
                 # person_name is a default value:
@@ -185,7 +185,7 @@ class autor(ComputedNameModel):
             return kuerzel or cls._name_default % {'verbose_name': cls._meta.verbose_name}
 
 
-class ausgabe(ComputedNameModel):
+class Ausgabe(ComputedNameModel):
     UNBEARBEITET = 'unb'
     INBEARBEITUNG = 'iB'
     ABGESCHLOSSEN = 'abg'
@@ -205,14 +205,14 @@ class ausgabe(ComputedNameModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Ausgabe')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    magazin = models.ForeignKey('magazin', models.PROTECT)
+    magazin = models.ForeignKey('Magazin', models.PROTECT)
 
-    audio = models.ManyToManyField('audio', through=_m2m.m2m_audio_ausgabe)
+    audio = models.ManyToManyField('Audio', through=_m2m.m2m_audio_ausgabe)
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
-        'magazin__ausgaben_merkmal', 'ausgabe_jahr__jahr', 'ausgabe_num__num',
-        'ausgabe_lnum__lnum', 'ausgabe_monat__monat__abk'
+        'magazin__ausgaben_merkmal', 'ausgabejahr__jahr', 'ausgabenum__num',
+        'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
@@ -250,13 +250,13 @@ class ausgabe(ComputedNameModel):
         jahre = jahrgang = ''
         if 'jahrgang' in data:
             jahrgang = data['jahrgang'][0]
-        if 'ausgabe_jahr__jahr' in data:
+        if 'ausgabejahr__jahr' in data:
             # Concatenate the years given.
             # Use four digits for the first year,
             # use only the last two digits for the rest.
             jahre = [
                 str(jahr)[2:] if i else str(jahr)
-                for i, jahr in enumerate(sorted(data['ausgabe_jahr__jahr']))
+                for i, jahr in enumerate(sorted(data['ausgabejahr__jahr']))
             ]
             jahre = concat_limit(jahre, sep="/")
         if not jahre:
@@ -269,26 +269,26 @@ class ausgabe(ComputedNameModel):
         e_datum = nums = lnums = monate = ''
         if 'e_datum' in data:
             e_datum = data['e_datum'][0]
-        if 'ausgabe_num__num' in data:
+        if 'ausgabenum__num' in data:
             nums = concat_limit(
-                sorted(data['ausgabe_num__num']),
+                sorted(data['ausgabenum__num']),
                 sep="/",
                 z=2
             )
-        if 'ausgabe_lnum__lnum' in data:
+        if 'ausgabelnum__lnum' in data:
             lnums = concat_limit(
-                sorted(data['ausgabe_lnum__lnum']),
+                sorted(data['ausgabelnum__lnum']),
                 sep="/",
                 z=2
             )
-        if 'ausgabe_monat__monat__abk' in data:
+        if 'ausgabemonat__monat__abk' in data:
             monat_ordering = [
                 'Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep',
                 'Okt', 'Nov', 'Dez'
             ]
             # Sort the month abbreviations according to the calendar.
             monate = sorted(
-                data['ausgabe_monat__monat__abk'],
+                data['ausgabemonat__monat__abk'],
                 key=lambda abk:
                     monat_ordering.index(abk) + 1 if abk in monat_ordering else 0
             )
@@ -327,12 +327,12 @@ class ausgabe(ComputedNameModel):
         return cls._name_default % {'verbose_name': cls._meta.verbose_name}
 
 
-class ausgabe_jahr(BaseModel):
+class AusgabeJahr(BaseModel):
     jahr = YearField('Jahr')
 
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
-    search_fields = ['ausgabe']
+    search_fields = ['jahr']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Jahr'
@@ -341,10 +341,10 @@ class ausgabe_jahr(BaseModel):
         ordering = ['jahr']
 
 
-class ausgabe_num(BaseModel):
+class AusgabeNum(BaseModel):
     num = models.PositiveSmallIntegerField('Nummer')
 
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['num']
 
@@ -355,10 +355,10 @@ class ausgabe_num(BaseModel):
         ordering = ['num']
 
 
-class ausgabe_lnum(BaseModel):
+class AusgabeLnum(BaseModel):
     lnum = models.PositiveSmallIntegerField('Lfd. Nummer')
 
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
     search_fields = ['lnum']
 
@@ -369,9 +369,9 @@ class ausgabe_lnum(BaseModel):
         ordering = ['lnum']
 
 
-class ausgabe_monat(BaseModel):
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE)
-    monat = models.ForeignKey('monat', models.CASCADE)
+class AusgabeMonat(BaseModel):
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
+    monat = models.ForeignKey('Monat', models.CASCADE)
 
     search_fields = ['monat__monat', 'monat__abk']
 
@@ -385,7 +385,7 @@ class ausgabe_monat(BaseModel):
         return self.monat.abk
 
 
-class monat(BaseModel):
+class Monat(BaseModel):
     monat = models.CharField('Monat', max_length=200)
     abk = models.CharField('Abk', max_length=200)
     ordinal = models.PositiveSmallIntegerField(editable=False)
@@ -401,7 +401,7 @@ class monat(BaseModel):
         return self.monat
 
 
-class magazin(BaseModel):
+class Magazin(BaseModel):
     NUM = 'num'
     LNUM = 'lnum'
     MONAT = 'monat'
@@ -424,10 +424,10 @@ class magazin(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre', through=_m2m.m2m_magazin_genre)
-    verlag = models.ManyToManyField('verlag', through=_m2m.m2m_magazin_verlag)
+    genre = models.ManyToManyField('Genre', through=_m2m.m2m_magazin_genre)
+    verlag = models.ManyToManyField('Verlag', through=_m2m.m2m_magazin_verlag)
     herausgeber = models.ManyToManyField('Herausgeber', through=_m2m.m2m_magazin_herausgeber)
-    orte = models.ManyToManyField('ort')
+    orte = models.ManyToManyField('Ort')
 
     create_field = 'magazin_name'
     name_field = 'magazin_name'
@@ -444,13 +444,13 @@ class magazin(BaseModel):
         return str(self.magazin_name)
 
 class MagazinURL(AbstractURLModel):
-    magazin = models.ForeignKey('magazin', models.CASCADE, related_name='urls')
+    magazin = models.ForeignKey('Magazin', models.CASCADE, related_name='urls')
 
 
-class verlag(BaseModel):
+class Verlag(BaseModel):
     verlag_name = models.CharField('Verlag', max_length=200)
 
-    sitz = models.ForeignKey('ort', models.SET_NULL, null=True, blank=True)
+    sitz = models.ForeignKey('Ort', models.SET_NULL, null=True, blank=True)
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
@@ -463,13 +463,13 @@ class verlag(BaseModel):
 
 
 # TODO: clean up the data of models: ort/land/bland
-class ort(ComputedNameModel):
+class Ort(ComputedNameModel):
     stadt = models.CharField(max_length=200, blank=True)
 
     bland = models.ForeignKey(
         'bundesland', models.SET_NULL, verbose_name='Bundesland', null=True, blank=True
     )
-    land = models.ForeignKey('land', models.PROTECT)
+    land = models.ForeignKey('Land', models.PROTECT)
 
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
@@ -521,11 +521,11 @@ class ort(ComputedNameModel):
                 return land
 
 
-class bundesland(BaseModel):
+class Bundesland(BaseModel):
     bland_name = models.CharField('Bundesland', max_length=200)
     code = models.CharField(max_length=4, unique=False)
 
-    land = models.ForeignKey('land', models.PROTECT)
+    land = models.ForeignKey('Land', models.PROTECT)
 
     name_field = 'bland_name'
     primary_search_fields = []
@@ -544,7 +544,7 @@ class bundesland(BaseModel):
         ordering = ['land', 'bland_name']
 
 
-class land(BaseModel):
+class Land(BaseModel):
     land_name = models.CharField('Land', max_length=100, unique=True)
     code = models.CharField(max_length=4, unique=True)
 
@@ -561,24 +561,24 @@ class land(BaseModel):
         ordering = ['land_name']
 
 # TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
-class schlagwort(BaseModel):
+class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
     create_field = 'schlagwort'
     name_field = 'schlagwort'
     primary_search_fields = []
-    search_fields = ['schlagwort', 'schlagwort_alias__alias']
-    search_fields_suffixes = {'schlagwort_alias__alias': 'Alias'}
+    search_fields = ['schlagwort', 'schlagwortalias__alias']
+    search_fields_suffixes = {'schlagwortalias__alias': 'Alias'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
-class schlagwort_alias(BaseAliasModel):
-    parent = models.ForeignKey('schlagwort', models.CASCADE)
+class SchlagwortAlias(BaseAliasModel):
+    parent = models.ForeignKey('Schlagwort', models.CASCADE)
 
 
-class artikel(BaseModel):
+class Artikel(BaseModel):
     F = 'f'
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
@@ -593,17 +593,17 @@ class artikel(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Artikels')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    ausgabe = models.ForeignKey('ausgabe', models.PROTECT)
+    ausgabe = models.ForeignKey('Ausgabe', models.PROTECT)
 
-    genre = models.ManyToManyField('genre', through=_m2m.m2m_artikel_genre)
-    schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_artikel_schlagwort)
-    person = models.ManyToManyField('person', through=_m2m.m2m_artikel_person)
-    autor = models.ManyToManyField('autor', through=_m2m.m2m_artikel_autor)
-    band = models.ManyToManyField('band', through=_m2m.m2m_artikel_band)
-    musiker = models.ManyToManyField('musiker', through=_m2m.m2m_artikel_musiker)
-    ort = models.ManyToManyField('ort', through=_m2m.m2m_artikel_ort)
-    spielort = models.ManyToManyField('spielort', through=_m2m.m2m_artikel_spielort)
-    veranstaltung = models.ManyToManyField('veranstaltung', through=_m2m.m2m_artikel_veranstaltung)
+    genre = models.ManyToManyField('Genre', through=_m2m.m2m_artikel_genre)
+    schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_artikel_schlagwort)
+    person = models.ManyToManyField('Person', through=_m2m.m2m_artikel_person)
+    autor = models.ManyToManyField('Autor', through=_m2m.m2m_artikel_autor)
+    band = models.ManyToManyField('Band', through=_m2m.m2m_artikel_band)
+    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_artikel_musiker)
+    ort = models.ManyToManyField('Ort', through=_m2m.m2m_artikel_ort)
+    spielort = models.ManyToManyField('Spielort', through=_m2m.m2m_artikel_spielort)
+    veranstaltung = models.ManyToManyField('Veranstaltung', through=_m2m.m2m_artikel_veranstaltung)
 
     name_field = 'schlagzeile'
     primary_search_fields = ['schlagzeile']
@@ -631,7 +631,7 @@ class artikel(BaseModel):
             return 'Keine Schlagzeile gegeben!'
 
 
-class buch(BaseModel):
+class Buch(BaseModel):
     # TODO: übersetzer feld
     titel = models.CharField(max_length=200)
     titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
@@ -648,7 +648,7 @@ class buch(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Buches')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    schriftenreihe = models.ForeignKey('schriftenreihe', models.SET_NULL, null=True, blank=True)
+    schriftenreihe = models.ForeignKey('Schriftenreihe', models.SET_NULL, null=True, blank=True)
     buchband = models.ForeignKey(
         'self', models.PROTECT, null=True, blank=True, limit_choices_to={'is_buchband': True},
         related_name='buch_set', help_text='Der Sammelband, der diesen Aufsatz enthält.',
@@ -657,16 +657,16 @@ class buch(BaseModel):
     sprache = models.CharField(max_length=200, blank=True)
 
     herausgeber = models.ManyToManyField('Herausgeber')
-    verlag = models.ManyToManyField('verlag')
-    autor = models.ManyToManyField('autor')
-    genre = models.ManyToManyField('genre')
-    schlagwort = models.ManyToManyField('schlagwort')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker')
-    ort = models.ManyToManyField('ort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    verlag = models.ManyToManyField('Verlag')
+    autor = models.ManyToManyField('Autor')
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -697,8 +697,8 @@ class Herausgeber(BaseModel):
         verbose_name = 'Herausgeber'
         verbose_name_plural = 'Herausgeber'
 
-# TODO: instrument contains a lot of nonsense instruments + kuerzel
-class instrument(BaseModel):
+
+class Instrument(BaseModel):
     instrument = models.CharField(unique=True, max_length=200)
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
 
@@ -718,7 +718,7 @@ class instrument(BaseModel):
         return str(self.instrument)
 
 
-class audio(BaseModel):
+class Audio(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
@@ -734,15 +734,15 @@ class audio(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    plattenfirma = models.ManyToManyField('plattenfirma', through=_m2m.m2m_audio_plattenfirma)
-    band = models.ManyToManyField('band', through=_m2m.m2m_audio_band)
-    genre = models.ManyToManyField('genre', through=_m2m.m2m_audio_genre)
-    musiker = models.ManyToManyField('musiker', through=_m2m.m2m_audio_musiker)
-    person = models.ManyToManyField('person', through=_m2m.m2m_audio_person)
-    schlagwort = models.ManyToManyField('schlagwort', through=_m2m.m2m_audio_schlagwort)
-    spielort = models.ManyToManyField('spielort', through=_m2m.m2m_audio_spielort)
-    veranstaltung = models.ManyToManyField('veranstaltung', through=_m2m.m2m_audio_veranstaltung)
-    ort = models.ManyToManyField('ort', through=_m2m.m2m_audio_ort)
+    plattenfirma = models.ManyToManyField('Plattenfirma', through=_m2m.m2m_audio_plattenfirma)
+    band = models.ManyToManyField('Band', through=_m2m.m2m_audio_band)
+    genre = models.ManyToManyField('Genre', through=_m2m.m2m_audio_genre)
+    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_audio_musiker)
+    person = models.ManyToManyField('Person', through=_m2m.m2m_audio_person)
+    schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_audio_schlagwort)
+    spielort = models.ManyToManyField('Spielort', through=_m2m.m2m_audio_spielort)
+    veranstaltung = models.ManyToManyField('Veranstaltung', through=_m2m.m2m_audio_veranstaltung)
+    ort = models.ManyToManyField('Ort', through=_m2m.m2m_audio_ort)
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -761,7 +761,7 @@ class audio(BaseModel):
         return str(self.titel)
 
 
-class bildmaterial(BaseModel):
+class Bildmaterial(BaseModel):
     titel = models.CharField(max_length=200)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
@@ -776,14 +776,14 @@ class bildmaterial(BaseModel):
     reihe = models.ForeignKey(
         'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe')
 
-    genre = models.ManyToManyField('genre')
-    schlagwort = models.ManyToManyField('schlagwort')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker')
-    ort = models.ManyToManyField('ort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -812,7 +812,7 @@ class Bildreihe(BaseModel):
         verbose_name_plural = 'Bildreihen'
 
 
-class schriftenreihe(BaseModel):
+class Schriftenreihe(BaseModel):
     name = models.CharField(max_length=200)
 
     create_field = 'name'
@@ -825,19 +825,19 @@ class schriftenreihe(BaseModel):
         verbose_name_plural = 'Schriftenreihen'
 
 
-class dokument(BaseModel):
+class Dokument(BaseModel):
     titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Dokumentes')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre')
-    schlagwort = models.ManyToManyField('schlagwort')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker')
-    ort = models.ManyToManyField('ort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -853,19 +853,19 @@ class dokument(BaseModel):
         ]
 
 
-class memorabilien(BaseModel):
+class Memorabilien(BaseModel):
     titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Memorabiliums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre')
-    schlagwort = models.ManyToManyField('schlagwort')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker')
-    ort = models.ManyToManyField('ort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -881,18 +881,18 @@ class memorabilien(BaseModel):
         ]
 
 
-class spielort(BaseModel):
+class Spielort(BaseModel):
     name = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Spielortes')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    ort = models.ForeignKey('ort', models.PROTECT)
+    ort = models.ForeignKey('Ort', models.PROTECT)
 
     name_field = 'name'
     primary_search_fields = ['name']
-    search_fields = ['name', 'spielort_alias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = ['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'spielort_alias__alias': 'Alias',
+        'spielortalias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -901,23 +901,23 @@ class spielort(BaseModel):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
-class spielort_alias(BaseAliasModel):
-    parent = models.ForeignKey('spielort', models.CASCADE)
+class SpielortAlias(BaseAliasModel):
+    parent = models.ForeignKey('Spielort', models.CASCADE)
 
 
-class technik(BaseModel):
+class Technik(BaseModel):
     titel = models.CharField(max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Technik')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre')
-    schlagwort = models.ManyToManyField('schlagwort')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker')
-    ort = models.ManyToManyField('ort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -933,28 +933,28 @@ class technik(BaseModel):
         ]
 
 
-class veranstaltung(BaseModel):
+class Veranstaltung(BaseModel):
     name = models.CharField(max_length=200)
     datum = PartialDateField(blank=False)
 
-    spielort = models.ForeignKey('spielort', models.PROTECT)
+    spielort = models.ForeignKey('Spielort', models.PROTECT)
     reihe = models.ForeignKey('Veranstaltungsreihe', models.PROTECT, blank=True, null=True)
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Veranstaltung')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('genre')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    schlagwort = models.ManyToManyField('schlagwort')
-    musiker = models.ManyToManyField('musiker')
+    genre = models.ManyToManyField('Genre')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    musiker = models.ManyToManyField('Musiker')
 
     name_field = 'name'
     primary_search_fields = ['name']
     search_fields = [
-        'name', 'datum', 'veranstaltung_alias__alias', 'beschreibung', 'bemerkungen']
+        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {
-        'veranstaltung_alias__alias': 'Alias',
+        'veranstaltungalias__alias': 'Alias',
         'datum': 'Datum',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
@@ -971,8 +971,8 @@ class veranstaltung(BaseModel):
         else:
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
-class veranstaltung_alias(BaseAliasModel):
-    parent = models.ForeignKey('veranstaltung', models.CASCADE)
+class VeranstaltungAlias(BaseAliasModel):
+    parent = models.ForeignKey('Veranstaltung', models.CASCADE)  # TODO: add a related_name
 
 
 class Veranstaltungsreihe(BaseModel):
@@ -988,7 +988,7 @@ class Veranstaltungsreihe(BaseModel):
         verbose_name_plural = 'Veranstaltungsreihen'
 
 
-class video(BaseModel):
+class Video(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveSmallIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
@@ -997,13 +997,13 @@ class video(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    band = models.ManyToManyField('band')
-    genre = models.ManyToManyField('genre')
-    musiker = models.ManyToManyField('musiker', through=_m2m.m2m_video_musiker)
-    person = models.ManyToManyField('person')
-    schlagwort = models.ManyToManyField('schlagwort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    band = models.ManyToManyField('Band')
+    genre = models.ManyToManyField('Genre')
+    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_video_musiker)
+    person = models.ManyToManyField('Person')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -1019,7 +1019,7 @@ class video(BaseModel):
         ]
 
 
-class provenienz(BaseModel):
+class Provenienz(BaseModel):
     SCHENK = 'Schenkung'
     SPENDE = 'Spende'
     FUND = 'Fund'
@@ -1034,7 +1034,7 @@ class provenienz(BaseModel):
         'Art der Provenienz', max_length=100, choices=TYP_CHOICES, default=SCHENK
     )
 
-    geber = models.ForeignKey('geber', models.PROTECT)
+    geber = models.ForeignKey('Geber', models.PROTECT)
 
     search_fields = ['geber__name']
 
@@ -1047,7 +1047,7 @@ class provenienz(BaseModel):
         return "{0} ({1})".format(str(self.geber.name), str(self.typ))
 
 
-class geber(BaseModel):
+class Geber(BaseModel):
     name = models.CharField(max_length=200)
 
     name_field = create_field = 'name'
@@ -1059,7 +1059,7 @@ class geber(BaseModel):
         verbose_name_plural = 'Geber'
 
 
-class lagerort(ComputedNameModel):
+class Lagerort(ComputedNameModel):
     ort = models.CharField(max_length=200)
     raum = models.CharField(max_length=200, blank=True)
     regal = models.CharField(max_length=200, blank=True)
@@ -1109,7 +1109,7 @@ class lagerort(ComputedNameModel):
             return ort
 
 
-class bestand(BaseModel):
+class Bestand(BaseModel):
     BESTAND_CHOICES = [
         ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),
         ('buch', 'Buch'), ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
@@ -1120,18 +1120,18 @@ class bestand(BaseModel):
     bestand_art = models.CharField(
         'Bestand-Art', max_length=20, choices=BESTAND_CHOICES, blank=False, default='ausgabe')
 
-    lagerort = models.ForeignKey('lagerort', models.PROTECT)
-    provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
+    lagerort = models.ForeignKey('Lagerort', models.PROTECT)
+    provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
-    audio = models.ForeignKey('audio', models.CASCADE, blank=True, null=True)
-    ausgabe = models.ForeignKey('ausgabe', models.CASCADE, blank=True, null=True)
-    bildmaterial = models.ForeignKey('bildmaterial', models.CASCADE, blank=True, null=True)
+    audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
+    ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
+    bildmaterial = models.ForeignKey('Bildmaterial', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
-    buch = models.ForeignKey('buch', models.CASCADE, blank=True, null=True)
-    dokument = models.ForeignKey('dokument', models.CASCADE, blank=True, null=True)
-    memorabilien = models.ForeignKey('memorabilien', models.CASCADE, blank=True, null=True)
-    technik = models.ForeignKey('technik', models.CASCADE, blank=True, null=True)
-    video = models.ForeignKey('video', models.CASCADE, blank=True, null=True)
+    buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
+    dokument = models.ForeignKey('Dokument', models.CASCADE, blank=True, null=True)
+    memorabilien = models.ForeignKey('Memorabilien', models.CASCADE, blank=True, null=True)
+    technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
+    video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
@@ -1153,10 +1153,10 @@ class bestand(BaseModel):
         for fld_name, _choice in self.BESTAND_CHOICES:
             if getattr(self, fld_name):
                 self.bestand_art = fld_name
-        super(bestand, self).save(force_insert, force_update, using, update_fields)
+        super().save(force_insert, force_update, using, update_fields)
 
 
-class datei(BaseModel):
+class Datei(BaseModel):
     MEDIA_AUDIO = 'audio'
     MEDIA_BILD = 'bild'
     MEDIA_SONSTIGE = 'sonstige'
@@ -1183,16 +1183,16 @@ class datei(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Datei')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    provenienz = models.ForeignKey('provenienz', models.SET_NULL, blank=True, null=True)
+    provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
-    genre = models.ManyToManyField('genre')
-    schlagwort = models.ManyToManyField('schlagwort')
-    person = models.ManyToManyField('person')
-    band = models.ManyToManyField('band')
-    musiker = models.ManyToManyField('musiker', through=_m2m.m2m_datei_musiker)
-    ort = models.ManyToManyField('ort')
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_datei_musiker)
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -1213,7 +1213,7 @@ class Format(ComputedNameModel):
     catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)  # TODO: nr for vinyl?? http://mikiwiki.org/wiki/Nummern_auf_Schallplatten
     bemerkungen = models.TextField(blank=True)
 
-    audio = models.ForeignKey('audio', models.CASCADE)
+    audio = models.ForeignKey('Audio', models.CASCADE)
     format_typ = models.ForeignKey('FormatTyp', models.PROTECT, verbose_name='Format Typ')
     format_size = models.ForeignKey(
         'FormatSize', models.SET_NULL, verbose_name='Format Größe',
@@ -1291,7 +1291,7 @@ class FormatTyp(BaseModel):
         verbose_name_plural = 'Format-Typen'
 
 
-class plattenfirma(BaseModel):
+class Plattenfirma(BaseModel):
     name = models.CharField(max_length=200)
 
     name_field = create_field = 'name'
@@ -1310,9 +1310,7 @@ class BrochureYear(AbstractJahrModel):
 class BrochureURL(AbstractURLModel):
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, related_name='urls')
 
-# FIXME: crosslinks to BaseBrochure do not work
-#   - add a genre to a Brochure
-#   - no Brochure crosslink in that genre
+
 class BaseBrochure(BaseModel):
     titel = models.CharField(max_length=200)
     zusammenfassung = models.TextField(blank=True)
@@ -1323,7 +1321,7 @@ class BaseBrochure(BaseModel):
         verbose_name='Ausgabe', blank=True, null=True
     )
 
-    genre = models.ManyToManyField('genre')
+    genre = models.ManyToManyField('Genre')
 
     name_field = 'titel'
 
@@ -1337,7 +1335,7 @@ class BaseBrochure(BaseModel):
 class Brochure(BaseBrochure):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Broschüre')
 
-    schlagwort = models.ManyToManyField('schlagwort')
+    schlagwort = models.ManyToManyField('Schlagwort')
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
@@ -1352,11 +1350,11 @@ class Brochure(BaseBrochure):
         verbose_name_plural = 'Broschüren'
 
 
-class Kalendar(BaseBrochure):  # TODO: spelling: Kalender
+class Kalender(BaseBrochure):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Programmheftes')
 
-    spielort = models.ManyToManyField('spielort')
-    veranstaltung = models.ManyToManyField('veranstaltung')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']

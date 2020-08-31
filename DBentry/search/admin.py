@@ -196,14 +196,11 @@ class AdminSearchFormMixin(object):
             for field in utils.get_model_fields(self.model, base=False, foreign=True, m2m=True)
         ]
         for field_path in self.search_form_kwargs.get('fields', []):
-            msg = "Ignored '{model_admin}' search form field: '{field}'. %s."
-            msg = msg.format(model_admin=self.__class__.__name__, field=field_path)
+            msg = "Ignored search form field: '{field}'. %s".format( field=field_path)
             try:
                 search_utils.get_dbfield_from_path(self.model, field_path)
-            except exceptions.FieldDoesNotExist:
-                errors.append(checks.Info(msg % "Field does not exist"))
-            except exceptions.FieldError:
-                errors.append(checks.Info(msg % "Field is a reverse relation"))
+            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
+                errors.append(checks.Info(msg % e.args[0], obj=self))
             else:
                 try:
                     rel_fields.remove(field_path.split('__')[0])
@@ -212,8 +209,9 @@ class AdminSearchFormMixin(object):
         if rel_fields:
             errors.append(
                 checks.Info(
-                    "%s changelist search form is missing fields for relations:\n\t%s" %
-                    (self.__class__.__name__, rel_fields)
+                    "Changelist search form is missing fields for relations:"
+                    "\n\t%s" % (rel_fields),
+                    obj=self
                 )
             )
         return errors
