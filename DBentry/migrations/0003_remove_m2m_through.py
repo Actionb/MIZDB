@@ -36,6 +36,8 @@ def load_data(apps, schema_editor):
         m2m_model = get_m2m_model(apps, model_name, accessor_name)
         new_objects = []
         for values in m2m_data:
+            # Reusing the primary key would mess up postgres pk sequencing:
+            values.pop(m2m_model._meta.pk.name)
             new_objects.append(m2m_model(**values))
         m2m_model.objects.bulk_create(new_objects)
 
