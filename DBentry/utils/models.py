@@ -1,4 +1,7 @@
+import sys
+
 from django.apps import apps
+from django.contrib import contenttypes
 from django.core import exceptions
 from django.db import models
 
@@ -373,3 +376,14 @@ def validate_all_model_data(*models):
         else:
             print('All data valid.')
     return invalid
+
+
+def clean_contenttypes(stream=None):
+    """Delete ContentType objects that reference a non-existing model."""
+    if stream is None:
+        stream = sys.stdout
+    for ct in contenttypes.models.ContentType.objects.all():
+        model = ct.model_class()
+        if not model:
+            stream.write("Deleting %s\n" % ct)
+            ct.delete()
