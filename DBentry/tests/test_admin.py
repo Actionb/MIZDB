@@ -1145,6 +1145,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'spielort', 'fld_name': 'ort', 'label': 'Spielorte (1)'},
         {'model_name': 'technik', 'fld_name': 'ort', 'label': 'Technik (1)'},
         {'model_name': 'verlag', 'fld_name': 'sitz', 'label': 'Verlage (1)'},
+        {'model_name': 'video', 'fld_name': 'ort', 'label': 'Video Materialien (1)'}
     ]
 
     def bland_forwarded(self):
@@ -1451,10 +1452,10 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'titel', 'tracks', 'laufzeit', 'jahr', 'quelle', 'beschreibung', 'bemerkungen', 'medium']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
-        'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung']
+        'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
