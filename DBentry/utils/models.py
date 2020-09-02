@@ -1,9 +1,9 @@
 import sys
 
 from django.apps import apps
-from django.contrib import contenttypes
+from django.contrib import auth, contenttypes
 from django.core import exceptions
-from django.db import models
+from django.db import models, utils
 
 
 def get_model_from_string(model_name, app_label='DBentry'):
@@ -387,3 +387,46 @@ def clean_contenttypes(stream=None):
         if not model:
             stream.write("Deleting %s\n" % ct)
             ct.delete()
+
+
+def clean_permissions(stream=None):
+    """
+    Clean up the permissions and their codenames.
+
+    Permissions don't keep up with changes to the names of models, meaning you
+    can end up with two Permissions for the same action (e.g. 'add') on the same
+    model but with different codenames.
+    """
+    if stream is None:
+        stream = sys.stdout
+    for p in auth.models.Permission.objects.all():
+        action, _model_name = p.codename.split('_', 1)
+        model = p.content_type.model_class()
+        if not model:
+            stream.write(
+                "ContentType of %s references unknown model: %s.%s\n"
+                "Try running clean_contenttypes.\n" % (
+                    p.name, p.content_type.app_label, p.content_type.model)
+            )
+            continue
+        if action not in model._meta.default_permissions:
+            # Only update default permissions.
+            continue
+        old_codename = p.codename
+        new_codename = auth.get_permission_codename(action, model._meta)
+        if old_codename == new_codename:
+            # Nothing to update.
+            continue
+        try:
+            p.codename = new_codename
+            p.save()
+        except utils.IntegrityError:
+            stream.write(
+                "Permission with codename '%s' already exists. "
+                "Deleting permission with outdated codename: '%s'\n" % (
+                    new_codename, old_codename)
+            )
+            p.delete()
+        else:
+            stream.write(
+                "Updated %s '%s' codename to '%s'\n" % (p, old_codename, new_codename))
