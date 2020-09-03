@@ -58,15 +58,6 @@ class AudioAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.Veranstaltung
-    class FormatInLine(BaseStackedInline):
-        model = _models.Format
-        extra = 0
-        filter_horizontal = ['tag']
-        fieldsets = [
-            (None, {'fields': ['anzahl', 'format_typ', 'format_size', 'catalog_nr']}),
-            ('Tags', {'fields': ['tag'], 'classes': ['collapse', 'collapsed']}),
-            ('Bemerkungen', {'fields': ['bemerkungen'], 'classes': ['collapse', 'collapsed']})
-        ]
     class OrtInLine(BaseTabularInline):
         model = _models.Audio.ort.through
         verbose_model = _models.Ort
@@ -84,12 +75,12 @@ class AudioAdmin(MIZModelAdmin):
     form = AudioForm
     index_category = 'Archivgut'
     save_on_top = True
-    list_display = ['__str__', 'formate_string', 'kuenstler_string']
-    list_prefetch_related = ['band', 'musiker', 'format_set']
+    list_display = ['__str__', 'medium', 'kuenstler_string']
+    list_prefetch_related = ['band', 'musiker']
 
     fieldsets = [
         (None, {'fields':
-                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle',
+                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'medium',
                 'beschreibung', 'bemerkungen']
         }),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
@@ -98,7 +89,7 @@ class AudioAdmin(MIZModelAdmin):
         GenreInLine, SchlInLine,
         MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
-        PersonInLine, FormatInLine, PlattenInLine,
+        PersonInLine, PlattenInLine,
         AusgabeInLine, DateiInLine,
         BestandInLine
     ]
@@ -106,19 +97,13 @@ class AudioAdmin(MIZModelAdmin):
         'fields': [
             'musiker', 'band', 'person', 'genre', 'schlagwort',
             'ort', 'spielort', 'veranstaltung', 'plattenfirma',
-            'format__format_size', 'format__format_typ', 'format__tag',
-            'release_id'
+            'medium', 'release_id'
         ],
-        'labels': {'format__tag': 'Tags'}
     }
 
     def kuenstler_string(self, obj):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
     kuenstler_string.short_description = 'Künstler'
-
-    def formate_string(self, obj):
-        return concat_limit(list(obj.format_set.all()))
-    formate_string.short_description = 'Format'
 
 
 @admin.register(_models.Ausgabe, site=miz_site)
@@ -998,8 +983,7 @@ class KalenderAdmin(BaseBrochureAdmin):
 
 @admin.register(
     _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
-    _models.Provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
-    _models.FormatTyp, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
+    _models.Provenienz, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
     _models.VideoMedium,
     site=miz_site
 )
