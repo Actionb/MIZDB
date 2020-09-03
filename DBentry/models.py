@@ -737,6 +737,11 @@ class Audio(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Audio Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
+    medium = models.ForeignKey(
+        'AudioMedium', models.PROTECT, blank=True, null=True, verbose_name="Medium",
+        help_text="Format des Speichermediums."
+    )
+
     plattenfirma = models.ManyToManyField('Plattenfirma', through=_m2m.m2m_audio_plattenfirma)
     band = models.ManyToManyField('Band', through=_m2m.m2m_audio_band)
     genre = models.ManyToManyField('Genre', through=_m2m.m2m_audio_genre)
@@ -762,6 +767,19 @@ class Audio(BaseModel):
 
     def __str__(self):
         return str(self.titel)
+
+
+class AudioMedium(BaseModel):
+    medium = models.CharField(max_length=200, unique=True)
+
+    create_field = 'medium'
+    name_field = 'medium'
+    search_fields = ['medium']
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'Audio-Medium'
+        verbose_name_plural = 'Audio-Medium'
+        ordering = ['medium']
 
 
 class Bildmaterial(BaseModel):
