@@ -1021,7 +1021,7 @@ class AuthAdminMixin(object):
 
     def formfield_for_manytomany(self, db_field, request=None, **kwargs):
         formfield = super().formfield_for_manytomany(db_field, request=request, **kwargs)
-        if 'permission' in db_field.name and formfield.queryset.model == Permission:
+        if formfield.queryset.model == Permission:
             choices = []
             for perm in formfield.queryset:
                 object_name = str(perm.content_type)
