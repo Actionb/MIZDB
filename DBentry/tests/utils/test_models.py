@@ -23,15 +23,15 @@ class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_many(self):
         expected = (
-            _models.Format._meta.get_field('tag'),
-            _models.FormatTag._meta.get_field('format')
+            _models.Artikel._meta.get_field('genre'),
+            _models.Genre._meta.get_field('artikel')
         )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.Format, _models.FormatTag)), expected)
+            (utils.get_relations_between_models(_models.Artikel, _models.Genre)), expected)
         self.assertEqual(
-            (utils.get_relations_between_models(_models.FormatTag, _models.Format)), expected)
-        self.assertEqual((utils.get_relations_between_models('Format', 'FormatTag')), expected)
-        self.assertEqual((utils.get_relations_between_models('FormatTag', 'Format')), expected)
+            (utils.get_relations_between_models(_models.Genre, _models.Artikel)), expected)
+        self.assertEqual((utils.get_relations_between_models('Artikel', 'Genre')), expected)
+        self.assertEqual((utils.get_relations_between_models('Genre', 'Artikel')), expected)
 
     def test_is_protected(self):
         art = make(_models.Artikel)
@@ -91,8 +91,8 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Ort), ['land'])
         self.assertEqual(
             required_field_names(_models.Artikel), ['schlagzeile', 'seite', 'ausgabe'])
-        # _models.Format.anzahl field is required but has a default:
-        self.assertEqual(required_field_names(_models.Format), ['audio', 'format_typ'])
+        # _models.Provenienz.typ field is required but has a default:
+        self.assertEqual(required_field_names(_models.Provenienz), ['geber'])
         self.assertEqual(required_field_names(_models.Bestand), ['lagerort'])
 
     def test_get_updateable_fields(self):

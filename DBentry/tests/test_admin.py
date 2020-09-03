@@ -1228,14 +1228,13 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     # (and removing catalog_nr) the fields for the form that way
     fields_expected = [
         'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
-        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen'
+        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'medium'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band__band_name': 'Testband',
-            'musiker__kuenstler_name': 'Alice Tester',
-            'format__format_typ__typ': ['TestTyp1', 'TestTyp2']
+            'musiker__kuenstler_name': 'Alice Tester'
         }
     ]
 
@@ -1244,9 +1243,6 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.model_admin.kuenstler_string(self.obj1),
             'Testband, Alice Tester'
         )
-
-    def test_formate_string(self):
-        self.assertEqual(self.model_admin.formate_string(self.obj1), 'TestTyp1, TestTyp2')
 
 
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
