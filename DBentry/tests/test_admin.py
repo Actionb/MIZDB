@@ -3,7 +3,7 @@ from unittest import skip
 from unittest.mock import patch, Mock
 
 from django.db import connections
-from django.contrib import admin
+from django.contrib import admin, contenttypes
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.core import checks
@@ -18,7 +18,7 @@ from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import MIZAdminSite, miz_site
-from DBentry.tests.base import AdminTestCase, UserTestCase
+from DBentry.tests.base import AdminTestCase, UserTestCase, TestCase
 from DBentry.utils import get_model_fields
 
 
@@ -1603,3 +1603,20 @@ class TestAdminSite(UserTestCase):
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path=path, user=self.super_user)
                 self.assertEqual(response.status_code, 200, msg=path)
+
+
+class TestAuthAdminMixin(TestCase):
+
+    @patch('DBentry.admin.super')
+    def test_formfield_for_manytomany(self, mocked_super):
+        # Assert that formfield_for_manytomany adds a (<model_class_name>) to
+        # the human-readable part of the formfield's choices.
+        ct = contenttypes.models.ContentType.objects.get_for_model(_models.AusgabeLnum)
+        perm_queryset = Permission.objects.filter(content_type=ct)
+        mocked_formfield = Mock(queryset=perm_queryset)
+        mocked_super.return_value = Mock(
+            formfield_for_manytomany=Mock(return_value=mocked_formfield))
+        formfield = _admin.AuthAdminMixin().formfield_for_manytomany(None)
+        for choice in formfield.choices:
+            with self.subTest(choice=choice):
+                self.assertIn(_models.AusgabeLnum.__name__, choice[1])
