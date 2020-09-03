@@ -140,7 +140,7 @@ class BaseAliasModel(BaseModel):
     class Meta(BaseModel.Meta):
         ordering = ['alias']
         verbose_name = 'Alias'
-        verbose_name = 'Alias'
+        verbose_name_plural = 'Aliases'
         abstract = True
 
 

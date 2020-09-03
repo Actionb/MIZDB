@@ -743,20 +743,37 @@ class VideoAdmin(MIZModelAdmin):
     class BandInLine(BaseTabularInline):
         model = _models.Video.band.through
         verbose_model = _models.Band
+    class OrtInLine(BaseTabularInline):
+        model = _models.Video.ort.through
+        verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.Video.spielort.through
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
+    class DateiInLine(BaseTabularInline):
+        model = _m2m.m2m_datei_quelle
+        fields = ['datei']
+        verbose_model = _models.Datei
 
     index_category = 'Archivgut'
-    superuser_only = True
+    collapse_all = True
+    save_on_top = True
 
     inlines = [
-        GenreInLine, SchlInLine, MusikerInLine, BandInLine,
-        SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
+        GenreInLine, SchlInLine,
+        MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        PersonInLine, DateiInLine, BestandInLine
     ]
+
+    search_form_kwargs = {
+        'fields': [
+            'musiker', 'band', 'person', 'genre', 'schlagwort',
+            'ort', 'spielort', 'veranstaltung', 'medium'
+        ],
+    }
 
 
 @admin.register(_models.Bundesland, site=miz_site)
@@ -984,6 +1001,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
     _models.Provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
     _models.FormatTyp, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
+    _models.VideoMedium,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
