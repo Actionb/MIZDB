@@ -79,10 +79,10 @@ class AudioAdmin(MIZModelAdmin):
     list_prefetch_related = ['band', 'musiker']
 
     fieldsets = [
-        (None, {'fields':
-                ['titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'medium',
-                'beschreibung', 'bemerkungen']
-        }),
+        (None, {'fields': [
+                'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'medium',
+                'plattennummer', 'beschreibung', 'bemerkungen'
+        ]}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     inlines = [

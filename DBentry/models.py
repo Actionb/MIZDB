@@ -727,8 +727,7 @@ class Audio(BaseModel):
     )
     e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
-    # TODO: field 'catalog_nr' is missing in AudioAdmin -- Format.catalog_nr does that job??
-    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)
+    plattennummer = models.CharField(max_length=200, blank=True)
     release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
     discogs_url = models.URLField(
         'Link discogs.com', blank=True,

@@ -1224,10 +1224,8 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'plattenfirma', 'band', 'genre', 'musiker', 'person', 'schlagwort',
         'spielort', 'veranstaltung', 'ort'
     ]
-    # Note that AudioAdmin specifies a fieldsets attribute, overriding
-    # (and removing catalog_nr) the fields for the form that way
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'catalog_nr',
+        'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'plattennummer',
         'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'medium'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
