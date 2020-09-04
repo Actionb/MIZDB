@@ -1,4 +1,3 @@
-# TODO: Permissions in the auth forms are difficult to distinguish.
 # TODO: tweak index_category of some ModelAdmins:
 #   Herausgeber is in 'Stammdaten', Verlag is in 'Sonstige'
 from django.contrib import admin

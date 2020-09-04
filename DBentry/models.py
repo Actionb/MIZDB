@@ -975,7 +975,7 @@ class Veranstaltung(BaseModel):
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
 class VeranstaltungAlias(BaseAliasModel):
-    parent = models.ForeignKey('Veranstaltung', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Veranstaltung', models.CASCADE)
 
 
 class Veranstaltungsreihe(BaseModel):
