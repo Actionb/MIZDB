@@ -23,7 +23,7 @@
                             </th>
                         {% endif %}
                     {% endfor %}
-                    {% if inline_admin_formset.formset.can_delete %}<th>{% trans "Delete?" %}</th>{% endif %}
+                    {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission %}<th>{% trans "Delete?" %}</th>{% endif %}
                 </tr></thead>
 
                 <tbody>
@@ -35,12 +35,12 @@
                             id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
                             <td class="original">
                                 {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
-                                {{ inline_admin_form.fk_field.field }}
+                                {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
                                 {% spaceless %}
                                 {% for fieldset in inline_admin_form %}
                                     {% for line in fieldset %}
                                         {% for field in line %}
-                                            {% if field.field.is_hidden %} {{ field.field }} {% endif %}
+                                            {% if not field.is_readonly and field.field.is_hidden %} {{ field.field }} {% endif %}
                                         {% endfor %}
                                     {% endfor %}
                                 {% endfor %}
@@ -49,7 +49,7 @@
                             {% for fieldset in inline_admin_form %}
                                 {% for line in fieldset %}
                                     {% for field in line %}
-                                        {% if not field.field.is_hidden %}
+                                        {% if field.is_readonly or not field.field.is_hidden %}
                                             <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>
                                                 {% if field.is_readonly %}<p>{{ field.contents }}</p>
                                                 {% else %}{{ field.field.errors.as_ul }}{{ field.field }}
@@ -59,7 +59,7 @@
                                     {% endfor %}
                                 {% endfor %}
                             {% endfor %}
-                            {% if inline_admin_formset.formset.can_delete %}
+                            {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission %}
                                 <td class="delete">{% if inline_admin_form.original %}{{ inline_admin_form.deletion_field.field }}{% endif %}</td>
                             {% endif %}
                         </tr>
