@@ -113,13 +113,21 @@ class RequestTestCase(UserTestCase):
     def get_path(self):
         return self.path
 
-    def post_request(self, path=None, data=None, user=None, **kwargs):
+    def get_response(self, method, path, data=None, user=None, **kwargs):
         self.client.force_login(user or self.super_user)
-        return self.client.post(path or self.get_path(), data, **kwargs).wsgi_request
+        if method == 'GET':
+            func = self.client.get
+        elif method == 'POST':
+            func = self.client.post
+        else:
+            raise ValueError("Unknown request method: %s" % method)
+        return func(path or self.get_path(), data, **kwargs)
+
+    def post_request(self, path=None, data=None, user=None, **kwargs):
+        return self.get_response('POST', path, data, user, **kwargs).wsgi_request
 
     def get_request(self, path=None, data=None, user=None, **kwargs):
-        self.client.force_login(user or self.super_user)
-        return self.client.get(path or self.get_path(), data, **kwargs).wsgi_request
+        return self.get_response('GET', path, data, user, **kwargs).wsgi_request
 
     def assertMessageSent(self, request, expected_message):
         messages = [str(msg) for msg in get_messages(request)]
