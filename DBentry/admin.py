@@ -514,10 +514,10 @@ class MagazinAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):
         model = _models.MagazinURL
     class VerlagInLine(BaseTabularInline):
-        model = _m2m.m2m_magazin_verlag
+        model = _models.Magazin.verlag.through
         verbose_model = _models.Verlag
     class HerausgeberInLine(BaseTabularInline):
-        model = _m2m.m2m_magazin_herausgeber
+        model = _models.Magazin.herausgeber.through
         verbose_model = _models.Herausgeber
     class GenreInLine(BaseGenreInline):
         model = _models.Magazin.genre.through

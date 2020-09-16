@@ -62,6 +62,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase):
             # The values of the objects in the aforementioned queryset
             self.merger_related[(related_model, related_field)] = list(
                 updated_qs.values(*preserved_fields))
+        ContentType.objects.clear_cache()
 
     def assertRestDeleted(self):
         # Assert whether the other records were deleted after the merge.
@@ -502,10 +503,6 @@ class VideoMergingDataMixin(object):
 
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
         super().setUpTestData()
-
-    def setUp(self):
-        super().setUp()
-        ContentType.objects.clear_cache()
 
 
 class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
