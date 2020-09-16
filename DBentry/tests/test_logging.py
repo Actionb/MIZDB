@@ -86,7 +86,7 @@ class TestLoggingMixin(ViewTestCase):
         log_entry = view.log_change(self.obj1, ['genre'], self.m2m)
         expected = 'Changed {fields} for {name} "{object}".'.format(
             fields=capfirst(self.m2m._meta.get_field('genre').verbose_name),
-            name=self.m2m._meta.verbose_name,
+            name=capfirst(self.m2m._meta.verbose_name),
             object=force_text(self.m2m)
         )
         self.assertEqual(log_entry.get_change_message(), expected)

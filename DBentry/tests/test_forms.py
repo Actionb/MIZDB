@@ -447,21 +447,21 @@ class TestAudioForm(ModelFormTestCase):
 
 class TestMIZAdminInlineFormBase(MyTestCase):
     form = MIZAdminInlineFormBase
-    model = _models.Band.musiker.through
-    fields = ['band', 'musiker']
+    model = _models.Video.musiker.through
+    fields = ['video', 'musiker']
 
     @classmethod
     def setUpTestData(cls):
-        cls.band = make(_models.Band)
+        cls.video = make(_models.Video)
         cls.musiker = make(_models.Musiker)
-        cls.m2m = _models.Band.musiker.through.objects.create(
-            band=cls.band, musiker=cls.musiker)
+        cls.m2m = _models.Video.musiker.through.objects.create(
+            video=cls.video, musiker=cls.musiker)
         super().setUpTestData()
 
     def setUp(self):
         super().setUp()
         self.formset_class = forms.inlineformset_factory(
-            _models.Band, _models.Band.musiker.through,
+            _models.Video, _models.Video.musiker.through,
             form=self.form,
             fields=forms.ALL_FIELDS,
             extra=1,
@@ -471,16 +471,16 @@ class TestMIZAdminInlineFormBase(MyTestCase):
         # Assert that MIZAdminInlineFormBase handles duplicate entries as
         # expected.
         data = {
-            'm2m_band_musiker_set-INITIAL_FORMS': '1',
-            'm2m_band_musiker_set-TOTAL_FORMS': '2',
-            'm2m_band_musiker_set-0-id': self.m2m.pk,
-            'm2m_band_musiker_set-0-musiker': self.musiker.pk,
-            'm2m_band_musiker_set-0-band': self.band.pk,
-            'm2m_band_musiker_set-1-id': '',
-            'm2m_band_musiker_set-1-musiker': self.musiker.pk,
-            'm2m_band_musiker_set-1-band': self.band.pk,
+            'm2m_video_musiker_set-INITIAL_FORMS': '1',
+            'm2m_video_musiker_set-TOTAL_FORMS': '2',
+            'm2m_video_musiker_set-0-id': self.m2m.pk,
+            'm2m_video_musiker_set-0-musiker': self.musiker.pk,
+            'm2m_video_musiker_set-0-band': self.video.pk,
+            'm2m_video_musiker_set-1-id': '',
+            'm2m_video_musiker_set-1-musiker': self.musiker.pk,
+            'm2m_video_musiker_set-1-band': self.video.pk,
         }
-        formset = self.formset_class(instance=self.band, data=data)
+        formset = self.formset_class(instance=self.video, data=data)
         for form in formset.forms:
             self.assertTrue(form.is_valid())
             self.assertIsNone(
