@@ -284,6 +284,12 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertEqual(next_data.get('jahrgang', 0), 12)
         self.assertFalse(next_data.get('jahr'))
 
+    def test_javascript(self):
+        # Check that jquery and select2 are loaded correctly.
+        with self.settings(DEBUG=True):
+            response = self.get_response('GET', reverse('bulk_ausgabe'))
+            self.assertSelect2JS(response.context['form'].media._js)
+
 
 class TestBulkAusgabeStory(BulkAusgabeTestCase):
 

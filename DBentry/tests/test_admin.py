@@ -38,6 +38,9 @@ class AdminTestMethodsMixin(object):
     fields_expected = None
     # the final search_fields expected
     search_fields_expected = None
+    # if True, check the load order of jquery, select2 and django's jquery_init
+    add_page_uses_select2 = True
+    changelist_uses_select2 = True
 
     @classmethod
     def setUpTestData(cls):
@@ -258,6 +261,18 @@ class AdminTestMethodsMixin(object):
             n, len(queries.captured_queries),
             msg="Number of queries for changelist depends on number of records!"
         )
+
+    def test_javascript_add_page(self):
+        if self.add_page_uses_select2:
+            with self.settings(DEBUG=True):
+                response = self.get_response('GET', self.add_path)
+                self.assertSelect2JS(response.context['media']._js)
+
+    def test_javascript_change_list(self):
+        if self.changelist_uses_select2:
+            with self.settings(DEBUG=True):
+                response = self.get_response('GET', self.changelist_path)
+                self.assertSelect2JS(response.context['media']._js)
 
 
 class TestMIZModelAdmin(AdminTestCase):
@@ -970,6 +985,8 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Genre
     fields_expected = ['genre']
     search_fields_expected = ['genre', 'genrealias__alias', 'pk__exact']
+    add_page_uses_select2 = False
+    changelist_uses_select2 = False
 
     raw_data = [
         {
@@ -1025,6 +1042,8 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Schlagwort
     fields_expected = ['schlagwort']
     search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__exact']
+    add_page_uses_select2 = False
+    changelist_uses_select2 = False
 
     raw_data = [
         {
@@ -1160,6 +1179,8 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['land_name', 'code']
     search_fields_expected = ['land_name', 'code', 'pk__exact']
     test_data_count = 1
+    add_page_uses_select2 = False
+    changelist_uses_select2 = False
 
     crosslinks_expected = [
         {'model_name': 'ort', 'fld_name': 'land', 'label': 'Orte (1)'},
@@ -1187,6 +1208,8 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['instrument', 'kuerzel']
     search_fields_expected = ['instrument', 'kuerzel', 'pk__exact']
     test_data_count = 1
+    add_page_uses_select2 = False
+    changelist_uses_select2 = False
 
     crosslinks_expected = [
         {'model_name': 'musiker', 'fld_name': 'instrument', 'label': 'Musiker (1)'}
@@ -1234,6 +1257,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     search_fields_expected = [
         'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__exact']
     test_data_count = 1
+    changelist_uses_select2 = False
 
     crosslinks_expected = [
         {'model_name': 'dokument', 'fld_name': 'spielort', 'label': 'Dokumente (1)'},
@@ -1261,6 +1285,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
         'beschreibung', 'bemerkungen', 'pk__exact'
     ]
     test_data_count = 1
+    changelist_uses_select2 = False
 
     crosslinks_expected = [
         {'model_name': 'technik', 'fld_name': 'veranstaltung', 'label': 'Technik (1)'},
@@ -1477,6 +1502,7 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'veranstaltung'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
+    changelist_uses_select2 = False
 
 
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1484,6 +1510,8 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
     search_fields_expected = ['herausgeber', 'pk__exact']
+    add_page_uses_select2 = False
+    changelist_uses_select2 = False
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'},
