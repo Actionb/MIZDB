@@ -2,6 +2,7 @@
 from collections import OrderedDict
 
 from django import forms
+from django.conf import settings
 from django.core import exceptions
 from django.db.models import lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
@@ -93,11 +94,19 @@ class SearchForm(forms.Form):
 
     range_upper_bound = django_lookups.LessThanOrEqual
 
-    class Media:
+    @property
+    def media(self):
         css = {
             'all': ('admin/css/forms.css', 'admin/css/search_form.css')
         }
-        js = ['admin/js/remove_empty_fields.js', 'admin/js/collapse.js']
+        extra = '' if settings.DEBUG else '.min'
+        js = [
+            'admin/js/vendor/jquery/jquery%s.js' % extra,
+            'admin/js/jquery.init.js',
+            'admin/js/remove_empty_fields.js',
+            'admin/js/collapse.js'
+        ]
+        return super().media + forms.Media(css=css, js=js)
 
     def get_filters_params(self):
         """
