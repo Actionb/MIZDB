@@ -6,7 +6,7 @@ from django.db.models.manager import BaseManager
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 
-from DBentry.utils import snake_case_to_spaces, ensure_jquery
+from DBentry.utils import snake_case_to_spaces
 
 
 class FieldGroup:
@@ -248,14 +248,14 @@ class MIZAdminFormMixin(object):
 
     @property
     def media(self):
-        # Collect the media needed for all the widgets
+        # Collect the media needed for all the widgets.
         media = super().media
         # Collect the media needed for all fieldsets.
         # This will add collapse.js if necessary
         # (from django.contrib.admin.options.helpers.Fieldset).
         for fieldset in self.__iter__():
             media += fieldset.media
-        return ensure_jquery(media)
+        return media
 
     @cached_property
     def changed_data(self):

@@ -136,12 +136,6 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
 
     def get_context_data(self, form, **kwargs):
         context = super().get_context_data(form=form, **kwargs)
-        media = context.get('media')
-        if media:
-            media += form.media
-        else:
-            media = form.media
-        context['media'] = utils.ensure_jquery(media)
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
         # 'title' is a context variable for base_site.html:

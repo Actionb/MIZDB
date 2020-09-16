@@ -45,7 +45,7 @@ def load_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0002_rename_kalendar_to_kalender'),
+        ('DBentry', '0008_rename_audio_catalog_nr'),
     ]
 
     operations = [
