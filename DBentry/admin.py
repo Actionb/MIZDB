@@ -984,7 +984,7 @@ class KalenderAdmin(BaseBrochureAdmin):
 @admin.register(
     _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
     _models.Provenienz, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
-    _models.VideoMedium,
+    _models.VideoMedium, _models.AudioMedium,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
