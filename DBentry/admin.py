@@ -1,6 +1,8 @@
+# TODO: tweak index_category of some ModelAdmins:
+#   Herausgeber is in 'Stammdaten', Verlag is in 'Sonstige'
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import Group, User, Permission
 from django.db.models import Count, Min
 
 import DBentry.models as _models
@@ -740,20 +742,37 @@ class VideoAdmin(MIZModelAdmin):
     class BandInLine(BaseTabularInline):
         model = _models.Video.band.through
         verbose_model = _models.Band
+    class OrtInLine(BaseTabularInline):
+        model = _models.Video.ort.through
+        verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
         model = _models.Video.spielort.through
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
+    class DateiInLine(BaseTabularInline):
+        model = _m2m.m2m_datei_quelle
+        fields = ['datei']
+        verbose_model = _models.Datei
 
     index_category = 'Archivgut'
-    superuser_only = True
+    collapse_all = True
+    save_on_top = True
 
     inlines = [
-        GenreInLine, SchlInLine, MusikerInLine, BandInLine,
-        SpielortInLine, VeranstaltungInLine, PersonInLine, BestandInLine
+        GenreInLine, SchlInLine,
+        MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        PersonInLine, DateiInLine, BestandInLine
     ]
+
+    search_form_kwargs = {
+        'fields': [
+            'musiker', 'band', 'person', 'genre', 'schlagwort',
+            'ort', 'spielort', 'veranstaltung', 'medium'
+        ],
+    }
 
 
 @admin.register(_models.Bundesland, site=miz_site)
@@ -981,11 +1000,46 @@ class KalenderAdmin(BaseBrochureAdmin):
     _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
     _models.Provenienz, _models.Format, _models.FormatTag, _models.FormatSize,
     _models.FormatTyp, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
+    _models.VideoMedium,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
     superuser_only = True
 
 
-miz_site.register(Group, GroupAdmin)
-miz_site.register(User, UserAdmin)
+class AuthAdminMixin(object):
+    """
+    Add a model's class name to the human-readable name part of the 'permission'
+    formfield choices to make the permissions more distinguishable from each
+    other.
+
+    By default the choice's names contain the verbose_name of a model, which may
+    not be unique enough to be able to differentiate between different
+    permissions.
+    """
+
+    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
+        formfield = super().formfield_for_manytomany(db_field, request=request, **kwargs)
+        if formfield.queryset.model == Permission:
+            choices = []
+            for perm in formfield.queryset:
+                object_name = str(perm.content_type)
+                if perm.content_type.model_class():
+                    # Not all ContentType objects reference an existing model_class.
+                    object_name += " (%s)" % perm.content_type.model_class().__name__
+                choices.append((
+                    perm.pk,
+                    "%s | %s | %s" % (perm.content_type.app_label, object_name, perm.name,)
+                ))
+            formfield.choices = choices
+        return formfield
+
+
+@admin.register(Group, site=miz_site)
+class MIZGroupAdmin(AuthAdminMixin, GroupAdmin):
+    pass
+
+
+@admin.register(User, site=miz_site)
+class MIZUserAdmin(AuthAdminMixin, UserAdmin):
+    pass

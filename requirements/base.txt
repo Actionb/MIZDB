@@ -1,27 +1,25 @@
 -c constraints.txt
-# django base
-Django==2.2.13
 
-# django extensions/apps
-django-test-without-migrations==0.6
+Django
+django-test-without-migrations
 
-# autocomplete HumanName creator/name utils
-nameparser==0.5.7
+# HumanName utilities for autocomplete
+nameparser
 
 # import/export
-data-importer==3.0.2
+data-importer
 
 # autocomplete
-django-autocomplete-light==3.3.2
+django-autocomplete-light
 
 # WizardViews
-django-formtools==2.1
+django-formtools
 
-# ISSN/ISBN fields
-python-stdnum==1.8.1
+# Standard number validation, etc. for EAN/ISBN/ISSN fields
+python-stdnum
 
-# DBentry's own factory
-factory-boy==2.11.1
+# Base factory for the app's test data factories
+factory-boy
 
 # PostgreSQL Python
-psycopg2==2.8.5
+psycopg2

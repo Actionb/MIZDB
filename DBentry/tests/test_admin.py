@@ -3,7 +3,7 @@ from unittest import skip
 from unittest.mock import patch, Mock
 
 from django.db import connections
-from django.contrib import admin
+from django.contrib import admin, contenttypes
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.core import checks
@@ -18,7 +18,7 @@ from DBentry.changelist import MIZChangeList, AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import MIZAdminSite, miz_site
-from DBentry.tests.base import AdminTestCase, UserTestCase
+from DBentry.tests.base import AdminTestCase, UserTestCase, TestCase
 from DBentry.utils import get_model_fields
 
 
@@ -372,13 +372,13 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_add_pk_search_field(self):
         # Assert that a search field for the primary key is added to the search fields.
         # For primary keys that are a relation (OneToOneRelation) this should be
-        # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
+        # 'pk__pk__exact' as 'exact' is not a valid lookup for a OneToOneField.
         test_data = [
-            ('NoRelation', self.model_admin, 'pk__iexact'),
+            ('NoRelation', self.model_admin, 'pk__exact'),
             (
                 'OneToOneRelation',
                 _admin.KatalogAdmin(_models.Katalog, self.admin_site),
-                'pk__pk__iexact'
+                'pk__pk__exact'
             )
         ]
         mocked_has_search_form = Mock(return_value=False)
@@ -551,7 +551,7 @@ class TestMIZModelAdmin(AdminTestCase):
         # Assert that _check_search_fields_lookups finds invalid search fields
         # and/or lookups correctly.
         with patch.object(self.model_admin, 'get_search_fields'):
-            self.model_admin.get_search_fields.return_value = ['titel__iexact']
+            self.model_admin.get_search_fields.return_value = ['titel__exact']
             self.assertFalse(self.model_admin._check_search_fields_lookups())
             # Check for invalid field:
             self.model_admin.get_search_fields.return_value = ['thisisnofield']
@@ -969,7 +969,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
     fields_expected = ['genre']
-    search_fields_expected = ['genre', 'genrealias__alias', 'pk__iexact']
+    search_fields_expected = ['genre', 'genrealias__alias', 'pk__exact']
 
     raw_data = [
         {
@@ -1024,7 +1024,7 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
     fields_expected = ['schlagwort']
-    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__iexact']
+    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__exact']
 
     raw_data = [
         {
@@ -1145,6 +1145,7 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'spielort', 'fld_name': 'ort', 'label': 'Spielorte (1)'},
         {'model_name': 'technik', 'fld_name': 'ort', 'label': 'Technik (1)'},
         {'model_name': 'verlag', 'fld_name': 'sitz', 'label': 'Verlage (1)'},
+        {'model_name': 'video', 'fld_name': 'ort', 'label': 'Video Materialien (1)'}
     ]
 
     def bland_forwarded(self):
@@ -1157,7 +1158,7 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.LandAdmin
     model = _models.Land
     fields_expected = ['land_name', 'code']
-    search_fields_expected = ['land_name', 'code', 'pk__iexact']
+    search_fields_expected = ['land_name', 'code', 'pk__exact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1184,7 +1185,7 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.InstrumentAdmin
     model = _models.Instrument
     fields_expected = ['instrument', 'kuerzel']
-    search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
+    search_fields_expected = ['instrument', 'kuerzel', 'pk__exact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1231,7 +1232,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
-        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__exact']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1257,7 +1258,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
         'name', 'datum', 'veranstaltungalias__alias',
-        'beschreibung', 'bemerkungen', 'pk__iexact'
+        'beschreibung', 'bemerkungen', 'pk__exact'
     ]
     test_data_count = 1
 
@@ -1420,7 +1421,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1432,7 +1433,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1444,17 +1445,17 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
 
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'festplatte', 'quelle', 'beschreibung', 'bemerkungen']
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'titel', 'tracks', 'laufzeit', 'jahr', 'quelle', 'beschreibung', 'bemerkungen', 'medium']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
-        'band', 'genre', 'musiker', 'person', 'schlagwort', 'spielort', 'veranstaltung']
+        'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1475,14 +1476,14 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
 
 
 class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
-    search_fields_expected = ['herausgeber', 'pk__iexact']
+    search_fields_expected = ['herausgeber', 'pk__exact']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'herausgeber', 'label': 'Bücher (1)'},
@@ -1603,3 +1604,20 @@ class TestAdminSite(UserTestCase):
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path=path, user=self.super_user)
                 self.assertEqual(response.status_code, 200, msg=path)
+
+
+class TestAuthAdminMixin(TestCase):
+
+    @patch('DBentry.admin.super')
+    def test_formfield_for_manytomany(self, mocked_super):
+        # Assert that formfield_for_manytomany adds a (<model_class_name>) to
+        # the human-readable part of the formfield's choices.
+        ct = contenttypes.models.ContentType.objects.get_for_model(_models.AusgabeLnum)
+        perm_queryset = Permission.objects.filter(content_type=ct)
+        mocked_formfield = Mock(queryset=perm_queryset)
+        mocked_super.return_value = Mock(
+            formfield_for_manytomany=Mock(return_value=mocked_formfield))
+        formfield = _admin.AuthAdminMixin().formfield_for_manytomany(None)
+        for choice in formfield.choices:
+            with self.subTest(choice=choice):
+                self.assertIn(_models.AusgabeLnum.__name__, choice[1])

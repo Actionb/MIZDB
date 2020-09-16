@@ -1,43 +1,55 @@
 /*global gettext*/
-(function($) {
+(function() {
     'use strict';
-    $(document).ready(function() {
+    var closestElem = function(elem, tagName) {
+        if (elem.nodeName === tagName.toUpperCase()) {
+            return elem;
+        }
+        if (elem.parentNode.nodeName === 'BODY') {
+            return null;
+        }
+        return elem.parentNode && closestElem(elem.parentNode, tagName);
+    };
+
+    window.addEventListener('load', function() {
         // Add anchor tag for Show/Hide
-        $("fieldset.collapse").each(function(i, elem) {
-            var has_error = $(elem).find("div.errors").length !== 0;
-            var is_collapsed = $(elem).hasClass('collapsed');
-            // Don't hide if fields in this fieldset have errors
-            if (has_error && is_collapsed) { 
-                $(elem).removeClass('collapsed'); 
+        var fieldsets = document.querySelectorAll('fieldset.collapse');
+        for (var i = 0; i < fieldsets.length; i++) {
+            var elem = fieldsets[i];
+            if (elem.querySelectorAll('div.errors').length !== 0) {
+                // Don't hide if fields in this fieldset have errors
+                elem.classList.remove('collapsed');
             }
-            var label_text = gettext("Hide");
-            if($(elem).hasClass("collapsed")){
-                label_text = gettext("Show");
+            var hint = document.createElement('span');
+            hint.setAttribute('class', 'collapse-hint collapsible');
+            if (elem.classList.contains('collapsed')) {
+                hint.textContent = ' (' + gettext('Show') + ')';
+            } else {
+                hint.textContent = ' (' + gettext('Hide') + ')';
             }
-            var hint = '<span class="collapse-hint">' + '(' + label_text + ')' +'</span>';
-            if ($(elem).hasClass("stacked-inline-collapsible")){
-                $(elem).siblings("h3").first().prepend('<span class="collapse-hint" style="float:left;">' + '(' + label_text + ')' +'</span>')//.children().last().before(hint);
+            elem.querySelector('.collapsible').appendChild(hint);
+        }
+        // Create the event listener callback
+        var toggleFunc = function(ev) {
+            // When an element with the class collapsible is clicked,
+            // hide/show the nearest parent fieldset.
+            if (ev.target.matches('.collapsible')) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                var fieldset = closestElem(ev.target, 'fieldset');
+                var hint = fieldset.querySelector('.collapse-hint')
+                if (fieldset.classList.contains('collapsed')) {
+                    hint.textContent = ' (' + gettext('Hide') + ')';
+                    fieldset.classList.remove('collapsed');
+                } else {
+                    hint.textContent = ' (' + gettext('Show') + ')';
+                    fieldset.classList.add('collapsed');
+                }
             }
-            else {
-                $(elem).find("h2").first().append(hint);
-            }
-        });
-        
-        $(".collapsible").click(function(){
-            // find out which element to collapse:
-            // either a direct parent fieldset element (inlines, fieldsets) or a sibling with class .collapse (inside stacked inlines)
-            var elem = $(this).parent();
-            if (!elem.hasClass("collapse")){
-                // parent does not have class collapse, so we need to look for a sibling with that class instead
-                elem = $(this).siblings(".collapse");
-            }
-            if(elem.hasClass("collapsed")){
-                $(this).children(".collapse-hint").text('('+gettext("Hide")+')');
-            }
-            else {
-                $(this).children(".collapse-hint").text('('+gettext("Show")+')');
-            }
-            elem.toggleClass("collapsed");
-        });
+        };
+        var inlineDivs = document.querySelectorAll('fieldset.module');
+        for (i = 0; i < inlineDivs.length; i++) {
+            inlineDivs[i].addEventListener('click', toggleFunc);
+        }
     });
-})(django.jQuery);
+})();

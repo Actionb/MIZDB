@@ -721,7 +721,10 @@ class Instrument(BaseModel):
 class Audio(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
-    laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
+    laufzeit = models.DurationField(
+        blank=True, null=True,
+        help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
+    )
     e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
     # TODO: field 'catalog_nr' is missing in AudioAdmin -- Format.catalog_nr does that job??
@@ -731,7 +734,7 @@ class Audio(BaseModel):
         'Link discogs.com', blank=True,
         help_text="Adresse zur discogs.com Seite dieses Objektes."
     )
-    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
+    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Audio Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     plattenfirma = models.ManyToManyField('Plattenfirma', through=_m2m.m2m_audio_plattenfirma)
@@ -972,7 +975,7 @@ class Veranstaltung(BaseModel):
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
 class VeranstaltungAlias(BaseAliasModel):
-    parent = models.ForeignKey('Veranstaltung', models.CASCADE)  # TODO: add a related_name
+    parent = models.ForeignKey('Veranstaltung', models.CASCADE)
 
 
 class Veranstaltungsreihe(BaseModel):
@@ -991,17 +994,26 @@ class Veranstaltungsreihe(BaseModel):
 class Video(BaseModel):
     titel = models.CharField(max_length=200)
     tracks = models.PositiveSmallIntegerField('Anz. Tracks', blank=True, null=True)
-    laufzeit = models.DurationField(blank=True, null=True, help_text='Format: hh:mm:ss')
-    festplatte = models.CharField(max_length=200, blank=True)  # TODO: "Speicherort"?? shouldnt this be a relation to Datei then?
-    quelle = models.CharField(max_length=200, blank=True)  # TODO: same as audio.quelle?
-    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Mediums')
+    laufzeit = models.DurationField(
+        blank=True, null=True,
+        help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
+    )
+    jahr = YearField('Jahr', blank=True, null=True)
+    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
+    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Video Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
+
+    medium = models.ForeignKey(
+        'VideoMedium', models.PROTECT, blank=True, null=True, verbose_name="Medium",
+        help_text="Format des Speichermediums."
+    )
 
     band = models.ManyToManyField('Band')
     genre = models.ManyToManyField('Genre')
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_video_musiker)
     person = models.ManyToManyField('Person')
     schlagwort = models.ManyToManyField('Schlagwort')
+    ort = models.ManyToManyField('Ort')
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
 
@@ -1017,6 +1029,19 @@ class Video(BaseModel):
         permissions = [
             ('alter_bestand_video', 'Aktion: Bestand/Dublette hinzufügen.'),
         ]
+
+
+class VideoMedium(BaseModel):
+    medium = models.CharField(max_length=200)
+
+    create_field = 'medium'
+    name_field = 'medium'
+    search_fields = ['medium']
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'Video-Medium'
+        verbose_name_plural = 'Video-Medium'
+        ordering = ['medium']
 
 
 class Provenienz(BaseModel):
