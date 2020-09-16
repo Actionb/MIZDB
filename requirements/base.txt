@@ -6,9 +6,6 @@ django-test-without-migrations
 # HumanName utilities for autocomplete
 nameparser
 
-# import/export
-data-importer
-
 # autocomplete
 django-autocomplete-light
 
