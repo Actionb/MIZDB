@@ -3,7 +3,7 @@ import sys
 from django.apps import apps
 from django.contrib import auth, contenttypes
 from django.core import exceptions
-from django.db import models, utils
+from django.db import models, transaction, utils
 
 
 def get_model_from_string(model_name, app_label='DBentry'):
@@ -419,7 +419,8 @@ def clean_permissions(stream=None):
             continue
         try:
             p.codename = new_codename
-            p.save()
+            with transaction.atomic():
+                p.save()
         except utils.IntegrityError:
             stream.write(
                 "Permission with codename '%s' already exists. "
