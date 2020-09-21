@@ -272,9 +272,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         Add a search field for the primary key to search_fields if missing.
 
         Unless the ModelAdmin instance has a search form (which is presumed to
-        take over the duty of filtering for primary keys), 'pk__exact' is added
+        take over the duty of filtering for primary keys), 'pk__iexact' is added
         to the given list 'search_fields'.
-        If the primary key is a OneToOneRelation, 'pk__pk__exact' is added
+        If the primary key is a OneToOneRelation, 'pk__pk__iexact' is added
         instead.
 
         Returns a copy of the passed in search_fields list.
@@ -301,7 +301,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 break
         else:
             search_fields.append(
-                'pk__pk__exact' if pk_field.is_relation else 'pk__exact'
+                'pk__pk__iexact' if pk_field.is_relation else 'pk__iexact'
             )
         return search_fields
 
