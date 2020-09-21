@@ -15,7 +15,6 @@ from DBentry import utils
 from DBentry.base.views import MIZAdminMixin
 from DBentry.bulk.forms import BulkFormAusgabe
 from DBentry.logging import LoggingMixin
-from DBentry.m2m import m2m_audio_ausgabe
 from DBentry.sites import register_tool
 
 
@@ -242,11 +241,13 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     self.log_addition(audio_instance)
                 # Check if the ausgabe instance is already related to the audio
                 # instance.
-                is_related = m2m_audio_ausgabe.objects.filter(
-                    ausgabe=instance, audio=audio_instance
-                ).exists()
+                is_related = (
+                    _models.Ausgabe.audio.through.objects
+                    .filter(ausgabe=instance, audio=audio_instance)
+                    .exists()
+                )
                 if not is_related:
-                    m2m_instance = m2m_audio_ausgabe(
+                    m2m_instance = _models.Ausgabe.audio.through(
                         ausgabe=instance,
                         audio=audio_instance
                     )

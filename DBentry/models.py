@@ -60,8 +60,8 @@ class Musiker(BaseModel):
 
     person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
-    genre = models.ManyToManyField('Genre', through=_m2m.m2m_musiker_genre)
-    instrument = models.ManyToManyField('Instrument', through=_m2m.m2m_musiker_instrument)
+    genre = models.ManyToManyField('Genre')
+    instrument = models.ManyToManyField('Instrument')
     orte = models.ManyToManyField('Ort')
 
     create_field = 'kuenstler_name'
@@ -108,8 +108,8 @@ class Band(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Band')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('Genre', through=_m2m.m2m_band_genre)
-    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_band_musiker)
+    genre = models.ManyToManyField('Genre')
+    musiker = models.ManyToManyField('Musiker')
     orte = models.ManyToManyField('Ort')
 
     create_field = 'band_name'
@@ -137,7 +137,7 @@ class Autor(ComputedNameModel):
 
     person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
-    magazin = models.ManyToManyField('Magazin', through=_m2m.m2m_autor_magazin)
+    magazin = models.ManyToManyField('Magazin')
 
     name_composing_fields = ['person___name', 'kuerzel']
     primary_search_fields = ['_name']
@@ -207,7 +207,7 @@ class Ausgabe(ComputedNameModel):
 
     magazin = models.ForeignKey('Magazin', models.PROTECT)
 
-    audio = models.ManyToManyField('Audio', through=_m2m.m2m_audio_ausgabe)
+    audio = models.ManyToManyField('Audio')
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
@@ -424,9 +424,9 @@ class Magazin(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Magazines')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    genre = models.ManyToManyField('Genre', through=_m2m.m2m_magazin_genre)
-    verlag = models.ManyToManyField('Verlag', through=_m2m.m2m_magazin_verlag)
-    herausgeber = models.ManyToManyField('Herausgeber', through=_m2m.m2m_magazin_herausgeber)
+    genre = models.ManyToManyField('Genre')
+    verlag = models.ManyToManyField('Verlag')
+    herausgeber = models.ManyToManyField('Herausgeber')
     orte = models.ManyToManyField('Ort')
 
     create_field = 'magazin_name'
@@ -595,15 +595,15 @@ class Artikel(BaseModel):
 
     ausgabe = models.ForeignKey('Ausgabe', models.PROTECT)
 
-    genre = models.ManyToManyField('Genre', through=_m2m.m2m_artikel_genre)
-    schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_artikel_schlagwort)
-    person = models.ManyToManyField('Person', through=_m2m.m2m_artikel_person)
-    autor = models.ManyToManyField('Autor', through=_m2m.m2m_artikel_autor)
-    band = models.ManyToManyField('Band', through=_m2m.m2m_artikel_band)
-    musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_artikel_musiker)
-    ort = models.ManyToManyField('Ort', through=_m2m.m2m_artikel_ort)
-    spielort = models.ManyToManyField('Spielort', through=_m2m.m2m_artikel_spielort)
-    veranstaltung = models.ManyToManyField('Veranstaltung', through=_m2m.m2m_artikel_veranstaltung)
+    genre = models.ManyToManyField('Genre')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    person = models.ManyToManyField('Person')
+    autor = models.ManyToManyField('Autor')
+    band = models.ManyToManyField('Band')
+    musiker = models.ManyToManyField('Musiker')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
 
     name_field = 'schlagzeile'
     primary_search_fields = ['schlagzeile']
@@ -727,8 +727,7 @@ class Audio(BaseModel):
     )
     e_jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
-    # TODO: field 'catalog_nr' is missing in AudioAdmin -- Format.catalog_nr does that job??
-    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)
+    plattennummer = models.CharField(max_length=200, blank=True)
     release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
     discogs_url = models.URLField(
         'Link discogs.com', blank=True,
@@ -737,15 +736,20 @@ class Audio(BaseModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Audio Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    plattenfirma = models.ManyToManyField('Plattenfirma', through=_m2m.m2m_audio_plattenfirma)
-    band = models.ManyToManyField('Band', through=_m2m.m2m_audio_band)
-    genre = models.ManyToManyField('Genre', through=_m2m.m2m_audio_genre)
+    medium = models.ForeignKey(
+        'AudioMedium', models.PROTECT, blank=True, null=True, verbose_name="Medium",
+        help_text="Format des Speichermediums."
+    )
+
+    plattenfirma = models.ManyToManyField('Plattenfirma')
+    band = models.ManyToManyField('Band')
+    genre = models.ManyToManyField('Genre')
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_audio_musiker)
-    person = models.ManyToManyField('Person', through=_m2m.m2m_audio_person)
-    schlagwort = models.ManyToManyField('Schlagwort', through=_m2m.m2m_audio_schlagwort)
-    spielort = models.ManyToManyField('Spielort', through=_m2m.m2m_audio_spielort)
-    veranstaltung = models.ManyToManyField('Veranstaltung', through=_m2m.m2m_audio_veranstaltung)
-    ort = models.ManyToManyField('Ort', through=_m2m.m2m_audio_ort)
+    person = models.ManyToManyField('Person')
+    schlagwort = models.ManyToManyField('Schlagwort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
+    ort = models.ManyToManyField('Ort')
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -762,6 +766,19 @@ class Audio(BaseModel):
 
     def __str__(self):
         return str(self.titel)
+
+
+class AudioMedium(BaseModel):
+    medium = models.CharField(max_length=200, unique=True)
+
+    create_field = 'medium'
+    name_field = 'medium'
+    search_fields = ['medium']
+
+    class Meta(BaseModel.Meta):
+        verbose_name = 'Audio-Medium'
+        verbose_name_plural = 'Audio-Medium'
+        ordering = ['medium']
 
 
 class Bildmaterial(BaseModel):
@@ -1032,7 +1049,7 @@ class Video(BaseModel):
 
 
 class VideoMedium(BaseModel):
-    medium = models.CharField(max_length=200)
+    medium = models.CharField(max_length=200)  # TODO: VideoMedium.medium unique?
 
     create_field = 'medium'
     name_field = 'medium'
@@ -1231,89 +1248,6 @@ class Datei(BaseModel):
 
     def __str__(self):
         return str(self.titel)
-
-
-class Format(ComputedNameModel):
-    anzahl = models.PositiveSmallIntegerField(default=1)
-    catalog_nr = models.CharField('Katalog Nummer', max_length=200, blank=True)  # TODO: nr for vinyl?? http://mikiwiki.org/wiki/Nummern_auf_Schallplatten
-    bemerkungen = models.TextField(blank=True)
-
-    audio = models.ForeignKey('Audio', models.CASCADE)
-    format_typ = models.ForeignKey('FormatTyp', models.PROTECT, verbose_name='Format Typ')
-    format_size = models.ForeignKey(
-        'FormatSize', models.SET_NULL, verbose_name='Format Größe',
-        help_text='LP, 12", Mini-Disc, etc.', blank=True, null=True
-    )
-    # The field 'tag' is used in a stacked inline on audio.
-    # blank must be True or the inline requires a tag to be submitted.
-    tag = models.ManyToManyField('FormatTag', verbose_name='Tags', blank=True)
-
-    name_composing_fields = [
-        'anzahl', 'format_size__size', 'format_typ__typ',
-        'tag__tag',
-    ]
-
-    class Meta(BaseModel.Meta):
-        ordering = ['_name']
-        verbose_name = 'Format'
-        verbose_name_plural = 'Formate'
-
-    @classmethod
-    def _get_name(cls, **data):
-        """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
-
-        Returns a name in the format:
-            '{quantity (if > 1)} {format} {tags} {channel}'
-        where 'format' is either format_size or format_typ.
-        """
-        qty = format = tags = channel = ''
-        if 'anzahl' in data and data['anzahl'][0] > 1:
-            qty = str(data['anzahl'][0]) + 'x'
-        if 'format_size__size' in data:
-            format = str(data['format_size__size'][0])
-        elif 'format_typ__typ' in data:
-            format = str(data['format_typ__typ'][0])
-        if'tag__tag' in data:
-            tags = ", " + concat_limit(sorted(data['tag__tag']))
-        if 'channel' in data:
-            channel = ", " + data['channel'][0]
-        return qty + format + tags + channel
-
-
-class FormatTag(BaseModel):
-    tag = models.CharField(max_length=200)
-    abk = models.CharField('Abkürzung', max_length=200, blank=True)
-
-    class Meta(BaseModel.Meta):
-        ordering = ['tag']
-        verbose_name = 'Format-Tag'
-        verbose_name_plural = 'Format-Tags'
-
-    def __str__(self):
-        return str(self.tag)
-
-
-class FormatSize(BaseModel):
-    size = models.CharField(max_length=200)
-
-    class Meta(BaseModel.Meta):
-        ordering = ['size']
-        verbose_name = 'Format-Größe'
-        verbose_name_plural = 'Format-Größen'
-
-
-class FormatTyp(BaseModel):
-    """Art des Formats (Vinyl, DVD, Cassette, etc)."""
-
-    typ = models.CharField(max_length=200)
-
-    class Meta(BaseModel.Meta):
-        ordering = ['typ']
-        verbose_name = 'Format-Typ'
-        verbose_name_plural = 'Format-Typen'
 
 
 class Plattenfirma(BaseModel):

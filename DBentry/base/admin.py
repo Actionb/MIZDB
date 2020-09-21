@@ -18,9 +18,7 @@ from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import (
-    get_model_relations, ensure_jquery, get_fields_and_lookups,
-    resolve_list_display_item
-)
+    get_model_relations, get_fields_and_lookups, resolve_list_display_item)
 
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
@@ -274,9 +272,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         Add a search field for the primary key to search_fields if missing.
 
         Unless the ModelAdmin instance has a search form (which is presumed to
-        take over the duty of filtering for primary keys), 'pk__exact' is added
+        take over the duty of filtering for primary keys), 'pk__iexact' is added
         to the given list 'search_fields'.
-        If the primary key is a OneToOneRelation, 'pk__pk__exact' is added
+        If the primary key is a OneToOneRelation, 'pk__pk__iexact' is added
         instead.
 
         Returns a copy of the passed in search_fields list.
@@ -303,7 +301,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 break
         else:
             search_fields.append(
-                'pk__pk__exact' if pk_field.is_relation else 'pk__exact'
+                'pk__pk__iexact' if pk_field.is_relation else 'pk__iexact'
             )
         return search_fields
 
@@ -402,9 +400,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             new_extra['crosslinks'].append({'url': url, 'label': label})
         return new_extra
 
-    @property
-    def media(self):
-        return ensure_jquery(super().media)
 
     def add_extra_context(self, request=None, extra_context=None, object_id=None):
         new_extra = extra_context or {}
@@ -501,26 +496,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         if isinstance(form.instance, ComputedNameModel):
             # Update the instance's _name now. save_model was called earlier.
             form.instance.update_name(force_update=True)
-
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        if 'media' in context:
-            # Fix jquery load order during the add/change view process. If the
-            # ModelAdmin does not have inlines, collapse elements will not work:
-            # django's Fieldsets will include just 'collapse.js' if collapse is
-            # in the fieldset's classes. django's AdminForm then scoops up all
-            # the fieldsets and merges their media with its own (which may just
-            # be nothing).
-            # Finally, this ModelAdmin will merge its media:
-            # [jquery.js, jquery_init.js, ...]
-            # with that of the AdminForm. Since merging/sorting is now stable
-            # the result will be: [jquery.js, collapse.js, jquery_init.js, ...].
-            # Usually this faulty load order is then later fixed by media
-            # mergers on the inlines which mostly only have
-            # [jquery.js, jquery_init.js], but if the ModelAdmin does not have
-            # any inlines, collapse will not work.
-            context['media'] = ensure_jquery(context['media'])
-        return super().render_change_form(
-            request, context, add, change, form_url, obj)
 
 
 class BaseInlineMixin(object):

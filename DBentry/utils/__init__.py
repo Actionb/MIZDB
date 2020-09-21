@@ -3,7 +3,6 @@ from DBentry.utils.copyrelated import *  # NOQA
 from DBentry.utils.dates import *  # NOQA
 from DBentry.utils.debug import *  # NOQA
 from DBentry.utils.inspect import *  # NOQA
-from DBentry.utils.jquery import *  # NOQA
 from DBentry.utils.merge import *  # NOQA
 from DBentry.utils.models import *  # NOQA
 from DBentry.utils.text import *  # NOQA

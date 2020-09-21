@@ -117,14 +117,14 @@ class TestActionConfirmationView(ActionViewTestCase):
         expected = [['Band: '+ get_obj_link(self.obj1, request.user, blank=True)]]
         self.assertEqual(view.compile_affected_objects(), expected)
 
-        a = make(_models.Audio, band=self.obj1, format__extra=2)
+        a = make(_models.Audio, band=self.obj1, genre__extra=2)
         view = self.get_view(
             request,
             model_admin=AudioAdmin(_models.Audio, miz_site),
             queryset=_models.Audio.objects.all()
         )
         view.affected_fields = [
-            'titel', 'band__band_name', 'format___name', 'release_id']
+            'titel', 'band__band_name', 'genre__genre', 'release_id']
         link_list = view.compile_affected_objects()
         # link_list should have a structure like this:
         # [
@@ -145,11 +145,11 @@ class TestActionConfirmationView(ActionViewTestCase):
         # Second item should a link to the band object:
         expected = 'Band: ' + get_obj_link(a.band.first(), request.user, blank=True)
         self.assertEqual(link_list[0][1][1], expected)
-        # The next two items should be links to the Format objects:
-        format_set = a.format_set.all().order_by('_name')
-        expected = 'Format: ' + get_obj_link(format_set[0], request.user, blank=True)
+        # The next two items should be links to the Genre objects:
+        genres = a.genre.all().order_by('genre')
+        expected = 'Genre: ' + get_obj_link(genres[0], request.user, blank=True)
         self.assertEqual(link_list[0][1][2], expected)
-        expected = 'Format: '+ get_obj_link(format_set[1], request.user, blank=True)
+        expected = 'Genre: '+ get_obj_link(genres[1], request.user, blank=True)
         self.assertEqual(link_list[0][1][3], expected)
         # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')

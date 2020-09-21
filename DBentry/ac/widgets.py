@@ -61,10 +61,17 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
     class.
     """
 
-    class Media:
+    @property
+    def media(self):
+        from django.conf import settings
+        from django import forms
+        extra = '' if settings.DEBUG else '.min'
         js = [
-            'admin/js/jquery.init.js', 'admin/js/admin/RelatedObjectLookups.js'
+            'admin/js/vendor/jquery/jquery%s.js' % extra,
+            'admin/js/jquery.init.js',
+            'admin/js/admin/RelatedObjectLookups.js'
         ]
+        return forms.Media(js=js) + super().media 
 
     def __init__(
             self, widget, related_model, remote_field_name='id',

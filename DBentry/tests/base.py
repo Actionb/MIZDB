@@ -78,6 +78,41 @@ class MyTestCase(TestCase):
                 fail_txt += '\n' + msg
             self.fail(fail_txt)
 
+    def assertSelect2JS(self, js, jquery='', select2='', jquery_init=''):
+        """
+        Assert that select2 is loaded after jQuery and before jquery_init.
+
+        Arguments:
+            js (iterable): the iterable containing the javascript URLs
+            jquery/select2/jquery_init (str): URLs to the javascript resources
+        Pass None to either jquery or select2 to skip the assertions.
+        """
+        if jquery is None or select2 is None:
+            return
+        from django.conf import settings
+        extra = '' if settings.DEBUG else '.min'
+        if jquery == '':
+            jquery = 'admin/js/vendor/jquery/jquery%s.js' % extra
+        if select2 == '':
+            # Note that dal always loads select2.full.js regardless of
+            # settings.DEBUG.
+            select2 = 'admin/js/vendor/select2/select2.full.js'
+        if jquery_init == '':
+            jquery_init = 'admin/js/jquery.init.js'
+
+        self.assertIn(jquery, js, msg="select2 requires jQuery.")
+        self.assertIn(select2, js, msg="select2 js file not found.")
+        self.assertGreater(
+            js.index(select2), js.index(jquery),
+            msg="select2 must be loaded after jQuery."
+        )
+        if jquery_init:  # jquery_init could be None
+            self.assertIn(jquery_init, js)
+            self.assertGreater(
+                js.index(jquery_init), js.index(select2),
+                msg="select2 must be loaded before django's jquery_init."
+            )
+
 
 class DataTestCase(TestDataMixin, MyTestCase):
 
@@ -113,13 +148,21 @@ class RequestTestCase(UserTestCase):
     def get_path(self):
         return self.path
 
-    def post_request(self, path=None, data=None, user=None, **kwargs):
+    def get_response(self, method, path, data=None, user=None, **kwargs):
         self.client.force_login(user or self.super_user)
-        return self.client.post(path or self.get_path(), data, **kwargs).wsgi_request
+        if method == 'GET':
+            func = self.client.get
+        elif method == 'POST':
+            func = self.client.post
+        else:
+            raise ValueError("Unknown request method: %s" % method)
+        return func(path or self.get_path(), data, **kwargs)
+
+    def post_request(self, path=None, data=None, user=None, **kwargs):
+        return self.get_response('POST', path, data, user, **kwargs).wsgi_request
 
     def get_request(self, path=None, data=None, user=None, **kwargs):
-        self.client.force_login(user or self.super_user)
-        return self.client.get(path or self.get_path(), data, **kwargs).wsgi_request
+        return self.get_response('GET', path, data, user, **kwargs).wsgi_request
 
     def assertMessageSent(self, request, expected_message):
         messages = [str(msg) for msg in get_messages(request)]
