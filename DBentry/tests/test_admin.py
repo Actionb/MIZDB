@@ -274,6 +274,12 @@ class AdminTestMethodsMixin(object):
                 response = self.get_response('GET', self.changelist_path)
                 self.assertSelect2JS(response.context['media']._js)
 
+    def test_search(self):
+        with self.assertNotRaises(Exception):
+            response = self.client.get(
+                self.changelist_path, data={admin.views.main.SEARCH_VAR:'Stuff'})
+            self.assertEqual(response.status_code, 200)
+
 
 class TestMIZModelAdmin(AdminTestCase):
 
@@ -387,13 +393,13 @@ class TestMIZModelAdmin(AdminTestCase):
     def test_add_pk_search_field(self):
         # Assert that a search field for the primary key is added to the search fields.
         # For primary keys that are a relation (OneToOneRelation) this should be
-        # 'pk__pk__exact' as 'exact' is not a valid lookup for a OneToOneField.
+        # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
         test_data = [
-            ('NoRelation', self.model_admin, 'pk__exact'),
+            ('NoRelation', self.model_admin, 'pk__iexact'),
             (
                 'OneToOneRelation',
                 _admin.KatalogAdmin(_models.Katalog, self.admin_site),
-                'pk__pk__exact'
+                'pk__pk__iexact'
             )
         ]
         mocked_has_search_form = Mock(return_value=False)
@@ -566,7 +572,7 @@ class TestMIZModelAdmin(AdminTestCase):
         # Assert that _check_search_fields_lookups finds invalid search fields
         # and/or lookups correctly.
         with patch.object(self.model_admin, 'get_search_fields'):
-            self.model_admin.get_search_fields.return_value = ['titel__exact']
+            self.model_admin.get_search_fields.return_value = ['titel__iexact']
             self.assertFalse(self.model_admin._check_search_fields_lookups())
             # Check for invalid field:
             self.model_admin.get_search_fields.return_value = ['thisisnofield']
@@ -984,7 +990,7 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
     fields_expected = ['genre']
-    search_fields_expected = ['genre', 'genrealias__alias', 'pk__exact']
+    search_fields_expected = ['genre', 'genrealias__alias', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1041,7 +1047,7 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
     fields_expected = ['schlagwort']
-    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__exact']
+    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1177,7 +1183,7 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.LandAdmin
     model = _models.Land
     fields_expected = ['land_name', 'code']
-    search_fields_expected = ['land_name', 'code', 'pk__exact']
+    search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1
     add_page_uses_select2 = False
     changelist_uses_select2 = False
@@ -1206,7 +1212,7 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.InstrumentAdmin
     model = _models.Instrument
     fields_expected = ['instrument', 'kuerzel']
-    search_fields_expected = ['instrument', 'kuerzel', 'pk__exact']
+    search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
     add_page_uses_select2 = False
     changelist_uses_select2 = False
@@ -1249,7 +1255,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
-        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__exact']
+        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
     test_data_count = 1
     changelist_uses_select2 = False
 
@@ -1276,7 +1282,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
         'name', 'datum', 'veranstaltungalias__alias',
-        'beschreibung', 'bemerkungen', 'pk__exact'
+        'beschreibung', 'bemerkungen', 'pk__iexact'
     ]
     test_data_count = 1
     changelist_uses_select2 = False
@@ -1440,7 +1446,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1452,7 +1458,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1464,7 +1470,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1495,7 +1501,7 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__exact']
+    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
     changelist_uses_select2 = False
 
 
@@ -1503,7 +1509,7 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
-    search_fields_expected = ['herausgeber', 'pk__exact']
+    search_fields_expected = ['herausgeber', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
