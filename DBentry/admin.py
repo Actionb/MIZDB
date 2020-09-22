@@ -794,7 +794,7 @@ class BestandAdmin(MIZModelAdmin):
 #        'dokument', 'memorabilien', 'technik', 'video'
 #    ]
     list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
-    search_form_kwargs = {'fields': ['bestand_art', 'lagerort']}
+    search_form_kwargs = {'fields': ['bestand_art', 'lagerort', 'signatur']}
     superuser_only = True
 
     def _check_search_form_fields(self, **kwargs):
