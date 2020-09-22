@@ -1152,6 +1152,7 @@ class Lagerort(ComputedNameModel):
 
 
 class Bestand(BaseModel):
+    # TODO: BESTAND_CHOICES is missing BaseBrochure models
     BESTAND_CHOICES = [
         ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),
         ('buch', 'Buch'), ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
