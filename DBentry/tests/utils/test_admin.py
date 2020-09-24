@@ -1,5 +1,6 @@
 import re
 
+from django.contrib.auth.models import Permission
 from django.urls import NoReverseMatch
 from django.utils.encoding import force_text
 
@@ -77,7 +78,6 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             msg="Should return False for a user with no permissions."
         )
 
-        from django.contrib.auth.models import Permission
         perms = Permission.objects.filter(codename__in=('add_artikel', ))
         self.staff_user.user_permissions.set(perms)
         request = self.get_request(user=self.staff_user)
@@ -103,6 +103,20 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             utils.has_admin_permission(request, model_admin),
             msg="Should return True for superuser on a superuser-only model admin."
         )
+
+    def test_requires_change_or_view_perm(self):
+        change = Permission.objects.get(codename='change_band')
+        view = Permission.objects.get(codename='view_band')
+        perms = [[change], [view], [change, view]]
+        msg = (
+            "Given a user with either 'change' or 'view' permission, "
+            "get_changelist_url should return an url."
+        )
+        for permissions in perms:
+            with self.subTest(permissions=permissions):
+                self.staff_user.user_permissions.set(permissions)
+                self.assertTrue(
+                    utils.get_changelist_url(model=self.model, user=self.staff_user), msg=msg)
 
     def test_get_changelist_url(self):
         kwargs = {'model': self.model, 'user': self.super_user}
