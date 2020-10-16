@@ -265,7 +265,7 @@ class ArtikelAdmin(MIZModelAdmin):
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
             return ''
-        return concat_limit(obj.zusammenfassung.split(), sep=" ")
+        return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
     zusammenfassung_string.short_description = 'Zusammenfassung'
 
     def artikel_magazin(self, obj):

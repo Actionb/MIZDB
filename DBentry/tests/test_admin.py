@@ -691,11 +691,13 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_zusammenfassung_string(self):
         self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '')
         self.obj1.zusammenfassung = (
-            'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+            "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
+            "ist, dafür aber doch recht lang ist."
         )
         self.assertEqual(
             self.model_admin.zusammenfassung_string(self.obj1),
-            'Dies ist eine Testzusammenfassung, die nicht [...]'
+            "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
+            "ist, dafür aber doch recht lang [...]"
         )
 
     def test_artikel_magazin(self):
