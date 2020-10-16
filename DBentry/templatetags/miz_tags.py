@@ -18,6 +18,8 @@ def tabindex(bound_field, index):
 
     Credit for idea to: Gareth Reese (stackoverflow)
     """
+    # FIXME: fix tabbing breaking when exiting a dal widget (focus being lost)
+    # (probably requires javascript)
     bound_field.field.widget.attrs['tabindex'] = index
     return bound_field
 

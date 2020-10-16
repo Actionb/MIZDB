@@ -19,7 +19,7 @@
                         {% if field.is_readonly %}
                             <div class="readonly">{{ field.contents }}</div>
                         {% else %}
-                            {{ field.field|tabindex:"1" }}
+                            {{ field.field }}
                         {% endif %}
                     {% endif %}
                     {% if field.field.help_text %}
