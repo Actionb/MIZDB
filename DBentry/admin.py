@@ -124,6 +124,7 @@ class AusgabenAdmin(MIZModelAdmin):
         verbose_name_plural = 'erschienen im Jahr'
     class AudioInLine(BaseTabularInline):
         model = _models.Ausgabe.audio.through
+        verbose_model = _models.Audio
 
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
