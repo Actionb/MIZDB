@@ -1087,7 +1087,10 @@ class TestModelMusiker(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen'])
+            sorted([
+                'kuenstler_name', 'musikeralias__alias', 'person___name',
+                'beschreibung', 'bemerkungen'
+            ])
         )
 
     def test_search_fields_suffixes(self):
@@ -1095,6 +1098,7 @@ class TestModelMusiker(DataTestCase):
             self.model.search_fields_suffixes,
             {
                 'musikeralias__alias': 'Alias',
+                'person___name': 'bürgerl. Name',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }

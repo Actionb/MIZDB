@@ -90,8 +90,8 @@ class ACViewTestMethodMixin(object):
                     )
                 else:
                     self.warn(
-                        'Test poorly configured: no test data for search field: {}'.format(
-                            search_field)
+                        'Test {} poorly configured: no test data for search field: {}'.format(
+                            str(self), search_field)
                     )
 
     def test_apply_q_alias(self):

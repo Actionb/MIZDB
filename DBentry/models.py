@@ -67,9 +67,13 @@ class Musiker(BaseModel):
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
     primary_search_fields = ['kuenstler_name']
-    search_fields = ['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = [
+        'kuenstler_name', 'musikeralias__alias', 'person___name',
+        'beschreibung', 'bemerkungen'
+    ]
     search_fields_suffixes = {
         'musikeralias__alias': 'Alias',
+        'person___name': 'bürgerl. Name',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
