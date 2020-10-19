@@ -461,7 +461,6 @@ class BuchAdmin(MIZModelAdmin):
             'schriftenreihe', 'buchband', 'verlag', 'ort', 'spielort', 'veranstaltung',
             'jahr', 'ISBN', 'EAN'
         ],
-        'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
         # 'autor' help_text refers to quick item creation which is not allowed in search forms.
         'help_texts': {'autor': None}
     }
