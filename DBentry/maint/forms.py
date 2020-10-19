@@ -39,7 +39,7 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
         'deren Werte in die Suche miteinbezogen werden sollen.')
 
     class Media:
-        css = {'all': ['admin/css/dupes.css']}
+        css = {'all': ['admin/css/forms.css']}
         js = ['admin/js/collapse.js']
 
     def __init__(self, *, model, **kwargs):
