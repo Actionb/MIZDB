@@ -4,8 +4,6 @@ from DBentry.actions.views import (
 from DBentry.actions.decorators import add_cls_attrs
 # TODO: add an action that creates an overview of the stock (Bestand) of the
 # selected items (possibly allow changes there too?)
-# TODO: add an action that allows changing the status of multiple Ausgabe
-# instances at once.
 
 
 @add_cls_attrs(BulkEditJahrgang)
