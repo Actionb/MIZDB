@@ -1,6 +1,6 @@
 from django import views
 from django.contrib.admin import helpers
-from django.contrib.admin.utils import get_fields_from_path
+from django.contrib.admin.utils import display_for_field, get_fields_from_path
 from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.text import capfirst
@@ -218,9 +218,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                         related_obj = field.related_model.objects.get(pk=pk)
                         sub_list.append(linkify(related_obj))
                 else:
-                    value = getattr(obj, field.name)
-                    if value is None:
-                        value = '---'
+                    value = display_for_field(getattr(obj, field.name), field, '---')
                     verbose_name = field.verbose_name
                     if verbose_name == field.name.replace('_', ' '):
                         # The field has the default django verbose_name
