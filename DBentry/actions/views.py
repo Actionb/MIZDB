@@ -482,7 +482,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
     short_description = 'zu Broschüren bewegen'
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
-    allowed_permissions = ['delete']
+    allowed_permissions = ['moveto_brochure']
     action_allowed_checks = [
         check_same_magazin,
         '_check_protected_artikel',

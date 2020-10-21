@@ -204,6 +204,13 @@ class AusgabenAdmin(MIZModelAdmin):
     change_status_abgeschlossen.allowed_permissions = ['change']
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
 
+    def has_moveto_brochure_permission(self, request):
+        from django.contrib.auth import get_permission_codename
+        perms = []
+        for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
+            perms.append("%s.%s" % (opts.app_label, get_permission_codename(name, opts)))
+        return request.user.has_perms(perms)
+
 
 @admin.register(_models.Autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):

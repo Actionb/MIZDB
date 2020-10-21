@@ -1096,7 +1096,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # Assert that specific permissions are required to access this action.
         view = self.get_view()
         self.assertTrue(hasattr(view, 'allowed_permissions'))
-        self.assertEqual(view.allowed_permissions, ['delete'])
+        self.assertEqual(view.allowed_permissions, ['moveto_brochure'])
 
     def test_story(self):
         other_mag = make(_models.Magazin)

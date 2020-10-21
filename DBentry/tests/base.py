@@ -133,7 +133,7 @@ class UserTestCase(MyTestCase):
         cls.staff_user = User.objects.create_user(
             username='staff', password='Stuff', is_staff=True)
         cls.noperms_user = User.objects.create_user(
-            username='Beep', password='Boop')
+            username='noperms', password='Boop')
         cls.users = [cls.super_user, cls.staff_user, cls.noperms_user]
 
     def setUp(self):

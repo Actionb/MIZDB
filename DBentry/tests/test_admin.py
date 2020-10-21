@@ -825,13 +825,52 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 Permission.objects.get(codename=codename))
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'bulk_jg', 'add_bestand', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
         for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
+
+    def test_movetobrochure_permissions(self):
+        # moveto_brochure should require both 'delete_ausgabe' and 'add_BaseBrochure'
+        # permissions.
+        msg_template = (
+            "Action 'moveto_brochure' should not be available to "
+            "users that miss the '%s' permission."
+        )
+        delete_codename = get_permission_codename('delete', _models.Ausgabe._meta)
+        delete_permission = Permission.objects.get(codename=delete_codename)
+        add_codename = get_permission_codename('add', _models.BaseBrochure._meta)
+        add_permission = Permission.objects.get(codename=add_codename)
+
+        # delete only: not allowed
+        self.staff_user.user_permissions.set([delete_permission])
+        request = self.get_request(user=self.staff_user)
+        self.assertFalse(
+            self.model_admin.has_moveto_brochure_permission(request),
+            msg=msg_template % add_codename
+        )
+
+        # add only: not allowed
+        self.staff_user.user_permissions.set([add_permission])
+        request = self.get_request(user=self.staff_user)
+        self.assertFalse(
+            self.model_admin.has_moveto_brochure_permission(request),
+            msg=msg_template % delete_codename
+        )
+
+        # delete + add: moveto_brochure allowed
+        self.staff_user.user_permissions.set([delete_permission, add_permission])
+        request = self.get_request(user=self.staff_user)
+        self.assertTrue(
+            self.model_admin.has_moveto_brochure_permission(request),
+            msg=(
+                "Action 'moveto_brochure' should be available for users with both "
+                "'%s' and '%s' permissions" % (delete_codename, add_codename)
+            )
+        )
 
     def test_actions_super_user(self):
         # Assert that certain actions are available for super users.
