@@ -22,9 +22,10 @@ class ConfirmationViewMixin(MIZAdminMixin):
             an operation that is not easily reversed.
         short_description (str): label for the action in the changelist
             dropdown menu.
-        action_name (str): context variable that will be used on the template
-            so django redirects back here through response_action
-            (line contrib.admin.options:1255)
+        action_name (str): name of the action as registered with the ModelAdmin
+            This is the value for the hidden input named "action" with which the
+            ModelAdmin resolves the right action to use. With an invalid form, 
+            ModelAdmin.response_action will return here.
         view_helptext (str): a help text for this view
         action_allowed_checks (list or tuple): list of callables or names of view
             methods that assess if the action is allowed.
