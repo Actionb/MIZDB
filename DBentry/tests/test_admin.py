@@ -750,6 +750,18 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(
             self.model_admin.get_changelist(self.get_request()), AusgabeChangeList)
 
+    def test_changelist_ordering(self):
+        # Check that the changelist results are only chronologically ordered
+        # when the ORDER_VAR ('o') is not present in the query string.
+        request_data = {'magazin': self.obj1.magazin_id}
+        request = self.get_request(data=request_data)
+        queryset = self.model_admin.get_changelist_instance(request).get_queryset(request)
+        self.assertTrue(queryset.chronologically_ordered)
+        request_data[admin.views.main.ORDER_VAR] = '1'
+        request = self.get_request(data=request_data)
+        queryset = self.model_admin.get_changelist_instance(request).get_queryset(request)
+        self.assertFalse(queryset.chronologically_ordered)
+
     def test_anz_artikel(self):
         obj = self.get_queryset().get(pk=self.obj1.pk)
         self.assertEqual(self.model_admin.anz_artikel(obj), 1)
