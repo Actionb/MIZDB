@@ -796,6 +796,8 @@ class BestandAdmin(MIZModelAdmin):
     list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['bestand_art', 'lagerort', 'signatur']}
     superuser_only = True
+    # TODO: change related link/icon doesn't make much sense for the fields that
+    # relate to models whose stock is set here (i.e. Audio, Ausgabe, etc.)
 
     def _check_search_form_fields(self, **kwargs):
         # Ignore the search form fields check for BestandAdmin.

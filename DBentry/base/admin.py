@@ -19,6 +19,8 @@ from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import (
     get_model_relations, get_fields_and_lookups, resolve_list_display_item)
+# TODO: when using list_editable the 'save' element overlaps the 'add' element
+# on the changelist.
 
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):

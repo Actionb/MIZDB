@@ -622,6 +622,9 @@ class Artikel(BaseModel):
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
         ordering = [
+            # TODO: ordering by ausgabe___name doesn't work well when name
+            # contains months (1970-Dez comes before 1970-Nov).
+            # (might be a PRO for introducing an order column on Ausgabe?)
             'ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite',
             'schlagzeile'
         ]
