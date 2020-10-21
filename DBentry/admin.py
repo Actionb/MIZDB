@@ -1,5 +1,3 @@
-# TODO: tweak index_category of some ModelAdmins:
-#   Herausgeber is in 'Stammdaten', Verlag is in 'Sonstige'
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User, Permission
@@ -886,7 +884,7 @@ class InstrumentAdmin(MIZModelAdmin):
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
-    index_category = 'Stammdaten'
+    pass
 
 
 class BaseBrochureAdmin(MIZModelAdmin):
