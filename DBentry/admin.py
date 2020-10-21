@@ -156,7 +156,8 @@ class AusgabenAdmin(MIZModelAdmin):
 
     actions = [
         _actions.merge_records, _actions.bulk_jg, _actions.add_bestand,
-        _actions.moveto_brochure
+        _actions.moveto_brochure, 'change_status_unbearbeitet',
+        'change_status_inbearbeitung', 'change_status_abgeschlossen'
     ]
 
     def get_changelist(self, request, **kwargs):
@@ -187,6 +188,21 @@ class AusgabenAdmin(MIZModelAdmin):
                 obj.ausgabemonat_set.values_list('monat__abk', flat=True)
             )
     monat_string.short_description = 'Monate'
+
+    def change_status_unbearbeitet(self, request, queryset):
+        queryset.update(status=_models.Ausgabe.UNBEARBEITET)
+    change_status_unbearbeitet.allowed_permissions = ['change']
+    change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'
+
+    def change_status_inbearbeitung(self, request, queryset):
+        queryset.update(status=_models.Ausgabe.INBEARBEITUNG)
+    change_status_inbearbeitung.allowed_permissions= ['change']
+    change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
+
+    def change_status_abgeschlossen(self, request, queryset):
+        queryset.update(status=_models.Ausgabe.ABGESCHLOSSEN)
+    change_status_abgeschlossen.allowed_permissions = ['change']
+    change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
 
 
 @admin.register(_models.Autor, site=miz_site)

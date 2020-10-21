@@ -806,7 +806,12 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_actions_noperms(self):
         # Assert that certain actions are not available to user without permissions.
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+        action_names = (
+            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'change_status_unbearbeitet', 'change_status_inbearbeitung',
+            'change_status_abgeschlossen'
+        )
+        for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertNotIn(action_name, actions)
 
@@ -819,14 +824,24 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.staff_user.user_permissions.add(
                 Permission.objects.get(codename=codename))
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+        action_names = (
+            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'change_status_unbearbeitet', 'change_status_inbearbeitung',
+            'change_status_abgeschlossen'
+        )
+        for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 
     def test_actions_super_user(self):
         # Assert that certain actions are available for super users.
         actions = self.model_admin.get_actions(self.get_request(user=self.super_user))
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+        action_names = (
+            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'change_status_unbearbeitet', 'change_status_inbearbeitung',
+            'change_status_abgeschlossen'
+        )
+        for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 
@@ -850,6 +865,18 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 data['model_name'] = model_name
                 data['label'] = labels[model_name]
                 self.assertInCrosslinks(data, crosslinks)
+
+    def test_change_status_unbearbeitet(self):
+        self.model_admin.change_status_unbearbeitet(self.get_request(), self.queryset)
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'unb'})
+
+    def test_change_status_inbearbeitung(self):
+        self.model_admin.change_status_inbearbeitung(self.get_request(), self.queryset)
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'iB'})
+
+    def test_change_status_abgeschlossen(self):
+        self.model_admin.change_status_abgeschlossen(self.get_request(), self.queryset)
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'abg'})
 
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
