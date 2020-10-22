@@ -474,7 +474,7 @@ class VideoMergingDataMixin(object):
     @classmethod
     def setUpTestData(cls):
         obj1 = make(
-            cls.model, titel='Original', tracks=3, band__extra=1,
+            cls.model, titel='Original', band__extra=1,
             musiker__extra=1, bestand__extra=1,
         )
         cls.band_original = obj1.band.get()
@@ -483,7 +483,7 @@ class VideoMergingDataMixin(object):
         cls.obj1 = obj1
 
         obj2 = make(
-            cls.model, titel='Merger1', tracks=3, band__extra=1,
+            cls.model, titel='Merger1', band__extra=1,
             musiker__extra=1, bestand__extra=1,
         )
         cls.band_merger1 = obj2.band.get()
@@ -492,7 +492,7 @@ class VideoMergingDataMixin(object):
         cls.obj2 = obj2
 
         obj3 = make(
-            cls.model, titel='Merger2', tracks=3, band__extra=1,
+            cls.model, titel='Merger2', band__extra=1,
             musiker__extra=1, bestand__extra=1,
             beschreibung='Hello!'
         )
@@ -517,7 +517,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
         )
         self.assertEqual(new_original, self.obj1)
         self.assertEqual(new_original.titel, 'Original')
-        self.assertEqual(new_original.tracks, 3)
         self.assertEqual(new_original.beschreibung, 'Hello!')
 
     def test_merge_records_no_expand(self):
@@ -530,7 +529,6 @@ class TestMergingVideoManual(VideoMergingDataMixin, MergingTestCase):
         )
         self.assertEqual(new_original, self.obj1)
         self.assertEqual(new_original.titel, 'Original')
-        self.assertEqual(new_original.tracks, 3)
         self.assertNotEqual(new_original.beschreibung, 'Hello!')
 
     def test_related_changes(self):

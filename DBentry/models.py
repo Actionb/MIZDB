@@ -1017,7 +1017,6 @@ class Veranstaltungsreihe(BaseModel):
 
 class Video(BaseModel):
     titel = models.CharField(max_length=200)
-    tracks = models.PositiveSmallIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(
         blank=True, null=True,
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'

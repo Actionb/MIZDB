@@ -29,7 +29,7 @@ class TestBaseModel(DataTestCase):
 
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(_models.Video, titel="lotsa testing", tracks=1, quelle="from the computer")
+        obj = make(_models.Video, titel="lotsa testing", quelle="from the computer")
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")
@@ -37,7 +37,7 @@ class TestBaseModel(DataTestCase):
         # Assert that, if no name_field is set, __str__ defaults to the old
         # method of gathering values from applicable fields to form a string.
         obj.name_field = None
-        self.assertEqual(obj.__str__(), "lotsa testing 1 from the computer")
+        self.assertEqual(obj.__str__(), "lotsa testing from the computer")
 
 
 class TestBaseM2MModel(DataTestCase):
