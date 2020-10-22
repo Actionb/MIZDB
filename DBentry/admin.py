@@ -810,16 +810,13 @@ class OrtAdmin(MIZModelAdmin):
 
 @admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
-#    readonly_fields = [
-#        'audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch',
-#        'dokument', 'memorabilien', 'technik', 'video'
-#    ]
+    readonly_fields = [
+        'audio', 'ausgabe', 'bildmaterial', 'brochure', 'buch',
+        'dokument', 'memorabilien', 'technik', 'video'
+    ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['bestand_art', 'lagerort', 'signatur']}
     superuser_only = True
-    # TODO: change related link/icon doesn't make much sense for the fields that
-    # relate to models whose stock is set here (i.e. Audio, Ausgabe, etc.)
-    # plus: change related link/icon for BaseBrochure makes no sense
 
     def get_queryset(self, request, **kwargs):
         self.request = request  # save the request for bestand_link()
