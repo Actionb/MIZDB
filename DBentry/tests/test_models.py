@@ -1408,3 +1408,22 @@ class TestModelVideo(DataTestCase):
             self.model.search_fields_suffixes,
             {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
+
+
+class TestModelBaseBrochure(DataTestCase):
+
+    model = _models.BaseBrochure
+
+    def test_resolve_child_no_children(self):
+        # Should the obj have no children, None should be returned.
+        obj = make(self.model)
+        self.assertIsNone(obj.resolve_child())
+
+    def test_resolve_child(self):
+        child_models = (_models.Brochure, _models.Kalender, _models.Katalog)
+        for child_model in child_models:
+            with self.subTest(child_model=child_model._meta.object_name):
+                obj = make(child_model)
+                # Call resolve_child from the BaseBrochure parent instance.
+                resolved = getattr(obj, child_model._meta.pk.name).resolve_child()
+                self.assertIsInstance(resolved, child_model)

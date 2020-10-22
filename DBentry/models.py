@@ -12,7 +12,7 @@ from DBentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
 from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
-from DBentry.utils import concat_limit
+from DBentry.utils import concat_limit, get_model_relations
 
 
 class Person(ComputedNameModel):
@@ -1294,6 +1294,21 @@ class BaseBrochure(BaseModel):
 
     def __str__(self):
         return str(self.titel)
+
+    def resolve_child(self):
+        """Fetch a child instance from this parent instance."""
+        for rel in get_model_relations(self, forward=False, reverse=True):
+            # Look for a reverse relation that is a PK and originates from a
+            # subclass.
+            if not rel.field.primary_key:
+                continue
+            if not issubclass(rel.related_model, self.__class__):
+                continue
+            try:
+                return getattr(self, rel.name)
+            except getattr(self.__class__, rel.name).RelatedObjectDoesNotExist:
+                # This subclass is not related to this BaseBrochure instance.
+                continue
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
