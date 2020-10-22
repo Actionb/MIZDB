@@ -631,7 +631,27 @@ class TestModelBandAlias(DataTestCase):
 
 
 class TestModelBestand(DataTestCase):
-    pass
+
+    model = _models.Bestand
+
+    def test_bestand_object(self):
+        # Assert that the property 'bestand_object' returns the expected
+        # instance: the object the Bestand instance is meant to keep a record
+        # of.
+        test_data = [
+            ('ausgabe', _models.Ausgabe),
+            ('audio', _models.Audio),
+            ('brochure', _models.Katalog)
+        ]
+        lagerort = make(_models.Lagerort)
+        for field_name, expected_model in test_data:
+            with self.subTest(field_name=field_name):
+                obj = _models.Bestand.objects.create(
+                    **{'lagerort': lagerort, field_name: make(expected_model)})
+                # refresh to clear Bestand.brochure cache so that it doesn't
+                # return the Katalog instance directly.
+                obj.refresh_from_db()
+                self.assertIsInstance(obj.bestand_object, expected_model)
 
 
 class TestModelBildmaterial(DataTestCase):

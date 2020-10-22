@@ -12,7 +12,7 @@ from DBentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
 from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
-from DBentry.utils import concat_limit, get_model_relations
+from DBentry.utils import concat_limit, get_model_relations, get_model_fields
 
 
 class Person(ComputedNameModel):
@@ -1191,10 +1191,24 @@ class Bestand(BaseModel):
     def __str__(self):
         return str(self.lagerort)
 
-    def bestand_objekt(self):
-        # TODO: WIP create a template just for bestand changeform so we can display the object in question as a link
-        # art = self.bestand_art(as_field=True)
-        objekt = art.value_from_object(self)
+    @property
+    def bestand_object(self):
+        """Return the archive object this Bestand instance refers to."""
+        if hasattr(self, '_bestand_object'):
+            return self._bestand_object
+        self._bestand_object = None
+        for field in get_model_fields(self, base=False, foreign=True, m2m=False):
+            # The archive object is referenced by the one FK relation (other
+            # than Lagerort and Provenienz) that is not null.
+            if field.related_model._meta.object_name in ('Lagerort', 'Provenienz'):
+                continue
+            related_obj = getattr(self, field.name)
+            if  related_obj:
+                if related_obj._meta.object_name == 'BaseBrochure':
+                    # Handle the multiple inheritance stuff:
+                    related_obj = related_obj.resolve_child()
+                self._bestand_object = related_obj
+        return self._bestand_object
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
