@@ -815,7 +815,7 @@ class BestandAdmin(MIZModelAdmin):
         'dokument', 'memorabilien', 'technik', 'video'
     ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
-    search_form_kwargs = {'fields': ['bestand_art', 'lagerort', 'signatur']}
+    search_form_kwargs = {'fields': ['lagerort', 'signatur']}
     superuser_only = True
 
     def get_queryset(self, request, **kwargs):

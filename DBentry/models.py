@@ -1159,17 +1159,7 @@ class Lagerort(ComputedNameModel):
 
 
 class Bestand(BaseModel):
-    # TODO: BESTAND_CHOICES is missing BaseBrochure models
-    BESTAND_CHOICES = [
-        ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),
-        ('buch', 'Buch'), ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
-        ('technik', 'Technik'), ('video', 'Video')
-    ]
-
     signatur = models.AutoField(primary_key=True)
-    bestand_art = models.CharField(
-        'Bestand-Art', max_length=20, choices=BESTAND_CHOICES, blank=False, default='ausgabe')
-
     lagerort = models.ForeignKey('Lagerort', models.PROTECT)
     provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
@@ -1209,15 +1199,6 @@ class Bestand(BaseModel):
                     related_obj = related_obj.resolve_child()
                 self._bestand_object = related_obj
         return self._bestand_object
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        # TODO: bestand_art should get its value from the related_model.
-        # Find the correct Bestand-Art
-        for fld_name, _choice in self.BESTAND_CHOICES:
-            if getattr(self, fld_name):
-                self.bestand_art = fld_name
-        super().save(force_insert, force_update, using, update_fields)
 
 
 class Datei(BaseModel):
