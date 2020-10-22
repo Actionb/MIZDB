@@ -16,7 +16,7 @@ from DBentry.forms import (
     BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
-from DBentry.utils import concat_limit, copy_related_set
+from DBentry.utils import concat_limit, copy_related_set, get_obj_link
 
 
 class BestandInLine(BaseTabularInline):
@@ -814,11 +814,28 @@ class BestandAdmin(MIZModelAdmin):
 #        'audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch',
 #        'dokument', 'memorabilien', 'technik', 'video'
 #    ]
-    list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
+    list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['bestand_art', 'lagerort', 'signatur']}
     superuser_only = True
     # TODO: change related link/icon doesn't make much sense for the fields that
     # relate to models whose stock is set here (i.e. Audio, Ausgabe, etc.)
+    # plus: change related link/icon for BaseBrochure makes no sense
+
+    def get_queryset(self, request, **kwargs):
+        self.request = request  # save the request for bestand_link()
+        return super().get_queryset(request, **kwargs)
+
+    def bestand_class(self, obj):
+        if obj.bestand_object:
+            return obj.bestand_object._meta.verbose_name
+        return ''
+    bestand_class.short_description = 'Art'
+
+    def bestand_link(self, obj):
+        if obj.bestand_object:
+            return get_obj_link(obj.bestand_object, self.request.user, blank=True)
+        return ''
+    bestand_link.short_description = 'Link'
 
     def _check_search_form_fields(self, **kwargs):
         # Ignore the search form fields check for BestandAdmin.

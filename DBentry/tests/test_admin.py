@@ -1573,6 +1573,27 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
 
+    def test_bestand_class(self):
+        # Assert that list_display method bestand_class returns the verbose_name
+        # of the model that is referenced by the particular Bestand instance.
+        obj = make(self.model)
+        self.assertFalse(self.model_admin.bestand_class(obj))
+        obj = make(self.model, audio=make(_models.Audio))
+        self.assertEqual(self.model_admin.bestand_class(obj), _models.Audio._meta.verbose_name)
+
+    def test_bestand_link(self):
+        # Assert that list_display method bestand_link returns a hyperlink to
+        # the instance that is referenced by the particular Bestand instance.
+        obj = make(self.model)
+        self.assertFalse(self.model_admin.bestand_link(obj))
+        obj = make(self.model, audio=make(_models.Audio))
+        # Need to set a request attribute on the model_admin instance:
+        self.model_admin.request = self.get_request()
+        link = self.model_admin.bestand_link(obj)
+        self.assertTrue(link.startswith('<a'))
+        self.assertIn('target="_blank"', link)
+        self.assertIn(str(obj.audio.pk), link)
+
 
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DateiAdmin
