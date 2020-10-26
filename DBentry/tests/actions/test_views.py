@@ -154,6 +154,22 @@ class TestActionConfirmationView(ActionViewTestCase):
         # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
 
+    def test_compile_affected_objects_choices(self):
+        # Assert that for fields with choices the human readable part is displayed.
+        obj = make(_models.Ausgabe, status=_models.Ausgabe.INBEARBEITUNG)
+        view = self.get_view(
+            request=self.get_request(),
+            model_admin=AusgabenAdmin(_models.Ausgabe, miz_site),
+            queryset=_models.Ausgabe.objects.filter(pk=obj.pk)
+        )
+        view.affected_fields = ['status']
+        status_field = _models.Ausgabe._meta.get_field('status')
+        expected = "%s: %s" % (  # "Bearbeitungsstatus: in Bearbeitung"
+            status_field.verbose_name,
+            dict(status_field.choices)[_models.Ausgabe.INBEARBEITUNG]
+        )
+        self.assertEqual(view.compile_affected_objects()[0][1][0], expected)
+
     def test_form_valid(self):
         # form_valid should redirect back to the changelist
         # a return value of None will make options.ModelAdmin.response_action redirect there
@@ -1096,7 +1112,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # Assert that specific permissions are required to access this action.
         view = self.get_view()
         self.assertTrue(hasattr(view, 'allowed_permissions'))
-        self.assertEqual(view.allowed_permissions, ['delete'])
+        self.assertEqual(view.allowed_permissions, ['moveto_brochure'])
 
     def test_story(self):
         other_mag = make(_models.Magazin)

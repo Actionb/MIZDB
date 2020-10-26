@@ -1,6 +1,6 @@
 from django import views
 from django.contrib.admin import helpers
-from django.contrib.admin.utils import get_fields_from_path
+from django.contrib.admin.utils import display_for_field, get_fields_from_path
 from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.text import capfirst
@@ -22,9 +22,10 @@ class ConfirmationViewMixin(MIZAdminMixin):
             an operation that is not easily reversed.
         short_description (str): label for the action in the changelist
             dropdown menu.
-        action_name (str): context variable that will be used on the template
-            so django redirects back here through response_action
-            (line contrib.admin.options:1255)
+        action_name (str): name of the action as registered with the ModelAdmin
+            This is the value for the hidden input named "action" with which the
+            ModelAdmin resolves the right action to use. With an invalid form, 
+            ModelAdmin.response_action will return here.
         view_helptext (str): a help text for this view
         action_allowed_checks (list or tuple): list of callables or names of view
             methods that assess if the action is allowed.
@@ -217,9 +218,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                         related_obj = field.related_model.objects.get(pk=pk)
                         sub_list.append(linkify(related_obj))
                 else:
-                    value = getattr(obj, field.name)
-                    if value is None:
-                        value = '---'
+                    value = display_for_field(getattr(obj, field.name), field, '---')
                     verbose_name = field.verbose_name
                     if verbose_name == field.name.replace('_', ' '):
                         # The field has the default django verbose_name

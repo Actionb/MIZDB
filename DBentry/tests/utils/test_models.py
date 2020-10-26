@@ -1,3 +1,8 @@
+from functools import partial
+from io import StringIO
+from unittest.mock import patch, Mock
+
+from django.contrib import auth, contenttypes
 from django.core import exceptions
 
 from DBentry import utils, models as _models
@@ -150,3 +155,88 @@ class TestModelUtils(MyTestCase):
         # if the first field is not a model field of the given model.
         with self.assertRaises(exceptions.FieldDoesNotExist):
             utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')
+
+
+class TestCleanPerms(MyTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.patcher = partial(patch.object, auth.models.Permission.objects, 'all')
+
+    @patch('sys.stdout')
+    def test_stream_argument(self, mocked_stdout):
+        # Assert that clean_permissions uses the stream kwarg or defaults
+        # to sys.stdout.
+        p = auth.models.Permission.objects.first()
+        p.codename += 'beep'  # make the codename invalid to prompt a message
+        p.save()
+        utils.clean_permissions(stream=None)
+        self.assertTrue(mocked_stdout.write.called)
+        p.codename += 'beep'
+        p.save()
+        stream = StringIO()
+        utils.clean_permissions(stream=stream)
+        self.assertTrue(stream.getvalue())
+
+    def test_unknown_model(self):
+        # Assert that a message is written to the stream if clean_permissions
+        # encounters a content type with an unknown model.
+        ct = contenttypes.models.ContentType.objects.first()
+        ct.model = 'Not.AModel'
+        ct.save()
+        p = auth.models.Permission.objects.first()
+        p.content_type = ct
+        p.save()
+        expected_message = (
+            "ContentType of %s references unknown model: %s.%s\n"
+            "Try running clean_contenttypes.\n" % (
+                p.name, p.content_type.app_label, p.content_type.model)
+        )
+        stream = StringIO()
+        with self.patcher(new=Mock(return_value=[p])):
+            utils.clean_permissions(stream)
+            self.assertEqual(stream.getvalue(), expected_message)
+
+    def test_only_default_perms(self):
+        # Assert that clean_permissions only checks the default permissions.
+        p = auth.models.Permission.objects.first()
+        p.codename = 'beep_boop'
+        p.save()
+        stream = StringIO()
+        # 'p' with permission 'beep' should just be skipped:
+        with self.patcher(new=Mock(return_value=[p])):
+            utils.clean_permissions(stream)
+            self.assertFalse(stream.getvalue())
+
+    def test_no_update_needed(self):
+        # Assert that clean_permissions only updates a permission's codename if
+        # that codename differs from the one returned by
+        # auth.get_permission_codename.
+        p = auth.models.Permission.objects.get(codename='add_ausgabe')
+        p.codename = 'add_actuallyincorrect'
+        p.save()
+        stream = StringIO()
+        mocked_get_codename = Mock(return_value='add_actuallyincorrect')
+        with patch.object(auth,'get_permission_codename', new=mocked_get_codename):
+            with self.patcher(new=Mock(return_value=[p])):
+                utils.clean_permissions(stream)
+                self.assertFalse(stream.getvalue())
+
+    def test_duplicate_permissions(self):
+        # Assert that clean_permissions deletes redundant permissions.
+        p = auth.models.Permission.objects.get(codename='add_ausgabe')
+        # Dupe the perm just with a different codename;
+        # clean_permissions will correct the codename and make the new perm a
+        # true duplicate.
+        new = auth.models.Permission.objects.create(
+            name=p.name, codename='add_beep', content_type=p.content_type)
+        expected_message = (
+            "Permission with codename '%s' already exists. "
+            "Deleting permission with outdated codename: '%s'\n" % (
+                'add_ausgabe', 'add_beep')
+        )
+        stream = StringIO()
+        with self.patcher(new=Mock(return_value=[new])):
+            utils.clean_permissions(stream)
+            self.assertEqual(stream.getvalue(), expected_message)
+            self.assertFalse(new.pk)

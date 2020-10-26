@@ -29,7 +29,7 @@ class TestBaseModel(DataTestCase):
 
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(_models.Video, titel="lotsa testing", tracks=1, quelle="from the computer")
+        obj = make(_models.Video, titel="lotsa testing", quelle="from the computer")
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")
@@ -37,7 +37,7 @@ class TestBaseModel(DataTestCase):
         # Assert that, if no name_field is set, __str__ defaults to the old
         # method of gathering values from applicable fields to form a string.
         obj.name_field = None
-        self.assertEqual(obj.__str__(), "lotsa testing 1 from the computer")
+        self.assertEqual(obj.__str__(), "lotsa testing from the computer")
 
 
 class TestBaseM2MModel(DataTestCase):
@@ -631,7 +631,27 @@ class TestModelBandAlias(DataTestCase):
 
 
 class TestModelBestand(DataTestCase):
-    pass
+
+    model = _models.Bestand
+
+    def test_bestand_object(self):
+        # Assert that the property 'bestand_object' returns the expected
+        # instance: the object the Bestand instance is meant to keep a record
+        # of.
+        test_data = [
+            ('ausgabe', _models.Ausgabe),
+            ('audio', _models.Audio),
+            ('brochure', _models.Katalog)
+        ]
+        lagerort = make(_models.Lagerort)
+        for field_name, expected_model in test_data:
+            with self.subTest(field_name=field_name):
+                obj = _models.Bestand.objects.create(
+                    **{'lagerort': lagerort, field_name: make(expected_model)})
+                # refresh to clear Bestand.brochure cache so that it doesn't
+                # return the Katalog instance directly.
+                obj.refresh_from_db()
+                self.assertIsInstance(obj.bestand_object, expected_model)
 
 
 class TestModelBildmaterial(DataTestCase):
@@ -1087,7 +1107,10 @@ class TestModelMusiker(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
-            sorted(['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen'])
+            sorted([
+                'kuenstler_name', 'musikeralias__alias', 'person___name',
+                'beschreibung', 'bemerkungen'
+            ])
         )
 
     def test_search_fields_suffixes(self):
@@ -1095,6 +1118,7 @@ class TestModelMusiker(DataTestCase):
             self.model.search_fields_suffixes,
             {
                 'musikeralias__alias': 'Alias',
+                'person___name': 'bürgerl. Name',
                 'beschreibung': 'Beschreibung',
                 'bemerkungen': 'Bemerkungen'
             }
@@ -1404,3 +1428,22 @@ class TestModelVideo(DataTestCase):
             self.model.search_fields_suffixes,
             {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
+
+
+class TestModelBaseBrochure(DataTestCase):
+
+    model = _models.BaseBrochure
+
+    def test_resolve_child_no_children(self):
+        # Should the obj have no children, None should be returned.
+        obj = make(self.model)
+        self.assertIsNone(obj.resolve_child())
+
+    def test_resolve_child(self):
+        child_models = (_models.Brochure, _models.Kalender, _models.Katalog)
+        for child_model in child_models:
+            with self.subTest(child_model=child_model._meta.object_name):
+                obj = make(child_model)
+                # Call resolve_child from the BaseBrochure parent instance.
+                resolved = getattr(obj, child_model._meta.pk.name).resolve_child()
+                self.assertIsInstance(resolved, child_model)

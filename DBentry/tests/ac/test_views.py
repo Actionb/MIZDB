@@ -462,6 +462,8 @@ class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
     raw_data = [
         {
             'musikeralias__alias': 'John',
+            'person__vorname': 'Peter',
+            'person__nachname': 'Lustig',
             'beschreibung': 'Description',
             'bemerkungen': 'Stuff'
         }

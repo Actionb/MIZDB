@@ -691,11 +691,13 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_zusammenfassung_string(self):
         self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '')
         self.obj1.zusammenfassung = (
-            'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+            "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
+            "ist, dafür aber doch recht lang ist."
         )
         self.assertEqual(
             self.model_admin.zusammenfassung_string(self.obj1),
-            'Dies ist eine Testzusammenfassung, die nicht [...]'
+            "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
+            "ist, dafür aber doch recht lang [...]"
         )
 
     def test_artikel_magazin(self):
@@ -747,6 +749,18 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_get_changelist(self):
         self.assertEqual(
             self.model_admin.get_changelist(self.get_request()), AusgabeChangeList)
+
+    def test_changelist_ordering(self):
+        # Check that the changelist results are only chronologically ordered
+        # when the ORDER_VAR ('o') is not present in the query string.
+        request_data = {'magazin': self.obj1.magazin_id}
+        request = self.get_request(data=request_data)
+        queryset = self.model_admin.get_changelist_instance(request).get_queryset(request)
+        self.assertTrue(queryset.chronologically_ordered)
+        request_data[admin.views.main.ORDER_VAR] = '1'
+        request = self.get_request(data=request_data)
+        queryset = self.model_admin.get_changelist_instance(request).get_queryset(request)
+        self.assertFalse(queryset.chronologically_ordered)
 
     def test_anz_artikel(self):
         obj = self.get_queryset().get(pk=self.obj1.pk)
@@ -804,7 +818,12 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_actions_noperms(self):
         # Assert that certain actions are not available to user without permissions.
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+        action_names = (
+            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'change_status_unbearbeitet', 'change_status_inbearbeitung',
+            'change_status_abgeschlossen'
+        )
+        for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertNotIn(action_name, actions)
 
@@ -817,14 +836,63 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.staff_user.user_permissions.add(
                 Permission.objects.get(codename=codename))
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+        action_names = (
+            'bulk_jg', 'add_bestand', 'merge_records',
+            'change_status_unbearbeitet', 'change_status_inbearbeitung',
+            'change_status_abgeschlossen'
+        )
+        for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
+
+    def test_movetobrochure_permissions(self):
+        # moveto_brochure should require both 'delete_ausgabe' and 'add_BaseBrochure'
+        # permissions.
+        msg_template = (
+            "Action 'moveto_brochure' should not be available to "
+            "users that miss the '%s' permission."
+        )
+        delete_codename = get_permission_codename('delete', _models.Ausgabe._meta)
+        delete_permission = Permission.objects.get(codename=delete_codename)
+        add_codename = get_permission_codename('add', _models.BaseBrochure._meta)
+        add_permission = Permission.objects.get(codename=add_codename)
+
+        # delete only: not allowed
+        self.staff_user.user_permissions.set([delete_permission])
+        request = self.get_request(user=self.staff_user)
+        self.assertFalse(
+            self.model_admin.has_moveto_brochure_permission(request),
+            msg=msg_template % add_codename
+        )
+
+        # add only: not allowed
+        self.staff_user.user_permissions.set([add_permission])
+        request = self.get_request(user=self.staff_user)
+        self.assertFalse(
+            self.model_admin.has_moveto_brochure_permission(request),
+            msg=msg_template % delete_codename
+        )
+
+        # delete + add: moveto_brochure allowed
+        self.staff_user.user_permissions.set([delete_permission, add_permission])
+        request = self.get_request(user=self.staff_user)
+        self.assertTrue(
+            self.model_admin.has_moveto_brochure_permission(request),
+            msg=(
+                "Action 'moveto_brochure' should be available for users with both "
+                "'%s' and '%s' permissions" % (delete_codename, add_codename)
+            )
+        )
 
     def test_actions_super_user(self):
         # Assert that certain actions are available for super users.
         actions = self.model_admin.get_actions(self.get_request(user=self.super_user))
-        for action_name in ('bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records'):
+        action_names = (
+            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'change_status_unbearbeitet', 'change_status_inbearbeitung',
+            'change_status_abgeschlossen'
+        )
+        for action_name in action_names:
             with self.subTest(action_name=action_name):
                 self.assertIn(action_name, actions)
 
@@ -848,6 +916,18 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 data['model_name'] = model_name
                 data['label'] = labels[model_name]
                 self.assertInCrosslinks(data, crosslinks)
+
+    def test_change_status_unbearbeitet(self):
+        self.model_admin.change_status_unbearbeitet(self.get_request(), self.queryset)
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'unb'})
+
+    def test_change_status_inbearbeitung(self):
+        self.model_admin.change_status_inbearbeitung(self.get_request(), self.queryset)
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'iB'})
+
+    def test_change_status_abgeschlossen(self):
+        self.model_admin.change_status_abgeschlossen(self.get_request(), self.queryset)
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'abg'})
 
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -944,7 +1024,9 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
+        'kuenstler_name', 'musikeralias__alias', 'person___name',
+        'beschreibung', 'bemerkungen'
+    ]
 
     raw_data = [
         {},
@@ -1477,7 +1559,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'jahr', 'quelle', 'beschreibung', 'bemerkungen', 'medium']
+        'titel', 'laufzeit', 'jahr', 'quelle', 'beschreibung', 'bemerkungen', 'medium']
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
@@ -1487,9 +1569,30 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.Bestand
     fields_expected = [
-        'bestand_art', 'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
+        'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
+
+    def test_bestand_class(self):
+        # Assert that list_display method bestand_class returns the verbose_name
+        # of the model that is referenced by the particular Bestand instance.
+        obj = make(self.model)
+        self.assertFalse(self.model_admin.bestand_class(obj))
+        obj = make(self.model, audio=make(_models.Audio))
+        self.assertEqual(self.model_admin.bestand_class(obj), _models.Audio._meta.verbose_name)
+
+    def test_bestand_link(self):
+        # Assert that list_display method bestand_link returns a hyperlink to
+        # the instance that is referenced by the particular Bestand instance.
+        obj = make(self.model)
+        self.assertFalse(self.model_admin.bestand_link(obj))
+        obj = make(self.model, audio=make(_models.Audio))
+        # Need to set a request attribute on the model_admin instance:
+        self.model_admin.request = self.get_request()
+        link = self.model_admin.bestand_link(obj)
+        self.assertTrue(link.startswith('<a'))
+        self.assertIn('target="_blank"', link)
+        self.assertIn(str(obj.audio.pk), link)
 
 
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):

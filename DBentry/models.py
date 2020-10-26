@@ -12,7 +12,7 @@ from DBentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
 from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
-from DBentry.utils import concat_limit
+from DBentry.utils import concat_limit, get_model_relations, get_model_fields
 
 
 class Person(ComputedNameModel):
@@ -67,9 +67,13 @@ class Musiker(BaseModel):
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
     primary_search_fields = ['kuenstler_name']
-    search_fields = ['kuenstler_name', 'musikeralias__alias', 'beschreibung', 'bemerkungen']
+    search_fields = [
+        'kuenstler_name', 'musikeralias__alias', 'person___name',
+        'beschreibung', 'bemerkungen'
+    ]
     search_fields_suffixes = {
         'musikeralias__alias': 'Alias',
+        'person___name': 'bürgerl. Name',
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
@@ -618,6 +622,9 @@ class Artikel(BaseModel):
         verbose_name = 'Artikel'
         verbose_name_plural = 'Artikel'
         ordering = [
+            # TODO: ordering by ausgabe___name doesn't work well when name
+            # contains months (1970-Dez comes before 1970-Nov).
+            # (might be a PRO for introducing an order column on Ausgabe?)
             'ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite',
             'schlagzeile'
         ]
@@ -1010,7 +1017,6 @@ class Veranstaltungsreihe(BaseModel):
 
 class Video(BaseModel):
     titel = models.CharField(max_length=200)
-    tracks = models.PositiveSmallIntegerField('Anz. Tracks', blank=True, null=True)
     laufzeit = models.DurationField(
         blank=True, null=True,
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
@@ -1152,16 +1158,7 @@ class Lagerort(ComputedNameModel):
 
 
 class Bestand(BaseModel):
-    BESTAND_CHOICES = [
-        ('audio', 'Audio'), ('ausgabe', 'Ausgabe'), ('bildmaterial', 'Bildmaterial'),
-        ('buch', 'Buch'), ('dokument', 'Dokument'), ('memorabilien', 'Memorabilien'),
-        ('technik', 'Technik'), ('video', 'Video')
-    ]
-
     signatur = models.AutoField(primary_key=True)
-    bestand_art = models.CharField(
-        'Bestand-Art', max_length=20, choices=BESTAND_CHOICES, blank=False, default='ausgabe')
-
     lagerort = models.ForeignKey('Lagerort', models.PROTECT)
     provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
@@ -1183,19 +1180,24 @@ class Bestand(BaseModel):
     def __str__(self):
         return str(self.lagerort)
 
-    def bestand_objekt(self):
-        # TODO: WIP create a template just for bestand changeform so we can display the object in question as a link
-        # art = self.bestand_art(as_field=True)
-        objekt = art.value_from_object(self)
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        # TODO: bestand_art should get its value from the related_model.
-        # Find the correct Bestand-Art
-        for fld_name, _choice in self.BESTAND_CHOICES:
-            if getattr(self, fld_name):
-                self.bestand_art = fld_name
-        super().save(force_insert, force_update, using, update_fields)
+    @property
+    def bestand_object(self):
+        """Return the archive object this Bestand instance refers to."""
+        if hasattr(self, '_bestand_object'):
+            return self._bestand_object
+        self._bestand_object = None
+        for field in get_model_fields(self, base=False, foreign=True, m2m=False):
+            # The archive object is referenced by the one FK relation (other
+            # than Lagerort and Provenienz) that is not null.
+            if field.related_model._meta.object_name in ('Lagerort', 'Provenienz'):
+                continue
+            related_obj = getattr(self, field.name)
+            if  related_obj:
+                if related_obj._meta.object_name == 'BaseBrochure':
+                    # Handle the multiple inheritance stuff:
+                    related_obj = related_obj.resolve_child()
+                self._bestand_object = related_obj
+        return self._bestand_object
 
 
 class Datei(BaseModel):
@@ -1286,6 +1288,21 @@ class BaseBrochure(BaseModel):
 
     def __str__(self):
         return str(self.titel)
+
+    def resolve_child(self):
+        """Fetch a child instance from this parent instance."""
+        for rel in get_model_relations(self, forward=False, reverse=True):
+            # Look for a reverse relation that is a PK and originates from a
+            # subclass.
+            if not rel.field.primary_key:
+                continue
+            if not issubclass(rel.related_model, self.__class__):
+                continue
+            try:
+                return getattr(self, rel.name)
+            except getattr(self.__class__, rel.name).RelatedObjectDoesNotExist:
+                # This subclass is not related to this BaseBrochure instance.
+                continue
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']

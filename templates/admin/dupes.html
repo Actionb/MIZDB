@@ -1,6 +1,14 @@
 {% extends 'admin/basic_form.html' %}
 {% load i18n admin_urls %}
 
+{% block extrastyle %}
+<style>
+form ul li {
+    list-style-type:none; 
+}
+</style>
+{% endblock extrastyle %}
+
 {% block breadcrumbs %}
     <div class="breadcrumbs">
         <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
@@ -12,8 +20,8 @@
 
 {% block content %}
 {% block form %}
-<div name="fields_select" class="collapse {%if items %}collapsed{% endif %}">
-<h2 class="collapsible">Felder</h2>
+<fieldset name="fields_select" class="module aligned collapse{%if items %} collapsed{% endif %}">
+<h2 class="fieldset-name collapsible">Felder</h2>
 <form name="fields_select" method="get">
     {{ form.non_field_errors }}
     <span class="help">{{form.help_text}}</span>
@@ -22,7 +30,7 @@
     </tr> </tbody></table>
         <input type="submit" name="get_duplicates" value="Suchen">
 </form>
-</div>
+</fieldset>
 {% endblock form %}
 <br>
 

@@ -61,8 +61,10 @@ def get_changelist_url(model, user, site_name='admin', obj_list=None):
     except NoReverseMatch:
         return ''
 
-    perm = '%s.%s' % (opts.app_label, get_permission_codename('changelist', opts))
-    if not user.has_perm(perm):
+    change_perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
+    view_perm = '%s.%s' % (opts.app_label, get_permission_codename('view', opts))
+    if not (user.has_perm(change_perm) or user.has_perm(view_perm)):
+        # 'change' or 'view' permission is required to access the changelist.
         return ''
 
     if obj_list:

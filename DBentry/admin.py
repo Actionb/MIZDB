@@ -1,5 +1,3 @@
-# TODO: tweak index_category of some ModelAdmins:
-#   Herausgeber is in 'Stammdaten', Verlag is in 'Sonstige'
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User, Permission
@@ -18,7 +16,7 @@ from DBentry.forms import (
     BildmaterialForm, MusikerForm, BandForm
 )
 from DBentry.sites import miz_site
-from DBentry.utils import concat_limit, copy_related_set
+from DBentry.utils import concat_limit, copy_related_set, get_obj_link
 
 
 class BestandInLine(BaseTabularInline):
@@ -124,6 +122,7 @@ class AusgabenAdmin(MIZModelAdmin):
         verbose_name_plural = 'erschienen im Jahr'
     class AudioInLine(BaseTabularInline):
         model = _models.Ausgabe.audio.through
+        verbose_model = _models.Audio
 
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
@@ -155,7 +154,8 @@ class AusgabenAdmin(MIZModelAdmin):
 
     actions = [
         _actions.merge_records, _actions.bulk_jg, _actions.add_bestand,
-        _actions.moveto_brochure
+        _actions.moveto_brochure, 'change_status_unbearbeitet',
+        'change_status_inbearbeitung', 'change_status_abgeschlossen'
     ]
 
     def get_changelist(self, request, **kwargs):
@@ -186,6 +186,28 @@ class AusgabenAdmin(MIZModelAdmin):
                 obj.ausgabemonat_set.values_list('monat__abk', flat=True)
             )
     monat_string.short_description = 'Monate'
+
+    def change_status_unbearbeitet(self, request, queryset):
+        queryset.update(status=_models.Ausgabe.UNBEARBEITET)
+    change_status_unbearbeitet.allowed_permissions = ['change']
+    change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'
+
+    def change_status_inbearbeitung(self, request, queryset):
+        queryset.update(status=_models.Ausgabe.INBEARBEITUNG)
+    change_status_inbearbeitung.allowed_permissions= ['change']
+    change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
+
+    def change_status_abgeschlossen(self, request, queryset):
+        queryset.update(status=_models.Ausgabe.ABGESCHLOSSEN)
+    change_status_abgeschlossen.allowed_permissions = ['change']
+    change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
+
+    def has_moveto_brochure_permission(self, request):
+        from django.contrib.auth import get_permission_codename
+        perms = []
+        for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
+            perms.append("%s.%s" % (opts.app_label, get_permission_codename(name, opts)))
+        return request.user.has_perms(perms)
 
 
 @admin.register(_models.Autor, site=miz_site)
@@ -264,7 +286,7 @@ class ArtikelAdmin(MIZModelAdmin):
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
             return ''
-        return concat_limit(obj.zusammenfassung.split(), sep=" ")
+        return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
     zusammenfassung_string.short_description = 'Zusammenfassung'
 
     def artikel_magazin(self, obj):
@@ -460,7 +482,6 @@ class BuchAdmin(MIZModelAdmin):
             'schriftenreihe', 'buchband', 'verlag', 'ort', 'spielort', 'veranstaltung',
             'jahr', 'ISBN', 'EAN'
         ],
-        'labels': {'buchband': 'aus Buchband', 'jahr': 'Jahr'},
         # 'autor' help_text refers to quick item creation which is not allowed in search forms.
         'help_texts': {'autor': None}
     }
@@ -789,13 +810,29 @@ class OrtAdmin(MIZModelAdmin):
 
 @admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
-#    readonly_fields = [
-#        'audio', 'ausgabe', 'ausgabe_magazin', 'bildmaterial', 'buch',
-#        'dokument', 'memorabilien', 'technik', 'video'
-#    ]
-    list_display = ['signatur', 'bestand_art', 'lagerort', 'provenienz']
-    search_form_kwargs = {'fields': ['bestand_art', 'lagerort']}
+    readonly_fields = [
+        'audio', 'ausgabe', 'bildmaterial', 'brochure', 'buch',
+        'dokument', 'memorabilien', 'technik', 'video'
+    ]
+    list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
+    search_form_kwargs = {'fields': ['lagerort', 'signatur']}
     superuser_only = True
+
+    def get_queryset(self, request, **kwargs):
+        self.request = request  # save the request for bestand_link()
+        return super().get_queryset(request, **kwargs)
+
+    def bestand_class(self, obj):
+        if obj.bestand_object:
+            return obj.bestand_object._meta.verbose_name
+        return ''
+    bestand_class.short_description = 'Art'
+
+    def bestand_link(self, obj):
+        if obj.bestand_object:
+            return get_obj_link(obj.bestand_object, self.request.user, blank=True)
+        return ''
+    bestand_link.short_description = 'Link'
 
     def _check_search_form_fields(self, **kwargs):
         # Ignore the search form fields check for BestandAdmin.
@@ -861,7 +898,7 @@ class InstrumentAdmin(MIZModelAdmin):
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
-    index_category = 'Stammdaten'
+    pass
 
 
 class BaseBrochureAdmin(MIZModelAdmin):
