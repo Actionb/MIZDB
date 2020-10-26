@@ -8,6 +8,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.core import checks
 from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from django.utils.translation import override as translation_override
 
 
@@ -208,7 +209,6 @@ class AdminTestMethodsMixin(object):
         # always one without it) so after media + InlineFormset.media jquery_init
         # follows directly after jquery_base.
         # Patch render_change_form to get at the context the mock is called with.
-        from django.urls import reverse
         try:
             path = reverse(
                 'admin:DBentry_{}_add'.format(self.model._meta.model_name))
@@ -1724,7 +1724,7 @@ class TestAdminSite(UserTestCase):
             response.context_data['admintools']['bulk_ausgabe'], 'Test')
 
     def test_changelist_availability(self):
-        from django.urls import reverse
+        self.client.force_login(self.super_user)
         for model in miz_site._registry:
             opts = model._meta
             with self.subTest(model_name=opts.model_name):
@@ -1733,7 +1733,7 @@ class TestAdminSite(UserTestCase):
                     (miz_site.name, opts.app_label, opts.model_name)
                 )
                 with self.assertNotRaises(Exception):
-                    response = self.client.get(path=path, user=self.super_user)
+                    response = self.client.get(path=path)
                 self.assertEqual(response.status_code, 200, msg=path)
 
 
