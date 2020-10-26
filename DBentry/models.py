@@ -1312,6 +1312,8 @@ class Brochure(BaseBrochure):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Broschüre')
 
     schlagwort = models.ManyToManyField('Schlagwort')
+    # TODO: add spielort ManyToManyField or merge all the BaseBrochure models?
+    # (assuming a Brochure is specifically about a venue/s)
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
