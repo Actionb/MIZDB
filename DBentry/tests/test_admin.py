@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 from django.db import connections
 from django.contrib import admin, contenttypes
 from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import User, Permission
 from django.core import checks
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
@@ -25,6 +25,7 @@ from DBentry.utils import get_model_fields
 
 class AdminTestMethodsMixin(object):
 
+    test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested
     crosslinks_object = None
     # the data used to create the crosslinks_object with (via make())
@@ -45,6 +46,10 @@ class AdminTestMethodsMixin(object):
 
     @classmethod
     def setUpTestData(cls):
+        cls.visitor_user = User.objects.create_user(
+            username='visitor', password='besucher', is_staff=True)
+        p = Permission.objects.get(codename='view_%s' % cls.model._meta.model_name)
+        cls.visitor_user.user_permissions.add(p)
         super().setUpTestData()
         if not cls.crosslinks_object:
             if cls.crosslinks_object_data:
@@ -279,6 +284,18 @@ class AdminTestMethodsMixin(object):
             response = self.client.get(
                 self.changelist_path, data={admin.views.main.SEARCH_VAR:'Stuff'})
             self.assertEqual(response.status_code, 200)
+
+    def test_changeform_availability(self):
+        # Assert that the changeform is available.
+        response = self.client.get(path=self.change_path.format(pk=self.obj1.pk))
+        self.assertEqual(response.status_code, 200)
+
+    def test_changeform_availability_view_only(self):
+        # Assert that the changeform is available for user with 'view' only
+        # permissions (like a visitor).
+        self.client.force_login(self.visitor_user)
+        response = self.client.get(path=self.change_path.format(pk=self.obj1.pk))
+        self.assertEqual(response.status_code, 200)
 
 
 class TestMIZModelAdmin(AdminTestCase):
