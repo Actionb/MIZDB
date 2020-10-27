@@ -214,6 +214,7 @@ class AusgabenAdmin(MIZModelAdmin):
 class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
         model = _models.Autor.magazin.through
+        verbose_model = _models.Magazin
         extra = 1
 
     form = AutorForm
@@ -309,6 +310,8 @@ class BandAdmin(MIZModelAdmin):
         model = _models.Band.genre.through
     class MusikerInLine(BaseTabularInline):
         model = _models.Band.musiker.through
+        verbose_name = 'Band-Mitglied'
+        verbose_name_plural = 'Band-Mitglieder'
     class AliasInLine(BaseAliasInline):
         model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):
