@@ -733,7 +733,8 @@ class Audio(BaseModel):
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
     )
     e_jahr = YearField('Jahr', blank=True, null=True)
-    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
+    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')  # TODO: might just need a better help_text: "Art d. Aufnahme"?
+    # TODO: add Original/Kopie choice field
     plattennummer = models.CharField(max_length=200, blank=True)
     release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
     discogs_url = models.URLField(
@@ -1022,7 +1023,8 @@ class Video(BaseModel):
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
     )
     jahr = YearField('Jahr', blank=True, null=True)
-    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
+    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')  # TODO: might just need a better help_text: "Art d. Aufnahme"?
+    # TODO: add Original/Kopie choice field
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Video Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
