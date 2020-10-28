@@ -13,7 +13,7 @@ from DBentry.base.admin import (
 )
 from DBentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    BildmaterialForm, MusikerForm, BandForm
+    BildmaterialForm, MusikerForm, BandForm, VideoForm
 )
 from DBentry.sites import miz_site
 from DBentry.utils import concat_limit, copy_related_set, get_obj_link
@@ -766,6 +766,7 @@ class VideoAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
+    form = VideoForm
     index_category = 'Archivgut'
     collapse_all = True
     save_on_top = True
@@ -781,12 +782,13 @@ class VideoAdmin(MIZModelAdmin):
                 'titel', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
                 'beschreibung', 'bemerkungen'
         ]}),
+        ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     # TODO: changelist stuff: list_display, etc.
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'person', 'genre', 'schlagwort',
-            'ort', 'spielort', 'veranstaltung', 'medium'
+            'ort', 'spielort', 'veranstaltung', 'medium', 'release_id'
         ],
     }
 

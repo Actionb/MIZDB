@@ -1039,6 +1039,11 @@ class Video(BaseModel):
         'Originalmaterial', default=False,
         help_text='Ist das vorliegende Material ein Original?'
     )
+    release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
+    discogs_url = models.URLField(
+        'Link discogs.com', blank=True,
+        help_text="Adresse zur discogs.com Seite dieses Objektes."
+    )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Video Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 

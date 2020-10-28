@@ -1576,8 +1576,8 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
     fields_expected = [
-        'titel', 'laufzeit', 'jahr', 'quelle', 'original', 'beschreibung', 'bemerkungen',
-        'medium', 'medium_qty'
+        'titel', 'laufzeit', 'jahr', 'quelle', 'original', 'release_id', 'discogs_url',
+        'beschreibung', 'bemerkungen', 'medium', 'medium_qty'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [

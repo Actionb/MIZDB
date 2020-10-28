@@ -6,7 +6,9 @@ from django.db.models.manager import BaseManager
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 
+from DBentry.constants import discogs_release_id_pattern
 from DBentry.utils import snake_case_to_spaces
+from DBentry.validators import DiscogsURLValidator
 
 
 class FieldGroup:
@@ -368,3 +370,45 @@ class MIZAdminInlineFormBase(forms.ModelForm):
         except ValidationError:
             # Ignore non-unique entries in the same formset.
             self.cleaned_data['DELETE'] = True
+
+
+class DiscogsFormMixin(object):
+    # TODO: add doc string
+    # TODO: refactor this:
+    #       - add url_field_name/release_id_field_name
+    #       - use if any(x in self._errors) in clean()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'discogs_url' in self.fields:
+            self.fields['discogs_url'].validators.append(DiscogsURLValidator())
+
+    def clean(self):
+        """Validate and clean release_id and discogs_url."""
+        # release_id and discogs_url are not required, so that leaves two
+        # possibilities why they not turn up in self.cleaned_data at this point:
+        # - they simply had no data
+        # - the data they had was invalid
+        release_id = str(self.cleaned_data.get('release_id', '') or '')
+        discogs_url = self.cleaned_data.get('discogs_url') or ''
+        # There is no point in working on empty or invalid data, so return early.
+        if (not (release_id or discogs_url)
+                or 'release_id' in self._errors
+                or 'discogs_url' in self._errors):
+            return self.cleaned_data
+        match = discogs_release_id_pattern.search(discogs_url)
+        if match and len(match.groups()) == 1:
+            # We have a valid url with a release_id in it.
+            release_id_from_url = match.groups()[-1]
+            if release_id and release_id_from_url != release_id:
+                raise ValidationError(
+                    "Die angegebene Release ID stimmt nicht mit der ID im "
+                    "Discogs Link überein."
+                )
+            elif not release_id:
+                # Set release_id from the url.
+                release_id = str(match.groups()[-1])
+                self.cleaned_data['release_id'] = release_id
+        discogs_url = "http://www.discogs.com/release/" + release_id
+        self.cleaned_data['discogs_url'] = discogs_url
+        return self.cleaned_data
