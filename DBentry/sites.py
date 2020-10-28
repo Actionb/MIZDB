@@ -43,6 +43,14 @@ class MIZAdminSite(admin.AdminSite):
         return errors
 
     def app_index(self, request, app_label, extra_context=None):
+        """
+        The categories added to the index page of 'DBentry' are essentially
+        'fake' apps and since admin.AdminSite.app_index() is the index for a
+        specific app (and thus would not include other apps), a request for the
+        app_index of 'DBentry' must be redirected to index() (which collects
+        all apps, including our fake ones) for the response to include the
+        grouping categories.
+        """
         if app_label == 'DBentry':
             # Redirect to the 'tidied' up index page of the main page
             return self.index(request, extra_context)
@@ -58,6 +66,12 @@ class MIZAdminSite(admin.AdminSite):
         tools = sorted(self.tools, key=lambda t: t[2])
         for _tool, url_name, index_label, superuser_only in tools:
             if superuser_only and not request.user.is_superuser:
+                continue
+            # Check that the user has permissions to access the tools.
+            try:
+                resolver_match = resolve(reverse(url_name))
+                resolver_match.func(*resolver_match.args, request=request, **resolver_match.kwargs)
+            except (NoReverseMatch, PermissionDenied):
                 continue
             result[url_name] = index_label
         return result
@@ -91,7 +105,7 @@ class MIZAdminSite(admin.AdminSite):
         # Divide the models into their categories.
         for m in model_list:
             model_admin =  utils.get_model_admin_for_model(
-                m.get('object_name'), self)
+                m['object_name'], self)
             model_category = model_admin.get_index_category()
             if model_category not in categories:
                 categories['Sonstige'] = [m]

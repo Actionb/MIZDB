@@ -1,9 +1,12 @@
-from unittest.mock import patch
+from unittest.mock import patch, Mock, DEFAULT
 
+from django import views
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.core import checks
 from django.urls import reverse
 
+from DBentry import models as _models
 from DBentry.sites import MIZAdminSite, miz_site
 from DBentry.tests.base import RequestTestCase
 
@@ -25,7 +28,7 @@ class TestMIZAdminSite(RequestTestCase):
     def test_index_tools_mitarbeiter(self):
         # Check that staff users only have access to a selected number
         # of index tools. Here: only bulk_ausgabe and not dupes_select.
-        perms = Permission.objects.filter(codename__in=('add_ausgabe'))
+        perms = Permission.objects.filter(codename='add_ausgabe')
         self.staff_user.user_permissions.set(perms)
         self.client.force_login(self.staff_user)
         response = self.client.get(reverse('admin:index'))
@@ -37,10 +40,42 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
-    def test_app_index_returns_DBentry(self):
-        # Assert that app_index returns the tidied up index page of DBentry.
-        # The response's app_list should contain additional 'fake' apps
-        # like 'Archivgut' etc:
+    def test_index_tools_view_only(self):
+        # Assert that view-only user (i.e. visitors) only see the site_search
+        # tool.
+        visitor_user = User.objects.create_user(
+            username='visitor', password='besucher', is_staff=True)
+        visitor_user.user_permissions.set([
+            Permission.objects.get(codename='view_ausgabe'),
+        ])
+        self.client.force_login(visitor_user)
+        response = self.client.get(reverse('admin:index'))
+        tools = response.context_data.get('admintools').copy()
+        self.assertIn('site_search', tools)
+        self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
+        self.assertFalse(tools)
+
+    @patch('DBentry.sites.admin.AdminSite.app_index')
+    def test_app_index_returns_DBentry(self, mocked_super_app_index):
+        # Assert that a request for the app_index of 'DBentry' uses the index()
+        # method instead.
+        # (can't really test a full on request-response process because mocking
+        #   index or super.app_index breaks it)
+        site = MIZAdminSite()
+        for app_label, index_called in [('DBentry', True), ('Beep', False)]:
+            with self.subTest(app_label=app_label):
+                with patch.object(site, 'index') as mocked_index:
+                    site.app_index(request=None, app_label=app_label)
+                    if index_called:
+                        self.assertTrue(mocked_index.called)
+                        self.assertFalse(mocked_super_app_index.called)
+                    else:
+                        self.assertFalse(mocked_index.called)
+                        self.assertTrue(mocked_super_app_index.called)
+
+    def test_app_index_categories(self):
+        # Assert that the DBentry app_list contains the additional 'fake' apps
+        # that organize the various models of the app.
         request = self.get_request(path=reverse('admin:index'))
         response = miz_site.app_index(request, app_label='DBentry')
         app_list = response.context_data['app_list']
@@ -85,3 +120,69 @@ class TestMIZAdminSite(RequestTestCase):
                 with self.assertNotRaises(Exception):
                     response = self.client.get(path=path)
                 self.assertEqual(response.status_code, 200, msg=path)
+
+    @patch.multiple('DBentry.sites', reverse=DEFAULT, resolve=DEFAULT)
+    def test_build_admintools_context_no_perms(self, reverse, resolve):
+        # Assert that build_admintools_context only includes tools the user has
+        # permission for.
+        site = MIZAdminSite()
+        class DummyToolView(PermissionRequiredMixin, views.View):
+            permission_required = ['DBentry.add_ausgabe']
+        # Items in the tools list are a 4-tuple:
+        #   (tool, url_name, index_label, superuser_only)
+        site.tools = [(None, 'expected_url_name', 'expected_index_label', False)]
+        view_func = DummyToolView.as_view()
+        mocked_match = Mock(func=view_func, args=(), kwargs={})
+        resolve.return_value = mocked_match
+        request = self.get_request(user=self.staff_user)
+        self.assertFalse(site.build_admintools_context(request))
+        # Now give the user the required permission:
+        self.staff_user.user_permissions.set(
+            Permission.objects.filter(codename='add_ausgabe'))
+        request = self.get_request(user=self.staff_user)
+        context_tools = site.build_admintools_context(request)
+        self.assertIn('expected_url_name', context_tools)
+        self.assertEqual('expected_index_label', context_tools['expected_url_name'])
+
+    def test_build_admintools_context_superuser_only(self):
+        # Assert that build_admintools_context only includes tools that are
+        # flagged with superuser_only=True for superusers.
+        site = MIZAdminSite()
+        # Items in the tools list are a 4-tuple:
+        #   (tool, url_name, index_label, superuser_only)
+        site.tools = [(None, '', '', True)]
+        request = self.get_request(user=self.noperms_user)
+        self.assertFalse(site.build_admintools_context(request))
+        request = self.get_request(user=self.super_user)
+        # Mock your way around the permission/availability checks following the
+        # superuser checks.
+        with patch.multiple('DBentry.sites', reverse=DEFAULT, resolve=DEFAULT):
+            self.assertTrue(site.build_admintools_context(request))
+
+    def test_add_categories_no_category(self):
+        # Assert that add_categories puts ModelAdmins with a category that isn't
+        # one of the three default ones (Archivgut, Stammdaten, Sonstige) into
+        # the 'Sonstige' category.
+        # (lazily just use miz_site instead of mocking everything)
+        model_admin = miz_site._registry[_models.Artikel]
+        for index_category in ('Sonstige', 'Beep', None):
+            app_list = [{'app_label': 'DBentry', 'models': [{'object_name': 'Artikel'}]}]
+            with self.subTest(index_category=str(index_category)):
+                with patch.object(model_admin, 'index_category', new=index_category):
+                    app_list = miz_site.add_categories(app_list)
+                    self.assertEqual(len(app_list), 3, app_list)
+                    self.assertEqual(app_list[-1]['name'], 'Sonstige')
+                    sonstige_category = app_list[-1]
+                    self.assertEqual(len(sonstige_category['models']), 1)
+                    self.assertEqual(sonstige_category['models'][0]['object_name'], 'Artikel')
+
+    def test_add_categories_no_DBentry_app(self):
+        # Assert that add_categories returns an empty list if no 'DBentry' app
+        # can be found in the given app_list.
+        site = MIZAdminSite()
+        app_list = []
+        self.assertFalse(site.add_categories(app_list))
+        app_list.append({'app_label': 'Beep', 'models': []})
+        self.assertFalse(site.add_categories(app_list))
+        app_list.append({'app_label': 'DBentry', 'models': []})
+        self.assertTrue(site.add_categories(app_list))
