@@ -755,7 +755,7 @@ class Audio(BaseModel):
         help_text="Format des Speichermediums."
     )
     medium_qty = models.PositiveSmallIntegerField(
-        'Anzahl', blank=True, null=True, validators=[MinValueValidator(1)])
+        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)])
 
     plattenfirma = models.ManyToManyField('Plattenfirma')
     band = models.ManyToManyField('Band')
@@ -1052,7 +1052,7 @@ class Video(BaseModel):
         help_text="Format des Speichermediums."
     )
     medium_qty = models.PositiveSmallIntegerField(
-        'Anzahl', blank=True, null=True, validators=[MinValueValidator(1)])
+        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)])
 
     band = models.ManyToManyField('Band')
     genre = models.ManyToManyField('Genre')
