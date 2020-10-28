@@ -715,6 +715,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
     list_prefetch_related = ['band', 'musiker']
     save_on_top = True
+    # TODO: search form
 
     def kuenstler_string(self, obj):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
@@ -781,7 +782,7 @@ class VideoAdmin(MIZModelAdmin):
                 'beschreibung', 'bemerkungen'
         ]}),
     ]
-
+    # TODO: changelist stuff: list_display, etc.
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'person', 'genre', 'schlagwort',
