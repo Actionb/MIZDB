@@ -423,27 +423,6 @@ class TestAudioForm(ModelFormTestCase):
         })
         self.assertNotIn('discogs_url', form.errors)
 
-#x = {
-#    'm2m_band_musiker_set-INITIAL_FORMS': ['1'],
-#    'm2m_band_musiker_set-MIN_NUM_FORMS': ['0'],
-#    'm2m_band_musiker_set-MAX_NUM_FORMS': ['1000'],
-#    'm2m_band_musiker_set-TOTAL_FORMS': ['2'],
-#
-#    'band_name': ['Test Band'],
-#
-#    'm2m_band_musiker_set-0-id': ['21348'],
-#    'm2m_band_musiker_set-0-band': ['4449'],
-#    'm2m_band_musiker_set-0-musiker': ['35627'],
-#    'm2m_band_musiker_set-1-id': [''],
-#    'm2m_band_musiker_set-1-band': ['4449']}
-#    'm2m_band_musiker_set-1-musiker': ['35627'],
-#
-#    'm2m_band_musiker_set-__prefix__-id': [''],
-
-
-#    'm2m_band_musiker_set-__prefix__-band': ['4449'],
-#    'm2m_band_musiker_set-__prefix__-musiker': [''],
-#}
 
 class TestMIZAdminInlineFormBase(MyTestCase):
     form = MIZAdminInlineFormBase
