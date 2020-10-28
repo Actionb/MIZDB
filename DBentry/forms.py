@@ -94,11 +94,33 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
         widgets = {
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
             'titel_orig': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
+            # TODO: wrap & can_delete_related kwargs to make_widget is ignored?
+            # Especially the delete button makes no sense on that field:
+            # you can't delete the buchband you are related to (when you are related to it)
             'buchband': make_widget(
                 url='acbuchband', model=_models.Buch, wrap=False,
                 can_delete_related=False
             ),
         }
+
+    def clean_is_buchband(self):
+        """
+        Only allow setting 'is_buchband' to False for instances that aren't
+        referenced by other Buch instances.
+
+        If this form's instance was flagged as a Buchband and other Buch
+        instances refer to it as their Buchband, setting is_buchband to False
+        would end up making the forms of the related instances invalid:
+        the selected Buchband would not be a valid choice anymore as the choices
+        are limited to {'is_buchband': True} (see the model field).
+        """
+        is_buchband = self.cleaned_data.get('is_buchband', False)
+        if not is_buchband and self.instance.buch_set.exists():
+            raise ValidationError(
+                "Nicht abwählbar für Buchband mit existierenden Aufsätzen.",
+                code='invalid'
+            )
+        return is_buchband
 
 
 class MusikerForm(forms.ModelForm):

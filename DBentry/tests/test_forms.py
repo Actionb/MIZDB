@@ -134,6 +134,18 @@ class TestBuchForm(ModelFormTestCase):
         form.full_clean()
         self.assertFalse(form.errors)
 
+    def test_clean_is_buchband(self):
+        # Assert that a ValidationError is raised when is_buchband is set to
+        # False from True when the form's model instance already has related
+        # Buch instances.
+        buchband = make(self.model, titel='Der Buchband', is_buchband=True)
+        make(self.model, titel='Der Aufsatz', buchband=buchband)
+        form_data = {'titel': buchband.titel, 'is_buchband': False}
+        buchband_form = self.get_form(instance=buchband, data=form_data)
+        self.assertFalse(buchband_form.is_valid())
+        expected_error_message = "Nicht abwählbar für Buchband mit existierenden Aufsätzen."
+        self.assertEqual(buchband_form.errors, {'is_buchband': [expected_error_message]})
+
 
 class TestMIZAdminForm(FormTestCase):
 
