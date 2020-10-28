@@ -737,7 +737,10 @@ class Audio(BaseModel):
         max_length=200, blank=True,
         help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
     )
-    original = models.BooleanField('Original', default=False, help_text='Original/Kopie')
+    original = models.BooleanField(
+        'Originalmaterial', default=False,
+        help_text='Ist das vorliegende Material ein Original?'
+    )
     plattennummer = models.CharField(max_length=200, blank=True)
     release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
     discogs_url = models.URLField(
@@ -1032,7 +1035,10 @@ class Video(BaseModel):
         max_length=200, blank=True,
         help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
     )
-    original = models.BooleanField('Original', default=False, help_text='Original/Kopie')
+    original = models.BooleanField(
+        'Originalmaterial', default=False,
+        help_text='Ist das vorliegende Material ein Original?'
+    )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Video Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
