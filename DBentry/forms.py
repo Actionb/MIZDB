@@ -115,7 +115,8 @@ class AudioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['discogs_url'].validators.append(DiscogsURLValidator())
+        if 'discogs_url' in self.fields:
+            self.fields['discogs_url'].validators.append(DiscogsURLValidator())
 
     def clean(self):
         """Validate and clean release_id and discogs_url."""
