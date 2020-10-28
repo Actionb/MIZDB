@@ -1,6 +1,14 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls miz_tags %}
 
+{% block extrastyle %}
+    {% if not cl.formset and not action_form and cl.model_admin.has_search_form %}
+        {# Include i18n for view-only changelists (not editable and without actions) with a search form. #}
+        <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+    {% endif %}
+    {{ block.super }}
+{% endblock extrastyle %}
+
 {% block search %}
 <!-- ADMIN SEARCH FORM --->
     {% if cl.model_admin.has_search_form %}

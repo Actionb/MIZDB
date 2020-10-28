@@ -732,8 +732,12 @@ class Audio(BaseModel):
         blank=True, null=True,
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
     )
-    e_jahr = YearField('Jahr', blank=True, null=True)
-    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
+    jahr = YearField('Jahr', blank=True, null=True)  # TODO: rename to jahr
+    quelle = models.CharField(
+        max_length=200, blank=True,
+        help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
+    )
+    original = models.BooleanField('Original', default=False, help_text='Original/Kopie')
     plattennummer = models.CharField(max_length=200, blank=True)
     release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
     discogs_url = models.URLField(
@@ -744,9 +748,11 @@ class Audio(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     medium = models.ForeignKey(
-        'AudioMedium', models.PROTECT, blank=True, null=True, verbose_name="Medium",
+        'AudioMedium', models.PROTECT, blank=True, null=True, verbose_name="Speichermedium",
         help_text="Format des Speichermediums."
     )
+    medium_qty = models.PositiveSmallIntegerField(
+        'Anzahl', blank=True, null=True, validators=[MinValueValidator(1)])
 
     plattenfirma = models.ManyToManyField('Plattenfirma')
     band = models.ManyToManyField('Band')
@@ -1022,14 +1028,20 @@ class Video(BaseModel):
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
     )
     jahr = YearField('Jahr', blank=True, null=True)
-    quelle = models.CharField(max_length=200, blank=True, help_text='Broadcast, Live, etc.')
+    quelle = models.CharField(
+        max_length=200, blank=True,
+        help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
+    )
+    original = models.BooleanField('Original', default=False, help_text='Original/Kopie')
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Video Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     medium = models.ForeignKey(
-        'VideoMedium', models.PROTECT, blank=True, null=True, verbose_name="Medium",
+        'VideoMedium', models.PROTECT, blank=True, null=True, verbose_name="Speichermedium",
         help_text="Format des Speichermediums."
     )
+    medium_qty = models.PositiveSmallIntegerField(
+        'Anzahl', blank=True, null=True, validators=[MinValueValidator(1)])
 
     band = models.ManyToManyField('Band')
     genre = models.ManyToManyField('Genre')
@@ -1312,6 +1324,8 @@ class Brochure(BaseBrochure):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Broschüre')
 
     schlagwort = models.ManyToManyField('Schlagwort')
+    # TODO: add spielort ManyToManyField or merge all the BaseBrochure models?
+    # (assuming a Brochure is specifically about a venue/s)
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']

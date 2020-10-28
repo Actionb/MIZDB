@@ -5,9 +5,10 @@ from unittest.mock import patch, Mock
 from django.db import connections
 from django.contrib import admin, contenttypes
 from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import User, Permission
 from django.core import checks
 from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from django.utils.translation import override as translation_override
 
 
@@ -24,6 +25,7 @@ from DBentry.utils import get_model_fields
 
 class AdminTestMethodsMixin(object):
 
+    test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested
     crosslinks_object = None
     # the data used to create the crosslinks_object with (via make())
@@ -44,6 +46,10 @@ class AdminTestMethodsMixin(object):
 
     @classmethod
     def setUpTestData(cls):
+        cls.visitor_user = User.objects.create_user(
+            username='visitor', password='besucher', is_staff=True)
+        p = Permission.objects.get(codename='view_%s' % cls.model._meta.model_name)
+        cls.visitor_user.user_permissions.add(p)
         super().setUpTestData()
         if not cls.crosslinks_object:
             if cls.crosslinks_object_data:
@@ -208,7 +214,6 @@ class AdminTestMethodsMixin(object):
         # always one without it) so after media + InlineFormset.media jquery_init
         # follows directly after jquery_base.
         # Patch render_change_form to get at the context the mock is called with.
-        from django.urls import reverse
         try:
             path = reverse(
                 'admin:DBentry_{}_add'.format(self.model._meta.model_name))
@@ -279,6 +284,18 @@ class AdminTestMethodsMixin(object):
             response = self.client.get(
                 self.changelist_path, data={admin.views.main.SEARCH_VAR:'Stuff'})
             self.assertEqual(response.status_code, 200)
+
+    def test_changeform_availability(self):
+        # Assert that the changeform is available.
+        response = self.client.get(path=self.change_path.format(pk=self.obj1.pk))
+        self.assertEqual(response.status_code, 200)
+
+    def test_changeform_availability_view_only(self):
+        # Assert that the changeform is available for user with 'view' only
+        # permissions (like a visitor).
+        self.client.force_login(self.visitor_user)
+        response = self.client.get(path=self.change_path.format(pk=self.obj1.pk))
+        self.assertEqual(response.status_code, 200)
 
 
 class TestMIZModelAdmin(AdminTestCase):
@@ -1313,8 +1330,9 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'spielort', 'veranstaltung', 'ort'
     ]
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'plattennummer',
-        'release_id', 'discogs_url', 'beschreibung', 'bemerkungen', 'medium'
+        'titel', 'tracks', 'laufzeit', 'jahr', 'quelle', 'original',
+        'plattennummer', 'release_id', 'discogs_url', 'beschreibung',
+        'bemerkungen', 'medium', 'medium_qty'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     raw_data = [
@@ -1559,7 +1577,9 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
     fields_expected = [
-        'titel', 'laufzeit', 'jahr', 'quelle', 'beschreibung', 'bemerkungen', 'medium']
+        'titel', 'laufzeit', 'jahr', 'quelle', 'original', 'beschreibung', 'bemerkungen',
+        'medium', 'medium_qty'
+    ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
@@ -1724,7 +1744,7 @@ class TestAdminSite(UserTestCase):
             response.context_data['admintools']['bulk_ausgabe'], 'Test')
 
     def test_changelist_availability(self):
-        from django.urls import reverse
+        self.client.force_login(self.super_user)
         for model in miz_site._registry:
             opts = model._meta
             with self.subTest(model_name=opts.model_name):
@@ -1733,7 +1753,7 @@ class TestAdminSite(UserTestCase):
                     (miz_site.name, opts.app_label, opts.model_name)
                 )
                 with self.assertNotRaises(Exception):
-                    response = self.client.get(path=path, user=self.super_user)
+                    response = self.client.get(path=path)
                 self.assertEqual(response.status_code, 200, msg=path)
 
 

@@ -78,7 +78,7 @@ class AudioAdmin(MIZModelAdmin):
 
     fieldsets = [
         (None, {'fields': [
-                'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'medium',
+                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
                 'plattennummer', 'beschreibung', 'bemerkungen'
         ]}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
@@ -214,6 +214,7 @@ class AusgabenAdmin(MIZModelAdmin):
 class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
         model = _models.Autor.magazin.through
+        verbose_model = _models.Magazin
         extra = 1
 
     form = AutorForm
@@ -309,6 +310,8 @@ class BandAdmin(MIZModelAdmin):
         model = _models.Band.genre.through
     class MusikerInLine(BaseTabularInline):
         model = _models.Band.musiker.through
+        verbose_name = 'Band-Mitglied'
+        verbose_name_plural = 'Band-Mitglieder'
     class AliasInLine(BaseAliasInline):
         model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):
@@ -771,6 +774,12 @@ class VideoAdmin(MIZModelAdmin):
         MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, DateiInLine, BestandInLine
+    ]
+    fieldsets = [
+        (None, {'fields': [
+                'titel', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
+                'beschreibung', 'bemerkungen'
+        ]}),
     ]
 
     search_form_kwargs = {
