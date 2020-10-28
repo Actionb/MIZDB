@@ -78,7 +78,7 @@ class AudioAdmin(MIZModelAdmin):
 
     fieldsets = [
         (None, {'fields': [
-                'titel', 'tracks', 'laufzeit', 'e_jahr', 'quelle', 'medium',
+                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
                 'plattennummer', 'beschreibung', 'bemerkungen'
         ]}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
@@ -774,6 +774,12 @@ class VideoAdmin(MIZModelAdmin):
         MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, DateiInLine, BestandInLine
+    ]
+    fieldsets = [
+        (None, {'fields': [
+                'titel', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
+                'beschreibung', 'bemerkungen'
+        ]}),
     ]
 
     search_form_kwargs = {
