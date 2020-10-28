@@ -18,7 +18,7 @@ class FieldGroup:
     """
 
     def __init__(self, form, *, fields, min=None, max=None,
-                 error_messages=None, format_callback=None):
+                 error_messages=None, format_callback=None, **kwargs):
         """
         Constructor for the FieldGroup.
 
@@ -139,6 +139,9 @@ class MinMaxRequiredFormMixin(object):
         super().__init__(*args, **kwargs)
 
         self._groups = []
+        # Check that field names specified in the group_kwargs are present
+        # on the form and set the 'required' attribute of those formfields
+        # to False.
         for group_kwargs in self.minmax_required or []:
             fields = group_kwargs.get('fields', [])
             if not fields:
@@ -149,16 +152,13 @@ class MinMaxRequiredFormMixin(object):
             except KeyError:
                 # At least one field in that group does not have a
                 # corresponding formfield; skip the entire group.
-                raise
+                continue
             self._groups.append(group_kwargs)
 
     def get_groups(self):
         """Instantiate the helper objects."""
         for group_kwargs in self._groups:
-            try:
                 yield FieldGroup(self, **group_kwargs)
-            except TypeError:
-                raise
 
     def clean(self):
         for group in self.get_groups():
@@ -181,7 +181,7 @@ class MinMaxRequiredFormMixin(object):
 
     def _get_message_field_names(self, group):
         return ", ".join(
-            self.fields[field_name].label or
+            self.fields[field_name].label or  # FIXME: self.fields[field_name] with empty self.fields
             snake_case_to_spaces(field_name).title()
             for field_name in group.fields
         )

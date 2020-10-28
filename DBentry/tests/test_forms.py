@@ -221,27 +221,24 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
     dummy_bases = (MinMaxRequiredFormMixin, forms.Form)
 
     def test_init_resets_required(self):
-        # Assert that __init__ sets any fields declared in minmax_required to not required
+        # Assert that __init__ sets any fields declared in minmax_required to
+        # not be required.
         form = self.get_dummy_form()
         self.assertTrue(form.fields['last_name'].required)
         minmax_required = [{'min': 1, 'fields': ['first_name', 'last_name']}]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
         self.assertFalse(form.fields['last_name'].required)
 
-    def test_init_raises_keyerror(self):
-        # Assert that __init__ reraises a KeyError if a group's fields contains field names
-        # not found on the form.
-        minmax_required = [{'min': 1, 'fields': ['a']}]
-        form_class = self.get_dummy_form_class(attrs={'minmax_required': minmax_required})
-        with self.assertRaises(KeyError):
-            form_class()
-
-    def test_get_groups_raises_typeerror(self):
-        # Assert that get_groups() raises a TypeError from bad kwargs.
-        minmax_required = [{'min': 1, 'fields': ['first_name', 'last_name'], 'bad':'kwarg'}]
+    def test_init_invalid_field_name(self):
+        # Assert that __init__ ignores declared groups if one of its specified
+        # field names cannot be found on the form.
+        minmax_required = [
+            {'min': 1, 'fields': ['a']},
+            {'min': 1, 'fields': ['first_name', 'last_name']}
+        ]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
-        with self.assertRaises(TypeError):
-            list(form.get_groups())
+        self.assertEqual(len(form._groups), 1)
+        self.assertEqual(form._groups[0], {'min': 1, 'fields': ['first_name', 'last_name']})
 
     @translation_override(language=None)
     def test_clean(self):
