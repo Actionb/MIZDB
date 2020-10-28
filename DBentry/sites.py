@@ -1,6 +1,10 @@
 from collections import OrderedDict
 
 from django.contrib import admin
+from django.core import checks
+from django.core.exceptions import PermissionDenied
+from django.urls import reverse, resolve
+from django.urls.exceptions import NoReverseMatch
 from django.views.decorators.cache import never_cache
 
 from DBentry import utils
@@ -24,6 +28,19 @@ class MIZAdminSite(admin.AdminSite):
         See MIZAdminSite.index for more details.
         """
         self.tools.append((view, url_name, index_label, superuser_only))
+
+    def check(self, app_configs):
+        errors = super().check(app_configs)
+        for tool, url_name, index_label, _superuser_only in self.tools:
+            try:
+                reverse(url_name)
+            except NoReverseMatch as e:
+                errors.append(checks.Error(
+                    str(e),
+                    hint="Check register_tool decorator args of %s" % tool,
+                    obj="%s admin tools" % self.__class__
+                ))
+        return errors
 
     def app_index(self, request, app_label, extra_context=None):
         if app_label == 'DBentry':

@@ -1,4 +1,7 @@
-from django.contrib.auth.models import Permission
+from unittest.mock import patch
+
+from django.contrib.auth.models import Permission, User
+from django.core import checks
 from django.urls import reverse
 
 from DBentry.admin import miz_site
@@ -45,3 +48,14 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertIn('Archivgut', app_names)
         self.assertIn('Stammdaten', app_names)
         self.assertIn('Sonstige', app_names)
+
+    @patch("DBentry.sites.admin.AdminSite.check")
+    def test_check(self, mocked_super_check):
+        # Assert that the check finds tools with invalid url names.
+        mocked_super_check.return_value = []
+        with patch.object(miz_site, 'tools', new=[]):
+            self.assertFalse(miz_site.check(None))
+            miz_site.tools.append((None, '404_url', '', False))
+            errors = miz_site.check(None)
+            self.assertEqual(len(errors), 1)
+            self.assertIsInstance(errors[0], checks.Error)
