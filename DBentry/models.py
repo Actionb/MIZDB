@@ -732,7 +732,7 @@ class Audio(BaseModel):
         blank=True, null=True,
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
     )
-    jahr = YearField('Jahr', blank=True, null=True)  # TODO: rename to jahr
+    jahr = YearField('Jahr', blank=True, null=True)
     quelle = models.CharField(
         max_length=200, blank=True,
         help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
