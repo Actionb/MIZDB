@@ -165,8 +165,10 @@ class AdminTestMethodsMixin(object):
             self.warn(warning)
 
     def test_get_exclude(self):
-        expected = self.exclude_expected or []
-        self.assertEqual(self.model_admin.get_exclude(self.get_request()), expected)
+        expected = []
+        if self.exclude_expected:
+            expected = sorted(self.exclude_expected)
+        self.assertEqual(sorted(self.model_admin.get_exclude(self.get_request())), expected)
 
     def test_get_fields(self):
         expected = self.fields_expected or []

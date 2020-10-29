@@ -84,8 +84,8 @@ class AudioAdmin(MIZModelAdmin):
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     inlines = [
-        GenreInLine, SchlInLine,
         MusikerInLine, BandInLine,
+        SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, PlattenInLine,
         AusgabeInLine, DateiInLine,
@@ -93,9 +93,8 @@ class AudioAdmin(MIZModelAdmin):
     ]
     search_form_kwargs = {
         'fields': [
-            'musiker', 'band', 'person', 'genre', 'schlagwort',
-            'ort', 'spielort', 'veranstaltung', 'plattenfirma',
-            'medium', 'release_id'
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id'
         ],
     }
 
@@ -267,7 +266,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
-        AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        AutorInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine
     ]
     list_display = [
@@ -277,9 +276,9 @@ class ArtikelAdmin(MIZModelAdmin):
     list_prefetch_related = ['schlagwort', 'musiker', 'band']
     search_form_kwargs = {
         'fields': [
-            'ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band',
-            'musiker', 'autor', 'person',
-            'ort', 'spielort', 'veranstaltung', 'seite__range'
+            'ausgabe__magazin', 'ausgabe','autor', 'musiker', 'band',
+            'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
+            'seite__range'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
@@ -379,14 +378,14 @@ class BildmaterialAdmin(MIZModelAdmin):
     save_on_top = True
 
     inlines = [
-        GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        SchlInLine, GenreInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, BestandInLine
     ]
     search_form_kwargs = {
         'fields': [
-            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'person',
-            'ort', 'spielort', 'veranstaltung', 'reihe', 'signatur'
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -470,9 +469,9 @@ class BuchAdmin(MIZModelAdmin):
         }),
     ]
     inlines = [
-        AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        AutorInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
-        HerausgeberInLine, VerlagInLine, PersonInLine, BestandInLine
+        PersonInLine, HerausgeberInLine, VerlagInLine, BestandInLine
     ]
     list_display = [
         'titel', 'autoren_string', 'herausgeber_string', 'verlag_string',
@@ -481,9 +480,9 @@ class BuchAdmin(MIZModelAdmin):
     list_prefetch_related = ['autor', 'herausgeber', 'verlag', 'schlagwort', 'genre']
     search_form_kwargs = {
         'fields': [
-            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person',
-            'schriftenreihe', 'buchband', 'verlag', 'ort', 'spielort', 'veranstaltung',
-            'jahr', 'ISBN', 'EAN'
+            'autor', 'musiker', 'band', 'schlagwort', 'genre', 'ort',
+            'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
+            'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
         # 'autor' help_text refers to quick item creation which is not allowed in search forms.
         'help_texts': {'autor': None}
@@ -711,7 +710,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.VeranstaltungAlias
 
     collapse_all = True
-    inlines = [GenreInLine, SchlInLine, AliasInLine, BandInLine, MusikerInLine, PersonInLine]
+    inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
     list_prefetch_related = ['band', 'musiker']
     save_on_top = True
@@ -772,8 +771,8 @@ class VideoAdmin(MIZModelAdmin):
     save_on_top = True
 
     inlines = [
-        GenreInLine, SchlInLine,
         MusikerInLine, BandInLine,
+        SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, DateiInLine, BestandInLine
     ]
@@ -788,8 +787,8 @@ class VideoAdmin(MIZModelAdmin):
     list_prefetch_related = ['band', 'musiker']
     search_form_kwargs = {
         'fields': [
-            'musiker', 'band', 'person', 'genre', 'schlagwort',
-            'ort', 'spielort', 'veranstaltung', 'medium', 'release_id'
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'medium', 'release_id'
         ],
     }
 
