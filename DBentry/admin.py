@@ -784,13 +784,18 @@ class VideoAdmin(MIZModelAdmin):
         ]}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
-    # TODO: changelist stuff: list_display, etc.
+    list_display = ['__str__', 'medium', 'kuenstler_string']
+    list_prefetch_related = ['band', 'musiker']
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'person', 'genre', 'schlagwort',
             'ort', 'spielort', 'veranstaltung', 'medium', 'release_id'
         ],
     }
+
+    def kuenstler_string(self, obj):
+        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
 
 
 @admin.register(_models.Bundesland, site=miz_site)
