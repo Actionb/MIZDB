@@ -186,18 +186,21 @@ class AusgabenAdmin(MIZModelAdmin):
             )
     monat_string.short_description = 'Monate'
 
+    def _change_status(self, request, queryset, status):
+        queryset.update(status=status, _changed_flag=False)
+
     def change_status_unbearbeitet(self, request, queryset):
-        queryset.update(status=_models.Ausgabe.UNBEARBEITET)
+        self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
     change_status_unbearbeitet.allowed_permissions = ['change']
     change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'
 
     def change_status_inbearbeitung(self, request, queryset):
-        queryset.update(status=_models.Ausgabe.INBEARBEITUNG)
+        self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
     change_status_inbearbeitung.allowed_permissions= ['change']
     change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
 
     def change_status_abgeschlossen(self, request, queryset):
-        queryset.update(status=_models.Ausgabe.ABGESCHLOSSEN)
+        self._change_status(request, queryset, _models.Ausgabe.ABGESCHLOSSEN)
     change_status_abgeschlossen.allowed_permissions = ['change']
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
 

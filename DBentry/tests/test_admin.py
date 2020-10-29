@@ -2,7 +2,7 @@ import re
 from unittest import skip
 from unittest.mock import patch, Mock
 
-from django.db import connections
+from django.db import connections, transaction
 from django.contrib import admin, contenttypes
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User, Permission
@@ -946,6 +946,28 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_change_status_abgeschlossen(self):
         self.model_admin.change_status_abgeschlossen(self.get_request(), self.queryset)
         self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'abg'})
+
+    def test_change_status(self):
+        # Integration test for the change_status stuff.
+        for action, expected_value in [
+                ('change_status_inbearbeitung', 'iB'),
+                ('change_status_abgeschlossen', 'abg'),
+                # obj1.status is 'unb' at the start, so test for 'unb' last to be
+                # able to register a change:
+                ('change_status_unbearbeitet', 'unb')
+            ]:
+            request_data = {
+                'action': action,
+                admin.helpers.ACTION_CHECKBOX_NAME: self.obj1.pk,
+                'index': 0,  # required by changelist_view to identify the request as an action
+            }
+            path = self.changelist_path + '?magazin=%s' % self.obj1.magazin_id
+            with self.subTest(action=action, status=expected_value):
+                with transaction.atomic():
+                    response = self.client.post(path, data=request_data)
+                self.assertEqual(response.status_code, 302)
+                self.obj1.refresh_from_db()
+                self.assertEqual(self.obj1.status, expected_value)
 
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
