@@ -183,9 +183,10 @@ class MinMaxRequiredFormMixin(object):
 
     def _get_message_field_names(self, group):
         return ", ".join(
-            self.fields[field_name].label or  # FIXME: self.fields[field_name] with empty self.fields
+            self.fields[field_name].label or
             snake_case_to_spaces(field_name).title()
             for field_name in group.fields
+            if field_name in self.fields
         )
 
     def get_group_error_messages(self, group, error_messages, format_callback=None):
