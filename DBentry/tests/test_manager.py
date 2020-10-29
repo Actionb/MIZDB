@@ -277,6 +277,11 @@ class TestAusgabeChronologicOrder(DataTestCase):
         queryset = queryset.order_by('magazin')
         self.assertFalse(queryset.chronologically_ordered)
 
+    def test_update(self):
+        # Assert that update calls are possible after chronologic_order().
+        with self.assertNotRaises(FieldError):
+            self.queryset.chronologic_order().update(beschreibung='abc')
+
 
 class TestAusgabeIncrementJahrgang(DataTestCase):
 
