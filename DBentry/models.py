@@ -737,7 +737,10 @@ class Audio(BaseModel):
         max_length=200, blank=True,
         help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
     )
-    original = models.BooleanField('Original', default=False, help_text='Original/Kopie')
+    original = models.BooleanField(
+        'Originalmaterial', default=False,
+        help_text='Ist das vorliegende Material ein Original?'
+    )
     plattennummer = models.CharField(max_length=200, blank=True)
     release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
     discogs_url = models.URLField(
@@ -752,7 +755,7 @@ class Audio(BaseModel):
         help_text="Format des Speichermediums."
     )
     medium_qty = models.PositiveSmallIntegerField(
-        'Anzahl', blank=True, null=True, validators=[MinValueValidator(1)])
+        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)])
 
     plattenfirma = models.ManyToManyField('Plattenfirma')
     band = models.ManyToManyField('Band')
@@ -1032,7 +1035,15 @@ class Video(BaseModel):
         max_length=200, blank=True,
         help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'
     )
-    original = models.BooleanField('Original', default=False, help_text='Original/Kopie')
+    original = models.BooleanField(
+        'Originalmaterial', default=False,
+        help_text='Ist das vorliegende Material ein Original?'
+    )
+    release_id = models.PositiveIntegerField('Release ID (discogs)', blank=True, null=True)
+    discogs_url = models.URLField(
+        'Link discogs.com', blank=True,
+        help_text="Adresse zur discogs.com Seite dieses Objektes."
+    )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Video Materials')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -1041,7 +1052,7 @@ class Video(BaseModel):
         help_text="Format des Speichermediums."
     )
     medium_qty = models.PositiveSmallIntegerField(
-        'Anzahl', blank=True, null=True, validators=[MinValueValidator(1)])
+        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)])
 
     band = models.ManyToManyField('Band')
     genre = models.ManyToManyField('Genre')

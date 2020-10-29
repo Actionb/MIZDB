@@ -1,6 +1,10 @@
 from collections import OrderedDict
 
 from django.contrib import admin
+from django.core import checks
+from django.core.exceptions import PermissionDenied
+from django.urls import reverse, resolve
+from django.urls.exceptions import NoReverseMatch
 from django.views.decorators.cache import never_cache
 
 from DBentry import utils
@@ -25,7 +29,28 @@ class MIZAdminSite(admin.AdminSite):
         """
         self.tools.append((view, url_name, index_label, superuser_only))
 
+    def check(self, app_configs):
+        errors = super().check(app_configs)
+        for tool, url_name, index_label, _superuser_only in self.tools:
+            try:
+                reverse(url_name)
+            except NoReverseMatch as e:
+                errors.append(checks.Error(
+                    str(e),
+                    hint="Check register_tool decorator args of %s" % tool,
+                    obj="%s admin tools" % self.__class__
+                ))
+        return errors
+
     def app_index(self, request, app_label, extra_context=None):
+        """
+        The categories added to the index page of 'DBentry' are essentially
+        'fake' apps and since admin.AdminSite.app_index() is the index for a
+        specific app (and thus would not include other apps), a request for the
+        app_index of 'DBentry' must be redirected to index() (which collects
+        all apps, including our fake ones) for the response to include the
+        grouping categories.
+        """
         if app_label == 'DBentry':
             # Redirect to the 'tidied' up index page of the main page
             return self.index(request, extra_context)
@@ -41,6 +66,12 @@ class MIZAdminSite(admin.AdminSite):
         tools = sorted(self.tools, key=lambda t: t[2])
         for _tool, url_name, index_label, superuser_only in tools:
             if superuser_only and not request.user.is_superuser:
+                continue
+            # Check that the user has permissions to access the tools.
+            try:
+                resolver_match = resolve(reverse(url_name))
+                resolver_match.func(*resolver_match.args, request=request, **resolver_match.kwargs)
+            except (NoReverseMatch, PermissionDenied):
                 continue
             result[url_name] = index_label
         return result
@@ -74,7 +105,7 @@ class MIZAdminSite(admin.AdminSite):
         # Divide the models into their categories.
         for m in model_list:
             model_admin =  utils.get_model_admin_for_model(
-                m.get('object_name'), self)
+                m['object_name'], self)
             model_category = model_admin.get_index_category()
             if model_category not in categories:
                 categories['Sonstige'] = [m]

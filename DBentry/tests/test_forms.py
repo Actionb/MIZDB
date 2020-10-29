@@ -134,6 +134,18 @@ class TestBuchForm(ModelFormTestCase):
         form.full_clean()
         self.assertFalse(form.errors)
 
+    def test_clean_is_buchband(self):
+        # Assert that a ValidationError is raised when is_buchband is set to
+        # False from True when the form's model instance already has related
+        # Buch instances.
+        buchband = make(self.model, titel='Der Buchband', is_buchband=True)
+        make(self.model, titel='Der Aufsatz', buchband=buchband)
+        form_data = {'titel': buchband.titel, 'is_buchband': False}
+        buchband_form = self.get_form(instance=buchband, data=form_data)
+        self.assertFalse(buchband_form.is_valid())
+        expected_error_message = "Nicht abwählbar für Buchband mit existierenden Aufsätzen."
+        self.assertEqual(buchband_form.errors, {'is_buchband': [expected_error_message]})
+
 
 class TestMIZAdminForm(FormTestCase):
 
@@ -221,27 +233,24 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
     dummy_bases = (MinMaxRequiredFormMixin, forms.Form)
 
     def test_init_resets_required(self):
-        # Assert that __init__ sets any fields declared in minmax_required to not required
+        # Assert that __init__ sets any fields declared in minmax_required to
+        # not be required.
         form = self.get_dummy_form()
         self.assertTrue(form.fields['last_name'].required)
         minmax_required = [{'min': 1, 'fields': ['first_name', 'last_name']}]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
         self.assertFalse(form.fields['last_name'].required)
 
-    def test_init_raises_keyerror(self):
-        # Assert that __init__ reraises a KeyError if a group's fields contains field names
-        # not found on the form.
-        minmax_required = [{'min': 1, 'fields': ['a']}]
-        form_class = self.get_dummy_form_class(attrs={'minmax_required': minmax_required})
-        with self.assertRaises(KeyError):
-            form_class()
-
-    def test_get_groups_raises_typeerror(self):
-        # Assert that get_groups() raises a TypeError from bad kwargs.
-        minmax_required = [{'min': 1, 'fields': ['first_name', 'last_name'], 'bad':'kwarg'}]
+    def test_init_invalid_field_name(self):
+        # Assert that __init__ ignores declared groups if one of its specified
+        # field names cannot be found on the form.
+        minmax_required = [
+            {'min': 1, 'fields': ['a']},
+            {'min': 1, 'fields': ['first_name', 'last_name']}
+        ]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
-        with self.assertRaises(TypeError):
-            list(form.get_groups())
+        self.assertEqual(len(form._groups), 1)
+        self.assertEqual(form._groups[0], {'min': 1, 'fields': ['first_name', 'last_name']})
 
     @translation_override(language=None)
     def test_clean(self):
@@ -423,27 +432,6 @@ class TestAudioForm(ModelFormTestCase):
         })
         self.assertNotIn('discogs_url', form.errors)
 
-#x = {
-#    'm2m_band_musiker_set-INITIAL_FORMS': ['1'],
-#    'm2m_band_musiker_set-MIN_NUM_FORMS': ['0'],
-#    'm2m_band_musiker_set-MAX_NUM_FORMS': ['1000'],
-#    'm2m_band_musiker_set-TOTAL_FORMS': ['2'],
-#
-#    'band_name': ['Test Band'],
-#
-#    'm2m_band_musiker_set-0-id': ['21348'],
-#    'm2m_band_musiker_set-0-band': ['4449'],
-#    'm2m_band_musiker_set-0-musiker': ['35627'],
-#    'm2m_band_musiker_set-1-id': [''],
-#    'm2m_band_musiker_set-1-band': ['4449']}
-#    'm2m_band_musiker_set-1-musiker': ['35627'],
-#
-#    'm2m_band_musiker_set-__prefix__-id': [''],
-
-
-#    'm2m_band_musiker_set-__prefix__-band': ['4449'],
-#    'm2m_band_musiker_set-__prefix__-musiker': [''],
-#}
 
 class TestMIZAdminInlineFormBase(MyTestCase):
     form = MIZAdminInlineFormBase

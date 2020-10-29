@@ -29,7 +29,7 @@ class TestBaseModel(DataTestCase):
 
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
-        obj = make(_models.Video, titel="lotsa testing", quelle="from the computer")
+        obj = make(_models.Video, titel="lotsa testing", quelle="from the computer", medium_qty=0)
         self.assertEqual(obj.__str__(), "lotsa testing")
         obj.name_field = "quelle"
         self.assertEqual(obj.__str__(), "from the computer")

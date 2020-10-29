@@ -3,9 +3,7 @@ from django.core.exceptions import ValidationError
 
 from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
-from DBentry.base.forms import MinMaxRequiredFormMixin
-from DBentry.constants import discogs_release_id_pattern
-from DBentry.validators import DiscogsURLValidator
+from DBentry.base.forms import MinMaxRequiredFormMixin, DiscogsFormMixin
 
 
 class GoogleBtnWidget(forms.widgets.TextInput):
@@ -94,11 +92,33 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
         widgets = {
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
             'titel_orig': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
+            # TODO: wrap & can_delete_related kwargs to make_widget is ignored?
+            # Especially the delete button makes no sense on that field:
+            # you can't delete the buchband you are related to (when you are related to it)
             'buchband': make_widget(
                 url='acbuchband', model=_models.Buch, wrap=False,
                 can_delete_related=False
             ),
         }
+
+    def clean_is_buchband(self):
+        """
+        Only allow setting 'is_buchband' to False for instances that aren't
+        referenced by other Buch instances.
+
+        If this form's instance was flagged as a Buchband and other Buch
+        instances refer to it as their Buchband, setting is_buchband to False
+        would end up making the forms of the related instances invalid:
+        the selected Buchband would not be a valid choice anymore as the choices
+        are limited to {'is_buchband': True} (see the model field).
+        """
+        is_buchband = self.cleaned_data.get('is_buchband', False)
+        if not is_buchband and self.instance.buch_set.exists():
+            raise ValidationError(
+                "Nicht abwählbar für Buchband mit existierenden Aufsätzen.",
+                code='invalid'
+            )
+        return is_buchband
 
 
 class MusikerForm(forms.ModelForm):
@@ -111,41 +131,12 @@ class BandForm(forms.ModelForm):
         widgets = {'band_name': GoogleBtnWidget()}
 
 
-class AudioForm(forms.ModelForm):
+class AudioForm(DiscogsFormMixin, forms.ModelForm):
+    pass
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['discogs_url'].validators.append(DiscogsURLValidator())
 
-    def clean(self):
-        """Validate and clean release_id and discogs_url."""
-        # release_id and discogs_url are not required, so that leaves two
-        # possibilities why they not turn up in self.cleaned_data at this point:
-        # - they simply had no data
-        # - the data they had was invalid
-        release_id = str(self.cleaned_data.get('release_id', '') or '')
-        discogs_url = self.cleaned_data.get('discogs_url') or ''
-        # There is no point in working on empty or invalid data, so return early.
-        if (not (release_id or discogs_url)
-                or 'release_id' in self._errors
-                or 'discogs_url' in self._errors):
-            return self.cleaned_data
-        match = discogs_release_id_pattern.search(discogs_url)
-        if match and len(match.groups()) == 1:
-            # We have a valid url with a release_id in it.
-            release_id_from_url = match.groups()[-1]
-            if release_id and release_id_from_url != release_id:
-                raise ValidationError(
-                    "Die angegebene Release ID stimmt nicht mit der ID im "
-                    "Discogs Link überein."
-                )
-            elif not release_id:
-                # Set release_id from the url.
-                release_id = str(match.groups()[-1])
-                self.cleaned_data['release_id'] = release_id
-        discogs_url = "http://www.discogs.com/release/" + release_id
-        self.cleaned_data['discogs_url'] = discogs_url
-        return self.cleaned_data
+class VideoForm(DiscogsFormMixin, forms.ModelForm):
+    pass
 
 
 class BildmaterialForm(forms.ModelForm):
