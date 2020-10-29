@@ -2,8 +2,7 @@ from collections import OrderedDict
 
 from django.contrib import admin
 from django.core import checks
-from django.core.exceptions import PermissionDenied
-from django.urls import reverse, resolve
+from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from django.views.decorators.cache import never_cache
 
@@ -66,12 +65,6 @@ class MIZAdminSite(admin.AdminSite):
         tools = sorted(self.tools, key=lambda t: t[2])
         for _tool, url_name, index_label, superuser_only in tools:
             if superuser_only and not request.user.is_superuser:
-                continue
-            # Check that the user has permissions to access the tools.
-            try:
-                resolver_match = resolve(reverse(url_name))
-                resolver_match.func(*resolver_match.args, request=request, **resolver_match.kwargs)
-            except (NoReverseMatch, PermissionDenied):
                 continue
             result[url_name] = index_label
         return result
