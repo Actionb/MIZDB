@@ -1078,7 +1078,7 @@ class Video(BaseModel):
 
 
 class VideoMedium(BaseModel):
-    medium = models.CharField(max_length=200)  # TODO: VideoMedium.medium unique?
+    medium = models.CharField(max_length=200, unique=True)
 
     create_field = 'medium'
     name_field = 'medium'
