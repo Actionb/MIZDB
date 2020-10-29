@@ -9,10 +9,10 @@ from django.utils.translation import override as translation_override
 from DBentry import models as _models
 from DBentry.base.forms import (
     DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin,
-    MIZAdminInlineFormBase
+    MIZAdminInlineFormBase, DiscogsFormMixin
 )
 from DBentry.forms import (
-    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm
+    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm, VideoForm
 )
 from DBentry.ac.widgets import EasyWidgetWrapper
 from DBentry.factory import make
@@ -303,8 +303,12 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
                 self.assertIn(expected, form.non_field_errors())
 
 
-class TestAudioForm(ModelFormTestCase):
-    form_class = AudioForm
+class TestDiscogsFormMixin(ModelFormTestCase):
+    form_class = type(
+        'TestForm',
+        (DiscogsFormMixin, forms.ModelForm),
+        {'url_field_name': 'discogs_url', 'release_id_field_name': 'release_id'}
+    )
     model = _models.Audio
     fields = ['release_id', 'discogs_url']
 
@@ -362,7 +366,9 @@ class TestAudioForm(ModelFormTestCase):
         form.full_clean()
         self.assertIn(NON_FIELD_ERRORS, form.errors)
         expected_error_message = (
-            "Die angegebene Release ID stimmt nicht mit der ID im Discogs Link überein.")
+            "Die angegebene Release ID (1234) stimmt nicht mit der ID im Discogs"
+            " Link überein (3512181)."
+        )
         self.assertIn(expected_error_message, form.errors[NON_FIELD_ERRORS])
 
     def test_clean_sets_release_id_from_url(self):
@@ -370,7 +376,7 @@ class TestAudioForm(ModelFormTestCase):
         # was missing.
         form = self.get_form(data={'discogs_url': 'http://www.discogs.com/release/3512181'})
         form.full_clean()
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), form.errors)
         self.assertIn('release_id', form.cleaned_data)
         self.assertEqual(form.cleaned_data['release_id'], '3512181')
 
@@ -488,3 +494,24 @@ class TestMIZAdminInlineFormBase(MyTestCase):
                 self.assertTrue(form.cleaned_data['DELETE'])
             else:
                 self.assertFalse(form.cleaned_data['DELETE'])
+
+
+class DiscogsMixinAttributesTestMixin(object):
+
+    def test_discogs_mixin_attributes_set(self):
+        # Assert that url_field_name and release_id_field_name are set.
+        msg_template = "'%s' attribute not set on %s"
+        for field in ('url_field_name', 'release_id_field_name'):
+            with self.subTest(field=field):
+                self.assertTrue(
+                    getattr(self.form_class, field), msg=msg_template % (field, self.form_class))
+
+
+class TestAudioForm(DiscogsMixinAttributesTestMixin, MyTestCase):
+
+    form_class = AudioForm
+
+
+class TestVideoForm(DiscogsMixinAttributesTestMixin, MyTestCase):
+
+    form_class = VideoForm

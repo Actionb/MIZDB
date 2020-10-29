@@ -160,7 +160,7 @@ class MinMaxRequiredFormMixin(object):
     def get_groups(self):
         """Instantiate the helper objects."""
         for group_kwargs in self._groups:
-                yield FieldGroup(self, **group_kwargs)
+            yield FieldGroup(self, **group_kwargs)
 
     def clean(self):
         for group in self.get_groups():
@@ -373,37 +373,43 @@ class MIZAdminInlineFormBase(forms.ModelForm):
 
 
 class DiscogsFormMixin(object):
-    # TODO: add doc string
-    # TODO: refactor this:
-    #       - add url_field_name/release_id_field_name
-    #       - use if any(x in self._errors) in clean()
+    """
+    A mixin for fields handling data from discogs.
+
+    The form should include two fields:
+        - a field that stores the release ID of a record on discogs
+        - a field that stores the URL to the page of that record
+    This mixin knows these fields through the attributes 'release_id_field_name'
+    and 'url_field_name', and adds validation to both.
+    """
+
+    url_field_name = release_id_field_name = ''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'discogs_url' in self.fields:
-            self.fields['discogs_url'].validators.append(DiscogsURLValidator())
+        if self.url_field_name in self.fields:
+            self.fields[self.url_field_name].validators.append(
+                DiscogsURLValidator())
 
     def clean(self):
         """Validate and clean release_id and discogs_url."""
-        # release_id and discogs_url are not required, so that leaves two
-        # possibilities why they not turn up in self.cleaned_data at this point:
-        # - they simply had no data
-        # - the data they had was invalid
-        release_id = str(self.cleaned_data.get('release_id', '') or '')
-        discogs_url = self.cleaned_data.get('discogs_url') or ''
-        # There is no point in working on empty or invalid data, so return early.
-        if (not (release_id or discogs_url)
-                or 'release_id' in self._errors
-                or 'discogs_url' in self._errors):
+        if (self.url_field_name in self._errors
+                or self.release_id_field_name in self._errors):
             return self.cleaned_data
+        release_id = str(
+            self.cleaned_data.get(self.release_id_field_name, '') or '')
+        discogs_url = self.cleaned_data.get(self.url_field_name) or ''
+        if not (release_id or discogs_url):
+            return self.cleaned_data
+
         match = discogs_release_id_pattern.search(discogs_url)
         if match and len(match.groups()) == 1:
             # We have a valid url with a release_id in it.
             release_id_from_url = match.groups()[-1]
             if release_id and release_id_from_url != release_id:
                 raise ValidationError(
-                    "Die angegebene Release ID stimmt nicht mit der ID im "
-                    "Discogs Link überein."
+                    "Die angegebene Release ID (%s) stimmt nicht mit der ID im "
+                    "Discogs Link überein (%s)." % (release_id, release_id_from_url)
                 )
             elif not release_id:
                 # Set release_id from the url.
