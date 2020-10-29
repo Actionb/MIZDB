@@ -682,6 +682,7 @@ class SpielortAdmin(MIZModelAdmin):
 
     list_display = ['name', 'ort']
     inlines = [AliasInLine]
+    search_form_kwargs = {'fields': ['ort', 'ort__land']}
 
 
 @admin.register(_models.Technik, site=miz_site)
@@ -714,7 +715,12 @@ class VeranstaltungAdmin(MIZModelAdmin):
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
     list_prefetch_related = ['band', 'musiker']
     save_on_top = True
-    # TODO: search form
+    search_form_kwargs = {
+        'fields': [
+            'musiker', 'band', 'schlagwort', 'genre', 'person', 'spielort',
+            'reihe', 'datum__range'
+        ]
+    }
 
     def kuenstler_string(self, obj):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))

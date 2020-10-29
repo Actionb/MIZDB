@@ -1356,7 +1356,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
-        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     changelist_uses_select2 = False
 
@@ -1382,9 +1382,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'name', 'datum', 'veranstaltungalias__alias',
-        'beschreibung', 'bemerkungen', 'pk__iexact'
-    ]
+        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     changelist_uses_select2 = False
 
