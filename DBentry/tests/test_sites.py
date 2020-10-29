@@ -1,7 +1,6 @@
-from unittest.mock import patch, Mock, DEFAULT
+from unittest import skip
+from unittest.mock import patch, DEFAULT
 
-from django import views
-from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.core import checks
 from django.urls import reverse
@@ -40,6 +39,7 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
+    @skip("Permission checks disabled again: commit 0190e654")
     def test_index_tools_view_only(self):
         # Assert that view-only user (i.e. visitors) only see the site_search
         # tool.
@@ -121,29 +121,6 @@ class TestMIZAdminSite(RequestTestCase):
                     response = self.client.get(path=path)
                 self.assertEqual(response.status_code, 200, msg=path)
 
-    @patch.multiple('DBentry.sites', reverse=DEFAULT, resolve=DEFAULT)
-    def test_build_admintools_context_no_perms(self, reverse, resolve):
-        # Assert that build_admintools_context only includes tools the user has
-        # permission for.
-        site = MIZAdminSite()
-        class DummyToolView(PermissionRequiredMixin, views.View):
-            permission_required = ['DBentry.add_ausgabe']
-        # Items in the tools list are a 4-tuple:
-        #   (tool, url_name, index_label, superuser_only)
-        site.tools = [(None, 'expected_url_name', 'expected_index_label', False)]
-        view_func = DummyToolView.as_view()
-        mocked_match = Mock(func=view_func, args=(), kwargs={})
-        resolve.return_value = mocked_match
-        request = self.get_request(user=self.staff_user)
-        self.assertFalse(site.build_admintools_context(request))
-        # Now give the user the required permission:
-        self.staff_user.user_permissions.set(
-            Permission.objects.filter(codename='add_ausgabe'))
-        request = self.get_request(user=self.staff_user)
-        context_tools = site.build_admintools_context(request)
-        self.assertIn('expected_url_name', context_tools)
-        self.assertEqual('expected_index_label', context_tools['expected_url_name'])
-
     def test_build_admintools_context_superuser_only(self):
         # Assert that build_admintools_context only includes tools that are
         # flagged with superuser_only=True for superusers.
@@ -156,7 +133,7 @@ class TestMIZAdminSite(RequestTestCase):
         request = self.get_request(user=self.super_user)
         # Mock your way around the permission/availability checks following the
         # superuser checks.
-        with patch.multiple('DBentry.sites', reverse=DEFAULT, resolve=DEFAULT):
+        with patch.multiple('DBentry.sites', reverse=DEFAULT):
             self.assertTrue(site.build_admintools_context(request))
 
     def test_add_categories_no_category(self):
