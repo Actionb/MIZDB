@@ -85,6 +85,16 @@ class TestAdminMixin(AdminTestCase):
                 "search_form's lookup mapping and thus should not be allowed."
             )
 
+    def test_lookup_allowed_range_end(self):
+        # Assert that for a given search field declared with the range lookup,
+        # the lte lookup is also valid.
+        model_admin = _admin.AusgabenAdmin(_models.Ausgabe, _admin.miz_site)
+        model_admin.get_search_form()  # set the search_form attribute
+        # While ausgabejahr__jahr can be found as a field on the search form,
+        # only the 'range' lookup will be registered and thus lte would be
+        # regarded as invalid.
+        self.assertTrue(model_admin.lookup_allowed('ausgabejahr__jahr__lte', None))
+
     def test_response_post_save_preserves_multi_values(self):
         # Assert that multiple values of a preserved_filter querystring are
         # included in the redirect url back to the changelist from the changeform.
