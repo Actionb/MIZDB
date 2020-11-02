@@ -2,6 +2,7 @@ from urllib.parse import parse_qsl, urlparse, urlunparse
 
 from django.core import checks, exceptions
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
+from django.db.models.lookups import Range, LessThanOrEqual
 from django.http import HttpResponseRedirect, QueryDict
 
 from DBentry import utils
@@ -108,12 +109,17 @@ class AdminSearchFormMixin(object):
         # Remove all lookups from the field_path to end up with just a
         # relational path:
         field_path = search_utils.strip_lookups_from_path(lookup, lookups)
+        # All lookups that the formfield was registered with should be allowed
+        # by default.
+        allowed = self.search_form.lookups.get(field_path, [])
+        if Range.lookup_name in allowed:
+            # If the start of a range is not given, a __lte lookup will be used.
+            allowed.append(LessThanOrEqual.lookup_name)
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
-        registered_lookups = self.search_form.lookups.get(field_path, [])
         return (
-            (field_path in self.search_form.fields)
-            and (set(lookups).issubset(registered_lookups))
+            field_path in self.search_form.fields
+            and set(lookups).issubset(allowed)
         )
 
     def get_changeform_initial_data(self, request):

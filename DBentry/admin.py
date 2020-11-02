@@ -84,8 +84,8 @@ class AudioAdmin(MIZModelAdmin):
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     inlines = [
-        GenreInLine, SchlInLine,
         MusikerInLine, BandInLine,
+        SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, PlattenInLine,
         AusgabeInLine, DateiInLine,
@@ -93,9 +93,8 @@ class AudioAdmin(MIZModelAdmin):
     ]
     search_form_kwargs = {
         'fields': [
-            'musiker', 'band', 'person', 'genre', 'schlagwort',
-            'ort', 'spielort', 'veranstaltung', 'plattenfirma',
-            'medium', 'release_id'
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id'
         ],
     }
 
@@ -187,18 +186,21 @@ class AusgabenAdmin(MIZModelAdmin):
             )
     monat_string.short_description = 'Monate'
 
+    def _change_status(self, request, queryset, status):
+        queryset.update(status=status, _changed_flag=False)
+
     def change_status_unbearbeitet(self, request, queryset):
-        queryset.update(status=_models.Ausgabe.UNBEARBEITET)
+        self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
     change_status_unbearbeitet.allowed_permissions = ['change']
     change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'
 
     def change_status_inbearbeitung(self, request, queryset):
-        queryset.update(status=_models.Ausgabe.INBEARBEITUNG)
+        self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
     change_status_inbearbeitung.allowed_permissions= ['change']
     change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
 
     def change_status_abgeschlossen(self, request, queryset):
-        queryset.update(status=_models.Ausgabe.ABGESCHLOSSEN)
+        self._change_status(request, queryset, _models.Ausgabe.ABGESCHLOSSEN)
     change_status_abgeschlossen.allowed_permissions = ['change']
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
 
@@ -267,7 +269,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
-        AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        AutorInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine
     ]
     list_display = [
@@ -277,9 +279,9 @@ class ArtikelAdmin(MIZModelAdmin):
     list_prefetch_related = ['schlagwort', 'musiker', 'band']
     search_form_kwargs = {
         'fields': [
-            'ausgabe__magazin', 'ausgabe', 'schlagwort', 'genre', 'band',
-            'musiker', 'autor', 'person',
-            'ort', 'spielort', 'veranstaltung', 'seite__range'
+            'ausgabe__magazin', 'ausgabe','autor', 'musiker', 'band',
+            'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
+            'seite__range'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
@@ -379,14 +381,14 @@ class BildmaterialAdmin(MIZModelAdmin):
     save_on_top = True
 
     inlines = [
-        GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        SchlInLine, GenreInLine, MusikerInLine, BandInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, BestandInLine
     ]
     search_form_kwargs = {
         'fields': [
-            'datum__range', 'schlagwort', 'genre', 'band','musiker', 'person',
-            'ort', 'spielort', 'veranstaltung', 'reihe', 'signatur'
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -470,9 +472,9 @@ class BuchAdmin(MIZModelAdmin):
         }),
     ]
     inlines = [
-        AutorInLine, GenreInLine, SchlInLine, MusikerInLine, BandInLine,
+        AutorInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
-        HerausgeberInLine, VerlagInLine, PersonInLine, BestandInLine
+        PersonInLine, HerausgeberInLine, VerlagInLine, BestandInLine
     ]
     list_display = [
         'titel', 'autoren_string', 'herausgeber_string', 'verlag_string',
@@ -481,9 +483,9 @@ class BuchAdmin(MIZModelAdmin):
     list_prefetch_related = ['autor', 'herausgeber', 'verlag', 'schlagwort', 'genre']
     search_form_kwargs = {
         'fields': [
-            'autor', 'herausgeber', 'schlagwort', 'genre', 'musiker', 'band', 'person',
-            'schriftenreihe', 'buchband', 'verlag', 'ort', 'spielort', 'veranstaltung',
-            'jahr', 'ISBN', 'EAN'
+            'autor', 'musiker', 'band', 'schlagwort', 'genre', 'ort',
+            'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
+            'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
         # 'autor' help_text refers to quick item creation which is not allowed in search forms.
         'help_texts': {'autor': None}
@@ -683,6 +685,7 @@ class SpielortAdmin(MIZModelAdmin):
 
     list_display = ['name', 'ort']
     inlines = [AliasInLine]
+    search_form_kwargs = {'fields': ['ort', 'ort__land']}
 
 
 @admin.register(_models.Technik, site=miz_site)
@@ -711,11 +714,16 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.VeranstaltungAlias
 
     collapse_all = True
-    inlines = [GenreInLine, SchlInLine, AliasInLine, BandInLine, MusikerInLine, PersonInLine]
+    inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
     list_prefetch_related = ['band', 'musiker']
     save_on_top = True
-    # TODO: search form
+    search_form_kwargs = {
+        'fields': [
+            'musiker', 'band', 'schlagwort', 'genre', 'person', 'spielort',
+            'reihe', 'datum__range'
+        ]
+    }
 
     def kuenstler_string(self, obj):
         return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
@@ -772,8 +780,8 @@ class VideoAdmin(MIZModelAdmin):
     save_on_top = True
 
     inlines = [
-        GenreInLine, SchlInLine,
         MusikerInLine, BandInLine,
+        SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
         PersonInLine, DateiInLine, BestandInLine
     ]
@@ -784,13 +792,18 @@ class VideoAdmin(MIZModelAdmin):
         ]}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
-    # TODO: changelist stuff: list_display, etc.
+    list_display = ['__str__', 'medium', 'kuenstler_string']
+    list_prefetch_related = ['band', 'musiker']
     search_form_kwargs = {
         'fields': [
-            'musiker', 'band', 'person', 'genre', 'schlagwort',
-            'ort', 'spielort', 'veranstaltung', 'medium', 'release_id'
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'medium', 'release_id'
         ],
     }
+
+    def kuenstler_string(self, obj):
+        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+    kuenstler_string.short_description = 'Künstler'
 
 
 @admin.register(_models.Bundesland, site=miz_site)

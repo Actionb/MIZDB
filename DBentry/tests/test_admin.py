@@ -2,7 +2,7 @@ import re
 from unittest import skip
 from unittest.mock import patch, Mock
 
-from django.db import connections
+from django.db import connections, transaction
 from django.contrib import admin, contenttypes
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User, Permission
@@ -165,8 +165,10 @@ class AdminTestMethodsMixin(object):
             self.warn(warning)
 
     def test_get_exclude(self):
-        expected = self.exclude_expected or []
-        self.assertEqual(self.model_admin.get_exclude(self.get_request()), expected)
+        expected = []
+        if self.exclude_expected:
+            expected = sorted(self.exclude_expected)
+        self.assertEqual(sorted(self.model_admin.get_exclude(self.get_request())), expected)
 
     def test_get_fields(self):
         expected = self.fields_expected or []
@@ -945,6 +947,28 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.model_admin.change_status_abgeschlossen(self.get_request(), self.queryset)
         self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'abg'})
 
+    def test_change_status(self):
+        # Integration test for the change_status stuff.
+        for action, expected_value in [
+                ('change_status_inbearbeitung', 'iB'),
+                ('change_status_abgeschlossen', 'abg'),
+                # obj1.status is 'unb' at the start, so test for 'unb' last to be
+                # able to register a change:
+                ('change_status_unbearbeitet', 'unb')
+            ]:
+            request_data = {
+                'action': action,
+                admin.helpers.ACTION_CHECKBOX_NAME: self.obj1.pk,
+                'index': 0,  # required by changelist_view to identify the request as an action
+            }
+            path = self.changelist_path + '?magazin=%s' % self.obj1.magazin_id
+            with self.subTest(action=action, status=expected_value):
+                with transaction.atomic():
+                    response = self.client.post(path, data=request_data)
+                self.assertEqual(response.status_code, 302)
+                self.obj1.refresh_from_db()
+                self.assertEqual(self.obj1.status, expected_value)
+
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -1354,7 +1378,7 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
     search_fields_expected = [
-        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen', 'pk__iexact']
+        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     changelist_uses_select2 = False
 
@@ -1380,9 +1404,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
-        'name', 'datum', 'veranstaltungalias__alias',
-        'beschreibung', 'bemerkungen', 'pk__iexact'
-    ]
+        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     changelist_uses_select2 = False
 

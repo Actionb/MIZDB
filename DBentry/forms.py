@@ -132,11 +132,13 @@ class BandForm(forms.ModelForm):
 
 
 class AudioForm(DiscogsFormMixin, forms.ModelForm):
-    pass
+    url_field_name = 'discogs_url'
+    release_id_field_name = 'release_id'
 
 
 class VideoForm(DiscogsFormMixin, forms.ModelForm):
-    pass
+    url_field_name = 'discogs_url'
+    release_id_field_name = 'release_id'
 
 
 class BildmaterialForm(forms.ModelForm):
