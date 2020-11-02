@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'formtools',
     'test_without_migrations',
     'debug_toolbar',
+    'django.contrib.postgres'
 ]
 
 MIDDLEWARE = [
