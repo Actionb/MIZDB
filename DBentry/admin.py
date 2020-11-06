@@ -17,6 +17,8 @@ from DBentry.forms import (
 )
 from DBentry.sites import miz_site
 from DBentry.utils import concat_limit, copy_related_set, get_obj_link
+# TODO: add admindocs
+# (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
 
 class BestandInLine(BaseTabularInline):
