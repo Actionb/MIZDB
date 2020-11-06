@@ -4,6 +4,7 @@ import os
 import sys
 
 import yaml
+
 # TODO: update django doc refs version 1.11 -> 3.x/2.2
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -150,3 +151,51 @@ if 'test' in sys.argv:
     # Note that django debug toolbar adds a handler to the root logger that
     # handles all log records. The toolbar need not be enabled for this.
     logging.getLogger().addHandler(logging.NullHandler())
+
+# Logging dictConfig:
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'miz': {
+            'format': '[%(asctime)s][%(levelname)s][%(name)s]%(message)s',
+            'style': '%'
+        }
+    },
+    'handlers': {
+        'miz': {
+            'class': 'logging.StreamHandler',
+            'level': 'INFO',
+            'formatter': 'miz'
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'log.txt'),
+            'level': 'DEBUG',
+            'formatter': 'miz'
+        },
+        'test': {  # Handler for logging during test runs.
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'test_log.txt'),
+            'level': 'WARNING',
+            'formatter': 'miz'
+        }
+    },
+    'loggers': {
+        # 'dbentry' so that all loggers created inside dbentry/ can use
+        # __name__ for their names and still have the logger 'dbentry' be their
+        # root.
+        'dbentry': {
+            'level': 'INFO',
+            # TODO: get level from os.environ: os.getenv('DJANGO_LOG_LEVEL', 'DEBUG')
+            'handlers': ['miz']
+        }
+    }
+}
+
+# Disable dbentry logging during testing:
+import sys
+if 'test' in sys.argv:
+    # examples:
+    LOGGING['loggers']['dbentry']['handlers'] = ['file']
+#    LOGGING['loggers']['dbentry']['level'] = 'CRITICAL'
