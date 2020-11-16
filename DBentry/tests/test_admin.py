@@ -789,16 +789,20 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.anz_artikel(obj), 0)
 
     def test_jahr_string(self):
-        self.assertEqual(self.model_admin.jahr_string(self.obj1), '2020, 2021, 2022')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.jahr_string(obj), '2020, 2021, 2022')
 
     def test_num_string(self):
-        self.assertEqual(self.model_admin.num_string(self.obj1), '10, 11, 12')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.num_string(obj), '10, 11, 12')
 
     def test_lnum_string(self):
-        self.assertEqual(self.model_admin.lnum_string(self.obj1), '10, 11, 12')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.lnum_string(obj), '10, 11, 12')
 
     def test_monat_string(self):
-        self.assertEqual(self.model_admin.monat_string(self.obj1), 'Jan, Feb')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.monat_string(obj), 'Jan, Feb')
 
     def test_add_crosslinks_custom(self):
         obj = make(

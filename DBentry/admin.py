@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User, Permission
-from django.db.models import Count, Min
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Count, Min, Subquery, OuterRef, Func, Value
 
 import DBentry.models as _models
 import DBentry.m2m as _m2m
@@ -19,6 +20,16 @@ from DBentry.sites import miz_site
 from DBentry.utils import concat_limit, copy_related_set, get_obj_link
 # TODO: add admindocs
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
+
+
+class ArrayToString(Func):
+    """Django query expression for the postgres 'array_to_string' array function."""
+    function = 'array_to_string'
+
+    def __init__(self, array, delimiter=', ', repl='', **extra):
+        delimiter_expr = Value(str(delimiter))
+        repl_expr = Value(str(repl))
+        super().__init__(array, delimiter_expr, repl_expr, **extra)
 
 
 class BestandInLine(BaseTabularInline):
@@ -127,8 +138,6 @@ class AusgabenAdmin(MIZModelAdmin):
 
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
-    list_prefetch_related = [
-        'ausgabejahr_set', 'ausgabenum_set', 'ausgabelnum_set', 'ausgabemonat_set']
 
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
@@ -163,6 +172,38 @@ class AusgabenAdmin(MIZModelAdmin):
         from .changelist import AusgabeChangeList
         return AusgabeChangeList
 
+    def get_result_list_annotations(self):
+        # Can't use ArrayAgg directly to get a list of distinct monat__abk
+        # values as we are ordering by monat__ordinal: using distinct AND
+        # ordering requires that the ordering expressions are present in the
+        # argument list to ArrayAgg.
+        # Use a subquery instead:
+        subquery = (
+            self.model.objects.order_by().filter(id=OuterRef('id'))
+            .annotate(
+                x=ArrayToString(
+                    ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
+                    repl='-'
+                )
+            )
+            .values('x')
+        )
+        return {
+            'jahr_string': ArrayToString(
+                ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
+                repl='-'
+            ),
+            'num_string': ArrayToString(
+                ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
+                repl='-'
+            ),
+            'lnum_string': ArrayToString(
+                ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
+                repl='-'
+            ),
+            'monat_string': Subquery(subquery)
+        }
+
     def anz_artikel(self, obj):
         return obj.anz_artikel
     anz_artikel.short_description = 'Anz. Artikel'
@@ -170,22 +211,19 @@ class AusgabenAdmin(MIZModelAdmin):
     anz_artikel.annotation = Count('artikel', distinct=True)
 
     def jahr_string(self, obj):
-        return concat_limit(obj.ausgabejahr_set.all())
+        return obj.jahr_string
     jahr_string.short_description = 'Jahre'
 
     def num_string(self, obj):
-        return concat_limit(obj.ausgabenum_set.all())
+        return obj.num_string
     num_string.short_description = 'Nummer'
 
     def lnum_string(self, obj):
-        return concat_limit(obj.ausgabelnum_set.all())
+        return obj.lnum_string
     lnum_string.short_description = 'lfd. Nummer'
 
     def monat_string(self, obj):
-        if obj.ausgabemonat_set.exists():
-            return concat_limit(
-                obj.ausgabemonat_set.values_list('monat__abk', flat=True)
-            )
+        return obj.monat_string
     monat_string.short_description = 'Monate'
 
     def _change_status(self, request, queryset, status):
