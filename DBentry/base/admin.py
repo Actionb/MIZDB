@@ -499,6 +499,19 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             # Update the instance's _name now. save_model was called earlier.
             form.instance.update_name(force_update=True)
 
+    def get_result_list_annotations(self):
+        """
+        Return annotations that are expected by list_display items.
+
+        These annotations will be added to the 'result_list' queryset in
+        changelist.get_results() *after* the counts for the paginator and the
+        full count have been queried. This way these annotations aren't included
+        in the count queries, which would slow them down.
+        Don't use this to add annotations that are required for the query to
+        return the correct results/count.
+        """
+        return
+
 
 class BaseInlineMixin(object):
     """

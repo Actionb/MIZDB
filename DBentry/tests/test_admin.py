@@ -196,6 +196,7 @@ class AdminTestMethodsMixin(object):
                 formfield.widget, MIZModelSelect2, msg=fkey_field.name)
 
     def test_get_changelist(self):
+        # TODO: wtf is this testing?
         request = self.get_request(path=self.changelist_path)
         self.assertEqual(self.model_admin.get_changelist(request), MIZChangeList)
 
@@ -1734,3 +1735,22 @@ class TestAuthAdminMixin(TestCase):
         for choice in formfield.choices:
             with self.subTest(choice=choice):
                 self.assertIn(_models.AusgabeLnum.__name__, choice[1])
+
+
+class TestMIZChangelist(AdminTestCase):
+
+    model = _models.Genre
+    model_admin_class = _admin.GenreAdmin
+
+    @patch.object(_admin.GenreAdmin, 'get_result_list_annotations')
+    def test_adds_annotations(self, mocked_get_annotations):
+        # Assert that list_display annotations are added.
+        request = self.get_request(path=self.changelist_path)
+        changelist = self.model_admin.get_changelist_instance(request)
+        mocked_get_annotations.return_value = {}
+        changelist.get_results(request)
+        self.assertFalse(changelist.result_list.query.annotations)
+        from django.db.models import Count
+        mocked_get_annotations.return_value = {'c': Count('artikel')}
+        changelist.get_results(request)
+        self.assertIn('c', changelist.result_list.query.annotations)

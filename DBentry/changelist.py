@@ -12,6 +12,13 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
                 *self.model_admin.list_prefetch_related)
         return super().get_queryset(request)
 
+    def get_results(self, request):
+        super().get_results(request)
+        # Add the annotations for the list display.
+        annotations = self.model_admin.get_result_list_annotations()
+        if annotations:
+            self.result_list = self.result_list.annotate(**annotations)
+
 
 class AusgabeChangeList(MIZChangeList):
 
