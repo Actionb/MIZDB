@@ -441,6 +441,7 @@ class AusgabeQuerySet(CNQuerySet):
                 return self.order_by(*ordering)
             return self.order_by(*self.model._meta.ordering)
 
+        # FIXME: default_ordering orders by 'magazin' and not 'magazin_name'?
         default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
         if ordering:
             ordering = list(ordering)
