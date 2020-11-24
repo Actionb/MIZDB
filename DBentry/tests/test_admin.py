@@ -723,14 +723,16 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag)
 
     def test_schlagwort_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.schlagwort_string(self.obj1),
+            self.model_admin.schlagwort_string(obj),
             'Testschlagwort1, Testschlagwort2'
         )
 
     def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.kuenstler_string(self.obj1),
+            self.model_admin.kuenstler_string(obj),
             'Testband, Alice Tester'
         )
 

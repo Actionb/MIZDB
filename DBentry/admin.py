@@ -316,7 +316,6 @@ class ArtikelAdmin(MIZModelAdmin):
         '__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string',
         'ausgabe', 'artikel_magazin', 'kuenstler_string'
     ]
-    list_prefetch_related = ['schlagwort', 'musiker', 'band']
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe','autor', 'musiker', 'band',
@@ -325,6 +324,16 @@ class ArtikelAdmin(MIZModelAdmin):
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
+
+    def get_result_list_annotations(self):
+        return {
+            'schlagwort_list': 
+                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+            'musiker_list':
+                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list':
+                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+        }
 
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
@@ -338,11 +347,14 @@ class ArtikelAdmin(MIZModelAdmin):
     artikel_magazin.admin_order_field = 'ausgabe__magazin'
 
     def schlagwort_string(self, obj):
-        return concat_limit(obj.schlagwort.all())
+        return concat_limit(obj.schlagwort_list)
     schlagwort_string.short_description = 'Schlagwörter'
 
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(
+            # TODO: remove the list and filter once concat_limit can filter empty values
+            list(filter(lambda i: i, obj.band_list + obj.musiker_list))
+        )
     kuenstler_string.short_description = 'Künstler'
 
 
