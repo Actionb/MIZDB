@@ -1654,6 +1654,11 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
+    raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):

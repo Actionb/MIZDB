@@ -916,7 +916,6 @@ class VideoAdmin(MIZModelAdmin):
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     list_display = ['__str__', 'medium', 'kuenstler_string']
-    list_prefetch_related = ['band', 'musiker']
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
@@ -924,8 +923,16 @@ class VideoAdmin(MIZModelAdmin):
         ],
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'musiker_list':
+                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list':
+                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+        }
+
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(obj.band_list + obj.musiker_list)
     kuenstler_string.short_description = 'Künstler'
 
 
