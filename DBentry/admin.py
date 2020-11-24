@@ -763,11 +763,15 @@ class SchlagwortAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
-    list_prefetch_related = ['schlagwortalias_set']
     search_fields = ['schlagwort', 'schlagwortalias__alias']
 
+    def get_result_list_annotations(self):
+        return {
+            'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
+        }
+
     def alias_string(self, obj):
-        return concat_limit(obj.schlagwortalias_set.all())
+        return concat_limit(obj.alias_list)
     alias_string.short_description = 'Aliase'
 
 
