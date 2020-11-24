@@ -994,6 +994,18 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     raw_data = [{'ausgabe__extra': 1}]
+    @classmethod
+    def setUpTestData(cls):
+        ort1 = make(_models.Ort, stadt='Dortmund', land__code='DE')
+        ort2 = make(_models.Ort, stadt='Buxtehude', land__code='DE')
+        cls.test_data = [
+            make(cls.model, ausgabe__extra=1, orte=[ort1, ort2])
+        ]
+        super().setUpTestData()
+
+    def test_orte_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE, Dortmund, DE')
 
     def test_anz_ausgaben(self):
         obj = self.get_queryset().get(pk=self.obj1.pk)

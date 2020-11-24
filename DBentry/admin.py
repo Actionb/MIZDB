@@ -646,11 +646,15 @@ class MagazinAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
     list_display = ['__str__', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
-    list_prefetch_related = ['orte']
 
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
+
+    def get_result_list_annotations(self):
+        return {
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+        }
 
     def anz_ausgaben(self, obj):
         return obj.anz_ausgabe
@@ -659,7 +663,7 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.annotation = Count('ausgabe')
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list)
     orte_string.short_description = 'Orte'
 
     def short_beschreibung(self, obj):
