@@ -351,10 +351,7 @@ class ArtikelAdmin(MIZModelAdmin):
     schlagwort_string.short_description = 'Schlagwörter'
 
     def kuenstler_string(self, obj):
-        return concat_limit(
-            # TODO: remove the list and filter once concat_limit can filter empty values
-            list(filter(lambda i: i, obj.band_list + obj.musiker_list))
-        )
+        return concat_limit(obj.band_list + obj.musiker_list)
     kuenstler_string.short_description = 'Künstler'
 
 
