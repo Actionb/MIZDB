@@ -1447,7 +1447,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
         'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
-    test_data_count = 1
+    raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
     changelist_uses_select2 = False
 
     crosslinks_expected = [
@@ -1462,6 +1462,10 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'artikel', 'fld_name': 'veranstaltung', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'veranstaltung', 'label': 'Audio Materialien (1)'}
     ]
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
 
 
 class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):

@@ -832,7 +832,6 @@ class VeranstaltungAdmin(MIZModelAdmin):
     collapse_all = True
     inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
-    list_prefetch_related = ['band', 'musiker']
     save_on_top = True
     search_form_kwargs = {
         'fields': [
@@ -841,8 +840,16 @@ class VeranstaltungAdmin(MIZModelAdmin):
         ]
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'musiker_list':
+                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list':
+                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+        }
+
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(obj.band_list + obj.musiker_list)
     kuenstler_string.short_description = 'Künstler'
 
 
