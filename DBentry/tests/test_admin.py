@@ -1234,23 +1234,27 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
     def test_genre_string(self):
-        self.assertEqual(self.model_admin.genre_string(self.obj1), 'Testgenre1, Testgenre2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.genre_string(obj), 'Testgenre1, Testgenre2')
 
     def test_musiker_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.musiker_string(self.obj1),
+            self.model_admin.musiker_string(obj),
             'Testkuenstler1, Testkuenstler2'
         )
 
     def test_orte_string(self):
-        self.assertEqual(self.model_admin.orte_string(self.obj1), '')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), '')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
-        self.obj1.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):

@@ -372,7 +372,6 @@ class BandAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
-    list_prefetch_related = ['genre', 'musiker', 'bandalias_set', 'orte']
     save_on_top = True
 
     search_form_kwargs = {
@@ -380,20 +379,30 @@ class BandAdmin(MIZModelAdmin):
         'labels': {'musiker': 'Mitglied'}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'alias_list': ArrayAgg(
+                'bandalias__alias', distinct=True, ordering='bandalias__alias'),
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+        }
+
     def genre_string(self, obj):
-        return concat_limit(obj.genre.all())
+        return concat_limit(obj.genre_list)
     genre_string.short_description = 'Genres'
 
     def musiker_string(self, obj):
-        return concat_limit(obj.musiker.all())
+        return concat_limit(obj.musiker_list)
     musiker_string.short_description = 'Mitglieder'
 
     def alias_string(self, obj):
-        return concat_limit(obj.bandalias_set.all())
+        return concat_limit(obj.alias_list)
     alias_string.short_description = 'Aliase'
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list)
     orte_string.short_description = 'Orte'
 
 
