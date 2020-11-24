@@ -616,11 +616,15 @@ class GenreAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
-    list_prefetch_related = ['genrealias_set']
     search_fields = ['genre', 'genrealias__alias']
 
+    def get_result_list_annotations(self):
+        return {
+            'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
+        }
+
     def alias_string(self, obj):
-        return concat_limit(obj.genrealias_set.all())
+        return concat_limit(obj.alias_list)
     alias_string.short_description = 'Aliase'
 
 

@@ -1147,7 +1147,8 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
     def test_brochure_crosslink(self):
         # Assert that crosslinks to all of the BaseBrochure children are displayed.
