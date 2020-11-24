@@ -557,7 +557,6 @@ class BuchAdmin(MIZModelAdmin):
         'titel', 'autoren_string', 'herausgeber_string', 'verlag_string',
         'schlagwort_string', 'genre_string'
     ]
-    list_prefetch_related = ['autor', 'herausgeber', 'verlag', 'schlagwort', 'genre']
     search_form_kwargs = {
         'fields': [
             'autor', 'musiker', 'band', 'schlagwort', 'genre', 'ort',
@@ -568,24 +567,37 @@ class BuchAdmin(MIZModelAdmin):
         'help_texts': {'autor': None}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
+            'herausgeber_list':
+                ArrayAgg('herausgeber__herausgeber', distinct=True, ordering='herausgeber__herausgeber'),
+            'verlag_list':
+                ArrayAgg('verlag__verlag_name', distinct=True, ordering='verlag__verlag_name'),
+            'schlagwort_list': 
+                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+            'genre_list': 
+                ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+        }
+
     def autoren_string(self, obj):
-        return concat_limit(obj.autor.all())
+        return concat_limit(obj.autor_list)
     autoren_string.short_description = 'Autoren'
 
     def herausgeber_string(self, obj):
-        return concat_limit(obj.herausgeber.all())
+        return concat_limit(obj.herausgeber_list)
     herausgeber_string.short_description = 'Herausgeber'
 
     def verlag_string(self, obj):
-        return concat_limit(obj.verlag.all())
+        return concat_limit(obj.verlag_list)
     verlag_string.short_description = 'Verlag'
 
     def schlagwort_string(self, obj):
-        return concat_limit(obj.schlagwort.all())
+        return concat_limit(obj.schlagwort_list)
     schlagwort_string.short_description = 'Schlagwörter'
 
     def genre_string(self, obj):
-        return concat_limit(obj.genre.all())
+        return concat_limit(obj.genre_list)
     genre_string.short_description = 'Genres'
 
 

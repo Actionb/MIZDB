@@ -1478,26 +1478,30 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         super().setUpTestData()
 
     def test_autoren_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.autoren_string(self.obj1),
+            self.model_admin.autoren_string(obj),
             'Alice Testman (AT), Bob Mantest (BM)'
         )
 
     def test_herausgeber_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.herausgeber_string(self.obj1),
+            self.model_admin.herausgeber_string(obj),
             'Alice Testman, Bob Mantest'
         )
 
     def test_schlagwort_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.schlagwort_string(self.obj1),
+            self.model_admin.schlagwort_string(obj),
             'Testschlagwort1, Testschlagwort2'
         )
 
     def test_genre_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.genre_string(self.obj1),
+            self.model_admin.genre_string(obj),
             'Testgenre1, Testgenre2'
         )
 
