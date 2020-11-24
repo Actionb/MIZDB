@@ -449,7 +449,6 @@ class BildmaterialAdmin(MIZModelAdmin):
     form = BildmaterialForm
     index_category = 'Archivgut'
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
-    list_prefetch_related = ['veranstaltung']
     save_on_top = True
 
     inlines = [
@@ -465,13 +464,19 @@ class BildmaterialAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'veranstaltung_list':
+                ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
+        }
+
     def datum_localized(self, obj):
         return obj.datum.localize()
     datum_localized.short_description = 'Datum'
     datum_localized.admin_order_field = 'datum'
 
     def veranstaltung_string(self, obj):
-        return concat_limit(list(obj.veranstaltung.all()))
+        return concat_limit(obj.veranstaltung_list)
     veranstaltung_string.short_description = 'Veranstaltungen'
 
     def copy_related(self, obj):
@@ -483,7 +488,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         return super().response_add(request, obj, post_url_continue)
 
     def response_change(self, request, obj):
-        if 'copy_related' in request.POST:
+        if 'copy_related' in request.POST:  # TODO: does this remove deleted related objects to stay up-to-date?
             self.copy_related(obj)
         return super().response_change(request, obj)
 

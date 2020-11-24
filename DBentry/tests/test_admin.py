@@ -1698,9 +1698,12 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
 
         cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
-        cls.veranstaltung = make(
-            _models.Veranstaltung, band=[cls.band], musiker=[cls.musiker])
-        cls.obj1.veranstaltung.add(cls.veranstaltung)
+        cls.obj1.veranstaltung.add(
+            make(
+                _models.Veranstaltung, name='Woodstock 1969', band=[cls.band], musiker=[cls.musiker]
+            )
+        )
+        cls.obj1.veranstaltung.add(make(_models.Veranstaltung, name='Glastonbury 2004'))
 
     def test_copy_related_set(self):
         self.model_admin.copy_related(self.obj1)
@@ -1730,6 +1733,13 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.model_admin.response_change(request, self.obj1)
         self.assertNotIn(self.band, self.obj1.band.all())
         self.assertNotIn(self.musiker, self.obj1.musiker.all())
+
+    def test_veranstaltung_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(
+            self.model_admin.veranstaltung_string(obj),
+            'Glastonbury 2004, Woodstock 1969'
+        )
 
 
 class TestAuthAdminMixin(TestCase):
