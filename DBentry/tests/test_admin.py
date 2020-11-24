@@ -1113,17 +1113,19 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue('crosslinks' in extra)
 
     def test_band_string(self):
-        self.assertEqual(self.model_admin.band_string(self.obj2), 'Testband1, Testband2')
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.band_string(obj), 'Testband1, Testband2')
 
     def test_genre_string(self):
-        self.assertEqual(self.model_admin.genre_string(self.obj2), 'Testgenre1, Testgenre2')
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.genre_string(obj), 'Testgenre1, Testgenre2')
 
     def test_orte_string(self):
-        self.assertEqual(self.model_admin.orte_string(self.obj2), '')
-        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
-        self.obj2.orte.add(o)
-        self.obj2.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.obj2.orte.add(make(_models.Ort, stadt='Dortmund', land__code='XYZ'))
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):

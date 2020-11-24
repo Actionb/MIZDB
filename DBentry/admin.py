@@ -711,20 +711,27 @@ class MusikerAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
-    list_prefetch_related = ['band_set', 'genre', 'orte']
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
 
+
+    def get_result_list_annotations(self):
+        return {
+            'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
+            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+        }
+
     def band_string(self, obj):
-        return concat_limit(obj.band_set.all())
+        return concat_limit(obj.band_list)
     band_string.short_description = 'Bands'
 
     def genre_string(self, obj):
-        return concat_limit(obj.genre.all())
+        return concat_limit(obj.genre_list)
     genre_string.short_description = 'Genres'
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list)
     orte_string.short_description = 'Orte'
 
 
