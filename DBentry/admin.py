@@ -209,14 +209,14 @@ class AusgabenAdmin(MIZModelAdmin):
                 ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
                 repl='-'
             ),
-            'monat_string': Subquery(subquery)
+            'monat_string': Subquery(subquery),
+            'anz_artikel': Count('artikel', distinct=True)
         }
 
     def anz_artikel(self, obj):
         return obj.anz_artikel
     anz_artikel.short_description = 'Anz. Artikel'
     anz_artikel.admin_order_field = 'anz_artikel'
-    anz_artikel.annotation = Count('artikel', distinct=True)
 
     def jahr_string(self, obj):
         return obj.jahr_string
@@ -653,14 +653,14 @@ class MagazinAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
+            'anz_ausgaben': Count('ausgabe', distinct=True)
         }
 
     def anz_ausgaben(self, obj):
-        return obj.anz_ausgabe
+        return obj.anz_ausgaben
     anz_ausgaben.short_description = 'Anz. Ausgaben'
-    anz_ausgaben.admin_order_field = 'anz_ausgabe'
-    anz_ausgaben.annotation = Count('ausgabe')
+    anz_ausgaben.admin_order_field = 'anz_ausgaben'
 
     def orte_string(self, obj):
         return concat_limit(obj.orte_list)
@@ -1100,14 +1100,14 @@ class BaseBrochureAdmin(MIZModelAdmin):
         return {
             'jahr_string': ArrayToString(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr')
-            )
+            ),
+            'jahr_min': Min('jahre__jahr')
         }
 
     def jahr_string(self, obj):
         return obj.jahr_string
     jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = 'jahr'
-    jahr_string.annotation = Min('jahre__jahr')
+    jahr_string.admin_order_field = 'jahr_min'
 
 
 @admin.register(_models.Brochure, site=miz_site)

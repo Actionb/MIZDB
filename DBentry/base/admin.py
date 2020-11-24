@@ -109,6 +109,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def _check_list_item_annotations(self, **kwargs):
         """Check items in 'list_display' that are expected to be sortable."""
+        # TODO: remove; now redundant with get_result_list_annotations
         errors = []
         for list_item in self.list_display:
             func = resolve_list_display_item(self, list_item)
@@ -179,6 +180,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         and 'annotation' (aggregate function) attribute of the callable.
         Returns the annotated queryset.
         """
+        # TODO: remove; now redundant with get_result_list_annotations
         ordering = queryset.query.order_by
         for list_item in self.get_list_display(request):
             func = resolve_list_display_item(self, list_item)

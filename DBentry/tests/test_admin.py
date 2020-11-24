@@ -784,10 +784,10 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertFalse(queryset.chronologically_ordered)
 
     def test_anz_artikel(self):
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_artikel(obj), 1)
         _models.Artikel.objects.all().delete()
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_artikel(obj), 0)
 
     def test_jahr_string(self):
@@ -1008,10 +1008,10 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE, Dortmund, DE')
 
     def test_anz_ausgaben(self):
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_ausgaben(obj), 1)
         self.obj1.ausgabe_set.all().delete()
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_ausgaben(obj), 0)
 
     def test_ausgaben_merkmal_excluded(self):
