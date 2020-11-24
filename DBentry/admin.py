@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User, Permission
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Count, Min, Subquery, OuterRef, Func, Value
+from django.db.models import Count, Min, Subquery, OuterRef, Func, Value, Exists
 
 import DBentry.models as _models
 import DBentry.m2m as _m2m
@@ -743,25 +743,33 @@ class PersonAdmin(MIZModelAdmin):
     fields = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
     inlines = [OrtInLine]
-    list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
+    list_display = ('vorname', 'nachname', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
-    list_prefetch_related = ['musiker_set', 'autor_set', 'orte']
 
     search_form_kwargs = {
         'fields': ['orte', 'orte__land', 'orte__bland'],
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def Ist_Musiker(self, obj):
-        return obj.musiker_set.exists()
-    Ist_Musiker.boolean = True
+    def get_result_list_annotations(self):
+        return {
+            'is_musiker': 
+                Exists(_models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
+            'is_autor': 
+                Exists(_models.Autor.objects.only('id').filter(person_id=OuterRef('id'))),
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+        }
 
-    def Ist_Autor(self, obj):
-        return obj.autor_set.exists()
-    Ist_Autor.boolean = True
+    def is_musiker(self, obj):
+        return obj.is_musiker
+    is_musiker.boolean = True
+
+    def is_autor(self, obj):
+        return obj.is_autor
+    is_autor.boolean = True
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list)
     orte_string.short_description = 'Orte'
 
 

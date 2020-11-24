@@ -1059,20 +1059,33 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'musiker', 'fld_name': 'person', 'label': 'Musiker (1)'},
     ]
 
-    def test_Ist_Musiker(self):
-        self.assertTrue(self.model_admin.Ist_Musiker(self.obj1))
-        self.assertFalse(self.model_admin.Ist_Musiker(self.obj2))
+    def test_is_musiker(self):
+        obj1, obj2 = (
+            self.queryset
+            .annotate(**self.model_admin.get_result_list_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
+        )
+        self.assertTrue(self.model_admin.is_musiker(obj1))
+        self.assertFalse(self.model_admin.is_musiker(obj2))
 
-    def test_Ist_Autor(self):
-        self.assertTrue(self.model_admin.Ist_Autor(self.obj1))
-        self.assertFalse(self.model_admin.Ist_Autor(self.obj2))
+    def test_is_autor(self):
+        obj1, obj2 = (
+            self.queryset
+            .annotate(**self.model_admin.get_result_list_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
+        )
+        self.assertTrue(self.model_admin.is_autor(obj1))
+        self.assertFalse(self.model_admin.is_autor(obj2))
 
     def test_orte_string(self):
-        self.assertEqual(self.model_admin.orte_string(self.obj1), '')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), '')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
-        self.obj1.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
