@@ -144,6 +144,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         Check that items in 'list_prefetch_related' are valid arguments for
         prefetch_related.
         """
+        # NOTE: list_prefetch_related currently not used anywhere
         if not getattr(self, 'list_prefetch_related', None):
             return []
         if not isinstance(self.list_prefetch_related, (list, tuple)):
