@@ -1542,6 +1542,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
+    raw_data = [{'jahre__jahr': [2002, 2001]}]
 
     @translation_override(language=None)
     def test_get_fieldsets(self):
@@ -1563,6 +1564,10 @@ class TestBaseBrochureAdmin(AdminTestCase):
             fieldset_options['description'],
             'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
         )
+
+    def test_jahr_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
 
 class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):

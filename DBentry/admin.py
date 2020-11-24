@@ -1068,7 +1068,6 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
-    list_prefetch_related = ['jahre']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr']}
 
@@ -1097,8 +1096,15 @@ class BaseBrochureAdmin(MIZModelAdmin):
             default_fieldset['fields'] = fields
         return fieldsets
 
+    def get_result_list_annotations(self):
+        return {
+            'jahr_string': ArrayToString(
+                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr')
+            )
+        }
+
     def jahr_string(self, obj):
-        return concat_limit(obj.jahre.all())
+        return obj.jahr_string
     jahr_string.short_description = 'Jahre'
     jahr_string.admin_order_field = 'jahr'
     jahr_string.annotation = Min('jahre__jahr')
