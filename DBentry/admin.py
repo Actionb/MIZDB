@@ -263,11 +263,17 @@ class AutorAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [MagazinInLine]
     list_display = ['__str__', 'person', 'kuerzel', 'magazin_string']
-    list_prefetch_related = ['magazin', 'person']
+    list_select_related = ['person']
     search_form_kwargs = {'fields': ['magazin', 'person']}
 
+    def get_result_list_annotations(self):
+        return {
+            'magazin_list': ArrayAgg(
+                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name')
+        }
+
     def magazin_string(self, obj):
-        return concat_limit(obj.magazin.all())
+        return concat_limit(obj.magazin_list)
     magazin_string.short_description = 'Magazin(e)'
 
 
