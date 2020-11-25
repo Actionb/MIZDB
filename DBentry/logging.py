@@ -1,3 +1,5 @@
+# TODO: move this to utils and maybe rename the module
+# (logging.py *not* refering to python logging is confusing)
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text

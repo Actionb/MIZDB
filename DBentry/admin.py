@@ -245,6 +245,7 @@ class AusgabenAdmin(MIZModelAdmin):
 
     def _change_status(self, request, queryset, status):
         queryset.update(status=status, _changed_flag=False)
+        # TODO: create a LogEntry for the changes
 
     def change_status_unbearbeitet(self, request, queryset):
         self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
@@ -513,6 +514,7 @@ class BildmaterialAdmin(MIZModelAdmin):
 
     def copy_related(self, obj):
         copy_related_set(obj, 'veranstaltung__band', 'veranstaltung__musiker')
+        # TODO: create a LogEntry for the changes
 
     def response_add(self, request, obj, post_url_continue=None):
         if 'copy_related' in request.POST:
