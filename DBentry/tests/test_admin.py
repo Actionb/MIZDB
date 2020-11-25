@@ -14,7 +14,7 @@ from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
 import DBentry.models as _models
-from DBentry.changelist import MIZChangeList, AusgabeChangeList
+from DBentry.changelist import AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import miz_site
@@ -42,6 +42,10 @@ class AdminTestMethodsMixin(object):
     # if True, check the load order of jquery, select2 and django's jquery_init
     add_page_uses_select2 = True
     changelist_uses_select2 = True
+    # the number of queries expected for a changelist request:
+    # 5 queries:
+    # 1. session, 2. auth, 3. result count, 4. full count, 5. result list
+    num_queries_changelist = 5
 
     @classmethod
     def setUpTestData(cls):
@@ -195,11 +199,6 @@ class AdminTestMethodsMixin(object):
             self.assertIsInstance(
                 formfield.widget, MIZModelSelect2, msg=fkey_field.name)
 
-    def test_get_changelist(self):
-        # TODO: wtf is this testing?
-        request = self.get_request(path=self.changelist_path)
-        self.assertEqual(self.model_admin.get_changelist(request), MIZChangeList)
-
     def test_get_search_fields(self):
         if self.search_fields_expected is None:
             return
@@ -267,6 +266,14 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(
             n, len(queries.captured_queries),
             msg="Number of queries for changelist depends on number of records!"
+        )
+        if not self.num_queries_changelist:
+            return
+        self.assertEqual(
+            n, self.num_queries_changelist,
+            msg="Number of queries required for a changelist request differs "
+                "from the expected value: got '%s' expected '%s'. "
+                "Check 'list_select_related'." % (n, self.num_queries_changelist)
         )
 
     def test_javascript_add_page(self):
@@ -630,7 +637,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         super().setUpTestData()
 
     def test_zusammenfassung_string(self):
-        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '')
+        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '-')
         self.obj1.zusammenfassung = (
             "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
             "ist, dafür aber doch recht lang ist."
@@ -642,7 +649,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
     def test_artikel_magazin(self):
-        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag)
+        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag.magazin_name)
 
     def test_schlagwort_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -671,6 +678,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
+    # one more query for the chronologically_ordered() query for magazin count:
+    num_queries_changelist = 6
 
     @classmethod
     def setUpTestData(cls):
@@ -1003,7 +1012,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -1057,7 +1066,7 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         self.obj2.orte.add(make(_models.Ort, stadt='Dortmund', land__code='XYZ'))
         obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
@@ -1201,7 +1210,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -1423,11 +1432,15 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         p1 = make(_models.Person, vorname='Alice', nachname='Testman')
         p2 = make(_models.Person, vorname='Bob', nachname='Mantest')
+        cls.musiker = make(_models.Musiker, kuenstler_name='Robert Plant')
+        cls.band = make(_models.Band, band_name='Led Zeppelin')
         cls.obj1 = make(
             cls.model,
-            autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],
+            autor__person=[p1, p2],
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
-            genre__genre=['Testgenre1', 'Testgenre2']
+            genre__genre=['Testgenre1', 'Testgenre2'],
+            musiker=[cls.musiker],
+            band=[cls.band]
         )
         cls.test_data = [cls.obj1]
         super().setUpTestData()
@@ -1437,13 +1450,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(
             self.model_admin.autoren_string(obj),
             'Alice Testman (AT), Bob Mantest (BM)'
-        )
-
-    def test_herausgeber_string(self):
-        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(
-            self.model_admin.herausgeber_string(obj),
-            'Alice Testman, Bob Mantest'
         )
 
     def test_schlagwort_string(self):
@@ -1459,6 +1465,14 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.model_admin.genre_string(obj),
             'Testgenre1, Testgenre2'
         )
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(
+            self.model_admin.kuenstler_string(obj),
+            'Led Zeppelin, Robert Plant'
+        )
+
 
 
 class TestBaseBrochureAdmin(AdminTestCase):
@@ -1595,6 +1609,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
         'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
+    num_queries_changelist = 0  # skip the test for the number of queries per changelist request
 
     def test_bestand_class(self):
         # Assert that list_display method bestand_class returns the verbose_name
