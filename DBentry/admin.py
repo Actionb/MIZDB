@@ -480,7 +480,11 @@ class BildmaterialAdmin(MIZModelAdmin):
         return super().response_add(request, obj, post_url_continue)
 
     def response_change(self, request, obj):
-        if 'copy_related' in request.POST:  # TODO: does this remove deleted related objects to stay up-to-date?
+        if 'copy_related' in request.POST:
+            # Note that copy_related *adds* instances to the related manager.
+            # It doesn't overwrite the related set: the related set could
+            # contain instances that were once related to the obj we are copying
+            # from (here 'veranstaltung') but aren't anymore.
             self.copy_related(obj)
         return super().response_change(request, obj)
 
