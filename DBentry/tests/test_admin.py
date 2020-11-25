@@ -42,6 +42,10 @@ class AdminTestMethodsMixin(object):
     # if True, check the load order of jquery, select2 and django's jquery_init
     add_page_uses_select2 = True
     changelist_uses_select2 = True
+    # the number of queries expected for a changelist request:
+    # 5 queries:
+    # 1. session, 2. auth, 3. result count, 4. full count, 5. result list
+    num_queries_changelist = 5
 
     @classmethod
     def setUpTestData(cls):
@@ -267,6 +271,14 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(
             n, len(queries.captured_queries),
             msg="Number of queries for changelist depends on number of records!"
+        )
+        if not self.num_queries_changelist:
+            return
+        self.assertEqual(
+            n, self.num_queries_changelist,
+            msg="Number of queries required for a changelist request differs "
+                "from the expected value: got '%s' expected '%s'. "
+                "Check 'list_select_related'." % (n, self.num_queries_changelist)
         )
 
     def test_javascript_add_page(self):
@@ -671,6 +683,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
+    # one more query for the chronologically_ordered() query for magazin count:
+    num_queries_changelist = 6
 
     @classmethod
     def setUpTestData(cls):
@@ -1595,6 +1609,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
         'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
+    num_queries_changelist = 0  # skip the test for the number of queries per changelist request
 
     def test_bestand_class(self):
         # Assert that list_display method bestand_class returns the verbose_name
