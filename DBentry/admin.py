@@ -183,7 +183,7 @@ class AusgabenAdmin(MIZModelAdmin):
             .annotate(
                 x=Func(
                     ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
-                    Value(', '), Value('-'), function='array_to_string'
+                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
                 )
             )
             .values('x')
@@ -191,15 +191,15 @@ class AusgabenAdmin(MIZModelAdmin):
         return {
             'jahr_string': Func(
                 ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
-                Value(', '), Value('-'), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
             ),
             'num_string': Func(
                 ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
-                Value(', '), Value('-'), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
             ),
             'lnum_string': Func(
                 ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
-                Value(', '), Value('-'), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
             ),
             'monat_string': Subquery(subquery),
             'anz_artikel': Count('artikel', distinct=True)
@@ -1097,7 +1097,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
         return {
             'jahr_string': Func(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
-                Value(', '), Value('-'), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
             ),
             'jahr_min': Min('jahre__jahr')
         }
