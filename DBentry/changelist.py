@@ -5,14 +5,6 @@ from DBentry.search.admin import ChangelistSearchFormMixin
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 
-    def get_queryset(self, request):
-        # NOTE: list_prefetch_related currently not used anywhere
-        # Add queryset optimization:
-        if getattr(self.model_admin, 'list_prefetch_related', None):
-            return super().get_queryset(request).prefetch_related(
-                *self.model_admin.list_prefetch_related)
-        return super().get_queryset(request)
-
     def get_results(self, request):
         super().get_results(request)
         # Add annotations required for this model admin's 'list_display' items.
