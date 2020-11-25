@@ -144,7 +144,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
 
     def test_chronologic_order_empty_queryset(self):
         # Assert that chronologic_order is not attempted for an empty queryset.
-        queryset = self.model.objects.filter(id=1002)  # 1002 is not a valid ID
+        queryset = self.model.objects.filter(id=1002).order_by()  # 1002 is not a valid ID
         with self.assertNumQueries(1):
             queryset = queryset.chronologic_order()
         self.assertEqual(
