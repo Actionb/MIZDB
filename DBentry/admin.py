@@ -22,16 +22,6 @@ from DBentry.utils import concat_limit, copy_related_set, get_obj_link
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
 
-class ArrayToString(Func):
-    """Django query expression for the postgres 'array_to_string' array function."""
-    function = 'array_to_string'
-
-    def __init__(self, array, delimiter=', ', repl='', **extra):
-        delimiter_expr = Value(str(delimiter))
-        repl_expr = Value(str(repl))
-        super().__init__(array, delimiter_expr, repl_expr, **extra)
-
-
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     # This allows inlines.js to copy the last selected bestand to a new row.
@@ -191,25 +181,25 @@ class AusgabenAdmin(MIZModelAdmin):
         subquery = (
             self.model.objects.order_by().filter(id=OuterRef('id'))
             .annotate(
-                x=ArrayToString(
+                x=Func(
                     ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
-                    repl='-'
+                    Value(', '), Value('-'), function='array_to_string'
                 )
             )
             .values('x')
         )
         return {
-            'jahr_string': ArrayToString(
+            'jahr_string': Func(
                 ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
-                repl='-'
+                Value(', '), Value('-'), function='array_to_string'
             ),
-            'num_string': ArrayToString(
+            'num_string': Func(
                 ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
-                repl='-'
+                Value(', '), Value('-'), function='array_to_string'
             ),
-            'lnum_string': ArrayToString(
+            'lnum_string': Func(
                 ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
-                repl='-'
+                Value(', '), Value('-'), function='array_to_string'
             ),
             'monat_string': Subquery(subquery),
             'anz_artikel': Count('artikel', distinct=True)
@@ -1101,8 +1091,9 @@ class BaseBrochureAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'jahr_string': ArrayToString(
-                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr')
+            'jahr_string': Func(
+                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
+                Value(', '), Value('-'), function='array_to_string'
             ),
             'jahr_min': Min('jahre__jahr')
         }
