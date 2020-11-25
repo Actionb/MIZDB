@@ -642,7 +642,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         super().setUpTestData()
 
     def test_zusammenfassung_string(self):
-        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '')
+        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '-')
         self.obj1.zusammenfassung = (
             "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
             "ist, dafür aber doch recht lang ist."
@@ -654,7 +654,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
     def test_artikel_magazin(self):
-        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag)
+        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag.magazin_name)
 
     def test_schlagwort_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -1017,7 +1017,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -1071,7 +1071,7 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         self.obj2.orte.add(make(_models.Ort, stadt='Dortmund', land__code='XYZ'))
         obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
@@ -1215,7 +1215,7 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), '')
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -1437,11 +1437,15 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         p1 = make(_models.Person, vorname='Alice', nachname='Testman')
         p2 = make(_models.Person, vorname='Bob', nachname='Mantest')
+        cls.musiker = make(_models.Musiker, kuenstler_name='Robert Plant')
+        cls.band = make(_models.Band, band_name='Led Zeppelin')
         cls.obj1 = make(
             cls.model,
-            autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],
+            autor__person=[p1, p2],
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
-            genre__genre=['Testgenre1', 'Testgenre2']
+            genre__genre=['Testgenre1', 'Testgenre2'],
+            musiker=[cls.musiker],
+            band=[cls.band]
         )
         cls.test_data = [cls.obj1]
         super().setUpTestData()
@@ -1451,13 +1455,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(
             self.model_admin.autoren_string(obj),
             'Alice Testman (AT), Bob Mantest (BM)'
-        )
-
-    def test_herausgeber_string(self):
-        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(
-            self.model_admin.herausgeber_string(obj),
-            'Alice Testman, Bob Mantest'
         )
 
     def test_schlagwort_string(self):
@@ -1473,6 +1470,14 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.model_admin.genre_string(obj),
             'Testgenre1, Testgenre2'
         )
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(
+            self.model_admin.kuenstler_string(obj),
+            'Led Zeppelin, Robert Plant'
+        )
+
 
 
 class TestBaseBrochureAdmin(AdminTestCase):
