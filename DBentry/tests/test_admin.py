@@ -14,7 +14,7 @@ from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
 import DBentry.models as _models
-from DBentry.changelist import MIZChangeList, AusgabeChangeList
+from DBentry.changelist import AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import miz_site
@@ -198,11 +198,6 @@ class AdminTestMethodsMixin(object):
                 fkey_field, self.get_request())
             self.assertIsInstance(
                 formfield.widget, MIZModelSelect2, msg=fkey_field.name)
-
-    def test_get_changelist(self):
-        # TODO: wtf is this testing?
-        request = self.get_request(path=self.changelist_path)
-        self.assertEqual(self.model_admin.get_changelist(request), MIZChangeList)
 
     def test_get_search_fields(self):
         if self.search_fields_expected is None:
