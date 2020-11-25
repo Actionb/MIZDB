@@ -15,7 +15,7 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
 
     def get_results(self, request):
         super().get_results(request)
-        # Add the annotations for the list display.
+        # Add annotations required for this model admin's 'list_display' items.
         annotations = self.model_admin.get_result_list_annotations()
         if annotations:
             self.result_list = self.result_list.annotate(**annotations)

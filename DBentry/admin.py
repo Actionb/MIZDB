@@ -91,10 +91,12 @@ class AudioAdmin(MIZModelAdmin):
 
     fieldsets = [
         (None, {'fields': [
-                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
-                'plattennummer', 'beschreibung', 'bemerkungen'
+                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle',
+                ('medium', 'medium_qty'), 'plattennummer', 'beschreibung', 'bemerkungen'
         ]}),
-        ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
+        ('Discogs', {
+            'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}
+        ),
     ]
     inlines = [
         MusikerInLine, BandInLine,
@@ -113,10 +115,10 @@ class AudioAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'musiker_list':
-                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
-            'band_list':
-                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
         }
 
     def kuenstler_string(self, obj):
@@ -244,7 +246,7 @@ class AusgabenAdmin(MIZModelAdmin):
 
     def change_status_inbearbeitung(self, request, queryset):
         self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
-    change_status_inbearbeitung.allowed_permissions= ['change']
+    change_status_inbearbeitung.allowed_permissions = ['change']
     change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
 
     def change_status_abgeschlossen(self, request, queryset):
@@ -332,7 +334,7 @@ class ArtikelAdmin(MIZModelAdmin):
     ]
     search_form_kwargs = {
         'fields': [
-            'ausgabe__magazin', 'ausgabe','autor', 'musiker', 'band',
+            'ausgabe__magazin', 'ausgabe', 'autor', 'musiker', 'band',
             'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
             'seite__range'
         ],
@@ -341,12 +343,12 @@ class ArtikelAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'schlagwort_list': 
-                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
-            'musiker_list':
-                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
-            'band_list':
-                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+            'schlagwort_list': ArrayAgg(
+                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
         }
 
     def zusammenfassung_string(self, obj):
@@ -540,8 +542,8 @@ class BuchAdmin(MIZModelAdmin):
                 'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe',
                 ('buchband', 'is_buchband'), 'ISBN', 'EAN', 'sprache',
                 'beschreibung', 'bemerkungen'
-            ]}
-        ),
+            ]
+        }),
         ('Original Angaben (bei Übersetzung)', {
             'fields': ['titel_orig', 'jahr_orig'],
             'description': "Angaben zum Original eines übersetzten Buches.",
@@ -563,21 +565,21 @@ class BuchAdmin(MIZModelAdmin):
             'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
             'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
-        # 'autor' help_text refers to quick item creation which is not allowed in search forms.
+        # 'autor' help_text refers to quick item creation which is not allowed
+        # in search forms - disable the help_text.
         'help_texts': {'autor': None}
     }
 
     def get_result_list_annotations(self):
         return {
             'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
-            'herausgeber_list':
-                ArrayAgg('herausgeber__herausgeber', distinct=True, ordering='herausgeber__herausgeber'),
-            'verlag_list':
-                ArrayAgg('verlag__verlag_name', distinct=True, ordering='verlag__verlag_name'),
-            'schlagwort_list': 
-                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
-            'genre_list': 
-                ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+            'herausgeber_list': ArrayAgg(
+                'herausgeber__herausgeber', distinct=True, ordering='herausgeber__herausgeber'),
+            'verlag_list': ArrayAgg(
+                'verlag__verlag_name', distinct=True, ordering='verlag__verlag_name'),
+            'schlagwort_list': ArrayAgg(
+                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
         }
 
     def autoren_string(self, obj):
@@ -714,7 +716,6 @@ class MusikerAdmin(MIZModelAdmin):
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
 
-
     def get_result_list_annotations(self):
         return {
             'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
@@ -753,11 +754,12 @@ class PersonAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'is_musiker': 
-                Exists(_models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
-            'is_autor': 
-                Exists(_models.Autor.objects.only('id').filter(person_id=OuterRef('id'))),
-            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+            'is_musiker': Exists(
+                _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
+            'is_autor': Exists(
+                _models.Autor.objects.only('id').filter(person_id=OuterRef('id'))),
+            'orte_list': ArrayAgg(
+                'orte___name', distinct=True, ordering='orte___name')
         }
 
     def is_musiker(self, obj):
@@ -842,10 +844,10 @@ class VeranstaltungAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'musiker_list':
-                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
-            'band_list':
-                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
         }
 
     def kuenstler_string(self, obj):
@@ -925,10 +927,10 @@ class VideoAdmin(MIZModelAdmin):
 
     def get_result_list_annotations(self):
         return {
-            'musiker_list':
-                ArrayAgg('musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
-            'band_list':
-                ArrayAgg('band__band_name', distinct=True, ordering='band__band_name')
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
         }
 
     def kuenstler_string(self, obj):
@@ -1091,7 +1093,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
                 'Beilage von Ausgabe', {
                     'fields': [ausgabe_fields],
                     'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
-            })
+                }
+            )
             fieldsets.insert(1, fieldset)
             default_fieldset['fields'] = fields
         return fieldsets
@@ -1206,8 +1209,9 @@ class AuthAdminMixin(object):
             choices = []
             for perm in formfield.queryset:
                 object_name = str(perm.content_type)
+                # Check that the model_class that this content_type is
+                # referencing exists.
                 if perm.content_type.model_class():
-                    # Not all ContentType objects reference an existing model_class.
                     object_name += " (%s)" % perm.content_type.model_class().__name__
                 choices.append((
                     perm.pk,
