@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User, Permission
-from django.db.models import Count, Min
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import Count, Min, Subquery, OuterRef, Func, Value, Exists
 
 import DBentry.models as _models
 import DBentry.m2m as _m2m
@@ -17,6 +18,8 @@ from DBentry.forms import (
 )
 from DBentry.sites import miz_site
 from DBentry.utils import concat_limit, copy_related_set, get_obj_link
+# TODO: add admindocs
+# (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
 
 class BestandInLine(BaseTabularInline):
@@ -73,15 +76,18 @@ class AudioAdmin(MIZModelAdmin):
     form = AudioForm
     index_category = 'Archivgut'
     save_on_top = True
-    list_display = ['__str__', 'medium', 'kuenstler_string']
-    list_prefetch_related = ['band', 'musiker']
+    list_display = ['titel', 'jahr', 'medium', 'kuenstler_string']
+    list_select_related = ['medium']
+    ordering = ['titel', 'jahr', 'medium']
 
     fieldsets = [
         (None, {'fields': [
-                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
-                'plattennummer', 'beschreibung', 'bemerkungen'
+                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle',
+                ('medium', 'medium_qty'), 'plattennummer', 'beschreibung', 'bemerkungen'
         ]}),
-        ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
+        ('Discogs', {
+            'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}
+        ),
     ]
     inlines = [
         MusikerInLine, BandInLine,
@@ -98,8 +104,16 @@ class AudioAdmin(MIZModelAdmin):
         ],
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
+        }
+
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
     kuenstler_string.short_description = 'Künstler'
 
 
@@ -125,16 +139,16 @@ class AusgabenAdmin(MIZModelAdmin):
 
     index_category = 'Archivgut'
     inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
-    list_prefetch_related = [
-        'ausgabejahr_set', 'ausgabenum_set', 'ausgabelnum_set', 'ausgabemonat_set']
+    ordering = ['magazin__magazin_name', '_name']
+    list_select_related = ['magazin']
 
     fields = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
     ]
     list_display = (
-        '__str__', 'num_string', 'lnum_string', 'monat_string', 'jahr_string',
-        'jahrgang', 'magazin', 'e_datum', 'anz_artikel', 'status'
+        'ausgabe_name', 'num_string', 'lnum_string', 'monat_string', 'jahr_string',
+        'jahrgang', 'magazin_name', 'e_datum', 'anz_artikel', 'status'
     )
     search_form_kwargs = {
         'fields': [
@@ -161,33 +175,77 @@ class AusgabenAdmin(MIZModelAdmin):
         from .changelist import AusgabeChangeList
         return AusgabeChangeList
 
+    def ausgabe_name(self, obj):
+        return obj._name
+    ausgabe_name.short_description = 'Ausgabe'
+    ausgabe_name.admin_order_field = '_name'
+
+    def magazin_name(self, obj):
+        return obj.magazin.magazin_name
+    magazin_name.short_description = 'Magazin'
+    magazin_name.admin_order_field = 'magazin__magazin_name'
+
+    def get_result_list_annotations(self):
+        # Can't use ArrayAgg directly to get a list of distinct monat__abk
+        # values as we are ordering by monat__ordinal: using distinct AND
+        # ordering requires that the ordering expressions are present in the
+        # argument list to ArrayAgg.
+        # Use a subquery instead:
+        subquery = (
+            self.model.objects.order_by().filter(id=OuterRef('id'))
+            .annotate(
+                x=Func(
+                    ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
+                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                )
+            )
+            .values('x')
+        )
+        return {
+            'jahr_string': Func(
+                ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+            ),
+            'num_string': Func(
+                ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+            ),
+            'lnum_string': Func(
+                ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+            ),
+            'monat_string': Subquery(subquery),
+            'anz_artikel': Count('artikel', distinct=True)
+        }
+
     def anz_artikel(self, obj):
         return obj.anz_artikel
     anz_artikel.short_description = 'Anz. Artikel'
     anz_artikel.admin_order_field = 'anz_artikel'
-    anz_artikel.annotation = Count('artikel', distinct=True)
 
     def jahr_string(self, obj):
-        return concat_limit(obj.ausgabejahr_set.all())
+        return obj.jahr_string
     jahr_string.short_description = 'Jahre'
+    jahr_string.admin_order_field = 'jahr_string'
 
     def num_string(self, obj):
-        return concat_limit(obj.ausgabenum_set.all())
+        return obj.num_string
     num_string.short_description = 'Nummer'
+    num_string.admin_order_field = 'num_string'
 
     def lnum_string(self, obj):
-        return concat_limit(obj.ausgabelnum_set.all())
+        return obj.lnum_string
     lnum_string.short_description = 'lfd. Nummer'
+    lnum_string.admin_order_field = 'lnum_string'
 
     def monat_string(self, obj):
-        if obj.ausgabemonat_set.exists():
-            return concat_limit(
-                obj.ausgabemonat_set.values_list('monat__abk', flat=True)
-            )
+        return obj.monat_string
     monat_string.short_description = 'Monate'
+    monat_string.admin_order_field = 'monat_string'
 
     def _change_status(self, request, queryset, status):
         queryset.update(status=status, _changed_flag=False)
+        # TODO: create a LogEntry for the changes
 
     def change_status_unbearbeitet(self, request, queryset):
         self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
@@ -196,7 +254,7 @@ class AusgabenAdmin(MIZModelAdmin):
 
     def change_status_inbearbeitung(self, request, queryset):
         self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
-    change_status_inbearbeitung.allowed_permissions= ['change']
+    change_status_inbearbeitung.allowed_permissions = ['change']
     change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
 
     def change_status_abgeschlossen(self, request, queryset):
@@ -222,13 +280,26 @@ class AutorAdmin(MIZModelAdmin):
     form = AutorForm
     index_category = 'Stammdaten'
     inlines = [MagazinInLine]
-    list_display = ['__str__', 'person', 'kuerzel', 'magazin_string']
-    list_prefetch_related = ['magazin', 'person']
+    list_display = ['autor_name', 'person', 'kuerzel', 'magazin_string']
+    list_select_related = ['person']
     search_form_kwargs = {'fields': ['magazin', 'person']}
+    ordering = ['_name']
+
+    def get_result_list_annotations(self):
+        return {
+            'magazin_list': ArrayAgg(
+                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name')
+        }
+
+    def autor_name(self, obj):
+        return obj._name
+    autor_name.short_description = 'Autor'
+    autor_name.admin_order_field = '_name'
 
     def magazin_string(self, obj):
-        return concat_limit(obj.magazin.all())
+        return concat_limit(obj.magazin_list) or self.get_empty_value_display()
     magazin_string.short_description = 'Magazin(e)'
+    magazin_string.admin_order_field = 'magazin_list'
 
 
 @admin.register(_models.Artikel, site=miz_site)
@@ -261,8 +332,10 @@ class ArtikelAdmin(MIZModelAdmin):
 
     form = ArtikelForm
     index_category = 'Archivgut'
-    list_display_links = ['__str__', 'seite']
     save_on_top = True
+    list_select_related = ['ausgabe', 'ausgabe__magazin']
+    ordering = [
+        'ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
 
     fields = [
         ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'),
@@ -273,36 +346,52 @@ class ArtikelAdmin(MIZModelAdmin):
         OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine
     ]
     list_display = [
-        '__str__', 'zusammenfassung_string', 'seite', 'schlagwort_string',
-        'ausgabe', 'artikel_magazin', 'kuenstler_string'
+        'schlagzeile', 'zusammenfassung_string', 'seite', 'schlagwort_string',
+        'ausgabe_name', 'artikel_magazin', 'kuenstler_string'
     ]
-    list_prefetch_related = ['schlagwort', 'musiker', 'band']
     search_form_kwargs = {
         'fields': [
-            'ausgabe__magazin', 'ausgabe','autor', 'musiker', 'band',
+            'ausgabe__magazin', 'ausgabe', 'autor', 'musiker', 'band',
             'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
             'seite__range'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'schlagwort_list': ArrayAgg(
+                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
+        }
+
+    def ausgabe_name(self, obj):
+        return obj.ausgabe._name
+    ausgabe_name.short_description = 'Ausgabe'
+    ausgabe_name.admin_order_field = 'ausgabe___name'
+
     def zusammenfassung_string(self, obj):
         if not obj.zusammenfassung:
-            return ''
+            return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
     zusammenfassung_string.short_description = 'Zusammenfassung'
+    zusammenfassung_string.admin_order_field = 'zusammenfassung'
 
     def artikel_magazin(self, obj):
-        return obj.ausgabe.magazin
+        return obj.ausgabe.magazin.magazin_name
     artikel_magazin.short_description = 'Magazin'
-    artikel_magazin.admin_order_field = 'ausgabe__magazin'
+    artikel_magazin.admin_order_field = 'ausgabe__magazin__magazin_name'
 
     def schlagwort_string(self, obj):
-        return concat_limit(obj.schlagwort.all())
+        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()
     schlagwort_string.short_description = 'Schlagwörter'
+    schlagwort_string.admin_order_field = 'schlagwort_list'
 
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
     kuenstler_string.short_description = 'Künstler'
 
 
@@ -323,29 +412,43 @@ class BandAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
-    list_prefetch_related = ['genre', 'musiker', 'bandalias_set', 'orte']
     save_on_top = True
+    ordering = ['band_name']
 
     search_form_kwargs = {
         'fields': ['musiker', 'genre', 'orte__land', 'orte'],
         'labels': {'musiker': 'Mitglied'}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'alias_list': ArrayAgg(
+                'bandalias__alias', distinct=True, ordering='bandalias__alias'),
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+        }
+
     def genre_string(self, obj):
-        return concat_limit(obj.genre.all())
+        return concat_limit(obj.genre_list) or self.get_empty_value_display()
     genre_string.short_description = 'Genres'
+    genre_string.admin_order_field = 'genre_list'
 
     def musiker_string(self, obj):
-        return concat_limit(obj.musiker.all())
+        return concat_limit(obj.musiker_list) or self.get_empty_value_display()
     musiker_string.short_description = 'Mitglieder'
+    musiker_string.admin_order_field = 'musiker_list'
 
     def alias_string(self, obj):
-        return concat_limit(obj.bandalias_set.all())
+        return concat_limit(obj.alias_list) or self.get_empty_value_display()
     alias_string.short_description = 'Aliase'
+    alias_string.admin_order_field = 'alias_list'
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()
     orte_string.short_description = 'Orte'
+    orte_string.admin_order_field = 'orte_list'
 
 
 @admin.register(_models.Bildmaterial, site=miz_site)
@@ -377,8 +480,8 @@ class BildmaterialAdmin(MIZModelAdmin):
     form = BildmaterialForm
     index_category = 'Archivgut'
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
-    list_prefetch_related = ['veranstaltung']
     save_on_top = True
+    ordering = ['titel', 'datum', 'signatur']
 
     inlines = [
         SchlInLine, GenreInLine, MusikerInLine, BandInLine,
@@ -393,17 +496,25 @@ class BildmaterialAdmin(MIZModelAdmin):
         'labels': {'reihe': 'Bildreihe'}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'veranstaltung_list':
+                ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
+        }
+
     def datum_localized(self, obj):
         return obj.datum.localize()
     datum_localized.short_description = 'Datum'
     datum_localized.admin_order_field = 'datum'
 
     def veranstaltung_string(self, obj):
-        return concat_limit(list(obj.veranstaltung.all()))
+        return concat_limit(obj.veranstaltung_list) or self.get_empty_value_display()
     veranstaltung_string.short_description = 'Veranstaltungen'
+    veranstaltung_string.admin_order_field = 'veranstaltung_list'
 
     def copy_related(self, obj):
         copy_related_set(obj, 'veranstaltung__band', 'veranstaltung__musiker')
+        # TODO: create a LogEntry for the changes
 
     def response_add(self, request, obj, post_url_continue=None):
         if 'copy_related' in request.POST:
@@ -412,6 +523,10 @@ class BildmaterialAdmin(MIZModelAdmin):
 
     def response_change(self, request, obj):
         if 'copy_related' in request.POST:
+            # Note that copy_related *adds* instances to the related manager.
+            # It doesn't overwrite the related set: the related set could
+            # contain instances that were once related to the obj we are copying
+            # from (here 'veranstaltung') but aren't anymore.
             self.copy_related(obj)
         return super().response_change(request, obj)
 
@@ -456,6 +571,7 @@ class BuchAdmin(MIZModelAdmin):
     form = BuchForm
     index_category = 'Archivgut'
     save_on_top = True
+    ordering = ['titel']
 
     fieldsets = [
         (None, {
@@ -463,8 +579,8 @@ class BuchAdmin(MIZModelAdmin):
                 'titel', 'seitenumfang', 'jahr', 'auflage', 'schriftenreihe',
                 ('buchband', 'is_buchband'), 'ISBN', 'EAN', 'sprache',
                 'beschreibung', 'bemerkungen'
-            ]}
-        ),
+            ]
+        }),
         ('Original Angaben (bei Übersetzung)', {
             'fields': ['titel_orig', 'jahr_orig'],
             'description': "Angaben zum Original eines übersetzten Buches.",
@@ -477,39 +593,50 @@ class BuchAdmin(MIZModelAdmin):
         PersonInLine, HerausgeberInLine, VerlagInLine, BestandInLine
     ]
     list_display = [
-        'titel', 'autoren_string', 'herausgeber_string', 'verlag_string',
+        'titel', 'seitenumfang', 'autoren_string', 'kuenstler_string',
         'schlagwort_string', 'genre_string'
     ]
-    list_prefetch_related = ['autor', 'herausgeber', 'verlag', 'schlagwort', 'genre']
     search_form_kwargs = {
         'fields': [
             'autor', 'musiker', 'band', 'schlagwort', 'genre', 'ort',
             'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
             'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
-        # 'autor' help_text refers to quick item creation which is not allowed in search forms.
+        # 'autor' help_text refers to quick item creation which is not allowed
+        # in search forms - disable the help_text.
         'help_texts': {'autor': None}
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
+            'schlagwort_list': ArrayAgg(
+                'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
+            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
+        }
+
     def autoren_string(self, obj):
-        return concat_limit(obj.autor.all())
+        return concat_limit(obj.autor_list) or self.get_empty_value_display()
     autoren_string.short_description = 'Autoren'
-
-    def herausgeber_string(self, obj):
-        return concat_limit(obj.herausgeber.all())
-    herausgeber_string.short_description = 'Herausgeber'
-
-    def verlag_string(self, obj):
-        return concat_limit(obj.verlag.all())
-    verlag_string.short_description = 'Verlag'
+    autoren_string.admin_order_field = 'autor_list'
 
     def schlagwort_string(self, obj):
-        return concat_limit(obj.schlagwort.all())
+        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()
     schlagwort_string.short_description = 'Schlagwörter'
+    schlagwort_string.admin_order_field = 'schlagwort_list'
 
     def genre_string(self, obj):
-        return concat_limit(obj.genre.all())
+        return concat_limit(obj.genre_list) or self.get_empty_value_display()
     genre_string.short_description = 'Genres'
+    genre_string.admin_order_field = 'genre_list'
+
+    def kuenstler_string(self, obj):
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
+    kuenstler_string.short_description = 'Künstler'
 
 
 @admin.register(_models.Dokument, site=miz_site)
@@ -517,6 +644,7 @@ class DokumentAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
+    ordering = ['titel']
 
 
 @admin.register(_models.Genre, site=miz_site)
@@ -527,11 +655,16 @@ class GenreAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
-    list_prefetch_related = ['genrealias_set']
     search_fields = ['genre', 'genrealias__alias']
+    ordering = ['genre']
+
+    def get_result_list_annotations(self):
+        return {
+            'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
+        }
 
     def alias_string(self, obj):
-        return concat_limit(obj.genrealias_set.all())
+        return concat_limit(obj.alias_list) or self.get_empty_value_display()
     alias_string.short_description = 'Aliase'
 
 
@@ -552,26 +685,33 @@ class MagazinAdmin(MIZModelAdmin):
 
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, VerlagInLine, HerausgeberInLine, OrtInLine]
-    list_display = ['__str__', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
-    list_prefetch_related = ['orte']
+    list_display = ['magazin_name', 'short_beschreibung', 'orte_string', 'anz_ausgaben']
+    ordering = ['magazin_name']
 
     search_form_kwargs = {
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
+            'anz_ausgaben': Count('ausgabe', distinct=True)
+        }
+
     def anz_ausgaben(self, obj):
-        return obj.anz_ausgabe
+        return obj.anz_ausgaben
     anz_ausgaben.short_description = 'Anz. Ausgaben'
-    anz_ausgaben.admin_order_field = 'anz_ausgabe'
-    anz_ausgaben.annotation = Count('ausgabe')
+    anz_ausgaben.admin_order_field = 'anz_ausgaben'
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()
     orte_string.short_description = 'Orte'
+    orte_string.admin_order_field = 'orte_list'
 
     def short_beschreibung(self, obj):
         return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
     short_beschreibung.short_description = 'Beschreibung'
+    short_beschreibung.admin_order_field = 'beschreibung'
 
     def get_exclude(self, request, obj=None):
         """
@@ -590,6 +730,7 @@ class MemoAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
+    ordering = ['titel']
 
 
 @admin.register(_models.Musiker, site=miz_site)
@@ -614,21 +755,31 @@ class MusikerAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
-    list_prefetch_related = ['band_set', 'genre', 'orte']
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
+    ordering = ['kuenstler_name']
+
+    def get_result_list_annotations(self):
+        return {
+            'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
+            'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
+            'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
+        }
 
     def band_string(self, obj):
-        return concat_limit(obj.band_set.all())
+        return concat_limit(obj.band_list) or self.get_empty_value_display()
     band_string.short_description = 'Bands'
+    band_string.admin_order_field = 'band_list'
 
     def genre_string(self, obj):
-        return concat_limit(obj.genre.all())
+        return concat_limit(obj.genre_list) or self.get_empty_value_display()
     genre_string.short_description = 'Genres'
+    genre_string.admin_order_field = 'genre_list'
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()
     orte_string.short_description = 'Orte'
+    orte_string.admin_order_field = 'orte_list'
 
 
 @admin.register(_models.Person, site=miz_site)
@@ -639,26 +790,39 @@ class PersonAdmin(MIZModelAdmin):
     fields = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
     inlines = [OrtInLine]
-    list_display = ('vorname', 'nachname', 'Ist_Musiker', 'Ist_Autor')
+    list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
-    list_prefetch_related = ['musiker_set', 'autor_set', 'orte']
+    ordering = ['nachname', 'vorname']
 
     search_form_kwargs = {
         'fields': ['orte', 'orte__land', 'orte__bland'],
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def Ist_Musiker(self, obj):
-        return obj.musiker_set.exists()
-    Ist_Musiker.boolean = True
+    def get_result_list_annotations(self):
+        return {
+            'is_musiker': Exists(
+                _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
+            'is_autor': Exists(
+                _models.Autor.objects.only('id').filter(person_id=OuterRef('id'))),
+            'orte_list': ArrayAgg(
+                'orte___name', distinct=True, ordering='orte___name')
+        }
 
-    def Ist_Autor(self, obj):
-        return obj.autor_set.exists()
-    Ist_Autor.boolean = True
+    def is_musiker(self, obj):
+        return obj.is_musiker
+    is_musiker.short_description = 'Ist Musiker'
+    is_musiker.boolean = True
+
+    def is_autor(self, obj):
+        return obj.is_autor
+    is_autor.short_description = 'Ist Autor'
+    is_autor.boolean = True
 
     def orte_string(self, obj):
-        return concat_limit(obj.orte.all())
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()
     orte_string.short_description = 'Orte'
+    orte_string.admin_order_field = 'orte_list'
 
 
 @admin.register(_models.Schlagwort, site=miz_site)
@@ -670,12 +834,18 @@ class SchlagwortAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
-    list_prefetch_related = ['schlagwortalias_set']
     search_fields = ['schlagwort', 'schlagwortalias__alias']
+    ordering = ['schlagwort']
+
+    def get_result_list_annotations(self):
+        return {
+            'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
+        }
 
     def alias_string(self, obj):
-        return concat_limit(obj.schlagwortalias_set.all())
+        return concat_limit(obj.alias_list) or self.get_empty_value_display()
     alias_string.short_description = 'Aliase'
+    alias_string.admin_order_field = 'alias_list'
 
 
 @admin.register(_models.Spielort, site=miz_site)
@@ -686,6 +856,8 @@ class SpielortAdmin(MIZModelAdmin):
     list_display = ['name', 'ort']
     inlines = [AliasInLine]
     search_form_kwargs = {'fields': ['ort', 'ort__land']}
+    ordering = ['name', 'ort']
+    list_select_related = ['ort']
 
 
 @admin.register(_models.Technik, site=miz_site)
@@ -693,6 +865,7 @@ class TechnikAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [BestandInLine]
     superuser_only = True
+    ordering = ['titel']
 
 
 @admin.register(_models.Veranstaltung, site=miz_site)
@@ -716,8 +889,8 @@ class VeranstaltungAdmin(MIZModelAdmin):
     collapse_all = True
     inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
     list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
-    list_prefetch_related = ['band', 'musiker']
     save_on_top = True
+    ordering = ['name', 'spielort', 'datum']
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'person', 'spielort',
@@ -725,8 +898,16 @@ class VeranstaltungAdmin(MIZModelAdmin):
         ]
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
+        }
+
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
     kuenstler_string.short_description = 'Künstler'
 
 
@@ -737,6 +918,8 @@ class VerlagAdmin(MIZModelAdmin):
         'fields': ['sitz', 'sitz__land', 'sitz__bland'],
         'labels': {'sitz': 'Sitz'}
     }
+    list_select_related = ['sitz']
+    ordering = ['verlag_name', 'sitz']
 
 
 @admin.register(_models.Video, site=miz_site)
@@ -778,6 +961,9 @@ class VideoAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     collapse_all = True
     save_on_top = True
+    list_display = ['titel', 'medium', 'kuenstler_string']
+    ordering = ['titel']
+    list_select_related = ['medium']
 
     inlines = [
         MusikerInLine, BandInLine,
@@ -792,8 +978,6 @@ class VideoAdmin(MIZModelAdmin):
         ]}),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
-    list_display = ['__str__', 'medium', 'kuenstler_string']
-    list_prefetch_related = ['band', 'musiker']
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
@@ -801,8 +985,16 @@ class VideoAdmin(MIZModelAdmin):
         ],
     }
 
+    def get_result_list_annotations(self):
+        return {
+            'musiker_list': ArrayAgg(
+                'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
+            'band_list': ArrayAgg(
+                'band__band_name', distinct=True, ordering='band__band_name')
+        }
+
     def kuenstler_string(self, obj):
-        return concat_limit(list(obj.band.all()) + list(obj.musiker.all()))
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
     kuenstler_string.short_description = 'Künstler'
 
 
@@ -812,11 +1004,12 @@ class BlandAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': ['land'],
     }
+    ordering = ['land', 'bland_name']
 
 
 @admin.register(_models.Land, site=miz_site)
 class LandAdmin(MIZModelAdmin):
-    pass
+    ordering = ['land_name']
 
 
 @admin.register(_models.Ort, site=miz_site)
@@ -826,6 +1019,8 @@ class OrtAdmin(MIZModelAdmin):
     list_display = ['stadt', 'bland', 'land']
     list_display_links = list_display
     search_form_kwargs = {'fields': ['land', 'bland']}
+    ordering = ['land', 'bland', 'stadt']
+    list_select_related = ['land', 'bland']
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field == self.opts.get_field('bland'):
@@ -903,6 +1098,7 @@ class DateiAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     save_on_top = True
     superuser_only = True
+    ordering = ['titel']
 
     inlines = [
         QuelleInLine, GenreInLine, SchlInLine,
@@ -919,11 +1115,12 @@ class DateiAdmin(MIZModelAdmin):
 @admin.register(_models.Instrument, site=miz_site)
 class InstrumentAdmin(MIZModelAdmin):
     list_display = ['instrument', 'kuerzel']
+    ordering = ['instrument']
 
 
 @admin.register(_models.Herausgeber, site=miz_site)
 class HerausgeberAdmin(MIZModelAdmin):
-    pass
+    ordering = ['herausgeber']
 
 
 class BaseBrochureAdmin(MIZModelAdmin):
@@ -938,9 +1135,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
-    list_prefetch_related = ['jahre']
     search_form_kwargs = {
-        'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr']}
+        'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
+        'labels': {'jahre__jahr__range': 'Jahr'}
+    }
 
     def get_fieldsets(self, request, obj=None):
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
@@ -962,16 +1160,28 @@ class BaseBrochureAdmin(MIZModelAdmin):
                 'Beilage von Ausgabe', {
                     'fields': [ausgabe_fields],
                     'description': 'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
-            })
+                }
+            )
             fieldsets.insert(1, fieldset)
             default_fieldset['fields'] = fields
         return fieldsets
 
+    def get_ordering(self, request):
+        return ['titel', 'jahr_min', 'zusammenfassung']
+
+    def get_result_list_annotations(self):
+        return {
+            'jahr_string': Func(
+                ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+            ),
+            'jahr_min': Min('jahre__jahr')
+        }
+
     def jahr_string(self, obj):
-        return concat_limit(obj.jahre.all())
+        return obj.jahr_string
     jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = 'jahr'
-    jahr_string.annotation = Min('jahre__jahr')
+    jahr_string.admin_order_field = 'jahr_min'
 
 
 @admin.register(_models.Brochure, site=miz_site)
@@ -989,8 +1199,9 @@ class BrochureAdmin(BaseBrochureAdmin):
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
-            'jahre__jahr'
-        ]
+            'jahre__jahr__range'
+        ],
+        'labels': {'jahre__jahr__range': 'Jahr'}
     }
 
 
@@ -1038,8 +1249,9 @@ class KalenderAdmin(BaseBrochureAdmin):
     search_form_kwargs = {
         'fields': [
             'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
-            'jahre__jahr'
-        ]
+            'jahre__jahr__range'
+        ],
+        'labels': {'jahre__jahr__range': 'Jahr'}
     }
 
 
@@ -1070,8 +1282,9 @@ class AuthAdminMixin(object):
             choices = []
             for perm in formfield.queryset:
                 object_name = str(perm.content_type)
+                # Check that the model_class that this content_type is
+                # referencing exists.
                 if perm.content_type.model_class():
-                    # Not all ContentType objects reference an existing model_class.
                     object_name += " (%s)" % perm.content_type.model_class().__name__
                 choices.append((
                     perm.pk,

@@ -434,13 +434,17 @@ class AusgabeQuerySet(CNQuerySet):
         # A chronologic order is (mostly) consistent ONLY within
         # the ausgabe_set of one particular magazin. If the queryset contains
         # the ausgaben of more than one magazin, we may end up replacing one
-        # 'poor' ordering (the default one) with another poor chronologic one.
+        # 'poor' ordering (the default one) with another poor, but more
+        # expensive chronologic one. Return self with some form of ordering.
         if self.only('magazin').distinct().values_list('magazin').count() != 1:
             # This condition is also True if self is an empty queryset.
             if ordering:
                 return self.order_by(*ordering)
+            if self.query.order_by:
+                return self
             return self.order_by(*self.model._meta.ordering)
 
+        # FIXME: default_ordering orders by 'magazin' and not 'magazin_name'?
         default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
         if ordering:
             ordering = list(ordering)

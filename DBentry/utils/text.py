@@ -5,16 +5,20 @@ from DBentry.constants import M2M_LIST_MAX_LEN
 
 def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
     """
-    Join string values of iterable 'values' separated by 'sep' up to a length
-    of 'width', truncating the remainder. Items in 'values' that represent
-    numericals will be 'z-filled' with 'z' number of zeros.
+    Join non-empty string values of iterable 'values' separated by 'sep' up to a
+    length of current string + 'width', truncating the remainder.
+    Passing width=0 disables the truncation.
     """
-    if not values:
-        return ''
-    rslt = str(values[0]).zfill(z)
-    for v in values[1:]:
-        if len(rslt) + len(str(v)) < width:
-            rslt += sep + str(v).zfill(z)
+    rslt = ''
+    for v in values:
+        if not v:
+            continue
+        item = str(v)
+        if not rslt:
+            rslt = item
+            continue
+        if not width or len(rslt) + len(item) < width:
+            rslt += sep + item
         else:
             rslt += sep + "[...]"
             break

@@ -14,7 +14,7 @@ from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
 import DBentry.models as _models
-from DBentry.changelist import MIZChangeList, AusgabeChangeList
+from DBentry.changelist import AusgabeChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import miz_site
@@ -42,6 +42,10 @@ class AdminTestMethodsMixin(object):
     # if True, check the load order of jquery, select2 and django's jquery_init
     add_page_uses_select2 = True
     changelist_uses_select2 = True
+    # the number of queries expected for a changelist request:
+    # 5 queries:
+    # 1. session, 2. auth, 3. result count, 4. full count, 5. result list
+    num_queries_changelist = 5
 
     @classmethod
     def setUpTestData(cls):
@@ -195,10 +199,6 @@ class AdminTestMethodsMixin(object):
             self.assertIsInstance(
                 formfield.widget, MIZModelSelect2, msg=fkey_field.name)
 
-    def test_get_changelist(self):
-        request = self.get_request(path=self.changelist_path)
-        self.assertEqual(self.model_admin.get_changelist(request), MIZChangeList)
-
     def test_get_search_fields(self):
         if self.search_fields_expected is None:
             return
@@ -266,6 +266,14 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(
             n, len(queries.captured_queries),
             msg="Number of queries for changelist depends on number of records!"
+        )
+        if not self.num_queries_changelist:
+            return
+        self.assertEqual(
+            n, self.num_queries_changelist,
+            msg="Number of queries required for a changelist request differs "
+                "from the expected value: got '%s' expected '%s'. "
+                "Check 'list_select_related'." % (n, self.num_queries_changelist)
         )
 
     def test_javascript_add_page(self):
@@ -487,53 +495,6 @@ class TestMIZModelAdmin(AdminTestCase):
             with self.subTest(field=field):
                 self.assertIn(field, changed_fields)
 
-    def test_check_list_prefetch_related(self):
-        # Assert that check_list_prefetch_related returns an empty list if the
-        # class attribute 'list_prefetch_related' is unset or None.
-        self.assertEqual(
-            # object obviously doesn't have the attribute:
-            self.model_admin_class._check_list_prefetch_related(object), [])
-        with patch.object(self.model_admin, 'list_prefetch_related', new=None, create=True):
-            self.assertEqual(self.model_admin._check_list_prefetch_related(), [])
-            # list_prefetch_related must be a list or tuple:
-            self.model_admin.list_prefetch_related = 'Not a list!'
-            checked = self.model_admin._check_list_prefetch_related()
-            self.assertEqual(len(checked), 1)
-            self.assertIsInstance(checked[0], checks.Error)
-            self.assertEqual(
-                checked[0].msg,
-                "{}.list_prefetch_related attribute must be a list or a tuple.".format(
-                    self.model_admin_class.__name__)
-            )
-            self.model_admin.list_prefetch_related = []
-            self.assertFalse(self.model_admin._check_list_prefetch_related())
-            self.model_admin.list_prefetch_related = ()
-            self.assertFalse(self.model_admin._check_list_prefetch_related())
-            # Every item in list_prefetch_related must be an attribute of the
-            # ModelAdmin's model.
-            self.model_admin.list_prefetch_related = [
-                'musiker', 'musiker_set', 'band', 'band_set']
-            checked = self.model_admin._check_list_prefetch_related()
-            self.assertEqual(len(checked), 2)
-            msg_template = (
-                "Invalid item in {model_admin}.list_prefetch_related: "
-                "cannot find '{field_name}' on model {object_name}"
-            )
-            template_kwargs = {
-                'model_admin': self.model_admin_class.__name__,
-                'object_name': self.model._meta.object_name
-            }
-            self.assertIsInstance(checked[0], checks.Error)
-            self.assertEqual(
-                checked[0].msg,
-                msg_template.format(field_name='musiker_set', **template_kwargs)
-            )
-            self.assertIsInstance(checked[1], checks.Error)
-            self.assertEqual(
-                checked[1].msg,
-                msg_template.format(field_name='band_set', **template_kwargs)
-            )
-
     def test_check_fieldset_fields(self):
         # Assert that _check_fieldset_fields finds invalid field declarations.
         with patch.object(self.model_admin, 'fieldsets'):
@@ -648,37 +609,6 @@ class TestMIZModelAdmin(AdminTestCase):
                     expected_msg = msg_template.format(field, self.model._meta.object_name)
                     self.assertEqual(errors[0].msg, expected_msg)
 
-    @patch("DBentry.base.admin.resolve_list_display_item")
-    def test_check_list_item_annotations(self, mocked_resolve):
-        # Assert that _check_list_item_annotations checks that annotations
-        # declared on a list_display item are Aggregations.
-        with patch.object(self.model_admin, 'list_display'):
-            # First: some special conditions where _check_list_item_annotations
-            # just continues looping through the list_display items.
-            # resolve_list_display_item could not resolve the item and
-            # returned None:
-            self.model_admin.list_display = ['thisisnofield']
-            mocked_resolve.return_value = None
-            self.assertFalse(self.model_admin._check_list_item_annotations())
-            # The func returned by resolve_list_display_item does not have
-            # a 'admin_order_field' attribute:
-            some_func = lambda x: x
-            mocked_resolve.return_value = some_func
-            self.assertFalse(self.model_admin._check_list_item_annotations())
-            # The func returned by resolve_list_display_item does not have
-            # a 'annotations' attribute.
-            setattr(some_func, 'admin_order_field', 'beep')
-            self.assertFalse(self.model_admin._check_list_item_annotations())
-            # Add an invalid 'annotation' attribute to our dummy func:
-            setattr(some_func, 'annotation', 'not_an_aggregate_instance')
-            expected_msg = "%s.%s.annotation is not an aggregate: %s" % (
-                    self.model_admin_class.__name__, some_func.__name__, type(''))
-            errors = self.model_admin._check_list_item_annotations()
-            self.assertTrue(errors)
-            self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(errors[0].msg, expected_msg)
-
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -707,7 +637,7 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         super().setUpTestData()
 
     def test_zusammenfassung_string(self):
-        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '')
+        self.assertEqual(self.model_admin.zusammenfassung_string(self.obj1), '-')
         self.obj1.zusammenfassung = (
             "Dies ist eine Testzusammenfassung, die nicht besonders inhaltsvoll "
             "ist, dafür aber doch recht lang ist."
@@ -719,17 +649,19 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
     def test_artikel_magazin(self):
-        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag)
+        self.assertEqual(self.model_admin.artikel_magazin(self.obj1), self.mag.magazin_name)
 
     def test_schlagwort_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.schlagwort_string(self.obj1),
+            self.model_admin.schlagwort_string(obj),
             'Testschlagwort1, Testschlagwort2'
         )
 
     def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.kuenstler_string(self.obj1),
+            self.model_admin.kuenstler_string(obj),
             'Testband, Alice Tester'
         )
 
@@ -746,6 +678,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
+    # one more query for the chronologically_ordered() query for magazin count:
+    num_queries_changelist = 6
 
     @classmethod
     def setUpTestData(cls):
@@ -781,23 +715,27 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertFalse(queryset.chronologically_ordered)
 
     def test_anz_artikel(self):
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_artikel(obj), 1)
         _models.Artikel.objects.all().delete()
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_artikel(obj), 0)
 
     def test_jahr_string(self):
-        self.assertEqual(self.model_admin.jahr_string(self.obj1), '2020, 2021, 2022')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.jahr_string(obj), '2020, 2021, 2022')
 
     def test_num_string(self):
-        self.assertEqual(self.model_admin.num_string(self.obj1), '10, 11, 12')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.num_string(obj), '10, 11, 12')
 
     def test_lnum_string(self):
-        self.assertEqual(self.model_admin.lnum_string(self.obj1), '10, 11, 12')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.lnum_string(obj), '10, 11, 12')
 
     def test_monat_string(self):
-        self.assertEqual(self.model_admin.monat_string(self.obj1), 'Jan, Feb')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.monat_string(obj), 'Jan, Feb')
 
     def test_add_crosslinks_custom(self):
         obj = make(
@@ -987,12 +925,24 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     raw_data = [{'ausgabe__extra': 1}]
+    @classmethod
+    def setUpTestData(cls):
+        ort1 = make(_models.Ort, stadt='Dortmund', land__code='DE')
+        ort2 = make(_models.Ort, stadt='Buxtehude', land__code='DE')
+        cls.test_data = [
+            make(cls.model, ausgabe__extra=1, orte=[ort1, ort2])
+        ]
+        super().setUpTestData()
+
+    def test_orte_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE, Dortmund, DE')
 
     def test_anz_ausgaben(self):
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_ausgaben(obj), 1)
         self.obj1.ausgabe_set.all().delete()
-        obj = self.get_queryset().get(pk=self.obj1.pk)
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.anz_ausgaben(obj), 0)
 
     def test_ausgaben_merkmal_excluded(self):
@@ -1040,20 +990,33 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'musiker', 'fld_name': 'person', 'label': 'Musiker (1)'},
     ]
 
-    def test_Ist_Musiker(self):
-        self.assertTrue(self.model_admin.Ist_Musiker(self.obj1))
-        self.assertFalse(self.model_admin.Ist_Musiker(self.obj2))
+    def test_is_musiker(self):
+        obj1, obj2 = (
+            self.queryset
+            .annotate(**self.model_admin.get_result_list_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
+        )
+        self.assertTrue(self.model_admin.is_musiker(obj1))
+        self.assertFalse(self.model_admin.is_musiker(obj2))
 
-    def test_Ist_Autor(self):
-        self.assertTrue(self.model_admin.Ist_Autor(self.obj1))
-        self.assertFalse(self.model_admin.Ist_Autor(self.obj2))
+    def test_is_autor(self):
+        obj1, obj2 = (
+            self.queryset
+            .annotate(**self.model_admin.get_result_list_annotations())
+            .filter(id__in=[self.obj1.pk, self.obj2.pk])
+            .order_by('id')
+        )
+        self.assertTrue(self.model_admin.is_autor(obj1))
+        self.assertFalse(self.model_admin.is_autor(obj2))
 
     def test_orte_string(self):
-        self.assertEqual(self.model_admin.orte_string(self.obj1), '')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
-        self.obj1.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1094,17 +1057,19 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue('crosslinks' in extra)
 
     def test_band_string(self):
-        self.assertEqual(self.model_admin.band_string(self.obj2), 'Testband1, Testband2')
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.band_string(obj), 'Testband1, Testband2')
 
     def test_genre_string(self):
-        self.assertEqual(self.model_admin.genre_string(self.obj2), 'Testgenre1, Testgenre2')
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.genre_string(obj), 'Testgenre1, Testgenre2')
 
     def test_orte_string(self):
-        self.assertEqual(self.model_admin.orte_string(self.obj2), '')
-        o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
-        self.obj2.orte.add(o)
-        self.obj2.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj2), 'Dortmund, XYZ')
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
+        self.obj2.orte.add(make(_models.Ort, stadt='Dortmund', land__code='XYZ'))
+        obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1140,7 +1105,8 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
     def test_brochure_crosslink(self):
         # Assert that crosslinks to all of the BaseBrochure children are displayed.
@@ -1195,7 +1161,8 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
 
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1227,23 +1194,27 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_alias_string(self):
-        self.assertEqual(self.model_admin.alias_string(self.obj1), 'Alias1, Alias2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
     def test_genre_string(self):
-        self.assertEqual(self.model_admin.genre_string(self.obj1), 'Testgenre1, Testgenre2')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.genre_string(obj), 'Testgenre1, Testgenre2')
 
     def test_musiker_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.musiker_string(self.obj1),
+            self.model_admin.musiker_string(obj),
             'Testkuenstler1, Testkuenstler2'
         )
 
     def test_orte_string(self):
-        self.assertEqual(self.model_admin.orte_string(self.obj1), '')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), '-')
         o = make(_models.Ort, stadt='Dortmund', land__code='XYZ')
         self.obj1.orte.add(o)
-        self.obj1.refresh_from_db()
-        self.assertEqual(self.model_admin.orte_string(self.obj1), 'Dortmund, XYZ')
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1263,8 +1234,9 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_magazin_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.magazin_string(self.obj1),
+            self.model_admin.magazin_string(obj),
             'Testmagazin1, Testmagazin2'
         )
 
@@ -1366,8 +1338,9 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.kuenstler_string(self.obj1),
+            self.model_admin.kuenstler_string(obj),
             'Testband, Alice Tester'
         )
 
@@ -1405,7 +1378,7 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
     search_fields_expected = [
         'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
-    test_data_count = 1
+    raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
     changelist_uses_select2 = False
 
     crosslinks_expected = [
@@ -1420,6 +1393,10 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'artikel', 'fld_name': 'veranstaltung', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'veranstaltung', 'label': 'Audio Materialien (1)'}
     ]
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
 
 
 class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1455,43 +1432,53 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
     def setUpTestData(cls):
         p1 = make(_models.Person, vorname='Alice', nachname='Testman')
         p2 = make(_models.Person, vorname='Bob', nachname='Mantest')
+        cls.musiker = make(_models.Musiker, kuenstler_name='Robert Plant')
+        cls.band = make(_models.Band, band_name='Led Zeppelin')
         cls.obj1 = make(
             cls.model,
-            autor__person=[p1, p2], herausgeber__herausgeber=[str(p1), str(p2)],
+            autor__person=[p1, p2],
             schlagwort__schlagwort=['Testschlagwort1', 'Testschlagwort2'],
-            genre__genre=['Testgenre1', 'Testgenre2']
+            genre__genre=['Testgenre1', 'Testgenre2'],
+            musiker=[cls.musiker],
+            band=[cls.band]
         )
         cls.test_data = [cls.obj1]
         super().setUpTestData()
 
     def test_autoren_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.autoren_string(self.obj1),
+            self.model_admin.autoren_string(obj),
             'Alice Testman (AT), Bob Mantest (BM)'
         )
 
-    def test_herausgeber_string(self):
-        self.assertEqual(
-            self.model_admin.herausgeber_string(self.obj1),
-            'Alice Testman, Bob Mantest'
-        )
-
     def test_schlagwort_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.schlagwort_string(self.obj1),
+            self.model_admin.schlagwort_string(obj),
             'Testschlagwort1, Testschlagwort2'
         )
 
     def test_genre_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(
-            self.model_admin.genre_string(self.obj1),
+            self.model_admin.genre_string(obj),
             'Testgenre1, Testgenre2'
         )
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(
+            self.model_admin.kuenstler_string(obj),
+            'Led Zeppelin, Robert Plant'
+        )
+
 
 
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
+    raw_data = [{'jahre__jahr': [2002, 2001]}]
 
     @translation_override(language=None)
     def test_get_fieldsets(self):
@@ -1513,6 +1500,10 @@ class TestBaseBrochureAdmin(AdminTestCase):
             fieldset_options['description'],
             'Geben Sie die Ausgabe an, der dieses Objekt beilag.'
         )
+
+    def test_jahr_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
 
 class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1604,6 +1595,11 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
+    raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
+
+    def test_kuenstler_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1613,6 +1609,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
         'lagerort', 'provenienz', 'audio', 'ausgabe', 'bildmaterial',
         'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
     ]
+    num_queries_changelist = 0  # skip the test for the number of queries per changelist request
 
     def test_bestand_class(self):
         # Assert that list_display method bestand_class returns the verbose_name
@@ -1685,9 +1682,12 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
 
         cls.band = make(_models.Band)
         cls.musiker = make(_models.Musiker)
-        cls.veranstaltung = make(
-            _models.Veranstaltung, band=[cls.band], musiker=[cls.musiker])
-        cls.obj1.veranstaltung.add(cls.veranstaltung)
+        cls.obj1.veranstaltung.add(
+            make(
+                _models.Veranstaltung, name='Woodstock 1969', band=[cls.band], musiker=[cls.musiker]
+            )
+        )
+        cls.obj1.veranstaltung.add(make(_models.Veranstaltung, name='Glastonbury 2004'))
 
     def test_copy_related_set(self):
         self.model_admin.copy_related(self.obj1)
@@ -1718,6 +1718,13 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertNotIn(self.band, self.obj1.band.all())
         self.assertNotIn(self.musiker, self.obj1.musiker.all())
 
+    def test_veranstaltung_string(self):
+        obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
+        self.assertEqual(
+            self.model_admin.veranstaltung_string(obj),
+            'Glastonbury 2004, Woodstock 1969'
+        )
+
 
 class TestAuthAdminMixin(TestCase):
 
@@ -1734,3 +1741,22 @@ class TestAuthAdminMixin(TestCase):
         for choice in formfield.choices:
             with self.subTest(choice=choice):
                 self.assertIn(_models.AusgabeLnum.__name__, choice[1])
+
+
+class TestMIZChangelist(AdminTestCase):
+
+    model = _models.Genre
+    model_admin_class = _admin.GenreAdmin
+
+    @patch.object(_admin.GenreAdmin, 'get_result_list_annotations')
+    def test_adds_annotations(self, mocked_get_annotations):
+        # Assert that list_display annotations are added.
+        request = self.get_request(path=self.changelist_path)
+        changelist = self.model_admin.get_changelist_instance(request)
+        mocked_get_annotations.return_value = {}
+        changelist.get_results(request)
+        self.assertFalse(changelist.result_list.query.annotations)
+        from django.db.models import Count
+        mocked_get_annotations.return_value = {'c': Count('artikel')}
+        changelist.get_results(request)
+        self.assertIn('c', changelist.result_list.query.annotations)

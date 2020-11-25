@@ -1,6 +1,5 @@
 from django.contrib.auth import get_permission_codename
 from django.contrib.admin.utils import quote
-from django.core import exceptions
 from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from django.utils.encoding import force_text
@@ -127,31 +126,3 @@ def has_admin_permission(request, model_admin):
     # Check if the user has any permissions
     # (add, change, delete, view) for the model.
     return True in model_admin.get_model_perms(request).values()
-
-
-def resolve_list_display_item(model_admin, item):
-    """
-    A ModelAdmin's list_display may contain any of the following:
-        - name of a model field
-        - callable
-        - name of a method of model_admin
-        - name of a method or attribute of model_admin.model
-    This helper function takes an item of list_display and returns the first
-    object that matches any of the possiblities given above
-    (or None if no match).
-    """
-    # (used in base.admin as a helper to annotate sortable list_display items)
-    try:
-        return model_admin.opts.get_field(item)
-    except exceptions.FieldDoesNotExist:
-        if callable(item):
-            func = item
-        elif hasattr(model_admin, item) and item != '__str__':
-            # item is a method of model_admin. '__str__' would refer to the
-            # model's str() method - NOT the ModelAdmin's.
-            func = getattr(model_admin, item)
-        elif hasattr(model_admin.model, item):
-            func = getattr(model_admin.model, item)
-        else:
-            func = None
-    return func

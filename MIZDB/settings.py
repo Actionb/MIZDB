@@ -32,7 +32,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv', 'testserver']
 
 INSTALLED_APPS = [ 
     'DBentry.apps.DbentryConfig',
-    'dal', 
+    'dal',
     'dal_select2',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,8 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'formtools', 
+    'formtools',
     'test_without_migrations',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'MIZDB.urls'
@@ -141,3 +143,7 @@ MEDIA_URL = '/media/'
 
 # Override maximum number of post parameters to allow handling of user input during imports
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
+
+
+# Required for debug_toolbar:
+INTERNAL_IPS = ['127.0.0.1']
