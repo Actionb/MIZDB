@@ -19,7 +19,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         non_reversible_warning (str): a text that warns the user that
             the action they are about to confirm is not reversible.
         action_reversible (bool): set to True, if this action performs
-            an operation that is not easily reversed.
+            an operation that is not easily reversed.  TODO: isn't this backwards?
         short_description (str): label for the action in the changelist
             dropdown menu.
         action_name (str): name of the action as registered with the ModelAdmin
