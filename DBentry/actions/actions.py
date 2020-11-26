@@ -1,5 +1,6 @@
 from DBentry.actions.views import (
-    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase
+    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase,
+    ChangeBestand
 )
 from DBentry.actions.decorators import add_cls_attrs
 # TODO: add an action that creates an overview of the stock (Bestand) of the
@@ -27,4 +28,10 @@ def merge_records(model_admin, request, queryset):
 @add_cls_attrs(MoveToBrochureBase)
 def moveto_brochure(model_admin, request, queryset):
     return MoveToBrochureBase.as_view(
+        model_admin=model_admin, queryset=queryset)(request)
+
+
+@add_cls_attrs(ChangeBestand)
+def change_bestand(model_admin, request, queryset):
+    return ChangeBestand.as_view(
         model_admin=model_admin, queryset=queryset)(request)

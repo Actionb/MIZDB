@@ -6,7 +6,7 @@ from django.db.models import Count, Min, Subquery, OuterRef, Func, Value, Exists
 
 import DBentry.models as _models
 import DBentry.m2m as _m2m
-import DBentry.actions as _actions
+import DBentry.actions.actions as _actions
 from DBentry.ac.widgets import make_widget
 from DBentry.base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline,
@@ -168,7 +168,8 @@ class AusgabenAdmin(MIZModelAdmin):
     actions = [
         _actions.merge_records, _actions.bulk_jg, _actions.add_bestand,
         _actions.moveto_brochure, 'change_status_unbearbeitet',
-        'change_status_inbearbeitung', 'change_status_abgeschlossen'
+        'change_status_inbearbeitung', 'change_status_abgeschlossen',
+        _actions.change_bestand
     ]
 
     def get_changelist(self, request, **kwargs):

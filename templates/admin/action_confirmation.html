@@ -41,10 +41,12 @@
                 {% blocktrans %}Are you sure you want to change the selected {{ objects_name }}? {% endblocktrans %}
             </p>
             {% block object_details %}
+                {% if affected_objects %}
                 <h2>{% trans "Objects" %}</h2>
                 {% for affected_object in affected_objects %}
                     <ul>{{ affected_object|unordered_list }}</ul>
                 {% endfor %}
+                {% endif %}
             {% endblock object_details %}
             
             {% if non_reversible_warning %}

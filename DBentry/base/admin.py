@@ -10,7 +10,7 @@ from django.utils.text import capfirst
 
 from DBentry import models as _models
 from DBentry.ac.widgets import make_widget
-from DBentry.actions import merge_records
+from DBentry.actions.actions import merge_records
 from DBentry.base.models import ComputedNameModel
 from DBentry.base.forms import MIZAdminInlineFormBase
 from DBentry.changelist import MIZChangeList

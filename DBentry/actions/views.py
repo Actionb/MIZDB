@@ -1,4 +1,4 @@
-from django import forms
+from django import forms, views
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import ProtectedError, F, Count
@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy, gettext
 
 from DBentry import models as _models
 from DBentry.actions.base import (
-    ActionConfirmationView, WizardConfirmationView
+    ActionConfirmationView, WizardConfirmationView, ConfirmationViewMixin
 )
 from DBentry.actions.forms import (
     MergeFormSelectPrimary, MergeConflictsFormSet,
@@ -713,4 +713,66 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         context['management_form'] = formset.management_form
         context['options_form'] = self.get_options_form()
         context.update(kwargs)
+        return context
+
+
+class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
+    # TODO: add permission checks
+
+    template_name = 'admin/change_bestand.html'
+    short_description = 'Bestände ändern'
+    action_name = 'change_bestand'
+    action_reversible = True
+
+    def post(self, request, *args, **kwargs):
+        if 'action_confirmed' in request.POST:
+            # Collect all the valid formsets:
+            formsets = []
+            for obj in self.queryset:
+                formset, inline = self.get_bestand_formset(self.request, obj)
+                if formset.is_valid():
+                    formsets.append(formset)
+                else:
+                    # Invalid formset found, abort the save process.
+                    break
+            else:
+                for formset in formsets:
+                    formset.save()
+                # Return to the changelist:
+                return
+        return self.get(request, *args, **kwargs)
+
+    def get_bestand_formset(self, request, obj):
+        """Return the Bestand formset and model admin inline for this object."""
+        for formset_class, inline in self.model_admin.get_formsets_with_inlines(request, obj):
+            if inline.model == _models.Bestand:
+                break
+        formset_params = {
+            'instance': obj,
+            'prefix': "%s-%s" % (formset_class.get_default_prefix(), obj.pk),
+            'queryset': inline.get_queryset(request),
+        }
+        if 'action_confirmed' in request.POST:
+            formset_params['data'] = request.POST.copy()
+        formset = formset_class(**formset_params)
+        return formset, inline
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['object_name'] = self.opts.object_name
+        context['formsets'] = []
+        media_updated = False
+        for obj in self.queryset:
+            formset, inline = self.get_bestand_formset(self.request, obj)
+            # Wrap the formset into django's InlineAdminFormSet, so that we can
+            # use django's edit_inline/tabular template.
+            wrapped_formset = self.model_admin.get_inline_formsets(
+                request=self.request, formsets=[formset], inline_instances=[inline], obj=obj)[0]
+            if not media_updated:
+                # Add the inline formset media (such as inlines.js):
+                context['media'] += wrapped_formset.media
+            context['formsets'].append((
+                get_obj_link(obj=obj,user=self.request.user, blank=True),
+                wrapped_formset
+            ))
         return context
