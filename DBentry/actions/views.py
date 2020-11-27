@@ -771,6 +771,7 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
             if not media_updated:
                 # Add the inline formset media (such as inlines.js):
                 context['media'] += wrapped_formset.media
+                media_updated = True
             context['formsets'].append((
                 get_obj_link(obj=obj,user=self.request.user, blank=True),
                 wrapped_formset

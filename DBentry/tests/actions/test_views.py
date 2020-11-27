@@ -17,7 +17,9 @@ from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
 from DBentry.actions.views import (
-    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase)
+    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase,
+    ChangeBestand
+)
 from DBentry.actions.forms import (
     MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions)
 from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
@@ -1201,3 +1203,170 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)
+
+class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
+
+    view_class = ChangeBestand
+    model = _models.Ausgabe
+    model_admin_class = AusgabenAdmin
+    action_name = 'change_bestand'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.lagerort1 = make(_models.Lagerort)
+        cls.lagerort2 = make(_models.Lagerort)
+        mag = make(_models.Magazin, magazin_name='Testmagazin')
+
+        cls.obj1 = make(cls.model, magazin=mag)
+        super().setUpTestData()
+
+    def get_request_data(self, **kwargs):
+        return {
+            'action': 'change_bestand',
+            helpers.ACTION_CHECKBOX_NAME: '%s' % self.obj1.pk,
+            **kwargs
+        }
+
+    def get_form_data(self, parent_obj, *bestand_objects):
+        prefix = 'bestand_set-%s' % parent_obj.pk
+        management_form_data = {
+            prefix + '-TOTAL_FORMS': len(bestand_objects),
+            prefix + '-INITIAL_FORMS': parent_obj.bestand_set.count(),
+            prefix + '-MIN_NUM_FORMS': 0,
+            prefix + '-MAX_NUM_FORMS': 1000,
+        }
+        form_data = {}
+        for i, (bestand_obj_pk, lagerort_pk) in enumerate(bestand_objects):
+            form_prefix = prefix + '-%s' % i
+            form_data.update({
+                form_prefix + '-ausgabe': parent_obj.pk,
+                form_prefix + '-signatur': bestand_obj_pk or '',
+                form_prefix + '-lagerort': lagerort_pk or ''
+            })
+        return {**management_form_data, **form_data}
+
+    def test_success_add(self):
+        # Assert that Bestand instances are added to obj1's bestand_set.
+        response = self.client.post(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **self.get_form_data(self.obj1, (None, self.lagerort1.pk))
+            },
+            follow=False
+        )
+        self.assertEqual(
+            response.status_code, 302,
+            msg="Expected a redirect back to the changelist."
+        )
+        self.assertEqual(self.obj1.bestand_set.count(), 1)
+        b = self.obj1.bestand_set.get()
+        self.assertEqual(b.lagerort, self.lagerort1)
+
+    def test_success_update(self):
+        # Assert that Bestand instances in obj1's bestand_set can be updated.
+        b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
+        b.save()
+        response = self.client.post(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **self.get_form_data(self.obj1, (b.pk, self.lagerort2.pk))
+            },
+            follow=False
+        )
+        self.assertEqual(
+            response.status_code, 302,
+            msg="Expected a redirect back to the changelist."
+        )
+        self.assertEqual(self.obj1.bestand_set.count(), 1)
+        self.assertEqual(self.obj1.bestand_set.get().lagerort, self.lagerort2)
+
+    def test_success_delete(self):
+        # Test that Bestand relations can be deleted:
+        b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
+        b.save()
+        form_data = self.get_form_data(self.obj1, (b.pk, self.lagerort1.pk))
+        form_data['bestand_set-%s-0-DELETE' % self.obj1.pk] = True
+        response = self.client.post(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **form_data
+            },
+            follow=False
+        )
+        self.assertEqual(
+            response.status_code, 302,
+            msg="Expected a redirect back to the changelist."
+        )
+        self.assertFalse(self.obj1.bestand_set.exists())
+
+    def test_post_stops_on_invalid(self):
+        # A post request with invalid formsets should not post successfully,
+        # i.e. not return back to the changelist.
+        # Two formsets, of which the second has an invalid lagerort:
+        form_data = self.get_form_data(
+            self.obj1, (None, self.lagerort1.pk), (None, -1))
+        response = self.client.post(
+            path=self.changelist_path,
+            data={**self.get_request_data(action_confirmed='Yes'), **form_data},
+            follow=False
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, self.view_class.template_name)
+
+    def test_get_bestand_formset(self):
+        # Check that get_bestand_formset returns the expected formset & inline.
+        self.obj1.bestand_set.create(lagerort=self.lagerort1)
+        request = self.post_request(
+            path=self.changelist_path,
+            data=self.get_request_data()
+        )
+        view = self.get_view(request)
+        formset, inline = view.get_bestand_formset(request, self.obj1)
+        # Check some attributes of the formset/inline.
+        self.assertEqual(inline.model, _models.Bestand)
+        self.assertEqual(formset.instance,  self.obj1)
+        self.assertEqual(list(formset.queryset.all()), list(self.obj1.bestand_set.all()))
+
+    def test_get_bestand_formset_form_data(self):
+        # Assert that get_bestand_formset only adds formset data if the
+        # submit keyword ('action_confirmed') is present in the request.
+        request = self.post_request(
+            path=self.changelist_path,
+            data=self.get_request_data()
+        )
+        view = self.get_view(request)
+        formset, inline = view.get_bestand_formset(request, self.obj1)
+        self.assertFalse(formset.data)
+        request = self.post_request(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **self.get_form_data(self.obj1, (None, self.lagerort1.pk))
+            }
+        )
+        view = self.get_view(request)
+        formset, inline = view.get_bestand_formset(request, self.obj1)
+        self.assertTrue(formset.data)
+
+    def test_media(self):
+        # Assert that the formset's media is added to the context.
+        other = make(self.model)
+        response = self.client.post(
+            path=self.changelist_path,
+            data=self.get_request_data(**{
+                # Use a queryset with two objects to check the coverage on that
+                # 'media_updated condition'.
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, other.pk]
+            }),
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('media', response.context)
+        from django.conf import settings
+        self.assertIn(
+            'admin/js/inlines%s.js' % ('' if settings.DEBUG else '.min'),
+            response.context['media']._js
+        )
