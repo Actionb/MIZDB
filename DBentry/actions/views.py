@@ -716,11 +716,14 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         return context
 
 
-class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
-    # TODO: add permission checks
+class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMixin):
+    """Edit the Bestand set of the parent model instance(s)."""
 
     template_name = 'admin/change_bestand.html'
+
     short_description = 'Bestände ändern'
+    allowed_permissions = ['alter_bestand']
+
     action_name = 'change_bestand'
     action_reversible = True
 
@@ -736,11 +739,37 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
                     # Invalid formset found, abort the save process.
                     break
             else:
-                for formset in formsets:
-                    formset.save()
+                self.perform_action(formsets)
                 # Return to the changelist:
                 return
         return self.get(request, *args, **kwargs)
+
+    def perform_action(self, formsets):
+        with transaction.atomic():
+            for formset in formsets:
+                formset.save()
+                self.create_log_entries(formset)
+
+    def create_log_entries(self, formset):
+        """Create LogEntry objects for the parent and its related objects."""
+        # We can get the correct change message for the LogEntry objects
+        # of the parent instance from the model_admin's
+        # construct_change_message method.
+        # That method requires an object with a 'changed_data' attribute
+        # (usually this would be the model_admin's form):
+        fake_form = type('FakeForm', (object, ), {'changed_data': None})
+        # 'add' argument is always False since we are always working on
+        # an already existing parent instance.
+        change_message = self.model_admin.construct_change_message(
+            request=self.request, form=fake_form, formsets=[formset], add=False)
+        self.model_admin.log_change(self.request, formset.instance, change_message)
+        # Now create LogEntry objects for the Bestand model side:
+        for new_obj in formset.new_objects:
+            self.log_addition(new_obj)
+        for changed_obj, changed_data in formset.changed_objects:
+            self.log_change(changed_obj, fields=changed_data)
+        for deleted_obj in formset.deleted_objects:
+            self.log_deletion(deleted_obj)
 
     def get_bestand_formset(self, request, obj):
         """Return the Bestand formset and model admin inline for this object."""
