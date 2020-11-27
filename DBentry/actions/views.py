@@ -684,6 +684,9 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMi
         for formset_class, inline in self.model_admin.get_formsets_with_inlines(request, obj):
             if inline.model == _models.Bestand:
                 break
+        else:
+            # TODO: add a sensible way to deal with this:
+            raise Exception("This model admin has no inline for Bestand!")
         formset_params = {
             'instance': obj,
             'prefix': "%s-%s" % (formset_class.get_default_prefix(), obj.pk),

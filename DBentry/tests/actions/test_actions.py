@@ -2,7 +2,7 @@
 This is meant to test an action at its 'backend', i.e. testing the availablity
 of the action through a changelist. Probably not going to stay.
 """
-
+# TODO: uuuhhh, figure out if this is useful?
 from ..base import AdminTestCase
 
 from django.utils.translation import override as translation_override
@@ -67,11 +67,4 @@ class TestAdminActionAusgabe(AdminTestCase):
 
     def test_bulk_jg(self):
         response = self.call_action('bulk_jg', self.queryset)
-        self.assertEqual(response.status_code, 200)
-
-    def test_add_bestand(self):
-        from DBentry.constants import ZRAUM_ID,  DUPLETTEN_ID
-        _models.Lagerort.objects.create(pk=ZRAUM_ID, ort='Bestand')
-        _models.Lagerort.objects.create(pk=DUPLETTEN_ID, ort='Dublette')
-        response = self.call_action('add_bestand', self.queryset)
         self.assertEqual(response.status_code, 200)

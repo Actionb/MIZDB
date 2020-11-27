@@ -1,5 +1,7 @@
 # TODO: move this to utils and maybe rename the module
 # (logging.py *not* refering to python logging is confusing)
+# TODO: how to log deletion of related objects? (deletion of bestand: ausgabe <- bestand)
+# TODO: how to log change on reverse related objects? (change on bestand: ausgabe <- bestand)
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
@@ -98,6 +100,7 @@ class LoggingMixin(object):
         msg = {
             'changed': {
                 'fields': sorted(
+                    # FIXME: this can't handle fields of a related_obj
                     [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])
             }
         }
