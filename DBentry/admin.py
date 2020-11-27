@@ -103,6 +103,7 @@ class AudioAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id'
         ],
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_result_list_annotations(self):
         return {
@@ -166,10 +167,9 @@ class AusgabenAdmin(MIZModelAdmin):
     }
 
     actions = [
-        _actions.merge_records, _actions.bulk_jg, _actions.add_bestand,
+        _actions.merge_records, _actions.bulk_jg, _actions.change_bestand,
         _actions.moveto_brochure, 'change_status_unbearbeitet',
-        'change_status_inbearbeitung', 'change_status_abgeschlossen',
-        _actions.change_bestand
+        'change_status_inbearbeitung', 'change_status_abgeschlossen'
     ]
 
     def get_changelist(self, request, **kwargs):
@@ -496,6 +496,7 @@ class BildmaterialAdmin(MIZModelAdmin):
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_result_list_annotations(self):
         return {
@@ -607,6 +608,7 @@ class BuchAdmin(MIZModelAdmin):
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_result_list_annotations(self):
         return {
@@ -646,6 +648,7 @@ class DokumentAdmin(MIZModelAdmin):
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
+    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Genre, site=miz_site)
@@ -732,6 +735,7 @@ class MemoAdmin(MIZModelAdmin):
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
+    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Musiker, site=miz_site)
@@ -867,6 +871,7 @@ class TechnikAdmin(MIZModelAdmin):
     inlines = [BestandInLine]
     superuser_only = True
     ordering = ['titel']
+    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Veranstaltung, site=miz_site)
@@ -985,6 +990,7 @@ class VideoAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'medium', 'release_id'
         ],
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_result_list_annotations(self):
         return {
@@ -1140,6 +1146,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
         'labels': {'jahre__jahr__range': 'Jahr'}
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_fieldsets(self, request, obj=None):
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
@@ -1204,12 +1211,14 @@ class BrochureAdmin(BaseBrochureAdmin):
         ],
         'labels': {'jahre__jahr__range': 'Jahr'}
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(_models.Katalog, site=miz_site)
 class KatalogAdmin(BaseBrochureAdmin):
 
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
+    actions = [_actions.merge_records, _actions.change_bestand]
 
     def get_fieldsets(self, *args, **kwargs):
         """
@@ -1254,6 +1263,7 @@ class KalenderAdmin(BaseBrochureAdmin):
         ],
         'labels': {'jahre__jahr__range': 'Jahr'}
     }
+    actions = [_actions.merge_records, _actions.change_bestand]
 
 
 @admin.register(

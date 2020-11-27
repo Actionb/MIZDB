@@ -2,7 +2,6 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from DBentry import models as _models
-from DBentry.ac.widgets import make_widget
 from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
 from DBentry.utils import get_model_from_string
 
@@ -27,23 +26,6 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
     jahrgang = forms.IntegerField(
         required=True,
         help_text='Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.'
-    )
-
-
-class BulkAddBestandForm(MIZAdminForm):
-    """The form to add a 'bestand' to a model instance."""
-
-    bestand = forms.ModelChoiceField(
-        required=True,
-        label="Lagerort (Bestand)",
-        queryset=_models.Lagerort.objects.all(),
-        widget=make_widget(model=_models.Lagerort, wrap=True)
-    )
-    dublette = forms.ModelChoiceField(
-        required=True,
-        label="Lagerort (Dublette)",
-        queryset=_models.Lagerort.objects.all(),
-        widget=make_widget(model=_models.Lagerort, wrap=True)
     )
 
 

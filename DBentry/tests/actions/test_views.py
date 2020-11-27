@@ -9,21 +9,18 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.test import tag
 from django.utils.translation import override as translation_override
-from django.utils.safestring import SafeText
-from django.urls import reverse
 
 import DBentry.models as _models
 from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
 from DBentry.actions.views import (
-    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase,
+    BulkEditJahrgang, MergeViewWizarded, MoveToBrochureBase,
     ChangeBestand
 )
 from DBentry.actions.forms import (
     MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions)
 from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make
 from DBentry.sites import miz_site
 from DBentry.tests.actions.base import ActionViewTestCase
@@ -379,149 +376,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         view = self.get_view()
         self.assertTrue(hasattr(view, 'allowed_permissions'))
         self.assertEqual(view.allowed_permissions, ['change'])
-
-
-class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
-
-    view_class = BulkAddBestand
-    model = _models.Ausgabe
-    model_admin_class = AusgabenAdmin
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.bestand_lagerort = make(_models.Lagerort, pk=ZRAUM_ID, ort='Bestand')
-        cls.dubletten_lagerort = make(_models.Lagerort, pk=DUPLETTEN_ID, ort='Dublette')
-        mag = make(_models.Magazin, magazin_name='Testmagazin')
-
-        cls.obj1 = make(cls.model, magazin=mag)
-        cls.obj2 = make(cls.model, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
-        cls.obj3 = make(cls.model, magazin=mag, bestand__lagerort=cls.dubletten_lagerort)
-        cls.obj4 = make(
-            cls.model, magazin=mag,
-            bestand__lagerort=[cls.bestand_lagerort, cls.dubletten_lagerort]
-        )
-
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
-        super().setUpTestData()
-
-    def test_compile_affected_objects(self):
-        # Assert that links to the instance's bestand objects are included.
-        def get_bestand_links(obj):
-            view_name = "admin:DBentry_%s_change" % (_models.Bestand._meta.model_name)
-            link_template = '<a href="{url}" target="_blank">{lagerort__ort}</a>'
-            template = 'Bestand: {link}'
-            for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
-                url = reverse(view_name, args=[pk])
-                link = link_template.format(url=url, lagerort__ort=lagerort__ort)
-                yield template.format(link=link)
-
-        request = self.get_request()
-        # We are expecting the link_list to be ordered according to the order
-        # in which we created the test objects; order by 'pk'.
-        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
-        link_list = view.compile_affected_objects()
-        self.assertEqual(len(link_list), 4)
-        expected = [
-            # obj1 has no bestand, no links expected
-            [],
-        ]
-        # Let the helper function add the expected links for the other objects.
-        expected.extend(
-            get_bestand_links(obj)
-            for obj in self.test_data[1:]
-        )
-
-        for i, links in enumerate(expected):
-            # The first item of every link_list is the link to the main object.
-            # The second is the sub list of affected objects.
-            with self.subTest(i=i, obj="obj%s" % (i + 1)):
-                if not links:
-                    self.assertFalse(
-                        link_list[i][1],  msg="No bestand links expected."
-                    )
-                for j, link in enumerate(links, 1):
-                    with self.subTest(link_number=str(j)):
-                        self.assertIn(link, link_list[i][1])
-
-    @patch("DBentry.actions.views.link_list")
-    def test_build_message(self, mocked_link_list):
-        # Assert that build_message creates a SafeText string.
-        mocked_link_list.return_value = "Beep, Boop"
-        mocked_fkey = Mock()
-        mocked_fkey.name = "whatever"
-        message = self.get_view()._build_message(
-            lagerort_instance="Attic",
-            bestand_instances=[Mock(), Mock()],
-            fkey=mocked_fkey,  # passed to mocked_link_list
-        )
-        self.assertIsInstance(message, SafeText)
-        self.assertEqual(
-            message,
-            "Attic-Bestand zu diesen 2 Ausgaben hinzugefügt: Beep, Boop"
-        )
-
-    @tag('logging')
-    def test_perform_action(self):
-        # Record the bestand of the objects before the action
-        old_bestand1 = list(self.obj1.bestand_set.values_list('pk', flat=True))
-        old_bestand2 = list(self.obj2.bestand_set.values_list('pk', flat=True))
-        old_bestand3 = list(self.obj3.bestand_set.values_list('pk', flat=True))
-        old_bestand4 = list(self.obj4.bestand_set.values_list('pk', flat=True))
-
-        request = self.get_request()
-        view = self.get_view(request=request)
-        view.perform_action(
-            {'bestand': self.bestand_lagerort, 'dublette': self.dubletten_lagerort})
-
-        # obj1 has no bestand at all; this should add a 'bestand' bestand (hurrr)
-        all_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
-        expected = [self.bestand_lagerort.pk]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj1.bestand_set.exclude(pk__in=old_bestand1)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj1, new_bestand.first())
-
-        # obj2 has one 'bestand' bestand; this should add a dublette
-        all_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
-        expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj2.bestand_set.exclude(pk__in=old_bestand2)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj2, new_bestand.first())
-
-        # obj3 has one dubletten bestand; this should add a bestand
-        all_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
-        expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj3.bestand_set.exclude(pk__in=old_bestand3)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj3, new_bestand.first())
-
-        # obj4 has both bestand and dubletten bestand; this should add a dublette
-        all_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
-        expected = [
-            self.bestand_lagerort.pk, self.dubletten_lagerort.pk,
-            self.dubletten_lagerort.pk
-        ]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj4.bestand_set.exclude(pk__in=old_bestand4)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj4, new_bestand.first())
-
-    def test_get_initial(self):
-        view = self.get_view()
-        initial = view.get_initial()
-
-        self.assertTrue('bestand' in initial)
-        self.assertEqual(initial.get('bestand'), self.bestand_lagerort)
-        self.assertTrue('dublette' in initial)
-        self.assertEqual(initial.get('dublette'), self.dubletten_lagerort)
-
-    def test_permissions_required(self):
-        # Assert that specific permissions are required to access this action.
-        view = self.get_view()
-        self.assertTrue(hasattr(view, 'allowed_permissions'))
-        self.assertEqual(view.allowed_permissions, ['alter_bestand'])
 
 
 class TestMergeViewWizardedAusgabe(ActionViewTestCase):
@@ -1280,7 +1134,8 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             msg="Expected a redirect back to the changelist."
         )
         self.assertEqual(self.obj1.bestand_set.count(), 1)
-        self.assertEqual(self.obj1.bestand_set.get().lagerort, self.lagerort2)
+        new_bestand = self.obj1.bestand_set.get()
+        self.assertEqual(new_bestand.lagerort, self.lagerort2)
 
     def test_success_delete(self):
         # Test that Bestand relations can be deleted:

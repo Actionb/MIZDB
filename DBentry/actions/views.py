@@ -10,11 +10,9 @@ from DBentry.actions.base import (
     ActionConfirmationView, WizardConfirmationView, ConfirmationViewMixin
 )
 from DBentry.actions.forms import (
-    MergeFormSelectPrimary, MergeConflictsFormSet,
-    BulkAddBestandForm, BulkEditJahrgangForm,
+    MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm,
     BrochureActionFormSet, BrochureActionFormOptions
 )
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.logging import LoggingMixin, log_addition
 from DBentry.utils import (
     link_list, merge_records, get_updateable_fields, get_obj_link,
@@ -92,96 +90,6 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         else:
             qs.increment_jahrgang(start, jg)
         self.log_update(self.queryset, 'jahrgang')
-
-
-class BulkAddBestand(ActionConfirmationView, LoggingMixin):
-    """View that adds a bestand to a given model instances."""
-
-    short_description = gettext_lazy("Alter stock")
-    allowed_permissions = ['alter_bestand']
-    action_name = 'add_bestand'
-
-    affected_fields = ['bestand']
-
-    form_class = BulkAddBestandForm
-
-    view_helptext = (
-        "Sie können hier Bestände für die ausgewählten Objekte hinzufügen."
-        "\nBesitzt ein Objekt bereits einen Bestand in der ersten Kategorie "
-        "('Lagerort (Bestand)'), so wird stattdessen diesem Objekt ein Bestand "
-        "in der zweiten Kategorie ('Lagerort (Dublette)') hinzugefügt."
-    )
-
-    def get_initial(self):
-        """Provide initial values for bestand and dublette fields."""
-        if self.model == _models.Ausgabe:
-            try:
-                return {
-                    'bestand': _models.Lagerort.objects.get(pk=ZRAUM_ID),
-                    'dublette': _models.Lagerort.objects.get(pk=DUPLETTEN_ID)
-                }
-            except _models.Lagerort.DoesNotExist:
-                pass
-        return super().get_initial()
-
-    def _build_message(self, lagerort_instance, bestand_instances, fkey):
-        """
-        Create the message about bestand objects having been added successfully.
-        """
-        base_msg = ("{lagerort}-Bestand zu diesen {count} {verbose_model_name} "
-            "hinzugefügt: {obj_links}")
-        format_dict = {
-            'verbose_model_name': self.opts.verbose_name_plural,
-            'obj_links': link_list(
-                request=self.request,
-                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances],
-                blank=True
-            ),
-            'lagerort': str(lagerort_instance),
-            'count': len(bestand_instances)
-        }
-        return format_html(base_msg, **format_dict)
-
-    def _get_bestand_field(self, model):
-        """Return the ForeignKey field from `bestand` to model `model`."""
-        for field in _models.Bestand._meta.get_fields():
-            if field.is_relation and field.related_model == model:
-                return field
-
-    def perform_action(self, form_cleaned_data):
-        """Add a bestand instance to the given instances."""
-
-        bestand_lagerort = form_cleaned_data['bestand']
-        dubletten_lagerort = form_cleaned_data['dublette']
-        bestand_list = []
-        dubletten_list = []
-        # Get the correct fkey from bestand model to this view's model
-        fkey = self._get_bestand_field(self.model)
-
-        for instance in self.queryset:
-            filter_kwargs = {fkey.name: instance, 'lagerort': bestand_lagerort}
-            instance_data = {fkey.name: instance}
-            if not _models.Bestand.objects.filter(**filter_kwargs).exists():
-                instance_data['lagerort'] = bestand_lagerort
-                bestand_list.append(_models.Bestand(**instance_data))
-            else:
-                instance_data['lagerort'] = dubletten_lagerort
-                dubletten_list.append(_models.Bestand(**instance_data))
-
-        with transaction.atomic():
-            for lagerort_instance, bestand_instances in (
-                (bestand_lagerort, bestand_list),
-                (dubletten_lagerort, dubletten_list)
-            ):
-                for obj in bestand_instances:
-                    obj.save()
-                    self.log_addition(getattr(obj, fkey.name), obj)
-                admin_message = self._build_message(
-                    lagerort_instance=lagerort_instance,
-                    bestand_instances=bestand_instances,
-                    fkey=fkey
-                )
-                self.model_admin.message_user(self.request, admin_message)
 
 
 class MergeViewWizarded(WizardConfirmationView):

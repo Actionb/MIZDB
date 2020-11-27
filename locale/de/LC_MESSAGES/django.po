@@ -31,10 +31,6 @@ msgstr "Warnung: Diese Aktion ist NICHT umkehrbar!"
 msgid "Add issue volume"
 msgstr "Jahrgang hinzufügen"
 
-#: DBentry/actions/views.py:68
-msgid "Alter stock"
-msgstr "Bestand hinzufügen"
-
 #: DBentry/actions/views.py:129 DBentry/snippets/actions.py:21
 #, python-format
 msgid "Merge selected %(verbose_name_plural)s"

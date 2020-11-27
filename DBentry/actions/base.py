@@ -68,7 +68,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
 
     @property
     def action_allowed(self):
-        """Check if the action is allowed.
+        """
+        Check if the action is allowed.
 
         Checks are called with keyword argument 'view' which is this instance.
         Assessment stops if a check returns False.

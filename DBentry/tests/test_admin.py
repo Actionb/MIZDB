@@ -775,7 +775,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         # Assert that certain actions are not available to user without permissions.
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'bulk_jg', 'change_bestand', 'moveto_brochure', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
@@ -793,7 +793,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 Permission.objects.get(codename=codename))
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'merge_records',
+            'bulk_jg', 'change_bestand', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
@@ -844,7 +844,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         # Assert that certain actions are available for super users.
         actions = self.model_admin.get_actions(self.get_request(user=self.super_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'bulk_jg', 'change_bestand', 'moveto_brochure', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
