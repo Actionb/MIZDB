@@ -127,9 +127,12 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
     def has_alter_bestand_permission(self, request):
         """Check that the user has permission to change inventory quantities."""
-        codename = get_permission_codename('alter_bestand', self.opts)
-        return request.user.has_perm(
-            '{}.{}'.format(self.opts.app_label, codename))
+        opts = _models.Bestand._meta
+        perms = [
+            "%s.%s" % (opts.app_label, get_permission_codename(action, opts))
+            for action in ('add', 'change', 'delete')
+        ]
+        return request.user.has_perms(perms)
 
     def get_exclude(self, request, obj=None):
         """Exclude all concrete M2M fields as those are handled by inlines."""

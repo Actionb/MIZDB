@@ -331,11 +331,11 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_has_alter_bestand_permission(self):
-        # Note: _models.Datei._meta doesn't set 'alter_bestand_datei' permission
         model_admin = _admin.VideoAdmin(_models.Video, self.admin_site)
-        codename = get_permission_codename('alter_bestand', _models.Video._meta)
-        self.staff_user.user_permissions.add(
-            Permission.objects.get(codename=codename))
+        for action in ('add', 'change', 'delete'):
+            codename = get_permission_codename(action, _models.Bestand._meta)
+            self.staff_user.user_permissions.add(
+                Permission.objects.get(codename=codename))
         self.assertFalse(
             model_admin.has_alter_bestand_permission(
                 request=self.get_request(user=self.noperms_user))
@@ -786,9 +786,14 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_actions_staff_user(self):
         # Assert that certain actions are available for staff users with the
         # proper permissions.
-        for perm_name in ('change', 'alter_bestand', 'delete', 'merge'):
+        for perm_name in ('change', 'delete', 'merge'):
             # bulk_jg requires 'change' and moveto_brochure requires 'delete'
             codename = get_permission_codename(perm_name, self.model._meta)
+            self.staff_user.user_permissions.add(
+                Permission.objects.get(codename=codename))
+        # Add permissions for 'change_bestand'
+        for action in ('add', 'change', 'delete'):
+            codename = get_permission_codename(action, _models.Bestand._meta)
             self.staff_user.user_permissions.add(
                 Permission.objects.get(codename=codename))
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
