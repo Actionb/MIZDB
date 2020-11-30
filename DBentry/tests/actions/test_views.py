@@ -1225,3 +1225,14 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             'admin/js/inlines%s.js' % ('' if settings.DEBUG else '.min'),
             response.context['media']._js
         )
+
+    def test_get_bestand_formset_no_inline(self):
+        # get_bestand_formset should throw an error when attempting to get the
+        # Bestand inline for a model_admin_class that doesn't have such an
+        # inline.
+        mocked_inlines = Mock(return_value=[])
+        with patch.object(self.model_admin, 'get_formsets_with_inlines', new=mocked_inlines):
+            with self.assertRaises(ValueError):
+                request = self.get_request()
+                view = self.get_view(request=request)
+                view.get_bestand_formset(request, None)
