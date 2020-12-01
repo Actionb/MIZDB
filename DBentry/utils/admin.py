@@ -4,6 +4,7 @@ from django.urls import reverse, NoReverseMatch
 from django.utils.html import format_html
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
+from django.utils.translation import override as translation_override
 
 from DBentry.utils.models import get_model_from_string
 
@@ -126,3 +127,66 @@ def has_admin_permission(request, model_admin):
     # Check if the user has any permissions
     # (add, change, delete, view) for the model.
     return True in model_admin.get_model_perms(request).values()
+
+
+def construct_change_message(form, formsets, add):
+    """
+    Construct a JSON structure describing changes from a changed object.
+
+    Translations are deactivated so that strings are stored untranslated.
+    Translation happens later on LogEntry access.
+    """
+    change_message = []
+    if add:
+        change_message.append({'added': {}})
+    elif form.changed_data:
+        changed_fields = [form.fields[field].label for field in form.changed_data]
+        change_message.append({'changed': {'fields': changed_fields}})
+    # Handle relational changes:
+    if formsets:
+        parent_model = form._meta.model
+        with translation_override(None):
+            for formset in formsets:
+                for added_object in formset.new_objects:
+                    msg = _get_relation_change_message(added_object, parent_model)
+                    change_message.append({'added': msg})
+                for changed_object, changed_fields in formset.changed_objects:
+                    msg = _get_relation_change_message(changed_object, parent_model)
+                    msg['fields'] = changed_fields
+                    change_message.append({'changed': msg})
+                for deleted_object in formset.deleted_objects:
+                    msg = _get_relation_change_message(deleted_object, parent_model)
+                    change_message.append({'deleted': msg})
+    return change_message
+
+def _get_relation_change_message(obj, parent_model):
+    """
+    Create the change message JSON for changes on relations.
+
+    Arguments:
+        - obj (model instance): the related model instance
+        - parent_model (model class): the model class that 'obj' is related to
+    """
+    # The related models are responsible for creating useful textual
+    # representations of themselves and their instances.
+    # Exempt from this are auto created models such as the through tables of m2m
+    # relations. Use the textual representation provided by the model on the
+    # other end of the m2m relation instead.
+    result = {
+        'name': str(obj._meta.verbose_name),
+        'object': str(obj),
+    }
+    if obj._meta.auto_created:
+        # An auto_created m2m through table only has two relation fields;
+        # one is the field pointing towards the parent model and the other is
+        # the one we are looking for here.
+        for fld in obj._meta.get_fields():
+            if fld.is_relation and fld.related_model != parent_model:
+                # Use the verbose_name of the model on the other end of the m2m
+                # relation as 'name'.
+                result['name'] = str(fld.related_model._meta.verbose_name)
+                # Use the other related object directly instead of the record
+                # in the auto created through table.
+                result['object'] = str(getattr(obj, fld.name))
+                break
+    return result
