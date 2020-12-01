@@ -22,7 +22,8 @@ from DBentry.utils import (
 
 def check_same_magazin(view, **kwargs):
     """
-    Check that all objects in the view's queryset are related to the same magazin.
+    Check that all objects in the view's queryset are related to the same
+    Magazin instance.
     """
     if view.queryset.values('magazin_id').distinct().count() != 1:
         view.model_admin.message_user(
@@ -32,11 +33,12 @@ def check_same_magazin(view, **kwargs):
             'unterschiedlichen Magazinen.' % view.opts.verbose_name_plural
         )
         return False
+    return True
 
 
 class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
     """
-    View that bulk edits the jahrgang of a collection of ausgabe instances.
+    View that bulk edits the jahrgang of a collection of Ausgabe instances.
     """
 
     short_description = gettext_lazy("Add issue volume")
@@ -53,7 +55,8 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         "\nWählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines "
         "Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an."
         "\nDie Jahrgangswerte der anderen Ausgaben werden danach in Abständen "
-        "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt."
+        "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. "
+        "heruntergezählt."
         "\n\nAusgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), "
         "werden ignoriert."
         "\nWird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge "
@@ -93,7 +96,8 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
 
 
 class MergeViewWizarded(WizardConfirmationView):
-    """View that merges model instances.
+    """
+    View that merges model instances.
 
     The user selects one instance from the available instances to designate
     it as the 'primary'.
@@ -138,7 +142,7 @@ class MergeViewWizarded(WizardConfirmationView):
         "Für die Erweiterung der Grunddaten des primären Datensatzes stehen "
         "widersprüchliche Möglichkeiten zur Verfügung."
         "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären "
-       "Datensatz übernommen werden sollen."
+        "Datensatz übernommen werden sollen."
     )
 
     view_helptext = {
@@ -154,6 +158,7 @@ class MergeViewWizarded(WizardConfirmationView):
         return context
 
     def _check_too_few_objects(view, **kwargs):
+        """Check whether an insufficient number of objects has been selected."""
         if view.queryset.count() == 1:
             view.model_admin.message_user(
                 request=view.request,
@@ -162,8 +167,12 @@ class MergeViewWizarded(WizardConfirmationView):
                 'ausgewählt werden, um diese Aktion durchzuführen.',
             )
             return False
+        return True
 
     def _check_different_magazines(view, **kwargs):
+        """
+        Check whether the Ausgabe instances are from different Magazin instances.
+        """
         if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
@@ -178,8 +187,12 @@ class MergeViewWizarded(WizardConfirmationView):
                 level=messages.ERROR
             )
             return False
+        return True
 
     def _check_different_ausgaben(view, **kwargs):
+        """
+        Check whether the Artikel instances are from different Ausgabe instances.
+        """
         if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
@@ -193,10 +206,12 @@ class MergeViewWizarded(WizardConfirmationView):
                 level=messages.ERROR
             )
             return False
+        return True
 
     @property
     def updates(self):
-        """Data to update the 'primary' instance with.
+        """
+        Data to update the 'primary' instance with.
 
         Prepared by `_has_merge_conflicts` during processing the first step
         (SELECT_PRIMARY_STEP) and then added to the storage by `process_step`,
@@ -209,7 +224,8 @@ class MergeViewWizarded(WizardConfirmationView):
         return self._updates
 
     def _has_merge_conflicts(self, data):
-        """Determine if there is going to be a merge conflict.
+        """
+        Determine if there is going to be a merge conflict.
 
         If the 'primary' is going to be expanded with values from the other
         instances and there is more than one possible value for any field,
@@ -461,6 +477,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         return self._can_delete_magazin
 
     def _check_protected_artikel(view, **kwargs):
+        """Check whether any of the Artikel instances cannot be deleted."""
         ausgaben_with_artikel = (
             view.queryset
                 .annotate(artikel_count=Count('artikel'))
@@ -475,7 +492,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             view.model_admin.message_user(
                 request=view.request,
                 level=messages.ERROR,
-                message= format_html(
+                message=format_html(
                     msg_template,
                     link_list(view.request, ausgaben_with_artikel),
                     get_changelist_link(
@@ -487,6 +504,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 )
             )
             return False
+        return True
 
     def form_valid(self, form):
         options_form = self.get_options_form(data=self.request.POST)
@@ -494,6 +512,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
+        # Return to the changelist:
         return
 
     def perform_action(self, form_cleaned_data, options_form_cleaned_data):
@@ -559,7 +578,9 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     ['ausgabe_id', 'brochure_id']
                 )
                 self.log_deletion(ausgabe_instance)
-
+        # Notify the user about Ausgabe instances that could not be deleted and
+        # return to the changelist - without deleting the Magazin instance
+        # (since it will also be protected).
         if protected_ausg:
             msg_template = (
                 "Folgende Ausgaben konnten nicht gelöscht werden: "
@@ -596,13 +617,14 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
                         get_obj_link(
-                            obj=self.magazin_instance,user=self.request.user, blank=True)
+                            obj=self.magazin_instance, user=self.request.user, blank=True)
                     )
                 )
             else:
                 self.log_deletion(self.magazin_instance)
 
     def get_options_form(self, **kwargs):
+        """Return the form that configures this action."""
         kwargs['can_delete_magazin'] = self.can_delete_magazin
         return BrochureActionFormOptions(**kwargs)
 
@@ -649,7 +671,7 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMi
             else:
                 self.perform_action(formsets)
                 # Return to the changelist:
-                return
+                return None
         return self.get(request, *args, **kwargs)
 
     def perform_action(self, formsets):
@@ -681,7 +703,9 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMi
 
     def get_bestand_formset(self, request, obj):
         """Return the Bestand formset and model admin inline for this object."""
-        for formset_class, inline in self.model_admin.get_formsets_with_inlines(request, obj):
+        formsets_with_inlines = self.model_admin.get_formsets_with_inlines(
+            request, obj)
+        for formset_class, inline in formsets_with_inlines:
             if inline.model == _models.Bestand:
                 break
         else:
@@ -709,13 +733,17 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMi
             # Wrap the formset into django's InlineAdminFormSet, so that we can
             # use django's edit_inline/tabular template.
             wrapped_formset = self.model_admin.get_inline_formsets(
-                request=self.request, formsets=[formset], inline_instances=[inline], obj=obj)[0]
+                request=self.request,
+                formsets=[formset],
+                inline_instances=[inline],
+                obj=obj
+            )[0]
             if not media_updated:
                 # Add the inline formset media (such as inlines.js):
                 context['media'] += wrapped_formset.media
                 media_updated = True
             context['formsets'].append((
-                get_obj_link(obj=obj,user=self.request.user, blank=True),
+                get_obj_link(obj=obj, user=self.request.user, blank=True),
                 wrapped_formset
             ))
         return context
