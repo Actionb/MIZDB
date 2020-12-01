@@ -5,7 +5,6 @@ from django.contrib.auth import get_permission_codename
 from django.db import models
 from django.db.models.constants import LOOKUP_SEP
 from django.urls import reverse, NoReverseMatch
-from django.utils.translation import override as translation_override
 from django.utils.text import capfirst
 
 from DBentry import models as _models
@@ -18,6 +17,7 @@ from DBentry.constants import ATTRS_TEXTAREA
 from DBentry.forms import AusgabeMagazinFieldForm
 from DBentry.search.admin import MIZAdminSearchFormMixin
 from DBentry.utils import get_model_relations, get_fields_and_lookups
+from DBentry.utils.admin import construct_change_message
 # TODO: when using list_editable the 'save' element overlaps the 'add' element
 # on the changelist.
 
@@ -333,56 +333,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def construct_change_message(self, request, form, formsets, add=False):
         """
         Construct a JSON structure describing changes from a changed object.
-
-        Translations are deactivated so that strings are stored untranslated.
-        Translation happens later on LogEntry access.
         """
-        change_message = []
-        if add:
-            change_message.append({'added': {}})
-        elif form.changed_data:
-            changed_fields = [form.fields[field].label for field in form.changed_data]
-            change_message.append({'changed': {'fields': changed_fields}})
-        # Handle m2m changes:
-        if formsets:
-            with translation_override(None):
-                for formset in formsets:
-                    for added_object in formset.new_objects:
-                        msg = self._get_m2m_change_message_dict(added_object)
-                        change_message.append({'added': msg})
-                    for changed_object, changed_fields in formset.changed_objects:
-                        msg = self._get_m2m_change_message_dict(changed_object)
-                        msg['fields'] = changed_fields
-                        change_message.append({'changed': msg})
-                    for deleted_object in formset.deleted_objects:
-                        msg = self._get_m2m_change_message_dict(deleted_object)
-                        change_message.append({'deleted': msg})
-        return change_message
-
-    def _get_m2m_change_message_dict(self, obj):
-        """Create the change message JSON for related m2m objects."""
-        if obj._meta.auto_created:
-            # An auto_created m2m through table only has two relation fields;
-            # one is the field pointing at *this* model and the other is the one
-            # we are looking for here.
-            relation_field = [
-                fld
-                for fld in obj._meta.get_fields()
-                if fld.is_relation and fld.related_model != self.model
-            ][0]
-            return {
-                # Use the verbose_name of the model on the other end of the m2m
-                # relation as 'name'.
-                'name': str(relation_field.related_model._meta.verbose_name),
-                # Use the other related object directly instead of the record
-                # in the auto created through table.
-                'object': str(getattr(obj, relation_field.name)),
-            }
-        else:
-            return {
-                'name': str(obj._meta.verbose_name),
-                'object': str(obj),
-            }
+        return construct_change_message(form, formsets, add)
 
     def has_module_permission(self, request):
         if self.superuser_only:

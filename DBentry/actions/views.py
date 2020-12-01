@@ -684,14 +684,15 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMi
         """Create LogEntry objects for the parent and its related objects."""
         # We can get the correct change message for the LogEntry objects
         # of the parent instance from the model_admin's
-        # construct_change_message method.
-        # That method requires an object with a 'changed_data' attribute
-        # (usually this would be the model_admin's form):
-        fake_form = type('FakeForm', (object, ), {'changed_data': None})
-        # 'add' argument is always False since we are always working on
-        # an already existing parent instance.
+        # construct_change_message method, which requires a form argument.
+        # Since we're not changing anything on the instance itself, an empty
+        # model form will do.
+        form = self.model_admin.get_form(
+            self.request, obj=formset.instance, change=True)()
+        # 'add' argument is always False as we are always working on an already
+        # existing parent instance.
         change_message = self.model_admin.construct_change_message(
-            request=self.request, form=fake_form, formsets=[formset], add=False)
+            request=self.request, form=form, formsets=[formset], add=False)
         self.model_admin.log_change(self.request, formset.instance, change_message)
         # Now create LogEntry objects for the Bestand model side:
         for new_obj in formset.new_objects:
