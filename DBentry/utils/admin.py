@@ -1,8 +1,10 @@
-from django.contrib.auth import get_permission_codename
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.admin.utils import quote
+from django.contrib.auth import get_permission_codename
 from django.urls import reverse, NoReverseMatch
-from django.utils.html import format_html
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.utils.text import capfirst
 from django.utils.translation import override as translation_override
 
@@ -38,7 +40,7 @@ def get_obj_link(obj, user, site_name='admin', blank=False):
     except NoReverseMatch:
         return no_edit_link
 
-    perm = '%s.%s' % (opts.app_label,get_permission_codename('change', opts))
+    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
     if not user.has_perm(perm):
         return no_edit_link
 
@@ -116,6 +118,7 @@ def get_model_admin_for_model(model, *admin_sites):
     for site in sites:
         if site.is_registered(model):
             return site._registry.get(model)
+    return None
 
 
 def has_admin_permission(request, model_admin):
@@ -159,6 +162,7 @@ def construct_change_message(form, formsets, add):
                     change_message.append({'deleted': msg})
     return change_message
 
+
 def _get_relation_change_message(obj, parent_model):
     """
     Create the change message JSON for changes on relations.
@@ -190,3 +194,57 @@ def _get_relation_change_message(obj, parent_model):
                 result['object'] = str(getattr(obj, fld.name))
                 break
     return result
+
+
+def create_logentry(user_id, obj, action_flag, message=''):
+    return LogEntry.objects.log_action(
+        user_id=user_id,
+        content_type_id=get_content_type_for_model(obj).pk,
+        object_id=obj.pk,
+        object_repr=str(obj),
+        action_flag=action_flag,
+        change_message=message,
+    )
+
+
+def log_addition(user_id, obj, related_obj=None):
+    """
+    Log that an object has been successfully added.
+
+    If 'related_obj' is given, log that a related object has been added to
+    'object'.
+    """
+    message = {"added": {}}
+    if related_obj:
+        message['added'] = {
+            'name': str(related_obj._meta.verbose_name),
+            'object': str(related_obj),
+        }
+    return create_logentry(user_id, obj, ADDITION, [message])
+
+
+def log_change(user_id, obj, fields, related_obj=None):
+    """
+    Log that values for the fields 'fields' of object 'object' have changed.
+
+    If 'related_obj' is given, log that a related object's field values have
+    been changed.
+    """
+    if isinstance(fields, str):
+        fields = [fields]
+    message = {'changed': {}}
+    if related_obj:
+        message['changed'] = _get_relation_change_message(related_obj, obj)
+        # Use the fields map of the related model:
+        fields_opts = related_obj._meta
+    else:
+        fields_opts = obj._meta
+
+    message['changed']['fields'] = sorted(
+        capfirst(fields_opts.get_field(f).verbose_name) for f in fields)
+    return create_logentry(user_id, obj, CHANGE, [message])
+
+
+def log_deletion(user_id, obj):
+    """Log that an object will be deleted."""
+    return create_logentry(user_id, obj, DELETION)

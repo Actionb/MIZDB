@@ -1,6 +1,7 @@
 import re
 from unittest.mock import patch, Mock
 
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth.models import Permission
 from django.forms import modelform_factory
 from django.urls import NoReverseMatch
@@ -23,6 +24,8 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         cls.musiker = make(_models.Musiker, kuenstler_name='Robert Plant')
         cls.band = make(_models.Band, band_name='Led Zeppelin')
         cls.obj1 = make(cls.model, titel='Testaudio')
+        lagerort = make(_models.Lagerort, ort="Aufm Tisch!")
+        cls.bestand = make(_models.Bestand, audio=cls.obj1, lagerort=lagerort)
 
         cls.test_data = [cls.obj1]
 
@@ -181,11 +184,10 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             musiker=self.musiker, audio=self.obj1)
         m2m_band = self.obj1.band.through.objects.create(
             band=self.band, audio=self.obj1)
-        lagerort = make(_models.Lagerort, ort="Aufm Tisch!")
-        bestand = make(_models.Bestand, audio=self.obj1, lagerort=lagerort)
+
         formsets = [
             Mock(new_objects=[m2m_musiker], changed_objects=[], deleted_objects=[]),
-            Mock(changed_objects=[(bestand, ['lagerort'])], new_objects=[], deleted_objects=[]),
+            Mock(changed_objects=[(self.bestand, ['lagerort'])], new_objects=[], deleted_objects=[]),
             Mock(deleted_objects=[m2m_band], new_objects=[], changed_objects=[])
         ]
 
@@ -199,10 +201,91 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         self.assertEqual(added_msg['added'], {'name': 'Audio-Musiker', 'object': 'Robert Plant'}),
         self.assertEqual(
             changed_msg['changed'],
-            {'name': 'Bestand', 'object': 'Aufm Tisch!', 'fields': ['lagerort']}
+            {'name': 'Bestand', 'object': 'Aufm Tisch!', 'fields': ['lagerort']}  # TODO: probably should be 'Lagerort'
         )
         self.assertEqual(deleted_msg['deleted'], {'name': 'Band', 'object': 'Led Zeppelin'})
 
     def test_construct_change_message_added(self):
         msg = admin_utils.construct_change_message(Mock(changed_data=None), formsets=[], add=True)
         self.assertEqual(msg, [{'added': {}}])
+
+    def test_log_addition(self):
+        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+            admin_utils.log_addition(
+                user_id=self.super_user.pk,
+                obj=self.obj1,
+                related_obj=None,
+            )
+            expected_message = [{'added': {}}]
+            self.assertTrue(mocked_create_logentry.called)
+            user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
+            self.assertEqual(user_id, self.super_user.pk)
+            self.assertIsInstance(obj, self.model)
+            self.assertEqual(obj, self.obj1)
+            self.assertEqual(action_flag, ADDITION)
+            self.assertIsInstance(message, list)
+            self.assertEqual(message, expected_message)
+
+    def test_log_addition_related_obj(self):
+        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+            admin_utils.log_addition(
+                user_id=self.super_user.pk,
+                obj=self.obj1,
+                related_obj=self.musiker,
+            )
+            expected_message = [{'added': {'name': 'Musiker', 'object': 'Robert Plant'}}]
+            self.assertTrue(mocked_create_logentry.called)
+            user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
+            self.assertEqual(user_id, self.super_user.pk)
+            self.assertIsInstance(obj, self.model)
+            self.assertEqual(obj, self.obj1)
+            self.assertEqual(action_flag, ADDITION)
+            self.assertIsInstance(message, list)
+            self.assertEqual(message, expected_message)
+
+    def test_log_change(self):
+        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+            admin_utils.log_change(
+                user_id=self.super_user.pk,
+                obj=self.obj1,
+                fields=['titel'],
+                related_obj=None,
+            )
+            expected_message = [{'changed': {'fields': ['Titel']}}]
+            self.assertTrue(mocked_create_logentry.called)
+            user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
+            self.assertEqual(user_id, self.super_user.pk)
+            self.assertIsInstance(obj, self.model)
+            self.assertEqual(obj, self.obj1)
+            self.assertEqual(action_flag, CHANGE)
+            self.assertIsInstance(message, list)
+            self.assertEqual(message, expected_message)
+
+    def test_log_change_related_obj(self):
+        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+            admin_utils.log_change(
+                user_id=self.super_user.pk,
+                obj=self.obj1,
+                fields=['lagerort'],
+                related_obj=self.bestand,
+            )
+            expected_message = [{'changed':
+                    {'fields': ['Lagerort'], 'name': 'Bestand', 'object': 'Aufm Tisch!'}}]
+            self.assertTrue(mocked_create_logentry.called)
+            user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
+            self.assertEqual(user_id, self.super_user.pk)
+            self.assertIsInstance(obj, self.model)
+            self.assertEqual(obj, self.obj1)
+            self.assertEqual(action_flag, CHANGE)
+            self.assertIsInstance(message, list)
+            self.assertEqual(message, expected_message)
+
+    def test_log_deletion(self):
+        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+            admin_utils.log_deletion(user_id=self.super_user.pk, obj=self.obj1)
+            self.assertTrue(mocked_create_logentry.called)
+            user_id, obj, action_flag = mocked_create_logentry.call_args[0]
+            self.assertEqual(user_id, self.super_user.pk)
+            self.assertIsInstance(obj, self.model)
+            self.assertEqual(obj, self.obj1)
+            self.assertEqual(action_flag, DELETION)
