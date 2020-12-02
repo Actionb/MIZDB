@@ -1,11 +1,11 @@
 from django.db import transaction, models
 from django.db.utils import IntegrityError
 
-from DBentry.logging import get_logger
 from DBentry.utils.models import (
     get_model_relations, get_relation_info_to, get_updateable_fields,
     is_protected
 )
+from DBentry.utils.admin import log_addition, log_change, log_deletion
 
 
 def merge_records(original, qs, update_data=None, expand_original=True, request=None):
@@ -15,7 +15,10 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
 
     Returns the updated 'original' instance.
     """
-    logger = get_logger(request)
+    user_id = 0
+    if request:
+        user_id = request.user.pk
+
     qs = qs.exclude(pk=original.pk)
     model = original._meta.model
     original_qs = model.objects.filter(pk=original.pk)
@@ -37,7 +40,8 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
         # log the changes.
         if expand_original and update_data:
             original_qs.update(**update_data)
-            logger.log_update(original_qs, update_data)
+            if user_id:
+                log_change(user_id, original_qs.get(), update_data.keys())
 
         for rel in get_model_relations(model, forward=False):
             related_model, related_field = get_relation_info_to(model, rel)
@@ -103,11 +107,12 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
             # Log the changes:
             for pk in updated_ids:
                 obj = related_model.objects.get(pk=pk)
-                # Log the addition of a new related object for original.
-                logger.log_addition(original, obj)
-                # Log the change of the related object's relation field
-                # pointing towards original.
-                logger.log_change(obj, related_field.name, original)
+                if user_id:
+                    # Log the addition of a new related object for original.
+                    log_addition(user_id, original, obj)
+                    # Log the change of the related object's relation field
+                    # pointing towards original.
+                    log_change(user_id, obj, related_field.name)
 
             if rel.on_delete == models.PROTECT:
                 not_updated = merger_related.exclude(pk__in=updated_ids)
@@ -115,7 +120,9 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                     # Some related objects could not be updated (probably
                     # because the original already has identical related objects).
                     # Delete the troublemakers?
-                    logger.log_delete(not_updated)
+                    if user_id:
+                        for obj in not_updated:
+                            log_deletion(user_id, obj)
                     not_updated.delete()
 
         # All related objects that could have been protected should now have
@@ -126,6 +133,8 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
             # Some objects are still protected, abort the merge by forcing
             # a rollback.
             raise protected
-        logger.log_delete(qs)
+        if user_id:
+            for obj in qs:
+                log_deletion(user_id, obj)
         qs.delete()
     return original_qs.first(), update_data

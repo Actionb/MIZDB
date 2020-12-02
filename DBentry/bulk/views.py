@@ -11,15 +11,16 @@ from django.utils.html import format_html
 from django.utils.translation import gettext
 
 from DBentry import models as _models
-from DBentry import utils
 from DBentry.base.views import MIZAdminMixin
 from DBentry.bulk.forms import BulkFormAusgabe
-from DBentry.logging import LoggingMixin
 from DBentry.sites import register_tool
+from DBentry.utils.admin import (
+    log_addition, log_change, link_list, get_changelist_link, get_changelist_url
+)
 
 
 @register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
-class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView, LoggingMixin):
+class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView):
     """A FormView that creates multiple ausgabe instances from a single form."""
 
     template_name = 'admin/bulk.html'
@@ -65,20 +66,20 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             ids, created, updated = self.save_data(form)
             if created:
                 # Message about created instances.
-                obj_list = utils.link_list(request, created, blank=True)
+                obj_list = link_list(request, created, blank=True)
                 messages.success(
                     request,
                     format_html('Ausgaben erstellt: {}', obj_list)
                 )
             if updated:
                 # Message about updated instances.
-                obj_list = utils.link_list(request, updated, blank=True)
+                obj_list = link_list(request, updated, blank=True)
                 messages.success(
                     request,
                     format_html('Dubletten hinzugefügt: {}', obj_list)
                 )
             if created or updated:
-                changelist_link = utils.get_changelist_link(
+                changelist_link = get_changelist_link(
                     _models.Ausgabe,
                     request.user,
                     obj_list=[*created, *updated],
@@ -94,7 +95,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             # Save the data and redirect back to the changelist.
             ids, instances, updated = self.save_data(form)
             return redirect(
-                utils.get_changelist_url(
+                get_changelist_url(
                     model=_models.Ausgabe,
                     user=request.user,
                     obj_list=[*instances, *updated]
@@ -140,6 +141,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         # but a 'dubletten' bestand will be added to their originals.
         dupes = []
 
+        user_id = self.request.user.pk
         # Split row_data into rows of duplicates and originals, so we save the
         # originals before any duplicates This assumes row_data does not contain
         # any nested duplicates. Also filter out rows that resulted in multiple
@@ -163,7 +165,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     # bestand.
                     bestand_data['provenienz'] = row.get('provenienz')
                 bestand = instance.bestand_set.create(**bestand_data)
-                self.log_addition(instance, bestand)
+                log_addition(user_id, instance, bestand)
                 continue
 
             if row.get('instance'):
@@ -173,7 +175,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if not instance.pk:
                 # This is a new instance, mark it as such.
                 instance.save()
-                self.log_addition(instance)
+                log_addition(user_id, instance)
                 created.append(instance)
             else:
                 # This instance already existed, update it and mark it as such.
@@ -188,7 +190,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                         updates[k] = v
 
                 instance.qs().update(**updates)
-                self.log_update(instance.qs(), updates)
+                instance.refresh_from_db()
+                log_change(user_id, instance, updates.keys())
                 updated.append(instance)
 
             # Create and/or update related sets.
@@ -220,7 +223,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     except IntegrityError:
                         # Ignore UNIQUE constraints violations.
                         continue
-                    self.log_addition(instance, related_obj)
+                    log_addition(user_id, instance, related_obj)
 
             # All the necessary data to construct a proper name should be
             # included now, update the name.
@@ -238,7 +241,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 if audio_instance is None:
                     audio_instance = _models.Audio(**audio_data)
                     audio_instance.save()
-                    self.log_addition(audio_instance)
+                    log_addition(user_id, audio_instance)
                 # Check if the ausgabe instance is already related to the audio
                 # instance.
                 is_related = (
@@ -252,8 +255,8 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                         audio=audio_instance
                     )
                     m2m_instance.save()
-                    self.log_addition(instance, m2m_instance)
-                    self.log_addition(audio_instance, m2m_instance)
+                    log_addition(user_id, instance, m2m_instance)
+                    log_addition(user_id, audio_instance, m2m_instance)
                 # Add bestand for the audio instance.
                 bestand_data = {
                     'lagerort': form.cleaned_data.get('audio_lagerort')
@@ -261,7 +264,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                 if 'provenienz' in row:
                     bestand_data['provenienz'] = row.get('provenienz')
                 bestand = audio_instance.bestand_set.create(**bestand_data)
-                self.log_addition(audio_instance, bestand)
+                log_addition(user_id, audio_instance, bestand)
 
             # Add bestand for the ausgabe instance.
             bestand_data = {
@@ -270,7 +273,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if 'provenienz' in row:
                 bestand_data['provenienz'] = row.get('provenienz')
             bestand = instance.bestand_set.create(**bestand_data)
-            self.log_addition(instance, bestand)
+            log_addition(user_id, instance, bestand)
 
             row['instance'] = instance
             ids.append(instance.pk)
@@ -380,7 +383,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                         "immer nur eine bereits bestehende Ausgabe verändert "
                         "werden: diese Zeile wird ignoriert."
                     )
-                preview_row['Instanz'] = utils.link_list(request, instances, blank=True)
+                preview_row['Instanz'] = link_list(request, instances, blank=True)
                 preview_row['Datenbank'] = format_html(img + ' ' + msg)
             preview_data.append(preview_row)
         # Build the headers for the preview table.

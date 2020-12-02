@@ -232,8 +232,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase):
                 self.assertLoggedAddition(self.original, related_obj)
             except AssertionError as e:
                 raise e
-            self.assertLoggedChange(
-                related_obj, related_field.name, self.original)
+            self.assertLoggedChange(related_obj, related_field.name)
 
 
 # TODO: merge_record: most of the TestClasses for models are VERY basic

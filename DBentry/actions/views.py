@@ -1,5 +1,6 @@
 from django import forms, views
 from django.contrib import messages
+from django.contrib.admin.models import ADDITION
 from django.db import transaction
 from django.db.models import ProtectedError, F, Count
 from django.utils.html import format_html
@@ -13,10 +14,12 @@ from DBentry.actions.forms import (
     MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm,
     BrochureActionFormSet, BrochureActionFormOptions
 )
-from DBentry.logging import LoggingMixin, log_addition
 from DBentry.utils import (
     link_list, merge_records, get_updateable_fields, get_obj_link,
     get_changelist_link, get_model_from_string, is_protected
+)
+from DBentry.utils.admin import (
+    create_logentry, log_addition, log_change, log_deletion
 )
 
 
@@ -36,7 +39,7 @@ def check_same_magazin(view, **kwargs):
     return True
 
 
-class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
+class BulkEditJahrgang(ActionConfirmationView):
     """
     View that bulk edits the jahrgang of a collection of Ausgabe instances.
     """
@@ -92,7 +95,9 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
             qs.update(jahrgang=None)
         else:
             qs.increment_jahrgang(start, jg)
-        self.log_update(self.queryset, 'jahrgang')
+        for obj in self.queryset:
+            log_change(
+                user_id=self.request.user.pk, obj=obj, fields=['jahrgang'])
 
 
 class MergeViewWizarded(WizardConfirmationView):
@@ -400,7 +405,7 @@ class MergeViewWizarded(WizardConfirmationView):
         return
 
 
-class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
+class MoveToBrochureBase(ActionConfirmationView):
     """Moves a set of ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
@@ -562,9 +567,10 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                log_addition(
-                    request=self.request,
-                    object=new_brochure,
+                create_logentry(
+                    user_id=self.request.user.pk,
+                    obj=new_brochure,
+                    action_flag=ADDITION,
                     message="Hinweis: "
                     "{verbose_name} wurde automatisch erstellt beim Verschieben"
                     " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
@@ -573,11 +579,18 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                         str_magazin=str(self.magazin_instance)
                     )
                 )
-                self.log_update(
-                    _models.Bestand.objects.filter(brochure_id=new_brochure.pk),
-                    ['ausgabe_id', 'brochure_id']
-                )
-                self.log_deletion(ausgabe_instance)
+                # Log the changes to the Bestand instances:
+                qs = _models.Bestand.objects.filter(brochure_id=new_brochure.pk)
+                for bestand_instance in qs:
+                    log_change(
+                        user_id=self.request.user.pk,
+                        obj=bestand_instance,
+                        fields=['ausgabe_id', 'brochure_id']
+                    )
+                # Log the deletion of the Ausgabe instance:
+                # NOTE: the doc string of ModelAdmin.log_deletion mentions that
+                # the log should be created before deletion.
+                log_deletion(self.request.user.pk, ausgabe_instance)
         # Notify the user about Ausgabe instances that could not be deleted and
         # return to the changelist - without deleting the Magazin instance
         # (since it will also be protected).
@@ -621,7 +634,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     )
                 )
             else:
-                self.log_deletion(self.magazin_instance)
+                log_deletion(self.request.user.pk, self.magazin_instance)
 
     def get_options_form(self, **kwargs):
         """Return the form that configures this action."""
@@ -646,7 +659,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         return context
 
 
-class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMixin):
+class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
     """Edit the Bestand set of the parent model instance(s)."""
 
     template_name = 'admin/change_bestand.html'
@@ -695,12 +708,13 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView, LoggingMi
             request=self.request, form=form, formsets=[formset], add=False)
         self.model_admin.log_change(self.request, formset.instance, change_message)
         # Now create LogEntry objects for the Bestand model side:
+        user_id = self.request.user.pk
         for new_obj in formset.new_objects:
-            self.log_addition(new_obj)
+            log_addition(user_id, new_obj)
         for changed_obj, changed_data in formset.changed_objects:
-            self.log_change(changed_obj, fields=changed_data)
+            log_change(user_id, changed_obj, fields=changed_data)
         for deleted_obj in formset.deleted_objects:
-            self.log_deletion(deleted_obj)
+            log_deletion(user_id, deleted_obj)
 
     def get_bestand_formset(self, request, obj):
         """Return the Bestand formset and model admin inline for this object."""
