@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User, Permission
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import transaction
 from django.db.models import Count, Min, Subquery, OuterRef, Func, Value, Exists
 
 import DBentry.models as _models
@@ -17,7 +18,8 @@ from DBentry.forms import (
     BildmaterialForm, MusikerForm, BandForm, VideoForm
 )
 from DBentry.sites import miz_site
-from DBentry.utils import concat_limit, copy_related_set, get_obj_link
+from DBentry.utils import concat_limit, copy_related_set
+from DBentry.utils.admin import get_obj_link, log_change
 # TODO: add admindocs
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
@@ -245,8 +247,19 @@ class AusgabenAdmin(MIZModelAdmin):
     monat_string.admin_order_field = 'monat_string'
 
     def _change_status(self, request, queryset, status):
-        queryset.update(status=status, _changed_flag=False)
-        # TODO: create a LogEntry for the changes
+        with transaction.atomic():
+            queryset.update(status=status, _changed_flag=False)
+        try:
+            with transaction.atomic():
+                for obj in queryset:
+                    log_change(request.user.pk, obj, fields=['status'])
+        except Exception as e:
+            message_text = (
+                "Fehler beim Erstellen der LogEntry Objekte: \n"
+                "%(error_class)s: %(error_txt)s" % {
+                    'error_class': e.__class__.__name__, 'error_txt': e.args[0]}
+            )
+            self.message_user(request, message_text, 'ERROR')
 
     def change_status_unbearbeitet(self, request, queryset):
         self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)

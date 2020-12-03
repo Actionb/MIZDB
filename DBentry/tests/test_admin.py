@@ -902,6 +902,31 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.obj1.refresh_from_db()
                 self.assertEqual(self.obj1.status, expected_value)
 
+    @patch('DBentry.admin.log_change')
+    def test_change_status_logentry_error(self, mocked_log_change):
+        # Check how exceptions during the creation of the LogEntry objects
+        # are handled.
+        error_msg = "This is a test exception."
+        mocked_log_change.side_effect = ValueError(error_msg)
+
+        request = self.get_request()
+        with patch.object(self.model_admin, 'message_user') as mocked_message:
+            # An exception should not propagate:
+            with self.assertNotRaises(Exception):
+                self.model_admin._change_status(
+                    request, self.queryset, status=_models.Ausgabe.INBEARBEITUNG)
+        # An exception should not stop the updates:
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'iB'})
+        # The user should have been messaged about the exception:
+        self.assertTrue(mocked_message.called)
+        expected_msg = (
+            "Fehler beim Erstellen der LogEntry Objekte: \n"
+            "ValueError: This is a test exception."
+        )
+        _request, message, level = mocked_message.call_args[0]
+        self.assertEqual(level, 'ERROR')
+        self.assertEqual(message, expected_msg)
+
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
