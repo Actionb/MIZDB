@@ -30,7 +30,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv', 'testserver']
 
 # Application definition
 
-INSTALLED_APPS = [ 
+INSTALLED_APPS = [
     'DBentry.apps.DbentryConfig',
     'dal',
     'dal_select2',

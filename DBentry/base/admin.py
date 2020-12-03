@@ -309,7 +309,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             new_extra['crosslinks'].append({'url': url, 'label': label})
         return new_extra
 
-
     def add_extra_context(self, request=None, extra_context=None, object_id=None):
         new_extra = extra_context or {}
         if object_id:

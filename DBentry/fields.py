@@ -313,7 +313,7 @@ class PartialDate(datetime.date):
         if isinstance(other, str):
             try:
                 other = self.from_string(other)
-            except:
+            except ValueError:
                 return False
         return super().__eq__(other)
 

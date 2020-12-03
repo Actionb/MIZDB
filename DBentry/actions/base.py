@@ -25,7 +25,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
             dropdown menu.
         action_name (str): name of the action as registered with the ModelAdmin
             This is the value for the hidden input named "action" with which the
-            ModelAdmin resolves the right action to use. With an invalid form, 
+            ModelAdmin resolves the right action to use. With an invalid form
             ModelAdmin.response_action will return here.
         view_helptext (str): a help text for this view
         action_allowed_checks (list or tuple): list of callables or names of view

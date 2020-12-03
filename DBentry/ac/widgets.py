@@ -71,7 +71,7 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             'admin/js/jquery.init.js',
             'admin/js/admin/RelatedObjectLookups.js'
         ]
-        return forms.Media(js=js) + super().media 
+        return forms.Media(js=js) + super().media
 
     def __init__(
             self, widget, related_model, remote_field_name='id',

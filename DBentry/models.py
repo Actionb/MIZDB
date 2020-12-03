@@ -414,8 +414,10 @@ class Magazin(BaseModel):
     magazin_name = models.CharField('Magazin', max_length=200)
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', max_length=8, blank=True, choices=MERKMAL_CHOICES,
-        help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
-            'Ausgaben in der Änderungsliste.')
+        help_text=(
+            'Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die '
+            'Darstellung der Ausgaben in der Änderungsliste.'
+        )
     )
     fanzine = models.BooleanField('Fanzine', default=False)
     issn = ISSNField(
@@ -1191,7 +1193,7 @@ class Bestand(BaseModel):
             if field.related_model._meta.object_name in ('Lagerort', 'Provenienz'):
                 continue
             related_obj = getattr(self, field.name)
-            if  related_obj:
+            if related_obj:
                 if related_obj._meta.object_name == 'BaseBrochure':
                     # Handle the multiple inheritance stuff:
                     related_obj = related_obj.resolve_child()

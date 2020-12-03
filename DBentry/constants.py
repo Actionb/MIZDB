@@ -1,5 +1,5 @@
 import re
-#TODO: remove the ZRAUM_ID,DUPLETTEN_ID constants
+# TODO: remove the ZRAUM_ID,DUPLETTEN_ID constants
 # ID für den Lagerort, der den Zeitschriftenraum darstellt
 ZRAUM_ID = 6
 
