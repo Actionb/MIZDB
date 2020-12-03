@@ -1709,33 +1709,32 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1.veranstaltung.add(make(_models.Veranstaltung, name='Glastonbury 2004'))
 
     def test_copy_related_set(self):
-        self.model_admin.copy_related(self.obj1)
-        self.assertIn(self.band, self.obj1.band.all())
-        self.assertIn(self.musiker, self.obj1.musiker.all())
-
-    def test_reponse_add(self):
         request = self.post_request(data={'copy_related': True})
-        self.model_admin.response_add(request, self.obj1)
+        self.model_admin._copy_related(request, self.obj1)
         self.assertIn(self.band, self.obj1.band.all())
         self.assertIn(self.musiker, self.obj1.musiker.all())
 
-    def test_reponse_add_no_copy(self):
-        request = self.post_request(data={})
-        self.model_admin.response_add(request, self.obj1)
-        self.assertNotIn(self.band, self.obj1.band.all())
-        self.assertNotIn(self.musiker, self.obj1.musiker.all())
+    def test_get_fields_add(self):
+        # Assert that the 'copy_related' field is included in the add form.
+        # (this test is mainly for covering a coverage branch)
+        request = self.get_request(user=self.super_user)
+        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
+        request = self.get_request(user=self.noperms_user)
+        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
 
-    def test_reponse_change(self):
-        request = self.post_request(data={'copy_related': True})
-        self.model_admin.response_change(request, self.obj1)
-        self.assertIn(self.band, self.obj1.band.all())
-        self.assertIn(self.musiker, self.obj1.musiker.all())
-
-    def test_reponse_change_no_copy(self):
-        request = self.post_request(data={})
-        self.model_admin.response_change(request, self.obj1)
-        self.assertNotIn(self.band, self.obj1.band.all())
-        self.assertNotIn(self.musiker, self.obj1.musiker.all())
+    def test_get_fields_no_perms(self):
+        # Assert that the 'copy_related' field is removed from the change form
+        # for users that lack change permission.
+        request = self.get_request(user=self.super_user)
+        self.assertIn('copy_related', self.model_admin.get_fields(request, self.obj1))
+        request = self.get_request(user=self.noperms_user)
+        self.assertNotIn(
+            'copy_related', self.model_admin.get_fields(request, self.obj1),
+            msg= (
+                "Field 'copy_related' should not be available for users that do "
+                "not have permissions to use it."
+            )
+        )
 
     def test_veranstaltung_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()

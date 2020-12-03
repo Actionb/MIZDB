@@ -1,11 +1,16 @@
-from DBentry import utils, models as _models
+from unittest.mock import patch
+
+from DBentry import models as _models, admin as _admin
+from django.db.utils import IntegrityError
 from DBentry.factory import make
-from DBentry.tests.base import DataTestCase
+from DBentry.tests.base import AdminTestCase
+from DBentry.utils import copyrelated as utils
 
 
-class TestCopyRelated(DataTestCase):
+class TestCopyRelated(AdminTestCase):
 
     model = _models.Bildmaterial
+    model_admin_class = _admin.BildmaterialAdmin
     test_data_count = 1
 
     @classmethod
@@ -22,7 +27,7 @@ class TestCopyRelated(DataTestCase):
         cls.obj1.veranstaltung.add(cls.v1, cls.v2, cls.v3)
 
     def test_copies_related_bands(self):
-        utils.copy_related_set(self.obj1, 'veranstaltung__band')
+        utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 2)
         self.assertIn(self.band1, bands)
@@ -32,9 +37,8 @@ class TestCopyRelated(DataTestCase):
         # Assert that copy_related_set does not create duplicate related records.
         # The models actually do not allow that so we can test for an IntegrityError.
         self.obj1.band.add(self.band1)
-        from django.db.utils import IntegrityError
         with self.assertNotRaises(IntegrityError):
-            utils.copy_related_set(self.obj1, 'veranstaltung__band')
+            utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 2)
         self.assertIn(self.band1, bands)
@@ -44,7 +48,7 @@ class TestCopyRelated(DataTestCase):
         other_band = make(_models.Band)
         self.obj1.band.add(other_band)
 
-        utils.copy_related_set(self.obj1, 'veranstaltung__band')
+        utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 3)
         self.assertIn(other_band, bands)
@@ -53,16 +57,36 @@ class TestCopyRelated(DataTestCase):
 
     def test_invalid_path(self):
         # No transactions should happen for invalid paths.
+        request = self.get_request()
         with self.assertNumQueries(0):
-            utils.copy_related_set(self.obj1, 'NOT__A__VALID__PATH')
+            utils.copy_related_set(request, self.obj1, 'NOT__A__VALID__PATH')
 
     def test_direct_relations(self):
         # No transactions should happen for paths that represent a direct relation.
+        request = self.get_request()
         with self.assertNumQueries(0):
-            utils.copy_related_set(self.obj1, 'veranstaltung')
+            utils.copy_related_set(request, self.obj1, 'veranstaltung')
 
     def test_not_related(self):
         # If the 'target' model of the path and the 'source' model do not have a relation
         # on their own, no action should be taken.
+        request = self.get_request()
         with self.assertNumQueries(0):
-            utils.copy_related_set(self.obj1, 'veranstaltung__reihe')
+            utils.copy_related_set(request, self.obj1, 'veranstaltung__reihe')
+
+    @patch('DBentry.utils.copyrelated.create_logentry')
+    def test_logentry_error(self, mocked_logentry):
+        # The user should be messaged about an error during the LogEntry
+        # creation, but the copy process must finish undisturbed.
+        mocked_logentry.side_effect = ValueError("This is a test exception.")
+        request = self.get_request()
+        with self.assertNotRaises(ValueError):
+            utils.copy_related_set(request, self.obj1, 'veranstaltung__band')
+        # Check that copying went through:
+        self.assertEqual(self.obj1.band.count(), 2)
+        # Check that the message was sent:
+        message_text = (
+            "Fehler beim Erstellen der LogEntry Objekte: \n"
+            "ValueError: This is a test exception."
+        )
+        self.assertMessageSent(request, message_text)

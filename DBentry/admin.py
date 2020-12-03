@@ -527,23 +527,33 @@ class BildmaterialAdmin(MIZModelAdmin):
     veranstaltung_string.short_description = 'Veranstaltungen'
     veranstaltung_string.admin_order_field = 'veranstaltung_list'
 
-    def copy_related(self, obj):
-        copy_related_set(obj, 'veranstaltung__band', 'veranstaltung__musiker')
-        # TODO: create a LogEntry for the changes
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if obj is None:
+            return fields
+        # Remove the 'copy_related' field from the change form if the user
+        # only has view permissions and thus can't use copy_related.
+        if not (obj and hasattr(request, 'user') and 'copy_related' in fields):
+            # Either this is an 'add' form or 'copy_related' isn't even
+            # included in the felds.
+            # NOTE: what does it mean if a request doesn't have a 'user'
+            # attribute? Does that mean anonymous user? Shouldn't the field be
+            # unavailable for those as well?
+            return fields
+        has_change_perms = self.has_change_permission(request, obj)
+        if not (obj.pk and has_change_perms) and 'copy_related' in fields:
+            fields.remove('copy_related')
+        return fields
 
-    def response_add(self, request, obj, post_url_continue=None):
-        if 'copy_related' in request.POST:
-            self.copy_related(obj)
-        return super().response_add(request, obj, post_url_continue)
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        self._copy_related(request, form.instance)
 
-    def response_change(self, request, obj):
+    def _copy_related(self, request, obj):
+        """Copy Band and Musiker instances of Veranstaltung to this object."""
         if 'copy_related' in request.POST:
-            # Note that copy_related *adds* instances to the related manager.
-            # It doesn't overwrite the related set: the related set could
-            # contain instances that were once related to the obj we are copying
-            # from (here 'veranstaltung') but aren't anymore.
-            self.copy_related(obj)
-        return super().response_change(request, obj)
+            copy_related_set(
+                request, obj, 'veranstaltung__band', 'veranstaltung__musiker')
 
 
 @admin.register(_models.Buch, site=miz_site)
