@@ -4,6 +4,7 @@ from unittest.mock import patch, Mock
 
 from django.db import connections, transaction
 from django.contrib import admin, contenttypes
+from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User, Permission
 from django.core import checks
@@ -14,7 +15,7 @@ from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
 import DBentry.models as _models
-from DBentry.changelist import AusgabeChangeList
+from DBentry.changelist import AusgabeChangeList, MIZChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import miz_site
@@ -257,12 +258,14 @@ class AdminTestMethodsMixin(object):
         # Assert that the number of queries needed for the changelist remains
         # constant and doesn't depend on the number of records fetched.
         # (which points to an unoptimized query / no prefetch)
+        # Request with 'all=1' to set changelist.show_all to True which should
+        # stop hiding/filtering results - which might affect the # of queries.
         with CaptureQueriesContext(connections['default']) as queries:
-            self.client.get(self.changelist_path)
+            self.client.get(self.changelist_path, data={ALL_VAR: '1'})
         n = len(queries.captured_queries)
         make(self.model)
         with CaptureQueriesContext(connections['default']) as queries:
-            self.client.get(self.changelist_path)
+            self.client.get(self.changelist_path, data={ALL_VAR: '1'})
         self.assertEqual(
             n, len(queries.captured_queries),
             msg="Number of queries for changelist depends on number of records!"
@@ -1733,10 +1736,108 @@ class TestMIZChangelist(AdminTestCase):
 
     model = _models.Genre
     model_admin_class = _admin.GenreAdmin
+    test_data_count = 1  # need at least one for the result list
+    result_list_msg = (
+        "If no filters have been applied the result list should be empty unless "
+        "ALL_VAR ('%s') is in the request parameters or the model admin does "
+        "not provide a search form." % ALL_VAR
+    )
+
+    @patch.object(MIZChangeList, 'get_queryset')
+    @patch.object(model_admin_class, 'has_search_form')
+    def test_get_result_list_ALL_VAR(self, mocked_has_search_form, mocked_get_queryset):
+        # Check that the changelist's result list for an unfiltered changelist
+        # queryset exists if ALL_VAR is present in the request.
+
+        # Mock the queryset returned by get_queryset to be unfiltered:
+        # (explicit order() to avoid RemovedInDjango31Warning about ordering)
+        mocked_get_queryset.return_value = self.model.objects.all().order_by('id')
+        # Mock the model admin to 'have a search form' to exclude the case when
+        # a model admin without a search form allows an unfiltered result list:
+        mocked_has_search_form.return_value = True
+
+        request = self.get_request(path=self.changelist_path, data={ALL_VAR: '1'})
+        changelist = self.model_admin.get_changelist_instance(request)
+        self.assertTrue(
+            changelist.result_list.exists(),
+            msg="Results should be shown if '%s' is in the request." % ALL_VAR
+        )
+        # Without ALL_VAR and with a search form, the result list should
+        # be empty:
+        request = self.get_request(path=self.changelist_path)
+        changelist = self.model_admin.get_changelist_instance(request)
+        self.assertFalse(changelist.result_list.exists(), msg=self.result_list_msg)
+
+    @patch.object(MIZChangeList, 'get_queryset')
+    @patch.object(model_admin_class, 'has_search_form')
+    def test_get_result_list_no_search_form(self, mocked_has_search_form, mocked_get_queryset):
+        # Check that the changelist's result list for an unfiltered changelist
+        # queryset exists if model admin does not provide a search form.
+
+        # Mock the queryset returned by get_queryset to be unfiltered:
+        # (explicit order() to avoid RemovedInDjango31Warning about ordering)
+        mocked_get_queryset.return_value = self.model.objects.all().order_by('id')
+
+        mocked_has_search_form.return_value = False
+        request = self.get_request(path=self.changelist_path)
+        changelist = self.model_admin.get_changelist_instance(request)
+        changelist.get_results(request)
+        self.assertTrue(
+            changelist.result_list.exists(),
+            msg=(
+                "Results should be shown if the model admin does not have a "
+                "search form."
+            )
+        )
+        # Without ALL_VAR and with a search form, the result list should
+        # be empty:
+        mocked_has_search_form.return_value = True
+        changelist = self.model_admin.get_changelist_instance(request)
+        changelist.get_results(request)
+        self.assertFalse(changelist.result_list.exists(), msg=self.result_list_msg)
+
+    @patch.object(MIZChangeList, 'get_queryset')
+    @patch.object(model_admin_class, 'has_search_form')
+    def test_get_result_list_qs_filtered(self, mocked_has_search_form, mocked_get_queryset):
+        # Assert that the changelist's result list for a *filtered* changelist
+        # queryset exists - with or without either search form or ALL_VAR.
+        # Filter the changelist's queryset in whatever way:
+        mocked_get_queryset.return_value = self.model.objects.filter(id=self.obj1.pk).order_by('id')
+
+        cases = [
+            # (has_search_form, ALL_VAR)
+            (False, False),
+            (False, True),
+            (True, False),
+            (True, True)
+        ]
+        for has_search_form, has_ALL_VAR in cases:
+            with self.subTest(has_search_form=has_search_form, has_ALL_VAR=has_ALL_VAR):
+                mocked_has_search_form.return_value = has_search_form
+                if has_ALL_VAR:
+                    request_data = {ALL_VAR: '1'}
+                else:
+                    request_data = {}
+                request = self.get_request(path=self.changelist_path, data=request_data)
+                changelist = self.model_admin.get_changelist_instance(request)
+                self.assertTrue(
+                    changelist.result_list.exists(),
+                    msg="Results should be shown if the result queryset is filtered."
+                )
+
+    def test_get_show_all_url(self):
+        # get_show_all_url should return an url with no other param other than
+        # ALL_VAR
+        request = self.get_request(self.changelist_path, data={'q': 'Beep Boop'})
+        changelist = self.model_admin.get_changelist_instance(request)
+        self.assertEqual(changelist.get_show_all_url(), '?%s=' % ALL_VAR)
 
     @patch.object(_admin.GenreAdmin, 'get_result_list_annotations')
     def test_adds_annotations(self, mocked_get_annotations):
         # Assert that list_display annotations are added.
+        # Delete the test's test data - having a non-empty queryset prompts
+        # calls to the list display methods (such as alias_string).
+        self.model.objects.all().delete()
         request = self.get_request(path=self.changelist_path)
         changelist = self.model_admin.get_changelist_instance(request)
         mocked_get_annotations.return_value = {}
