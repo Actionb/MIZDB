@@ -18,11 +18,6 @@ def to_audio_medium(apps, schema_editor):
         medium = AudioMedium.objects.create(medium=format_typ.typ)
         formate = Format.objects.filter(format_typ=format_typ)
         Audio.objects.filter(format__in=formate).update(medium=medium)
-    # Dump the data of the models to be deleted:
-    for model_name in ('FormatTyp', 'FormatSize', 'FormatTag', 'Format', 'Format_tag'):
-        model = apps.get_model('DBentry', model_name)
-        with open('%s.json' % model_name, 'w') as stream:
-            serializers.serialize('json', model.objects.iterator(), stream=stream)
 
 
 def to_formate(apps, schema_editor):
