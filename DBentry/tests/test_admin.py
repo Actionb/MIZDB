@@ -62,13 +62,15 @@ class AdminTestMethodsMixin(object):
                 cls.crosslinks_object = modelfactory_factory(cls.model).full_relations()
 
     def get_crosslinks(self, obj, labels=None):
-        # Return the crosslinks bit of the 'new_extra' context the model_admin would add.
+        # Return the crosslinks bit of the 'new_extra' context the model_admin
+        # would add.
         labels = labels or self.crosslinks_labels or self.model_admin.crosslink_labels or {}
         return self.model_admin.add_crosslinks(
             object_id=obj.pk, labels=labels).get('crosslinks')
 
     def _prepare_crosslink_data(self, data, obj=None):
-        # Return a dict based off of 'data' similar in structure of those in the crosslinks.
+        # Return a dict based off of 'data' similar in structure of those in
+        # the crosslinks.
         if obj is not None and 'pk' not in data:
             data['pk'] = str(obj.pk)
         if 'url' in data:
@@ -294,7 +296,7 @@ class AdminTestMethodsMixin(object):
     def test_search(self):
         with self.assertNotRaises(Exception):
             response = self.client.get(
-                self.changelist_path, data={admin.views.main.SEARCH_VAR:'Stuff'})
+                self.changelist_path, data={admin.views.main.SEARCH_VAR: 'Stuff'})
             self.assertEqual(response.status_code, 200)
 
     def test_changeform_availability(self):
@@ -401,7 +403,8 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_add_pk_search_field(self):
-        # Assert that a search field for the primary key is added to the search fields.
+        # Assert that a search field for the primary key is added to the search
+        # fields.
         # For primary keys that are a relation (OneToOneRelation) this should be
         # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
         test_data = [
@@ -728,7 +731,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             ausgabejahr__extra=1,
             artikel__extra=1, audio__extra=1, bestand__extra=1,
         )
-        # Only artikel should show up in the crosslinks as audio is present in the inlines.
+        # Only artikel should show up in the crosslinks as audio is present in
+        # the inlines.
         links = self.get_crosslinks(obj)
         self.assertEqual(len(links), 1)
         expected = {
@@ -756,7 +760,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertFalse(self.get_crosslinks(obj))
 
     def test_actions_noperms(self):
-        # Assert that certain actions are not available to user without permissions.
+        # Assert that certain actions are not available to user without
+        # permissions.
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
         action_names = (
             'bulk_jg', 'change_bestand', 'moveto_brochure', 'merge_records',
@@ -791,8 +796,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.assertIn(action_name, actions)
 
     def test_movetobrochure_permissions(self):
-        # moveto_brochure should require both 'delete_ausgabe' and 'add_BaseBrochure'
-        # permissions.
+        # moveto_brochure should require both 'delete_ausgabe' and
+        # 'add_BaseBrochure' permissions.
         msg_template = (
             "Action 'moveto_brochure' should not be available to "
             "users that miss the '%s' permission."
@@ -876,13 +881,14 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_change_status(self):
         # Integration test for the change_status stuff.
-        for action, expected_value in [
-                ('change_status_inbearbeitung', 'iB'),
-                ('change_status_abgeschlossen', 'abg'),
-                # obj1.status is 'unb' at the start, so test for 'unb' last to be
-                # able to register a change:
-                ('change_status_unbearbeitet', 'unb')
-            ]:
+        test_data = [
+            ('change_status_inbearbeitung', 'iB'),
+            ('change_status_abgeschlossen', 'abg'),
+            # obj1.status is 'unb' at the start, so test for 'unb' last to be
+            # able to register a change:
+            ('change_status_unbearbeitet', 'unb')
+        ]
+        for action, expected_value in test_data:
             request_data = {
                 'action': action,
                 admin.helpers.ACTION_CHECKBOX_NAME: self.obj1.pk,
@@ -1461,7 +1467,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.model_admin.kuenstler_string(obj),
             'Led Zeppelin, Robert Plant'
         )
-
 
 
 class TestBaseBrochureAdmin(AdminTestCase):
