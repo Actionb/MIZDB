@@ -272,18 +272,17 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # Objects in this queryset have different magazines.
         queryset = self.model.objects.filter(ausgabejahr__jahr=2001)
         view = self.get_view(request, queryset=queryset)
-        view.model_admin.message_user = Mock()
-        self.assertFalse(view.action_allowed)
-
-        expected_message = (
-            'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu'
-            ' unterschiedlichen Magazinen.'
-        )
-        view.model_admin.message_user.assert_called_once_with(
-            request=request,
-            message=expected_message,
-            level=messages.ERROR
-        )
+        with patch.object(view.model_admin, 'message_user') as mocked_message:
+            self.assertFalse(view.action_allowed)
+            expected_message = (
+                'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu'
+                ' unterschiedlichen Magazinen.'
+            )
+            mocked_message.assert_called_once_with(
+                request=request,
+                message=expected_message,
+                level=messages.ERROR
+            )
 
     def test_compile_affected_objects(self):
         # result 0 0 => obj1
