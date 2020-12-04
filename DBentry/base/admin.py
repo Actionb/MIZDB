@@ -20,6 +20,12 @@ from DBentry.utils import get_model_relations, get_fields_and_lookups
 from DBentry.utils.admin import construct_change_message
 # TODO: when using list_editable the 'save' element overlaps the 'add' element
 # on the changelist.
+# TODO: enable delete_related on inlines:
+# RelatedFieldWidgetWrapper disables can_delete_related for inlines because of
+# cascading:
+#        # XXX: The deletion UX can be confusing when dealing with cascading deletion.
+#        cascade = getattr(rel, 'on_delete', None) is CASCADE
+#        self.can_delete_related = not multiple and not cascade and can_delete_related
 
 
 class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
