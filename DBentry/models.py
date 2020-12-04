@@ -1324,7 +1324,7 @@ class Brochure(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
 
@@ -1343,7 +1343,7 @@ class Kalender(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
         verbose_name_plural = 'Programmhefte'
 
@@ -1370,6 +1370,6 @@ class Katalog(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'
