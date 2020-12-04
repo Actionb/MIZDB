@@ -232,6 +232,7 @@ class LoggingTestMixin(object):
                     fields = [fields]
                 if not isinstance(fields, list):
                     fields = list(fields)
+                # FIXME: this can't handle changes on fields of a related_obj
                 msg = {'changed': {'fields': sorted(
                     [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])}}
                 if related_obj:

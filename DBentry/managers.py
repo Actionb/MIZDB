@@ -204,9 +204,7 @@ class CNQuerySet(MIZQuerySet):
         return super().values_list(*fields, **kwargs)
 
     def _update_names(self):
-        """
-        Update the names of rows where _changed_flag is True.
-        """
+        """Update the names of rows where _changed_flag is True."""
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
             values = self.filter(
                 _changed_flag=True
@@ -523,6 +521,7 @@ class HumanNameQuerySet(MIZQuerySet):
         try:
             return str(HumanName(text))
         except:
+            # TODO: find out which exceptions might be raised by HumanName()
             return text
 
     def find(self, q, **kwargs):

@@ -1,5 +1,6 @@
-from django import forms
+from django import forms, views
 from django.contrib import messages
+from django.contrib.admin.models import ADDITION
 from django.db import transaction
 from django.db.models import ProtectedError, F, Count
 from django.utils.html import format_html
@@ -7,24 +8,25 @@ from django.utils.translation import gettext_lazy, gettext
 
 from DBentry import models as _models
 from DBentry.actions.base import (
-    ActionConfirmationView, WizardConfirmationView
+    ActionConfirmationView, WizardConfirmationView, ConfirmationViewMixin
 )
 from DBentry.actions.forms import (
-    MergeFormSelectPrimary, MergeConflictsFormSet,
-    BulkAddBestandForm, BulkEditJahrgangForm,
+    MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm,
     BrochureActionFormSet, BrochureActionFormOptions
 )
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.logging import LoggingMixin, log_addition
 from DBentry.utils import (
     link_list, merge_records, get_updateable_fields, get_obj_link,
     get_changelist_link, get_model_from_string, is_protected
+)
+from DBentry.utils.admin import (
+    create_logentry, log_addition, log_change, log_deletion
 )
 
 
 def check_same_magazin(view, **kwargs):
     """
-    Check that all objects in the view's queryset are related to the same magazin.
+    Check that all objects in the view's queryset are related to the same
+    Magazin instance.
     """
     if view.queryset.values('magazin_id').distinct().count() != 1:
         view.model_admin.message_user(
@@ -34,11 +36,12 @@ def check_same_magazin(view, **kwargs):
             'unterschiedlichen Magazinen.' % view.opts.verbose_name_plural
         )
         return False
+    return True
 
 
-class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
+class BulkEditJahrgang(ActionConfirmationView):
     """
-    View that bulk edits the jahrgang of a collection of ausgabe instances.
+    View that bulk edits the jahrgang of a collection of Ausgabe instances.
     """
 
     short_description = gettext_lazy("Add issue volume")
@@ -55,7 +58,8 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
         "\nWählen Sie zunächst eine Schlüssel-Ausgabe, die den Beginn eines "
         "Jahrganges darstellt, aus und geben Sie den Jahrgang dieser Ausgabe an."
         "\nDie Jahrgangswerte der anderen Ausgaben werden danach in Abständen "
-        "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. heruntergezählt."
+        "von einem Jahr (im Bezug zur Schlüssel-Ausgabe) hochgezählt, bzw. "
+        "heruntergezählt."
         "\n\nAusgaben, die keine Jahresangaben besitzen (z.B. Sonderausgaben), "
         "werden ignoriert."
         "\nWird als Jahrgang '0' eingegeben, werden die Angaben für Jahrgänge "
@@ -91,101 +95,14 @@ class BulkEditJahrgang(ActionConfirmationView, LoggingMixin):
             qs.update(jahrgang=None)
         else:
             qs.increment_jahrgang(start, jg)
-        self.log_update(self.queryset, 'jahrgang')
-
-
-class BulkAddBestand(ActionConfirmationView, LoggingMixin):
-    """View that adds a bestand to a given model instances."""
-
-    short_description = gettext_lazy("Alter stock")
-    allowed_permissions = ['alter_bestand']
-    action_name = 'add_bestand'
-
-    affected_fields = ['bestand']
-
-    form_class = BulkAddBestandForm
-
-    view_helptext = (
-        "Sie können hier Bestände für die ausgewählten Objekte hinzufügen."
-        "\nBesitzt ein Objekt bereits einen Bestand in der ersten Kategorie "
-        "('Lagerort (Bestand)'), so wird stattdessen diesem Objekt ein Bestand "
-        "in der zweiten Kategorie ('Lagerort (Dublette)') hinzugefügt."
-    )
-
-    def get_initial(self):
-        """Provide initial values for bestand and dublette fields."""
-        if self.model == _models.Ausgabe:
-            try:
-                return {
-                    'bestand': _models.Lagerort.objects.get(pk=ZRAUM_ID),
-                    'dublette': _models.Lagerort.objects.get(pk=DUPLETTEN_ID)
-                }
-            except _models.Lagerort.DoesNotExist:
-                pass
-        return super().get_initial()
-
-    def _build_message(self, lagerort_instance, bestand_instances, fkey):
-        """
-        Create the message about bestand objects having been added successfully.
-        """
-        base_msg = ("{lagerort}-Bestand zu diesen {count} {verbose_model_name} "
-            "hinzugefügt: {obj_links}")
-        format_dict = {
-            'verbose_model_name': self.opts.verbose_name_plural,
-            'obj_links': link_list(
-                request=self.request,
-                obj_list=[getattr(obj, fkey.name) for obj in bestand_instances],
-                blank=True
-            ),
-            'lagerort': str(lagerort_instance),
-            'count': len(bestand_instances)
-        }
-        return format_html(base_msg, **format_dict)
-
-    def _get_bestand_field(self, model):
-        """Return the ForeignKey field from `bestand` to model `model`."""
-        for field in _models.Bestand._meta.get_fields():
-            if field.is_relation and field.related_model == model:
-                return field
-
-    def perform_action(self, form_cleaned_data):
-        """Add a bestand instance to the given instances."""
-
-        bestand_lagerort = form_cleaned_data['bestand']
-        dubletten_lagerort = form_cleaned_data['dublette']
-        bestand_list = []
-        dubletten_list = []
-        # Get the correct fkey from bestand model to this view's model
-        fkey = self._get_bestand_field(self.model)
-
-        for instance in self.queryset:
-            filter_kwargs = {fkey.name: instance, 'lagerort': bestand_lagerort}
-            instance_data = {fkey.name: instance}
-            if not _models.Bestand.objects.filter(**filter_kwargs).exists():
-                instance_data['lagerort'] = bestand_lagerort
-                bestand_list.append(_models.Bestand(**instance_data))
-            else:
-                instance_data['lagerort'] = dubletten_lagerort
-                dubletten_list.append(_models.Bestand(**instance_data))
-
-        with transaction.atomic():
-            for lagerort_instance, bestand_instances in (
-                (bestand_lagerort, bestand_list),
-                (dubletten_lagerort, dubletten_list)
-            ):
-                for obj in bestand_instances:
-                    obj.save()
-                    self.log_addition(getattr(obj, fkey.name), obj)
-                admin_message = self._build_message(
-                    lagerort_instance=lagerort_instance,
-                    bestand_instances=bestand_instances,
-                    fkey=fkey
-                )
-                self.model_admin.message_user(self.request, admin_message)
+        for obj in self.queryset:
+            log_change(
+                user_id=self.request.user.pk, obj=obj, fields=['jahrgang'])
 
 
 class MergeViewWizarded(WizardConfirmationView):
-    """View that merges model instances.
+    """
+    View that merges model instances.
 
     The user selects one instance from the available instances to designate
     it as the 'primary'.
@@ -230,7 +147,7 @@ class MergeViewWizarded(WizardConfirmationView):
         "Für die Erweiterung der Grunddaten des primären Datensatzes stehen "
         "widersprüchliche Möglichkeiten zur Verfügung."
         "\nBitte wählen Sie jeweils eine der Möglichkeiten, die für den primären "
-       "Datensatz übernommen werden sollen."
+        "Datensatz übernommen werden sollen."
     )
 
     view_helptext = {
@@ -246,6 +163,7 @@ class MergeViewWizarded(WizardConfirmationView):
         return context
 
     def _check_too_few_objects(view, **kwargs):
+        """Check whether an insufficient number of objects has been selected."""
         if view.queryset.count() == 1:
             view.model_admin.message_user(
                 request=view.request,
@@ -254,8 +172,12 @@ class MergeViewWizarded(WizardConfirmationView):
                 'ausgewählt werden, um diese Aktion durchzuführen.',
             )
             return False
+        return True
 
     def _check_different_magazines(view, **kwargs):
+        """
+        Check whether the Ausgabe instances are from different Magazin instances.
+        """
         if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
@@ -270,8 +192,12 @@ class MergeViewWizarded(WizardConfirmationView):
                 level=messages.ERROR
             )
             return False
+        return True
 
     def _check_different_ausgaben(view, **kwargs):
+        """
+        Check whether the Artikel instances are from different Ausgabe instances.
+        """
         if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
@@ -285,10 +211,12 @@ class MergeViewWizarded(WizardConfirmationView):
                 level=messages.ERROR
             )
             return False
+        return True
 
     @property
     def updates(self):
-        """Data to update the 'primary' instance with.
+        """
+        Data to update the 'primary' instance with.
 
         Prepared by `_has_merge_conflicts` during processing the first step
         (SELECT_PRIMARY_STEP) and then added to the storage by `process_step`,
@@ -301,7 +229,8 @@ class MergeViewWizarded(WizardConfirmationView):
         return self._updates
 
     def _has_merge_conflicts(self, data):
-        """Determine if there is going to be a merge conflict.
+        """
+        Determine if there is going to be a merge conflict.
 
         If the 'primary' is going to be expanded with values from the other
         instances and there is more than one possible value for any field,
@@ -476,7 +405,7 @@ class MergeViewWizarded(WizardConfirmationView):
         return
 
 
-class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
+class MoveToBrochureBase(ActionConfirmationView):
     """Moves a set of ausgabe instances to a BaseBrochure child model."""
 
     short_description = 'zu Broschüren bewegen'
@@ -553,6 +482,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         return self._can_delete_magazin
 
     def _check_protected_artikel(view, **kwargs):
+        """Check whether any of the Artikel instances cannot be deleted."""
         ausgaben_with_artikel = (
             view.queryset
                 .annotate(artikel_count=Count('artikel'))
@@ -567,7 +497,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             view.model_admin.message_user(
                 request=view.request,
                 level=messages.ERROR,
-                message= format_html(
+                message=format_html(
                     msg_template,
                     link_list(view.request, ausgaben_with_artikel),
                     get_changelist_link(
@@ -579,6 +509,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                 )
             )
             return False
+        return True
 
     def form_valid(self, form):
         options_form = self.get_options_form(data=self.request.POST)
@@ -586,6 +517,7 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
+        # Return to the changelist:
         return
 
     def perform_action(self, form_cleaned_data, options_form_cleaned_data):
@@ -635,9 +567,10 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                log_addition(
-                    request=self.request,
-                    object=new_brochure,
+                create_logentry(
+                    user_id=self.request.user.pk,
+                    obj=new_brochure,
+                    action_flag=ADDITION,
                     message="Hinweis: "
                     "{verbose_name} wurde automatisch erstellt beim Verschieben"
                     " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
@@ -646,12 +579,21 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                         str_magazin=str(self.magazin_instance)
                     )
                 )
-                self.log_update(
-                    _models.Bestand.objects.filter(brochure_id=new_brochure.pk),
-                    ['ausgabe_id', 'brochure_id']
-                )
-                self.log_deletion(ausgabe_instance)
-
+                # Log the changes to the Bestand instances:
+                qs = _models.Bestand.objects.filter(brochure_id=new_brochure.pk)
+                for bestand_instance in qs:
+                    log_change(
+                        user_id=self.request.user.pk,
+                        obj=bestand_instance,
+                        fields=['ausgabe_id', 'brochure_id']
+                    )
+                # Log the deletion of the Ausgabe instance:
+                # NOTE: the doc string of ModelAdmin.log_deletion mentions that
+                # the log should be created before deletion.
+                log_deletion(self.request.user.pk, ausgabe_instance)
+        # Notify the user about Ausgabe instances that could not be deleted and
+        # return to the changelist - without deleting the Magazin instance
+        # (since it will also be protected).
         if protected_ausg:
             msg_template = (
                 "Folgende Ausgaben konnten nicht gelöscht werden: "
@@ -688,13 +630,14 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
                         get_obj_link(
-                            obj=self.magazin_instance,user=self.request.user, blank=True)
+                            obj=self.magazin_instance, user=self.request.user, blank=True)
                     )
                 )
             else:
-                self.log_deletion(self.magazin_instance)
+                log_deletion(self.request.user.pk, self.magazin_instance)
 
     def get_options_form(self, **kwargs):
+        """Return the form that configures this action."""
         kwargs['can_delete_magazin'] = self.can_delete_magazin
         return BrochureActionFormOptions(**kwargs)
 
@@ -713,4 +656,109 @@ class MoveToBrochureBase(ActionConfirmationView, LoggingMixin):
         context['management_form'] = formset.management_form
         context['options_form'] = self.get_options_form()
         context.update(kwargs)
+        return context
+
+
+class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
+    """Edit the Bestand set of the parent model instance(s)."""
+
+    template_name = 'admin/change_bestand.html'
+
+    short_description = 'Bestände ändern'
+    allowed_permissions = ['alter_bestand']
+
+    action_name = 'change_bestand'
+    action_reversible = True
+
+    def post(self, request, *args, **kwargs):
+        if 'action_confirmed' in request.POST:
+            # Collect all the valid formsets:
+            formsets = []
+            for obj in self.queryset:
+                formset, inline = self.get_bestand_formset(self.request, obj)
+                if formset.is_valid():
+                    formsets.append(formset)
+                else:
+                    # Invalid formset found, abort the save process.
+                    break
+            else:
+                self.perform_action(formsets)
+                # Return to the changelist:
+                return None
+        return self.get(request, *args, **kwargs)
+
+    def perform_action(self, formsets):
+        with transaction.atomic():
+            for formset in formsets:
+                formset.save()
+                self.create_log_entries(formset)
+
+    def create_log_entries(self, formset):
+        """Create LogEntry objects for the parent and its related objects."""
+        # We can get the correct change message for the LogEntry objects
+        # of the parent instance from the model_admin's
+        # construct_change_message method, which requires a form argument.
+        # Since we're not changing anything on the instance itself, an empty
+        # model form will do.
+        form = self.model_admin.get_form(
+            self.request, obj=formset.instance, change=True)()
+        # 'add' argument is always False as we are always working on an already
+        # existing parent instance.
+        change_message = self.model_admin.construct_change_message(
+            request=self.request, form=form, formsets=[formset], add=False)
+        self.model_admin.log_change(self.request, formset.instance, change_message)
+        # Now create LogEntry objects for the Bestand model side:
+        user_id = self.request.user.pk
+        for new_obj in formset.new_objects:
+            log_addition(user_id, new_obj)
+        for changed_obj, changed_data in formset.changed_objects:
+            log_change(user_id, changed_obj, fields=changed_data)
+        for deleted_obj in formset.deleted_objects:
+            log_deletion(user_id, deleted_obj)
+
+    def get_bestand_formset(self, request, obj):
+        """Return the Bestand formset and model admin inline for this object."""
+        formsets_with_inlines = self.model_admin.get_formsets_with_inlines(
+            request, obj)
+        for formset_class, inline in formsets_with_inlines:
+            if inline.model == _models.Bestand:
+                break
+        else:
+            raise ValueError(
+                "Model admin '%s' has no inline for model Bestand!" %
+                self.model_admin
+            )
+        formset_params = {
+            'instance': obj,
+            'prefix': "%s-%s" % (formset_class.get_default_prefix(), obj.pk),
+            'queryset': inline.get_queryset(request),
+        }
+        if 'action_confirmed' in request.POST:
+            formset_params['data'] = request.POST.copy()
+        formset = formset_class(**formset_params)
+        return formset, inline
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['object_name'] = self.opts.object_name
+        context['formsets'] = []
+        media_updated = False
+        for obj in self.queryset:
+            formset, inline = self.get_bestand_formset(self.request, obj)
+            # Wrap the formset into django's InlineAdminFormSet, so that we can
+            # use django's edit_inline/tabular template.
+            wrapped_formset = self.model_admin.get_inline_formsets(
+                request=self.request,
+                formsets=[formset],
+                inline_instances=[inline],
+                obj=obj
+            )[0]
+            if not media_updated:
+                # Add the inline formset media (such as inlines.js):
+                context['media'] += wrapped_formset.media
+                media_updated = True
+            context['formsets'].append((
+                get_obj_link(obj=obj, user=self.request.user, blank=True),
+                wrapped_formset
+            ))
         return context

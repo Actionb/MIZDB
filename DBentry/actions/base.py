@@ -16,15 +16,16 @@ class ConfirmationViewMixin(MIZAdminMixin):
     Attributes:
         title (str): the title that is shown both in the template and
             in the browser title
+        action_reversible (bool): if False (which is the default), it is implied
+            that this action will make a change that is not easily reversed.
+            If False, a warning text is added to the template context.
         non_reversible_warning (str): a text that warns the user that
             the action they are about to confirm is not reversible.
-        action_reversible (bool): set to True, if this action performs
-            an operation that is not easily reversed.
         short_description (str): label for the action in the changelist
             dropdown menu.
         action_name (str): name of the action as registered with the ModelAdmin
             This is the value for the hidden input named "action" with which the
-            ModelAdmin resolves the right action to use. With an invalid form, 
+            ModelAdmin resolves the right action to use. With an invalid form
             ModelAdmin.response_action will return here.
         view_helptext (str): a help text for this view
         action_allowed_checks (list or tuple): list of callables or names of view
@@ -68,7 +69,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
 
     @property
     def action_allowed(self):
-        """Check if the action is allowed.
+        """
+        Check if the action is allowed.
 
         Checks are called with keyword argument 'view' which is this instance.
         Assessment stops if a check returns False.

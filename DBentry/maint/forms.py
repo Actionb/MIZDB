@@ -128,7 +128,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     def get_model_filters(self):
         """
-        Prepare filters to apply to the list of models returned by apps.get_models.
+        Prepare filters for the list of models returned by apps.get_models.
         """
         return [
             # Filter out m2m intermediary tables (manually or auto created)

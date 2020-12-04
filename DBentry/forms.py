@@ -91,14 +91,7 @@ class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
     class Meta:
         widgets = {
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
-            'titel_orig': forms.Textarea(attrs={'rows': 1, 'cols': 90}),
-            # TODO: wrap & can_delete_related kwargs to make_widget is ignored?
-            # Especially the delete button makes no sense on that field:
-            # you can't delete the buchband you are related to (when you are related to it)
-            'buchband': make_widget(
-                url='acbuchband', model=_models.Buch, wrap=False,
-                can_delete_related=False
-            ),
+            'titel_orig': forms.Textarea(attrs={'rows': 1, 'cols': 90})
         }
 
     def clean_is_buchband(self):

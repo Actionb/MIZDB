@@ -1,9 +1,12 @@
-from django.contrib.auth import get_permission_codename
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.admin.utils import quote
+from django.contrib.auth import get_permission_codename
 from django.urls import reverse, NoReverseMatch
-from django.utils.html import format_html
 from django.utils.encoding import force_text
+from django.utils.html import format_html
 from django.utils.text import capfirst
+from django.utils.translation import override as translation_override
 
 from DBentry.utils.models import get_model_from_string
 
@@ -37,7 +40,7 @@ def get_obj_link(obj, user, site_name='admin', blank=False):
     except NoReverseMatch:
         return no_edit_link
 
-    perm = '%s.%s' % (opts.app_label,get_permission_codename('change', opts))
+    perm = '%s.%s' % (opts.app_label, get_permission_codename('change', opts))
     if not user.has_perm(perm):
         return no_edit_link
 
@@ -115,6 +118,7 @@ def get_model_admin_for_model(model, *admin_sites):
     for site in sites:
         if site.is_registered(model):
             return site._registry.get(model)
+    return None
 
 
 def has_admin_permission(request, model_admin):
@@ -126,3 +130,121 @@ def has_admin_permission(request, model_admin):
     # Check if the user has any permissions
     # (add, change, delete, view) for the model.
     return True in model_admin.get_model_perms(request).values()
+
+
+def construct_change_message(form, formsets, add):
+    """
+    Construct a JSON structure describing changes from a changed object.
+
+    Translations are deactivated so that strings are stored untranslated.
+    Translation happens later on LogEntry access.
+    """
+    change_message = []
+    if add:
+        change_message.append({'added': {}})
+    elif form.changed_data:
+        changed_fields = [form.fields[field].label for field in form.changed_data]
+        change_message.append({'changed': {'fields': changed_fields}})
+    # Handle relational changes:
+    if formsets:
+        parent_model = form._meta.model
+        with translation_override(None):
+            for formset in formsets:
+                for added_object in formset.new_objects:
+                    msg = _get_relation_change_message(added_object, parent_model)
+                    change_message.append({'added': msg})
+                for changed_object, changed_fields in formset.changed_objects:
+                    msg = _get_relation_change_message(changed_object, parent_model)
+                    msg['fields'] = changed_fields
+                    change_message.append({'changed': msg})
+                for deleted_object in formset.deleted_objects:
+                    msg = _get_relation_change_message(deleted_object, parent_model)
+                    change_message.append({'deleted': msg})
+    return change_message
+
+
+def _get_relation_change_message(obj, parent_model):
+    """
+    Create the change message JSON for changes on relations.
+
+    Arguments:
+        - obj (model instance): the related model instance
+        - parent_model (model class): the model class that 'obj' is related to
+    """
+    # The related models are responsible for creating useful textual
+    # representations of themselves and their instances.
+    # Exempt from this are auto created models such as the through tables of m2m
+    # relations. Use the textual representation provided by the model on the
+    # other end of the m2m relation instead.
+    result = {
+        'name': str(obj._meta.verbose_name),
+        'object': str(obj),
+    }
+    if obj._meta.auto_created:
+        # An auto_created m2m through table only has two relation fields;
+        # one is the field pointing towards the parent model and the other is
+        # the one we are looking for here.
+        for fld in obj._meta.get_fields():
+            if fld.is_relation and fld.related_model != parent_model:
+                # Use the verbose_name of the model on the other end of the m2m
+                # relation as 'name'.
+                result['name'] = str(fld.related_model._meta.verbose_name)
+                # Use the other related object directly instead of the record
+                # in the auto created through table.
+                result['object'] = str(getattr(obj, fld.name))
+                break
+    return result
+
+
+def create_logentry(user_id, obj, action_flag, message=''):
+    return LogEntry.objects.log_action(
+        user_id=user_id,
+        content_type_id=get_content_type_for_model(obj).pk,
+        object_id=obj.pk,
+        object_repr=str(obj),
+        action_flag=action_flag,
+        change_message=message,
+    )
+
+
+def log_addition(user_id, obj, related_obj=None):
+    """
+    Log that an object has been successfully added.
+
+    If 'related_obj' is given, log that a related object has been added to
+    'object'.
+    """
+    message = {"added": {}}
+    if related_obj:
+        message['added'] = {
+            'name': str(related_obj._meta.verbose_name),
+            'object': str(related_obj),
+        }
+    return create_logentry(user_id, obj, ADDITION, [message])
+
+
+def log_change(user_id, obj, fields, related_obj=None):
+    """
+    Log that values for the fields 'fields' of object 'object' have changed.
+
+    If 'related_obj' is given, log that a related object's field values have
+    been changed.
+    """
+    if isinstance(fields, str):
+        fields = [fields]
+    message = {'changed': {}}
+    if related_obj:
+        message['changed'] = _get_relation_change_message(related_obj, obj)
+        # Use the fields map of the related model:
+        fields_opts = related_obj._meta
+    else:
+        fields_opts = obj._meta
+
+    message['changed']['fields'] = sorted(
+        capfirst(fields_opts.get_field(f).verbose_name) for f in fields)
+    return create_logentry(user_id, obj, CHANGE, [message])
+
+
+def log_deletion(user_id, obj):
+    """Log that an object will be deleted."""
+    return create_logentry(user_id, obj, DELETION)

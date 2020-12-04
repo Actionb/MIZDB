@@ -4,6 +4,7 @@ from unittest.mock import patch, Mock
 
 from django.db import connections, transaction
 from django.contrib import admin, contenttypes
+from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User, Permission
 from django.core import checks
@@ -14,7 +15,7 @@ from django.utils.translation import override as translation_override
 
 import DBentry.admin as _admin
 import DBentry.models as _models
-from DBentry.changelist import AusgabeChangeList
+from DBentry.changelist import AusgabeChangeList, MIZChangeList
 from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make, modelfactory_factory
 from DBentry.sites import miz_site
@@ -61,13 +62,15 @@ class AdminTestMethodsMixin(object):
                 cls.crosslinks_object = modelfactory_factory(cls.model).full_relations()
 
     def get_crosslinks(self, obj, labels=None):
-        # Return the crosslinks bit of the 'new_extra' context the model_admin would add.
+        # Return the crosslinks bit of the 'new_extra' context the model_admin
+        # would add.
         labels = labels or self.crosslinks_labels or self.model_admin.crosslink_labels or {}
         return self.model_admin.add_crosslinks(
             object_id=obj.pk, labels=labels).get('crosslinks')
 
     def _prepare_crosslink_data(self, data, obj=None):
-        # Return a dict based off of 'data' similar in structure of those in the crosslinks.
+        # Return a dict based off of 'data' similar in structure of those in
+        # the crosslinks.
         if obj is not None and 'pk' not in data:
             data['pk'] = str(obj.pk)
         if 'url' in data:
@@ -257,12 +260,14 @@ class AdminTestMethodsMixin(object):
         # Assert that the number of queries needed for the changelist remains
         # constant and doesn't depend on the number of records fetched.
         # (which points to an unoptimized query / no prefetch)
+        # Request with 'all=1' to set changelist.show_all to True which should
+        # stop hiding/filtering results - which might affect the # of queries.
         with CaptureQueriesContext(connections['default']) as queries:
-            self.client.get(self.changelist_path)
+            self.client.get(self.changelist_path, data={ALL_VAR: '1'})
         n = len(queries.captured_queries)
         make(self.model)
         with CaptureQueriesContext(connections['default']) as queries:
-            self.client.get(self.changelist_path)
+            self.client.get(self.changelist_path, data={ALL_VAR: '1'})
         self.assertEqual(
             n, len(queries.captured_queries),
             msg="Number of queries for changelist depends on number of records!"
@@ -291,7 +296,7 @@ class AdminTestMethodsMixin(object):
     def test_search(self):
         with self.assertNotRaises(Exception):
             response = self.client.get(
-                self.changelist_path, data={admin.views.main.SEARCH_VAR:'Stuff'})
+                self.changelist_path, data={admin.views.main.SEARCH_VAR: 'Stuff'})
             self.assertEqual(response.status_code, 200)
 
     def test_changeform_availability(self):
@@ -331,11 +336,11 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_has_alter_bestand_permission(self):
-        # Note: _models.Datei._meta doesn't set 'alter_bestand_datei' permission
         model_admin = _admin.VideoAdmin(_models.Video, self.admin_site)
-        codename = get_permission_codename('alter_bestand', _models.Video._meta)
-        self.staff_user.user_permissions.add(
-            Permission.objects.get(codename=codename))
+        for action in ('add', 'change', 'delete'):
+            codename = get_permission_codename(action, _models.Bestand._meta)
+            self.staff_user.user_permissions.add(
+                Permission.objects.get(codename=codename))
         self.assertFalse(
             model_admin.has_alter_bestand_permission(
                 request=self.get_request(user=self.noperms_user))
@@ -371,25 +376,6 @@ class TestMIZModelAdmin(AdminTestCase):
         request = self.get_request()
         self.assertEqual(self.model_admin.get_changeform_initial_data(request), {})
 
-    def test_get_change_message_dict(self):
-        # auto created
-        obj = self.model.band.through.objects.create(
-            band=_models.Band.objects.create(band_name='Testband'),
-            datei=self.obj1
-        )
-        expected = {'name': 'Band', 'object': 'Testband'}
-        self.assertEqual(
-            self.model_admin._get_m2m_change_message_dict(obj), expected)
-
-        # not auto created
-        obj = self.model.musiker.through.objects.create(
-            musiker=_models.Musiker.objects.create(kuenstler_name='Testmusiker'),
-            datei=self.obj1
-        )
-        expected = {'name': 'Musiker', 'object': 'Testmusiker'}
-        self.assertEqual(
-            self.model_admin._get_m2m_change_message_dict(obj), expected)
-
     def test_save_model(self):
         # save_model should not update the _name of a ComputedNameModel object.
         obj = make(_models.Person, vorname='Alice', nachname='Testman')
@@ -417,7 +403,8 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_add_pk_search_field(self):
-        # Assert that a search field for the primary key is added to the search fields.
+        # Assert that a search field for the primary key is added to the search
+        # fields.
         # For primary keys that are a relation (OneToOneRelation) this should be
         # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
         test_data = [
@@ -744,7 +731,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             ausgabejahr__extra=1,
             artikel__extra=1, audio__extra=1, bestand__extra=1,
         )
-        # Only artikel should show up in the crosslinks as audio is present in the inlines.
+        # Only artikel should show up in the crosslinks as audio is present in
+        # the inlines.
         links = self.get_crosslinks(obj)
         self.assertEqual(len(links), 1)
         expected = {
@@ -772,10 +760,11 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertFalse(self.get_crosslinks(obj))
 
     def test_actions_noperms(self):
-        # Assert that certain actions are not available to user without permissions.
+        # Assert that certain actions are not available to user without
+        # permissions.
         actions = self.model_admin.get_actions(self.get_request(user=self.noperms_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'bulk_jg', 'change_bestand', 'moveto_brochure', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
@@ -786,14 +775,19 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_actions_staff_user(self):
         # Assert that certain actions are available for staff users with the
         # proper permissions.
-        for perm_name in ('change', 'alter_bestand', 'delete', 'merge'):
+        for perm_name in ('change', 'delete', 'merge'):
             # bulk_jg requires 'change' and moveto_brochure requires 'delete'
             codename = get_permission_codename(perm_name, self.model._meta)
             self.staff_user.user_permissions.add(
                 Permission.objects.get(codename=codename))
+        # Add permissions for 'change_bestand'
+        for action in ('add', 'change', 'delete'):
+            codename = get_permission_codename(action, _models.Bestand._meta)
+            self.staff_user.user_permissions.add(
+                Permission.objects.get(codename=codename))
         actions = self.model_admin.get_actions(self.get_request(user=self.staff_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'merge_records',
+            'bulk_jg', 'change_bestand', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
@@ -802,8 +796,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.assertIn(action_name, actions)
 
     def test_movetobrochure_permissions(self):
-        # moveto_brochure should require both 'delete_ausgabe' and 'add_BaseBrochure'
-        # permissions.
+        # moveto_brochure should require both 'delete_ausgabe' and
+        # 'add_BaseBrochure' permissions.
         msg_template = (
             "Action 'moveto_brochure' should not be available to "
             "users that miss the '%s' permission."
@@ -844,7 +838,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         # Assert that certain actions are available for super users.
         actions = self.model_admin.get_actions(self.get_request(user=self.super_user))
         action_names = (
-            'bulk_jg', 'add_bestand', 'moveto_brochure', 'merge_records',
+            'bulk_jg', 'change_bestand', 'moveto_brochure', 'merge_records',
             'change_status_unbearbeitet', 'change_status_inbearbeitung',
             'change_status_abgeschlossen'
         )
@@ -887,13 +881,14 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_change_status(self):
         # Integration test for the change_status stuff.
-        for action, expected_value in [
-                ('change_status_inbearbeitung', 'iB'),
-                ('change_status_abgeschlossen', 'abg'),
-                # obj1.status is 'unb' at the start, so test for 'unb' last to be
-                # able to register a change:
-                ('change_status_unbearbeitet', 'unb')
-            ]:
+        test_data = [
+            ('change_status_inbearbeitung', 'iB'),
+            ('change_status_abgeschlossen', 'abg'),
+            # obj1.status is 'unb' at the start, so test for 'unb' last to be
+            # able to register a change:
+            ('change_status_unbearbeitet', 'unb')
+        ]
+        for action, expected_value in test_data:
             request_data = {
                 'action': action,
                 admin.helpers.ACTION_CHECKBOX_NAME: self.obj1.pk,
@@ -906,6 +901,31 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.assertEqual(response.status_code, 302)
                 self.obj1.refresh_from_db()
                 self.assertEqual(self.obj1.status, expected_value)
+
+    @patch('DBentry.admin.log_change')
+    def test_change_status_logentry_error(self, mocked_log_change):
+        # Check how exceptions during the creation of the LogEntry objects
+        # are handled.
+        error_msg = "This is a test exception."
+        mocked_log_change.side_effect = ValueError(error_msg)
+
+        request = self.get_request()
+        with patch.object(self.model_admin, 'message_user') as mocked_message:
+            # An exception should not propagate:
+            with self.assertNotRaises(Exception):
+                self.model_admin._change_status(
+                    request, self.queryset, status=_models.Ausgabe.INBEARBEITUNG)
+        # An exception should not stop the updates:
+        self.assertEqual(set(self.queryset.values_list('status', flat=True)), {'iB'})
+        # The user should have been messaged about the exception:
+        self.assertTrue(mocked_message.called)
+        expected_msg = (
+            "Fehler beim Erstellen der LogEntry Objekte: \n"
+            "ValueError: This is a test exception."
+        )
+        _request, message, level = mocked_message.call_args[0]
+        self.assertEqual(level, 'ERROR')
+        self.assertEqual(message, expected_msg)
 
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1474,7 +1494,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
@@ -1690,33 +1709,32 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
         cls.obj1.veranstaltung.add(make(_models.Veranstaltung, name='Glastonbury 2004'))
 
     def test_copy_related_set(self):
-        self.model_admin.copy_related(self.obj1)
-        self.assertIn(self.band, self.obj1.band.all())
-        self.assertIn(self.musiker, self.obj1.musiker.all())
-
-    def test_reponse_add(self):
         request = self.post_request(data={'copy_related': True})
-        self.model_admin.response_add(request, self.obj1)
+        self.model_admin._copy_related(request, self.obj1)
         self.assertIn(self.band, self.obj1.band.all())
         self.assertIn(self.musiker, self.obj1.musiker.all())
 
-    def test_reponse_add_no_copy(self):
-        request = self.post_request(data={})
-        self.model_admin.response_add(request, self.obj1)
-        self.assertNotIn(self.band, self.obj1.band.all())
-        self.assertNotIn(self.musiker, self.obj1.musiker.all())
+    def test_get_fields_add(self):
+        # Assert that the 'copy_related' field is included in the add form.
+        # (this test is mainly for covering a coverage branch)
+        request = self.get_request(user=self.super_user)
+        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
+        request = self.get_request(user=self.noperms_user)
+        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
 
-    def test_reponse_change(self):
-        request = self.post_request(data={'copy_related': True})
-        self.model_admin.response_change(request, self.obj1)
-        self.assertIn(self.band, self.obj1.band.all())
-        self.assertIn(self.musiker, self.obj1.musiker.all())
-
-    def test_reponse_change_no_copy(self):
-        request = self.post_request(data={})
-        self.model_admin.response_change(request, self.obj1)
-        self.assertNotIn(self.band, self.obj1.band.all())
-        self.assertNotIn(self.musiker, self.obj1.musiker.all())
+    def test_get_fields_no_perms(self):
+        # Assert that the 'copy_related' field is removed from the change form
+        # for users that lack change permission.
+        request = self.get_request(user=self.super_user)
+        self.assertIn('copy_related', self.model_admin.get_fields(request, self.obj1))
+        request = self.get_request(user=self.noperms_user)
+        self.assertNotIn(
+            'copy_related', self.model_admin.get_fields(request, self.obj1),
+            msg= (
+                "Field 'copy_related' should not be available for users that do "
+                "not have permissions to use it."
+            )
+        )
 
     def test_veranstaltung_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -1747,10 +1765,108 @@ class TestMIZChangelist(AdminTestCase):
 
     model = _models.Genre
     model_admin_class = _admin.GenreAdmin
+    test_data_count = 1  # need at least one for the result list
+    result_list_msg = (
+        "If no filters have been applied the result list should be empty unless "
+        "ALL_VAR ('%s') is in the request parameters or the model admin does "
+        "not provide a search form." % ALL_VAR
+    )
+
+    @patch.object(MIZChangeList, 'get_queryset')
+    @patch.object(model_admin_class, 'has_search_form')
+    def test_get_result_list_ALL_VAR(self, mocked_has_search_form, mocked_get_queryset):
+        # Check that the changelist's result list for an unfiltered changelist
+        # queryset exists if ALL_VAR is present in the request.
+
+        # Mock the queryset returned by get_queryset to be unfiltered:
+        # (explicit order() to avoid RemovedInDjango31Warning about ordering)
+        mocked_get_queryset.return_value = self.model.objects.all().order_by('id')
+        # Mock the model admin to 'have a search form' to exclude the case when
+        # a model admin without a search form allows an unfiltered result list:
+        mocked_has_search_form.return_value = True
+
+        request = self.get_request(path=self.changelist_path, data={ALL_VAR: '1'})
+        changelist = self.model_admin.get_changelist_instance(request)
+        self.assertTrue(
+            changelist.result_list.exists(),
+            msg="Results should be shown if '%s' is in the request." % ALL_VAR
+        )
+        # Without ALL_VAR and with a search form, the result list should
+        # be empty:
+        request = self.get_request(path=self.changelist_path)
+        changelist = self.model_admin.get_changelist_instance(request)
+        self.assertFalse(changelist.result_list.exists(), msg=self.result_list_msg)
+
+    @patch.object(MIZChangeList, 'get_queryset')
+    @patch.object(model_admin_class, 'has_search_form')
+    def test_get_result_list_no_search_form(self, mocked_has_search_form, mocked_get_queryset):
+        # Check that the changelist's result list for an unfiltered changelist
+        # queryset exists if model admin does not provide a search form.
+
+        # Mock the queryset returned by get_queryset to be unfiltered:
+        # (explicit order() to avoid RemovedInDjango31Warning about ordering)
+        mocked_get_queryset.return_value = self.model.objects.all().order_by('id')
+
+        mocked_has_search_form.return_value = False
+        request = self.get_request(path=self.changelist_path)
+        changelist = self.model_admin.get_changelist_instance(request)
+        changelist.get_results(request)
+        self.assertTrue(
+            changelist.result_list.exists(),
+            msg=(
+                "Results should be shown if the model admin does not have a "
+                "search form."
+            )
+        )
+        # Without ALL_VAR and with a search form, the result list should
+        # be empty:
+        mocked_has_search_form.return_value = True
+        changelist = self.model_admin.get_changelist_instance(request)
+        changelist.get_results(request)
+        self.assertFalse(changelist.result_list.exists(), msg=self.result_list_msg)
+
+    @patch.object(MIZChangeList, 'get_queryset')
+    @patch.object(model_admin_class, 'has_search_form')
+    def test_get_result_list_qs_filtered(self, mocked_has_search_form, mocked_get_queryset):
+        # Assert that the changelist's result list for a *filtered* changelist
+        # queryset exists - with or without either search form or ALL_VAR.
+        # Filter the changelist's queryset in whatever way:
+        mocked_get_queryset.return_value = self.model.objects.filter(id=self.obj1.pk).order_by('id')
+
+        cases = [
+            # (has_search_form, ALL_VAR)
+            (False, False),
+            (False, True),
+            (True, False),
+            (True, True)
+        ]
+        for has_search_form, has_ALL_VAR in cases:
+            with self.subTest(has_search_form=has_search_form, has_ALL_VAR=has_ALL_VAR):
+                mocked_has_search_form.return_value = has_search_form
+                if has_ALL_VAR:
+                    request_data = {ALL_VAR: '1'}
+                else:
+                    request_data = {}
+                request = self.get_request(path=self.changelist_path, data=request_data)
+                changelist = self.model_admin.get_changelist_instance(request)
+                self.assertTrue(
+                    changelist.result_list.exists(),
+                    msg="Results should be shown if the result queryset is filtered."
+                )
+
+    def test_get_show_all_url(self):
+        # get_show_all_url should return an url with no other param other than
+        # ALL_VAR
+        request = self.get_request(self.changelist_path, data={'q': 'Beep Boop'})
+        changelist = self.model_admin.get_changelist_instance(request)
+        self.assertEqual(changelist.get_show_all_url(), '?%s=' % ALL_VAR)
 
     @patch.object(_admin.GenreAdmin, 'get_result_list_annotations')
     def test_adds_annotations(self, mocked_get_annotations):
         # Assert that list_display annotations are added.
+        # Delete the test's test data - having a non-empty queryset prompts
+        # calls to the list display methods (such as alias_string).
+        self.model.objects.all().delete()
         request = self.get_request(path=self.changelist_path)
         changelist = self.model_admin.get_changelist_instance(request)
         mocked_get_annotations.return_value = {}

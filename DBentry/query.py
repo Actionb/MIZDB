@@ -324,10 +324,10 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         ids = list(self._root_queryset.values_list('pk', flat=True))
         # Find the separator item.
         result_ids = [result_item[0] for result_item in results]
-        if not self.use_separator or  self.separator_item_id not in result_ids:
+        if not self.use_separator or self.separator_item_id not in result_ids:
             # No distinction between strong and weak results possible.
             return super().reorder_results(results)
-        sep_index = result_ids.index( self.separator_item_id)
+        sep_index = result_ids.index(self.separator_item_id)
         # Now split the results into strong and weak results and order
         # both groups individually according to the order in the root queryset.
         strong, weak = results[:sep_index], results[sep_index + 1:]
@@ -443,7 +443,7 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
                     )
                 )
         return search_results
-    
+
     def get_values_for_result(self, result):
         """
         Return the id and a name/label from the given result.

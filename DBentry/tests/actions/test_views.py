@@ -9,19 +9,18 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.test import tag
 from django.utils.translation import override as translation_override
-from django.utils.safestring import SafeText
-from django.urls import reverse
 
 import DBentry.models as _models
 from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
 from DBentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
 from DBentry.actions.views import (
-    BulkEditJahrgang, BulkAddBestand, MergeViewWizarded, MoveToBrochureBase)
+    BulkEditJahrgang, MergeViewWizarded, MoveToBrochureBase,
+    ChangeBestand
+)
 from DBentry.actions.forms import (
     MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions)
 from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
 from DBentry.factory import make
 from DBentry.sites import miz_site
 from DBentry.tests.actions.base import ActionViewTestCase
@@ -273,18 +272,17 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # Objects in this queryset have different magazines.
         queryset = self.model.objects.filter(ausgabejahr__jahr=2001)
         view = self.get_view(request, queryset=queryset)
-        view.model_admin.message_user = Mock()
-        self.assertFalse(view.action_allowed)
-
-        expected_message = (
-            'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu'
-            ' unterschiedlichen Magazinen.'
-        )
-        view.model_admin.message_user.assert_called_once_with(
-            request=request,
-            message=expected_message,
-            level=messages.ERROR
-        )
+        with patch.object(view.model_admin, 'message_user') as mocked_message:
+            self.assertFalse(view.action_allowed)
+            expected_message = (
+                'Aktion abgebrochen: Die ausgewählten Ausgaben gehören zu'
+                ' unterschiedlichen Magazinen.'
+            )
+            mocked_message.assert_called_once_with(
+                request=request,
+                message=expected_message,
+                level=messages.ERROR
+            )
 
     def test_compile_affected_objects(self):
         # result 0 0 => obj1
@@ -377,149 +375,6 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         view = self.get_view()
         self.assertTrue(hasattr(view, 'allowed_permissions'))
         self.assertEqual(view.allowed_permissions, ['change'])
-
-
-class TestBulkAddBestand(ActionViewTestCase, LoggingTestMixin):
-
-    view_class = BulkAddBestand
-    model = _models.Ausgabe
-    model_admin_class = AusgabenAdmin
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.bestand_lagerort = make(_models.Lagerort, pk=ZRAUM_ID, ort='Bestand')
-        cls.dubletten_lagerort = make(_models.Lagerort, pk=DUPLETTEN_ID, ort='Dublette')
-        mag = make(_models.Magazin, magazin_name='Testmagazin')
-
-        cls.obj1 = make(cls.model, magazin=mag)
-        cls.obj2 = make(cls.model, magazin=mag, bestand__lagerort=cls.bestand_lagerort)
-        cls.obj3 = make(cls.model, magazin=mag, bestand__lagerort=cls.dubletten_lagerort)
-        cls.obj4 = make(
-            cls.model, magazin=mag,
-            bestand__lagerort=[cls.bestand_lagerort, cls.dubletten_lagerort]
-        )
-
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
-        super().setUpTestData()
-
-    def test_compile_affected_objects(self):
-        # Assert that links to the instance's bestand objects are included.
-        def get_bestand_links(obj):
-            view_name = "admin:DBentry_%s_change" % (_models.Bestand._meta.model_name)
-            link_template = '<a href="{url}" target="_blank">{lagerort__ort}</a>'
-            template = 'Bestand: {link}'
-            for pk, lagerort__ort in obj.bestand_set.values_list('pk', 'lagerort__ort'):
-                url = reverse(view_name, args=[pk])
-                link = link_template.format(url=url, lagerort__ort=lagerort__ort)
-                yield template.format(link=link)
-
-        request = self.get_request()
-        # We are expecting the link_list to be ordered according to the order
-        # in which we created the test objects; order by 'pk'.
-        view = self.get_view(request, queryset=self.queryset.order_by('pk'))
-        link_list = view.compile_affected_objects()
-        self.assertEqual(len(link_list), 4)
-        expected = [
-            # obj1 has no bestand, no links expected
-            [],
-        ]
-        # Let the helper function add the expected links for the other objects.
-        expected.extend(
-            get_bestand_links(obj)
-            for obj in self.test_data[1:]
-        )
-
-        for i, links in enumerate(expected):
-            # The first item of every link_list is the link to the main object.
-            # The second is the sub list of affected objects.
-            with self.subTest(i=i, obj="obj%s" % (i + 1)):
-                if not links:
-                    self.assertFalse(
-                        link_list[i][1],  msg="No bestand links expected."
-                    )
-                for j, link in enumerate(links, 1):
-                    with self.subTest(link_number=str(j)):
-                        self.assertIn(link, link_list[i][1])
-
-    @patch("DBentry.actions.views.link_list")
-    def test_build_message(self, mocked_link_list):
-        # Assert that build_message creates a SafeText string.
-        mocked_link_list.return_value = "Beep, Boop"
-        mocked_fkey = Mock()
-        mocked_fkey.name = "whatever"
-        message = self.get_view()._build_message(
-            lagerort_instance="Attic",
-            bestand_instances=[Mock(), Mock()],
-            fkey=mocked_fkey,  # passed to mocked_link_list
-        )
-        self.assertIsInstance(message, SafeText)
-        self.assertEqual(
-            message,
-            "Attic-Bestand zu diesen 2 Ausgaben hinzugefügt: Beep, Boop"
-        )
-
-    @tag('logging')
-    def test_perform_action(self):
-        # Record the bestand of the objects before the action
-        old_bestand1 = list(self.obj1.bestand_set.values_list('pk', flat=True))
-        old_bestand2 = list(self.obj2.bestand_set.values_list('pk', flat=True))
-        old_bestand3 = list(self.obj3.bestand_set.values_list('pk', flat=True))
-        old_bestand4 = list(self.obj4.bestand_set.values_list('pk', flat=True))
-
-        request = self.get_request()
-        view = self.get_view(request=request)
-        view.perform_action(
-            {'bestand': self.bestand_lagerort, 'dublette': self.dubletten_lagerort})
-
-        # obj1 has no bestand at all; this should add a 'bestand' bestand (hurrr)
-        all_bestand = list(self.obj1.bestand_set.values_list('lagerort', flat=True))
-        expected = [self.bestand_lagerort.pk]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj1.bestand_set.exclude(pk__in=old_bestand1)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj1, new_bestand.first())
-
-        # obj2 has one 'bestand' bestand; this should add a dublette
-        all_bestand = list(self.obj2.bestand_set.values_list('lagerort', flat=True))
-        expected = [self.bestand_lagerort.pk, self.dubletten_lagerort.pk]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj2.bestand_set.exclude(pk__in=old_bestand2)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj2, new_bestand.first())
-
-        # obj3 has one dubletten bestand; this should add a bestand
-        all_bestand = list(self.obj3.bestand_set.values_list('lagerort', flat=True))
-        expected = [self.dubletten_lagerort.pk, self.bestand_lagerort.pk]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj3.bestand_set.exclude(pk__in=old_bestand3)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj3, new_bestand.first())
-
-        # obj4 has both bestand and dubletten bestand; this should add a dublette
-        all_bestand = list(self.obj4.bestand_set.values_list('lagerort', flat=True))
-        expected = [
-            self.bestand_lagerort.pk, self.dubletten_lagerort.pk,
-            self.dubletten_lagerort.pk
-        ]
-        self.assertEqual(all_bestand, expected)
-        new_bestand = self.obj4.bestand_set.exclude(pk__in=old_bestand4)
-        self.assertEqual(new_bestand.count(), 1)
-        self.assertLoggedAddition(self.obj4, new_bestand.first())
-
-    def test_get_initial(self):
-        view = self.get_view()
-        initial = view.get_initial()
-
-        self.assertTrue('bestand' in initial)
-        self.assertEqual(initial.get('bestand'), self.bestand_lagerort)
-        self.assertTrue('dublette' in initial)
-        self.assertEqual(initial.get('dublette'), self.dubletten_lagerort)
-
-    def test_permissions_required(self):
-        # Assert that specific permissions are required to access this action.
-        view = self.get_view()
-        self.assertTrue(hasattr(view, 'allowed_permissions'))
-        self.assertEqual(view.allowed_permissions, ['alter_bestand'])
 
 
 class TestMergeViewWizardedAusgabe(ActionViewTestCase):
@@ -1201,3 +1056,182 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)
+
+class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
+
+    view_class = ChangeBestand
+    model = _models.Ausgabe
+    model_admin_class = AusgabenAdmin
+    action_name = 'change_bestand'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.lagerort1 = make(_models.Lagerort)
+        cls.lagerort2 = make(_models.Lagerort)
+        mag = make(_models.Magazin, magazin_name='Testmagazin')
+
+        cls.obj1 = make(cls.model, magazin=mag)
+        super().setUpTestData()
+
+    def get_request_data(self, **kwargs):
+        return {
+            'action': 'change_bestand',
+            helpers.ACTION_CHECKBOX_NAME: '%s' % self.obj1.pk,
+            **kwargs
+        }
+
+    def get_form_data(self, parent_obj, *bestand_objects):
+        prefix = 'bestand_set-%s' % parent_obj.pk
+        management_form_data = {
+            prefix + '-TOTAL_FORMS': len(bestand_objects),
+            prefix + '-INITIAL_FORMS': parent_obj.bestand_set.count(),
+            prefix + '-MIN_NUM_FORMS': 0,
+            prefix + '-MAX_NUM_FORMS': 1000,
+        }
+        form_data = {}
+        for i, (bestand_obj_pk, lagerort_pk) in enumerate(bestand_objects):
+            form_prefix = prefix + '-%s' % i
+            form_data.update({
+                form_prefix + '-ausgabe': parent_obj.pk,
+                form_prefix + '-signatur': bestand_obj_pk or '',
+                form_prefix + '-lagerort': lagerort_pk or ''
+            })
+        return {**management_form_data, **form_data}
+
+    def test_success_add(self):
+        # Assert that Bestand instances are added to obj1's bestand_set.
+        response = self.client.post(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **self.get_form_data(self.obj1, (None, self.lagerort1.pk))
+            },
+            follow=False
+        )
+        self.assertEqual(
+            response.status_code, 302,
+            msg="Expected a redirect back to the changelist."
+        )
+        self.assertEqual(self.obj1.bestand_set.count(), 1)
+        b = self.obj1.bestand_set.get()
+        self.assertEqual(b.lagerort, self.lagerort1)
+
+    def test_success_update(self):
+        # Assert that Bestand instances in obj1's bestand_set can be updated.
+        b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
+        b.save()
+        response = self.client.post(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **self.get_form_data(self.obj1, (b.pk, self.lagerort2.pk))
+            },
+            follow=False
+        )
+        self.assertEqual(
+            response.status_code, 302,
+            msg="Expected a redirect back to the changelist."
+        )
+        self.assertEqual(self.obj1.bestand_set.count(), 1)
+        new_bestand = self.obj1.bestand_set.get()
+        self.assertEqual(new_bestand.lagerort, self.lagerort2)
+
+    def test_success_delete(self):
+        # Test that Bestand relations can be deleted:
+        b = _models.Bestand(lagerort=self.lagerort1, ausgabe=self.obj1)
+        b.save()
+        form_data = self.get_form_data(self.obj1, (b.pk, self.lagerort1.pk))
+        form_data['bestand_set-%s-0-DELETE' % self.obj1.pk] = True
+        response = self.client.post(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **form_data
+            },
+            follow=False
+        )
+        self.assertEqual(
+            response.status_code, 302,
+            msg="Expected a redirect back to the changelist."
+        )
+        self.assertFalse(self.obj1.bestand_set.exists())
+
+    def test_post_stops_on_invalid(self):
+        # A post request with invalid formsets should not post successfully,
+        # i.e. not return back to the changelist.
+        # Two formsets, of which the second has an invalid lagerort:
+        form_data = self.get_form_data(
+            self.obj1, (None, self.lagerort1.pk), (None, -1))
+        response = self.client.post(
+            path=self.changelist_path,
+            data={**self.get_request_data(action_confirmed='Yes'), **form_data},
+            follow=False
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, self.view_class.template_name)
+
+    def test_get_bestand_formset(self):
+        # Check that get_bestand_formset returns the expected formset & inline.
+        self.obj1.bestand_set.create(lagerort=self.lagerort1)
+        request = self.post_request(
+            path=self.changelist_path,
+            data=self.get_request_data()
+        )
+        view = self.get_view(request)
+        formset, inline = view.get_bestand_formset(request, self.obj1)
+        # Check some attributes of the formset/inline.
+        self.assertEqual(inline.model, _models.Bestand)
+        self.assertEqual(formset.instance,  self.obj1)
+        self.assertEqual(list(formset.queryset.all()), list(self.obj1.bestand_set.all()))
+
+    def test_get_bestand_formset_form_data(self):
+        # Assert that get_bestand_formset only adds formset data if the
+        # submit keyword ('action_confirmed') is present in the request.
+        request = self.post_request(
+            path=self.changelist_path,
+            data=self.get_request_data()
+        )
+        view = self.get_view(request)
+        formset, inline = view.get_bestand_formset(request, self.obj1)
+        self.assertFalse(formset.data)
+        request = self.post_request(
+            path=self.changelist_path,
+            data={
+                **self.get_request_data(action_confirmed='Yes'),
+                **self.get_form_data(self.obj1, (None, self.lagerort1.pk))
+            }
+        )
+        view = self.get_view(request)
+        formset, inline = view.get_bestand_formset(request, self.obj1)
+        self.assertTrue(formset.data)
+
+    def test_media(self):
+        # Assert that the formset's media is added to the context.
+        other = make(self.model)
+        response = self.client.post(
+            path=self.changelist_path,
+            data=self.get_request_data(**{
+                # Use a queryset with two objects to check the coverage on that
+                # 'media_updated condition'.
+                helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, other.pk]
+            }),
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('media', response.context)
+        from django.conf import settings
+        self.assertIn(
+            'admin/js/inlines%s.js' % ('' if settings.DEBUG else '.min'),
+            response.context['media']._js
+        )
+
+    def test_get_bestand_formset_no_inline(self):
+        # get_bestand_formset should throw an error when attempting to get the
+        # Bestand inline for a model_admin_class that doesn't have such an
+        # inline.
+        mocked_inlines = Mock(return_value=[])
+        with patch.object(self.model_admin, 'get_formsets_with_inlines', new=mocked_inlines):
+            with self.assertRaises(ValueError):
+                request = self.get_request()
+                view = self.get_view(request=request)
+                view.get_bestand_formset(request, None)

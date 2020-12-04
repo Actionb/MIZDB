@@ -30,7 +30,7 @@ class MIZAdminSite(admin.AdminSite):
 
     def check(self, app_configs):
         errors = super().check(app_configs)
-        for tool, url_name, index_label, _superuser_only in self.tools:
+        for tool, url_name, _index_label, _superuser_only in self.tools:
             try:
                 reverse(url_name)
             except NoReverseMatch as e:
@@ -97,7 +97,7 @@ class MIZAdminSite(admin.AdminSite):
 
         # Divide the models into their categories.
         for m in model_list:
-            model_admin =  utils.get_model_admin_for_model(
+            model_admin = utils.get_model_admin_for_model(
                 m['object_name'], self)
             model_category = model_admin.get_index_category()
             if model_category not in categories:

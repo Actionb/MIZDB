@@ -1,6 +1,7 @@
 from unittest import mock
 from urllib.parse import urlparse
 
+from django.contrib.admin.views.main import ALL_VAR
 from django.core import checks
 from django.http.request import QueryDict
 from django.urls import reverse
@@ -355,7 +356,7 @@ class TestSearchFormChangelist(AdminTestCase):
 
     def test_changelist(self):
         # Assert that the changelist can be created without errors.
-        response = self.client.get(self.changelist_path)
+        response = self.client.get(self.changelist_path, data={ALL_VAR: ''})
         self.assertEqual(response.status_code, 200)
         changelist = response.context['cl']
         self.assertEqual(len(changelist.result_list), 3)

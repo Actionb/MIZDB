@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from functools import partial
 
 from django.forms import widgets
@@ -40,26 +41,37 @@ class TestEasyWidgetWrapper(MyTestCase):
         self.assertEqual(url, "/admin/DBentry/ausgabe/__fk__/delete/")
 
     def test_get_context_can_change(self):
-        context = self.widget.get_context('Beep', ['1'], {'id': 1})
-        self.assertTrue(context.get('can_change_related', False))
-        self.assertEqual(
-            context.get('change_related_template_url'),
-            "/admin/DBentry/ausgabe/__fk__/change/"
-        )
+        with patch.object(self.widget, 'can_change_related', True):
+            context = self.widget.get_context('Beep', ['1'], {'id': 1})
+            self.assertTrue(context.get('can_change_related', False))
+            self.assertEqual(
+                context.get('change_related_template_url'),
+                "/admin/DBentry/ausgabe/__fk__/change/"
+            )
+        with patch.object(self.widget, 'can_change_related', False):
+            context = self.widget.get_context('Beep', ['1'], {'id': 1})
+            self.assertNotIn('can_change_related', context)
 
     def test_get_context_can_add(self):
-        context = self.widget.get_context('Beep', ['1'], {'id': 1})
-        self.assertTrue(context.get('can_add_related', False))
-        self.assertEqual(context.get('add_related_url'), "/admin/DBentry/ausgabe/add/")
+        with patch.object(self.widget, 'can_add_related', True):
+            context = self.widget.get_context('Beep', ['1'], {'id': 1})
+            self.assertTrue(context.get('can_add_related', False))
+            self.assertEqual(context.get('add_related_url'), "/admin/DBentry/ausgabe/add/")
+        with patch.object(self.widget, 'can_add_related', False):
+            context = self.widget.get_context('Beep', ['1'], {'id': 1})
+            self.assertNotIn('can_add_related', context)
 
     def test_get_context_can_delete(self):
-        self.widget.can_delete_related = True
-        context = self.widget.get_context('Beep', ['1'], {'id': 1})
-        self.assertTrue(context.get('can_delete_related', False))
-        self.assertEqual(
-            context.get('delete_related_template_url'),
-            "/admin/DBentry/ausgabe/__fk__/delete/"
-        )
+        with patch.object(self.widget, 'can_delete_related', True):
+            context = self.widget.get_context('Beep', ['1'], {'id': 1})
+            self.assertTrue(context.get('can_delete_related', False))
+            self.assertEqual(
+                context.get('delete_related_template_url'),
+                "/admin/DBentry/ausgabe/__fk__/delete/"
+            )
+        with patch.object(self.widget, 'can_delete_related', False):
+            context = self.widget.get_context('Beep', ['1'], {'id': 1})
+            self.assertNotIn('can_delete_related', context)
 
     def test_wrapper_includes_relatedobject_js(self):
         # Assert that the wrapped widget includes the RelatedObjectLookups.js

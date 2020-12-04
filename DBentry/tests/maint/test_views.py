@@ -298,8 +298,9 @@ class TestUnusedObjectsView(ViewTestCase):
 
         items = self.get_view(self.get_request()).build_items(relations, queryset)
         self.assertEqual(len(items), 2)
-        # Sort via the links to the change pages (lower ID should come first):
-        unused, used_once = sorted(items, key=lambda tpl: tpl[0])
+        # Sorting by "model_name (count)" since we know count is either 0 or 1:
+        # (sorting by url will sort an url with pk="10" before one with pk="9")
+        unused, used_once = sorted(items, key=lambda tpl: tpl[1])
         url = reverse("admin:DBentry_genre_change", args=[self.unused.pk])
         self.assertIn(url, unused[0])
         self.assertIn("Artikel (0)", unused[1])

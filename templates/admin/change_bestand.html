@@ -1,0 +1,10 @@
+{% extends "admin/action_confirmation.html" %}
+{% load admin_urls %}
+
+{% block selection_form %}
+    {% for obj_url, formset in formsets %}
+        <p>Bestände von {{ object_name }} {{ obj_url }} </a></p>
+        {% include formset.opts.template with inline_admin_formset=formset%}
+        <hr style="background-color:black; margin-bottom: 10px;">
+    {% endfor %}
+{% endblock selection_form %}

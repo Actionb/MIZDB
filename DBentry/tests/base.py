@@ -5,7 +5,6 @@ from importlib import import_module
 from unittest.mock import Mock
 
 from django import forms
-from django.contrib.admin import helpers
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.conf import settings
@@ -194,7 +193,7 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        super(AdminTestCase, cls).setUpTestData()
+        super().setUpTestData()
 
         if not cls.changelist_path:
             cls.changelist_path = reverse(
@@ -206,22 +205,8 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
             cls.add_path = reverse('admin:DBentry_{}_add'.format(cls.model._meta.model_name))
 
     def setUp(self):
-        super(AdminTestCase, self).setUp()
+        super().setUp()
         self.model_admin = self.model_admin_class(self.model, self.admin_site)
-
-    def get_action_func(self, action_name):
-        for action in self.model_admin.actions:
-            func, name, desc = self.model_admin.get_action(action)
-            if name == self.action:
-                return func
-
-    def call_action(self, action_name, objs, data=None):
-        if isinstance(objs, QuerySet):
-            objs = objs.values_list('pk', flat=True)
-        request_data = {'action': action_name, helpers.ACTION_CHECKBOX_NAME: objs}
-        for other_dict in data or []:
-            request_data.update(other_dict)
-        return self.client.post(self.changelist_path, data=request_data)
 
     def get_changelist(self, request):
         return self.model_admin.get_changelist_instance(request)

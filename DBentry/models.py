@@ -228,9 +228,6 @@ class Ausgabe(ComputedNameModel):
         verbose_name = 'Ausgabe'
         verbose_name_plural = 'Ausgaben'
         ordering = ['magazin']
-        permissions = [
-            ('alter_bestand_ausgabe', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
     @classmethod
     def _get_name(cls, **data):
@@ -417,8 +414,10 @@ class Magazin(BaseModel):
     magazin_name = models.CharField('Magazin', max_length=200)
     ausgaben_merkmal = models.CharField(
         'Ausgaben Merkmal', max_length=8, blank=True, choices=MERKMAL_CHOICES,
-        help_text=('Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die Darstellung der '
-            'Ausgaben in der Änderungsliste.')
+        help_text=(
+            'Das dominante Merkmal der Ausgaben. Diese Angabe bestimmt die '
+            'Darstellung der Ausgaben in der Änderungsliste.'
+        )
     )
     fanzine = models.BooleanField('Fanzine', default=False)
     issn = ISSNField(
@@ -684,9 +683,6 @@ class Buch(BaseModel):
         ordering = ['titel']
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
-        permissions = [
-            ('alter_bestand_buch', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
     def __str__(self):
         return str(self.titel)
@@ -776,9 +772,6 @@ class Audio(BaseModel):
         ordering = ['titel']
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
-        permissions = [
-            ('alter_bestand_audio', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
     def __str__(self):
         return str(self.titel)
@@ -830,9 +823,6 @@ class Bildmaterial(BaseModel):
         ordering = ['titel']
         verbose_name = 'Bild Material'
         verbose_name_plural = 'Bild Materialien'
-        permissions = [
-            ('alter_bestand_bildmaterial', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
 
 class Bildreihe(BaseModel):
@@ -884,9 +874,6 @@ class Dokument(BaseModel):
         ordering = ['titel']
         verbose_name = 'Dokument'
         verbose_name_plural = 'Dokumente'
-        permissions = [
-            ('alter_bestand_dokument', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
 
 class Memorabilien(BaseModel):
@@ -912,9 +899,6 @@ class Memorabilien(BaseModel):
         verbose_name = 'Memorabilia'
         verbose_name_plural = 'Memorabilien'
         ordering = ['titel']
-        permissions = [
-            ('alter_bestand_memorabilien', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
 
 class Spielort(BaseModel):
@@ -964,9 +948,6 @@ class Technik(BaseModel):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'
         ordering = ['titel']
-        permissions = [
-            ('alter_bestand_technik', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
 
 class Veranstaltung(BaseModel):
@@ -1072,9 +1053,6 @@ class Video(BaseModel):
         verbose_name = 'Video Material'
         verbose_name_plural = 'Video Materialien'
         ordering = ['titel']
-        permissions = [
-            ('alter_bestand_video', 'Aktion: Bestand/Dublette hinzufügen.'),
-        ]
 
 
 class VideoMedium(BaseModel):
@@ -1215,7 +1193,7 @@ class Bestand(BaseModel):
             if field.related_model._meta.object_name in ('Lagerort', 'Provenienz'):
                 continue
             related_obj = getattr(self, field.name)
-            if  related_obj:
+            if related_obj:
                 if related_obj._meta.object_name == 'BaseBrochure':
                     # Handle the multiple inheritance stuff:
                     related_obj = related_obj.resolve_child()
@@ -1346,7 +1324,7 @@ class Brochure(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
 
@@ -1365,7 +1343,7 @@ class Kalender(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
         verbose_name_plural = 'Programmhefte'
 
@@ -1392,6 +1370,6 @@ class Katalog(BaseBrochure):
         'bemerkungen': 'Bemerkungen'
     }
 
-    class Meta:
+    class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'

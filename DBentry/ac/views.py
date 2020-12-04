@@ -6,11 +6,11 @@ from dal import autocomplete
 
 from DBentry import models as _models
 from DBentry.ac.creator import Creator
-from DBentry.logging import LoggingMixin
-from DBentry.utils import get_model_from_string
+from DBentry.utils.models import get_model_from_string
+from DBentry.utils.admin import log_addition
 
 
-class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
+class ACBase(autocomplete.Select2QuerySetView):
     """Base view for the autocomplete views of the DBentry app."""
 
     def dispatch(self, *args, **kwargs):
@@ -75,7 +75,7 @@ class ACBase(autocomplete.Select2QuerySetView, LoggingMixin):
         """Create an object given a text."""
         obj = self.model.objects.create(**{self.create_field: text})
         if obj and self.request:
-            self.log_addition(obj)
+            log_addition(self.request.user.pk, obj)
         return obj
 
     def get_queryset(self):

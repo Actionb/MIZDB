@@ -202,7 +202,7 @@ class AdminSearchFormMixin(object):
             for field in utils.get_model_fields(self.model, base=False, foreign=True, m2m=True)
         ]
         for field_path in self.search_form_kwargs.get('fields', []):
-            msg = "Ignored search form field: '{field}'. %s".format( field=field_path)
+            msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
             try:
                 search_utils.get_dbfield_from_path(self.model, field_path)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
@@ -210,7 +210,8 @@ class AdminSearchFormMixin(object):
             else:
                 try:
                     rel_fields.remove(field_path.split('__')[0])
-                except:
+                except ValueError:
+                    # The first part of field_path is not in the rel_fields.
                     pass
         if rel_fields:
             errors.append(
