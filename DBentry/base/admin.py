@@ -370,6 +370,18 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         """
         return
 
+    def response_action(self, request, queryset):
+        # Actions are called with the queryset returned by the changelist's
+        # get_queryset() method. Any additional annotations provided by
+        # get_result_list_annotations will not be included as these are added
+        # by changelist.get_results().
+        # If an annotation is part of the queryset ordering, but the annotation
+        # was not added to the queryset, an iteration over the queryset will
+        # fail. To avoid this from occurring, add the annotations to the
+        # action's queryset.
+        queryset = queryset.annotate(**self.get_result_list_annotations() or {})
+        return super().response_action(request, queryset)
+
 
 class BaseInlineMixin(object):
     """
