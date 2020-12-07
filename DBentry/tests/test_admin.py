@@ -7,11 +7,10 @@ from django.contrib import admin, contenttypes
 from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User, Permission
-from django.core import checks
+from django.core import checks, exceptions
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.translation import override as translation_override
-
 
 import DBentry.admin as _admin
 import DBentry.models as _models
@@ -927,6 +926,18 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(level, 'ERROR')
         self.assertEqual(message, expected_msg)
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -1364,6 +1375,18 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
             'Testband, Alice Tester'
         )
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
 
@@ -1493,6 +1516,18 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
             'Led Zeppelin, Robert Plant'
         )
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
@@ -1535,6 +1570,18 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
     exclude_expected = ['genre', 'schlagwort']
     search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
@@ -1556,6 +1603,18 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         z_index = none_fieldset_options['fields'].index('zusammenfassung')
         self.assertTrue(art_index < z_index)
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KalenderAdmin
@@ -1566,6 +1625,18 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
     search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
+
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
 @skip("Unfinished model/ModelAdmin")
@@ -1579,6 +1650,18 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 @skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1591,6 +1674,18 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
 
 @skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1602,6 +1697,18 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'veranstaltung'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
+
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1619,6 +1726,18 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_kuenstler_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.kuenstler_string(obj), 'Led Zeppelin, Robert Plant')
+
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1742,6 +1861,18 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
             self.model_admin.veranstaltung_string(obj),
             'Glastonbury 2004, Woodstock 1969'
         )
+
+    def test_action_change_bestand(self):
+        # Check that the user can navigate to the 'change_bestand' view.
+        request_data = {
+            'action': 'change_bestand',
+            admin.helpers.ACTION_CHECKBOX_NAME: str(self.obj1.pk),
+            'follow': True
+        }
+        with self.assertNotRaises(exceptions.FieldError):
+            response = self.client.post(path=self.changelist_path, data=request_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
 class TestAuthAdminMixin(TestCase):
