@@ -25,16 +25,29 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
             reverse_kwargs['create_field'] = self.model.create_field
         return reverse(self.path, kwargs=reverse_kwargs)
 
+    def get_create_field(self, model):
+        return getattr(model, 'create_field', None)
+
     def get_view(
             self, request=None, args=None, kwargs=None, model=None,
-            create_field=None, forwarded=None, q=None
+            create_field=None, forwarded=None, q=''
         ):
         # DBentry.ac.views behave slightly different in their as_view() method
         view = super(ACViewTestCase, self).get_view(request, args, kwargs)
-        view.model = model or self.model
-        view.create_field = create_field or self.create_field
-        view.forwarded = forwarded or {}
-        view.q = q or ''
+        # The request data will set some of the values - then overwrite/extend
+        # them with the passed in arguments.
+        if model:
+            view.model = model
+        elif view.model is None:
+            view.model = self.model
+        if create_field:
+            view.create_field = create_field
+        elif view.create_field is None:
+            view.create_field = self.get_create_field(view.model)
+        if not getattr(view, 'forwarded', None):
+            view.forwarded = forwarded or {}
+        if not getattr(view, 'q', None):
+            view.q = q
         return view
 
 
@@ -147,3 +160,11 @@ class ACViewTestMethodMixin(object):
         if view.has_create_field():
             obj = view.create_object('Boop')
             self.assertLoggedAddition(obj)
+
+    def test_create_object_strip(self):
+        # Assert that the input is stripped for object creation:
+        request = self.get_request()
+        view = self.get_view(request)
+        if view.has_create_field():
+            obj = view.create_object('   Boop\n')
+            self.assertEqual(getattr(obj, view.create_field), 'Boop')

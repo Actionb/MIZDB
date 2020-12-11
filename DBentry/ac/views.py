@@ -73,6 +73,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def create_object(self, text):
         """Create an object given a text."""
+        text = text.strip()
         obj = self.model.objects.create(**{self.create_field: text})
         if obj and self.request:
             log_addition(self.request.user.pk, obj)
@@ -231,6 +232,7 @@ class ACCreateable(ACBase):
 
     def create_object(self, text, creator=None):
         """Create a model instance from 'text' and save it to the database."""
+        text = text.strip()
         if self.has_create_field():
             return super().create_object(text)
         creator = creator or self.creator
