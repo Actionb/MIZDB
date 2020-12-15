@@ -118,6 +118,16 @@ class Band(BaseModel):
     musiker = models.ManyToManyField('Musiker')
     orte = models.ManyToManyField('Ort')
 
+    search = SearchVectorField(
+        columns=[
+            WeightedColumn('band_name', 'A'),
+            WeightedColumn('beschreibung', 'B')
+        ],
+        # NOTE: language is per SearchVectorField, not per column!
+        # 'beschreibung' needs stemming, but band_name doesn't!
+        language='simple',
+        blank=True, null=True, editable=False)
+
     create_field = 'band_name'
     name_field = 'band_name'
     primary_search_fields = ['band_name']
