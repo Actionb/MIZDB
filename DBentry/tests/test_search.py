@@ -1,4 +1,5 @@
-from django.contrib.postgres.search import SearchVector
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+from django.db.models import F, Value, FloatField
 
 from DBentry import models as _models
 from DBentry.factory import make
@@ -17,6 +18,16 @@ from DBentry.tests.base import DataTestCase
 #       => 'The Beatles' found by 'Th'
 #   - should enable finding "Rock 'n' Roll" from "rock n roll"
 #   - trigram support
+#   - special cases: umlaute, ß, quotation marks and nickname markers: ",',(,),',"
+#   - multiple words connected by AND? (doesn't the autocomplete partial match with OR??)
+#   - languages (for both: SearchVectorField and SearchQuery)
+
+
+# Other:
+# TODO: SearchQuery with 'websearch' search_type argument: search like on google, etc.
+#       - requires Django 3.1 (which requires Python > 3.5)
+#       - requires Postgres 11 (Debian 11 Bullseye or install manually)
+# NOTE: Ranking requires consulting the tsvector of each match: -> add a SearchVectorField column
 
 class TestSearch(DataTestCase):
 
@@ -39,8 +50,10 @@ class TestSearch(DataTestCase):
     def search(self, q, qs=None):
         if qs is None:
             qs = self.queryset
-#        return qs.find(q)
-        return qs.annotate(search=self.get_search_vector()).filter(search=q)
+        if isinstance(q, str):
+            q = SearchQuery(q)
+        rank = SearchRank(F('search'), q)
+        return qs.annotate(rank=rank).filter(search=q).order_by('-rank', 'band_name')
 
     def test_unaccent(self):
         # Assert that search uses unaccent.
@@ -95,18 +108,70 @@ class TestSearch(DataTestCase):
         self.assertTrue(results)
         self.assertIn(obj, results)
 
-    def test_rank(self):
-        # Assert that the results are ranked according to:
-        # exact matches -> startswith matches -> contains matches
-        contains = make(self.model, band_name='Thesoundstuff')
+    def test_partial_match(self):
+        obj = make(self.model, band_name='Soundgarden')
+        query = SearchQuery('Sound:*', search_type='raw')
+        results=self.search(query, qs=obj.qs())
+        self.assertTrue(results)
+        self.assertIn(obj, results)
+
+    def test_exact(self):
+        # Assert that exact matches come first:
+        make(self.model, band_name='Soundgarden')
+        make(self.model, band_name='Garden Sound')
+        make(self.model, band_name='Led Zeppelin')
         exact = make(self.model, band_name='Sound')
-        startswith = make(self.model, band_name='Soundgarden')
-        results = self.search(
-            'Sound',
-            qs=self.model.objects.filter(id__in=[contains.pk, exact.pk, startswith.pk])
+        queryset = self.model.objects
+        results_exact = (
+            queryset.filter(band_name='Sound')
+            .annotate(rank=Value(value=1, output_field=FloatField()))
         )
-        self.assertEqual(results.count(), 3)
-#        self.assertIn(exact, results)
-#        self.assertIn(startswith, results)
-#        self.assertIn(contains, results)
-        self.assertEqual(list(results), [exact, startswith, contains])
+        results_fts = self.search(
+            SearchQuery('Sound:*', search_type='raw'),
+            qs=queryset.exclude(id__in=results_exact.values_list('id', flat=True))
+        )
+        results = results_exact.union(results_fts).order_by('-rank', 'band_name')
+        self.assertIn(exact, results)
+        self.assertEqual(results[0], exact)
+
+import time
+from unittest import skip
+@skip("Nah")
+class TestBenchmark(DataTestCase):
+
+    model = _models.Band
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.test_data = [make(cls.model, band_name='Led Zeppelin')]
+        for i in range(10000):
+            make(cls.model)
+        super().setUpTestData()
+
+    def print_times(self, times, desc):
+        template = '\n{desc}\navg:\t{avg!r:.6}\tmin:\t{min!r:.6}\tmax:\t{max!r:.6}'
+        format_kwargs = {
+            'desc': desc,
+            'avg': sum(times)/len(times),
+            'min': min(times),
+            'max': max(times)
+        }
+        print(template.format(**format_kwargs))
+
+    def test_fts(self):
+        times = []
+        for i in range(100):
+            start = time.perf_counter()
+            qs = self.model.objects.filter(search=SearchQuery('Led:*', search_type='raw'))
+            self.assertIn(self.obj1, qs)
+            times.append(time.perf_counter() - start)
+        self.print_times(times, 'FTS')
+
+    def test_find(self):
+        times = []
+        for i in range(100):
+            start = time.perf_counter()
+            qs = self.model.objects.find('Led')
+            self.assertIn((self.obj1.pk, 'Led Zeppelin'), qs)
+            times.append(time.perf_counter() - start)
+        self.print_times(times, 'FIND')
