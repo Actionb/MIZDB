@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'DBentry.db',
         'NAME': 'mizdb',
         'USER': 'mizdb_user',
         'PASSWORD': 'm!zdb_2017',

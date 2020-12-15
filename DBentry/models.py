@@ -2,6 +2,8 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from tsvector_field import SearchVectorField, WeightedColumn
+
 import DBentry.m2m as _m2m
 from DBentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel,
