@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv', 'testserver']
 # Application definition
 
 INSTALLED_APPS = [
-    'DBentry.apps.DbentryConfig',
+    'dbentry.apps.DbentryConfig',
     'dal',
     'dal_select2',
     'django.contrib.admin',

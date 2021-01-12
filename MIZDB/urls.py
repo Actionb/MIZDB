@@ -19,15 +19,15 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
 
-from DBentry.sites import miz_site
+from dbentry.sites import miz_site
 
 urlpatterns = [
     path('admin/', miz_site.urls),
-    path('admin/', include('DBentry.urls')),
+    path('admin/', include('dbentry.urls')),
     path('__debug__/', include(debug_toolbar.urls))
 ]
 
 if settings.DEBUG:
     urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler403 = 'DBentry.views.MIZ_permission_denied_view'
+handler403 = 'dbentry.views.MIZ_permission_denied_view'
