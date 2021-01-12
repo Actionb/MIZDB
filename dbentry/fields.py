@@ -9,7 +9,7 @@ from django.db import models
 from django.forms import widgets, fields
 from django.utils import formats
 
-from DBentry.validators import ISSNValidator, ISBNValidator, EANValidator
+from dbentry.validators import ISSNValidator, ISBNValidator, EANValidator
 
 
 class YearField(models.IntegerField):

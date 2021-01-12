@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0011_remove_video_tracks'),
+        ('dbentry', '0011_remove_video_tracks'),
     ]
 
     operations = [
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='audio',
             name='medium',
-            field=models.ForeignKey(blank=True, help_text='Format des Speichermediums.', null=True, on_delete=django.db.models.deletion.PROTECT, to='DBentry.AudioMedium', verbose_name='Speichermedium'),
+            field=models.ForeignKey(blank=True, help_text='Format des Speichermediums.', null=True, on_delete=django.db.models.deletion.PROTECT, to='dbentry.AudioMedium', verbose_name='Speichermedium'),
         ),
         migrations.AlterField(
             model_name='audio',
@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='video',
             name='medium',
-            field=models.ForeignKey(blank=True, help_text='Format des Speichermediums.', null=True, on_delete=django.db.models.deletion.PROTECT, to='DBentry.VideoMedium', verbose_name='Speichermedium'),
+            field=models.ForeignKey(blank=True, help_text='Format des Speichermediums.', null=True, on_delete=django.db.models.deletion.PROTECT, to='dbentry.VideoMedium', verbose_name='Speichermedium'),
         ),
         migrations.AlterField(
             model_name='video',

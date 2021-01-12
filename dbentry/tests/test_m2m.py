@@ -1,6 +1,6 @@
-import DBentry.m2m as _m2m
+import dbentry.m2m as _m2m
 
-from DBentry.tests.base import DataTestCase
+from dbentry.tests.base import DataTestCase
 
 
 class TestM2mAudioMusiker(DataTestCase):

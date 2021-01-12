@@ -11,10 +11,10 @@ from django.db import models, transaction
 from django.db.models import Count, Min, Max
 from django.db.models.constants import LOOKUP_SEP
 
-from DBentry.query import (
+from dbentry.query import (
     BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
 )
-from DBentry.utils import leapdays, is_iterable
+from dbentry.utils import leapdays, is_iterable
 
 
 class MIZQuerySet(models.QuerySet):

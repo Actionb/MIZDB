@@ -1,10 +1,10 @@
 from unittest.mock import patch
 
-from DBentry import models as _models, admin as _admin
+from dbentry import models as _models, admin as _admin
 from django.db.utils import IntegrityError
-from DBentry.factory import make
-from DBentry.tests.base import AdminTestCase
-from DBentry.utils import copyrelated as utils
+from dbentry.factory import make
+from dbentry.tests.base import AdminTestCase
+from dbentry.utils import copyrelated as utils
 
 
 class TestCopyRelated(AdminTestCase):
@@ -74,7 +74,7 @@ class TestCopyRelated(AdminTestCase):
         with self.assertNumQueries(0):
             utils.copy_related_set(request, self.obj1, 'veranstaltung__reihe')
 
-    @patch('DBentry.utils.copyrelated.create_logentry')
+    @patch('dbentry.utils.copyrelated.create_logentry')
     def test_logentry_error(self, mocked_logentry):
         # The user should be messaged about an error during the LogEntry
         # creation, but the copy process must finish undisturbed.

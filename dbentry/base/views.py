@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 
 from formtools.wizard.views import SessionWizardView
 
-from DBentry.sites import miz_site
+from dbentry.sites import miz_site
 
 
 class MIZAdminMixin(object):

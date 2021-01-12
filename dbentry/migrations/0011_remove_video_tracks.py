@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0010_remove_bestand_bestand_art'),
+        ('dbentry', '0010_remove_bestand_bestand_art'),
     ]
 
     operations = [

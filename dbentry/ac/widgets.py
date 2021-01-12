@@ -5,7 +5,7 @@ from django.urls import reverse
 
 from dal import autocomplete, forward
 
-from DBentry.utils import get_model_from_string, snake_case_to_spaces
+from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
 
 class WidgetCaptureMixin(object):

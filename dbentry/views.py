@@ -3,9 +3,9 @@ from django.apps import apps
 from django.template import TemplateDoesNotExist, loader
 from django.template.response import TemplateResponse
 
-from DBentry import utils
-from DBentry.base.views import MIZAdminMixin
-from DBentry.sites import miz_site, register_tool
+from dbentry import utils
+from dbentry.base.views import MIZAdminMixin
+from dbentry.sites import miz_site, register_tool
 
 
 def MIZ_permission_denied_view(request, exception, template_name='admin/403.html'):
@@ -33,7 +33,7 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
     A view enabling looking up a search term on every registered non-m2m model.
     """
 
-    app_label = 'DBentry'
+    app_label = 'dbentry'
     template_name = 'admin/site_search.html'
     title = 'Datenbank durchsuchen'
     breadcrumbs_title = 'Suchen'
@@ -53,7 +53,7 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
         Returns a list of hyperlinks to the changelists containing the results,
         sorted by the model's object name.
         """
-        from DBentry.base.models import BaseModel, BaseM2MModel  # avoid circular imports
+        from dbentry.base.models import BaseModel, BaseM2MModel  # avoid circular imports
         models = [
             m for m in apps.get_models(self.app_label)
             if issubclass(m, BaseModel) and not issubclass(m, BaseM2MModel)

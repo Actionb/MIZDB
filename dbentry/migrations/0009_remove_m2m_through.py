@@ -20,7 +20,7 @@ data = {}
 
 
 def get_m2m_model(apps, model_name, accessor_name):
-    return getattr(apps.get_model('DBentry', model_name), accessor_name).through
+    return getattr(apps.get_model('dbentry', model_name), accessor_name).through
 
 
 def backup_data(apps, schema_editor):
@@ -45,7 +45,7 @@ def load_data(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0008_rename_audio_catalog_nr'),
+        ('dbentry', '0008_rename_audio_catalog_nr'),
     ]
 
     operations = [
@@ -536,132 +536,132 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='artikel',
             name='autor',
-            field=models.ManyToManyField(to='DBentry.Autor'),
+            field=models.ManyToManyField(to='dbentry.Autor'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='band',
-            field=models.ManyToManyField(to='DBentry.Band'),
+            field=models.ManyToManyField(to='dbentry.Band'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='genre',
-            field=models.ManyToManyField(to='DBentry.Genre'),
+            field=models.ManyToManyField(to='dbentry.Genre'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='musiker',
-            field=models.ManyToManyField(to='DBentry.Musiker'),
+            field=models.ManyToManyField(to='dbentry.Musiker'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='ort',
-            field=models.ManyToManyField(to='DBentry.Ort'),
+            field=models.ManyToManyField(to='dbentry.Ort'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='person',
-            field=models.ManyToManyField(to='DBentry.Person'),
+            field=models.ManyToManyField(to='dbentry.Person'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='schlagwort',
-            field=models.ManyToManyField(to='DBentry.Schlagwort'),
+            field=models.ManyToManyField(to='dbentry.Schlagwort'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='spielort',
-            field=models.ManyToManyField(to='DBentry.Spielort'),
+            field=models.ManyToManyField(to='dbentry.Spielort'),
         ),
         migrations.AddField(
             model_name='artikel',
             name='veranstaltung',
-            field=models.ManyToManyField(to='DBentry.Veranstaltung'),
+            field=models.ManyToManyField(to='dbentry.Veranstaltung'),
         ),
         migrations.AddField(
             model_name='audio',
             name='band',
-            field=models.ManyToManyField(to='DBentry.Band'),
+            field=models.ManyToManyField(to='dbentry.Band'),
         ),
         migrations.AddField(
             model_name='audio',
             name='genre',
-            field=models.ManyToManyField(to='DBentry.Genre'),
+            field=models.ManyToManyField(to='dbentry.Genre'),
         ),
         migrations.AddField(
             model_name='audio',
             name='ort',
-            field=models.ManyToManyField(to='DBentry.Ort'),
+            field=models.ManyToManyField(to='dbentry.Ort'),
         ),
         migrations.AddField(
             model_name='audio',
             name='person',
-            field=models.ManyToManyField(to='DBentry.Person'),
+            field=models.ManyToManyField(to='dbentry.Person'),
         ),
         migrations.AddField(
             model_name='audio',
             name='plattenfirma',
-            field=models.ManyToManyField(to='DBentry.Plattenfirma'),
+            field=models.ManyToManyField(to='dbentry.Plattenfirma'),
         ),
         migrations.AddField(
             model_name='audio',
             name='schlagwort',
-            field=models.ManyToManyField(to='DBentry.Schlagwort'),
+            field=models.ManyToManyField(to='dbentry.Schlagwort'),
         ),
         migrations.AddField(
             model_name='audio',
             name='spielort',
-            field=models.ManyToManyField(to='DBentry.Spielort'),
+            field=models.ManyToManyField(to='dbentry.Spielort'),
         ),
         migrations.AddField(
             model_name='audio',
             name='veranstaltung',
-            field=models.ManyToManyField(to='DBentry.Veranstaltung'),
+            field=models.ManyToManyField(to='dbentry.Veranstaltung'),
         ),
         migrations.AddField(
             model_name='ausgabe',
             name='audio',
-            field=models.ManyToManyField(to='DBentry.Audio'),
+            field=models.ManyToManyField(to='dbentry.Audio'),
         ),
         migrations.AddField(
             model_name='autor',
             name='magazin',
-            field=models.ManyToManyField(to='DBentry.Magazin'),
+            field=models.ManyToManyField(to='dbentry.Magazin'),
         ),
         migrations.AddField(
             model_name='band',
             name='genre',
-            field=models.ManyToManyField(to='DBentry.Genre'),
+            field=models.ManyToManyField(to='dbentry.Genre'),
         ),
         migrations.AddField(
             model_name='band',
             name='musiker',
-            field=models.ManyToManyField(to='DBentry.Musiker'),
+            field=models.ManyToManyField(to='dbentry.Musiker'),
         ),
         migrations.AddField(
             model_name='magazin',
             name='genre',
-            field=models.ManyToManyField(to='DBentry.Genre'),
+            field=models.ManyToManyField(to='dbentry.Genre'),
         ),
         migrations.AddField(
             model_name='magazin',
             name='herausgeber',
-            field=models.ManyToManyField(to='DBentry.Herausgeber'),
+            field=models.ManyToManyField(to='dbentry.Herausgeber'),
         ),
         migrations.AddField(
             model_name='magazin',
             name='verlag',
-            field=models.ManyToManyField(to='DBentry.Verlag'),
+            field=models.ManyToManyField(to='dbentry.Verlag'),
         ),
         migrations.AddField(
             model_name='musiker',
             name='genre',
-            field=models.ManyToManyField(to='DBentry.Genre'),
+            field=models.ManyToManyField(to='dbentry.Genre'),
         ),
         migrations.AddField(
             model_name='musiker',
             name='instrument',
-            field=models.ManyToManyField(to='DBentry.Instrument'),
+            field=models.ManyToManyField(to='dbentry.Instrument'),
         ),
         # Apply the backup or create one if reversing:
         migrations.RunPython(load_data, backup_data, elidable=True),

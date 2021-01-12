@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0015_add_default_to_medium_qty'),
+        ('dbentry', '0015_add_default_to_medium_qty'),
     ]
 
     operations = [

@@ -9,13 +9,13 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.test import tag
 
-from DBentry import models as _models
-from DBentry.factory import make
-from DBentry.fields import (
+from dbentry import models as _models
+from dbentry.factory import make
+from dbentry.fields import (
     StdNumWidget, YearField,
     PartialDate, PartialDateField, PartialDateWidget, PartialDateFormField
 )
-from DBentry.tests.base import MyTestCase, DataTestCase
+from dbentry.tests.base import MyTestCase, DataTestCase
 
 
 class TestYearField(MyTestCase):

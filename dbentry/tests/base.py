@@ -14,8 +14,8 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.http import unquote
 
-from DBentry.tests.mixins import CreateFormMixin, CreateViewMixin, TestDataMixin
-from DBentry.sites import miz_site
+from dbentry.tests.mixins import CreateFormMixin, CreateViewMixin, TestDataMixin
+from dbentry.sites import miz_site
 
 
 def _showwarning(message, category=Warning, *args, **kwargs):
@@ -197,12 +197,12 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
 
         if not cls.changelist_path:
             cls.changelist_path = reverse(
-                'admin:DBentry_{}_changelist'.format(cls.model._meta.model_name))
+                'admin:dbentry_{}_changelist'.format(cls.model._meta.model_name))
         if not cls.change_path:
             cls.change_path = unquote(reverse(
-                'admin:DBentry_{}_change'.format(cls.model._meta.model_name), args=['{pk}']))
+                'admin:dbentry_{}_change'.format(cls.model._meta.model_name), args=['{pk}']))
         if not cls.add_path:
-            cls.add_path = reverse('admin:DBentry_{}_add'.format(cls.model._meta.model_name))
+            cls.add_path = reverse('admin:dbentry_{}_add'.format(cls.model._meta.model_name))
 
     def setUp(self):
         super().setUp()

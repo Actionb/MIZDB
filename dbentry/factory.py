@@ -4,8 +4,8 @@ import factory
 import sys
 from stdnum import issn
 
-import DBentry.models as _models
-from DBentry.utils import is_iterable, get_model_relations, get_model_fields
+import dbentry.models as _models
+from dbentry.utils import is_iterable, get_model_relations, get_model_fields
 
 
 class RuntimeFactoryMixin(object):
@@ -278,7 +278,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
     def _get_decl_for_model_field(field):
         """For a given model field, return an appropriate faker declaration."""
         try:
-            from DBentry.fields import PartialDateField
+            from dbentry.fields import PartialDateField
             if isinstance(field, PartialDateField):
                 return factory.Faker('date')
         except ImportError:
@@ -564,7 +564,7 @@ def modelfactory_factory(model, **kwargs):
 class AutorFactory(MIZModelFactory):
     class Meta:
         model = _models.Autor
-    person = SubFactory('DBentry.factory.PersonFactory', required=True)
+    person = SubFactory('dbentry.factory.PersonFactory', required=True)
 
     @factory.lazy_attribute
     def kuerzel(obj):

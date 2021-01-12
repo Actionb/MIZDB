@@ -4,19 +4,19 @@ from unittest.mock import Mock, patch
 from django.apps import apps
 from django.db.models import fields
 
-import DBentry.models as _models
-from DBentry.base.models import BaseModel, BaseM2MModel
-from DBentry.factory import (
+import dbentry.models as _models
+from dbentry.base.models import BaseModel, BaseM2MModel
+from dbentry.factory import (
     factory, RuntimeFactoryMixin, UniqueFaker, modelfactory_factory, make,
     SelfFactory, M2MFactory, MIZDjangoOptions, AutorFactory, MagazinFactory
 )
-from DBentry.tests.base import MyTestCase
-from DBentry.utils import get_model_relations, get_model_fields
+from dbentry.tests.base import MyTestCase
+from dbentry.utils import get_model_relations, get_model_fields
 
 
 class TestRuntimeFactoryMixin(MyTestCase):
 
-    local_factory_module = 'DBentry.factory'  # the module modelfactory_factory lives in
+    local_factory_module = 'dbentry.factory'  # the module modelfactory_factory lives in
     base_factory_module = 'factory.base'
 
     # We are subclassing factory.SubFactory as the mixin's functionality should
@@ -34,7 +34,7 @@ class TestRuntimeFactoryMixin(MyTestCase):
         fac = self.dummy_factory(
             self.local_factory_module + '.DoesNotExit', related_model=_models.Technik)
         self.assertEqual(fac.factory._meta.model, _models.Technik)
-        from DBentry import factory
+        from dbentry import factory
         self.assertIn('technik', factory._cache)
 
     def test_new_factory_wo_related_model(self):
@@ -174,7 +174,7 @@ class TestM2MFactory(MyTestCase):
 
     def test_m2m_pops_accessor_name(self):
         m2m = M2MFactory(
-            'DBentry.factory.whatever',
+            'dbentry.factory.whatever',
             accessor_name='beep boop',
             related_model=_models.Genre
         )
@@ -280,7 +280,7 @@ class TestMIZDjangoOptions(MyTestCase):
         mocked_rel.configure_mock(name=rel_name)
         return mocked_rel
 
-    @patch('DBentry.factory.get_model_relations')
+    @patch('dbentry.factory.get_model_relations')
     def test_add_m2m_factories_inherited_relation(self, mocked_get_model_relations):
         # Assert that add_m2m_factories can handle inherited ManyToManyRelations.
         # Pretend factory has no attributes, so add_m2m_factories will try to add one:
@@ -300,7 +300,7 @@ class TestMIZDjangoOptions(MyTestCase):
         opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
-            with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
+            with patch('dbentry.factory.M2MFactory') as mocked_m2m_factory:
                 opts.add_m2m_factories()
 
         self.assertTrue(hasattr(opts.factory, 'mocked_field_name'))
@@ -325,7 +325,7 @@ class TestMIZDjangoOptions(MyTestCase):
         opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
-            with patch('DBentry.factory.M2MFactory') as mocked_m2m_factory:
+            with patch('dbentry.factory.M2MFactory') as mocked_m2m_factory:
                 opts.add_m2m_factories()
 
         self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
@@ -335,7 +335,7 @@ class TestMIZDjangoOptions(MyTestCase):
             'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.Genre}
         self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
 
-    @patch('DBentry.factory.get_model_relations')
+    @patch('dbentry.factory.get_model_relations')
     def test_add_m2m_factories_unknown_relation(self, mocked_get_model_relations):
         # Assert that add_m2m_factories raises a TypeError if it encounters a relation that:
         # - does not originate from self.model
@@ -360,7 +360,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.buchband.factory._meta.model, _models.Buch)
         self.assertEqual(fac.verlag.factory._meta.model, _models.Verlag)
 
-    @patch('DBentry.factory.get_model_relations')
+    @patch('dbentry.factory.get_model_relations')
     def test_add_related_factories_inherited_relation(self, mocked_get_model_relations):
         # Assert that add_related_factories can handle inherited relations.
         # Pretend factory has no attributes, so add_related_factories will try to add one:
@@ -378,7 +378,7 @@ class TestMIZDjangoOptions(MyTestCase):
         opts.model = _models.Kalender
         mocked_factory_name = Mock(return_value='SomeFactory')
         with patch.object(opts, '_get_factory_name_for_model', new=mocked_factory_name):
-            with patch('DBentry.factory.RelatedFactory') as mocked_related_factory:
+            with patch('dbentry.factory.RelatedFactory') as mocked_related_factory:
                 opts.add_related_factories()
 
                 self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
@@ -659,7 +659,7 @@ class TestMIZModelFactory(MyTestCase):
         cls.factories = []
         models = [
             m
-            for m in apps.get_models('DBentry')
+            for m in apps.get_models('dbentry')
             if issubclass(m, BaseModel) and not issubclass(m, (BaseM2MModel, _models.BaseBrochure))
         ]
         for model in models:

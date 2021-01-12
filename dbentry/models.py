@@ -2,17 +2,17 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
-import DBentry.m2m as _m2m
-from DBentry.base.models import (
+import dbentry.m2m as _m2m
+from dbentry.base.models import (
     BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel,
     AbstractURLModel
 )
-from DBentry.constants import LIST_DISPLAY_MAX_LEN
-from DBentry.fields import (
+from dbentry.constants import LIST_DISPLAY_MAX_LEN
+from dbentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
-from DBentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
-from DBentry.utils import concat_limit, get_model_relations, get_model_fields
+from dbentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
+from dbentry.utils import concat_limit, get_model_relations, get_model_fields
 
 
 class Person(ComputedNameModel):

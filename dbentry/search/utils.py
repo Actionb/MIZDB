@@ -1,7 +1,7 @@
 from django.core import exceptions
 from django.db.models.constants import LOOKUP_SEP
 
-from DBentry import utils
+from dbentry import utils
 
 
 def get_dbfield_from_path(model, field_path):

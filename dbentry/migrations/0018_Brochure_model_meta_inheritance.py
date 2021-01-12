@@ -8,7 +8,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0017_removed_alter_bestand_permission'),
+        ('dbentry', '0017_removed_alter_bestand_permission'),
     ]
 
     operations = [

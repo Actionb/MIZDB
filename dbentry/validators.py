@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy
 
-from DBentry.constants import discogs_release_id_pattern
+from dbentry.constants import discogs_release_id_pattern
 
 
 class StdValidationError(ValidationError):

@@ -2,9 +2,9 @@ from django.core import checks, exceptions
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from DBentry.fields import YearField
-from DBentry.managers import CNQuerySet, MIZQuerySet
-from DBentry.utils import get_model_fields, get_fields_and_lookups
+from dbentry.fields import YearField
+from dbentry.managers import CNQuerySet, MIZQuerySet
+from dbentry.utils import get_model_fields, get_fields_and_lookups
 
 
 class BaseModel(models.Model):
@@ -312,7 +312,7 @@ class ComputedNameModel(BaseModel):
 
 
 class AbstractJahrModel(BaseModel):
-    """Abstract model that adds a DBentry.fields.YearField."""
+    """Abstract model that adds a dbentry.fields.YearField."""
 
     jahr = YearField('Jahr')
 

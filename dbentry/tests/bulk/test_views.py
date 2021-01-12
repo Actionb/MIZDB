@@ -1,11 +1,11 @@
 from django.test import tag
 from django.urls import reverse_lazy, reverse
 
-import DBentry.models as _models
-from DBentry.bulk.views import BulkAusgabe
-from DBentry.factory import make, batch
-from DBentry.tests.base import ViewTestCase
-from DBentry.tests.mixins import TestDataMixin, CreateFormViewMixin, LoggingTestMixin
+import dbentry.models as _models
+from dbentry.bulk.views import BulkAusgabe
+from dbentry.factory import make, batch
+from dbentry.tests.base import ViewTestCase
+from dbentry.tests.mixins import TestDataMixin, CreateFormViewMixin, LoggingTestMixin
 
 
 class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
@@ -101,7 +101,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # Use follow = False to get the redirect response.
         response = self.client.post(self.path, data=data, follow=False)
         self.assertEqual(response.status_code, 302)
-        self.assertIn("admin/DBentry/ausgabe/?id__in=", response.url)
+        self.assertIn("admin/dbentry/ausgabe/?id__in=", response.url)
 
     def test_post_save_and_addanother_preview(self):
         # Assert that after succesful 'add_another' post, the preview with
@@ -414,6 +414,6 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
         continue_data['_continue'] = True
         continue_response = self.client.post(self.path, data=continue_data)
         self.assertEqual(continue_response.status_code, 302)
-        changelist_url = reverse("admin:DBentry_ausgabe_changelist")
+        changelist_url = reverse("admin:dbentry_ausgabe_changelist")
         self.assertTrue(continue_response.url.startswith(changelist_url))
         self.assertIn('id', continue_response.url)

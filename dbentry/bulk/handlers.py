@@ -6,7 +6,7 @@ class ItemHandler(object):
     A helper object that extracts values from a string item.
 
     Intended use is to validate and to extract data from an encoded string
-    (i.e. formatted in a specific way) for the DBentry.bulk.fields.SplitField.
+    (i.e. formatted in a specific way) for the dbentry.bulk.fields.SplitField.
 
     Attributes:
         regex: either a regex pattern or a compiled regular expression to

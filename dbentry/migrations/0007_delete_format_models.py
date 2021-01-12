@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0006_data_formate_to_audio_medium'),
+        ('dbentry', '0006_data_formate_to_audio_medium'),
     ]
 
     operations = [

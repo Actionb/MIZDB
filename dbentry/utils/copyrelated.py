@@ -4,7 +4,7 @@ from django.contrib.admin.utils import get_fields_from_path
 from django.core import exceptions
 from django.db import transaction
 
-from DBentry.utils.admin import create_logentry, _get_relation_change_message
+from dbentry.utils.admin import create_logentry, _get_relation_change_message
 
 
 def copy_related_set(request, obj, *paths):

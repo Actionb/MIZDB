@@ -4,9 +4,9 @@ from django.test import tag
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
-from DBentry.ac.views import ACBase
-from DBentry.tests.base import ViewTestCase
-from DBentry.tests.mixins import TestDataMixin, LoggingTestMixin
+from dbentry.ac.views import ACBase
+from dbentry.tests.base import ViewTestCase
+from dbentry.tests.mixins import TestDataMixin, LoggingTestMixin
 
 
 @tag("dal")
@@ -32,7 +32,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
             self, request=None, args=None, kwargs=None, model=None,
             create_field=None, forwarded=None, q=''
         ):
-        # DBentry.ac.views behave slightly different in their as_view() method
+        # dbentry.ac.views behave slightly different in their as_view() method
         view = super(ACViewTestCase, self).get_view(request, args, kwargs)
         # The request data will set some of the values - then overwrite/extend
         # them with the passed in arguments.

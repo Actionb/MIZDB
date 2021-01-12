@@ -6,19 +6,19 @@ from django.db.models import ProtectedError, F, Count
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
 
-from DBentry import models as _models
-from DBentry.actions.base import (
+from dbentry import models as _models
+from dbentry.actions.base import (
     ActionConfirmationView, WizardConfirmationView, ConfirmationViewMixin
 )
-from DBentry.actions.forms import (
+from dbentry.actions.forms import (
     MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm,
     BrochureActionFormSet, BrochureActionFormOptions
 )
-from DBentry.utils import (
+from dbentry.utils import (
     link_list, merge_records, get_updateable_fields, get_obj_link,
     get_changelist_link, get_model_from_string, is_protected
 )
-from DBentry.utils.admin import (
+from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )
 

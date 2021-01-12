@@ -1,9 +1,9 @@
 from django import forms
 from django.apps import apps
 
-from DBentry import utils
-from DBentry.base import models as base_models
-from DBentry.base.forms import (
+from dbentry import utils
+from dbentry.base import models as base_models
+from dbentry.base.forms import (
     MIZAdminForm, DynamicChoiceFormMixin, MinMaxRequiredFormMixin
 )
 
@@ -119,7 +119,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         'ausgabenum', 'ausgabelnum', 'ausgabemonat',
     ]
 
-    def __init__(self, exclude=None, app_label='DBentry', *args, **kwargs):
+    def __init__(self, exclude=None, app_label='dbentry', *args, **kwargs):
         if exclude:
             self.exclude_models = exclude
         self.app_label = app_label

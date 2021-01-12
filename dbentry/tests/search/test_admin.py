@@ -7,10 +7,10 @@ from django.http.request import QueryDict
 from django.urls import reverse
 from django.utils.http import urlencode
 
-from DBentry import models as _models, admin as _admin
-from DBentry.factory import batch, make
-from DBentry.fields import PartialDate
-from DBentry.tests.base import AdminTestCase
+from dbentry import models as _models, admin as _admin
+from dbentry.factory import batch, make
+from dbentry.fields import PartialDate
+from dbentry.tests.base import AdminTestCase
 
 
 class TestAdminMixin(AdminTestCase):
@@ -18,7 +18,7 @@ class TestAdminMixin(AdminTestCase):
     model = _models.Bildmaterial
     model_admin_class = _admin.BildmaterialAdmin
 
-    @mock.patch('DBentry.search.admin.searchform_factory')
+    @mock.patch('dbentry.search.admin.searchform_factory')
     def test_get_search_form_class(self, mocked_factory):
         # Assert that the searchform_factory is called with a combination of
         # the ModelAdmin's search_form_kwargs and the passed in kwargs.
@@ -245,7 +245,7 @@ class TestAdminMixin(AdminTestCase):
         # added if 'cl' is present in context_data.
         mocked_tag = mock.Mock(return_value={'cl': "extra from tag"})
         patcher = mock.patch(
-            'DBentry.search.admin.search_form_tag_context', mocked_tag)
+            'dbentry.search.admin.search_form_tag_context', mocked_tag)
         patcher.start()
         response = self.model_admin.update_changelist_context(
             response=mock.Mock(context_data={}))
@@ -268,7 +268,7 @@ class TestAdminMixin(AdminTestCase):
         # patch get_model_fields so the returned error list does not contain
         # items pertaining to missing search fields:
         patcher = mock.patch(
-            'DBentry.search.admin.utils.get_model_fields', new=mock.Mock(return_value=[]))
+            'dbentry.search.admin.utils.get_model_fields', new=mock.Mock(return_value=[]))
         patcher.start()
         with mock.patch.object(self.model_admin, 'search_form_kwargs'):
             # A search field that doesn't exist:
@@ -299,7 +299,7 @@ class TestAdminMixin(AdminTestCase):
         # Assert that _check_search_form_fields complains about missing search
         # fields.
         patch_config = {
-            'target': 'DBentry.search.admin.utils.get_model_fields',
+            'target': 'dbentry.search.admin.utils.get_model_fields',
             'new': mock.Mock(
                 return_value=[
                     self.model._meta.get_field('genre'),

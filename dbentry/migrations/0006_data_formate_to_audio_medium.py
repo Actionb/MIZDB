@@ -10,10 +10,10 @@ dump_file = 'format_models.json'
 
 @transaction.atomic
 def to_audio_medium(apps, schema_editor):
-    Audio = apps.get_model('DBentry', 'Audio')
-    AudioMedium = apps.get_model('DBentry', 'AudioMedium')
-    Format = apps.get_model('DBentry', 'Format')
-    FormatTyp = apps.get_model('DBentry', 'FormatTyp')
+    Audio = apps.get_model('dbentry', 'Audio')
+    AudioMedium = apps.get_model('dbentry', 'AudioMedium')
+    Format = apps.get_model('dbentry', 'Format')
+    FormatTyp = apps.get_model('dbentry', 'FormatTyp')
     for format_typ in FormatTyp.objects.all():
         medium = AudioMedium.objects.create(medium=format_typ.typ)
         formate = Format.objects.filter(format_typ=format_typ)
@@ -24,7 +24,7 @@ def to_formate(apps, schema_editor):
     with transaction.atomic():
         for model_name in (
                 'FormatTyp', 'FormatSize', 'FormatTag', 'Format', 'Format_tag'):
-            model = apps.get_model('DBentry', model_name)
+            model = apps.get_model('dbentry', model_name)
             try:
                 data = open('%s.json' % model_name, 'r').read()
             except FileNotFoundError:
@@ -42,7 +42,7 @@ def to_formate(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0005_add_model_audio_medium'),
+        ('dbentry', '0005_add_model_audio_medium'),
     ]
 
     operations = [

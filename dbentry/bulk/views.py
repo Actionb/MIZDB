@@ -10,11 +10,11 @@ from django.shortcuts import redirect
 from django.utils.html import format_html
 from django.utils.translation import gettext
 
-from DBentry import models as _models
-from DBentry.base.views import MIZAdminMixin
-from DBentry.bulk.forms import BulkFormAusgabe
-from DBentry.sites import register_tool
-from DBentry.utils.admin import (
+from dbentry import models as _models
+from dbentry.base.views import MIZAdminMixin
+from dbentry.bulk.forms import BulkFormAusgabe
+from dbentry.sites import register_tool
+from dbentry.utils.admin import (
     log_addition, log_change, link_list, get_changelist_link, get_changelist_url
 )
 
@@ -26,7 +26,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     title = "Ausgaben Erstellung"
-    permission_required = ['DBentry.add_ausgabe']
+    permission_required = ['dbentry.add_ausgabe']
     # 'preview_fields' determines what formfields may show up in the preview as
     # columns and sets their order.
     preview_fields = [

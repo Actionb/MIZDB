@@ -5,21 +5,21 @@ from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import Count, Min, Subquery, OuterRef, Func, Value, Exists
 
-import DBentry.models as _models
-import DBentry.m2m as _m2m
-import DBentry.actions.actions as _actions
-from DBentry.ac.widgets import make_widget
-from DBentry.base.admin import (
+import dbentry.models as _models
+import dbentry.m2m as _m2m
+import dbentry.actions.actions as _actions
+from dbentry.ac.widgets import make_widget
+from dbentry.base.admin import (
     MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline,
     BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
 )
-from DBentry.forms import (
+from dbentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
     BildmaterialForm, MusikerForm, BandForm, VideoForm
 )
-from DBentry.sites import miz_site
-from DBentry.utils import concat_limit, copy_related_set
-from DBentry.utils.admin import get_obj_link, log_change
+from dbentry.sites import miz_site
+from dbentry.utils import concat_limit, copy_related_set
+from dbentry.utils.admin import get_obj_link, log_change
 # TODO: add admindocs
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 

@@ -6,8 +6,8 @@ from django.utils.html import format_html
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy
 
-from DBentry.utils import get_obj_link
-from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
+from dbentry.utils import get_obj_link
+from dbentry.base.views import MIZAdminMixin, FixedSessionWizardView
 
 
 class ConfirmationViewMixin(MIZAdminMixin):

@@ -5,9 +5,9 @@ from unittest.mock import patch, Mock
 from django.contrib import auth, contenttypes
 from django.core import exceptions
 
-from DBentry import utils, models as _models
-from DBentry.factory import make
-from DBentry.tests.base import MyTestCase
+from dbentry import utils, models as _models
+from dbentry.factory import make
+from dbentry.tests.base import MyTestCase
 
 
 class TestModelUtils(MyTestCase):

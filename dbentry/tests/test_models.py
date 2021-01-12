@@ -5,12 +5,12 @@ from django.db import models as django_models
 from django.test import tag
 from django.utils.translation import override as translation_override
 
-import DBentry.m2m as _m2m
-import DBentry.models as _models
-from DBentry import fields as _fields
-from DBentry.base.models import BaseModel
-from DBentry.factory import make
-from DBentry.tests.base import DataTestCase
+import dbentry.m2m as _m2m
+import dbentry.models as _models
+from dbentry import fields as _fields
+from dbentry.base.models import BaseModel
+from dbentry.factory import make
+from dbentry.tests.base import DataTestCase
 
 
 class TestBaseModel(DataTestCase):
@@ -55,7 +55,7 @@ class TestBaseM2MModel(DataTestCase):
         # Patch get_model_fields so that it only returns one field with null=True.
         # This way the data used to build the string representation out of is
         # empty and __str__ calls super().
-        with patch('DBentry.base.models.get_model_fields') as mocked_get_fields:
+        with patch('dbentry.base.models.get_model_fields') as mocked_get_fields:
             with patch.object(BaseModel, '__str__') as mocked_super:
                 mocked_get_fields.return_value = [Mock(null=True)]
                 self.obj1.__str__()

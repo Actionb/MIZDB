@@ -7,11 +7,11 @@ from django.db.models import Q, Count
 from django.shortcuts import redirect
 from django.urls import reverse
 
-from DBentry import utils
-from DBentry.actions.views import MergeViewWizarded
-from DBentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
-from DBentry.sites import register_tool
-from DBentry.maint.forms import (
+from dbentry import utils
+from dbentry.actions.views import MergeViewWizarded
+from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
+from dbentry.sites import register_tool
+from dbentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
 

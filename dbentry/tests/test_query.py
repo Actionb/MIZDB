@@ -1,12 +1,12 @@
 from django.utils.translation import override as translation_override
 
-import DBentry.models as _models
-from DBentry.factory import make
-from DBentry.query import (
+import dbentry.models as _models
+from dbentry.factory import make
+from dbentry.query import (
     BaseSearchQuery, NameFieldSearchQuery, PrimaryFieldsSearchQuery,
     ValuesDictSearchQuery
 )
-from DBentry.tests.base import DataTestCase
+from dbentry.tests.base import DataTestCase
 
 
 class QueryTestCase(DataTestCase):

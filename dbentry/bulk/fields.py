@@ -4,7 +4,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
-from DBentry.bulk.handlers import (
+from dbentry.bulk.handlers import (
     NumericHandler, RangeHandler, RangeGroupingHandler, GroupingHandler
 )
 

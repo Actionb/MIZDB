@@ -6,11 +6,11 @@ from unittest.mock import patch, Mock
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.test import tag
 
-import DBentry.models as _models
-from DBentry.factory import make
-from DBentry.managers import CNQuerySet, MIZQuerySet, build_date
-from DBentry.tests.base import DataTestCase, MyTestCase
-from DBentry.query import (
+import dbentry.models as _models
+from dbentry.factory import make
+from dbentry.managers import CNQuerySet, MIZQuerySet, build_date
+from dbentry.tests.base import DataTestCase, MyTestCase
+from dbentry.query import (
     BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery)
 
 

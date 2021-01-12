@@ -1,11 +1,11 @@
-from DBentry.utils.admin import *  # NOQA
-from DBentry.utils.copyrelated import *  # NOQA
-from DBentry.utils.dates import *  # NOQA
-from DBentry.utils.debug import *  # NOQA
-from DBentry.utils.inspect import *  # NOQA
-from DBentry.utils.merge import *  # NOQA
-from DBentry.utils.models import *  # NOQA
-from DBentry.utils.text import *  # NOQA
+from dbentry.utils.admin import *  # NOQA
+from dbentry.utils.copyrelated import *  # NOQA
+from dbentry.utils.dates import *  # NOQA
+from dbentry.utils.debug import *  # NOQA
+from dbentry.utils.inspect import *  # NOQA
+from dbentry.utils.merge import *  # NOQA
+from dbentry.utils.models import *  # NOQA
+from dbentry.utils.text import *  # NOQA
 
 
 def nfilter(filters, iterable):

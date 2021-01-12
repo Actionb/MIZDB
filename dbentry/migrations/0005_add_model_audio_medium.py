@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0004_alias_verbose_name_plural'),
+        ('dbentry', '0004_alias_verbose_name_plural'),
     ]
 
     operations = [
@@ -28,6 +28,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='audio',
             name='medium',
-            field=models.ForeignKey(blank=True, help_text='Format des Speichermediums.', null=True, on_delete=django.db.models.deletion.PROTECT, to='DBentry.AudioMedium', verbose_name='Medium'),
+            field=models.ForeignKey(blank=True, help_text='Format des Speichermediums.', null=True, on_delete=django.db.models.deletion.PROTECT, to='dbentry.AudioMedium', verbose_name='Medium'),
         ),
     ]

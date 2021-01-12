@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.core.management.base import BaseCommand
 
-from DBentry.base.models import ComputedNameModel
+from dbentry.base.models import ComputedNameModel
 
 
 class Command(BaseCommand):
@@ -20,7 +20,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         models = [
             model
-            for model in apps.get_models('DBentry')
+            for model in apps.get_models('dbentry')
             if issubclass(model, ComputedNameModel)
         ]
         for model in models:

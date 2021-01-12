@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 
-from DBentry.actions.forms import BrochureActionFormOptions
-from DBentry.tests.base import FormTestCase
+from dbentry.actions.forms import BrochureActionFormOptions
+from dbentry.tests.base import FormTestCase
 
 
 class TestBrochureActionFormOptions(FormTestCase):

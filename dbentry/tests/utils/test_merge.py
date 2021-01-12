@@ -3,11 +3,11 @@ from itertools import chain
 from django.contrib.contenttypes.models import ContentType
 from django.test import tag
 
-from DBentry import utils, models as _models
-from DBentry.factory import make
-from DBentry.tests.base import RequestTestCase
-from DBentry.tests.mixins import LoggingTestMixin, TestDataMixin
-from DBentry.utils.models import (
+from dbentry import utils, models as _models
+from dbentry.factory import make
+from dbentry.tests.base import RequestTestCase
+from dbentry.tests.mixins import LoggingTestMixin, TestDataMixin
+from dbentry.utils.models import (
     get_model_fields, get_model_relations, get_relation_info_to, get_updateable_fields
 )
 

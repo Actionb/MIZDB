@@ -1,8 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import override as translation_override
 
-from DBentry.tests.base import MyTestCase
-from DBentry.validators import (
+from dbentry.tests.base import MyTestCase
+from dbentry.validators import (
     ISSNValidator, ISBNValidator, EANValidator,
     InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength,
     DiscogsURLValidator

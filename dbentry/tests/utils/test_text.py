@@ -1,5 +1,5 @@
-from DBentry import utils
-from DBentry.tests.base import MyTestCase
+from dbentry import utils
+from dbentry.tests.base import MyTestCase
 
 
 class TestTextUtils(MyTestCase):

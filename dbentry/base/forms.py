@@ -6,9 +6,9 @@ from django.db.models.manager import BaseManager
 from django.utils.translation import gettext_lazy
 from django.utils.functional import cached_property
 
-from DBentry.constants import discogs_release_id_pattern
-from DBentry.utils import snake_case_to_spaces
-from DBentry.validators import DiscogsURLValidator
+from dbentry.constants import discogs_release_id_pattern
+from dbentry.utils import snake_case_to_spaces
+from dbentry.validators import DiscogsURLValidator
 
 
 class FieldGroup:

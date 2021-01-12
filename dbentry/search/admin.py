@@ -5,9 +5,9 @@ from django.contrib.admin.templatetags.admin_list import search_form as search_f
 from django.db.models.lookups import Range, LessThanOrEqual
 from django.http import HttpResponseRedirect, QueryDict
 
-from DBentry import utils
-from DBentry.search import utils as search_utils
-from DBentry.search.forms import searchform_factory, MIZAdminSearchForm
+from dbentry import utils
+from dbentry.search import utils as search_utils
+from dbentry.search.forms import searchform_factory, MIZAdminSearchForm
 
 
 class AdminSearchFormMixin(object):

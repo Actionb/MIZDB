@@ -1,8 +1,8 @@
 from django.core import exceptions
 
-from DBentry import models as _models
-from DBentry.search import utils
-from DBentry.tests.base import MyTestCase
+from dbentry import models as _models
+from dbentry.search import utils
+from dbentry.tests.base import MyTestCase
 
 
 class TestUtils(MyTestCase):

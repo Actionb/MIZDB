@@ -1,9 +1,9 @@
 from unittest.mock import Mock
 
-import DBentry.models as _models
-from DBentry.ac.creator import Creator, MultipleObjectsReturnedException, FailedObject
-from DBentry.factory import make
-from DBentry.tests.base import DataTestCase, mockv
+import dbentry.models as _models
+from dbentry.ac.creator import Creator, MultipleObjectsReturnedException, FailedObject
+from dbentry.factory import make
+from dbentry.tests.base import DataTestCase, mockv
 
 
 class TestCreator(DataTestCase):

@@ -9,7 +9,7 @@ def add_cls_attrs(view_cls):
             the changelist drop down menu.
         - 'allowed_permissions', list of permission codewords required to access
             the action.
-            See DBentry.admin.base.MIZModelAdmin.get_actions().
+            See dbentry.admin.base.MIZModelAdmin.get_actions().
     """
     def wrap(func):
         if (not hasattr(func, 'short_description')

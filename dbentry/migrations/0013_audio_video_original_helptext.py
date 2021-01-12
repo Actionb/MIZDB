@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0012_audio_video_tweaks'),
+        ('dbentry', '0012_audio_video_tweaks'),
     ]
 
     operations = [

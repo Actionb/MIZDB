@@ -6,16 +6,16 @@ from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.utils.translation import override as translation_override
 
-from DBentry import models as _models
-from DBentry.base.forms import (
+from dbentry import models as _models
+from dbentry.base.forms import (
     DynamicChoiceFormMixin, MIZAdminForm, MinMaxRequiredFormMixin,
     MIZAdminInlineFormBase, DiscogsFormMixin
 )
-from DBentry.forms import (
+from dbentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm, VideoForm
 )
-from DBentry.ac.widgets import EasyWidgetWrapper
-from DBentry.factory import make
+from dbentry.ac.widgets import EasyWidgetWrapper
+from dbentry.factory import make
 
 from dal import autocomplete
 

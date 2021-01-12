@@ -1,6 +1,6 @@
 from django.db import models
-from DBentry.base.models import BaseM2MModel
-from DBentry.utils.models import get_model_fields
+from dbentry.base.models import BaseM2MModel
+from dbentry.utils.models import get_model_fields
 
 
 class m2m_audio_musiker(BaseM2MModel):
@@ -14,7 +14,7 @@ class m2m_audio_musiker(BaseM2MModel):
 
     class Meta:
         unique_together = ('audio', 'musiker')
-        db_table = 'DBentry_audio_musiker'
+        db_table = 'dbentry_audio_musiker'
         verbose_name = 'Audio-Musiker'
         verbose_name_plural = 'Audio-Musiker'
 
@@ -30,7 +30,7 @@ class m2m_video_musiker(BaseM2MModel):
 
     class Meta:
         unique_together = ('video', 'musiker')
-        db_table = 'DBentry_video_musiker'
+        db_table = 'dbentry_video_musiker'
         verbose_name = 'Video-Musiker'
         verbose_name_plural = 'Video-Musiker'
 
@@ -43,7 +43,7 @@ class m2m_datei_musiker(BaseM2MModel):
     )
     class Meta:
         unique_together = ('datei', 'musiker')
-        db_table = 'DBentry_datei_musiker'
+        db_table = 'dbentry_datei_musiker'
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
 
@@ -65,7 +65,7 @@ class m2m_datei_quelle(BaseM2MModel):
     memorabilien = models.ForeignKey('Memorabilien', models.SET_NULL, blank=True, null=True)
     video = models.ForeignKey('Video', models.SET_NULL, blank=True, null=True)
     class Meta:
-        db_table = 'DBentry_datei_quelle'
+        db_table = 'dbentry_datei_quelle'
         verbose_name = 'Datei-Quelle'
         verbose_name_plural = 'Datei-Quellen'
 

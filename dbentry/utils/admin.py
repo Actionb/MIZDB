@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django.utils.text import capfirst
 from django.utils.translation import override as translation_override
 
-from DBentry.utils.models import get_model_from_string
+from dbentry.utils.models import get_model_from_string
 
 
 def create_hyperlink(url, content, **attrs):
@@ -111,7 +111,7 @@ def get_model_admin_for_model(model, *admin_sites):
     Check the registries of 'admin_sites' for a ModelAdmin that represents
     'model' and return the first ModelAdmin found.
     """
-    from DBentry.sites import miz_site
+    from dbentry.sites import miz_site
     if isinstance(model, str):
         model = get_model_from_string(model)
     sites = admin_sites or [miz_site]

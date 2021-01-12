@@ -1,9 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from DBentry import models as _models
-from DBentry.ac.widgets import make_widget
-from DBentry.base.forms import MinMaxRequiredFormMixin, DiscogsFormMixin
+from dbentry import models as _models
+from dbentry.ac.widgets import make_widget
+from dbentry.base.forms import MinMaxRequiredFormMixin, DiscogsFormMixin
 
 
 class GoogleBtnWidget(forms.widgets.TextInput):

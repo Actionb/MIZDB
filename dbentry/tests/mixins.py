@@ -3,7 +3,7 @@ from django.contrib.admin.options import get_content_type_for_model
 from django.utils.encoding import force_text
 from django.utils.text import capfirst
 
-from DBentry.factory import make, batch
+from dbentry.factory import make, batch
 
 
 class TestDataMixin(object):

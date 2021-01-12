@@ -4,14 +4,14 @@ from django.utils.translation import gettext
 
 from dal import autocomplete
 
-from DBentry import models as _models
-from DBentry.ac.creator import Creator
-from DBentry.utils.models import get_model_from_string
-from DBentry.utils.admin import log_addition
+from dbentry import models as _models
+from dbentry.ac.creator import Creator
+from dbentry.utils.models import get_model_from_string
+from dbentry.utils.admin import log_addition
 
 
 class ACBase(autocomplete.Select2QuerySetView):
-    """Base view for the autocomplete views of the DBentry app."""
+    """Base view for the autocomplete views of the dbentry app."""
 
     def dispatch(self, *args, **kwargs):
         if not self.model:

@@ -1,8 +1,8 @@
 from collections import OrderedDict
 from nameparser import HumanName
 
-from DBentry import models as _models
-from DBentry.utils import parse_name
+from dbentry import models as _models
+from dbentry.utils import parse_name
 
 
 class MultipleObjectsReturnedException(Exception):

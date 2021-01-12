@@ -13,7 +13,7 @@ def delete_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0016_alter_video_medium_unique'),
+        ('dbentry', '0016_alter_video_medium_unique'),
     ]
 
     operations = [

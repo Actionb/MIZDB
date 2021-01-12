@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0014_add_discogs_to_video'),
+        ('dbentry', '0014_add_discogs_to_video'),
     ]
 
     operations = [

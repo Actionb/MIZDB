@@ -7,17 +7,17 @@ from django.db.models.constants import LOOKUP_SEP
 from django.urls import reverse, NoReverseMatch
 from django.utils.text import capfirst
 
-from DBentry import models as _models
-from DBentry.ac.widgets import make_widget
-from DBentry.actions.actions import merge_records
-from DBentry.base.models import ComputedNameModel
-from DBentry.base.forms import MIZAdminInlineFormBase
-from DBentry.changelist import MIZChangeList
-from DBentry.constants import ATTRS_TEXTAREA
-from DBentry.forms import AusgabeMagazinFieldForm
-from DBentry.search.admin import MIZAdminSearchFormMixin
-from DBentry.utils import get_model_relations, get_fields_and_lookups
-from DBentry.utils.admin import construct_change_message
+from dbentry import models as _models
+from dbentry.ac.widgets import make_widget
+from dbentry.actions.actions import merge_records
+from dbentry.base.models import ComputedNameModel
+from dbentry.base.forms import MIZAdminInlineFormBase
+from dbentry.changelist import MIZChangeList
+from dbentry.constants import ATTRS_TEXTAREA
+from dbentry.forms import AusgabeMagazinFieldForm
+from dbentry.search.admin import MIZAdminSearchFormMixin
+from dbentry.utils import get_model_relations, get_fields_and_lookups
+from dbentry.utils.admin import construct_change_message
 # TODO: when using list_editable the 'save' element overlaps the 'add' element
 # on the changelist.
 # TODO: enable delete_related on inlines:

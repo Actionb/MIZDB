@@ -6,13 +6,13 @@ from django.core.exceptions import ImproperlyConfigured
 from django.urls.exceptions import NoReverseMatch
 from django.utils.translation import override as translation_override
 
-import DBentry.models as _models
-from DBentry.ac.widgets import (
+import dbentry.models as _models
+from dbentry.ac.widgets import (
     EasyWidgetWrapper, WidgetCaptureMixin, MIZModelSelect2,
     MIZModelSelect2Multiple, make_widget
 )
-from DBentry.forms import ArtikelForm
-from DBentry.tests.base import MyTestCase
+from dbentry.forms import ArtikelForm
+from dbentry.tests.base import MyTestCase
 
 from dal import autocomplete, forward
 
@@ -30,15 +30,15 @@ class TestEasyWidgetWrapper(MyTestCase):
     def test_get_related_url(self):
         url = self.widget.get_related_url(self.info, 'change', '__fk__')
         self.assertEqual(
-            url, "/admin/DBentry/ausgabe/__fk__/change/",
+            url, "/admin/dbentry/ausgabe/__fk__/change/",
             msg='info: {}'.format(self.info)
         )
 
         url = self.widget.get_related_url(self.info, 'add')
-        self.assertEqual(url, "/admin/DBentry/ausgabe/add/")
+        self.assertEqual(url, "/admin/dbentry/ausgabe/add/")
 
         url = self.widget.get_related_url(self.info, 'delete', '__fk__')
-        self.assertEqual(url, "/admin/DBentry/ausgabe/__fk__/delete/")
+        self.assertEqual(url, "/admin/dbentry/ausgabe/__fk__/delete/")
 
     def test_get_context_can_change(self):
         with patch.object(self.widget, 'can_change_related', True):
@@ -46,7 +46,7 @@ class TestEasyWidgetWrapper(MyTestCase):
             self.assertTrue(context.get('can_change_related', False))
             self.assertEqual(
                 context.get('change_related_template_url'),
-                "/admin/DBentry/ausgabe/__fk__/change/"
+                "/admin/dbentry/ausgabe/__fk__/change/"
             )
         with patch.object(self.widget, 'can_change_related', False):
             context = self.widget.get_context('Beep', ['1'], {'id': 1})
@@ -56,7 +56,7 @@ class TestEasyWidgetWrapper(MyTestCase):
         with patch.object(self.widget, 'can_add_related', True):
             context = self.widget.get_context('Beep', ['1'], {'id': 1})
             self.assertTrue(context.get('can_add_related', False))
-            self.assertEqual(context.get('add_related_url'), "/admin/DBentry/ausgabe/add/")
+            self.assertEqual(context.get('add_related_url'), "/admin/dbentry/ausgabe/add/")
         with patch.object(self.widget, 'can_add_related', False):
             context = self.widget.get_context('Beep', ['1'], {'id': 1})
             self.assertNotIn('can_add_related', context)
@@ -67,7 +67,7 @@ class TestEasyWidgetWrapper(MyTestCase):
             self.assertTrue(context.get('can_delete_related', False))
             self.assertEqual(
                 context.get('delete_related_template_url'),
-                "/admin/DBentry/ausgabe/__fk__/delete/"
+                "/admin/dbentry/ausgabe/__fk__/delete/"
             )
         with patch.object(self.widget, 'can_delete_related', False):
             context = self.widget.get_context('Beep', ['1'], {'id': 1})

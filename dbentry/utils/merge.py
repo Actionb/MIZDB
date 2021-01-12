@@ -1,11 +1,11 @@
 from django.db import transaction, models
 from django.db.utils import IntegrityError
 
-from DBentry.utils.models import (
+from dbentry.utils.models import (
     get_model_relations, get_relation_info_to, get_updateable_fields,
     is_protected
 )
-from DBentry.utils.admin import log_addition, log_change, log_deletion
+from dbentry.utils.admin import log_addition, log_change, log_deletion
 
 
 def merge_records(original, qs, update_data=None, expand_original=True, request=None):

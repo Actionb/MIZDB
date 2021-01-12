@@ -12,14 +12,14 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
-import DBentry.admin as _admin
-import DBentry.models as _models
-from DBentry.changelist import AusgabeChangeList, MIZChangeList
-from DBentry.constants import ZRAUM_ID, DUPLETTEN_ID
-from DBentry.factory import make, modelfactory_factory
-from DBentry.sites import miz_site
-from DBentry.tests.base import AdminTestCase, TestCase
-from DBentry.utils import get_model_fields
+import dbentry.admin as _admin
+import dbentry.models as _models
+from dbentry.changelist import AusgabeChangeList, MIZChangeList
+from dbentry.constants import ZRAUM_ID, DUPLETTEN_ID
+from dbentry.factory import make, modelfactory_factory
+from dbentry.sites import miz_site
+from dbentry.tests.base import AdminTestCase, TestCase
+from dbentry.utils import get_model_fields
 
 
 class AdminTestMethodsMixin(object):
@@ -75,7 +75,7 @@ class AdminTestMethodsMixin(object):
         if 'url' in data:
             url = data['url']
         else:
-            url = '/admin/DBentry/{model_name}/?{fld_name}={pk}'.format(**data)
+            url = '/admin/dbentry/{model_name}/?{fld_name}={pk}'.format(**data)
         return {'url': url, 'label': data['label']}
 
     def assertInCrosslinks(self, expected, links):
@@ -84,7 +84,7 @@ class AdminTestMethodsMixin(object):
         if 'url' in expected:
             url = expected['url']
         else:
-            url = '/admin/DBentry/{model_name}/?{fld_name}={pk}'.format(**expected)
+            url = '/admin/dbentry/{model_name}/?{fld_name}={pk}'.format(**expected)
         data = {'url': url, 'label': expected['label']}
         self.assertIn(data, links)
         return data
@@ -133,7 +133,7 @@ class AdminTestMethodsMixin(object):
             inline_model_names = [
                 inline.model._meta.model_name for inline in self.model_admin.inlines]
             for i, link in enumerate(links.copy()):
-                model_name_regex = re.search(r'DBentry/(\w+)/', link['url'])
+                model_name_regex = re.search(r'dbentry/(\w+)/', link['url'])
                 if not model_name_regex:
                     continue
                 model_name = model_name_regex.groups()[0]
@@ -192,7 +192,7 @@ class AdminTestMethodsMixin(object):
 
     def test_formfield_for_foreignkey(self):
         # Test that every ForeignKey formfield gets a fancy select2 widget
-        from DBentry.ac.widgets import MIZModelSelect2
+        from dbentry.ac.widgets import MIZModelSelect2
         model_fields = get_model_fields(
             self.model, base=False, foreign=True, m2m=False)
         for fkey_field in model_fields:
@@ -219,7 +219,7 @@ class AdminTestMethodsMixin(object):
         # Patch render_change_form to get at the context the mock is called with.
         try:
             path = reverse(
-                'admin:DBentry_{}_add'.format(self.model._meta.model_name))
+                'admin:dbentry_{}_add'.format(self.model._meta.model_name))
             self.model_admin._changeform_view(
                 request=self.get_request(path=path),
                 object_id=None,
@@ -901,7 +901,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.obj1.refresh_from_db()
                 self.assertEqual(self.obj1.status, expected_value)
 
-    @patch('DBentry.admin.log_change')
+    @patch('dbentry.admin.log_change')
     def test_change_status_logentry_error(self, mocked_log_change):
         # Check how exceptions during the creation of the LogEntry objects
         # are handled.
@@ -1877,7 +1877,7 @@ class TestBildmaterialAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 class TestAuthAdminMixin(TestCase):
 
-    @patch('DBentry.admin.super')
+    @patch('dbentry.admin.super')
     def test_formfield_for_manytomany(self, mocked_super):
         # Assert that formfield_for_manytomany adds a (<model_class_name>) to
         # the human-readable part of the formfield's choices.

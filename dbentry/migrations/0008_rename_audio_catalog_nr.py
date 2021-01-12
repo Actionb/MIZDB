@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0007_delete_format_models'),
+        ('dbentry', '0007_delete_format_models'),
     ]
 
     operations = [

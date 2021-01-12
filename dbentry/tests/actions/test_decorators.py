@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from DBentry.actions.decorators import add_cls_attrs
+from dbentry.actions.decorators import add_cls_attrs
 
 
 def dummy_func0():

@@ -1,12 +1,12 @@
 from django.urls import reverse, resolve
 from django.urls.exceptions import NoReverseMatch, Resolver404
 
-from DBentry import urls as dbentry_urls
-from DBentry.ac import urls as autocomplete_urls, views as autocomplete_views
-from DBentry.bulk import views as bulk_views
-from DBentry.maint import urls as maint_urls, views as maint_views
-from DBentry.sites import miz_site
-from DBentry.tests.base import MyTestCase
+from dbentry import urls as dbentry_urls
+from dbentry.ac import urls as autocomplete_urls, views as autocomplete_views
+from dbentry.bulk import views as bulk_views
+from dbentry.maint import urls as maint_urls, views as maint_views
+from dbentry.sites import miz_site
+from dbentry.tests.base import MyTestCase
 
 from MIZDB import urls as mizdb_urls
 
@@ -60,11 +60,11 @@ class TestURLs(URLTestCase):
         # miz_site.index is a bound function:
         self.assertResolves('/admin/', miz_site.index.__func__)
 
-        self.assertReverses('admin:app_list', app_label='DBentry')
-        self.assertResolves('/admin/DBentry/', miz_site.app_index.__func__)
+        self.assertReverses('admin:app_list', app_label='dbentry')
+        self.assertResolves('/admin/dbentry/', miz_site.app_index.__func__)
 
     def test_dbentry_urls(self):
-        # Tests the urls in DBentry.urls.py.
+        # Tests the urls in dbentry.urls.py.
         self.urlconf = dbentry_urls
 
         expected = [
@@ -76,7 +76,7 @@ class TestURLs(URLTestCase):
                 self.assertResolves(url, view_class)
 
     def test_autocomplete_urls(self):
-        # Tests the urls in DBentry.ac.urls.py.
+        # Tests the urls in dbentry.ac.urls.py.
         self.urlconf = autocomplete_urls
         expected = [
             ('acbuchband', '/buch/', (), {}, autocomplete_views.ACBuchband),

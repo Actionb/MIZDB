@@ -4,12 +4,12 @@ from unittest.mock import Mock
 from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
-import DBentry.models as _models
-from DBentry.ac.creator import Creator
-from DBentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable
-from DBentry.factory import make
-from DBentry.tests.base import mockv
-from DBentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
+import dbentry.models as _models
+from dbentry.ac.creator import Creator
+from dbentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable
+from dbentry.factory import make
+from dbentry.tests.base import mockv
+from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):

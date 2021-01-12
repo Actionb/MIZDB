@@ -1,9 +1,9 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
-from DBentry import models as _models
-from DBentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
-from DBentry.utils import get_model_from_string
+from dbentry import models as _models
+from dbentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
+from dbentry.utils import get_model_from_string
 
 
 class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):

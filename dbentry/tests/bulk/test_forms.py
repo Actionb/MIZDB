@@ -3,12 +3,12 @@ from django.core.exceptions import ValidationError
 from django.test import tag
 from django.utils.translation import override as translation_override
 
-import DBentry.models as _models
-from DBentry.bulk.forms import BulkForm, BulkFormAusgabe
-from DBentry.bulk.fields import BulkField, BulkJahrField
-from DBentry.factory import make, batch
-from DBentry.tests.base import FormTestCase
-from DBentry.tests.mixins import TestDataMixin
+import dbentry.models as _models
+from dbentry.bulk.forms import BulkForm, BulkFormAusgabe
+from dbentry.bulk.fields import BulkField, BulkJahrField
+from dbentry.factory import make, batch
+from dbentry.tests.base import FormTestCase
+from dbentry.tests.mixins import TestDataMixin
 
 
 class TestBulkForm(FormTestCase):

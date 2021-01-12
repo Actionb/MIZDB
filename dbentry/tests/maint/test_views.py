@@ -6,15 +6,15 @@ from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse, resolve
 from django.utils.http import unquote
 
-from DBentry import models as _models
-from DBentry import utils
-from DBentry.actions.views import MergeViewWizarded
-from DBentry.factory import make
-from DBentry.maint.views import (
+from dbentry import models as _models
+from dbentry import utils
+from dbentry.actions.views import MergeViewWizarded
+from dbentry.factory import make
+from dbentry.maint.views import (
     DuplicateObjectsView, ModelSelectView, UnusedObjectsView
 )
-from DBentry.tests.base import ViewTestCase
-from DBentry.tests.mixins import TestDataMixin
+from dbentry.tests.base import ViewTestCase
+from dbentry.tests.mixins import TestDataMixin
 
 
 class TestModelSelectView(ViewTestCase):
@@ -134,7 +134,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
     def test_build_duplicates_items(self):
         # Assert that build_duplicates_items returns the correct items.
         changeform_url = unquote(
-            reverse('admin:DBentry_band_change', args=['{pk}'])
+            reverse('admin:dbentry_band_change', args=['{pk}'])
         )
         link_template = '<a href="{url}" target="_blank">{name}</a>'
 
@@ -196,7 +196,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             attrs['href'].count('?'), 1,
             msg="Changelist url should be of format <changelist>?id__in=[ids]")
         cl_url, query_params = attrs['href'].split('?')
-        self.assertEqual(reverse('admin:DBentry_band_changelist'), cl_url)
+        self.assertEqual(reverse('admin:dbentry_band_changelist'), cl_url)
         self.assertEqual("id__in=" + ",".join(str(o.pk) for o in self.test_data), query_params)
         self.assertIn("target", attrs)
         self.assertEqual(attrs['target'], '_blank')
@@ -301,10 +301,10 @@ class TestUnusedObjectsView(ViewTestCase):
         # Sorting by "model_name (count)" since we know count is either 0 or 1:
         # (sorting by url will sort an url with pk="10" before one with pk="9")
         unused, used_once = sorted(items, key=lambda tpl: tpl[1])
-        url = reverse("admin:DBentry_genre_change", args=[self.unused.pk])
+        url = reverse("admin:dbentry_genre_change", args=[self.unused.pk])
         self.assertIn(url, unused[0])
         self.assertIn("Artikel (0)", unused[1])
-        url = reverse("admin:DBentry_genre_change", args=[self.used_once.pk])
+        url = reverse("admin:dbentry_genre_change", args=[self.used_once.pk])
         self.assertIn(url, used_once[0])
         self.assertIn("Artikel (1)", used_once[1])
 
@@ -322,6 +322,6 @@ class TestUnusedObjectsView(ViewTestCase):
         context = mocked_render.call_args[0][0]
         self.assertIn('changelist_link', context.keys())
         link = context['changelist_link']
-        cl_url = reverse('admin:DBentry_genre_changelist') + "?id__in=" + str(self.unused.pk)
+        cl_url = reverse('admin:dbentry_genre_changelist') + "?id__in=" + str(self.unused.pk)
         # Too lazy to unpack the html element with regex to check its other attributes.
         self.assertIn(cl_url, link)

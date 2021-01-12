@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('DBentry', '0009_remove_m2m_through'),
+        ('dbentry', '0009_remove_m2m_through'),
     ]
 
     operations = [

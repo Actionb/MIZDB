@@ -1,8 +1,8 @@
-from DBentry.actions.views import (
+from dbentry.actions.views import (
     BulkEditJahrgang, MergeViewWizarded, MoveToBrochureBase,
     ChangeBestand
 )
-from DBentry.actions.decorators import add_cls_attrs
+from dbentry.actions.decorators import add_cls_attrs
 # TODO: add an action that creates an overview of the stock (Bestand) of the
 # selected items (possibly allow changes there too?)
 

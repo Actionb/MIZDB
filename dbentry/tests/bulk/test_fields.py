@@ -1,8 +1,8 @@
 from django.utils.translation import override as translation_override
 from django.core.exceptions import ValidationError
 
-from DBentry.bulk.fields import BulkField, BulkJahrField
-from DBentry.tests.base import MyTestCase
+from dbentry.bulk.fields import BulkField, BulkJahrField
+from dbentry.tests.base import MyTestCase
 
 
 class TestBulkField(MyTestCase):

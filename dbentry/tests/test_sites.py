@@ -5,9 +5,9 @@ from django.contrib.auth.models import Permission, User
 from django.core import checks
 from django.urls import reverse
 
-from DBentry import models as _models
-from DBentry.sites import MIZAdminSite, miz_site
-from DBentry.tests.base import RequestTestCase
+from dbentry import models as _models
+from dbentry.sites import MIZAdminSite, miz_site
+from dbentry.tests.base import RequestTestCase
 
 
 class TestMIZAdminSite(RequestTestCase):
@@ -55,14 +55,14 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
         self.assertFalse(tools)
 
-    @patch('DBentry.sites.admin.AdminSite.app_index')
-    def test_app_index_returns_DBentry(self, mocked_super_app_index):
-        # Assert that a request for the app_index of 'DBentry' uses the index()
+    @patch('dbentry.sites.admin.AdminSite.app_index')
+    def test_app_index_returns_dbentry(self, mocked_super_app_index):
+        # Assert that a request for the app_index of 'dbentry' uses the index()
         # method instead.
         # (can't really test a full on request-response process because mocking
         #   index or super.app_index breaks it)
         site = MIZAdminSite()
-        for app_label, index_called in [('DBentry', True), ('Beep', False)]:
+        for app_label, index_called in [('dbentry', True), ('Beep', False)]:
             with self.subTest(app_label=app_label):
                 with patch.object(site, 'index') as mocked_index:
                     site.app_index(request=None, app_label=app_label)
@@ -74,17 +74,17 @@ class TestMIZAdminSite(RequestTestCase):
                         self.assertTrue(mocked_super_app_index.called)
 
     def test_app_index_categories(self):
-        # Assert that the DBentry app_list contains the additional 'fake' apps
+        # Assert that the dbentry app_list contains the additional 'fake' apps
         # that organize the various models of the app.
         request = self.get_request(path=reverse('admin:index'))
-        response = miz_site.app_index(request, app_label='DBentry')
+        response = miz_site.app_index(request, app_label='dbentry')
         app_list = response.context_data['app_list']
         app_names = [d.get('name') for d in app_list if d.get('name')]
         for category in ['Archivgut', 'Stammdaten', 'Sonstige']:
             with self.subTest():
                 self.assertIn(category, app_names)
 
-    @patch("DBentry.sites.admin.AdminSite.check")
+    @patch("dbentry.sites.admin.AdminSite.check")
     def test_check(self, mocked_super_check):
         # Assert that the check finds tools with invalid url names.
         mocked_super_check.return_value = []
@@ -96,9 +96,9 @@ class TestMIZAdminSite(RequestTestCase):
             self.assertIsInstance(errors[0], checks.Error)
 
     def test_app_index(self):
-        # Check that /admin/DBentry/ and /admin/ resolve to the expected index
+        # Check that /admin/dbentry/ and /admin/ resolve to the expected index
         # views.
-        response = self.client.get('/admin/DBentry/')
+        response = self.client.get('/admin/dbentry/')
         self.assertEqual(
             response.resolver_match.func.__name__, MIZAdminSite.app_index.__name__)
 
@@ -133,7 +133,7 @@ class TestMIZAdminSite(RequestTestCase):
         request = self.get_request(user=self.super_user)
         # Mock your way around the permission/availability checks following the
         # superuser checks.
-        with patch.multiple('DBentry.sites', reverse=DEFAULT):
+        with patch.multiple('dbentry.sites', reverse=DEFAULT):
             self.assertTrue(site.build_admintools_context(request))
 
     def test_add_categories_no_category(self):
@@ -143,7 +143,7 @@ class TestMIZAdminSite(RequestTestCase):
         # (lazily just use miz_site instead of mocking everything)
         model_admin = miz_site._registry[_models.Artikel]
         for index_category in ('Sonstige', 'Beep', None):
-            app_list = [{'app_label': 'DBentry', 'models': [{'object_name': 'Artikel'}]}]
+            app_list = [{'app_label': 'dbentry', 'models': [{'object_name': 'Artikel'}]}]
             with self.subTest(index_category=str(index_category)):
                 with patch.object(model_admin, 'index_category', new=index_category):
                     app_list = miz_site.add_categories(app_list)
@@ -153,13 +153,13 @@ class TestMIZAdminSite(RequestTestCase):
                     self.assertEqual(len(sonstige_category['models']), 1)
                     self.assertEqual(sonstige_category['models'][0]['object_name'], 'Artikel')
 
-    def test_add_categories_no_DBentry_app(self):
-        # Assert that add_categories returns an empty list if no 'DBentry' app
+    def test_add_categories_no_dbentry_app(self):
+        # Assert that add_categories returns an empty list if no 'dbentry' app
         # can be found in the given app_list.
         site = MIZAdminSite()
         app_list = []
         self.assertFalse(site.add_categories(app_list))
         app_list.append({'app_label': 'Beep', 'models': []})
         self.assertFalse(site.add_categories(app_list))
-        app_list.append({'app_label': 'DBentry', 'models': []})
+        app_list.append({'app_label': 'dbentry', 'models': []})
         self.assertTrue(site.add_categories(app_list))

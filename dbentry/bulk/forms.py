@@ -2,11 +2,11 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 
-from DBentry import models as _models
-from DBentry.ac.widgets import make_widget
-from DBentry.base.forms import MIZAdminForm, MinMaxRequiredFormMixin
-from DBentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
-from DBentry.bulk.fields import BulkField, BulkJahrField, BaseSplitField
+from dbentry import models as _models
+from dbentry.ac.widgets import make_widget
+from dbentry.base.forms import MIZAdminForm, MinMaxRequiredFormMixin
+from dbentry.constants import ATTRS_TEXTAREA, DUPLETTEN_ID, ZRAUM_ID
+from dbentry.bulk.fields import BulkField, BulkJahrField, BaseSplitField
 
 
 class BulkForm(MIZAdminForm):

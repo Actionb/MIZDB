@@ -6,7 +6,7 @@ from django.core import exceptions
 from django.db import models, transaction, utils
 
 
-def get_model_from_string(model_name, app_label='DBentry'):
+def get_model_from_string(model_name, app_label='dbentry'):
     """
     Find the model class with name 'model_name'.
 
@@ -285,11 +285,11 @@ def get_full_fields_list(model):
 def get_all_model_names():
     """
     Return all the names of models in the apps registry that are subclasses
-    of DBentry.base.models.BaseModel.
+    of dbentry.base.models.BaseModel.
     """
     # (this is not explicitly used by anything)
-    from DBentry.base.models import BaseModel  # avoid circular imports
-    mdls = apps.get_models('DBentry')
+    from dbentry.base.models import BaseModel  # avoid circular imports
+    mdls = apps.get_models('dbentry')
     my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
     return sorted(my_mdls, key=lambda m: m.lower())
 
@@ -357,14 +357,14 @@ def validate_model_data(model):
 def validate_all_model_data(*models):
     """
     Validate the data of given models or of all models that inherit from
-    superclass DBentry.base.models.BaseModel.
+    superclass dbentry.base.models.BaseModel.
     """
 
     invalid = {}
     if not models:
-        from DBentry.base.models import BaseModel  # avoid circular imports
+        from dbentry.base.models import BaseModel  # avoid circular imports
         models = [
-            m for m in apps.get_models('DBentry')
+            m for m in apps.get_models('dbentry')
             if issubclass(m, BaseModel)
         ]
     for model in models:

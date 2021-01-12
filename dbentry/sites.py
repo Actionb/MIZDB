@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from django.views.decorators.cache import never_cache
 
-from DBentry import utils
+from dbentry import utils
 
 
 class MIZAdminSite(admin.AdminSite):
@@ -43,14 +43,14 @@ class MIZAdminSite(admin.AdminSite):
 
     def app_index(self, request, app_label, extra_context=None):
         """
-        The categories added to the index page of 'DBentry' are essentially
+        The categories added to the index page of 'dbentry' are essentially
         'fake' apps and since admin.AdminSite.app_index() is the index for a
         specific app (and thus would not include other apps), a request for the
-        app_index of 'DBentry' must be redirected to index() (which collects
+        app_index of 'dbentry' must be redirected to index() (which collects
         all apps, including our fake ones) for the response to include the
         grouping categories.
         """
-        if app_label == 'DBentry':
+        if app_label == 'dbentry':
             # Redirect to the 'tidied' up index page of the main page
             return self.index(request, extra_context)
         return super().app_index(request, app_label, extra_context)
@@ -71,22 +71,22 @@ class MIZAdminSite(admin.AdminSite):
 
     def add_categories(self, app_list):
         """Regroup the models in app_list by introducing categories."""
-        # Find the index of the DBentry app:
+        # Find the index of the dbentry app:
         index = None
         try:
             index = next(
                 i
                 for i, d in enumerate(app_list)
-                if d['app_label'] == 'DBentry'
+                if d['app_label'] == 'dbentry'
             )
         except StopIteration:
             pass
         if index is None:
-            # No app with label 'DBentry' found.
+            # No app with label 'dbentry' found.
             # Return an empty app_list.
             return []
 
-        # Get the dict containing data for the DBentry app with keys:
+        # Get the dict containing data for the dbentry app with keys:
         # {app_url, name, has_module_perms, models, app_label}
         dbentry_dict = app_list.pop(index)
         model_list = dbentry_dict.pop('models')

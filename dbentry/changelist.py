@@ -1,6 +1,6 @@
 from django.contrib.admin.views.main import ChangeList, ALL_VAR, ORDER_VAR
 
-from DBentry.search.admin import ChangelistSearchFormMixin
+from dbentry.search.admin import ChangelistSearchFormMixin
 
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):

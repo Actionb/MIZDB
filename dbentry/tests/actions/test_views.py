@@ -10,23 +10,23 @@ from django.db import models
 from django.test import tag
 from django.utils.translation import override as translation_override
 
-import DBentry.models as _models
-from DBentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
-from DBentry.actions.base import (
+import dbentry.models as _models
+from dbentry.admin import BandAdmin, AusgabenAdmin, ArtikelAdmin, AudioAdmin
+from dbentry.actions.base import (
     ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView)
-from DBentry.actions.views import (
+from dbentry.actions.views import (
     BulkEditJahrgang, MergeViewWizarded, MoveToBrochureBase,
     ChangeBestand
 )
-from DBentry.actions.forms import (
+from dbentry.actions.forms import (
     MergeConflictsFormSet, MergeFormSelectPrimary, BrochureActionFormOptions)
-from DBentry.base.views import MIZAdminMixin, FixedSessionWizardView
-from DBentry.factory import make
-from DBentry.sites import miz_site
-from DBentry.tests.actions.base import ActionViewTestCase
-from DBentry.tests.base import AdminTestCase, mockv
-from DBentry.tests.mixins import LoggingTestMixin
-from DBentry.utils import get_obj_link  # parameters: obj, user, admin_site
+from dbentry.base.views import MIZAdminMixin, FixedSessionWizardView
+from dbentry.factory import make
+from dbentry.sites import miz_site
+from dbentry.tests.actions.base import ActionViewTestCase
+from dbentry.tests.base import AdminTestCase, mockv
+from dbentry.tests.mixins import LoggingTestMixin
+from dbentry.utils import get_obj_link  # parameters: obj, user, admin_site
 
 
 class TestConfirmationViewMixin(AdminTestCase):
@@ -542,7 +542,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(self.obj2.jahrgang, 1)
         self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
 
-    @patch('DBentry.actions.views.get_updateable_fields', return_value=[])
+    @patch('dbentry.actions.views.get_updateable_fields', return_value=[])
     @patch.object(SessionWizardView, 'process_step', return_value={})
     def test_process_step(self, super_process_step, updateable_fields):
         view = self.get_view()
@@ -649,7 +649,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertTrue(hasattr(view, 'allowed_permissions'))
         self.assertEqual(view.allowed_permissions, ['merge'])
 
-    @patch('DBentry.actions.views.merge_records')
+    @patch('dbentry.actions.views.merge_records')
     @patch.object(MergeViewWizarded, 'get_cleaned_data_for_step')
     def test_perform_action_no_expand(self, mocked_step_data, mocked_merge_records):
         # Assert that merge_records is called with the correct arguments.
@@ -732,7 +732,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht "
             "verschoben werden können: {}"
         ).format(
-            '<a href="/admin/DBentry/ausgabe/{}/change/">Testausgabe</a>'.format(
+            '<a href="/admin/dbentry/ausgabe/{}/change/">Testausgabe</a>'.format(
                 str(self.obj1.pk)
             )
         )
@@ -860,7 +860,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
         self.assertEqual(_models.Kalender.objects.count(), 1)
 
-    @patch('DBentry.actions.views.get_model_from_string')
+    @patch('dbentry.actions.views.get_model_from_string')
     def test_perform_action_protected_ausgabe(self, mocked_model_from_string):
         mocked_model_from_string.return_value = _models.Brochure
         options_form_cleaned_data = {'brochure_art': 'brochure'}
@@ -874,8 +874,8 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
-            '<a href="/admin/DBentry/ausgabe/{pk}/change/" target="_blank">{name}</a> '
-            '(<a href="/admin/DBentry/ausgabe/?id__in={pk}" target="_blank">Liste</a>). '
+            '<a href="/admin/dbentry/ausgabe/{pk}/change/" target="_blank">{name}</a> '
+            '(<a href="/admin/dbentry/ausgabe/?id__in={pk}" target="_blank">Liste</a>). '
             'Es wurden keine Broschüren für diese Ausgaben erstellt.'
         ).format(pk=self.obj1.pk, name=str(self.obj1))
         self.assertMessageSent(request, expected_message)
@@ -883,8 +883,8 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # No new brochure objects should have been created
         self.assertEqual(_models.Brochure.objects.count(), 0)
 
-    @patch('DBentry.actions.views.is_protected')
-    @patch('DBentry.actions.views.get_model_from_string')
+    @patch('dbentry.actions.views.is_protected')
+    @patch('dbentry.actions.views.get_model_from_string')
     def test_perform_action_does_not_roll_back_ausgabe_deletion(
             self, mocked_model_from_string, mocked_is_protected):
         # Assert that a rollback on trying to delete the magazin does not also
@@ -924,7 +924,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertIsInstance(context['options_form'], BrochureActionFormOptions)
 
     @patch(
-        'DBentry.actions.views.MoveToBrochureBase.can_delete_magazin',
+        'dbentry.actions.views.MoveToBrochureBase.can_delete_magazin',
         new_callable=PropertyMock
     )
     def test_conditionally_show_delete_magazin_option(self, mocked_can_delete):

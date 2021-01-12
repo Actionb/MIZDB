@@ -2,10 +2,10 @@ from unittest import mock
 
 from django import forms
 
-from DBentry import models as _models
-from DBentry.base.views import OptionalFormView, FixedSessionWizardView
-from DBentry.tests.base import MyTestCase, ViewTestCase
-from DBentry.views import MIZ_permission_denied_view, SiteSearchView
+from dbentry import models as _models
+from dbentry.base.views import OptionalFormView, FixedSessionWizardView
+from dbentry.tests.base import MyTestCase, ViewTestCase
+from dbentry.views import MIZ_permission_denied_view, SiteSearchView
 
 
 class TestOptionalFormView(ViewTestCase):
@@ -83,7 +83,7 @@ class TestFixedSessionWizardView(ViewTestCase):
 
     view_class = FixedSessionWizardView
 
-    @mock.patch("DBentry.base.views.SessionWizardView.get_context_data")
+    @mock.patch("dbentry.base.views.SessionWizardView.get_context_data")
     def test_get_context_data(self, mocked_super_get_context_data):
         # Make sure that 'form' is passed to SessionWizardView as a positional
         # argument - unlike other views that accept (only) keyword arguments.

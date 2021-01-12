@@ -7,12 +7,12 @@ from django.forms import modelform_factory
 from django.urls import NoReverseMatch
 from django.utils.encoding import force_text
 
-from DBentry import models as _models
-from DBentry.utils import admin as admin_utils
-from DBentry.factory import make
-from DBentry.sites import miz_site
-from DBentry.tests.base import RequestTestCase
-from DBentry.tests.mixins import TestDataMixin
+from dbentry import models as _models
+from dbentry.utils import admin as admin_utils
+from dbentry.factory import make
+from dbentry.sites import miz_site
+from dbentry.tests.base import RequestTestCase
+from dbentry.tests.mixins import TestDataMixin
 
 
 class TestAdminUtils(TestDataMixin, RequestTestCase):
@@ -45,12 +45,12 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
 
     def test_get_obj_link(self):
         link = admin_utils.get_obj_link(self.obj1, self.super_user)
-        url = '/admin/DBentry/audio/{}/change/'.format(self.obj1.pk)
+        url = '/admin/dbentry/audio/{}/change/'.format(self.obj1.pk)
         expected = '<a href="{}">{}</a>'.format(url, force_text(self.obj1))
         self.assertEqual(link, expected)
 
         link = admin_utils.get_obj_link(self.obj1, self.super_user, blank=True)
-        url = '/admin/DBentry/audio/{}/change/'.format(self.obj1.pk)
+        url = '/admin/dbentry/audio/{}/change/'.format(self.obj1.pk)
         expected = '<a href="{}" target="_blank">{}</a>'.format(url, force_text(self.obj1))
         self.assertEqual(link, expected)
 
@@ -59,7 +59,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         links = admin_utils.link_list(request, self.test_data)
         for i, (url, label) in enumerate(re.findall(r'<a href="(.*?)">(.*?)</a>', links)):
             self.assertEqual(
-                url, '/admin/DBentry/audio/{}/change/'.format(self.test_data[i].pk))
+                url, '/admin/dbentry/audio/{}/change/'.format(self.test_data[i].pk))
             self.assertEqual(label, str(self.test_data[i]))
 
     def test_link_list_blank(self):
@@ -74,18 +74,18 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_changelist_link(self):
         request = self.get_request()
         link = admin_utils.get_changelist_link(_models.Artikel, request.user)
-        self.assertEqual(link, '<a href="/admin/DBentry/artikel/">Liste</a>')
+        self.assertEqual(link, '<a href="/admin/dbentry/artikel/">Liste</a>')
         link = admin_utils.get_changelist_link(_models.Artikel, request.user, blank=True)
-        self.assertEqual(link, '<a href="/admin/DBentry/artikel/" target="_blank">Liste</a>')
+        self.assertEqual(link, '<a href="/admin/dbentry/artikel/" target="_blank">Liste</a>')
 
     def test_get_model_admin_for_model(self):
-        from DBentry.admin import ArtikelAdmin  # TODO: make module import
+        from dbentry.admin import ArtikelAdmin  # TODO: make module import
         self.assertIsInstance(admin_utils.get_model_admin_for_model('Artikel'), ArtikelAdmin)
         self.assertIsInstance(admin_utils.get_model_admin_for_model(_models.Artikel), ArtikelAdmin)
         self.assertIsNone(admin_utils.get_model_admin_for_model('beepboop'))
 
     def test_has_admin_permission(self):
-        from DBentry.admin import ArtikelAdmin, BildmaterialAdmin  # TODO: make module import
+        from dbentry.admin import ArtikelAdmin, BildmaterialAdmin  # TODO: make module import
         request = self.get_request(user=self.noperms_user)
         model_admin = ArtikelAdmin(_models.Artikel, miz_site)
         self.assertFalse(
@@ -137,7 +137,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         kwargs = {'model': self.model, 'user': self.super_user}
         for obj_list in (None, [self.obj1], self.test_data):
             kwargs['obj_list'] = obj_list
-            expected = '/admin/DBentry/audio/'
+            expected = '/admin/dbentry/audio/'
             if obj_list:
                 expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
             with self.subTest(obj_list=obj_list):
@@ -210,7 +210,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         self.assertEqual(msg, [{'added': {}}])
 
     def test_log_addition(self):
-        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+        with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_addition(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
@@ -227,7 +227,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_addition_related_obj(self):
-        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+        with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_addition(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
@@ -244,7 +244,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_change(self):
-        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+        with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_change(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
@@ -262,7 +262,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_change_related_obj(self):
-        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+        with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_change(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
@@ -281,7 +281,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_deletion(self):
-        with patch('DBentry.utils.admin.create_logentry') as mocked_create_logentry:
+        with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_deletion(user_id=self.super_user.pk, obj=self.obj1)
             self.assertTrue(mocked_create_logentry.called)
             user_id, obj, action_flag = mocked_create_logentry.call_args[0]

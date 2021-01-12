@@ -3,12 +3,12 @@ from itertools import chain
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
 
-from DBentry import models as _models
-from DBentry.ac import widgets as autocomplete_widgets
-from DBentry.factory import make
-from DBentry.fields import PartialDate, PartialDateFormField
-from DBentry.search import forms as search_forms
-from DBentry.tests.base import MyTestCase
+from dbentry import models as _models
+from dbentry.ac import widgets as autocomplete_widgets
+from dbentry.factory import make
+from dbentry.fields import PartialDate, PartialDateFormField
+from dbentry.search import forms as search_forms
+from dbentry.tests.base import MyTestCase
 
 
 class TestSearchFormFactory(MyTestCase):

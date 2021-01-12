@@ -1,6 +1,6 @@
 from nameparser import HumanName
 
-from DBentry.constants import M2M_LIST_MAX_LEN
+from dbentry.constants import M2M_LIST_MAX_LEN
 
 
 def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
