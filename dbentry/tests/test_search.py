@@ -1,9 +1,9 @@
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.db.models import F, Value, FloatField
 
-from DBentry import models as _models
-from DBentry.factory import make
-from DBentry.tests.base import DataTestCase
+from dbentry import models as _models
+from dbentry.factory import make
+from dbentry.tests.base import DataTestCase
 
 # Stuff to test for:
 #   - unaccent
