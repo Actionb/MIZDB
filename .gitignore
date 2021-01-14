@@ -13,7 +13,7 @@ htmlcov/
 
 static/
 
-!DBentry/static
+!dbentry/static
 
 docs/
 
