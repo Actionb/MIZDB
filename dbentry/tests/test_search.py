@@ -55,14 +55,6 @@ class TestSearch(DataTestCase):
         rank = SearchRank(F('search'), q)
         return qs.annotate(rank=rank).filter(search=q).order_by('-rank', 'band_name')
 
-    def test_unaccent(self):
-        # Assert that search uses unaccent.
-        # Hélène <- Helene
-        self.assertTrue(self.search('Helene'))
-        self.obj1.band_name = 'Helene'
-        self.obj1.save()
-        self.assertTrue(self.search('Hélène'))
-
     def test_search_fields(self):
         # Assert that the search fields are queried.
         test_data = [
@@ -102,12 +94,6 @@ class TestSearch(DataTestCase):
         self.assertTrue(results)
         self.assertIn(obj, results)
 
-    def test_trigram(self):
-        obj = make(self.model, band_name='Katy Stevens')
-        results = self.search('Katie Stephens', qs=obj.qs())
-        self.assertTrue(results)
-        self.assertIn(obj, results)
-
     def test_partial_match(self):
         obj = make(self.model, band_name='Soundgarden')
         query = SearchQuery('Sound:*', search_type='raw')
@@ -133,6 +119,31 @@ class TestSearch(DataTestCase):
         results = results_exact.union(results_fts).order_by('-rank', 'band_name')
         self.assertIn(exact, results)
         self.assertEqual(results[0], exact)
+
+
+class TestUnaccent(DataTestCase):
+
+    model = _models.Band
+
+    def test_unaccent(self):
+        # Assert that search uses unaccent.
+        # Hélène <-> Helene
+        obj = make(self.model, band_name='Hélène')
+        self.queryset.filter(search__unaccent='Helene')
+        self.assertIn(obj, self.queryset.filter(search__unaccent='Helene'))
+        obj.band_name = 'Helene'
+        obj.save()
+        self.assertIn(obj, self.queryset.filter(search__unaccent='Hélène'))
+
+
+class TestTrigram(DataTestCase):
+
+    model = _models.Band
+
+    def test_trigram(self):
+        obj = make(self.model, band_name='Katy Stevens')
+        self.assertIn(obj, self.queryset.filter(search__trigram='Katie Stephens'))
+
 
 import time
 from unittest import skip
