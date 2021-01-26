@@ -84,7 +84,7 @@ class AudioAdmin(MIZModelAdmin):
 
     fieldsets = [
         (None, {'fields': [
-                'titel', 'tracks', 'laufzeit', 'jahr', 'original', 'quelle',
+                'titel', 'tracks', 'laufzeit', 'jahr', 'land_pressung', 'original', 'quelle',
                 ('medium', 'medium_qty'), 'plattennummer', 'beschreibung', 'bemerkungen'
         ]}),
         ('Discogs', {
@@ -102,7 +102,8 @@ class AudioAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
-            'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id'
+            'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id',
+            'land_pressung'
         ],
     }
     actions = [_actions.merge_records, _actions.change_bestand]

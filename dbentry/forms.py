@@ -127,11 +127,15 @@ class BandForm(forms.ModelForm):
 class AudioForm(DiscogsFormMixin, forms.ModelForm):
     url_field_name = 'discogs_url'
     release_id_field_name = 'release_id'
+    class Meta:
+        widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
 
 class VideoForm(DiscogsFormMixin, forms.ModelForm):
     url_field_name = 'discogs_url'
     release_id_field_name = 'release_id'
+    class Meta:
+        widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
 
 class BildmaterialForm(forms.ModelForm):
