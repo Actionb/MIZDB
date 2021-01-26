@@ -1,0 +1,113 @@
+select {
+    min-width: 260px;
+}
+
+.vIntegerField{
+    width: 9em;
+}
+
+/*
+Set rules for the h2 element displaying the 'name' of a fieldset.
+*/
+fieldset[class^="module aligned"] .fieldset-name{
+    font-size: 13px;
+    letter-spacing: 0;
+    text-transform: none;
+    background: lightblue none repeat scroll 0 0;
+    color:#447e9b;
+}
+
+/*
+Set some rules for the form of a stacked inline.
+*/
+.inline-related .stacked-inline-collapsible {
+    border: 1px groove lightgrey;
+    margin-bottom: 5px;
+}
+
+.collapsible:hover {
+    cursor:pointer;
+}
+
+/*
+forms.css:217 overrides forms.css:213 display: none; to display: block; 
+for h2 elements and for collapsed fieldsets INSIDE a collapsed fieldset.
+We want everything inside a collapsed fieldset to be hidden:
+*/
+fieldset.collapsed * {
+    display: none;
+}
+
+/*
+Add a pointer and change the border of the h3 element in a StackedInline group
+to make it apparent that it can be collapsed.
+*/
+.inline-related h3:hover{
+    border-style: solid;
+    cursor: pointer;
+    border-color:#79aec8;
+}
+
+/*
+forms.css:227 sets collapsed h2 elements to white background with black
+text color. Set it to the default of uncollapsed h2 elements instead.
+*/
+fieldset.collapsed h2 {
+    background: #79aec8 none repeat scroll 0 0;
+    color: #fff;
+}
+
+.collapsible .collapse-hint {
+    display: inline;
+    float: right;
+    padding-left:5px;
+    padding-right:5px;
+}
+
+/*
+Add 5px to the bottom padding to a description element for a django fieldset.
+(see fieldset.html)
+*/
+.description {
+    padding: 5px 0 5px 12px;
+}
+
+
+/**
+    ACTION CONFIRMATION
+*/
+
+/*
+Paint the submit button in a slighter darker red when hovered over or focussed.
+*/
+.action-confirmation form input[type="submit"][name^="action_confirmed"] {
+    background: #ba2121 none repeat scroll 0 0;
+}
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:active,
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:focus,
+.action-confirmation form input[type="submit"][name^="action_confirmed"]:hover {
+    background: #a41515 none repeat scroll 0 0;
+}
+
+.action-confirmation form .cancel-link {
+    background: #ddd none repeat scroll 0 0;
+    border-radius: 4px;
+    color: #333;
+    display: inline-block;
+    height: 15px;
+    line-height: 15px;
+    margin: 0 0 0 10px;
+    padding: 10px 15px;
+    vertical-align: middle;
+}
+
+/*
+Move the radio buttons 'up' a little bit to bring them in line with the label.
+*/
+.aligned .form-row input[type="radio"]{
+    margin-bottom: 5px;
+}
+
+button[name="wizard_goto_step"]{
+    padding: 10px 15px;
+}

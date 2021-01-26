@@ -741,6 +741,9 @@ class Audio(BaseModel):
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
     )
     jahr = YearField('Jahr', blank=True, null=True)
+    land_pressung = models.ForeignKey(
+        'Land', models.PROTECT, blank=True, null=True, verbose_name='Land der Pressung'
+    )
     quelle = models.CharField(
         max_length=200, blank=True,
         help_text='Angaben zur Herkunft/Qualität der Aufnahme: z.B. Broadcast, Live, etc.'

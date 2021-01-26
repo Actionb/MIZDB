@@ -1315,7 +1315,8 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     crosslinks_expected = [
         {'model_name': 'ort', 'fld_name': 'land', 'label': 'Orte (1)'},
-        {'model_name': 'bundesland', 'fld_name': 'land', 'label': 'Bundesländer (1)'}
+        {'model_name': 'bundesland', 'fld_name': 'land', 'label': 'Bundesländer (1)'},
+        {'model_name': 'audio', 'fld_name': 'land_pressung', 'label': 'Audio Materialien (1)'}
     ]
 
 
@@ -1356,7 +1357,7 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'spielort', 'veranstaltung', 'ort'
     ]
     fields_expected = [
-        'titel', 'tracks', 'laufzeit', 'jahr', 'quelle', 'original',
+        'titel', 'tracks', 'laufzeit', 'jahr', 'land_pressung', 'quelle', 'original',
         'plattennummer', 'release_id', 'discogs_url', 'beschreibung',
         'bemerkungen', 'medium', 'medium_qty'
     ]
