@@ -140,9 +140,12 @@ class AusgabenAdmin(MIZModelAdmin):
     class AudioInLine(BaseTabularInline):
         model = _models.Ausgabe.audio.through
         verbose_model = _models.Audio
+    class VideoInLine(BaseTabularInline):
+        model = _models.Ausgabe.video.through
+        verbose_model = _models.Video
 
     index_category = 'Archivgut'
-    inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, BestandInLine]
+    inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, VideoInLine, BestandInLine]
     ordering = ['magazin__magazin_name', '_name']
     list_select_related = ['magazin']
 
@@ -158,14 +161,15 @@ class AusgabenAdmin(MIZModelAdmin):
         'fields': [
             'magazin', 'status', 'ausgabejahr__jahr__range', 'ausgabenum__num__range',
             'ausgabelnum__lnum__range', 'ausgabemonat__monat__ordinal__range',
-            'jahrgang', 'sonderausgabe', 'audio'
+            'jahrgang', 'sonderausgabe', 'audio', 'video'
         ],
         'labels': {
             'ausgabejahr__jahr__range': 'Jahr',
             'ausgabenum__num__range': 'Nummer',
             'ausgabelnum__lnum__range': 'Lfd. Nummer',
             'ausgabemonat__monat__ordinal__range': 'Monatsnummer',
-            'audio': 'Audio (Beilagen)'
+            'audio': 'Audio (Beilagen)',
+            'video': 'Video (Beilagen)'
         }
     }
 
@@ -982,6 +986,8 @@ class VideoAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
+    class AusgabeInLine(BaseAusgabeInline):
+        model = _models.Ausgabe.video.through
     class DateiInLine(BaseTabularInline):
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
@@ -999,7 +1005,7 @@ class VideoAdmin(MIZModelAdmin):
         MusikerInLine, BandInLine,
         SchlInLine, GenreInLine,
         OrtInLine, SpielortInLine, VeranstaltungInLine,
-        PersonInLine, DateiInLine, BestandInLine
+        PersonInLine, AusgabeInLine, DateiInLine, BestandInLine
     ]
     fieldsets = [
         (None, {'fields': [

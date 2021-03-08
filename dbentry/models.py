@@ -212,6 +212,7 @@ class Ausgabe(ComputedNameModel):
     magazin = models.ForeignKey('Magazin', models.PROTECT)
 
     audio = models.ManyToManyField('Audio')
+    video = models.ManyToManyField('Video')
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
