@@ -15,9 +15,10 @@ from dbentry.query import (
     BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
 )
 from dbentry.utils import leapdays, is_iterable
+from dbentry.fts.manager import TextSearchQuerySetMixin
 
 
-class MIZQuerySet(models.QuerySet):
+class MIZQuerySet(TextSearchQuerySetMixin, models.QuerySet):
 
     def find(self, q, ordered=False, strat_class=None, **kwargs):
         """

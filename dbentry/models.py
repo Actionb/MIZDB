@@ -2,7 +2,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
-from tsvector_field import SearchVectorField, WeightedColumn
 
 import dbentry.m2m as _m2m
 from dbentry.base.models import (
@@ -10,6 +9,7 @@ from dbentry.base.models import (
     AbstractURLModel
 )
 from dbentry.constants import LIST_DISPLAY_MAX_LEN
+from dbentry.db.base import SearchVectorField, WeightedColumn
 from dbentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
@@ -120,8 +120,8 @@ class Band(BaseModel):
 
     search = SearchVectorField(
         columns=[
-            WeightedColumn('band_name', 'A'),
-            WeightedColumn('beschreibung', 'B')
+            WeightedColumn('band_name', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german')
         ],
         # NOTE: language is per SearchVectorField, not per column!
         # 'beschreibung' needs stemming, but band_name doesn't!
@@ -132,6 +132,7 @@ class Band(BaseModel):
     name_field = 'band_name'
     primary_search_fields = ['band_name']
     search_fields = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
+    related_search_vectors = ['bandalias__search']
     search_fields_suffixes = {
         'bandalias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
@@ -144,6 +145,10 @@ class Band(BaseModel):
         ordering = ['band_name']
 class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
+    search = SearchVectorField(
+        columns=[WeightedColumn('alias', 'B', 'simple')],
+        language='simple', blank=True, null=True, editable=False
+    )
 
 
 class Autor(ComputedNameModel):
