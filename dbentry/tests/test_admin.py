@@ -656,7 +656,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     model_admin_class = _admin.AusgabenAdmin
     model = _models.Ausgabe
-    exclude_expected = ['audio']
+    exclude_expected = ['audio', 'video']
     fields_expected = [
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
