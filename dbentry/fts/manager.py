@@ -1,7 +1,7 @@
 from django.contrib.postgres.search import SearchRank, SearchQuery
 from django.db.models import F, Q
 
-from dbentry.db.base import SearchVectorField
+from dbentry.fts.fields import SearchVectorField
 
 
 class TextSearchQuerySetMixin(object):

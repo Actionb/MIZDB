@@ -9,10 +9,10 @@ from dbentry.base.models import (
     AbstractURLModel
 )
 from dbentry.constants import LIST_DISPLAY_MAX_LEN
-from dbentry.db.base import SearchVectorField, WeightedColumn
 from dbentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
+from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
 from dbentry.utils import concat_limit, get_model_relations, get_model_fields
 
