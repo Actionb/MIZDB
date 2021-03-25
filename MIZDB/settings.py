@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'dbentry.db',
+        'ENGINE': 'dbentry.fts.db',
         'NAME': 'mizdb',
         'USER': 'mizdb_user',
         'PASSWORD': 'm!zdb_2017',

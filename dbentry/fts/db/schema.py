@@ -1,34 +1,11 @@
-# This wrapper is required for the django-tsvector-field app to work properly.
-from django.db.backends.postgresql import base
-from django.utils.encoding import force_text
-from tsvector_field.schema import DatabaseTriggerEditor
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor as PostgreSQLSchemaEditor
-import tsvector_field
-
-
-class WeightedColumn(tsvector_field.WeightedColumn):
-
-    def __init__(self, name, weight, language):
-        self.language = language
-        super().__init__(name, weight)
-
-    def deconstruct(self):
-        path = "dbentry.db.base.{}".format(self.__class__.__name__)
-        return path, [force_text(self.name), force_text(self.weight), force_text(self.language)], {}
-
-
-class SearchVectorField(tsvector_field.SearchVectorField):
-
-    def _check_language_attributes(self, textual_columns):
-        # Check implementation doesn't work with per column language.
-        return []
-
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        return name, "dbentry.db.base.{}".format(self.__class__.__name__), args, kwargs
+from tsvector_field.schema import DatabaseTriggerEditor
 
 
 class MIZDBTriggerEditor(DatabaseTriggerEditor):
+    """
+    Extend DatabaseTriggerEditor to accounnt for the column.language attribute.
+    """
 
     def _to_tsvector_weights(self, field):
         sql_setweight = (
@@ -38,6 +15,7 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
         weights = []
         for column in field.columns:
             weights.append(sql_setweight.format(
+                # FIXME: catch invalid column.language (f.ex. empty string)
                 language=self.quote_value(column.language),
                 column=self.quote_name(column.name),
                 weight=self.quote_value(column.weight)
@@ -48,6 +26,17 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
 
 
 class MIZDBSchemaEditor(PostgreSQLSchemaEditor):
+    """
+    Schema editor class with a trigger_editor_class attribute.
+
+    tsvector_field's schema editor calls the trigger editor class directly in
+    each method, i.e.:
+        DatabaseTriggerEditor(self).create_model(model)
+    Changing the trigger editor class thus means that each method must be
+    changed. To facilitate custom editors, introduce a trigger_editor_class
+    attribute that is then called instead.
+    """
+
     trigger_editor_class = MIZDBTriggerEditor
 
     def create_model(self, model):
@@ -69,7 +58,3 @@ class MIZDBSchemaEditor(PostgreSQLSchemaEditor):
     def alter_field(self, model, old_field, new_field, strict=False):
         super().alter_field(model, old_field, new_field)
         self.trigger_editor_class(self).alter_field(model, old_field, new_field)
-
-
-class DatabaseWrapper(base.DatabaseWrapper):
-    SchemaEditorClass = MIZDBSchemaEditor
