@@ -1,6 +1,9 @@
+from django.test import TestCase
+
 from dbentry import models as _models
 from dbentry.factory import make
 from dbentry.tests.base import DataTestCase
+from dbentry.fts import fields
 
 
 class TestFullTextSearch(DataTestCase):
@@ -72,3 +75,23 @@ class TestFullTextSearch(DataTestCase):
         results = self.queryset.search('Doktores')
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.get(), self.obj1)
+
+
+class TestWeightedColumn(TestCase):
+
+    def test_deconstruct(self):
+        # Assert that the column is deconstructed with the correct path and
+        # the correct column's language.
+        column = fields.WeightedColumn('name', 'weight', language='german')
+        name, args, kwargs = column.deconstruct()
+        self.assertEqual(name, 'dbentry.fts.fields.WeightedColumn')
+        self.assertIn(args, 'german')
+
+
+class TestSearchVectorField(TestCase):
+
+    def test_deconstruct(self):
+        # Assert that the field is deconstructed with the correct path.
+        field = fields.SearchVectorField()
+        name, path, args, kwargs = field.deconstruct()
+        self.assertEqual(path, 'dbentry.fts.fields.SearchVectorField')
