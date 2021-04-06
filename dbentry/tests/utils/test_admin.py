@@ -85,7 +85,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         self.assertIsNone(admin_utils.get_model_admin_for_model('beepboop'))
 
     def test_has_admin_permission(self):
-        from dbentry.admin import ArtikelAdmin, BildmaterialAdmin  # TODO: make module import
+        from dbentry.admin import ArtikelAdmin, PlakatAdmin  # TODO: make module import
         request = self.get_request(user=self.noperms_user)
         model_admin = ArtikelAdmin(_models.Artikel, miz_site)
         self.assertFalse(
@@ -106,14 +106,14 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         )
 
         request = self.get_request(user=self.staff_user)
-        model_admin = BildmaterialAdmin(_models.Bildmaterial, miz_site)
+        model_admin = PlakatAdmin(_models.Plakat, miz_site)
         self.assertFalse(
             admin_utils.has_admin_permission(request, model_admin),
             msg="Should return False for non-superusers on a superuser only model admin."
         )
 
         request = self.get_request(user=self.super_user)
-        model_admin = BildmaterialAdmin(_models.Bildmaterial, miz_site)
+        model_admin = PlakatAdmin(_models.Plakat, miz_site)
         self.assertTrue(
             admin_utils.has_admin_permission(request, model_admin),
             msg="Should return True for superuser on a superuser-only model admin."

@@ -811,7 +811,7 @@ class AudioMedium(BaseModel):
         ordering = ['medium']
 
 
-class Bildmaterial(BaseModel):
+class Plakat(BaseModel):
     titel = models.CharField(max_length=200)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
@@ -820,7 +820,7 @@ class Bildmaterial(BaseModel):
     )
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
-    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
+    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Plakates')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     reihe = models.ForeignKey(
@@ -842,8 +842,8 @@ class Bildmaterial(BaseModel):
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
-        verbose_name = 'Bild Material'
-        verbose_name_plural = 'Bild Materialien'
+        verbose_name = 'Plakat'
+        verbose_name_plural = 'Plakate'
 
 
 class Bildreihe(BaseModel):
@@ -1186,11 +1186,12 @@ class Bestand(BaseModel):
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
-    bildmaterial = models.ForeignKey('Bildmaterial', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.CASCADE, blank=True, null=True)
+    foto = models.ForeignKey('Foto', models.CASCADE, blank=True, null=True)
     memorabilien = models.ForeignKey('Memorabilien', models.CASCADE, blank=True, null=True)
+    plakat = models.ForeignKey('Plakat', models.CASCADE, blank=True, null=True)
     technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
 
@@ -1394,3 +1395,50 @@ class Katalog(BaseBrochure):
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
         verbose_name_plural = 'Warenkataloge'
+
+
+class Foto(BaseModel):
+    ART_NEGATIV = 'negativ'
+    ART_POSITIV = 'positiv'
+    ART_REPRINT = 'reprint'
+    ART_POLAROID = 'polaroid'
+    ART_CHOICES = [
+        (ART_NEGATIV, 'negativ'), (ART_POSITIV, 'positiv'),
+        (ART_REPRINT, 'Neuabzug (reprint)'), (ART_POLAROID, 'Polaroid')
+    ]
+
+    titel = models.CharField(max_length=200)
+    size = models.CharField('Größe', max_length=200, blank=True)
+    datum = PartialDateField('Zeitangabe')
+    typ = models.CharField(
+        'Art des Fotos', max_length=100, choices=ART_CHOICES, default=ART_NEGATIV
+    )
+    farbe = models.BooleanField('Farbfoto')
+    owner = models.CharField('Rechteinhaber', max_length=200, blank=True)
+    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Fotos')
+    bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
+
+    reihe = models.ForeignKey(
+        'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe')
+
+    schlagwort = models.ManyToManyField('Schlagwort')
+    genre = models.ManyToManyField('Genre')
+    musiker = models.ManyToManyField('Musiker')
+    band = models.ManyToManyField('Band')
+    ort = models.ManyToManyField('Ort')
+    spielort = models.ManyToManyField('Spielort')
+    veranstaltung = models.ManyToManyField('Veranstaltung')
+    person = models.ManyToManyField('Person')
+
+    name_field = 'titel'
+    primary_search_fields = ['titel']
+    search_fields = ['titel', 'owner', 'beschreibung', 'bemerkungen']
+    search_fields_suffixes = {
+        'owner': 'Rechteinhaber',
+        'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'
+    }
+
+    class Meta(BaseModel.Meta):
+        ordering = ['titel']
+        verbose_name = 'Foto'
+        verbose_name_plural = 'Fotos'
