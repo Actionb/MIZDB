@@ -794,7 +794,7 @@ class AudioMedium(BaseModel):
         ordering = ['medium']
 
 
-class Bildmaterial(BaseModel):
+class Plakat(BaseModel):
     titel = models.CharField(max_length=200)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
@@ -803,7 +803,7 @@ class Bildmaterial(BaseModel):
     )
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
-    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Bildmaterials')
+    beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Plakates')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     reihe = models.ForeignKey(
@@ -825,8 +825,8 @@ class Bildmaterial(BaseModel):
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
-        verbose_name = 'Bild Material'
-        verbose_name_plural = 'Bild Materialien'
+        verbose_name = 'Plakat'
+        verbose_name_plural = 'Plakate'
 
 
 class Bildreihe(BaseModel):
@@ -1169,7 +1169,7 @@ class Bestand(BaseModel):
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE, blank=True, null=True)
-    bildmaterial = models.ForeignKey('Bildmaterial', models.CASCADE, blank=True, null=True)
+    plakat = models.ForeignKey('Plakat', models.CASCADE, blank=True, null=True)
     brochure = models.ForeignKey('BaseBrochure', models.CASCADE, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.CASCADE, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.CASCADE, blank=True, null=True)

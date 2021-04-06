@@ -654,9 +654,9 @@ class TestModelBestand(DataTestCase):
                 self.assertIsInstance(obj.bestand_object, expected_model)
 
 
-class TestModelBildmaterial(DataTestCase):
+class TestModelPlakat(DataTestCase):
 
-    model = _models.Bildmaterial
+    model = _models.Plakat
 
     def test_str(self):
         obj = make(self.model, titel='Testbild')

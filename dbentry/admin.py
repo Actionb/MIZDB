@@ -15,7 +15,7 @@ from dbentry.base.admin import (
 )
 from dbentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    BildmaterialForm, MusikerForm, BandForm, VideoForm
+    PlakatForm, MusikerForm, BandForm, VideoForm
 )
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -470,33 +470,33 @@ class BandAdmin(MIZModelAdmin):
     orte_string.admin_order_field = 'orte_list'
 
 
-@admin.register(_models.Bildmaterial, site=miz_site)
-class BildmaterialAdmin(MIZModelAdmin):
+@admin.register(_models.Plakat, site=miz_site)
+class PlakatAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
-        model = _models.Bildmaterial.genre.through
+        model = _models.Plakat.genre.through
     class SchlInLine(BaseSchlagwortInline):
-        model = _models.Bildmaterial.schlagwort.through
+        model = _models.Plakat.schlagwort.through
     class PersonInLine(BaseTabularInline):
-        model = _models.Bildmaterial.person.through
+        model = _models.Plakat.person.through
         verbose_model = _models.Person
     class MusikerInLine(BaseTabularInline):
-        model = _models.Bildmaterial.musiker.through
+        model = _models.Plakat.musiker.through
         verbose_model = _models.Musiker
     class BandInLine(BaseTabularInline):
-        model = _models.Bildmaterial.band.through
+        model = _models.Plakat.band.through
         verbose_model = _models.Band
     class OrtInLine(BaseTabularInline):
-        model = _models.Bildmaterial.ort.through
+        model = _models.Plakat.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):
-        model = _models.Bildmaterial.spielort.through
+        model = _models.Plakat.spielort.through
         verbose_model = _models.Spielort
     class VeranstaltungInLine(BaseTabularInline):
-        model = _models.Bildmaterial.veranstaltung.through
+        model = _models.Plakat.veranstaltung.through
         verbose_model = _models.Veranstaltung
 
     collapse_all = True
-    form = BildmaterialForm
+    form = PlakatForm
     index_category = 'Archivgut'
     list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
     save_on_top = True
@@ -1068,7 +1068,7 @@ class OrtAdmin(MIZModelAdmin):
 @admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
     readonly_fields = [
-        'audio', 'ausgabe', 'bildmaterial', 'brochure', 'buch',
+        'audio', 'ausgabe', 'plakat', 'brochure', 'buch',
         'dokument', 'memorabilien', 'technik', 'video'
     ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']

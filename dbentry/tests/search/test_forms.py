@@ -250,7 +250,7 @@ class TestSearchForm(MyTestCase):
         self.assertIn('seite__lte', filter_params)
 
     def test_get_filters_params(self):
-        form_class = self.factory(_models.Bildmaterial, fields=['datum'])
+        form_class = self.factory(_models.Plakat, fields=['datum'])
         form = form_class(data={'datum_0': 2020, 'datum_1': 5, 'datum_2': 20})
         self.assertTrue(form.is_valid())
         self.assertIn('datum', form.cleaned_data)
@@ -263,7 +263,7 @@ class TestSearchForm(MyTestCase):
         # values for the 'in' lookup with querysets.
         genre1 = make(_models.Genre, genre="genre1", pk=1)
         genre2 = make(_models.Genre, genre="genre2", pk=2)
-        form_class = self.factory(_models.Bildmaterial, fields=['genre'])
+        form_class = self.factory(_models.Plakat, fields=['genre'])
         form = form_class(data={'genre': [genre1.pk, genre2.pk]})
         self.assertTrue(form.is_valid(), msg=form.errors)
         self.assertIn('genre', form.cleaned_data)

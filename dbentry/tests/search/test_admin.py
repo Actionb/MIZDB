@@ -15,8 +15,8 @@ from dbentry.tests.base import AdminTestCase
 
 class TestAdminMixin(AdminTestCase):
 
-    model = _models.Bildmaterial
-    model_admin_class = _admin.BildmaterialAdmin
+    model = _models.Plakat
+    model_admin_class = _admin.PlakatAdmin
 
     @mock.patch('dbentry.search.admin.searchform_factory')
     def test_get_search_form_class(self, mocked_factory):
@@ -43,7 +43,7 @@ class TestAdminMixin(AdminTestCase):
         self.assertIn('search_var', response.context)
 
     @mock.patch.object(
-        _admin.BildmaterialAdmin,
+        _admin.PlakatAdmin,
         'search_form_kwargs',
         {'fields': ['datum']}
     )
@@ -144,7 +144,7 @@ class TestAdminMixin(AdminTestCase):
             ('m2m', {'genre': ['1', '2']})
         ]
         # Disable the inlines so we do not have to provide all the post data for them:
-        patcher = mock.patch.object(_admin.BildmaterialAdmin, 'inlines', [])
+        patcher = mock.patch.object(_admin.PlakatAdmin, 'inlines', [])
         patcher.start()
         for filter_type, filter_kwargs in filters:
             changelist_filters = urlencode(filter_kwargs, doseq=True)
@@ -208,7 +208,7 @@ class TestAdminMixin(AdminTestCase):
         )
         search_form = mock.Mock(media="dummy_media")
         patcher = mock.patch.object(
-            _admin.BildmaterialAdmin, 'search_form', search_form, create=True)
+            _admin.PlakatAdmin, 'search_form', search_form, create=True)
         patcher.start()
 
         # Assert that a missing 'media' key in context_data is handled:
@@ -280,7 +280,7 @@ class TestAdminMixin(AdminTestCase):
             self.assertEqual(
                 errors[0].msg,
                 "Ignored search form field: 'BeepBoop'. "
-                "Bildmaterial has no field named 'BeepBoop'"
+                "Plakat has no field named 'BeepBoop'"
             )
             # A valid search field with an invalid lookup:
             self.model_admin.search_form_kwargs = {'fields': ['titel__beep']}
@@ -321,8 +321,8 @@ class TestAdminMixin(AdminTestCase):
 
 class TestSearchFormChangelist(AdminTestCase):
 
-    model = _models.Bildmaterial
-    model_admin_class = _admin.BildmaterialAdmin
+    model = _models.Plakat
+    model_admin_class = _admin.PlakatAdmin
 
     search_form_kwargs = {
         'fields': [
@@ -340,15 +340,15 @@ class TestSearchFormChangelist(AdminTestCase):
         cls.reihe = make(_models.Bildreihe)
         cls.test_data = [
             make(
-                _models.Bildmaterial, titel='Object1', datum='2019-05-19',
+                _models.Plakat, titel='Object1', datum='2019-05-19',
                 genre=[cls.genre1, cls.genre2]
             ),
             make(
-                _models.Bildmaterial, titel='Object2',  datum='2019-05-20',
+                _models.Plakat, titel='Object2',  datum='2019-05-20',
                 genre=[cls.genre1]
             ),
             make(
-                _models.Bildmaterial, titel='Object3',  datum='2019-05-21',
+                _models.Plakat, titel='Object3',  datum='2019-05-21',
                 reihe=cls.reihe,
             ),
         ]
@@ -361,7 +361,7 @@ class TestSearchFormChangelist(AdminTestCase):
         changelist = response.context['cl']
         self.assertEqual(len(changelist.result_list), 3)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_titel(self):
         request_data = {'titel': 'Object1'}
         response = self.client.get(path=self.changelist_path, data=request_data)
@@ -370,7 +370,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertEqual(len(changelist.result_list), 1)
         self.assertIn(self.obj1, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_datum_range(self):
         request_data = {
             'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19,
@@ -383,7 +383,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertIn(self.obj1, changelist.result_list)
         self.assertIn(self.obj2, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_datum_range_no_end(self):
         request_data = {'datum_0_0': 2019, 'datum_0_1': 5, 'datum_0_2': 19}
         response = self.client.get(path=self.changelist_path, data=request_data)
@@ -392,7 +392,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertEqual(len(changelist.result_list), 1)
         self.assertIn(self.obj1, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_datum_range_no_start(self):
         request_data = {'datum_1_0': 2019, 'datum_1_1': 5, 'datum_1_2': 20}
         response = self.client.get(path=self.changelist_path, data=request_data)
@@ -402,7 +402,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertIn(self.obj1, changelist.result_list)
         self.assertIn(self.obj2, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_genre(self):
         request_data = {'genre': [self.genre1.pk, self.genre2.pk]}
         response = self.client.get(path=self.changelist_path, data=request_data)
@@ -412,7 +412,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertIn(self.obj1, changelist.result_list)
         self.assertIn(self.obj2, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_reihe(self):
         request_data = {'reihe': self.reihe.pk}
         response = self.client.get(path=self.changelist_path, data=request_data)
@@ -421,7 +421,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertEqual(len(changelist.result_list), 1)
         self.assertIn(self.obj3, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_filter_by_id(self):
         request_data = {'id': [",".join(str(pk) for pk in [self.obj1.pk, self.obj2.pk])]}
         response = self.client.get(path=self.changelist_path, data=request_data)
@@ -431,7 +431,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertIn(self.obj1, changelist.result_list)
         self.assertIn(self.obj2, changelist.result_list)
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_get_filters_params_select_multiple_lookup(self):
         # Assert that the params returned contain a valid lookup:
         # i.e. '__in' for SelectMultiple.
@@ -445,7 +445,7 @@ class TestSearchFormChangelist(AdminTestCase):
             '%s,%s' % (self.genre1.pk, self.genre2.pk)
         )
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_get_filters_params_range_lookup(self):
         # Assert that the params returned contain a valid lookup:
         # i.e. '__range' for RangeFormField.
@@ -462,7 +462,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertEqual(start, PartialDate(2020, 5, 20))
         self.assertEqual(end, PartialDate(2020, 5, 22))
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_get_filters_params_range_lookup_no_start(self):
         # Assert that the params returned contain a valid lookup:
         # i.e. '__range' for RangeFormField.
@@ -477,7 +477,7 @@ class TestSearchFormChangelist(AdminTestCase):
         self.assertIn('datum__lte', params)
         self.assertEqual(params['datum__lte'], PartialDate(2020, 5, 22))
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_get_filters_params_range_lookup_no_end(self):
         # Assert that the params returned contain a valid lookup:
         # i.e. '__range' for RangeFormField.
@@ -497,7 +497,7 @@ class TestSearchFormChangelist(AdminTestCase):
         # the changelist must query with the cleaned data only and not the indiviual fields.
         form_data = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 20}
         patcher = mock.patch.object(
-            _admin.BildmaterialAdmin, 'search_form_kwargs', {'fields': ['datum']}
+            _admin.PlakatAdmin, 'search_form_kwargs', {'fields': ['datum']}
         )
         patcher.start()
         request = self.get_request(path=self.changelist_path, data=form_data)
@@ -512,7 +512,7 @@ class TestSearchFormChangelist(AdminTestCase):
                 self.assertNotIn(key, params)
         patcher.stop()
 
-    @mock.patch.object(_admin.BildmaterialAdmin, 'search_form_kwargs', search_form_kwargs)
+    @mock.patch.object(_admin.PlakatAdmin, 'search_form_kwargs', search_form_kwargs)
     def test_preserved_filters_result_list(self):
         # Assert that all items of the result list have the preserved filters
         # attached to the link.
