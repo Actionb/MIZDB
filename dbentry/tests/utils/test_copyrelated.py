@@ -9,8 +9,8 @@ from dbentry.utils import copyrelated as utils
 
 class TestCopyRelated(AdminTestCase):
 
-    model = _models.Bildmaterial
-    model_admin_class = _admin.BildmaterialAdmin
+    model = _models.Plakat
+    model_admin_class = _admin.PlakatAdmin
     test_data_count = 1
 
     @classmethod

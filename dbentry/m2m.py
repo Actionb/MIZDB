@@ -59,7 +59,7 @@ class m2m_datei_quelle(BaseM2MModel):
     # a non-datei object (OneToOne?)
     datei = models.ForeignKey('Datei', models.CASCADE)
     audio = models.ForeignKey('Audio', models.SET_NULL, blank=True, null=True)
-    bildmaterial = models.ForeignKey('Bildmaterial', models.SET_NULL, blank=True, null=True)
+    plakat = models.ForeignKey('Plakat', models.SET_NULL, blank=True, null=True)
     buch = models.ForeignKey('Buch', models.SET_NULL, blank=True, null=True)
     dokument = models.ForeignKey('Dokument', models.SET_NULL, blank=True, null=True)
     memorabilien = models.ForeignKey('Memorabilien', models.SET_NULL, blank=True, null=True)

@@ -138,12 +138,12 @@ class VideoForm(DiscogsFormMixin, forms.ModelForm):
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
 
-class BildmaterialForm(forms.ModelForm):
+class PlakatForm(forms.ModelForm):
     """
-    The form for the bildmaterial's admin add/change page.
+    The form for the plakat's admin add/change page.
     A BooleanField is added with which the user can request to copy all related
     Musiker/Band objects of the related veranstaltung instances to this
-    bildmaterial instance.
+    plakat instance.
     """
 
     copy_related = forms.BooleanField(
@@ -155,5 +155,10 @@ class BildmaterialForm(forms.ModelForm):
         required=False
     )
 
+    class Meta:
+        widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
+
+
+class FotoForm(forms.ModelForm):
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}

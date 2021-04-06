@@ -654,9 +654,9 @@ class TestModelBestand(DataTestCase):
                 self.assertIsInstance(obj.bestand_object, expected_model)
 
 
-class TestModelBildmaterial(DataTestCase):
+class TestModelPlakat(DataTestCase):
 
-    model = _models.Bildmaterial
+    model = _models.Plakat
 
     def test_str(self):
         obj = make(self.model, titel='Testbild')
@@ -1447,3 +1447,16 @@ class TestModelBaseBrochure(DataTestCase):
                 # Call resolve_child from the BaseBrochure parent instance.
                 resolved = getattr(obj, child_model._meta.pk.name).resolve_child()
                 self.assertIsInstance(resolved, child_model)
+
+
+class TestModelFoto(DataTestCase):
+
+    model = _models.Foto
+
+    def test_str(self):
+        obj = make(self.model, titel='Testbild')
+        self.assertEqual(str(obj), 'Testbild')
+
+    def test_meta_ordering(self):
+        # Check the default ordering of this model.
+        self.assertEqual(self.model._meta.ordering, ['titel'])
