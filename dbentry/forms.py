@@ -157,3 +157,8 @@ class PlakatForm(forms.ModelForm):
 
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
+
+
+class FotoForm(forms.ModelForm):
+    class Meta:
+        widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}

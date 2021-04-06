@@ -15,7 +15,7 @@ from dbentry.base.admin import (
 )
 from dbentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    PlakatForm, MusikerForm, BandForm, VideoForm
+    PlakatForm, MusikerForm, BandForm, VideoForm, FotoForm
 )
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -1068,8 +1068,8 @@ class OrtAdmin(MIZModelAdmin):
 @admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
     readonly_fields = [
-        'audio', 'ausgabe', 'plakat', 'brochure', 'buch',
-        'dokument', 'memorabilien', 'technik', 'video'
+        'audio', 'ausgabe', 'brochure', 'buch', 'dokument', 'foto',
+        'memorabilien', 'plakat', 'technik', 'video'
     ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['lagerort', 'signatur']}
@@ -1294,6 +1294,81 @@ class KalenderAdmin(BaseBrochureAdmin):
         'labels': {'jahre__jahr__range': 'Jahr'}
     }
     actions = [_actions.merge_records, _actions.change_bestand]
+
+
+@admin.register(_models.Foto, site=miz_site)
+class FotoAdmin(MIZModelAdmin):
+    class GenreInLine(BaseGenreInline):
+        model = _models.Foto.genre.through
+    class SchlInLine(BaseSchlagwortInline):
+        model = _models.Foto.schlagwort.through
+    class PersonInLine(BaseTabularInline):
+        model = _models.Foto.person.through
+        verbose_model = _models.Person
+    class MusikerInLine(BaseTabularInline):
+        model = _models.Foto.musiker.through
+        verbose_model = _models.Musiker
+    class BandInLine(BaseTabularInline):
+        model = _models.Foto.band.through
+        verbose_model = _models.Band
+    class OrtInLine(BaseTabularInline):
+        model = _models.Foto.ort.through
+        verbose_model = _models.Ort
+    class SpielortInLine(BaseTabularInline):
+        model = _models.Foto.spielort.through
+        verbose_model = _models.Spielort
+    class VeranstaltungInLine(BaseTabularInline):
+        model = _models.Foto.veranstaltung.through
+        verbose_model = _models.Veranstaltung
+
+    collapse_all = True
+    form = FotoForm
+    index_category = 'Archivgut'
+    list_display = ['titel', 'padded_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
+    readonly_fields = ['padded_id']
+    save_on_top = True
+    ordering = ['titel', 'datum']
+
+    fields = [
+        'titel', 'padded_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
+        'owner', 'beschreibung', 'bemerkungen'
+    ]
+    inlines = [
+        SchlInLine, GenreInLine, MusikerInLine, BandInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine,
+        PersonInLine, BestandInLine
+    ]
+    search_form_kwargs = {
+        'fields': [
+            'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
+            'veranstaltung', 'person', 'reihe', 'datum__range'
+        ],
+        'labels': {'reihe': 'Bildreihe'}
+    }
+    actions = [_actions.merge_records, _actions.change_bestand]
+
+    def get_result_list_annotations(self):
+        return {
+            'schlagwort_list':
+                ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
+        }
+
+    def padded_id(self, obj):
+        """Return the id of the object, padded with zeros."""
+        if not obj.pk:
+            return self.get_empty_value_display()
+        return str(obj.pk).zfill(6)
+    padded_id.short_description = 'ID'
+
+    def datum_localized(self, obj):
+        return obj.datum.localize()
+    datum_localized.short_description = 'Datum'
+    datum_localized.admin_order_field = 'datum'
+
+    def schlagwort_list(self, obj):
+        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()
+    schlagwort_list.short_description = 'Schlagworte'
+    schlagwort_list.admin_order_field = 'schlagwort_list'
 
 
 @admin.register(

@@ -1019,6 +1019,7 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'audio', 'fld_name': 'person', 'label': 'Audio Materialien (1)'},
         {'model_name': 'buch', 'fld_name': 'person', 'label': 'Bücher (1)'},
         {'model_name': 'musiker', 'fld_name': 'person', 'label': 'Musiker (1)'},
+        {'model_name': 'foto', 'fld_name': 'person', 'label': 'Fotos (1)'},
     ]
 
     def test_is_musiker(self):
@@ -1073,11 +1074,12 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'musiker', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'musiker', 'label': 'Audio Materialien (1)'},
-        {'model_name': 'plakat', 'fld_name': 'musiker', 'label': 'Plakate (1)'},
         {'model_name': 'buch', 'fld_name': 'musiker', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'musiker', 'label': 'Dateien (1)'},
         {'model_name': 'dokument', 'fld_name': 'musiker', 'label': 'Dokumente (1)'},
+        {'model_name': 'foto', 'fld_name': 'musiker', 'label': 'Fotos (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'musiker', 'label': 'Memorabilien (1)'},
+        {'model_name': 'plakat', 'fld_name': 'musiker', 'label': 'Plakate (1)'},
         {'model_name': 'technik', 'fld_name': 'musiker', 'label': 'Technik (1)'},
         {'model_name': 'veranstaltung', 'fld_name': 'musiker', 'label': 'Veranstaltungen (1)'},
         {'model_name': 'video', 'fld_name': 'musiker', 'label': 'Video Materialien (1)'},
@@ -1123,13 +1125,14 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'artikel', 'fld_name': 'genre', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'genre', 'label': 'Audio Materialien (1)'},
         {'model_name': 'band', 'fld_name': 'genre', 'label': 'Bands (1)'},
-        {'model_name': 'plakat', 'fld_name': 'genre', 'label': 'Plakate (1)'},
         {'model_name': 'buch', 'fld_name': 'genre', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'genre', 'label': 'Dateien (1)'},
         {'model_name': 'magazin', 'fld_name': 'genre', 'label': 'Magazine (1)'},
         {'model_name': 'dokument', 'fld_name': 'genre', 'label': 'Dokumente (1)'},
+        {'model_name': 'foto', 'fld_name': 'genre', 'label': 'Fotos (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'genre', 'label': 'Memorabilien (1)'},
         {'model_name': 'musiker', 'fld_name': 'genre', 'label': 'Musiker (1)'},
+        {'model_name': 'plakat', 'fld_name': 'genre', 'label': 'Plakate (1)'},
         {'model_name': 'technik', 'fld_name': 'genre', 'label': 'Technik (1)'},
         {'model_name': 'veranstaltung', 'fld_name': 'genre', 'label': 'Veranstaltungen (1)'},
         {'model_name': 'video', 'fld_name': 'genre', 'label': 'Video Materialien (1)'},
@@ -1180,12 +1183,13 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'schlagwort', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'schlagwort', 'label': 'Audio Materialien (1)'},
-        {'model_name': 'plakat', 'fld_name': 'schlagwort', 'label': 'Plakate (1)'},
         {'model_name': 'brochure', 'fld_name': 'schlagwort', 'label': 'Broschüren (1)'},
         {'model_name': 'buch', 'fld_name': 'schlagwort', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'schlagwort', 'label': 'Dateien (1)'},
         {'model_name': 'dokument', 'fld_name': 'schlagwort', 'label': 'Dokumente (1)'},
+        {'model_name': 'foto', 'fld_name': 'schlagwort', 'label': 'Fotos (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'schlagwort', 'label': 'Memorabilien (1)'},
+        {'model_name': 'plakat', 'fld_name': 'schlagwort', 'label': 'Plakate (1)'},
         {'model_name': 'technik', 'fld_name': 'schlagwort', 'label': 'Technik (1)'},
         {'model_name': 'veranstaltung', 'fld_name': 'schlagwort', 'label': 'Veranstaltungen (1)'},
         {'model_name': 'video', 'fld_name': 'schlagwort', 'label': 'Video Materialien (1)'},
@@ -1214,11 +1218,12 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'band', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'band', 'label': 'Audio Materialien (1)'},
-        {'model_name': 'plakat', 'fld_name': 'band', 'label': 'Plakate (1)'},
         {'model_name': 'buch', 'fld_name': 'band', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'band', 'label': 'Dateien (1)'},
         {'model_name': 'dokument', 'fld_name': 'band', 'label': 'Dokumente (1)'},
+        {'model_name': 'foto', 'fld_name': 'band', 'label': 'Fotos (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'band', 'label': 'Memorabilien (1)'},
+        {'model_name': 'plakat', 'fld_name': 'band', 'label': 'Plakate (1)'},
         {'model_name': 'technik', 'fld_name': 'band', 'label': 'Technik (1)'},
         {'model_name': 'veranstaltung', 'fld_name': 'band', 'label': 'Veranstaltungen (1)'},
         {'model_name': 'video', 'fld_name': 'band', 'label': 'Video Materialien (1)'},
@@ -1284,14 +1289,15 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'artikel', 'fld_name': 'ort', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'ort', 'label': 'Audio Materialien (1)'},
         {'model_name': 'band', 'fld_name': 'orte', 'label': 'Bands (1)'},
-        {'model_name': 'plakat', 'fld_name': 'ort', 'label': 'Plakate (1)'},
         {'model_name': 'buch', 'fld_name': 'ort', 'label': 'Bücher (1)'},
         {'model_name': 'datei', 'fld_name': 'ort', 'label': 'Dateien (1)'},
         {'model_name': 'dokument', 'fld_name': 'ort', 'label': 'Dokumente (1)'},
+        {'model_name': 'foto', 'fld_name': 'ort', 'label': 'Fotos (1)'},
         {'model_name': 'magazin', 'fld_name': 'orte', 'label': 'Magazine (1)'},
         {'model_name': 'memorabilien', 'fld_name': 'ort', 'label': 'Memorabilien (1)'},
         {'model_name': 'musiker', 'fld_name': 'orte', 'label': 'Musiker (1)'},
         {'model_name': 'person', 'fld_name': 'orte', 'label': 'Personen (1)'},
+        {'model_name': 'plakat', 'fld_name': 'ort', 'label': 'Plakate (1)'},
         {'model_name': 'spielort', 'fld_name': 'ort', 'label': 'Spielorte (1)'},
         {'model_name': 'technik', 'fld_name': 'ort', 'label': 'Technik (1)'},
         {'model_name': 'verlag', 'fld_name': 'sitz', 'label': 'Verlage (1)'},
@@ -1410,7 +1416,8 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'artikel', 'fld_name': 'spielort', 'label': 'Artikel (1)'},
         {'model_name': 'audio', 'fld_name': 'spielort', 'label': 'Audio Materialien (1)'},
         {'model_name': 'technik', 'fld_name': 'spielort', 'label': 'Technik (1)'},
-        {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'}
+        {'model_name': 'veranstaltung', 'fld_name': 'spielort', 'label': 'Veranstaltungen (1)'},
+        {'model_name': 'foto', 'fld_name': 'spielort', 'label': 'Fotos (1)'},
     ]
 
 
@@ -1435,7 +1442,8 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'plakat', 'fld_name': 'veranstaltung', 'label': 'Plakate (1)'},
         {'model_name': 'datei', 'fld_name': 'veranstaltung', 'label': 'Dateien (1)'},
         {'model_name': 'artikel', 'fld_name': 'veranstaltung', 'label': 'Artikel (1)'},
-        {'model_name': 'audio', 'fld_name': 'veranstaltung', 'label': 'Audio Materialien (1)'}
+        {'model_name': 'audio', 'fld_name': 'veranstaltung', 'label': 'Audio Materialien (1)'},
+        {'model_name': 'foto', 'fld_name': 'veranstaltung', 'label': 'Fotos (1)'},
     ]
 
     def test_kuenstler_string(self):
@@ -1745,8 +1753,8 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.Bestand
     fields_expected = [
-        'lagerort', 'provenienz', 'audio', 'ausgabe', 'plakat',
-        'brochure', 'buch', 'dokument', 'memorabilien', 'technik', 'video'
+        'lagerort', 'provenienz', 'audio', 'ausgabe', 'brochure', 'buch',
+        'dokument', 'foto', 'memorabilien', 'plakat', 'technik', 'video'
     ]
     num_queries_changelist = 0  # skip the test for the number of queries per changelist request
 
@@ -2008,3 +2016,20 @@ class TestMIZChangelist(AdminTestCase):
         mocked_get_annotations.return_value = {'c': Count('artikel')}
         changelist.get_results(request)
         self.assertIn('c', changelist.result_list.query.annotations)
+
+
+class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
+
+    model_admin_class = _admin.FotoAdmin
+    model = _models.Foto
+    test_data_count = 1
+
+    fields_expected = [
+        'titel', 'padded_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
+        'owner', 'beschreibung', 'bemerkungen'
+    ]
+    search_fields_expected = ['titel', 'owner', 'beschreibung', 'bemerkungen']
+    exclude_expected = [
+        'genre', 'schlagwort', 'person', 'band',
+        'musiker', 'ort', 'spielort', 'veranstaltung'
+    ]
