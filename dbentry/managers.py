@@ -30,6 +30,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, models.QuerySet):
         If 'ordered' is True, results will be ordered according to the order
         established in the queryset instead.
         """
+        return self.search(q)
         if strat_class:
             strat_class = strat_class
         # Use the most accurate strategy possible:
