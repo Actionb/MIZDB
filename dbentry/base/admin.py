@@ -388,6 +388,9 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         queryset = queryset.annotate(**self.get_result_list_annotations() or {})
         return super().response_action(request, queryset)
 
+    def get_search_results(self, request, queryset, search_term):
+        return queryset.search(search_term), False
+
 
 class BaseInlineMixin(object):
     """
