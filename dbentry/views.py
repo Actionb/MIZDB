@@ -60,12 +60,12 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
         ]
         results = []
         for model in sorted(models, key=lambda m: m._meta.object_name):
-            model_results = model.objects.find(q, use_separator=False)
+            model_results = model.objects.search(q)
             if not model_results:
                 continue
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
             url = utils.get_changelist_url(model, self.request.user)
             if url:
-                url += "?id__in=" + ",".join((str(tpl[0]) for tpl in model_results))
+                url += "?id__in=" + ",".join(str(obj.pk) for obj in model_results)
                 results.append(utils.create_hyperlink(url, label, target="_blank"))
         return results
