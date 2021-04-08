@@ -85,7 +85,7 @@ class TestWeightedColumn(TestCase):
         column = fields.WeightedColumn('name', 'weight', language='german')
         name, args, kwargs = column.deconstruct()
         self.assertEqual(name, 'dbentry.fts.fields.WeightedColumn')
-        self.assertIn(args, 'german')
+        self.assertIn('german', args)
 
 
 class TestSearchVectorField(TestCase):

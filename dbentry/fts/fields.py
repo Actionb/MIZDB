@@ -18,7 +18,7 @@ class WeightedColumn(tsvector_field.WeightedColumn):
 
     def deconstruct(self):
         """Return a tuple with which the column can be recreated."""
-        path = "dbentry.db.base.{}".format(self.__class__.__name__)
+        path = "dbentry.fts.fields.{}".format(self.__class__.__name__)
         return (
             path,
             [force_text(self.name), force_text(self.weight), force_text(self.language)],
@@ -41,7 +41,7 @@ class SearchVectorField(tsvector_field.SearchVectorField):
         name, path, args, kwargs = super().deconstruct()
         return (
             name,
-            "dbentry.db.base.{}".format(self.__class__.__name__),
+            "dbentry.fts.fields.{}".format(self.__class__.__name__),
             args,
             kwargs
         )
