@@ -7,13 +7,9 @@ from dbentry.fts.fields import SearchVectorField
 class TextSearchQuerySetMixin(object):
 
     search_vector_field_class = SearchVectorField
+    search_vector_field_name = '_fts'
     simple_config = 'simple'
     stemmed_config = 'german'
-
-    def _get_search_vector_field(self):
-        for field in self.model._meta.get_fields():
-            if isinstance(field, self.search_vector_field_class):
-                return field
 
     def _get_stemmed_languages(self, search_vector_field):
         """Return extra configs declared on the search vector field that aren't the default."""
@@ -39,6 +35,8 @@ class TextSearchQuerySetMixin(object):
         """
         Return search vector (fields) of models that are related to this model.
         """
+        if not hasattr(self.model, 'related_search_vectors'):
+            return {}
         vectors = {}
         for field_path in self.model.related_search_vectors:
             vectors[field_path] = F(field_path)
@@ -47,12 +45,13 @@ class TextSearchQuerySetMixin(object):
     def search(self, search_term, search_type='plain'):
         if not search_term:
             return self
+        if not hasattr(self.model, self.search_vector_field_name):
+            return self
         simple_query = self._get_search_query(
             search_term, config=self.simple_config, search_type=search_type)
         stemmed_query = self._get_search_query(
             search_term, config=self.stemmed_config, search_type=search_type)
-        # TODO: catch _get_search_vector_field returning None
-        field_name = self._get_search_vector_field().name
+        field_name = self.search_vector_field_name
         search_rank = SearchRank(F(field_name), simple_query) + SearchRank(F(field_name), stemmed_query)
         filter = Q(**{field_name: simple_query}) | Q(**{field_name: stemmed_query})
         for field_path, search_vector in self._get_related_search_vectors().items():
