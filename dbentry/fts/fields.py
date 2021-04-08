@@ -28,6 +28,9 @@ class WeightedColumn(tsvector_field.WeightedColumn):
 
 class SearchVectorField(tsvector_field.SearchVectorField):
     # Adjust SearchVectorField to skip the _check_language_attributes check.
+    
+    def __init__(self, blank=True, null=True, editable=False, *args, **kwargs):
+        super().__init__(blank=blank, null=null, editable=editable, *args, **kwargs)
 
     def _check_language_attributes(self, textual_columns):
         # Skip this check.
