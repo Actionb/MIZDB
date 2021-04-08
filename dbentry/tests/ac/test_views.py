@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from unittest.mock import Mock
 
-from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
@@ -383,58 +382,48 @@ class TestACAusgabe(ACViewTestCase):
 
     def test_apply_q_num(self):
         view = self.get_view(q=self.obj_num.__str__())
-        expected = (self.obj_num.pk, force_text(self.obj_num))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_num, view.apply_q(self.queryset))
 
         # search for 10/11
         self.obj_num.ausgabenum_set.create(num=11)
         self.obj_num.refresh_from_db()
         view = self.get_view(q=self.obj_num.__str__())
-        expected = (self.obj_num.pk, force_text(self.obj_num))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_num, view.apply_q(self.queryset))
 
     def test_apply_q_lnum(self):
         view = self.get_view(q=self.obj_lnum.__str__())
-        expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_lnum, view.apply_q(self.queryset), msg="q:%s,qs:%s" % (view.q, view.apply_q(self.queryset)))
 
         # search for 10/11
         self.obj_lnum.ausgabelnum_set.create(lnum=11)
         self.obj_lnum.refresh_from_db()
         view = self.get_view(q=self.obj_lnum.__str__())
-        expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_lnum, view.apply_q(self.queryset))
 
     def test_apply_q_monat(self):
         view = self.get_view(q=self.obj_monat.__str__())
-        expected = (self.obj_monat.pk, force_text(self.obj_monat))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_monat, view.apply_q(self.queryset))
 
         # search for Jan/Feb
         self.obj_monat.ausgabemonat_set.create(monat=make(_models.Monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
-        expected = (self.obj_monat.pk, force_text(self.obj_monat))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_monat, view.apply_q(self.queryset))
 
     def test_apply_q_sonderausgabe(self):
         view = self.get_view(q=self.obj_sonder.__str__())
-        expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_sonder, view.apply_q(self.queryset))
 
         view = self.get_view(q=self.obj_sonder.__str__(), forwarded={'magazin': self.mag.pk})
-        expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_sonder, view.apply_q(self.queryset))
 
     def test_apply_q_jahrgang(self):
         view = self.get_view(q=self.obj_jahrg.__str__())
-        expected = (self.obj_jahrg.pk, force_text(self.obj_jahrg))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_jahrg, view.apply_q(self.queryset))
 
     def test_apply_q_datum(self):
         view = self.get_view(q=self.obj_datum.__str__())
-        expected = (self.obj_datum.pk, force_text(self.obj_datum))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_datum, view.apply_q(self.queryset))
 
 
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
