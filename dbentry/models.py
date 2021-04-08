@@ -25,6 +25,14 @@ class Person(ComputedNameModel):
 
     orte = models.ManyToManyField('Ort')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('_name', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_composing_fields = ['vorname', 'nachname']
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
@@ -66,6 +74,14 @@ class Musiker(BaseModel):
     instrument = models.ManyToManyField('Instrument')
     orte = models.ManyToManyField('Ort')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('kuenstler_name', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
     primary_search_fields = ['kuenstler_name']
@@ -79,6 +95,7 @@ class Musiker(BaseModel):
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
+    related_search_vectors = ['musikeralias___fts']
 
     objects = HumanNameQuerySet.as_manager()
 
@@ -89,9 +106,21 @@ class Musiker(BaseModel):
 class MusikerAlias(BaseAliasModel):
     parent = models.ForeignKey('Musiker', models.CASCADE)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('alias', 'B', 'simple'),
+        ]
+    )
+
 
 class Genre(BaseModel):
     genre = models.CharField('Genre', max_length=100, unique=True)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('genre', 'A', 'simple'),
+        ]
+    )
 
     create_field = 'genre'
     name_field = 'genre'
@@ -100,6 +129,7 @@ class Genre(BaseModel):
     search_fields_suffixes = {
         'genrealias__alias': 'Alias'
     }
+    related_search_vectors = ['genrealias___fts']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
@@ -107,6 +137,12 @@ class Genre(BaseModel):
         ordering = ['genre']
 class GenreAlias(BaseAliasModel):
     parent = models.ForeignKey('Genre', models.CASCADE)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('alias', 'B', 'simple'),
+        ]
+    )
 
 
 class Band(BaseModel):
@@ -118,21 +154,20 @@ class Band(BaseModel):
     musiker = models.ManyToManyField('Musiker')
     orte = models.ManyToManyField('Ort')
 
-    search = SearchVectorField(
+    _fts = SearchVectorField(
         columns=[
             WeightedColumn('band_name', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german')
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
         ],
-        # NOTE: language is per SearchVectorField, not per column!
-        # 'beschreibung' needs stemming, but band_name doesn't!
-        language='simple',
-        blank=True, null=True, editable=False)
+        blank=True, null=True, editable=False
+    )
 
     create_field = 'band_name'
     name_field = 'band_name'
     primary_search_fields = ['band_name']
     search_fields = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
-    related_search_vectors = ['bandalias__search']
+    related_search_vectors = ['bandalias___fts']
     search_fields_suffixes = {
         'bandalias__alias': 'Alias',
         'beschreibung': 'Beschreibung',
@@ -145,9 +180,9 @@ class Band(BaseModel):
         ordering = ['band_name']
 class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
-    search = SearchVectorField(
+
+    _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'B', 'simple')],
-        language='simple', blank=True, null=True, editable=False
     )
 
 
@@ -159,6 +194,14 @@ class Autor(ComputedNameModel):
     person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
 
     magazin = models.ManyToManyField('Magazin')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('_name', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
 
     name_composing_fields = ['person___name', 'kuerzel']
     primary_search_fields = ['_name']
@@ -230,6 +273,14 @@ class Ausgabe(ComputedNameModel):
 
     audio = models.ManyToManyField('Audio')
     video = models.ManyToManyField('Video')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('_name', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
 
     name_composing_fields = [
         'beschreibung', 'sonderausgabe', 'e_datum', 'jahrgang',
@@ -409,6 +460,13 @@ class Monat(BaseModel):
     abk = models.CharField('Abk', max_length=200)
     ordinal = models.PositiveSmallIntegerField(editable=False)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('monat', 'A', 'simple'),
+            WeightedColumn('abk', 'A', 'simple')
+        ]
+    )
+
     search_fields = ['monat', 'abk', 'ordinal']
 
     class Meta(BaseModel.Meta):
@@ -450,6 +508,15 @@ class Magazin(BaseModel):
     herausgeber = models.ManyToManyField('Herausgeber')
     orte = models.ManyToManyField('Ort')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('magazin_name', 'A', 'simple'),
+            WeightedColumn('issn', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     create_field = 'magazin_name'
     name_field = 'magazin_name'
     primary_search_fields = ['magazin_name']
@@ -473,6 +540,12 @@ class Verlag(BaseModel):
 
     sitz = models.ForeignKey('Ort', models.SET_NULL, null=True, blank=True)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('verlag_name', 'A', 'simple'),
+        ]
+    )
+
     create_field = 'verlag_name'
     name_field = 'verlag_name'
     search_fields = ['verlag_name']
@@ -491,6 +564,12 @@ class Ort(ComputedNameModel):
         'bundesland', models.SET_NULL, verbose_name='Bundesland', null=True, blank=True
     )
     land = models.ForeignKey('Land', models.PROTECT)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('_name', 'A', 'simple'),
+        ]
+    )
 
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
@@ -548,6 +627,13 @@ class Bundesland(BaseModel):
 
     land = models.ForeignKey('Land', models.PROTECT)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('bland_name', 'A', 'simple'),
+            WeightedColumn('code', 'A', 'simple')
+        ]
+    )
+
     name_field = 'bland_name'
     primary_search_fields = []
     search_fields = ['bland_name', 'code']
@@ -569,6 +655,13 @@ class Land(BaseModel):
     land_name = models.CharField('Land', max_length=100, unique=True)
     code = models.CharField(max_length=4, unique=True)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('land_name', 'A', 'simple'),
+            WeightedColumn('code', 'A', 'simple')
+        ]
+    )
+
     name_field = 'land_name'
     search_fields = ['land_name', 'code']
     search_fields_suffixes = {'code': 'Land-Code'}
@@ -585,11 +678,18 @@ class Land(BaseModel):
 class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('schlagwort', 'A', 'simple'),
+        ]
+    )
+
     create_field = 'schlagwort'
     name_field = 'schlagwort'
     primary_search_fields = []
     search_fields = ['schlagwort', 'schlagwortalias__alias']
     search_fields_suffixes = {'schlagwortalias__alias': 'Alias'}
+    related_search_vectors = ['schlagwortalias___fts']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
@@ -597,6 +697,12 @@ class Schlagwort(BaseModel):
         ordering = ['schlagwort']
 class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('alias', 'A', 'simple'),
+        ]
+    )
 
 
 class Artikel(BaseModel):
@@ -625,6 +731,15 @@ class Artikel(BaseModel):
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
     person = models.ManyToManyField('Person')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('schlagzeile', 'A', 'simple'),
+            WeightedColumn('zusammenfassung', 'B', 'german'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
 
     name_field = 'schlagzeile'
     primary_search_fields = ['schlagzeile']
@@ -692,6 +807,14 @@ class Buch(BaseModel):
     herausgeber = models.ManyToManyField('Herausgeber')
     verlag = models.ManyToManyField('Verlag')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
@@ -709,6 +832,12 @@ class Buch(BaseModel):
 class Herausgeber(BaseModel):
     herausgeber = models.CharField(max_length=200)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('herausgeber', 'A', 'simple'),
+        ]
+    )
+
     name_field = 'herausgeber'
     create_field = 'herausgeber'
     search_fields = ['herausgeber']
@@ -722,6 +851,13 @@ class Herausgeber(BaseModel):
 class Instrument(BaseModel):
     instrument = models.CharField(unique=True, max_length=200)
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('instrument', 'A', 'simple'),
+            WeightedColumn('kuerzel', 'A', 'simple'),
+        ]
+    )
 
     name_field = 'instrument'
     primary_search_fields = ['instrument']
@@ -784,6 +920,14 @@ class Audio(BaseModel):
     person = models.ManyToManyField('Person')
     plattenfirma = models.ManyToManyField('Plattenfirma')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
@@ -800,6 +944,12 @@ class Audio(BaseModel):
 
 class AudioMedium(BaseModel):
     medium = models.CharField(max_length=200, unique=True)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('medium', 'A', 'simple'),
+        ]
+    )
 
     create_field = 'medium'
     name_field = 'medium'
@@ -835,6 +985,15 @@ class Plakat(BaseModel):
     veranstaltung = models.ManyToManyField('Veranstaltung')
     person = models.ManyToManyField('Person')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('signatur', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
@@ -849,6 +1008,12 @@ class Plakat(BaseModel):
 class Bildreihe(BaseModel):
     name = models.CharField(max_length=200)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+        ]
+    )
+
     create_field = 'name'
     name_field = 'name'
     search_fields = ['name']
@@ -861,6 +1026,12 @@ class Bildreihe(BaseModel):
 
 class Schriftenreihe(BaseModel):
     name = models.CharField(max_length=200)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+        ]
+    )
 
     create_field = 'name'
     name_field = 'name'
@@ -885,6 +1056,14 @@ class Dokument(BaseModel):
     ort = models.ManyToManyField('Ort')
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -911,6 +1090,14 @@ class Memorabilien(BaseModel):
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
@@ -929,6 +1116,14 @@ class Spielort(BaseModel):
 
     ort = models.ForeignKey('Ort', models.PROTECT)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'name'
     primary_search_fields = ['name']
     search_fields = ['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
@@ -937,6 +1132,7 @@ class Spielort(BaseModel):
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
+    related_search_vectors = ['spielortalias___fts']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -944,6 +1140,12 @@ class Spielort(BaseModel):
         ordering = ['name', 'ort']
 class SpielortAlias(BaseAliasModel):
     parent = models.ForeignKey('Spielort', models.CASCADE)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('alias', 'A', 'simple'),
+        ]
+    )
 
 
 class Technik(BaseModel):
@@ -959,6 +1161,14 @@ class Technik(BaseModel):
     ort = models.ManyToManyField('Ort')
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
 
     name_field = 'titel'
     primary_search_fields = ['titel']
@@ -987,6 +1197,15 @@ class Veranstaltung(BaseModel):
     genre = models.ManyToManyField('Genre')
     person = models.ManyToManyField('Person')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('datum', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'name'
     primary_search_fields = ['name']
     search_fields = [
@@ -997,6 +1216,7 @@ class Veranstaltung(BaseModel):
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
+    related_search_vectors = ['veranstaltungalias___fts']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
@@ -1012,9 +1232,21 @@ class Veranstaltung(BaseModel):
 class VeranstaltungAlias(BaseAliasModel):
     parent = models.ForeignKey('Veranstaltung', models.CASCADE)
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('alias', 'A', 'simple'),
+        ]
+    )
+
 
 class Veranstaltungsreihe(BaseModel):
     name = models.CharField(max_length=200)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+        ]
+    )
 
     create_field = 'name'
     name_field = 'name'
@@ -1065,6 +1297,14 @@ class Video(BaseModel):
     veranstaltung = models.ManyToManyField('Veranstaltung')
     person = models.ManyToManyField('Person')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
@@ -1078,6 +1318,12 @@ class Video(BaseModel):
 
 class VideoMedium(BaseModel):
     medium = models.CharField(max_length=200, unique=True)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('medium', 'A', 'simple'),
+        ]
+    )
 
     create_field = 'medium'
     name_field = 'medium'
@@ -1106,6 +1352,8 @@ class Provenienz(BaseModel):
 
     geber = models.ForeignKey('Geber', models.PROTECT)
 
+    # TODO: FTS SearchVectorField
+
     search_fields = ['geber__name']
 
     class Meta(BaseModel.Meta):
@@ -1119,6 +1367,12 @@ class Provenienz(BaseModel):
 
 class Geber(BaseModel):
     name = models.CharField(max_length=200)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+        ]
+    )
 
     name_field = create_field = 'name'
     search_fields = ['name']
@@ -1135,6 +1389,12 @@ class Lagerort(ComputedNameModel):
     regal = models.CharField(max_length=200, blank=True)
     fach = models.CharField(max_length=200, blank=True)
     ordner = models.CharField(max_length=200, blank=True)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('_name', 'A', 'simple'),
+        ]
+    )
 
     name_composing_fields = ['ort', 'raum', 'regal', 'fach']
     search_fields = ['ort', 'raum', 'regal', 'fach', 'ordner']
@@ -1261,6 +1521,14 @@ class Datei(BaseModel):
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
 
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
+
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
@@ -1277,6 +1545,12 @@ class Datei(BaseModel):
 
 class Plattenfirma(BaseModel):
     name = models.CharField(max_length=200)
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('name', 'A', 'simple'),
+        ]
+    )
 
     name_field = create_field = 'name'
     search_fields = ['name']
@@ -1306,6 +1580,13 @@ class BaseBrochure(BaseModel):
     )
 
     genre = models.ManyToManyField('Genre')
+
+    # TODO: add full text seach SearchVectorField
+    #   Brochure, Kalender, Warenkatalog inherit from BaseBrochure via
+    #   multi-table inheritance. This means that fields declared in BaseBrochure
+    #   aren't present in the postgres tables of Brochure, etc.
+    #   This, in turn, means that these fields cannot immediately be used as
+    #   columns for SearchVectorField.
 
     name_field = 'titel'
 
@@ -1429,6 +1710,14 @@ class Foto(BaseModel):
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
     person = models.ManyToManyField('Person')
+
+    _fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', 'simple'),
+            WeightedColumn('beschreibung', 'C', 'german'),
+            WeightedColumn('bemerkungen', 'D', 'simple')
+        ]
+    )
 
     name_field = 'titel'
     primary_search_fields = ['titel']
