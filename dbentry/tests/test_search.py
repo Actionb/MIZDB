@@ -90,6 +90,14 @@ class TestFullTextSearch(DataTestCase):
                 )
             )
 
+    def test_handles_special_characters(self):
+        # Assert that queries with tsquery-specific chars are fine.
+        chars = ['"', "'", "&", "|",  "<", ">", ":"]
+        for special_char in chars:
+            with self.subTest(special_char=special_char):
+                with self.assertNotRaises(Exception):
+                    self.queryset.search('Beep' + special_char)
+
     def test_prefix_query(self):
         # Assert that _get_search_query returns a prefix query for
         # plain-text 'simple' lookups.

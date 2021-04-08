@@ -27,8 +27,15 @@ class TextSearchQuerySetMixin(object):
             # prefix. Modify the search term to specify prefix matching (:*).
             # If search_type is 'raw', expect the search term to have already
             # been modified to be used as it is.
-            search_type = 'raw'
-            search_term = ' & '.join(word for word in search_term.split()) + ':*'
+            if search_term:
+                search_type = 'raw'
+                # Replace single quotes with a space (same as to_tsvector/to_tsquery does (depending on dictionary used))
+                search_term = search_term.replace("'", ' ')
+                # Escape each word:
+                words = ["'''" + word + "'''" for word in search_term.split()]
+                # Add prefix to last word:
+                words[-1] += ':*'
+                search_term = ' & '.join(word for word in words)
         return SearchQuery(search_term, config=config, search_type=search_type)
 
     def _get_related_search_vectors(self):
