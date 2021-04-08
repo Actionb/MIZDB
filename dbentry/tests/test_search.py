@@ -90,6 +90,16 @@ class TestFullTextSearch(DataTestCase):
                 )
             )
 
+    def test_prefix_query(self):
+        # Assert that _get_search_query returns a prefix query for
+        # plain-text 'simple' lookups.
+        tsquery = self.queryset._get_search_query(
+            search_term='Beep', config='simple', search_type='plain')
+        self.assertTrue(tsquery.value.endswith(':*'))
+        tsquery = self.queryset._get_search_query(
+            search_term='Beep', config='simple', search_type='raw')
+        self.assertFalse(tsquery.value.endswith(':*'))
+
 
 class TestWeightedColumn(TestCase):
 
