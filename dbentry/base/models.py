@@ -40,7 +40,7 @@ class BaseModel(models.Model):
     search_fields_suffixes = None
     name_field = None
     create_field = None
-    exclude_from_str = ('beschreibung', 'bemerkungen')
+    exclude_from_str = ('beschreibung', 'bemerkungen', '_fts')
 
     objects = MIZQuerySet.as_manager()
 
