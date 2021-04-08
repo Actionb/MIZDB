@@ -76,6 +76,20 @@ class TestFullTextSearch(DataTestCase):
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.get(), self.obj1)
 
+    def test_ordering(self):
+        # Assert that the result querysets includes the model's default ordering.
+        results = self.queryset.search('Die Ärzte')
+        for ordering in self.model._meta.ordering:
+            self.assertIn(
+                ordering, results.query.order_by,
+                msg=(
+                    "Result queryset ordering does not include the model's "
+                    "default ordering.\nResult ordering:%s\nDefault ordering:%s" % (
+                        results.query.order_by, self.model._meta.ordering
+                    )
+                )
+            )
+
 
 class TestWeightedColumn(TestCase):
 

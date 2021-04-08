@@ -58,5 +58,4 @@ class TextSearchQuerySetMixin(object):
         for field_path, search_vector in self._get_related_search_vectors().items():
             # Include related search vector fields in the filter:
             filter |= Q(**{field_path: simple_query})  # NOTE: simple query only?
-        # TODO: extend ordering by default order
-        return self.annotate(rank=search_rank).filter(filter).order_by('-rank').distinct()
+        return self.annotate(rank=search_rank).filter(filter).order_by('-rank', *self.model._meta.ordering).distinct()
