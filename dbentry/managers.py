@@ -3,45 +3,17 @@ import datetime
 from itertools import chain
 from collections import Counter, OrderedDict, namedtuple
 
-from nameparser import HumanName
-
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import models, transaction
 from django.db.models import Count, Min, Max
 from django.db.models.constants import LOOKUP_SEP
 
-from dbentry.query import (
-    BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
-)
 from dbentry.utils import leapdays, is_iterable
 from dbentry.fts.manager import TextSearchQuerySetMixin
 
 
 class MIZQuerySet(TextSearchQuerySetMixin, models.QuerySet):
-
-    def find(self, q, ordered=False, strat_class=None, **kwargs):
-        """
-        Return a list of instances that contain search term 'q'.
-
-        Find any occurence of the search term 'q' in the queryset, depending
-        on the search strategy used.
-        By default, the order of the results depends on the search strategy.
-        If 'ordered' is True, results will be ordered according to the order
-        established in the queryset instead.
-        """
-        if strat_class:
-            strat_class = strat_class
-        # Use the most accurate strategy possible:
-        elif getattr(self.model, 'name_field', False):
-            strat_class = ValuesDictSearchQuery
-        elif getattr(self.model, 'primary_search_fields', False):
-            strat_class = PrimaryFieldsSearchQuery
-        else:
-            strat_class = BaseSearchQuery
-        strat = strat_class(self, **kwargs)
-        result, exact_match = strat.search(q, ordered)
-        return result
 
     def duplicates(self, *fields):
         """
@@ -285,11 +257,6 @@ class AusgabeQuerySet(CNQuerySet):
             return self.order_by().update(*args, **kwargs)
         return super().update(*args, **kwargs)
 
-    def find(self, q, ordered=True, **kwargs):
-        # Insist on preserving the chronologic order over the order created
-        # by the search query (exact, startswith, contains).
-        return super().find(q, ordered=ordered, **kwargs)
-
     def search(self, q):
         # Override the default order of the search query with the chronologic
         # order.
@@ -523,20 +490,7 @@ class AusgabeQuerySet(CNQuerySet):
 class HumanNameQuerySet(MIZQuerySet):
     """Extension of MIZQuerySet that enables searches for 'human names'."""
     # TODO: delete HumanNameQuerySet; search() covers all of this
-
-    def _parse_human_name(self, text):
-        try:
-            return str(HumanName(text))
-        except:
-            # TODO: find out which exceptions might be raised by HumanName()
-            return text
-
-    def find(self, q, **kwargs):
-        # Parse 'q' through HumanName first to 'combine' the various ways one
-        # could write a human name.
-        # (f.ex. 'first name surname' or 'surname, first name')
-        q = self._parse_human_name(q)
-        return super().find(q, **kwargs)
+    pass
 
 
 class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):

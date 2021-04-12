@@ -1,7 +1,7 @@
 import datetime
 import random
 from itertools import chain
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.test import tag
@@ -10,8 +10,6 @@ import dbentry.models as _models
 from dbentry.factory import make
 from dbentry.managers import CNQuerySet, MIZQuerySet, build_date
 from dbentry.tests.base import DataTestCase, MyTestCase
-from dbentry.query import (
-    BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery)
 
 
 class TestMIZQuerySet(DataTestCase):
@@ -29,41 +27,6 @@ class TestMIZQuerySet(DataTestCase):
         },
     ]
     fields = ['band_name', 'genre__genre', 'bandalias__alias']
-
-    @patch.object(
-        ValuesDictSearchQuery, 'search',
-        return_value=('ValuesDictSearchQuery', False)
-    )
-    @patch.object(
-        PrimaryFieldsSearchQuery, 'search',
-        return_value=('PrimaryFieldsSearchQuery', False)
-    )
-    @patch.object(
-        BaseSearchQuery, 'search',
-        return_value=('BaseSearchQuery', False)
-    )
-    def test_find_strategy_chosen(self, MockBSQ, MockPFSQ, MockVDSQ):
-        # Assert that 'find' chooses the correct search strategy dependent on the
-        # model's properties.
-        model = Mock(name_field='', primary_search_fields=[], search_field_suffixes={})
-        model.get_search_fields.return_value = []
-        qs = Mock(model=model, find=MIZQuerySet.find)
-
-        self.assertEqual(qs.find(qs, 'x'), 'BaseSearchQuery')
-
-        model.primary_search_fields = ['Something']
-        self.assertEqual(qs.find(qs, 'x'), 'PrimaryFieldsSearchQuery')
-
-        model.name_field = 'Something again'
-        self.assertEqual(qs.find(qs, 'x'), 'ValuesDictSearchQuery')
-
-    def test_find(self):
-        self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
-        self.assertIn(
-            (self.obj2.pk, str(self.obj2) + ' (Alias)'),
-            self.queryset.find('Coffee')
-        )
-        self.assertFalse(self.queryset.find('Jazz'))
 
 
 class TestAusgabeChronologicOrder(DataTestCase):
