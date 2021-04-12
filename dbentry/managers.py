@@ -517,6 +517,7 @@ class AusgabeQuerySet(CNQuerySet):
 
 class HumanNameQuerySet(MIZQuerySet):
     """Extension of MIZQuerySet that enables searches for 'human names'."""
+    # TODO: delete HumanNameQuerySet; search() covers all of this
 
     def _parse_human_name(self, text):
         try:
@@ -535,4 +536,5 @@ class HumanNameQuerySet(MIZQuerySet):
 
 class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):
     """Queryset for models where the names of people are primary."""
+    # TODO: delete PeopleQuerySet; HumanNameQuerySet is now redundant
     pass
