@@ -16,14 +16,12 @@ class BaseModel(models.Model):
 
     Attributes:
         search_fields (tuple): field names to include in searches.
-            (autocomplete, ModelAdmin search bar, queries using find())
+            (autocomplete, ModelAdmin search bar)
         primary_search_fields (tuple): search results that were found through
             fields that are not in primary_search_fields will be flagged as
             a 'weak hit' and thus be visually separated from the other results.
         name_field (str): the name of the field that most accurately represents
-            the record. If set, only this field will a) be used for __str__()
-            and b) fetched from the database as search results for
-            queryset.find().
+            the record. If set, only this field will be used for __str__().
         create_field (str): the name of the field for the dal autocomplete
             object creation.
         exclude_from_str (tuple): list of field names to be excluded from the
