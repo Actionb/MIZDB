@@ -123,7 +123,7 @@ class ACViewTestMethodMixin(object):
             return
         view = self.get_view()
         view.q = str(alias)
-        result = [pk for pk, str_repr in view.apply_q(self.queryset)]
+        result = [obj.pk for obj in view.apply_q(self.queryset)]
         self.assertTrue(
             result,
             msg='View returned no results when querying for alias: ' + view.q

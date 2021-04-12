@@ -95,7 +95,7 @@ class Musiker(BaseModel):
         'beschreibung': 'Beschreibung',
         'bemerkungen': 'Bemerkungen'
     }
-    related_search_vectors = ['musikeralias___fts']
+    related_search_vectors = ['musikeralias___fts', 'person___fts']
 
     objects = HumanNameQuerySet.as_manager()
 
@@ -207,6 +207,7 @@ class Autor(ComputedNameModel):
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
+    related_search_vectors = ['person___fts']
 
     objects = PeopleQuerySet.as_manager()
 

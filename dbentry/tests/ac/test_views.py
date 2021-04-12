@@ -66,34 +66,18 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view(q='Boop')
         # obj1 is the only exact match
         # obj4 starts with q
-        # obj2 contains q
-        expected = [
-            (self.obj1.pk, self.obj1.__str__()),
-            (self.obj4.pk, self.obj4.__str__()),
-            (self.obj2.pk, self.obj2.__str__())
-        ]
-        self.assertEqual(list(view.apply_q(self.queryset)), expected)
-
-        # All but obj3 contain 'oop', standard ordering should apply as there
-        # are neither exact nor startswith matches.
-        view.q = 'oop'
-        expected = [
-            (self.obj2.pk, self.obj2.__str__()),
-            (self.obj1.pk, self.obj1.__str__()),
-            (self.obj4.pk, self.obj4.__str__())
-        ]
-        self.assertEqual(list(view.apply_q(self.queryset)), expected)
+        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4])
 
         # only obj4 should appear
         view.q = 'Boopband'
         self.assertEqual(
-            list(view.apply_q(self.queryset)), [(self.obj4.pk, self.obj4.__str__())])
+            list(view.apply_q(self.queryset)), [self.obj4])
 
     def test_get_queryset_with_q(self):
         request = self.get_request()
         view = self.get_view(request)
         view.q = 'notfound'
-        self.assertEqual(list(view.get_queryset()), [(self.obj3.pk, self.obj3.__str__())])
+        self.assertEqual(list(view.get_queryset()), [self.obj3])
 
     def test_get_queryset_forwarded(self):
         # fake forwarded attribute
@@ -497,9 +481,9 @@ class TestACBuchband(ACViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = make(cls.model, titel='DerBuchband', is_buchband=True)
-        cls.obj2 = make(cls.model, titel='DasBuch', buchband=cls.obj1)
-        cls.obj3 = make(cls.model, titel='Buch')
+        cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
+        cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
+        cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
 
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
 
@@ -510,7 +494,7 @@ class TestACBuchband(ACViewTestCase):
         view = self.get_view(q='Buch')
         result = view.get_queryset()
         self.assertEqual(len(result), 1)
-        self.assertIn((self.obj1.pk, self.obj1.__str__()), result)
+        self.assertIn(self.obj1, result)
 
         self.obj1.qs().update(is_buchband=False)
         self.assertFalse(view.get_queryset())
