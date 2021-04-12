@@ -10,6 +10,7 @@ from django.forms import widgets, fields
 from django.utils import formats
 
 from dbentry.validators import ISSNValidator, ISBNValidator, EANValidator
+# FIXME: PartialDate: changelist queries (using the advanced search form formfields) require a year value.
 
 
 class YearField(models.IntegerField):
