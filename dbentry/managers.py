@@ -290,6 +290,11 @@ class AusgabeQuerySet(CNQuerySet):
         # by the search query (exact, startswith, contains).
         return super().find(q, ordered=ordered, **kwargs)
 
+    def search(self, q):
+        # Override the default order of the search query with the chronologic
+        # order.
+        return super().search(q).chronologic_order()
+
     def increment_jahrgang(self, start_obj, start_jg=1):
         """
         Alter the 'jahrgang' values using 'start_obj' as anchor.

@@ -237,12 +237,12 @@ class TestAusgabeChronologicOrder(DataTestCase):
         )
         self.assertEqual(queryset.chronologic_order().query.order_by, expected)
 
-    def test_find_keeps_order(self):
-        # Assert that filtering the queryset via MIZQuerySet.find(ordered=True)
-        # maintains the ordering established by chronologic_order.
+    def test_search_keeps_order(self):
+        # Assert that filtering the queryset via search() maintains the ordering
+        # established by chronologic_order.
         queryset = self.model.objects.filter(ausgabejahr__jahr=2000).chronologic_order()
         found_ids = [
-            pk for pk, str_repr in queryset.find('2000', ordered=True)
+            obj.pk for obj in queryset.search('2000')
         ]
         self.assertEqual(
             list(queryset.values_list('pk', flat=True)), found_ids
