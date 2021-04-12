@@ -389,6 +389,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return super().response_action(request, queryset)
 
     def get_search_results(self, request, queryset, search_term):
+        if not search_term:
+            return queryset, False
         return queryset.search(search_term), False
 
 
