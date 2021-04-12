@@ -13,7 +13,7 @@ from dbentry.fields import (
     ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
 )
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
-from dbentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
+from dbentry.managers import AusgabeQuerySet
 from dbentry.utils import concat_limit, get_model_relations, get_model_fields
 
 
@@ -37,8 +37,6 @@ class Person(ComputedNameModel):
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-
-    objects = PeopleQuerySet.as_manager()
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
@@ -96,8 +94,6 @@ class Musiker(BaseModel):
         'bemerkungen': 'Bemerkungen'
     }
     related_search_vectors = ['musikeralias___fts', 'person___fts']
-
-    objects = HumanNameQuerySet.as_manager()
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Musiker'
@@ -208,8 +204,6 @@ class Autor(ComputedNameModel):
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
     search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
     related_search_vectors = ['person___fts']
-
-    objects = PeopleQuerySet.as_manager()
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'

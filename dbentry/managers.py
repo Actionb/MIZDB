@@ -485,15 +485,3 @@ class AusgabeQuerySet(CNQuerySet):
         ).order_by(*ordering)
         clone.chronologically_ordered = True
         return clone
-
-
-class HumanNameQuerySet(MIZQuerySet):
-    """Extension of MIZQuerySet that enables searches for 'human names'."""
-    # TODO: delete HumanNameQuerySet; search() covers all of this
-    pass
-
-
-class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):
-    """Queryset for models where the names of people are primary."""
-    # TODO: delete PeopleQuerySet; HumanNameQuerySet is now redundant
-    pass

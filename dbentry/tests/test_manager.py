@@ -9,7 +9,7 @@ from django.test import tag
 import dbentry.models as _models
 from dbentry.factory import make
 from dbentry.managers import CNQuerySet, MIZQuerySet, build_date
-from dbentry.tests.base import DataTestCase, MyTestCase
+from dbentry.tests.base import DataTestCase
 
 
 class TestMIZQuerySet(DataTestCase):
@@ -823,32 +823,6 @@ class TestDuplicates(DataTestCase):
         self.obj2.musikeralias_set.create(alias='Boop')
         duplicates = self.get_duplicate_instances('kuenstler_name', 'musikeralias__alias')
         self.assertEqual(len(duplicates), 2)
-
-
-class TestHumanNameQuerySet(MyTestCase):
-
-    def test_find_person(self):
-        obj = make(_models.Person, vorname='Peter', nachname='Lustig')
-        for name in ('Peter Lustig', 'Lustig, Peter'):
-            with self.subTest():
-                results = _models.Person.objects.search(name)
-                msg = "Name looked up: %s" % name
-                self.assertIn(obj, results, msg=msg)
-
-    def test_find_autor(self):
-        obj = make(
-            _models.Autor,
-            person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
-        )
-        names = (
-            'Peter Lustig', 'Lustig, Peter', 'Peter (PL) Lustig',
-            'Peter Lustig (PL)', 'Lustig, Peter (PL)'
-        )
-        for name in names:
-            with self.subTest():
-                results = _models.Autor.objects.search(name)
-                msg = "Name looked up: %s" % name
-                self.assertIn(obj, results, msg=msg)
 
 
 class TestFindSpecialCases(DataTestCase):
