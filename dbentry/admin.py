@@ -927,7 +927,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
 
     collapse_all = True
     inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
-    list_display = ['name', 'datum', 'spielort', 'kuenstler_string']
+    list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
     search_form_kwargs = {
@@ -948,6 +948,11 @@ class VeranstaltungAdmin(MIZModelAdmin):
     def kuenstler_string(self, obj):
         return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
     kuenstler_string.short_description = 'Künstler'
+
+    def datum_localized(self, obj):
+        return obj.datum.localize()
+    datum_localized.short_description = 'Datum'
+    datum_localized.admin_order_field = 'datum'
 
 
 @admin.register(_models.Verlag, site=miz_site)
