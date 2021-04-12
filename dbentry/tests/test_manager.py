@@ -868,9 +868,9 @@ class TestHumanNameQuerySet(MyTestCase):
         obj = make(_models.Person, vorname='Peter', nachname='Lustig')
         for name in ('Peter Lustig', 'Lustig, Peter'):
             with self.subTest():
-                results = _models.Person.objects.find(name)
+                results = _models.Person.objects.search(name)
                 msg = "Name looked up: %s" % name
-                self.assertIn((obj.pk, 'Peter Lustig'), results, msg=msg)
+                self.assertIn(obj, results, msg=msg)
 
     def test_find_autor(self):
         obj = make(
@@ -883,29 +883,32 @@ class TestHumanNameQuerySet(MyTestCase):
         )
         for name in names:
             with self.subTest():
-                results = _models.Autor.objects.find(name)
+                results = _models.Autor.objects.search(name)
                 msg = "Name looked up: %s" % name
-                self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg=msg)
+                self.assertIn(obj, results, msg=msg)
 
 
 class TestFindSpecialCases(DataTestCase):
 
     model = _models.Band
-    raw_data = [{'band_name': 'Ümlautße'}]
+    raw_data = [
+        {'band_name': 'Scharfes ß'},
+        {'band_name': 'Ümlaute'}
+    ]
 
-    def test_find_sharp_s(self):
+    def test_search_sharp_s(self):
         # Assert that a 'ß' search term is handled properly.
         # ('ß'.casefold() performed in BaseSearchQuery.clean_string() results in 'ss')
-        results = self.model.objects.find('ß')
+        results = self.model.objects.search('ß')
         self.assertTrue(
             results, msg="Expected to find the instance with 'ß' in its name.")
 
-    def test_find_umlaute(self):
+    def test_search_umlaute(self):
         # SQLlite performs case sensitive searches for strings containing chars
         # outside the ASCII range (such as Umlaute ä, ö, ü).
         for q in ('ü', 'Ü'):
             with self.subTest(q=q):
-                results = self.model.objects.find(q)
+                results = self.model.objects.search(q)
                 self.assertTrue(
                     results,
                     msg="Expected to find matches regardless of case of Umlaut."
