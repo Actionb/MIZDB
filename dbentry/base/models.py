@@ -17,11 +17,6 @@ class BaseModel(models.Model):
     Attributes:
         search_fields (tuple): field names to include in searches.
             (autocomplete, ModelAdmin search bar, queries using find())
-        search_fields_suffixes (dict): a dictionary of search_fields and their
-            suffixes that will be appended to search results when using certain
-            search strategies (queryset.find() or autocomplete views).
-            Through these suffixes it can be hinted at why exactly a user has
-            found a particular result for a given search term.
         primary_search_fields (tuple): search results that were found through
             fields that are not in primary_search_fields will be flagged as
             a 'weak hit' and thus be visually separated from the other results.
@@ -37,7 +32,6 @@ class BaseModel(models.Model):
 
     search_fields = ()
     primary_search_fields = ()
-    search_fields_suffixes = None
     name_field = None
     create_field = None
     exclude_from_str = ('beschreibung', 'bemerkungen', '_fts')

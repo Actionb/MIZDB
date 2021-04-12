@@ -253,16 +253,6 @@ class TestModelArtikel(DataTestCase):
             sorted(['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
 
 class TestModelAudio(DataTestCase):
 
@@ -280,12 +270,6 @@ class TestModelAudio(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
 
 
@@ -480,12 +464,6 @@ class TestModelAusgabe(DataTestCase):
             sorted(['_name', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
 
 class TestModelAusgabeJahr(DataTestCase):
 
@@ -585,12 +563,6 @@ class TestModelAutor(DataTestCase):
             sorted(['_name', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
 
 class TestModelBand(DataTestCase):
 
@@ -608,16 +580,6 @@ class TestModelBand(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'bandalias__alias': 'Alias',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
         )
 
 
@@ -672,12 +634,6 @@ class TestModelPlakat(DataTestCase):
             sorted(['titel', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
 
 class TestModelBildreihe(DataTestCase):
 
@@ -703,16 +659,6 @@ class TestModelBrochure(DataTestCase):
             sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
 
 class TestModelBuch(DataTestCase):
 
@@ -726,12 +672,6 @@ class TestModelBuch(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
 
 
@@ -764,9 +704,6 @@ class TestModelBundesland(DataTestCase):
             sorted(['bland_name', 'code'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'code': 'Bundesland-Code'})
-
 
 class TestModelDatei(DataTestCase):
 
@@ -786,12 +723,6 @@ class TestModelDatei(DataTestCase):
             sorted(['titel', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
 
 class TestModelDokument(DataTestCase):
 
@@ -804,12 +735,6 @@ class TestModelDokument(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
 
 
@@ -827,9 +752,6 @@ class TestModelGeber(DataTestCase):
 
     def test_get_search_fields(self):
         self.assertEqual(self.model.get_search_fields(), ['name'])
-
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
 
 
 class TestModelGenre(DataTestCase):
@@ -849,9 +771,6 @@ class TestModelGenre(DataTestCase):
             sorted(self.model.get_search_fields()),
             sorted(['genre', 'genrealias__alias'])
         )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'genrealias__alias': 'Alias'})
 
 
 class TestModelGenreAlias(DataTestCase):
@@ -900,9 +819,6 @@ class TestModelInstrument(DataTestCase):
             sorted(['instrument', 'kuerzel'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'kuerzel': 'Kürzel'})
-
 
 class TestModelKalender(DataTestCase):
 
@@ -917,16 +833,6 @@ class TestModelKalender(DataTestCase):
             sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
 
 class TestModelKatalog(DataTestCase):
 
@@ -939,16 +845,6 @@ class TestModelKatalog(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
         )
 
 
@@ -995,12 +891,6 @@ class TestModelLagerort(DataTestCase):
             sorted(['_name', 'ort', 'raum', 'regal', 'fach', 'ordner'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'fach': 'Fach', 'ordner': 'Ordner', 'regal': 'Regal', 'raum': 'Raum'}
-        )
-
 
 class TestModelLand(DataTestCase):
 
@@ -1019,9 +909,6 @@ class TestModelLand(DataTestCase):
             sorted(self.model.get_search_fields()),
             sorted(['land_name', 'code'])
         )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'code': 'Land-Code'})
 
 
 class TestModelMagazin(DataTestCase):
@@ -1042,12 +929,6 @@ class TestModelMagazin(DataTestCase):
             sorted(['magazin_name', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
 
 class TestModelMemorabilien(DataTestCase):
 
@@ -1060,12 +941,6 @@ class TestModelMemorabilien(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
 
 
@@ -1086,9 +961,6 @@ class TestModelMonat(DataTestCase):
             sorted(self.model.get_search_fields()),
             sorted(['monat', 'abk', 'ordinal'])
         )
-
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
 
 
 class TestModelMusiker(DataTestCase):
@@ -1111,17 +983,6 @@ class TestModelMusiker(DataTestCase):
                 'kuenstler_name', 'musikeralias__alias', 'person___name',
                 'beschreibung', 'bemerkungen'
             ])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'musikeralias__alias': 'Alias',
-                'person___name': 'bürgerl. Name',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
         )
 
 
@@ -1161,9 +1022,6 @@ class TestModelOrt(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(self.model.get_search_fields(), ['_name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
 
 @tag("cn")
 class TestModelPerson(DataTestCase):
@@ -1194,13 +1052,6 @@ class TestModelPerson(DataTestCase):
             sorted(['_name', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
 class TestModelPlattenfirma(DataTestCase):
 
     model = _models.Plattenfirma
@@ -1215,9 +1066,6 @@ class TestModelPlattenfirma(DataTestCase):
 
     def test_get_search_fields(self):
         self.assertEqual(self.model.get_search_fields(), ['name'])
-
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
 
 
 class TestModelProvenienz(DataTestCase):
@@ -1234,9 +1082,6 @@ class TestModelProvenienz(DataTestCase):
 
     def test_get_search_fields(self):
         self.assertEqual(self.model.get_search_fields(), ['geber__name'])
-
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
 
 
 class TestModelSchlagwort(DataTestCase):
@@ -1256,10 +1101,6 @@ class TestModelSchlagwort(DataTestCase):
             sorted(self.model.get_search_fields()),
             sorted(['schlagwort', 'schlagwortalias__alias'])
         )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes, {'schlagwortalias__alias': 'Alias'})
 
 
 class TestModelSchlagwortAlias(DataTestCase):
@@ -1291,16 +1132,6 @@ class TestModelSpielort(DataTestCase):
             sorted(['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'spielortalias__alias': 'Alias',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
 
 class TestModelSpielortAlias(DataTestCase):
 
@@ -1322,12 +1153,6 @@ class TestModelTechnik(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
 
 
@@ -1356,17 +1181,6 @@ class TestModelVeranstaltung(DataTestCase):
             sorted(['name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen'])
         )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'datum': 'Datum',
-                'veranstaltungalias__alias': 'Alias',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
 
 class TestModelVeranstaltungAlias(DataTestCase):
 
@@ -1387,9 +1201,6 @@ class TestModelVeranstaltungsreihe(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(self.model.get_search_fields(), ['name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
 
 class TestModelVerlag(DataTestCase):
 
@@ -1406,9 +1217,6 @@ class TestModelVerlag(DataTestCase):
     def test_get_search_fields(self):
         self.assertEqual(self.model.get_search_fields(), ['verlag_name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
 
 class TestModelVideo(DataTestCase):
 
@@ -1421,12 +1229,6 @@ class TestModelVideo(DataTestCase):
         self.assertEqual(
             sorted(self.model.get_search_fields()),
             sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
         )
 
 

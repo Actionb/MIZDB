@@ -36,7 +36,6 @@ class Person(ComputedNameModel):
     name_composing_fields = ['vorname', 'nachname']
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
@@ -87,12 +86,6 @@ class Musiker(BaseModel):
         'kuenstler_name', 'musikeralias__alias', 'person___name',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_suffixes = {
-        'musikeralias__alias': 'Alias',
-        'person___name': 'bürgerl. Name',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
     related_search_vectors = ['musikeralias___fts', 'person___fts']
 
     class Meta(BaseModel.Meta):
@@ -122,9 +115,6 @@ class Genre(BaseModel):
     name_field = 'genre'
     primary_search_fields = ['genre']
     search_fields = ['genre', 'genrealias__alias']
-    search_fields_suffixes = {
-        'genrealias__alias': 'Alias'
-    }
     related_search_vectors = ['genrealias___fts']
 
     class Meta(BaseModel.Meta):
@@ -164,11 +154,6 @@ class Band(BaseModel):
     primary_search_fields = ['band_name']
     search_fields = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     related_search_vectors = ['bandalias___fts']
-    search_fields_suffixes = {
-        'bandalias__alias': 'Alias',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Band'
@@ -202,7 +187,6 @@ class Autor(ComputedNameModel):
     name_composing_fields = ['person___name', 'kuerzel']
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
     related_search_vectors = ['person___fts']
 
     class Meta(ComputedNameModel.Meta):
@@ -284,7 +268,6 @@ class Ausgabe(ComputedNameModel):
     ]
     primary_search_fields = ['_name']
     search_fields = ['_name', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     objects = AusgabeQuerySet.as_manager()
 
@@ -516,7 +499,6 @@ class Magazin(BaseModel):
     name_field = 'magazin_name'
     primary_search_fields = ['magazin_name']
     search_fields = ['magazin_name', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Magazin'
@@ -632,9 +614,6 @@ class Bundesland(BaseModel):
     name_field = 'bland_name'
     primary_search_fields = []
     search_fields = ['bland_name', 'code']
-    search_fields_suffixes = {
-        'code': 'Bundesland-Code'
-    }
 
     def __str__(self):
         return "{} {}".format(self.bland_name, self.code).strip()
@@ -659,7 +638,6 @@ class Land(BaseModel):
 
     name_field = 'land_name'
     search_fields = ['land_name', 'code']
-    search_fields_suffixes = {'code': 'Land-Code'}
 
     def __str__(self):
         return "{} {}".format(self.land_name, self.code).strip()
@@ -683,7 +661,6 @@ class Schlagwort(BaseModel):
     name_field = 'schlagwort'
     primary_search_fields = []
     search_fields = ['schlagwort', 'schlagwortalias__alias']
-    search_fields_suffixes = {'schlagwortalias__alias': 'Alias'}
     related_search_vectors = ['schlagwortalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -739,11 +716,6 @@ class Artikel(BaseModel):
     name_field = 'schlagzeile'
     primary_search_fields = ['schlagzeile']
     search_fields = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'zusammenfassung': 'Zusammenfassung',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
@@ -813,7 +785,6 @@ class Buch(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -857,7 +828,6 @@ class Instrument(BaseModel):
     name_field = 'instrument'
     primary_search_fields = ['instrument']
     search_fields = ['instrument', 'kuerzel']
-    search_fields_suffixes = {'kuerzel': 'Kürzel'}
 
     class Meta(BaseModel.Meta):
         ordering = ['instrument', 'kuerzel']
@@ -926,7 +896,6 @@ class Audio(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -992,7 +961,6 @@ class Plakat(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1063,7 +1031,6 @@ class Dokument(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1096,7 +1063,6 @@ class Memorabilien(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Memorabilia'
@@ -1122,11 +1088,6 @@ class Spielort(BaseModel):
     name_field = 'name'
     primary_search_fields = ['name']
     search_fields = ['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'spielortalias__alias': 'Alias',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
     related_search_vectors = ['spielortalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -1168,8 +1129,7 @@ class Technik(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-
+    
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'
@@ -1205,12 +1165,6 @@ class Veranstaltung(BaseModel):
     primary_search_fields = ['name']
     search_fields = [
         'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'veranstaltungalias__alias': 'Alias',
-        'datum': 'Datum',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
     related_search_vectors = ['veranstaltungalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -1303,7 +1257,6 @@ class Video(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
@@ -1393,7 +1346,6 @@ class Lagerort(ComputedNameModel):
 
     name_composing_fields = ['ort', 'raum', 'regal', 'fach']
     search_fields = ['ort', 'raum', 'regal', 'fach', 'ordner']
-    search_fields_suffixes = {'raum': 'Raum', 'regal': 'Regal', 'fach': 'Fach', 'ordner': 'Ordner'}
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
@@ -1527,7 +1479,6 @@ class Datei(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1616,11 +1567,6 @@ class Brochure(BaseBrochure):
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'zusammenfassung': 'Zusammenfassung',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
@@ -1635,11 +1581,6 @@ class Kalender(BaseBrochure):
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'zusammenfassung': 'Zusammenfassung',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
@@ -1662,11 +1603,6 @@ class Katalog(BaseBrochure):
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'zusammenfassung': 'Zusammenfassung',
-        'beschreibung': 'Beschreibung',
-        'bemerkungen': 'Bemerkungen'
-    }
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
@@ -1717,10 +1653,6 @@ class Foto(BaseModel):
     name_field = 'titel'
     primary_search_fields = ['titel']
     search_fields = ['titel', 'owner', 'beschreibung', 'bemerkungen']
-    search_fields_suffixes = {
-        'owner': 'Rechteinhaber',
-        'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'
-    }
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
