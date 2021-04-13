@@ -138,6 +138,21 @@ class LoggingTestMixin(object):
         if not isinstance(objects, (list, tuple, set)):
             objects = [objects]
 
+        # FIXME: occasionally this returns false negatives:
+        # a log entry for the given filter parameters exists, but the queryset
+        # still returns empty.
+        # Only the order of change message dictionary keywords differ, but:
+        #   a) the order of keywords should not matter for the query
+        #   b) the difference might only exist in the error message; the sorting
+        #       done on the filter parameter dictionary for the message might
+        #       create the difference
+        # 
+        #   AssertionError: LogEntry for ADDITION missing on objects: [<Video: Original>], model: (video).
+        # Filter parameters used:
+        # [('action_flag', 1), ('change_message', '[{"added": {"name": "video-band-Beziehung", "object": "Video_band object (7)"}}]'), ('content_type__pk', 55), ('object_id', 32)]; video
+        # LogEntry values:
+        # [('action_flag', 1), ('change_message', '[{"added": {"object": "Video_band object (7)", "name": "video-band-Beziehung"}}]'), ('content_type__pk', 55), ('object_id', '32')]; video
+
         # We need the content_type as a filter parameter here, or we're going
         # to match everything.
         for obj in objects:
