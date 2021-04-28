@@ -33,7 +33,23 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
         widget=forms.CheckboxSelectMultiple,
         label=''
     )
-    minmax_required = [{'min': 1, 'fields': ['base', 'm2m', 'reverse']}]
+
+    base_display = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        label=''
+    )
+    m2m_display = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        label=''
+    )
+    reverse_display = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple,
+        label=''
+    )
+    minmax_required = [
+        {'min': 1, 'fields': ['base', 'm2m', 'reverse']},
+        {'min': 1, 'fields': ['base_display', 'm2m_display', 'reverse_display']}
+    ]
     min_error_message = "Bitte mindestens 1 Häkchen setzen."
     help_text = ('Wähle die Felder, '
         'deren Werte in die Suche miteinbezogen werden sollen.')
@@ -48,6 +64,21 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
         self.fields['base'].choices = choices['base']
         self.fields['m2m'].choices = choices['m2m']
         self.fields['reverse'].choices = choices['reverse']
+        self.fields['base_display'].choices = choices['base']
+        self.fields['m2m_display'].choices = choices['m2m']
+        self.fields['reverse_display'].choices = choices['reverse']
+        self.select_fields = ['base', 'm2m', 'reverse']
+        self.display_fields = ['base_display', 'm2m_display', 'reverse_display']
+
+    def selects(self):
+        """Return the bound fields of the dupe field selection."""
+        for name in self.select_fields:
+            yield self[name]
+
+    def displays(self):
+        """Return the bound fields for the display field selection."""
+        for name in self.display_fields:
+            yield self[name]
 
 
 def get_dupe_fields_for_model(model):

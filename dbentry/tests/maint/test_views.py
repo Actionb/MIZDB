@@ -142,7 +142,13 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         link_template = '<a href="{url}" target="_blank">{name}</a>'
 
-        request = self.get_request(data={'base': ['band_name', 'beschreibung'], 'm2m': ['genre']})
+        request = self.get_request(
+            data={
+                'base': ['band_name', 'beschreibung'], 'm2m': ['genre'],
+                'base_display': ['band_name', 'beschreibung'],
+                'm2m_display': ['genre']
+            }
+        )
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         # A validated and cleaned form is required.
@@ -212,9 +218,9 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         # Assert that the correct (field.verbose_name capitalized) headers are
         # returned. Headers are built from the labels of the established choices.
         test_data = [
-            ({'base': ['band_name']}, 'Bandname'),
-            ({'m2m': ['genre']}, 'Genre'),
-            ({'reverse': ['bandalias__alias']}, 'Alias')
+            ({'base': ['band_name'], 'base_display': ['band_name']}, 'Bandname'),
+            ({'m2m': ['genre'], 'm2m_display': ['genre']}, 'Genre'),
+            ({'reverse': ['bandalias__alias'], 'reverse_display': ['bandalias__alias']}, 'Alias')
         ]
         for request_data, expected in test_data:
             with self.subTest(data=request_data):
@@ -226,7 +232,12 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                 self.assertIn(expected, headers)
 
     def test_build_duplicates_headers_grouped_choices(self):
-        request = self.get_request(data={'reverse': ['bandalias__alias']})
+        request = self.get_request(
+            data={
+                'reverse': ['bandalias__alias'],
+                'reverse_display': ['bandalias__alias']
+            }
+        )
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         form.fields['reverse'].choices = [

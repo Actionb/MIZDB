@@ -150,16 +150,37 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         kwargs['data'] = self.request.GET
         return kwargs
 
+    def _get_group_field_names(self, form, formfield_group):
+        """
+        Return the field names of fields selected in the given formfield_group.
+
+        Check the given formfield_group (i.e. either select_fields or
+        display_fields) and create a list of all model field names selected in
+        that group.
+        """
+        field_names = []
+        for formfield_name in formfield_group:
+            if form.cleaned_data.get(formfield_name):
+                field_names.extend(form.cleaned_data[formfield_name])
+        return field_names
+
+    def get_select_fields(self, form):
+        """Return a list of the field names the user selected to be displayed."""
+        return self._get_group_field_names(form, form.select_fields)
+
+    def get_display_fields(self, form):
+        """Return a list of the field names the user selected to be displayed."""
+        return self._get_group_field_names(form, form.display_fields)
+
     def build_duplicates_headers(self, form):
         """
         Extract the table headers for the table that lists the duplicates from
-        the selected search fields in 'form'.
+        the selected display fields in 'form'.
         The headers should be the human readable part of the choices.
         """
         headers = []
-        # Iterate over form.fields instead of form.cleaned_data to preserve
-        # ordering.
-        for field_name, formfield in form.fields.items():
+        for field_name in form.display_fields:
+            formfield = form.fields[field_name]
             selected = form.cleaned_data.get(field_name)
             if not selected:
                 continue
@@ -183,45 +204,50 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     def build_duplicates_items(self, form):
         """Prepare the content of the table that lists the duplicates."""
         # Get the model fields that were selected in the form.
-        dupe_fields = []
-        for field_name in form.fields:
-            if form.cleaned_data.get(field_name):
-                dupe_fields.extend(form.cleaned_data[field_name])
+        dupe_fields = self.get_select_fields(form)
+        display_fields = self.get_display_fields(form)
         # Look for duplicates using the selected fields.
         # A list of namedtuples is returned, each with attributes:
         # - 'instances': a list of instances that are duplicates of each other
         # - 'values': a list of field_name, field_values pairs. The values are
-        #       shared by all duplicates.
+        #       shared by all duplicates - hence why they *are* duplicates.
         # Items in the list returned by duplicates() can be thought of as
         # 'groups' of duplicates.
         duplicates = self.model.objects.duplicates(*dupe_fields)
         items = []
+        # Walk through each group of duplicates:
         for dupe in duplicates:
-            # Prepare the duplicate values.
-            # dupe_fields uses the order of form.fields and thus shares the
-            # same order as the headers.
-            values = dict(dupe.values)
-            duplicate_values = []
-            for field_name in dupe_fields:
-                if field_name in values:
-                    duplicate_values.append(
-                        ", ".join(str(v) for v in values[field_name]))
-                else:
-                    # Don't skip a column! Add an 'empty'.
-                    duplicate_values.append("")
-
             # 'dupe_item' contains the data required to create a 'row' for the
             # table listing the duplicates. It contains the model instance that
             # is part of this 'duplicates group', a link to the instance's change
-            # page and the values that are shared in the 'duplicates group'.
-            dupe_item = [
-                (
+            # page and the values of the selected display_fields for each
+            # instance of this 'duplicates group'.
+            dupe_item = []
+            for instance in dupe.instances:
+                # WARNING: this adds one query for every duplicate instance,
+                # whereas before it was one query for *ALL* duplicate instances
+                # (just the duplicates() query)
+                values = (
+                    self.model.objects
+                    .filter(pk=instance.pk)
+                    .values_dict(*display_fields, tuplfy=False)[instance.pk]
+                )
+                # Prepare the values that will be displayed.
+                duplicate_values = []
+                for field_name in display_fields:
+                    if field_name in values:
+                        duplicate_values.append(
+                            ", ".join(str(v)[:100] for v in values[field_name]))
+                    else:
+                        # Don't skip a column! Add an 'empty'.
+                        duplicate_values.append("")
+                # Add the instance's data to the dupe_item list:
+                dupe_item.append((
                     instance,
                     utils.get_obj_link(instance, self.request.user, blank=True),
                     duplicate_values
-                )
-                for instance in dupe.instances
-            ]
+                ))
+
             # Add a link to the changelist page of this group.
             cl_url = utils.get_changelist_url(
                 self.model, self.request.user, obj_list=dupe.instances)
