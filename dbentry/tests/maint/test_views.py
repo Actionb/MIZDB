@@ -62,13 +62,17 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        # Not using make() as the factory for band has 'band_name' in
-        # get_or_create; calling make(band_name = 'X') repeatedly will always
-        # return the same band object.
-        cls.test_data = [
-            _models.Band.objects.create(id=i, band_name='Beep')
-            for i in range(1, 4)
-        ]
+        cls.genre1 = make(_models.Genre)
+        cls.genre2 = make(_models.Genre)
+        cls.test_data = []
+        for i in range(1, 4):
+            # Note that we are not using make() here, as the factory for the
+            # Band model uses get_or_create with the field 'band_name'.
+            # make(Band, band_name='Beep') will try to get() an existing Band
+            # instance with band_name = 'Beep' before creating a new one.
+            obj = _models.Band.objects.create(id=i, band_name='Beep')
+            obj.genre.set([cls.genre1, cls.genre2])
+            cls.test_data.append(obj)
         super().setUpTestData()
 
     def test_availabilty(self):
@@ -138,7 +142,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         )
         link_template = '<a href="{url}" target="_blank">{name}</a>'
 
-        request = self.get_request(data={'base': ['band_name', 'beschreibung']})
+        request = self.get_request(data={'base': ['band_name', 'beschreibung'], 'm2m': ['genre']})
         view = self.get_view(request, kwargs={'model_name': 'band'})
         form = view.get_form()
         # A validated and cleaned form is required.
@@ -177,8 +181,9 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                     dupe_item[1], expected_link,
                     msg="Should be link to change form of object."
                 )
+                genre_pks = ", ".join(str(pk) for pk in [self.genre1.pk, self.genre2.pk])
                 self.assertEqual(
-                    dupe_item[2], ['Beep', ''],
+                    dupe_item[2], ['Beep', '', genre_pks],
                     msg="Should be the duplicate object's values of the "
                     "fields the duplicates were found with."
                 )

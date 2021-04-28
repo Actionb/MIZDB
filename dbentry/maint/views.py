@@ -204,7 +204,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             duplicate_values = []
             for field_name in dupe_fields:
                 if field_name in values:
-                    duplicate_values.append(values[field_name][0])
+                    duplicate_values.append(
+                        ", ".join(str(v) for v in values[field_name]))
                 else:
                     # Don't skip a column! Add an 'empty'.
                     duplicate_values.append("")
