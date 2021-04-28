@@ -152,8 +152,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
 
     def build_duplicates_headers(self, form):
         """
-        Prepare the headers from the selected search fields in 'form' for the
-        table that lists the duplicates.
+        Extract the table headers for the table that lists the duplicates from
+        the selected search fields in 'form'.
         The headers should be the human readable part of the choices.
         """
         headers = []
