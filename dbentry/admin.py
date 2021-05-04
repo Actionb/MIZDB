@@ -541,9 +541,14 @@ class PlakatAdmin(MIZModelAdmin):
         if not (obj and hasattr(request, 'user') and 'copy_related' in fields):
             # Either this is an 'add' form or 'copy_related' isn't even
             # included in the felds.
-            # NOTE: what does it mean if a request doesn't have a 'user'
-            # attribute? Does that mean anonymous user? Shouldn't the field be
-            # unavailable for those as well?
+            #
+            # request.user is set by AuthenticationMiddleware to either an
+            # auth.User instance or an AnonymousUser instance. Only mocked
+            # request objects would bypass the middleware, which could allow
+            # a request object to *not* have a user attribute.
+            # NOTE: Honestly, I'm not sure why I am checking for the attribute
+            # here (I'm assuming it's for tests), but I'm just going to leave
+            # it in.
             return fields
         has_change_perms = self.has_change_permission(request, obj)
         if not (obj.pk and has_change_perms) and 'copy_related' in fields:
