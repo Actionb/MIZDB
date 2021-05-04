@@ -187,11 +187,27 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                     dupe_item[1], expected_link,
                     msg="Should be link to change form of object."
                 )
-                genre_pks = ", ".join(str(pk) for pk in [self.genre1.pk, self.genre2.pk])
                 self.assertEqual(
-                    dupe_item[2], ['Beep', '', genre_pks],
-                    msg="Should be the duplicate object's values of the "
-                    "fields the duplicates were found with."
+                    len(dupe_item[2]), 3,
+                    msg=(
+                        "Expected each dupe item to have three values: band_name,"
+                        " beschreibung, genres"
+                    )
+                )
+                # band_name:
+                self.assertEqual(
+                    dupe_item[2][0], 'Beep', msg="Band names do not match.")
+                # beschreibung:
+                self.assertEqual(
+                    dupe_item[2][1], '', msg="Beschreibung does not match.")
+                # genres:
+                genre_pks = ", ".join(
+                    pk for pk in sorted([str(self.genre1.pk), str(self.genre2.pk)]))
+                self.assertEqual(
+                    # Enforce an alphabetical order.
+                    ", ".join(v for v in sorted(dupe_item[2][2].split(", "))),
+                    genre_pks,
+                    msg="Genres do not match."
                 )
         # Investigate the link to the changelist:
         cl_link = items[0][1]
