@@ -296,7 +296,7 @@ class TestUnusedObjectsView(ViewTestCase):
     def test_get_form_invalid(self, mocked_render, mocked_build_items):
         # Assert that the get response with an invalid form does not contain
         # the context variable 'items'.
-        data={'get_unused': True, 'model_select': 'NotAModel', 'limit': 0}
+        data = {'get_unused': True, 'model_select': 'NotAModel', 'limit': 0}
         request = self.get_request(data=data)
         view = self.get_view(request=request)
         self.assertFalse(view.get_form().is_valid())
@@ -310,7 +310,7 @@ class TestUnusedObjectsView(ViewTestCase):
     def test_get_form_valid(self, mocked_render, mocked_build_items):
         # Assert that the get response with a valid form contains the
         # context variable 'items'.
-        data={'get_unused': True, 'model_select': 'artikel', 'limit': 0}
+        data = {'get_unused': True, 'model_select': 'artikel', 'limit': 0}
         request = self.get_request(data=data)
         view = self.get_view(request=request)
         self.assertTrue(view.get_form().is_valid())
@@ -345,7 +345,7 @@ class TestUnusedObjectsView(ViewTestCase):
     def test_get_changelist_link(self, mocked_render, mocked_build_items):
         # Assert that the response's context contains a link to the changelist
         # listing all the unused objects.
-        data={'get_unused': True, 'model_select': 'genre', 'limit': 0}
+        data = {'get_unused': True, 'model_select': 'genre', 'limit': 0}
         request = self.get_request(data=data)
         view = self.get_view(request=request)
         self.assertTrue(view.get_form().is_valid())
@@ -484,7 +484,8 @@ class TestDuplicates(DataTestCase):
                     'beschreibung', dupe.duplicate_values,
                     msg="Expected field 'beschreibung' to be in dupe_values."
                 )
-                self.assertEqual(dupe.duplicate_values['beschreibung'], ('Rival Sons are pretty good.', ))
+                self.assertEqual(
+                    dupe.duplicate_values['beschreibung'], ('Rival Sons are pretty good.', ))
 
     def test_display_values(self):
         # Check the 'display values' returned by find_duplicates.
@@ -499,4 +500,5 @@ class TestDuplicates(DataTestCase):
                     'beschreibung', dupe.display_values,
                     msg="Expected field 'beschreibung' to be in display_values."
                 )
-                self.assertEqual(dupe.display_values['beschreibung'], ('Rival Sons are pretty good.', ))
+                self.assertEqual(
+                    dupe.display_values['beschreibung'], ('Rival Sons are pretty good.', ))

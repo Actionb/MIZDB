@@ -49,16 +49,17 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     minmax_required = [
         {
             'min': 1, 'fields': ['base', 'm2m', 'reverse'],
-            'error_messages': {'min': 'Bitte mindestens ein Feld für die Duplikatensuche auswählen.'}
+            'error_messages': {
+                'min': 'Bitte mindestens ein Feld für die Duplikatensuche auswählen.'
+            }
         },
         {
             'min': 1, 'fields': ['base_display', 'm2m_display', 'reverse_display'],
-            'error_messages': {'min': 'Bitte mindestens ein Feld für die Übersicht auswählen.'}
+            'error_messages': {
+                'min': 'Bitte mindestens ein Feld für die Übersicht auswählen.'
+            }
         }
     ]
-#    min_error_message = "Bitte mindestens 1 Häkchen setzen."
-    help_text = ('Wähle die Felder, '
-        'deren Werte in die Suche miteinbezogen werden sollen.')
 
     class Media:
         css = {'all': ['admin/css/forms.css']}

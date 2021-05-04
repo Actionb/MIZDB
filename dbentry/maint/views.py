@@ -156,7 +156,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     is done. Duplicates are model instances that have the same values in all of
     the model fields selected in the form.
     These duplicates are grouped together according to these equivalent values
-    and the possiblity for merging each group is provided.
+    and the possibility for merging each group is provided.
     """
 
     template_name = 'admin/dupes.html'
