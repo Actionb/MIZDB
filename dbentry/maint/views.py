@@ -1,5 +1,5 @@
 from itertools import chain
-from collections import OrderedDict
+from collections import OrderedDict, Counter, namedtuple
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
@@ -14,6 +14,63 @@ from dbentry.sites import register_tool
 from dbentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
+
+
+def find_duplicates(queryset, dupe_fields, display_fields):
+    """
+    Find records in the queryset that share values in the fields given
+    by dupe_fields.
+
+    Returns a list of lists (groups of duplicates) where each list is made up of
+    'Dupe' named tuples. 'Dupe' has three attributes:
+        - instance: the model instance that is a duplicate of another
+        - duplicate_values: the values that are shared
+        - display_values: the values fetched to be displayed
+    """
+    Dupe = namedtuple(
+        'Dupe', ['instance', 'duplicate_values', 'display_values']
+    )
+
+    queried = queryset.values_dict(*dupe_fields, *display_fields, tuplfy=True)
+    dupe_values = []
+    display_values = {}
+    # Separate duplicate_values and display_values which are both contained
+    # (as tuples) in the following tuple 'values':
+    for pk, values in queried.items():
+        item_dupe_values = []
+        for k, v in values:
+            if k in dupe_fields:
+                item_dupe_values.append((k, v))
+            elif k in display_fields:
+                if pk not in display_values:
+                    display_values[pk] = []
+                display_values[pk].append((k, v))
+        dupe_values.append(tuple(item_dupe_values))
+
+    rslt = []
+    # Walk through the values, looking for non-empty values that appeared
+    # more than once.
+    # Preserve the display_values.
+    for elem, count in Counter(dupe_values).items():
+        dupe_group = []
+        if not elem or count < 2:
+            # Do not compare empty with empty.
+            continue
+        # Find all the pks that match these values.
+        for pk, values in queried.items():
+            item_dupe_values = tuple(
+                (k, v) for k, v in values if k in dupe_fields)
+            if elem == item_dupe_values:
+                item_display_values = dict(display_values.get(pk, ()))
+                dupe_group.append(
+                    Dupe(
+                        queryset.get(pk=pk),
+                        dict(item_dupe_values),
+                        item_display_values
+                    )
+                )
+        rslt.append(dupe_group)
+    return rslt
 
 
 class ModelSelectView(views.generic.FormView):
@@ -213,7 +270,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         #       shared by all duplicates - hence why they *are* duplicates.
         # Items in the list returned by duplicates() can be thought of as
         # 'groups' of duplicates.
-        duplicates = self.model.objects.duplicates(*dupe_fields)
+        duplicates = find_duplicates(self.model.objects, dupe_fields, display_fields)
         items = []
         # Walk through each group of duplicates:
         for dupe in duplicates:
@@ -227,11 +284,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                 # WARNING: this adds one query for every duplicate instance,
                 # whereas before it was one query for *ALL* duplicate instances
                 # (just the duplicates() query)
-                values = (
-                    self.model.objects
-                    .filter(pk=instance.pk)
-                    .values_dict(*display_fields, tuplfy=False)[instance.pk]
-                )
+                values = dict(dupe.duplicate_values.get(instance.pk, ()))
                 # Prepare the values that will be displayed.
                 duplicate_values = []
                 for field_name in display_fields:
