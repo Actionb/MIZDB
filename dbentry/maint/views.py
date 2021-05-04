@@ -260,53 +260,50 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
 
     def build_duplicates_items(self, form):
         """Prepare the content of the table that lists the duplicates."""
+        items = []
         # Get the model fields that were selected in the form.
         dupe_fields = self.get_select_fields(form)
         display_fields = self.get_display_fields(form)
         # Look for duplicates using the selected fields.
-        # A list of namedtuples is returned, each with attributes:
-        # - 'instances': a list of instances that are duplicates of each other
-        # - 'values': a list of field_name, field_values pairs. The values are
-        #       shared by all duplicates - hence why they *are* duplicates.
-        # Items in the list returned by duplicates() can be thought of as
-        # 'groups' of duplicates.
+        # A list of lists/group of 'Dupe' named tuples is returned.
         duplicates = find_duplicates(self.model.objects, dupe_fields, display_fields)
-        items = []
         # Walk through each group of duplicates:
-        for dupe in duplicates:
-            # 'dupe_item' contains the data required to create a 'row' for the
-            # table listing the duplicates. It contains the model instance that
-            # is part of this 'duplicates group', a link to the instance's change
-            # page and the values of the selected display_fields for each
-            # instance of this 'duplicates group'.
-            dupe_item = []
-            for instance in dupe.instances:
-                # WARNING: this adds one query for every duplicate instance,
-                # whereas before it was one query for *ALL* duplicate instances
-                # (just the duplicates() query)
-                values = dict(dupe.duplicate_values.get(instance.pk, ()))
-                # Prepare the values that will be displayed.
-                duplicate_values = []
+        for dupe_group in duplicates:
+            group = []
+            instances = []
+            for dupe in dupe_group:
+                # 'Dupe' has these attributes:
+                # - 'instance': the duplicate model instance
+                # - 'duplicate_values': a list of field_name, field_values pairs
+                #       the values are shared by the duplicates
+                # - 'display_values': additional values for the tables
+                # Create a list of string values to display on the table.
+                display_values = []
                 for field_name in display_fields:
-                    if field_name in values:
-                        duplicate_values.append(
-                            ", ".join(str(v)[:100] for v in values[field_name]))
+                    if field_name in dupe.duplicate_values:
+                        values = dupe.duplicate_values[field_name]
+                    elif field_name in dupe.display_values:
+                        values = dupe.display_values[field_name]
                     else:
-                        # Don't skip a column! Add an 'empty'.
-                        duplicate_values.append("")
-                # Add the instance's data to the dupe_item list:
-                dupe_item.append((
-                    instance,
-                    utils.get_obj_link(instance, self.request.user, blank=True),
-                    duplicate_values
+                        values = []
+                    display_values.append(
+                        ", ".join(str(v)[:100] for v in values))
+                # Add this instance's data, including a changelink, to the group.
+                group.append((
+                    dupe.instance,
+                    utils.get_obj_link(dupe.instance, self.request.user, blank=True),
+                    display_values
                 ))
-
+                # Record the group's instances for the changelist link.
+                instances.append(dupe.instance)
             # Add a link to the changelist page of this group.
             cl_url = utils.get_changelist_url(
-                self.model, self.request.user, obj_list=dupe.instances)
-            hyperlink_attrs = {'target': '_blank', 'class': 'button'}
-            link = utils.create_hyperlink(cl_url, 'Änderungsliste', **hyperlink_attrs)
-            items.append((dupe_item, link))
+                self.model, self.request.user, obj_list=instances)
+            link = utils.create_hyperlink(
+                url=cl_url, content='Änderungsliste',
+                **{'target': '_blank', 'class': 'button'}
+            )
+            items.append((group, link))
         return items
 
 
