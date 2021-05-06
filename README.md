@@ -18,19 +18,21 @@ MIZDB git Repository klonen:
 `sudo git clone https://github.com/Actionb/MIZDB`
 
 `sudo` übernimmt die virtuelle Umgebung nicht: `sudo pip` würde das globale pip rufen und damit nicht in die virtuelle Umgebung installieren. Somit kann `sudo`nicht benutzt werden und es muss auf `root` gewechselt werden:  
-`su root && source /srv/archiv/bin/activate && cd /srv/archiv/MIZDB`
+`su root`  
+Virtuelle Umgebung aktivieren und zum MIZDB Ordner navigieren:  
+`source /srv/archiv/bin/activate && cd /srv/archiv/MIZDB`
 
 Erforderliche Python Module installieren:  
 `pip install -r requirements.txt`  
 Unter Umständen muss die django debug toolbar installieren werden:  
-`pip install django-debug-toolbar=3.1.1`  
+`pip install django-debug-toolbar==3.1.1`  
 Statische Dateien für die Webseite sammeln:  
 `python manage.py collectstatic`  
 Umgebung deaktivieren `deactivate`und dann Root Rechte ablegen `exit`.
 
 ### 3. Postges Datenbank einrichten
 
-Postgres Terminal aufrufen `sudo -u postges psql` und Datenbank und User erstellen:  
+Postgres Terminal aufrufen `sudo -u postgres psql` und Datenbank und User erstellen:  
 ```
 CREATE DATABASE mizdb;
 CREATE USER mizdb_user WITH ENCRYPTED PASSWORD 'm!zdb_2017';
@@ -43,7 +45,7 @@ ALTER USER mizdb_user CREATEDB;
 ```
 
 ### 4. mod_wsgi einrichten
-Installationshinweise: https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html
+Installationshinweise: https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html  
 Neueste Version auf: https://github.com/GrahamDumpleton/mod_wsgi/releases
 
 Download (in einen beliebigen Ordner außerhalb vom archiv Ordner) und entpacken, hier beispielsweise mit Version 4.7.1:
@@ -60,15 +62,18 @@ make
 make install
 ```
 Ist die Installation erfolgreich, so wird auf den Speicherort des Moduls für Apache hingewiesen. Z.B.:
->"Libraries have been installed in: /usr/lib/apache2/modules"
-Danach Aufräumen und Root Rechte ablegen:
+>"Libraries have been installed in: /usr/lib/apache2/modules"  
+
+Danach aufräumen und Root Rechte ablegen:
 ```
 make clean
 exit
 ```
 Damit Apache das wsgi Modul laden kann, muss noch ein Loader erstellt werden:  
-`sudo nano /etc/apache2/mods-available/mod_wsgi.load` mit folgendem Code:  
-`LoadModule wsgi_module /usr/lib/apache2/modules/mod_wsgi.so` wobei der Pfad zum Modul dem Speicherort von oben entspricht.  
+`sudo nano /etc/apache2/mods-available/mod_wsgi.load`  
+mit folgendem Code:  
+`LoadModule wsgi_module /usr/lib/apache2/modules/mod_wsgi.so` 
+wobei der Pfad zum Modul dem Speicherort von oben entspricht.  
 Danach kann das Modul aktiviert werden: `sudo a2enmod mod_wsgi`
 
 ### 5. Apache einrichten
