@@ -102,16 +102,16 @@ Mit folgendem Code:
 
  		# Make the static folder in the project root available. The Alias is required.
 		Alias /static $PROJECT_ROOT/static
-    	<Directory $PROJECT_ROOT/static>
-        	Require all granted
-    	</Directory>
+    		<Directory $PROJECT_ROOT/static>
+        		Require all granted
+    		</Directory>
 
 		# Allow access to the file containing the wsgi application.
-    	<Directory $PROJECT_ROOT/MIZDB>
-        	<Files wsgi.py>
-            	Require all granted
-        	</Files>
-    	</Directory>
+    		<Directory $PROJECT_ROOT/MIZDB>
+        		<Files wsgi.py>
+            			Require all granted
+        		</Files>
+    		</Directory>
 
 	</VirtualHost>
 </Macro>
