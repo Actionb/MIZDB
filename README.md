@@ -41,7 +41,7 @@ Erforderliche Python Module installieren:
 `pip install -r requirements.txt`  
 Unter Umständen muss die django debug toolbar installieren werden:  
 `pip install django-debug-toolbar==3.1.1`  
-Datenbank Migrationen anwenden:
+Datenbank Migrationen anwenden:  
 `python manage.py migrate`  
 Statische Dateien für die Webseite sammeln:  
 `python manage.py collectstatic`  
