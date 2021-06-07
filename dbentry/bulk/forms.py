@@ -236,10 +236,6 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         Returns a queryset instance with the results.
         """
         qs = self.cleaned_data.get('magazin').ausgabe_set.all()
-        # Check the queryset before adding joins.
-        # Return it as is if there is less or equal than one instance found.
-        if qs.count() <= 1:
-            return qs
 
         for fld_name, field_path in [
                 ('num', 'ausgabenum__num'),
