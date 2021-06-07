@@ -104,7 +104,8 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             cls.model, 2,
             magazin=cls.mag,
             ausgabejahr__jahr=[2000, 2001],
-            ausgabenum__num=5
+            ausgabenum__num=5,
+            jahrgang=2
         )
         cls.test_data = [cls.updated, cls.multi1, cls.multi2]
         super().setUpTestData()
@@ -161,60 +162,40 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         # for a given row.
         test_data = [
             ({'num': '2', 'jahr': '2000', 'lnum': '312', 'monat': '12'}, 0),
+            ({'num': '1', 'jahr': '2000'}, 1),
             ({'num': '1', 'jahr': ['2000', '2001']}, 1),
-            ({'num': '5', 'jahr': ['2000', '2001']}, 2)
+            ({'num': '5', 'jahr': '2000'}, 2),
+            ({'num': '5', 'jahr': ['2000', '2001']}, 2),
+            ({'num': '5', 'jahrgang': '2'}, 2),
+            ( {'num': '5', 'jahrgang': '2', 'jahr': '2000'}, 2),
+            ({'num': '5', 'jahrgang': '1'}, 0),
         ]
         form = self.get_valid_form()
         for row_data, expected in test_data:
             with self.subTest(data=row_data):
                 self.assertEqual(form.lookup_instance(row_data).count(), expected)
 
-    def test_lookup_instance_jahrgang(self):
+    def test_lookup_instance_same_years_different_jahrgang(self):
+        # Assert that lookup_instance flags an instance with the right jahr
+        # values but different jahrgang as a matching instance.
         form = self.get_valid_form()
-        # Assert that lookup_instance can now find matching instances via their
-        # jahrgang.
-        instance = make(
-            self.model,
-            magazin=self.mag,
-            jahrgang=1,
-            ausgabenum__num=5,
-            ausgabejahr__jahr=2002
+        instances = form.lookup_instance({'jahrgang': '2',  'num': '5', 'jahr': '2000'})
+        self.assertTrue(
+            instances.exists(),
+            msg="lookup_instance should match instances with matching values for"
+                " years but different jahrgang."
         )
-        row_data = {'jahrgang': '1', 'num': '5'}
-        lookuped = form.lookup_instance(row_data)
-        self.assertEqual(lookuped.count(), 1)
-        self.assertIn(instance, lookuped)
 
-        # Assert that lookup_instance will use jahrgang OR jahr to find
-        # matching instances.
-        row_data = {'jahrgang': '1', 'num': '5', 'jahr': '2001'}
-        lookuped = form.lookup_instance(row_data)
-        # Should find 3 instances:
-        # the created instance, plus self.multi1, self.multi2.
-        self.assertEqual(lookuped.count(), 3)
-        self.assertIn(instance, lookuped)
-
-        # Assert that lookup_instance will use jahrgang AND jahr
-        # if there are instances that can be found like that.
-        instance = make(
-            self.model,
-            magazin=self.mag,
-            jahrgang=2,
-            ausgabenum__num=5,
-            ausgabejahr__jahr=2002
+    def test_lookup_instance_same_jahrgang_different_years(self):
+        # Assert that lookup_instance does *not* flag an instance with the right
+        # jahrgang but different values for years as a matching instance.
+        form = self.get_valid_form()
+        instances = form.lookup_instance({'jahrgang': '2',  'num': '5', 'jahr': '2002'})
+        self.assertFalse(
+            instances.exists(),
+            msg="lookup_instance should not match instances with different years"
+                " but the same jahrgang values."
         )
-        # Create a control instance that should not be included in the result.
-        make(
-            self.model,
-            magazin=self.mag,
-            jahrgang=2,
-            ausgabenum__num=5,
-            ausgabejahr__jahr=2003
-        )
-        row_data = {'jahrgang': '2', 'num': '5', 'jahr': '2002'}
-        lookuped = form.lookup_instance(row_data)
-        self.assertEqual(lookuped.count(), 1)
-        self.assertIn(instance, lookuped)
 
     def test_row_data_prop(self):
         # Verify that form.row_data contains the expected data.
