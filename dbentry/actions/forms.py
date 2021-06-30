@@ -1,5 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 
 from dbentry import models as _models
 from dbentry.base.forms import MIZAdminForm, DynamicChoiceFormMixin
@@ -25,7 +26,8 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
     )
     jahrgang = forms.IntegerField(
         required=True,
-        help_text='Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.'
+        help_text='Geben Sie den Jahrgang für die oben ausgewählte Ausgabe an.',
+        validators=[MinValueValidator(limit_value=0)]
     )
 
 
