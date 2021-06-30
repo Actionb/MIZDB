@@ -102,7 +102,7 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                         # 'moved' to original and later deleted.
                         pass
                     else:
-                        updated_ids.append(id)
+                        updated_ids.append(pk)
 
             # Log the changes:
             for pk in updated_ids:
