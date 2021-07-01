@@ -9,6 +9,13 @@
     {{ block.super }}
 {% endblock extrastyle %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock breadcrumbs %}
+
 {% block search %}
 <!-- ADMIN SEARCH FORM --->
     {% if cl.model_admin.has_search_form %}
