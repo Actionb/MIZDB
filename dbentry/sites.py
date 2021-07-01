@@ -12,6 +12,9 @@ from dbentry import utils
 class MIZAdminSite(admin.AdminSite):
     site_header = 'MIZDB'
     site_title = 'MIZDB'
+    
+    # Do not display the “View on site” link in the header:
+    site_url = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
