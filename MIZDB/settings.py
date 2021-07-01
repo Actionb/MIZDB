@@ -147,3 +147,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
 # Required for debug_toolbar:
 INTERNAL_IPS = ['127.0.0.1']
+
+
+# URL to the wiki.
+# That URL is displayed in the header on each admin page.
+# See: sites.MIZAdminSite.each_context
+WIKI_URL = 'http://127.0.0.1/wiki/Hauptseite'

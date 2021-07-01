@@ -9,3 +9,10 @@
     {% endcomment %}
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/base_custom.css" %}"/>
 {% endblock %}
+
+{% block userlinks %}
+    {% if wiki_url %}
+        <a href="{{ wiki_url }} " target="_blank">Wiki</a>
+    {% endif %}
+    {{ block.super }}
+{% endblock userlinks %}

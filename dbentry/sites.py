@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.conf import settings
 from django.contrib import admin
 from django.core import checks
 from django.urls import reverse
@@ -19,6 +20,13 @@ class MIZAdminSite(admin.AdminSite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tools = []
+
+    def each_context(self, request):
+        context = super().each_context(request)
+        # Add the URL to the wiki for the link in the header:
+        if getattr(settings, 'WIKI_URL', False):
+            context['wiki_url'] = settings.WIKI_URL
+        return context
 
     def register_tool(self, view, url_name, index_label, superuser_only):
         """
