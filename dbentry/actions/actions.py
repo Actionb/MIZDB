@@ -3,8 +3,6 @@ from dbentry.actions.views import (
     ChangeBestand
 )
 from dbentry.actions.decorators import add_cls_attrs
-# TODO: add an action that creates an overview of the stock (Bestand) of the
-# selected items (possibly allow changes there too?)
 
 
 @add_cls_attrs(BulkEditJahrgang)

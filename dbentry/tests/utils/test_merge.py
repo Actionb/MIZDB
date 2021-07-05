@@ -277,10 +277,10 @@ class TestMergingAusgabe(MergingTestCase):
     @classmethod
     def setUpTestData(cls):
         default = {
-            'ausgabejahr__extra': 1,
-            'ausgabenum__extra': 1,
-            'ausgabelnum__extra': 1,
-            'ausgabemonat__extra': 1,
+            'ausgabejahr__jahr': 2019,
+            'ausgabenum__num': 1,
+            'ausgabelnum__lnum': 11,
+            'ausgabemonat__monat__ordinal': 6,
             'bestand__extra': 1
         }
         cls.obj1 = make(cls.model, **default)
@@ -398,6 +398,28 @@ class TestMergingAusgabe(MergingTestCase):
             self.assertRelatedChanges()
         self.assertTrue(context_manager.exception.args[0].startswith(
             'Unexpected additional 1 relation-changes occurred: '))
+
+    def test_duplicate_related_objects(self):
+        # Assert that merge_records handles UNIQUE CONSTRAINT violations on
+        # related objects properly.
+        self.obj2.ausgabenum_set.add(_models.AusgabeNum(num=42), bulk=False)
+        num_42 = _models.AusgabeNum.objects.get(num=42, ausgabe_id=self.obj2.pk)
+        self.obj3.ausgabenum_set.add(_models.AusgabeNum(num=42), bulk=False)
+        # A bug had caused the merging of records with duplicate related objects
+        # to crash. The bug was that the built-in function 'id' was added to the
+        # list of updated_ids instead of the loop variable 'pk', which then led
+        # to a TypeError when trying a query with the buit-in as parameter.
+        with self.assertNotRaises(TypeError):
+            new_original, update_data = utils.merge_records(
+                self.original,
+                self.qs,
+                expand_original=True,
+                request=self.request
+            )
+        # TODO: assertLoggedAddition could do with a "msg" parameter.
+        # A change history log entry describing adding Nummer 42 should have
+        # been created.
+        self.assertLoggedAddition(self.original, num_42)
 
 
 class TestMergingOrt(MergingTestCase, MergeTestMethodsMixin):

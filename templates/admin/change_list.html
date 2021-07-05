@@ -9,6 +9,13 @@
     {{ block.super }}
 {% endblock extrastyle %}
 
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock breadcrumbs %}
+
 {% block search %}
 <!-- ADMIN SEARCH FORM --->
     {% if cl.model_admin.has_search_form %}
@@ -27,14 +34,14 @@
 {% block pagination %}
     {{ block.super }}
     <br>
-    <ul class="object-tools">
+    <div><ul class="object-tools" style="margin-top: 0px;">
         {% if has_add_permission %}<li>
             {% url cl.opts|admin_urlname:'add' as add_url %}
             <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
             {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
             </a>
         </li>{% endif %}
-    </ul>
+    </ul></div>
     <a href="#top">(nach oben)</a>
 {% endblock %}
 

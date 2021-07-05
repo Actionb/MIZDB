@@ -1,6 +1,5 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
@@ -237,10 +236,6 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         Returns a queryset instance with the results.
         """
         qs = self.cleaned_data.get('magazin').ausgabe_set.all()
-        # Check the queryset before adding joins.
-        # Return it as is if there is less or equal than one instance found.
-        if qs.count() <= 1:
-            return qs
 
         for fld_name, field_path in [
                 ('num', 'ausgabenum__num'),
@@ -257,19 +252,19 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         jahre = row.get('jahr', None)
         if isinstance(jahre, str):
             jahre = [jahre]
-        if jg and jahre:
-            if qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre).exists():
-                qs = qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre)
-            else:
-                # Do not shadow possible duplicates that
-                # only have one of (jg, jahre) by using OR.
-                qs = qs.filter(
-                    Q(('jahrgang', jg)) | Q(('ausgabejahr__jahr__in', jahre))
-                )
-        elif jg:
-            qs = qs.filter(jahrgang=jg)
+        if jg and jahre and qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre).exists():
+            # Only filter for both jahrgang and jahre if such a queryset actually exists.
+            # If we can only find instances with jahre, but not with jahre and 
+            # jahrgang, then use the queryset that only uses jahre.
+            # jahre should take priority, since issues rarely specify a value 
+            # for  jahrgang. Instead, a value for jahrgang is usually *derived*
+            # from the jahre values: first issue appeared in the year 2000, that
+            # would make issues published in 2010 to be of the 10th jahrgang.
+            qs = qs.filter(jahrgang=jg, ausgabejahr__jahr__in=jahre)
         elif jahre:
             qs = qs.filter(ausgabejahr__jahr__in=jahre)
+        elif jg:
+            qs = qs.filter(jahrgang=jg)
         return qs.distinct()
 
     @property

@@ -1,7 +1,6 @@
 import calendar
 import datetime
-from itertools import chain
-from collections import Counter, OrderedDict, namedtuple
+from collections import OrderedDict
 
 from nameparser import HumanName
 
@@ -41,36 +40,6 @@ class MIZQuerySet(models.QuerySet):
         strat = strat_class(self, **kwargs)
         result, exact_match = strat.search(q, ordered)
         return result
-
-    def duplicates(self, *fields):
-        """
-        Find records that share values in the given fields.
-
-        Returns a list of 'Dupe' named tuples.
-        'Dupe' has two attributes:
-            - instances: a queryset of records that share some values
-            - values: the values that are shared
-        """
-        Dupe = namedtuple('Dupe', ['instances', 'values'])
-
-        queried = self.values_dict(*fields, tuplfy=True)
-        # chain all the values in queried to be able to later count over them.
-        all_values = list(chain(values for pk, values in queried.items()))
-        rslt = []
-        # Walk through the values, looking for non-empty values that appeared
-        # more than once.
-        for elem, count in Counter(all_values).items():
-            if not elem or count < 2:
-                # Do not compare empty with empty.
-                continue
-            # Find all the pks that match these values.
-            pks = []
-            for pk, values in queried.items():
-                if values == elem:
-                    pks.append(pk)
-            instances = self.model.objects.filter(pk__in=pks)
-            rslt.append(Dupe(instances, elem))
-        return rslt
 
     def values_dict(self, *fields, include_empty=False, flatten=False,
             tuplfy=False, **expressions):

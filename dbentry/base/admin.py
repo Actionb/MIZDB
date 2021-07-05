@@ -18,8 +18,6 @@ from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_model_relations, get_fields_and_lookups
 from dbentry.utils.admin import construct_change_message
-# TODO: when using list_editable the 'save' element overlaps the 'add' element
-# on the changelist.
 # TODO: enable delete_related on inlines:
 # RelatedFieldWidgetWrapper disables can_delete_related for inlines because of
 # cascading:
