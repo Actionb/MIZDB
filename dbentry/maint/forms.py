@@ -94,6 +94,7 @@ def get_dupe_fields_for_model(model):
 
     Returns a dictionary of {category_name: choices}.
     """
+    # TODO: this misses 'bands' for model 'Musiker'
     base = [
         (f.name, f.verbose_name.capitalize())
         for f in utils.get_model_fields(model, base=True, foreign=True, m2m=False)
