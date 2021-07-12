@@ -510,7 +510,7 @@ class PlakatAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
-            'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur'
+            'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
