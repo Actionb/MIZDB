@@ -111,3 +111,8 @@ Move the radio buttons 'up' a little bit to bring them in line with the label.
 button[name="wizard_goto_step"]{
     padding: 10px 15px;
 }
+
+/* Stop searchbar from disappearing when width < 1024px */
+#changelist #toolbar form #searchbar {
+    min-width: 303px;
+}
