@@ -176,24 +176,24 @@ def _get_relation_change_message(obj, parent_model):
     # Exempt from this are auto created models such as the through tables of m2m
     # relations. Use the textual representation provided by the model on the
     # other end of the m2m relation instead.
-    result = {
-        'name': str(obj._meta.verbose_name),
-        'object': str(obj),
-    }
     if obj._meta.auto_created:
         # An auto_created m2m through table only has two relation fields;
         # one is the field pointing towards the parent model and the other is
         # the one we are looking for here.
         for fld in obj._meta.get_fields():
             if fld.is_relation and fld.related_model != parent_model:
-                # Use the verbose_name of the model on the other end of the m2m
-                # relation as 'name'.
-                result['name'] = str(fld.related_model._meta.verbose_name)
-                # Use the other related object directly instead of the record
-                # in the auto created through table.
-                result['object'] = str(getattr(obj, fld.name))
-                break
-    return result
+                return {
+                    # Use the verbose_name of the model on the other end of the
+                    # m2m relation as 'name'.
+                    'name': str(fld.related_model._meta.verbose_name),
+                    # Use the other related object directly instead of the
+                    # record in the auto created through table.
+                    'object': str(getattr(obj, fld.name))
+                }
+    return {
+        'name': str(obj._meta.verbose_name),
+        'object': str(obj),
+    }
 
 
 def create_logentry(user_id, obj, action_flag, message=''):
