@@ -60,12 +60,17 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                 if related_field.name in unique_together:
                     # The ForeignKey field that led us from original's model
                     # to this related model is part of this unique_together.
-                    # Since we are trying to exclude values of objects that
-                    # are not yet related to original we must not call
-                    # exclude(FKfield_id=original_id, <other_values>)!
-                    # FKfield_id=original_id only applies to objects
-                    # that are *already* related to original and thus would
-                    # render the exclusion pointless.
+                    # Since we're filtering against this field being equal to
+                    # 'original' in order to find all the values that original
+                    # already has, the values of this field will always be equal
+                    # to original's id.
+                    # But we're trying to exclude objects that are not yet
+                    # related to original (i.e. related_field.name cannot be
+                    # equal to original_id), and by including this field and its
+                    # values in the exclude parameters, we would exclude all
+                    # those very objects that are not yet related to original.
+                    # Thus, we need to remove this field from the list of
+                    # parameters passed to values().
                     unique_together = list(unique_together)
                     unique_together.remove(related_field.name)
                     if not unique_together:
