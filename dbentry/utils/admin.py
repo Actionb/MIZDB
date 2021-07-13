@@ -228,17 +228,18 @@ def log_change(user_id, obj, fields, related_obj=None):
     Log that values for the fields 'fields' of object 'object' have changed.
 
     If 'related_obj' is given, log that a related object's field values have
-    been changed.
+    been changed. (This is, basically, like logging changes on admin inline
+    formsets)
     """
     if isinstance(fields, str):
         fields = [fields]
     message = {'changed': {}}
+    fields_opts = obj._meta
     if related_obj:
-        message['changed'] = _get_relation_change_message(related_obj, obj)
+        message['changed'] = _get_relation_change_message(
+            related_obj, obj._meta.model)
         # Use the fields map of the related model:
         fields_opts = related_obj._meta
-    else:
-        fields_opts = obj._meta
 
     message['changed']['fields'] = sorted(
         capfirst(fields_opts.get_field(f).verbose_name) for f in fields)

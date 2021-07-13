@@ -260,15 +260,19 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_change_related_obj(self):
+        # Note: to understand the purpose of logging changes of related objects,
+        # imagine logging changes to admin inlines.
+        m2m_band = self.obj1.band.through.objects.create(
+            band=self.band, audio=self.obj1)
         with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_change(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
-                fields=['lagerort'],
-                related_obj=self.bestand,
+                fields=['band'],
+                related_obj=m2m_band,
             )
             expected_message = [{'changed':
-                    {'fields': ['Lagerort'], 'name': 'Bestand', 'object': 'Aufm Tisch!'}}]
+                    {'fields': ['Band'], 'name': 'Band', 'object': 'Led Zeppelin'}}]
             self.assertTrue(mocked_create_logentry.called)
             user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
             self.assertEqual(user_id, self.super_user.pk)
