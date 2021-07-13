@@ -216,10 +216,8 @@ def log_addition(user_id, obj, related_obj=None):
     """
     message = {"added": {}}
     if related_obj:
-        message['added'] = {
-            'name': str(related_obj._meta.verbose_name),
-            'object': str(related_obj),
-        }
+        message['added'] = _get_relation_change_message(
+            related_obj, obj._meta.model)
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
