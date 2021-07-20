@@ -25,6 +25,10 @@ class TestMergingVideo(MergingTestCase):
         obj1 = make(
             cls.model, titel='Original', band__extra=1,
             musiker__extra=1, bestand__extra=1,
+            # merge would try to update fields with default values.
+            # In order to not have medium_qty show up in change messages,
+            # give it a value that isn't the default.
+            medium_qty=2,
         )
         cls.band_original = obj1.band.get()
         cls.musiker_original = obj1.musiker.get()
@@ -68,7 +72,10 @@ class TestMergingVideo(MergingTestCase):
         self.assertEqual(new_original, self.obj1)
         self.assertEqual(new_original.titel, 'Original')
         self.assertEqual(new_original.beschreibung, 'Hello!')
-        self.assertLoggedChange(new_original, fields=['beschreibung'])
+        self.assertLoggedChange(
+            new_original,
+            change_message=[{'changed': {'fields': ['Beschreibung']}}]
+        )
 
     def test_merge_records_no_expand(self):
         # Assert that merge does not expand the original's values with
