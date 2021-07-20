@@ -1084,6 +1084,8 @@ class BestandAdmin(MIZModelAdmin):
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['lagerort', 'signatur']}
     superuser_only = True
+    # FIXME: the search form is missing a text search element ('q')
+    # FIXME: the search form is missing a 'show all'
 
     def get_queryset(self, request, **kwargs):
         self.request = request  # save the request for bestand_link()
