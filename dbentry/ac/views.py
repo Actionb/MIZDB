@@ -258,3 +258,14 @@ class ACCreateable(ACBase):
             return http.JsonResponse({'id': 0, 'text': msg})
 
         return http.JsonResponse({'id': result.pk, 'text': str(result)})
+
+
+class GND(ACBase):
+
+    model = _models.Person  # TODO: remove pointless placeholder
+
+    def get_queryset(self):
+        from dbentry.utils.gnd import searchgnd
+        query = " and ".join("PER=%s" % w for w in self.q.split())
+        query += " and BBG=Tp*"
+        return searchgnd(query)

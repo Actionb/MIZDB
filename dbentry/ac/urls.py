@@ -1,10 +1,11 @@
 from django.urls import path, include
 
-from .views import ACBase, ACBuchband, ACCreateable, ACAusgabe
+from .views import ACBase, ACBuchband, ACCreateable, ACAusgabe, GND
 
 autocomplete_patterns = [
     path('buch/', ACBuchband.as_view(), name='acbuchband'),
-    path('ausgabe/', ACAusgabe.as_view(), name='acausgabe')
+    path('ausgabe/', ACAusgabe.as_view(), name='acausgabe'),
+    path('gnd/', GND.as_view(), name='gnd')
 ]
 
 urlpatterns = [
