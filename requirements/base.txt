@@ -20,3 +20,6 @@ factory-boy
 
 # PostgreSQL Python
 psycopg2
+
+# HTTP library handling the SRU requests to the DNB
+requests
