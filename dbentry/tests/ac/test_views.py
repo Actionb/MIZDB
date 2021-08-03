@@ -1,14 +1,14 @@
 from collections import OrderedDict
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
-from dbentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable
+from dbentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable, GND
 from dbentry.factory import make
-from dbentry.tests.base import mockv
+from dbentry.tests.base import mockv, ViewTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
@@ -539,3 +539,15 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Schlagwort
     alias_accessor_name = 'schlagwortalias_set'
     raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]
+
+
+@patch('dbentry.ac.views.searchgnd')
+class TestGND(ViewTestCase):
+
+    view_class = GND
+    path = 'gnd'
+
+    def test_get_queryset(self, mocked_searchnd):
+        mocked_searchnd.return_value = [('id', 'label')], 1
+        view = self.get_view(request=self.get_request(), q='Beep')
+        self.assertTrue(view.get_queryset())

@@ -57,7 +57,7 @@ class TestGND(MyTestCase):
         modified_rdf_xml = self.rdf_xml.replace(
             '<gndo:gndIdentifier>124182054</gndo:gndIdentifier>', '')
         mocked_request.get(self.url, text=modified_rdf_xml)
-        results = gnd.searchgnd(url=self.url, query='test')
+        results, _count = gnd.searchgnd(url=self.url, query='test')
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0][0], '42')
 
@@ -66,7 +66,7 @@ class TestGND(MyTestCase):
         # the result list.
         modified_rdf_xml = self.rdf_xml.replace('124182054', '')
         mocked_request.get(self.url, text=modified_rdf_xml)
-        results = gnd.searchgnd(url=self.url, query='test')
+        results, _count = gnd.searchgnd(url=self.url, query='test')
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0][0], '42')
 
@@ -76,7 +76,7 @@ class TestGND(MyTestCase):
         modified_rdf_xml = self.rdf_xml.replace(
             '<gndo:preferredNameForThePerson>Lindemann, Till</gndo:preferredNameForThePerson>', '')
         mocked_request.get(self.url, text=modified_rdf_xml)
-        results = gnd.searchgnd(url=self.url, query='test')
+        results, _count = gnd.searchgnd(url=self.url, query='test')
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0][1], '124182054')
 
@@ -85,6 +85,20 @@ class TestGND(MyTestCase):
         # provide a label have no text value.
         modified_rdf_xml = self.rdf_xml.replace('Lindemann, Till', '')
         mocked_request.get(self.url, text=modified_rdf_xml)
-        results = gnd.searchgnd(url=self.url, query='test')
+        results, _count = gnd.searchgnd(url=self.url, query='test')
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0][1], '124182054')
+
+    def test_returns_total_number_of_matches(self, mocked_request):
+        # Assert that searchgnd returns the total number of matches according
+        # to the value of xml element 'numberOfRecords'.
+        mocked_request.get(self.url, text=self.rdf_xml)
+        results, count = gnd.searchgnd(url=self.url, query='Peter')
+        self.assertEqual(count, 864)
+
+    def test_returns_empty_when_no_query(self, mocked_request):
+        # Assert that searchgnd short circuits when query string is missing.
+        mocked_request.get(self.url, text=self.rdf_xml)
+        results, count = gnd.searchgnd(url=self.url, query='')
+        self.assertFalse(results)
+        self.assertEqual(count, 0)

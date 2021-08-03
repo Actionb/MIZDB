@@ -8,7 +8,6 @@ from xml.etree import ElementTree
 logger = logging.getLogger(__name__)
 
 
-# TODO: pagination/scrolling (nextRecordPosition)
 def searchgnd(
         query: str,
         start: str = '1',
@@ -19,7 +18,7 @@ def searchgnd(
         identifier: str = 'gndo:gndIdentifier',
         labels: Tuple[str] = ('gndo:preferredNameForThePerson',),
         **params: List[str]
-) -> List[Tuple[str, str]]:
+) -> Tuple[List[Tuple[str, str]], int]:
     """
     Query the GND of the DNB and return a list of matching (id, label) pairs.
 
@@ -48,11 +47,16 @@ def searchgnd(
         **params (List[str]): additional request parameters.
 
     Returns:
-        A list of (id, text label) 2-tuples: List[Tuple[str, str]].
+        A 2-tuple with one item being the result list and the other being the
+        total number of matches found.
+        The result list is a list of (id, text label) 2-tuples: List[Tuple[str, str]].
 
     Raises:
         requests.exceptions.HTTPError: if response status code is 4xx or 5xx.
     """
+    if not query:
+        return [], 0
+
     request_params = {
         'query': [query],
         'version': [version],
@@ -74,9 +78,13 @@ def searchgnd(
     namespaces['sru'] = namespaces['']
 
     root = ElementTree.fromstring(response.text)
+    # Get the total number of matches:
+    result_count = int(root.find('.//sru:numberOfRecords', namespaces).text)
+    # Get the records returned in this batch.
+    # Note that by default SRU returns 10 records at a time.
     records = root.findall('.//sru:recordData', namespaces)
-    # Note that, by default, SRU only returns 10 records at a time.
-    logger.info('SRU response returned %r matching records.', len(records))
+    logger.info('SRU response returned %r of %r matching records.' % (len(records), result_count))
+
     results = []
     for record in records:
         identifier_element = record.find(".//%s" % identifier, namespaces)
@@ -96,4 +104,4 @@ def searchgnd(
                 label = label_element.text
                 break
         results.append((id_number, label))
-    return results
+    return results, result_count

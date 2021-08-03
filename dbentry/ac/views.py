@@ -1,5 +1,7 @@
 from django import http
 from django.contrib.auth import get_permission_codename
+from django.core.paginator import Paginator
+from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from dal import autocomplete
@@ -8,6 +10,7 @@ from dbentry import models as _models
 from dbentry.ac.creator import Creator
 from dbentry.utils.models import get_model_from_string
 from dbentry.utils.admin import log_addition
+from dbentry.utils.gnd import searchgnd
 
 
 class ACBase(autocomplete.Select2QuerySetView):
@@ -260,12 +263,58 @@ class ACCreateable(ACBase):
         return http.JsonResponse({'id': result.pk, 'text': str(result)})
 
 
-class GND(ACBase):
+class GNDPaginator(Paginator):
 
-    model = _models.Person  # TODO: remove pointless placeholder
+    def __init__(self, *args, total_count=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.total_count = total_count
+
+    def page(self, number):
+        """Return a Page object for the given 1-based page number."""
+        # Pagination is done by the SRU backend; we only ever get one page.
+        return self._get_page(self.object_list, number, self)
+
+    @cached_property
+    def count(self):
+        """Return the total number of objects, across all pages."""
+        return self.total_count
+
+
+class GND(ACBase):
+    """
+    Autocomple view that queries the SRU API of the DNB.
+    """
+
+    paginate_by = 10  # DNB default number of records per request
+    paginator_class = GNDPaginator
+
+    def get_query_string(self, q=None):
+        """Construct and return a SRU compliant query string."""
+        if q is None:
+            q = self.q
+        if not q:
+            return ""
+        query = " and ".join("PER=%s" % w for w in q.split())
+        query += " and BBG=Tp*"
+        return query
 
     def get_queryset(self):
-        from dbentry.utils.gnd import searchgnd
-        query = " and ".join("PER=%s" % w for w in self.q.split())
-        query += " and BBG=Tp*"
-        return searchgnd(query)
+        """Get a list of records from the SRU API."""
+        # Calculate the 'startRecord' parameter for the request.
+        # The absolute record position of the first record of a page is given by
+        #   (page_number -1) * records_per_page
+        # Add +1 to account for SRU indexing starting at 1 (instead of at 0).
+        page = self.kwargs.get(self.page_kwarg) or self.request.GET.get(self.page_kwarg) or 1
+        page_number = int(page)
+        start = (page_number - 1) * self.paginate_by + 1
+
+        results, self.total_count = searchgnd(
+            self.get_query_string(self.q),
+            startRecord=[start],
+            # TODO: add maximumRecords request param (self.paginate_by)
+        )
+        return results
+
+    def get_paginator(self, *args, **kwargs):
+        kwargs['total_count'] = self.total_count
+        return super().get_paginator(*args, **kwargs)
