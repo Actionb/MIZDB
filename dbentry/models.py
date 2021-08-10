@@ -18,6 +18,12 @@ from dbentry.utils import concat_limit, get_model_relations, get_model_fields
 class Person(ComputedNameModel):
     vorname = models.CharField(max_length=200, blank=True)
     nachname = models.CharField(max_length=200)
+
+    gnd_id = models.CharField('GND ID', max_length=20, blank=True)
+    gnd_name = models.CharField('GND Name', max_length=200, blank=True, editable=False)
+    dnb_url = models.URLField(
+        'Link DNB', blank=True,
+        help_text="Adresse zur Seite dieser Person in der Deutschen Nationalbibliothek.")
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
