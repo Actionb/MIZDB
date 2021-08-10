@@ -12,7 +12,8 @@ from dbentry.base.forms import (
     MIZAdminInlineFormBase, DiscogsFormMixin
 )
 from dbentry.forms import (
-    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm, VideoForm
+    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm,
+    VideoForm, PersonForm
 )
 from dbentry.ac.widgets import EasyWidgetWrapper
 from dbentry.factory import make
@@ -515,3 +516,113 @@ class TestAudioForm(DiscogsMixinAttributesTestMixin, MyTestCase):
 class TestVideoForm(DiscogsMixinAttributesTestMixin, MyTestCase):
 
     form_class = VideoForm
+from django.test import tag
+@tag("wip")
+class TestPersonForm(ModelFormTestCase):
+
+    form_class = PersonForm
+    model = _models.Person
+    fields = ['nachname', 'gnd_id', 'dnb_url']
+
+    def test_clean_continues_on_empty_data(self):
+        # Assert that the clean method continues if both fields are empty.
+        form = self.get_form(data={'nachname': 'Plant'})
+        form.full_clean()
+        self.assertFalse(form.errors)
+        form = self.get_form(data={'nachname': 'Plant', 'gnd_id': 0})
+        form.full_clean()
+        self.assertFalse(form.errors)
+
+    def test_clean_handles_integer_gnd_id(self):
+        # NOTE: gnd_id is a CharField. This test method might be pointless.
+        # Assert that clean can properly cast any valid input for gnd_id into a string.
+        form = self.get_form(data={'gnd_id': 1234})
+        form.full_clean()
+        self.assertNotIn('gnd_id', form._errors)
+
+        form = self.get_form(data={'gnd_id': '1234'})
+        form.full_clean()
+        self.assertNotIn('gnd_id', form._errors)
+
+    def test_clean_aborts_on_invalid_dnburl(self):
+        # Assert that clean does not mess with any gnd_id if the dnb_url is
+        # invalid.
+        form = self.get_form(data={'gnd_id': '11863996X', 'dnb_url': 'a real url'})
+        form.full_clean()
+        self.assertEqual(form.cleaned_data.get('gnd_id', ''), '11863996X')
+
+    @translation_override(language=None)
+    def test_clean_raises_error_when_gndid_and_dnburl_dont_match(self):
+        # Assert that clean raises a ValidationError when gnd_id and the
+        # gnd_id given in dnb_url don't match.
+        form = self.get_form(data={
+            'gnd_id': '1234',
+            'dnb_url': 'http://d-nb.info/gnd/11863996X'
+        })
+        form.full_clean()
+        self.assertIn(NON_FIELD_ERRORS, form.errors)
+        expected_error_message = (
+            "Die angegebene GND ID (1234) stimmt nicht mit der ID im DNB"
+            " Link überein (11863996X)."
+        )
+        self.assertIn(expected_error_message, form.errors[NON_FIELD_ERRORS])
+
+    def test_clean_sets_gnd_id_from_url(self):
+        # Assert that clean sets the correct gnd_id from a given valid url if a gnd_id
+        # was missing.
+        form = self.get_form(data={
+            'dnb_url': 'http://d-nb.info/gnd/11863996X',
+            'nachname': 'Plant',
+        })
+        form.full_clean()
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
+
+    def test_clean_sets_url_from_gnd_id(self):
+        # Assert that clean creates the correct url from a given valid gnd_id if an url
+        # was missing
+        form = self.get_form(data={'gnd_id': '11863996X', 'nachname': 'Plant'})
+        form.full_clean()
+        self.assertIn('dnb_url', form.cleaned_data)
+        self.assertEqual(
+            form.cleaned_data['dnb_url'],
+            'http://d-nb.info/gnd/11863996X'
+        )
+
+    @translation_override(language=None)
+    def test_invalid_urls_keep_old_error_message(self):
+        # Assert that invalid urls are validated through the default URLValidator also
+        form = self.get_form(data={'nachname': 'Plant', 'dnb_url': 'notavalidurl'})
+        self.assertIn('dnb_url', form.errors)
+        self.assertIn('Enter a valid URL.', form.errors['dnb_url'])
+        self.assertIn(
+            "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de).",
+            form.errors['dnb_url']
+        )
+
+    @translation_override(language=None)
+    def test_urls_only_valid_from_discogs(self):
+        # Assert that only urls with domain discogs.com are valid
+        form = self.get_form(data={'nachname': 'Plant', 'dnb_url': 'http://www.google.com'})
+        self.assertIn('dnb_url', form.errors)
+        self.assertIn(
+            "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de).",
+            form.errors['dnb_url']
+        )
+
+    def test_valid_urls(self):
+        # Assert that valid urls will be reformatted to d-nb.info/gnd/<id> urls.
+        urls = [
+            'http://d-nb.info/gnd/11863996X',
+            'https://d-nb.info/gnd/11863996X',
+            'https://portal.dnb.de/opac.htm?method=simpleSearch&cqlMode=true&query=nid%3D11863996X',
+        ]
+        for url in urls:
+            form = self.get_form(data={'nachname': 'Plant', 'dnb_url': url})
+            self.assertTrue(form.is_valid())
+            self.assertIn('dnb_url', form.cleaned_data)
+            self.assertEqual(
+                form.cleaned_data['dnb_url'],
+                'http://d-nb.info/gnd/11863996X',
+            )

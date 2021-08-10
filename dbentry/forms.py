@@ -1,9 +1,11 @@
+from dal import autocomplete
 from django import forms
 from django.core.exceptions import ValidationError
 
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.base.forms import MinMaxRequiredFormMixin, DiscogsFormMixin
+from dbentry.validators import DNBURLValidator
 
 
 class GoogleBtnWidget(forms.widgets.TextInput):
@@ -162,3 +164,47 @@ class PlakatForm(forms.ModelForm):
 class FotoForm(forms.ModelForm):
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
+
+
+class PersonForm(forms.ModelForm):
+    class Meta:
+        widgets = {'gnd_id': autocomplete.Select2(url='gnd')}
+
+    url_validator_class = DNBURLValidator
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['dnb_url'].validators.append(self.url_validator_class())
+        if self.instance.pk:
+            # Set the initial (selected) choice.
+            self.fields['gnd_id'].widget.choices = [
+                (self.instance.gnd_id, self.instance.gnd_name)]
+
+    def clean(self):
+        """Validate and clean gnd_id and dnb_url."""
+        if ('dnb_url' in self._errors
+                or 'gnd_id' in self._errors):
+            return self.cleaned_data
+        gnd_id= self.cleaned_data.get('gnd_id', '')
+        dnb_url = self.cleaned_data.get('dnb_url', '')
+        if not (gnd_id or dnb_url):
+            return self.cleaned_data
+
+        match = self.url_validator_class.regex.search(dnb_url)
+        if match and len(match.groups()) == 1:
+            # We have a valid url with a gnd_id in it.
+            gnd_id_from_url = match.groups()[-1]
+            if gnd_id and gnd_id_from_url != gnd_id:
+                raise ValidationError(
+                    "Die angegebene GND ID (%s) stimmt nicht mit der ID im "
+                    "DNB Link überein (%s)." % (gnd_id, gnd_id_from_url)
+                )
+            elif not gnd_id:
+                # Set gnd_id from the url.
+                gnd_id = gnd_id_from_url
+                self.cleaned_data['gnd_id'] = gnd_id
+        dnb_url = "http://d-nb.info/gnd/" + gnd_id
+        # NOTE: If the gnd_id is invalid, a request for dnb_url would return
+        # with 404. This way, a validation of the gnd_id is possible.
+        self.cleaned_data['dnb_url'] = dnb_url
+        return self.cleaned_data
