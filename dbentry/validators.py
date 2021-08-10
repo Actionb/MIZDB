@@ -65,3 +65,15 @@ class DiscogsURLValidator(RegexValidator):
     regex = re.compile(discogs_release_id_pattern)
     message = "Bitte nur Adressen von discogs.com eingeben."
     code = "discogs"
+
+
+class DNBURLValidator(RegexValidator):
+    """
+    RegexValidator for URLs of the German national library.
+
+    This validator captures the GND ID in the first group for a given valid URL.
+    """
+
+    regex = re.compile( r'.*(?:d-nb.info?|portal.dnb.de?)/.*(?:gnd/?|nid%3D?)(\w+)')
+    message = "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de)."
+    code = "dnb"
