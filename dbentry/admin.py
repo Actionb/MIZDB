@@ -15,7 +15,7 @@ from dbentry.base.admin import (
 )
 from dbentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    PlakatForm, MusikerForm, BandForm, VideoForm, FotoForm
+    PlakatForm, MusikerForm, BandForm, VideoForm, FotoForm, PersonForm
 )
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -825,12 +825,22 @@ class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.Person.orte.through
 
-    fields = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
     inlines = [OrtInLine]
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
+    form = PersonForm
+
+    fieldsets = [
+        (None, {
+            'fields': ['vorname', 'nachname', 'beschreibung', 'bemerkungen'],
+        }),
+        ('GND', {
+            'fields': ['gnd_id', 'dnb_url'],
+            'classes': ['collapse', 'collapsed'],
+        })
+    ]
 
     search_form_kwargs = {
         'fields': ['orte', 'orte__land', 'orte__bland'],
