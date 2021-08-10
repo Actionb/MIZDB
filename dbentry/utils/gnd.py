@@ -89,10 +89,10 @@ def searchgnd(
     for record in records:
         identifier_element = record.find(".//%s" % identifier, namespaces)
         if identifier_element is None:
-            logger.warning("Record data contained no element with identifier tag %r.", identifier)
+            logger.warning("Record data contained no element with identifier tag %r." % identifier)
             continue
         if not getattr(identifier_element, 'text', None):
-            logger.warning("No ID value found on element with identifier tag %r.", identifier)
+            logger.warning("No ID value found on element with identifier tag %r." % identifier)
             continue
         id_number = identifier_element.text
         # Use the text from the first element that has text as a label for this
