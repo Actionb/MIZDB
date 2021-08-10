@@ -271,7 +271,9 @@ class GNDPaginator(Paginator):
 
     def page(self, number):
         """Return a Page object for the given 1-based page number."""
-        # Pagination is done by the SRU backend; we only ever get one page.
+        # Paginator.page slices the object_list here, but in our case,
+        # pagination is done by the SRU backend: we only ever get one page thus
+        # slicing must not occur.
         return self._get_page(self.object_list, number, self)
 
     @cached_property
@@ -282,7 +284,7 @@ class GNDPaginator(Paginator):
 
 class GND(ACBase):
     """
-    Autocomple view that queries the SRU API of the DNB.
+    Autocomple view that queries the SRU API endpoint of the DNB.
     """
 
     paginate_by = 10  # DNB default number of records per request
@@ -311,7 +313,7 @@ class GND(ACBase):
         results, self.total_count = searchgnd(
             self.get_query_string(self.q),
             startRecord=[start],
-            # TODO: add maximumRecords request param (self.paginate_by)
+            maximumRecords=[self.paginate_by]
         )
         return results
 
