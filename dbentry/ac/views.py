@@ -122,7 +122,7 @@ class ACBase(autocomplete.Select2QuerySetView):
                 # The list 'result' contains the IDs of the results.
                 # A '0' ID may be the 'weak hits' separator
                 # (query.PrimaryFieldsSearchQuery).
-                # Set it's id to None to make it unselectable.
+                # Set it's id to None to make it not selectable.
                 return None
             return result[0]
         return str(result.pk)
@@ -222,7 +222,7 @@ class ACCreateable(ACBase):
         creator = creator or self.creator
         create_info = []
         default = {
-            'id': None,  # 'id': None will make the option unselectable.
+            'id': None,  # 'id': None will make the option not selectable.
             'create_id': True, 'text': '...mit folgenden Daten:'
         }
 
@@ -284,7 +284,7 @@ class GNDPaginator(Paginator):
 
 class GND(ACBase):
     """
-    Autocomple view that queries the SRU API endpoint of the DNB.
+    Autocomplete view that queries the SRU API endpoint of the DNB.
     """
 
     paginate_by = 10  # DNB default number of records per request

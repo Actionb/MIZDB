@@ -26,7 +26,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
     to limit (forward) the choices available to the widget of a field 'ausgabe'.
 
     Also adds the ausgabe's magazin to the form's initial data (if applicable).
-    Useable by any ModelForm that uses a relation to ausgabe.
+    Usable by any ModelForm that uses a relation to ausgabe.
     """
 
     ausgabe__magazin = forms.ModelChoiceField(
