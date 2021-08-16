@@ -836,7 +836,7 @@ class PersonAdmin(MIZModelAdmin):
         (None, {
             'fields': ['vorname', 'nachname', 'beschreibung', 'bemerkungen'],
         }),
-        ('GND', {
+        ('Gemeinsame Normdatei', {
             'fields': ['gnd_id', 'gnd_name', 'dnb_url'],
             'classes': ['collapse', 'collapsed'],
         })
