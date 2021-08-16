@@ -196,17 +196,27 @@ class PersonForm(forms.ModelForm):
 
         match = self.url_validator_class.regex.search(dnb_url)
         if match and len(match.groups()) == 1:
-            # We have a valid url with a gnd_id in it.
+            # The URL is valid and has a gnd_id.
+            # The validator doesn't allow URLs without at least a one digit ID.
             gnd_id_from_url = match.groups()[-1]
-            if gnd_id and gnd_id_from_url != gnd_id:
-                raise ValidationError(
-                    "Die angegebene GND ID (%s) stimmt nicht mit der ID im "
-                    "DNB Link überein (%s)." % (gnd_id, gnd_id_from_url)
-                )
-            elif not gnd_id:
-                # Set gnd_id from the url.
+
+            if 'gnd_id' in self.changed_data and 'dnb_url' in self.changed_data:
+                if not gnd_id:
+                    # gnd_id was 'removed'. Set it from the new URL.
+                    gnd_id = gnd_id_from_url
+                    self.cleaned_data['gnd_id'] = gnd_id
+                elif gnd_id_from_url != gnd_id:
+                    # The values of both fields have changed, but the IDs do 
+                    # not match.
+                    raise ValidationError(
+                        "Die angegebene GND ID (%s) stimmt nicht mit der ID im "
+                        "DNB Link überein (%s)." % (gnd_id, gnd_id_from_url)
+                    )
+            elif 'dnb_url' in self.changed_data:
+                # Only dnb_url was changed; update gnd_id accordingly.
                 gnd_id = gnd_id_from_url
                 self.cleaned_data['gnd_id'] = gnd_id
+
         # Validate the gnd_id by checking that a SRU query with it returns
         # a single match.
         results, _c = searchgnd(query="nid=" + gnd_id)

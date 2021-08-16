@@ -566,23 +566,86 @@ class TestPersonForm(ModelFormTestCase):
         )
         self.assertIn(expected_error_message, form.errors[NON_FIELD_ERRORS])
 
-    def test_clean_sets_gnd_id_from_url(self):
-        # Assert that clean sets the correct gnd_id from a given valid url if a gnd_id
-        # was missing.
+    def test_clean_sets_gnd_id_from_url_when_gnd_id_missing(self):
+        # Assert that clean sets the correct gnd_id from a given valid url if
+        # a gnd_id was missing.
         form = self.get_form(data={
             'dnb_url': 'http://d-nb.info/gnd/11863996X',
             'nachname': 'Plant',
         })
-        form.full_clean()
         self.assertTrue(form.is_valid(), form.errors)
         self.assertIn('gnd_id', form.cleaned_data)
         self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
 
-    def test_clean_sets_url_from_gnd_id(self):
-        # Assert that clean creates the correct url from a given valid gnd_id if an url
-        # was missing
+    def test_clean_sets_gnd_id_from_url_when_gnd_id_omitted(self):
+        # Assert that clean sets the correct gnd_id from a given valid url if
+        # the value for gnd_id was omitted.
+        form = self.get_form(
+            data={
+                'dnb_url': 'http://d-nb.info/gnd/11863996X',
+                'nachname': 'Plant',
+            },
+            initial={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
+
+    def test_clean_sets_gnd_id_from_url_when_url_changes(self):
+        # Assert that clean sets the correct gnd_id from a given valid url if
+        # the 'dnb_url' was changed, but 'gnd_id' was not.
+        form = self.get_form(
+            data={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/11863996X',
+                'nachname': 'Plant'
+            },
+            initial={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('dnb_url', form.changed_data)
+        self.assertNotIn('gnd_id', form.changed_data)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
+
+    def test_clean_sets_url_from_gnd_id_when_url_missing(self):
+        # Assert that clean creates the correct url from a given valid gnd_id
+        # if an url was missing.
         form = self.get_form(data={'gnd_id': '11863996X', 'nachname': 'Plant'})
-        form.full_clean()
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('dnb_url', form.cleaned_data)
+        self.assertEqual(
+            form.cleaned_data['dnb_url'],
+            'http://d-nb.info/gnd/11863996X'
+        )
+
+    def test_clean_sets_url_from_gnd_id_when_gnd_id_changes(self):
+        # Assert that clean updates the url from a given valid gnd_id if the
+        # gnd_id was changed, but the url was not.
+        form = self.get_form(
+            data={
+                'gnd_id': '11863996X',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            },
+            initial={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.changed_data)
+        self.assertNotIn('dnb_url', form.changed_data)
         self.assertIn('dnb_url', form.cleaned_data)
         self.assertEqual(
             form.cleaned_data['dnb_url'],
@@ -620,7 +683,7 @@ class TestPersonForm(ModelFormTestCase):
         for url in urls:
             form = self.get_form(data={'nachname': 'Plant', 'dnb_url': url})
             with self.subTest(url=url):
-                self.assertTrue(form.is_valid())
+                self.assertTrue(form.is_valid(), form.errors)
                 self.assertIn('dnb_url', form.cleaned_data)
                 self.assertEqual(
                     form.cleaned_data['dnb_url'],
@@ -641,8 +704,8 @@ class TestPersonForm(ModelFormTestCase):
     def test_clean_saves_preferred_name(self, mocked_searchgnd):
         # Assert that clean saves the 'preferred name' (RDFxml) of the result.
         mocked_searchgnd.return_value = ([('1234', 'Robert Plant')], 1)
-        form = self.get_form(data={'gnd_id': '1234'})
-        form.full_clean()
+        form = self.get_form(data={'gnd_id': '1234', 'nachname': 'Plant'})
+        self.assertTrue(form.is_valid(), form.errors)
         self.assertIn('gnd_name', form.cleaned_data)
         self.assertEqual((form.cleaned_data['gnd_name']), 'Robert Plant')
 
@@ -651,7 +714,7 @@ class TestPersonForm(ModelFormTestCase):
         # Assert that gnd_id and gnd_name are saved to the form's model object.
         mocked_searchgnd.return_value = ([('1234', 'Robert Plant')], 1)
         form = self.get_form(data={'nachname': 'Plant', 'gnd_id': '1234'})
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), form.errors)
         plant = form.save()
         self.assertEqual(plant.nachname, 'Plant')
         self.assertEqual(plant.gnd_id, '1234')
