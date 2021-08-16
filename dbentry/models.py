@@ -19,11 +19,12 @@ class Person(ComputedNameModel):
     vorname = models.CharField(max_length=200, blank=True)
     nachname = models.CharField(max_length=200)
 
-    gnd_id = models.CharField('GND ID', max_length=20, blank=True)
-    gnd_name = models.CharField('GND Name', max_length=200, blank=True)
+    gnd_id = models.CharField('Normdatei ID', max_length=20, blank=True)
+    gnd_name = models.CharField('Normdatei Name', max_length=200, blank=True)
     dnb_url = models.URLField(
         'Link DNB', blank=True,
-        help_text="Adresse zur Seite dieser Person in der Deutschen Nationalbibliothek.")
+        help_text="Adresse zur Seite dieser Person in der Deutschen Nationalbibliothek."
+    )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
