@@ -180,8 +180,9 @@ class PersonForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['dnb_url'].validators.append(self.url_validator_class())
-        if self.instance.pk:
+        if 'dnb_url' in self.fields:
+            self.fields['dnb_url'].validators.append(self.url_validator_class())
+        if self.instance.pk and 'gnd_id' in self.fields:
             # Set the choice selected in the widget:
             self.fields['gnd_id'].widget.choices = [
                 (self.instance.gnd_id, self.instance.gnd_name)]
