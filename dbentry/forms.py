@@ -130,6 +130,7 @@ class BandForm(forms.ModelForm):
 class AudioForm(DiscogsFormMixin, forms.ModelForm):
     url_field_name = 'discogs_url'
     release_id_field_name = 'release_id'
+
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
@@ -137,6 +138,7 @@ class AudioForm(DiscogsFormMixin, forms.ModelForm):
 class VideoForm(DiscogsFormMixin, forms.ModelForm):
     url_field_name = 'discogs_url'
     release_id_field_name = 'release_id'
+
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
@@ -180,7 +182,7 @@ class PersonForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['dnb_url'].validators.append(self.url_validator_class())
         if self.instance.pk:
-            # Set the initial (selected) choice.
+            # Set the choice selected in the widget:
             self.fields['gnd_id'].widget.choices = [
                 (self.instance.gnd_id, self.instance.gnd_name)]
 

@@ -24,7 +24,6 @@ from dal import autocomplete
 
 
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):
-
     form_class = AusgabeMagazinFieldForm
     model = _models.Ausgabe.audio.through
     fields = ['ausgabe']
@@ -46,7 +45,6 @@ class TestAusgabeMagazinFieldForm(ModelFormTestCase):
 
 
 class TestArtikelForm(ModelFormTestCase):
-
     form_class = ArtikelForm
     model = _models.Artikel
     fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
@@ -151,12 +149,11 @@ class TestBuchForm(ModelFormTestCase):
 
 
 class TestMIZAdminForm(FormTestCase):
-
     dummy_attrs = {
         'some_int': forms.IntegerField(),
         'wrap_me': forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin')),
     }
-    dummy_bases = (MIZAdminForm, )
+    dummy_bases = (MIZAdminForm,)
 
     def test_iter(self):
         form = self.get_dummy_form()
@@ -175,7 +172,6 @@ class TestMIZAdminForm(FormTestCase):
 
 
 class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
-
     dummy_bases = (DynamicChoiceFormMixin, forms.Form)
     dummy_attrs = {
         'cf': forms.ChoiceField(choices=[]),
@@ -228,9 +224,8 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
 
 class TestMinMaxRequiredFormMixin(FormTestCase):
-
     dummy_attrs = {
-        'first_name': forms.CharField(),  'last_name': forms.CharField(required=True),
+        'first_name': forms.CharField(), 'last_name': forms.CharField(required=True),
         'favorite_pet': forms.CharField(), 'favorite_sport': forms.CharField(),
     }
     dummy_bases = (MinMaxRequiredFormMixin, forms.Form)
@@ -511,17 +506,14 @@ class DiscogsMixinAttributesTestMixin(object):
 
 
 class TestAudioForm(DiscogsMixinAttributesTestMixin, MyTestCase):
-
     form_class = AudioForm
 
 
 class TestVideoForm(DiscogsMixinAttributesTestMixin, MyTestCase):
-
     form_class = VideoForm
-from django.test import tag
-@tag("wip")
-class TestPersonForm(ModelFormTestCase):
 
+
+class TestPersonForm(ModelFormTestCase):
     form_class = PersonForm
     model = _models.Person
     fields = ['nachname', 'gnd_id', 'gnd_name', 'dnb_url']

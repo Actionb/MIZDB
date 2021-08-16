@@ -312,8 +312,9 @@ class GND(ACBase):
 
         results, self.total_count = searchgnd(
             self.get_query_string(self.q),
-            startRecord=[start],
-            maximumRecords=[self.paginate_by]
+            startRecord=[str(start)],
+            maximumRecords=[str(self.paginate_by)]
+            # TODO: support all searchgnd parameters
         )
         return results
 
