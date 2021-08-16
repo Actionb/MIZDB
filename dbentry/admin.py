@@ -837,7 +837,7 @@ class PersonAdmin(MIZModelAdmin):
             'fields': ['vorname', 'nachname', 'beschreibung', 'bemerkungen'],
         }),
         ('GND', {
-            'fields': ['gnd_id', 'dnb_url'],
+            'fields': ['gnd_id', 'gnd_name', 'dnb_url'],
             'classes': ['collapse', 'collapsed'],
         })
     ]
