@@ -182,6 +182,11 @@ class PersonForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if 'dnb_url' in self.fields:
             self.fields['dnb_url'].validators.append(self.url_validator_class())
+            # Add a link to the search form of the DNB to the help text:
+            self.fields['dnb_url'].help_text = (
+                'Adresse zur Seite dieser Person in der '
+                '<a href="https://portal.dnb.de/opac/showSearchForm">Deutschen Nationalbibliothek</a>.'
+            )
         if self.instance.pk and 'gnd_id' in self.fields:
             # Set the choice selected in the widget:
             self.fields['gnd_id'].widget.choices = [
