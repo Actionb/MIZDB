@@ -20,7 +20,7 @@ class Person(ComputedNameModel):
     nachname = models.CharField(max_length=200)
 
     gnd_id = models.CharField('GND ID', max_length=20, blank=True)
-    gnd_name = models.CharField('GND Name', max_length=200, blank=True, editable=False)
+    gnd_name = models.CharField('GND Name', max_length=200, blank=True)
     dnb_url = models.URLField(
         'Link DNB', blank=True,
         help_text="Adresse zur Seite dieser Person in der Deutschen Nationalbibliothek.")

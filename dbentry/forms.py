@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.base.forms import MinMaxRequiredFormMixin, DiscogsFormMixin
+from dbentry.utils.gnd import searchgnd
 from dbentry.validators import DNBURLValidator
 
 
@@ -168,7 +169,10 @@ class FotoForm(forms.ModelForm):
 
 class PersonForm(forms.ModelForm):
     class Meta:
-        widgets = {'gnd_id': autocomplete.Select2(url='gnd')}
+        widgets = {
+                'gnd_id': autocomplete.Select2(url='gnd'),
+                'gnd_name': forms.HiddenInput()
+        }
 
     url_validator_class = DNBURLValidator
 
@@ -185,7 +189,7 @@ class PersonForm(forms.ModelForm):
         if ('dnb_url' in self._errors
                 or 'gnd_id' in self._errors):
             return self.cleaned_data
-        gnd_id= self.cleaned_data.get('gnd_id', '')
+        gnd_id = self.cleaned_data.get('gnd_id', '')
         dnb_url = self.cleaned_data.get('dnb_url', '')
         if not (gnd_id or dnb_url):
             return self.cleaned_data
@@ -203,8 +207,15 @@ class PersonForm(forms.ModelForm):
                 # Set gnd_id from the url.
                 gnd_id = gnd_id_from_url
                 self.cleaned_data['gnd_id'] = gnd_id
+        # Validate the gnd_id by checking that a SRU query with it returns
+        # a single match.
+        results, _c = searchgnd(query="nid=" + gnd_id)
+        if len(results) != 1:
+            raise ValidationError("Die GND ID ist ungültig.")
+        # Store the result's label for later use as data for the model field
+        # 'gnd_name'.
+        self.cleaned_data['gnd_name'] = results[0][1]
+        # Normalize the URL to the DNB permalink.
         dnb_url = "http://d-nb.info/gnd/" + gnd_id
-        # NOTE: If the gnd_id is invalid, a request for dnb_url would return
-        # with 404. This way, a validation of the gnd_id is possible.
         self.cleaned_data['dnb_url'] = dnb_url
         return self.cleaned_data

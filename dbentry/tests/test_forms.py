@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from .base import FormTestCase, ModelFormTestCase, MyTestCase
 from .mixins import TestDataMixin
 
@@ -522,14 +524,11 @@ class TestPersonForm(ModelFormTestCase):
 
     form_class = PersonForm
     model = _models.Person
-    fields = ['nachname', 'gnd_id', 'dnb_url']
+    fields = ['nachname', 'gnd_id', 'gnd_name', 'dnb_url']
 
     def test_clean_continues_on_empty_data(self):
         # Assert that the clean method continues if both fields are empty.
         form = self.get_form(data={'nachname': 'Plant'})
-        form.full_clean()
-        self.assertFalse(form.errors)
-        form = self.get_form(data={'nachname': 'Plant', 'gnd_id': 0})
         form.full_clean()
         self.assertFalse(form.errors)
 
@@ -620,9 +619,40 @@ class TestPersonForm(ModelFormTestCase):
         ]
         for url in urls:
             form = self.get_form(data={'nachname': 'Plant', 'dnb_url': url})
-            self.assertTrue(form.is_valid())
-            self.assertIn('dnb_url', form.cleaned_data)
-            self.assertEqual(
-                form.cleaned_data['dnb_url'],
-                'http://d-nb.info/gnd/11863996X',
-            )
+            with self.subTest(url=url):
+                self.assertTrue(form.is_valid())
+                self.assertIn('dnb_url', form.cleaned_data)
+                self.assertEqual(
+                    form.cleaned_data['dnb_url'],
+                    'http://d-nb.info/gnd/11863996X',
+                )
+
+    @patch('dbentry.forms.searchgnd')
+    def test_clean_validates_gnd_id(self, mocked_searchgnd):
+        # Assert that clean validates the gnd_id via a SRU request.
+        # A SRU query with an invalid gnd_id would return no results.
+        mocked_searchgnd.return_value = ([], 0)
+        form = self.get_form(data={'gnd_id': 'invalid'})
+        form.full_clean()
+        self.assertIn(NON_FIELD_ERRORS, form.errors)
+        self.assertIn("Die GND ID ist ungültig.", form.errors[NON_FIELD_ERRORS])
+
+    @patch('dbentry.forms.searchgnd')
+    def test_clean_saves_preferred_name(self, mocked_searchgnd):
+        # Assert that clean saves the 'preferred name' (RDFxml) of the result.
+        mocked_searchgnd.return_value = ([('1234', 'Robert Plant')], 1)
+        form = self.get_form(data={'gnd_id': '1234'})
+        form.full_clean()
+        self.assertIn('gnd_name', form.cleaned_data)
+        self.assertEqual((form.cleaned_data['gnd_name']), 'Robert Plant')
+
+    @patch('dbentry.forms.searchgnd')
+    def test_save(self, mocked_searchgnd):
+        # Assert that gnd_id and gnd_name are saved to the form's model object.
+        mocked_searchgnd.return_value = ([('1234', 'Robert Plant')], 1)
+        form = self.get_form(data={'nachname': 'Plant', 'gnd_id': '1234'})
+        self.assertTrue(form.is_valid())
+        plant = form.save()
+        self.assertEqual(plant.nachname, 'Plant')
+        self.assertEqual(plant.gnd_id, '1234')
+        self.assertEqual(plant.gnd_name, 'Robert Plant')
