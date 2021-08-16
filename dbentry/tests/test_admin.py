@@ -997,7 +997,10 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.PersonAdmin
     model = _models.Person
     exclude_expected = ['orte']
-    fields_expected = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
+    fields_expected = [
+        'vorname', 'nachname', 'gnd_id', 'gnd_name', 'dnb_url',
+        'beschreibung', 'bemerkungen'
+    ]
     search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     # one extra 'empty' object without relations for Ist_Autor/Ist_Musiker:
     test_data_count = 1

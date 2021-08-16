@@ -587,21 +587,21 @@ class TestGND(ViewTestCase):
         view.get_queryset()
         args, kwargs = mocked_searchnd.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
-        self.assertEqual(kwargs['startRecord'], [1])
+        self.assertEqual(kwargs['startRecord'], ['1'])
         # Should call with request.GET.page_kwarg:
         request = self.get_request(data={'page': '2'})
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
         args, kwargs = mocked_searchnd.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
-        self.assertEqual(kwargs['startRecord'], [11])
+        self.assertEqual(kwargs['startRecord'], ['11'])
         # Should call with view.kwargs.page_kwarg:
         request = self.get_request()
         view = self.get_view(request=request, kwargs={'page': 3}, **view_initkwargs)
         view.get_queryset()
         args, kwargs = mocked_searchnd.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
-        self.assertEqual(kwargs['startRecord'], [21])
+        self.assertEqual(kwargs['startRecord'], ['21'])
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_paginate_by(self, mocked_searchnd):
@@ -618,7 +618,7 @@ class TestGND(ViewTestCase):
             'startRecord', kwargs,
             msg="Expected searchgnd to be called with a 'startRecord' kwarg."
         )
-        self.assertEqual(kwargs['startRecord'], [11])
+        self.assertEqual(kwargs['startRecord'], ['11'])
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_maximum_records(self, mocked_searchnd):
@@ -633,7 +633,7 @@ class TestGND(ViewTestCase):
             'maximumRecords', kwargs,
             msg="Expected searchgnd to be called with a 'maximumRecords' kwarg."
         )
-        self.assertEqual(kwargs['maximumRecords'], [9])
+        self.assertEqual(kwargs['maximumRecords'], ['9'])
 
     def test_get_paginator_adds_total_count(self):
         # Assert that get_paginator adds 'total_count' to the

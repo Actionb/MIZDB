@@ -19,6 +19,7 @@ from dbentry.forms import (
 )
 from dbentry.ac.widgets import EasyWidgetWrapper
 from dbentry.factory import make
+from dbentry.validators import DNBURLValidator
 
 from dal import autocomplete
 
@@ -711,3 +712,22 @@ class TestPersonForm(ModelFormTestCase):
         self.assertEqual(plant.nachname, 'Plant')
         self.assertEqual(plant.gnd_id, '1234')
         self.assertEqual(plant.gnd_name, 'Robert Plant')
+
+    def test_init_adds_url_validator(self):
+        # Assert that the DNBURLValidator is added to the list of validators of
+        # the dnb_url field.
+        form = self.get_form()
+        self.assertTrue(any(isinstance(v, DNBURLValidator) for v in form.fields['dnb_url'].validators))
+
+    def test_init_sets_gnd_id_initial_choice(self):
+        # Assert that init prepares the instance's gnd_id and gnd_name values
+        # as initial selected option of the gnd_id select widget.
+        obj = make(
+            self.model, vorname='Robert', nachname='Plant',
+            gnd_id='1234', gnd_name='Plant, Robert'
+        )
+        form = self.get_form(instance=obj)
+        self.assertEqual(
+            form.fields['gnd_id'].widget.choices,
+            [('1234', 'Plant, Robert')]
+        )
