@@ -221,7 +221,7 @@ class PersonForm(forms.ModelForm):
                         "Die angegebene GND ID (%s) stimmt nicht mit der ID im "
                         "DNB Link überein (%s)." % (gnd_id, gnd_id_from_url)
                     )
-            elif 'dnb_url' in self.changed_data:
+            elif 'dnb_url' in self.changed_data or not gnd_id:
                 # Only dnb_url was changed; update gnd_id accordingly.
                 gnd_id = gnd_id_from_url
                 self.cleaned_data['gnd_id'] = gnd_id
