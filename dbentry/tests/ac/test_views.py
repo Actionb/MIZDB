@@ -643,6 +643,15 @@ class TestGND(ViewTestCase):
             view.get_paginator()
             mocked_super.assert_called_with(total_count=420)
 
+    def test_get_result_label(self):
+        # Assert that for a given result, the label displayed is of the format:
+        # 'gnd_name (gnd_id)'
+        view = self.get_view(request=self.get_request(), q='any')
+        self.assertEqual(
+            'Plant, Robert (134485904)',
+            view.get_result_label(('134485904', 'Plant, Robert'))
+        )
+
 
 class TestGNDPaginator(MyTestCase):
 

@@ -300,6 +300,10 @@ class GND(ACBase):
         query += " and BBG=Tp*"
         return query
 
+    def get_result_label(self, result):
+        """Return the label of a result."""
+        return "%s (%s)" % (result[1], result[0])
+
     def get_queryset(self):
         """Get a list of records from the SRU API."""
         # Calculate the 'startRecord' parameter for the request.
