@@ -28,7 +28,7 @@ pipreqs==0.4.9
 			certifi==2019.3.9
 			chardet==3.0.4
 			idna==2.8
-			urllib3==1.24.2
+			urllib3==1.26.5
 
 django-debug-toolbar==3.1.1
 
