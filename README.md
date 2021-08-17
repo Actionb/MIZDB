@@ -45,13 +45,25 @@ Datenbank Migrationen anwenden:
 `python manage.py migrate`  
 Statische Dateien für die Webseite sammeln:  
 `python manage.py collectstatic`  
+
+
+### 4. mod_wsgi installieren
+mod_wsgi lässt sich in der virtuellen Umgebung mit pip installieren.
+Alternativ kann auch direkt vom Quellcode von mod_wsgi installiert werden.
+
+### 4.1 mod_wsgi mit pip installieren
+
+mod_wsgi installieren: `pip install mod_wsgi`  
+Jetzt muss apache mitgeteilt werden, wo das Modul liegt. Dazu erstellt man einen Loader, der den Pfad angibt:  
+```mod_wsgi-express install-module > /etc/apache2/mods-available/mod_wsgi.load```  
+Danach kann das Modul aktiviert werden: `a2enmod mod_wsgi`   
 Umgebung deaktivieren `deactivate`und dann Root Rechte ablegen `exit`.
 
-
-### 4. mod_wsgi einrichten
+### 4.2 mod_wsgi aus Quellcode installieren
 Installationshinweise: https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html  
 Neueste Version auf: https://github.com/GrahamDumpleton/mod_wsgi/releases
 
+Virtuelle Umgebung zunächst deaktivieren: `deactivate`  
 Download (in einen beliebigen Ordner außerhalb vom archiv Ordner) und entpacken, hier beispielsweise mit Version 4.7.1:
 ```
 wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/4.7.1.tar.gz
@@ -60,7 +72,6 @@ cd mod_wsgi-4.7.1
 ```
 Installation vorbereiten, Software bauen und installieren (root Rechte nötig):
 ```
-su root
 ./configure --with-python=/usr/bin/python3
 make
 make install

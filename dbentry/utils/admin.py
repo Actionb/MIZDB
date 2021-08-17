@@ -176,24 +176,24 @@ def _get_relation_change_message(obj, parent_model):
     # Exempt from this are auto created models such as the through tables of m2m
     # relations. Use the textual representation provided by the model on the
     # other end of the m2m relation instead.
-    result = {
-        'name': str(obj._meta.verbose_name),
-        'object': str(obj),
-    }
     if obj._meta.auto_created:
         # An auto_created m2m through table only has two relation fields;
         # one is the field pointing towards the parent model and the other is
         # the one we are looking for here.
         for fld in obj._meta.get_fields():
             if fld.is_relation and fld.related_model != parent_model:
-                # Use the verbose_name of the model on the other end of the m2m
-                # relation as 'name'.
-                result['name'] = str(fld.related_model._meta.verbose_name)
-                # Use the other related object directly instead of the record
-                # in the auto created through table.
-                result['object'] = str(getattr(obj, fld.name))
-                break
-    return result
+                return {
+                    # Use the verbose_name of the model on the other end of the
+                    # m2m relation as 'name'.
+                    'name': str(fld.related_model._meta.verbose_name),
+                    # Use the other related object directly instead of the
+                    # record in the auto created through table.
+                    'object': str(getattr(obj, fld.name))
+                }
+    return {
+        'name': str(obj._meta.verbose_name),
+        'object': str(obj),
+    }
 
 
 def create_logentry(user_id, obj, action_flag, message=''):
@@ -216,10 +216,8 @@ def log_addition(user_id, obj, related_obj=None):
     """
     message = {"added": {}}
     if related_obj:
-        message['added'] = {
-            'name': str(related_obj._meta.verbose_name),
-            'object': str(related_obj),
-        }
+        message['added'] = _get_relation_change_message(
+            related_obj, obj._meta.model)
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
@@ -228,17 +226,18 @@ def log_change(user_id, obj, fields, related_obj=None):
     Log that values for the fields 'fields' of object 'object' have changed.
 
     If 'related_obj' is given, log that a related object's field values have
-    been changed.
+    been changed. (This is, basically, like logging changes on admin inline
+    formsets)
     """
     if isinstance(fields, str):
         fields = [fields]
     message = {'changed': {}}
+    fields_opts = obj._meta
     if related_obj:
-        message['changed'] = _get_relation_change_message(related_obj, obj)
+        message['changed'] = _get_relation_change_message(
+            related_obj, obj._meta.model)
         # Use the fields map of the related model:
         fields_opts = related_obj._meta
-    else:
-        fields_opts = obj._meta
 
     message['changed']['fields'] = sorted(
         capfirst(fields_opts.get_field(f).verbose_name) for f in fields)

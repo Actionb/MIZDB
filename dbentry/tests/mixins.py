@@ -131,12 +131,23 @@ class LoggingTestMixin(object):
     objects is being logged.
     """
 
-    def assertLogged(self, objects, action_flag, **kwargs):
+    def assertLogged(self, objects, action_flag, change_message=None, **kwargs):
         if not LogEntry.objects.exists():
             raise AssertionError("LogEntry table is empty!")
         unlogged = []
         if not isinstance(objects, (list, tuple, set)):
             objects = [objects]
+        # Prepare the change_message:
+        if not change_message:
+            if action_flag==ADDITION:
+                change_message = [{"added": {}}]
+            elif action_flag==CHANGE:
+               change_message = [{"changed": {}}]
+            elif action_flag==DELETION:
+                change_message = [{"deleted": {}}]
+        if not isinstance(change_message, str):
+            change_message = str(change_message)
+        change_message = change_message.replace("'", '"')
 
         # FIXME: occasionally this returns false negatives:
         # a log entry for the given filter parameters exists, but the queryset
@@ -162,7 +173,8 @@ class LoggingTestMixin(object):
             filter_params = {
                 'object_id': pk,
                 'content_type__pk': content_type.pk,
-                'action_flag': action_flag
+                'action_flag': action_flag,
+                'change_message': change_message
             }
             filter_params.update(**kwargs)
             qs = LogEntry.objects.filter(**filter_params)
@@ -223,39 +235,12 @@ class LoggingTestMixin(object):
                     msg += "\n{}: {}".format(str(l.pk), l.get_change_message())
             self.fail(msg)
 
-    def assertLoggedAddition(self, obj, related_obj=None, **kwargs):
+    def assertLoggedAddition(self, obj, **kwargs):
         """Assert that `obj` has a LogEntry with action_flag == ADDITION."""
-        # Do not overwrite any change_message filter_params
-        # (f.ex. change_message__contains) already set through kwargs:
-        if not any(k.startswith('change_message') for k in kwargs):
-            msg = {"added": {}}
-            if related_obj:
-                msg['added'].update({
-                    'name': force_text(related_obj._meta.verbose_name),
-                    'object': force_text(related_obj),
-                })
-            kwargs['change_message'] = str([msg]).replace("'", '"')
         self.assertLogged(obj, ADDITION, **kwargs)
 
-    def assertLoggedChange(self, obj, fields=None, related_obj=None, **kwargs):
+    def assertLoggedChange(self, obj, **kwargs):
         """Assert that `object` has a LogEntry with action_flag == CHANGE."""
-        # Do not overwrite any change_message filter_params
-        # (f.ex. change_message__contains) already set through kwargs:
-        if not any(k.startswith('change_message') for k in kwargs):
-            if fields:
-                if isinstance(fields, str):
-                    fields = [fields]
-                if not isinstance(fields, list):
-                    fields = list(fields)
-                # FIXME: this can't handle changes on fields of a related_obj
-                msg = {'changed': {'fields': sorted(
-                    [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])}}
-                if related_obj:
-                    msg['changed'].update({
-                        'name': force_text(related_obj._meta.verbose_name),
-                        'object': force_text(related_obj),
-                    })
-                kwargs['change_message'] = str([msg]).replace("'", '"')
         self.assertLogged(obj, CHANGE, **kwargs)
 
     def assertLoggedDeletion(self, objects, **kwargs):

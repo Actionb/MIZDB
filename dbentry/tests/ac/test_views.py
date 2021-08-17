@@ -1,14 +1,15 @@
 from collections import OrderedDict
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
-from dbentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable
+from dbentry.ac.views import (
+    ACBase, ACAusgabe, ACBuchband, ACCreateable, GND, GNDPaginator, Paginator)
 from dbentry.factory import make
-from dbentry.tests.base import mockv
+from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
@@ -539,3 +540,134 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Schlagwort
     alias_accessor_name = 'schlagwortalias_set'
     raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]
+
+
+class TestGND(ViewTestCase):
+
+    view_class = GND
+    path = 'gnd'
+
+    def test_get_query_string(self):
+        # Assert that from a given query term, a SRU query string is returned.
+        view = self.get_view()
+        query = view.get_query_string(q="Robert Plant")
+        self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
+        view = self.get_view(q="Robert Plant")
+        query = view.get_query_string(q=None)
+        self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
+
+    def test_get_query_string_returns_empty(self):
+        # Assert that for empty input parameters, an empty string is returned.
+        view = self.get_view(q="")
+        for data in [None, 0, False, ""]:
+            with self.subTest(data=data):
+                self.assertFalse(view.get_query_string(q=data))
+
+    @patch('dbentry.ac.views.searchgnd')
+    def test_get_queryset(self, mocked_searchnd):
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
+        view = self.get_view(request=self.get_request(), q='Beep')
+        self.assertTrue(view.get_queryset())
+
+    @patch('dbentry.ac.views.searchgnd')
+    def test_get_queryset_page_number(self, mocked_searchnd):
+        # Assert that, for a given page number, get_queryset calls searchgnd
+        # with the correct startRecord index.
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
+        startRecord_msg = "Expected searchgnd to be called with a 'startRecord' kwarg."
+        view_initkwargs = {
+            'q': 'Beep',
+            'page_kwarg': 'page',
+            'paginate_by': 10,
+        }
+        # Should call with 1 if view kwargs or request data do not provide a
+        # 'page' (page_kwarg) parameter:
+        request = self.get_request()
+        view = self.get_view(request=request, **view_initkwargs)
+        view.get_queryset()
+        args, kwargs = mocked_searchnd.call_args
+        self.assertIn('startRecord', kwargs, msg=startRecord_msg)
+        self.assertEqual(kwargs['startRecord'], ['1'])
+        # Should call with request.GET.page_kwarg:
+        request = self.get_request(data={'page': '2'})
+        view = self.get_view(request=request, **view_initkwargs)
+        view.get_queryset()
+        args, kwargs = mocked_searchnd.call_args
+        self.assertIn('startRecord', kwargs, msg=startRecord_msg)
+        self.assertEqual(kwargs['startRecord'], ['11'])
+        # Should call with view.kwargs.page_kwarg:
+        request = self.get_request()
+        view = self.get_view(request=request, kwargs={'page': 3}, **view_initkwargs)
+        view.get_queryset()
+        args, kwargs = mocked_searchnd.call_args
+        self.assertIn('startRecord', kwargs, msg=startRecord_msg)
+        self.assertEqual(kwargs['startRecord'], ['21'])
+
+    @patch('dbentry.ac.views.searchgnd')
+    def test_get_queryset_paginate_by(self, mocked_searchnd):
+        # Assert that get_queryset factors in the paginate_by attribute when
+        # calculating the startRecord value.
+        # Set paginate_by to 5; the startRecord index for the third page
+        # would then be 11 (first page: 1-5, second page: 6-10).
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
+        request = self.get_request(data={'page': '3'})
+        view = self.get_view(request=request, page_kwarg='page', paginate_by=5, q='Beep')
+        view.get_queryset()
+        args, kwargs = mocked_searchnd.call_args
+        self.assertIn(
+            'startRecord', kwargs,
+            msg="Expected searchgnd to be called with a 'startRecord' kwarg."
+        )
+        self.assertEqual(kwargs['startRecord'], ['11'])
+
+    @patch('dbentry.ac.views.searchgnd')
+    def test_get_queryset_maximum_records(self, mocked_searchnd):
+        # Assert that get_queryset passes 'paginate_by' to searchgnd as
+        # 'maximumRecords' kwarg.
+        # (This sets the number of records retrieved per request)
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
+        view = self.get_view(request=self.get_request(), q='Beep', paginate_by=9)
+        view.get_queryset()
+        args, kwargs = mocked_searchnd.call_args
+        self.assertIn(
+            'maximumRecords', kwargs,
+            msg="Expected searchgnd to be called with a 'maximumRecords' kwarg."
+        )
+        self.assertEqual(kwargs['maximumRecords'], ['9'])
+
+    def test_get_paginator_adds_total_count(self):
+        # Assert that get_paginator adds 'total_count' to the
+        # super().get_paginator kwargs.
+        view = self.get_view(total_count=420)
+        with patch.object(ACBase, 'get_paginator') as mocked_super:
+            view.get_paginator()
+            mocked_super.assert_called_with(total_count=420)
+
+    def test_get_result_label(self):
+        # Assert that for a given result, the label displayed is of the format:
+        # 'gnd_name (gnd_id)'
+        view = self.get_view(request=self.get_request(), q='any')
+        self.assertEqual(
+            'Plant, Robert (134485904)',
+            view.get_result_label(('134485904', 'Plant, Robert'))
+        )
+
+
+class TestGNDPaginator(MyTestCase):
+
+    def test_count_equals_total_count_kwarg(self):
+        # Assert that paginator.count returns the 'total_count' that was passed
+        # to the constructor.
+        paginator = GNDPaginator(object_list=[], per_page=1, total_count=69)
+        self.assertEqual(paginator.count, 69)
+
+    def test_page_does_not_slice_object_list(self):
+        # Assert that GNDPaginator.page does not slice the object_list in its
+        # call to Paginator._get_page.
+        # Mock object isn't subscriptable; trying to slice it would raise a TypeError.
+        paginator = GNDPaginator(
+            object_list=Mock(), per_page=1, total_count=1, allow_empty_first_page=True)
+        msg = "GNDPaginator.page tried to slice the object list."
+        with patch.object(Paginator, '_get_page'):
+            with self.assertNotRaises(TypeError, msg=msg):
+                paginator.page(number=1)

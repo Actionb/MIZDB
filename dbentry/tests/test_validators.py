@@ -5,7 +5,7 @@ from dbentry.tests.base import MyTestCase
 from dbentry.validators import (
     ISSNValidator, ISBNValidator, EANValidator,
     InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength,
-    DiscogsURLValidator
+    DiscogsURLValidator, DNBURLValidator
 )
 
 
@@ -81,3 +81,34 @@ class TestDiscogsURLValidator(MyTestCase):
         with self.assertNotRaises(ValidationError):
             self.validator(
                 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181')
+
+
+class TestDNBURLValidator(MyTestCase):
+
+    def setUp(self):
+        self.validator = DNBURLValidator()
+
+    def test_invalid_url(self):
+        msg = "ValidationError not raised for invalid url."
+        urls = ['notavalidurl', 'www.google.com']
+        for url in urls:
+            with self.subTest(url=url):
+                with self.assertRaises(ValidationError, msg=msg) as cm:
+                    self.validator(url)
+                self.assertEqual(
+                    cm.exception.message,
+                    "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de)."
+                )
+                self.assertEqual(cm.exception.code, 'dnb')
+
+    def test_valid_url(self):
+        msg = "ValidationError raised for valid url."
+        urls = [
+            'http://d-nb.info/gnd/11863996X',
+            'https://d-nb.info/gnd/11863996X',
+            'https://portal.dnb.de/opac.htm?method=simpleSearch&cqlMode=true&query=nid%3D11863996X',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                with self.assertNotRaises(ValidationError, msg=msg):
+                    self.validator(url)

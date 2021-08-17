@@ -177,17 +177,32 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         # The 'updated' instance should be the only instance marked as updated.
         self.assertEqual(updated, [self.updated])
         self.assertTrue(self.updated.audio.exists())
+
         # Assert that the update was logged properly.
-        a = self.updated.audio.first()
-        m2m_instance = self.model.audio.through.objects.get(ausgabe=self.updated, audio=a)
-        self.assertLoggedAddition(a)
-        self.assertLoggedAddition(a, a.bestand_set.first())
-        self.assertLoggedAddition(self.updated, m2m_instance)
-        self.assertLoggedAddition(a, m2m_instance)
+        new_audio = self.updated.audio.first()
+        change_message = {}
+        added = [{"added": change_message}]
+        # Check that the creation of new_audio was logged:
+        self.assertLoggedAddition(new_audio,change_message=added)
+        # Check that the creation of the Bestand for new_audio was logged:
+        change_message['name'] = 'Bestand'
+        change_message['object'] = str(new_audio.bestand_set.first())
+        self.assertLoggedAddition(new_audio, change_message=added)
+        # Check that new_audio being added to 'updated' was logged:
+        change_message['name'] = 'Audio Material'
+        change_message['object'] = str(new_audio)
+        self.assertLoggedAddition(self.updated, change_message=added)
+        # Check that 'updated' being added to new_audio was logged:
+        change_message['name'] = 'Ausgabe'
+        change_message['object'] = str(self.updated)
+        self.assertLoggedAddition(new_audio, change_message=added)
         # Check that a value for 'jahrgang' was added and that the addition
         # was logged correctly.
         self.assertIsNotNone(self.updated.jahrgang)
-        self.assertLoggedChange(self.updated, fields=['jahrgang'])
+        self.assertLoggedChange(
+            self.updated,
+            change_message=[{"changed": {'fields': ['Jahrgang']}}]
+        )
 
     @tag('logging')
     def test_save_data_created(self):
@@ -220,6 +235,8 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
 
         # Check that the created objects have the expected values.
         expected_num = 2
+        change_message = {}
+        added = [{"added": change_message}]
         for instance, expected_num in zip(created, [2, 3, 4]):
             with self.subTest(num=n):
                 self.assertEqual(instance.magazin.pk, self.mag.pk)
@@ -257,17 +274,36 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
                 )
                 # Assert that the creation of the objects was logged properly.
                 self.assertLoggedAddition(instance)
+                # Check the logs for Jahr:
+                change_message['name'] = 'Jahr'
                 for j in instance.ausgabejahr_set.all():
-                    self.assertLoggedAddition(instance, j)
+                    change_message['object'] = str(j)
+                    self.assertLoggedAddition(instance, change_message=added)
+                # Check the logs for Num:
+                change_message['name'] = 'Nummer'
                 for n in instance.ausgabenum_set.all():
-                    self.assertLoggedAddition(instance, n)
-                a = instance.audio.first()
-                m2m = self.model.audio.through.objects.get(ausgabe=instance, audio=a)
-                self.assertLoggedAddition(instance, m2m)
-                self.assertLoggedAddition(a, m2m)
-                self.assertLoggedAddition(a, a.bestand_set.first())
+                    change_message['object'] = str(n)
+                    self.assertLoggedAddition(instance, change_message=added)
+                # Check the log for the new audio instance.
+                new_audio = instance.audio.first()
+                self.assertLoggedAddition(new_audio)
+                # Check that the creation of the Bestand for new_audio was logged:
+                change_message['name'] = 'Bestand'
+                change_message['object'] = str(new_audio.bestand_set.first())
+                self.assertLoggedAddition(new_audio, change_message=added)
+                # Check that new_audio being added to 'instance' was logged:
+                change_message['name'] = 'Audio Material'
+                change_message['object'] = str(new_audio)
+                self.assertLoggedAddition(instance, change_message=added)
+                # Check that 'instance' being added to new_audio was logged:
+                change_message['name'] = 'Ausgabe'
+                change_message['object'] = str(instance)
+                self.assertLoggedAddition(new_audio, change_message=added)
+                # Check the logs for Bestand:
+                change_message['name'] = 'Bestand'
                 for b in instance.bestand_set.all():
-                    self.assertLoggedAddition(instance, b)
+                    change_message['object'] = str(b)
+                    self.assertLoggedAddition(instance, change_message=added)
 
     def test_next_initial_data_increments_jahr(self):
         form = self.get_valid_form()

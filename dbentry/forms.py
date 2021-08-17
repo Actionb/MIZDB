@@ -1,9 +1,12 @@
+from dal import autocomplete
 from django import forms
 from django.core.exceptions import ValidationError
 
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.base.forms import MinMaxRequiredFormMixin, DiscogsFormMixin
+from dbentry.utils.gnd import searchgnd
+from dbentry.validators import DNBURLValidator
 
 
 class GoogleBtnWidget(forms.widgets.TextInput):
@@ -24,7 +27,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
     to limit (forward) the choices available to the widget of a field 'ausgabe'.
 
     Also adds the ausgabe's magazin to the form's initial data (if applicable).
-    Useable by any ModelForm that uses a relation to ausgabe.
+    Usable by any ModelForm that uses a relation to ausgabe.
     """
 
     ausgabe__magazin = forms.ModelChoiceField(
@@ -127,6 +130,7 @@ class BandForm(forms.ModelForm):
 class AudioForm(DiscogsFormMixin, forms.ModelForm):
     url_field_name = 'discogs_url'
     release_id_field_name = 'release_id'
+
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
@@ -134,6 +138,7 @@ class AudioForm(DiscogsFormMixin, forms.ModelForm):
 class VideoForm(DiscogsFormMixin, forms.ModelForm):
     url_field_name = 'discogs_url'
     release_id_field_name = 'release_id'
+
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
 
@@ -162,3 +167,74 @@ class PlakatForm(forms.ModelForm):
 class FotoForm(forms.ModelForm):
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
+
+
+class PersonForm(forms.ModelForm):
+    class Meta:
+        widgets = {
+                'gnd_id': autocomplete.Select2(url='gnd'),
+                'gnd_name': forms.HiddenInput()
+        }
+
+    url_validator_class = DNBURLValidator
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'dnb_url' in self.fields:
+            self.fields['dnb_url'].validators.append(self.url_validator_class())
+            # Add a link to the search form of the DNB to the help text:
+            self.fields['dnb_url'].help_text = (
+                'Adresse zur Seite dieser Person in der '
+                '<a href="https://portal.dnb.de/opac/checkCategory?categoryId=persons" target="_blank">'
+                'Deutschen Nationalbibliothek</a>.'
+            )
+        if self.instance.pk and 'gnd_id' in self.fields:
+            # Set the choice selected in the widget:
+            self.fields['gnd_id'].widget.choices = [
+                (self.instance.gnd_id, self.instance.gnd_name)]
+
+    def clean(self):
+        """Validate and clean gnd_id and dnb_url."""
+        if ('dnb_url' in self._errors
+                or 'gnd_id' in self._errors):
+            return self.cleaned_data
+        gnd_id = self.cleaned_data.get('gnd_id', '')
+        dnb_url = self.cleaned_data.get('dnb_url', '')
+        if not (gnd_id or dnb_url):
+            return self.cleaned_data
+
+        match = self.url_validator_class.regex.search(dnb_url)
+        if match and len(match.groups()) == 1:
+            # The URL is valid and has a gnd_id.
+            # The validator doesn't allow URLs without at least a one digit ID.
+            gnd_id_from_url = match.groups()[-1]
+
+            if 'gnd_id' in self.changed_data and 'dnb_url' in self.changed_data:
+                if not gnd_id:
+                    # gnd_id was 'removed'. Set it from the new URL.
+                    gnd_id = gnd_id_from_url
+                    self.cleaned_data['gnd_id'] = gnd_id
+                elif gnd_id_from_url != gnd_id:
+                    # The values of both fields have changed, but the IDs do 
+                    # not match.
+                    raise ValidationError(
+                        "Die angegebene GND ID (%s) stimmt nicht mit der ID im "
+                        "DNB Link überein (%s)." % (gnd_id, gnd_id_from_url)
+                    )
+            elif 'dnb_url' in self.changed_data:
+                # Only dnb_url was changed; update gnd_id accordingly.
+                gnd_id = gnd_id_from_url
+                self.cleaned_data['gnd_id'] = gnd_id
+
+        # Validate the gnd_id by checking that a SRU query with it returns
+        # a single match.
+        results, _c = searchgnd(query="nid=" + gnd_id)
+        if len(results) != 1:
+            raise ValidationError("Die GND ID ist ungültig.")
+        # Store the result's label for later use as data for the model field
+        # 'gnd_name'.
+        self.cleaned_data['gnd_name'] = results[0][1]
+        # Normalize the URL to the DNB permalink.
+        dnb_url = "http://d-nb.info/gnd/" + gnd_id
+        self.cleaned_data['dnb_url'] = dnb_url
+        return self.cleaned_data

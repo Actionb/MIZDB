@@ -15,7 +15,7 @@ from dbentry.base.admin import (
 )
 from dbentry.forms import (
     ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    PlakatForm, MusikerForm, BandForm, VideoForm, FotoForm
+    PlakatForm, MusikerForm, BandForm, VideoForm, FotoForm, PersonForm
 )
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -510,7 +510,7 @@ class PlakatAdmin(MIZModelAdmin):
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
-            'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur'
+            'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
         'labels': {'reihe': 'Bildreihe'}
     }
@@ -825,12 +825,22 @@ class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.Person.orte.through
 
-    fields = ['vorname', 'nachname', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
     inlines = [OrtInLine]
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
+    form = PersonForm
+
+    fieldsets = [
+        (None, {
+            'fields': ['vorname', 'nachname', 'beschreibung', 'bemerkungen'],
+        }),
+        ('Gemeinsame Normdatei', {
+            'fields': ['gnd_id', 'gnd_name', 'dnb_url'],
+            'classes': ['collapse', 'collapsed'],
+        })
+    ]
 
     search_form_kwargs = {
         'fields': ['orte', 'orte__land', 'orte__bland'],
@@ -1084,6 +1094,8 @@ class BestandAdmin(MIZModelAdmin):
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
     search_form_kwargs = {'fields': ['lagerort', 'signatur']}
     superuser_only = True
+    # FIXME: the search form is missing a text search element ('q')
+    # FIXME: the search form is missing a 'show all'
 
     def get_queryset(self, request, **kwargs):
         self.request = request  # save the request for bestand_link()

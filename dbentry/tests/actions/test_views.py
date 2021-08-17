@@ -346,7 +346,10 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
             .distinct())
         self.assertEqual(list(new_jg), [31416, 31417, 31418])
         for obj in self.queryset.all():
-            self.assertLoggedChange(obj, 'jahrgang')
+            self.assertLoggedChange(
+                obj,
+                change_message=[{"changed": {'fields':['Jahrgang']}}]
+            )
 
     @tag('logging')
     def test_perform_action_no_years(self):
@@ -358,7 +361,10 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         view.perform_action(form_cleaned_data)
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
-        self.assertLoggedChange(self.obj4, 'jahrgang')
+        self.assertLoggedChange(
+            self.obj4,
+            change_message=[{"changed": {'fields':['Jahrgang']}}]
+        )
 
     @tag('logging')
     def test_perform_action_jahrgang_zero(self):
@@ -368,7 +374,10 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         new_jg = list(self.queryset.values_list('jahrgang', flat=True).distinct())
         self.assertEqual(new_jg, [None])
         for obj in self.queryset.all():
-            self.assertLoggedChange(obj, 'jahrgang')
+            self.assertLoggedChange(
+                obj,
+                change_message=[{"changed": {'fields':['Jahrgang']}}]
+            )
 
     def test_permissions_required(self):
         # Assert that specific permissions are required to access this action.
