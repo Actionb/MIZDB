@@ -843,7 +843,7 @@ class PersonAdmin(MIZModelAdmin):
     ]
 
     search_form_kwargs = {
-        'fields': ['orte', 'orte__land', 'orte__bland'],
+        'fields': ['orte', 'orte__land', 'orte__bland', 'gnd_id'],
         'forwards': {'orte__bland': 'orte__land'}
     }
 
