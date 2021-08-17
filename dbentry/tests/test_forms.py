@@ -525,17 +525,6 @@ class TestPersonForm(ModelFormTestCase):
         form.full_clean()
         self.assertFalse(form.errors)
 
-    def test_clean_handles_integer_gnd_id(self):
-        # NOTE: gnd_id is a CharField. This test method might be pointless.
-        # Assert that clean can properly cast any valid input for gnd_id into a string.
-        form = self.get_form(data={'gnd_id': 1234})
-        form.full_clean()
-        self.assertNotIn('gnd_id', form._errors)
-
-        form = self.get_form(data={'gnd_id': '1234'})
-        form.full_clean()
-        self.assertNotIn('gnd_id', form._errors)
-
     def test_clean_aborts_on_invalid_dnburl(self):
         # Assert that clean does not mess with any gnd_id if the dnb_url is
         # invalid.
@@ -545,8 +534,8 @@ class TestPersonForm(ModelFormTestCase):
 
     @translation_override(language=None)
     def test_clean_raises_error_when_gndid_and_dnburl_dont_match(self):
-        # Assert that clean raises a ValidationError when gnd_id and the
-        # gnd_id given in dnb_url don't match.
+        # Assert that clean raises a ValidationError when gnd_id and the gnd_id
+        # given in dnb_url don't match.
         form = self.get_form(data={
             'gnd_id': '1234',
             'dnb_url': 'http://d-nb.info/gnd/11863996X'
@@ -646,21 +635,13 @@ class TestPersonForm(ModelFormTestCase):
         )
 
     @translation_override(language=None)
-    def test_invalid_urls_keep_old_error_message(self):
-        # Assert that invalid urls are validated through the default URLValidator also
+    def test_invalid_urls(self):
+        # Assert that invalid URLs produce the expected error messages.
         form = self.get_form(data={'nachname': 'Plant', 'dnb_url': 'notavalidurl'})
         self.assertIn('dnb_url', form.errors)
+        # Default URL validator error message:
         self.assertIn('Enter a valid URL.', form.errors['dnb_url'])
-        self.assertIn(
-            "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de).",
-            form.errors['dnb_url']
-        )
-
-    @translation_override(language=None)
-    def test_urls_only_valid_from_discogs(self):
-        # Assert that only urls with domain discogs.com are valid
-        form = self.get_form(data={'nachname': 'Plant', 'dnb_url': 'http://www.google.com'})
-        self.assertIn('dnb_url', form.errors)
+        # DNBURLValidator error message:
         self.assertIn(
             "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de).",
             form.errors['dnb_url']
@@ -684,6 +665,7 @@ class TestPersonForm(ModelFormTestCase):
                 )
 
     @patch('dbentry.forms.searchgnd')
+    @translation_override(language=None)
     def test_clean_validates_gnd_id(self, mocked_searchgnd):
         # Assert that clean validates the gnd_id via a SRU request.
         # A SRU query with an invalid gnd_id would return no results.

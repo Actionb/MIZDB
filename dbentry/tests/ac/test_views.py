@@ -7,7 +7,7 @@ from django.utils.translation import override as translation_override
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreateable, GND, GNDPaginator)
+    ACBase, ACAusgabe, ACBuchband, ACCreateable, GND, GNDPaginator, Paginator)
 from dbentry.factory import make
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
@@ -565,7 +565,7 @@ class TestGND(ViewTestCase):
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset(self, mocked_searchnd):
-        mocked_searchnd.return_value = [('id', 'label')], 1
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep')
         self.assertTrue(view.get_queryset())
 
@@ -573,7 +573,7 @@ class TestGND(ViewTestCase):
     def test_get_queryset_page_number(self, mocked_searchnd):
         # Assert that, for a given page number, get_queryset calls searchgnd
         # with the correct startRecord index.
-        mocked_searchnd.return_value = [('id', 'label')], 1
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
         startRecord_msg = "Expected searchgnd to be called with a 'startRecord' kwarg."
         view_initkwargs = {
             'q': 'Beep',
@@ -609,7 +609,7 @@ class TestGND(ViewTestCase):
         # calculating the startRecord value.
         # Set paginate_by to 5; the startRecord index for the third page
         # would then be 11 (first page: 1-5, second page: 6-10).
-        mocked_searchnd.return_value = [('id', 'label')], 1
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
         request = self.get_request(data={'page': '3'})
         view = self.get_view(request=request, page_kwarg='page', paginate_by=5, q='Beep')
         view.get_queryset()
@@ -625,7 +625,7 @@ class TestGND(ViewTestCase):
         # Assert that get_queryset passes 'paginate_by' to searchgnd as
         # 'maximumRecords' kwarg.
         # (This sets the number of records retrieved per request)
-        mocked_searchnd.return_value = [('id', 'label')], 1
+        mocked_searchnd.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep', paginate_by=9)
         view.get_queryset()
         args, kwargs = mocked_searchnd.call_args
@@ -659,7 +659,6 @@ class TestGNDPaginator(MyTestCase):
         paginator = GNDPaginator(
             object_list=Mock(), per_page=1, total_count=1, allow_empty_first_page=True)
         msg = "GNDPaginator.page tried to slice the object list."
-        from dbentry.ac.views import Paginator
         with patch.object(Paginator, '_get_page'):
             with self.assertNotRaises(TypeError, msg=msg):
                 paginator.page(number=1)
