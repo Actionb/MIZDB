@@ -162,6 +162,12 @@ class PlakatForm(forms.ModelForm):
 
     class Meta:
         widgets = {'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})}
+        help_texts = {
+            'plakat_id': (
+                "Die ID wird von der Datenbank nach Abspeichern vergeben und "
+                "muss auf der Rückseite des Plakats vermerkt werden."
+            )
+        }
 
 
 class FotoForm(forms.ModelForm):

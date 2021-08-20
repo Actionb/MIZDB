@@ -498,9 +498,14 @@ class PlakatAdmin(MIZModelAdmin):
     collapse_all = True
     form = PlakatForm
     index_category = 'Archivgut'
-    list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
+    list_display = ['titel', 'plakat_id', 'size', 'datum_localized', 'veranstaltung_string']
+    readonly_fields = ['plakat_id']
     save_on_top = True
-    ordering = ['titel', 'datum', 'signatur']
+    ordering = ['titel', 'datum']
+    fields = [
+        'titel', 'plakat_id', 'size', 'datum', 'reihe', 'copy_related',
+        'beschreibung', 'bemerkungen'
+    ]
 
     inlines = [
         SchlInLine, GenreInLine, MusikerInLine, BandInLine,
@@ -565,6 +570,14 @@ class PlakatAdmin(MIZModelAdmin):
         if 'copy_related' in request.POST:
             copy_related_set(
                 request, obj, 'veranstaltung__band', 'veranstaltung__musiker')
+
+    def plakat_id(self, obj):
+        """ID of this instance, with a prefixed 'P' and padded with zeros."""
+        if not obj.pk:
+            return self.get_empty_value_display()
+        return "P" + str(obj.pk).zfill(6)
+    plakat_id.short_description = 'Plakat ID'
+    plakat_id.admin_order_field = 'id'
 
 
 @admin.register(_models.Buch, site=miz_site)

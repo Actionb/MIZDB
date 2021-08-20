@@ -803,6 +803,7 @@ class AudioMedium(BaseModel):
 
 class Plakat(BaseModel):
     titel = models.CharField(max_length=200)
+    # TODO: delete model field 'signatur' (it's no longer in use)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
         help_text=('Kürzel bestehend aus Angabe zur Größe und '

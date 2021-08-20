@@ -1817,8 +1817,8 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
 
     fields_expected = [
-        'titel', 'signatur', 'size', 'datum', 'beschreibung',
-        'bemerkungen', 'reihe', 'copy_related'
+        'titel', 'plakat_id', 'size', 'datum', 'reihe', 'copy_related',
+        'beschreibung', 'bemerkungen'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
