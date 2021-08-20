@@ -70,6 +70,9 @@ class ACBase(autocomplete.Select2QuerySetView):
     def apply_q(self, qs):
         """Filter the given queryset 'qs' with the view's search term 'q'."""
         if self.q:
+            # Prefer querying for primary key values:
+            if self.q.isnumeric() and qs.filter(pk=self.q).exists():
+                return qs.filter(pk=self.q)
             return qs.find(self.q)
         else:
             return qs
