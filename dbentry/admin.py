@@ -552,7 +552,8 @@ class PlakatAdmin(MIZModelAdmin):
             return fields
         has_change_perms = self.has_change_permission(request, obj)
         if not (obj.pk and has_change_perms) and 'copy_related' in fields:
-            fields.remove('copy_related')
+            # Return a copy without 'copy_related':
+            return [f for f in fields if f != 'copy_related']
         return fields
 
     def save_related(self, request, form, formsets, change):
