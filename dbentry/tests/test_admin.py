@@ -2028,7 +2028,7 @@ class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
 
     fields_expected = [
-        'titel', 'padded_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
+        'titel', 'foto_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
         'owner', 'beschreibung', 'bemerkungen'
     ]
     search_fields_expected = ['titel', 'owner', 'beschreibung', 'bemerkungen']

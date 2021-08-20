@@ -1360,13 +1360,13 @@ class FotoAdmin(MIZModelAdmin):
     collapse_all = True
     form = FotoForm
     index_category = 'Archivgut'
-    list_display = ['titel', 'padded_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
-    readonly_fields = ['padded_id']
+    list_display = ['titel', 'foto_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
+    readonly_fields = ['foto_id']
     save_on_top = True
     ordering = ['titel', 'datum']
 
     fields = [
-        'titel', 'padded_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
+        'titel', 'foto_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
         'owner', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
@@ -1389,12 +1389,13 @@ class FotoAdmin(MIZModelAdmin):
                 ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
         }
 
-    def padded_id(self, obj):
+    def foto_id(self, obj):
         """Return the id of the object, padded with zeros."""
         if not obj.pk:
             return self.get_empty_value_display()
         return str(obj.pk).zfill(6)
-    padded_id.short_description = 'ID'
+    foto_id.short_description = 'Foto ID'
+    foto_id.admin_order_field = 'id'
 
     def datum_localized(self, obj):
         return obj.datum.localize()
