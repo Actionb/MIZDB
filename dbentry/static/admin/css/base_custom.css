@@ -116,3 +116,25 @@ button[name="wizard_goto_step"]{
 #changelist #toolbar form #searchbar {
     min-width: 303px;
 }
+
+/* Rules for the element that displays the ID in the object tools block of a change form */
+.object-tools span:not(.id-container) {
+    display: block;
+    float: left;
+    padding: 3px 12px;
+    background: #999;
+        background-color: rgb(153, 153, 153);
+    font-weight: 400;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+    border-radius: 15px;
+}
+
+.object-tools span.id-container {
+    -webkit-user-select: all;
+    -moz-user-select: all;
+    -ms-user-select: all;
+    user-select: all;
+}

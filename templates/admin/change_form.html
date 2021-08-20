@@ -10,9 +10,17 @@
 {% endblock %}
 
 {% block object-tools %}
+{% comment %}
+  default: {% if change %}{% if not is_popup %}
+  Django's default template for the change form doesn't show the object tools if
+  this is a popup. That would make the change history inaccessible from within
+  the popup.
+{% endcomment %}
 {% if change %}
   <ul class="object-tools">
     {% block object-tools-items %}
+      {# Add an element that display the object's ID #}
+      <li><span>id:<span class="id-container">{{ object_id }}</span></span></li>
       {% change_form_object_tools %}
     {% endblock %}
   </ul>
