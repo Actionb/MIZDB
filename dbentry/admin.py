@@ -540,7 +540,7 @@ class PlakatAdmin(MIZModelAdmin):
         # only has view permissions and thus can't use copy_related.
         if not (obj and hasattr(request, 'user') and 'copy_related' in fields):
             # Either this is an 'add' form or 'copy_related' isn't even
-            # included in the felds.
+            # included in the fields.
             #
             # request.user is set by AuthenticationMiddleware to either an
             # auth.User instance or an AnonymousUser instance. Only mocked
