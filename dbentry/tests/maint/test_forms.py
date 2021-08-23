@@ -19,8 +19,8 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
 
         # Get the group
         self.assertEqual(
-            len(reverse), 1,
-            msg="There should be only reverse dupe fields group for Musiker."
+            len(reverse), 2,
+            msg="There should be exactly two reverse dupe fields group for Musiker: alias and URL."
         )
         musiker_alias_group = reverse[0]
         self.assertIsInstance(musiker_alias_group, (list, tuple))
