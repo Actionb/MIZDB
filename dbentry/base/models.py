@@ -330,5 +330,5 @@ class AbstractURLModel(BaseModel):
 
     class Meta(BaseModel.Meta):
         abstract = True
-        verbose_name = 'Web-Adresse'
-        verbose_name_plural = 'Web-Adressen'
+        verbose_name = 'Webseite'
+        verbose_name_plural = 'Webseiten'
