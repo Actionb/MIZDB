@@ -295,10 +295,12 @@ class AutorAdmin(MIZModelAdmin):
         model = _models.Autor.magazin.through
         verbose_model = _models.Magazin
         extra = 1
+    class URLInLine(BaseTabularInline):
+        model = _models.AutorURL
 
     form = AutorForm
     index_category = 'Stammdaten'
-    inlines = [MagazinInLine]
+    inlines = [URLInLine, MagazinInLine]
     list_display = ['autor_name', 'person', 'kuerzel', 'magazin_string']
     list_select_related = ['person']
     search_form_kwargs = {'fields': ['magazin', 'person']}
@@ -426,10 +428,12 @@ class BandAdmin(MIZModelAdmin):
         model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):
         model = _models.Band.orte.through
+    class URLInLine(BaseTabularInline):
+        model = _models.BandURL
 
     form = BandForm
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
+    inlines = [URLInLine, GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
     save_on_top = True
     ordering = ['band_name']
@@ -801,11 +805,13 @@ class MusikerAdmin(MIZModelAdmin):
         verbose_name = 'Instrument'
     class OrtInLine(BaseOrtInLine):
         model = _models.Musiker.orte.through
+    class URLInLine(BaseTabularInline):
+        model = _models.MusikerURL
 
     form = MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
+    inlines = [URLInLine, GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
@@ -838,9 +844,11 @@ class MusikerAdmin(MIZModelAdmin):
 class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.Person.orte.through
+    class URLInLine(BaseTabularInline):
+        model = _models.PersonURL
 
     index_category = 'Stammdaten'
-    inlines = [OrtInLine]
+    inlines = [URLInLine, OrtInLine]
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
@@ -914,9 +922,11 @@ class SchlagwortAdmin(MIZModelAdmin):
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.SpielortAlias
+    class URLInLine(BaseTabularInline):
+        model = _models.SpielortURL
 
     list_display = ['name', 'ort']
-    inlines = [AliasInLine]
+    inlines = [URLInLine, AliasInLine]
     search_form_kwargs = {'fields': ['ort', 'ort__land']}
     ordering = ['name', 'ort']
     list_select_related = ['ort']
@@ -948,9 +958,11 @@ class VeranstaltungAdmin(MIZModelAdmin):
         verbose_model = _models.Musiker
     class AliasInLine(BaseAliasInline):
         model = _models.VeranstaltungAlias
+    class URLInLine(BaseTabularInline):
+        model = _models.VeranstaltungURL
 
     collapse_all = True
-    inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
+    inlines = [URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
     list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
