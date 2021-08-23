@@ -60,6 +60,11 @@ class Person(ComputedNameModel):
         return cls._name_default % {'verbose_name': cls._meta.verbose_name}
 
 
+class PersonURL(AbstractURLModel):
+    brochure = models.ForeignKey('Person', models.CASCADE, related_name='urls')
+
+
+
 class Musiker(BaseModel):
     kuenstler_name = models.CharField('Künstlername', max_length=200)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Musikers')
@@ -91,8 +96,14 @@ class Musiker(BaseModel):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
+
+
 class MusikerAlias(BaseAliasModel):
     parent = models.ForeignKey('Musiker', models.CASCADE)
+
+
+class MusikerURL(AbstractURLModel):
+    brochure = models.ForeignKey('Musiker', models.CASCADE, related_name='urls')
 
 
 class Genre(BaseModel):
@@ -110,6 +121,8 @@ class Genre(BaseModel):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
+
+
 class GenreAlias(BaseAliasModel):
     parent = models.ForeignKey('Genre', models.CASCADE)
 
@@ -137,8 +150,14 @@ class Band(BaseModel):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
+
+
 class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
+
+
+class BandURL(AbstractURLModel):
+    brochure = models.ForeignKey('Band', models.CASCADE, related_name='urls')
 
 
 class Autor(ComputedNameModel):
@@ -194,6 +213,11 @@ class Autor(ComputedNameModel):
                 return person_name
         else:
             return kuerzel or cls._name_default % {'verbose_name': cls._meta.verbose_name}
+
+
+class AutorURL(AbstractURLModel):
+    brochure = models.ForeignKey('Autor', models.CASCADE, related_name='urls')
+
 
 
 class Ausgabe(ComputedNameModel):
@@ -456,6 +480,7 @@ class Magazin(BaseModel):
     def __str__(self):
         return str(self.magazin_name)
 
+
 class MagazinURL(AbstractURLModel):
     magazin = models.ForeignKey('Magazin', models.CASCADE, related_name='urls')
 
@@ -573,6 +598,7 @@ class Land(BaseModel):
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
 
+
 # TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
 class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
@@ -587,6 +613,8 @@ class Schlagwort(BaseModel):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
+
+
 class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)
 
@@ -935,6 +963,12 @@ class Spielort(BaseModel):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
+
+
+class SpielortURL(AbstractURLModel):
+    brochure = models.ForeignKey('Spielort', models.CASCADE, related_name='urls')
+
+
 class SpielortAlias(BaseAliasModel):
     parent = models.ForeignKey('Spielort', models.CASCADE)
 
@@ -1002,8 +1036,14 @@ class Veranstaltung(BaseModel):
         else:
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
+
+
 class VeranstaltungAlias(BaseAliasModel):
     parent = models.ForeignKey('Veranstaltung', models.CASCADE)
+
+
+class VeranstaltungURL(AbstractURLModel):
+    brochure = models.ForeignKey('Veranstaltung', models.CASCADE, related_name='urls')
 
 
 class Veranstaltungsreihe(BaseModel):
