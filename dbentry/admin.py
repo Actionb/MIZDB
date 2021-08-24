@@ -521,7 +521,7 @@ class PlakatAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
-        'labels': {'reihe': 'Bildreihe'}
+        'labels': {'reihe': 'Bildreihe'},
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 

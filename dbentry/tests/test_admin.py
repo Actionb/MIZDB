@@ -1886,6 +1886,14 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
+    def test_search_form_id_cleans_prefix(self):
+        # Assert that the changelist search form can handle ID input that
+        # includes the 'P' prefix.
+        form = self.model_admin.get_search_form(
+            data={'id__in': 'P' + str(self.obj1.pk)})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['id__in'], str(self.obj1.pk))
+
 
 class TestAuthAdminMixin(TestCase):
 

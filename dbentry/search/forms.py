@@ -170,6 +170,13 @@ class SearchForm(forms.Form):
             params[param_key] = param_value
         return params
 
+    def clean_id__in(self):
+        """Clean the ID value by Removing any non-numeric characters."""
+        # The 'Plakat ID' is presented with a prefixed 'P'. People will try to
+        # query for the id WITH that prefix.
+        return "".join(
+            i for i in self.cleaned_data.get('id__in', '') if i.isnumeric())
+
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     """A search form that includes django media and supports fieldsets."""
