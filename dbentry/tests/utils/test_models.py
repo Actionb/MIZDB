@@ -103,23 +103,23 @@ class TestModelUtils(MyTestCase):
     def test_get_updateable_fields(self):
         obj = make(_models.Artikel)
         self.assertEqual(
-            utils.get_updateable_fields(obj),
+            utils.get_updatable_fields(obj),
             ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen']
         )
 
         obj.seitenumfang = 'f'
         obj.beschreibung = 'Beep'
-        self.assertEqual(utils.get_updateable_fields(obj), ['zusammenfassung', 'bemerkungen'])
+        self.assertEqual(utils.get_updatable_fields(obj), ['zusammenfassung', 'bemerkungen'])
         obj.zusammenfassung = 'Boop'
-        self.assertEqual(utils.get_updateable_fields(obj), ['bemerkungen'])
+        self.assertEqual(utils.get_updatable_fields(obj), ['bemerkungen'])
 
         obj = make(_models.Ausgabe)
         self.assertEqual(
-            utils.get_updateable_fields(obj),
+            utils.get_updatable_fields(obj),
             ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
         )
         obj.status = 2
-        self.assertNotIn('status', utils.get_updateable_fields(obj))
+        self.assertNotIn('status', utils.get_updatable_fields(obj))
 
     def test_get_reverse_field_path(self):
         # no related_query_name or related_name

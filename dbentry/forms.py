@@ -1,3 +1,4 @@
+# noinspection PyPackageRequirements
 from dal import autocomplete
 from django import forms
 from django.core.exceptions import ValidationError
@@ -70,7 +71,7 @@ class ArtikelForm(AusgabeMagazinFieldForm):
 
 
 class AutorForm(MinMaxRequiredFormMixin, forms.ModelForm):
-    minmax_required = [{'min': 1, 'fields': ['kuerzel', 'person']}]
+    minmax_required = [{'min_fields': 1, 'fields': ['kuerzel', 'person']}]
 
 
 class BrochureForm(AusgabeMagazinFieldForm):
@@ -84,7 +85,7 @@ class BrochureForm(AusgabeMagazinFieldForm):
 
 class BuchForm(MinMaxRequiredFormMixin, forms.ModelForm):
     minmax_required = [{
-        'max': 1,
+        'max_fields': 1,
         'fields': ['is_buchband', 'buchband'],
         'error_messages': {
             'max': 'Ein Buchband kann nicht selber Teil eines Buchbandes sein.'

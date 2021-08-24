@@ -160,7 +160,9 @@ class BrochureActionFormOptions(MIZAdminForm):
             field will not be displayed.
     """
 
+    # noinspection PyProtectedMember,PyUnresolvedReferences,PyMethodParameters,PyMethodMayBeStatic
     def brochure_choices():
+        # FIXME: Why is this callable? Couldn't this just be a list?
         return [
             (_models.Brochure._meta.model_name, _models.Brochure._meta.verbose_name),
             (_models.Katalog._meta.model_name, _models.Katalog._meta.verbose_name),

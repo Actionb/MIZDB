@@ -41,9 +41,10 @@ class BaseSearchQuery(object):
         except FieldDoesNotExist:
             return None
 
+    # noinspection PyMethodMayBeStatic
     def clean_string(self, s):
         """
-        Remove whitespaces from string 's' and prepare it for caseless
+        Remove whitespaces from string 's' and prepare it for case insensitive
         comparison.
         """
         return str(s).strip().lower()
@@ -158,10 +159,10 @@ class BaseSearchQuery(object):
 
         self.ids_found = set()
         self.exact_match = False
-        rslt = self._search(q)
-        if rslt and ordered and self._root_queryset.ordered:
-            rslt = self.reorder_results(rslt)
-        return rslt, self.exact_match
+        result = self._search(q)
+        if result and ordered and self._root_queryset.ordered:
+            result = self.reorder_results(result)
+        return result, self.exact_match
 
     def reorder_results(self, results, comp_func=None):
         """
@@ -176,30 +177,30 @@ class BaseSearchQuery(object):
 
         For each field in search_fields perform three lookups.
         """
-        rslt = []
+        result = []
         for search_field in self.search_fields:
             cleaned_q = self.clean_q(q, search_field)
-            rslt.extend(
+            result.extend(
                 self.exact_search(search_field, cleaned_q)
                 + self.startsw_search(search_field, cleaned_q)
                 + self.contains_search(search_field, cleaned_q)
             )
-        return rslt
+        return result
 
 
 class PrimaryFieldsSearchQuery(BaseSearchQuery):
     """
     A search that visually separates 'strong' results from 'weak' results.
 
-    Using the two lists of queriable field paths 'primary_search_fields' and
+    Using the two lists of queryable field paths 'primary_search_fields' and
     'secondary_search_fields', the results can be categorized into two groups.
     A result is regarded as 'strong' if it was found by searching the values
     of a 'primary search field' or if it was a result of an iexact lookup on a
     'secondary search field'.
     Any results from istartswith/icontains lookups on secondary search fields
     are categorized as 'weak' results.
-    Within the result list, these two categories are separated by an artifically
-    inserted result (the separator).
+    Within the result list, these two categories are separated by an
+    artificially inserted result (the separator).
 
     Class attributes:
         - weak_hits_sep (str): template for the separator.
@@ -233,7 +234,7 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
             - queryset: the queryset to perform the search on.
             - use_separator (bool): whether to insert the separator into the
                 result list.
-            - primary_search_fields: a list of queriable field paths
+            - primary_search_fields: a list of queryable field paths
         """
         self.use_separator = use_separator
         if primary_search_fields:
@@ -288,19 +289,19 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         Then get the 'weak' results from istartswith and icontains lookups on
         fields in secondary_search_fields.
         If use_separator is True and weak results were found, insert a
-        separator inbetween the two categories.
+        separator in between the two categories.
         """
-        rslt = []
+        results = []
         for search_field in self.primary_search_fields:
             cleaned_q = self.clean_q(q, search_field)
-            rslt.extend(
+            results.extend(
                 self.exact_search(search_field, cleaned_q)
                 + self.startsw_search(search_field, cleaned_q)
                 + self.contains_search(search_field, cleaned_q)
             )
         for search_field in self.secondary_search_fields:
             cleaned_q = self.clean_q(q, search_field)
-            rslt.extend(self.exact_search(search_field, cleaned_q))
+            results.extend(self.exact_search(search_field, cleaned_q))
 
         weak_hits = []
         for search_field in self.secondary_search_fields:
@@ -310,12 +311,12 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
                 + self.contains_search(search_field, cleaned_q)
             )
         if weak_hits:
-            if self.use_separator and len(rslt):
+            if self.use_separator and len(results):
                 weak_hits.insert(0, self.create_separator_item(q))
-            rslt.extend(weak_hits)
-        return rslt
+            results.extend(weak_hits)
+        return results
 
-    def reorder_results(self, results):
+    def reorder_results(self, results, *args, **kwargs):
         """
         Reorder the results according to the order established by the root queryset.
         Strong and weak results will be ordered within their respective group.
@@ -331,7 +332,10 @@ class PrimaryFieldsSearchQuery(BaseSearchQuery):
         # Now split the results into strong and weak results and order
         # both groups individually according to the order in the root queryset.
         strong, weak = results[:sep_index], results[sep_index + 1:]
-        comp_func = lambda result_item: ids.index(result_item[0])
+
+        def comp_func(result_item):
+            return ids.index(result_item[0])
+
         ordered_results = sorted(strong, key=comp_func)
         # Put the separator item back in.
         ordered_results.append(results[sep_index])
@@ -372,7 +376,7 @@ class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
 class ValuesDictSearchQuery(NameFieldSearchQuery):
     """Fetch all the relevant data first and then do a search in memory."""
 
-    def get_queryset(self, q):
+    def get_queryset(self, q=''):
         # To limit the length of values_dict, exclude any records that do not
         # at least icontain one 'word' of 'q' in any of the search_fields.
         qobjects = models.Q()
@@ -394,16 +398,17 @@ class ValuesDictSearchQuery(NameFieldSearchQuery):
         #  pk_2: {}, ...}
         search_results = []
 
-        def filter_func(q):
-            q = self.clean_q(q, search_field)
+        def filter_func(search_term):
+            search_term = self.clean_q(search_term, search_field)
+
             def inner(s):
                 """The filter function for the filter iterator."""
                 s = self.clean_string(s)
                 if lookup == '__iexact':
-                    return q == s
+                    return search_term == s
                 elif lookup == '__istartswith':
-                    return s.startswith(q)
-                return q in s
+                    return s.startswith(search_term)
+                return search_term in s
             return inner
 
         for pk, data_dict in self.values_dict.copy().items():

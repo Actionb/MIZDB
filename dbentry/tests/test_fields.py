@@ -573,8 +573,7 @@ class TestPartialDateField(MyTestCase):
     def test_from_db(self):
         # Assert that a value read from the db becomes a PartialDate.
         # (from_db_value)
-        from_db = PartialDateField().from_db_value(
-            value='2019-05-20', expression=None, connection=None)
+        from_db = PartialDateField().from_db_value(value='2019-05-20', _expression=None, _connection=None)
         self.assertIsInstance(from_db, PartialDate)
 
     def test_to_db(self):

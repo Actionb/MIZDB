@@ -1,9 +1,12 @@
 import sys
 
 from django.apps import apps
-from django.contrib import auth, contenttypes
+from django.contrib import auth
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
 from django.db import models, transaction, utils
+from django.db.models import constants
 
 
 def get_model_from_string(model_name, app_label='dbentry'):
@@ -23,21 +26,22 @@ def get_model_from_string(model_name, app_label='dbentry'):
         return None
 
 
+# noinspection PyProtectedMember
 def get_model_fields(
         model, base=True, foreign=True, m2m=True,
         exclude=(), primary_key=False
-    ):
+     ):
     """
     Return a list of concrete model fields of the given model.
 
     Arguments that affect the contents of the result:
         base: if True, non-relational fields are included
-        foreig: if True, ForeignKey fields are included
+        foreign: if True, ForeignKey fields are included
         m2m: if True, ManyToManyFields are included
         exclude: any field whose name is in this list is excluded
         primary_key: if True, the primary key field is included
     """
-    rslt = []
+    result = []
     for f in model._meta.get_fields():
         if not f.concrete or f.name in exclude:
             continue
@@ -46,14 +50,15 @@ def get_model_fields(
         if f.is_relation:
             if f.many_to_many:
                 if m2m:
-                    rslt.append(f)
+                    result.append(f)
             elif foreign:
-                rslt.append(f)
+                result.append(f)
         elif base:
-            rslt.append(f)
-    return rslt
+            result.append(f)
+    return result
 
 
+# noinspection PyProtectedMember
 def get_model_relations(model, forward=True, reverse=True):
     """
     Return a list of relation objects that involve the given model.
@@ -102,6 +107,7 @@ def get_model_relations(model, forward=True, reverse=True):
     return result
 
 
+# noinspection PyProtectedMember
 def get_relation_info_to(model, rel):
     """
     Return the model that implements the relation 'rel' and the model field
@@ -145,7 +151,7 @@ def get_required_fields(model):
     (i.e. not null, no default value, etc.)
     """
     # (this is not explicitly used by anything)
-    rslt = []
+    result = []
     for f in get_model_fields(model, m2m=False):
         if f.null:
             continue
@@ -157,8 +163,8 @@ def get_required_fields(model):
             # Field has a default value, whether or not that value is an
             # 'EMPTY_VALUE' we do not care
             continue
-        rslt.append(f)
-    return rslt
+        result.append(f)
+    return result
 
 
 def get_related_descriptor(model, rel):
@@ -175,6 +181,7 @@ def get_related_descriptor(model, rel):
         return getattr(rel.model, rel.get_accessor_name())
 
 
+# noinspection PyProtectedMember
 def get_related_manager(instance, rel):
     """
     Return the related manager that governs the relation 'rel' for model object
@@ -189,13 +196,14 @@ def get_related_manager(instance, rel):
     return descriptor.related_manager_cls(instance)
 
 
-def get_updateable_fields(instance):
+# noinspection PyProtectedMember
+def get_updatable_fields(instance):
     """
     Return the names of 'instance's fields that are empty or have their default
     value.
     """
     # (used by merge_records)
-    rslt = []
+    result = []
     fields = get_model_fields(
         instance._meta.model, m2m=False, primary_key=False)
     for fld in fields:
@@ -205,15 +213,15 @@ def get_updateable_fields(instance):
         field_value = fld.value_from_object(instance)
         if field_value in fld.empty_values:
             # This field's value is 'empty' in some form or other
-            rslt.append(fld.attname)
+            result.append(fld.attname)
         elif fld.has_default():
             if type(fld.default) is bool:
                 # Special case, boolean values should be left alone?
                 continue
             elif fld.default == field_value:
                 # This field has it's default value/choice
-                rslt.append(fld.attname)
-    return rslt
+                result.append(fld.attname)
+    return result
 
 
 def is_protected(objs, using='default'):
@@ -231,6 +239,7 @@ def is_protected(objs, using='default'):
         return e
 
 
+# noinspection PyProtectedMember
 def get_reverse_field_path(rel, field_name):
     """Build a field_path to 'field_name' using the reverse relation 'rel'."""
     # (used by maint.forms.get_dupe_fields_for_model)
@@ -240,9 +249,10 @@ def get_reverse_field_path(rel, field_name):
         field_path = rel.related_name
     else:
         field_path = rel.related_model._meta.model_name
-    return field_path + models.constants.LOOKUP_SEP + field_name
+    return field_path + constants.LOOKUP_SEP + field_name
 
 
+# noinspection PyProtectedMember
 def get_relations_between_models(model1, model2):
     """
     Return the field and the relation object that connects model1 and model2.
@@ -269,19 +279,20 @@ def get_full_fields_list(model):
     Collect the names of all fields and relations available on the given model.
     """
     # (this is not explicitly used by anything)
-    rslt = set()
+    result = set()
     for field in get_model_fields(model):
-        rslt.add(field.name)
+        result.add(field.name)
     # Call get_model_relations with forward=False,
     # as forward relations were already added by get_model_fields.
     for rel in get_model_relations(model, forward=False):
         if rel.many_to_many and rel.field.model == model:
-            rslt.add(rel.field.name)
+            result.add(rel.field.name)
         else:
-            rslt.add(rel.name)
-    return rslt
+            result.add(rel.name)
+    return result
 
 
+# noinspection PyProtectedMember
 def get_all_model_names():
     """
     Return all the names of models in the apps registry that are subclasses
@@ -294,6 +305,7 @@ def get_all_model_names():
     return sorted(my_mdls, key=lambda m: m.lower())
 
 
+# noinspection PyProtectedMember
 def get_fields_and_lookups(model, field_path):
     """
     Extract model fields and lookups from 'field_path'.
@@ -354,20 +366,21 @@ def validate_model_data(model):
     return invalid
 
 
-def validate_all_model_data(*models):
+# noinspection PyProtectedMember
+def validate_all_model_data(*model_list):
     """
     Validate the data of given models or of all models that inherit from
     superclass dbentry.base.models.BaseModel.
     """
 
     invalid = {}
-    if not models:
+    if not model_list:
         from dbentry.base.models import BaseModel  # avoid circular imports
-        models = [
+        model_list = [
             m for m in apps.get_models('dbentry')
             if issubclass(m, BaseModel)
         ]
-    for model in models:
+    for model in model_list:
         print("Validating %s... " % model._meta.model_name, end='')
         inv = validate_model_data(model)
         if inv:
@@ -382,13 +395,14 @@ def clean_contenttypes(stream=None):
     """Delete ContentType objects that reference a non-existing model."""
     if stream is None:
         stream = sys.stdout
-    for ct in contenttypes.models.ContentType.objects.all():
+    for ct in ContentType.objects.all():
         model = ct.model_class()
         if not model:
             stream.write("Deleting %s\n" % ct)
             ct.delete()
 
 
+# noinspection PyProtectedMember
 def clean_permissions(stream=None):
     """
     Clean up the permissions and their codenames.
@@ -399,7 +413,7 @@ def clean_permissions(stream=None):
     """
     if stream is None:
         stream = sys.stdout
-    for p in auth.models.Permission.objects.all():
+    for p in Permission.objects.all():
         action, _model_name = p.codename.split('_', 1)
         model = p.content_type.model_class()
         if not model:

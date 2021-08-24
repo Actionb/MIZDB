@@ -7,6 +7,7 @@ from django.db import transaction
 from dbentry.utils.admin import create_logentry, _get_relation_change_message
 
 
+# noinspection PyProtectedMember
 def copy_related_set(request, obj, *paths):
     """Add the related_objects in 'paths' to an equivalent relation of 'obj'."""
     change_message = []
@@ -38,7 +39,7 @@ def copy_related_set(request, obj, *paths):
                 change_message.append({
                     'added': _get_relation_change_message(related_object, obj)
                 })
-    # Create LogEntry for all succesful transactions.
+    # Create LogEntry for all successful transactions.
     if change_message:
         try:
             create_logentry(request.user.pk, obj, CHANGE, change_message)

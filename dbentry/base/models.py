@@ -14,7 +14,7 @@ class BaseModel(models.Model):
     Adds a 'merge' permission (required to be allowed to merge model instances)
     to the default permissions.
 
-    Attributes:
+    attrs:
         search_fields (tuple): field names to include in searches.
             (autocomplete, ModelAdmin search bar, queries using find())
         search_fields_suffixes (dict): a dictionary of search_fields and their
@@ -53,9 +53,9 @@ class BaseModel(models.Model):
         non-relation fields that are not excluded through 'exclude_from_str'.
         """
         if self.name_field is not None:
-            rslt = str(self._meta.get_field(self.name_field).value_from_object(self))
+            result = str(self._meta.get_field(self.name_field).value_from_object(self))
         else:
-            rslt = " ".join([
+            result = " ".join([
                 str(fld.value_from_object(self))
                 for fld in get_model_fields(
                     self._meta.model, foreign=False, m2m=False,
@@ -63,7 +63,7 @@ class BaseModel(models.Model):
                 )
                 if fld.value_from_object(self)
             ])
-        return rslt.strip() or super().__str__()
+        return result.strip() or super().__str__()
 
     def qs(self):
         """Return a queryset that contains the current instance only."""
@@ -190,7 +190,7 @@ class ComputedNameModel(BaseModel):
         return errors
 
     @classmethod
-    def _check_name_composing_fields(cls, **kwargs):
+    def _check_name_composing_fields(cls, **_kwargs):
         """
         Check that name_composing_fields is set and does not contain invalid
         fields.

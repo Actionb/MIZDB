@@ -30,7 +30,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     """
     Base ModelAdmin for this app.
 
-    Attributes:
+    attrs:
         crosslink_labels (dict): mapping of related_model_name: custom_label
             used to give crosslinks custom labels.
         collapse_all (bool): context variable used in the inline templates.
@@ -63,7 +63,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         errors.extend(self._check_search_fields_lookups(**kwargs))
         return errors
 
-    def _check_fieldset_fields(self, **kwargs):
+    def _check_fieldset_fields(self, **_kwargs):
         """Check for unknown field names in the fieldsets attribute."""
         if not self.fieldsets:
             return []
@@ -89,7 +89,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     )
         return errors
 
-    def _check_search_fields_lookups(self, **kwargs):
+    def _check_search_fields_lookups(self, **_kwargs):
         """Check that all search fields and their lookups are valid."""
         errors = []
         msg_template = "Invalid search field '%s': %s"
@@ -129,6 +129,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return request.user.has_perm(
             '{}.{}'.format(self.opts.app_label, codename))
 
+    # noinspection PyMethodMayBeStatic,PyProtectedMember
     def has_alter_bestand_permission(self, request):
         """Check that the user has permission to change inventory quantities."""
         opts = _models.Bestand._meta
@@ -148,6 +149,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     self.exclude.append(fld.name)
         return self.exclude
 
+    # noinspection PyMethodMayBeStatic
     def _add_bb_fieldset(self, fieldsets):
         """
         Append a fieldset for 'Beschreibung & Bemerkungen'.
@@ -180,6 +182,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         fieldsets = super().get_fieldsets(request, obj)
         return self._add_bb_fieldset(fieldsets)
 
+    # noinspection PyProtectedMember
     def _add_pk_search_field(self, search_fields):
         """
         Add a search field for the primary key to search_fields if missing.
@@ -225,6 +228,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             search_fields = list(self.model.get_search_fields())
         return self._add_pk_search_field(search_fields)
 
+    # noinspection PyProtectedMember
     def add_crosslinks(self, object_id, labels=None):
         """
         Provide the template with data to create links to related objects.
@@ -313,6 +317,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             new_extra['crosslinks'].append({'url': url, 'label': label})
         return new_extra
 
+    # noinspection PyUnusedLocal
     def add_extra_context(self, request=None, extra_context=None, object_id=None):
         new_extra = extra_context or {}
         if object_id:
@@ -409,12 +414,14 @@ class BaseInlineMixin(object):
     description = ''
     form = MIZAdminInlineFormBase
 
+    # noinspection PyProtectedMember
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.verbose_model:
             self.verbose_name = self.verbose_model._meta.verbose_name
             self.verbose_name_plural = self.verbose_model._meta.verbose_name_plural
 
+    # noinspection PyUnresolvedReferences
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if 'widget' not in kwargs:
             kwargs['widget'] = make_widget(model=db_field.related_model)

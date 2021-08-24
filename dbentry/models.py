@@ -15,6 +15,7 @@ from dbentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
 from dbentry.utils import concat_limit, get_model_relations, get_model_fields
 
 
+# noinspection PyUnresolvedReferences
 class Person(ComputedNameModel):
     vorname = models.CharField(max_length=200, blank=True)
     nachname = models.CharField(max_length=200)
@@ -62,7 +63,6 @@ class Person(ComputedNameModel):
 
 class PersonURL(AbstractURLModel):
     brochure = models.ForeignKey('Person', models.CASCADE, related_name='urls')
-
 
 
 class Musiker(BaseModel):
@@ -160,6 +160,7 @@ class BandURL(AbstractURLModel):
     brochure = models.ForeignKey('Band', models.CASCADE, related_name='urls')
 
 
+# noinspection PyUnresolvedReferences
 class Autor(ComputedNameModel):
     kuerzel = models.CharField('Kürzel', max_length=8, blank=True)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Autors')
@@ -180,6 +181,7 @@ class Autor(ComputedNameModel):
         verbose_name = 'Autor'
         verbose_name_plural = 'Autoren'
 
+    # noinspection PyProtectedMember
     @classmethod
     def _get_name(cls, **data):
         """
@@ -217,7 +219,6 @@ class Autor(ComputedNameModel):
 
 class AutorURL(AbstractURLModel):
     brochure = models.ForeignKey('Autor', models.CASCADE, related_name='urls')
-
 
 
 class Ausgabe(ComputedNameModel):
@@ -277,7 +278,7 @@ class Ausgabe(ComputedNameModel):
                 width=LIST_DISPLAY_MAX_LEN + 5,
                 sep=" "
             )
-        if ('sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung):
+        if 'sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung:
             # Special issues may be a bit... 'special' in their numerical values.
             # Just use the 'beschreibung' for such an issue.
             return beschreibung
@@ -416,6 +417,7 @@ class AusgabeMonat(BaseModel):
         unique_together = ('ausgabe', 'monat')
         ordering = ['monat']
 
+    # noinspection PyUnresolvedReferences
     def __str__(self):
         return self.monat.abk
 
@@ -545,16 +547,16 @@ class Ort(ComputedNameModel):
         if 'land__code' in data:
             land_code = data['land__code'][0]
 
-        rslt_template = "{}, {}"
+        result_template = "{}, {}"
         if stadt:
             if bundesland_code:
                 codes = land_code + '-' + bundesland_code
-                return rslt_template.format(stadt, codes)
+                return result_template.format(stadt, codes)
             else:
-                return rslt_template.format(stadt, land_code)
+                return result_template.format(stadt, land_code)
         else:
             if bundesland:
-                return rslt_template.format(bundesland, land_code)
+                return result_template.format(bundesland, land_code)
             else:
                 return land
 
@@ -599,7 +601,7 @@ class Land(BaseModel):
         ordering = ['land_name']
 
 
-# TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
+# TODO: make schlagwort 'view-only' in admin (meta.default_permissions)
 class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
@@ -836,8 +838,10 @@ class Plakat(BaseModel):
     # TODO: delete model field 'signatur' (it's no longer in use)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
-        help_text=('Kürzel bestehend aus Angabe zur Größe und '
-            'einer 5-stelligen fortlaufenden Nummer. Z.B.: DINA2-00395')
+        help_text=(
+            'Kürzel bestehend aus Angabe zur Größe und einer 5-stelligen '
+            'fortlaufenden Nummer. Z.B.: DINA2-00395'
+        )
     )
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
@@ -1236,6 +1240,7 @@ class Bestand(BaseModel):
     def __str__(self):
         return str(self.lagerort)
 
+    # noinspection PyProtectedMember
     @property
     def bestand_object(self):
         """Return the archive object this Bestand instance refers to."""

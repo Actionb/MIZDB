@@ -71,7 +71,8 @@ class TestSearchFormFactory(MyTestCase):
     def test_takes_formfield_callback(self):
         # Assert that custom formfield_callback can be passed to the factory
         # and that it uses that to create formfields for dbfields.
-        callback = lambda dbfield, **kwargs: forms.DateField(**kwargs)
+        def callback(_dbfield, **kwargs):
+            return forms.DateField(**kwargs)
         form_class = self.factory(
             model=_models.Artikel,
             formfield_callback=callback,
@@ -171,7 +172,7 @@ class TestSearchForm(MyTestCase):
         self.factory = search_forms.SearchFormFactory()
 
     def test_get_filters_params_returns_empty_on_invalid(self):
-        # get_filters_params should shortcircuit if the form is invalid.
+        # get_filters_params should short-circuit if the form is invalid.
         form_class = self.factory(self.model)
         form = form_class()
         # Empty form without data => is_valid == False

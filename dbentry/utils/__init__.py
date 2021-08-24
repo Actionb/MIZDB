@@ -13,5 +13,5 @@ def nfilter(filters, iterable):
     def filter_func(item):
         if not filters:
             return True
-        return all(filter(item) for filter in filters)
+        return all(f(item) for f in filters)
     return filter(filter_func, iterable)

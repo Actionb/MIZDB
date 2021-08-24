@@ -47,7 +47,7 @@ def find_duplicates(queryset, dupe_fields, display_fields):
                 display_values[pk].append((k, v))
         dupe_values.append(tuple(item_dupe_values))
 
-    rslt = []
+    results = []
     # Walk through the values, looking for non-empty values that appeared
     # more than once.
     # Preserve the display_values.
@@ -69,8 +69,8 @@ def find_duplicates(queryset, dupe_fields, display_fields):
                         item_display_values
                     )
                 )
-        rslt.append(dupe_group)
-    return rslt
+        results.append(dupe_group)
+    return results
 
 
 class ModelSelectView(views.generic.FormView):
@@ -78,8 +78,9 @@ class ModelSelectView(views.generic.FormView):
     A FormView that redirects to another view with the model chosen in the form
     as initkwargs.
 
-    Attributes:
-        next_view (str): reverseable view name of the next view.
+    attrs:
+        next_view (str): view name of the next view. reverse() must be able to
+            return an URL using this view name.
     """
 
     template_name = 'admin/basic_form.html'
@@ -114,6 +115,7 @@ class ModelSelectView(views.generic.FormView):
 class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
     """A mixin that sets up the view following a ModelSelectView."""
 
+    # noinspection PyProtectedMember,PyAttributeOutsideInit,PyUnresolvedReferences
     def setup(self, request, *args, **kwargs):
         super().setup(request, *args, **kwargs)
         if not kwargs.get('model_name'):
@@ -207,6 +209,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         kwargs['data'] = self.request.GET
         return kwargs
 
+    # noinspection PyMethodMayBeStatic
     def _get_group_field_names(self, form, formfield_group):
         """
         Return the field names of fields selected in the given formfield_group.
@@ -229,6 +232,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         """Return a list of the field names the user selected to be displayed."""
         return self._get_group_field_names(form, form.display_fields)
 
+    # noinspection PyMethodMayBeStatic
     def build_duplicates_headers(self, form):
         """
         Extract the table headers for the table that lists the duplicates from
@@ -356,6 +360,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
                 context.update(**context_kwargs)
         return self.render_to_response(context)
 
+    # noinspection PyMethodMayBeStatic
     def get_queryset(self, model, limit):
         """
         Prepare the queryset that includes all objects of 'model' that have less
@@ -404,6 +409,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
             }
         return relations, model.objects.filter(pk__in=unused)
 
+    # noinspection PyProtectedMember
     def build_items(self, relations, queryset):
         """Build items for the context."""
         items = []

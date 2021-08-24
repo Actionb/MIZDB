@@ -21,6 +21,7 @@ class RuntimeFactoryMixin(object):
         self._factory = None
         super().__init__(*args, **kwargs)
 
+    # noinspection PyUnresolvedReferences
     @property
     def factory(self):
         if self._factory is None:
@@ -53,7 +54,9 @@ class UniqueFaker(factory.Sequence):
 
     def __init__(self, faker, function=None, **kwargs):
         if function is None:
-            function = lambda n: n
+            def default_callable(n):
+                return n
+            function = default_callable
         super().__init__(function, **kwargs)
         self.faker = faker
         if isinstance(faker, str):
@@ -79,9 +82,9 @@ class ISSNFaker(factory.Faker):
 class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
     """A SubFactory that only generates objects if required."""
 
-    def __init__(self, factory, required=False, **kwargs):
+    def __init__(self, factory_class, required=False, **kwargs):
         self.required = required
-        super().__init__(factory, **kwargs)
+        super().__init__(factory_class, **kwargs)
 
     def evaluate(self, instance, step, extra):
         # Do not generate an object unless required or parameters are declared
@@ -98,6 +101,7 @@ class SubFactory(RuntimeFactoryMixin, factory.SubFactory):
 class SelfFactory(SubFactory):
     """A SubFactory used for recursive relations."""
 
+    # noinspection PyProtectedMember
     def evaluate(self, instance, step, extra):
         # 'extra' may define the recursion depth:
         # extra = {field__field__field=None}
@@ -146,14 +150,13 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
         => AutorFactory(name='Charlie', beschreibung='Test')
     """
 
-    def __init__(self, factory, factory_related_name='', accessor_name=None,
-            extra=0, **defaults):
+    def __init__(self, factory_class, factory_related_name='', accessor_name=None, extra=0, **defaults):
         self.accessor_name = accessor_name
         self.extra = extra
-        super().__init__(factory, factory_related_name, **defaults)
+        super().__init__(factory_class, factory_related_name, **defaults)
 
     def call(self, instance, step, context):
-        factory = self.get_factory()
+        factory_class = self.get_factory()
         related_objects = []
 
         if context.value:
@@ -168,7 +171,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
                 getattr(instance, self.accessor_name).add(*related_objects)
 
         if context.extra or self.extra:
-            # From the class doctstring example:
+            # From the class docstring example:
             # context.extra = {
             #    'name': ['Alice','Bob','Charlie'],
             #    'kuerzel': ['Al','Bo'],
@@ -198,7 +201,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
                         if k not in iterables
                     }
                     # Create keyword arguments for the all related instances
-                    # expected to be created from the iterables, sublementing
+                    # expected to be created from the iterables, supplementing
                     # missing values with None (zip_longest).
                     # e.g: [('Alice','Al'), ('Bob','Bo'),('Charlie',None)]
                     for value in itertools.zip_longest(*iterables.values()):
@@ -222,7 +225,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
                 extra -= 1
             # Create the related instances.
             for kwargs in passed_kwargs:
-                related_objects.append(step.recurse(factory, kwargs))
+                related_objects.append(step.recurse(factory_class, kwargs))
         return related_objects
 
 
@@ -236,15 +239,16 @@ class M2MFactory(RelatedFactory):
             to the relation's descriptor.
     """
 
-    def __init__(self, factory, descriptor_name=None, **defaults):
+    def __init__(self, factory_class, descriptor_name=None, **defaults):
         self.descriptor_name = descriptor_name
         if 'accessor_name' in defaults:
             # Having the attribute accessor_name upon calling super().call()
             # will make the RelatedFactory try to invoke .add() which is not
             # allowed for intermediary tables that were not auto_created.
             del defaults['accessor_name']
-        super().__init__(factory, **defaults)
+        super().__init__(factory_class, **defaults)
 
+    # noinspection PyProtectedMember
     def call(self, instance, step, context):
         related_manager = getattr(instance, self.descriptor_name)
         # Get the right field names from the intermediary m2m table.
@@ -278,12 +282,15 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
     def _get_decl_for_model_field(field):
         """For a given model field, return an appropriate faker declaration."""
         try:
+            # TODO: why is this import inside a try block?
+            # noinspection PyUnresolvedReferences
             from dbentry.fields import PartialDateField
             if isinstance(field, PartialDateField):
                 return factory.Faker('date')
         except ImportError:
             pass
         internal_type = field.get_internal_type()
+        declaration = None
         if internal_type in ('CharField', 'TextField'):
             if field.unique:
                 declaration = UniqueFaker('word')
@@ -309,6 +316,9 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             declaration = factory.Faker(provider)
         elif internal_type == 'DurationField':
             declaration = factory.Faker('time_delta')
+        # TODO: could use a else branch if no faker declaration could be found
+        # Raise an error with something like "Could not find a faker declaration for model field %r"
+        # Could then also maybe remove the declaration = None declaration.
         return declaration
 
     def add_base_fields(self):
@@ -322,6 +332,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 self.factory, field.name, self._get_decl_for_model_field(field)
             )
 
+    # noinspection PyProtectedMember
     def add_m2m_factories(self):
         """Add M2MFactories for every many to many relation of this model."""
         for rel in get_model_relations(self.model):
@@ -362,11 +373,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                     )
             factory_name = self._get_factory_name_for_model(related_model)
             if not hasattr(self.factory, declaration_name):
-                m2m_factory = M2MFactory(
-                    factory_name,
-                    descriptor_name=descriptor_name,
-                    related_model=related_model
-                )
+                m2m_factory = M2MFactory(factory_name, descriptor_name=descriptor_name, related_model=related_model)
                 setattr(self.factory, declaration_name, m2m_factory)
 
     def add_related_factories(self):
@@ -381,12 +388,8 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             factory_name = self._get_factory_name_for_model(rel.related_model)
             accessor_name = rel.get_accessor_name()
             if not hasattr(self.factory, rel.name):
-                related_factory = RelatedFactory(
-                    factory_name,
-                    factory_related_name=rel.field.name,
-                    accessor_name=accessor_name,
-                    related_model=rel.related_model
-                )
+                related_factory = RelatedFactory(factory_name, factory_related_name=rel.field.name,
+                                                 accessor_name=accessor_name, related_model=rel.related_model)
                 setattr(self.factory, rel.name, related_factory)
 
     def add_sub_factories(self):
@@ -399,13 +402,10 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
                 if field.related_model == self.model:
                     _factory = SelfFactory(self.factory, required=not field.null)
                 else:
-                    _factory = SubFactory(
-                        factory_name,
-                        related_model=field.related_model,
-                        required=not field.null
-                    )
+                    _factory = SubFactory(factory_name, required=not field.null, related_model=field.related_model)
                 setattr(self.factory, field.name, _factory)
 
+    # noinspection PyUnresolvedReferences
     def contribute_to_class(self, factory_class, meta=None, base_meta=None,
                             base_factory=None, params=None):
         super().contribute_to_class(
@@ -427,6 +427,7 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             factory.builder.parse_declarations(self.declarations))
 
 
+# noinspection PyProtectedMember
 class MIZModelFactory(factory.django.DjangoModelFactory):
     _options_class = MIZDjangoOptions
     # __memo remembers the kwargs for the model instance creation that were
@@ -444,6 +445,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
             return
         cls.__memo = value
 
+    # noinspection PyUnresolvedReferences
     @classmethod
     def full_relations(cls, **kwargs):
         """
@@ -540,6 +542,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
 _cache = {}
 
 
+# noinspection PyProtectedMember
 def modelfactory_factory(model, **kwargs):
     """Create a factory class for the given model."""
     model_name = model._meta.model_name
@@ -566,6 +569,7 @@ class AutorFactory(MIZModelFactory):
         model = _models.Autor
     person = SubFactory('dbentry.factory.PersonFactory', required=True)
 
+    # noinspection PyUnresolvedReferences,PyMethodParameters
     @factory.lazy_attribute
     def kuerzel(obj):
         if obj.person is None:

@@ -1,7 +1,10 @@
+from typing import Union
+
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.admin.utils import quote
 from django.contrib.auth import get_permission_codename
+from django.db.models import Model
 from django.urls import reverse, NoReverseMatch
 from django.utils.encoding import force_text
 from django.utils.html import format_html
@@ -22,6 +25,7 @@ def create_hyperlink(url, content, **attrs):
     )
 
 
+# noinspection PyProtectedMember
 def get_obj_link(obj, user, site_name='admin', blank=False):
     """
     Return a safe link to the change page of 'obj'.
@@ -49,6 +53,7 @@ def get_obj_link(obj, user, site_name='admin', blank=False):
     return create_hyperlink(admin_url, obj)
 
 
+# noinspection PyProtectedMember
 def get_changelist_url(model, user, site_name='admin', obj_list=None):
     """
     Return an url to the changelist of 'model'.
@@ -106,6 +111,7 @@ def link_list(request, obj_list, sep=", ", blank=False):
     return format_html(sep.join(links))
 
 
+# noinspection PyProtectedMember
 def get_model_admin_for_model(model, *admin_sites):
     """
     Check the registries of 'admin_sites' for a ModelAdmin that represents
@@ -132,6 +138,7 @@ def has_admin_permission(request, model_admin):
     return True in model_admin.get_model_perms(request).values()
 
 
+# noinspection PyProtectedMember
 def construct_change_message(form, formsets, add):
     """
     Construct a JSON structure describing changes from a changed object.
@@ -163,6 +170,7 @@ def construct_change_message(form, formsets, add):
     return change_message
 
 
+# noinspection PyProtectedMember
 def _get_relation_change_message(obj, parent_model):
     """
     Create the change message JSON for changes on relations.
@@ -196,7 +204,9 @@ def _get_relation_change_message(obj, parent_model):
     }
 
 
-def create_logentry(user_id, obj, action_flag, message=''):
+def create_logentry(
+        user_id: int, obj: Model, action_flag: int,
+        message: Union[str, list] = '') -> LogEntry:
     return LogEntry.objects.log_action(
         user_id=user_id,
         content_type_id=get_content_type_for_model(obj).pk,
@@ -207,6 +217,7 @@ def create_logentry(user_id, obj, action_flag, message=''):
     )
 
 
+# noinspection PyProtectedMember
 def log_addition(user_id, obj, related_obj=None):
     """
     Log that an object has been successfully added.
@@ -221,6 +232,7 @@ def log_addition(user_id, obj, related_obj=None):
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
+# noinspection PyProtectedMember
 def log_change(user_id, obj, fields, related_obj=None):
     """
     Log that values for the fields 'fields' of object 'object' have changed.
@@ -239,6 +251,7 @@ def log_change(user_id, obj, fields, related_obj=None):
         # Use the fields map of the related model:
         fields_opts = related_obj._meta
 
+    # noinspection PyTypeChecker
     message['changed']['fields'] = sorted(
         capfirst(fields_opts.get_field(f).verbose_name) for f in fields)
     return create_logentry(user_id, obj, CHANGE, [message])

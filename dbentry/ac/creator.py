@@ -11,7 +11,7 @@ class MultipleObjectsReturnedException(Exception):
 
 class FailedObject(object):
     """
-    A dummy object that immitates a result object should creation fail.
+    A dummy object that imitates a result object should creation fail.
 
     dal views expect _some_ object with a pk attribute and string representation
     further down the chain (get_result_label, etc.).
@@ -36,6 +36,7 @@ class Creator(object):
     a model instance from a given string.
     """
 
+    # noinspection PyProtectedMember
     def __init__(self, model, raise_exceptions=False):
         self.model = model
         self.raise_exceptions = raise_exceptions
@@ -53,6 +54,8 @@ class Creator(object):
         try:
             return self.creator(text, preview)
         except MultipleObjectsReturnedException as e:
+            # NOTE: raise_exceptions only addresses MultipleObjectsReturnedExceptions.
+            # Is that intended?
             if self.raise_exceptions:
                 raise e
             if preview:
@@ -61,6 +64,7 @@ class Creator(object):
             # text attribute (which FailedObject emulates).
             return {'instance': FailedObject(str(e))}
 
+    # noinspection PyMethodMayBeStatic
     def _get_model_instance(self, model, **data):
         """
         Using get(), query for an existing model instance with 'data'.
@@ -76,6 +80,7 @@ class Creator(object):
         except model.MultipleObjectsReturned:
             raise MultipleObjectsReturnedException
 
+    # noinspection PyTypeChecker
     def create_person(self, text, preview=True):
         """
         Get or create a Person instance from `text`.
@@ -97,6 +102,7 @@ class Creator(object):
             ('instance', person_instance)
         ])
 
+    # noinspection PyTypeChecker
     def create_autor(self, text, preview=True):
         """
         Get or create an autor instance from `text`.

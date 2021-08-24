@@ -3,6 +3,7 @@ from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.urls import reverse
 
+# noinspection PyPackageRequirements
 from dal import autocomplete, forward
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
@@ -73,10 +74,13 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         ]
         return forms.Media(js=js) + super().media
 
+    # noinspection PyMissingConstructor
     def __init__(
             self, widget, related_model, remote_field_name='id',
             can_add_related=True, can_change_related=True,
             can_delete_related=True):
+        # TODO: try to use super class init (needs 'rel' argument).
+        # (remember to remove noinspection PyMissingConstructor afterwards)
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         self.choices = widget.choices
@@ -89,8 +93,10 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         self.remote_field_name = remote_field_name
 
     def get_related_url(self, info, action, *args):
-        return reverse("admin:%s_%s_%s" % (info + (action,)), args=args)
+        # noinspection PyStringFormat
+        return reverse("admin:%s_%s_%s" % (*info, action), args=args)
 
+    # noinspection PyProtectedMember
     def get_context(self, name, value, attrs):
         rel_opts = self.related_model._meta
         info = (rel_opts.app_label, rel_opts.model_name)
@@ -126,6 +132,7 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
         return context
 
 
+# noinspection PyProtectedMember
 def make_widget(
         url='accapture', multiple=False, wrap=False, remote_field_name='id',
         can_add_related=True, can_change_related=True, can_delete_related=True,

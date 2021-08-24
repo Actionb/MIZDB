@@ -19,16 +19,17 @@ class FieldGroup:
     assess whether or not its minimum/maximum requirements are fulfilled.
     """
 
-    def __init__(self, form, *, fields, min=None, max=None,
-                 error_messages=None, format_callback=None, **kwargs):
+    def __init__(self, form, *, fields, min_fields=None, max_fields=None,
+                 error_messages=None, format_callback=None, **_kwargs
+                 ):
         """
         Constructor for the FieldGroup.
 
         Parameters:
             form: the form instance this FieldGroup belongs to.
             fields (list): this group's field names.
-            min (int): the minimum number of fields that need to be filled out.
-            max (int): the maximum number of fields that may be filled out.
+            min_fields (int): the minimum number of fields that need to be filled out.
+            max_fields (int): the maximum number of fields that may be filled out.
             error_messages (dict): a mapping of error_type (i.e. 'min','max')
                 to (ValidationError) error message.
             format_callback (callable or str): a callable or the name of a
@@ -37,7 +38,7 @@ class FieldGroup:
 
         self.form = form
         self.fields = fields
-        self.min, self.max = min, max
+        self.min, self.max = min_fields, max_fields
         self.error_messages = self.form.get_group_error_messages(
             group=self, error_messages=error_messages or {},
             format_callback=format_callback
@@ -77,6 +78,7 @@ class FieldGroup:
         return min_error, max_error
 
 
+# noinspection PyUnresolvedReferences
 class MinMaxRequiredFormMixin(object):
     """
     A mixin that allows setting groups of fields to be required.
@@ -233,12 +235,13 @@ class MinMaxRequiredFormMixin(object):
         return messages
 
 
+# noinspection PyUnresolvedReferences
 class MIZAdminFormMixin(object):
     """A mixin that adds django admin media and fieldsets."""
 
     class Media:
         css = {
-            'all': ('admin/css/forms.css', )
+            'all': ('admin/css/forms.css',)
         }
 
     def __iter__(self):
@@ -305,6 +308,7 @@ class MIZAdminForm(MIZAdminFormMixin, forms.Form):
     pass
 
 
+# noinspection PyUnresolvedReferences
 class DynamicChoiceFormMixin(object):
     """Set formfield choices after init from keyword arguments."""
 
@@ -373,6 +377,7 @@ class MIZAdminInlineFormBase(forms.ModelForm):
             self.cleaned_data['DELETE'] = True
 
 
+# noinspection PyUnresolvedReferences
 class DiscogsFormMixin(object):
     """
     A mixin for fields handling data from discogs.

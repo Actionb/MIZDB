@@ -49,14 +49,17 @@ def _validate(std, number):
     return True
 
 
+# noinspection PyPep8Naming
 def ISBNValidator(raw_isbn):
     return _validate(isbn, raw_isbn)
 
 
+# noinspection PyPep8Naming
 def ISSNValidator(raw_issn):
     return _validate(issn, raw_issn)
 
 
+# noinspection PyPep8Naming
 def EANValidator(raw_ean):
     return _validate(ean, raw_ean)
 

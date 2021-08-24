@@ -92,7 +92,7 @@ class TestAutorForm(ModelFormTestCase):
 
         form = self.get_form(data={'beschreibung': 'Boop'})
         form.full_clean()
-        self.assertIn(expected_error_message, form.errors.get('__all__'))
+        self.assertIn(expected_error_message, form.errors.get(forms.ALL_FIELDS))
 
         form = self.get_form(data={'kuerzel': 'Beep'})
         form.full_clean()
@@ -122,7 +122,7 @@ class TestBuchForm(ModelFormTestCase):
 
         form = self.get_form(data={'is_buchband': True, 'buchband': b.pk})
         form.full_clean()
-        self.assertIn(expected_error_message, form.errors.get('__all__'))
+        self.assertIn(expected_error_message, form.errors.get(forms.ALL_FIELDS))
 
         form = self.get_form(data={'is_buchband': True})
         form.full_clean()
@@ -236,7 +236,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         # not be required.
         form = self.get_dummy_form()
         self.assertTrue(form.fields['last_name'].required)
-        minmax_required = [{'min': 1, 'fields': ['first_name', 'last_name']}]
+        minmax_required = [{'min_fields': 1, 'fields': ['first_name', 'last_name']}]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
         self.assertFalse(form.fields['last_name'].required)
 
@@ -244,19 +244,19 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         # Assert that __init__ ignores declared groups if one of its specified
         # field names cannot be found on the form.
         minmax_required = [
-            {'min': 1, 'fields': ['a']},
-            {'min': 1, 'fields': ['first_name', 'last_name']}
+            {'min_fields': 1, 'fields': ['a']},
+            {'min_fields': 1, 'fields': ['first_name', 'last_name']}
         ]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
         self.assertEqual(len(form._groups), 1)
-        self.assertEqual(form._groups[0], {'min': 1, 'fields': ['first_name', 'last_name']})
+        self.assertEqual(form._groups[0], {'min_fields': 1, 'fields': ['first_name', 'last_name']})
 
     @translation_override(language=None)
     def test_clean(self):
         attrs = {
             'minmax_required': [
-                {'min': 1, 'fields': ['first_name', 'last_name']},
-                {'max': 1, 'fields': ['favorite_pet', 'favorite_sport']}
+                {'min_fields': 1, 'fields': ['first_name', 'last_name']},
+                {'max_fields': 1, 'fields': ['favorite_pet', 'favorite_sport']}
             ]
         }
         form_data = {'favorite_pet': 'Cat', 'favorite_sport': 'Coffee drinking.'}
@@ -278,7 +278,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
             fields = " or ".join(f.replace('_', ' ').title() for f in group.fields)
             return {'max': "%s! Cannot have both!" % fields}
 
-        minmax_required = [{'max': 1, 'fields': ['favorite_pet', 'favorite_sport']}]
+        minmax_required = [{'max_fields': 1, 'fields': ['favorite_pet', 'favorite_sport']}]
         base_attrs = {'minmax_required': minmax_required}
         form_data = {'favorite_pet': 'Cat', 'favorite_sport': 'Coffee drinking.'}
         expected = "Favorite Pet or Favorite Sport! Cannot have both!"

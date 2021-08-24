@@ -64,6 +64,7 @@ class BulkForm(MIZAdminForm):
             self._row_data = []
         return has_changed
 
+    # noinspection PyProtectedMember,PyAttributeOutsideInit
     def clean(self):
         """
         Populate self.split_data with data from BaseSplitFields.to_list and

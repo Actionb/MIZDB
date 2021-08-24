@@ -2,12 +2,13 @@ from django.db import transaction, models
 from django.db.utils import IntegrityError
 
 from dbentry.utils.models import (
-    get_model_relations, get_relation_info_to, get_updateable_fields,
+    get_model_relations, get_relation_info_to, get_updatable_fields,
     is_protected
 )
 from dbentry.utils.admin import log_addition, log_change, log_deletion
 
 
+# noinspection PyProtectedMember
 def merge_records(original, qs, update_data=None, expand_original=True, request=None):
     """
     Merge 'original' object with all other objects in 'qs' and update
@@ -22,15 +23,15 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
     qs = qs.exclude(pk=original.pk)
     model = original._meta.model
     original_qs = model.objects.filter(pk=original.pk)
-    updateable_fields = get_updateable_fields(original)
+    updatable_fields = get_updatable_fields(original)
     # Get the first value found in the other objects to replace empty values
     # of original.
-    if expand_original and updateable_fields and update_data is None:
-        # If updateable_fields is empty the following query will include ALL
+    if expand_original and updatable_fields and update_data is None:
+        # If updatable_fields is empty the following query will include ALL
         # values including the primary key, etc. which obviously must not be
         # allowed to happen.
         update_data = {}
-        for other_record_valdict in qs.values(*updateable_fields):
+        for other_record_valdict in qs.values(*updatable_fields):
             for k, v in other_record_valdict.items():
                 if v and k not in update_data:
                     update_data[k] = v
@@ -79,7 +80,7 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                         related_model.objects
                         .filter(**{related_field.name: original})
                         .values(*unique_together)
-                    ):
+                     ):
                     # Exclude all values that would violate the unique
                     # constraints (i.e. values that original has already):
                     qs_to_be_updated = qs_to_be_updated.exclude(**values)
@@ -103,7 +104,7 @@ def merge_records(original, qs, update_data=None, expand_original=True, request=
                             loop_qs.update(**{related_field.name: original})
                     except IntegrityError:
                         # Ignore UNIQUE CONSTRAINT violations at this stage.
-                        # If an error occured, the related object will not be
+                        # If an error occurred, the related object will not be
                         # 'moved' to original and later deleted.
                         pass
                     else:

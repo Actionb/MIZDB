@@ -48,9 +48,10 @@ class TestRuntimeFactoryMixin(MyTestCase):
 class TestUniqueFaker(MyTestCase):
 
     def test_init(self):
-        # UniqueFaker.function should default to lambda n: n
+        # UniqueFaker.function should default to a function 'default_callable'
+        # that simply returns the input.
         faker = UniqueFaker('name', function=None)
-        self.assertEqual(faker.function.__name__, '<lambda>')
+        self.assertEqual(faker.function.__name__, 'default_callable')
         self.assertEqual(faker.function(1), 1)
         self.assertEqual(faker.function(42), 42)
 
@@ -173,11 +174,7 @@ class TestM2MFactory(MyTestCase):
         self.assertEqual(m.genre.count(), 4)
 
     def test_m2m_pops_accessor_name(self):
-        m2m = M2MFactory(
-            'dbentry.factory.whatever',
-            accessor_name='beep boop',
-            related_model=_models.Genre
-        )
+        m2m = M2MFactory('dbentry.factory.whatever', accessor_name='beep boop', related_model=_models.Genre)
         self.assertIsNone(m2m.accessor_name)
 
 

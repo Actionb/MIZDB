@@ -1,6 +1,7 @@
 from django import http, views
 from django.apps import apps
-from django.template import TemplateDoesNotExist, loader
+from django.template import loader
+from django.template.exceptions import TemplateDoesNotExist
 from django.template.response import TemplateResponse
 
 from dbentry import utils
@@ -8,6 +9,7 @@ from dbentry.base.views import MIZAdminMixin
 from dbentry.sites import miz_site, register_tool
 
 
+# noinspection PyPep8Naming
 def MIZ_permission_denied_view(request, exception, template_name='admin/403.html'):
     # Make sure that a template for template_name exists.
     try:
@@ -46,6 +48,7 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
             context['results'] = self.get_result_list(q)
         return self.render_to_response(context)
 
+    # noinspection PyProtectedMember
     def get_result_list(self, q):
         """
         Perform the queries for the search term.

@@ -139,9 +139,11 @@ class MIZAdminSite(admin.AdminSite):
             response.context_data['app_list'] = new_app_list
         return response
 
+
 miz_site = MIZAdminSite()
 
 
+# noinspection PyPep8Naming
 class register_tool(object):
     """
     Decorator that registers a View with a given admin site.

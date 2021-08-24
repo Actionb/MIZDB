@@ -551,7 +551,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(self.obj2.jahrgang, 1)
         self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
 
-    @patch('dbentry.actions.views.get_updateable_fields', return_value=[])
+    @patch('dbentry.actions.views.get_updatable_fields', return_value=[])
     @patch.object(SessionWizardView, 'process_step', return_value={})
     def test_process_step(self, super_process_step, updateable_fields):
         view = self.get_view()

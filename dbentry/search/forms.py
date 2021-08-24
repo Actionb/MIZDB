@@ -21,8 +21,9 @@ class RangeWidget(forms.MultiWidget):
 
     class Media:
         css = {
-            'all': ('admin/css/rangewidget.css', )
+            'all': ('admin/css/rangewidget.css',)
         }
+
     template_name = 'rangewidget.html'
 
     def __init__(self, widget, attrs=None):
@@ -59,6 +60,7 @@ class RangeFormField(forms.MultiValueField):
             **kwargs
         )
 
+    # noinspection PyArgumentList
     def get_initial(self, initial, name):
         widget_data = self.widget.value_from_datadict(initial, None, name)
         if isinstance(self.fields[0], forms.MultiValueField):
@@ -146,21 +148,21 @@ class SearchForm(forms.Form):
                     )
                     param_value = end
             elif (isinstance(formfield, forms.BooleanField)
-                    and not isinstance(formfield, forms.NullBooleanField)
-                    and not value):
+                  and not isinstance(formfield, forms.NullBooleanField)
+                  and not value):
                 # value is False on a simple BooleanField;
                 # don't include it in the filter parameters.
                 continue
             elif (value in formfield.empty_values
-                    or isinstance(value, QuerySet)
-                    and not value.exists()):
-                # Dont want empty values as filter parameters!
+                  or isinstance(value, QuerySet)
+                  and not value.exists()):
+                # Don't want empty values as filter parameters!
                 continue
             elif (
                     'in' in self.lookups.get(field_name, [])
                     and isinstance(value, QuerySet)
-                ):
-                # django admin's prepare_lookup_value() expects an '__in'
+            ):
+                # django admin prepare_lookup_value() expects an '__in'
                 # lookup to consist of comma separated values.
                 param_value = ",".join(
                     str(pk)
@@ -184,6 +186,7 @@ class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     pass
 
 
+# noinspection PyMethodMayBeStatic
 class SearchFormFactory:
     """
     Helper object around the central method 'get_search_form' to facilitate
@@ -247,12 +250,13 @@ class SearchFormFactory:
             return forms.CharField(**{**defaults, **kwargs})
         return formfield
 
+    # noinspection PyProtectedMember
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
             widgets=None, localized_fields=None, labels=None, help_texts=None,
             error_messages=None, field_classes=None, forwards=None,
             range_lookup=django_lookups.Range
-        ):
+         ):
         """
         Create and return a search form class for a given model.
 
@@ -342,7 +346,7 @@ class SearchFormFactory:
         base_form = form or SearchForm
         attrs['lookups'] = lookup_mapping
         form_class_name = '%sSearchForm' % model._meta.model_name.capitalize()
-        return type(form_class_name, (base_form, ), attrs)
+        return type(form_class_name, (base_form,), attrs)
 
 
 searchform_factory = SearchFormFactory()

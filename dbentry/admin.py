@@ -24,6 +24,7 @@ from dbentry.utils.admin import get_obj_link, log_change
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
 
+# noinspection PyProtectedMember
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     # This allows inlines.js to copy the last selected bestand to a new row.
@@ -38,12 +39,12 @@ class BestandInLine(BaseTabularInline):
 class AudioAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Audio.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Audio.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Audio.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseStackedInline):
+    class MusikerInLine(BaseStackedInline):  # noqa
         model = _models.Audio.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
@@ -52,24 +53,24 @@ class AudioAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Audio.band.through
         verbose_model = _models.Band
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Audio.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.Veranstaltung
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Audio.ort.through
         verbose_model = _models.Ort
-    class PlattenInLine(BaseTabularInline):
+    class PlattenInLine(BaseTabularInline):  # noqa
         model = _models.Audio.plattenfirma.through
         verbose_model = _models.Plattenfirma
-    class AusgabeInLine(BaseAusgabeInline):
+    class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.audio.through
-    class DateiInLine(BaseTabularInline):
+    class DateiInLine(BaseTabularInline):  # noqa
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
         verbose_model = _models.Datei
@@ -83,13 +84,16 @@ class AudioAdmin(MIZModelAdmin):
     ordering = ['titel', 'jahr', 'medium']
 
     fieldsets = [
-        (None, {'fields': [
+        (None, {
+            'fields': [
                 'titel', 'tracks', 'laufzeit', 'jahr', 'land_pressung', 'original', 'quelle',
                 ('medium', 'medium_qty'), 'plattennummer', 'beschreibung', 'bemerkungen'
-        ]}),
+            ]
+        }),
         ('Discogs', {
-            'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}
-        ),
+            'fields': ['release_id', 'discogs_url'],
+            'classes': ['collapse', 'collapsed']
+        }),
     ]
     inlines = [
         MusikerInLine, BandInLine,
@@ -121,26 +125,27 @@ class AudioAdmin(MIZModelAdmin):
     kuenstler_string.short_description = 'Künstler'
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences
 @admin.register(_models.Ausgabe, site=miz_site)
 class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
         model = _models.AusgabeNum
         extra = 0
-    class MonatInLine(BaseTabularInline):
+    class MonatInLine(BaseTabularInline):  # noqa
         model = _models.AusgabeMonat
         verbose_model = _models.Monat
         extra = 0
-    class LNumInLine(BaseTabularInline):
+    class LNumInLine(BaseTabularInline):  # noqa
         model = _models.AusgabeLnum
         extra = 0
-    class JahrInLine(BaseTabularInline):
+    class JahrInLine(BaseTabularInline):  # noqa
         model = _models.AusgabeJahr
         extra = 0
         verbose_name_plural = 'erschienen im Jahr'
-    class AudioInLine(BaseTabularInline):
+    class AudioInLine(BaseTabularInline):  # noqa
         model = _models.Ausgabe.audio.through
         verbose_model = _models.Audio
-    class VideoInLine(BaseTabularInline):
+    class VideoInLine(BaseTabularInline):  # noqa
         model = _models.Ausgabe.video.through
         verbose_model = _models.Video
 
@@ -281,6 +286,7 @@ class AusgabenAdmin(MIZModelAdmin):
     change_status_abgeschlossen.allowed_permissions = ['change']
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
 
+    # noinspection PyMethodMayBeStatic
     def has_moveto_brochure_permission(self, request):
         from django.contrib.auth import get_permission_codename
         perms = []
@@ -289,13 +295,14 @@ class AusgabenAdmin(MIZModelAdmin):
         return request.user.has_perms(perms)
 
 
+# noinspection PyProtectedMember
 @admin.register(_models.Autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
         model = _models.Autor.magazin.through
         verbose_model = _models.Magazin
         extra = 1
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.AutorURL
 
     form = AutorForm
@@ -323,31 +330,32 @@ class AutorAdmin(MIZModelAdmin):
     magazin_string.admin_order_field = 'magazin_list'
 
 
+# noinspection PyProtectedMember
 @admin.register(_models.Artikel, site=miz_site)
 class ArtikelAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Artikel.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Artikel.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.person.through
         verbose_model = _models.Person
-    class AutorInLine(BaseTabularInline):
+    class AutorInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.autor.through
         verbose_model = _models.Autor
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.musiker.through
         verbose_model = _models.Musiker
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.band.through
         verbose_model = _models.Band
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.veranstaltung.through
         verbose_model = _models.Veranstaltung
 
@@ -420,15 +428,15 @@ class ArtikelAdmin(MIZModelAdmin):
 class BandAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Band.genre.through
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Band.musiker.through
         verbose_name = 'Band-Mitglied'
         verbose_name_plural = 'Band-Mitglieder'
-    class AliasInLine(BaseAliasInline):
+    class AliasInLine(BaseAliasInline):  # noqa
         model = _models.BandAlias
-    class OrtInLine(BaseOrtInLine):
+    class OrtInLine(BaseOrtInLine):  # noqa
         model = _models.Band.orte.through
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.BandURL
 
     form = BandForm
@@ -474,28 +482,28 @@ class BandAdmin(MIZModelAdmin):
     orte_string.admin_order_field = 'orte_list'
 
 
-@admin.register(_models.Plakat, site=miz_site)
+@admin.register(_models.Plakat, site=miz_site)  # noqa
 class PlakatAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Plakat.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Plakat.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.musiker.through
         verbose_model = _models.Musiker
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.band.through
         verbose_model = _models.Band
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.veranstaltung.through
         verbose_model = _models.Veranstaltung
 
@@ -569,6 +577,7 @@ class PlakatAdmin(MIZModelAdmin):
         super().save_related(request, form, formsets, change)
         self._copy_related(request, form.instance)
 
+    # noinspection PyMethodMayBeStatic
     def _copy_related(self, request, obj):
         """Copy Band and Musiker instances of Veranstaltung to this object."""
         if 'copy_related' in request.POST:
@@ -588,33 +597,33 @@ class PlakatAdmin(MIZModelAdmin):
 class BuchAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Buch.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Buch.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Buch.person.through
         verbose_model = _models.Person
-    class AutorInLine(BaseTabularInline):
+    class AutorInLine(BaseTabularInline):  # noqa
         model = _models.Buch.autor.through
         verbose_model = _models.Autor
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Buch.musiker.through
         verbose_model = _models.Musiker
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Buch.band.through
         verbose_model = _models.Band
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Buch.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Buch.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Buch.veranstaltung.through
         verbose_model = _models.Veranstaltung
-    class HerausgeberInLine(BaseTabularInline):
+    class HerausgeberInLine(BaseTabularInline):  # noqa
         model = _models.Buch.herausgeber.through
         verbose_model = _models.Herausgeber
-    class VerlagInLine(BaseTabularInline):
+    class VerlagInLine(BaseTabularInline):  # noqa
         model = _models.Buch.verlag.through
         verbose_model = _models.Verlag
 
@@ -727,15 +736,15 @@ class GenreAdmin(MIZModelAdmin):
 class MagazinAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):
         model = _models.MagazinURL
-    class VerlagInLine(BaseTabularInline):
+    class VerlagInLine(BaseTabularInline):  # noqa
         model = _models.Magazin.verlag.through
         verbose_model = _models.Verlag
-    class HerausgeberInLine(BaseTabularInline):
+    class HerausgeberInLine(BaseTabularInline):  # noqa
         model = _models.Magazin.herausgeber.through
         verbose_model = _models.Herausgeber
-    class GenreInLine(BaseGenreInline):
+    class GenreInLine(BaseGenreInline):  # noqa
         model = _models.Magazin.genre.through
-    class OrtInLine(BaseOrtInLine):
+    class OrtInLine(BaseOrtInLine):  # noqa
         model = _models.Magazin.orte.through
 
     index_category = 'Stammdaten'
@@ -793,19 +802,19 @@ class MemoAdmin(MIZModelAdmin):
 class MusikerAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Musiker.genre.through
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
-    class AliasInLine(BaseAliasInline):
+    class AliasInLine(BaseAliasInline):  # noqa
         model = _models.MusikerAlias
-    class InstrInLine(BaseTabularInline):
+    class InstrInLine(BaseTabularInline):  # noqa
         model = _models.Musiker.instrument.through
         verbose_name_plural = 'Spielt Instrument'
         verbose_name = 'Instrument'
-    class OrtInLine(BaseOrtInLine):
+    class OrtInLine(BaseOrtInLine):  # noqa
         model = _models.Musiker.orte.through
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.MusikerURL
 
     form = MusikerForm
@@ -844,7 +853,7 @@ class MusikerAdmin(MIZModelAdmin):
 class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.Person.orte.through
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.PersonURL
 
     index_category = 'Stammdaten'
@@ -922,7 +931,7 @@ class SchlagwortAdmin(MIZModelAdmin):
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.SpielortAlias
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.SpielortURL
 
     list_display = ['name', 'ort']
@@ -945,20 +954,20 @@ class TechnikAdmin(MIZModelAdmin):
 class VeranstaltungAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Veranstaltung.genre.through
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.band.through
         verbose_model = _models.Band
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.person.through
         verbose_model = _models.Person
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Veranstaltung.schlagwort.through
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.musiker.through
         verbose_model = _models.Musiker
-    class AliasInLine(BaseAliasInline):
+    class AliasInLine(BaseAliasInline):  # noqa
         model = _models.VeranstaltungAlias
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.VeranstaltungURL
 
     collapse_all = True
@@ -1006,12 +1015,12 @@ class VerlagAdmin(MIZModelAdmin):
 class VideoAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Video.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Video.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Video.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseStackedInline):
+    class MusikerInLine(BaseStackedInline):  # noqa
         model = _models.Video.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
@@ -1020,21 +1029,21 @@ class VideoAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Video.band.through
         verbose_model = _models.Band
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Video.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Video.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
-    class AusgabeInLine(BaseAusgabeInline):
+    class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.video.through
-    class DateiInLine(BaseTabularInline):
+    class DateiInLine(BaseTabularInline):  # noqa
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
         verbose_model = _models.Datei
@@ -1054,10 +1063,12 @@ class VideoAdmin(MIZModelAdmin):
         PersonInLine, AusgabeInLine, DateiInLine, BestandInLine
     ]
     fieldsets = [
-        (None, {'fields': [
+        (None, {
+            'fields': [
                 'titel', 'laufzeit', 'jahr', 'original', 'quelle', ('medium', 'medium_qty'),
                 'beschreibung', 'bemerkungen'
-        ]}),
+            ]
+        }),
         ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
     ]
     search_form_kwargs = {
@@ -1111,6 +1122,7 @@ class OrtAdmin(MIZModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
+# noinspection PyProtectedMember
 @admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
     readonly_fields = [
@@ -1123,9 +1135,10 @@ class BestandAdmin(MIZModelAdmin):
     # FIXME: the search form is missing a text search element ('q')
     # FIXME: the search form is missing a 'show all'
 
+    # noinspection PyAttributeOutsideInit
     def get_queryset(self, request, **kwargs):
         self.request = request  # save the request for bestand_link()
-        return super().get_queryset(request, **kwargs)
+        return super().get_queryset(request)
 
     def bestand_class(self, obj):
         if obj.bestand_object:
@@ -1148,12 +1161,12 @@ class BestandAdmin(MIZModelAdmin):
 class DateiAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Datei.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Datei.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Datei.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseStackedInline):
+    class MusikerInLine(BaseStackedInline):  # noqa
         model = _models.Datei.musiker.through
         extra = 0
         filter_horizontal = ['instrument']
@@ -1162,19 +1175,19 @@ class DateiAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Datei.band.through
         verbose_model = _models.Band
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Datei.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Datei.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Datei.veranstaltung.through
         verbose_model = _models.Veranstaltung
-    class QuelleInLine(BaseStackedInline):
+    class QuelleInLine(BaseStackedInline):  # noqa
         model = _m2m.m2m_datei_quelle
         extra = 0
         description = 'Verweise auf das Herkunfts-Medium (Tonträger, Videoband, etc.) dieser Datei.'
@@ -1211,9 +1224,9 @@ class HerausgeberAdmin(MIZModelAdmin):
 class BaseBrochureAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
-    class JahrInLine(BaseTabularInline):
+    class JahrInLine(BaseTabularInline):  # noqa
         model = _models.BrochureYear
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
     form = BrochureForm
@@ -1274,11 +1287,11 @@ class BaseBrochureAdmin(MIZModelAdmin):
 class BrochureAdmin(BaseBrochureAdmin):
     class JahrInLine(BaseTabularInline):
         model = _models.BrochureYear
-    class GenreInLine(BaseGenreInline):
+    class GenreInLine(BaseGenreInline):  # noqa
         model = _models.BaseBrochure.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Brochure.schlagwort.through
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
     inlines = [URLInLine, JahrInLine, GenreInLine, SchlInLine, BestandInLine]
@@ -1320,15 +1333,15 @@ class KatalogAdmin(BaseBrochureAdmin):
 class KalenderAdmin(BaseBrochureAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.BaseBrochure.genre.through
-    class JahrInLine(BaseTabularInline):
+    class JahrInLine(BaseTabularInline):  # noqa
         model = _models.BrochureYear
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
-    class URLInLine(BaseTabularInline):
+    class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
     inlines = [
@@ -1348,24 +1361,24 @@ class KalenderAdmin(BaseBrochureAdmin):
 class FotoAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
         model = _models.Foto.genre.through
-    class SchlInLine(BaseSchlagwortInline):
+    class SchlInLine(BaseSchlagwortInline):  # noqa
         model = _models.Foto.schlagwort.through
-    class PersonInLine(BaseTabularInline):
+    class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Foto.person.through
         verbose_model = _models.Person
-    class MusikerInLine(BaseTabularInline):
+    class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Foto.musiker.through
         verbose_model = _models.Musiker
-    class BandInLine(BaseTabularInline):
+    class BandInLine(BaseTabularInline):  # noqa
         model = _models.Foto.band.through
         verbose_model = _models.Band
-    class OrtInLine(BaseTabularInline):
+    class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Foto.ort.through
         verbose_model = _models.Ort
-    class SpielortInLine(BaseTabularInline):
+    class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Foto.spielort.through
         verbose_model = _models.Spielort
-    class VeranstaltungInLine(BaseTabularInline):
+    class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Foto.veranstaltung.through
         verbose_model = _models.Veranstaltung
 
@@ -1430,6 +1443,7 @@ class HiddenFromIndex(MIZModelAdmin):
     superuser_only = True
 
 
+# noinspection PyUnresolvedReferences
 class AuthAdminMixin(object):
     """
     Add a model's class name to the human-readable name part of the 'permission'

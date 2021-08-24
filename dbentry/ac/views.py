@@ -4,10 +4,11 @@ from django.core.paginator import Paginator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
+# noinspection PyPackageRequirements
 from dal import autocomplete
 
 from dbentry import models as _models
-from dbentry.ac.creator import Creator
+from dbentry.ac.creator import Creator, MultipleObjectsReturnedException
 from dbentry.utils.models import get_model_from_string
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
@@ -53,6 +54,7 @@ class ACBase(autocomplete.Select2QuerySetView):
             return self.build_create_option(q)
         return []
 
+    # noinspection PyProtectedMember
     def do_ordering(self, queryset):
         """
         Apply ordering to the queryset.
@@ -107,6 +109,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         qs = self.apply_q(qs)
         return qs
 
+    # noinspection PyProtectedMember
     def has_add_permission(self, request):
         """Return True if the user has the permission to add a model."""
         if not request.user.is_authenticated:
@@ -148,7 +151,7 @@ class ACBuchband(ACBase):
 
 class ACAusgabe(ACBase):
     """
-    Autocomplete view for the model ausgabe that applies chronologic order to
+    Autocomplete view for the model ausgabe that applies chronological order to
     the results.
     """
 
@@ -165,6 +168,7 @@ class ACCreateable(ACBase):
     Creator helper object.
     """
 
+    # noinspection PyAttributeOutsideInit
     @property
     def creator(self):
         if not hasattr(self, '_creator'):
@@ -212,15 +216,15 @@ class ACCreateable(ACBase):
         Build template context to display a more informative create option.
         """
         def flatten_dict(_dict):
-            rslt = []
-            for k, v in _dict.items():
-                if not v or k == 'instance':
+            result = []
+            for key, value in _dict.items():
+                if not value or key == 'instance':
                     continue
-                if isinstance(v, dict):
-                    rslt.extend(flatten_dict(v))
+                if isinstance(value, dict):
+                    result.extend(flatten_dict(value))
                 else:
-                    rslt.append((k, v))
-            return rslt
+                    result.append((key, value))
+            return result
 
         creator = creator or self.creator
         create_info = []
@@ -244,7 +248,7 @@ class ACCreateable(ACBase):
         creator = creator or self.creator
         return creator.create(text, preview=False).get('instance')
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """Create an object given a text after checking permissions."""
         if not self.has_add_permission(request):
             return http.HttpResponseForbidden()
@@ -259,7 +263,7 @@ class ACCreateable(ACBase):
 
         try:
             result = self.create_object(text)
-        except:
+        except MultipleObjectsReturnedException:
             msg = 'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen" Knopf.'
             return http.JsonResponse({'id': 0, 'text': msg})
 

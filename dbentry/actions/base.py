@@ -67,6 +67,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
                 continue
             yield check
 
+    # noinspection PyAttributeOutsideInit
     @property
     def action_allowed(self):
         """
@@ -86,6 +87,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
     def perform_action(self, form_cleaned_data=None):
         raise NotImplementedError('Subclasses must implement this method.')
 
+    # noinspection PyUnresolvedReferences
     def dispatch(self, request, *args, **kwargs):
         if not self.action_allowed:
             # The action is not allowed, redirect back to the changelist
@@ -147,7 +149,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
     are going to be changed by this action. This list is created by the
     `compile_affected_objects` method.
 
-    Attributes:
+    attrs:
         affected_fields (list): the model fields whose values should be
             displayed in the summary of objects affected by this action.
     """
@@ -184,15 +186,19 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         If the action is aimed at the values of particular fields of the
         objects, present those values as a nested list.
         """
-        def linkify(obj):
+
+        # noinspection PyProtectedMember
+        def linkify(model_instance):
             object_link = get_obj_link(
-                obj, self.request.user, self.model_admin.admin_site.name, blank=True)
+                model_instance, self.request.user,
+                self.model_admin.admin_site.name, blank=True
+            )
             if "</a>" in object_link:
                 # get_obj_link returned a full link;
                 # add the model's verbose_name.
                 return format_html(
                     '{model_name}: {object_link}',
-                    model_name=capfirst(obj._meta.verbose_name),
+                    model_name=capfirst(model_instance._meta.verbose_name),
                     object_link=object_link
                 )
             else:
@@ -200,7 +206,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                 # {model_name}: force_text(obj)
                 return object_link
 
-        objs = []
+        objects = []
         for obj in self.queryset:
             links = [linkify(obj)]
             # Investigate the field paths in affected_fields:
@@ -228,8 +234,8 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                     sub_list.append("{}: {}".format(verbose_name, str(value)))
             if self.affected_fields:
                 links.append(sub_list)
-            objs.append(links)
-        return objs
+            objects.append(links)
+        return objects
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -3,7 +3,7 @@ import re
 # ID für den Lagerort, der den Zeitschriftenraum darstellt
 ZRAUM_ID = 6
 
-# ID für den Lagerort, der das Duplettenlager darstellt
+# ID für den Lagerort, der das Dublettenlager darstellt
 DUPLETTEN_ID = 5
 
 # attrs specifications for TextArea Formfield

@@ -1,8 +1,9 @@
-from django import forms, views
+from django import views
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION
 from django.db import transaction
 from django.db.models import ProtectedError, F, Count
+from django.forms import ALL_FIELDS
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy, gettext
 
@@ -15,7 +16,7 @@ from dbentry.actions.forms import (
     BrochureActionFormSet, BrochureActionFormOptions
 )
 from dbentry.utils import (
-    link_list, merge_records, get_updateable_fields, get_obj_link,
+    link_list, merge_records, get_updatable_fields, get_obj_link,
     get_changelist_link, get_model_from_string, is_protected
 )
 from dbentry.utils.admin import (
@@ -23,7 +24,7 @@ from dbentry.utils.admin import (
 )
 
 
-def check_same_magazin(view, **kwargs):
+def check_same_magazin(view, **_kwargs):
     """
     Check that all objects in the view's queryset are related to the same
     Magazin instance.
@@ -67,9 +68,9 @@ class BulkEditJahrgang(ActionConfirmationView):
         "\nAlle bereits vorhandenen Angaben für Jahrgänge werden überschrieben."
     )
 
-    def get_form_kwargs(self, *args, **kwargs):
-        kwargs = super().get_form_kwargs(*args, **kwargs)
-        kwargs['choices'] = {forms.ALL_FIELDS: self.queryset}
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['choices'] = {ALL_FIELDS: self.queryset}
         return kwargs
 
     def get_initial(self):
@@ -78,7 +79,7 @@ class BulkEditJahrgang(ActionConfirmationView):
             'start': self.queryset.values_list('pk', flat=True).first(),
         }
 
-    def perform_action(self, form_cleaned_data):
+    def perform_action(self, form_cleaned_data=None):
         """
         Incrementally update the jahrgang for each instance.
 
@@ -162,7 +163,8 @@ class MergeViewWizarded(WizardConfirmationView):
             'Merge objects: step {}').format(str(int(self.steps.current) + 1))
         return context
 
-    def _check_too_few_objects(view, **kwargs):
+    # noinspection PyMethodParameters
+    def _check_too_few_objects(view, **_kwargs):
         """Check whether an insufficient number of objects has been selected."""
         if view.queryset.count() == 1:
             view.model_admin.message_user(
@@ -174,7 +176,8 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
         return True
 
-    def _check_different_magazines(view, **kwargs):
+    # noinspection PyMethodParameters,PyProtectedMember
+    def _check_different_magazines(view, **_kwargs):
         """
         Check whether the Ausgabe instances are from different Magazin instances.
         """
@@ -194,7 +197,8 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
         return True
 
-    def _check_different_ausgaben(view, **kwargs):
+    # noinspection PyMethodParameters,PyProtectedMember
+    def _check_different_ausgaben(view, **_kwargs):
         """
         Check whether the Artikel instances are from different Ausgabe instances.
         """
@@ -213,6 +217,7 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
         return True
 
+    # noinspection PyAttributeOutsideInit
     @property
     def updates(self):
         """
@@ -254,11 +259,11 @@ class MergeViewWizarded(WizardConfirmationView):
             return False, None
         qs = self.queryset.exclude(pk=primary.pk)
 
-        # get_updateable_fields() returns the fields that
+        # get_updatable_fields() returns the fields that
         # may be updated by this merge;
         # i.e. empty fields without a (default) value.
-        updateable_fields = get_updateable_fields(primary)
-        if not updateable_fields:
+        updatable_fields = get_updatable_fields(primary)
+        if not updatable_fields:
             # No updates can be done on 'primary'.
             return False, None
 
@@ -267,9 +272,9 @@ class MergeViewWizarded(WizardConfirmationView):
         # If there is more than one possible change per field, we
         # need user input to decide what change to keep.
         # This is where then the next form MergeConflictsFormSet comes in.
-        updates = {fld_name: set() for fld_name in updateable_fields}
+        updates = {fld_name: set() for fld_name in updatable_fields}
 
-        for other_record_valdict in qs.values(*updateable_fields):
+        for other_record_valdict in qs.values(*updatable_fields):
             for k, v in other_record_valdict.items():
                 if v or isinstance(v, bool):
                     # Make v both hashable (for the set) and
@@ -308,10 +313,11 @@ class MergeViewWizarded(WizardConfirmationView):
         if not has_conflict:
             # No conflict found;
             # Set the current_step to the CONFLICT_RESOLUTION_STEP
-            # so that the conflict reslution will be skipped.
+            # so that the conflict resolution will be skipped.
             self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
         return data
 
+    # noinspection PyUnresolvedReferences
     def get_form_kwargs(self, step=None):
         kwargs = super().get_form_kwargs(step)
         if step is None:
@@ -382,6 +388,7 @@ class MergeViewWizarded(WizardConfirmationView):
         merge_records(
             primary, self.queryset, update_data, expand, request=self.request)
 
+    # noinspection PyProtectedMember
     def done(self, *args, **kwargs):
         try:
             self.perform_action()
@@ -389,8 +396,10 @@ class MergeViewWizarded(WizardConfirmationView):
             # The merge could not be completed as there were protected objects
             # in the queryset, all changes were rolled back.
             object_name = 'Objekte'
-            msg_template = ("Folgende verwandte {object_name} verhinderten "
-                "die Zusammenführung: {protected}")
+            msg_template = (
+                "Folgende verwandte {object_name} verhinderten die "
+                "Zusammenführung: {protected}"
+            )
             if e.protected_objects.model._meta.verbose_name_plural:
                 object_name = e.protected_objects.model._meta.verbose_name_plural
             self.model_admin.message_user(
@@ -442,6 +451,7 @@ class MoveToBrochureBase(ActionConfirmationView):
             })
         return initial
 
+    # noinspection PyAttributeOutsideInit
     @property
     def magazin_instance(self):
         """Return the magazin instance common to all queryset objects."""
@@ -455,6 +465,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                 self._magazin_instance = None
         return self._magazin_instance
 
+    # noinspection PyAttributeOutsideInit
     @property
     def can_delete_magazin(self):
         """
@@ -481,7 +492,8 @@ class MoveToBrochureBase(ActionConfirmationView):
                 self._can_delete_magazin = magazin_ausgabe_set == selected
         return self._can_delete_magazin
 
-    def _check_protected_artikel(view, **kwargs):
+    # noinspection PyMethodParameters
+    def _check_protected_artikel(view, **_kwargs):
         """Check whether any of the Artikel instances cannot be deleted."""
         ausgaben_with_artikel = (
             view.queryset
@@ -520,6 +532,7 @@ class MoveToBrochureBase(ActionConfirmationView):
         # Return to the changelist:
         return
 
+    # noinspection PyMethodOverriding,PyProtectedMember
     def perform_action(self, form_cleaned_data, options_form_cleaned_data):
         protected_ausg = []
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
@@ -538,7 +551,8 @@ class MoveToBrochureBase(ActionConfirmationView):
                     pk=data['ausgabe_id'])
             except (
                 _models.Ausgabe.DoesNotExist,
-                _models.Ausgabe.MultipleObjectsReturned):
+                _models.Ausgabe.MultipleObjectsReturned
+            ):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -687,6 +701,7 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
                 return None
         return self.get(request, *args, **kwargs)
 
+    # noinspection PyMethodOverriding
     def perform_action(self, formsets):
         with transaction.atomic():
             for formset in formsets:

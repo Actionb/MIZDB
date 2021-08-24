@@ -116,7 +116,6 @@ class StdNumField(models.CharField):
         }
         kwargs = {**defaults, **kwargs}
 
-        widget_class = None
         # Pass the format callback function to the widget for a
         # prettier display of the value.
         widget_kwargs = {'format_callback': self.get_format_callback()}
@@ -157,8 +156,10 @@ class ISBNField(StdNumField):
     min_length = 10  # ISBN-10 without dashes/spaces
     max_length = 17  # ISBN-13 with four dashes/spaces
     default_validators = [ISBNValidator]
-    description = ('Cleaned and validated ISBN string: min length 10 '
-        '(ISBN-10), max length 17 (13 digits + dashes/spaces).')
+    description = (
+        'Cleaned and validated ISBN string: min length 10 (ISBN-10), '
+        'max length 17 (13 digits + dashes/spaces).'
+    )
 
     def to_python(self, value):
         # Save the values as ISBN-13.
@@ -201,8 +202,10 @@ class EANField(StdNumField):
     min_length = 8  # EAN-8
     max_length = 17  # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
-    description = ('Cleaned and validated EAN string: min length 8 (EAN-8), '
-        'max length 17 (13 digits + dashes/spaces).')
+    description = (
+        'Cleaned and validated EAN string: min length 8 (EAN-8), '
+        'max length 17 (13 digits + dashes/spaces).'
+    )
 
 
 """
@@ -211,6 +214,8 @@ django-partial-date: https://github.com/ktowen/django_partial_date
 https://stackoverflow.com/q/2971198
 https://stackoverflow.com/a/30186603
 """
+
+
 @total_ordering
 class PartialDate(datetime.date):
     """A datetime.date that allows constructor arguments to be optional."""
@@ -226,14 +231,14 @@ class PartialDate(datetime.date):
         iterator = zip(
             ('day', 'month', 'year'), (day, month, year), ('%d', '%B', '%Y')
         )
-        for name, value, format in iterator:
+        for name, value, format_code in iterator:
             if value is None:
                 continue
             value = int(value)
             if value != 0:
                 constructor_kwargs[name] = value
                 instance_attrs[name] = value
-                date_format.append(format)
+                date_format.append(format_code)
         # Call the datetime.date constructor. If the date is invalid,
         # a ValueError will be raised.
         date = super().__new__(cls, **constructor_kwargs)
@@ -278,6 +283,7 @@ class PartialDate(datetime.date):
     def __str__(self):
         return self.strftime(self.date_format)
 
+    # noinspection PyUnresolvedReferences
     def localize(self):
         if self.date_format:
             # Fun fact: python's format code for month textual long is %B.
@@ -429,7 +435,8 @@ class PartialDateField(models.CharField):
         value = super().get_prep_value(value)
         return self.to_python(value).db_value
 
-    def from_db_value(self, value, expression, connection):
+    # noinspection PyMethodMayBeStatic
+    def from_db_value(self, value, _expression, _connection):
         return PartialDate.from_string(value)
 
     def formfield(self, **kwargs):

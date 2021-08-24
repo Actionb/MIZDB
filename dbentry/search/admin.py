@@ -10,6 +10,7 @@ from dbentry.search import utils as search_utils
 from dbentry.search.forms import searchform_factory, MIZAdminSearchForm
 
 
+# noinspection PyUnresolvedReferences
 class AdminSearchFormMixin(object):
     """
     A mixin for ModelAdmin classes that adds more search options to its
@@ -47,6 +48,7 @@ class AdminSearchFormMixin(object):
         factory_kwargs.update(kwargs)
         return searchform_factory(model=self.model, **factory_kwargs)
 
+    # noinspection PyAttributeOutsideInit
     def get_search_form(self, **form_kwargs):
         """Instantiate the search form with the given 'form_kwargs'."""
         form_class = self.get_search_form_class()
@@ -135,9 +137,10 @@ class AdminSearchFormMixin(object):
         # Let the intended initial overwrite the filters:
         return {**changelist_filters, **initial}
 
+    # noinspection PyProtectedMember
     def _response_post_save(self, request, obj):
         """
-        Readd query parameters dropped by add_preserved_filters.
+        Restore query parameters dropped by add_preserved_filters.
 
         '_response_post_save' is django's helper method that returns the user
         back to the changelist (or index if no perms) after a save.
@@ -154,8 +157,8 @@ class AdminSearchFormMixin(object):
         when it should be:
             '?genre=176&genre=594'
 
-        To preserve all the filters, we must readd these dropped values to the
-        query string.
+        To preserve all the filters, we must restore these dropped values to
+        the query string.
         """
         # Get the '_changelist_filters' part of the querystring.
         preserved_filters = self.get_preserved_filters(request)
@@ -217,7 +220,7 @@ class AdminSearchFormMixin(object):
             errors.append(
                 checks.Info(
                     "Changelist search form is missing fields for relations:"
-                    "\n\t%s" % (rel_fields),
+                    "\n\t%s" % rel_fields,
                     obj=self
                 )
             )
@@ -238,6 +241,7 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
         return super().get_search_form_class(**kwargs)
 
 
+# noinspection PyUnresolvedReferences
 class ChangelistSearchFormMixin(object):
     """Mixin for changelist classes to incorporate the new search form."""
 

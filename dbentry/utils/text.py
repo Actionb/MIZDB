@@ -9,20 +9,21 @@ def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
     length of current string + 'width', truncating the remainder.
     Passing width=0 disables the truncation.
     """
-    rslt = ''
+    # TODO: z parameter is not used?
+    results = ''
     for v in values:
         if not v:
             continue
         item = str(v)
-        if not rslt:
-            rslt = item
+        if not results:
+            results = item
             continue
-        if not width or len(rslt) + len(item) < width:
-            rslt += sep + item
+        if not width or len(results) + len(item) < width:
+            results += sep + item
         else:
-            rslt += sep + "[...]"
+            results += sep + "[...]"
             break
-    return rslt
+    return results
 
 
 def snake_case_to_spaces(value):

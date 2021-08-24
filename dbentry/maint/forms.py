@@ -88,6 +88,7 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
             yield self[name]
 
 
+# noinspection PyProtectedMember
 def get_dupe_fields_for_model(model):
     """
     Prepare the choices for the three categories of DuplicateFieldsSelectForm.
@@ -132,7 +133,7 @@ def get_dupe_fields_for_model(model):
                 related_model._meta.verbose_name,
                 group_choices
             ))
-    # get_model_relations uses an unordered set() to collect the rels;
+    # get_model_relations uses an unordered set() to collect the relations;
     # We need to sort the group names alphabetically to establish some order.
     groups = sorted(groups, key=lambda group: group[0].lower())
     return {'base': base, 'm2m': m2m, 'reverse': groups}
@@ -165,6 +166,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         choices = {'model_select': self.get_model_list()}
         super().__init__(choices=choices, *args, **kwargs)
 
+    # noinspection PyProtectedMember
     def get_model_filters(self):
         """
         Prepare filters for the list of models returned by apps.get_models.
@@ -180,6 +182,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
             lambda model: model._meta.model_name not in self.exclude_models
         ]
 
+    # noinspection PyProtectedMember
     def get_model_list(self):
         """Return the choices for the 'model_select' field."""
         filters = self.get_model_filters()

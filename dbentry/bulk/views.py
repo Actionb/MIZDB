@@ -279,10 +279,11 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             ids.append(instance.pk)
         return ids, created, updated
 
+    # noinspection PyMethodMayBeStatic
     def next_initial_data(self, form):
         # Use the form's uncleaned data as basis for the next form.
         # form.cleaned_data contains model instances (from using ModelChoiceFields)
-        # which are not JSON serializable and thus is insuitable for storage
+        # which are not JSON serializable and thus is unsuitable for storage
         # in request.session.
         data = form.data.copy()
         # Increment jahr and jahrgang.
@@ -299,6 +300,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             data['jahrgang'] = form.cleaned_data['jahrgang'] + 1
         return data
 
+    # noinspection PyMethodMayBeStatic
     def instance_data(self, row):
         """
         Return data suitable to construct a model instance with from a given row.
@@ -401,6 +403,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             headers += ['Bereits vorhanden', 'Datenbank']
         return headers, preview_data
 
+    # noinspection PyProtectedMember
     def get_context_data(self, **kwargs):
         # Add ausgabe's meta for the template.
         return super().get_context_data(opts=_models.Ausgabe._meta)
