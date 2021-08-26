@@ -228,8 +228,13 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     """Default mixin for MIZAdmin admin models adding more search options."""
 
     def get_search_form_class(self, **kwargs):
-        # Set the default form class for searchform_factory:
-        kwargs['form'] = MIZAdminSearchForm
+        # Set the default form class for searchform_factory, unless a class is
+        # provided by kwargs or search_form_kwargs:
+        if not (
+                'form' in kwargs or
+                (self.search_form_kwargs and 'form' in self.search_form_kwargs)
+        ):
+            kwargs['form'] = MIZAdminSearchForm
         return super().get_search_form_class(**kwargs)
 
 

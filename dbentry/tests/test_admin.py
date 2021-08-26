@@ -1817,8 +1817,8 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
 
     fields_expected = [
-        'titel', 'signatur', 'size', 'datum', 'beschreibung',
-        'bemerkungen', 'reihe', 'copy_related'
+        'titel', 'plakat_id', 'size', 'datum', 'reihe', 'copy_related',
+        'beschreibung', 'bemerkungen'
     ]
     search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
@@ -1885,6 +1885,14 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
+    def test_search_form_id_cleans_prefix(self):
+        # Assert that the changelist search form can handle ID input that
+        # includes the 'P' prefix.
+        form = self.model_admin.get_search_form(
+            data={'id__in': 'P' + str(self.obj1.pk)})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['id__in'], str(self.obj1.pk))
 
 
 class TestAuthAdminMixin(TestCase):
@@ -2028,7 +2036,7 @@ class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
 
     fields_expected = [
-        'titel', 'padded_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
+        'titel', 'foto_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
         'owner', 'beschreibung', 'bemerkungen'
     ]
     search_fields_expected = ['titel', 'owner', 'beschreibung', 'bemerkungen']

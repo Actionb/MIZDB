@@ -116,6 +116,32 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.forwarded = {'ignore_me_too': ''}
         self.assertFalse(view.get_queryset().exists())
 
+    def test_get_queryset_pk(self):
+        # Assert that the queryset is filtered against primary keys if q is a
+        # numeric string.
+        view = self.get_view(self.get_request())
+        view.q = str(self.obj1.pk)
+        # Note: a queryset will be returned, since filter() is called instead
+        # of find() (which returns a list of 2-tuples).
+        self.assertIn(self.obj1, view.apply_q(self.queryset))
+        # If the query for PK returns no results, results of a query using
+        # find() should be returned.
+        view.q = '0'
+        mocked_find = Mock()
+        mocked_exists = Mock(return_value=False)
+        mocked_queryset = Mock(
+            # The calls will be qs.filter().exists().
+            # That means that qs.filter() should return an object with a
+            # mocked 'exists' - which itself must return False.
+            filter=Mock(return_value=Mock(exists=mocked_exists)),
+            find=mocked_find
+        )
+        view.apply_q(mocked_queryset)
+        self.assertTrue(mocked_find.called)
+        # Check that qs.filter was still called:
+        self.assertTrue(mocked_queryset.filter.called)
+        self.assertTrue(mocked_exists.called)
+
     def test_dispatch_sets_model(self):
         # dispatch should set the model attribute from the url caught parameter
         # 'model_name' if the view instance does not have one.

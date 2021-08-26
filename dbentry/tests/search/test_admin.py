@@ -10,6 +10,7 @@ from django.utils.http import urlencode
 from dbentry import models as _models, admin as _admin
 from dbentry.factory import batch, make
 from dbentry.fields import PartialDate
+from dbentry.search.forms import MIZAdminSearchForm
 from dbentry.tests.base import AdminTestCase
 
 
@@ -34,6 +35,62 @@ class TestAdminMixin(AdminTestCase):
                 with self.subTest(key=key, value=value):
                     self.assertIn(key, kwargs)
                     self.assertEqual(kwargs[key], value)
+
+    @mock.patch('dbentry.search.admin.searchform_factory')
+    def test_get_search_form_class_custom_form_class(self, mocked_factory):
+        # Assert that get_search_form_class calls the factory with the right
+        # 'form' kwarg.
+        # Prioritize:
+        #   1. get_search_form_class call kwargs
+        #   2. ModelAdmin search_form_kwargs
+        #   3. default
+        with mock.patch.object(self.model_admin, 'search_form_kwargs', {}):
+            # Default:
+            self.model_admin.get_search_form_class()
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], MIZAdminSearchForm,
+                msg=(
+                    "factory should be called with default form class %r if no"
+                    " other form class is provided." % MIZAdminSearchForm
+                )
+            )
+            # Prioritize the call kwarg over the default:
+            self.model_admin.get_search_form_class(form='CallKwargsForm')
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'CallKwargsForm',
+                msg=(
+                    "factory should be called with the form class provided in "
+                    "the kwargs to get_search_form_class."
+                )
+            )
+            # Prioritize the search_form_kwarg over the default:
+            self.model_admin.search_form_kwargs = {'form': 'SearchFormKwargsForm'}
+            self.model_admin.get_search_form_class()
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'SearchFormKwargsForm',
+                msg=(
+                    "factory should be called with the form class provided in "
+                    "the ModelAdmin's search_form_kwargs."
+                )
+            )
+            # Prioritize the call kwarg over the search_form_kwarg:
+            self.model_admin.search_form_kwargs = {'form': 'SearchFormKwargsForm'}
+            self.model_admin.get_search_form_class(form='CallKwargsForm')
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'CallKwargsForm',
+                msg=(
+                    "factory should be called with the form class provided in "
+                    "the kwargs to get_search_form_class."
+                )
+            )
 
     def test_search_form_added_to_response_context(self):
         # Assert that the changelist_view's response context contains

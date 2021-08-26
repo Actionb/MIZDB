@@ -295,10 +295,12 @@ class AutorAdmin(MIZModelAdmin):
         model = _models.Autor.magazin.through
         verbose_model = _models.Magazin
         extra = 1
+    class URLInLine(BaseTabularInline):
+        model = _models.AutorURL
 
     form = AutorForm
     index_category = 'Stammdaten'
-    inlines = [MagazinInLine]
+    inlines = [URLInLine, MagazinInLine]
     list_display = ['autor_name', 'person', 'kuerzel', 'magazin_string']
     list_select_related = ['person']
     search_form_kwargs = {'fields': ['magazin', 'person']}
@@ -426,10 +428,12 @@ class BandAdmin(MIZModelAdmin):
         model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):
         model = _models.Band.orte.through
+    class URLInLine(BaseTabularInline):
+        model = _models.BandURL
 
     form = BandForm
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
+    inlines = [URLInLine, GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
     save_on_top = True
     ordering = ['band_name']
@@ -498,9 +502,14 @@ class PlakatAdmin(MIZModelAdmin):
     collapse_all = True
     form = PlakatForm
     index_category = 'Archivgut'
-    list_display = ['titel', 'signatur', 'size', 'datum_localized', 'veranstaltung_string']
+    list_display = ['titel', 'plakat_id', 'size', 'datum_localized', 'veranstaltung_string']
+    readonly_fields = ['plakat_id']
     save_on_top = True
-    ordering = ['titel', 'datum', 'signatur']
+    ordering = ['titel', 'datum']
+    fields = [
+        'titel', 'plakat_id', 'size', 'datum', 'reihe', 'copy_related',
+        'beschreibung', 'bemerkungen'
+    ]
 
     inlines = [
         SchlInLine, GenreInLine, MusikerInLine, BandInLine,
@@ -512,7 +521,7 @@ class PlakatAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
-        'labels': {'reihe': 'Bildreihe'}
+        'labels': {'reihe': 'Bildreihe'},
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -540,7 +549,7 @@ class PlakatAdmin(MIZModelAdmin):
         # only has view permissions and thus can't use copy_related.
         if not (obj and hasattr(request, 'user') and 'copy_related' in fields):
             # Either this is an 'add' form or 'copy_related' isn't even
-            # included in the felds.
+            # included in the fields.
             #
             # request.user is set by AuthenticationMiddleware to either an
             # auth.User instance or an AnonymousUser instance. Only mocked
@@ -552,7 +561,8 @@ class PlakatAdmin(MIZModelAdmin):
             return fields
         has_change_perms = self.has_change_permission(request, obj)
         if not (obj.pk and has_change_perms) and 'copy_related' in fields:
-            fields.remove('copy_related')
+            # Return a copy without 'copy_related':
+            return [f for f in fields if f != 'copy_related']
         return fields
 
     def save_related(self, request, form, formsets, change):
@@ -564,6 +574,14 @@ class PlakatAdmin(MIZModelAdmin):
         if 'copy_related' in request.POST:
             copy_related_set(
                 request, obj, 'veranstaltung__band', 'veranstaltung__musiker')
+
+    def plakat_id(self, obj):
+        """ID of this instance, with a prefixed 'P' and padded with zeros."""
+        if not obj.pk:
+            return self.get_empty_value_display()
+        return "P" + str(obj.pk).zfill(6)
+    plakat_id.short_description = 'Plakat ID'
+    plakat_id.admin_order_field = 'id'
 
 
 @admin.register(_models.Buch, site=miz_site)
@@ -787,11 +805,13 @@ class MusikerAdmin(MIZModelAdmin):
         verbose_name = 'Instrument'
     class OrtInLine(BaseOrtInLine):
         model = _models.Musiker.orte.through
+    class URLInLine(BaseTabularInline):
+        model = _models.MusikerURL
 
     form = MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
-    inlines = [GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
+    inlines = [URLInLine, GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
     list_display = ['kuenstler_name', 'genre_string', 'band_string', 'orte_string']
     save_on_top = True
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
@@ -824,9 +844,11 @@ class MusikerAdmin(MIZModelAdmin):
 class PersonAdmin(MIZModelAdmin):
     class OrtInLine(BaseOrtInLine):
         model = _models.Person.orte.through
+    class URLInLine(BaseTabularInline):
+        model = _models.PersonURL
 
     index_category = 'Stammdaten'
-    inlines = [OrtInLine]
+    inlines = [URLInLine, OrtInLine]
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
@@ -843,7 +865,7 @@ class PersonAdmin(MIZModelAdmin):
     ]
 
     search_form_kwargs = {
-        'fields': ['orte', 'orte__land', 'orte__bland'],
+        'fields': ['orte', 'orte__land', 'orte__bland', 'gnd_id'],
         'forwards': {'orte__bland': 'orte__land'}
     }
 
@@ -900,9 +922,11 @@ class SchlagwortAdmin(MIZModelAdmin):
 class SpielortAdmin(MIZModelAdmin):
     class AliasInLine(BaseAliasInline):
         model = _models.SpielortAlias
+    class URLInLine(BaseTabularInline):
+        model = _models.SpielortURL
 
     list_display = ['name', 'ort']
-    inlines = [AliasInLine]
+    inlines = [URLInLine, AliasInLine]
     search_form_kwargs = {'fields': ['ort', 'ort__land']}
     ordering = ['name', 'ort']
     list_select_related = ['ort']
@@ -934,9 +958,11 @@ class VeranstaltungAdmin(MIZModelAdmin):
         verbose_model = _models.Musiker
     class AliasInLine(BaseAliasInline):
         model = _models.VeranstaltungAlias
+    class URLInLine(BaseTabularInline):
+        model = _models.VeranstaltungURL
 
     collapse_all = True
-    inlines = [AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
+    inlines = [URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
     list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
@@ -1346,13 +1372,13 @@ class FotoAdmin(MIZModelAdmin):
     collapse_all = True
     form = FotoForm
     index_category = 'Archivgut'
-    list_display = ['titel', 'padded_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
-    readonly_fields = ['padded_id']
+    list_display = ['titel', 'foto_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
+    readonly_fields = ['foto_id']
     save_on_top = True
     ordering = ['titel', 'datum']
 
     fields = [
-        'titel', 'padded_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
+        'titel', 'foto_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
         'owner', 'beschreibung', 'bemerkungen'
     ]
     inlines = [
@@ -1375,12 +1401,13 @@ class FotoAdmin(MIZModelAdmin):
                 ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
         }
 
-    def padded_id(self, obj):
+    def foto_id(self, obj):
         """Return the id of the object, padded with zeros."""
         if not obj.pk:
             return self.get_empty_value_display()
         return str(obj.pk).zfill(6)
-    padded_id.short_description = 'ID'
+    foto_id.short_description = 'Foto ID'
+    foto_id.admin_order_field = 'id'
 
     def datum_localized(self, obj):
         return obj.datum.localize()
