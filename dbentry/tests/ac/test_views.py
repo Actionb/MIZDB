@@ -7,7 +7,7 @@ from django.utils.translation import override as translation_override
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreateable, GND, GNDPaginator, Paginator)
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator)
 from dbentry.factory import make
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
@@ -194,10 +194,10 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_label(instance), 'All this testing')
 
 
-class TestACCreateable(ACViewTestCase):
+class TestACCreatable(ACViewTestCase):
 
     model = _models.Autor
-    view_class = ACCreateable
+    view_class = ACCreatable
 
     def test_creator_property(self):
         # Assert that the create property returns a ac.creator.Creator instance.
@@ -207,19 +207,19 @@ class TestACCreateable(ACViewTestCase):
         view._creator = None
         self.assertIsNone(view._creator)
 
-    def test_createable(self):
+    def test_creatable(self):
         # Assert that creatable returns True if:
         # - a new object can be created from the given parameters
         # - no objects already present in the database fit the given parameters
         request = self.get_request()
         view = self.get_view(request)
-        self.assertTrue(view.createable('Alice Testman (AT)'))
+        self.assertTrue(view.creatable('Alice Testman (AT)'))
         make(
             self.model,
             person__vorname='Alice', person__nachname='Testman',
             kuerzel='AT'
         )
-        self.assertFalse(view.createable('Alice Testman (AT)'))
+        self.assertFalse(view.creatable('Alice Testman (AT)'))
 
     @translation_override(language=None)
     def test_get_create_option(self):
@@ -242,7 +242,7 @@ class TestACCreateable(ACViewTestCase):
         create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
         self.assertEqual(len(create_option), 1)
 
-        view.createable = mockv(False)
+        view.creatable = mockv(False)
         self.assertFalse(view.get_create_option(context={}, q='Nope'))
 
     @translation_override(language=None)

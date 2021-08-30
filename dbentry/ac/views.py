@@ -161,7 +161,7 @@ class ACAusgabe(ACBase):
         return queryset.chronologic_order()
 
 
-class ACCreateable(ACBase):
+class ACCreatable(ACBase):
     """
     Add additional information to the create_option part of the response and
     enable a more involved model instance creation process by utilizing a
@@ -175,7 +175,7 @@ class ACCreateable(ACBase):
             self._creator = Creator(self.model, raise_exceptions=False)
         return self._creator
 
-    def createable(self, text, creator=None):
+    def creatable(self, text, creator=None):
         """
         Return True if a new(!) model instance would be created from 'text'.
         """
@@ -196,7 +196,7 @@ class ACCreateable(ACBase):
                 # See if we can create a new object from q.
                 # If pre-existing objects can be found using q, the create
                 # option should not be enabled.
-                if self.createable(q):
+                if self.creatable(q):
                     return True
         return False
 
