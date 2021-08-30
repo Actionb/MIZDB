@@ -494,8 +494,8 @@ class AusgabeQuerySet(CNQuerySet):
 class HumanNameQuerySet(MIZQuerySet):
     """Extension of MIZQuerySet that enables searches for 'human names'."""
 
-    # noinspection PyMethodMayBeStatic
-    def _parse_human_name(self, text):
+    @staticmethod
+    def _parse_human_name(text):
         try:
             return str(HumanName(text))
         except:

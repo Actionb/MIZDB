@@ -286,8 +286,8 @@ class AusgabenAdmin(MIZModelAdmin):
     change_status_abgeschlossen.allowed_permissions = ['change']
     change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
 
-    # noinspection PyMethodMayBeStatic
-    def has_moveto_brochure_permission(self, request):
+    @staticmethod
+    def has_moveto_brochure_permission(request):
         from django.contrib.auth import get_permission_codename
         perms = []
         for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
@@ -577,8 +577,8 @@ class PlakatAdmin(MIZModelAdmin):
         super().save_related(request, form, formsets, change)
         self._copy_related(request, form.instance)
 
-    # noinspection PyMethodMayBeStatic
-    def _copy_related(self, request, obj):
+    @staticmethod
+    def _copy_related(request, obj):
         """Copy Band and Musiker instances of Veranstaltung to this object."""
         if 'copy_related' in request.POST:
             copy_related_set(

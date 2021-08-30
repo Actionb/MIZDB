@@ -64,8 +64,8 @@ class Creator(object):
             # text attribute (which FailedObject emulates).
             return {'instance': FailedObject(str(e))}
 
-    # noinspection PyMethodMayBeStatic
-    def _get_model_instance(self, model, **data):
+    @staticmethod
+    def _get_model_instance(model, **data):
         """
         Using get(), query for an existing model instance with 'data'.
 

@@ -209,8 +209,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         kwargs['data'] = self.request.GET
         return kwargs
 
-    # noinspection PyMethodMayBeStatic
-    def _get_group_field_names(self, form, formfield_group):
+    @staticmethod
+    def _get_group_field_names(form, formfield_group):
         """
         Return the field names of fields selected in the given formfield_group.
 

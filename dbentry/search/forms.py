@@ -186,7 +186,6 @@ class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     pass
 
 
-# noinspection PyMethodMayBeStatic
 class SearchFormFactory:
     """
     Helper object around the central method 'get_search_form' to facilitate
@@ -196,13 +195,15 @@ class SearchFormFactory:
     def __call__(self, *args, **kwargs):
         return self.get_search_form(*args, **kwargs)
 
-    def get_default_lookup(self, formfield):
+    @staticmethod
+    def get_default_lookup(formfield):
         """Return default lookups for a given formfield instance."""
         if isinstance(formfield.widget, forms.SelectMultiple):
             return ['in']
         return []
 
-    def resolve_to_dbfield(self, model, field_path):
+    @staticmethod
+    def resolve_to_dbfield(model, field_path):
         """
         Follow the given 'field_path' from 'model' and return the final concrete
         model field along the path and the path's remainder (lookups).
@@ -214,7 +215,8 @@ class SearchFormFactory:
         """
         return search_utils.get_dbfield_from_path(model, field_path)
 
-    def formfield_for_dbfield(self, db_field, **kwargs):
+    @staticmethod
+    def formfield_for_dbfield(db_field, **kwargs):
         """
         Create a formfield for the given model field 'db_field' using the
         keyword arguments provided.

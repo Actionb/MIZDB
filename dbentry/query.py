@@ -41,8 +41,8 @@ class BaseSearchQuery(object):
         except FieldDoesNotExist:
             return None
 
-    # noinspection PyMethodMayBeStatic
-    def clean_string(self, s):
+    @staticmethod
+    def clean_string(s):
         """
         Remove whitespaces from string 's' and prepare it for case insensitive
         comparison.
