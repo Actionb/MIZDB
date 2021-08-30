@@ -37,12 +37,12 @@ class TestRuntimeFactoryMixin(MyTestCase):
         from dbentry import factory
         self.assertIn('technik', factory._cache)
 
-    def test_new_factory_wo_related_model(self):
+    def test_new_factory_without_related_model(self):
         # factory property should raise an AttributeError if the factory's
         # related_model attribute is None and a new factory has to be created.
         fac = self.dummy_factory(self.local_factory_module + 'beep', related_model=None)
         with self.assertRaises(AttributeError):
-            fac.factory
+            fac.factory  # noqa
 
 
 class TestUniqueFaker(MyTestCase):
@@ -267,12 +267,14 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.instrument.factory._meta.model, _models.Instrument)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)
 
-    def get_mocked_field(self, field_name, model, related_model):
+    @staticmethod
+    def get_mocked_field(field_name, model, related_model):
         mocked_field = Mock(model=model, related_model=related_model)
         mocked_field.configure_mock(name=field_name)
         return mocked_field
 
-    def get_mocked_rel(self, rel_name, accessor_name, **kwargs):
+    @staticmethod
+    def get_mocked_rel(rel_name, accessor_name, **kwargs):
         mocked_rel = Mock(get_accessor_name=Mock(return_value=accessor_name), **kwargs)
         mocked_rel.configure_mock(name=rel_name)
         return mocked_rel

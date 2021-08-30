@@ -247,7 +247,7 @@ class AusgabeQuerySet(CNQuerySet):
 
     def update(self, **kwargs):
         if self.chronologically_ordered:
-            # Trying to update a chronologically ordered queryset seems to fail.
+            # FIXME: Trying to update a chronologically ordered queryset seems to fail.
             # A FieldError is raised, complaining about a missing field. That
             # field should exist as an annotation but just doesn't.
             # Proper solution to this would be check the update kwargs for
@@ -403,11 +403,11 @@ class AusgabeQuerySet(CNQuerySet):
             # Already ordered!
             return self
 
-        # A chronologic order is (mostly) consistent ONLY within
+        # A chronological order is (mostly) consistent ONLY within
         # the ausgabe_set of one particular magazin. If the queryset contains
         # the ausgaben of more than one magazin, we may end up replacing one
         # 'poor' ordering (the default one) with another poor, but more
-        # expensive chronologic one. Return self with some form of ordering.
+        # expensive chronological one. Return self with some form of ordering.
         if self.only('magazin').distinct().values_list('magazin').count() != 1:
             # This condition is also True if self is an empty queryset.
             if ordering:

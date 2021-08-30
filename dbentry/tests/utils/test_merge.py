@@ -93,7 +93,7 @@ class TestMergingVideo(MergingTestCase):
     def test_related_changes(self):
         # Assert that merge adds all the related objects of the other objects
         # to original.
-        new_original, update_data = utils.merge_records(
+        _new_original, _update_data = utils.merge_records(
             self.original,
             self.queryset,
             expand_original=False,

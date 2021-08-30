@@ -14,6 +14,7 @@ from dbentry.query import (
     BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery)
 
 
+# noinspection PyUnresolvedReferences
 class TestMIZQuerySet(DataTestCase):
 
     model = _models.Band
@@ -30,6 +31,7 @@ class TestMIZQuerySet(DataTestCase):
     ]
     fields = ['band_name', 'genre__genre', 'bandalias__alias']
 
+    # noinspection PyPep8Naming
     @patch.object(
         ValuesDictSearchQuery, 'search',
         return_value=('ValuesDictSearchQuery', False)
@@ -42,7 +44,7 @@ class TestMIZQuerySet(DataTestCase):
         BaseSearchQuery, 'search',
         return_value=('BaseSearchQuery', False)
     )
-    def test_find_strategy_chosen(self, MockBSQ, MockPFSQ, MockVDSQ):
+    def test_find_strategy_chosen(self, _MockBSQ, _MockPFSQ, _MockVDSQ):
         # Assert that 'find' chooses the correct search strategy dependent on the
         # model's properties.
         model = Mock(name_field='', primary_search_fields=[], search_field_suffixes={})
@@ -78,6 +80,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
             # 'randomize' the pk values so we cannot rely on them for ordering
             return possible_pks.pop(random.randrange(0, len(possible_pks) - 1))
 
+        # noinspection PyShadowingNames
         def get_date(month, year):
             return "{year}-{month}-{day}".format(
                 year=str(year),
@@ -120,7 +123,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
         # still need to be refreshed.
         for o in self.all:
             o.refresh_from_db()
-        super().setUp
+        super().setUp()
         self.queryset = self.model.objects.all()
 
     def test_a_num_queries(self):
@@ -283,6 +286,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
             self.queryset.chronologic_order().update(beschreibung='abc')
 
 
+# noinspection PyUnresolvedReferences
 class TestAusgabeIncrementJahrgang(DataTestCase):
 
     model = _models.Ausgabe
@@ -306,7 +310,7 @@ class TestAusgabeIncrementJahrgang(DataTestCase):
             'ausgabenum__num': [6],
         },
         {  # obj4: start_jg
-            # Test the differentation of jahr/num/monat values when the object
+            # Test the differentiation of jahr/num/monat values when the object
             # spans more than one year.
             'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000, 2001],
             'e_datum': '2000-12-31', 'ausgabemonat__monat__ordinal': [12, 1],
@@ -613,6 +617,7 @@ class TestCNQuerySet(DataTestCase):
             list(self.queryset.only('_name').filter(_name='Testinfo').values_list('_name'))
 
 
+# noinspection PyUnresolvedReferences
 class TestBuchQuerySet(DataTestCase):
 
     model = _models.Buch
@@ -639,6 +644,7 @@ class TestBuchQuerySet(DataTestCase):
         self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))
 
 
+# noinspection PyUnresolvedReferences
 class TestValuesDict(DataTestCase):
 
     model = _models.Band
@@ -698,7 +704,7 @@ class TestValuesDict(DataTestCase):
             ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')),
             ('bandalias__alias', ('Coffee',))
         )
-        # Iterate through the expected_values and compare them individuallly;
+        # Iterate through the expected_values and compare them individually;
         # full tuple comparison includes order equality - and we can't predict
         # the order of the tuples.
         for expected_values in expected:
@@ -804,6 +810,7 @@ class TestHumanNameQuerySet(MyTestCase):
 class TestFindSpecialCases(DataTestCase):
 
     model = _models.Band
+    # noinspection SpellCheckingInspection
     raw_data = [{'band_name': 'Ümlautße'}]
 
     def test_find_sharp_s(self):
@@ -814,7 +821,7 @@ class TestFindSpecialCases(DataTestCase):
             results, msg="Expected to find the instance with 'ß' in its name.")
 
     def test_find_umlaute(self):
-        # SQLlite performs case sensitive searches for strings containing chars
+        # SQLite performs case sensitive searches for strings containing chars
         # outside the ASCII range (such as Umlaute ä, ö, ü).
         for q in ('ü', 'Ü'):
             with self.subTest(q=q):

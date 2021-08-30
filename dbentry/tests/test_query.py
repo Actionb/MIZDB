@@ -9,6 +9,7 @@ from dbentry.query import (
 from dbentry.tests.base import DataTestCase
 
 
+# noinspection SpellCheckingInspection
 class QueryTestCase(DataTestCase):
 
     model = _models.Band
@@ -138,7 +139,6 @@ class TestBaseQuery(QueryTestCase):
         lookup = '__iexact'
 
         q = 'AC/DC'
-        expected = []
         query = self.make_query()
         self.assertFalse(query.exact_search('bandalias__alias', q))
         self.assertFalse(query.exact_match)
@@ -161,7 +161,6 @@ class TestBaseQuery(QueryTestCase):
         lookup = '__istartswith'
 
         q = 'AC/DCS'
-        expected = []
         self.assertFalse(self.make_query().startsw_search('band_name', q))
 
         q = 'AC/'
@@ -184,7 +183,6 @@ class TestBaseQuery(QueryTestCase):
         lookup = '__icontains'
 
         q = 'AC/DCS'
-        expected = []
         self.assertFalse(self.make_query().contains_search('band_name', q))
 
         q = 'C/D'
@@ -200,9 +198,9 @@ class TestBaseQuery(QueryTestCase):
         self.assertEqual(sorted(query.contains_search(search_field, q)), sorted(expected))
 
     def test_search(self):
-        def extract_ids(search_results):
+        def extract_ids(results):
             ids = []
-            for result in search_results:
+            for result in results:
                 if isinstance(result, tuple):
                     ids.append(result[0])
                 else:
@@ -261,6 +259,7 @@ class TestBaseQuery(QueryTestCase):
         )
 
 
+# noinspection SpellCheckingInspection
 class TestPrimaryFieldsQuery(TestBaseQuery):
 
     query_class = PrimaryFieldsSearchQuery
@@ -406,11 +405,12 @@ class TestNameFieldQuery(TestPrimaryFieldsQuery):
         return super().append_suffix(query, new_objs, search_field, lookup)
 
     def test_init(self):
-        # Set name_field from primary_search_fields or seconary_search_fields
+        # Set name_field from primary_search_fields or secondary_search_fields
         self.assertEqual(self.make_query(name_field='').name_field, 'band_name')
         self.assertEqual(self.make_query(primary_search_fields=[]).name_field, 'band_name')
 
 
+# noinspection SpellCheckingInspection
 class TestValuesDictQuery(TestNameFieldQuery):
 
     query_class = ValuesDictSearchQuery
@@ -546,8 +546,8 @@ class TestValuesDictQuery(TestNameFieldQuery):
         # Assert that the strategy's values_dict is reset
         query = self.make_query()
         query.values_dict = {1: 'invalid'}
-        rslt = query.search('rose')
-        self.assertTrue(len(rslt) > 1)
+        result = query.search('rose')
+        self.assertTrue(len(result) > 1)
 
     def test_num_queries(self):
         q = 'Rose'

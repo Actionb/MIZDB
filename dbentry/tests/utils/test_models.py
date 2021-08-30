@@ -10,6 +10,7 @@ from dbentry.factory import make
 from dbentry.tests.base import MyTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
@@ -86,6 +87,7 @@ class TestModelUtils(MyTestCase):
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
+
         self.assertEqual(required_field_names(_models.Person), ['nachname'])
         self.assertEqual(required_field_names(_models.Musiker), ['kuenstler_name'])
         self.assertEqual(required_field_names(_models.Genre), ['genre'])
@@ -100,7 +102,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Provenienz), ['geber'])
         self.assertEqual(required_field_names(_models.Bestand), ['lagerort'])
 
-    def test_get_updateable_fields(self):
+    def test_get_updatable_fields(self):
         obj = make(_models.Artikel)
         self.assertEqual(
             utils.get_updatable_fields(obj),
@@ -157,6 +159,7 @@ class TestModelUtils(MyTestCase):
             utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')
 
 
+# noinspection PyUnresolvedReferences
 class TestCleanPerms(MyTestCase):
 
     def setUp(self):
@@ -217,7 +220,7 @@ class TestCleanPerms(MyTestCase):
         p.save()
         stream = StringIO()
         mocked_get_codename = Mock(return_value='add_actuallyincorrect')
-        with patch.object(auth,'get_permission_codename', new=mocked_get_codename):
+        with patch.object(auth, 'get_permission_codename', new=mocked_get_codename):
             with self.patcher(new=Mock(return_value=[p])):
                 utils.clean_permissions(stream)
                 self.assertFalse(stream.getvalue())

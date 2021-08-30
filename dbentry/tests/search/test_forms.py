@@ -33,10 +33,12 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_for_dbfield_dal_m2m(self):
         # Assert that formfield_for_dbfield prepares an
         # autocomplete ready formfield for many to many relations.
+        # noinspection PyUnresolvedReferences
         dbfield = _models.Artikel._meta.get_field('genre')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2Multiple)
+        # noinspection PyUnresolvedReferences
         self.assertEqual(widget.model_name, _models.Genre._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
         self.assertFalse(widget.create_field, msg=msg)

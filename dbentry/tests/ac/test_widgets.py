@@ -14,6 +14,7 @@ from dbentry.ac.widgets import (
 from dbentry.forms import ArtikelForm
 from dbentry.tests.base import MyTestCase
 
+# noinspection PyPackageRequirements
 from dal import autocomplete, forward
 
 
@@ -73,7 +74,7 @@ class TestEasyWidgetWrapper(MyTestCase):
             context = self.widget.get_context('Beep', ['1'], {'id': 1})
             self.assertNotIn('can_delete_related', context)
 
-    def test_wrapper_includes_relatedobject_js(self):
+    def test_wrapper_includes_related_object_js(self):
         # Assert that the wrapped widget includes the RelatedObjectLookups.js
         self.assertIn('admin/js/admin/RelatedObjectLookups.js', self.widget.media._js)
 
@@ -113,6 +114,7 @@ class TestWidgetCaptureMixin(MyTestCase):
 
         # Assert that 'url' kwarg defaults to 'accapture'
         self.assertEqual(self.cls()._url, 'accapture')
+        # noinspection SpellCheckingInspection
         self.assertEqual(self.cls(url='nocapture')._url, 'nocapture')
 
     def test_get_url(self):
@@ -132,6 +134,7 @@ class TestWidgetCaptureMixin(MyTestCase):
         o.create_field = None
         self.assertEqual(o._get_url(), '/admin/ac/buch/')
 
+        # noinspection SpellCheckingInspection
         o._url = 'averyrandomurl'
         with self.assertRaises(NoReverseMatch):
             o._get_url()
@@ -143,7 +146,7 @@ class TestMakeWidget(MyTestCase):
         widget = make_widget(widget_class=widgets.TextInput)
         self.assertIsInstance(widget, widgets.TextInput)
 
-    def test_selectmultiple(self):
+    def test_select_multiple(self):
         self.assertIsInstance(
             make_widget(model=_models.Genre, multiple=False), MIZModelSelect2)
         self.assertIsInstance(
@@ -206,7 +209,8 @@ class TestMakeWidget(MyTestCase):
         # Assert that make_widget preserves 'attrs' passed in via kwargs even
         # though the forwarded bit messes with that.
         class DummyWidget(MIZModelSelect2):
-            def __init__(self, *args, **kwargs):
+            # noinspection PyMissingConstructor
+            def __init__(self, *_args, **kwargs):
                 self.untouched = kwargs.get('attrs', {}).pop('untouched', None)
         widget = make_widget(
             model=_models.Ausgabe, widget_class=DummyWidget,

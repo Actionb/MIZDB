@@ -13,6 +13,7 @@ from dbentry.factory import make
 from dbentry.tests.base import DataTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestBaseModel(DataTestCase):
 
     model = _models.Artikel
@@ -25,8 +26,10 @@ class TestBaseModel(DataTestCase):
 
     def test_qs_exception(self):
         with self.assertRaises(TypeError):
+            # noinspection PyTypeChecker
             self.model.qs(self.model)
 
+    # noinspection SpellCheckingInspection
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
         obj = make(_models.Video, titel="lotsa testing", quelle="from the computer", medium_qty=0)
@@ -40,6 +43,7 @@ class TestBaseModel(DataTestCase):
         self.assertEqual(obj.__str__(), "lotsa testing from the computer")
 
 
+# noinspection PyUnresolvedReferences
 class TestBaseM2MModel(DataTestCase):
 
     model = _m2m.m2m_audio_musiker
@@ -96,7 +100,7 @@ class TestComputedNameModel(DataTestCase):
     def test_name_default(self):
         self.assertEqual(str(self.obj1), self.default)
 
-    def test_update_name_notexplodes_on_no_pk_and_forced(self):
+    def test_update_name_no_pk_and_forced(self):
         # Unsaved instances should be ignored, as update_name relies on filtering
         # queries with the instance's pk.
         obj = _models.Ausgabe(magazin=self.mag)
@@ -224,6 +228,8 @@ class TestComputedNameModel(DataTestCase):
                 "listing them in name_composing_fields."
             )
 
+
+# noinspection PyUnresolvedReferences
 class TestModelArtikel(DataTestCase):
 
     model = _models.Artikel
@@ -264,6 +270,7 @@ class TestModelArtikel(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAudio(DataTestCase):
 
     model = _models.Audio
@@ -442,10 +449,10 @@ class TestModelAusgabe(DataTestCase):
         )
         name_data = {
             'magazin__ausgaben_merkmal': ('num', ),
-            'beschreibung': ('Woops!', )
+            'beschreibung': ('Whoops!', )
         }
         self.assertEqual(
-            self.model._get_name(**name_data), 'Woops!',
+            self.model._get_name(**name_data), 'Whoops!',
             msg="get_name should ignore ausgaben_merkmal if the attribute "
             "it is referring to is not set."
         )
@@ -487,6 +494,7 @@ class TestModelAusgabe(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeJahr(DataTestCase):
 
     model = _models.AusgabeJahr
@@ -500,6 +508,7 @@ class TestModelAusgabeJahr(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['jahr'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeLnum(DataTestCase):
 
     model = _models.AusgabeLnum
@@ -513,6 +522,7 @@ class TestModelAusgabeLnum(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['lnum'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeMonat(DataTestCase):
 
     model = _models.AusgabeMonat
@@ -532,6 +542,7 @@ class TestModelAusgabeMonat(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeNum(DataTestCase):
 
     model = _models.AusgabeNum
@@ -545,6 +556,7 @@ class TestModelAusgabeNum(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['num'])
 
 
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelAutor(DataTestCase):
 
@@ -592,6 +604,7 @@ class TestModelAutor(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBand(DataTestCase):
 
     model = _models.Band
@@ -621,6 +634,7 @@ class TestModelBand(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBandAlias(DataTestCase):
 
     model = _models.BandAlias
@@ -654,6 +668,7 @@ class TestModelBestand(DataTestCase):
                 self.assertIsInstance(obj.bestand_object, expected_model)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelPlakat(DataTestCase):
 
     model = _models.Plakat
@@ -679,6 +694,7 @@ class TestModelPlakat(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBildreihe(DataTestCase):
 
     model = _models.Bildreihe
@@ -690,6 +706,7 @@ class TestModelBildreihe(DataTestCase):
         self.assertEqual(self.model.get_search_fields(), ['name'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBrochure(DataTestCase):
 
     model = _models.Brochure
@@ -714,6 +731,7 @@ class TestModelBrochure(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBuch(DataTestCase):
 
     model = _models.Buch
@@ -735,6 +753,7 @@ class TestModelBuch(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelSchriftenreihe(DataTestCase):
 
     model = _models.Schriftenreihe
@@ -746,6 +765,7 @@ class TestModelSchriftenreihe(DataTestCase):
         self.assertEqual(self.model.get_search_fields(), ['name'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBundesland(DataTestCase):
 
     model = _models.Bundesland
@@ -768,6 +788,7 @@ class TestModelBundesland(DataTestCase):
         self.assertEqual(self.model.search_fields_suffixes, {'code': 'Bundesland-Code'})
 
 
+# noinspection PyUnresolvedReferences
 class TestModelDatei(DataTestCase):
 
     model = _models.Datei
@@ -793,6 +814,7 @@ class TestModelDatei(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelDokument(DataTestCase):
 
     model = _models.Dokument
@@ -813,6 +835,7 @@ class TestModelDokument(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelGeber(DataTestCase):
 
     model = _models.Geber
@@ -832,6 +855,7 @@ class TestModelGeber(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelGenre(DataTestCase):
 
     model = _models.Genre
@@ -854,6 +878,7 @@ class TestModelGenre(DataTestCase):
         self.assertEqual(self.model.search_fields_suffixes, {'genrealias__alias': 'Alias'})
 
 
+# noinspection PyUnresolvedReferences
 class TestModelGenreAlias(DataTestCase):
 
     model = _models.GenreAlias
@@ -863,6 +888,7 @@ class TestModelGenreAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelHerausgeber(DataTestCase):
 
     model = _models.Herausgeber
@@ -879,6 +905,7 @@ class TestModelHerausgeber(DataTestCase):
         self.assertEqual(self.model.get_search_fields(), ['herausgeber'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelInstrument(DataTestCase):
 
     model = _models.Instrument
@@ -904,6 +931,7 @@ class TestModelInstrument(DataTestCase):
         self.assertEqual(self.model.search_fields_suffixes, {'kuerzel': 'Kürzel'})
 
 
+# noinspection PyUnresolvedReferences
 class TestModelKalender(DataTestCase):
 
     model = _models.Kalender
@@ -928,6 +956,7 @@ class TestModelKalender(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelKatalog(DataTestCase):
 
     model = _models.Katalog
@@ -952,6 +981,7 @@ class TestModelKatalog(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelLagerort(DataTestCase):
 
@@ -1002,6 +1032,7 @@ class TestModelLagerort(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelLand(DataTestCase):
 
     model = _models.Land
@@ -1049,6 +1080,7 @@ class TestModelMagazin(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelMemorabilien(DataTestCase):
 
     model = _models.Memorabilien
@@ -1069,6 +1101,7 @@ class TestModelMemorabilien(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelMonat(DataTestCase):
 
     model = _models.Monat
@@ -1091,6 +1124,7 @@ class TestModelMonat(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelMusiker(DataTestCase):
 
     model = _models.Musiker
@@ -1125,6 +1159,7 @@ class TestModelMusiker(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelMusikerAlias(DataTestCase):
 
     model = _models.MusikerAlias
@@ -1134,6 +1169,7 @@ class TestModelMusikerAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelOrt(DataTestCase):
 
@@ -1165,6 +1201,7 @@ class TestModelOrt(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelPerson(DataTestCase):
 
@@ -1201,6 +1238,7 @@ class TestModelPerson(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelPlattenfirma(DataTestCase):
 
     model = _models.Plattenfirma
@@ -1220,6 +1258,7 @@ class TestModelPlattenfirma(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelProvenienz(DataTestCase):
 
     model = _models.Provenienz
@@ -1239,6 +1278,7 @@ class TestModelProvenienz(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelSchlagwort(DataTestCase):
 
     model = _models.Schlagwort
@@ -1262,6 +1302,7 @@ class TestModelSchlagwort(DataTestCase):
             self.model.search_fields_suffixes, {'schlagwortalias__alias': 'Alias'})
 
 
+# noinspection PyUnresolvedReferences
 class TestModelSchlagwortAlias(DataTestCase):
 
     model = _models.SchlagwortAlias
@@ -1271,6 +1312,7 @@ class TestModelSchlagwortAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelSpielort(DataTestCase):
 
     model = _models.Spielort
@@ -1302,6 +1344,7 @@ class TestModelSpielort(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelSpielortAlias(DataTestCase):
 
     model = _models.SpielortAlias
@@ -1311,6 +1354,7 @@ class TestModelSpielortAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelTechnik(DataTestCase):
 
     model = _models.Technik
@@ -1331,6 +1375,7 @@ class TestModelTechnik(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelVeranstaltung(DataTestCase):
 
     model = _models.Veranstaltung
@@ -1368,6 +1413,7 @@ class TestModelVeranstaltung(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelVeranstaltungAlias(DataTestCase):
 
     model = _models.VeranstaltungAlias
@@ -1377,6 +1423,7 @@ class TestModelVeranstaltungAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelVeranstaltungsreihe(DataTestCase):
 
     model = _models.Veranstaltungsreihe
@@ -1391,6 +1438,7 @@ class TestModelVeranstaltungsreihe(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelVerlag(DataTestCase):
 
     model = _models.Verlag
@@ -1410,6 +1458,7 @@ class TestModelVerlag(DataTestCase):
         self.assertFalse(self.model.search_fields_suffixes)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelVideo(DataTestCase):
 
     model = _models.Video
@@ -1430,6 +1479,7 @@ class TestModelVideo(DataTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestModelBaseBrochure(DataTestCase):
 
     model = _models.BaseBrochure
@@ -1449,6 +1499,7 @@ class TestModelBaseBrochure(DataTestCase):
                 self.assertIsInstance(resolved, child_model)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelFoto(DataTestCase):
 
     model = _models.Foto

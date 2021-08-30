@@ -35,7 +35,7 @@ class InvalidComponent(StdValidationError):
 
 
 def _validate(std, number):
-    # Reraise the exceptions as django.ValidationErrors
+    # Re-raise the exceptions as django.ValidationErrors
     try:
         std.validate(number)
     except stdnum_exceptions.InvalidLength:

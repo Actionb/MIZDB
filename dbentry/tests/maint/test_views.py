@@ -45,7 +45,7 @@ class TestModelSelectView(ViewTestCase):
         self.assertEqual(response.url, '/admin/')
 
     def test_get_success_url(self):
-        # Assert that get_success_url returns a resolveable url.
+        # Assert that get_success_url returns a resolvable url.
         view = self.get_view(self.get_request(), next_view='admin:index')
         with patch.object(view, 'get_next_view_kwargs', return_value={}):
             self.assertEqual(view.get_success_url(), '/admin/')
@@ -75,7 +75,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             cls.test_data.append(obj)
         super().setUpTestData()
 
-    def test_availabilty(self):
+    def test_availability(self):
         url = reverse('dupes', kwargs={'model_name': 'band'})
         self.assertTrue(resolve(url))
 
@@ -94,6 +94,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         with self.assertRaises(TypeError):
             view.setup(request)
         with self.assertRaises(ValueError):
+            # noinspection SpellCheckingInspection
             view.setup(request, model_name='WOOP')
 
     def test_post_redirects_to_self_after_merging(self):
@@ -108,6 +109,7 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
             response = view.post(request)
             self.assertEqual(response.url, path)
 
+    # noinspection PyUnresolvedReferences
     def test_post_calls_merge_view(self):
         # Assert that a post request will call the merge view.
         model_admin = utils.get_model_admin_for_model(self.model)
@@ -293,7 +295,7 @@ class TestUnusedObjectsView(ViewTestCase):
 
     @patch.object(UnusedObjectsView, 'build_items')
     @patch.object(UnusedObjectsView, 'render_to_response')
-    def test_get_form_invalid(self, mocked_render, mocked_build_items):
+    def test_get_form_invalid(self, mocked_render, _mocked_build_items):
         # Assert that the get response with an invalid form does not contain
         # the context variable 'items'.
         data = {'get_unused': True, 'model_select': 'NotAModel', 'limit': 0}
@@ -307,7 +309,7 @@ class TestUnusedObjectsView(ViewTestCase):
 
     @patch.object(UnusedObjectsView, 'build_items')
     @patch.object(UnusedObjectsView, 'render_to_response')
-    def test_get_form_valid(self, mocked_render, mocked_build_items):
+    def test_get_form_valid(self, mocked_render, _mocked_build_items):
         # Assert that the get response with a valid form contains the
         # context variable 'items'.
         data = {'get_unused': True, 'model_select': 'artikel', 'limit': 0}
@@ -342,7 +344,7 @@ class TestUnusedObjectsView(ViewTestCase):
 
     @patch.object(UnusedObjectsView, 'build_items')
     @patch.object(UnusedObjectsView, 'render_to_response')
-    def test_get_changelist_link(self, mocked_render, mocked_build_items):
+    def test_get_changelist_link(self, mocked_render, _mocked_build_items):
         # Assert that the response's context contains a link to the changelist
         # listing all the unused objects.
         data = {'get_unused': True, 'model_select': 'genre', 'limit': 0}
@@ -384,6 +386,7 @@ class TestDuplicates(DataTestCase):
                 instances.append(dupe.instance)
         return instances
 
+    # noinspection PyUnresolvedReferences
     def test_find_duplicates(self):
         # Assert that the three duplicates instances are found.
         duplicates = self.get_duplicate_instances(['kuenstler_name'])
@@ -400,6 +403,7 @@ class TestDuplicates(DataTestCase):
             with self.subTest(obj=obj):
                 self.assertNotIn(obj, duplicates, msg=msg % obj)
 
+    # noinspection PyUnresolvedReferences
     def test_duplicates_m2m(self):
         # Assert that duplicates can be found by comparing m2m fields.
         g1 = make(_models.Genre)
@@ -429,6 +433,7 @@ class TestDuplicates(DataTestCase):
         self.assertNotIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
+    # noinspection PyUnresolvedReferences
     def test_duplicates_reverse_fk(self):
         # Assert that duplicates can be found by comparing reverse FK fields.
         # Add the same alias to both obj1 and obj2:
@@ -456,6 +461,7 @@ class TestDuplicates(DataTestCase):
         self.assertNotIn(self.obj2, duplicates)
         self.assertNotIn(self.obj3, duplicates)
 
+    # noinspection PyUnresolvedReferences
     def test_duplicates_reverse_fk_joins(self):
         # Assert that the number of duplicates found is not affected by table joins.
         self.obj1.musikeralias_set.create(alias='Beep')

@@ -36,8 +36,9 @@ class TestYearField(MyTestCase):
         self.assertEqual(max_validator.limit_value, model_field.MAX_YEAR)
 
 
-# Reminder: the field's cleaning methods will reraise any ValidationError subtypes as a new
+# Reminder: the field's cleaning methods will re-raise any ValidationError subtypes as a new
 # ValidationError, meaning we cannot test for the correct subtype here.
+# noinspection PyUnresolvedReferences
 class StdNumFieldTestsMixin(object):
 
     # the data necessary to create a partial prototype of a model instance:
@@ -51,8 +52,8 @@ class StdNumFieldTestsMixin(object):
         instance_data.update(kwargs)
         return self.model(**instance_data)
 
-    def test_empty_values_modelfield(self):
-        # Assert that 'empty' values are left untouched by the modelfield.
+    def test_empty_values_model_field(self):
+        # Assert that 'empty' values are left untouched by the model field.
         for empty_value in self.model_field.empty_values:
             with self.subTest(value=empty_value):
                 self.assertEqual(self.model_field.to_python(empty_value), empty_value)
@@ -139,7 +140,7 @@ class StdNumFieldTestsMixin(object):
     def test_modelform_uses_pretty_format(self):
         # Assert that the value displayed on a modelform is the 'pretty' and
         # not the compact version (if applicable).
-        # We're using str(boundfield) for this as this renders the widget for
+        # We're using str(bound_field) for this as this renders the widget for
         # the formfield. Note that this test will always succeed for EAN fields
         # as they have nothing but compact.
         model_form_class = forms.modelform_factory(self.model, fields=[self.model_field.name])
@@ -196,6 +197,7 @@ class StdNumFieldTestsMixin(object):
                 self.assertFalse(model_form.has_changed(), msg=msg)
 
 
+# noinspection PyUnresolvedReferences
 class TestStdNumField(MyTestCase):
 
     def test_formfield_widget(self):
@@ -214,6 +216,7 @@ class TestStdNumField(MyTestCase):
                 self.assertTrue(isinstance(formfield_widget, StdNumWidget))
 
 
+# noinspection PyUnresolvedReferences
 class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.Buch
     model_field = _models.Buch._meta.get_field('ISBN')
@@ -330,6 +333,7 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
         self.assertEqual(formfield.max_length, 17)
 
 
+# noinspection PyUnresolvedReferences
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.Buch
     model_field = _models.Buch._meta.get_field('EAN')
@@ -387,6 +391,7 @@ class TestPartialDate(MyTestCase):
         self.assertAttrsSet(PartialDate(month=0, day=0), None, None, None, '')
         self.assertAttrsSet(PartialDate(year=0, month=0, day=0), None, None, None, '')
 
+    # noinspection PyTypeChecker
     def test_new_with_string_kwargs(self):
         # Full date
         self.assertAttrsSet(
@@ -720,7 +725,8 @@ class TestPartialDateFormField(MyTestCase):
                 cleaned = field.clean(data)
             self.assertEqual(cleaned, PartialDate(*data))
 
-    def prepare_form_data(self, data):
+    @staticmethod
+    def prepare_form_data(data):
         # The form data for a MultiValueField should be of the format:
         # <field_name>_[0,1...]
         return {
@@ -804,9 +810,9 @@ class TestPartialDateFormField(MyTestCase):
                 self.assertIn('widget', kwargs)
                 self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
 
-        for invald_widget in (None, forms.NumberInput, forms.NumberInput()):
+        for invalid_widget in (None, forms.NumberInput, forms.NumberInput()):
             with self.subTest():
-                PartialDateFormField(widget=invald_widget)
+                PartialDateFormField(widget=invalid_widget)
                 args, kwargs = mocked_init.call_args
                 self.assertIn('widget', kwargs)
                 self.assertIsInstanceOrSubclass(kwargs['widget'], PartialDateWidget)
