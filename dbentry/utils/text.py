@@ -9,7 +9,10 @@ def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
     length of current string + 'width', truncating the remainder.
     Passing width=0 disables the truncation.
     """
-    # TODO: z parameter is not used?
+    # FIXME: z-fill was dropped in ca7fdee952ed1965ed320a42ef7892db3affdde8
+    # and I don't really know why. Without z-fill, sorting Ausgabe instances by
+    # their '_name' (i.e. alphabetically) will be poor:
+    # '2000-11' comes before '2000-2' (should be: '2000-02')
     results = ''
     for v in values:
         if not v:
