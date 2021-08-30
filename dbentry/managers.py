@@ -252,7 +252,7 @@ class AusgabeQuerySet(CNQuerySet):
             # field should exist as an annotation but just doesn't.
             # Proper solution to this would be check the update kwargs for
             # expressions that require ordering and handle those separately
-            # somehow - but considering that chronologic_order's days are almost
+            # somehow - but considering that chronological_order's days are almost
             # numbered, this is the quick and dirty way of fixing the problem:
             return self.order_by().update(**kwargs)
         return super().update(**kwargs)
@@ -277,7 +277,7 @@ class AusgabeQuerySet(CNQuerySet):
         Returns a dictionary that was used to update the jahrgang values;
         it maps jahrgang to list of ids.
         """
-        start = start_obj or self.chronologic_order().first()
+        start = start_obj or self.chronological_order().first()
         start_date = start.e_datum
         years = start.ausgabejahr_set.values_list('jahr', flat=True)
         if start_date:
@@ -393,9 +393,8 @@ class AusgabeQuerySet(CNQuerySet):
 
         return update_dict
 
-    def chronologic_order(self, *ordering):
+    def chronological_order(self, *ordering):
         """Return this queryset chronologically ordered."""
-        # TODO: rename to chronological_order
         # TODO: check out nulls_first and nulls_last parameters of
         # Expression.asc() and desc() (added in 1.11) to fix the nulls messing
         # up the ordering.

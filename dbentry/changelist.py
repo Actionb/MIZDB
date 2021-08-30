@@ -34,10 +34,10 @@ class AusgabeChangeList(MIZChangeList):
 
     def get_queryset(self, request):
         """
-        Apply chronologic_order to the result queryset unless manually-specified
+        Apply chronological_order to the result queryset unless manually-specified
         ordering is available from the query string.
         """
         if ORDER_VAR in self.params:
             return super().get_queryset(request)
         else:
-            return super().get_queryset(request).chronologic_order()
+            return super().get_queryset(request).chronological_order()

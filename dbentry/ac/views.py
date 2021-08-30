@@ -158,7 +158,7 @@ class ACAusgabe(ACBase):
     model = _models.Ausgabe
 
     def do_ordering(self, queryset):
-        return queryset.chronologic_order()
+        return queryset.chronological_order()
 
 
 class ACCreatable(ACBase):

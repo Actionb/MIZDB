@@ -68,7 +68,7 @@ class TestMIZQuerySet(DataTestCase):
         self.assertFalse(self.queryset.find('Jazz'))
 
 
-class TestAusgabeChronologicOrder(DataTestCase):
+class TestAusgabeChronologicalOrder(DataTestCase):
 
     model = _models.Ausgabe
 
@@ -127,59 +127,59 @@ class TestAusgabeChronologicOrder(DataTestCase):
         self.queryset = self.model.objects.all()
 
     def test_a_num_queries(self):
-        # Assert that a standard chronologic_order call does the expected
+        # Assert that a standard chronological_order call does the expected
         # number of queries.
         # 3 queries:
         #   - for number of magazines
         #   - for number of jahr & jahrgang
         #   - for getting the numbers for the criteria (e_datum, etc.)
         with self.assertNumQueries(3):
-            self.model.objects.chronologic_order()
+            self.model.objects.chronological_order()
 
-    def test_chronologic_order_already_ordered(self):
-        # Assert that chronologic_order is not attempted for a queryset that is
+    def test_chronological_order_already_ordered(self):
+        # Assert that chronological_order is not attempted for a queryset that is
         # already chronologically ordered.
         queryset = self.model.objects.all()
         queryset.chronologically_ordered = True
         with self.assertNumQueries(0):
-            queryset = queryset.chronologic_order()
+            queryset = queryset.chronological_order()
         self.assertFalse(queryset.query.order_by)
 
-    def test_chronologic_order_empty_queryset(self):
-        # Assert that chronologic_order is not attempted for an empty queryset.
+    def test_chronological_order_empty_queryset(self):
+        # Assert that chronological_order is not attempted for an empty queryset.
         queryset = self.model.objects.filter(id=1002).order_by()  # 1002 is not a valid ID
         with self.assertNumQueries(1):
-            queryset = queryset.chronologic_order()
+            queryset = queryset.chronological_order()
         self.assertEqual(
             queryset.query.order_by, tuple(self.model._meta.ordering))
 
-    def test_chronologic_order_multiple_magazine(self):
-        # Assert that chronologic_order is not attempt for a queryset with
+    def test_chronological_order_multiple_magazine(self):
+        # Assert that chronological_order is not attempt for a queryset with
         # multiple magazines.
         make(_models.Ausgabe, magazin__magazin_name='Bad', id=1002)
         queryset = self.model.objects.all()
         with self.assertNumQueries(1):
-            queryset = queryset.chronologic_order()
+            queryset = queryset.chronological_order()
         self.assertEqual(
             queryset.query.order_by, tuple(self.model._meta.ordering))
 
-    def test_chronologic_order_empty_queryset_takes_ordering(self):
-        # Assert that chronologic_order applies the passed in ordering to
+    def test_chronological_order_empty_queryset_takes_ordering(self):
+        # Assert that chronological_order applies the passed in ordering to
         # an 'empty' queryset (or one with multiple magazines; functionally the
         # same thing).
         queryset = self.model.objects.all()
         self.assertEqual(
-            queryset.none().chronologic_order('sonderausgabe').query.order_by,
+            queryset.none().chronological_order('sonderausgabe').query.order_by,
             ('sonderausgabe', )
         )
 
-    def test_chronologic_order_checks_for_pk_ordering(self):
-        # Assert that chronologic_order checks the passed in ordering for the
+    def test_chronological_order_checks_for_pk_ordering(self):
+        # Assert that chronological_order checks the passed in ordering for the
         # primary key field an then puts that field at the very end of the final
         # ordering.
         for ordering in [[], ['pk'], ['-pk'], ['id'], ['-id'], ['pk', '-pk']]:
             with self.subTest(ordering=ordering):
-                queryset = self.model.objects.chronologic_order(*ordering)
+                queryset = self.model.objects.chronological_order(*ordering)
                 if not ordering:
                     self.assertEqual(
                         queryset.query.order_by[-1], '-%s' % self.model._meta.pk.name,
@@ -194,39 +194,39 @@ class TestAusgabeChronologicOrder(DataTestCase):
                         msg="Last ordering entry should be a primary key."
                     )
 
-    def test_chronologic_order_overrides_default_ordering(self):
-        # Assert that chronologic_order accepts an ordering override via the
+    def test_chronological_order_overrides_default_ordering(self):
+        # Assert that chronological_order accepts an ordering override via the
         # arguments.
-        queryset = self.model.objects.chronologic_order(
+        queryset = self.model.objects.chronological_order(
             '-magazin', 'sonderausgabe', 'jahr')
         self.assertEqual(
             queryset.query.order_by[:3],
             ('-magazin', 'sonderausgabe', 'jahr')
         )
 
-    def test_chronologic_order_jahr_over_jahrgang(self):
+    def test_chronological_order_jahr_over_jahrgang(self):
         # Assert that in a queryset with:
         # number of objects with jahr values > number of objects with a jahrgang value
         # the jahr ordering precedes jahrgang ordering.
-        order_by = self.model.objects.chronologic_order().query.order_by
+        order_by = self.model.objects.chronological_order().query.order_by
         self.assertGreater(
             order_by.index('jahrgang'), order_by.index('jahr'),
             msg="'jahr' ordering expected before 'jahrgang'."
         )
 
-    def test_chronologic_order_jahrgang_over_jahr(self):
+    def test_chronological_order_jahrgang_over_jahr(self):
         # Assert that in a queryset with:
         # number of objects with jahrgang value > number of objects with jahr values
         # the jahrgang ordering precedes jahr ordering.
         ids = [obj.pk for obj in self.jg]
         order_by = self.model.objects.filter(
-            id__in=ids).chronologic_order().query.order_by
+            id__in=ids).chronological_order().query.order_by
         self.assertGreater(
             order_by.index('jahr'), order_by.index('jahrgang'),
             msg="'jahrgang' ordering expected before 'jahr'."
         )
 
-    def test_chronologic_order_criteria_equal(self):
+    def test_chronological_order_criteria_equal(self):
         # If none of the four criteria dominate, the default order should be:
         # 'e_datum', 'lnum', 'monat', 'num'
         queryset = self.model.objects.filter(
@@ -238,12 +238,12 @@ class TestAusgabeChronologicOrder(DataTestCase):
             'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
             'e_datum', 'lnum', 'monat', 'num', '-id'
         )
-        self.assertEqual(queryset.chronologic_order().query.order_by, expected)
+        self.assertEqual(queryset.chronological_order().query.order_by, expected)
 
     def test_find_keeps_order(self):
         # Assert that filtering the queryset via MIZQuerySet.find(ordered=True)
-        # maintains the ordering established by chronologic_order.
-        queryset = self.model.objects.filter(ausgabejahr__jahr=2000).chronologic_order()
+        # maintains the ordering established by chronological_order.
+        queryset = self.model.objects.filter(ausgabejahr__jahr=2000).chronological_order()
         found_ids = [
             pk for pk, str_repr in queryset.find('2000', ordered=True)
         ]
@@ -251,7 +251,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
             list(queryset.values_list('pk', flat=True)), found_ids
         )
 
-    def test_update_names_after_chronologic_order(self):
+    def test_update_names_after_chronological_order(self):
         # Assert that resetting ordering for _update_names does not break the
         # ordering of the underlying queryset.
         expected = (
@@ -261,7 +261,7 @@ class TestAusgabeChronologicOrder(DataTestCase):
             'num', 'e_datum', 'lnum', 'monat', '-id'
         )
         self.model.objects.update(_changed_flag=True)
-        queryset = self.model.objects.chronologic_order()
+        queryset = self.model.objects.chronological_order()
         queryset._update_names()
         self.assertEqual(queryset.query.order_by, expected)
 
@@ -269,21 +269,21 @@ class TestAusgabeChronologicOrder(DataTestCase):
         queryset = self.model.objects.all()
         self.assertFalse(queryset.chronologically_ordered)
         self.assertFalse(queryset._chain().chronologically_ordered)
-        queryset = queryset.chronologic_order()
+        queryset = queryset.chronological_order()
         self.assertTrue(queryset.chronologically_ordered)
         self.assertTrue(queryset._chain().chronologically_ordered)
 
-    def test_order_by_call_disables_chronologic_order(self):
+    def test_order_by_call_disables_chronological_order(self):
         # A call of order_by should set chronologically_ordered to False.
-        queryset = self.model.objects.all().chronologic_order()
+        queryset = self.model.objects.all().chronological_order()
         self.assertTrue(queryset.chronologically_ordered)
         queryset = queryset.order_by('magazin')
         self.assertFalse(queryset.chronologically_ordered)
 
     def test_update(self):
-        # Assert that update calls are possible after chronologic_order().
+        # Assert that update calls are possible after chronological_order().
         with self.assertNotRaises(FieldError):
-            self.queryset.chronologic_order().update(beschreibung='abc')
+            self.queryset.chronological_order().update(beschreibung='abc')
 
 
 # noinspection PyUnresolvedReferences
