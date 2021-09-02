@@ -1,12 +1,19 @@
+from typing import Iterable, Tuple, Union
+
 from nameparser import HumanName
 
 from dbentry.constants import M2M_LIST_MAX_LEN
 
 
-def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
+def concat_limit(
+        values: Iterable,
+        width: int = M2M_LIST_MAX_LEN,
+        sep: str = ", ", z: int = 0
+) -> str:
     """
-    Join non-empty string values of iterable 'values' separated by 'sep' up to a
-    length of current string + 'width', truncating the remainder.
+    Join non-empty string values of iterable ``values`` separated by ``sep`` up
+    to a length of current string + ``width``, truncating the remainder.
+
     Passing width=0 disables the truncation.
     """
     # FIXME: z-fill was dropped in ca7fdee952ed1965ed320a42ef7892db3affdde8  # noqa
@@ -29,11 +36,11 @@ def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
     return results
 
 
-def snake_case_to_spaces(value):
+def snake_case_to_spaces(value: str) -> str:
     return value.replace('_', ' ').strip()
 
 
-def parse_name(full_name):
+def parse_name(full_name: Union[str, HumanName]) -> Tuple[str, str]:
     """
     Return a two-tuple of first names (including middle names) and last name.
     """

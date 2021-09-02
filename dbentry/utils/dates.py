@@ -2,7 +2,7 @@ import calendar
 import datetime
 
 
-def leapdays(start, end):
+def leapdays(start: datetime.date, end: datetime.date) -> int:
     """
     Count leap days between datetime.date instances.
 

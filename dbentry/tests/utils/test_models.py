@@ -27,6 +27,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(
             (utils.get_relations_between_models('Magazin', 'Ausgabe')), expected)
 
+    # noinspection PyTypeChecker
     def test_get_relations_between_models_many_to_many(self):
         expected = (
             _models.Artikel._meta.get_field('genre'),
