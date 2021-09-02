@@ -1,23 +1,42 @@
-from django import http
-from django.contrib.auth import get_permission_codename
-from django.core.paginator import Paginator
-from django.utils.functional import cached_property
-from django.utils.translation import gettext
+from typing import Any, List, Optional, Sequence, Tuple, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
+from django import http
+from django.contrib.auth import get_permission_codename
+from django.core.paginator import Page, Paginator
+from django.db.models import Model
+from django.http import HttpRequest, HttpResponse
+from django.utils.functional import cached_property
+from django.utils.translation import gettext
 
 from dbentry import models as _models
 from dbentry.ac.creator import Creator, MultipleObjectsReturnedException
-from dbentry.utils.models import get_model_from_string
+from dbentry.managers import AusgabeQuerySet, MIZQuerySet
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
+from dbentry.utils.models import get_model_from_string
 
 
 class ACBase(autocomplete.Select2QuerySetView):
-    """Base view for the autocomplete views of the dbentry app."""
+    """
+    Base view for the autocomplete views of the dbentry app.
 
-    def dispatch(self, *args, **kwargs):
+    This class extends Select2QuerySetView in the following ways:
+        - set instance attributes ``model`` and ``create_field`` from the
+          request payload/keyword arguments
+        - split up the process of providing a create option into several
+          methods (``get_create_option``)
+        - ``get_queryset`` includes forwarded values, and the method calls
+          other methods to perform ordering and search term filtering
+        - ``get_result_value`` and ``get_result_label`` can handle lists/tuples
+    """
+    model: Optional[Type[Model]]
+    create_field: Optional[str]
+
+    def dispatch(self, *args: Any, **kwargs: Any) -> HttpResponse:
+        """Set model and create_field instance attributes."""
+        # TODO: shouldn't this happen in view.setup()?
         if not self.model:
             model_name = kwargs.pop('model_name', '')
             self.model = get_model_from_string(model_name)
@@ -25,12 +44,12 @@ class ACBase(autocomplete.Select2QuerySetView):
             self.create_field = kwargs.pop('create_field', None)
         return super().dispatch(*args, **kwargs)
 
-    def has_create_field(self):
+    def has_create_field(self) -> bool:
         if self.create_field:
             return True
         return False
 
-    def display_create_option(self, context, q):
+    def display_create_option(self, context: dict, q: str) -> bool:
         """
         Return a boolean whether the create option should be displayed or not.
         """
@@ -40,24 +59,24 @@ class ACBase(autocomplete.Select2QuerySetView):
                 return True
         return False
 
-    def build_create_option(self, q):
+    def build_create_option(self, q: str) -> list:
+        """Form the create option item to append to the result list."""
         return [{
             'id': q,
             'text': gettext('Create "%(new_value)s"') % {'new_value': q},
             'create_id': True,
         }]
 
-    def get_create_option(self, context, q):
+    def get_create_option(self, context: dict, q: str) -> list:
         """Form the correct create_option to append to results."""
         if (self.display_create_option(context, q)
                 and self.has_add_permission(self.request)):
             return self.build_create_option(q)
         return []
 
-    # noinspection PyProtectedMember
-    def do_ordering(self, queryset):
+    def do_ordering(self, queryset: MIZQuerySet) -> MIZQuerySet:
         """
-        Apply ordering to the queryset.
+        Apply ordering to the queryset and return it.
 
         Use the model's default ordering if the view's get_ordering method does
         not return anything to order with.
@@ -67,32 +86,51 @@ class ACBase(autocomplete.Select2QuerySetView):
             if isinstance(ordering, str):
                 ordering = (ordering,)
             return queryset.order_by(*ordering)
-        return queryset.order_by(*self.model._meta.ordering)
+        # noinspection PyProtectedMember,PyUnresolvedReferences
+        return queryset.order_by(*self.model._meta.ordering)  # type: ignore
 
-    def apply_q(self, qs):
-        """Filter the given queryset 'qs' with the view's search term 'q'."""
+    def apply_q(self, queryset: MIZQuerySet) -> Union[MIZQuerySet, list]:
+        """
+        Filter the given queryset with the view's search term ``q``.
+
+        If ``q`` is a numeric value, try a primary key lookup. Otherwise use
+        MIZQuerySet.find to find results.
+
+        Returns:
+            a list if querying via MIZQuerySet.find or a MIZQuerySet.
+        """
+        # TODO: check that queryset is an instance of MIZQuerySet in order to
+        #  guarantee that find() can be used.
         if self.q:
-            # Prefer querying for primary key values:
-            if self.q.isnumeric() and qs.filter(pk=self.q).exists():
-                return qs.filter(pk=self.q)
-            return qs.find(self.q)
+            # If the search term is a numeric value, try using it in a primary
+            # key lookup, and if that returns results, return them.
+            if self.q.isnumeric() and queryset.filter(pk=self.q).exists():
+                return queryset.filter(pk=self.q)
+            return queryset.find(self.q)
         else:
-            return qs
+            return queryset
 
-    def create_object(self, text):
-        """Create an object given a text."""
+    def create_object(self, text: str) -> Model:
+        """
+        Create an object given a text.
+
+        If an object was created, add an addition LogEntry to the django admin
+        log table.
+        """
         text = text.strip()
-        obj = self.model.objects.create(**{self.create_field: text})
+        # noinspection PyUnresolvedReferences
+        obj = self.model.objects.create(**{self.create_field: text})  # type: ignore
         if obj and self.request:
             log_addition(self.request.user.pk, obj)
         return obj
 
-    def get_queryset(self):
+    def get_queryset(self) -> MIZQuerySet:
         """Return the ordered and filtered queryset for this view."""
         if self.queryset is None:
-            qs = self.model.objects.all()
+            # noinspection PyUnresolvedReferences
+            queryset = self.model.objects.all()  # type: ignore
         else:
-            qs = self.queryset
+            queryset = self.queryset
 
         if self.forwarded:
             forward_filter = {}
@@ -102,27 +140,36 @@ class ACBase(autocomplete.Select2QuerySetView):
                     forward_filter[k] = v
             if not forward_filter:
                 # All forwarded items were empty; return an empty queryset.
-                return self.model.objects.none()
-            qs = qs.filter(**forward_filter)
+                # noinspection PyUnresolvedReferences
+                return self.model.objects.none()  # type: ignore
+            queryset = queryset.filter(**forward_filter)
 
-        qs = self.do_ordering(qs)
-        qs = self.apply_q(qs)
-        return qs
+        queryset = self.do_ordering(queryset)
+        queryset = self.apply_q(queryset)
+        return queryset
 
-    # noinspection PyProtectedMember
-    def has_add_permission(self, request):
+    def has_add_permission(self, request: HttpRequest) -> bool:
         """Return True if the user has the permission to add a model."""
-        if not request.user.is_authenticated:
+        # noinspection PyUnresolvedReferences
+        user = request.user
+        if not user.is_authenticated:
             return False
         # At this point, dal calls get_queryset() to get the model options via
         # queryset.model._meta which is unnecessary for ACBase since it
         # declares the model class during dispatch().
-        opts = self.model._meta
+        # noinspection PyProtectedMember, PyUnresolvedReferences
+        opts = self.model._meta  # type: ignore
         codename = get_permission_codename('add', opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return user.has_perm("%s.%s" % (opts.app_label, codename))
 
-    def get_result_value(self, result):
-        """Return the value of a result."""
+    def get_result_value(self, result: Union[Model, Sequence]) -> Optional[Union[str, int]]:
+        """
+        Return the value (usually the primary key) of a result.
+
+        Args:
+            result: may be a model instance or a sequence, such as the list
+                returned by MIZQuerySet.find().
+        """
         if isinstance(result, (list, tuple)):
             if result[0] == 0:
                 # The list 'result' contains the IDs of the results.
@@ -131,10 +178,16 @@ class ACBase(autocomplete.Select2QuerySetView):
                 # Set it's id to None to make it not selectable.
                 return None
             return result[0]
-        return str(result.pk)
+        return str(result.pk)  # type: ignore
 
-    def get_result_label(self, result):
-        """Return the label of a result."""
+    def get_result_label(self, result: Union[Model, Sequence]) -> str:
+        """
+        Return the label of a result.
+
+        Args:
+            result: may be a model instance or a sequence, such as the list
+                returned by MIZQuerySet.find().
+        """
         if isinstance(result, (list, tuple)):
             return result[1]
         return str(result)
@@ -142,7 +195,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
 class ACBuchband(ACBase):
     """
-    Autocomplete view that queries buch instances that are defined as 'buchband'.
+    Autocomplete view that queries buch instances that are defined as buchband.
     """
 
     model = _models.Buch
@@ -157,7 +210,7 @@ class ACAusgabe(ACBase):
 
     model = _models.Ausgabe
 
-    def do_ordering(self, queryset):
+    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
         return queryset.chronological_order()
 
 
@@ -168,16 +221,16 @@ class ACCreatable(ACBase):
     Creator helper object.
     """
 
-    # noinspection PyAttributeOutsideInit
     @property
     def creator(self):
         if not hasattr(self, '_creator'):
+            # noinspection PyAttributeOutsideInit
             self._creator = Creator(self.model, raise_exceptions=False)
         return self._creator
 
-    def creatable(self, text, creator=None):
+    def creatable(self, text: str, creator: Optional[Creator] = None) -> bool:
         """
-        Return True if a new(!) model instance would be created from 'text'.
+        Return True if a new(!) model instance would be created from ``text``.
         """
         creator = creator or self.creator
         created = creator.create(text, preview=True)
@@ -186,7 +239,7 @@ class ACCreatable(ACBase):
             return True
         return False
 
-    def display_create_option(self, context, q):
+    def display_create_option(self, context: dict, q: str) -> bool:
         """
         Return a boolean whether the create option should be displayed or not.
         """
@@ -200,10 +253,10 @@ class ACCreatable(ACBase):
                     return True
         return False
 
-    def build_create_option(self, q):
+    def build_create_option(self, q: str) -> list:
         """
-        Add additional information on how the object is going to be created
-        to the create option.
+        Add additional information to the create option on how the object is
+        going to be created.
         """
         create_option = super().build_create_option(q)
         create_info = self.get_creation_info(q)
@@ -211,10 +264,11 @@ class ACCreatable(ACBase):
             create_option.extend(create_info)
         return create_option
 
-    def get_creation_info(self, text, creator=None):
+    def get_creation_info(self, text: str, creator: Optional[Creator] = None) -> list:
         """
         Build template context to display a more informative create option.
         """
+
         def flatten_dict(_dict):
             result = []
             for key, value in _dict.items():
@@ -240,15 +294,15 @@ class ACCreatable(ACBase):
             create_info.append(default.copy())
         return create_info
 
-    def create_object(self, text, creator=None):
-        """Create a model instance from 'text' and save it to the database."""
+    def create_object(self, text: str, creator: Optional[Creator] = None) -> Model:
+        """Create a model instance from ``text`` and save it to the database."""
         text = text.strip()
         if self.has_create_field():
             return super().create_object(text)
         creator = creator or self.creator
         return creator.create(text, preview=False).get('instance')
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         """Create an object given a text after checking permissions."""
         if not self.has_add_permission(request):
             return http.HttpResponseForbidden()
@@ -271,20 +325,34 @@ class ACCreatable(ACBase):
 
 
 class GNDPaginator(Paginator):
+    """
+    Paginator for autocomplete views that query the German national library.
 
-    def __init__(self, *args, total_count=0, **kwargs):
+    Responses send back by the library are already paginated; the
+    ``object_list`` will always be of a fixed length (default length: 10).
+    Whereas a default paginator would try to slice the object_list to get the
+    desired page, the request to the SRU API must define the number/index of
+    the starting record of the slice such that the SRU backend sends back the
+    correct page.
+
+    Attributes:
+        total_count: the total number of records found across all pages
+    """
+    total_count: int
+
+    def __init__(self, *args: Any, total_count: int = 0, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.total_count = total_count
 
-    def page(self, number):
+    def page(self, number: int) -> Page:
         """Return a Page object for the given 1-based page number."""
-        # Paginator.page slices the object_list here, but in our case,
+        # Paginator.page would slice the object_list here, but in our case
         # pagination is done by the SRU backend: we only ever get one page thus
         # slicing must not occur.
         return self._get_page(self.object_list, number, self)
 
     @cached_property
-    def count(self):
+    def count(self) -> int:
         """Return the total number of objects, across all pages."""
         return self.total_count
 
@@ -297,7 +365,7 @@ class GND(ACBase):
     paginate_by = 10  # DNB default number of records per request
     paginator_class = GNDPaginator
 
-    def get_query_string(self, q=None):
+    def get_query_string(self, q: Optional[str] = None) -> str:
         """Construct and return a SRU compliant query string."""
         if q is None:
             q = self.q
@@ -307,11 +375,11 @@ class GND(ACBase):
         query += " and BBG=Tp*"
         return query
 
-    def get_result_label(self, result):
+    def get_result_label(self, result: Tuple[str, str]) -> str:  # type: ignore[override]
         """Return the label of a result."""
         return "%s (%s)" % (result[1], result[0])
 
-    def get_queryset(self):
+    def get_queryset(self) -> List[Tuple[str, str]]:
         """Get a list of records from the SRU API."""
         # Calculate the 'startRecord' parameter for the request.
         # The absolute record position of the first record of a page is given by
@@ -329,6 +397,6 @@ class GND(ACBase):
         )
         return results
 
-    def get_paginator(self, *args, **kwargs):
+    def get_paginator(self, *args: Any, **kwargs: Any) -> GNDPaginator:
         kwargs['total_count'] = self.total_count
         return super().get_paginator(*args, **kwargs)

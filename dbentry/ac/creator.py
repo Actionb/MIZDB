@@ -1,4 +1,7 @@
 from collections import OrderedDict
+from typing import Any, Dict, Type, Union
+
+from django.db.models import Model
 from nameparser import HumanName
 
 from dbentry import models as _models
@@ -6,6 +9,9 @@ from dbentry.utils import parse_name
 
 
 class MultipleObjectsReturnedException(Exception):
+    """The query returned multiple objects for the given text."""
+    # TODO: rename MultipleObjectsReturnedException to just MultipleObjectsReturned
+
     message = 'Name nicht einzigartig.'
 
 
@@ -13,7 +19,7 @@ class FailedObject(object):
     """
     A dummy object that imitates a result object should creation fail.
 
-    dal views expect _some_ object with a pk attribute and string representation
+    dal views expect some object with a pk attribute and string representation
     further down the chain (get_result_label, etc.).
     When the saving of a new (unique) model instance fails due to a
     MultipleObjectsReturned exception, and when that exception is not allowed
@@ -32,21 +38,44 @@ class Creator(object):
     """
     Create a model instance from a text input.
 
-    A helper class that uses a declared 'create_<model_name>' method to create
-    a model instance from a given string.
+    A helper class that uses a declared ``create_<model_name>`` method to
+    create a model instance from a given string.
     """
 
-    # noinspection PyProtectedMember
-    def __init__(self, model, raise_exceptions=False):
+    def __init__(self, model: Type[Model], raise_exceptions: bool = False) -> None:
+        """
+        Set attributes and assign the creator method.
+
+        Args:
+            model (model class): the model class for which instances should be
+                created
+            raise_exceptions (boolean): if false, return a ``FailedObject``
+                dummy object instead, when encountering a
+                MultipleObjectsReturned exception. Otherwise, let the exception
+                bubble up
+        """
         self.model = model
         self.raise_exceptions = raise_exceptions
+        # noinspection PyProtectedMember,PyUnresolvedReferences
         self.creator = getattr(self, 'create_' + model._meta.model_name, None)
 
-    def create(self, text, preview=True):
+    def create(self, text: str, preview: bool = True) -> Union[Dict, OrderedDict]:
         """
-        Try to create a model instance from the string 'text'.
+        Try to create a model instance from the string ``text``.
 
-        If preview is True, no new database records will be created.
+        Args:
+            text (str): the text passed to the creator to create the instance
+                with
+            preview (bool): if True, do not save the created instance
+
+        Returns:
+            OrderedDict that includes the created instance and additional
+                information for the 'create_option' of a dal widget
+
+        Raises:
+            MultipleObjectsReturnedException: if raise_exceptions is True; the
+                creator has found multiple already existing objects that fit
+                'text'.
         """
         if self.creator is None:
             return {}
@@ -64,10 +93,11 @@ class Creator(object):
             # text attribute (which FailedObject emulates).
             return {'instance': FailedObject(str(e))}
 
+    # noinspection PyUnresolvedReferences
     @staticmethod
-    def _get_model_instance(model, **data):
+    def _get_model_instance(model: Type[Model], **data: Any) -> Model:
         """
-        Using get(), query for an existing model instance with 'data'.
+        Query for existing model instances with kwargs ``data``.
 
         If the query returns exactly one instance, return that instance.
         If the query returned no results, return a new unsaved instance.
@@ -80,15 +110,15 @@ class Creator(object):
         except model.MultipleObjectsReturned:
             raise MultipleObjectsReturnedException
 
-    # noinspection PyTypeChecker
-    def create_person(self, text, preview=True):
+    def create_person(self, text: Union[str, HumanName], preview: bool = True) -> OrderedDict:
         """
-        Get or create a Person instance from `text`.
+        Get or create a Person instance from ``text``.
 
-        If preview is True, do not save the found instance even if it is new.
+        If ``preview`` is True, do not save the instance even if it is new.
 
-        Return an OrderedDict that includes the instance and additional
-        information for the 'create_option' of a dal widget.
+        Returns:
+            OrderedDict that includes the created instance and additional
+                information for the 'create_option' of a dal widget
         """
         # parse_name will join first and middle names
         vorname, nachname = parse_name(text)
@@ -97,20 +127,22 @@ class Creator(object):
         )
         if not preview and person_instance.pk is None:
             person_instance.save()
-        return OrderedDict([
-            ('Vorname', vorname), ('Nachname', nachname),
-            ('instance', person_instance)
-        ])
+        return OrderedDict(
+            [
+                ('Vorname', vorname), ('Nachname', nachname),
+                ('instance', person_instance)
+            ]
+        )
 
-    # noinspection PyTypeChecker
-    def create_autor(self, text, preview=True):
+    def create_autor(self, text: str, preview: bool = True):
         """
-        Get or create an autor instance from `text`.
+        Get or create an autor instance from ``text``.
 
-        If preview is True, do not save the found instance even if it is new.
+        If ``preview`` is True, do not save the instance even if it is new.
 
-        Return an OrderedDict that includes the instance and additional
-        information for the 'create_option' of a dal widget.
+        Returns:
+            OrderedDict that includes the created instance and additional
+                information for the 'create_option' of a dal widget
         """
         name = HumanName(text)
         kuerzel = name.nickname
@@ -121,9 +153,13 @@ class Creator(object):
             _models.Autor, person=person_instance, kuerzel=kuerzel
         )
         if not preview and autor_instance.pk is None:
+            # noinspection PyUnresolvedReferences
             if autor_instance.person.pk is None:
+                # noinspection PyUnresolvedReferences
                 autor_instance.person.save()
             autor_instance.save()
-        return OrderedDict([
-            ('Person', p), ('Kürzel', kuerzel), ('instance', autor_instance)
-        ])
+        return OrderedDict(
+            [
+                ('Person', p), ('Kürzel', kuerzel), ('instance', autor_instance)
+            ]
+        )
