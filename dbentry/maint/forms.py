@@ -48,13 +48,15 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
     )
     minmax_required = [
         {
-            'min': 1, 'fields': ['base', 'm2m', 'reverse'],
+            'min_fields': 1,
+            'fields': ['base', 'm2m', 'reverse'],
             'error_messages': {
                 'min': 'Bitte mindestens ein Feld für die Duplikatensuche auswählen.'
             }
         },
         {
-            'min': 1, 'fields': ['base_display', 'm2m_display', 'reverse_display'],
+            'min_fields': 1,
+            'fields': ['base_display', 'm2m_display', 'reverse_display'],
             'error_messages': {
                 'min': 'Bitte mindestens ein Feld für die Übersicht auswählen.'
             }

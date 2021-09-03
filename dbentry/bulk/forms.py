@@ -139,8 +139,8 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
 
     # MinMaxRequiredFormMixin attributes:
     minmax_required = [
-        {'min': 1, 'fields': ['jahr', 'jahrgang']},
-        {'min': 1, 'fields': ['num', 'monat', 'lnum']}
+        {'min_fields': 1, 'fields': ['jahr', 'jahrgang']},
+        {'min_fields': 1, 'fields': ['num', 'monat', 'lnum']}
     ]
     field_order = [
         'magazin', 'jahrgang', 'jahr', 'status', 'beschreibung', 'bemerkungen',
