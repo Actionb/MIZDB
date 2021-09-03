@@ -1,40 +1,46 @@
+from typing import Any, Dict, List, Optional, Set, Tuple
+
 from django import views
 from django.contrib import messages
 from django.contrib.admin.models import ADDITION
+from django.contrib.admin.options import InlineModelAdmin
 from django.db import transaction
-from django.db.models import ProtectedError, F, Count
-from django.forms import ALL_FIELDS
+from django.db.models import Count, F, Model, ProtectedError
+from django.forms import ALL_FIELDS, BaseInlineFormSet, Form
+from django.http import HttpRequest, HttpResponse
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy, gettext
+from django.utils.translation import gettext, gettext_lazy
+from django.views.generic import FormView
 
 from dbentry import models as _models
 from dbentry.actions.base import (
-    ActionConfirmationView, WizardConfirmationView, ConfirmationViewMixin
+    ActionConfirmationView, ConfirmationViewMixin, WizardConfirmationView
 )
 from dbentry.actions.forms import (
-    MergeFormSelectPrimary, MergeConflictsFormSet, BulkEditJahrgangForm,
-    BrochureActionFormSet, BrochureActionFormOptions
+    BrochureActionFormOptions, BrochureActionFormSet, BulkEditJahrgangForm, MergeConflictsFormSet,
+    MergeFormSelectPrimary
 )
+from dbentry.models import Magazin
 from dbentry.utils import (
-    link_list, merge_records, get_updatable_fields, get_obj_link,
-    get_changelist_link, get_model_from_string, is_protected
+    get_changelist_link, get_model_from_string, get_obj_link, get_updatable_fields, is_protected,
+    link_list, merge_records
 )
 from dbentry.utils.admin import (
     create_logentry, log_addition, log_change, log_deletion
 )
 
 
-def check_same_magazin(view, **_kwargs):
+# noinspection PyUnresolvedReferences
+def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
     """
     Check that all objects in the view's queryset are related to the same
     Magazin instance.
     """
     if view.queryset.values('magazin_id').distinct().count() != 1:
         view.model_admin.message_user(
-            request=view.request,
-            level=messages.ERROR,
+            request=view.request, level=messages.ERROR,
             message='Aktion abgebrochen: Die ausgewählten %s gehören zu '
-            'unterschiedlichen Magazinen.' % view.opts.verbose_name_plural
+                    'unterschiedlichen Magazinen.' % view.opts.verbose_name_plural
         )
         return False
     return True
@@ -73,18 +79,18 @@ class BulkEditJahrgang(ActionConfirmationView):
         kwargs['choices'] = {ALL_FIELDS: self.queryset}
         return kwargs
 
-    def get_initial(self):
+    def get_initial(self) -> dict:
         return {
             'jahrgang': 1,
             'start': self.queryset.values_list('pk', flat=True).first(),
         }
 
-    def perform_action(self, form_cleaned_data=None):
+    def perform_action(self, form_cleaned_data: dict) -> None:  # type: ignore[override]
         """
         Incrementally update the jahrgang for each instance.
 
-        If the user has chosen the integer 0 for jahrgang,
-        delete all jahrgang values instead.
+        If the user has chosen the integer 0 for jahrgang, delete all jahrgang
+        values instead.
         """
         qs = self.queryset.order_by().all()
         jg = form_cleaned_data['jahrgang']
@@ -98,7 +104,8 @@ class BulkEditJahrgang(ActionConfirmationView):
             qs.increment_jahrgang(start, jg)
         for obj in self.queryset:
             log_change(
-                user_id=self.request.user.pk, obj=obj, fields=['jahrgang'])
+                user_id=self.request.user.pk, obj=obj, fields=['jahrgang']
+            )
 
 
 class MergeViewWizarded(WizardConfirmationView):
@@ -156,34 +163,38 @@ class MergeViewWizarded(WizardConfirmationView):
         CONFLICT_RESOLUTION_STEP: step2_helptext
     }
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
         # Add the current step to the view's title.
         context['title'] = gettext(
-            'Merge objects: step {}').format(str(int(self.steps.current) + 1))
+            'Merge objects: step {}'
+        ).format(str(int(self.steps.current) + 1))
         return context
 
     # noinspection PyMethodParameters
-    def _check_too_few_objects(view, **_kwargs):
+    def _check_too_few_objects(view, **_kwargs: Any) -> bool:
         """Check whether an insufficient number of objects has been selected."""
         if view.queryset.count() == 1:
             view.model_admin.message_user(
                 request=view.request,
                 level=messages.WARNING,
-                message='Es müssen mindestens zwei Objekte aus der Liste '
-                'ausgewählt werden, um diese Aktion durchzuführen.',
+                message=(
+                    'Es müssen mindestens zwei Objekte aus der Liste '
+                    'ausgewählt werden, um diese Aktion durchzuführen.'
+                ),
             )
             return False
         return True
 
-    # noinspection PyMethodParameters,PyProtectedMember
-    def _check_different_magazines(view, **_kwargs):
+    # noinspection PyMethodParameters
+    def _check_different_magazines(view, **_kwargs: Any) -> bool:
         """
         Check whether the Ausgabe instances are from different Magazin instances.
         """
         if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
+            # noinspection PyUnresolvedReferences,PyProtectedMember
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
                 # Add a 'n' at the end because german grammar.
@@ -197,14 +208,15 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
         return True
 
-    # noinspection PyMethodParameters,PyProtectedMember
-    def _check_different_ausgaben(view, **_kwargs):
+    # noinspection PyMethodParameters
+    def _check_different_ausgaben(view, **_kwargs: Any) -> bool:
         """
         Check whether the Artikel instances are from different Ausgabe instances.
         """
         if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
+            # noinspection PyProtectedMember,PyUnresolvedReferences
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
                 'other_plural': _models.Ausgabe._meta.verbose_name_plural
@@ -219,7 +231,7 @@ class MergeViewWizarded(WizardConfirmationView):
 
     # noinspection PyAttributeOutsideInit
     @property
-    def updates(self):
+    def updates(self) -> dict:
         """
         Data to update the 'primary' instance with.
 
@@ -233,7 +245,7 @@ class MergeViewWizarded(WizardConfirmationView):
             self._updates = step_data.get('updates', {})
         return self._updates
 
-    def _has_merge_conflicts(self, data):
+    def _has_merge_conflicts(self, data: dict) -> Tuple[bool, Optional[dict]]:
         """
         Determine if there is going to be a merge conflict.
 
@@ -241,19 +253,21 @@ class MergeViewWizarded(WizardConfirmationView):
         instances and there is more than one possible value for any field,
         we have a conflict and the user needs to choose what value to keep.
 
-        Parameters:
-            data: the cleaned form data from step 0
+        Args:
+            data (dict): the cleaned form data from step 0
                 (i.e. the selection of the 'primary' instance).
 
         Returns:
-            boolean: whether or not there is a conflict.
-            dict: a dictionary of field_name: new_value for all the updates
-                planned for 'primary'.
+            a 2-tuple consisting of a boolean on whether there is a conflict
+                and a dict (or None if no updates) of field_name: new_value for
+                all the updates planned for 'primary'
         """
         # Get the 'primary' object chosen by the user and
         # exclude it from the queryset we are working with.
+        # noinspection PyUnresolvedReferences
         try:
             original_pk = data[self.get_form_prefix() + '-primary']
+            # noinspection PyUnresolvedReferences
             primary = self.model.objects.get(pk=original_pk)
         except (KeyError, self.model.DoesNotExist):
             return False, None
@@ -272,7 +286,7 @@ class MergeViewWizarded(WizardConfirmationView):
         # If there is more than one possible change per field, we
         # need user input to decide what change to keep.
         # This is where then the next form MergeConflictsFormSet comes in.
-        updates = {fld_name: set() for fld_name in updatable_fields}
+        updates: Dict[str, Set] = {fld_name: set() for fld_name in updatable_fields}
 
         for other_record_valdict in qs.values(*updatable_fields):
             for k, v in other_record_valdict.items():
@@ -287,14 +301,12 @@ class MergeViewWizarded(WizardConfirmationView):
 
         # Sets are not JSON serializable (required for session storage):
         # turn them into lists and remove empty ones.
-        updates = {
-            fld_name: list(value_set)
-            for fld_name, value_set in updates.items()
-            if value_set
-        }
+        updates: Dict[str, List] = {  # type: ignore[no-redef]
+            fld_name: list(value_set) for fld_name, value_set in updates.items() if value_set}
         return has_conflict, updates
 
-    def process_step(self, form):
+    def process_step(self, form: Form) -> dict:
+        """Check the form data whether conflict resolution needs to occur."""
         data = super().process_step(form)  # the form.data for this step
         if self.steps.current == self.CONFLICT_RESOLUTION_STEP:
             # No special processing needed for the last step.
@@ -317,12 +329,14 @@ class MergeViewWizarded(WizardConfirmationView):
             self.storage.current_step = self.CONFLICT_RESOLUTION_STEP
         return data
 
-    # noinspection PyUnresolvedReferences
-    def get_form_kwargs(self, step=None):
+    def get_form_kwargs(self, step: Optional[int] = None) -> dict:
         kwargs = super().get_form_kwargs(step)
         if step is None:
             step = self.steps.current
-        form_class = self.form_list[step]
+        # Note that WizardView.get_initkwargs turns the form_list into an
+        # OrderedDict.
+        # noinspection PyTypeChecker
+        form_class: MergeFormSelectPrimary = self.form_list[step]  # type: ignore[assignment]
         prefix = self.get_form_prefix(step, form_class)
         if step == self.CONFLICT_RESOLUTION_STEP:
             # There is a conflict.
@@ -341,9 +355,7 @@ class MergeViewWizarded(WizardConfirmationView):
                     verbose_fld_name = model_field.verbose_name.capitalize()
                     data[add_prefix('original_fld_name')] = fld_name
                     data[add_prefix('verbose_fld_name')] = verbose_fld_name
-                    choices[add_prefix('posvals')] = [
-                        (c, v) for c, v in enumerate(values)
-                    ]
+                    choices[add_prefix('posvals')] = [(c, v) for c, v in enumerate(values)]
                     total_forms += 1
 
             management_form_data = {
@@ -361,12 +373,13 @@ class MergeViewWizarded(WizardConfirmationView):
         elif step == self.SELECT_PRIMARY_STEP:
             # MergeFormSelectPrimary form:
             # choices for the selection of primary are objects in the queryset
+            # noinspection PyUnresolvedReferences
             kwargs['choices'] = {
                 prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset
             }
         return kwargs
 
-    def perform_action(self, form_cleaned_data=None):
+    def perform_action(self, *args: Any, **kwargs: Any) -> None:
         update_data = {}
         expand = self.get_cleaned_data_for_step('0').get('expand_primary', True)
         if expand:
@@ -386,22 +399,28 @@ class MergeViewWizarded(WizardConfirmationView):
         original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
         primary = self.opts.model.objects.get(pk=original_pk)
         merge_records(
-            primary, self.queryset, update_data, expand, request=self.request)
+            primary, self.queryset, update_data, expand, request=self.request
+        )
 
-    # noinspection PyProtectedMember
-    def done(self, *args, **kwargs):
+    def done(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Perform the action.
+
+        If the action fails due to a ProtectedError, send an admin message.
+        """
         try:
             self.perform_action()
         except ProtectedError as e:
             # The merge could not be completed as there were protected objects
             # in the queryset, all changes were rolled back.
-            object_name = 'Objekte'
+            # noinspection PyProtectedMember
+            object_name = e.protected_objects.model._meta.verbose_name_plural
+            if not object_name:
+                object_name = 'Objekte'
             msg_template = (
                 "Folgende verwandte {object_name} verhinderten die "
                 "Zusammenführung: {protected}"
             )
-            if e.protected_objects.model._meta.verbose_name_plural:
-                object_name = e.protected_objects.model._meta.verbose_name_plural
             self.model_admin.message_user(
                 request=self.request,
                 level=messages.ERROR,
@@ -411,7 +430,7 @@ class MergeViewWizarded(WizardConfirmationView):
                     protected=link_list(self.request, e.protected_objects)
                 )
             )
-        return
+        return None
 
 
 class MoveToBrochureBase(ActionConfirmationView):
@@ -421,10 +440,7 @@ class MoveToBrochureBase(ActionConfirmationView):
     template_name = 'admin/movetobrochure.html'
     action_name = 'moveto_brochure'
     allowed_permissions = ['moveto_brochure']
-    action_allowed_checks = [
-        check_same_magazin,
-        '_check_protected_artikel',
-    ]
+    action_allowed_checks = [check_same_magazin, '_check_protected_artikel', ]
 
     form_class = BrochureActionFormSet
 
@@ -441,19 +457,21 @@ class MoveToBrochureBase(ActionConfirmationView):
         initial = []
         for (pk, beschreibung, bemerkungen, magazin_id,
                 magazin_name, magazin_beschreibung) in values:
-            initial.append({
-                'ausgabe_id': pk,
-                'titel': magazin_name,
-                'zusammenfassung': magazin_beschreibung,
-                'beschreibung': beschreibung,
-                'bemerkungen': bemerkungen,
-                'magazin_id': magazin_id
-            })
+            initial.append(
+                {
+                    'ausgabe_id': pk,
+                    'titel': magazin_name,
+                    'zusammenfassung': magazin_beschreibung,
+                    'beschreibung': beschreibung,
+                    'bemerkungen': bemerkungen,
+                    'magazin_id': magazin_id
+                }
+            )
         return initial
 
     # noinspection PyAttributeOutsideInit
     @property
-    def magazin_instance(self):
+    def magazin_instance(self) -> Magazin:
         """Return the magazin instance common to all queryset objects."""
         # At this point the checks have run and excluded the possibility
         # that the queryset contains more than one magazin.
@@ -467,7 +485,7 @@ class MoveToBrochureBase(ActionConfirmationView):
 
     # noinspection PyAttributeOutsideInit
     @property
-    def can_delete_magazin(self):
+    def can_delete_magazin(self) -> bool:
         """
         Assess if the magazin instance can be deleted following the action.
         """
@@ -483,6 +501,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                 # the set of the selected ausgaben.
                 # If the sets match, all ausgabe instances of magazin will be
                 # moved and the magazin will be open to deletion afterwards.
+                # noinspection PyUnresolvedReferences
                 magazin_ausgabe_set = set(
                     self.magazin_instance.ausgabe_set.values_list('pk', flat=True)
                 )
@@ -493,7 +512,7 @@ class MoveToBrochureBase(ActionConfirmationView):
         return self._can_delete_magazin
 
     # noinspection PyMethodParameters
-    def _check_protected_artikel(view, **_kwargs):
+    def _check_protected_artikel(view, **_kwargs: Any) -> bool:
         """Check whether any of the Artikel instances cannot be deleted."""
         ausgaben_with_artikel = (
             view.queryset
@@ -523,21 +542,25 @@ class MoveToBrochureBase(ActionConfirmationView):
             return False
         return True
 
-    def form_valid(self, form):
+    def form_valid(self, form: Form) -> Optional[HttpResponse]:
         options_form = self.get_options_form(data=self.request.POST)
         if not options_form.is_valid():
             context = self.get_context_data(options_form=options_form)
             return self.render_to_response(context)
         self.perform_action(form.cleaned_data, options_form.cleaned_data)
         # Return to the changelist:
-        return
+        return None
 
-    # noinspection PyMethodOverriding,PyProtectedMember
-    def perform_action(self, form_cleaned_data, options_form_cleaned_data):
+    # noinspection PyUnresolvedReferences
+    def perform_action(  # type: ignore[override]
+            self,
+            form_cleaned_data: dict,
+            options_form_cleaned_data: dict
+    ) -> None:
         protected_ausg = []
         delete_magazin = options_form_cleaned_data.get('delete_magazin', False)
-        # brochure_art is guaranteed to be a valid
-        # model name due to the form validation.
+        # brochure_art is guaranteed to be a valid model name due to the
+        # form validation.
         brochure_art = options_form_cleaned_data.get('brochure_art', '')
         brochure_class = get_model_from_string(brochure_art)
 
@@ -548,11 +571,9 @@ class MoveToBrochureBase(ActionConfirmationView):
             # Verify that the ausgabe exists and can be deleted
             try:
                 ausgabe_instance = _models.Ausgabe.objects.get(
-                    pk=data['ausgabe_id'])
-            except (
-                _models.Ausgabe.DoesNotExist,
-                _models.Ausgabe.MultipleObjectsReturned
-            ):
+                    pk=data['ausgabe_id']
+                )
+            except (_models.Ausgabe.DoesNotExist, _models.Ausgabe.MultipleObjectsReturned):
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -572,7 +593,8 @@ class MoveToBrochureBase(ActionConfirmationView):
                         ausgabe_id=None, brochure_id=new_brochure.pk
                     )
                     ausgabejahre = ausgabe_instance.ausgabejahr_set.values_list(
-                        'jahr', flat=True)
+                        'jahr', flat=True
+                    )
                     for jahr in ausgabejahre:
                         _models.BrochureYear.objects.create(
                             brochure=new_brochure, jahr=jahr
@@ -581,17 +603,18 @@ class MoveToBrochureBase(ActionConfirmationView):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
+                # noinspection PyProtectedMember
                 create_logentry(
                     user_id=self.request.user.pk,
                     obj=new_brochure,
                     action_flag=ADDITION,
                     message="Hinweis: "
-                    "{verbose_name} wurde automatisch erstellt beim Verschieben"
-                    " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
-                        verbose_name=brochure_class._meta.verbose_name,
-                        str_ausgabe=str(ausgabe_instance),
-                        str_magazin=str(self.magazin_instance)
-                    )
+                            "{verbose_name} wurde automatisch erstellt beim Verschieben"
+                            " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
+                                verbose_name=brochure_class._meta.verbose_name,
+                                str_ausgabe=str(ausgabe_instance),
+                                str_magazin=str(self.magazin_instance)
+                            )
                 )
                 # Log the changes to the Bestand instances:
                 qs = _models.Bestand.objects.filter(brochure_id=new_brochure.pk)
@@ -628,7 +651,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                     )
                 )
             )
-            return
+            return None
 
         # The deletion should not interrupt/rollback the deletion of
         # the ausgabe, hence we do not include it in the ausgabe transaction.
@@ -644,18 +667,19 @@ class MoveToBrochureBase(ActionConfirmationView):
                     message=format_html(
                         "Magazin konnte nicht gelöscht werden: {}",
                         get_obj_link(
-                            obj=self.magazin_instance, user=self.request.user, blank=True)
+                            obj=self.magazin_instance, user=self.request.user, blank=True
+                        )
                     )
                 )
             else:
                 log_deletion(self.request.user.pk, self.magazin_instance)
 
-    def get_options_form(self, **kwargs):
+    def get_options_form(self, **kwargs: Any) -> Form:
         """Return the form that configures this action."""
         kwargs['can_delete_magazin'] = self.can_delete_magazin
         return BrochureActionFormOptions(**kwargs)
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
         formset = self.get_form()
         forms = []
@@ -684,7 +708,7 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
     action_name = 'change_bestand'
     action_reversible = True
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> Optional[HttpResponse]:
         if 'action_confirmed' in request.POST:
             # Collect all the valid formsets:
             formsets = []
@@ -701,14 +725,13 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
                 return None
         return self.get(request, *args, **kwargs)
 
-    # noinspection PyMethodOverriding
-    def perform_action(self, formsets):
+    def perform_action(self, formsets: List[BaseInlineFormSet]) -> None:  # type: ignore[override]
         with transaction.atomic():
             for formset in formsets:
                 formset.save()
                 self.create_log_entries(formset)
 
-    def create_log_entries(self, formset):
+    def create_log_entries(self, formset: BaseInlineFormSet) -> None:
         """Create LogEntry objects for the parent and its related objects."""
         # We can get the correct change message for the LogEntry objects
         # of the parent instance from the model_admin's
@@ -716,11 +739,13 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
         # Since we're not changing anything on the instance itself, an empty
         # model form will do.
         form = self.model_admin.get_form(
-            self.request, obj=formset.instance, change=True)()
+            self.request, obj=formset.instance, change=True
+        )()
         # 'add' argument is always False as we are always working on an already
         # existing parent instance.
         change_message = self.model_admin.construct_change_message(
-            request=self.request, form=form, formsets=[formset], add=False)
+            request=self.request, form=form, formsets=[formset], add=False
+        )
         self.model_admin.log_change(self.request, formset.instance, change_message)
         # Now create LogEntry objects for the Bestand model side:
         user_id = self.request.user.pk
@@ -731,17 +756,19 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
         for deleted_obj in formset.deleted_objects:
             log_deletion(user_id, deleted_obj)
 
-    def get_bestand_formset(self, request, obj):
+    def get_bestand_formset(
+            self, request: HttpRequest, obj: Model
+    ) -> Tuple[BaseInlineFormSet, InlineModelAdmin]:
         """Return the Bestand formset and model admin inline for this object."""
         formsets_with_inlines = self.model_admin.get_formsets_with_inlines(
-            request, obj)
+            request, obj
+        )
         for formset_class, inline in formsets_with_inlines:
             if inline.model == _models.Bestand:
                 break
         else:
             raise ValueError(
-                "Model admin '%s' has no inline for model Bestand!" %
-                self.model_admin
+                "Model admin '%s' has no inline for model Bestand!" % self.model_admin
             )
         formset_params = {
             'instance': obj,
@@ -753,7 +780,7 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
         formset = formset_class(**formset_params)
         return formset, inline
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
         context['object_name'] = self.opts.object_name
         context['formsets'] = []
@@ -772,8 +799,10 @@ class ChangeBestand(ConfirmationViewMixin, views.generic.TemplateView):
                 # Add the inline formset media (such as inlines.js):
                 context['media'] += wrapped_formset.media
                 media_updated = True
-            context['formsets'].append((
-                get_obj_link(obj=obj, user=self.request.user, blank=True),
-                wrapped_formset
-            ))
+            context['formsets'].append(
+                (
+                    get_obj_link(obj=obj, user=self.request.user, blank=True),
+                    wrapped_formset
+                )
+            )
         return context

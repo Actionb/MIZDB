@@ -53,7 +53,7 @@ class TestConfirmationViewMixin(AdminTestCase):
         # this base class has not implemented the perform_action method
         instance = self.get_instance()
         with self.assertRaises(NotImplementedError):
-            instance.perform_action()
+            instance.perform_action(form_cleaned_data={})
 
     def test_dispatch_action_not_allowed(self):
         # dispatch should redirect 'back' (here: return None) if the action is not allowed
@@ -113,7 +113,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         request = self.get_request()
         view = self.get_view(request=request)
         # noinspection PyUnresolvedReferences
-        expected = [['Band: ' + get_obj_link(self.obj1, request.user, blank=True)]]
+        expected = [('Band: ' + get_obj_link(self.obj1, request.user, blank=True), )]
         self.assertEqual(view.compile_affected_objects(), expected)
 
         # noinspection PyUnresolvedReferences
@@ -128,8 +128,8 @@ class TestActionConfirmationView(ActionViewTestCase):
         link_list = view.compile_affected_objects()
         # link_list should have a structure like this:
         # [
-        #       ['Audio Material: <link of obj1>', [<affected objects>]],
-        #       ['Audio Material: <link of obj2>', [<affected objects>]],
+        #       ('Audio Material: <link of obj1>', [<affected objects>]),
+        #       ('Audio Material: <link of obj2>', [<affected objects>]),
         #       ...
         # ]
         # In this case here, the list only has one object (first index==0).
