@@ -1,11 +1,15 @@
 from collections import OrderedDict
 from itertools import chain
+from typing import Any, List, Tuple
 
 from django import views
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.db import transaction
+from django.db.models import Model
 from django.db.utils import IntegrityError
+from django.forms import Form
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.utils.html import format_html
 from django.utils.translation import gettext
@@ -15,7 +19,7 @@ from dbentry.base.views import MIZAdminMixin
 from dbentry.bulk.forms import BulkFormAusgabe
 from dbentry.sites import register_tool
 from dbentry.utils.admin import (
-    log_addition, log_change, link_list, get_changelist_link, get_changelist_url
+    get_changelist_link, get_changelist_url, link_list, log_addition, log_change
 )
 
 
@@ -34,14 +38,14 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         'audio_lagerort', 'ausgabe_lagerort', 'provenienz'
     ]
 
-    def get_initial(self):
+    def get_initial(self) -> dict:
         """
         Use data of the previously submitted form stored in the current session
         as this form's initial data.
         """
         return self.request.session.get('old_form_data', {})
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
         Either:
             - show the preview for *this* form
@@ -58,7 +62,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             # complain about it.
             messages.warning(
                 request, 'Angaben haben sich geändert. '
-                'Bitte kontrolliere diese in der Vorschau.'
+                         'Bitte kontrolliere diese in der Vorschau.'
             )
         elif '_addanother' in request.POST:
             # Save the data, notify the user about changes and prepare the
@@ -79,6 +83,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
                     format_html('Dubletten hinzugefügt: {}', obj_list)
                 )
             if created or updated:
+                # noinspection PyUnresolvedReferences
                 changelist_link = get_changelist_link(
                     _models.Ausgabe,
                     request.user,
@@ -94,6 +99,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         elif '_continue' in request.POST:
             # Save the data and redirect back to the changelist.
             ids, instances, updated = self.save_data(form)
+            # noinspection PyUnresolvedReferences
             return redirect(
                 get_changelist_url(
                     model=_models.Ausgabe,
@@ -111,17 +117,19 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         context['form'] = form
         # Provide the next form with initial so we can track data changes
         # within the form.
+        # noinspection PyUnresolvedReferences
         request.session['old_form_data'] = form.data
         return self.render_to_response(context)
 
     @transaction.atomic()
-    def save_data(self, form):
+    def save_data(self, form: Form) -> Tuple[List[int], List[Model], List[Model]]:
         """
-        Create or update model instances from the form's 'row_data'.
+        Create or update model instances from the form's ``row_data``.
 
         Rows that are duplicates of another row or rows that resolve
         into multiple similar existing instances will not be used to create new
         instances.
+
         Returns a 3-tuple:
             - the list of ids of created or updated instances
             - the list of created instances
@@ -280,7 +288,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         return ids, created, updated
 
     # noinspection PyMethodMayBeStatic
-    def next_initial_data(self, form):
+    def next_initial_data(self, form: Form) -> dict:
         # Use the form's uncleaned data as basis for the next form.
         # form.cleaned_data contains model instances (from using ModelChoiceFields)
         # which are not JSON serializable and thus is unsuitable for storage
@@ -292,16 +300,18 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             # (all rows share the same values).
             # 2018,2019 -> 2020,2021
             jahre = form.row_data[0]['jahr']
-            data['jahr'] = ",".join([
-                str(int(j) + len(jahre))
-                for j in jahre
-            ])
+            data['jahr'] = ",".join(
+                [
+                    str(int(j) + len(jahre))
+                    for j in jahre
+                ]
+            )
         if form.cleaned_data.get('jahrgang'):
             data['jahrgang'] = form.cleaned_data['jahrgang'] + 1
         return data
 
     # noinspection PyMethodMayBeStatic
-    def instance_data(self, row):
+    def instance_data(self, row: dict) -> dict:
         """
         Return data suitable to construct a model instance with from a given row.
         """
@@ -313,8 +323,18 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             'status': row.get('status')
         }
 
-    def build_preview(self, request, form):
-        """Prepare context variables used in the 'preview' table."""
+    def build_preview(
+            self,
+            request: HttpRequest,
+            form: Form
+    ) -> Tuple[List[str], List[OrderedDict]]:
+        """
+        Prepare context variables used in the preview table.
+
+        Returns a 2-tuple:
+            - the list of table headers for the preview table
+            - the list of rows for the preview table
+        """
         # Check if any of the form's rows constitute one or more already
         # existing model instances. If so, the preview needs to include the
         # 'Bereits vorhanden' and 'Datenbank' headers that will contain those
@@ -403,9 +423,9 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             headers += ['Bereits vorhanden', 'Datenbank']
         return headers, preview_data
 
-    # noinspection PyProtectedMember
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict:
         # Add ausgabe's meta for the template.
+        # noinspection PyProtectedMember,PyUnresolvedReferences
         return super().get_context_data(opts=_models.Ausgabe._meta)
 
 
