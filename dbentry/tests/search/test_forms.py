@@ -270,6 +270,20 @@ class TestSearchForm(MyTestCase):
         self.assertEqual(list(form.cleaned_data['genre']), [genre1, genre2])
         self.assertEqual(form.get_filters_params(), {'genre__in': "1,2"})
 
+    def test_clean_id__in(self):
+        # Assert that clean_id__in filters out alphabetic characters.
+        form_class = self.factory(self.model, fields=['id__in'])
+        form = form_class()
+        form.cleaned_data = {'id__in': 'A20'}
+        self.assertEqual(form.clean_id__in(), '20')
+
+    def test_clean_id__in_keeps_sep(self):
+        # Assert that clean_id__in keeps the separator character.
+        form_class = self.factory(self.model, fields=['id__in'])
+        form = form_class()
+        form.cleaned_data = {'id__in': '1,2'}
+        self.assertEqual(form.clean_id__in(), '1,2')
+
 
 class TestRangeFormField(MyTestCase):
 
