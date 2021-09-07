@@ -175,7 +175,10 @@ class SearchForm(forms.Form):
         # The 'Plakat ID' is presented with a prefixed 'P'. People will try to
         # query for the id WITH that prefix.
         return "".join(
-            i for i in self.cleaned_data.get('id__in', '') if i.isnumeric())
+            i
+            for i in self.cleaned_data.get('id__in', '')
+            if i.isnumeric() or i == ','
+        )
 
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
