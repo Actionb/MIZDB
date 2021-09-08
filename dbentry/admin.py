@@ -1,30 +1,41 @@
+from typing import Any, Dict, List, Optional, Type, Union
+
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
-from django.contrib.auth.models import Group, User, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
-from django.db.models import Count, Min, Subquery, OuterRef, Func, Value, Exists
+from django.db.models import (
+    Count, Exists, Field as ModelField, Func, ManyToManyField, Min, OuterRef, QuerySet, Subquery,
+    Value
+)
+from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
+from django.http import HttpRequest
+from django.utils.safestring import SafeText
 
-import dbentry.models as _models
-import dbentry.m2m as _m2m
 import dbentry.actions.actions as _actions
+import dbentry.m2m as _m2m
+import dbentry.models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.base.admin import (
-    MIZModelAdmin, BaseAliasInline, BaseAusgabeInline, BaseGenreInline,
-    BaseSchlagwortInline, BaseStackedInline, BaseTabularInline, BaseOrtInLine
+    BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseOrtInLine, BaseSchlagwortInline,
+    BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
+from dbentry.changelist import AusgabeChangeList
 from dbentry.forms import (
-    ArtikelForm, AutorForm, BuchForm, BrochureForm, AudioForm,
-    PlakatForm, MusikerForm, BandForm, VideoForm, FotoForm, PersonForm
+    ArtikelForm, AudioForm, AutorForm, BandForm, BrochureForm, BuchForm, FotoForm, MusikerForm,
+    PersonForm, PlakatForm, VideoForm
 )
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
+
+
 # TODO: add admindocs
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
 
-# noinspection PyProtectedMember
+# noinspection PyProtectedMember,PyUnresolvedReferences
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     # This allows inlines.js to copy the last selected bestand to a new row.
@@ -96,12 +107,9 @@ class AudioAdmin(MIZModelAdmin):
         }),
     ]
     inlines = [
-        MusikerInLine, BandInLine,
-        SchlInLine, GenreInLine,
-        OrtInLine, SpielortInLine, VeranstaltungInLine,
-        PersonInLine, PlattenInLine,
-        AusgabeInLine, DateiInLine,
-        BestandInLine
+        MusikerInLine, BandInLine, SchlInLine, GenreInLine,
+        OrtInLine, SpielortInLine, VeranstaltungInLine, PersonInLine,
+        PlattenInLine, AusgabeInLine, DateiInLine, BestandInLine
     ]
     search_form_kwargs = {
         'fields': [
@@ -112,7 +120,7 @@ class AudioAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
                 'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
@@ -120,12 +128,13 @@ class AudioAdmin(MIZModelAdmin):
                 'band__band_name', distinct=True, ordering='band__band_name')
         }
 
-    def kuenstler_string(self, obj):
+    def kuenstler_string(self, obj: _models.Audio) -> str:
+        # band_list and musiker_list added by annotations
+        # noinspection PyUnresolvedReferences
         return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
-    kuenstler_string.short_description = 'Künstler'
+    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
-# noinspection PyProtectedMember,PyUnresolvedReferences
 @admin.register(_models.Ausgabe, site=miz_site)
 class AusgabenAdmin(MIZModelAdmin):
     class NumInLine(BaseTabularInline):
@@ -150,7 +159,9 @@ class AusgabenAdmin(MIZModelAdmin):
         verbose_model = _models.Video
 
     index_category = 'Archivgut'
-    inlines = [NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, VideoInLine, BestandInLine]
+    inlines = [
+        NumInLine, MonatInLine, LNumInLine, JahrInLine, AudioInLine, VideoInLine, BestandInLine
+    ]
     ordering = ['magazin__magazin_name', '_name']
     list_select_related = ['magazin']
 
@@ -184,21 +195,21 @@ class AusgabenAdmin(MIZModelAdmin):
         'change_status_inbearbeitung', 'change_status_abgeschlossen'
     ]
 
-    def get_changelist(self, request, **kwargs):
-        from .changelist import AusgabeChangeList
+    def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[AusgabeChangeList]:
         return AusgabeChangeList
 
-    def ausgabe_name(self, obj):
+    def ausgabe_name(self, obj: _models.Ausgabe) -> str:
+        # noinspection PyProtectedMember
         return obj._name
-    ausgabe_name.short_description = 'Ausgabe'
-    ausgabe_name.admin_order_field = '_name'
+    ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
+    ausgabe_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
 
-    def magazin_name(self, obj):
+    def magazin_name(self, obj: _models.Ausgabe) -> str:
         return obj.magazin.magazin_name
-    magazin_name.short_description = 'Magazin'
-    magazin_name.admin_order_field = 'magazin__magazin_name'
+    magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
+    magazin_name.admin_order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> dict:
         # Can't use ArrayAgg directly to get a list of distinct monat__abk
         # values as we are ordering by monat__ordinal: using distinct AND
         # ordering requires that the ordering expressions are present in the
@@ -231,37 +242,39 @@ class AusgabenAdmin(MIZModelAdmin):
             'anz_artikel': Count('artikel', distinct=True)
         }
 
-    def anz_artikel(self, obj):
-        return obj.anz_artikel
-    anz_artikel.short_description = 'Anz. Artikel'
-    anz_artikel.admin_order_field = 'anz_artikel'
+    def anz_artikel(self, obj: _models.Ausgabe) -> int:
+        return obj.anz_artikel  # added by annotations  # noqa
+    anz_artikel.short_description = 'Anz. Artikel'  # type: ignore[attr-defined]  # noqa
+    anz_artikel.admin_order_field = 'anz_artikel'  # type: ignore[attr-defined]  # noqa
 
-    def jahr_string(self, obj):
-        return obj.jahr_string
-    jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = 'jahr_string'
+    def jahr_string(self, obj: _models.Ausgabe) -> str:
+        return obj.jahr_string  # added by annotations  # noqa
+    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
+    jahr_string.admin_order_field = 'jahr_string'  # type: ignore[attr-defined]  # noqa
 
-    def num_string(self, obj):
-        return obj.num_string
-    num_string.short_description = 'Nummer'
-    num_string.admin_order_field = 'num_string'
+    def num_string(self, obj: _models.Ausgabe) -> str:
+        return obj.num_string  # added by annotations  # noqa
+    num_string.short_description = 'Nummer'  # type: ignore[attr-defined]  # noqa
+    num_string.admin_order_field = 'num_string'  # type: ignore[attr-defined]  # noqa
 
-    def lnum_string(self, obj):
-        return obj.lnum_string
-    lnum_string.short_description = 'lfd. Nummer'
-    lnum_string.admin_order_field = 'lnum_string'
+    def lnum_string(self, obj: _models.Ausgabe) -> str:
+        return obj.lnum_string  # added by annotations  # noqa
+    lnum_string.short_description = 'lfd. Nummer'  # type: ignore[attr-defined]  # noqa
+    lnum_string.admin_order_field = 'lnum_string'  # type: ignore[attr-defined]  # noqa
 
-    def monat_string(self, obj):
-        return obj.monat_string
-    monat_string.short_description = 'Monate'
-    monat_string.admin_order_field = 'monat_string'
+    def monat_string(self, obj: _models.Ausgabe) -> str:
+        return obj.monat_string  # added by annotations  # noqa
+    monat_string.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
+    monat_string.admin_order_field = 'monat_string'  # type: ignore[attr-defined]  # noqa
 
-    def _change_status(self, request, queryset, status):
+    def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
+        """Update the ``status`` of the Ausgabe instances in ``queryset``."""
         with transaction.atomic():
             queryset.update(status=status, _changed_flag=False)
         try:
             with transaction.atomic():
                 for obj in queryset:
+                    # noinspection PyUnresolvedReferences
                     log_change(request.user.pk, obj, fields=['status'])
         except Exception as e:
             message_text = (
@@ -271,31 +284,48 @@ class AusgabenAdmin(MIZModelAdmin):
             )
             self.message_user(request, message_text, 'ERROR')
 
-    def change_status_unbearbeitet(self, request, queryset):
+    def change_status_unbearbeitet(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """
+        Set the ``status`` of the Ausgabe instances in ``queryset`` to
+        UNBEARBEITET.
+        """
         self._change_status(request, queryset, _models.Ausgabe.UNBEARBEITET)
-    change_status_unbearbeitet.allowed_permissions = ['change']
-    change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'
+    change_status_unbearbeitet.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
+    change_status_unbearbeitet.short_description = 'Status ändern: unbearbeitet'  # type: ignore[attr-defined]  # noqa
 
-    def change_status_inbearbeitung(self, request, queryset):
+    def change_status_inbearbeitung(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """
+        Set the ``status`` of the Ausgabe instances in ``queryset`` to
+        INBEARBEITUNG.
+        """
         self._change_status(request, queryset, _models.Ausgabe.INBEARBEITUNG)
-    change_status_inbearbeitung.allowed_permissions = ['change']
-    change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'
+    change_status_inbearbeitung.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
+    change_status_inbearbeitung.short_description = 'Status ändern: in Bearbeitung'  # type: ignore[attr-defined]  # noqa
 
-    def change_status_abgeschlossen(self, request, queryset):
+    def change_status_abgeschlossen(self, request: HttpRequest, queryset: QuerySet) -> None:
+        """
+        Set the ``status`` of the Ausgabe instances in ``queryset`` to
+        ABGESCHLOSSEN.
+        """
         self._change_status(request, queryset, _models.Ausgabe.ABGESCHLOSSEN)
-    change_status_abgeschlossen.allowed_permissions = ['change']
-    change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'
+    change_status_abgeschlossen.allowed_permissions = ['change']  # type: ignore[attr-defined]  # noqa
+    change_status_abgeschlossen.short_description = 'Status ändern: abgeschlossen'  # type: ignore[attr-defined]  # noqa
 
     @staticmethod
-    def has_moveto_brochure_permission(request):
+    def has_moveto_brochure_permission(request: HttpRequest) -> bool:
+        """
+        Check that the request's user has permission to add Brochure objects
+        and permission to delete Ausgabe objects.
+        """
         from django.contrib.auth import get_permission_codename
         perms = []
+        # noinspection PyUnresolvedReferences,PyProtectedMember
         for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
             perms.append("%s.%s" % (opts.app_label, get_permission_codename(name, opts)))
+        # noinspection PyUnresolvedReferences
         return request.user.has_perms(perms)
 
 
-# noinspection PyProtectedMember
 @admin.register(_models.Autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):
     class MagazinInLine(BaseTabularInline):
@@ -313,24 +343,24 @@ class AutorAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['magazin', 'person']}
     ordering = ['_name']
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'magazin_list': ArrayAgg(
                 'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name')
         }
 
-    def autor_name(self, obj):
+    def autor_name(self, obj: _models.Autor) -> str:
+        # noinspection PyProtectedMember
         return obj._name
-    autor_name.short_description = 'Autor'
-    autor_name.admin_order_field = '_name'
+    autor_name.short_description = 'Autor'  # type: ignore[attr-defined]  # noqa
+    autor_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
 
-    def magazin_string(self, obj):
-        return concat_limit(obj.magazin_list) or self.get_empty_value_display()
-    magazin_string.short_description = 'Magazin(e)'
-    magazin_string.admin_order_field = 'magazin_list'
+    def magazin_string(self, obj: _models.Autor) -> str:
+        return concat_limit(obj.magazin_list) or self.get_empty_value_display() # added by annotations  # noqa
+    magazin_string.short_description = 'Magazin(e)'  # type: ignore[attr-defined]  # noqa
+    magazin_string.admin_order_field = 'magazin_list'  # type: ignore[attr-defined]  # noqa
 
 
-# noinspection PyProtectedMember
 @admin.register(_models.Artikel, site=miz_site)
 class ArtikelAdmin(MIZModelAdmin):
     class GenreInLine(BaseGenreInline):
@@ -387,7 +417,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'forwards': {'ausgabe': 'ausgabe__magazin'}
     }
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'schlagwort_list': ArrayAgg(
                 'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
@@ -397,31 +427,34 @@ class ArtikelAdmin(MIZModelAdmin):
                 'band__band_name', distinct=True, ordering='band__band_name')
         }
 
-    def ausgabe_name(self, obj):
+    def ausgabe_name(self, obj: _models.Artikel) -> str:
+        # noinspection PyProtectedMember
         return obj.ausgabe._name
-    ausgabe_name.short_description = 'Ausgabe'
-    ausgabe_name.admin_order_field = 'ausgabe___name'
+    ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
+    ausgabe_name.admin_order_field = 'ausgabe___name'  # type: ignore[attr-defined]  # noqa
 
-    def zusammenfassung_string(self, obj):
+    def zusammenfassung_string(self, obj: _models.Artikel) -> str:
         if not obj.zusammenfassung:
             return self.get_empty_value_display()
         return concat_limit(obj.zusammenfassung.split(), sep=" ", width=100)
-    zusammenfassung_string.short_description = 'Zusammenfassung'
-    zusammenfassung_string.admin_order_field = 'zusammenfassung'
+    zusammenfassung_string.short_description = 'Zusammenfassung'  # type: ignore[attr-defined]  # noqa
+    zusammenfassung_string.admin_order_field = 'zusammenfassung'  # type: ignore[attr-defined]  # noqa
 
-    def artikel_magazin(self, obj):
+    def artikel_magazin(self, obj: _models.Artikel) -> str:
         return obj.ausgabe.magazin.magazin_name
-    artikel_magazin.short_description = 'Magazin'
-    artikel_magazin.admin_order_field = 'ausgabe__magazin__magazin_name'
+    artikel_magazin.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
+    artikel_magazin.admin_order_field = 'ausgabe__magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
-    def schlagwort_string(self, obj):
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()
-    schlagwort_string.short_description = 'Schlagwörter'
-    schlagwort_string.admin_order_field = 'schlagwort_list'
+    def schlagwort_string(self, obj: _models.Artikel) -> str:
+        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display() # added by annotations  # noqa
+    schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
+    schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
-    def kuenstler_string(self, obj):
+    def kuenstler_string(self, obj: _models.Artikel) -> str:
+        # band_list and musiker_list added by annotations
+        # noinspection PyUnresolvedReferences
         return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
-    kuenstler_string.short_description = 'Künstler'
+    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Band, site=miz_site)
@@ -451,7 +484,7 @@ class BandAdmin(MIZModelAdmin):
         'labels': {'musiker': 'Mitglied'}
     }
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
             'musiker_list': ArrayAgg(
@@ -461,25 +494,25 @@ class BandAdmin(MIZModelAdmin):
             'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
         }
 
-    def genre_string(self, obj):
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()
-    genre_string.short_description = 'Genres'
-    genre_string.admin_order_field = 'genre_list'
+    def genre_string(self, obj: _models.Band) -> str:
+        return concat_limit(obj.genre_list) or self.get_empty_value_display()  # added by annotations  # noqa
+    genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
+    genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
-    def musiker_string(self, obj):
-        return concat_limit(obj.musiker_list) or self.get_empty_value_display()
-    musiker_string.short_description = 'Mitglieder'
-    musiker_string.admin_order_field = 'musiker_list'
+    def musiker_string(self, obj: _models.Band) -> str:
+        return concat_limit(obj.musiker_list) or self.get_empty_value_display()  # added by annotations  # noqa
+    musiker_string.short_description = 'Mitglieder'  # type: ignore[attr-defined]  # noqa
+    musiker_string.admin_order_field = 'musiker_list'  # type: ignore[attr-defined]  # noqa
 
-    def alias_string(self, obj):
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()
-    alias_string.short_description = 'Aliase'
-    alias_string.admin_order_field = 'alias_list'
+    def alias_string(self, obj: _models.Band) -> str:
+        return concat_limit(obj.alias_list) or self.get_empty_value_display()  # added by annotations  # noqa
+    alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
+    alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
 
-    def orte_string(self, obj):
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()
-    orte_string.short_description = 'Orte'
-    orte_string.admin_order_field = 'orte_list'
+    def orte_string(self, obj: _models.Band) -> str:
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations  # noqa
+    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
+    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Plakat, site=miz_site)  # noqa
@@ -533,23 +566,27 @@ class PlakatAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'veranstaltung_list':
                 ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
         }
 
-    def datum_localized(self, obj):
+    def datum_localized(self, obj: _models.Plakat) -> str:
         return obj.datum.localize()
-    datum_localized.short_description = 'Datum'
-    datum_localized.admin_order_field = 'datum'
+    datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
+    datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
-    def veranstaltung_string(self, obj):
-        return concat_limit(obj.veranstaltung_list) or self.get_empty_value_display()
-    veranstaltung_string.short_description = 'Veranstaltungen'
-    veranstaltung_string.admin_order_field = 'veranstaltung_list'
+    def veranstaltung_string(self, obj: _models.Plakat) -> str:
+        return concat_limit(obj.veranstaltung_list) or self.get_empty_value_display()  # added by annotations  # noqa
+    veranstaltung_string.short_description = 'Veranstaltungen'  # type: ignore[attr-defined]  # noqa
+    veranstaltung_string.admin_order_field = 'veranstaltung_list'  # type: ignore[attr-defined]  # noqa
 
-    def get_fields(self, request, obj=None):
+    def get_fields(self, request: HttpRequest, obj: _models.Plakat = None) -> List[str]:
+        """
+        Remove the 'copy_related' formfield if the user does not have change
+        permissions on the object.
+        """
         fields = super().get_fields(request, obj)
         if obj is None:
             return fields
@@ -573,24 +610,31 @@ class PlakatAdmin(MIZModelAdmin):
             return [f for f in fields if f != 'copy_related']
         return fields
 
-    def save_related(self, request, form, formsets, change):
+    def save_related(
+            self,
+            request: HttpRequest,
+            form: ModelForm,
+            formsets: List[BaseInlineFormSet],
+            change: bool
+    ) -> None:
         super().save_related(request, form, formsets, change)
         self._copy_related(request, form.instance)
 
     @staticmethod
-    def _copy_related(request, obj):
+    def _copy_related(request: HttpRequest, obj: _models.Plakat) -> None:
         """Copy Band and Musiker instances of Veranstaltung to this object."""
         if 'copy_related' in request.POST:
             copy_related_set(
-                request, obj, 'veranstaltung__band', 'veranstaltung__musiker')
+                request, obj, 'veranstaltung__band', 'veranstaltung__musiker'
+            )
 
-    def plakat_id(self, obj):
+    def plakat_id(self, obj: _models.Plakat) -> str:
         """ID of this instance, with a prefixed 'P' and padded with zeros."""
         if not obj.pk:
             return self.get_empty_value_display()
         return "P" + str(obj.pk).zfill(6)
-    plakat_id.short_description = 'Plakat ID'
-    plakat_id.admin_order_field = 'id'
+    plakat_id.short_description = 'Plakat ID'  # type: ignore[attr-defined]  # noqa
+    plakat_id.admin_order_field = 'id'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Buch, site=miz_site)
@@ -670,7 +714,7 @@ class BuchAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
             'schlagwort_list': ArrayAgg(
@@ -682,24 +726,26 @@ class BuchAdmin(MIZModelAdmin):
                 'band__band_name', distinct=True, ordering='band__band_name')
         }
 
-    def autoren_string(self, obj):
-        return concat_limit(obj.autor_list) or self.get_empty_value_display()
-    autoren_string.short_description = 'Autoren'
-    autoren_string.admin_order_field = 'autor_list'
+    def autoren_string(self, obj: _models.Buch) -> str:
+        return concat_limit(obj.autor_list) or self.get_empty_value_display() # added by annotations  # noqa
+    autoren_string.short_description = 'Autoren'  # type: ignore[attr-defined]  # noqa
+    autoren_string.admin_order_field = 'autor_list'  # type: ignore[attr-defined]  # noqa
 
-    def schlagwort_string(self, obj):
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()
-    schlagwort_string.short_description = 'Schlagwörter'
-    schlagwort_string.admin_order_field = 'schlagwort_list'
+    def schlagwort_string(self, obj: _models.Buch) -> str:
+        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display() # added by annotations  # noqa
+    schlagwort_string.short_description = 'Schlagwörter'  # type: ignore[attr-defined]  # noqa
+    schlagwort_string.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
-    def genre_string(self, obj):
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()
-    genre_string.short_description = 'Genres'
-    genre_string.admin_order_field = 'genre_list'
+    def genre_string(self, obj: _models.Buch) -> str:
+        return concat_limit(obj.genre_list) or self.get_empty_value_display() # added by annotations  # noqa
+    genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
+    genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
-    def kuenstler_string(self, obj):
+    def kuenstler_string(self, obj: _models.Buch) -> str:
+        #  band_list and musiker_list added by annotations
+        # noinspection PyUnresolvedReferences
         return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
-    kuenstler_string.short_description = 'Künstler'
+    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Dokument, site=miz_site)
@@ -722,14 +768,14 @@ class GenreAdmin(MIZModelAdmin):
     search_fields = ['genre', 'genrealias__alias']
     ordering = ['genre']
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
         }
 
-    def alias_string(self, obj):
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()
-    alias_string.short_description = 'Aliase'
+    def alias_string(self, obj: _models.Genre) -> str:
+        return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
+    alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Magazin, site=miz_site)
@@ -756,33 +802,34 @@ class MagazinAdmin(MIZModelAdmin):
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
             'anz_ausgaben': Count('ausgabe', distinct=True)
         }
 
-    def anz_ausgaben(self, obj):
-        return obj.anz_ausgaben
-    anz_ausgaben.short_description = 'Anz. Ausgaben'
-    anz_ausgaben.admin_order_field = 'anz_ausgaben'
+    def anz_ausgaben(self, obj: _models.Magazin) -> int:
+        return obj.anz_ausgaben # added by annotations  # noqa
+    anz_ausgaben.short_description = 'Anz. Ausgaben'  # type: ignore[attr-defined]  # noqa
+    anz_ausgaben.admin_order_field = 'anz_ausgaben'  # type: ignore[attr-defined]  # noqa
 
-    def orte_string(self, obj):
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()
-    orte_string.short_description = 'Orte'
-    orte_string.admin_order_field = 'orte_list'
+    def orte_string(self, obj: _models.Magazin) -> str:
+        return concat_limit(obj.orte_list) or self.get_empty_value_display() # added by annotations  # noqa
+    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
+    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
-    def short_beschreibung(self, obj):
+    def short_beschreibung(self, obj: _models.Magazin) -> str:
         return concat_limit(obj.beschreibung.split(), width=150, sep=" ")
-    short_beschreibung.short_description = 'Beschreibung'
-    short_beschreibung.admin_order_field = 'beschreibung'
+    short_beschreibung.short_description = 'Beschreibung'  # type: ignore[attr-defined]  # noqa
+    short_beschreibung.admin_order_field = 'beschreibung'  # type: ignore[attr-defined]  # noqa
 
-    def get_exclude(self, request, obj=None):
+    def get_exclude(self, request: HttpRequest, obj: Optional[_models.Magazin] = None) -> List[str]:
         """
         Exclude 'ausgaben_merkmal' from the add/change page if the current
         user is not a superuser.
         """
         exclude = super().get_exclude(request, obj) or []
+        # noinspection PyUnresolvedReferences
         if not request.user.is_superuser:
             exclude = list(exclude)  # Copy the iterable.
             exclude.append('ausgaben_merkmal')
@@ -826,27 +873,27 @@ class MusikerAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
     ordering = ['kuenstler_name']
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
             'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name')
         }
 
-    def band_string(self, obj):
-        return concat_limit(obj.band_list) or self.get_empty_value_display()
-    band_string.short_description = 'Bands'
-    band_string.admin_order_field = 'band_list'
+    def band_string(self, obj: _models.Musiker) -> str:
+        return concat_limit(obj.band_list) or self.get_empty_value_display()  # added by annotations # noqa
+    band_string.short_description = 'Bands'  # type: ignore[attr-defined]  # noqa
+    band_string.admin_order_field = 'band_list'  # type: ignore[attr-defined]  # noqa
 
-    def genre_string(self, obj):
-        return concat_limit(obj.genre_list) or self.get_empty_value_display()
-    genre_string.short_description = 'Genres'
-    genre_string.admin_order_field = 'genre_list'
+    def genre_string(self, obj: _models.Musiker) -> str:
+        return concat_limit(obj.genre_list) or self.get_empty_value_display()  # added by annotations # noqa
+    genre_string.short_description = 'Genres'  # type: ignore[attr-defined]  # noqa
+    genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
-    def orte_string(self, obj):
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()
-    orte_string.short_description = 'Orte'
-    orte_string.admin_order_field = 'orte_list'
+    def orte_string(self, obj: _models.Musiker) -> str:
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations # noqa
+    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
+    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Person, site=miz_site)
@@ -878,7 +925,7 @@ class PersonAdmin(MIZModelAdmin):
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> dict:
         return {
             'is_musiker': Exists(
                 _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
@@ -888,20 +935,20 @@ class PersonAdmin(MIZModelAdmin):
                 'orte___name', distinct=True, ordering='orte___name')
         }
 
-    def is_musiker(self, obj):
-        return obj.is_musiker
-    is_musiker.short_description = 'Ist Musiker'
-    is_musiker.boolean = True
+    def is_musiker(self, obj: _models.Person) -> bool:
+        return obj.is_musiker  # added by annotations # noqa
+    is_musiker.short_description = 'Ist Musiker'  # type: ignore[attr-defined]  # noqa
+    is_musiker.boolean = True  # type: ignore[attr-defined]  # noqa
 
-    def is_autor(self, obj):
-        return obj.is_autor
-    is_autor.short_description = 'Ist Autor'
-    is_autor.boolean = True
+    def is_autor(self, obj: _models.Person) -> bool:
+        return obj.is_autor  # added by annotations # noqa
+    is_autor.short_description = 'Ist Autor'  # type: ignore[attr-defined]  # noqa
+    is_autor.boolean = True  # type: ignore[attr-defined]  # noqa
 
-    def orte_string(self, obj):
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()
-    orte_string.short_description = 'Orte'
-    orte_string.admin_order_field = 'orte_list'
+    def orte_string(self, obj: _models.Person) -> str:
+        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations # noqa
+    orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
+    orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Schlagwort, site=miz_site)
@@ -916,15 +963,15 @@ class SchlagwortAdmin(MIZModelAdmin):
     search_fields = ['schlagwort', 'schlagwortalias__alias']
     ordering = ['schlagwort']
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
         }
 
-    def alias_string(self, obj):
-        return concat_limit(obj.alias_list) or self.get_empty_value_display()
-    alias_string.short_description = 'Aliase'
-    alias_string.admin_order_field = 'alias_list'
+    def alias_string(self, obj: _models.Schlagwort) -> str:
+        return concat_limit(obj.alias_list) or self.get_empty_value_display()  # added by annotations # noqa
+    alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
+    alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Spielort, site=miz_site)
@@ -971,7 +1018,10 @@ class VeranstaltungAdmin(MIZModelAdmin):
         model = _models.VeranstaltungURL
 
     collapse_all = True
-    inlines = [URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlInLine, GenreInLine, PersonInLine]
+    inlines = [
+        URLInLine, AliasInLine, MusikerInLine, BandInLine, SchlInLine,
+        GenreInLine, PersonInLine
+    ]
     list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
@@ -982,7 +1032,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         ]
     }
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
                 'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
@@ -990,14 +1040,14 @@ class VeranstaltungAdmin(MIZModelAdmin):
                 'band__band_name', distinct=True, ordering='band__band_name')
         }
 
-    def kuenstler_string(self, obj):
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
-    kuenstler_string.short_description = 'Künstler'
+    def kuenstler_string(self, obj: _models.Veranstaltung) -> str:
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations # noqa
+    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
-    def datum_localized(self, obj):
+    def datum_localized(self, obj: _models.Veranstaltung) -> str:
         return obj.datum.localize()
-    datum_localized.short_description = 'Datum'
-    datum_localized.admin_order_field = 'datum'
+    datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
+    datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Verlag, site=miz_site)
@@ -1069,7 +1119,10 @@ class VideoAdmin(MIZModelAdmin):
                 'beschreibung', 'bemerkungen'
             ]
         }),
-        ('Discogs', {'fields': ['release_id', 'discogs_url'], 'classes': ['collapse', 'collapsed']}),
+        ('Discogs', {
+            'fields': ['release_id', 'discogs_url'],
+            'classes': ['collapse', 'collapsed']
+        }),
     ]
     search_form_kwargs = {
         'fields': [
@@ -1079,7 +1132,7 @@ class VideoAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
                 'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
@@ -1087,9 +1140,9 @@ class VideoAdmin(MIZModelAdmin):
                 'band__band_name', distinct=True, ordering='band__band_name')
         }
 
-    def kuenstler_string(self, obj):
-        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()
-    kuenstler_string.short_description = 'Künstler'
+    def kuenstler_string(self, obj: _models.Video) -> str:
+        return concat_limit(obj.band_list + obj.musiker_list) or self.get_empty_value_display()  # added by annotations # noqa
+    kuenstler_string.short_description = 'Künstler'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Bundesland, site=miz_site)
@@ -1116,13 +1169,14 @@ class OrtAdmin(MIZModelAdmin):
     ordering = ['land', 'bland', 'stadt']
     list_select_related = ['land', 'bland']
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    def formfield_for_foreignkey(
+            self, db_field: ModelField, request: HttpRequest, **kwargs: Any
+    ) -> FormField:
         if db_field == self.opts.get_field('bland'):
             kwargs['widget'] = make_widget(model=db_field.related_model, forward=['land'])
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-# noinspection PyProtectedMember
 @admin.register(_models.Bestand, site=miz_site)
 class BestandAdmin(MIZModelAdmin):
     readonly_fields = [
@@ -1135,24 +1189,26 @@ class BestandAdmin(MIZModelAdmin):
     # FIXME: the search form is missing a text search element ('q')
     # FIXME: the search form is missing a 'show all'
 
-    # noinspection PyAttributeOutsideInit
-    def get_queryset(self, request, **kwargs):
+    def get_queryset(self, request: HttpRequest, **kwargs: Any) -> QuerySet:
+        # noinspection PyAttributeOutsideInit
         self.request = request  # save the request for bestand_link()
         return super().get_queryset(request)
 
-    def bestand_class(self, obj):
+    def bestand_class(self, obj: _models.Bestand) -> str:
         if obj.bestand_object:
+            # noinspection PyProtectedMember
             return obj.bestand_object._meta.verbose_name
         return ''
-    bestand_class.short_description = 'Art'
+    bestand_class.short_description = 'Art'  # type: ignore[attr-defined]  # noqa
 
-    def bestand_link(self, obj):
+    def bestand_link(self, obj: _models.Bestand) -> Union[SafeText, str]:
         if obj.bestand_object:
+            # noinspection PyUnresolvedReferences
             return get_obj_link(obj.bestand_object, self.request.user, blank=True)
         return ''
-    bestand_link.short_description = 'Link'
+    bestand_link.short_description = 'Link'  # type: ignore[attr-defined]  # noqa
 
-    def _check_search_form_fields(self, **kwargs):
+    def _check_search_form_fields(self, **kwargs: Any) -> list:
         # Ignore the search form fields check for BestandAdmin.
         return []
 
@@ -1239,7 +1295,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_fieldsets(self, request, obj=None):
+    def get_fieldsets(self, request: HttpRequest, obj: _models.BaseBrochure = None) -> list:
         """Add a fieldset for (ausgabe, ausgabe__magazin)."""
         fieldsets = super().get_fieldsets(request, obj)
         # django default implementation adds at minimum:
@@ -1265,10 +1321,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
             default_fieldset['fields'] = fields
         return fieldsets
 
-    def get_ordering(self, request):
+    def get_ordering(self, request: HttpRequest) -> List[str]:
         return ['titel', 'jahr_min', 'zusammenfassung']
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> dict:
         return {
             'jahr_string': Func(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
@@ -1277,10 +1333,10 @@ class BaseBrochureAdmin(MIZModelAdmin):
             'jahr_min': Min('jahre__jahr')
         }
 
-    def jahr_string(self, obj):
-        return obj.jahr_string
-    jahr_string.short_description = 'Jahre'
-    jahr_string.admin_order_field = 'jahr_min'
+    def jahr_string(self, obj: _models.BaseBrochure) -> str:
+        return obj.jahr_string  # added by annotations  # noqa
+    jahr_string.short_description = 'Jahre'  # type: ignore[attr-defined]  # noqa
+    jahr_string.admin_order_field = 'jahr_min'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(_models.Brochure, site=miz_site)
@@ -1311,7 +1367,7 @@ class KatalogAdmin(BaseBrochureAdmin):
     list_display = ['titel', 'zusammenfassung', 'art', 'jahr_string']
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_fieldsets(self, *args, **kwargs):
+    def get_fieldsets(self, *args: Any, **kwargs: Any) -> list:
         """
         Swap fieldset fields 'art' and 'zusammenfassung' without having to
         redeclare the entire fieldsets attribute.
@@ -1408,29 +1464,29 @@ class FotoAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self):
+    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'schlagwort_list':
                 ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
         }
 
-    def foto_id(self, obj):
+    def foto_id(self, obj: _models.Foto) -> str:
         """Return the id of the object, padded with zeros."""
         if not obj.pk:
             return self.get_empty_value_display()
         return str(obj.pk).zfill(6)
-    foto_id.short_description = 'Foto ID'
-    foto_id.admin_order_field = 'id'
+    foto_id.short_description = 'Foto ID'  # type: ignore[attr-defined]  # noqa
+    foto_id.admin_order_field = 'id'  # type: ignore[attr-defined]  # noqa
 
-    def datum_localized(self, obj):
+    def datum_localized(self, obj: _models.Foto) -> str:
         return obj.datum.localize()
-    datum_localized.short_description = 'Datum'
-    datum_localized.admin_order_field = 'datum'
+    datum_localized.short_description = 'Datum'  # type: ignore[attr-defined]  # noqa
+    datum_localized.admin_order_field = 'datum'  # type: ignore[attr-defined]  # noqa
 
-    def schlagwort_list(self, obj):
-        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()
-    schlagwort_list.short_description = 'Schlagworte'
-    schlagwort_list.admin_order_field = 'schlagwort_list'
+    def schlagwort_list(self, obj: _models.Foto) -> str:
+        return concat_limit(obj.schlagwort_list) or self.get_empty_value_display()  # added by annotations  # noqa
+    schlagwort_list.short_description = 'Schlagworte'  # type: ignore[attr-defined]  # noqa
+    schlagwort_list.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
 
 @admin.register(
@@ -1443,7 +1499,6 @@ class HiddenFromIndex(MIZModelAdmin):
     superuser_only = True
 
 
-# noinspection PyUnresolvedReferences
 class AuthAdminMixin(object):
     """
     Add a model's class name to the human-readable name part of the 'permission'
@@ -1455,8 +1510,17 @@ class AuthAdminMixin(object):
     permissions.
     """
 
-    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-        formfield = super().formfield_for_manytomany(db_field, request=request, **kwargs)
+    def formfield_for_manytomany(
+            self, db_field: ManyToManyField, request: Optional[HttpRequest] = None, **kwargs: Any
+    ) -> FormField:
+        """
+        Get a form field for a ManyToManyField. If it's the formfield for
+        Permissions, adjust the choices to include the models' class names.
+        """
+        # noinspection PyUnresolvedReferences
+        formfield = super().formfield_for_manytomany(  # type: ignore[misc]
+            db_field, request=request, **kwargs
+        )
         if formfield.queryset.model == Permission:
             choices = []
             for perm in formfield.queryset:
