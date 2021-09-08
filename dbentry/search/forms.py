@@ -189,8 +189,8 @@ class SearchForm(forms.Form):
         # People will try to query for the id WITH that prefix.
         return "".join(
             i
-                for i in self.cleaned_data.get('id__in', '')
-                if i.isnumeric() or i == ','
+            for i in self.cleaned_data.get('id__in', '')
+            if i.isnumeric() or i == ','
         )
 
 

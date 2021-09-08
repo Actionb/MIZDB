@@ -1,11 +1,10 @@
 from typing import Union
 
 from django.contrib.admin.helpers import AdminField
+from django.contrib.admin.views.main import ChangeList, ORDER_VAR
 from django.forms import BoundField
 from django.template.library import Library
-
 from django.utils.html import format_html
-from django.contrib.admin.views.main import ChangeList, ORDER_VAR
 from django.utils.safestring import SafeText
 
 register = Library()

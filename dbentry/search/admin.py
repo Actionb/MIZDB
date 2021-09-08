@@ -26,7 +26,7 @@ class AdminSearchFormMixin(object):
 
     change_list_template = 'admin/change_list.html'
 
-    search_form_kwargs: dict = None
+    search_form_kwargs: dict = None  # type: ignore[assignment]
 
     def has_search_form(self) -> bool:
         """
@@ -49,7 +49,7 @@ class AdminSearchFormMixin(object):
         """
         factory_kwargs = self.search_form_kwargs or {}
         factory_kwargs.update(kwargs)
-        return searchform_factory(model=self.model, **factory_kwargs)
+        return searchform_factory(model=self.model, **factory_kwargs)  # type: ignore[attr-defined]
 
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
@@ -68,7 +68,7 @@ class AdminSearchFormMixin(object):
         # Add the search form as 'advanced_search_form' to the extra_context.
         search_form = self.get_search_form(data=request.GET)
         extra_context['advanced_search_form'] = search_form
-        response = super().changelist_view(request, extra_context)
+        response = super().changelist_view(request, extra_context)  # type: ignore[misc]
         # Let django.admin do its thing, then update the response's context.
         self.update_changelist_context(response)
         return response
@@ -105,7 +105,7 @@ class AdminSearchFormMixin(object):
         return response
 
     def lookup_allowed(self, lookup: str, value: Any) -> bool:
-        allowed = super().lookup_allowed(lookup, value)
+        allowed = super().lookup_allowed(lookup, value)  # type: ignore[misc]
         if allowed or not hasattr(self, 'search_form'):
             # super() determined the lookup is allowed or
             # this model admin has no search form instance set:
@@ -114,7 +114,9 @@ class AdminSearchFormMixin(object):
         # Allow lookups defined in advanced_search_form.
         # Extract the lookups from the field_path 'lookup':
         try:
-            _, lookups = utils.get_fields_and_lookups(self.model, lookup)
+            _, lookups = utils.get_fields_and_lookups(
+                self.model, lookup  # type: ignore[attr-defined]
+            )
         except (exceptions.FieldDoesNotExist, exceptions.FieldError):
             return False
         # Remove all lookups from the field_path to end up with just a
@@ -135,7 +137,7 @@ class AdminSearchFormMixin(object):
 
     def get_changeform_initial_data(self, request: HttpRequest) -> dict:
         """Add data from the changelist filters to the add form's initial."""
-        initial = super().get_changeform_initial_data(request)
+        initial = super().get_changeform_initial_data(request)  # type: ignore[misc]
         if '_changelist_filters' not in initial or not initial['_changelist_filters']:
             return initial
         changelist_filters = QueryDict(initial['_changelist_filters'])
@@ -168,12 +170,12 @@ class AdminSearchFormMixin(object):
         the query string.
         """
         # Get the '_changelist_filters' part of the querystring.
-        preserved_filters = self.get_preserved_filters(request)
+        preserved_filters = self.get_preserved_filters(request)  # type: ignore[attr-defined]
         preserved_filters = dict(parse_qsl(preserved_filters))
         # noinspection PyProtectedMember
-        response = super()._response_post_save(request, obj)
+        response = super()._response_post_save(request, obj)  # type: ignore[misc]
         if (not isinstance(response, HttpResponseRedirect)
-                or not self.has_view_or_change_permission(request)
+                or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]
                 or '_changelist_filters' not in preserved_filters):
             # Either the response is not a redirect (we need the url attribute) or
             # it redirects back to the index due to missing perms or
@@ -198,7 +200,7 @@ class AdminSearchFormMixin(object):
         return HttpResponseRedirect(post_url)
 
     def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
-        errors = super().check(**kwargs)
+        errors = super().check(**kwargs)  # type: ignore[misc]
         errors.extend(self._check_search_form_fields(**kwargs))
         return errors
 
@@ -210,12 +212,16 @@ class AdminSearchFormMixin(object):
         # Relation fields defined by the model should be in the search form:
         rel_fields = [
             field.name
-            for field in utils.get_model_fields(self.model, base=False, foreign=True, m2m=True)
+            for field in utils.get_model_fields(
+                self.model, base=False, foreign=True, m2m=True  # type: ignore[attr-defined]
+            )
         ]
         for field_path in self.search_form_kwargs.get('fields', []):
             msg = "Ignored search form field: '{field}'. %s".format(field=field_path)
             try:
-                search_utils.get_dbfield_from_path(self.model, field_path)
+                search_utils.get_dbfield_from_path(
+                    self.model, field_path  # type: ignore[attr-defined]
+                )
             except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                 errors.append(checks.Info(msg % e.args[0], obj=self))
             else:
@@ -261,21 +267,21 @@ class ChangelistSearchFormMixin(object):
         # django's changelist does not inherit the base View class that sets
         # self.request during setup().
         self.request = request
-        super().__init__(request, *args, **kwargs)
+        super().__init__(request, *args, **kwargs)  # type: ignore[call-arg]
 
     def get_filters_params(self, params: Optional[dict] = None) -> dict:
         """Replace the default filter params with those from the search form."""
-        params = super().get_filters_params(params)
-        if not isinstance(self.model_admin, AdminSearchFormMixin):
-            return params
+        filter_params: dict = super().get_filters_params(params)  # type: ignore[misc]
+        if not isinstance(self.model_admin, AdminSearchFormMixin):  # type: ignore[attr-defined]
+            return filter_params
         # If the ModelAdmin instance has a search form, let the form come up
         # with filter parameters.
         # Should the request contain query parameters that a part of the search
         # form, prioritize params returned by the form over the params included
         # in the request.
-        search_form_params = self.model_admin.get_search_form(
+        search_form_params = self.model_admin.get_search_form(  # type: ignore[attr-defined]
             data=self.request.GET
         ).get_filters_params()
         if search_form_params:
             return search_form_params
-        return params
+        return filter_params

@@ -1,6 +1,6 @@
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain
-from typing import Any, Dict, List, Tuple, Type, Union
+from typing import Any, Dict, List, Sequence, Tuple, Type, Union
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
@@ -21,8 +21,16 @@ from dbentry.sites import register_tool
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 
+Dupe = namedtuple(
+    'Dupe', ['instance', 'duplicate_values', 'display_values']
+)
 
-def find_duplicates(queryset, dupe_fields, display_fields) -> List[List[Tuple]]:
+
+def find_duplicates(
+        queryset: QuerySet,
+        dupe_fields: Sequence[str],
+        display_fields: Sequence[str]
+) -> List[List[Dupe]]:
     """
     Find records in the queryset that share values in the fields given
     by dupe_fields.
@@ -35,13 +43,13 @@ def find_duplicates(queryset, dupe_fields, display_fields) -> List[List[Tuple]]:
         - duplicate_values: the values that are shared
         - display_values: the values fetched to be displayed
     """
-    Dupe = namedtuple(
-        'Dupe', ['instance', 'duplicate_values', 'display_values']
-    )
 
-    queried = queryset.values_dict(*dupe_fields, *display_fields, tuplfy=True)
-    dupe_values = []
-    display_values = {}
+    # noinspection PyUnresolvedReferences
+    queried: OrderedDict[int, Tuple[str, Any]] = queryset.values_dict(
+        *dupe_fields, *display_fields, tuplfy=True
+    )
+    dupe_values: List[tuple] = []
+    display_values: Dict[int, list] = {}
     # Separate duplicate_values and display_values which are both contained
     # (as tuples) in the following tuple 'values':
     for pk, values in queried.items():
@@ -55,27 +63,27 @@ def find_duplicates(queryset, dupe_fields, display_fields) -> List[List[Tuple]]:
                 display_values[pk].append((k, v))
         dupe_values.append(tuple(item_dupe_values))
 
-    results = []
+    results: List[List[Dupe]] = []
     # Walk through the values, looking for non-empty values that appeared
     # more than once.
     # Preserve the display_values.
     for elem, count in Counter(dupe_values).items():
-        dupe_group = []
+        dupe_group: List[Dupe] = []
         if not elem or count < 2:
             # Do not compare empty with empty.
             continue
         # Find all the pks that match these values.
         for pk, values in queried.items():
-            item_dupe_values = tuple(
+            item_dupe_values = tuple(  # type: ignore[assignment]
                 (k, v) for k, v in values if k in dupe_fields
             )
             if elem == item_dupe_values:
                 item_display_values = dict(display_values.get(pk, ()))
                 dupe_group.append(
                     Dupe(
-                        queryset.get(pk=pk),
-                        dict(item_dupe_values),
-                        item_display_values
+                        instance=queryset.get(pk=pk),
+                        duplicate_values=dict(item_dupe_values),
+                        display_values=item_display_values
                     )
                 )
         results.append(dupe_group)
@@ -204,8 +212,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         # or there was nothing selected: redirect back here.
         return redirect(request.get_full_path())
 
-    def get_context_data(self, form: Form, **kwargs: Any) -> dict:
-        context = super().get_context_data(form=form, **kwargs)
+    def get_context_data(self, **kwargs: Any) -> dict:
+        context = super().get_context_data(**kwargs)
         context['action_name'] = 'merge_records'
         context['action_checkbox_name'] = ACTION_CHECKBOX_NAME
         # 'title' is a context variable for base_site.html:
@@ -250,7 +258,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         the selected display fields in 'form'.
         The headers should be the human readable part of the choices.
         """
-        headers = []
+        headers: List[str] = []
         for field_name in form.display_fields:
             formfield = form.fields[field_name]
             selected = form.cleaned_data.get(field_name)

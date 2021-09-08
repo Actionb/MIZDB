@@ -1,5 +1,5 @@
 import sys
-from typing import Iterable, List, Optional, Tuple, Type, Union, Dict, Set, TextIO
+from typing import Dict, Iterable, List, Optional, Set, TextIO, Tuple, Type, Union
 
 from django.apps import apps
 from django.contrib import auth
@@ -7,7 +7,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
 from django.db import models, transaction, utils
-from django.db.models import constants, Field, Model
+from django.db.models import Field, Model, constants
 from django.db.models.fields.related import ForeignKey, OneToOneField
 from django.db.models.fields.reverse_related import ManyToManyRel, ManyToOneRel, OneToOneRel
 
@@ -338,7 +338,7 @@ def get_all_model_names() -> List[str]:
     # NOTE: get_all_model_names is not used
     from dbentry.base.models import BaseModel  # avoid circular imports
     mdls = apps.get_models('dbentry')
-    # noinspection PyProtectedMember
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
     return sorted(my_mdls, key=lambda m: m.lower())
 
@@ -410,7 +410,6 @@ def validate_model_data(model: Type[Model]) -> List[Tuple[Model, exceptions.Vali
     return invalid
 
 
-# noinspection PyProtectedMember
 def validate_all_model_data(
         *model_list: Type[Model]
 ) -> Dict[str, List[Tuple[Model, exceptions.ValidationError]]]:
@@ -426,11 +425,13 @@ def validate_all_model_data(
             m for m in apps.get_models('dbentry') if issubclass(m, BaseModel)
         ]
     for model in model_list:
-        print("Validating %s... " % model._meta.model_name, end='')
+        # noinspection PyProtectedMember,PyUnresolvedReferences
+        opts = model._meta
+        print("Validating %s... " % opts.model_name, end='')
         inv = validate_model_data(model)
         if inv:
             print('Invalid data found.')
-            invalid[model._meta.model_name] = inv
+            invalid[opts.model_name] = inv
         else:
             print('All data valid.')
     return invalid

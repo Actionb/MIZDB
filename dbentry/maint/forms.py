@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Type
 
 from django import forms
 from django.apps import apps
@@ -169,7 +169,7 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     def __init__(
             self,
-            exclude: Optional[Sequence[str]] = None,
+            exclude: Optional[List[str]] = None,
             app_label: str = 'dbentry',
             *args: Any,
             **kwargs: Any

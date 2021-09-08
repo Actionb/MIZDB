@@ -210,8 +210,8 @@ class MinMaxRequiredFormMixin(object):
         """Get a string of the verbose names of the group's fields."""
         return ", ".join(
             self.fields[field_name].label or snake_case_to_spaces(field_name).title()
-                for field_name in group.fields
-                if field_name in self.fields
+            for field_name in group.fields
+            if field_name in self.fields
         )
 
     def get_group_error_messages(

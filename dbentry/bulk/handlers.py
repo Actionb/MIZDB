@@ -10,8 +10,8 @@ class ItemHandler(object):
     (i.e. formatted in a specific way) for the dbentry.bulk.fields.SplitField.
 
     Attributes:
-        - ``regex``: either a regex pattern or a compiled regular expression to
-          validate the item with.
+        - ``regex``: either a raw string or a compiled regular expression to
+          validate the item with
     """
 
     regex: Union[str, re.Pattern] = ''
@@ -31,7 +31,7 @@ class ItemHandler(object):
 
     def is_valid(self, item: str) -> Optional[re.Match]:
         """Validate that this handler can handle the item."""
-        return self.regex.search(item)
+        return self.regex.search(item)  # type: ignore[union-attr]
 
 
 class NumericHandler(ItemHandler):

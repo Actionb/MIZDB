@@ -1,15 +1,15 @@
-from typing import Any, Iterable, Optional, Union, Type, List, Dict
+from typing import Any, Dict, Iterable, List, Optional, Type, Union
 
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.admin.options import ModelAdmin, get_content_type_for_model
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.utils import quote
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
 from django.db.models import Model
-from django.forms import Form, BaseInlineFormSet
+from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest
-from django.urls import reverse, NoReverseMatch
+from django.urls import NoReverseMatch, reverse
 from django.utils.encoding import force_text
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
@@ -60,7 +60,8 @@ def get_obj_link(
     # noinspection PyProtectedMember,PyUnresolvedReferences
     opts = obj._meta
     no_edit_link = format_html(
-        '%s: %s' % (capfirst(opts.verbose_name), force_text(obj)))
+        '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))
+    )
     try:
         admin_url = reverse(
             '%s:%s_%s_change' % (site_name, opts.app_label, opts.model_name),
@@ -103,7 +104,8 @@ def get_changelist_url(
     opts = model._meta
     try:
         url = reverse(
-            '%s:%s_%s_changelist' % (site_name, opts.app_label, opts.model_name))
+            '%s:%s_%s_changelist' % (site_name, opts.app_label, opts.model_name)
+        )
     except NoReverseMatch:
         return ''
 
@@ -180,7 +182,7 @@ def get_model_admin_for_model(
     """
     from dbentry.sites import miz_site
     if isinstance(model, str):
-        model = get_model_from_string(model)
+        model = get_model_from_string(model)  # type: ignore[assignment]
     sites = admin_sites or [miz_site]
     for site in sites:
         if site.is_registered(model):
@@ -201,7 +203,7 @@ def has_admin_permission(request: HttpRequest, model_admin: ModelAdmin) -> bool:
 
 
 def construct_change_message(
-        form: Form, formsets: List[BaseInlineFormSet], add: bool
+        form: ModelForm, formsets: List[BaseInlineFormSet], add: bool
 ) -> List[Dict]:
     """
     Construct a JSON structure describing changes from a changed object.
@@ -306,7 +308,8 @@ def log_addition(user_id: int, obj: Model, related_obj: Model = None) -> LogEntr
     if related_obj:
         # noinspection PyProtectedMember,PyUnresolvedReferences
         message['added'] = _get_relation_change_message(
-            related_obj, obj._meta.model)
+            related_obj, obj._meta.model
+        )
     return create_logentry(user_id, obj, ADDITION, [message])
 
 
@@ -325,14 +328,16 @@ def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> L
     opts = obj._meta
     if related_obj:
         message['changed'] = _get_relation_change_message(
-            related_obj, opts.model)
+            related_obj, opts.model
+        )
         # Use the fields map of the related model:
         # noinspection PyProtectedMember, PyUnresolvedReferences
         opts = related_obj._meta
 
     # noinspection PyTypeChecker
     message['changed']['fields'] = sorted(
-        capfirst(opts.get_field(f).verbose_name) for f in fields)
+        capfirst(opts.get_field(f).verbose_name) for f in fields
+    )
     return create_logentry(user_id, obj, CHANGE, [message])
 
 

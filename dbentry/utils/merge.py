@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Tuple
 
-from django.db import transaction, models
+from django.db import models, transaction
 from django.db.models import Model, QuerySet
 from django.db.utils import IntegrityError
 from django.http import HttpRequest

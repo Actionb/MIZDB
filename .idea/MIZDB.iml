@@ -3,6 +3,7 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.eric6project" />
+      <excludeFolder url="file://$MODULE_DIR$/dbentry/utils/.mypy_cache" />
       <excludePattern pattern="*.e4p" />
     </content>
     <orderEntry type="inheritedJdk" />

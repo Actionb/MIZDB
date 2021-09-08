@@ -3,7 +3,7 @@ import logging
 from typing import List, Tuple
 from xml.etree import ElementTree
 
-import requests
+import requests  # type: ignore[import]
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +55,12 @@ def searchgnd(
         requests.exceptions.HTTPError: if response status code is 4xx or 5xx.
     """
     # FIXME: mypy warns that the items of the result list could be (None, None),
-    #   as the text attribute of the elements might be None.
-    #   Also: root.find('.//sru:numberOfRecords') could return None, or the
-    #   element's text attribute could be None. The view still requires a
-    #   result count of the total number of records found, though, or the
-    #   pagination won't work!
+    #  as the text attribute of the elements might be None.
+    #  Also: root.find('.//sru:numberOfRecords') could return None, or the
+    #  element's text attribute could be None. The view still requires a
+    #  result count of the total number of records found, though, or the
+    #  pagination won't work!
+    #  ALSO ALSO: id_number and label could be None
     if not query:
         return [], 0
 

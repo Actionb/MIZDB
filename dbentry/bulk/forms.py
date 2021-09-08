@@ -1,4 +1,4 @@
-from typing import Any, List, Sequence, Type
+from typing import Any, Dict, List, Sequence, Type
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -28,7 +28,7 @@ class BulkForm(MIZAdminForm):
           contain the same amount of 'items'.
     """
 
-    model: Type[Model] = None
+    model: Type[Model] = None  # type: ignore[assignment]
     each_fields: Sequence = ()
     split_fields: Sequence = ()
 
@@ -90,7 +90,7 @@ class BulkForm(MIZAdminForm):
 
         self.total_count = 0
         # noinspection PyAttributeOutsideInit
-        self.split_data = {}
+        self.split_data: Dict[str, list] = {}
         for fld_name, fld in self.fields.items():
             if not isinstance(fld, BaseSplitField):
                 continue
@@ -289,7 +289,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
         # Form is valid: split_data and total_count have been
         # computed in clean().
         for c in range(self.total_count):
-            row = {}
+            row: Dict[str, Any] = {}
             for field_name, _formfield in self.fields.items():
                 if field_name not in self.each_fields + self.split_fields:
                     # This field was not assigned to either each_fields or
@@ -298,10 +298,10 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
                 if field_name in self.split_data:
                     if field_name in self.each_fields:
                         # All items of this list are part of this row.
-                        item = self.split_data.get(field_name)
+                        item = self.split_data[field_name]
                     else:
                         # Only one item of this list needs to be part of this row.
-                        item = self.split_data.get(field_name)[c]
+                        item = self.split_data[field_name][c]
                 else:
                     item = self.cleaned_data.get(field_name)
                 if item:

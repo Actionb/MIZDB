@@ -8,7 +8,7 @@ from django.db import transaction
 from django.db.models import Model
 from django.http import HttpRequest
 
-from dbentry.utils.admin import create_logentry, _get_relation_change_message
+from dbentry.utils.admin import _get_relation_change_message, create_logentry
 
 
 def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
