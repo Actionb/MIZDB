@@ -1,4 +1,5 @@
 from itertools import chain
+from unittest.mock import patch
 
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -300,3 +301,47 @@ class TestRangeFormField(MyTestCase):
         formfield = search_forms.RangeFormField(PartialDateFormField())
         expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]
         self.assertEqual(formfield.get_initial(initial, 'datum'), expected)
+
+    def test_init_formfield_widget_to_range_widget(self):
+        # Assert that init turns the formfield's widget into a RangeWidget.
+        with patch('django.forms.MultiValueField.__init__') as mocked_init:
+            search_forms.RangeFormField(formfield=forms.CharField())
+        self.assertTrue(mocked_init.called)
+        _args, kwargs = mocked_init.call_args
+        self.assertIn('widget', kwargs)
+        self.assertIsInstance(kwargs['widget'], search_forms.RangeWidget)
+        # Now with an explicitly passed in widget:
+        # NOTE: this is commented out because the functionality is in question.
+        # with patch('django.forms.MultiValueField.__init__') as mocked_init:
+        #     search_forms.RangeFormField(
+        #         formfield=forms.CharField(), widget=forms.DateInput()
+        #     )
+        # self.assertTrue(mocked_init.called)
+        # _args, kwargs = mocked_init.call_args
+        # self.assertIn('widget', kwargs)
+        # self.assertIsInstance(kwargs['widget'], search_forms.RangeWidget)
+        # self.assertTrue(all(isinstance(w, forms.DateInput) for w in kwargs['widget'].widgets))
+
+    def test_init_duplicates_formfield(self):
+        # Assert that init duplicates the given formfield instance for the
+        # MultiValueField constructor.
+        with patch('django.forms.MultiValueField.__init__') as mocked_init:
+            search_forms.RangeFormField(formfield=forms.CharField())
+        self.assertTrue(mocked_init.called)
+        _args, kwargs = mocked_init.call_args
+        self.assertIn('fields', kwargs)
+        self.assertEqual(len(kwargs['fields']), 2)
+        self.assertTrue(all(isinstance(f, forms.CharField) for f in kwargs['fields']))
+
+class TestRangeWidget(MyTestCase):
+
+    def test_init_duplicates_widget(self):
+        # Assert that init duplicates the given widget instance for the
+        # MultiWidget constructor.
+        with patch('django.forms.MultiWidget.__init__') as mocked_init:
+            search_forms.RangeWidget(widget=forms.TextInput())
+        self.assertTrue(mocked_init.called)
+        _args, kwargs = mocked_init.call_args
+        self.assertIn('widgets', kwargs)
+        self.assertEqual(len(kwargs['widgets']), 2)
+        self.assertTrue(all(isinstance(w, forms.TextInput) for w in kwargs['widgets']))

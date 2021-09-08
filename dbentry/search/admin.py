@@ -1,13 +1,15 @@
+from typing import Any, List, Optional, Type
 from urllib.parse import parse_qsl, urlparse, urlunparse
 
-from django.core import checks, exceptions
 from django.contrib.admin.templatetags.admin_list import search_form as search_form_tag_context
-from django.db.models.lookups import Range, LessThanOrEqual
-from django.http import HttpResponseRedirect, QueryDict
+from django.core import checks, exceptions
+from django.db.models import Model
+from django.db.models.lookups import LessThanOrEqual, Range
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, QueryDict
 
 from dbentry import utils
 from dbentry.search import utils as search_utils
-from dbentry.search.forms import searchform_factory, MIZAdminSearchForm
+from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
 
 
 # noinspection PyUnresolvedReferences
@@ -17,27 +19,28 @@ class AdminSearchFormMixin(object):
     changelist.
 
     Attributes:
-        - search_form_kwargs (dict): the keyword arguments for
-            searchform_factory to create a search form class with.
-            These are *not* the arguments for form initialization!
+        - ``search_form_kwargs`` (dict): the keyword arguments for
+          searchform_factory to create a search form class with.
+          These are *not* the arguments for form initialization!
     """
 
     change_list_template = 'admin/change_list.html'
-    search_form_kwargs = None
 
-    def has_search_form(self):
+    search_form_kwargs: dict = None
+
+    def has_search_form(self) -> bool:
         """
         Return True if a non-empty search form class was created for this
         instance.
 
         A search form class would be empty if the instance's
-        'search_form_kwargs' did not specify any 'fields'.
+        ``search_form_kwargs`` did not specify any fields.
         """
         if isinstance(self.search_form_kwargs, dict):
             return bool(self.search_form_kwargs.get('fields'))
         return False
 
-    def get_search_form_class(self, **kwargs):
+    def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         """
         Create a form class that will facilitate changelist searches.
 
@@ -48,14 +51,18 @@ class AdminSearchFormMixin(object):
         factory_kwargs.update(kwargs)
         return searchform_factory(model=self.model, **factory_kwargs)
 
-    # noinspection PyAttributeOutsideInit
-    def get_search_form(self, **form_kwargs):
+    def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
         form_class = self.get_search_form_class()
+        # noinspection PyAttributeOutsideInit
         self.search_form = form_class(**form_kwargs)
         return self.search_form
 
-    def changelist_view(self, request, extra_context=None):
+    def changelist_view(
+            self,
+            request: HttpRequest,
+            extra_context: Optional[dict] = None
+    ) -> HttpResponse:
         if extra_context is None:
             extra_context = {}
         # Add the search form as 'advanced_search_form' to the extra_context.
@@ -66,7 +73,7 @@ class AdminSearchFormMixin(object):
         self.update_changelist_context(response)
         return response
 
-    def update_changelist_context(self, response, **kwargs):
+    def update_changelist_context(self, response: HttpResponse, **kwargs: Any) -> HttpResponse:
         """
         Update the context of the changelist response.
 
@@ -77,25 +84,27 @@ class AdminSearchFormMixin(object):
             # Not all responses allow access to the template context post
             # instantiation.
             return response
+        # noinspection PyUnresolvedReferences
+        context_data = response.context_data
         if hasattr(self, 'search_form') and hasattr(self.search_form, 'media'):
             # Add the search form's media to the context (if this model_admin
             # instance has one).
-            if 'media' in response.context_data:
-                response.context_data['media'] += self.search_form.media
+            if 'media' in context_data:
+                context_data['media'] += self.search_form.media
             else:
-                response.context_data['media'] = self.search_form.media
+                context_data['media'] = self.search_form.media
         # django's search_form tag adds context items
         # (show_result_count, search_var) that are also required by the
         # advanced_search_form template. Since the default tag is not called
         # when an advanced_search_form is available, we need to add these
         # context items explicitly.
-        if 'cl' in response.context_data:
-            extra = search_form_tag_context(response.context_data['cl'])
-            response.context_data.update(extra)
-        response.context_data.update(kwargs)
+        if 'cl' in context_data:
+            extra = search_form_tag_context(context_data['cl'])
+            context_data.update(extra)
+        context_data.update(kwargs)
         return response
 
-    def lookup_allowed(self, lookup, value):
+    def lookup_allowed(self, lookup: str, value: Any) -> bool:
         allowed = super().lookup_allowed(lookup, value)
         if allowed or not hasattr(self, 'search_form'):
             # super() determined the lookup is allowed or
@@ -120,12 +129,12 @@ class AdminSearchFormMixin(object):
         # Now check that the field_path is in the form's fields and
         # that the lookups are part of that field's registered lookups.
         return (
-            field_path in self.search_form.fields
-            and set(lookups).issubset(allowed)
+                field_path in self.search_form.fields
+                and set(lookups).issubset(allowed)
         )
 
-    def get_changeform_initial_data(self, request):
-        """Add data from the changelist filters to the add-form's initial."""
+    def get_changeform_initial_data(self, request: HttpRequest) -> dict:
+        """Add data from the changelist filters to the add form's initial."""
         initial = super().get_changeform_initial_data(request)
         if '_changelist_filters' not in initial or not initial['_changelist_filters']:
             return initial
@@ -137,25 +146,23 @@ class AdminSearchFormMixin(object):
         # Let the intended initial overwrite the filters:
         return {**changelist_filters, **initial}
 
-    # noinspection PyProtectedMember
-    def _response_post_save(self, request, obj):
+    def _response_post_save(self, request: HttpRequest, obj: Model) -> HttpResponseRedirect:
         """
         Restore query parameters dropped by add_preserved_filters.
 
-        '_response_post_save' is django's helper method that returns the user
+        ``_response_post_save`` is django's helper method that returns the user
         back to the changelist (or index if no perms) after a save.
         In its original form, the method uses
-            django.contrib.admin.templatetags.admin_urls.add_preserved_filters
+        ``django.contrib.admin.templatetags.admin_urls.add_preserved_filters``
         to tack on the changelist filters to the redirect url.
         (add_preserved_filters is also used to modify the links of result items)
 
-        However, add_preserved_filters drops multiple values from a SelectMultiple
-        by calling dict() on a parsed querystring with multiple values:
-            '?_changelist_filters=genre%3D176%26genre%3D594'
-        becomes:
-            '?genre=176'
-        when it should be:
-            '?genre=176&genre=594'
+        However, ``add_preserved_filters`` drops multiple values from a
+        SelectMultiple by calling dict() on a parsed query string with multiple
+        values:
+        given the query string '?_changelist_filters=genre%3D176%26genre%3D594',
+        ``add_preserved_filters`` will return '?genre=176', when it should be
+        '?genre=176&genre=594'
 
         To preserve all the filters, we must restore these dropped values to
         the query string.
@@ -163,6 +170,7 @@ class AdminSearchFormMixin(object):
         # Get the '_changelist_filters' part of the querystring.
         preserved_filters = self.get_preserved_filters(request)
         preserved_filters = dict(parse_qsl(preserved_filters))
+        # noinspection PyProtectedMember
         response = super()._response_post_save(request, obj)
         if (not isinstance(response, HttpResponseRedirect)
                 or not self.has_view_or_change_permission(request)
@@ -189,12 +197,12 @@ class AdminSearchFormMixin(object):
         post_url = urlunparse(parsed_url)
         return HttpResponseRedirect(post_url)
 
-    def check(self, **kwargs):
+    def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
         errors = super().check(**kwargs)
         errors.extend(self._check_search_form_fields(**kwargs))
         return errors
 
-    def _check_search_form_fields(self, **kwargs):
+    def _check_search_form_fields(self, **kwargs: Any) -> List[checks.CheckMessage]:
         """Check the fields given in self.search_form_kwargs."""
         if not self.has_search_form():
             return []
@@ -230,7 +238,7 @@ class AdminSearchFormMixin(object):
 class MIZAdminSearchFormMixin(AdminSearchFormMixin):
     """Default mixin for MIZAdmin admin models adding more search options."""
 
-    def get_search_form_class(self, **kwargs):
+    def get_search_form_class(self, **kwargs: Any) -> Type[SearchForm]:
         # Set the default form class for searchform_factory, unless a class is
         # provided by kwargs or search_form_kwargs:
         if not (
@@ -245,7 +253,7 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
 class ChangelistSearchFormMixin(object):
     """Mixin for changelist classes to incorporate the new search form."""
 
-    def __init__(self, request, *args, **kwargs):
+    def __init__(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         # Preserve the contents of request.GET.
         # The changelist attribute 'param' is insufficient as it destroys
         # the multiple values of a MultiValueDict by calling items() instead
@@ -255,7 +263,7 @@ class ChangelistSearchFormMixin(object):
         self.request = request
         super().__init__(request, *args, **kwargs)
 
-    def get_filters_params(self, params=None):
+    def get_filters_params(self, params: Optional[dict] = None) -> dict:
         """Replace the default filter params with those from the search form."""
         params = super().get_filters_params(params)
         if not isinstance(self.model_admin, AdminSearchFormMixin):
@@ -266,7 +274,8 @@ class ChangelistSearchFormMixin(object):
         # form, prioritize params returned by the form over the params included
         # in the request.
         search_form_params = self.model_admin.get_search_form(
-            data=self.request.GET).get_filters_params()
+            data=self.request.GET
+        ).get_filters_params()
         if search_form_params:
             return search_form_params
         return params
