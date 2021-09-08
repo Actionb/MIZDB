@@ -5,16 +5,18 @@ from dbentry.base.models import ComputedNameModel
 
 
 class Command(BaseCommand):
-
     requires_migrations_checks = True
 
-    help = 'Updates the name attribute of all models subclassing ComputedNameModel.'
+    help = (
+        'Updates the name attribute of all model instances of models '
+        'subclassing ComputedNameModel.'
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
             '-f', '--force',
             action='store_true',
-            help='Force the update of all models.'
+            help='Force the update of all model instances.'
         )
 
     # noinspection PyProtectedMember
@@ -28,4 +30,5 @@ class Command(BaseCommand):
             if options['force']:
                 model.objects.update(_changed_flag=True)
             model.objects.all()._update_names()
+            # noinspection PyUnresolvedReferences
             self.stdout.write("{} updated!".format(model._meta.verbose_name))
