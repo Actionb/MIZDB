@@ -41,17 +41,13 @@ class QueryTestCase(DataTestCase):
     def make_query(self, **kwargs):
         if 'queryset' not in kwargs:
             kwargs['queryset'] = self.queryset
+        if 'suffixes' not in kwargs:
+            kwargs['suffixes'] = {
+                'bandalias__alias': 'Alias',
+                'beschreibung': 'Beschreibung',
+                'bemerkungen': 'Bemerkungen'
+            }
         return self.query_class(**kwargs)
-
-    def append_suffix(self, query, objs, search_field, lookup):
-        # Helper method that appends suffixes to the objects in objs.
-        suffix = query.get_suffix(search_field, lookup)
-        result = []
-        for obj in objs:
-            result.append(
-                query.create_result_item(obj, suffix)
-            )
-        return result
 
 
 class TestBaseQuery(QueryTestCase):
@@ -136,7 +132,7 @@ class TestBaseQuery(QueryTestCase):
                 )
 
     def test_exact_search(self):
-        lookup = '__iexact'
+        # lookup = '__iexact'
 
         q = 'AC/DC'
         query = self.make_query()
@@ -146,19 +142,17 @@ class TestBaseQuery(QueryTestCase):
         q = 'AC/DC'
         query = self.make_query()
         search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual(sorted(query.exact_search(search_field, q)), sorted(expected))
+        self.assertEqual(query.exact_search(search_field, q), [(self.obj2.pk, "AC/DC")])
         self.assertTrue(query.exact_match)
 
         q = 'ACDC'
         query = self.make_query()
         search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual(sorted(query.exact_search(search_field, q)), sorted(expected))
+        self.assertEqual(query.exact_search(search_field, q), [(self.obj2.pk, "AC/DC (Alias)")])
         self.assertTrue(query.exact_match)
 
     def test_startsw_search(self):
-        lookup = '__istartswith'
+        # lookup = '__istartswith'
 
         q = 'AC/DCS'
         self.assertFalse(self.make_query().startsw_search('band_name', q))
@@ -166,21 +160,15 @@ class TestBaseQuery(QueryTestCase):
         q = 'AC/'
         query = self.make_query()
         search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual(
-            sorted(query.startsw_search(search_field, q)),
-            sorted(expected),
-            msg="query: {}".format(query)
-        )
+        self.assertEqual(query.startsw_search(search_field, q), [(self.obj2.pk, "AC/DC")])
 
         q = 'ACD'
         query = self.make_query()
         search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual(sorted(query.startsw_search(search_field, q)), sorted(expected))
+        self.assertEqual(query.startsw_search(search_field, q), [(self.obj2.pk, "AC/DC (Alias)")])
 
     def test_contains_search(self):
-        lookup = '__icontains'
+        # lookup = '__icontains'
 
         q = 'AC/DCS'
         self.assertFalse(self.make_query().contains_search('band_name', q))
@@ -188,14 +176,12 @@ class TestBaseQuery(QueryTestCase):
         q = 'C/D'
         query = self.make_query()
         search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual(sorted(query.contains_search(search_field, q)), sorted(expected))
+        self.assertEqual(query.contains_search(search_field, q), [(self.obj2.pk, "AC/DC")])
 
         q = 'CD'
         query = self.make_query()
         search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual(sorted(query.contains_search(search_field, q)), sorted(expected))
+        self.assertEqual(query.contains_search(search_field, q), [(self.obj2.pk, "AC/DC (Alias)")])
 
     def test_search(self):
         def extract_ids(results):
@@ -311,47 +297,30 @@ class TestPrimaryFieldsQuery(TestBaseQuery):
         self.assertEqual(len(search_results), 9)
 
         # Exact primary field match first
-        lookup = '__iexact'
-        search_field = 'band_name'
-        expected = self.append_suffix(query, [rose_band], search_field, lookup)
-        self.assertEqual([search_results[0]], expected)
+        self.assertEqual(search_results[0], (rose_band.pk, "Rose"))
 
         # Primary startsw matches next
-        lookup = '__istartswith'
-        search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj4], search_field, lookup)
-        self.assertEqual([search_results[1]], expected)
+        self.assertEqual(search_results[1], (self.obj4.pk, "Rosewood"))
 
         # Then primary contains matches
-        lookup = '__icontains'
-        search_field = 'band_name'
-        expected = self.append_suffix(query, [self.obj1, self.obj5], search_field, lookup)
+        expected = [
+            (self.obj1.pk, "Guns 'N Roses"),
+            (self.obj5.pk, "More Roses")
+        ]
         self.assertEqual(search_results[2:4], expected)
 
         # Then secondary exact_matches
-        lookup = '__iexact'
-        search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [some_other_band], search_field, lookup)
-        self.assertEqual([search_results[4]], expected)
+        self.assertEqual(search_results[4], (some_other_band.pk, "Boop (Alias)"))
 
         # weak hits --- a separator followed by secondary startsw and contains matches
-        self.assertEqual(search_results[5], query.create_separator_item(q))
+        self.assertEqual(search_results[5], (0, '--- schwache Treffer für "Rose" ----'))
 
         # Then secondary startsw matches
-        lookup = '__istartswith'
-        search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [yet_another_band], search_field, lookup)
-        self.assertEqual([search_results[6]], expected)
+        self.assertEqual(search_results[6], (yet_another_band.pk, "NoName (Alias)"))
 
         # Finally, secondary contains matches
-        lookup = '__icontains'
-        search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [self.obj6], search_field, lookup)
-        self.assertEqual([search_results[7]], expected)
-        lookup = '__icontains'
-        search_field = 'beschreibung'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual([search_results[8]], expected)
+        self.assertEqual(search_results[7], (self.obj6.pk, "Beep (Alias)"))
+        self.assertEqual(search_results[8], (self.obj2.pk, "AC/DC (Beschreibung)"))
 
     def test_reorder_results_with_separator(self):
         # Assert that the order of the results matches the order of the
@@ -392,18 +361,6 @@ class TestNameFieldQuery(TestPrimaryFieldsQuery):
 
     query_class = NameFieldSearchQuery
 
-    def append_suffix(self, query, objs, search_field, lookup):
-        # NameFieldSearchQuery uses two-tuples, not model instances.
-        # For ease of use, however, model instances are usually passed to this
-        # method.
-        new_objs = []
-        for obj in objs:
-            if isinstance(obj, self.model):
-                new_objs.append((obj.pk, getattr(obj, query.name_field)))
-            else:
-                new_objs.append(obj)
-        return super().append_suffix(query, new_objs, search_field, lookup)
-
     def test_init(self):
         # Set name_field from primary_search_fields or secondary_search_fields
         self.assertEqual(self.make_query(name_field='').name_field, 'band_name')
@@ -424,30 +381,6 @@ class TestValuesDictQuery(TestNameFieldQuery):
             else:
                 query.values_dict = self.queryset.values_dict(*query.search_fields)
         return query
-
-    def append_suffix(self, query, objs, search_field, lookup):
-        # ValuesDictSearchQuery uses values_dict(), not model instances.
-        # For ease of use, however, model instances are usually passed to this
-        # method.
-        new_objs = []
-        for obj in objs:
-            if isinstance(obj, self.model):
-                # 2-tuple of (pk, values of values_dict) expected
-                new_objs.append((
-                    obj.pk,
-                    obj.qs().values_dict(*query.search_fields).pop(obj.pk)
-                ))
-            else:
-                new_objs.append(obj)
-        return super().append_suffix(query, new_objs, search_field, lookup)
-
-    def test_get_values_for_result(self):
-        # Assert that the correct values are returned for a given 'result' object.
-        query = self.make_query()
-        self.assertEqual(
-            query.get_values_for_result((1, {query.name_field: ('Beep', )})),
-            (1, 'Beep')
-        )
 
     def test_get_queryset(self):
         # Assert that ValuesDictSearchQuery.get_queryset applies a
@@ -494,53 +427,38 @@ class TestValuesDictQuery(TestNameFieldQuery):
         self.assertEqual(len(search_results), 10)
 
         # Exact primary field match first
-        lookup = '__iexact'
-        search_field = 'band_name'
-        expected = self.append_suffix(query, [rose_band], search_field, lookup)
-        self.assertEqual([search_results[0]], expected)
+        self.assertEqual(search_results[0], (rose_band.pk, 'Rose'))
 
         # No partial primary exact found
 
         # Then startsw matches + partial startsw matches
         # (which are weighted equally and ordered)
-        # => "Guns N' Roses", 'More Roses', 'Rosewood'
-        lookup = '__istartswith'
-        search_field = 'band_name'
-        expected = self.append_suffix(
-            query, [self.obj4, self.obj1, self.obj5], search_field, lookup)
+        # => 'Rosewood', "Guns N' Roses", 'More Roses'
+        expected = [
+            (self.obj4.pk, "Rosewood"),
+            (self.obj1.pk, "Guns 'N Roses"),
+            (self.obj5.pk, "More Roses")
+        ]
         self.assertEqual(search_results[1:4], expected)
 
         # Then primary contains matches
-        lookup = '__icontains'
-        search_field = 'band_name'
-        expected = self.append_suffix(
-            query, [should_have_setup_this_better], search_field, lookup)
-        self.assertEqual([search_results[4]], expected)
+        self.assertEqual(
+            search_results[4],
+            (should_have_setup_this_better.pk, "SomethingContainingRoses")
+        )
 
         # Then secondary exact_matches
-        lookup = '__iexact'
-        search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [some_other_band], search_field, lookup)
-        self.assertEqual([search_results[5]], expected)
+        self.assertEqual(search_results[5], (some_other_band.pk, "Boop (Alias)"))
 
         # weak hits --- a separator followed by secondary startsw and contains matches
-        self.assertEqual(search_results[6], query.create_separator_item(q))
+        self.assertEqual(search_results[6], (0, '--- schwache Treffer für "Rose" ----'))
 
         # Then secondary startsw matches
-        lookup = '__istartswith'
-        search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [yet_another_band], search_field, lookup)
-        self.assertEqual([search_results[7]], expected)
+        self.assertEqual(search_results[7], (yet_another_band.pk, "NoName (Alias)"))
 
         # Finally, secondary contains matches
-        lookup = '__icontains'
-        search_field = 'bandalias__alias'
-        expected = self.append_suffix(query, [self.obj6], search_field, lookup)
-        self.assertEqual([search_results[8]], expected)
-        lookup = '__icontains'
-        search_field = 'beschreibung'
-        expected = self.append_suffix(query, [self.obj2], search_field, lookup)
-        self.assertEqual([search_results[9]], expected)
+        self.assertEqual(search_results[8], (self.obj6.pk, "Beep (Alias)"))
+        self.assertEqual(search_results[9], (self.obj2.pk, "AC/DC (Beschreibung)"))
 
     def test_search_resets_values_dict(self):
         # Assert that the strategy's values_dict is reset
@@ -554,3 +472,20 @@ class TestValuesDictQuery(TestNameFieldQuery):
         query = self.make_query(use_separator=False)
         with self.assertNumQueries(1):
             query.search(q)
+
+    def test_contains_search(self):
+        # lookup = '__icontains'
+
+        q = 'AC/DCS'
+        self.assertFalse(self.make_query().contains_search('band_name', q))
+
+        q = 'C/D'
+        query = self.make_query()
+        search_field = 'band_name'
+        self.assertEqual(query.contains_search(search_field, q), [(self.obj2.pk, "AC/DC")])
+
+        q = 'CD'
+        query = self.make_query()
+        search_field = 'bandalias__alias'
+        # expected = self.append_suffix(query, [self.obj2], search_field, lookup)
+        self.assertEqual(query.contains_search(search_field, q), [(self.obj2.pk, "AC/DC (Alias)")])
