@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from typing import Callable
 
 from django.conf import settings
 from django.contrib import admin
@@ -143,31 +144,26 @@ class MIZAdminSite(admin.AdminSite):
 miz_site = MIZAdminSite()
 
 
-# noinspection PyPep8Naming
-class register_tool(object):
+def register_tool(
+        url_name: str,
+        index_label: str,
+        superuser_only: bool = False,
+        site: MIZAdminSite = miz_site
+) -> Callable:
     """
-    Decorator that registers a View with a given admin site.
+    Decorator that registers a view as a 'tool view' with a given admin site.
 
-    Required arguments:
-        url_name (str): name of the URL pattern to the view.
-        index_label (str): the label for the link on the index page to the view.
-    Optional arguments:
-        superuser_only (bool): determines whether a link to the view is displayed
-                on the index page. If True, only superusers will see a link.
-                This does not restrict access to the view in any way.
-                Defaults to False.
-        site (admin site instance): the site to register the view with.
-            Defaults to 'miz_site'.
+    A link to the registered view will be displayed in the sidebar of the index
+    page.
+
+    Args:
+        url_name (str): name of the URL pattern to the view
+        index_label (str): the label for the link on the index page to the view
+        superuser_only (bool): If True, only superusers will see a link on the
+          index page. This does not restrict access to the view in any way.
+        site (MIZAdminSite instance): the site to register the view with
     """
-
-    def __init__(self, url_name, index_label, superuser_only=False, site=miz_site):
-        self.url_name = url_name
-        self.index_label = index_label
-        self.superuser_only = superuser_only
-        self.site = site
-
-    def __call__(self, tool_view):
-        self.site.register_tool(
-            tool_view, self.url_name, self.index_label, self.superuser_only
-        )
+    def decorator(tool_view):
+        site.register_tool(tool_view, url_name, index_label, superuser_only)
         return tool_view
+    return decorator
