@@ -138,8 +138,6 @@ class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
         if not kwargs.get('model_name'):
             raise TypeError("Model not provided.")
         self.model = utils.get_model_from_string(kwargs['model_name'])
-        if self.model is None:
-            raise ValueError("Unknown model: %s" % kwargs['model_name'])
         # noinspection PyUnresolvedReferences,PyProtectedMember
         self.opts = self.model._meta
 

@@ -16,7 +16,7 @@ Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
 RelationalFields = Union[ForeignKey, OneToOneField]
 
 
-def get_model_from_string(model_name: str, app_label: str = 'dbentry') -> Optional[Type[Model]]:
+def get_model_from_string(model_name: str, app_label: str = 'dbentry') -> Type[Model]:
     """
     Find the model class with name ``model_name``.
 
@@ -28,13 +28,14 @@ def get_model_from_string(model_name: str, app_label: str = 'dbentry') -> Option
     Returns:
         Model: the model class found or None, if the given app does not have a
             model with the given name.
+
+    Raises:
+        LookupError: if no application exists with this label, or no model
+          exists with this name in the application
     """
     if '.' in model_name:
         app_label, model_name = model_name.split('.')
-    try:
-        return apps.get_model(app_label, model_name)
-    except LookupError:
-        return None
+    return apps.get_model(app_label, model_name)
 
 
 def get_model_fields(

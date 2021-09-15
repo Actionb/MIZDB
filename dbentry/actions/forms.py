@@ -196,6 +196,8 @@ class BrochureActionFormOptions(MIZAdminForm):
     def clean_brochure_art(self) -> str:
         """Make sure the user has selected a valid model."""
         value = self.cleaned_data.get('brochure_art')
-        if get_model_from_string(value) is None:
+        try:
+            get_model_from_string(value)
+        except LookupError:
             raise ValidationError("%s ist kein zulässiges Model." % value)
         return value

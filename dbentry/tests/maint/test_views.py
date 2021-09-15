@@ -85,17 +85,13 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         with self.assertNumQueries(2):
             self.client.get(url)
 
-    def test_setup_exceptions(self):
-        # Assert that setup() raises exceptions when:
-        # - the kwarg 'model_name' is not provided OR
-        # - when no model matching that name exists.
+    def test_setup_exception(self):
+        # Assert that setup() raises a TypeError when 'model_name' kwarg is
+        # missing.
         view = self.view_class()
         request = self.get_request()
         with self.assertRaises(TypeError):
             view.setup(request)
-        with self.assertRaises(ValueError):
-            # noinspection SpellCheckingInspection
-            view.setup(request, model_name='WOOP')
 
     def test_post_redirects_to_self_after_merging(self):
         # Assert that post redirects back to itself after a merge.

@@ -81,7 +81,8 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_model_admin_for_model(self):
         self.assertIsInstance(admin_utils.get_model_admin_for_model('Artikel'), _admin.ArtikelAdmin)
         self.assertIsInstance(admin_utils.get_model_admin_for_model(_models.Artikel), _admin.ArtikelAdmin)
-        self.assertIsNone(admin_utils.get_model_admin_for_model('beepboop'))
+        with self.assertRaises(LookupError):
+            admin_utils.get_model_admin_for_model('beepboop')
 
     def test_has_admin_permission(self):
         request = self.get_request(user=self.noperms_user)

@@ -47,7 +47,11 @@ class TestModelUtils(MyTestCase):
 
     def test_get_model_from_string(self):
         self.assertEqual(_models.Ausgabe, utils.get_model_from_string('Ausgabe'))
-        self.assertIsNone(utils.get_model_from_string('beep boop'))
+        self.assertEqual(_models.Ausgabe, utils.get_model_from_string('dbentry.ausgabe'))
+        with self.assertRaises(LookupError):
+            utils.get_model_from_string('beep boop')
+        with self.assertRaises(LookupError):
+            utils.get_model_from_string('Ausgabe', app_label='beep boop')
 
     def test_get_model_relations(self):
         buch = _models.Buch
