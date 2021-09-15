@@ -473,7 +473,7 @@ class BaseInlineMixin(object):
 
     verbose_model: Type[Model] = None  # type: ignore[assignment]
     extra: int = 1
-    classes: tuple = ('collapse',)
+    classes: list = ['collapse']
     description: str = ''
     form: ModelForm = MIZAdminInlineFormBase
 

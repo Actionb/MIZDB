@@ -169,9 +169,9 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
 
     def __init__(
             self,
+            *args: Any,
             exclude: Optional[List[str]] = None,
             app_label: str = 'dbentry',
-            *args: Any,
             **kwargs: Any
     ) -> None:
         if exclude:

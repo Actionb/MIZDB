@@ -379,7 +379,7 @@ class GND(ACBase):
         """Return the label of a result."""
         return "%s (%s)" % (result[1], result[0])
 
-    def get_queryset(self) -> List[Tuple[str, str]]:
+    def get_queryset(self) -> List[Tuple[str, str]]:  # type: ignore[override]
         """Get a list of records from the SRU API."""
         # Calculate the 'startRecord' parameter for the request.
         # The absolute record position of the first record of a page is given by

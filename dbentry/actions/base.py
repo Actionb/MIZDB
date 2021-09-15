@@ -69,7 +69,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         # Allow setting of custom action_names, otherwise use the class's name
         if not getattr(self, 'action_name', False):
             self.action_name = self.__class__.__name__
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
 
     def get_action_allowed_checks(self) -> Iterable[Callable]:
         """Resolve the checks to callables and yield them."""
@@ -104,8 +104,7 @@ class ConfirmationViewMixin(MIZAdminMixin):
         if not self.action_allowed:
             # The action is not allowed, redirect back to the changelist
             return None
-        # noinspection PyUnresolvedReferences
-        return super().dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)  # type: ignore[misc]
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
@@ -131,8 +130,8 @@ class ConfirmationViewMixin(MIZAdminMixin):
             media = context['media'] + self.model_admin.media
         else:
             media = self.model_admin.media
-        if hasattr(self, 'get_form') and self.get_form():
-            media += self.get_form().media
+        if hasattr(self, 'get_form') and self.get_form():  # type: ignore[attr-defined]
+            media += self.get_form().media  # type: ignore[attr-defined]
         defaults['media'] = media
 
         # Add view specific variables.

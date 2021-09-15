@@ -551,7 +551,6 @@ class MoveToBrochureBase(ActionConfirmationView):
         # Return to the changelist:
         return None
 
-    # noinspection PyUnresolvedReferences
     def perform_action(  # type: ignore[override]
             self,
             form_cleaned_data: dict,
@@ -569,6 +568,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                 continue
 
             # Verify that the ausgabe exists and can be deleted
+            # noinspection PyUnresolvedReferences
             try:
                 ausgabe_instance = _models.Ausgabe.objects.get(
                     pk=data['ausgabe_id']
@@ -587,6 +587,7 @@ class MoveToBrochureBase(ActionConfirmationView):
 
             try:
                 with transaction.atomic():
+                    # noinspection PyUnresolvedReferences
                     new_brochure = brochure_class.objects.create(**instance_data)
                     # Update the bestand and delete the ausgabe
                     ausgabe_instance.bestand_set.update(
@@ -603,7 +604,7 @@ class MoveToBrochureBase(ActionConfirmationView):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                # noinspection PyProtectedMember
+                # noinspection PyProtectedMember,PyUnresolvedReferences
                 create_logentry(
                     user_id=self.request.user.pk,
                     obj=new_brochure,

@@ -1,7 +1,7 @@
 import calendar
 import datetime
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
@@ -13,7 +13,9 @@ from nameparser import HumanName
 from dbentry.query import (BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery)
 from dbentry.utils import leapdays
 
-Strategy = Union[BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery]
+Strategy = Union[
+    Type[BaseSearchQuery], Type[ValuesDictSearchQuery], Type[PrimaryFieldsSearchQuery]
+]
 
 
 class MIZQuerySet(QuerySet):
@@ -255,14 +257,14 @@ def build_date(
 class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
 
-    def _chain(self, **kwargs: Any) -> QuerySet:
+    def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
         # QuerySet._chain() will update the clone's __dict__ with the kwargs
         # we give it. (in django1.11: QuerySet._clone() did this job)
         if 'chronologically_ordered' not in kwargs:
             kwargs['chronologically_ordered'] = self.chronologically_ordered
         return super()._chain(**kwargs)
 
-    def order_by(self, *field_names: str) -> QuerySet:
+    def order_by(self, *field_names: str) -> 'AusgabeQuerySet':
         # Any call to order_by is almost guaranteed to break the
         # chronological ordering.
         self.chronologically_ordered = False
@@ -421,7 +423,7 @@ class AusgabeQuerySet(CNQuerySet):
 
         return update_dict
 
-    def chronological_order(self, *order_fields: str) -> QuerySet:
+    def chronological_order(self, *order_fields: str) -> 'AusgabeQuerySet':
         """Return this queryset chronologically ordered."""
         # TODO: check out nulls_first and nulls_last parameters of
         # Expression.asc() and desc() (added in 1.11) to fix the nulls messing

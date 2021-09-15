@@ -1196,7 +1196,7 @@ class BestandAdmin(MIZModelAdmin):
 
     def bestand_class(self, obj: _models.Bestand) -> str:
         if obj.bestand_object:
-            # noinspection PyProtectedMember
+            # noinspection PyProtectedMember,PyUnresolvedReferences
             return obj.bestand_object._meta.verbose_name
         return ''
     bestand_class.short_description = 'Art'  # type: ignore[attr-defined]  # noqa

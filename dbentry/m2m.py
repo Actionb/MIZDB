@@ -3,7 +3,8 @@ from dbentry.base.models import BaseM2MModel
 from dbentry.utils.models import get_model_fields
 
 
-class m2m_audio_musiker(BaseM2MModel):  # noqa
+# noinspection PyPep8Naming
+class m2m_audio_musiker(BaseM2MModel):
     audio = models.ForeignKey('Audio', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
@@ -19,7 +20,8 @@ class m2m_audio_musiker(BaseM2MModel):  # noqa
         verbose_name_plural = 'Audio-Musiker'
 
 
-class m2m_video_musiker(BaseM2MModel):  # noqa
+# noinspection PyPep8Naming
+class m2m_video_musiker(BaseM2MModel):
     video = models.ForeignKey('Video', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
@@ -35,8 +37,8 @@ class m2m_video_musiker(BaseM2MModel):  # noqa
         verbose_name_plural = 'Video-Musiker'
 
 
-# noinspection PyUnresolvedReferences
-class m2m_datei_musiker(BaseM2MModel):  # noqa
+# noinspection PyUnresolvedReferences,PyPep8Naming
+class m2m_datei_musiker(BaseM2MModel):
     datei = models.ForeignKey('Datei', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
     instrument = models.ManyToManyField(
@@ -49,16 +51,17 @@ class m2m_datei_musiker(BaseM2MModel):  # noqa
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.instrument.exists():
             instr = ",".join([str(i.kuerzel) for i in self.instrument.all()])
             return "{} ({})".format(str(getattr(self, 'musiker')), instr)
         return str(getattr(self, 'musiker'))
 
 
-class m2m_datei_quelle(BaseM2MModel):  # noqa
+# noinspection PyPep8Naming
+class m2m_datei_quelle(BaseM2MModel):
     # TODO: rework this, you should only ever be able to select one relation to
-    # a non-datei object (OneToOne?)
+    #  a non-datei object (OneToOne?)
     datei = models.ForeignKey('Datei', models.CASCADE)
     audio = models.ForeignKey('Audio', models.SET_NULL, blank=True, null=True)
     plakat = models.ForeignKey('Plakat', models.SET_NULL, blank=True, null=True)

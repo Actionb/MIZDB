@@ -18,7 +18,6 @@ class MIZAdminMixin(object):
     breadcrumbs_title: str = ''
     admin_site: AdminSite = miz_site
 
-    # noinspection PyUnresolvedReferences
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)  # type: ignore[misc]
         # Add admin site context.
@@ -62,9 +61,9 @@ class OptionalFormView(views.generic.FormView):
 class FixedSessionWizardView(SessionWizardView):
     """Subclass of SessionWizardView that fixes some quirks."""
 
-    def get_context_data(self, form: Optional[Form] = None, **kwargs: Any) -> dict:
+    def get_context_data(self, **kwargs: Any) -> dict:
         # SessionWizardView expects 'form' as required positional argument.
-        return super().get_context_data(form, **kwargs)
+        return super().get_context_data(kwargs.pop('form', None), **kwargs)
 
     def get_form(
             self,

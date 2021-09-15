@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List
 
 from django.core import checks, exceptions
 from django.db import models
@@ -17,14 +17,14 @@ class BaseModel(models.Model):
     to the default permissions.
 
     Attributes:
-        - ``search_fields`` (tuple): field names to include in searches.
+        - ``search_fields`` (list): field names to include in searches.
           (autocomplete, ModelAdmin search bar, queries using find())
         - ``search_fields_suffixes`` (dict): a dictionary of search_fields and
           their suffixes that will be appended to search results when using
           certain search strategies (queryset.find() or autocomplete views).
           Through these suffixes it can be hinted at why exactly a user has
           found a particular result for a given search term.
-        - ``primary_search_fields`` (tuple): search results that were found
+        - ``primary_search_fields`` (list): search results that were found
           through fields that are not in primary_search_fields will be flagged
           as a 'weak hit' and thus be visually separated from the other results.
         - ``name_field`` (str): the name of the field that most accurately
@@ -33,16 +33,16 @@ class BaseModel(models.Model):
           queryset.find().
         - ``create_field`` (str): the name of the field for the dal
           autocomplete object creation.
-        - ``exclude_from_str`` (tuple): list of field names to be excluded from
+        - ``exclude_from_str`` (list): list of field names to be excluded from
           the default __str__() implementation.
     """
 
-    search_fields: tuple = ()
-    primary_search_fields: tuple = ()
-    search_fields_suffixes: dict = None  # type: ignore[assignment]
-    name_field: Optional[str] = None
+    search_fields: list = []
+    primary_search_fields: list = []
+    search_fields_suffixes: dict = {}
+    name_field: str = ''
     create_field: str = ''  # TODO: must create_field allowed to be also be None?
-    exclude_from_str: tuple = ('beschreibung', 'bemerkungen')
+    exclude_from_str: list = ['beschreibung', 'bemerkungen']
 
     objects = MIZQuerySet.as_manager()
 
@@ -54,13 +54,13 @@ class BaseModel(models.Model):
         Otherwise the result will be a concatenation of values of all non-empty,
         non-relation fields that are not excluded through 'exclude_from_str'.
         """
-        if self.name_field is not None:
-            # noinspection PyUnresolvedReferences
-            result = str(self._meta.get_field(self.name_field).value_from_object(self))
+        # noinspection PyUnresolvedReferences
+        opts = self._meta
+        if self.name_field:
+            result = str(opts.get_field(self.name_field).value_from_object(self))
         else:
-            # noinspection PyUnresolvedReferences
             model_fields = get_model_fields(
-                self._meta.model,
+                opts.model,
                 foreign=False,
                 m2m=False,
                 exclude=self.exclude_from_str
@@ -182,7 +182,7 @@ class ComputedNameModel(BaseModel):
           name can be composed (missing data/new instance)
         - ``_changed_flag`` (boolean): if True, a new name will be computed the 
           next time the model object is instantiated
-        - ``name_composing_fields`` (tuple): a sequence of names of fields 
+        - ``name_composing_fields`` (list): a sequence of names of fields
           whose data make up the name. Values of these fields are retrieved 
           from the database and passed to the '_get_name' method
     """
@@ -191,7 +191,7 @@ class ComputedNameModel(BaseModel):
     _name = models.CharField(max_length=200, editable=False, default=_name_default)
     _changed_flag = models.BooleanField(editable=False, default=False)
 
-    name_composing_fields: tuple = ()
+    name_composing_fields: list = []
     name_field: str = '_name'
 
     objects = CNQuerySet.as_manager()

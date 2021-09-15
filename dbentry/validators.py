@@ -1,43 +1,49 @@
 import re
-
-from stdnum import issn, isbn, ean
-from stdnum import exceptions as stdnum_exceptions
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy
+from stdnum import ean, isbn, issn
+from stdnum import exceptions as stdnum_exceptions
 
 from dbentry.constants import discogs_release_id_pattern
 
 
-class StdValidationError(ValidationError):
+class MsgValidationError(ValidationError):
+    """Validation error with a preset message."""
     message = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # ValidationError requires one positional argument 'message'
         super().__init__(self.message, *args, **kwargs)
 
 
-class InvalidLength(StdValidationError):
+class InvalidLength(MsgValidationError):
     message = gettext_lazy('The number has an invalid length.')
 
 
-class InvalidFormat(StdValidationError):
+class InvalidFormat(MsgValidationError):
     message = gettext_lazy('The number has an invalid format.')
 
 
-class InvalidChecksum(StdValidationError):
+class InvalidChecksum(MsgValidationError):
     message = gettext_lazy("The number's checksum or check digit is invalid.")
 
 
-class InvalidComponent(StdValidationError):
+class InvalidComponent(MsgValidationError):
     message = gettext_lazy("One of the parts of the number are invalid or unknown.")
 
 
-def _validate(std, number):
-    # Re-raise the exceptions as django.ValidationErrors
+def _validate(stdnum_module, number: str) -> bool:
+    """
+    Validate ``number`` using the validate function of the given standard
+    number module ``std``.
+
+    Re-raise the standard number exceptions as django.ValidationErrors.
+    """
     try:
-        std.validate(number)
+        return bool(stdnum_module.validate(number))
     except stdnum_exceptions.InvalidLength:
         raise InvalidLength()
     except stdnum_exceptions.InvalidFormat:
@@ -46,21 +52,20 @@ def _validate(std, number):
         raise InvalidChecksum()
     except stdnum_exceptions.InvalidComponent:
         raise InvalidComponent()
-    return True
 
 
 # noinspection PyPep8Naming
-def ISBNValidator(raw_isbn):
+def ISBNValidator(raw_isbn: str) -> bool:
     return _validate(isbn, raw_isbn)
 
 
 # noinspection PyPep8Naming
-def ISSNValidator(raw_issn):
+def ISSNValidator(raw_issn: str) -> bool:
     return _validate(issn, raw_issn)
 
 
 # noinspection PyPep8Naming
-def EANValidator(raw_ean):
+def EANValidator(raw_ean: str) -> bool:
     return _validate(ean, raw_ean)
 
 

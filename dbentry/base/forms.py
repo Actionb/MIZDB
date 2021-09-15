@@ -1,7 +1,3 @@
-# type: ignore[attr-defined]
-# The form mixins reference attributes that are defined on the 'concrete'
-# form classes. mypy doesn't catch this (it's not intended to) and thus reports
-# lots of errors for these mixins.
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from django import forms
@@ -98,7 +94,6 @@ class FieldGroup:
         return min_error, max_error
 
 
-# noinspection PyUnresolvedReferences
 class MinMaxRequiredFormMixin(object):
     """
     A mixin that allows setting groups of fields to be required.
@@ -115,7 +110,7 @@ class MinMaxRequiredFormMixin(object):
         - ``max_error_message`` (str): the default error message for a max error
 
      Example:
-        class MyForm(MinMaxRequiredFormMixin, forms.Form):
+        class MyForm(MinMaxRequiredFormMixin, Form):
             spam = forms.IntegerField()
             bacon = forms.IntegerField()
             egg = forms.IntegerField()
@@ -155,13 +150,13 @@ class MinMaxRequiredFormMixin(object):
         'Bitte höchstens {max!s} dieser Felder ausfüllen: {fields}.'
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self: Form, *args: Any, **kwargs: Any) -> None:
         self.default_error_messages = {
             'min': self.min_error_message,
             'max': self.max_error_message
         }
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
 
         self._groups = []
         # Check that field names specified in the group_kwargs are present
@@ -180,10 +175,9 @@ class MinMaxRequiredFormMixin(object):
                 continue
             self._groups.append(group_kwargs)
 
-    def get_groups(self) -> Iterator[FieldGroup]:
+    def get_groups(self: Form) -> Iterator[FieldGroup]:
         """Instantiate and yield the helper objects."""
         for group_kwargs in self._groups:
-            # noinspection PyTypeChecker
             yield FieldGroup(self, **group_kwargs)
 
     def clean(self) -> dict:
@@ -195,7 +189,7 @@ class MinMaxRequiredFormMixin(object):
                 self.add_group_error('max', group)
         return super().clean()  # type: ignore[misc]
 
-    def add_group_error(self, error_type: str, group: FieldGroup) -> None:
+    def add_group_error(self: Form, error_type: str, group: FieldGroup) -> None:
         self.add_error(None, group.error_messages[error_type])
 
     def get_error_message_format_kwargs(self, group: FieldGroup) -> dict:
@@ -206,13 +200,15 @@ class MinMaxRequiredFormMixin(object):
             'max': group.max or '0',
         }
 
-    def _get_message_field_names(self, group: FieldGroup) -> str:
+    def _get_message_field_names(self: Form, group: FieldGroup) -> str:
         """Get a string of the verbose names of the group's fields."""
+        # @formatter:off
         return ", ".join(
             self.fields[field_name].label or snake_case_to_spaces(field_name).title()
             for field_name in group.fields
             if field_name in self.fields
         )
+        # @formatter:on
 
     def get_group_error_messages(
             self,
@@ -264,7 +260,6 @@ class MinMaxRequiredFormMixin(object):
         return messages
 
 
-# noinspection PyUnresolvedReferences
 class MIZAdminFormMixin(object):
     """A mixin that adds django admin media and fieldsets."""
 
@@ -273,7 +268,7 @@ class MIZAdminFormMixin(object):
             'all': ('admin/css/forms.css',)
         }
 
-    def __iter__(self) -> Fieldset:
+    def __iter__(self: Form) -> Fieldset:
         fieldsets = getattr(
             self, 'fieldsets',
             [(None, {'fields': list(self.fields.keys())})]
@@ -293,7 +288,7 @@ class MIZAdminFormMixin(object):
         return media
 
     @cached_property
-    def changed_data(self) -> list:
+    def changed_data(self: Form) -> list:
         # TODO: consider dropping this; it overrides forms.Form.changed_data to
         #  fix an issue when a formfield.show_hidden_initial is True - but we
         #  don't have any fields that have show_hidden_initial==True.
@@ -341,16 +336,15 @@ class MIZAdminForm(MIZAdminFormMixin, Form):
     pass
 
 
-# noinspection PyUnresolvedReferences
 class DynamicChoiceFormMixin(object):
     """Set formfield choices after init from keyword arguments."""
 
-    def __init__(self, choices: Optional[dict] = None, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)  # type: ignore[call-args]
+    def __init__(self, *args: Any, choices: Optional[dict] = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
         if choices:
             self.set_choices(choices)
 
-    def set_choices(self, choices: dict) -> None:
+    def set_choices(self: Form, choices: dict) -> None:
         """
         Set choices for choice fields that do not already have choices.
 
@@ -414,7 +408,6 @@ class MIZAdminInlineFormBase(forms.ModelForm):
             self.cleaned_data['DELETE'] = True
 
 
-# noinspection PyUnresolvedReferences
 class DiscogsFormMixin(object):
     """
     A mixin for fields handling data from discogs.
@@ -430,14 +423,14 @@ class DiscogsFormMixin(object):
     url_field_name: str = ''
     release_id_field_name: str = ''
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self: Form, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
         if self.url_field_name in self.fields:
             self.fields[self.url_field_name].validators.append(
                 DiscogsURLValidator()
             )
 
-    def clean(self) -> dict:
+    def clean(self: Form) -> dict:
         """Validate and clean release_id and discogs_url."""
         if (self.url_field_name in self._errors
                 or self.release_id_field_name in self._errors):
