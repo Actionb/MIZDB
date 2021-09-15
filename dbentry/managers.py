@@ -52,9 +52,8 @@ class MIZQuerySet(QuerySet):
             *fields: str,
             include_empty: bool = False,
             flatten: bool = False,
-            tuplfy: bool = False,
             **expressions: Any
-    ) -> OrderedDict[int, Union[dict, tuple]]:
+    ) -> OrderedDict[int, dict]:
         """
         An extension of QuerySet.values() that merges results of the same record.
 
@@ -85,8 +84,6 @@ class MIZQuerySet(QuerySet):
               will be replaced by just that one item. This does not apply to
               values from reverse related fields, as an iterable always
               expected here.
-            tuplfy (bool): if True, the values of the items returned will be
-              tuples instead of dictionaries
             **expressions: additional expressions for values()
 
         Returns:
@@ -128,7 +125,7 @@ class MIZQuerySet(QuerySet):
                 if not field.concrete:
                     flatten_exclude.append(field_path)
 
-        result: OrderedDict[int, Union[dict, tuple]] = OrderedDict()
+        result: OrderedDict[int, dict] = OrderedDict()
         for val_dict in self.values(*fields, **expressions):
             pk = val_dict.pop(pk_name)
             # For easier lookups of field_names, use dictionaries for the
@@ -158,8 +155,6 @@ class MIZQuerySet(QuerySet):
                 if flatten and len(values) == 1 and field_path not in flatten_exclude:
                     values = values[0]
                 item_dict[field_path] = values
-            if tuplfy:
-                item_dict = tuple(item_dict.items())
             result[pk] = item_dict
         return result
 

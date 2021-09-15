@@ -697,19 +697,6 @@ class TestValuesDict(DataTestCase):
         }
         self.assertEqual(values.get(self.obj1.pk), expected)
 
-    def test_values_dict_tuplfy(self):
-        values = self.qs_obj2.values_dict(*self.fields, tuplfy=True)
-        expected = (
-            ('band_name', ('Testband2',)), ('genre__genre', ('Rock', 'Jazz')),
-            ('bandalias__alias', ('Coffee',))
-        )
-        # Iterate through the expected_values and compare them individually;
-        # full tuple comparison includes order equality - and we can't predict
-        # the order of the tuples.
-        for expected_values in expected:
-            with self.subTest():
-                self.assertIn(expected_values, values.get(self.obj2.pk))
-
     # Patching MIZQuerySet.values to find out how the primary key values are queried.
     @patch.object(MIZQuerySet, 'values')
     def test_values_dict_no_fields(self, mocked_values):

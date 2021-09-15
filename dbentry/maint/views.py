@@ -45,8 +45,8 @@ def find_duplicates(
     """
 
     # noinspection PyUnresolvedReferences
-    queried: OrderedDict[int, Tuple[str, Any]] = queryset.values_dict(
-        *dupe_fields, *display_fields, tuplfy=True
+    queried: OrderedDict[int, Dict[str, Any]] = queryset.values_dict(
+        *dupe_fields, *display_fields
     )
     dupe_values: List[tuple] = []
     display_values: Dict[int, list] = {}
@@ -54,7 +54,7 @@ def find_duplicates(
     # (as tuples) in the following tuple 'values':
     for pk, values in queried.items():
         item_dupe_values = []
-        for k, v in values:
+        for k, v in values.items():
             if k in dupe_fields:
                 item_dupe_values.append((k, v))
             elif k in display_fields:
@@ -75,7 +75,7 @@ def find_duplicates(
         # Find all the pks that match these values.
         for pk, values in queried.items():
             item_dupe_values = tuple(  # type: ignore[assignment]
-                (k, v) for k, v in values if k in dupe_fields
+                (k, v) for k, v in values.items() if k in dupe_fields
             )
             if elem == item_dupe_values:
                 item_display_values = dict(display_values.get(pk, ()))
