@@ -1,31 +1,39 @@
 import calendar
 import datetime
 from collections import OrderedDict
-
-from nameparser import HumanName
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
-from django.db import models, transaction
-from django.db.models import Count, Min, Max
+from django.db import transaction
+from django.db.models import Count, Max, Min, Model, QuerySet
 from django.db.models.constants import LOOKUP_SEP
+from nameparser import HumanName
 
-from dbentry.query import (
-    BaseSearchQuery, ValuesDictSearchQuery, PrimaryFieldsSearchQuery
-)
-from dbentry.utils import leapdays, is_iterable
+from dbentry.query import (BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery)
+from dbentry.utils import leapdays
+
+Strategy = Union[
+    Type[BaseSearchQuery], Type[ValuesDictSearchQuery], Type[PrimaryFieldsSearchQuery]
+]
 
 
-class MIZQuerySet(models.QuerySet):
+class MIZQuerySet(QuerySet):
 
-    def find(self, q, ordered=False, strat_class=None, **kwargs):
+    def find(
+            self,
+            q: str,
+            ordered: bool = False,
+            strat_class: Optional[Strategy] = None,
+            **kwargs: Any
+    ) -> Union[List[Tuple[int, str]], QuerySet]:
         """
-        Return a list of instances that contain search term 'q'.
+        Return a list of instances that contain search term ``q``.
 
-        Find any occurence of the search term 'q' in the queryset, depending
+        Find any occurrence of the search term ``q`` in the queryset, depending
         on the search strategy used.
         By default, the order of the results depends on the search strategy.
-        If 'ordered' is True, results will be ordered according to the order
+        If ``ordered`` is True, results will be ordered according to the order
         established in the queryset instead.
         """
         if strat_class:
@@ -37,35 +45,57 @@ class MIZQuerySet(models.QuerySet):
             strat_class = PrimaryFieldsSearchQuery
         else:
             strat_class = BaseSearchQuery
-        strat = strat_class(self, **kwargs)
+        strat = strat_class(self, **kwargs)  # type: ignore[operator, misc]
         result, exact_match = strat.search(q, ordered)
         return result
 
-    def values_dict(self, *fields, include_empty=False, flatten=False,
-            tuplfy=False, **expressions):
+    def values_dict(
+            self,
+            *fields: str,
+            include_empty: bool = False,
+            flatten: bool = False,
+            **expressions: Any
+    ) -> OrderedDict[int, dict]:
         """
-        An extension of QuerySet.values() that merges the results.
+        An extension of QuerySet.values() that merges results of the same record.
 
-        For a pizza with two toppings and two sizes:
-        values('pk', 'pizza__topping', 'pizza__size'):
+        For example for  a pizza with two toppings and two sizes;
+
+        values('pk', 'pizza__topping', 'pizza__size') will return:
                 [
-                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},
-                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},
-                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},
-                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'},
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},\n
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},\n
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},\n
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'}\n
                 ]
 
-        values_dict('pk','pizza__topping', 'pizza__size'):
+
+        values_dict('pk', 'pizza__topping', 'pizza__size') will return:
                 {
-                    '1' : {
+                    1 : {
                         'pizza__topping' : ('Onions', 'Bacon' ),
                         'pizza__size': ('Tiny', 'God')
                     },
                 }
+
+        Args:
+            *fields (str): list of field names/paths that should be included
+            include_empty (bool): if True, include empty values
+              (here: as defined in django.core.validators.EMPTY_VALUES)
+            flatten (bool): if True, any values list that has a length of 1
+              will be replaced by just that one item. This does not apply to
+              values from reverse related fields, as an iterable always
+              expected here.
+            **expressions: additional expressions for values()
+
+        Returns:
+            an OrderedDict of primary key to item values (dicts)
         """
+        # noinspection PyProtectedMember
+        opts = self.model._meta
         # pk_name is the variable that will refer to this query's primary key
         # values.
-        pk_name = self.model._meta.pk.name
+        pk_name = opts.pk.name
 
         # Make sure the query includes the model's primary key values as we
         # require it to build the result out of.
@@ -77,7 +107,7 @@ class MIZQuerySet(models.QuerySet):
                 else:
                     # The query does not query for the primary key at all;
                     # it must be added to fields.
-                    fields += (pk_name, )
+                    fields += (pk_name,)
 
         # Do not flatten reverse relation values. An iterable is expected.
         flatten_exclude = []
@@ -87,7 +117,7 @@ class MIZQuerySet(models.QuerySet):
                 if LOOKUP_SEP in field_path:
                     field_name = field_path.split(LOOKUP_SEP, 1)[0]
                 try:
-                    field = self.model._meta.get_field(field_name)
+                    field = opts.get_field(field_name)
                 except FieldDoesNotExist:
                     # Don't raise the exception here; let it be raised by
                     # self.values(). An invalid field will cause the query to
@@ -97,82 +127,82 @@ class MIZQuerySet(models.QuerySet):
                 if not field.concrete:
                     flatten_exclude.append(field_path)
 
-        rslt = OrderedDict()
+        result: OrderedDict[int, dict] = OrderedDict()
         for val_dict in self.values(*fields, **expressions):
             pk = val_dict.pop(pk_name)
             # For easier lookups of field_names, use dictionaries for the
             # item's values mapping. If tuplfy == True, we turn the values
             # mapping back into a tuple before adding it to the result.
-            if pk in rslt:
+            item_dict: Union[dict, tuple]  # for mypy
+            if pk in result:
                 # Multiple rows returned due to joins over relations for this
                 # primary key.
-                item_dict = dict(rslt.get(pk))
+                item_dict = dict(result[pk])
             else:
                 item_dict = {}
             for field_path, value in val_dict.items():
                 if not include_empty and value in EMPTY_VALUES:
                     continue
+                values: tuple  # for mypy
                 if field_path not in item_dict:
                     values = ()
                 elif flatten and not isinstance(item_dict.get(field_path), tuple):
-                    # This value has previously been flattend!
-                    values = (item_dict.get(field_path), )
+                    # This value has previously been flattened!
+                    values = (item_dict[field_path],)
                 else:
-                    values = item_dict.get(field_path)
+                    values = item_dict[field_path]
                 if values and value in values:
                     continue
-                values += (value, )
+                values += (value,)
                 if flatten and len(values) == 1 and field_path not in flatten_exclude:
                     values = values[0]
                 item_dict[field_path] = values
-            if tuplfy:
-                item_dict = tuple(item_dict.items())
-            rslt[pk] = item_dict
-        return rslt
+            result[pk] = item_dict
+        return result
 
 
 class CNQuerySet(MIZQuerySet):
 
-    def bulk_create(self, objs, batch_size=None):
+    def bulk_create(self, objs: Iterable[Model], **kwargs: Any) -> List[Model]:
         # Set the _changed_flag on the objects to be created
         for obj in objs:
             obj._changed_flag = True
-        return super().bulk_create(objs, batch_size)
+        return super().bulk_create(objs, **kwargs)
 
-    def defer(self, *fields):
+    def defer(self, *fields: str) -> MIZQuerySet:
         if '_name' not in fields:
             self._update_names()
         return super().defer(*fields)
 
-    def filter(self, *args, **kwargs):
+    def filter(self, *args: Any, **kwargs: Any) -> MIZQuerySet:
         if any(k.startswith('_name') for k in kwargs):
             self._update_names()
         return super().filter(*args, **kwargs)
 
-    def only(self, *fields):
+    def only(self, *fields: str) -> MIZQuerySet:
         if '_name' in fields:
             self._update_names()
         return super().only(*fields)
 
-    def update(self, **kwargs):
+    def update(self, **kwargs: Any) -> int:
         # Assume that a name update will be required after this update.
         # If _changed_flag is not already part of the update, add it.
         if '_changed_flag' not in kwargs:
             kwargs['_changed_flag'] = True
         return super().update(**kwargs)
-    update.alters_data = True
+    update.alters_data = True  # type: ignore[attr-defined]
 
-    def values(self, *fields, **expressions):
+    def values(self, *fields: str, **expressions: Any) -> MIZQuerySet:
         if '_name' in fields:
             self._update_names()
         return super().values(*fields, **expressions)
 
-    def values_list(self, *fields, **kwargs):
+    def values_list(self, *fields: str, **kwargs: Any) -> MIZQuerySet:
         if '_name' in fields:
             self._update_names()
         return super().values_list(*fields, **kwargs)
 
-    def _update_names(self):
+    def _update_names(self) -> None:
         """Update the names of rows where _changed_flag is True."""
         if self.query.can_filter() and self.filter(_changed_flag=True).exists():
             values = self.filter(
@@ -184,22 +214,23 @@ class CNQuerySet(MIZQuerySet):
             )
             with transaction.atomic():
                 for pk, val_dict in values.items():
+                    # noinspection PyProtectedMember
                     new_name = self.model._get_name(**val_dict)
                     self.order_by().filter(pk=pk).update(
-                        _name=new_name, _changed_flag=False)
-    _update_names.alters_data = True
+                        _name=new_name, _changed_flag=False
+                    )
+    _update_names.alters_data = True  # type: ignore[attr-defined]
 
 
-def build_date(years, month_ordinals, day=None):
+def build_date(
+        years: List[int],
+        month_ordinals: List[int],
+        day: int = 1
+) -> Optional[datetime.date]:
     """
     Helper function for AusgabeQuerySet.increment_jahrgang to build a
     datetime.date instance out of lists of years and month ordinals.
     """
-    if not is_iterable(years):
-        years = [years]
-    if not is_iterable(month_ordinals):
-        month_ordinals = [month_ordinals]
-
     # Filter out None values that may have been returned by a values_list call.
     years = list(filter(None, years))
     month_ordinals = list(filter(None, month_ordinals))
@@ -220,60 +251,62 @@ def build_date(years, month_ordinals, day=None):
             month = max(month_ordinals)
         # Get the last day of the chosen month.
         day = calendar.monthrange(year, month)[1]
-
-    return datetime.date(year=year, month=month, day=day or 1)
+    return datetime.date(year=year, month=month, day=day)
 
 
 class AusgabeQuerySet(CNQuerySet):
-
     chronologically_ordered = False
 
-    def _chain(self, **kwargs):
+    def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
         # QuerySet._chain() will update the clone's __dict__ with the kwargs
         # we give it. (in django1.11: QuerySet._clone() did this job)
         if 'chronologically_ordered' not in kwargs:
             kwargs['chronologically_ordered'] = self.chronologically_ordered
         return super()._chain(**kwargs)
 
-    def order_by(self, *args, **kwargs):
+    def order_by(self, *field_names: str) -> 'AusgabeQuerySet':
         # Any call to order_by is almost guaranteed to break the
-        # chronologic ordering.
+        # chronological ordering.
         self.chronologically_ordered = False
-        return super().order_by(*args, **kwargs)
+        return super().order_by(*field_names)
 
-    def update(self, *args, **kwargs):
+    def update(self, **kwargs: Any) -> int:
         if self.chronologically_ordered:
-            # Trying to update a chronologically ordered queryset seems to fail.
+            # FIXME: Trying to update a chronologically ordered queryset seems to fail.
             # A FieldError is raised, complaining about a missing field. That
             # field should exist as an annotation but just doesn't.
             # Proper solution to this would be check the update kwargs for
             # expressions that require ordering and handle those separately
-            # somehow - but considering that chronologic_order's days are almost
+            # somehow - but considering that chronological_order's days are almost
             # numbered, this is the quick and dirty way of fixing the problem:
-            return self.order_by().update(*args, **kwargs)
-        return super().update(*args, **kwargs)
+            return self.order_by().update(**kwargs)
+        return super().update(**kwargs)
 
-    def find(self, q, ordered=True, **kwargs):
-        # Insist on preserving the chronologic order over the order created
-        # by the search query (exact, startswith, contains).
+    def find(
+            self, q: str, ordered: bool = False, *args, **kwargs: Any
+    ) -> Union[List[Tuple[int, str]], QuerySet]:
+        # By defaulting ``ordered`` kwarg to true, insist on preserving the
+        # chronological order over the order created by the search query
+        # (exact, startswith, contains).
         return super().find(q, ordered=ordered, **kwargs)
 
-    def increment_jahrgang(self, start_obj, start_jg=1):
+    def increment_jahrgang(self, start_obj: Model, start_jg: int = 1) -> Dict[int, List[int]]:
         """
-        Alter the 'jahrgang' values using 'start_obj' as anchor.
+        Alter the 'jahrgang' values using ``start_obj`` as starting point.
 
-        Set the 'jahrgang' (i.e. the volume) value for 'start_obj' to 'start_jg'
+        Set the jahrgang (i.e. the volume) value for ``start_obj`` to ``start_jg``
         and then alter the jahrgang values of the other ausgabe objects in this
-        queryset according to whether they lie temporally before or after the
-        jahrgang of 'start_obj'.
-        The time/jahrgang difference of other objects to 'start_obj' is
+        queryset according to whether they temporally come before or after the
+        jahrgang of ``start_obj``.
+        The time/jahrgang difference of other objects to ``start_obj`` is
         calculated using either (partial) dates, 'num' or simply the year values
         of the other objects; depending on the available data and in that order.
 
-        Returns a dictionary that was used to update the jahrgang values;
-        it maps jahrgang to list of ids.
+        Returns:
+            a dictionary that was used to update the jahrgang values;
+              it maps jahrgang to list of ids.
         """
-        start = start_obj or self.chronologic_order().first()
+        start = start_obj or self.chronological_order().first()
         start_date = start.e_datum
         years = start.ausgabejahr_set.values_list('jahr', flat=True)
         if start_date:
@@ -290,7 +323,8 @@ class AusgabeQuerySet(CNQuerySet):
         # Increment jahrgang using a (partial) date.
         if start_date is None:
             month_ordinals = start.ausgabemonat_set.values_list(
-                'monat__ordinal', flat=True)
+                'monat__ordinal', flat=True
+            )
             start_date = build_date(years, month_ordinals)
 
         if start_date:
@@ -302,7 +336,7 @@ class AusgabeQuerySet(CNQuerySet):
                 if 'e_datum' in val_dict:
                     obj_date = val_dict.get('e_datum')[-1]
                 elif ('ausgabejahr__jahr' not in val_dict
-                        or 'ausgabemonat__monat__ordinal' not in val_dict):
+                      or 'ausgabemonat__monat__ordinal' not in val_dict):
                     # Need both year and month to build a meaningful date.
                     continue
                 else:
@@ -389,7 +423,7 @@ class AusgabeQuerySet(CNQuerySet):
 
         return update_dict
 
-    def chronologic_order(self, *ordering):
+    def chronological_order(self, *order_fields: str) -> 'AusgabeQuerySet':
         """Return this queryset chronologically ordered."""
         # TODO: check out nulls_first and nulls_last parameters of
         # Expression.asc() and desc() (added in 1.11) to fix the nulls messing
@@ -398,35 +432,37 @@ class AusgabeQuerySet(CNQuerySet):
             # Already ordered!
             return self
 
-        # A chronologic order is (mostly) consistent ONLY within
+        # noinspection PyProtectedMember
+        opts = self.model._meta
+        # A chronological order is (mostly) consistent ONLY within
         # the ausgabe_set of one particular magazin. If the queryset contains
         # the ausgaben of more than one magazin, we may end up replacing one
         # 'poor' ordering (the default one) with another poor, but more
-        # expensive chronologic one. Return self with some form of ordering.
+        # expensive chronological one. Return self with some form of ordering.
         if self.only('magazin').distinct().values_list('magazin').count() != 1:
             # This condition is also True if self is an empty queryset.
-            if ordering:
-                return self.order_by(*ordering)
+            if order_fields:
+                return self.order_by(*order_fields)
             if self.query.order_by:
                 return self
-            return self.order_by(*self.model._meta.ordering)
+            return self.order_by(*opts.ordering)
 
         # FIXME: default_ordering orders by 'magazin' and not 'magazin_name'?
-        default_ordering = ['magazin', 'jahr', 'jahrgang', 'sonderausgabe']
-        if ordering:
-            ordering = list(ordering)
-            ordering.extend(default_ordering)
-        else:
-            ordering = default_ordering
+        default_ordering = ('magazin', 'jahr', 'jahrgang', 'sonderausgabe')
+        ordering: List[str] = [*order_fields, *default_ordering]
 
-        pk_name = self.model._meta.pk.name
+        pk_name = opts.pk.name
         # Retrieve the first item in ordering that refers to the primary key,
         # so we can later append it to the final ordering.
         # It makes no sense to have the queryset be ordered primarily on the
         # primary key.
         try:
-            filter_func = lambda i: i in ('pk', '-pk', pk_name, '-' + pk_name)
-            pk_order_item = next(filter(filter_func, ordering))
+            pk_order_item = next(
+                filter(
+                    lambda i: i in ('pk', '-pk', pk_name, '-' + pk_name),
+                    ordering
+                )
+            )
             ordering.remove(pk_order_item)
         except StopIteration:
             # No primary key in ordering, use a default.
@@ -436,7 +472,8 @@ class AusgabeQuerySet(CNQuerySet):
         jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
         jahr_values, jahrgang_values = (
-            list(filter(lambda x: x is not None, l)) for l in zip(*jj_values)
+            list(filter(lambda x: x is not None, _list))
+            for _list in zip(*jj_values)
         )
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
@@ -470,7 +507,7 @@ class AusgabeQuerySet(CNQuerySet):
                 -itemtpl[1], default_criteria_ordering.index(itemtpl[0])
             )
         )
-        result_ordering = [sum_name.split('__')[0] for sum_name, sum in criteria]
+        result_ordering = [sum_name.split('__')[0] for sum_name, _sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])
 
         clone = self.annotate(
@@ -486,21 +523,23 @@ class AusgabeQuerySet(CNQuerySet):
 class HumanNameQuerySet(MIZQuerySet):
     """Extension of MIZQuerySet that enables searches for 'human names'."""
 
-    def _parse_human_name(self, text):
+    @staticmethod
+    def _parse_human_name(text: str) -> str:
+        """Run ``text`` through the HumanName constructor."""
         try:
             return str(HumanName(text))
         except:
             # TODO: find out which exceptions might be raised by HumanName()
             return text
 
-    def find(self, q, **kwargs):
-        # Parse 'q' through HumanName first to 'combine' the various ways one
+    def find(self, q: str, *args: Any, **kwargs: Any) -> Union[List[Tuple[int, str]], QuerySet]:
+        # Parse q through HumanName first to 'combine' the various ways one
         # could write a human name.
         # (f.ex. 'first name surname' or 'surname, first name')
         q = self._parse_human_name(q)
-        return super().find(q, **kwargs)
+        return super().find(q, *args, **kwargs)
 
 
 class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):
-    """Queryset for models where the names of people are primary."""
+    """Queryset for models that handle people."""
     pass

@@ -12,9 +12,9 @@ class TestTextUtils(MyTestCase):
             ({'values': t, 'width': 1}, '2020, [...]'),
             ({'values': t, 'width': 0}, '2020, 2021, 2024'),
             ({'values': [''] + t}, '2020, 2021, 2024'),
-            ({'values': [None] + t}, '2020, 2021, 2024'),
+            ({'values': [None] + t}, '2020, 2021, 2024'),  # noqa
             ({'values': iter(t)}, '2020, 2021, 2024'),
-            ({'values': filter(lambda i:i, t)}, '2020, 2021, 2024'),
+            ({'values': filter(lambda i: i, t)}, '2020, 2021, 2024'),
             ({'values': (i for i in t)}, '2020, 2021, 2024')
         ]
         for kwargs, expected in params:

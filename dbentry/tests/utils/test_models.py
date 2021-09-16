@@ -10,6 +10,7 @@ from dbentry.factory import make
 from dbentry.tests.base import MyTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
@@ -26,6 +27,7 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(
             (utils.get_relations_between_models('Magazin', 'Ausgabe')), expected)
 
+    # noinspection PyTypeChecker
     def test_get_relations_between_models_many_to_many(self):
         expected = (
             _models.Artikel._meta.get_field('genre'),
@@ -45,7 +47,11 @@ class TestModelUtils(MyTestCase):
 
     def test_get_model_from_string(self):
         self.assertEqual(_models.Ausgabe, utils.get_model_from_string('Ausgabe'))
-        self.assertIsNone(utils.get_model_from_string('beep boop'))
+        self.assertEqual(_models.Ausgabe, utils.get_model_from_string('dbentry.ausgabe'))
+        with self.assertRaises(LookupError):
+            utils.get_model_from_string('beep boop')
+        with self.assertRaises(LookupError):
+            utils.get_model_from_string('Ausgabe', app_label='beep boop')
 
     def test_get_model_relations(self):
         buch = _models.Buch
@@ -86,6 +92,7 @@ class TestModelUtils(MyTestCase):
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
+
         self.assertEqual(required_field_names(_models.Person), ['nachname'])
         self.assertEqual(required_field_names(_models.Musiker), ['kuenstler_name'])
         self.assertEqual(required_field_names(_models.Genre), ['genre'])
@@ -100,26 +107,26 @@ class TestModelUtils(MyTestCase):
         self.assertEqual(required_field_names(_models.Provenienz), ['geber'])
         self.assertEqual(required_field_names(_models.Bestand), ['lagerort'])
 
-    def test_get_updateable_fields(self):
+    def test_get_updatable_fields(self):
         obj = make(_models.Artikel)
         self.assertEqual(
-            utils.get_updateable_fields(obj),
+            utils.get_updatable_fields(obj),
             ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen']
         )
 
         obj.seitenumfang = 'f'
         obj.beschreibung = 'Beep'
-        self.assertEqual(utils.get_updateable_fields(obj), ['zusammenfassung', 'bemerkungen'])
+        self.assertEqual(utils.get_updatable_fields(obj), ['zusammenfassung', 'bemerkungen'])
         obj.zusammenfassung = 'Boop'
-        self.assertEqual(utils.get_updateable_fields(obj), ['bemerkungen'])
+        self.assertEqual(utils.get_updatable_fields(obj), ['bemerkungen'])
 
         obj = make(_models.Ausgabe)
         self.assertEqual(
-            utils.get_updateable_fields(obj),
+            utils.get_updatable_fields(obj),
             ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
         )
         obj.status = 2
-        self.assertNotIn('status', utils.get_updateable_fields(obj))
+        self.assertNotIn('status', utils.get_updatable_fields(obj))
 
     def test_get_reverse_field_path(self):
         # no related_query_name or related_name
@@ -157,6 +164,7 @@ class TestModelUtils(MyTestCase):
             utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')
 
 
+# noinspection PyUnresolvedReferences
 class TestCleanPerms(MyTestCase):
 
     def setUp(self):
@@ -217,7 +225,7 @@ class TestCleanPerms(MyTestCase):
         p.save()
         stream = StringIO()
         mocked_get_codename = Mock(return_value='add_actuallyincorrect')
-        with patch.object(auth,'get_permission_codename', new=mocked_get_codename):
+        with patch.object(auth, 'get_permission_codename', new=mocked_get_codename):
             with self.patcher(new=Mock(return_value=[p])):
                 utils.clean_permissions(stream)
                 self.assertFalse(stream.getvalue())

@@ -18,13 +18,14 @@ from dbentry.tests.mixins import CreateFormMixin, CreateViewMixin, TestDataMixin
 from dbentry.sites import miz_site
 
 
-def _showwarning(message, category=Warning, *args, **kwargs):
+def _showwarning(message, category=Warning, *_args, **_kwargs):
     message = category.__name__ + ': ' + str(message)
     print(message, file=sys.stderr, end='... ')
 
 
 if not sys.warnoptions:
     import os
+
     # Change the filter in this process
     warnings.simplefilter("always")
     os.environ["PYTHONWARNINGS"] = "always"  # Also affect subprocesses
@@ -39,7 +40,7 @@ def mockv(value, **kwargs):
 def override_urls(url_patterns):
     dummy_module = type(
         'Dummy',
-        (object, ),
+        (object,),
         {'urlpatterns': url_patterns}
     )  # creating a dummy module is safer than using a basic Mock object
     with override_settings(ROOT_URLCONF=dummy_module):
@@ -49,6 +50,7 @@ def override_urls(url_patterns):
 @contextlib.contextmanager
 def add_urls(url_patterns, regex=''):
     try:
+        # noinspection PyUnresolvedReferences
         urls = import_module(settings.ROOT_URLCONF).urlpatterns
     except AttributeError as e:
         raise AttributeError(e.args[0], "Cannot override ROOT_URLCONF twice!")
@@ -63,7 +65,9 @@ class TestNotImplementedError(AssertionError):
 
 class MyTestCase(TestCase):
     warnings = 'always'
-    def warn(self, message):
+
+    @staticmethod
+    def warn(message):
         warnings.warn(message)
 
     @contextlib.contextmanager
@@ -72,11 +76,10 @@ class MyTestCase(TestCase):
         try:
             yield
         except exceptions as e:
-            fail_txt = "{} raised.".format(e.__class__.__name__)
-            if msg:
-                fail_txt += '\n' + msg
-            self.fail(fail_txt)
+            error_msg = "{} raised.".format(e.__class__.__name__)
+            self.fail(self._formatMessage(msg, error_msg))
 
+    # noinspection PyIncorrectDocstring
     def assertSelect2JS(self, js, jquery='', select2='', jquery_init=''):
         """
         Assert that select2 is loaded after jQuery and before jquery_init.
@@ -141,7 +144,6 @@ class UserTestCase(MyTestCase):
 
 
 class RequestTestCase(UserTestCase):
-
     path = ''
 
     def get_path(self):
@@ -163,19 +165,19 @@ class RequestTestCase(UserTestCase):
     def get_request(self, path=None, data=None, user=None, **kwargs):
         return self.get_response('GET', path, data, user, **kwargs).wsgi_request
 
-    def assertMessageSent(self, request, expected_message):
+    def assertMessageSent(self, request, expected_message, msg=None):
         messages = [str(msg) for msg in get_messages(request)]
         error_msg = "Message {} not found in messages: {}".format(
             expected_message, [m[:len(expected_message) + 5] + "[...]" for m in messages])
         if not any(m.startswith(expected_message) for m in messages):
-            raise AssertionError(error_msg)
+            self.fail(self._formatMessage(msg, error_msg))
 
-    def assertMessageNotSent(self, request, expected_message):
+    def assertMessageNotSent(self, request, expected_message, msg=None):
         messages = [str(msg) for msg in get_messages(request)]
         error_msg = "Message {} found in messages: {}".format(
-            expected_message,  [m[:len(expected_message) + 5] + "[...]" for m in messages])
+            expected_message, [m[:len(expected_message) + 5] + "[...]" for m in messages])
         if any(m.startswith(expected_message) for m in messages):
-            raise AssertionError(error_msg)
+            self.fail(self._formatMessage(msg, error_msg))
 
 
 class ViewTestCase(RequestTestCase, CreateViewMixin):
@@ -183,7 +185,6 @@ class ViewTestCase(RequestTestCase, CreateViewMixin):
 
 
 class AdminTestCase(TestDataMixin, RequestTestCase):
-
     admin_site = miz_site
     model_admin_class = None
 
@@ -222,19 +223,17 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
 ##############################################################################################################
 class FormTestCase(MyTestCase, CreateFormMixin):
 
-    def assertFormValid(self, form):
+    def assertFormValid(self, form, msg=None):
         if not form.is_valid():
             form_errors = [(k, v) for k, v in form.errors.items()]
-            raise AssertionError(
-                'Form invalid. Form errors: {}'.format(form_errors))
+            self.fail(self._formatMessage(msg, 'Form invalid. Form errors: {}'.format(form_errors)))
 
-    def assertFormInvalid(self, form):
+    def assertFormInvalid(self, form, msg=None):
         if form.is_valid():
-            raise AssertionError('Form valid when expected to be invalid')
+            self.fail(self._formatMessage(msg, 'Form valid when expected to be invalid'))
 
 
 class ModelFormTestCase(TestDataMixin, FormTestCase):
-
     fields = None
 
     def get_form(self, **kwargs):

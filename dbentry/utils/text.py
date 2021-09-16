@@ -1,35 +1,46 @@
+from typing import Iterable, Tuple, Union
+
 from nameparser import HumanName
 
 from dbentry.constants import M2M_LIST_MAX_LEN
 
 
-def concat_limit(values, width=M2M_LIST_MAX_LEN, sep=", ", z=0):
+def concat_limit(
+        values: Iterable,
+        width: int = M2M_LIST_MAX_LEN,
+        sep: str = ", ", z: int = 0
+) -> str:
     """
-    Join non-empty string values of iterable 'values' separated by 'sep' up to a
-    length of current string + 'width', truncating the remainder.
+    Join non-empty string values of iterable ``values`` separated by ``sep`` up
+    to a length of current string + ``width``, truncating the remainder.
+
     Passing width=0 disables the truncation.
     """
-    rslt = ''
+    # FIXME: z-fill was dropped in ca7fdee952ed1965ed320a42ef7892db3affdde8  # noqa
+    # and I don't really know why. Without z-fill, sorting Ausgabe instances by
+    # their '_name' (i.e. alphabetically) will be poor:
+    # '2000-11' comes before '2000-2' (should be: '2000-02')
+    results = ''
     for v in values:
         if not v:
             continue
         item = str(v)
-        if not rslt:
-            rslt = item
+        if not results:
+            results = item
             continue
-        if not width or len(rslt) + len(item) < width:
-            rslt += sep + item
+        if not width or len(results) + len(item) < width:
+            results += sep + item
         else:
-            rslt += sep + "[...]"
+            results += sep + "[...]"
             break
-    return rslt
+    return results
 
 
-def snake_case_to_spaces(value):
+def snake_case_to_spaces(value: str) -> str:
     return value.replace('_', ' ').strip()
 
 
-def parse_name(full_name):
+def parse_name(full_name: Union[str, HumanName]) -> Tuple[str, str]:
     """
     Return a two-tuple of first names (including middle names) and last name.
     """

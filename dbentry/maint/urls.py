@@ -1,7 +1,7 @@
 from django.urls import path
 
 from dbentry.maint.views import (
-    DuplicateObjectsView, DuplicateModelSelectView, UnusedObjectsView
+    DuplicateModelSelectView, DuplicateObjectsView, UnusedObjectsView
 )
 
 urlpatterns = [

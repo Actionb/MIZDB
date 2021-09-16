@@ -5,6 +5,7 @@ from dbentry.search import utils
 from dbentry.tests.base import MyTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestUtils(MyTestCase):
 
     def test_get_dbfield_from_path(self):

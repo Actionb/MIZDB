@@ -9,6 +9,7 @@ class TestM2mAudioMusiker(DataTestCase):
     raw_data = [{'musiker__kuenstler_name': 'Beep'}]
 
     def test_str(self):
+        # noinspection PyUnresolvedReferences
         self.assertEqual(str(self.obj1), 'Beep')
 
 
@@ -18,6 +19,7 @@ class TestM2mVideoMusiker(DataTestCase):
     raw_data = [{'musiker__kuenstler_name': 'Beep Boop'}]
 
     def test_str(self):
+        # noinspection PyUnresolvedReferences
         self.assertEqual(str(self.obj1), 'Beep Boop')
 
 
@@ -27,4 +29,5 @@ class TestM2mDateiMusiker(DataTestCase):
     raw_data = [{'musiker__kuenstler_name': 'Beep Boop'}]
 
     def test_str(self):
+        # noinspection PyUnresolvedReferences
         self.assertEqual(str(self.obj1), 'Beep Boop')

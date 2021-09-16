@@ -7,6 +7,7 @@ from dbentry.tests.base import AdminTestCase
 from dbentry.utils import copyrelated as utils
 
 
+# noinspection PyUnresolvedReferences
 class TestCopyRelated(AdminTestCase):
 
     model = _models.Plakat

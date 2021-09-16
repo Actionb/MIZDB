@@ -6,7 +6,7 @@ Based on: https://github.com/odwyersoftware/django-rename-app
 import logging
 
 from django.core.management.base import BaseCommand
-from django.db import connection, ProgrammingError
+from django.db import ProgrammingError, connection
 
 logger = logging.getLogger(__name__)
 

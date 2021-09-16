@@ -1,10 +1,12 @@
+from typing import Any, List
+
 from django.core import checks, exceptions
 from django.db import models
 from django.utils.translation import gettext_lazy
 
 from dbentry.fields import YearField
 from dbentry.managers import CNQuerySet, MIZQuerySet
-from dbentry.utils import get_model_fields, get_fields_and_lookups
+from dbentry.utils import get_fields_and_lookups, get_model_fields
 
 
 class BaseModel(models.Model):
@@ -15,36 +17,36 @@ class BaseModel(models.Model):
     to the default permissions.
 
     Attributes:
-        search_fields (tuple): field names to include in searches.
-            (autocomplete, ModelAdmin search bar, queries using find())
-        search_fields_suffixes (dict): a dictionary of search_fields and their
-            suffixes that will be appended to search results when using certain
-            search strategies (queryset.find() or autocomplete views).
-            Through these suffixes it can be hinted at why exactly a user has
-            found a particular result for a given search term.
-        primary_search_fields (tuple): search results that were found through
-            fields that are not in primary_search_fields will be flagged as
-            a 'weak hit' and thus be visually separated from the other results.
-        name_field (str): the name of the field that most accurately represents
-            the record. If set, only this field will a) be used for __str__()
-            and b) fetched from the database as search results for
-            queryset.find().
-        create_field (str): the name of the field for the dal autocomplete
-            object creation.
-        exclude_from_str (tuple): list of field names to be excluded from the
-            default __str__() implementation.
+        - ``search_fields`` (list): field names to include in searches.
+          (autocomplete, ModelAdmin search bar, queries using find())
+        - ``search_fields_suffixes`` (dict): a dictionary of search_fields and
+          their suffixes that will be appended to search results when using
+          certain search strategies (queryset.find() or autocomplete views).
+          Through these suffixes it can be hinted at why exactly a user has
+          found a particular result for a given search term.
+        - ``primary_search_fields`` (list): search results that were found
+          through fields that are not in primary_search_fields will be flagged
+          as a 'weak hit' and thus be visually separated from the other results.
+        - ``name_field`` (str): the name of the field that most accurately
+          represents the record. If set, only this field will a) be used
+          for __str__() and b) fetched from the database as search results for
+          queryset.find().
+        - ``create_field`` (str): the name of the field for the dal
+          autocomplete object creation.
+        - ``exclude_from_str`` (list): list of field names to be excluded from
+          the default __str__() implementation.
     """
 
-    search_fields = ()
-    primary_search_fields = ()
-    search_fields_suffixes = None
-    name_field = None
-    create_field = None
-    exclude_from_str = ('beschreibung', 'bemerkungen')
+    search_fields: list = []
+    primary_search_fields: list = []
+    search_fields_suffixes: dict = {}
+    name_field: str = ''
+    create_field: str = ''  # TODO: must create_field allowed to be also be None?
+    exclude_from_str: list = ['beschreibung', 'bemerkungen']
 
     objects = MIZQuerySet.as_manager()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return a string representation of this instance.
 
@@ -52,24 +54,38 @@ class BaseModel(models.Model):
         Otherwise the result will be a concatenation of values of all non-empty,
         non-relation fields that are not excluded through 'exclude_from_str'.
         """
-        if self.name_field is not None:
-            rslt = str(self._meta.get_field(self.name_field).value_from_object(self))
+        # noinspection PyUnresolvedReferences
+        opts = self._meta
+        if self.name_field:
+            result = str(opts.get_field(self.name_field).value_from_object(self))
         else:
-            rslt = " ".join([
-                str(fld.value_from_object(self))
-                for fld in get_model_fields(
-                    self._meta.model, foreign=False, m2m=False,
-                    exclude=self.exclude_from_str
-                )
-                if fld.value_from_object(self)
-            ])
-        return rslt.strip() or super().__str__()
+            model_fields = get_model_fields(
+                opts.model,
+                foreign=False,
+                m2m=False,
+                exclude=self.exclude_from_str
+            )
+            result = " ".join(
+                [
+                    str(fld.value_from_object(self))
+                    for fld in model_fields
+                    if fld.value_from_object(self)
+                ]
+            )
+        return result.strip() or super().__str__()
 
-    def qs(self):
-        """Return a queryset that contains the current instance only."""
+    def qs(self) -> MIZQuerySet:
+        """
+        Return a queryset that contains the current instance only.
+
+        Raises:
+            TypeError: when qs() was called from class level. The method
+                requires a model instance.
+        """
         try:
             # Use 'model.objects' instead of 'self.objects' as managers
             # are not accessible via instances.
+            # noinspection PyUnresolvedReferences
             return self._meta.model.objects.filter(pk=self.pk)
         except TypeError:
             # qs() was called from class level; i.e. 'self' is a model class.
@@ -81,8 +97,8 @@ class BaseModel(models.Model):
             )
 
     @classmethod
-    def get_search_fields(cls, foreign=False, m2m=False):
-        """Return the model's fields that are used in searches."""
+    def get_search_fields(cls, foreign: bool = False, m2m: bool = False) -> List[str]:
+        """Return the model's field names that are used in searches."""
         if cls.search_fields:
             return list(cls.search_fields)
         return [
@@ -98,7 +114,7 @@ class BaseModel(models.Model):
 class BaseM2MModel(BaseModel):
     """Base class for models that implement an intermediary through table."""
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Return a string representation of this instance.
 
@@ -106,6 +122,7 @@ class BaseM2MModel(BaseModel):
         """
         if self.name_field:
             return str(getattr(self, self.name_field))
+        # noinspection PyUnresolvedReferences
         data = [
             # Collect the string representations of related objects.
             # getattr(self, fk_field.attname) and
@@ -130,12 +147,13 @@ class BaseM2MModel(BaseModel):
 
 class BaseAliasModel(BaseModel):
     """
-    Abstract base class for any model that implements a
-    ManyToOne 'alias' relation using the `parent` field.
+    Abstract base class for any model that implements a ManyToOne 'alias'
+    relation using the ``parent`` field.
     """
 
     alias = models.CharField('Alias', max_length=100)
-    parent = None   # the field that will hold the ForeignKey
+    # the field that will hold the ForeignKey:
+    parent: models.ForeignKey = None  # type: ignore[assignment]
 
     class Meta(BaseModel.Meta):
         ordering = ['alias']
@@ -151,46 +169,46 @@ class ComputedNameModel(BaseModel):
     The 'name' is a concise description of a model instance. It is stored in
     the database to avoid repeated calculation and to make it accessible
     for queries on a database level.
-    The value is reevaluated when an instance is saved or the '_changed_flag'
-    was set (either manually or by the 'CNQuerySet' manager).
+    The value is reevaluated when an instance is saved or the ``_changed_flag``
+    was set (either manually or by the ``CNQuerySet`` manager).
 
     It's a step backwards in terms of database normalization in favour of
     being able to search for a computed name easily and quickly on the
     database level without having to instantiate a model object.
 
-    Attributes related to the computed name:
-        _name (CharField): the field that contains the computed name.
-        name_default (str): the default value for the _name field, if no name
-            can be composed (missing data/new instance).
-        _changed_flag (boolean): if True, a new name will be computed the next
-            time the model object is instantiated.
-        name_composing_fields (tuple): a sequence of names of fields whose data
-            make up the name. Values of these fields are retrieved from the
-            database and passed to the '_get_name' method.
+    Attributes:
+        - ``_name`` (CharField): the field that contains the computed name
+        - ``name_default`` (str): the default value for the _name field, if no 
+          name can be composed (missing data/new instance)
+        - ``_changed_flag`` (boolean): if True, a new name will be computed the 
+          next time the model object is instantiated
+        - ``name_composing_fields`` (list): a sequence of names of fields
+          whose data make up the name. Values of these fields are retrieved 
+          from the database and passed to the '_get_name' method
     """
 
-    _name_default = gettext_lazy("No data for %(verbose_name)s.")
+    _name_default: str = gettext_lazy("No data for %(verbose_name)s.")
     _name = models.CharField(max_length=200, editable=False, default=_name_default)
     _changed_flag = models.BooleanField(editable=False, default=False)
-    name_composing_fields = ()
 
-    name_field = '_name'
+    name_composing_fields: list = []
+    name_field: str = '_name'
 
     objects = CNQuerySet.as_manager()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # An up-to-date name _may_ be expected upon initialization.
         self.update_name()
 
     @classmethod
-    def check(cls, **kwargs):
+    def check(cls, **kwargs: Any) -> List[checks.CheckMessage]:
         errors = super().check(**kwargs)
         errors.extend(cls._check_name_composing_fields(**kwargs))
         return errors
 
     @classmethod
-    def _check_name_composing_fields(cls, **kwargs):
+    def _check_name_composing_fields(cls, **_kwargs: Any) -> List[checks.CheckMessage]:
         """
         Check that name_composing_fields is set and does not contain invalid
         fields.
@@ -217,7 +235,7 @@ class ComputedNameModel(BaseModel):
                 )
         return errors
 
-    def save(self, update=True, *args, **kwargs):
+    def save(self, update: bool = True, *args: Any, **kwargs: Any) -> None:
         super().save(*args, **kwargs)
         # Parameters that make up the name may have changed;
         # update the name if necessary.
@@ -225,7 +243,7 @@ class ComputedNameModel(BaseModel):
             self.update_name(force_update=True)
 
     @classmethod
-    def get_search_fields(cls, foreign=False, m2m=False):
+    def get_search_fields(cls, foreign: bool = False, m2m: bool = False) -> List[str]:
         search_fields = super().get_search_fields(foreign, m2m)
         # Make '_name' the first search field.
         if '_name' not in search_fields:
@@ -243,15 +261,15 @@ class ComputedNameModel(BaseModel):
             pass
         return search_fields
 
-    def update_name(self, force_update=False):
+    def update_name(self, force_update: bool = False) -> bool:
         """
-        Update the _name, if _changed_flag or force_update is True.
+        Update the ``_name``, if ``_changed_flag`` or ``force_update`` is True.
 
-        If the update is not aborted, the _changed_flag is always reset to
-        False. Deferring the _name field will avoid an update, unless
-        force_update is True.
+        If the update is not aborted, the ``_changed_flag`` is always reset to
+        False. Deferring the name field will avoid an update, unless
+        ``force_update`` is True.
 
-        Returns True when the _name was updated.
+        Returns True when the name was updated.
         """
         deferred = self.get_deferred_fields()
 
@@ -269,6 +287,7 @@ class ComputedNameModel(BaseModel):
         else:
             # Avoid calling refresh_from_db by fetching the value directly
             # from the database:
+            # noinspection PyUnresolvedReferences
             changed_flag = self._meta.model.objects.values_list(
                 '_changed_flag', flat=True
             ).get(pk=self.pk)
@@ -294,16 +313,17 @@ class ComputedNameModel(BaseModel):
         return False
 
     @classmethod
-    def _get_name(cls, **kwargs):
+    def _get_name(cls, **kwargs: Any) -> str:
         """
         Compute the 'name' from keyword arguments provided.
 
-        The keyword arguments are the fields of 'name_composing_fields'
+        The keyword arguments are the fields of ``name_composing_fields``
         and their respective values.
         """
         raise NotImplementedError('Subclasses must implement this method.')
 
-    def __str__(self):
+    def __str__(self) -> str:
+        # noinspection PyUnresolvedReferences
         return self._name % {'verbose_name': self._meta.verbose_name}
 
     class Meta(BaseModel.Meta):

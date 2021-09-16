@@ -1,12 +1,12 @@
 from unittest import skip
-from unittest.mock import patch, DEFAULT
+from unittest.mock import DEFAULT, patch, Mock
 
 from django.contrib.auth.models import Permission, User
 from django.core import checks
 from django.urls import reverse
 
 from dbentry import models as _models
-from dbentry.sites import MIZAdminSite, miz_site
+from dbentry.sites import MIZAdminSite, miz_site, register_tool
 from dbentry.tests.base import RequestTestCase
 
 
@@ -163,3 +163,28 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertFalse(site.add_categories(app_list))
         app_list.append({'app_label': 'dbentry', 'models': []})
         self.assertTrue(site.add_categories(app_list))
+
+    def test_register_tool(self):
+        # Assert that the register_tool decorator calls a site's register_tool
+        # method with the right arguments and adds the view to the list of tool
+        # views.
+        site = Mock()
+        dummy_view = object()
+        register_tool(
+            url_name='url_name',
+            index_label='index_label',
+            superuser_only='True',
+            site=site
+        )(dummy_view)
+        site.register_tool.assert_called_with(
+            dummy_view, 'url_name', 'index_label', 'True'
+        )
+
+        site = MIZAdminSite()
+        register_tool(
+            url_name='url_name',
+            index_label='index_label',
+            superuser_only='True',
+            site=site
+        )(dummy_view)
+        self.assertIn((dummy_view, 'url_name', 'index_label', 'True'), site.tools)

@@ -14,6 +14,7 @@ from dbentry.search.forms import MIZAdminSearchForm
 from dbentry.tests.base import AdminTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestAdminMixin(AdminTestCase):
 
     model = _models.Plakat
@@ -174,7 +175,6 @@ class TestAdminMixin(AdminTestCase):
         # Assert that _response_post_save returns the default response (the index)
         # when leaving a changeform with a post request while not having view or
         # change perms.
-        obj = make(self.model)
         request_data = {'_changelist_filters': 'genre=1&genre=2'}
         obj = make(self.model)
         request = self.get_request(
@@ -187,7 +187,7 @@ class TestAdminMixin(AdminTestCase):
     def test_preserved_filters_back_to_cl(self):
         # Assert that saving on a changeform returns back to the changelist
         # with the filters preserved.
-        # This is a more integrated test for the changes made in _reponse_post_save.
+        # This is a more integrated test for the changes made in _response_post_save.
         preserved_filters_name = '_changelist_filters'
         obj = make(self.model)
         filters = [
@@ -304,7 +304,7 @@ class TestAdminMixin(AdminTestCase):
         patcher = mock.patch(
             'dbentry.search.admin.search_form_tag_context', mocked_tag)
         patcher.start()
-        response = self.model_admin.update_changelist_context(
+        self.model_admin.update_changelist_context(
             response=mock.Mock(context_data={}))
         self.assertFalse(
             mocked_tag.called,
@@ -376,6 +376,8 @@ class TestAdminMixin(AdminTestCase):
                     "Changelist search form is missing fields for relations:\n\t['genre']"
                 )
 
+
+# noinspection PyUnresolvedReferences
 class TestSearchFormChangelist(AdminTestCase):
 
     model = _models.Plakat
@@ -551,7 +553,7 @@ class TestSearchFormChangelist(AdminTestCase):
 
     def test_get_filters_params_multifield(self):
         # Check how changelist copes with MultiValueFields such as PartialDateFormField:
-        # the changelist must query with the cleaned data only and not the indiviual fields.
+        # the changelist must query with the cleaned data only and not the individual fields.
         form_data = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 20}
         patcher = mock.patch.object(
             _admin.PlakatAdmin, 'search_form_kwargs', {'fields': ['datum']}

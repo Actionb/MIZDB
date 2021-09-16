@@ -11,7 +11,6 @@ from dbentry.tests.mixins import TestDataMixin, LoggingTestMixin
 
 @tag("dal")
 class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
-
     path = 'accapture'
     model = None
     create_field = None
@@ -25,13 +24,13 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
             reverse_kwargs['create_field'] = self.model.create_field
         return reverse(self.path, kwargs=reverse_kwargs)
 
-    def get_create_field(self, model):
+    @staticmethod
+    def get_create_field(model):
         return getattr(model, 'create_field', None)
 
     def get_view(
             self, request=None, args=None, kwargs=None, model=None,
-            create_field=None, forwarded=None, q=''
-        ):
+            create_field=None, forwarded=None, q=''):
         # dbentry.ac.views behave slightly different in their as_view() method
         view = super(ACViewTestCase, self).get_view(request, args, kwargs)
         # The request data will set some of the values - then overwrite/extend
@@ -53,7 +52,6 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
 
 @tag("dal")
 class ACViewTestMethodMixin(object):
-
     view_class = ACBase
     test_data_count = 0
     has_alias = True
