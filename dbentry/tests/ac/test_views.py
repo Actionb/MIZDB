@@ -633,19 +633,19 @@ class TestGND(ViewTestCase):
             with self.subTest(data=data):
                 self.assertFalse(view.get_query_string(q=data))
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset(self, mocked_searchgnd):
-        mocked_searchgnd.return_value = ([('id', 'label')], 1)
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset(self, mocked_query_func):
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep')
         self.assertTrue(view.get_queryset())
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset_page_number(self, mocked_searchgnd):
-        # Assert that, for a given page number, get_queryset calls searchgnd
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_page_number(self, mocked_query_func):
+        # Assert that, for a given page number, get_queryset calls query func
         # with the correct startRecord index.
-        mocked_searchgnd.return_value = ([('id', 'label')], 1)
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         # noinspection PyPep8Naming
-        startRecord_msg = "Expected searchgnd to be called with a 'startRecord' kwarg."
+        startRecord_msg = "Expected query func to be called with a 'startRecord' kwarg."
         view_initkwargs = {
             'q': 'Beep',
             'page_kwarg': 'page',
@@ -656,53 +656,53 @@ class TestGND(ViewTestCase):
         request = self.get_request()
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_searchgnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['1'])
         # Should call with request.GET.page_kwarg:
         request = self.get_request(data={'page': '2'})
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_searchgnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['11'])
         # Should call with view.kwargs.page_kwarg:
         request = self.get_request()
         view = self.get_view(request=request, kwargs={'page': 3}, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_searchgnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['21'])
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset_paginate_by(self, mocked_searchgnd):
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_paginate_by(self, mocked_query_func):
         # Assert that get_queryset factors in the paginate_by attribute when
         # calculating the startRecord value.
         # Set paginate_by to 5; the startRecord index for the third page
         # would then be 11 (first page: 1-5, second page: 6-10).
-        mocked_searchgnd.return_value = ([('id', 'label')], 1)
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         request = self.get_request(data={'page': '3'})
         view = self.get_view(request=request, page_kwarg='page', paginate_by=5, q='Beep')
         view.get_queryset()
-        args, kwargs = mocked_searchgnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn(
             'startRecord', kwargs,
-            msg="Expected searchgnd to be called with a 'startRecord' kwarg."
+            msg="Expected query func to be called with a 'startRecord' kwarg."
         )
         self.assertEqual(kwargs['startRecord'], ['11'])
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset_maximum_records(self, mocked_searchgnd):
-        # Assert that get_queryset passes 'paginate_by' to searchgnd as
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_maximum_records(self, mocked_query_func):
+        # Assert that get_queryset passes 'paginate_by' to the query func as
         # 'maximumRecords' kwarg.
         # (This sets the number of records retrieved per request)
-        mocked_searchgnd.return_value = ([('id', 'label')], 1)
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep', paginate_by=9)
         view.get_queryset()
-        args, kwargs = mocked_searchgnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn(
             'maximumRecords', kwargs,
-            msg="Expected searchgnd to be called with a 'maximumRecords' kwarg."
+            msg="Expected query func to be called with a 'maximumRecords' kwarg."
         )
         self.assertEqual(kwargs['maximumRecords'], ['9'])
 

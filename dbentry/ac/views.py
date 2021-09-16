@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
@@ -361,10 +361,14 @@ class GNDPaginator(Paginator):
 class GND(ACBase):
     """
     Autocomplete view that queries the SRU API endpoint of the DNB.
+
+    Attributes:
+        sru_query_func: the callable that fetches the results from the endpoint
     """
 
     paginate_by = 10  # DNB default number of records per request
     paginator_class = GNDPaginator
+    sru_query_func: Callable = searchgnd
 
     def get_query_string(self, q: Optional[str] = None) -> str:
         """Construct and return a SRU compliant query string."""
@@ -390,7 +394,7 @@ class GND(ACBase):
         page_number = int(page)
         start = (page_number - 1) * self.paginate_by + 1
 
-        results, self.total_count = searchgnd(
+        results, self.total_count = self.sru_query_func(
             self.get_query_string(self.q),
             startRecord=[str(start)],
             maximumRecords=[str(self.paginate_by)]
