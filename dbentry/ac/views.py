@@ -397,11 +397,16 @@ class GND(ACBase):
         results, self.total_count = self.sru_query_func(
             self.get_query_string(self.q),
             startRecord=[str(start)],
-            maximumRecords=[str(self.paginate_by)]
-            # TODO: support all searchgnd parameters
+            maximumRecords=[str(self.paginate_by)],
+            **self.get_query_func_kwargs()
         )
         return results
 
     def get_paginator(self, *args: Any, **kwargs: Any) -> GNDPaginator:
         kwargs['total_count'] = self.total_count
         return super().get_paginator(*args, **kwargs)
+
+    # noinspection PyMethodMayBeStatic
+    def get_query_func_kwargs(self, **kwargs: Any) -> dict:
+        """Hook to insert call kwargs for the query func in get_queryset."""
+        return kwargs

@@ -723,6 +723,24 @@ class TestGND(ViewTestCase):
             view.get_result_label(('134485904', 'Plant, Robert'))
         )
 
+    @patch.object(GND, 'sru_query_func')
+    def test_get_query_func_kwargs(self, mocked_query_func):
+        # Assert that the view's query func is called with the kwargs added
+        # by get_query_func_kwargs.
+        view = self.get_view(request=self.get_request(), q='Beep')
+        mocked_get_kwargs = Mock(
+            return_value={'version': '-1', 'new_kwarg': 'never seen before'}
+        )
+        mocked_query_func.return_value = ([], 0)
+        with patch.object(view, 'get_query_func_kwargs', new=mocked_get_kwargs):
+            view.get_queryset()
+            mocked_query_func.assert_called()
+            _args, kwargs = mocked_query_func.call_args
+            self.assertIn('version', kwargs)
+            self.assertEqual(kwargs['version'], '-1')
+            self.assertIn('new_kwarg', kwargs)
+            self.assertEqual(kwargs['new_kwarg'], 'never seen before')
+
 
 class TestGNDPaginator(MyTestCase):
 
