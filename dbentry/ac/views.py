@@ -94,21 +94,22 @@ class ACBase(autocomplete.Select2QuerySetView):
         Filter the given queryset with the view's search term ``q``.
 
         If ``q`` is a numeric value, try a primary key lookup. Otherwise use
-        MIZQuerySet.find to find results.
+        either MIZQuerySet.find to find results or filter against
+        ``create_field``, if that is set.
 
         Returns:
             a list if querying via MIZQuerySet.find or a MIZQuerySet.
         """
-        # TODO: check that queryset is an instance of MIZQuerySet in order to
-        #  guarantee that find() can be used.
         if self.q:
             # If the search term is a numeric value, try using it in a primary
             # key lookup, and if that returns results, return them.
             if self.q.isnumeric() and queryset.filter(pk=self.q).exists():
                 return queryset.filter(pk=self.q)
-            return queryset.find(self.q)
-        else:
-            return queryset
+            if isinstance(queryset, MIZQuerySet):
+                return queryset.find(self.q)
+            elif self.create_field:
+                return queryset.filter(**{self.create_field: self.q})
+        return queryset
 
     def create_object(self, text: str) -> Model:
         """

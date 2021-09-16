@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from unittest.mock import Mock, patch
 
+from django.db.models import QuerySet
 from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
@@ -9,6 +10,7 @@ from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
     ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator)
 from dbentry.factory import make
+from dbentry.managers import MIZQuerySet
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
@@ -92,6 +94,41 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(
             list(view.apply_q(self.queryset)), [(self.obj4.pk, self.obj4.__str__())])
 
+    def test_apply_q_checks_queryset_type(self):
+        # Assert that apply_q checks the type of the queryset being used.
+        # If view.q is a non-emtpy, non-numeric string, apply_q will try to
+        # use find() - a method exclusive to MIZQuerySets.
+        view = self.get_view(q='Boopband')
+        default_qs = QuerySet(model=self.model)
+        # if a create_field is set, apply_q will try to filter against it for
+        # default QuerySets.
+        view.create_field = 'band_name'
+        with self.assertNotRaises(AttributeError):
+            qs = view.apply_q(default_qs)
+        self.assertNotIsInstance(qs, MIZQuerySet)
+        self.assertIsInstance(qs, QuerySet)
+        self.assertTrue(qs.query.has_filters())  # cba to check that the only filter is 'band_name'
+        self.assertEqual(qs.count(), 1)
+        self.assertIn(self.obj4, qs)
+
+        # Unset create_field. apply_q should return an unfiltered default
+        # queryset.
+        view.create_field = None
+        qs = view.apply_q(default_qs)
+        self.assertNotIsInstance(qs, MIZQuerySet)
+        self.assertIsInstance(qs, QuerySet)
+        self.assertFalse(qs.query.has_filters())
+
+        miz_qs = MIZQuerySet(model=self.model)
+        qs = view.apply_q(miz_qs)
+        self.assertIsInstance(qs, list)  # find returns a list for this model
+        # Unset view.q. apply_q should now return an unfiltered MIZQuerySet.
+        view.q = None
+        qs = view.apply_q(miz_qs)
+        self.assertIsInstance(qs, MIZQuerySet)
+        self.assertFalse(qs.query.has_filters())
+
+
     def test_get_queryset_with_q(self):
         request = self.get_request()
         view = self.get_view(request)
@@ -122,8 +159,8 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         # numeric string.
         view = self.get_view(self.get_request())
         view.q = str(self.obj1.pk)
-        # Note: a queryset will be returned, since filter() is called instead
-        # of find() (which returns a list of 2-tuples).
+        # Note that a queryset will be returned, since filter() is called
+        # instead of find() (which returns a list of 2-tuples).
         self.assertIn(self.obj1, view.apply_q(self.queryset))
         # If the query for PK returns no results, results of a query using
         # find() should be returned.
@@ -135,7 +172,8 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             # That means that qs.filter() should return an object with a
             # mocked 'exists' - which itself must return False.
             filter=Mock(return_value=Mock(exists=mocked_exists)),
-            find=mocked_find
+            find=mocked_find,
+            spec=MIZQuerySet,  # the mock must pass as a MIZQuerySet instance
         )
         view.apply_q(mocked_queryset)
         self.assertTrue(mocked_find.called)
