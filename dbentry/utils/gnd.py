@@ -54,13 +54,6 @@ def searchgnd(
     Raises:
         requests.exceptions.HTTPError: if response status code is 4xx or 5xx.
     """
-    # FIXME: mypy warns that the items of the result list could be (None, None),
-    #  as the text attribute of the elements might be None.
-    #  Also: root.find('.//sru:numberOfRecords') could return None, or the
-    #  element's text attribute could be None. The view still requires a
-    #  result count of the total number of records found, though, or the
-    #  pagination won't work!
-    #  ALSO ALSO: id_number and label could be None
     if not query:
         return [], 0
 
@@ -72,9 +65,9 @@ def searchgnd(
         'startRecord': [start],
         **params
     }
-    logger.info('Sending request to %r using parameters %r.', url, request_params)
+    logger.info(f'Sending request to {url!r} using parameters {request_params!r}.')
     response = requests.get(url, request_params)
-    logger.info('DNB SRU response status code: %s', response.status_code)
+    logger.info(f'DNB SRU response status code: {response.status_code!r}')
     response.raise_for_status()  # raise 4xx and 5xx errors
 
     # Gather the namespaces and set the default namespace 'sru'.
@@ -88,27 +81,42 @@ def searchgnd(
 
     root = ElementTree.fromstring(response.text)
     # Get the total number of matches:
-    result_count = int(root.find('.//sru:numberOfRecords', namespaces).text)
+    try:
+        result_count = int(root.find('.//sru:numberOfRecords', namespaces).text)  # type: ignore[union-attr, arg-type]  # noqa
+    except AttributeError as exc:
+        logger.error(
+            "Could not find element 'sru:numberOfRecords' or the element found "
+            f"has no 'text' attribute. \nNamespaces used: {namespaces!r}"
+            f"\nError message: {exc!s}"
+        )
+        return [], 0
+    except ValueError as exc:
+        logger.error(
+            f"Inappropriate text value for the 'numberOfRecords' element. Error message: {exc!s}"
+        )
+        return [], 0
+
     # Get the records returned in this batch.
     # Note that by default SRU returns 10 records at a time.
     records = root.findall('.//sru:recordData', namespaces)
-    logger.info('SRU response returned %r of %r matching records.' % (len(records), result_count))
+    logger.info(f'SRU response returned {len(records)} of {result_count} matching records.')
 
     results = []
     for record in records:
-        identifier_element = record.find(".//%s" % identifier, namespaces)
+        identifier_element = record.find(f".//{identifier!s}", namespaces)
         if identifier_element is None:
-            logger.warning("Record data contained no element with identifier tag %r." % identifier)
+            logger.warning(f"Record data contained no element with identifier tag {identifier!r}.")
             continue
         if not getattr(identifier_element, 'text', None):
-            logger.warning("No ID value found on element with identifier tag %r." % identifier)
+            # Reject elements without an ID value:
+            logger.warning(f"No ID value found on element {identifier_element!r}.")
             continue
-        id_number = identifier_element.text
+        id_number: str = identifier_element.text  # type: ignore[assignment]
         # Use the text from the first element that has text as a label for this
         # particular match.
-        label = id_number
+        label: str = id_number
         for label_tag in labels:
-            label_element = record.find('.//%s' % label_tag, namespaces)
+            label_element = record.find(f'.//{label_tag}', namespaces)
             if label_element is not None and label_element.text:
                 label = label_element.text
                 break

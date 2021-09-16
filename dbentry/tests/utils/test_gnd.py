@@ -96,9 +96,32 @@ class TestGND(MyTestCase):
         results, count = gnd.searchgnd(url=self.url, query='Peter')
         self.assertEqual(count, 864)
 
-    def test_returns_empty_when_no_query(self, mocked_request):
+    def test_no_query_string(self, mocked_request):
         # Assert that searchgnd short circuits when query string is missing.
         mocked_request.get(self.url, text=self.rdf_xml)
         results, count = gnd.searchgnd(url=self.url, query='')
+        self.assertFalse(results)
+        self.assertEqual(count, 0)
+
+    def test_number_of_records_element_missing(self, mocked_request):
+        # Assert that searchgnd returns empty when a numberOfRecords element
+        # could not be found
+        modified_rdf_xml = self.rdf_xml.replace('<numberOfRecords>864</numberOfRecords>', '')
+        mocked_request.get(self.url, text=modified_rdf_xml)
+        with self.assertNotRaises(AttributeError):
+            results, count = gnd.searchgnd(url=self.url, query='test')
+        self.assertFalse(results)
+        self.assertEqual(count, 0)
+
+    def test_number_of_records_element_none(self, mocked_request):
+        # Assert that searchgnd returns empty when the numberOfRecords element
+        # has an inappropriate value for int().
+        modified_rdf_xml = self.rdf_xml.replace(
+            '<numberOfRecords>864</numberOfRecords>',
+            '<numberOfRecords>None</numberOfRecords>'
+        )
+        mocked_request.get(self.url, text=modified_rdf_xml)
+        with self.assertNotRaises(ValueError):
+            results, count = gnd.searchgnd(url=self.url, query='test')
         self.assertFalse(results)
         self.assertEqual(count, 0)
