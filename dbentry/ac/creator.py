@@ -48,10 +48,8 @@ class Creator(object):
         Args:
             model (model class): the model class for which instances should be
                 created
-            raise_exceptions (boolean): if false, return a ``FailedObject``
-                dummy object instead, when encountering a
-                MultipleObjectsReturned exception. Otherwise, let the exception
-                bubble up
+            raise_exceptions (boolean): if False, suppress MultipleObjectsReturned
+              exceptions and return a FailedObject dummy object instead
         """
         self.model = model
         self.raise_exceptions = raise_exceptions
@@ -82,8 +80,6 @@ class Creator(object):
         try:
             return self.creator(text, preview)
         except MultipleObjectsReturned as e:
-            # NOTE: raise_exceptions only addresses MultipleObjectsReturnedExceptions.
-            # Is that intended?
             if self.raise_exceptions:
                 raise e
             if preview:
