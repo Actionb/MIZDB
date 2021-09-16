@@ -18,6 +18,8 @@ class WidgetCaptureMixin(object):
     reversal of the generic url name ``accapture`` which requires reverse
     kwargs ``model_name`` and ``create_field``.
     """
+    # TODO: explain more what this actually does in comparison to how dal
+    #  does the url
 
     def __init__(self, model_name: str, *args: Any, **kwargs: Any) -> None:
         self.model_name = model_name
@@ -55,7 +57,7 @@ class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multi
     pass
 
 
-class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
+class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWidgetWrapper
     """
     A class that wraps a given widget to add add/change/delete links and icons.
 
@@ -64,6 +66,8 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
     this wrapper is used during widget declaration of formfields of a form
     class.
     """
+    # TODO: docstring mention that sometimes you would want to wrap a widget that
+    #  does NOT facilitate a relation, hence the optional rel argument
 
     @property
     def media(self) -> Media:
@@ -98,7 +102,7 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
             can_delete_related (bool): if True, add a 'delete' icon
         """
         # TODO: try to incorporate super class init (needs 'rel' argument).
-        # (remember to remove noinspection PyMissingConstructor afterwards)
+        #  (remember to remove noinspection PyMissingConstructor afterwards)
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         # noinspection PyUnresolvedReferences
