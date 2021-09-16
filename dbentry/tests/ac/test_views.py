@@ -143,31 +143,35 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertTrue(mocked_queryset.filter.called)
         self.assertTrue(mocked_exists.called)
 
-    def test_dispatch_sets_model(self):
-        # dispatch should set the model attribute from the url caught parameter
+    def test_setup_sets_model(self):
+        # setup should set the model attribute from the url caught kwarg
         # 'model_name' if the view instance does not have one.
-        view = self.get_view()
+        view = self.view_class()
         view.model = None
-        try:
-            view.dispatch(model_name='ausgabe')
-        except:  # noqa
-            # view.dispatch will run fine until it calls super() without a
-            # request positional argument:
-            # the model attribute is set before that.
-            pass
-        self.assertEqual(view.model._meta.model_name, 'ausgabe')
+        view.setup(self.get_request(), model_name='ausgabe')
+        self.assertEqual(view.model, _models.Ausgabe)
 
-    def test_dispatch_sets_create_field(self):
-        # Assert that dispatch can set the create field attribute from its kwargs.
-        view = self.get_view()
+    def test_setup_fails_gracefully_with_no_model(self):
+        # Assert that setup fails gracefully if no model class was set and a
+        # model_name kwarg was missing or was 'empty'.
+        request = self.get_request()
+        view = self.view_class()
+        view.model = None
+        with self.assertNotRaises(Exception):
+            view.setup(request)
+        view.model = None
+        for model_name in (None, ''):
+            with self.subTest(model_name=model_name):
+                with self.assertNotRaises(Exception):
+                    view.setup(request, model_name=model_name)
+                view.model = None
+
+    def test_setup_sets_create_field(self):
+        # Assert that setupp can set the create field attribute from its kwargs.
+        request = self.get_request()
+        view = self.view_class()
         view.create_field = None
-        try:
-            view.dispatch(create_field='this aint no field')
-        except:  # noqa
-            # view.dispatch will run fine until it calls super() without a
-            # request positional argument:
-            # the model attribute is set before that.
-            pass
+        view.setup(request, create_field='this aint no field')
         self.assertEqual(view.create_field, 'this aint no field')
 
     def test_get_result_value(self):

@@ -34,15 +34,15 @@ class ACBase(autocomplete.Select2QuerySetView):
     model: Optional[Type[Model]]
     create_field: Optional[str]
 
-    def dispatch(self, *args: Any, **kwargs: Any) -> HttpResponse:
+    def setup(self, request: HttpRequest, *args: Any, **kwargs: Any):
         """Set model and create_field instance attributes."""
-        # TODO: shouldn't this happen in view.setup()?
+        super().setup(request, *args, **kwargs)
         if not self.model:
             model_name = kwargs.pop('model_name', '')
-            self.model = get_model_from_string(model_name)
+            if model_name:
+                self.model = get_model_from_string(model_name)
         if self.create_field is None:
             self.create_field = kwargs.pop('create_field', None)
-        return super().dispatch(*args, **kwargs)
 
     def has_create_field(self) -> bool:
         if self.create_field:
