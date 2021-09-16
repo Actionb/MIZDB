@@ -8,9 +8,8 @@ from dbentry import models as _models
 from dbentry.utils import parse_name
 
 
-class MultipleObjectsReturnedException(Exception):
+class MultipleObjectsReturned(Exception):
     """The query returned multiple objects for the given text."""
-    # TODO: rename MultipleObjectsReturnedException to just MultipleObjectsReturned
 
     message = 'Name nicht einzigartig.'
 
@@ -73,7 +72,7 @@ class Creator(object):
                 information for the 'create_option' of a dal widget
 
         Raises:
-            MultipleObjectsReturnedException: if raise_exceptions is True; the
+            creator.MultipleObjectsReturned: if raise_exceptions is True; the
                 creator has found multiple already existing objects that fit
                 'text'.
         """
@@ -82,7 +81,7 @@ class Creator(object):
 
         try:
             return self.creator(text, preview)
-        except MultipleObjectsReturnedException as e:
+        except MultipleObjectsReturned as e:
             # NOTE: raise_exceptions only addresses MultipleObjectsReturnedExceptions.
             # Is that intended?
             if self.raise_exceptions:
@@ -108,7 +107,7 @@ class Creator(object):
         except model.DoesNotExist:
             return model(**data)
         except model.MultipleObjectsReturned:
-            raise MultipleObjectsReturnedException
+            raise MultipleObjectsReturned
 
     def create_person(self, text: Union[str, HumanName], preview: bool = True) -> OrderedDict:
         """

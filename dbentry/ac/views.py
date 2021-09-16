@@ -11,7 +11,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext
 
 from dbentry import models as _models
-from dbentry.ac.creator import Creator, MultipleObjectsReturnedException
+from dbentry.ac.creator import Creator, MultipleObjectsReturned
 from dbentry.managers import AusgabeQuerySet, MIZQuerySet
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
@@ -317,7 +317,7 @@ class ACCreatable(ACBase):
 
         try:
             result = self.create_object(text)
-        except MultipleObjectsReturnedException:
+        except MultipleObjectsReturned:
             msg = 'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen" Knopf.'
             return http.JsonResponse({'id': 0, 'text': msg})
 
