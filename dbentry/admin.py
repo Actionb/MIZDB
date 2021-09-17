@@ -1173,6 +1173,7 @@ class OrtAdmin(MIZModelAdmin):
             self, db_field: ModelField, request: HttpRequest, **kwargs: Any
     ) -> FormField:
         if db_field == self.opts.get_field('bland'):
+            # Limit the choices to the Land instance selected in 'land':
             kwargs['widget'] = make_widget(model=db_field.related_model, forward=['land'])
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
