@@ -24,8 +24,9 @@ class TestRemoteModelWidgetWrapper(MyTestCase):
         super().setUp()
         form = ArtikelForm()
         self.widget = RemoteModelWidgetWrapper(
-            form.fields['ausgabe'].widget, _models.Ausgabe, 'id')
-        rel_opts = self.widget.related_model._meta
+            form.fields['ausgabe'].widget, _models.Ausgabe, 'id'
+        )
+        rel_opts = self.widget.remote_model._meta
         self.info = (rel_opts.app_label, rel_opts.model_name)
 
     def test_get_related_url(self):
@@ -83,7 +84,7 @@ class TestRemoteModelWidgetWrapper(MyTestCase):
         # are added if the widget is a form of SelectMultiple.
         widget = RemoteModelWidgetWrapper(
             widget=widgets.SelectMultiple(),
-            related_model=_models.Ausgabe,
+            remote_model=_models.Ausgabe,
             can_add_related=True,
             can_change_related=True,
             can_delete_related=True
@@ -96,9 +97,15 @@ class TestRemoteModelWidgetWrapper(MyTestCase):
 
     def test_remote_field_defaults_to_pk(self):
         # Assert that init defaults remote_field_name to the PK field name.
-        widget = RemoteModelWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Ausgabe)
+        widget = RemoteModelWidgetWrapper(
+            widget=widgets.SelectMultiple(),
+            remote_model=_models.Ausgabe
+        )
         self.assertEqual(widget.remote_field_name, 'id')
-        widget = RemoteModelWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Katalog)
+        widget = RemoteModelWidgetWrapper(
+            widget=widgets.SelectMultiple(),
+            remote_model=_models.Katalog
+        )
         self.assertEqual(widget.remote_field_name, 'basebrochure_ptr_id')
 
 

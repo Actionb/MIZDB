@@ -84,7 +84,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
     def __init__(
             self,
             widget: Widget,
-            related_model: Model,
+            remote_model: Model,
             remote_field_name: str = '',
             can_add_related: bool = True,
             can_change_related: bool = True,
@@ -113,9 +113,9 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
         self.can_add_related = not multiple and can_add_related
         self.can_change_related = not multiple and can_change_related
         self.can_delete_related = not multiple and can_delete_related
-        self.related_model = related_model
+        self.remote_model = remote_model
         # noinspection PyProtectedMember,PyUnresolvedReferences
-        self.remote_field_name = remote_field_name or related_model._meta.pk.attname
+        self.remote_field_name = remote_field_name or remote_model._meta.pk.attname
 
     def get_related_url(self, info: Tuple[str, str], action: str, *args: Any) -> str:
         """
@@ -132,7 +132,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
 
     def get_context(self, name: str, value: Any, attrs: dict) -> dict:
         # noinspection PyProtectedMember,PyUnresolvedReferences
-        rel_opts = self.related_model._meta
+        rel_opts = self.remote_model._meta
         info = (rel_opts.app_label, rel_opts.model_name)
         self.widget.choices = self.choices
         url_params = '&'.join(
