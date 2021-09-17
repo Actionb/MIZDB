@@ -8,7 +8,7 @@ from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.widgets import (
-    EasyWidgetWrapper, WidgetCaptureMixin, MIZModelSelect2,
+    RemoteModelWidgetWrapper, WidgetCaptureMixin, MIZModelSelect2,
     MIZModelSelect2Multiple, make_widget
 )
 from dbentry.forms import ArtikelForm
@@ -18,12 +18,12 @@ from dbentry.tests.base import MyTestCase
 from dal import autocomplete, forward
 
 
-class TestEasyWidgetWrapper(MyTestCase):
+class TestRemoteModelWidgetWrapper(MyTestCase):
 
     def setUp(self):
         super().setUp()
         form = ArtikelForm()
-        self.widget = EasyWidgetWrapper(
+        self.widget = RemoteModelWidgetWrapper(
             form.fields['ausgabe'].widget, _models.Ausgabe, 'id')
         rel_opts = self.widget.related_model._meta
         self.info = (rel_opts.app_label, rel_opts.model_name)
@@ -81,7 +81,7 @@ class TestEasyWidgetWrapper(MyTestCase):
     def test_no_related_links_for_multiple(self):
         # Assert that no add/change/delete links/icons for related objects
         # are added if the widget is a form of SelectMultiple.
-        widget = EasyWidgetWrapper(
+        widget = RemoteModelWidgetWrapper(
             widget=widgets.SelectMultiple(),
             related_model=_models.Ausgabe,
             can_add_related=True,
@@ -96,9 +96,9 @@ class TestEasyWidgetWrapper(MyTestCase):
 
     def test_remote_field_defaults_to_pk(self):
         # Assert that init defaults remote_field_name to the PK field name.
-        widget = EasyWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Ausgabe)
+        widget = RemoteModelWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Ausgabe)
         self.assertEqual(widget.remote_field_name, 'id')
-        widget = EasyWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Katalog)
+        widget = RemoteModelWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Katalog)
         self.assertEqual(widget.remote_field_name, 'basebrochure_ptr_id')
 
 
@@ -229,4 +229,4 @@ class TestMakeWidget(MyTestCase):
         widget = make_widget(model=_models.Genre, multiple=False, wrap=False)
         self.assertIsInstance(widget, MIZModelSelect2)
         widget = make_widget(model=_models.Genre, multiple=False, wrap=True)
-        self.assertIsInstance(widget, EasyWidgetWrapper)
+        self.assertIsInstance(widget, RemoteModelWidgetWrapper)

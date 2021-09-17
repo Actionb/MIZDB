@@ -57,7 +57,7 @@ class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multi
     pass
 
 
-class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWidgetWrapper
+class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
     """
     Wrapper that adds icons to perform add/change/delete on the widget's model.
 
@@ -70,6 +70,7 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWid
 
     @property
     def media(self) -> Media:
+        # TODO: is this override still necessary?
         from django.conf import settings
         extra = '' if settings.DEBUG else '.min'
         js = [
@@ -183,7 +184,7 @@ def make_widget(
     Args:
         url: name of the url to the autocomplete view employed by this widget
         multiple (bool): if True, a SelectMultiple variant will be used
-        wrap (bool): if True, the widget will be wrapped with EasyWidgetWrapper
+        wrap (bool): if True, the widget will be wrapped with RemoteModelWidgetWrapper
         remote_field_name (str): wrapper arg: target of the relation field
         can_add_related (bool): wrapper arg: if True, add a 'add' icon
         can_change_related (bool): wrapper arg: if True, add a 'change' icon
@@ -279,7 +280,7 @@ def make_widget(
     widget = widget_class(**widget_opts)
 
     if model and wrap and remote_field_name:
-        return EasyWidgetWrapper(
+        return RemoteModelWidgetWrapper(
             widget, model, remote_field_name,
             can_add_related, can_change_related, can_delete_related
         )
