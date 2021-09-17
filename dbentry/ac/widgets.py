@@ -59,15 +59,14 @@ class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multi
 
 class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWidgetWrapper
     """
-    A class that wraps a given widget to add add/change/delete links and icons.
+    Wrapper that adds icons to perform add/change/delete on the widget's model.
 
-    Unlike its base class RelatedFieldWidgetWrapper, which is used during the
-    creation of an AdminForm's formfields (BaseModelAdmin.formfield_for_dbfield),
-    this wrapper is used during widget declaration of formfields of a form
-    class.
+    Unlike the super class RelatedFieldWidgetWrapper, this wrapper does not
+    require a relation object. Instead, it 'addresses' the model that the
+    widget is querying directly. This way one can add the add icons to any
+    widget that manage a remote model - and not just the ones that manage a
+    relation or a related field. (hence the class names)
     """
-    # TODO: docstring mention that sometimes you would want to wrap a widget that
-    #  does NOT facilitate a relation, hence the optional rel argument
 
     @property
     def media(self) -> Media:
@@ -85,7 +84,7 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWid
             self,
             widget: Widget,
             related_model: Model,
-            remote_field_name: str = 'id',
+            remote_field_name: str = '',
             can_add_related: bool = True,
             can_change_related: bool = True,
             can_delete_related: bool = True
@@ -95,14 +94,15 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWid
 
         Args:
             widget (Widget): the widget instance to wrap
-            related_model (model class): the model that the relation refers to
-            remote_field_name (str): name of the field that the relation targets
+            remote_model (model class): the model that the widget refers to
+            remote_field_name (str): name of the field with which instances of
+              the model can be uniquely identified. The value here will be
+              added to the context as TO_FIELD_VAR, which is used throughout
+              django admin and defaults to the primary key (opts.pk.attname)
             can_add_related (bool): if True, add a 'add' icon
             can_change_related (bool): if True, add a 'change' icon
             can_delete_related (bool): if True, add a 'delete' icon
         """
-        # TODO: try to incorporate super class init (needs 'rel' argument).
-        #  (remember to remove noinspection PyMissingConstructor afterwards)
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
         # noinspection PyUnresolvedReferences
@@ -113,7 +113,8 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):  # TODO: rename to SimpleWid
         self.can_change_related = not multiple and can_change_related
         self.can_delete_related = not multiple and can_delete_related
         self.related_model = related_model
-        self.remote_field_name = remote_field_name
+        # noinspection PyProtectedMember,PyUnresolvedReferences
+        self.remote_field_name = remote_field_name or related_model._meta.pk.attname
 
     def get_related_url(self, info: Tuple[str, str], action: str, *args: Any) -> str:
         """

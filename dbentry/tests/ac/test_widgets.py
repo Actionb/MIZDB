@@ -94,6 +94,13 @@ class TestEasyWidgetWrapper(MyTestCase):
                 self.assertFalse(getattr(widget, attr))
                 self.assertFalse(context.get(attr, False))
 
+    def test_remote_field_defaults_to_pk(self):
+        # Assert that init defaults remote_field_name to the PK field name.
+        widget = EasyWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Ausgabe)
+        self.assertEqual(widget.remote_field_name, 'id')
+        widget = EasyWidgetWrapper(widget=widgets.SelectMultiple(), related_model=_models.Katalog)
+        self.assertEqual(widget.remote_field_name, 'basebrochure_ptr_id')
+
 
 class TestWidgetCaptureMixin(MyTestCase):
 
