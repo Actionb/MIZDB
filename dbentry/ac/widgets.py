@@ -190,6 +190,10 @@ def make_widget(
         can_change_related (bool): wrapper arg: if True, add a 'change' icon
         can_delete_related (bool): wrapper arg: if True, add a 'delete' icon
         kwargs: additional keyword arguments for the widget class constructor
+
+    Raises:
+        django.core.exceptions.ImproperlyConfigured: no model_name was provided,
+          which is a required argument for widgets using WidgetCaptureMixin
     """
     widget_opts = {}
     model = kwargs.pop('model', None)
