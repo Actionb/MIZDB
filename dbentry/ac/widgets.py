@@ -12,21 +12,56 @@ from django.urls import reverse
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
 
-class WidgetCaptureMixin(object):
+class GenericURLWidgetMixin(object):
     """
-    A mixin for the ModelSelect2 widgets that enables the widget to handle
-    reversal of the generic url name ``accapture`` which requires reverse
-    kwargs ``model_name`` and ``create_field``.
-    """
-    # TODO: explain more what this actually does in comparison to how dal
-    #  does the url
+    A mixin for autocomplete.ModelSelect2 widgets that works on a generic
+    url name.
 
-    def __init__(self, model_name: str, *args: Any, **kwargs: Any) -> None:
+    The work flow for (dal) autocomplete widgets is:
+        1. create view
+        2. map view to URL (and url name)
+        3. add widget using that URL (or url name) to a form field
+        4. widget is used and an ajax request is made to that URL
+        5. view responds with the results for the widget to display
+
+    A down side is, that this requires having an URL for every different model
+    that one would like to use ModelSelect2 on.
+    To avoid explicitly declaring an URL for every model, a generic URL with a
+    captured model name can be used: ``path('<str:model_name>/', name='generic')``.
+
+    By passing the model name to the widget, the widget can then reverse that
+    generic URL - and pass the specific URL (f.ex. 'foo/' for model 'foo')
+    on to the template.
+
+    Attributes:
+        generic_url_name (str): if set, and if it matches the url name provided
+          in the widget arguments, the widget will reverse that url name with
+          arguments from _get_reverse_kwargs(). generic_url_name will replace a
+          default url parameter (i.e. an empty string) and (in that case) will
+          be passed to the super class constructor as keyword argument 'url'.
+    """
+
+    generic_url_name: str = ''
+
+    # noinspection PyShadowingNames
+    def __init__(
+            self,
+            model_name: str,
+            url: str = '',
+            forward: Optional[list] = None,
+            *args: Any,
+            **kwargs: Any
+    ) -> None:
         self.model_name = model_name
-        self.create_field = kwargs.pop('create_field', None)
-        if 'url' not in kwargs:
-            kwargs['url'] = 'accapture'
-        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
+        if url == '':  # allow for explicit url=None
+            url = self.generic_url_name
+        super().__init__(url, forward, *args, **kwargs)  # type: ignore[call-arg]
+
+    def _get_reverse_kwargs(self, **kwargs: Any) -> dict:
+        """Return the kwargs required for reversing the widget's url name."""
+        if self.model_name:
+            return {'model_name': self.model_name, **kwargs}
+        return kwargs
 
     def _get_url(self) -> Optional[str]:
         if self._url is None:
@@ -35,13 +70,10 @@ class WidgetCaptureMixin(object):
         if '/' in self._url:
             return self._url
 
-        reverse_kwargs = {}
-        if self._url == 'accapture':
-            if self.model_name:
-                reverse_kwargs['model_name'] = self.model_name
-            if self.create_field:
-                reverse_kwargs['create_field'] = self.create_field
-        return reverse(self._url, kwargs=reverse_kwargs)
+        if self._url == self.generic_url_name:
+            return reverse(self._url, kwargs=self._get_reverse_kwargs())
+
+        return reverse(self._url)
 
     def _set_url(self, url: Optional[str]) -> None:
         self._url = url
@@ -49,11 +81,34 @@ class WidgetCaptureMixin(object):
     url = property(_get_url, _set_url)
 
 
-class MIZModelSelect2(WidgetCaptureMixin, autocomplete.ModelSelect2):
+class MIZWidgetMixin(GenericURLWidgetMixin):
+    """
+    A mixin for the ModelSelect2 widgets that enables the widget to handle
+    reversal of the generic url name ``accapture`` which requires reverse
+    kwargs ``model_name`` and (sometimes) ``create_field``.
+    """
+
+    generic_url_name = 'accapture'
+
+    def __init__(self, *args, create_field: str = '', **kwargs):
+        self.create_field = create_field
+        super().__init__(*args, **kwargs)
+
+    def _get_reverse_kwargs(self, **kwargs: Any) -> dict:
+        # Add create_field to the reverse kwargs:
+        _kwargs = {}
+        if self.create_field:
+            _kwargs = {'create_field': self.create_field, **kwargs}
+        else:
+            _kwargs = kwargs
+        return super()._get_reverse_kwargs(**_kwargs)
+
+
+class MIZModelSelect2(MIZWidgetMixin, autocomplete.ModelSelect2):
     pass
 
 
-class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multiple):
+class MIZModelSelect2Multiple(MIZWidgetMixin, autocomplete.ModelSelect2Multiple):
     pass
 
 
@@ -193,7 +248,7 @@ def make_widget(
 
     Raises:
         django.core.exceptions.ImproperlyConfigured: no model_name was provided,
-          which is a required argument for widgets using WidgetCaptureMixin
+          which is a required argument for widgets using GenericURLWidgetMixin
     """
     widget_opts = {}
     model = kwargs.pop('model', None)

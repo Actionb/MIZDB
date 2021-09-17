@@ -8,7 +8,7 @@ from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.widgets import (
-    RemoteModelWidgetWrapper, WidgetCaptureMixin, MIZModelSelect2,
+    MIZWidgetMixin, RemoteModelWidgetWrapper, GenericURLWidgetMixin, MIZModelSelect2,
     MIZModelSelect2Multiple, make_widget
 )
 from dbentry.forms import ArtikelForm
@@ -109,49 +109,93 @@ class TestRemoteModelWidgetWrapper(MyTestCase):
         self.assertEqual(widget.remote_field_name, 'basebrochure_ptr_id')
 
 
+class DummyMixinSuper(object):
+
+    def __init__(self, url, *args, **kwargs):
+        self._url = url
+
+
 class TestWidgetCaptureMixin(MyTestCase):
 
-    class MixinSuper(object):
+    dummy_class = type('Dummy', (GenericURLWidgetMixin, DummyMixinSuper), {})
 
-        def __init__(self, *args, **kwargs):
-            self.args = args
-            self._url = kwargs.pop('url', None)
-            self.kwargs = kwargs
+    def test_init(self):
+        # Assert that init sets model_name.
+        self.assertEqual(self.dummy_class(model_name='genre').model_name, 'genre')
 
-    dummy_class = type('Dummy', (WidgetCaptureMixin, MixinSuper), {})
-    cls = partial(dummy_class, model_name='genre')
+        # Assert that 'url' argument defaults to class attribute
+        # 'generic_url_name' and is passed on to the super class constructor.
+        self.dummy_class.generic_url_name = ''
+        self.assertEqual(self.dummy_class(model_name='genre')._url, '')
+        self.dummy_class.generic_url_name = 'this-is-the-default'
+        self.assertEqual(self.dummy_class(model_name='genre')._url, 'this-is-the-default')
+        # noinspection SpellCheckingInspection
+        self.assertEqual(
+            self.dummy_class(model_name='genre', url='nocapture')._url, 'nocapture'
+        )
+
+    @patch('dbentry.ac.widgets.reverse')
+    def test_get_url(self, mocked_reverse):
+        obj = self.dummy_class(model_name='genre', url=None)
+        self.assertIsNone(obj._get_url())
+        self.assertFalse(mocked_reverse.called)
+
+        obj._url = 'Test/Test'
+        self.assertEqual(obj._get_url(), 'Test/Test')
+        self.assertFalse(mocked_reverse.called)
+
+        # reversing of the generic url starts here
+        obj._url = obj.generic_url_name = 'accapture'
+        obj._get_url()
+        reverse_args, reverse_kwargs = mocked_reverse.call_args
+        self.assertEqual(reverse_args, ('accapture', ))
+        self.assertIn('kwargs', reverse_kwargs)
+        self.assertIn('model_name', reverse_kwargs['kwargs'])
+        self.assertEqual(reverse_kwargs['kwargs']['model_name'], 'genre')
+
+    def test_get_reverse_kwargs(self):
+        # Assert tat get_reverse_kwargs only includes model_name, if it is set.
+        obj = self.dummy_class(model_name='')
+        reverse_kwargs = obj._get_reverse_kwargs(default='default')
+        self.assertNotIn('model_name', reverse_kwargs)
+        self.assertIn('default', reverse_kwargs)
+        self.assertEqual(reverse_kwargs['default'], 'default')
+
+        obj.model_name = 'model-name'
+        reverse_kwargs = obj._get_reverse_kwargs(default='default')
+        self.assertIn('model_name', reverse_kwargs)
+        self.assertEqual(reverse_kwargs['model_name'], 'model-name')
+        self.assertIn('default', reverse_kwargs)
+        self.assertEqual(reverse_kwargs['default'], 'default')
+
+
+class TestMIZWidgetMixin(MyTestCase):
+
+    dummy_class = type('Dummy', (MIZWidgetMixin, DummyMixinSuper), {})
 
     def test_init(self):
         # Assert that init sets create_field
-        self.assertEqual(self.cls(create_field='Test').create_field, 'Test')
-        self.assertIsNone(self.cls().create_field)
+        self.assertEqual(self.dummy_class(model_name='genre').create_field, '')
 
-        # Assert that 'url' kwarg defaults to 'accapture'
-        self.assertEqual(self.cls()._url, 'accapture')
-        # noinspection SpellCheckingInspection
-        self.assertEqual(self.cls(url='nocapture')._url, 'nocapture')
+        self.assertEqual(
+            self.dummy_class(model_name='genre', create_field='Test').create_field,
+            'Test'
+        )
 
-    def test_get_url(self):
-        o = self.cls(url=None)
-        self.assertIsNone(o._get_url())
+    def test_get_reverse_kwargs(self):
+        # Assert that get_reverse_kwargs adds 'create_field', if it is set.
+        obj = self.dummy_class(model_name='model_name')
+        reverse_kwargs = obj._get_reverse_kwargs(default='default')
+        self.assertNotIn('create_field', reverse_kwargs)
+        self.assertIn('default', reverse_kwargs)
+        self.assertEqual(reverse_kwargs['default'], 'default')
 
-        o._url = 'Test/Test'
-        self.assertEqual(o._get_url(), 'Test/Test')
-
-        # reversing of a named url starts here
-        o._url = 'accapture'
-        self.assertEqual(o._get_url(), '/admin/ac/genre/')
-        o.create_field = 'genre'
-        self.assertEqual(o._get_url(), '/admin/ac/genre/genre/')
-
-        o._url = 'acbuchband'
-        o.create_field = None
-        self.assertEqual(o._get_url(), '/admin/ac/buch/')
-
-        # noinspection SpellCheckingInspection
-        o._url = 'averyrandomurl'
-        with self.assertRaises(NoReverseMatch):
-            o._get_url()
+        obj.create_field = 'create-field'
+        reverse_kwargs = obj._get_reverse_kwargs(default='default')
+        self.assertIn('create_field', reverse_kwargs)
+        self.assertEqual(reverse_kwargs['create_field'], 'create-field')
+        self.assertIn('default', reverse_kwargs)
+        self.assertEqual(reverse_kwargs['default'], 'default')
 
 
 class TestMakeWidget(MyTestCase):
