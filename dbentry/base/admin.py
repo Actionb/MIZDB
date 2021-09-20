@@ -347,7 +347,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             new_extra['crosslinks'].append({'url': url, 'label': label})
         return new_extra
 
-    # noinspection PyUnusedLocal
     def add_extra_context(
             self,
             request: Optional[HttpRequest] = None,
@@ -355,10 +354,21 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             object_id: Optional[int] = None
     ) -> dict:
         """Add crosslinks as extra context."""
+        # TODO: docstring inaccurate: it also adds collapse_all
         new_extra = extra_context or {}
         if object_id:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
         new_extra['collapse_all'] = self.collapse_all
+        try:
+            # noinspection PyUnresolvedReferences
+            watchlist = request.session['watchlist']
+            new_extra['on_watchlist'] = object_id in watchlist[self.opts.model_name]
+        except AttributeError:
+            # No request or no session.
+            pass
+        except KeyError:
+            # No watchlist saved in the session.
+            pass
         return new_extra
 
     def add_view(
@@ -453,6 +463,13 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         # action's queryset.
         queryset = queryset.annotate(**self.get_result_list_annotations() or {})
         return super().response_action(request, queryset)
+
+    @property
+    def media(self):
+        media = super().media
+        # Inject the javascript for the watchlist object tools element.
+        media._js_lists[-1].append('admin/js/watchlist.js')
+        return media
 
 
 class BaseInlineMixin(object):

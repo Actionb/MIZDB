@@ -2,7 +2,7 @@ from typing import Any, List
 
 from django import views
 from django.apps import apps
-from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
+from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.template import loader
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.response import TemplateResponse
@@ -83,3 +83,32 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
                 url += "?id__in=" + ",".join((str(tpl[0]) for tpl in model_results))
                 results.append(utils.create_hyperlink(url, label, target="_blank"))
         return results
+
+
+def watchlist_add(request, *args, **kwargs):
+    """
+    Add or remove an object from the watchlist.
+
+    Clicking on the 'Watchlist' checkbox element in the object tools section of
+    a change form prompts an AJAX request to this view.
+    """
+    if 'watchlist' not in request.session:
+        request.session['watchlist'] = {}
+    watchlist = request.session['watchlist']
+
+    # noinspection PyShadowingBuiltins
+    id = request.GET['id']
+    model_name = request.GET['model_name']
+
+    if model_name in watchlist and id in watchlist[model_name]:
+        watchlist[model_name].remove(id)
+        on_watchlist = False
+    else:
+        if model_name not in watchlist:
+            watchlist[model_name] = [id]
+        else:
+            watchlist[model_name].append(id)
+        on_watchlist = True
+    # Must flag the session object as modified to save the watchlist.
+    request.session.modified = True
+    return JsonResponse({'on_watchlist': on_watchlist})

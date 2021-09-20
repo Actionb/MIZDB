@@ -117,7 +117,7 @@ button[name="wizard_goto_step"]{
     min-width: 303px;
 }
 
-/* Rules for the element that displays the ID in the object tools block of a change form */
+/* Rules for the object tools items on an object's change form page*/
 .object-tools span:not(.id-container) {
     display: block;
     float: left;
@@ -132,9 +132,27 @@ button[name="wizard_goto_step"]{
     border-radius: 15px;
 }
 
+/* Make the part that display the ID easily selectable*/
 .object-tools span.id-container {
     -webkit-user-select: all;
     -moz-user-select: all;
     -ms-user-select: all;
     user-select: all;
+}
+
+/* Add the background color change on focus and hover for the span list items.*/
+.object-tools span:focus, .object-tools span:hover{
+    background-color: #417690;
+}
+
+/* Overwrite the rules for labels inside object tools list items to bring their
+look in line with those of the other items*/
+.object-tools span label{
+    color: #fff;
+    font-size: 11px;
+}
+
+/* Add pointer cursor to the watchlist elements */
+.object-tools .watchlist{
+    cursor: pointer;
 }

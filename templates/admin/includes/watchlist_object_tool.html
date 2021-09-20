@@ -1,0 +1,15 @@
+{# Checkbox and its label that add an object to the session watchlist via an AJAX request. #}
+<li>
+    <span class="watchlist">
+        <!--suppress HtmlUnknownAttribute -->
+        <input
+                type="checkbox"
+                class="watchlist"
+                id="watchlist-cb"
+                data-id="{{ object_id }}"
+                data-model-name="{{ opts.model_name }}"
+                {% if on_watchlist %} checked {% endif %}
+        >
+        <label for="watchlist-cb" class="watchlist">Merkliste</label>
+    </span>
+</li>
