@@ -125,7 +125,10 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
 
     @property
     def media(self) -> Media:
-        # TODO: is this override still necessary?
+        """Add RelatedObjectLookups.js to the widget media."""
+        # django's admin adds RelatedObjectLookups.js via ModelAdmin.media.
+        # In order to wrap a widget outside of a ModelAdmin view, the widget
+        # needs to add the necessary javascript files itself.
         from django.conf import settings
         extra = '' if settings.DEBUG else '.min'
         js = [
