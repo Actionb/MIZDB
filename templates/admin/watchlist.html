@@ -1,0 +1,36 @@
+{% extends admin/base_site.html %}
+
+<div class="watchlist">
+<form method="post">
+
+{% for model, (headers, items) in watchlist_items.items %}
+<table id="{{ model }}_list">
+<thead>
+<tr>{{ model }}</tr>
+<tr>
+    <th scope="col">Merkliste</th>
+    <th scope="col">Objekt</th>
+    <th></th>
+    {% for header in headers %}
+    <th scope="col">
+        <div class="text"><span>{{ header.text|capfirst }}</span></div>
+    </th>
+    {% endfor %}
+</tr>
+</thead>
+<tbody>
+    {% for object_link, bestand, extra in items %}
+        <tr class="{% cycle 'row1' 'row2' %}">
+            <td><input type="checkbox" name="remove" value="{{object.pk}}"/></td>
+            <td>{{object_link}}</td>
+            <td>{{bestand}}</td>
+            {% for field in extra %}
+                <td>{{field}}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+    {{cl_link}}
+</form>
+{% endfor %}
