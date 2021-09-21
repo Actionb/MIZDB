@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Callable, List, Optional, ValuesView
+from typing import Any, Callable, List, Optional, OrderedDict as OrderedDictType, ValuesView
 
 from django.conf import settings
 from django.contrib import admin
@@ -90,7 +90,7 @@ class MIZAdminSite(admin.AdminSite):
             return self.index(request, extra_context)
         return super().app_index(request, app_label, extra_context)
 
-    def build_admintools_context(self, request: HttpRequest) -> OrderedDict[str, str]:
+    def build_admintools_context(self, request: HttpRequest) -> OrderedDictType[str, str]:
         """
         Return a mapping of url_name: index_label of registered tools
         (ordered by index_label) to be added to the index' context.
@@ -128,7 +128,7 @@ class MIZAdminSite(admin.AdminSite):
         # {app_url, name, has_module_perms, models, app_label}
         dbentry_dict = app_list.pop(index)
         model_list = dbentry_dict.pop('models')
-        categories: OrderedDict[str, list] = OrderedDict()
+        categories: OrderedDictType[str, list] = OrderedDict()
         categories['Archivgut'] = []
         categories['Stammdaten'] = []
         categories['Sonstige'] = []

@@ -1,7 +1,10 @@
 import calendar
 import datetime
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import (
+    Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Tuple, Type,
+    Union
+)
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
@@ -55,7 +58,7 @@ class MIZQuerySet(QuerySet):
             include_empty: bool = False,
             flatten: bool = False,
             **expressions: Any
-    ) -> OrderedDict[int, dict]:
+    ) -> OrderedDictType[int, dict]:
         """
         An extension of QuerySet.values() that merges results of the same record.
 
@@ -127,7 +130,7 @@ class MIZQuerySet(QuerySet):
                 if not field.concrete:
                     flatten_exclude.append(field_path)
 
-        result: OrderedDict[int, dict] = OrderedDict()
+        result: OrderedDictType[int, dict] = OrderedDict()
         for val_dict in self.values(*fields, **expressions):
             pk = val_dict.pop(pk_name)
             # For easier lookups of field_names, use dictionaries for the

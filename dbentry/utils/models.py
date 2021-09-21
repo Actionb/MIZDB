@@ -135,7 +135,7 @@ def get_model_relations(
 def get_relation_info_to(
         model: ModelClassOrInstance,
         rel: Relations
-) -> tuple[Type[Model], RelationalFields]:
+) -> Tuple[Type[Model], RelationalFields]:
     """
     Return the model that implements the relation ``rel`` and the relation
     field that points towards ``model`` from that model.

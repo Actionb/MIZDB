@@ -1,6 +1,6 @@
 from collections import Counter, OrderedDict, namedtuple
 from itertools import chain
-from typing import Any, Dict, List, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, OrderedDict as OrderedDictType, Sequence, Tuple, Type, Union
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
@@ -45,7 +45,7 @@ def find_duplicates(
     """
 
     # noinspection PyUnresolvedReferences
-    queried: OrderedDict[int, Dict[str, Any]] = queryset.values_dict(
+    queried: OrderedDictType[int, Dict[str, Any]] = queryset.values_dict(
         *dupe_fields, *display_fields
     )
     dupe_values: List[tuple] = []
@@ -396,7 +396,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
     # noinspection PyMethodMayBeStatic,PyUnresolvedReferences
     def get_queryset(
             self, model: Type[Model], limit: int
-    ) -> Tuple[OrderedDict[Relations, dict], QuerySet]:
+    ) -> Tuple[OrderedDictType[Relations, dict], QuerySet]:
         """
         Prepare the queryset that includes all objects of ``model`` that have
         less than ``limit`` reverse related objects.
@@ -447,7 +447,7 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
 
     def build_items(
             self,
-            relations: OrderedDict[Relations, dict],
+            relations: OrderedDictType[Relations, dict],
             queryset: QuerySet
     ) -> List[Tuple[SafeText, str]]:
         """Build items for the context."""
