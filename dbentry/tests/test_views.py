@@ -156,3 +156,57 @@ class TestSiteSearchView(ViewTestCase):
                 request = self.get_request(data=data)
                 self.get_view(request).get(request)
                 self.assertFalse(mocked_get_result_list.called)
+
+class TestWatchlistToggle(AdminTestCase):
+
+    model_admin_class = _admin.BandAdmin
+
+    def test_watchlist_story(self):
+        # Test the behaviour (UX) of the watchlist toggle.
+        # TODO: this requires selenium
+        ...
+
+    def test_watchlist_toggle_add_model(self):
+        # Assert that watchlist_toggle adds an item to the watchlist model.
+        ...
+
+    def test_watchlist_toggle_add_session(self):
+        # Assert that watchlist_toggle adds an item to the session watchlist.
+        ...
+
+    def test_watchlist_toggle_remove_model(self):
+        # Assert that watchlist_toggle removes an item from the watchlist model.
+        ...
+
+    def test_watchlist_toggle_remove_session(self):
+        # Assert that watchlist_toggle removes an item from the session
+        # watchlist.
+        ...
+
+    def test_watchlist_toggle_remove_only_model(self):
+        # Assert that watchlist_toggle does not add an item to the watchlist
+        # model if remove_only is True.
+        ...
+
+    def test_watchlist_toggle_remove_only_session(self):
+        # Assert that watchlist_toggle does not add an item to the session
+        # watchlist if remove_only is True.
+        ...
+
+    def test_watchlist_toggle_invalid_model(self):
+        # Assert that watchlist_toggle does not add invalid models.
+        ...
+
+    def test_watchlist_toggle_invalid_pk(self):
+        # Assert that watchlist_toggle does not add invalid primary keys.
+        ...
+
+
+class TestWatchlist(ViewTestCase):
+
+    view_class = Watchlist
+
+    def test_watchlist_pk_has_become_invalid(self):
+        # Assert that the view can handle the situation in which an object
+        # saved to the watchlist has been deleted in the mean time.
+        ...

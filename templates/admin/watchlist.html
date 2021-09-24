@@ -1,36 +1,44 @@
-{% extends admin/base_site.html %}
+{% extends 'admin/base_site.html' %}
+{% load static %}
 
+{% block extrahead %}
+    {{block.super}}
+    {{media}}
+{% endblock extrahead %}
+
+{% block content %}
 <div class="watchlist">
-<form method="post">
-
-{% for model, (headers, items) in watchlist_items.items %}
-<table id="{{ model }}_list">
+{% for model_opts, extra_headers, items, cl_link in watchlist %}
+    <div>
+<table id="{{model_opts.model_name}}_list">
 <thead>
-<tr>{{ model }}</tr>
+<tr>{{ model_opts.verbose_name }}</tr>
 <tr>
-    <th scope="col">Merkliste</th>
+    <th scope="col"></th>
     <th scope="col">Objekt</th>
-    <th></th>
-    {% for header in headers %}
-    <th scope="col">
-        <div class="text"><span>{{ header.text|capfirst }}</span></div>
-    </th>
+    {% for header in extra_headers %}
+        <th scope="col">{{header}}</th>
     {% endfor %}
+    <th scope="col">Bestand</th>
+    <th scope="col">Hinzugefügt</th>
 </tr>
 </thead>
 <tbody>
-    {% for object_link, bestand, extra in items %}
+    {% for id, object_link, extra_data, bestand, added in items %}
         <tr class="{% cycle 'row1' 'row2' %}">
-            <td><input type="checkbox" name="remove" value="{{object.pk}}"/></td>
+            <td><a class="inline-deletelink watchlist-remove" href="#" data-id="{{id}}" data-model-label="{{model_opts.label}}" title="Entfernen">Entfernen</a></td>
             <td>{{object_link}}</td>
-            <td>{{bestand}}</td>
-            {% for field in extra %}
-                <td>{{field}}</td>
+            {% for extra in extra_data %}
+                <td>{{extra}}</td>
             {% endfor %}
+            <td>{{bestand}}</td>  {# TODO: not every model has a bestand #}
+            <td>{{added}}</td>
         </tr>
     {% endfor %}
 </tbody>
 </table>
-    {{cl_link}}
-</form>
+    {{cl_link}}</div>
+    <br><hr><br>
 {% endfor %}
+</div>
+{% endblock content %}

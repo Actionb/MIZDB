@@ -4,10 +4,10 @@
         <!--suppress HtmlUnknownAttribute -->
         <input
                 type="checkbox"
-                class="watchlist"
+                class="watchlist watchlist-toggle"
                 id="watchlist-cb"
                 data-id="{{ object_id }}"
-                data-model-name="{{ opts.model_name }}"
+                data-model-label="{{ opts.label }}"
                 {% if on_watchlist %} checked {% endif %}
         >
         <label for="watchlist-cb" class="watchlist">Merkliste</label>

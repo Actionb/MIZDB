@@ -23,6 +23,7 @@ from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
+from dbentry.views import get_watchlist
 
 FieldsetList = List[Tuple[Optional[str], dict]]
 
@@ -357,18 +358,16 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         # TODO: docstring inaccurate: it also adds collapse_all
         new_extra = extra_context or {}
         if object_id:
+            # The request is for the change page of an existing instance.
+            # Add crosslinks and check if the instance is on the watchlist:
             new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
+
+            watchlist = get_watchlist(request)
+            if self.opts.label in watchlist:
+                ids = [pk for pk, time_added in watchlist[self.opts.label]]
+                new_extra['on_watchlist'] = int(object_id) in ids
+
         new_extra['collapse_all'] = self.collapse_all
-        try:
-            # noinspection PyUnresolvedReferences
-            watchlist = request.session['watchlist']
-            new_extra['on_watchlist'] = object_id in watchlist[self.opts.model_name]
-        except AttributeError:
-            # No request or no session.
-            pass
-        except KeyError:
-            # No watchlist saved in the session.
-            pass
         return new_extra
 
     def add_view(
@@ -468,6 +467,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def media(self):
         media = super().media
         # Inject the javascript for the watchlist object tools element.
+        # TODO: not every model admin will need this
         media._js_lists[-1].append('admin/js/watchlist.js')
         return media
 
