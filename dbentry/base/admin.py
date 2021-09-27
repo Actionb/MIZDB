@@ -255,7 +255,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             search_fields = list(self.model.get_search_fields())
         return self._add_pk_search_field(search_fields)
 
-    def add_crosslinks(self, object_id: int, labels: Optional[dict] = None) -> Dict[str, list]:
+    def add_crosslinks(self, object_id: str, labels: Optional[dict] = None) -> Dict[str, list]:
         """
         Provide the template with data to create links to related objects.
 
@@ -320,9 +320,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                 # No point showing an empty changelist.
                 continue
             # Add the query string to the url:
-            url += "?{field}={val}".format(
-                field=query_field, val=str(object_id)
-            )
+            url += f"?{query_field}={object_id}"
 
             # Prepare the label for the link with the following priorities:
             #   - a passed in label
@@ -352,7 +350,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
             self,
             request: Optional[HttpRequest] = None,
             extra_context: Optional[dict] = None,
-            object_id: Optional[int] = None
+            object_id: Optional[str] = None
     ) -> dict:
         """Add crosslinks as extra context."""
         new_extra = extra_context or {}
@@ -376,7 +374,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
     def change_view(
             self,
             request: HttpRequest,
-            object_id: int,
+            object_id: Optional[str],
             form_url: str = '',
             extra_context: dict = None
     ) -> HttpResponse:
