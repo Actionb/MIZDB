@@ -92,13 +92,12 @@ def get_changelist_url(
     parameter to filter to records in that list.
 
     Args:
-        model (model class or instance): the model class the changelist
-            'belongs' to
+        model (model class or instance): the model of the desired changelist
         user (User): the user that the URL is for
         site_name (str): namespace of the site/app
-        obj_list (Iterable): an iterable of model instances
-            if given, the url to the changelist will include a query
-            parameter to filter to records in that list.
+        obj_list (Iterable): an iterable of model instances. If given, the url
+          to the changelist will include a query parameter to filter to records
+          in that list.
     """
     # noinspection PyProtectedMember,PyUnresolvedReferences
     opts = model._meta
@@ -131,14 +130,16 @@ def get_changelist_link(
     """
     Return a safe link to the changelist of ``model``.
 
+    If ``obj_list`` is given, the url to the changelist will include a query
+    parameter to filter to records in that list.
+
     Args:
-        model (model class or instance): the model class the changelist
-            'belongs' to
+        model (model class or instance): the model of the desired changelist
         user (User): the user to create the link for
         site_name (str): namespace of the site/app
-        obj_list (Iterable): an iterable of model instances
-            if given, the url to the changelist will include a query
-            parameter to filter to records in that list.
+        obj_list (Iterable): an iterable of model instances. If given, the url
+          to the changelist will include a query parameter to filter to records
+          in that list.
         content (str): the text of the link
         blank (bool): if True, the link will have a target="_blank" attribute
     """
