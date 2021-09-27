@@ -46,8 +46,8 @@ def get_obj_link(
     """
     Return a safe link to the change page of ``obj``.
 
-    If no change page exists or the user has no change permission,
-    A simple string representation of ``obj`` is returned.
+    If no change page exists or the user has no change permission, a simple
+    string representation of ``obj`` is returned.
     If ``blank`` is True, the link will include a target="_blank" attribute,
     which opens the linked page in a new tab or window.
 
