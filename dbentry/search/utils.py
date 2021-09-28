@@ -1,10 +1,15 @@
+from typing import List, Tuple, Type, Union
+
 from django.core import exceptions
+from django.db.models import Field, Model
 from django.db.models.constants import LOOKUP_SEP
 
 from dbentry import utils
 
 
-def get_dbfield_from_path(model, field_path):
+def get_dbfield_from_path(
+        model: Union[Model, Type[Model]], field_path: str
+) -> Tuple[Field, List[str]]:
     """
     Return the final, concrete target field of a field path and the lookups
     used on that path.
@@ -24,7 +29,7 @@ def get_dbfield_from_path(model, field_path):
     return db_field, lookups
 
 
-def strip_lookups_from_path(path, lookups):
+def strip_lookups_from_path(path: str, lookups: List[str]) -> str:
     """
     Remove the lookups from the path.
 

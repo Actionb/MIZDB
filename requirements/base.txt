@@ -21,5 +21,8 @@ factory-boy
 # Postgres Python
 psycopg2
 
+# HTTP library handling the SRU requests to the DNB
+requests
+
 # Postgres Django SearchVectorField + Triggers
 django-tsvector-field

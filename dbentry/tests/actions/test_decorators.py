@@ -9,7 +9,7 @@ def dummy_func0():
 
 def dummy_func1():
     pass
-dummy_func1.short_description = 'Beep'
+dummy_func1.short_description = 'Beep'  # noqa
 dummy_func1.allowed_permissions = 'Boop'
 
 

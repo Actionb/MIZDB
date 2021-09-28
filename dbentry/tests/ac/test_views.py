@@ -1,16 +1,21 @@
 from collections import OrderedDict
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+from django.db.models import QuerySet
+from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
-from dbentry.ac.views import ACBase, ACAusgabe, ACBuchband, ACCreateable
+from dbentry.ac.views import (
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator)
 from dbentry.factory import make
-from dbentry.tests.base import mockv
+from dbentry.managers import MIZQuerySet
+from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
+# noinspection SpellCheckingInspection,PyUnresolvedReferences
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     view_class = ACBase
@@ -25,7 +30,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             cls.model, band_name='Boop', genre=cls.genre,
             musiker__extra=1, bandalias__alias='Voltaire'
         )
-        cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietsche')
+        cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietzsche')
         cls.obj3 = make(cls.model, band_name='notfound', bandalias__alias='Descartes')
         cls.obj4 = make(cls.model, band_name='Boopband', bandalias__alias='Kant')
 
@@ -98,31 +103,60 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.forwarded = {'ignore_me_too': ''}
         self.assertFalse(view.get_queryset().exists())
 
-    def test_dispatch_sets_model(self):
-        # dispatch should set the model attribute from the url caught parameter
-        # 'model_name' if the view instance does not have one.
-        view = self.get_view()
-        view.model = None
-        try:
-            view.dispatch(model_name='ausgabe')
-        except:
-            # view.dispatch will run fine until it calls super() without a
-            # request positional argument:
-            # the model attribute is set before that.
-            pass
-        self.assertEqual(view.model._meta.model_name, 'ausgabe')
+    def test_get_queryset_pk(self):
+        # Assert that the queryset is filtered against primary keys if q is a
+        # numeric string.
+        view = self.get_view(self.get_request())
+        view.q = str(self.obj1.pk)
+        self.assertIn(self.obj1, view.apply_q(self.queryset))
+        # If the query for PK returns no results, results of a query using
+        # search() should be returned.
+        view.q = '0'
+        mocked_search = Mock()
+        mocked_exists = Mock(return_value=False)
+        mocked_queryset = Mock(
+            # The calls will be qs.filter().exists().
+            # That means that qs.filter() should return an object with a
+            # mocked 'exists' - which itself must return False.
+            filter=Mock(return_value=Mock(exists=mocked_exists)),
+            search=mocked_search,
+            spec=MIZQuerySet,  # the mock must pass as a MIZQuerySet instance
+        )
+        view.apply_q(mocked_queryset)
+        self.assertTrue(mocked_search.called)
+        # Check that qs.filter was still called:
+        self.assertTrue(mocked_queryset.filter.called)
+        self.assertTrue(mocked_exists.called)
 
-    def test_dispatch_sets_create_field(self):
-        # Assert that dispatch can set the create field attribute from its kwargs.
-        view = self.get_view()
+    def test_setup_sets_model(self):
+        # setup should set the model attribute from the url caught kwarg
+        # 'model_name' if the view instance does not have one.
+        view = self.view_class()
+        view.model = None
+        view.setup(self.get_request(), model_name='ausgabe')
+        self.assertEqual(view.model, _models.Ausgabe)
+
+    def test_setup_fails_gracefully_with_no_model(self):
+        # Assert that setup fails gracefully if no model class was set and a
+        # model_name kwarg was missing or was 'empty'.
+        request = self.get_request()
+        view = self.view_class()
+        view.model = None
+        with self.assertNotRaises(Exception):
+            view.setup(request)
+        view.model = None
+        for model_name in (None, ''):
+            with self.subTest(model_name=model_name):
+                with self.assertNotRaises(Exception):
+                    view.setup(request, model_name=model_name)
+                view.model = None
+
+    def test_setup_sets_create_field(self):
+        # Assert that setupp can set the create field attribute from its kwargs.
+        request = self.get_request()
+        view = self.view_class()
         view.create_field = None
-        try:
-            view.dispatch(create_field='this aint no field')
-        except:
-            # view.dispatch will run fine until it calls super() without a
-            # request positional argument:
-            # the model attribute is set before that.
-            pass
+        view.setup(request, create_field='this aint no field')
         self.assertEqual(view.create_field, 'this aint no field')
 
     def test_get_result_value(self):
@@ -149,10 +183,10 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_label(instance), 'All this testing')
 
 
-class TestACCreateable(ACViewTestCase):
+class TestACCreatable(ACViewTestCase):
 
     model = _models.Autor
-    view_class = ACCreateable
+    view_class = ACCreatable
 
     def test_creator_property(self):
         # Assert that the create property returns a ac.creator.Creator instance.
@@ -162,25 +196,25 @@ class TestACCreateable(ACViewTestCase):
         view._creator = None
         self.assertIsNone(view._creator)
 
-    def test_createable(self):
-        # Assert that createable returns True if:
+    def test_creatable(self):
+        # Assert that creatable returns True if:
         # - a new object can be created from the given parameters
         # - no objects already present in the database fit the given parameters
         request = self.get_request()
         view = self.get_view(request)
-        self.assertTrue(view.createable('Alice Testman (AT)'))
+        self.assertTrue(view.creatable('Alice Testman (AT)'))
         make(
             self.model,
             person__vorname='Alice', person__nachname='Testman',
             kuerzel='AT'
         )
-        self.assertFalse(view.createable('Alice Testman (AT)'))
+        self.assertFalse(view.creatable('Alice Testman (AT)'))
 
     @translation_override(language=None)
     def test_get_create_option(self):
         # Assert that get_create_option appends a non-empty 'create_info' dict
         # to the default create option list.
-        # IF q is createable:
+        # IF q is creatable:
         request = self.get_request()
         view = self.get_view(request)
         self.assertTrue(hasattr(view, 'get_creation_info'))
@@ -197,7 +231,7 @@ class TestACCreateable(ACViewTestCase):
         create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
         self.assertEqual(len(create_option), 1)
 
-        view.createable = mockv(False)
+        view.creatable = mockv(False)
         self.assertFalse(view.get_create_option(context={}, q='Nope'))
 
     @translation_override(language=None)
@@ -272,7 +306,7 @@ class TestACCreateable(ACViewTestCase):
         self.assertEqual(create_info[3], expected)
 
     def test_create_object(self):
-        obj1 = make(
+        make(
             self.model,
             person__vorname='Alice', person__nachname='Testman',
             kuerzel='AT'
@@ -320,18 +354,18 @@ class TestACCreateable(ACViewTestCase):
 
         # create_field is None
         view._creator = _default_creator
-        with self.assertNotRaises(AttributeError) as cm:
+        with self.assertNotRaises(AttributeError):
             view.post(request)
 
         # creator is None
         view._creator = None
         view.create_field = 'kuerzel'
-        with self.assertNotRaises(AttributeError) as cm:
+        with self.assertNotRaises(AttributeError):
             view.post(request)
 
         # both are set
         view._creator = _default_creator
-        with self.assertNotRaises(AttributeError) as cm:
+        with self.assertNotRaises(AttributeError):
             view.post(request)
 
 
@@ -356,6 +390,7 @@ class TestACAusgabe(ACViewTestCase):
             cls.model, magazin=cls.mag, sonderausgabe=True,
             beschreibung='Special Edition'
         )
+        # noinspection SpellCheckingInspection
         cls.obj_jahrg = make(cls.model, magazin=cls.mag, jahrgang=12, ausgabenum__num=13)
         cls.obj_datum = make(cls.model, magazin=cls.mag, e_datum='1986-08-18')
 
@@ -512,3 +547,153 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Schlagwort
     alias_accessor_name = 'schlagwortalias_set'
     raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]
+
+
+class TestGND(ViewTestCase):
+
+    view_class = GND
+    path = 'gnd'
+
+    def test_get_query_string(self):
+        # Assert that from a given query term, a SRU query string is returned.
+        view = self.get_view()
+        query = view.get_query_string(q="Robert Plant")
+        self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
+        view = self.get_view(q="Robert Plant")
+        query = view.get_query_string(q=None)
+        self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
+
+    def test_get_query_string_returns_empty(self):
+        # Assert that for empty input parameters, an empty string is returned.
+        view = self.get_view(q="")
+        for data in [None, 0, False, ""]:
+            with self.subTest(data=data):
+                self.assertFalse(view.get_query_string(q=data))
+
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset(self, mocked_query_func):
+        mocked_query_func.return_value = ([('id', 'label')], 1)
+        view = self.get_view(request=self.get_request(), q='Beep')
+        self.assertTrue(view.get_queryset())
+
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_page_number(self, mocked_query_func):
+        # Assert that, for a given page number, get_queryset calls query func
+        # with the correct startRecord index.
+        mocked_query_func.return_value = ([('id', 'label')], 1)
+        # noinspection PyPep8Naming
+        startRecord_msg = "Expected query func to be called with a 'startRecord' kwarg."
+        view_initkwargs = {
+            'q': 'Beep',
+            'page_kwarg': 'page',
+            'paginate_by': 10,
+        }
+        # Should call with 1 if view kwargs or request data do not provide a
+        # 'page' (page_kwarg) parameter:
+        request = self.get_request()
+        view = self.get_view(request=request, **view_initkwargs)
+        view.get_queryset()
+        args, kwargs = mocked_query_func.call_args
+        self.assertIn('startRecord', kwargs, msg=startRecord_msg)
+        self.assertEqual(kwargs['startRecord'], ['1'])
+        # Should call with request.GET.page_kwarg:
+        request = self.get_request(data={'page': '2'})
+        view = self.get_view(request=request, **view_initkwargs)
+        view.get_queryset()
+        args, kwargs = mocked_query_func.call_args
+        self.assertIn('startRecord', kwargs, msg=startRecord_msg)
+        self.assertEqual(kwargs['startRecord'], ['11'])
+        # Should call with view.kwargs.page_kwarg:
+        request = self.get_request()
+        view = self.get_view(request=request, kwargs={'page': 3}, **view_initkwargs)
+        view.get_queryset()
+        args, kwargs = mocked_query_func.call_args
+        self.assertIn('startRecord', kwargs, msg=startRecord_msg)
+        self.assertEqual(kwargs['startRecord'], ['21'])
+
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_paginate_by(self, mocked_query_func):
+        # Assert that get_queryset factors in the paginate_by attribute when
+        # calculating the startRecord value.
+        # Set paginate_by to 5; the startRecord index for the third page
+        # would then be 11 (first page: 1-5, second page: 6-10).
+        mocked_query_func.return_value = ([('id', 'label')], 1)
+        request = self.get_request(data={'page': '3'})
+        view = self.get_view(request=request, page_kwarg='page', paginate_by=5, q='Beep')
+        view.get_queryset()
+        args, kwargs = mocked_query_func.call_args
+        self.assertIn(
+            'startRecord', kwargs,
+            msg="Expected query func to be called with a 'startRecord' kwarg."
+        )
+        self.assertEqual(kwargs['startRecord'], ['11'])
+
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_maximum_records(self, mocked_query_func):
+        # Assert that get_queryset passes 'paginate_by' to the query func as
+        # 'maximumRecords' kwarg.
+        # (This sets the number of records retrieved per request)
+        mocked_query_func.return_value = ([('id', 'label')], 1)
+        view = self.get_view(request=self.get_request(), q='Beep', paginate_by=9)
+        view.get_queryset()
+        args, kwargs = mocked_query_func.call_args
+        self.assertIn(
+            'maximumRecords', kwargs,
+            msg="Expected query func to be called with a 'maximumRecords' kwarg."
+        )
+        self.assertEqual(kwargs['maximumRecords'], ['9'])
+
+    def test_get_paginator_adds_total_count(self):
+        # Assert that get_paginator adds 'total_count' to the
+        # super().get_paginator kwargs.
+        view = self.get_view(total_count=420)
+        with patch.object(ACBase, 'get_paginator') as mocked_super:
+            view.get_paginator()
+            mocked_super.assert_called_with(total_count=420)
+
+    def test_get_result_label(self):
+        # Assert that for a given result, the label displayed is of the format:
+        # 'gnd_name (gnd_id)'
+        view = self.get_view(request=self.get_request(), q='any')
+        self.assertEqual(
+            'Plant, Robert (134485904)',
+            view.get_result_label(('134485904', 'Plant, Robert'))
+        )
+
+    @patch.object(GND, 'sru_query_func')
+    def test_get_query_func_kwargs(self, mocked_query_func):
+        # Assert that the view's query func is called with the kwargs added
+        # by get_query_func_kwargs.
+        view = self.get_view(request=self.get_request(), q='Beep')
+        mocked_get_kwargs = Mock(
+            return_value={'version': '-1', 'new_kwarg': 'never seen before'}
+        )
+        mocked_query_func.return_value = ([], 0)
+        with patch.object(view, 'get_query_func_kwargs', new=mocked_get_kwargs):
+            view.get_queryset()
+            mocked_query_func.assert_called()
+            _args, kwargs = mocked_query_func.call_args
+            self.assertIn('version', kwargs)
+            self.assertEqual(kwargs['version'], '-1')
+            self.assertIn('new_kwarg', kwargs)
+            self.assertEqual(kwargs['new_kwarg'], 'never seen before')
+
+
+class TestGNDPaginator(MyTestCase):
+
+    def test_count_equals_total_count_kwarg(self):
+        # Assert that paginator.count returns the 'total_count' that was passed
+        # to the constructor.
+        paginator = GNDPaginator(object_list=[], per_page=1, total_count=69)
+        self.assertEqual(paginator.count, 69)
+
+    def test_page_does_not_slice_object_list(self):
+        # Assert that GNDPaginator.page does not slice the object_list in its
+        # call to Paginator._get_page.
+        # Mock object isn't subscriptable; trying to slice it would raise a TypeError.
+        paginator = GNDPaginator(
+            object_list=Mock(), per_page=1, total_count=1, allow_empty_first_page=True)
+        msg = "GNDPaginator.page tried to slice the object list."
+        with patch.object(Paginator, '_get_page'):
+            with self.assertNotRaises(TypeError, msg=msg):
+                paginator.page(number=1)

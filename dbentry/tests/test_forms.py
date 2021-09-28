@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from .base import FormTestCase, ModelFormTestCase, MyTestCase
 from .mixins import TestDataMixin
 
@@ -12,21 +14,24 @@ from dbentry.base.forms import (
     MIZAdminInlineFormBase, DiscogsFormMixin
 )
 from dbentry.forms import (
-    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm, VideoForm
+    AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm,
+    VideoForm, PersonForm
 )
-from dbentry.ac.widgets import EasyWidgetWrapper
+from dbentry.ac.widgets import RemoteModelWidgetWrapper
 from dbentry.factory import make
+from dbentry.validators import DNBURLValidator
 
+# noinspection PyPackageRequirements
 from dal import autocomplete
 
 
 class TestAusgabeMagazinFieldForm(ModelFormTestCase):
-
     form_class = AusgabeMagazinFieldForm
     model = _models.Ausgabe.audio.through
     fields = ['ausgabe']
     test_data_count = 1
 
+    # noinspection PyUnresolvedReferences
     def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance': self.obj1}
@@ -39,16 +44,16 @@ class TestAusgabeMagazinFieldForm(ModelFormTestCase):
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
         self.assertTrue('ausgabe__magazin' in form.fields)
-        self.assertIsInstance(form.fields['ausgabe__magazin'].widget, EasyWidgetWrapper)
+        self.assertIsInstance(form.fields['ausgabe__magazin'].widget, RemoteModelWidgetWrapper)
 
 
 class TestArtikelForm(ModelFormTestCase):
-
     form_class = ArtikelForm
     model = _models.Artikel
     fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
     test_data_count = 1
 
+    # noinspection PyUnresolvedReferences
     def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance': self.obj1}
@@ -74,7 +79,7 @@ class TestArtikelForm(ModelFormTestCase):
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
         self.assertTrue('ausgabe__magazin' in form.fields)
-        self.assertIsInstance(form.fields['ausgabe__magazin'].widget, EasyWidgetWrapper)
+        self.assertIsInstance(form.fields['ausgabe__magazin'].widget, RemoteModelWidgetWrapper)
 
 
 class TestAutorForm(ModelFormTestCase):
@@ -90,7 +95,7 @@ class TestAutorForm(ModelFormTestCase):
 
         form = self.get_form(data={'beschreibung': 'Boop'})
         form.full_clean()
-        self.assertIn(expected_error_message, form.errors.get('__all__'))
+        self.assertIn(expected_error_message, form.errors.get(forms.ALL_FIELDS))
 
         form = self.get_form(data={'kuerzel': 'Beep'})
         form.full_clean()
@@ -120,7 +125,7 @@ class TestBuchForm(ModelFormTestCase):
 
         form = self.get_form(data={'is_buchband': True, 'buchband': b.pk})
         form.full_clean()
-        self.assertIn(expected_error_message, form.errors.get('__all__'))
+        self.assertIn(expected_error_message, form.errors.get(forms.ALL_FIELDS))
 
         form = self.get_form(data={'is_buchband': True})
         form.full_clean()
@@ -148,12 +153,11 @@ class TestBuchForm(ModelFormTestCase):
 
 
 class TestMIZAdminForm(FormTestCase):
-
     dummy_attrs = {
         'some_int': forms.IntegerField(),
         'wrap_me': forms.CharField(widget=autocomplete.ModelSelect2(url='acmagazin')),
     }
-    dummy_bases = (MIZAdminForm, )
+    dummy_bases = (MIZAdminForm,)
 
     def test_iter(self):
         form = self.get_dummy_form()
@@ -172,7 +176,6 @@ class TestMIZAdminForm(FormTestCase):
 
 
 class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
-
     dummy_bases = (DynamicChoiceFormMixin, forms.Form)
     dummy_attrs = {
         'cf': forms.ChoiceField(choices=[]),
@@ -189,6 +192,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         self.assertEqual(form.fields['cf'].choices, expected)
         self.assertEqual(form.fields['cf2'].choices, expected)
 
+    # noinspection PyUnresolvedReferences
     def test_set_choices_manager(self):
         # choices is a BaseManager
         choices = {forms.ALL_FIELDS: _models.Genre.objects}
@@ -200,6 +204,7 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         self.assertEqual(form.fields['cf'].choices, expected)
         self.assertEqual(form.fields['cf2'].choices, expected)
 
+    # noinspection PyUnresolvedReferences
     def test_set_choices_queryset(self):
         # choices is a QuerySet
         choices = {forms.ALL_FIELDS: _models.Genre.objects.all()}
@@ -225,9 +230,8 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
 
 
 class TestMinMaxRequiredFormMixin(FormTestCase):
-
     dummy_attrs = {
-        'first_name': forms.CharField(),  'last_name': forms.CharField(required=True),
+        'first_name': forms.CharField(), 'last_name': forms.CharField(required=True),
         'favorite_pet': forms.CharField(), 'favorite_sport': forms.CharField(),
     }
     dummy_bases = (MinMaxRequiredFormMixin, forms.Form)
@@ -237,7 +241,7 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         # not be required.
         form = self.get_dummy_form()
         self.assertTrue(form.fields['last_name'].required)
-        minmax_required = [{'min': 1, 'fields': ['first_name', 'last_name']}]
+        minmax_required = [{'min_fields': 1, 'fields': ['first_name', 'last_name']}]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
         self.assertFalse(form.fields['last_name'].required)
 
@@ -245,19 +249,19 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
         # Assert that __init__ ignores declared groups if one of its specified
         # field names cannot be found on the form.
         minmax_required = [
-            {'min': 1, 'fields': ['a']},
-            {'min': 1, 'fields': ['first_name', 'last_name']}
+            {'min_fields': 1, 'fields': ['a']},
+            {'min_fields': 1, 'fields': ['first_name', 'last_name']}
         ]
         form = self.get_dummy_form(attrs={'minmax_required': minmax_required})
         self.assertEqual(len(form._groups), 1)
-        self.assertEqual(form._groups[0], {'min': 1, 'fields': ['first_name', 'last_name']})
+        self.assertEqual(form._groups[0], {'min_fields': 1, 'fields': ['first_name', 'last_name']})
 
     @translation_override(language=None)
     def test_clean(self):
         attrs = {
             'minmax_required': [
-                {'min': 1, 'fields': ['first_name', 'last_name']},
-                {'max': 1, 'fields': ['favorite_pet', 'favorite_sport']}
+                {'min_fields': 1, 'fields': ['first_name', 'last_name']},
+                {'max_fields': 1, 'fields': ['favorite_pet', 'favorite_sport']}
             ]
         }
         form_data = {'favorite_pet': 'Cat', 'favorite_sport': 'Coffee drinking.'}
@@ -272,14 +276,17 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
             form.non_field_errors()
         )
 
+    # noinspection PyTypeChecker
     def test_get_group_error_messages_form_callback(self):
         # Assert that custom callbacks are handled correctly and return
         # the expected error messages.
+
+        # noinspection PyUnusedLocal,PyShadowingNames
         def callback(form, group, error_messages, format_kwargs):
             fields = " or ".join(f.replace('_', ' ').title() for f in group.fields)
             return {'max': "%s! Cannot have both!" % fields}
 
-        minmax_required = [{'max': 1, 'fields': ['favorite_pet', 'favorite_sport']}]
+        minmax_required = [{'max_fields': 1, 'fields': ['favorite_pet', 'favorite_sport']}]
         base_attrs = {'minmax_required': minmax_required}
         form_data = {'favorite_pet': 'Cat', 'favorite_sport': 'Coffee drinking.'}
         expected = "Favorite Pet or Favorite Sport! Cannot have both!"
@@ -498,6 +505,7 @@ class TestMIZAdminInlineFormBase(MyTestCase):
 
 class DiscogsMixinAttributesTestMixin(object):
 
+    # noinspection PyUnresolvedReferences
     def test_discogs_mixin_attributes_set(self):
         # Assert that url_field_name and release_id_field_name are set.
         msg_template = "'%s' attribute not set on %s"
@@ -508,10 +516,205 @@ class DiscogsMixinAttributesTestMixin(object):
 
 
 class TestAudioForm(DiscogsMixinAttributesTestMixin, MyTestCase):
-
     form_class = AudioForm
 
 
 class TestVideoForm(DiscogsMixinAttributesTestMixin, MyTestCase):
-
     form_class = VideoForm
+
+
+@patch('dbentry.forms.searchgnd', return_value=([('1234', 'Robert Plant')], 1))
+class TestPersonForm(ModelFormTestCase):
+    form_class = PersonForm
+    model = _models.Person
+    fields = ['nachname', 'gnd_id', 'gnd_name', 'dnb_url']
+
+    def test_clean_continues_on_empty_data(self, _mocked_searchgnd):
+        # Assert that the clean method continues if both fields are empty.
+        form = self.get_form(data={'nachname': 'Plant'})
+        form.full_clean()
+        self.assertFalse(form.errors)
+
+    def test_clean_aborts_on_invalid_dnburl(self, _mocked_searchgnd):
+        # Assert that clean does not mess with any gnd_id if the dnb_url is
+        # invalid.
+        form = self.get_form(data={'gnd_id': '11863996X', 'dnb_url': 'a real url'})
+        form.full_clean()
+        self.assertEqual(form.cleaned_data.get('gnd_id', ''), '11863996X')
+
+    @translation_override(language=None)
+    def test_clean_raises_error_when_gndid_and_dnburl_dont_match(self, _mocked_searchgnd):
+        # Assert that clean raises a ValidationError when gnd_id and the gnd_id
+        # given in dnb_url don't match.
+        form = self.get_form(data={
+            'gnd_id': '1234',
+            'dnb_url': 'http://d-nb.info/gnd/11863996X'
+        })
+        form.full_clean()
+        self.assertIn(NON_FIELD_ERRORS, form.errors)
+        expected_error_message = (
+            "Die angegebene GND ID (1234) stimmt nicht mit der ID im DNB"
+            " Link überein (11863996X)."
+        )
+        self.assertIn(expected_error_message, form.errors[NON_FIELD_ERRORS])
+
+    def test_clean_sets_gnd_id_from_url_when_gnd_id_missing(self, _mocked_searchgnd):
+        # Assert that clean sets the correct gnd_id from a given valid url if
+        # a gnd_id was missing.
+        form = self.get_form(data={
+            'dnb_url': 'http://d-nb.info/gnd/11863996X',
+            'nachname': 'Plant',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
+
+    def test_clean_sets_gnd_id_from_url_when_gnd_id_omitted(self, _mocked_searchgnd):
+        # Assert that clean sets the correct gnd_id from a given valid url if
+        # the value for gnd_id was omitted.
+        form = self.get_form(
+            data={
+                'dnb_url': 'http://d-nb.info/gnd/11863996X',
+                'nachname': 'Plant',
+            },
+            initial={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/11863996X',
+                'nachname': 'Plant'
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
+
+    def test_clean_sets_gnd_id_from_url_when_url_changes(self, _mocked_searchgnd):
+        # Assert that clean sets the correct gnd_id from a given valid url if
+        # the 'dnb_url' was changed, but 'gnd_id' was not.
+        form = self.get_form(
+            data={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/11863996X',
+                'nachname': 'Plant'
+            },
+            initial={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('dnb_url', form.changed_data)
+        self.assertNotIn('gnd_id', form.changed_data)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.cleaned_data)
+        self.assertEqual(form.cleaned_data['gnd_id'], '11863996X')
+
+    def test_clean_sets_url_from_gnd_id_when_url_missing(self, _mocked_searchgnd):
+        # Assert that clean creates the correct url from a given valid gnd_id
+        # if an url was missing.
+        form = self.get_form(data={'gnd_id': '11863996X', 'nachname': 'Plant'})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('dnb_url', form.cleaned_data)
+        self.assertEqual(
+            form.cleaned_data['dnb_url'],
+            'http://d-nb.info/gnd/11863996X'
+        )
+
+    def test_clean_sets_url_from_gnd_id_when_gnd_id_changes(self, _mocked_searchgnd):
+        # Assert that clean updates the url from a given valid gnd_id if the
+        # gnd_id was changed, but the url was not.
+        form = self.get_form(
+            data={
+                'gnd_id': '11863996X',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            },
+            initial={
+                'gnd_id': '1234',
+                'dnb_url': 'http://d-nb.info/gnd/1234',
+                'nachname': 'Plant'
+            }
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_id', form.changed_data)
+        self.assertNotIn('dnb_url', form.changed_data)
+        self.assertIn('dnb_url', form.cleaned_data)
+        self.assertEqual(
+            form.cleaned_data['dnb_url'],
+            'http://d-nb.info/gnd/11863996X'
+        )
+
+    @translation_override(language=None)
+    def test_invalid_urls(self, _mocked_searchgnd):
+        # Assert that invalid URLs produce the expected error messages.
+        form = self.get_form(data={'nachname': 'Plant', 'dnb_url': 'notavalidurl'})
+        self.assertIn('dnb_url', form.errors)
+        # Default URL validator error message:
+        self.assertIn('Enter a valid URL.', form.errors['dnb_url'])
+        # DNBURLValidator error message:
+        self.assertIn(
+            "Bitte nur Adressen der DNB eingeben (d-nb.info oder portal.dnb.de).",
+            form.errors['dnb_url']
+        )
+
+    def test_valid_urls(self, _mocked_searchgnd):
+        # Assert that valid urls will be reformatted to d-nb.info/gnd/<id> urls.
+        urls = [
+            'http://d-nb.info/gnd/11863996X',
+            'https://d-nb.info/gnd/11863996X',
+            'https://portal.dnb.de/opac.htm?method=simpleSearch&cqlMode=true&query=nid%3D11863996X',
+        ]
+        for url in urls:
+            form = self.get_form(data={'nachname': 'Plant', 'dnb_url': url})
+            with self.subTest(url=url):
+                self.assertTrue(form.is_valid(), form.errors)
+                self.assertIn('dnb_url', form.cleaned_data)
+                self.assertEqual(
+                    form.cleaned_data['dnb_url'],
+                    'http://d-nb.info/gnd/11863996X',
+                )
+
+    @translation_override(language=None)
+    def test_clean_validates_gnd_id(self, mocked_searchgnd):
+        # Assert that clean validates the gnd_id via a SRU request.
+        # A SRU query with an invalid gnd_id would return no results.
+        mocked_searchgnd.return_value = ([], 0)
+        form = self.get_form(data={'gnd_id': 'invalid'})
+        form.full_clean()
+        self.assertIn(NON_FIELD_ERRORS, form.errors)
+        self.assertIn("Die GND ID ist ungültig.", form.errors[NON_FIELD_ERRORS])
+
+    def test_clean_saves_preferred_name(self, _mocked_searchgnd):
+        # Assert that clean saves the 'preferred name' (RDFxml) of the result.
+        form = self.get_form(data={'gnd_id': '1234', 'nachname': 'Plant'})
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIn('gnd_name', form.cleaned_data)
+        self.assertEqual((form.cleaned_data['gnd_name']), 'Robert Plant')
+
+    def test_save(self, _mocked_searchgnd):
+        # Assert that gnd_id and gnd_name are saved to the form's model object.
+        form = self.get_form(data={'nachname': 'Plant', 'gnd_id': '1234'})
+        self.assertTrue(form.is_valid(), form.errors)
+        plant = form.save()
+        self.assertEqual(plant.nachname, 'Plant')
+        self.assertEqual(plant.gnd_id, '1234')
+        self.assertEqual(plant.gnd_name, 'Robert Plant')
+
+    def test_init_adds_url_validator(self, _mocked_searchgnd):
+        # Assert that the DNBURLValidator is added to the list of validators of
+        # the dnb_url field.
+        form = self.get_form()
+        self.assertTrue(any(isinstance(v, DNBURLValidator) for v in form.fields['dnb_url'].validators))
+
+    def test_init_sets_gnd_id_initial_choice(self, _mocked_searchgnd):
+        # Assert that init prepares the instance's gnd_id and gnd_name values
+        # as initial selected option of the gnd_id select widget.
+        obj = make(
+            self.model, vorname='Robert', nachname='Plant',
+            gnd_id='1234', gnd_name='Plant, Robert'
+        )
+        form = self.get_form(instance=obj)
+        self.assertEqual(
+            form.fields['gnd_id'].widget.choices,
+            [('1234', 'Plant, Robert')]
+        )

@@ -1,25 +1,33 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
+from typing import Optional
+
 from django.core.validators import MinValueValidator
 from django.db import models
 
 
 import dbentry.m2m as _m2m
 from dbentry.base.models import (
-    BaseModel, ComputedNameModel, BaseAliasModel, AbstractJahrModel,
-    AbstractURLModel
+    AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
 )
 from dbentry.constants import LIST_DISPLAY_MAX_LEN
 from dbentry.fields import (
-    ISSNField, ISBNField, EANField, YearField, PartialDate, PartialDateField
+    EANField, ISBNField, ISSNField, PartialDate, PartialDateField, YearField
 )
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
-from dbentry.managers import AusgabeQuerySet
-from dbentry.utils import concat_limit, get_model_relations, get_model_fields
+from dbentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
+from dbentry.utils import concat_limit, get_model_fields, get_model_relations
 
 
 class Person(ComputedNameModel):
     vorname = models.CharField(max_length=200, blank=True)
     nachname = models.CharField(max_length=200)
+
+    gnd_id = models.CharField('Normdatei ID', max_length=20, blank=True)
+    gnd_name = models.CharField('Normdatei Name', max_length=200, blank=True)
+    dnb_url = models.URLField(
+        'Link DNB', blank=True,
+        help_text="Adresse zur Seite dieser Person in der Deutschen Nationalbibliothek."
+    )
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Person')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -42,13 +50,16 @@ class Person(ComputedNameModel):
         verbose_name_plural = 'Personen'
 
     @classmethod
-    def _get_name(cls, **data):
+    def _get_name(cls, **data: tuple) -> str:
         """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
+        Construct a name from the data given.
 
-        Returns a name in the format '{vorname} {nachname}'.
+        Args:
+             **data: mapping of field_path: tuple of values provided by
+              MIZQuerySet.values_dict
+
+        Returns:
+             a name in the format '{vorname} {nachname}'
         """
         vorname = nachname = ''
         if 'vorname' in data:
@@ -57,7 +68,13 @@ class Person(ComputedNameModel):
             nachname = data['nachname'][0]
         if vorname or nachname:
             return "{} {}".format(vorname, nachname).strip()
-        return cls._name_default % {'verbose_name': cls._meta.verbose_name}
+        # noinspection PyUnresolvedReferences
+        opts = cls._meta
+        return cls._name_default % {'verbose_name': opts.verbose_name}
+
+
+class PersonURL(AbstractURLModel):
+    brochure = models.ForeignKey('Person', models.CASCADE, related_name='urls')
 
 
 class Musiker(BaseModel):
@@ -92,6 +109,8 @@ class Musiker(BaseModel):
         verbose_name = 'Musiker'
         verbose_name_plural = 'Musiker'
         ordering = ['kuenstler_name']
+
+
 class MusikerAlias(BaseAliasModel):
     parent = models.ForeignKey('Musiker', models.CASCADE)
 
@@ -100,6 +119,10 @@ class MusikerAlias(BaseAliasModel):
             WeightedColumn('alias', 'B', 'simple'),
         ]
     )
+
+
+class MusikerURL(AbstractURLModel):
+    brochure = models.ForeignKey('Musiker', models.CASCADE, related_name='urls')
 
 
 class Genre(BaseModel):
@@ -121,6 +144,8 @@ class Genre(BaseModel):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ['genre']
+
+
 class GenreAlias(BaseAliasModel):
     parent = models.ForeignKey('Genre', models.CASCADE)
 
@@ -159,12 +184,18 @@ class Band(BaseModel):
         verbose_name = 'Band'
         verbose_name_plural = 'Bands'
         ordering = ['band_name']
+
+
 class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
 
     _fts = SearchVectorField(
         columns=[WeightedColumn('alias', 'B', 'simple')],
     )
+
+
+class BandURL(AbstractURLModel):
+    brochure = models.ForeignKey('Band', models.CASCADE, related_name='urls')
 
 
 class Autor(ComputedNameModel):
@@ -194,11 +225,13 @@ class Autor(ComputedNameModel):
         verbose_name_plural = 'Autoren'
 
     @classmethod
-    def _get_name(cls, **data):
+    def _get_name(cls, **data: tuple) -> str:
         """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
+        Construct a name from the data given.
+
+        Args:
+             **data: mapping of field_path: tuple of values provided by
+              MIZQuerySet.values_dict
 
         Returns a name in the format of either:
             - '{person_name}' if no kuerzel is given
@@ -211,6 +244,7 @@ class Autor(ComputedNameModel):
         if 'person___name' in data:
             person_name = data['person___name'][0]
             # The person_name should not be a default value:
+            # noinspection PyUnresolvedReferences,PyProtectedMember
             person_default = Person._name_default % {
                 'verbose_name': Person._meta.verbose_name
             }
@@ -225,7 +259,13 @@ class Autor(ComputedNameModel):
             else:
                 return person_name
         else:
-            return kuerzel or cls._name_default % {'verbose_name': cls._meta.verbose_name}
+            # noinspection PyUnresolvedReferences
+            opts = cls._meta
+            return kuerzel or cls._name_default % {'verbose_name': opts.verbose_name}
+
+
+class AutorURL(AbstractURLModel):
+    brochure = models.ForeignKey('Autor', models.CASCADE, related_name='urls')
 
 
 class Ausgabe(ComputedNameModel):
@@ -239,11 +279,15 @@ class Ausgabe(ComputedNameModel):
     ]
 
     status = models.CharField(
-        'Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=UNBEARBEITET)
+        'Bearbeitungsstatus', max_length=40, choices=STATUS_CHOICES, default=UNBEARBEITET
+    )
     e_datum = models.DateField(
-        'Erscheinungsdatum', null=True, blank=True, help_text='Format: tt.mm.jjjj')
+        'Erscheinungsdatum', null=True, blank=True,
+        help_text='Format: TT.MM.JJJJ oder JJJJ-MM-TT (ISO 8601)'
+    )
     jahrgang = models.PositiveSmallIntegerField(
-        null=True, blank=True, verbose_name="Jahrgang", validators=[MinValueValidator(1)])
+        null=True, blank=True, verbose_name="Jahrgang", validators=[MinValueValidator(1)]
+    )
     sonderausgabe = models.BooleanField('Sonderausgabe', default=False)
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. der Ausgabe')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
@@ -277,11 +321,13 @@ class Ausgabe(ComputedNameModel):
         ordering = ['magazin']
 
     @classmethod
-    def _get_name(cls, **data):
+    def _get_name(cls, **data: tuple) -> str:
         """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
+        Construct a name from the data given.
+
+        Args:
+             **data: mapping of field_path: tuple of values provided by
+              MIZQuerySet.values_dict
         """
         beschreibung = ''
         if 'beschreibung' in data:
@@ -290,7 +336,7 @@ class Ausgabe(ComputedNameModel):
                 width=LIST_DISPLAY_MAX_LEN + 5,
                 sep=" "
             )
-        if ('sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung):
+        if 'sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung:
             # Special issues may be a bit... 'special' in their numerical values.
             # Just use the 'beschreibung' for such an issue.
             return beschreibung
@@ -302,7 +348,7 @@ class Ausgabe(ComputedNameModel):
             # Concatenate the years given.
             # Use four digits for the first year,
             # use only the last two digits for the rest.
-            jahre = [
+            jahre = [  # type: ignore[assignment]
                 str(jahr)[2:] if i else str(jahr)
                 for i, jahr in enumerate(sorted(data['ausgabejahr__jahr']))
             ]
@@ -335,10 +381,9 @@ class Ausgabe(ComputedNameModel):
                 'Okt', 'Nov', 'Dez'
             ]
             # Sort the month abbreviations according to the calendar.
-            monate = sorted(
+            monate = sorted(  # type: ignore[assignment]
                 data['ausgabemonat__monat__abk'],
-                key=lambda abk:
-                    monat_ordering.index(abk) + 1 if abk in monat_ordering else 0
+                key=lambda abk: monat_ordering.index(abk) + 1 if abk in monat_ordering else 0
             )
             monate = concat_limit(monate, sep="/")
         # 'ausgaben_merkmal' acts as an override to what attribute should make
@@ -372,7 +417,9 @@ class Ausgabe(ComputedNameModel):
             return "{}-{}".format(jahre, monate)
         if beschreibung:
             return beschreibung
-        return cls._name_default % {'verbose_name': cls._meta.verbose_name}
+        # noinspection PyUnresolvedReferences
+        opts = cls._meta
+        return cls._name_default % {'verbose_name': opts.verbose_name}
 
 
 class AusgabeJahr(BaseModel):
@@ -429,7 +476,8 @@ class AusgabeMonat(BaseModel):
         unique_together = ('ausgabe', 'monat')
         ordering = ['monat']
 
-    def __str__(self):
+    def __str__(self) -> str:
+        # noinspection PyUnresolvedReferences
         return self.monat.abk
 
 
@@ -452,8 +500,8 @@ class Monat(BaseModel):
         verbose_name_plural = 'Monate'
         ordering = ['ordinal']
 
-    def __str__(self):
-        return self.monat
+    def __str__(self) -> str:
+        return str(self.monat)
 
 
 class Magazin(BaseModel):
@@ -505,8 +553,9 @@ class Magazin(BaseModel):
         verbose_name_plural = 'Magazine'
         ordering = ['magazin_name']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.magazin_name)
+
 
 class MagazinURL(AbstractURLModel):
     magazin = models.ForeignKey('Magazin', models.CASCADE, related_name='urls')
@@ -560,11 +609,13 @@ class Ort(ComputedNameModel):
         ordering = ['land', 'bland', 'stadt']
 
     @classmethod
-    def _get_name(cls, **data):
+    def _get_name(cls, **data: tuple) -> str:
         """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
+        Construct a name from the data given.
+
+        Args:
+             **data: mapping of field_path: tuple of values provided by
+              MIZQuerySet.values_dict
 
         Returns a name in the format of either:
             - '{stadt}, {a combination of bundesland_code and land_code}'
@@ -584,16 +635,16 @@ class Ort(ComputedNameModel):
         if 'land__code' in data:
             land_code = data['land__code'][0]
 
-        rslt_template = "{}, {}"
+        result_template = "{}, {}"
         if stadt:
             if bundesland_code:
                 codes = land_code + '-' + bundesland_code
-                return rslt_template.format(stadt, codes)
+                return result_template.format(stadt, codes)
             else:
-                return rslt_template.format(stadt, land_code)
+                return result_template.format(stadt, land_code)
         else:
             if bundesland:
-                return rslt_template.format(bundesland, land_code)
+                return result_template.format(bundesland, land_code)
             else:
                 return land
 
@@ -612,10 +663,10 @@ class Bundesland(BaseModel):
     )
 
     name_field = 'bland_name'
-    primary_search_fields = []
+    primary_search_fields = []  # type: ignore[var-annotated]
     search_fields = ['bland_name', 'code']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} {}".format(self.bland_name, self.code).strip()
 
     class Meta(BaseModel.Meta):
@@ -639,7 +690,7 @@ class Land(BaseModel):
     name_field = 'land_name'
     search_fields = ['land_name', 'code']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{} {}".format(self.land_name, self.code).strip()
 
     class Meta(BaseModel.Meta):
@@ -647,7 +698,8 @@ class Land(BaseModel):
         verbose_name_plural = 'Länder'
         ordering = ['land_name']
 
-# TODO: make schlagwort 'view-pnly' in admin (meta.default_permissions)
+
+# TODO: make schlagwort 'view-only' in admin (meta.default_permissions)
 class Schlagwort(BaseModel):
     schlagwort = models.CharField(max_length=100, unique=True)
 
@@ -659,7 +711,7 @@ class Schlagwort(BaseModel):
 
     create_field = 'schlagwort'
     name_field = 'schlagwort'
-    primary_search_fields = []
+    primary_search_fields = []  # type: ignore[var-annotated]
     search_fields = ['schlagwort', 'schlagwortalias__alias']
     related_search_vectors = ['schlagwortalias___fts']
 
@@ -667,6 +719,8 @@ class Schlagwort(BaseModel):
         verbose_name = 'Schlagwort'
         verbose_name_plural = 'Schlagwörter'
         ordering = ['schlagwort']
+
+
 class SchlagwortAlias(BaseAliasModel):
     parent = models.ForeignKey('Schlagwort', models.CASCADE)
 
@@ -728,7 +782,7 @@ class Artikel(BaseModel):
             'schlagzeile'
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.schlagzeile:
             return str(self.schlagzeile)
         elif self.zusammenfassung:
@@ -741,7 +795,7 @@ class Buch(BaseModel):
     # TODO: übersetzer feld
     titel = models.CharField(max_length=200)
     titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
-    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: Semantik: Seitenanzahl?
+    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: Semantik: Seitenanzahl?  # noqa
     jahr = YearField('Jahr', null=True, blank=True)
     jahr_orig = YearField('Jahr (Original)', null=True, blank=True)
     auflage = models.CharField(max_length=200, blank=True)
@@ -791,7 +845,7 @@ class Buch(BaseModel):
         verbose_name = 'Buch'
         verbose_name_plural = 'Bücher'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.titel)
 
 
@@ -834,7 +888,7 @@ class Instrument(BaseModel):
         verbose_name = 'Instrument'
         verbose_name_plural = 'Instrumente'
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.kuerzel:
             return "{} ({})".format(str(self.instrument), str(self.kuerzel))
         return str(self.instrument)
@@ -873,7 +927,8 @@ class Audio(BaseModel):
         help_text="Format des Speichermediums."
     )
     medium_qty = models.PositiveSmallIntegerField(
-        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)])
+        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)]
+    )
 
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_audio_musiker)
     band = models.ManyToManyField('Band')
@@ -902,7 +957,7 @@ class Audio(BaseModel):
         verbose_name = 'Audio Material'
         verbose_name_plural = 'Audio Materialien'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.titel)
 
 
@@ -927,10 +982,13 @@ class AudioMedium(BaseModel):
 
 class Plakat(BaseModel):
     titel = models.CharField(max_length=200)
+    # TODO: delete model field 'signatur' (it's no longer in use)
     signatur = models.CharField(
         max_length=200, blank=True, null=True, unique=True,
-        help_text=('Kürzel bestehend aus Angabe zur Größe und '
-            'einer 5-stelligen fortlaufenden Nummer. Z.B.: DINA2-00395')
+        help_text=(
+            'Kürzel bestehend aus Angabe zur Größe und einer 5-stelligen '
+            'fortlaufenden Nummer. Z.B.: DINA2-00395'
+        )
     )
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
@@ -938,7 +996,8 @@ class Plakat(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     reihe = models.ForeignKey(
-        'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe')
+        'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe'
+    )
 
     schlagwort = models.ManyToManyField('Schlagwort')
     genre = models.ManyToManyField('Genre')
@@ -1094,6 +1153,12 @@ class Spielort(BaseModel):
         verbose_name = 'Spielort'
         verbose_name_plural = 'Spielorte'
         ordering = ['name', 'ort']
+
+
+class SpielortURL(AbstractURLModel):
+    brochure = models.ForeignKey('Spielort', models.CASCADE, related_name='urls')
+
+
 class SpielortAlias(BaseAliasModel):
     parent = models.ForeignKey('Spielort', models.CASCADE)
 
@@ -1172,12 +1237,14 @@ class Veranstaltung(BaseModel):
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'datum', 'spielort']
 
-    def __str__(self):
+    def __str__(self) -> str:
         if isinstance(self.datum, PartialDate):
             date = self.datum.localize()
         else:
             date = str(self.datum)
         return "{} ({})".format(self.name, date)
+
+
 class VeranstaltungAlias(BaseAliasModel):
     parent = models.ForeignKey('Veranstaltung', models.CASCADE)
 
@@ -1186,6 +1253,10 @@ class VeranstaltungAlias(BaseAliasModel):
             WeightedColumn('alias', 'A', 'simple'),
         ]
     )
+
+
+class VeranstaltungURL(AbstractURLModel):
+    brochure = models.ForeignKey('Veranstaltung', models.CASCADE, related_name='urls')
 
 
 class Veranstaltungsreihe(BaseModel):
@@ -1235,7 +1306,8 @@ class Video(BaseModel):
         help_text="Format des Speichermediums."
     )
     medium_qty = models.PositiveSmallIntegerField(
-        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)])
+        'Anzahl', blank=True, null=True, default=1, validators=[MinValueValidator(1)]
+    )
 
     musiker = models.ManyToManyField('Musiker', through=_m2m.m2m_video_musiker)
     band = models.ManyToManyField('Band')
@@ -1309,7 +1381,7 @@ class Provenienz(BaseModel):
         verbose_name = 'Provenienz'
         verbose_name_plural = 'Provenienzen'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "{0} ({1})".format(str(self.geber.name), str(self.typ))
 
 
@@ -1353,11 +1425,13 @@ class Lagerort(ComputedNameModel):
         ordering = ['_name']
 
     @classmethod
-    def _get_name(cls, **data):
+    def _get_name(cls, **data: tuple) -> str:
         """
-        Construct a name from the 'data' given.
-        'data' is a mapping of field_path: tuple of values provided by
-        MIZQuerySet.values_dict.
+        Construct a name from the data given.
+
+        Args:
+             **data: mapping of field_path: tuple of values provided by
+              MIZQuerySet.values_dict
 
         Returns a name in the format of either:
             - '{a combination of fach/regal/raum} ({ort})'
@@ -1407,22 +1481,24 @@ class Bestand(BaseModel):
         verbose_name_plural = 'Bestände'
         ordering = ['pk']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.lagerort)
 
     @property
-    def bestand_object(self):
+    def bestand_object(self) -> Optional[models.Model]:
         """Return the archive object this Bestand instance refers to."""
         if hasattr(self, '_bestand_object'):
             return self._bestand_object
-        self._bestand_object = None
+        self._bestand_object: Optional[models.Model] = None
         for field in get_model_fields(self, base=False, foreign=True, m2m=False):
             # The archive object is referenced by the one FK relation (other
             # than Lagerort and Provenienz) that is not null.
+            # noinspection PyProtectedMember
             if field.related_model._meta.object_name in ('Lagerort', 'Provenienz'):
                 continue
             related_obj = getattr(self, field.name)
             if related_obj:
+                # noinspection PyProtectedMember
                 if related_obj._meta.object_name == 'BaseBrochure':
                     # Handle the multiple inheritance stuff:
                     related_obj = related_obj.resolve_child()
@@ -1485,7 +1561,7 @@ class Datei(BaseModel):
         verbose_name = 'Datei'
         verbose_name_plural = 'Dateien'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.titel)
 
 
@@ -1536,10 +1612,10 @@ class BaseBrochure(BaseModel):
 
     name_field = 'titel'
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.titel)
 
-    def resolve_child(self):
+    def resolve_child(self) -> models.Model:
         """Fetch a child instance from this parent instance."""
         for rel in get_model_relations(self, forward=False, reverse=True):
             # Look for a reverse relation that is a PK and originates from a
@@ -1599,7 +1675,9 @@ class Katalog(BaseBrochure):
     ]
 
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Kataloges')
-    art = models.CharField('Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH)
+    art = models.CharField(
+        'Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH
+    )
 
     primary_search_fields = ['titel']
     search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
@@ -1631,7 +1709,8 @@ class Foto(BaseModel):
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
     reihe = models.ForeignKey(
-        'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe')
+        'Bildreihe', models.PROTECT, blank=True, null=True, verbose_name='Bildreihe'
+    )
 
     schlagwort = models.ManyToManyField('Schlagwort')
     genre = models.ManyToManyField('Genre')

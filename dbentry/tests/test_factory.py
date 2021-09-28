@@ -37,20 +37,21 @@ class TestRuntimeFactoryMixin(MyTestCase):
         from dbentry import factory
         self.assertIn('technik', factory._cache)
 
-    def test_new_factory_wo_related_model(self):
+    def test_new_factory_without_related_model(self):
         # factory property should raise an AttributeError if the factory's
         # related_model attribute is None and a new factory has to be created.
         fac = self.dummy_factory(self.local_factory_module + 'beep', related_model=None)
         with self.assertRaises(AttributeError):
-            fac.factory
+            fac.factory  # noqa
 
 
 class TestUniqueFaker(MyTestCase):
 
     def test_init(self):
-        # UniqueFaker.function should default to lambda n: n
+        # UniqueFaker.function should default to a function 'default_callable'
+        # that simply returns the input.
         faker = UniqueFaker('name', function=None)
-        self.assertEqual(faker.function.__name__, '<lambda>')
+        self.assertEqual(faker.function.__name__, 'default_callable')
         self.assertEqual(faker.function(1), 1)
         self.assertEqual(faker.function(42), 42)
 
@@ -172,14 +173,6 @@ class TestM2MFactory(MyTestCase):
         self.assertIn(g2, m.genre.all())
         self.assertEqual(m.genre.count(), 4)
 
-    def test_m2m_pops_accessor_name(self):
-        m2m = M2MFactory(
-            'dbentry.factory.whatever',
-            accessor_name='beep boop',
-            related_model=_models.Genre
-        )
-        self.assertIsNone(m2m.accessor_name)
-
 
 class TestMIZDjangoOptions(MyTestCase):
 
@@ -232,6 +225,14 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIsInstance(decl, factory.Faker)
         self.assertEqual(decl.provider, 'time_delta')
 
+    def test_get_decl_for_model_field_no_declaration(self):
+        # Assert that _get_decl_for_model_field raises an Exception if no faker
+        # declaration could be assigned to the given model field.
+        mocked_field = Mock()
+        mocked_field.get_internal_type.return_value = 'EGG & SPAM'
+        with self.assertRaises(Exception):
+            MIZDjangoOptions._get_decl_for_model_field(mocked_field)
+
     def test_adds_required_fields(self):
         # A dynamically created factory *must* include model fields that are required.
         # Model veranstaltung has three required fields:
@@ -270,12 +271,14 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertEqual(fac.instrument.factory._meta.model, _models.Instrument)
         self.assertEqual(fac.band.factory._meta.model, _models.Band)
 
-    def get_mocked_field(self, field_name, model, related_model):
+    @staticmethod
+    def get_mocked_field(field_name, model, related_model):
         mocked_field = Mock(model=model, related_model=related_model)
         mocked_field.configure_mock(name=field_name)
         return mocked_field
 
-    def get_mocked_rel(self, rel_name, accessor_name, **kwargs):
+    @staticmethod
+    def get_mocked_rel(rel_name, accessor_name, **kwargs):
         mocked_rel = Mock(get_accessor_name=Mock(return_value=accessor_name), **kwargs)
         mocked_rel.configure_mock(name=rel_name)
         return mocked_rel
@@ -305,10 +308,12 @@ class TestMIZDjangoOptions(MyTestCase):
 
         self.assertTrue(hasattr(opts.factory, 'mocked_field_name'))
         self.assertIsInstance(opts.factory.mocked_field_name, Mock)
-        expected_args = ('SomeFactory', )
         expected_kwargs = {
-            'descriptor_name': 'mocked_field_name', 'related_model': _models.Genre}
-        self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
+            'factory': 'SomeFactory',
+            'descriptor_name': 'mocked_field_name',
+            'related_model': _models.Genre
+        }
+        self.assertEqual(mocked_m2m_factory.call_args, ((), expected_kwargs))
 
         # Relation from genre to BaseBrochure inherited by Kalender; expected:
         # declaration name = 'mocked_rel_name';
@@ -330,10 +335,12 @@ class TestMIZDjangoOptions(MyTestCase):
 
         self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
         self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
-        expected_args = ('SomeFactory', )
         expected_kwargs = {
-            'descriptor_name': 'mocked_rel_accessor', 'related_model': _models.Genre}
-        self.assertEqual(mocked_m2m_factory.call_args, (expected_args, expected_kwargs))
+            'factory': 'SomeFactory',
+            'descriptor_name': 'mocked_rel_accessor',
+            'related_model': _models.Genre
+        }
+        self.assertEqual(mocked_m2m_factory.call_args, ((), expected_kwargs))
 
     @patch('dbentry.factory.get_model_relations')
     def test_add_m2m_factories_unknown_relation(self, mocked_get_model_relations):
@@ -383,14 +390,14 @@ class TestMIZDjangoOptions(MyTestCase):
 
                 self.assertTrue(hasattr(opts.factory, 'mocked_rel_name'))
                 self.assertIsInstance(opts.factory.mocked_rel_name, Mock)
-                expected_args = ('SomeFactory', )
                 expected_kwargs = {
+                    'factory': 'SomeFactory',
                     'factory_related_name': 'mocked_field_name',
                     'accessor_name': 'mocked_rel_accessor',
                     'related_model': _models.BaseBrochure
                 }
                 self.assertEqual(
-                    mocked_related_factory.call_args, (expected_args, expected_kwargs))
+                    mocked_related_factory.call_args, ((), expected_kwargs))
 
     def test_add_sub_factories(self):
         # Assert that self relations are recognized properly

@@ -18,6 +18,8 @@ nameparser==1.0.6
 
 python-stdnum==1.14
 
+requests==2.25.1
+
 
 # Test/development packages
 django-test-without-migrations==0.6

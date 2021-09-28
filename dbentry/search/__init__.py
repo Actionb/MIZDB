@@ -1,3 +1,3 @@
 """
-Adds more search options to the admin changelists.
+This package introduces improved changelist search forms to the django admin.
 """

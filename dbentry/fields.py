@@ -1,15 +1,20 @@
 import datetime
 import re
 from functools import total_ordering
-from stdnum import issn, isbn, ean
+from typing import Any, Callable, List, Optional, Union
 
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.forms import widgets, fields
+from django.forms import fields, widgets
 from django.utils import formats
+from stdnum import ean, isbn, issn
 
-from dbentry.validators import ISSNValidator, ISBNValidator, EANValidator
+from dbentry.validators import EANValidator, ISBNValidator, ISSNValidator
+
+
+# FIXME: PartialDate: changelist queries (using the advanced search form formfields)
+#  require a year value.
 
 
 class YearField(models.IntegerField):
@@ -20,7 +25,7 @@ class YearField(models.IntegerField):
     MAX_YEAR = 3000
     MIN_YEAR = 1800
 
-    def formfield(self, **kwargs):
+    def formfield(self, **kwargs: Any) -> fields.Field:
         kwargs['validators'] = [
             MaxValueValidator(self.MAX_YEAR),
             MinValueValidator(self.MIN_YEAR)
@@ -31,11 +36,13 @@ class YearField(models.IntegerField):
 class StdNumWidget(widgets.TextInput):
     """A TextInput widget that formats its value according to a format_callback."""
 
-    def __init__(self, format_callback=None, *args, **kwargs):
+    def __init__(
+            self, format_callback: Optional[Callable] = None, *args: Any, **kwargs: Any
+    ) -> None:
         self.format_callback = format_callback
         super().__init__(*args, **kwargs)
 
-    def format_value(self, value):
+    def format_value(self, value: str) -> str:
         if not value or self.format_callback is None:
             return value
         # Render the value in a pretty format
@@ -43,19 +50,19 @@ class StdNumWidget(widgets.TextInput):
 
 
 class StdNumFormField(fields.CharField):
-    """
-    Base formfield for standard number formfields.
-
-    Takes one additional positional keyword:
-        stdnum: the module of the stdnum library that implements validation and
-            formatting of the desired kind of standard number
-    """
 
     def __init__(self, stdnum, *args, **kwargs):
+        """
+        Base formfield for standard number formfields.
+
+        Args:
+            stdnum (module): the module of the stdnum library that implements
+              validation and formatting of the desired kind of standard number
+        """
         self.stdnum = stdnum
         super().__init__(*args, **kwargs)
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         """Return the compactified python value."""
         value = super().to_python(value)
         return self.stdnum.compact(value)
@@ -63,7 +70,7 @@ class StdNumFormField(fields.CharField):
 
 class ISBNFormField(StdNumFormField):
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         value = super().to_python(value)
         if value not in self.empty_values and isbn.isbn_type(value) == 'ISBN10':
             # Cast the ISBN10 into a ISBN13, so value can match the initial
@@ -74,7 +81,7 @@ class ISBNFormField(StdNumFormField):
 
 class ISSNFormField(StdNumFormField):
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         value = super().to_python(value)
         if value not in self.empty_values and len(value) == 13:
             # Compactified value is possibly a EAN-13 number.
@@ -90,21 +97,21 @@ class StdNumField(models.CharField):
 
     Attributes:
         stdnum: the module of the stdnum library that implements validation and
-            formatting of the desired kind of standard number
-        min_length (int): minimal length of the number.
-            Only used in formfield validation.
-        max_length (int): The maximum length (in characters) of the field.
+          formatting of the desired kind of standard number
+        min_length (int): minimal length of the number - only used in
+          formfield validation
+        max_length (int): the maximum length (in characters) of the field
     """
     stdnum = None
-    min_length = None
-    max_length = None
+    min_length: Optional[int] = None
+    max_length: Optional[int] = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         if self.max_length and 'max_length' not in kwargs:
             kwargs['max_length'] = self.max_length
         super().__init__(*args, **kwargs)
 
-    def formfield(self, widget=None, **kwargs):
+    def formfield(self, widget: Optional[fields.TextInput] = None, **kwargs: Any) -> fields.Field:
         defaults = {
             'min_length': self.min_length,
             'stdnum': self.stdnum,
@@ -115,14 +122,16 @@ class StdNumField(models.CharField):
         }
         kwargs = {**defaults, **kwargs}
 
-        widget_class = None
         # Pass the format callback function to the widget for a
         # prettier display of the value.
         widget_kwargs = {'format_callback': self.get_format_callback()}
         if widget:
             # django-admin will pass its own widget instance to formfield()
             # (or whatever the ModelAdmins.formfield_overrides sets).
-            # This means losing the StdNumWidget and its prettier output.
+            # In order to preserve the prettier output provided by StdNumWidget,
+            # overwrite the widget, if that widget is not an instance of
+            # StdNumWidget.
+            # NOTE: this is a bit oppressive, isn't it?
             if isinstance(widget, type):
                 widget_class = widget
             else:
@@ -132,21 +141,21 @@ class StdNumField(models.CharField):
                 widget_class = StdNumWidget
         else:
             widget_class = StdNumWidget
-        kwargs['widget'] = widget_class(**widget_kwargs)
+        kwargs['widget'] = widget_class(**widget_kwargs)  # type: ignore[misc]
         return super().formfield(**kwargs)
 
-    def get_format_callback(self):
+    def get_format_callback(self) -> Callable:
         if hasattr(self.stdnum, 'format'):
-            return self.stdnum.format
+            return self.stdnum.format  # type: ignore[attr-defined]
         # Fallback for ean stdnum which does not have a format function.
-        return self.stdnum.compact
+        return self.stdnum.compact  # type: ignore[attr-defined]
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         # In order to deny querying and saving with invalid values, we have to
         # call run_validators.
         # Saving a model instance will not cause the validators to be tested!
         if value not in self.empty_values:
-            value = self.stdnum.compact(value)
+            value = self.stdnum.compact(value)  # type: ignore[attr-defined]
         self.run_validators(value)
         return value
 
@@ -156,25 +165,28 @@ class ISBNField(StdNumField):
     min_length = 10  # ISBN-10 without dashes/spaces
     max_length = 17  # ISBN-13 with four dashes/spaces
     default_validators = [ISBNValidator]
-    description = ('Cleaned and validated ISBN string: min length 10 '
-        '(ISBN-10), max length 17 (13 digits + dashes/spaces).')
+    description = (
+        'Cleaned and validated ISBN string: min length 10 (ISBN-10), '
+        'max length 17 (13 digits + dashes/spaces).'
+    )
 
-    def to_python(self, value):
+    def to_python(self, value: str) -> str:
         # Save the values as ISBN-13.
         if value in self.empty_values:
             return value
         value = super().to_python(value)
         return isbn.to_isbn13(value)
 
-    def get_format_callback(self):
+    def get_format_callback(self) -> Callable:
         def _format(value):
             """Return a well formatted ISBN13."""
             if value in self.empty_values:
                 return value
             return isbn.format(value, convert=True)
+
         return _format
 
-    def formfield(self, **kwargs):
+    def formfield(self, **kwargs: Any) -> fields.Field:  # type: ignore[override]
         defaults = {'form_class': ISBNFormField}
         return super().formfield(**{**defaults, **kwargs})
 
@@ -186,7 +198,7 @@ class ISSNField(StdNumField):
     default_validators = [ISSNValidator]
     description = 'Cleaned and validated ISSN string of length 8.'
 
-    def formfield(self, **kwargs):
+    def formfield(self, **kwargs: Any) -> fields.Field:  # type: ignore[override]
         defaults = {
             # Allow for EAN-13 with dashes/spaces as form data
             'max_length': 17,
@@ -200,8 +212,10 @@ class EANField(StdNumField):
     min_length = 8  # EAN-8
     max_length = 17  # EAN-13 with four dashes/spaces
     default_validators = [EANValidator]
-    description = ('Cleaned and validated EAN string: min length 8 (EAN-8), '
-        'max length 17 (13 digits + dashes/spaces).')
+    description = (
+        'Cleaned and validated EAN string: min length 8 (EAN-8), '
+        'max length 17 (13 digits + dashes/spaces).'
+    )
 
 
 """
@@ -210,11 +224,22 @@ django-partial-date: https://github.com/ktowen/django_partial_date
 https://stackoverflow.com/q/2971198
 https://stackoverflow.com/a/30186603
 """
+StrOrInt = Optional[Union[str, int]]
+
+
 @total_ordering
 class PartialDate(datetime.date):
-    """A datetime.date that allows constructor arguments to be optional."""
+    """
+    A datetime.date that allows constructor arguments to be optional.
+
+    Additional attribute:
+        date_format (str): format code (C89 standard) string of the date;
+          '%d', '%B' or '%Y', or a combination thereof separated by whitespace
+    """
 
     db_value_template = '{year!s:0>4}-{month!s:0>2}-{day!s:0>2}'
+
+    date_format: str = None  # type: ignore[assignment]
 
     def __new__(cls, year=None, month=None, day=None):
         # Default values for the instance's attributes
@@ -225,14 +250,14 @@ class PartialDate(datetime.date):
         iterator = zip(
             ('day', 'month', 'year'), (day, month, year), ('%d', '%B', '%Y')
         )
-        for name, value, format in iterator:
+        for name, value, format_code in iterator:
             if value is None:
                 continue
             value = int(value)
             if value != 0:
                 constructor_kwargs[name] = value
                 instance_attrs[name] = value
-                date_format.append(format)
+                date_format.append(format_code)
         # Call the datetime.date constructor. If the date is invalid,
         # a ValueError will be raised.
         date = super().__new__(cls, **constructor_kwargs)
@@ -240,16 +265,18 @@ class PartialDate(datetime.date):
         for k, v in instance_attrs.items():
             # The default attrs year,month,day are not writable.
             setattr(date, '__' + k, v)
-        if not date_format:
-            # This is an 'empty' partial date.
-            setattr(date, 'date_format', '')
-        else:
-            setattr(date, 'date_format', ' '.join(date_format))
+
+        date.date_format = ' '.join(date_format)
         return date
 
     @classmethod
-    def from_string(cls, date):
-        """Create a PartialDate from the string 'date'."""
+    def from_string(cls, date: str) -> 'PartialDate':
+        """
+        Create a PartialDate from the string ``date``.
+
+        Raises:
+            ValueError: when the date is not in the format 'YYYY-MM-DD'
+        """
         regex = re.compile(
             r'^(?P<year>\d{4})?(?:-?(?P<month>\d{1,2}))?(?:-(?P<day>\d{1,2}))?$'
         )
@@ -259,13 +286,13 @@ class PartialDate(datetime.date):
         raise ValueError("Invalid format: 'YYYY-MM-DD' expected.")
 
     @classmethod
-    def from_date(cls, date):
+    def from_date(cls, date: datetime.date) -> 'PartialDate':
         """Create a PartialDate from a datetime.date instance."""
         year, month, day, *_ = date.timetuple()
         return cls.__new__(cls, year, month, day)
 
     @property
-    def db_value(self):
+    def db_value(self) -> str:
         """Return a string of format 'YYYY-MM-DD' to store in the database."""
         # FIXME: this plays poorly with full text search:
         #   date: 2020-02-01
@@ -281,15 +308,21 @@ class PartialDate(datetime.date):
     def __str__(self):
         return self.strftime(self.date_format)
 
-    def localize(self):
+    def localize(self) -> str:
+        """Return a localized date string."""
         if self.date_format:
-            # Fun fact: python's format code for month textual long is %B.
-            # django's is %F (%B isn't even implemented?).
+            # The date is not 'empty'; let django format the date.
+            # Note however, that python's format code for month full localized
+            # name is %B - whereas django uses %F.
+            # date_format also only checks for the format code letters, not the
+            # percent signs.
+            # noinspection PyUnresolvedReferences
             return formats.date_format(
-                self, self.date_format.replace('%B', '%F').replace('%', ''))
+                self, self.date_format.replace('%B', '%F')).replace('%', '')
         return ''
 
     def __iter__(self):
+        """Return the actual values for year, month and day in that order."""
         for attr in ('__year', '__month', '__day'):
             yield getattr(self, attr, None)
 
@@ -330,7 +363,7 @@ class PartialDate(datetime.date):
 class PartialDateWidget(widgets.MultiWidget):
     """Default widget for the PartialDateFormField."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         if 'widgets' in kwargs:
             _widgets = kwargs.pop('widgets')
         else:
@@ -345,7 +378,7 @@ class PartialDateWidget(widgets.MultiWidget):
                 _widgets.append(widgets.NumberInput(attrs=attrs))
         super().__init__(_widgets, **kwargs)
 
-    def decompress(self, value):
+    def decompress(self, value: Optional[PartialDate]) -> Union[List[int], List[None]]:
         if isinstance(value, PartialDate):
             return list(value)
         return [None, None, None]
@@ -356,7 +389,7 @@ class PartialDateFormField(fields.MultiValueField):
 
     default_error_messages = fields.DateField.default_error_messages
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         if 'fields' in kwargs:
             _fields = kwargs.pop('fields')
         else:
@@ -373,8 +406,8 @@ class PartialDateFormField(fields.MultiValueField):
             # a subclass or an instance of PartialDateWidget.
             kwarg_widget = kwargs.pop('widget')
             is_pd_widget = (
-                isinstance(kwarg_widget, type)
-                and issubclass(kwarg_widget, PartialDateWidget)
+                    isinstance(kwarg_widget, type)
+                    and issubclass(kwarg_widget, PartialDateWidget)
             )
             if (isinstance(kwarg_widget, PartialDateWidget)
                     or is_pd_widget):
@@ -383,7 +416,7 @@ class PartialDateFormField(fields.MultiValueField):
             _fields, widget=widget, require_all_fields=False, **kwargs
         )
 
-    def compress(self, data_list):
+    def compress(self, data_list: List[Union[int, str, None]]) -> PartialDate:
         try:
             return PartialDate(*data_list)
         except ValueError:
@@ -398,7 +431,7 @@ class PartialDateField(models.CharField):
     default_error_messages = models.DateField.default_error_messages
     help_text = "Teilweise Angaben sind erlaubt (z.B. Jahr & Monat aber ohne Tag)."
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs['max_length'] = 10  # digits: 4 year, 2 month, 2 day, 2 dashes
         if 'null' not in kwargs:
             kwargs['null'] = False
@@ -408,7 +441,7 @@ class PartialDateField(models.CharField):
             kwargs['help_text'] = self.help_text
         super().__init__(*args, **kwargs)
 
-    def to_python(self, value):
+    def to_python(self, value: Union[str, PartialDate, datetime.date, None]) -> PartialDate:
         if not value:
             return PartialDate()
         if isinstance(value, str):
@@ -428,12 +461,15 @@ class PartialDateField(models.CharField):
         elif isinstance(value, datetime.date):
             return PartialDate.from_date(value)
 
-    def get_prep_value(self, value):
+    def get_prep_value(self, value: Union[str, PartialDate, datetime.date, None]) -> str:
+        """Prepare a value to be stored in the database (object -> db)."""
         value = super().get_prep_value(value)
         return self.to_python(value).db_value
 
-    def from_db_value(self, value, expression, connection):
+    # noinspection PyMethodMayBeStatic
+    def from_db_value(self, value: str, *_args: Any, **_kwargs: Any) -> PartialDate:
+        """Create a PartialDate object from a database value (db -> object)."""
         return PartialDate.from_string(value)
 
-    def formfield(self, **kwargs):
+    def formfield(self, **kwargs: Any) -> fields.Field:
         return super().formfield(form_class=PartialDateFormField, **kwargs)

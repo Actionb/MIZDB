@@ -1,10 +1,26 @@
 {% extends "admin/change_form.html" %}
-{% load admin_modify %}
+{% load i18n admin_urls admin_modify %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; {% if has_view_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; {% if add %}{% blocktrans with name=opts.verbose_name %}Add {{ name }}{% endblocktrans %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
+</div>
+{% endblock %}
 
 {% block object-tools %}
+{% comment %}
+  default: {% if change %}{% if not is_popup %}
+  Django's default template for the change form doesn't show the object tools if
+  this is a popup. That would make the change history inaccessible from within
+  the popup.
+{% endcomment %}
 {% if change %}
   <ul class="object-tools">
     {% block object-tools-items %}
+      {# Add an element that display the object's ID #}
+      <li><span>id:<span class="id-container">{{ object_id }}</span></span></li>
       {% change_form_object_tools %}
     {% endblock %}
   </ul>

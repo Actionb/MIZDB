@@ -89,7 +89,7 @@ class TestURLs(URLTestCase):
             (
                 'accapture', '/autor/', (),
                 {'model_name': 'autor'},
-                autocomplete_views.ACCreateable
+                autocomplete_views.ACCreatable
             )
         ]
         for view_name, url, args, kwargs, view_class in expected:

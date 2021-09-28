@@ -19,8 +19,8 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
 
         # Get the group
         self.assertEqual(
-            len(reverse), 1,
-            msg="There should be only reverse dupe fields group for Musiker."
+            len(reverse), 2,
+            msg="There should be exactly two reverse dupe fields group for Musiker: alias and URL."
         )
         musiker_alias_group = reverse[0]
         self.assertIsInstance(musiker_alias_group, (list, tuple))
@@ -72,10 +72,9 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         group_names = [group_name for group_name, group_choices in reverse]
         self.assertEqual(group_names, expected)
 
-    def test_reverse_choices_are_queryable(self):
-        # Assert that whatever is returned by get_dupe_fields_for_model can
+    def test_reverse_choices_can_be_used_in_queries(self):
+        # Assert that the fields returned by get_dupe_fields_for_model can
         # actually be used in query.
-        # Using get_fields_from_path to assert the ... queryability
         dupe_fields = get_dupe_fields_for_model(_models.Ausgabe)
         reverse = dupe_fields['reverse']
         all_choices = list(chain(
@@ -84,6 +83,7 @@ class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
         failed = []
         for field_path, _label in all_choices:
             try:
+                # Let get_fields_from_path check whether this path exists.
                 get_fields_from_path(_models.Ausgabe, field_path)
             except FieldDoesNotExist:
                 failed.append(field_path)

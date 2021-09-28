@@ -1,104 +1,204 @@
+from typing import Any, Optional, Tuple
+
+# noinspection PyPackageRequirements
+from dal import autocomplete, forward
 from django.contrib.admin.views.main import IS_POPUP_VAR, TO_FIELD_VAR
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.db.models import Model
+from django.forms import Media, Widget
 from django.urls import reverse
-
-from dal import autocomplete, forward
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
 
-class WidgetCaptureMixin(object):
+class GenericURLWidgetMixin(object):
     """
-    A mixin for the ModelSelect2 widgets that enables the widget to handle
-    reversal of the generic url name 'accapture' which requires reverse kwargs
-    'model_name' and 'create_field'.
+    A mixin for autocomplete.ModelSelect2 widgets that works on a generic
+    url name.
+
+    The work flow for (dal) autocomplete widgets is:
+        1. create view
+        2. map view to URL (and url name)
+        3. add widget using that URL (or url name) to a form field
+        4. widget is used and an ajax request is made to that URL
+        5. view responds with the results for the widget to display
+
+    A down side is, that this requires having an URL for every different model
+    that one would like to use ModelSelect2 on.
+    To avoid explicitly declaring an URL for every model, a generic URL with a
+    captured model name can be used: ``path('<str:model_name>/', name='generic')``.
+
+    By passing the model name to the widget, the widget can then reverse that
+    generic URL - and pass the specific URL (f.ex. 'foo/' for model 'foo')
+    on to the template.
+
+    Attributes:
+        generic_url_name (str): if set, and if it matches the url name provided
+          in the widget arguments, the widget will reverse that url name with
+          arguments from _get_reverse_kwargs(). generic_url_name will replace a
+          default url parameter (i.e. an empty string) and (in that case) will
+          be passed to the super class constructor as keyword argument 'url'.
     """
 
-    def __init__(self, model_name, *args, **kwargs):
+    generic_url_name: str = ''
+
+    # noinspection PyShadowingNames
+    def __init__(
+            self,
+            model_name: str,
+            url: str = '',
+            forward: Optional[list] = None,
+            *args: Any,
+            **kwargs: Any
+    ) -> None:
         self.model_name = model_name
-        self.create_field = kwargs.pop('create_field', None)
-        if 'url' not in kwargs:
-            kwargs['url'] = 'accapture'
-        super().__init__(*args, **kwargs)
+        if url == '':  # allow for explicit url=None
+            url = self.generic_url_name
+        super().__init__(url, forward, *args, **kwargs)  # type: ignore[call-arg]
 
-    def _get_url(self):
+    def _get_reverse_kwargs(self, **kwargs: Any) -> dict:
+        """Return the kwargs required for reversing the widget's url name."""
+        if self.model_name:
+            return {'model_name': self.model_name, **kwargs}
+        return kwargs
+
+    def _get_url(self) -> Optional[str]:
         if self._url is None:
             return None
 
         if '/' in self._url:
             return self._url
 
-        reverse_kwargs = {}
-        if self._url == 'accapture':
-            if self.model_name:
-                reverse_kwargs['model_name'] = self.model_name
-            if self.create_field:
-                reverse_kwargs['create_field'] = self.create_field
-        return reverse(self._url, kwargs=reverse_kwargs)
+        if self._url == self.generic_url_name:
+            return reverse(self._url, kwargs=self._get_reverse_kwargs())
 
-    def _set_url(self, url):
+        return reverse(self._url)
+
+    def _set_url(self, url: Optional[str]) -> None:
         self._url = url
 
     url = property(_get_url, _set_url)
 
 
-class MIZModelSelect2(WidgetCaptureMixin, autocomplete.ModelSelect2):
-    pass
-
-
-class MIZModelSelect2Multiple(WidgetCaptureMixin, autocomplete.ModelSelect2Multiple):
-    pass
-
-
-class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
+class MIZWidgetMixin(GenericURLWidgetMixin):
     """
-    A class that wraps a given widget to add add/change/delete links and icons.
+    A mixin for the ModelSelect2 widgets that enables the widget to handle
+    reversal of the generic url name ``accapture`` which requires reverse
+    kwargs ``model_name`` and (sometimes) ``create_field``.
+    """
 
-    Unlike its base class RelatedFieldWidgetWrapper, which is used during the
-    creation of an AdminForm's formfields (BaseModelAdmin.formfield_for_dbfield),
-    this wrapper is used during widget declaration of formfields of a form
-    class.
+    generic_url_name = 'accapture'
+
+    def __init__(self, *args, create_field: str = '', **kwargs):
+        self.create_field = create_field
+        super().__init__(*args, **kwargs)
+
+    def _get_reverse_kwargs(self, **kwargs: Any) -> dict:
+        # Add create_field to the reverse kwargs:
+        _kwargs = {}
+        if self.create_field:
+            _kwargs = {'create_field': self.create_field, **kwargs}
+        else:
+            _kwargs = kwargs
+        return super()._get_reverse_kwargs(**_kwargs)
+
+
+class MIZModelSelect2(MIZWidgetMixin, autocomplete.ModelSelect2):
+    pass
+
+
+class MIZModelSelect2Multiple(MIZWidgetMixin, autocomplete.ModelSelect2Multiple):
+    pass
+
+
+class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
+    """
+    Wrapper that adds icons to perform add/change/delete on the widget's model.
+
+    Unlike the super class RelatedFieldWidgetWrapper, this wrapper does not
+    require a relation object. Instead, it 'addresses' the model that the
+    widget is querying directly. This way one can add the add icons to any
+    widget that manage a remote model - and not just the ones that manage a
+    relation or a related field. (hence the class names)
     """
 
     @property
-    def media(self):
+    def media(self) -> Media:
+        """Add RelatedObjectLookups.js to the widget media."""
+        # django's admin adds RelatedObjectLookups.js via ModelAdmin.media.
+        # In order to wrap a widget outside of a ModelAdmin view, the widget
+        # needs to add the necessary javascript files itself.
         from django.conf import settings
-        from django import forms
         extra = '' if settings.DEBUG else '.min'
         js = [
             'admin/js/vendor/jquery/jquery%s.js' % extra,
             'admin/js/jquery.init.js',
             'admin/js/admin/RelatedObjectLookups.js'
         ]
-        return forms.Media(js=js) + super().media
+        return Media(js=js) + super().media
 
+    # noinspection PyMissingConstructor
     def __init__(
-            self, widget, related_model, remote_field_name='id',
-            can_add_related=True, can_change_related=True,
-            can_delete_related=True):
+            self,
+            widget: Widget,
+            remote_model: Model,
+            remote_field_name: str = '',
+            can_add_related: bool = True,
+            can_change_related: bool = True,
+            can_delete_related: bool = True
+    ) -> None:
+        """
+        Instantiate the wrapper.
+
+        Args:
+            widget (Widget): the widget instance to wrap
+            remote_model (model class): the model that the widget refers to
+            remote_field_name (str): name of the field with which instances of
+              the model can be uniquely identified. The value here will be
+              added to the context as TO_FIELD_VAR, which is used throughout
+              django admin and defaults to the primary key (opts.pk.attname)
+            can_add_related (bool): if True, add a 'add' icon
+            can_change_related (bool): if True, add a 'change' icon
+            can_delete_related (bool): if True, add a 'delete' icon
+        """
         self.needs_multipart_form = widget.needs_multipart_form
         self.attrs = widget.attrs
+        # noinspection PyUnresolvedReferences
         self.choices = widget.choices
         self.widget = widget
         multiple = getattr(widget, 'allow_multiple_selected', False)
         self.can_add_related = not multiple and can_add_related
         self.can_change_related = not multiple and can_change_related
         self.can_delete_related = not multiple and can_delete_related
-        self.related_model = related_model
-        self.remote_field_name = remote_field_name
+        self.remote_model = remote_model
+        # noinspection PyProtectedMember,PyUnresolvedReferences
+        self.remote_field_name = remote_field_name or remote_model._meta.pk.attname
 
-    def get_related_url(self, info, action, *args):
-        return reverse("admin:%s_%s_%s" % (info + (action,)), args=args)
+    def get_related_url(self, info: Tuple[str, str], action: str, *args: Any) -> str:
+        """
+        Get the URL to the add/change/delete page of a related model.
 
-    def get_context(self, name, value, attrs):
-        rel_opts = self.related_model._meta
+        Args:
+            info (2-tuple): the app label and model name of the related model
+            action (str): the intended action on the related model
+                (i.e. add/change/delete)
+            *args: additional arguments to reverse()
+        """
+        # noinspection PyStringFormat
+        return reverse("admin:%s_%s_%s" % (*info, action), args=args)
+
+    def get_context(self, name: str, value: Any, attrs: dict) -> dict:
+        # noinspection PyProtectedMember,PyUnresolvedReferences
+        rel_opts = self.remote_model._meta
         info = (rel_opts.app_label, rel_opts.model_name)
         self.widget.choices = self.choices
-        url_params = '&'.join("%s=%s" % param for param in [
-            (TO_FIELD_VAR, self.remote_field_name),
-            (IS_POPUP_VAR, 1),
-        ])
+        url_params = '&'.join(
+            "%s=%s" % param for param in [
+                (TO_FIELD_VAR, self.remote_field_name),
+                (IS_POPUP_VAR, 1),
+            ]
+        )
         context = {
             'rendered_widget': self.widget.render(name, value, attrs),
             'name': name,
@@ -127,27 +227,37 @@ class EasyWidgetWrapper(RelatedFieldWidgetWrapper):
 
 
 def make_widget(
-        url='accapture', multiple=False, wrap=False, remote_field_name='id',
-        can_add_related=True, can_change_related=True, can_delete_related=True,
-        **kwargs):
+        url: str = 'accapture',
+        multiple: bool = False,
+        wrap: bool = False,
+        remote_field_name: str = 'id',
+        can_add_related: bool = True,
+        can_change_related: bool = True,
+        can_delete_related: bool = True,
+        **kwargs: Any
+) -> Widget:
     """
     Factory function that creates autocomplete widgets.
 
-    Arguments:
-        - url: name of the url to the autocomplete view employed by this widget
-        - multiple (boolean): if True, a SelectMultiple variant will be used
-        - wrap (boolean): if True, the widget will be wrapped (using
-            EasyWidgetWrapper) to add icons (add/change/delete related) to the
-            admin interface.
-        - remote_field_name: parameters for the EasyWidgetWrapper
-        - can_x_related (boolean): parameters for the EasyWidgetWrapper
+    Args:
+        url: name of the url to the autocomplete view employed by this widget
+        multiple (bool): if True, a SelectMultiple variant will be used
+        wrap (bool): if True, the widget will be wrapped with RemoteModelWidgetWrapper
+        remote_field_name (str): wrapper arg: target of the relation field
+        can_add_related (bool): wrapper arg: if True, add a 'add' icon
+        can_change_related (bool): wrapper arg: if True, add a 'change' icon
+        can_delete_related (bool): wrapper arg: if True, add a 'delete' icon
+        kwargs: additional keyword arguments for the widget class constructor
 
-    Any other keyword arguments are passed on to the widget class constructor.
+    Raises:
+        django.core.exceptions.ImproperlyConfigured: no model_name was provided,
+          which is a required argument for widgets using GenericURLWidgetMixin
     """
     widget_opts = {}
     model = kwargs.pop('model', None)
     model_name = kwargs.pop('model_name', '')
     if model and not model_name:
+        # noinspection PyProtectedMember
         model_name = model._meta.model_name
     if model_name and not model:
         model = get_model_from_string(model_name)
@@ -164,14 +274,16 @@ def make_widget(
         else:
             raise ImproperlyConfigured(
                 "{} widget missing argument 'model_name'.".format(
-                    widget_class.__name__)
+                    widget_class.__name__
+                )
             )
         if 'create_field' not in kwargs and can_add_related and model:
             widget_opts['create_field'] = model.create_field
 
     if issubclass(
             widget_class,
-            (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)):
+            (autocomplete.ModelSelect2, autocomplete.ModelSelect2Multiple)
+    ):
         widget_opts['url'] = url
 
     widget_opts.update(kwargs)
@@ -191,12 +303,9 @@ def make_widget(
                 dst = forwarded.split('__')[-1]
                 forwarded = forward.Field(src=forwarded, dst=dst)
             widget_opts['forward'].append(forwarded)
-
-            if 'attrs' in widget_opts:
-                attrs = widget_opts.get('attrs')
-            else:
-                widget_opts['attrs'] = {}
-                attrs = widget_opts['attrs']
+            attrs = widget_opts.get('attrs', {})
+            if 'attrs' not in widget_opts:
+                widget_opts['attrs'] = attrs
 
             if 'data-placeholder' not in attrs:
                 # forward with no data-placeholder-text
@@ -215,8 +324,10 @@ def make_widget(
                 # and not the model field's name.
                 try:
                     # verbose_name default is the field.name.replace('_',' ')
+                    # noinspection PyProtectedMember
                     forwarded_verbose = model._meta.get_field(
-                        forwarded.dst or forwarded.src).verbose_name.title()
+                        forwarded.dst or forwarded.src
+                    ).verbose_name.title()
                 except (AttributeError, FieldDoesNotExist):
                     # AttributeError: the field returned by get_field does not
                     # have a verbose_name attribute (i.e. a relation)
@@ -224,13 +335,14 @@ def make_widget(
                     # a name of a field of that model
                     forwarded_verbose = snake_case_to_spaces(forwarded.src).title()
                 placeholder = placeholder_template % {
-                    'verbose_name': forwarded_verbose}
+                    'verbose_name': forwarded_verbose
+                }
                 attrs['data-placeholder'] = placeholder
 
     widget = widget_class(**widget_opts)
 
     if model and wrap and remote_field_name:
-        return EasyWidgetWrapper(
+        return RemoteModelWidgetWrapper(
             widget, model, remote_field_name,
             can_add_related, can_change_related, can_delete_related
         )

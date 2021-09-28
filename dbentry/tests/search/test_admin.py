@@ -10,9 +10,11 @@ from django.utils.http import urlencode
 from dbentry import models as _models, admin as _admin
 from dbentry.factory import batch, make
 from dbentry.fields import PartialDate
+from dbentry.search.forms import MIZAdminSearchForm
 from dbentry.tests.base import AdminTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestAdminMixin(AdminTestCase):
 
     model = _models.Plakat
@@ -34,6 +36,62 @@ class TestAdminMixin(AdminTestCase):
                 with self.subTest(key=key, value=value):
                     self.assertIn(key, kwargs)
                     self.assertEqual(kwargs[key], value)
+
+    @mock.patch('dbentry.search.admin.searchform_factory')
+    def test_get_search_form_class_custom_form_class(self, mocked_factory):
+        # Assert that get_search_form_class calls the factory with the right
+        # 'form' kwarg.
+        # Prioritize:
+        #   1. get_search_form_class call kwargs
+        #   2. ModelAdmin search_form_kwargs
+        #   3. default
+        with mock.patch.object(self.model_admin, 'search_form_kwargs', {}):
+            # Default:
+            self.model_admin.get_search_form_class()
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], MIZAdminSearchForm,
+                msg=(
+                    "factory should be called with default form class %r if no"
+                    " other form class is provided." % MIZAdminSearchForm
+                )
+            )
+            # Prioritize the call kwarg over the default:
+            self.model_admin.get_search_form_class(form='CallKwargsForm')
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'CallKwargsForm',
+                msg=(
+                    "factory should be called with the form class provided in "
+                    "the kwargs to get_search_form_class."
+                )
+            )
+            # Prioritize the search_form_kwarg over the default:
+            self.model_admin.search_form_kwargs = {'form': 'SearchFormKwargsForm'}
+            self.model_admin.get_search_form_class()
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'SearchFormKwargsForm',
+                msg=(
+                    "factory should be called with the form class provided in "
+                    "the ModelAdmin's search_form_kwargs."
+                )
+            )
+            # Prioritize the call kwarg over the search_form_kwarg:
+            self.model_admin.search_form_kwargs = {'form': 'SearchFormKwargsForm'}
+            self.model_admin.get_search_form_class(form='CallKwargsForm')
+            args, kwargs = mocked_factory.call_args
+            self.assertIn('form', kwargs)
+            self.assertEqual(
+                kwargs['form'], 'CallKwargsForm',
+                msg=(
+                    "factory should be called with the form class provided in "
+                    "the kwargs to get_search_form_class."
+                )
+            )
 
     def test_search_form_added_to_response_context(self):
         # Assert that the changelist_view's response context contains
@@ -117,7 +175,6 @@ class TestAdminMixin(AdminTestCase):
         # Assert that _response_post_save returns the default response (the index)
         # when leaving a changeform with a post request while not having view or
         # change perms.
-        obj = make(self.model)
         request_data = {'_changelist_filters': 'genre=1&genre=2'}
         obj = make(self.model)
         request = self.get_request(
@@ -130,7 +187,7 @@ class TestAdminMixin(AdminTestCase):
     def test_preserved_filters_back_to_cl(self):
         # Assert that saving on a changeform returns back to the changelist
         # with the filters preserved.
-        # This is a more integrated test for the changes made in _reponse_post_save.
+        # This is a more integrated test for the changes made in _response_post_save.
         preserved_filters_name = '_changelist_filters'
         obj = make(self.model)
         filters = [
@@ -247,7 +304,7 @@ class TestAdminMixin(AdminTestCase):
         patcher = mock.patch(
             'dbentry.search.admin.search_form_tag_context', mocked_tag)
         patcher.start()
-        response = self.model_admin.update_changelist_context(
+        self.model_admin.update_changelist_context(
             response=mock.Mock(context_data={}))
         self.assertFalse(
             mocked_tag.called,
@@ -319,6 +376,8 @@ class TestAdminMixin(AdminTestCase):
                     "Changelist search form is missing fields for relations:\n\t['genre']"
                 )
 
+
+# noinspection PyUnresolvedReferences
 class TestSearchFormChangelist(AdminTestCase):
 
     model = _models.Plakat
@@ -494,7 +553,7 @@ class TestSearchFormChangelist(AdminTestCase):
 
     def test_get_filters_params_multifield(self):
         # Check how changelist copes with MultiValueFields such as PartialDateFormField:
-        # the changelist must query with the cleaned data only and not the indiviual fields.
+        # the changelist must query with the cleaned data only and not the individual fields.
         form_data = {'datum_0': 2020, 'datum_1': 5, 'datum_2': 20}
         patcher = mock.patch.object(
             _admin.PlakatAdmin, 'search_form_kwargs', {'fields': ['datum']}

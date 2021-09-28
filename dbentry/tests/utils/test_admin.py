@@ -7,16 +7,16 @@ from django.forms import modelform_factory
 from django.urls import NoReverseMatch
 from django.utils.encoding import force_text
 
-from dbentry import models as _models
-from dbentry.utils import admin as admin_utils
+from dbentry import models as _models, admin as _admin
 from dbentry.factory import make
 from dbentry.sites import miz_site
 from dbentry.tests.base import RequestTestCase
 from dbentry.tests.mixins import TestDataMixin
+from dbentry.utils import admin as admin_utils
 
 
+# noinspection PyUnresolvedReferences
 class TestAdminUtils(TestDataMixin, RequestTestCase):
-
     model = _models.Audio
 
     @classmethod
@@ -65,7 +65,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_link_list_blank(self):
         # Assert that all links contain target="_blank" when calling link_list
         # with blank=True.
-        sep="§"  # use an unusual separator so the links can be split 'securely'
+        sep = "§"  # use an unusual separator so the links can be split 'securely'
         links = admin_utils.link_list(self.get_request(), self.test_data, sep=sep, blank=True)
         for link in links.split(sep):
             with self.subTest(link=link):
@@ -79,24 +79,23 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         self.assertEqual(link, '<a href="/admin/dbentry/artikel/" target="_blank">Liste</a>')
 
     def test_get_model_admin_for_model(self):
-        from dbentry.admin import ArtikelAdmin  # TODO: make module import
-        self.assertIsInstance(admin_utils.get_model_admin_for_model('Artikel'), ArtikelAdmin)
-        self.assertIsInstance(admin_utils.get_model_admin_for_model(_models.Artikel), ArtikelAdmin)
-        self.assertIsNone(admin_utils.get_model_admin_for_model('beepboop'))
+        self.assertIsInstance(admin_utils.get_model_admin_for_model('Artikel'), _admin.ArtikelAdmin)
+        self.assertIsInstance(admin_utils.get_model_admin_for_model(_models.Artikel), _admin.ArtikelAdmin)
+        with self.assertRaises(LookupError):
+            admin_utils.get_model_admin_for_model('beepboop')
 
     def test_has_admin_permission(self):
-        from dbentry.admin import ArtikelAdmin, PlakatAdmin  # TODO: make module import
         request = self.get_request(user=self.noperms_user)
-        model_admin = ArtikelAdmin(_models.Artikel, miz_site)
+        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
         self.assertFalse(
             admin_utils.has_admin_permission(request, model_admin),
             msg="Should return False for a user with no permissions."
         )
 
-        perms = Permission.objects.filter(codename__in=('add_artikel', ))
+        perms = Permission.objects.filter(codename__in=('add_artikel',))
         self.staff_user.user_permissions.set(perms)
         request = self.get_request(user=self.staff_user)
-        model_admin = ArtikelAdmin(_models.Artikel, miz_site)
+        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
         self.assertTrue(
             admin_utils.has_admin_permission(request, model_admin),
             msg=(
@@ -106,14 +105,14 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         )
 
         request = self.get_request(user=self.staff_user)
-        model_admin = PlakatAdmin(_models.Plakat, miz_site)
+        model_admin = _admin.PlakatAdmin(_models.Plakat, miz_site)
         self.assertFalse(
             admin_utils.has_admin_permission(request, model_admin),
             msg="Should return False for non-superusers on a superuser only model admin."
         )
 
         request = self.get_request(user=self.super_user)
-        model_admin = PlakatAdmin(_models.Plakat, miz_site)
+        model_admin = _admin.PlakatAdmin(_models.Plakat, miz_site)
         self.assertTrue(
             admin_utils.has_admin_permission(request, model_admin),
             msg="Should return True for superuser on a superuser-only model admin."
@@ -227,13 +226,15 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_addition_related_obj(self):
+        m2m_band = self.obj1.band.through.objects.create(
+            band=self.band, audio=self.obj1)
         with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_addition(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
-                related_obj=self.musiker,
+                related_obj=m2m_band,
             )
-            expected_message = [{'added': {'name': 'Musiker', 'object': 'Robert Plant'}}]
+            expected_message = [{'added': {'name': 'Band', 'object': 'Led Zeppelin'}}]
             self.assertTrue(mocked_create_logentry.called)
             user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
             self.assertEqual(user_id, self.super_user.pk)
@@ -262,15 +263,19 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             self.assertEqual(message, expected_message)
 
     def test_log_change_related_obj(self):
+        # Note: to understand the purpose of logging changes of related objects,
+        # imagine logging changes to admin inlines.
+        m2m_band = self.obj1.band.through.objects.create(
+            band=self.band, audio=self.obj1)
         with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
             admin_utils.log_change(
                 user_id=self.super_user.pk,
                 obj=self.obj1,
-                fields=['lagerort'],
-                related_obj=self.bestand,
+                fields=['band'],
+                related_obj=m2m_band,
             )
-            expected_message = [{'changed':
-                    {'fields': ['Lagerort'], 'name': 'Bestand', 'object': 'Aufm Tisch!'}}]
+            expected_message = [
+                {'changed': {'fields': ['Band'], 'name': 'Band', 'object': 'Led Zeppelin'}}]
             self.assertTrue(mocked_create_logentry.called)
             user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
             self.assertEqual(user_id, self.super_user.pk)

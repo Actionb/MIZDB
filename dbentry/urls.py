@@ -1,7 +1,7 @@
-from django.urls import path, include
+from django.urls import include, path
 
-from dbentry.views import SiteSearchView
 from dbentry.bulk.views import BulkAusgabe, BulkAusgabeHelp
+from dbentry.views import SiteSearchView
 
 admin_tools_urls = [
     path('bulk_ausgabe/', BulkAusgabe.as_view(), name='bulk_ausgabe'),

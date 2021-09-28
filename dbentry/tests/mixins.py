@@ -1,13 +1,11 @@
 from django.contrib.admin.models import LogEntry, ContentType, ADDITION, CHANGE, DELETION
 from django.contrib.admin.options import get_content_type_for_model
-from django.utils.encoding import force_text
-from django.utils.text import capfirst
 
 from dbentry.factory import make, batch
 
 
+# noinspection PyPep8Naming,PyUnresolvedReferences
 class TestDataMixin(object):
-
     model = None
     queryset = None
     test_data = None
@@ -68,7 +66,7 @@ class CreateViewMixin(object):
         if attrs is None:
             attrs = attrs or getattr(self, 'view_attrs', {})
         if not isinstance(bases, (list, tuple)):
-            bases = (bases, )
+            bases = (bases,)
         return type("DummyView", bases, attrs)
 
     def get_dummy_view(self, bases=None, attrs=None, **initkwargs):
@@ -100,7 +98,7 @@ class CreateFormMixin(object):
 
     def get_dummy_form_class(self, bases=None, attrs=None):
         if bases is None:
-            bases = self.dummy_bases or (object, )
+            bases = self.dummy_bases or (object,)
         if attrs and self.dummy_attrs:
             class_attrs = {**self.dummy_attrs, **attrs}
         elif attrs:
@@ -125,18 +123,60 @@ class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
             return super(CreateFormViewMixin, self).get_form_class()
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences,PyPep8Naming
 class LoggingTestMixin(object):
     """
     Provide TestCases with assertions that verify that a change to model
     objects is being logged.
     """
 
-    def assertLogged(self, objects, action_flag, **kwargs):
+    def assertLogged(self, objects, action_flag, change_message=None, **kwargs):
         if not LogEntry.objects.exists():
             raise AssertionError("LogEntry table is empty!")
         unlogged = []
         if not isinstance(objects, (list, tuple, set)):
             objects = [objects]
+        # Prepare the change_message:
+        if not change_message:
+            if action_flag == ADDITION:
+                change_message = [{"added": {}}]
+            elif action_flag == CHANGE:
+                change_message = [{"changed": {}}]
+            elif action_flag == DELETION:
+                change_message = [{"deleted": {}}]
+        if not isinstance(change_message, str):
+            change_message = str(change_message)
+        change_message = change_message.replace("'", '"')
+
+        # FIXME: occasionally this returns false negatives:
+        # a log entry for the given filter parameters exists, but the queryset
+        # still returns empty.
+        # Only the order of change message dictionary keywords differ, but:
+        #   a) the order of keywords should not matter for the query
+        #   b) the difference might only exist in the error message; the sorting
+        #       done on the filter parameter dictionary for the message might
+        #       create the difference
+        # 
+        #   AssertionError: LogEntry for ADDITION missing on objects: [<Video: Original>], model: (video).
+        # Filter parameters used:
+        # [('action_flag', 1), ('change_message', '[{"added": {"name": "video-band-Beziehung", "object": "Video_band object (7)"}}]'), ('content_type__pk', 55), ('object_id', 32)]; video
+        # LogEntry values:
+        # [('action_flag', 1), ('change_message', '[{"added": {"object": "Video_band object (7)", "name": "video-band-Beziehung"}}]'), ('content_type__pk', 55), ('object_id', '32')]; video
+
+        # FIXME: occasionally this returns false negatives:
+        # a log entry for the given filter parameters exists, but the queryset
+        # still returns empty.
+        # Only the order of change message dictionary keywords differ, but:
+        #   a) the order of keywords should not matter for the query
+        #   b) the difference might only exist in the error message; the sorting
+        #       done on the filter parameter dictionary for the message might
+        #       create the difference
+        # 
+        #   AssertionError: LogEntry for ADDITION missing on objects: [<Video: Original>], model: (video).
+        # Filter parameters used:
+        # [('action_flag', 1), ('change_message', '[{"added": {"name": "video-band-Beziehung", "object": "Video_band object (7)"}}]'), ('content_type__pk', 55), ('object_id', 32)]; video
+        # LogEntry values:
+        # [('action_flag', 1), ('change_message', '[{"added": {"object": "Video_band object (7)", "name": "video-band-Beziehung"}}]'), ('content_type__pk', 55), ('object_id', '32')]; video
 
         # We need the content_type as a filter parameter here, or we're going
         # to match everything.
@@ -147,7 +187,8 @@ class LoggingTestMixin(object):
             filter_params = {
                 'object_id': pk,
                 'content_type__pk': content_type.pk,
-                'action_flag': action_flag
+                'action_flag': action_flag,
+                'change_message': change_message
             }
             filter_params.update(**kwargs)
             qs = LogEntry.objects.filter(**filter_params)
@@ -170,10 +211,10 @@ class LoggingTestMixin(object):
                 )
                 for values in (
                         LogEntry.objects
-                        .order_by('pk')
-                        .filter(**filter_params)
-                        .values('pk', *list(filter_params))
-                    ):
+                                .order_by('pk')
+                                .filter(**filter_params)
+                                .values('pk', *list(filter_params))
+                ):
                     pk = values.pop('pk')
                     ct_model = ContentType.objects.get_for_id(values['content_type__pk']).model
                     msg += "\n{}: {}; {}".format(str(pk), sorted(values.items()), ct_model)
@@ -183,6 +224,7 @@ class LoggingTestMixin(object):
                 msg += "\nCheck your test method or state of LogEntry table."
                 raise AssertionError(msg)
         if unlogged:
+            # noinspection PyUnboundLocalVariable
             msg = (
                 "LogEntry for {op} missing on objects: {unlogged_objects}, "
                 "model: ({model_name})."
@@ -199,48 +241,21 @@ class LoggingTestMixin(object):
                     ContentType.objects.get_for_id(filter_params['content_type__pk']).model
                 )
                 msg += "\nLogEntry values: "
-                for l in LogEntry.objects.order_by('pk').values('pk', *list(filter_params)):
-                    pk = l.pop('pk')
-                    ct_model = ContentType.objects.get_for_id(l['content_type__pk']).model
-                    msg += "\n{}: {}; {}".format(str(pk), sorted(l.items()), ct_model)
+                for log_entry in LogEntry.objects.order_by('pk').values('pk', *list(filter_params)):
+                    pk = log_entry.pop('pk')
+                    ct_model = ContentType.objects.get_for_id(log_entry['content_type__pk']).model
+                    msg += "\n{}: {}; {}".format(str(pk), sorted(log_entry.items()), ct_model)
                 msg += "\nchange_messages: "
-                for l in LogEntry.objects.order_by('pk'):
-                    msg += "\n{}: {}".format(str(l.pk), l.get_change_message())
+                for log_entry in LogEntry.objects.order_by('pk'):
+                    msg += "\n{}: {}".format(str(log_entry.pk), log_entry.get_change_message())
             self.fail(msg)
 
-    def assertLoggedAddition(self, obj, related_obj=None, **kwargs):
+    def assertLoggedAddition(self, obj, **kwargs):
         """Assert that `obj` has a LogEntry with action_flag == ADDITION."""
-        # Do not overwrite any change_message filter_params
-        # (f.ex. change_message__contains) already set through kwargs:
-        if not any(k.startswith('change_message') for k in kwargs):
-            msg = {"added": {}}
-            if related_obj:
-                msg['added'].update({
-                    'name': force_text(related_obj._meta.verbose_name),
-                    'object': force_text(related_obj),
-                })
-            kwargs['change_message'] = str([msg]).replace("'", '"')
         self.assertLogged(obj, ADDITION, **kwargs)
 
-    def assertLoggedChange(self, obj, fields=None, related_obj=None, **kwargs):
+    def assertLoggedChange(self, obj, **kwargs):
         """Assert that `object` has a LogEntry with action_flag == CHANGE."""
-        # Do not overwrite any change_message filter_params
-        # (f.ex. change_message__contains) already set through kwargs:
-        if not any(k.startswith('change_message') for k in kwargs):
-            if fields:
-                if isinstance(fields, str):
-                    fields = [fields]
-                if not isinstance(fields, list):
-                    fields = list(fields)
-                # FIXME: this can't handle changes on fields of a related_obj
-                msg = {'changed': {'fields': sorted(
-                    [capfirst(obj._meta.get_field(f).verbose_name) for f in fields])}}
-                if related_obj:
-                    msg['changed'].update({
-                        'name': force_text(related_obj._meta.verbose_name),
-                        'object': force_text(related_obj),
-                    })
-                kwargs['change_message'] = str([msg]).replace("'", '"')
         self.assertLogged(obj, CHANGE, **kwargs)
 
     def assertLoggedDeletion(self, objects, **kwargs):

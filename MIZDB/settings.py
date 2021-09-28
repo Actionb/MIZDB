@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'
+SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'  # noqa
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -148,3 +148,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 
 # Required for debug_toolbar:
 INTERNAL_IPS = ['127.0.0.1']
+
+
+# URL to the wiki.
+# That URL is displayed in the header on each admin page.
+# See: sites.MIZAdminSite.each_context
+WIKI_URL = 'http://127.0.0.1/wiki/Hauptseite'
