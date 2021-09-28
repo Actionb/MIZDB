@@ -423,6 +423,8 @@ class PartialDateFormField(fields.MultiValueField):
 
 class PartialDateField(models.CharField):
     """Model field that handles PartialDate instances."""
+    # TODO: since the value stored is in isoformat, couldn't this Field be a
+    #  DateField subclass?
 
     default_error_messages = models.DateField.default_error_messages
     help_text = "Teilweise Angaben sind erlaubt (z.B. Jahr & Monat aber ohne Tag)."
