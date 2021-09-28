@@ -496,12 +496,12 @@ class HumanNameQuerySet(MIZQuerySet):
             # TODO: find out which exceptions might be raised by HumanName()
             return text
 
-    def find(self, q: str, *args: Any, **kwargs: Any) -> Union[List[Tuple[int, str]], QuerySet]:
-        # Parse q through HumanName first to 'combine' the various ways one
-        # could write a human name.
+    def search(self, search_term, search_type):
+        # Parse the search term through HumanName first to 'combine' the
+        # various ways one could write a human name.
         # (f.ex. 'first name surname' or 'surname, first name')
-        q = self._parse_human_name(q)
-        return super().find(q, *args, **kwargs)
+        search_term = self._parse_human_name(search_term)
+        return super().search(search_term, search_type)
 
 
 class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):

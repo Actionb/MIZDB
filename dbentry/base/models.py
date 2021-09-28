@@ -8,6 +8,8 @@ from dbentry.fields import YearField
 from dbentry.managers import CNQuerySet, MIZQuerySet
 from dbentry.utils import get_fields_and_lookups, get_model_fields
 
+# TODO: remove mentions of MIZQuerySet.find()
+
 
 class BaseModel(models.Model):
     """

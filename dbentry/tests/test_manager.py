@@ -733,15 +733,14 @@ class TestValuesDict(DataTestCase):
 
 class TestHumanNameQuerySet(MyTestCase):
 
-    def test_find_person(self):
+    def test_search_person(self):
         obj = make(_models.Person, vorname='Peter', nachname='Lustig')
         for name in ('Peter Lustig', 'Lustig, Peter'):
             with self.subTest():
-                results = _models.Person.objects.find(name)
-                msg = "Name looked up: %s" % name
-                self.assertIn((obj.pk, 'Peter Lustig'), results, msg=msg)
+                results = _models.Person.objects.search(name)
+                self.assertIn(obj, results, msg=f"Name looked up: {name}")
 
-    def test_find_autor(self):
+    def test_search_autor(self):
         obj = make(
             _models.Autor,
             person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
@@ -752,9 +751,8 @@ class TestHumanNameQuerySet(MyTestCase):
         )
         for name in names:
             with self.subTest():
-                results = _models.Autor.objects.find(name)
-                msg = "Name looked up: %s" % name
-                self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg=msg)
+                results = _models.Autor.objects.search(name)
+                self.assertIn(obj, results, msg=f"Name looked up: {name}")
 
 
 class TestFindSpecialCases(DataTestCase):

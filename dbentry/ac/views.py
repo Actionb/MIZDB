@@ -94,11 +94,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         Filter the given queryset with the view's search term ``q``.
 
         If ``q`` is a numeric value, try a primary key lookup. Otherwise use
-        either MIZQuerySet.find to find results or filter against
-        ``create_field``, if that is set.
-
-        Returns:
-            a list if querying via MIZQuerySet.find or a MIZQuerySet.
+        either MIZQuerySet.search to find results.
         """
         if self.q:
             # If the search term is a numeric value, try using it in a primary
@@ -160,32 +156,14 @@ class ACBase(autocomplete.Select2QuerySetView):
         codename = get_permission_codename('add', opts)
         return user.has_perm("%s.%s" % (opts.app_label, codename))
 
-    def get_result_value(self, result: Union[Model, Sequence]) -> Optional[Union[str, int]]:
+    def get_result_value(self, result: Model) -> Optional[Union[str, int]]:
         """
-        Return the value (usually the primary key) of a result.
-
-        Args:
-            result: may be a model instance or a sequence, such as the list
-                returned by MIZQuerySet.find().
+        Return the value (usually the primary key) of a result model instance.
         """
-        if isinstance(result, (list, tuple)):
-            if result[0] == 0:
-                # The list 'result' contains the IDs of the results.
-                # A '0' ID may be the 'weak hits' separator
-                # (query.PrimaryFieldsSearchQuery).
-                # Set it's id to None to make it not selectable.
-                return None
-            return result[0]
         return str(result.pk)  # type: ignore
 
-    def get_result_label(self, result: Union[Model, Sequence]) -> str:
-        """
-        Return the label of a result.
-
-        Args:
-            result: may be a model instance or a sequence, such as the list
-                returned by MIZQuerySet.find().
-        """
+    def get_result_label(self, result: Model) -> str:
+        """Return the label of a result model instance."""
         if isinstance(result, (list, tuple)):
             return result[1]
         return str(result)
