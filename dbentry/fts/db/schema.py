@@ -4,7 +4,7 @@ from tsvector_field.schema import DatabaseTriggerEditor
 
 class MIZDBTriggerEditor(DatabaseTriggerEditor):
     """
-    Extend DatabaseTriggerEditor to accounnt for the column.language attribute.
+    Extend DatabaseTriggerEditor to account for the column.language attribute.
     """
 
     def _to_tsvector_weights(self, field):
