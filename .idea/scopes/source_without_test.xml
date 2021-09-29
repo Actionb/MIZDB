@@ -1,3 +1,3 @@
 <component name="DependencyValidationManager">
-  <scope name="source_without_test" pattern="!file[MIZDB]:.idea//*&amp;&amp;!file[MIZDB]:htmlcov//*&amp;&amp;!file[MIZDB]:locale//*&amp;&amp;!file[MIZDB]:logs//*&amp;&amp;!file[MIZDB]:db//*&amp;&amp;!file[MIZDB]:requirements//*&amp;&amp;!file[MIZDB]:static//*&amp;&amp;!file:.coverage&amp;&amp;!file:.coveragerc&amp;&amp;!file:.gitignore&amp;&amp;!file:manage.py&amp;&amp;!file:mypy.ini&amp;&amp;!file:README.md&amp;&amp;!file:requirements.txt&amp;&amp;!ext:*/&amp;&amp;!file[MIZDB]:dbentry/tests//*&amp;&amp;!file[MIZDB]:dbentry/migrations//*&amp;&amp;!file[MIZDB]:dbentry/fixtures//*" />
+  <scope name="source_without_test" pattern="(file[MIZDB]:dbentry//*||file[MIZDB]:MIZDB//*)&amp;&amp;!file[MIZDB]:dbentry/static//*&amp;&amp;!file[MIZDB]:dbentry/migrations//*&amp;&amp;!file[MIZDB]:dbentry/fixtures//*&amp;&amp;!file[MIZDB]:dbentry/templates//*&amp;&amp;!file[MIZDB]:dbentry/tests//*" />
 </component>
