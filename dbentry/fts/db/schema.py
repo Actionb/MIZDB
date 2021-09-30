@@ -4,7 +4,10 @@ from tsvector_field.schema import DatabaseTriggerEditor
 
 class MIZDBTriggerEditor(DatabaseTriggerEditor):
     """
-    Extend DatabaseTriggerEditor to account for the column.language attribute.
+    Extend DatabaseTriggerEditor to include the language attribute of a column.
+
+    SearchVectorField attributes 'language' and 'language_column' will be
+    ignored when creating the setweight SQL.
     """
 
     def _to_tsvector_weights(self, field):
