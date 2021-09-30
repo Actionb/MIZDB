@@ -18,7 +18,6 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
         weights = []
         for column in field.columns:
             weights.append(sql_setweight.format(
-                # FIXME: catch invalid column.language (f.ex. empty string)
                 language=self.quote_value(column.language),
                 column=self.quote_name(column.name),
                 weight=self.quote_value(column.weight)

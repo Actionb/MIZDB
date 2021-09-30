@@ -1,5 +1,6 @@
-from django.db import models
 from django.test import TestCase
+
+import tsvector_field
 
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 
@@ -45,3 +46,20 @@ class TestSearchVectorField(TestCase):
         self.assertEqual(kwargs['columns'], ['some_column'])
         self.assertNotIn('blank', kwargs)
         self.assertNotIn('editable', kwargs)
+
+    def test_check_language_attribute(self):
+        # Assert that the check catches missing WeightedColumn languages.
+        field = SearchVectorField(
+            columns=[
+                WeightedColumn('Ham', 'A', language='simple'),
+                WeightedColumn('Bacon', 'C', language=''),
+                tsvector_field.WeightedColumn('Egg', 'D'),
+            ]
+        )
+        errors = list(field._check_language_attributes(textual_columns=None))
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(
+            errors[0].msg,
+            "Language required for column WeightedColumn('Bacon', 'C', '')"
+        )
+        self.assertEqual(errors[0].obj, field)

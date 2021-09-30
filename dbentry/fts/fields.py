@@ -1,3 +1,4 @@
+from django.core import checks
 from django.utils.encoding import force_text
 
 import tsvector_field
@@ -10,7 +11,6 @@ class WeightedColumn(tsvector_field.WeightedColumn):
     This allows setting the language of each column of a SearchVectorField.
     The default implementation only allowed one language per SearchVectorField.
     """
-    # TODO: add a column language check
 
     def __init__(self, name, weight, language):
         self.language = language
@@ -29,7 +29,6 @@ class WeightedColumn(tsvector_field.WeightedColumn):
 
 
 class SearchVectorField(tsvector_field.SearchVectorField):
-    # Adjust SearchVectorField to skip the _check_language_attributes check.
     
     def __init__(self, blank=True, editable=False, *args, **kwargs):
         # Set defaults for blank and editable. Note that tsvector_field ALWAYS
@@ -37,9 +36,15 @@ class SearchVectorField(tsvector_field.SearchVectorField):
         super().__init__(blank=blank, editable=editable, *args, **kwargs)
 
     def _check_language_attributes(self, textual_columns):
-        # Skip this check.
-        # Changes to WeightedColumn stopped this check from working properly.
-        return []
+        """Check that every dbentry.WeightedColumn column has a language set."""
+        if self.columns:
+            for column in self.columns:
+                if isinstance(column, WeightedColumn) and not column.language:
+                    yield checks.Error(
+                        "Language required for column "
+                        f"WeightedColumn({column.name!r}, {column.weight!r}, {column.language!r})",
+                        obj=self
+                    )
 
     def deconstruct(self):
         """
