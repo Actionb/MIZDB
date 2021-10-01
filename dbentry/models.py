@@ -299,7 +299,7 @@ class Ausgabe(ComputedNameModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', 'simple'),
+            WeightedColumn('_name', 'A', 'simple_numeric'),
             WeightedColumn('beschreibung', 'C', 'german'),
             WeightedColumn('bemerkungen', 'D', 'simple')
         ]
