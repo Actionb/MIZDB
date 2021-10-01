@@ -753,28 +753,3 @@ class TestHumanNameQuerySet(MyTestCase):
             with self.subTest():
                 results = _models.Autor.objects.search(name)
                 self.assertIn(obj, results, msg=f"Name looked up: {name}")
-
-
-class TestFindSpecialCases(DataTestCase):
-
-    model = _models.Band
-    # noinspection SpellCheckingInspection
-    raw_data = [{'band_name': 'Ümlautße'}]
-
-    def test_search_sharp_s(self):
-        # Assert that a 'ß' search term is handled properly.
-        # ('ß'.casefold() performed in BaseSearchQuery.clean_string() results in 'ss')
-        results = self.model.objects.search('ß')
-        self.assertTrue(
-            results, msg="Expected to find the instance with 'ß' in its name.")
-
-    def test_search_umlaute(self):
-        # SQLite performs case sensitive searches for strings containing chars
-        # outside the ASCII range (such as Umlaute ä, ö, ü).
-        for q in ('ü', 'Ü'):
-            with self.subTest(q=q):
-                results = self.model.objects.search(q)
-                self.assertTrue(
-                    results,
-                    msg="Expected to find matches regardless of case of Umlaut."
-                )
