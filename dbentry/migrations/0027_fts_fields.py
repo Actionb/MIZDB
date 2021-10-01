@@ -8,23 +8,6 @@ import tsvector_field
 import dbentry.fts.fields
 
 
-class CreateDictInt(operations.CreateExtension):
-
-    def __init__(self):
-        self.name = 'dict_int'
-
-    def database_backwards(self, app_label, schema_editor, from_state, to_state):
-        # Only drop the dict_int extension, if no text search dicts depend on it.
-        with schema_editor.connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT 1 FROM pg_ts_template INNER JOIN pg_ts_dict "
-                "ON pg_ts_template.oid = pg_ts_dict.dicttemplate "
-                "WHERE tmplname = 'intdict_template' AND dictname != 'intdict';"
-            )
-            if not bool(cursor.fetchone()):
-                super().database_backwards(app_label, schema_editor, from_state, to_state)
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -40,7 +23,7 @@ class Migration(migrations.Migration):
         # to_tsquery('simple', '2018-01')           => '2018' & '-01'
         # to_tsvector('simple_numeric', '2018-01')  => '01':2 '2018':1
         # to_tsquery('simple_numeric', '2018-01')   => '2018' & '01'
-        CreateDictInt(),
+        operations.CreateExtension('dict_int'),
         migrations.RunSQL(
             sql=(
                 "CREATE TEXT SEARCH DICTIONARY signed_numeric (TEMPLATE = intdict_template);"
