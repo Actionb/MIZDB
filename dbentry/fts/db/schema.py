@@ -4,7 +4,8 @@ from tsvector_field.schema import DatabaseTriggerEditor
 
 class MIZDBTriggerEditor(DatabaseTriggerEditor):
     """
-    Extend DatabaseTriggerEditor to include the language attribute of a column.
+    Extend tsvector_field.DatabaseTriggerEditor to include the language
+    attribute of a column.
 
     SearchVectorField attributes 'language' and 'language_column' will be
     ignored when creating the setweight SQL.
@@ -17,11 +18,13 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
 
         weights = []
         for column in field.columns:
-            weights.append(sql_setweight.format(
-                language=self.quote_value(column.language),
-                column=self.quote_name(column.name),
-                weight=self.quote_value(column.weight)
-            ))
+            weights.append(
+                sql_setweight.format(
+                    language=self.quote_value(column.language),
+                    column=self.quote_name(column.name),
+                    weight=self.quote_value(column.weight)
+                )
+            )
         weights[-1] = weights[-1][:-3] + ';'
 
         return weights
@@ -29,14 +32,8 @@ class MIZDBTriggerEditor(DatabaseTriggerEditor):
 
 class MIZDBSchemaEditor(PostgreSQLSchemaEditor):
     """
-    Schema editor class with a trigger_editor_class attribute.
-
-    tsvector_field's schema editor calls the trigger editor class directly in
-    each method, i.e.:
-        DatabaseTriggerEditor(self).create_model(model)
-    Changing the trigger editor class thus means that each method must be
-    changed. To facilitate custom editors, introduce a trigger_editor_class
-    attribute that is then called instead.
+    Schema editor that calls another 'trigger' editor that extends the editor
+    SQL with triggers for the search vector fields.
     """
 
     trigger_editor_class = MIZDBTriggerEditor

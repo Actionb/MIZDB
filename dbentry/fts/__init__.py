@@ -2,8 +2,7 @@
 This package adds a SearchVectorField with WeightedColumns and a QuerySet mixin
 for django's postgres full text search. This package builds upon the python
 package ``django-tsvector-field``, and extends it by allowing setting the
-'language' (i.e. postgres search dictionary/config) of each column of a
-SearchVectorField.
+'language' (i.e. postgres search config) of each column of a SearchVectorField.
 """
 """
 In detail:

@@ -1,22 +1,24 @@
-from django.core import checks
-from django.utils.encoding import force_text
+from typing import Any, Dict, Iterator, List, Tuple
 
 import tsvector_field
+from django.core import checks
+from django.utils.encoding import force_text
 
 
 class WeightedColumn(tsvector_field.WeightedColumn):
     """
     Extend tsvector_field.WeightedColumn class with a language attribute.
 
-    This allows setting the language of each column of a SearchVectorField.
+    This allows setting the language (text search config) of each column of a
+    SearchVectorField.
     The default implementation only allowed one language per SearchVectorField.
     """
 
-    def __init__(self, name, weight, language):
+    def __init__(self, name: str, weight: str, language: str) -> None:
         self.language = language
         super().__init__(name, weight)
 
-    def deconstruct(self):
+    def deconstruct(self) -> Tuple[str, list, Dict[str, list]]:
         """
         Return a 3-tuple (path, args, kwargs) with which the column can be
         recreated.
@@ -29,13 +31,15 @@ class WeightedColumn(tsvector_field.WeightedColumn):
 
 
 class SearchVectorField(tsvector_field.SearchVectorField):
-    
-    def __init__(self, blank=True, editable=False, *args, **kwargs):
+
+    def __init__(
+            self, blank: bool = True, editable: bool = False, *args: Any, **kwargs: Any
+    ) -> None:
         # Set defaults for blank and editable. Note that tsvector_field ALWAYS
         # sets null to True.
         super().__init__(blank=blank, editable=editable, *args, **kwargs)
 
-    def _check_language_attributes(self, textual_columns):
+    def _check_language_attributes(self, textual_columns: List[str]) -> Iterator[checks.Error]:
         """Check that every dbentry.WeightedColumn column has a language set."""
         if self.columns:
             for column in self.columns:
@@ -46,7 +50,7 @@ class SearchVectorField(tsvector_field.SearchVectorField):
                         obj=self
                     )
 
-    def deconstruct(self):
+    def deconstruct(self) -> Tuple[str, str, list, Dict[str, list]]:
         """
         Return a 4-tuple (name, path, args, kwargs) with which the field can be
         recreated.
