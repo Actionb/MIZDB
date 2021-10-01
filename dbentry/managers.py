@@ -253,9 +253,8 @@ class AusgabeQuerySet(CNQuerySet):
             return self.order_by().update(**kwargs)
         return super().update(**kwargs)
 
-    def search(self, q: str) -> QuerySet:
-        # Override the default order of the search query with the chronological
-        # order.
+    def search(self, q: str, search_type: str = 'plain') -> 'AusgabeQuerySet':
+        # Always apply the chronological ordering to the search results.
         return super().search(q).chronological_order()
 
     def increment_jahrgang(self, start_obj: Model, start_jg: int = 1) -> Dict[int, List[int]]:
