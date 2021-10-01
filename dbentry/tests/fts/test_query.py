@@ -117,6 +117,15 @@ class TestFullTextSearch(DataTestCase):
                     msg="Expected to find matches regardless of case of Umlaut."
                 )
 
+    def test_search_ausgabe(self):
+        # Assert that an Ausgabe instance can be found using its _name.
+        # This tests the use of the 'simple_numeric' search config that
+        # addresses postgres default search configs tripping over string
+        # numerics with hyphens.
+        obj = make(_models.Ausgabe, ausgabejahr__jahr=2018, ausgabenum__num=3)
+        self.assertIn(obj, _models.Ausgabe.objects.search('2018-3'))
+        self.assertIn(obj, _models.Ausgabe.objects.search('2018 3'))
+
 
 class TestTextSearchQuerySetMixin(TestCase):
 
