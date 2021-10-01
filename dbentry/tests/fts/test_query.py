@@ -8,7 +8,7 @@ from django.test import TestCase
 from dbentry import models as _models
 from dbentry.factory import make
 from dbentry.fts.fields import SearchVectorField
-from dbentry.fts.manager import TextSearchQuerySetMixin
+from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.tests.base import DataTestCase
 
 

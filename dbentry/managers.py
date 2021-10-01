@@ -10,7 +10,7 @@ from django.db.models import Count, Max, Min, Model, QuerySet
 from django.db.models.constants import LOOKUP_SEP
 from nameparser import HumanName
 
-from dbentry.fts.manager import TextSearchQuerySetMixin
+from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.utils import leapdays
 
 
