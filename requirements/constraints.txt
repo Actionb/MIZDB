@@ -12,4 +12,4 @@ requests==2.25.1
 
 # Test/development packages
 django-test-without-migrations==0.6
-factory-boy==2.11.1
+factory-boy==2.12.0
