@@ -7,8 +7,8 @@ django-formtools==2.3
 
 # Other python packages
 nameparser==1.0.6
-python-stdnum==1.14
-requests==2.25.1
+python-stdnum==1.17
+requests==2.26.0
 
 # Test/development packages
 django-test-without-migrations==0.6
