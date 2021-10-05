@@ -5,6 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.eric6project" />
       <excludeFolder url="file://$MODULE_DIR$/dbentry/utils/.mypy_cache" />
       <excludeFolder url="file://$MODULE_DIR$/.mypy_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/.tox" />
       <excludePattern pattern="*.e4p" />
     </content>
     <orderEntry type="jdk" jdkName="py3" jdkType="Python SDK" />
