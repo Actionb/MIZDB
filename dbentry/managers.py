@@ -223,10 +223,6 @@ def build_date(
 
 class AusgabeQuerySet(CNQuerySet):
     chronologically_ordered = False
-    # Ausgabe _name contains mainly numerics, such as '2018-01'.
-    #   config 'simple' will parse '2018-01' as '2018 & -01'
-    #   config 'simple_numeric' will parse '2018-01' as '2018 & 01'
-    simple_config = 'simple_numeric'
 
     def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
         # QuerySet._chain() will update the clone's __dict__ with the kwargs

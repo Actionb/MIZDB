@@ -35,9 +35,9 @@ class Person(ComputedNameModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('_name', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -90,9 +90,9 @@ class Musiker(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('kuenstler_name', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('kuenstler_name', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -116,7 +116,7 @@ class MusikerAlias(BaseAliasModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('alias', 'B', 'simple'),
+            WeightedColumn('alias', 'B', 'simple_unaccent'),
         ]
     )
 
@@ -130,7 +130,7 @@ class Genre(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('genre', 'A', 'simple'),
+            WeightedColumn('genre', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -151,7 +151,7 @@ class GenreAlias(BaseAliasModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('alias', 'B', 'simple'),
+            WeightedColumn('alias', 'B', 'simple_unaccent'),
         ]
     )
 
@@ -167,11 +167,10 @@ class Band(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('band_name', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('band_name', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ],
-        blank=True, null=True, editable=False
     )
 
     create_field = 'band_name'
@@ -190,7 +189,7 @@ class BandAlias(BaseAliasModel):
     parent = models.ForeignKey('Band', models.CASCADE)
 
     _fts = SearchVectorField(
-        columns=[WeightedColumn('alias', 'B', 'simple')],
+        columns=[WeightedColumn('alias', 'B', 'simple_unaccent')],
     )
 
 
@@ -209,9 +208,9 @@ class Autor(ComputedNameModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('_name', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -299,9 +298,9 @@ class Ausgabe(ComputedNameModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', 'simple_numeric'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('_name', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -488,8 +487,8 @@ class Monat(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('monat', 'A', 'simple'),
-            WeightedColumn('abk', 'A', 'simple')
+            WeightedColumn('monat', 'A', 'simple_unaccent'),
+            WeightedColumn('abk', 'A', 'simple_unaccent')
         ]
     )
 
@@ -536,10 +535,10 @@ class Magazin(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('magazin_name', 'A', 'simple'),
-            WeightedColumn('issn', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('magazin_name', 'A', 'simple_unaccent'),
+            WeightedColumn('issn', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -568,7 +567,7 @@ class Verlag(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('verlag_name', 'A', 'simple'),
+            WeightedColumn('verlag_name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -593,7 +592,7 @@ class Ort(ComputedNameModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', 'simple'),
+            WeightedColumn('_name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -657,8 +656,8 @@ class Bundesland(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('bland_name', 'A', 'simple'),
-            WeightedColumn('code', 'A', 'simple')
+            WeightedColumn('bland_name', 'A', 'simple_unaccent'),
+            WeightedColumn('code', 'A', 'simple_unaccent')
         ]
     )
 
@@ -682,8 +681,8 @@ class Land(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('land_name', 'A', 'simple'),
-            WeightedColumn('code', 'A', 'simple')
+            WeightedColumn('land_name', 'A', 'simple_unaccent'),
+            WeightedColumn('code', 'A', 'simple_unaccent')
         ]
     )
 
@@ -705,7 +704,7 @@ class Schlagwort(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('schlagwort', 'A', 'simple'),
+            WeightedColumn('schlagwort', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -726,7 +725,7 @@ class SchlagwortAlias(BaseAliasModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('alias', 'A', 'simple'),
+            WeightedColumn('alias', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -760,10 +759,10 @@ class Artikel(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('schlagzeile', 'A', 'simple'),
-            WeightedColumn('zusammenfassung', 'B', 'german'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('schlagzeile', 'A', 'simple_unaccent'),
+            WeightedColumn('zusammenfassung', 'B', 'german_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -830,9 +829,10 @@ class Buch(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
+            # TODO: add columns for ISBN and EAN (autocomplete: looking up an object via its ISBN)
         ]
     )
 
@@ -854,7 +854,7 @@ class Herausgeber(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('herausgeber', 'A', 'simple'),
+            WeightedColumn('herausgeber', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -874,8 +874,8 @@ class Instrument(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('instrument', 'A', 'simple'),
-            WeightedColumn('kuerzel', 'A', 'simple'),
+            WeightedColumn('instrument', 'A', 'simple_unaccent'),
+            WeightedColumn('kuerzel', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -942,9 +942,9 @@ class Audio(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -966,7 +966,7 @@ class AudioMedium(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('medium', 'A', 'simple'),
+            WeightedColumn('medium', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1010,10 +1010,10 @@ class Plakat(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('signatur', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('signatur', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1032,7 +1032,7 @@ class Bildreihe(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1051,7 +1051,7 @@ class Schriftenreihe(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1081,9 +1081,9 @@ class Dokument(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1113,9 +1113,9 @@ class Memorabilien(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1138,9 +1138,9 @@ class Spielort(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('name', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1164,7 +1164,7 @@ class SpielortAlias(BaseAliasModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('alias', 'A', 'simple'),
+            WeightedColumn('alias', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1185,9 +1185,9 @@ class Technik(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1219,10 +1219,10 @@ class Veranstaltung(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
-            WeightedColumn('datum', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('name', 'A', 'simple_unaccent'),
+            WeightedColumn('datum', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1257,7 +1257,7 @@ class VeranstaltungAlias(BaseAliasModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('alias', 'A', 'simple'),
+            WeightedColumn('alias', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1271,7 +1271,7 @@ class Veranstaltungsreihe(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1327,9 +1327,9 @@ class Video(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1348,7 +1348,7 @@ class VideoMedium(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('medium', 'A', 'simple'),
+            WeightedColumn('medium', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1397,7 +1397,7 @@ class Geber(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1419,7 +1419,7 @@ class Lagerort(ComputedNameModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('_name', 'A', 'simple'),
+            WeightedColumn('_name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1553,9 +1553,9 @@ class Datei(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 
@@ -1577,7 +1577,7 @@ class Plattenfirma(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('name', 'A', 'simple'),
+            WeightedColumn('name', 'A', 'simple_unaccent'),
         ]
     )
 
@@ -1610,7 +1610,7 @@ class BaseBrochure(BaseModel):
 
     genre = models.ManyToManyField('Genre')
 
-    # TODO: add full text seach SearchVectorField
+    # TODO: add full text search SearchVectorField
     #   Brochure, Kalender, Warenkatalog inherit from BaseBrochure via
     #   multi-table inheritance. This means that fields declared in BaseBrochure
     #   aren't present in the postgres tables of Brochure, etc.
@@ -1730,9 +1730,9 @@ class Foto(BaseModel):
 
     _fts = SearchVectorField(
         columns=[
-            WeightedColumn('titel', 'A', 'simple'),
-            WeightedColumn('beschreibung', 'C', 'german'),
-            WeightedColumn('bemerkungen', 'D', 'simple')
+            WeightedColumn('titel', 'A', 'simple_unaccent'),
+            WeightedColumn('beschreibung', 'C', 'german_unaccent'),
+            WeightedColumn('bemerkungen', 'D', 'simple_unaccent')
         ]
     )
 

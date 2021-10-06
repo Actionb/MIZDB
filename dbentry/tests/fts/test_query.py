@@ -1,14 +1,15 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVectorExact
 from django.db import models
-from django.db.models.expressions import CombinedExpression
+from django.db.models.expressions import CombinedExpression, Value
+from django.db.models.functions import Coalesce, Greatest
 from django.test import TestCase
 
 from dbentry import models as _models
 from dbentry.factory import make
-from dbentry.fts.fields import SearchVectorField
-from dbentry.fts.query import TextSearchQuerySetMixin
+from dbentry.fts.fields import SearchVectorField, WeightedColumn
+from dbentry.fts.query import TextSearchQuerySetMixin, _get_search_vector_field
 from dbentry.tests.base import DataTestCase
 
 
@@ -82,6 +83,7 @@ class TestFullTextSearch(DataTestCase):
         results = self.queryset.search('Doktores')
         self.assertEqual(results.count(), 1)
         self.assertEqual(results.get(), self.obj1)
+        self.assertTrue(results.get().rank)
 
     def test_ordering(self):
         # Assert that the result querysets includes the model's default ordering.
@@ -140,7 +142,13 @@ class TestTextSearchQuerySetMixin(TestCase):
             fts = SearchVectorField()
 
         class TestModel(models.Model):
-            svf = SearchVectorField()
+            title = models.CharField()
+            svf = SearchVectorField(
+                columns=[
+                    WeightedColumn('title', 'A', 'simple_unaccent'),
+                    WeightedColumn('title', 'B', 'german_unaccent')
+                ]
+            )
             alias = models.ForeignKey(Alias, on_delete=models.CASCADE)
             objects = TestQuerySet.as_manager()
             related_search_vectors = ['alias__fts']
@@ -157,25 +165,23 @@ class TestTextSearchQuerySetMixin(TestCase):
     def test_get_search_query(self):
         # Assert that get_search_query prepares the search term (escape & strip
         # each word, and add prefix matching), and that it sets the search_type
-        # to 'raw', for any SearchQuery with config='simple' that is not already
-        # 'raw' (in which case it is assumed, that the search term has been
-        # prepared already).
+        # to 'raw', for any SearchQuery with config='simple_unaccent'.
         search_query = self.queryset._get_search_query(
-            "Ardal O'Hanlon ", config='simple', search_type='phrase'
+            "Ardal O'Hanlon ", config='simple_unaccent', search_type='phrase'
         )
         self.assertEqual(search_query.value, "'''Ardal''' & '''O''' & '''Hanlon''':*")
         self.assertEqual(search_query.search_type, 'raw')
 
         # config is not 'simple', leave the search term as is:
         search_query = self.queryset._get_search_query(
-            "Ardal O'Hanlon ", config='german', search_type='phrase'
+            "Ardal O'Hanlon ", config='german_unaccent', search_type='phrase'
         )
         self.assertEqual(search_query.value, "Ardal O'Hanlon ")
         self.assertEqual(search_query.search_type, 'phrase')
 
         # 'raw' search type, leave the search term as is:
         search_query = self.queryset._get_search_query(
-            "Ardal O'Hanlon ", config='simple', search_type='raw'
+            "Ardal O'Hanlon ", config='simple_unaccent', search_type='raw'
         )
         self.assertEqual(search_query.value, "Ardal O'Hanlon ")
         self.assertEqual(search_query.search_type, 'raw')
@@ -203,8 +209,9 @@ class TestTextSearchQuerySetMixin(TestCase):
 
         where_node = queryset.query.where.children[0]
         self.assertEqual(where_node.connector, 'OR')
-        # 2 exact lookups (one simple, one stemmed) for the field 'svf' and one
-        # exact lookup for the related search vector 'alias__fts'
+        # 2 exact lookups (one per column: one simple, one stemmed) for the
+        # field 'svf' and one exact lookup for the related search
+        # vector 'alias__fts'.
         self.assertEqual(len(where_node.children), 3)
         simple, stemmed, related = where_node.children
 
@@ -214,7 +221,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
         # query.config will be a Value expression
-        self.assertEqual(query.config.value, 'simple')
+        self.assertEqual(query.config.value, 'simple_unaccent')
         self.assertEqual(query.search_type, 'raw')
 
         self.assertIsInstance(stemmed, SearchVectorExact)
@@ -222,7 +229,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "Hovercraft")
-        self.assertEqual(query.config.value, 'german')
+        self.assertEqual(query.config.value, 'german_unaccent')
         self.assertEqual(query.search_type, 'plain')
 
         self.assertIsInstance(related, SearchVectorExact)
@@ -230,7 +237,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.alias_opts.get_field('fts'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
-        self.assertEqual(query.config.value, 'simple')
+        self.assertEqual(query.config.value, 'simple_unaccent')
         self.assertEqual(query.search_type, 'raw')
 
     def test_search_rank_annotation(self):
@@ -240,29 +247,87 @@ class TestTextSearchQuerySetMixin(TestCase):
 
         # Check search rank annotation:
         self.assertIn('rank', queryset.query.annotations)
-        rank_expression = queryset.query.annotations['rank']
-        self.assertIsInstance(rank_expression, CombinedExpression)
-        self.assertEqual(rank_expression.connector, '+')
-        lhs, rhs = rank_expression.get_source_expressions()
+        func = queryset.query.annotations['rank']
+        # Greatest func is expected, since we have queries for the model's
+        # search field and a related search field:
+        self.assertIsInstance(func, Greatest)
+        model_rank, related_rank = func.get_source_expressions()
 
-        # lhs should be the search rank with the simple search query
-        self.assertIsInstance(lhs, SearchRank)
-        col, query = lhs.get_source_expressions()
+        # Inspect the rank for the model field:
+        self.assertIsInstance(model_rank, CombinedExpression)
+        self.assertEqual(model_rank.connector, '+')
+        simple, stemmed = model_rank.get_source_expressions()
+
+        # 'simple' should be the search rank with the simple search query
+        self.assertIsInstance(simple, SearchRank)
+        col, query = simple.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
         # query.config will be a Value expression
-        self.assertEqual(query.config.value, 'simple')
+        self.assertEqual(query.config.value, 'simple_unaccent')
         self.assertEqual(query.search_type, 'raw')
 
-        # rhs should be the search rank with the stemmed search query
-        self.assertIsInstance(rhs, SearchRank)
-        col, query = rhs.get_source_expressions()
+        # 'stemmed' should be the search rank with the stemmed search query
+        self.assertIsInstance(stemmed, SearchRank)
+        col, query = stemmed.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "Hovercraft")
-        self.assertEqual(query.config.value, 'german')
+        self.assertEqual(query.config.value, 'german_unaccent')
         self.assertEqual(query.search_type, 'plain')
+
+        # The related rank consists of only one item, and thus hasn't been
+        # combined.
+        # Coalesce is used on every related rank:
+        self.assertIsInstance(related_rank, Coalesce)
+        related, fallback_value = related_rank.get_source_expressions()
+        self.assertIsInstance(fallback_value, Value)
+        self.assertEqual(fallback_value.value, 0)
+        # 'related' should be the search rank with the simple search query for
+        # the related vector field
+        self.assertIsInstance(related, SearchRank)
+        col, query = related.get_source_expressions()
+        self.assertEqual(col.target, self.alias_opts.get_field('fts'))
+        self.assertIsInstance(query, SearchQuery)
+        self.assertEqual(query.value, "'''Hovercraft''':*")
+        self.assertEqual(query.config.value, 'simple_unaccent')
+        self.assertEqual(query.search_type, 'raw')
+
+    def test_search_rank_annotation_related_rank_only(self):
+        # Assert that only the rank for the related vectors appears in the
+        # query annotations if no model rank could be built (f.ex. when the
+        # search vector feld was missing columns).
+        mocked_search_field = Mock(columns=None)
+        mocked_get_search_field = Mock(return_value=mocked_search_field)
+        with patch('dbentry.fts.query._get_search_vector_field', mocked_get_search_field):
+            queryset = self.queryset.search('Hovercraft')
+            self.assertIn('rank', queryset.query.annotations)
+            # ranks for related vectors should always be 'coalesced'
+            self.assertIsInstance(queryset.query.annotations['rank'], Coalesce)
+
+    def test_search_rank_annotation_model_rank_only(self):
+        # Assert that only the rank for the model field appears in the
+        # query annotations if no related rank could be built.
+        mocked_get_related = Mock(return_value={})
+        with patch.object(self.queryset, '_get_related_search_vectors', mocked_get_related):
+            queryset = self.queryset.search('Hovercraft')
+            self.assertIn('rank', queryset.query.annotations)
+            # the rank expression should be the combined expression for the two
+            # columns of the model's search vector field
+            self.assertIsInstance(queryset.query.annotations['rank'], CombinedExpression)
+
+    def test_search_no_columns_no_related_vectors(self):
+        # Assert that no filters or annotations are added to the queryset if no
+        # columns and no related search vectors were declared.
+        mocked_search_field = Mock(columns=None)
+        mocked_get_search_field = Mock(return_value=mocked_search_field)
+        mocked_get_related = Mock(return_value={})
+        with patch('dbentry.fts.query._get_search_vector_field', mocked_get_search_field):
+            with patch.object(self.queryset, '_get_related_search_vectors', mocked_get_related):
+                queryset = self.queryset.search('Hovercraft')
+                self.assertFalse(queryset.query.has_filters())
+                self.assertFalse(queryset.query.annotations)
 
     def test_search_no_search_term(self):
         # Assert that no filters or annotations are added to the queryset if no
