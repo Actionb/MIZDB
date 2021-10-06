@@ -169,7 +169,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         search_query = self.queryset._get_search_query(
             "Ardal O'Hanlon ", config='simple_unaccent', search_type='phrase'
         )
-        self.assertEqual(search_query.value, "'''Ardal''' & '''O''' & '''Hanlon''':*")
+        self.assertEqual(search_query.value, "'''Ardal''':* & '''O''':* & '''Hanlon''':*")
         self.assertEqual(search_query.search_type, 'raw')
 
         # config is not 'simple', leave the search term as is:

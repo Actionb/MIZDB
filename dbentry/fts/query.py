@@ -60,10 +60,8 @@ class TextSearchQuerySetMixin(object):
                 search_type = 'raw'
                 # Replace single quotes with a space:
                 search_term = search_term.replace("'", ' ')
-                # Escape each word:
-                words = ["'''" + word + "'''" for word in search_term.split()]
-                # Add prefix to last word:
-                words[-1] += ':*'
+                # Escape each word and add prefix matching:
+                words = ["'''" + word + "''':*" for word in search_term.split()]
                 search_term = ' & '.join(word for word in words)
         return SearchQuery(search_term, config=config, search_type=search_type)
 
