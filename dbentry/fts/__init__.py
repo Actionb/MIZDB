@@ -14,9 +14,9 @@ field will be parsed (``to_tsvector``) using the same language/config.
 
 But we need to able to have columns with different languages contributing to
 the same search vector:
-assuming that a table is about persons with fields for name and description, 
-then the name of a person must not be stemmed (i.e. 'simple' must be used as 
-config), while the description of that person should be parsed according to the
+assuming that a table is about books with fields for title and summary, 
+then the title of the book must not be stemmed (i.e. 'simple' must be used as 
+config), while the summary of that book should be parsed according to the
 appropriate natural language.
 
 This package adds that 'per column language'. To that end, changes had to be 
