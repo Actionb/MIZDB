@@ -227,8 +227,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
-        # query.config will be a Value expression
-        self.assertEqual(query.config.value, 'simple_unaccent')
+        self.assertEqual(query.config, Value('simple_unaccent'))
         self.assertEqual(query.search_type, 'raw')
 
         self.assertIsInstance(stemmed, SearchVectorExact)
@@ -236,7 +235,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "Hovercraft")
-        self.assertEqual(query.config.value, 'german_unaccent')
+        self.assertEqual(query.config, Value('german_unaccent'))
         self.assertEqual(query.search_type, 'plain')
 
         self.assertIsInstance(related, SearchVectorExact)
@@ -244,7 +243,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.alias_opts.get_field('fts'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
-        self.assertEqual(query.config.value, 'simple_unaccent')
+        self.assertEqual(query.config, Value('simple_unaccent'))
         self.assertEqual(query.search_type, 'raw')
 
     def test_search_filters_no_simple_configs(self):
@@ -284,7 +283,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
         # query.config will be a Value expression
-        self.assertEqual(query.config.value, 'simple_unaccent')
+        self.assertEqual(query.config, Value('simple_unaccent'))
         self.assertEqual(query.search_type, 'raw')
 
         # 'stemmed' should be the search rank with the stemmed search query
@@ -293,7 +292,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "Hovercraft")
-        self.assertEqual(query.config.value, 'german_unaccent')
+        self.assertEqual(query.config, Value('german_unaccent'))
         self.assertEqual(query.search_type, 'plain')
 
         # The related rank consists of only one item, and thus hasn't been
@@ -310,7 +309,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(col.target, self.alias_opts.get_field('fts'))
         self.assertIsInstance(query, SearchQuery)
         self.assertEqual(query.value, "'''Hovercraft''':*")
-        self.assertEqual(query.config.value, 'simple_unaccent')
+        self.assertEqual(query.config, Value('simple_unaccent'))
         self.assertEqual(query.search_type, 'raw')
 
     def test_search_rank_annotation_related_rank_only(self):
