@@ -1,32 +1,16 @@
-Django==2.2.16
-	pytz==2017.2
-	sqlparse==0.3.0
-
+Django==2.2.24
 psycopg2==2.8.5
-
 
 # Django extensions/apps
 django-autocomplete-light==3.7.0.dev0
-	six==1.10.0
-
-django-formtools==2.2
-
+django-formtools==2.3
 django-tsvector-field==0.9.5
 
 # Other python packages
 nameparser==1.0.6
-
-python-stdnum==1.14
-
-requests==2.25.1
-
+python-stdnum==1.17
+requests==2.26.0
 
 # Test/development packages
 django-test-without-migrations==0.6
-
-factory-boy==2.11.1
-	Faker==0.8.15
-		python-dateutil==2.7.3
-			six==1.10.0
-		six==1.10.0
-		test-unidecode==1.2
+factory-boy==2.12.0
