@@ -29,7 +29,7 @@ class TextSearchQuerySetMixin(object):
           configs will include prefix matching (see  _get_search_query).
     """
 
-    simple_configs = ('simple_unaccent', )
+    simple_configs = ('simple_unaccent', 'simple')
 
     def _get_search_query(self, search_term: str, config: str, search_type: str) -> SearchQuery:
         """
@@ -90,11 +90,14 @@ class TextSearchQuerySetMixin(object):
                 model_search_rank += rank
 
         related_search_rank = None
+        # For related vectors, only use a non-stemming config:
+        simple_config = 'simple'
+        if self.simple_configs:
+            simple_config = self.simple_configs[0]
         for field_path in self._get_related_search_vectors():
             # Include related search vector fields in the filter:
             query = self._get_search_query(
-                # NOTE: use config declared on related field (or its columns)?
-                search_term, config='simple_unaccent', search_type=search_type
+                search_term, config=simple_config, search_type=search_type
             )
             filters |= Q(**{field_path: query})  # NOTE: simple query only?
             # The rank function will return NULL, if the related search
