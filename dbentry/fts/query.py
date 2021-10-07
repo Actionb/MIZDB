@@ -1,4 +1,4 @@
-from typing import Any, Type, Union
+from typing import Any, Dict, Optional, Type, Union
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import F, Model, Q
@@ -8,7 +8,7 @@ from django.db.models.functions import Coalesce, Greatest
 from dbentry.fts.fields import SearchVectorField
 
 
-def _get_search_vector_field(model: Type[Model]) -> SearchVectorField:
+def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
     """
     Return the first SearchVectorField instance found for the given model.
     """
@@ -16,6 +16,7 @@ def _get_search_vector_field(model: Type[Model]) -> SearchVectorField:
     for field in model._meta.get_fields():
         if isinstance(field, SearchVectorField):
             return field
+    return None
 
 
 class TextSearchQuerySetMixin(object):
@@ -56,7 +57,7 @@ class TextSearchQuerySetMixin(object):
             search_type = 'raw'
         return SearchQuery(search_term, config=config, search_type=search_type)
 
-    def _get_related_search_vectors(self) -> Union[dict, dict[str, F]]:
+    def _get_related_search_vectors(self) -> Union[dict, Dict[str, F]]:
         """
         Get the search vector fields of related models.
 
@@ -80,7 +81,7 @@ class TextSearchQuerySetMixin(object):
         if not search_term:
             return self
         # noinspection PyUnresolvedReferences
-        search_field = _get_search_vector_field(self.model)
+        search_field = _get_search_vector_field(self.model)  # type: ignore[attr-defined]
         if not search_field:
             return self
 
