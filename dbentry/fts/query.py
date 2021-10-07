@@ -99,7 +99,7 @@ class TextSearchQuerySetMixin(object):
             query = self._get_search_query(
                 search_term, config=simple_config, search_type=search_type
             )
-            filters |= Q(**{field_path: query})  # NOTE: simple query only?
+            filters |= Q(**{field_path: query})
             # The rank function will return NULL, if the related search
             # vector column has no value - i.e. when the row's record has no
             # related items on the related table (nothing to join).
