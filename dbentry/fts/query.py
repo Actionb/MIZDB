@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, List, Optional, Type
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import F, Model, Q
