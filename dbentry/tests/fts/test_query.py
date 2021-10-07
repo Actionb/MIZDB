@@ -197,19 +197,16 @@ class TestTextSearchQuerySetMixin(TestCase):
                 self.assertEqual(search_query.search_type, search_type)
 
     def test_get_related_search_vectors_no_attr(self):
-        # Assert that an empty dictionary is returned, if the queryset model
-        # has no related_search_vectors attribute.
+        # Assert that an empty list is returned, if the queryset model has no
+        # related_search_vectors attribute.
         with patch.object(self.queryset, 'model') as mocked_model:
             delattr(mocked_model, 'related_search_vectors')
-            self.assertEqual(self.queryset._get_related_search_vectors(), {})
+            self.assertEqual(self.queryset._get_related_search_vectors(), [])
 
     def test_get_related_search_vectors(self):
         # Assert that get_related_search_vectors returns the search vectors
         # declared by the queryset model.
-        self.assertEqual(
-            self.queryset._get_related_search_vectors(),
-            {'alias__fts': models.F('alias__fts')}
-        )
+        self.assertEqual(self.queryset._get_related_search_vectors(), ['alias__fts'])
 
     def test_search_filters(self):
         # Assert that the queryset returned by search() has the expected

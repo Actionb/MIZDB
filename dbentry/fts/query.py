@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import F, Model, Q
@@ -57,24 +57,12 @@ class TextSearchQuerySetMixin(object):
             search_type = 'raw'
         return SearchQuery(search_term, config=config, search_type=search_type)
 
-    def _get_related_search_vectors(self) -> Union[dict, Dict[str, F]]:
+    def _get_related_search_vectors(self) -> List[str]:
         """
-        Get the search vector fields of related models.
-
-        Returns:
-            a dictionary of field_path to F(field_path); i.e. the path to the
-              related vector field and a query expression that refers to that
-              field
+        Return a list of field paths to the search vector fields of related
+        models.
         """
-        # noinspection PyUnresolvedReferences
-        if not hasattr(self.model, 'related_search_vectors'):  # type: ignore[attr-defined]
-            return {}
-        vectors = {}
-        # noinspection PyUnresolvedReferences
-        # TODO: only the field_path is ever used - the expression is unnecessary
-        for field_path in self.model.related_search_vectors:  # type: ignore[attr-defined]
-            vectors[field_path] = F(field_path)
-        return vectors
+        return getattr(self.model, 'related_search_vectors', [])  # type: ignore[attr-defined]
 
     def search(self, search_term: str, search_type: str = 'plain') -> Any:
         """Do a full text search for ``search_term``."""
@@ -87,8 +75,9 @@ class TextSearchQuerySetMixin(object):
 
         filters = Q()
         model_search_rank = None
-        # NOTE: django>3.1: add cover_density=True argument to SearchRank?
-        # TODO: add rank normalization: 0 <= rank <= 1
+        # TODO: django>3.1: add cover_density=True argument to SearchRank?
+        #   -> maybe for normalizing queries
+        # TODO: django>3.1: add rank normalization: 0 <= rank <= 1
         for column in search_field.columns or ():
             query = self._get_search_query(
                 search_term, config=column.language, search_type=search_type
@@ -101,7 +90,7 @@ class TextSearchQuerySetMixin(object):
                 model_search_rank += rank
 
         related_search_rank = None
-        for field_path, search_vector in self._get_related_search_vectors().items():
+        for field_path in self._get_related_search_vectors():
             # Include related search vector fields in the filter:
             query = self._get_search_query(
                 # NOTE: use config declared on related field (or its columns)?
