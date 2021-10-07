@@ -216,9 +216,9 @@ class TestTextSearchQuerySetMixin(TestCase):
 
         where_node = queryset.query.where.children[0]
         self.assertEqual(where_node.connector, 'OR')
-        # 2 exact lookups (one per column: one simple, one stemmed) for the
-        # field 'svf' and one exact lookup for the related search
-        # vector 'alias__fts'.
+        # 2 exact lookups, one for every config declared in the columns for the
+        # field 'svf' and one exact lookup for the related search vector
+        # 'alias__fts'.
         self.assertEqual(len(where_node.children), 3)
         simple, stemmed, related = where_node.children
 

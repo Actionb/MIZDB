@@ -78,7 +78,13 @@ class TextSearchQuerySetMixin(object):
         # TODO: django>3.1: add cover_density=True argument to SearchRank?
         #   -> maybe for normalizing queries
         # TODO: django>3.1: add rank normalization: 0 <= rank <= 1
+        # Add a query and a rank for every text search config defined on the
+        # search vector field's columns:
+        configs_seen = set()
         for column in search_field.columns or ():
+            if column.language in configs_seen:
+                continue
+            configs_seen.add(column.language)
             query = self._get_search_query(
                 search_term, config=column.language, search_type=search_type
             )
