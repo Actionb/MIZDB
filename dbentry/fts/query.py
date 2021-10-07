@@ -23,46 +23,37 @@ class TextSearchQuerySetMixin(object):
     Mixin for QuerySet classes that adds a search() text search method.
 
     Attributes:
-        - search_vector_field_name (str): the name of the SearchVectorField on
-          the model of this queryset
-        - simple_config (str): postgres text search config name for queries
-          without stemming
-        - stemmed_config (str): postgres text search config name for queries
-          that use natural language stemming
+        - simple_configs: names of postgres text search configs that do
+          not normalize words (stemming). 'Plain' search queries using these
+          configs will include prefix matching (see  _get_search_query).
     """
 
-    search_vector_field_name = '_fts'
-    simple_config = 'simple_unaccent'
-    stemmed_config = 'german_unaccent'
+    simple_configs = ('simple_unaccent', )
 
     def _get_search_query(self, search_term: str, config: str, search_type: str) -> SearchQuery:
         """
         Return a search query using the given search term, config/language and
         search type.
 
-        If the config is 'simple' and the search type is anything but 'raw',
-        modify the search term in the following way:
-            * replace single quotes
-            * escape each word of search term
-            * append a prefix matching label to the last word
-            * combine the words with a boolean AND (&)
-        The search type is then set to 'raw' so that postgres uses to_tsquery
-        instead of plainto_tsquery (which would undo the changes made to the
-        query text/search term).
+        Modify ``search_term`` to include prefix matching, if no word
+        normalization is intended and if ``search_type`` is 'plain'.
         """
-        if config == self.simple_config and search_type != 'raw':
-            # TODO: maybe search_types like phrase and websearch should be allowed to pass through?
-            # For name lookups, the search term should be interpreted as a
-            # prefix. Modify the search term to specify prefix matching (:*).
-            # If search_type is 'raw', expect the search term to have already
-            # been modified to be used as it is.
-            if search_term:
-                search_type = 'raw'
-                # Replace single quotes with a space:
-                search_term = search_term.replace("'", ' ')
-                # Escape each word and add prefix matching:
-                words = ["'''" + word + "''':*" for word in search_term.split()]
-                search_term = ' & '.join(word for word in words)
+        if search_term and config in self.simple_configs and search_type == 'plain':
+            # The given config does not use stemming - it makes sense to add
+            # prefix matching.
+            # Also: search terms for 'raw' queries are expected to be already
+            # formatted, and prefix matching does not work for the other search
+            # types such as 'phrase' or 'websearch'.
+
+            # Remove single quotes:
+            search_term = search_term.replace("'", ' ')
+            # Escape each word and add prefix matching to it:
+            words = ["'''" + word + "''':*" for word in search_term.split()]
+            # Reconnect the words using AND:
+            search_term = ' & '.join(word for word in words)
+            # In order to not have postgres parse the search term again and
+            # undo these changes, set the search_type to 'raw':
+            search_type = 'raw'
         return SearchQuery(search_term, config=config, search_type=search_type)
 
     def _get_related_search_vectors(self) -> Union[dict, dict[str, F]]:

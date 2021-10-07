@@ -160,6 +160,7 @@ class TestTextSearchQuerySetMixin(TestCase):
     def setUp(self):
         super().setUp()
         self.queryset = self.model.objects.all()
+        self.queryset.simple_configs = ('simple_unaccent',)
 
     # noinspection SpellCheckingInspection
     def test_get_search_query(self):
@@ -167,24 +168,33 @@ class TestTextSearchQuerySetMixin(TestCase):
         # each word, and add prefix matching), and that it sets the search_type
         # to 'raw', for any SearchQuery with config='simple_unaccent'.
         search_query = self.queryset._get_search_query(
-            "Ardal O'Hanlon ", config='simple_unaccent', search_type='phrase'
+            "Ardal O'Hanlon ", config='simple_unaccent', search_type='plain'
         )
         self.assertEqual(search_query.value, "'''Ardal''':* & '''O''':* & '''Hanlon''':*")
         self.assertEqual(search_query.search_type, 'raw')
 
-        # config is not 'simple', leave the search term as is:
+    # noinspection SpellCheckingInspection
+    def test_get_search_query_config_not_simple(self):
+        # Assert that get_search_query does not modify the search_term or
+        # changes the querie's search_type when the config is not registered
+        # as a 'simple' (non-normalizing) config.
         search_query = self.queryset._get_search_query(
-            "Ardal O'Hanlon ", config='german_unaccent', search_type='phrase'
+            "Ardal O'Hanlon ", config='german_unaccent', search_type='plain'
         )
         self.assertEqual(search_query.value, "Ardal O'Hanlon ")
-        self.assertEqual(search_query.search_type, 'phrase')
+        self.assertEqual(search_query.search_type, 'plain')
 
-        # 'raw' search type, leave the search term as is:
-        search_query = self.queryset._get_search_query(
-            "Ardal O'Hanlon ", config='simple_unaccent', search_type='raw'
-        )
-        self.assertEqual(search_query.value, "Ardal O'Hanlon ")
-        self.assertEqual(search_query.search_type, 'raw')
+    # noinspection SpellCheckingInspection
+    def test_get_search_query_search_type_not_plain(self):
+        # Assert that get_search_query does not modify the search_term or
+        # changes the querie's search_type when the search type is not 'plain'.
+        for search_type in ('raw', 'phrase'):  # TODO: django > 3.1: add search_type 'websearch'
+            with self.subTest(search_type=search_type):
+                search_query = self.queryset._get_search_query(
+                    "Ardal O'Hanlon ", config='simple_unaccent', search_type=search_type
+                )
+                self.assertEqual(search_query.value, "Ardal O'Hanlon ")
+                self.assertEqual(search_query.search_type, search_type)
 
     def test_get_related_search_vectors_no_attr(self):
         # Assert that an empty dictionary is returned, if the queryset model
