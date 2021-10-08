@@ -310,8 +310,16 @@ class TestTextSearchQuerySetMixin(TestCase):
         with patch('dbentry.fts.query._get_search_vector_field', mocked_get_search_field):
             queryset = self.queryset.search('Hovercraft')
             self.assertIn('rank', queryset.query.annotations)
-            # ranks for related vectors should be aggregated using Max
-            self.assertIsInstance(queryset.query.annotations['rank'], Max)
+            rank = queryset.query.annotations['rank']
+            # The rank for related vectors should be aggregated using Max and
+            # be wrapped in Coalesce:
+            self.assertIsInstance(rank, Max)
+            coalesce, *filters = rank.get_source_expressions()
+            self.assertIsInstance(coalesce, Coalesce)
+            search_rank, coalesce_value = coalesce.get_source_expressions()
+            self.assertIsInstance(search_rank, SearchRank)
+            col, query = search_rank.get_source_expressions()
+            self.assertEqual(col.target, self.alias_opts.get_field('fts'))
 
     def test_search_rank_annotation_model_rank_only(self):
         # Assert that only the rank for the model field appears in the
@@ -320,9 +328,13 @@ class TestTextSearchQuerySetMixin(TestCase):
         with patch.object(self.queryset, '_get_related_search_vectors', mocked_get_related):
             queryset = self.queryset.search('Hovercraft')
             self.assertIn('rank', queryset.query.annotations)
+            rank = queryset.query.annotations['rank']
             # the rank expression should be the combined expression for the two
             # columns of the model's search vector field
-            self.assertIsInstance(queryset.query.annotations['rank'], CombinedExpression)
+            self.assertIsInstance(rank, CombinedExpression)
+            for expr in rank.get_source_expressions():
+                col, query = expr.get_source_expressions()
+                self.assertEqual(col.target, self.opts.get_field('svf'))
 
     def test_search_no_columns_no_related_vectors(self):
         # Assert that no filters or annotations are added to the queryset if no
