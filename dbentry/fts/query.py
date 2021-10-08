@@ -67,7 +67,8 @@ class TextSearchQuerySetMixin(object):
     def search(self, search_term: str, search_type: str = 'plain') -> Any:
         """Do a full text search for ``search_term``."""
         if not search_term:
-            return self
+            # noinspection PyUnresolvedReferences
+            return self.none()  # type: ignore[attr-defined]
         # noinspection PyUnresolvedReferences
         search_field = _get_search_vector_field(self.model)  # type: ignore[attr-defined]
         if not search_field:

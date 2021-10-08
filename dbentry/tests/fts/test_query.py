@@ -349,10 +349,13 @@ class TestTextSearchQuerySetMixin(TestCase):
                 self.assertFalse(queryset.query.annotations)
 
     def test_search_no_search_term(self):
-        # Assert that no filters or annotations are added to the queryset if no
-        # search term is provided.
+        # Assert that an empty (using none()) queryset is returned if no search
+        # term was provided.
         queryset = self.queryset.search('')
-        self.assertFalse(queryset.query.has_filters())
+        self.assertFalse(queryset)
+        self.assertTrue(queryset.query.has_filters())
+        self.assertEqual(len(queryset.query.where.children), 1)
+        self.assertIsInstance(queryset.query.where.children[0], NothingNode)
         self.assertFalse(queryset.query.annotations)
 
     def test_search_no_search_vector_field_name(self):
