@@ -138,7 +138,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         super().setUpTestData()
 
         class TestQuerySet(TextSearchQuerySetMixin, models.QuerySet):
-            search_vector_field_name = 'svf'
+            simple_configs = ('simple_unaccent', 'simple')
 
         class Alias(models.Model):
             fts = SearchVectorField()
@@ -162,7 +162,6 @@ class TestTextSearchQuerySetMixin(TestCase):
     def setUp(self):
         super().setUp()
         self.queryset = self.model.objects.all()
-        self.queryset.simple_configs = ('simple_unaccent',)
 
     # noinspection SpellCheckingInspection
     def test_get_search_query(self):
@@ -345,9 +344,9 @@ class TestTextSearchQuerySetMixin(TestCase):
         mocked_get_related = Mock(return_value={})
         with patch('dbentry.fts.query._get_search_vector_field', mocked_get_search_field):
             with patch.object(self.queryset, '_get_related_search_vectors', mocked_get_related):
-                queryset = self.queryset.search('Hovercraft')
-                self.assertFalse(queryset.query.has_filters())
-                self.assertFalse(queryset.query.annotations)
+                query = self.queryset.search('Hovercraft').query
+                self.assertFalse(query.has_filters())
+                self.assertFalse(query.annotations)
 
     def test_search_no_search_term(self):
         # Assert that an empty (using none()) queryset is returned if no search
