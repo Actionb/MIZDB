@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import Max
 from django.db.models.expressions import CombinedExpression, Value
 from django.db.models.functions import Coalesce
+from django.db.models.sql.where import NothingNode
 from django.test import TestCase
 
 from dbentry import models as _models
@@ -357,13 +358,3 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(len(queryset.query.where.children), 1)
         self.assertIsInstance(queryset.query.where.children[0], NothingNode)
         self.assertFalse(queryset.query.annotations)
-
-    def test_search_no_search_vector_field_name(self):
-        # Assert that no filters or annotations are added to the queryset if
-        # the queryset model is missing the attribute that
-        # search_vector_field_name refers to.
-        with patch.object(self.queryset, 'model') as mocked_model:
-            delattr(mocked_model, self.queryset.search_vector_field_name)
-            queryset = self.queryset.search('Hovercraft')
-            self.assertFalse(queryset.query.has_filters())
-            self.assertFalse(queryset.query.annotations)

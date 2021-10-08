@@ -69,34 +69,33 @@ class TextSearchQuerySetMixin(object):
         if not search_term:
             # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
-        # noinspection PyUnresolvedReferences
-        search_field = _get_search_vector_field(self.model)  # type: ignore[attr-defined]
-        if not search_field:
-            return self
 
         filters = Q()
-        model_search_rank = None
-        # TODO: django>3.1: add cover_density=True argument to SearchRank?
-        #   -> maybe for normalizing queries
-        # TODO: django>3.1: add rank normalization: 0 <= rank <= 1
-        # Add a query and a rank for every text search config defined on the
-        # search vector field's columns:
-        configs_seen = set()
-        for column in search_field.columns or ():
-            if column.language in configs_seen:
-                continue
-            configs_seen.add(column.language)
-            query = self._get_search_query(
-                search_term, config=column.language, search_type=search_type
-            )
-            filters |= Q(**{search_field.name: query})
-            rank = SearchRank(F(search_field.name), query)
-            if model_search_rank is None:
-                model_search_rank = rank
-            else:
-                model_search_rank += rank
+        model_search_rank = related_search_rank = None
 
-        related_search_rank = None
+        # noinspection PyUnresolvedReferences
+        search_field = _get_search_vector_field(self.model)  # type: ignore[attr-defined]
+        if search_field:
+            # TODO: django>3.1: add cover_density=True argument to SearchRank?
+            #   -> maybe for normalizing queries
+            # TODO: django>3.1: add rank normalization: 0 <= rank <= 1
+            # Add a query and a rank for every text search config defined on
+            # the search vector field's columns:
+            configs_seen = set()
+            for column in search_field.columns or ():
+                if column.language in configs_seen:
+                    continue
+                configs_seen.add(column.language)
+                query = self._get_search_query(
+                    search_term, config=column.language, search_type=search_type
+                )
+                filters |= Q(**{search_field.name: query})
+                rank = SearchRank(F(search_field.name), query)
+                if model_search_rank is None:
+                    model_search_rank = rank
+                else:
+                    model_search_rank += rank
+
         # For related vectors, only use a non-stemming config:
         simple_config = 'simple'
         if self.simple_configs:
