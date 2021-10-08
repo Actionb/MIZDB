@@ -344,16 +344,15 @@ class TestTextSearchQuerySetMixin(TestCase):
         mocked_get_related = Mock(return_value={})
         with patch('dbentry.fts.query._get_search_vector_field', mocked_get_search_field):
             with patch.object(self.queryset, '_get_related_search_vectors', mocked_get_related):
-                query = self.queryset.search('Hovercraft').query
-                self.assertFalse(query.has_filters())
-                self.assertFalse(query.annotations)
+                queryset = self.queryset.search('Hovercraft')
+                self.assertEqual(len(queryset.query.where.children), 1)
+                self.assertIsInstance(queryset.query.where.children[0], NothingNode)
+                self.assertFalse(queryset.query.annotations)
 
     def test_search_no_search_term(self):
         # Assert that an empty (using none()) queryset is returned if no search
         # term was provided.
         queryset = self.queryset.search('')
-        self.assertFalse(queryset)
-        self.assertTrue(queryset.query.has_filters())
         self.assertEqual(len(queryset.query.where.children), 1)
         self.assertIsInstance(queryset.query.where.children[0], NothingNode)
         self.assertFalse(queryset.query.annotations)

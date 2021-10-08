@@ -117,7 +117,8 @@ class TextSearchQuerySetMixin(object):
 
         if not filters:
             # Neither of the loops ran: nothing to filter with.
-            return self
+            # noinspection PyUnresolvedReferences
+            return self.none()
 
         # Only use the rank of the closest matching related row (highest rank).
         # This prevents introducing duplicate rows due to related ranks having
