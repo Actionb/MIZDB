@@ -2,14 +2,15 @@ from unittest.mock import Mock, patch
 
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVectorExact
 from django.db import models
+from django.db.models import Max
 from django.db.models.expressions import CombinedExpression, Value
-from django.db.models.functions import Coalesce, Greatest
+from django.db.models.functions import Coalesce
 from django.test import TestCase
 
 from dbentry import models as _models
 from dbentry.factory import make
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
-from dbentry.fts.query import TextSearchQuerySetMixin, _get_search_vector_field
+from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.tests.base import DataTestCase
 
 
@@ -265,15 +266,14 @@ class TestTextSearchQuerySetMixin(TestCase):
 
         # Check search rank annotation:
         self.assertIn('rank', queryset.query.annotations)
-        func = queryset.query.annotations['rank']
-        # Greatest func is expected, since we have queries for the model's
-        # search field and a related search field:
-        self.assertIsInstance(func, Greatest)
-        model_rank, related_rank = func.get_source_expressions()
+        rank = queryset.query.annotations['rank']
+        # rank should be a combined expression, where the lhs (the first
+        # expression) is a combined expression of the 'model' ranks.
+        self.assertIsInstance(rank, CombinedExpression)
+        self.assertEqual(rank.connector, '+')
+        model_rank, related_rank = rank.get_source_expressions()
 
-        # Inspect the rank for the model field:
         self.assertIsInstance(model_rank, CombinedExpression)
-        self.assertEqual(model_rank.connector, '+')
         simple, stemmed = model_rank.get_source_expressions()
 
         # 'simple' should be the search rank with the simple search query
@@ -295,11 +295,12 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(query.config, Value('german_unaccent'))
         self.assertEqual(query.search_type, 'plain')
 
-        # The related rank consists of only one item, and thus hasn't been
-        # combined.
-        # Coalesce is used on every related rank:
-        self.assertIsInstance(related_rank, Coalesce)
-        related, fallback_value = related_rank.get_source_expressions()
+        # related_rank should be a Max aggregate of the 'coalesced' related
+        # ranks:
+        self.assertIsInstance(related_rank, Max)
+        coalesce_func = related_rank.get_source_expressions()[0]
+        self.assertIsInstance(coalesce_func, Coalesce)
+        related, fallback_value = coalesce_func.get_source_expressions()
         self.assertIsInstance(fallback_value, Value)
         self.assertEqual(fallback_value.value, 0)
         # 'related' should be the search rank with the simple search query for
@@ -321,8 +322,8 @@ class TestTextSearchQuerySetMixin(TestCase):
         with patch('dbentry.fts.query._get_search_vector_field', mocked_get_search_field):
             queryset = self.queryset.search('Hovercraft')
             self.assertIn('rank', queryset.query.annotations)
-            # ranks for related vectors should always be 'coalesced'
-            self.assertIsInstance(queryset.query.annotations['rank'], Coalesce)
+            # ranks for related vectors should be aggregated using Max
+            self.assertIsInstance(queryset.query.annotations['rank'], Max)
 
     def test_search_rank_annotation_model_rank_only(self):
         # Assert that only the rank for the model field appears in the

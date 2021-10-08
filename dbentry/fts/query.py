@@ -1,9 +1,9 @@
 from typing import Any, List, Optional, Type
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.db.models import F, Model, Q
+from django.db.models import F, Max, Model, Q
 from django.db.models import Value
-from django.db.models.functions import Coalesce, Greatest
+from django.db.models.functions import Coalesce
 
 from dbentry.fts.fields import SearchVectorField
 
@@ -121,26 +121,13 @@ class TextSearchQuerySetMixin(object):
             # Neither of the loops ran: nothing to filter with.
             return self
 
+        # Only use the rank of the closest matching related row (highest rank).
+        # This prevents introducing duplicate rows due to related ranks having
+        # different values for the same 'model object'.
         if model_search_rank and related_search_rank:
-            # To avoid duplicating rows in the results, just use the rank with
-            # the highest value.
-            # Explanation:
-            # For a given 'model rank', the related rank can be 0 (for the
-            # related rows that did not produce a match) and not 0 (for the
-            # related rows that did produce a match).
-            # If we were to just add both ranks up, we'd get two different
-            # ranks for the same record: that same the record would then turn
-            # up twice in the results.
-            # Example:
-            #       query for 'hovercraft':
-            # model_field | related__field | model_rank | related_rank
-            #  hovercraft |   hovercraft   |          1 |            1 (match on related)
-            #  hovercraft |  full of eels  |          1 |            0 (no match)
-            #  vikings    |   hovercraft   |          0 |            1 (match on related)
-            #  vikings    |   egg & spam   |          0 |            0 (no match)
-            search_rank = Greatest(model_search_rank, related_search_rank)
+            search_rank = model_search_rank + Max(related_search_rank)
         else:
-            search_rank = model_search_rank or related_search_rank
+            search_rank = model_search_rank or Max(related_search_rank)
 
         # noinspection PyProtectedMember
         return (
