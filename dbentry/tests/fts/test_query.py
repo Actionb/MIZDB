@@ -247,18 +247,6 @@ class TestTextSearchQuerySetMixin(TestCase):
         self.assertEqual(query.config, Value('simple_unaccent'))
         self.assertEqual(query.search_type, 'raw')
 
-    def test_search_filters_no_simple_configs(self):
-        # Assert that the filters for related search vectors default to
-        # 'simple' queries if the queryset specifies no simple_configs.
-        with patch.object(self.queryset, 'simple_configs', []):
-            queryset = self.queryset.search('Hovercraft')
-            related = queryset.query.where.children[0].children[-1]
-            self.assertIsInstance(related, SearchVectorExact)
-            col, query = related.get_source_expressions()
-            self.assertEqual(col.target, self.alias_opts.get_field('fts'))
-            self.assertIsInstance(query, SearchQuery)
-            self.assertEqual(query.config, Value('simple'))
-
     def test_search_rank_annotation(self):
         # Assert that the queryset returned by search() has the expected rank
         # annotation.

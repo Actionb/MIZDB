@@ -96,10 +96,8 @@ class TextSearchQuerySetMixin(object):
                 else:
                     model_search_rank += rank
 
-        # For related vectors, only use a non-stemming config:
-        simple_config = 'simple'
-        if self.simple_configs:
-            simple_config = self.simple_configs[0]
+        # For related vectors, use the top non-stemming config:
+        simple_config = self.simple_configs[0]
         for field_path in self._get_related_search_vectors():
             # Include related search vector fields in the filter:
             query = self._get_search_query(
