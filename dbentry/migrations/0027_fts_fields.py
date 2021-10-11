@@ -298,4 +298,28 @@ class Migration(migrations.Migration):
         tsvector_field.IndexSearchVector('verlag', '_fts'),
         tsvector_field.IndexSearchVector('video', '_fts'),
         tsvector_field.IndexSearchVector('videomedium', '_fts'),
+        migrations.AddField(
+            model_name='basebrochure',
+            name='_base_fts',
+            field=dbentry.fts.fields.SearchVectorField(columns=[dbentry.fts.fields.WeightedColumn('titel', 'A', 'simple_unaccent'), dbentry.fts.fields.WeightedColumn('zusammenfassung', 'B', 'german_unaccent'), dbentry.fts.fields.WeightedColumn('bemerkungen', 'D', 'simple_unaccent')]),
+        ),
+        migrations.AddField(
+            model_name='brochure',
+            name='_fts',
+            field=dbentry.fts.fields.SearchVectorField(columns=[dbentry.fts.fields.WeightedColumn('beschreibung', 'C', 'german_unaccent')]),
+        ),
+        migrations.AddField(
+            model_name='kalender',
+            name='_fts',
+            field=dbentry.fts.fields.SearchVectorField(columns=[dbentry.fts.fields.WeightedColumn('beschreibung', 'C', 'german_unaccent')]),
+        ),
+        migrations.AddField(
+            model_name='katalog',
+            name='_fts',
+            field=dbentry.fts.fields.SearchVectorField(columns=[dbentry.fts.fields.WeightedColumn('beschreibung', 'C', 'german_unaccent')]),
+        ),
+        tsvector_field.IndexSearchVector('basebrochure', '_base_fts'),
+        tsvector_field.IndexSearchVector('brochure', '_fts'),
+        tsvector_field.IndexSearchVector('kalender', '_fts'),
+        tsvector_field.IndexSearchVector('katalog', '_fts'),
     ]

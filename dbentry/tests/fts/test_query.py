@@ -130,6 +130,25 @@ class TestFullTextSearch(DataTestCase):
         self.assertIn(obj, _models.Ausgabe.objects.search('2018-3'))
         self.assertIn(obj, _models.Ausgabe.objects.search('2018 3'))
 
+    def test_search_kalender(self):
+        # Assert that a Kalender object can be found using values defined on
+        # its parent (BaseBrochure).
+        data = {
+            # BaseBrochure fields:
+            'titel': 'Titel',
+            'zusammenfassung': 'Zusammenfassung',
+            'bemerkungen': 'Bemerkungen',
+            # Kalender's own field:
+            'beschreibung': 'Beschreibung'
+        }
+        obj = make(_models.Kalender, **data)
+        control = make(_models.Kalender, titel='nope')
+        for field, value in data.items():
+            with self.subTest(field=field, value=value):
+                results = _models.Kalender.objects.search(search_term=value)
+                self.assertIn(obj, results)
+                self.assertNotIn(control, results)
+
 
 class TestTextSearchQuerySetMixin(TestCase):
 

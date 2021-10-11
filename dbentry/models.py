@@ -1551,6 +1551,14 @@ class BaseBrochure(BaseModel):
     #   This, in turn, means that these fields cannot immediately be used as
     #   columns for SearchVectorField.
 
+    _base_fts = SearchVectorField(
+        columns=[
+            WeightedColumn('titel', 'A', SIMPLE),
+            WeightedColumn('zusammenfassung', 'B', STEMMING),
+            WeightedColumn('bemerkungen', 'D', SIMPLE)
+        ]
+    )
+
     name_field = 'titel'
 
     def __str__(self) -> str:
@@ -1582,6 +1590,13 @@ class Brochure(BaseBrochure):
     # TODO: add spielort ManyToManyField or merge all the BaseBrochure models?
     # (assuming a Brochure is specifically about a venue/s)
 
+    _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
+
+    related_search_vectors = [
+        ('basebrochure_ptr___base_fts', SIMPLE),
+        ('basebrochure_ptr___base_fts', STEMMING),
+    ]
+
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
@@ -1592,6 +1607,13 @@ class Kalender(BaseBrochure):
 
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
+
+    _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
+
+    related_search_vectors = [
+        ('basebrochure_ptr___base_fts', SIMPLE),
+        ('basebrochure_ptr___base_fts', STEMMING),
+    ]
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
@@ -1613,6 +1635,13 @@ class Katalog(BaseBrochure):
     art = models.CharField(
         'Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH
     )
+
+    _fts = SearchVectorField(columns=[WeightedColumn('beschreibung', 'C', STEMMING)])
+
+    related_search_vectors = [
+        ('basebrochure_ptr___base_fts', SIMPLE),
+        ('basebrochure_ptr___base_fts', STEMMING),
+    ]
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
