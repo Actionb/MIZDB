@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'
+SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'  # noqa
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'formtools',
     'test_without_migrations',
     'debug_toolbar',
+    'django.contrib.postgres'
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,7 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'dbentry.fts.db',
         'NAME': 'mizdb',
         'USER': 'mizdb_user',
         'PASSWORD': 'm!zdb_2017',

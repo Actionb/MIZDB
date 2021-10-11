@@ -1,18 +1,21 @@
 from collections import OrderedDict
 from unittest.mock import Mock, patch
 
+from django.db.models import QuerySet
 from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreateable, GND, GNDPaginator, Paginator)
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator)
 from dbentry.factory import make
+from dbentry.managers import MIZQuerySet
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
+# noinspection SpellCheckingInspection,PyUnresolvedReferences
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     view_class = ACBase
@@ -27,7 +30,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             cls.model, band_name='Boop', genre=cls.genre,
             musiker__extra=1, bandalias__alias='Voltaire'
         )
-        cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietsche')
+        cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietzsche')
         cls.obj3 = make(cls.model, band_name='notfound', bandalias__alias='Descartes')
         cls.obj4 = make(cls.model, band_name='Boopband', bandalias__alias='Kant')
 
@@ -64,38 +67,17 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(create_option, [])
 
     def test_apply_q(self):
-        # Test the ordering of exact_match_qs, startswith_qs and then contains_qs
+        # Assert that exact matches come before partial ones.
         view = self.get_view(q='Boop')
         # obj1 is the only exact match
         # obj4 starts with q
-        # obj2 contains q
-        expected = [
-            (self.obj1.pk, self.obj1.__str__()),
-            (self.obj4.pk, self.obj4.__str__()),
-            (self.obj2.pk, self.obj2.__str__())
-        ]
-        self.assertEqual(list(view.apply_q(self.queryset)), expected)
-
-        # All but obj3 contain 'oop', standard ordering should apply as there
-        # are neither exact nor startswith matches.
-        view.q = 'oop'
-        expected = [
-            (self.obj2.pk, self.obj2.__str__()),
-            (self.obj1.pk, self.obj1.__str__()),
-            (self.obj4.pk, self.obj4.__str__())
-        ]
-        self.assertEqual(list(view.apply_q(self.queryset)), expected)
-
-        # only obj4 should appear
-        view.q = 'Boopband'
-        self.assertEqual(
-            list(view.apply_q(self.queryset)), [(self.obj4.pk, self.obj4.__str__())])
+        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4])
 
     def test_get_queryset_with_q(self):
         request = self.get_request()
         view = self.get_view(request)
         view.q = 'notfound'
-        self.assertEqual(list(view.get_queryset()), [(self.obj3.pk, self.obj3.__str__())])
+        self.assertEqual(list(view.get_queryset()), [self.obj3])
 
     def test_get_queryset_forwarded(self):
         # fake forwarded attribute
@@ -121,82 +103,72 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         # numeric string.
         view = self.get_view(self.get_request())
         view.q = str(self.obj1.pk)
-        # Note: a queryset will be returned, since filter() is called instead
-        # of find() (which returns a list of 2-tuples).
         self.assertIn(self.obj1, view.apply_q(self.queryset))
         # If the query for PK returns no results, results of a query using
-        # find() should be returned.
+        # search() should be returned.
         view.q = '0'
-        mocked_find = Mock()
+        mocked_search = Mock()
         mocked_exists = Mock(return_value=False)
         mocked_queryset = Mock(
             # The calls will be qs.filter().exists().
             # That means that qs.filter() should return an object with a
             # mocked 'exists' - which itself must return False.
             filter=Mock(return_value=Mock(exists=mocked_exists)),
-            find=mocked_find
+            search=mocked_search,
+            spec=MIZQuerySet,  # the mock must pass as a MIZQuerySet instance
         )
         view.apply_q(mocked_queryset)
-        self.assertTrue(mocked_find.called)
+        self.assertTrue(mocked_search.called)
         # Check that qs.filter was still called:
         self.assertTrue(mocked_queryset.filter.called)
         self.assertTrue(mocked_exists.called)
 
-    def test_dispatch_sets_model(self):
-        # dispatch should set the model attribute from the url caught parameter
+    def test_setup_sets_model(self):
+        # setup should set the model attribute from the url caught kwarg
         # 'model_name' if the view instance does not have one.
-        view = self.get_view()
+        view = self.view_class()
         view.model = None
-        try:
-            view.dispatch(model_name='ausgabe')
-        except:
-            # view.dispatch will run fine until it calls super() without a
-            # request positional argument:
-            # the model attribute is set before that.
-            pass
-        self.assertEqual(view.model._meta.model_name, 'ausgabe')
+        view.setup(self.get_request(), model_name='ausgabe')
+        self.assertEqual(view.model, _models.Ausgabe)
 
-    def test_dispatch_sets_create_field(self):
-        # Assert that dispatch can set the create field attribute from its kwargs.
-        view = self.get_view()
+    def test_setup_fails_gracefully_with_no_model(self):
+        # Assert that setup fails gracefully if no model class was set and a
+        # model_name kwarg was missing or was 'empty'.
+        request = self.get_request()
+        view = self.view_class()
+        view.model = None
+        with self.assertNotRaises(Exception):
+            view.setup(request)
+        view.model = None
+        for model_name in (None, ''):
+            with self.subTest(model_name=model_name):
+                with self.assertNotRaises(Exception):
+                    view.setup(request, model_name=model_name)
+                view.model = None
+
+    def test_setup_sets_create_field(self):
+        # Assert that setupp can set the create field attribute from its kwargs.
+        request = self.get_request()
+        view = self.view_class()
         view.create_field = None
-        try:
-            view.dispatch(create_field='this aint no field')
-        except:
-            # view.dispatch will run fine until it calls super() without a
-            # request positional argument:
-            # the model attribute is set before that.
-            pass
+        view.setup(request, create_field='this aint no field')
         self.assertEqual(view.create_field, 'this aint no field')
 
     def test_get_result_value(self):
-        # Result is a list:
         view = self.get_view()
-        self.assertEqual(view.get_result_value(['value', 'label']), 'value')
-
-        # Result is a model instance:
         instance = make(_models.Genre)
         self.assertEqual(view.get_result_value(instance), str(instance.pk))
 
-        # Result is a list/tuple, the first value is the integer 0 (ID == 0):
-        # (referring to the weak hits separator of PrimaryFieldsSearchQuery.
-        view = self.get_view()
-        self.assertEqual(view.get_result_value([0, 'weak hits separator']), None)
-
     def test_get_result_label(self):
-        # result is a list
         view = self.get_view()
-        self.assertEqual(view.get_result_label(['value', 'label']), 'label')
-
-        # result is a model instance
         instance = make(_models.Genre, genre='All this testing')
         self.assertEqual(view.get_result_label(instance), 'All this testing')
 
 
-class TestACCreateable(ACViewTestCase):
+class TestACCreatable(ACViewTestCase):
 
     model = _models.Autor
-    view_class = ACCreateable
+    view_class = ACCreatable
 
     def test_creator_property(self):
         # Assert that the create property returns a ac.creator.Creator instance.
@@ -206,25 +178,25 @@ class TestACCreateable(ACViewTestCase):
         view._creator = None
         self.assertIsNone(view._creator)
 
-    def test_createable(self):
-        # Assert that createable returns True if:
+    def test_creatable(self):
+        # Assert that creatable returns True if:
         # - a new object can be created from the given parameters
         # - no objects already present in the database fit the given parameters
         request = self.get_request()
         view = self.get_view(request)
-        self.assertTrue(view.createable('Alice Testman (AT)'))
+        self.assertTrue(view.creatable('Alice Testman (AT)'))
         make(
             self.model,
             person__vorname='Alice', person__nachname='Testman',
             kuerzel='AT'
         )
-        self.assertFalse(view.createable('Alice Testman (AT)'))
+        self.assertFalse(view.creatable('Alice Testman (AT)'))
 
     @translation_override(language=None)
     def test_get_create_option(self):
         # Assert that get_create_option appends a non-empty 'create_info' dict
         # to the default create option list.
-        # IF q is createable:
+        # IF q is creatable:
         request = self.get_request()
         view = self.get_view(request)
         self.assertTrue(hasattr(view, 'get_creation_info'))
@@ -241,7 +213,7 @@ class TestACCreateable(ACViewTestCase):
         create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
         self.assertEqual(len(create_option), 1)
 
-        view.createable = mockv(False)
+        view.creatable = mockv(False)
         self.assertFalse(view.get_create_option(context={}, q='Nope'))
 
     @translation_override(language=None)
@@ -316,7 +288,7 @@ class TestACCreateable(ACViewTestCase):
         self.assertEqual(create_info[3], expected)
 
     def test_create_object(self):
-        obj1 = make(
+        make(
             self.model,
             person__vorname='Alice', person__nachname='Testman',
             kuerzel='AT'
@@ -364,18 +336,18 @@ class TestACCreateable(ACViewTestCase):
 
         # create_field is None
         view._creator = _default_creator
-        with self.assertNotRaises(AttributeError) as cm:
+        with self.assertNotRaises(AttributeError):
             view.post(request)
 
         # creator is None
         view._creator = None
         view.create_field = 'kuerzel'
-        with self.assertNotRaises(AttributeError) as cm:
+        with self.assertNotRaises(AttributeError):
             view.post(request)
 
         # both are set
         view._creator = _default_creator
-        with self.assertNotRaises(AttributeError) as cm:
+        with self.assertNotRaises(AttributeError):
             view.post(request)
 
 
@@ -400,6 +372,7 @@ class TestACAusgabe(ACViewTestCase):
             cls.model, magazin=cls.mag, sonderausgabe=True,
             beschreibung='Special Edition'
         )
+        # noinspection SpellCheckingInspection
         cls.obj_jahrg = make(cls.model, magazin=cls.mag, jahrgang=12, ausgabenum__num=13)
         cls.obj_datum = make(cls.model, magazin=cls.mag, e_datum='1986-08-18')
 
@@ -410,58 +383,48 @@ class TestACAusgabe(ACViewTestCase):
 
     def test_apply_q_num(self):
         view = self.get_view(q=self.obj_num.__str__())
-        expected = (self.obj_num.pk, force_text(self.obj_num))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_num, view.apply_q(self.queryset))
 
         # search for 10/11
         self.obj_num.ausgabenum_set.create(num=11)
         self.obj_num.refresh_from_db()
         view = self.get_view(q=self.obj_num.__str__())
-        expected = (self.obj_num.pk, force_text(self.obj_num))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_num, view.apply_q(self.queryset))
 
     def test_apply_q_lnum(self):
         view = self.get_view(q=self.obj_lnum.__str__())
-        expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_lnum, view.apply_q(self.queryset), msg="q:%s,qs:%s" % (view.q, view.apply_q(self.queryset)))
 
         # search for 10/11
         self.obj_lnum.ausgabelnum_set.create(lnum=11)
         self.obj_lnum.refresh_from_db()
         view = self.get_view(q=self.obj_lnum.__str__())
-        expected = (self.obj_lnum.pk, force_text(self.obj_lnum))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_lnum, view.apply_q(self.queryset))
 
     def test_apply_q_monat(self):
         view = self.get_view(q=self.obj_monat.__str__())
-        expected = (self.obj_monat.pk, force_text(self.obj_monat))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_monat, view.apply_q(self.queryset))
 
         # search for Jan/Feb
         self.obj_monat.ausgabemonat_set.create(monat=make(_models.Monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
-        expected = (self.obj_monat.pk, force_text(self.obj_monat))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_monat, view.apply_q(self.queryset))
 
     def test_apply_q_sonderausgabe(self):
         view = self.get_view(q=self.obj_sonder.__str__())
-        expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_sonder, view.apply_q(self.queryset))
 
         view = self.get_view(q=self.obj_sonder.__str__(), forwarded={'magazin': self.mag.pk})
-        expected = (self.obj_sonder.pk, force_text(self.obj_sonder))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_sonder, view.apply_q(self.queryset))
 
     def test_apply_q_jahrgang(self):
         view = self.get_view(q=self.obj_jahrg.__str__())
-        expected = (self.obj_jahrg.pk, force_text(self.obj_jahrg))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_jahrg, view.apply_q(self.queryset))
 
     def test_apply_q_datum(self):
         view = self.get_view(q=self.obj_datum.__str__())
-        expected = (self.obj_datum.pk, force_text(self.obj_datum))
-        self.assertIn(expected, view.apply_q(self.queryset))
+        self.assertIn(self.obj_datum, view.apply_q(self.queryset))
 
 
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
@@ -478,7 +441,6 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Autor
-    # 'beschreibung' is a search_field and needs some data!
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
 
@@ -535,9 +497,9 @@ class TestACBuchband(ACViewTestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj1 = make(cls.model, titel='DerBuchband', is_buchband=True)
-        cls.obj2 = make(cls.model, titel='DasBuch', buchband=cls.obj1)
-        cls.obj3 = make(cls.model, titel='Buch')
+        cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
+        cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
+        cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
 
         cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
 
@@ -548,7 +510,7 @@ class TestACBuchband(ACViewTestCase):
         view = self.get_view(q='Buch')
         result = view.get_queryset()
         self.assertEqual(len(result), 1)
-        self.assertIn((self.obj1.pk, self.obj1.__str__()), result)
+        self.assertIn(self.obj1, result)
 
         self.obj1.qs().update(is_buchband=False)
         self.assertFalse(view.get_queryset())
@@ -589,18 +551,19 @@ class TestGND(ViewTestCase):
             with self.subTest(data=data):
                 self.assertFalse(view.get_query_string(q=data))
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset(self, mocked_searchnd):
-        mocked_searchnd.return_value = ([('id', 'label')], 1)
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset(self, mocked_query_func):
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep')
         self.assertTrue(view.get_queryset())
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset_page_number(self, mocked_searchnd):
-        # Assert that, for a given page number, get_queryset calls searchgnd
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_page_number(self, mocked_query_func):
+        # Assert that, for a given page number, get_queryset calls query func
         # with the correct startRecord index.
-        mocked_searchnd.return_value = ([('id', 'label')], 1)
-        startRecord_msg = "Expected searchgnd to be called with a 'startRecord' kwarg."
+        mocked_query_func.return_value = ([('id', 'label')], 1)
+        # noinspection PyPep8Naming
+        startRecord_msg = "Expected query func to be called with a 'startRecord' kwarg."
         view_initkwargs = {
             'q': 'Beep',
             'page_kwarg': 'page',
@@ -611,53 +574,53 @@ class TestGND(ViewTestCase):
         request = self.get_request()
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_searchnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['1'])
         # Should call with request.GET.page_kwarg:
         request = self.get_request(data={'page': '2'})
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_searchnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['11'])
         # Should call with view.kwargs.page_kwarg:
         request = self.get_request()
         view = self.get_view(request=request, kwargs={'page': 3}, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_searchnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['21'])
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset_paginate_by(self, mocked_searchnd):
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_paginate_by(self, mocked_query_func):
         # Assert that get_queryset factors in the paginate_by attribute when
         # calculating the startRecord value.
         # Set paginate_by to 5; the startRecord index for the third page
         # would then be 11 (first page: 1-5, second page: 6-10).
-        mocked_searchnd.return_value = ([('id', 'label')], 1)
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         request = self.get_request(data={'page': '3'})
         view = self.get_view(request=request, page_kwarg='page', paginate_by=5, q='Beep')
         view.get_queryset()
-        args, kwargs = mocked_searchnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn(
             'startRecord', kwargs,
-            msg="Expected searchgnd to be called with a 'startRecord' kwarg."
+            msg="Expected query func to be called with a 'startRecord' kwarg."
         )
         self.assertEqual(kwargs['startRecord'], ['11'])
 
-    @patch('dbentry.ac.views.searchgnd')
-    def test_get_queryset_maximum_records(self, mocked_searchnd):
-        # Assert that get_queryset passes 'paginate_by' to searchgnd as
+    @patch.object(GND, 'sru_query_func')
+    def test_get_queryset_maximum_records(self, mocked_query_func):
+        # Assert that get_queryset passes 'paginate_by' to the query func as
         # 'maximumRecords' kwarg.
         # (This sets the number of records retrieved per request)
-        mocked_searchnd.return_value = ([('id', 'label')], 1)
+        mocked_query_func.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep', paginate_by=9)
         view.get_queryset()
-        args, kwargs = mocked_searchnd.call_args
+        args, kwargs = mocked_query_func.call_args
         self.assertIn(
             'maximumRecords', kwargs,
-            msg="Expected searchgnd to be called with a 'maximumRecords' kwarg."
+            msg="Expected query func to be called with a 'maximumRecords' kwarg."
         )
         self.assertEqual(kwargs['maximumRecords'], ['9'])
 
@@ -677,6 +640,24 @@ class TestGND(ViewTestCase):
             'Plant, Robert (134485904)',
             view.get_result_label(('134485904', 'Plant, Robert'))
         )
+
+    @patch.object(GND, 'sru_query_func')
+    def test_get_query_func_kwargs(self, mocked_query_func):
+        # Assert that the view's query func is called with the kwargs added
+        # by get_query_func_kwargs.
+        view = self.get_view(request=self.get_request(), q='Beep')
+        mocked_get_kwargs = Mock(
+            return_value={'version': '-1', 'new_kwarg': 'never seen before'}
+        )
+        mocked_query_func.return_value = ([], 0)
+        with patch.object(view, 'get_query_func_kwargs', new=mocked_get_kwargs):
+            view.get_queryset()
+            mocked_query_func.assert_called()
+            _args, kwargs = mocked_query_func.call_args
+            self.assertIn('version', kwargs)
+            self.assertEqual(kwargs['version'], '-1')
+            self.assertIn('new_kwarg', kwargs)
+            self.assertEqual(kwargs['new_kwarg'], 'never seen before')
 
 
 class TestGNDPaginator(MyTestCase):

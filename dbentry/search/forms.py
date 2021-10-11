@@ -1,10 +1,11 @@
 # TODO: have 'and'/'or' checkboxes for SelectMultiple
 from collections import OrderedDict
+from typing import Any, List, Optional, Tuple, Type, Union
 
 from django import forms
 from django.conf import settings
 from django.core import exceptions
-from django.db.models import lookups as django_lookups
+from django.db.models import Field, Model, lookups as django_lookups
 from django.db.models.constants import LOOKUP_SEP
 from django.db.models.query import QuerySet
 
@@ -21,14 +22,17 @@ class RangeWidget(forms.MultiWidget):
 
     class Media:
         css = {
-            'all': ('admin/css/rangewidget.css', )
+            'all': ('admin/css/rangewidget.css',)
         }
+
     template_name = 'rangewidget.html'
 
-    def __init__(self, widget, attrs=None):
-        super().__init__(widgets=[widget] * 2, attrs=attrs)
+    def __init__(self, widget: forms.Widget, attrs: Optional[dict] = None) -> None:
+        # Duplicate the widget for the MultiWidget constructor:
+        widgets = [widget] * 2
+        super().__init__(widgets=widgets, attrs=attrs)
 
-    def decompress(self, value):
+    def decompress(self, value: Optional[str]) -> Union[List[str], List[None]]:
         # Split value into two values (start, end).
         # forms.MultiValueField.clean calls widget.decompress to get a list of
         # values. But since RangeFormField.clean uses the clean methods of
@@ -49,8 +53,14 @@ class RangeFormField(forms.MultiValueField):
 
     widget = RangeWidget
 
-    def __init__(self, formfield, require_all_fields=False, **kwargs):
+    def __init__(
+            self,
+            formfield: forms.Field,
+            require_all_fields: bool = False,
+            **kwargs: Any
+    ) -> None:
         if not kwargs.get('widget'):
+            # TODO: what about passed in widgets? Should they be 'wrapped' with RangeWidget?
             kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
         super().__init__(
@@ -59,8 +69,10 @@ class RangeFormField(forms.MultiValueField):
             **kwargs
         )
 
-    def get_initial(self, initial, name):
-        widget_data = self.widget.value_from_datadict(initial, None, name)
+    def get_initial(self, initial: dict, name: Any) -> list:
+        # pycharm cannot know that self.widget is a widget *instance* (not a class) at this point.
+        # noinspection PyArgumentList
+        widget_data = self.widget.value_from_datadict(data=initial, files=None, name=name)
         if isinstance(self.fields[0], forms.MultiValueField):
             # The sub fields are MultiValueFields themselves,
             # let them figure out the correct values for the given data.
@@ -71,7 +83,7 @@ class RangeFormField(forms.MultiValueField):
         else:
             return widget_data
 
-    def clean(self, value):
+    def clean(self, value: list) -> list:
         """Delegate cleaning to the clean method of each field."""
         return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
 
@@ -81,21 +93,22 @@ class SearchForm(forms.Form):
     Base form for the changelist search form.
 
     This form class is the default base class for searchform_factory.
-    It adds the method 'get_filters_params' that transforms the form's cleaned
-    data into valid queryset filter() keyword arguments.
+    It adds the method ``get_filters_params`` that transforms the form's
+    cleaned data into valid queryset filter() keyword arguments.
+
+    The factory adds the following attribute:
+        - ``lookups``: mapping of formfield_name: list of valid lookups
 
     Attributes:
-        - range_upper_bound: the lookup class that will be used when
-            a 'start' value is not provided for a range lookup.
-            defaults to: django.db.models.lookups.LessThanOrEqual
-    The factory adds the following attribute:
-        - lookups: mapping of formfield_name: list of valid lookups
+        - ``range_upper_bound``: the lookup class that will be used when
+          a 'start' value is not provided for a range lookup.
+          defaults to: django.db.models.lookups.LessThanOrEqual
     """
 
     range_upper_bound = django_lookups.LessThanOrEqual
 
     @property
-    def media(self):
+    def media(self) -> forms.Media:
         css = {
             'all': ('admin/css/forms.css', 'admin/css/search_form.css')
         }
@@ -108,13 +121,13 @@ class SearchForm(forms.Form):
         ]
         return super().media + forms.Media(css=css, js=js)
 
-    def get_filters_params(self):
+    def get_filters_params(self) -> dict:
         """
         Return a dict of queryset filters based on the form's cleaned_data
         to filter the changelist with.
         Adds any field specific lookups and clears 'empty' values.
         """
-        params = {}
+        params: dict = {}
         if not self.is_valid():
             return params
 
@@ -146,21 +159,21 @@ class SearchForm(forms.Form):
                     )
                     param_value = end
             elif (isinstance(formfield, forms.BooleanField)
-                    and not isinstance(formfield, forms.NullBooleanField)
-                    and not value):
+                  and not isinstance(formfield, forms.NullBooleanField)
+                  and not value):
                 # value is False on a simple BooleanField;
                 # don't include it in the filter parameters.
                 continue
             elif (value in formfield.empty_values
-                    or isinstance(value, QuerySet)
-                    and not value.exists()):
-                # Dont want empty values as filter parameters!
+                  or isinstance(value, QuerySet)
+                  and not value.exists()):
+                # Don't want empty values as filter parameters!
                 continue
             elif (
                     'in' in self.lookups.get(field_name, [])
                     and isinstance(value, QuerySet)
-                ):
-                # django admin's prepare_lookup_value() expects an '__in'
+            ):
+                # django admin prepare_lookup_value() expects an '__in'
                 # lookup to consist of comma separated values.
                 param_value = ",".join(
                     str(pk)
@@ -170,10 +183,10 @@ class SearchForm(forms.Form):
             params[param_key] = param_value
         return params
 
-    def clean_id__in(self):
+    def clean_id__in(self) -> str:
         """Clean the ID value by Removing any non-numeric characters."""
-        # The 'Plakat ID' is presented with a prefixed 'P'. People will try to
-        # query for the id WITH that prefix.
+        # Use case: the 'Plakat ID' is presented with a prefixed 'P'.
+        # People will try to query for the id WITH that prefix.
         return "".join(
             i
             for i in self.cleaned_data.get('id__in', '')
@@ -183,40 +196,45 @@ class SearchForm(forms.Form):
 
 class MIZAdminSearchForm(MIZAdminFormMixin, SearchForm):
     """A search form that includes django media and supports fieldsets."""
-
     pass
 
 
 class SearchFormFactory:
     """
-    Helper object around the central method 'get_search_form' to facilitate
+    Helper object around the central method ``get_search_form`` to facilitate
     building a form class for changelist filtering.
     """
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Type[SearchForm]:
         return self.get_search_form(*args, **kwargs)
 
-    def get_default_lookup(self, formfield):
+    @staticmethod
+    def get_default_lookup(formfield: forms.Field) -> Union[List[str], list]:
         """Return default lookups for a given formfield instance."""
         if isinstance(formfield.widget, forms.SelectMultiple):
             return ['in']
         return []
 
-    def resolve_to_dbfield(self, model, field_path):
+    @staticmethod
+    def resolve_to_dbfield(
+            model: Union[Model, Type[Model]], field_path: str
+    ) -> Tuple[Field, List[str]]:
         """
-        Follow the given 'field_path' from 'model' and return the final concrete
-        model field along the path and the path's remainder (lookups).
+        Follow the given ``field_path`` from ``model`` and return the final
+        concrete model field along the path and the path's remainder (lookups).
 
-        Raises FieldDoesNotExist if the field_path does not resolve to an
-        existing model field.
-        Raises FieldError if the field_path results in a reverse relation or if
-        an invalid lookup was used.
+        Raises:
+            FieldDoesNotExist: if the field_path does not resolve to an
+              existing model field.
+            FieldError: if the field_path results in a reverse relation or if
+              an invalid lookup was used.
         """
         return search_utils.get_dbfield_from_path(model, field_path)
 
-    def formfield_for_dbfield(self, db_field, **kwargs):
+    @staticmethod
+    def formfield_for_dbfield(db_field: Field, **kwargs: Any) -> forms.Field:
         """
-        Create a formfield for the given model field 'db_field' using the
+        Create a formfield for the given model field ``db_field`` using the
         keyword arguments provided.
         If no widget is provided and the field is a relation, a dal widget
         will be created.
@@ -255,7 +273,7 @@ class SearchFormFactory:
             widgets=None, localized_fields=None, labels=None, help_texts=None,
             error_messages=None, field_classes=None, forwards=None,
             range_lookup=django_lookups.Range
-        ):
+    ) -> Type[SearchForm]:
         """
         Create and return a search form class for a given model.
 
@@ -271,21 +289,23 @@ class SearchFormFactory:
         mapping, called 'lookups', of formfield_name: lookups which is attached
         to resulting form class. This is done to allow lookups in admin that are
         not whitelisted as a list_filter (see: ModelAdmin.lookup_allowed).
-        If the lookup (or parts of it) is a range lookup a RangeFormField is
+        If the lookup (or parts of it) is a range lookup, a RangeFormField is
         automatically created, wrapping the default formfield class for that
         formfield. If no lookups are included in the field_path, a default
         lookup will be retrieved from get_default_lookup().
 
         Additional arguments.
-            - forwards: a mapping of formfield_name: dal forwards
-            - range_lookup: the lookup class whose lookup_name is used to
-                recognize range lookups.
+            - ``forwards``: a mapping of formfield_name: dal forwards
+            - ``range_lookup``: the lookup class whose lookup_name is used to
+              recognize range lookups.
         """
         if formfield_callback is None:
             formfield_callback = self.formfield_for_dbfield
         if not callable(formfield_callback):
             raise TypeError('formfield_callback must be a function or callable')
 
+        # noinspection PyProtectedMember
+        opts = model._meta
         # Create the formfields.
         attrs = OrderedDict()
         lookup_mapping = {}
@@ -295,7 +315,7 @@ class SearchFormFactory:
                 db_field, lookups = self.resolve_to_dbfield(model, path)
             except (exceptions.FieldDoesNotExist, exceptions.FieldError):
                 continue
-            if model._meta.pk == db_field:
+            if opts.pk == db_field:
                 includes_pk = True
 
             formfield_kwargs = {}
@@ -336,16 +356,17 @@ class SearchFormFactory:
             # registering it separately in the lookup_mapping), the name meshes
             # with the query string created by utils.get_changelist_url
             # (which uses 'id__in').
-            db_field = model._meta.pk
+            db_field = opts.pk
             if db_field.is_relation:
                 # Assuming OneToOneRelation:
                 db_field = db_field.target_field
             attrs['id__in'] = formfield_callback(db_field, label='ID')
 
         base_form = form or SearchForm
-        attrs['lookups'] = lookup_mapping
-        form_class_name = '%sSearchForm' % model._meta.model_name.capitalize()
-        return type(form_class_name, (base_form, ), attrs)
+        attrs['lookups'] = lookup_mapping  # type: ignore[assignment]
+        form_class_name = '%sSearchForm' % opts.model_name.capitalize()
+        # noinspection PyTypeChecker
+        return type(form_class_name, (base_form,), attrs)
 
 
 searchform_factory = SearchFormFactory()

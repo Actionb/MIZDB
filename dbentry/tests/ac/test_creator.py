@@ -1,11 +1,12 @@
 from unittest.mock import Mock
 
 import dbentry.models as _models
-from dbentry.ac.creator import Creator, MultipleObjectsReturnedException, FailedObject
+from dbentry.ac.creator import Creator, MultipleObjectsReturned, FailedObject
 from dbentry.factory import make
 from dbentry.tests.base import DataTestCase, mockv
 
 
+# noinspection PyUnresolvedReferences
 class TestCreator(DataTestCase):
     model = _models.Autor
 
@@ -52,12 +53,12 @@ class TestCreator(DataTestCase):
     def test_create_reraises_or_failed_object(self):
         creator = Creator(model=_models.Person, raise_exceptions=True)
 
-        creator.creator = Mock(side_effect=MultipleObjectsReturnedException())
+        creator.creator = Mock(side_effect=MultipleObjectsReturned())
         msg = (
-            "create(preview = False): MultipleObjectsReturnedException "
+            "create(preview = False): MultipleObjectsReturned "
             "exceptions should bubble up"
         )
-        with self.assertRaises(MultipleObjectsReturnedException, msg=msg):
+        with self.assertRaises(MultipleObjectsReturned, msg=msg):
             creator.create('Alice Testman', preview=False)
 
         creator.raise_exceptions = False
@@ -65,7 +66,7 @@ class TestCreator(DataTestCase):
             "create(preview = False): No exceptions should bubble up if "
             "raise_exceptions == False"
         )
-        with self.assertNotRaises(MultipleObjectsReturnedException, msg=msg):
+        with self.assertNotRaises(MultipleObjectsReturned, msg=msg):
             created = creator.create('Alice Testman', False)
             self.assertIn('instance', created)
             self.assertIsInstance(
@@ -102,9 +103,9 @@ class TestCreator(DataTestCase):
         self.assertEqual(inst, self.alice)
 
         # _get_model_instance should raise a
-        # MultipleObjectsReturnedException if there is more than one match
+        # MultipleObjectsReturned if there is more than one match
         bob_data = dict(vorname='Bob', nachname='Testman')
-        with self.assertRaises(MultipleObjectsReturnedException):
+        with self.assertRaises(MultipleObjectsReturned):
             creator._get_model_instance(_models.Person, **bob_data)
 
     def test_create_person(self):

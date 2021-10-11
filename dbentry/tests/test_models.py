@@ -13,6 +13,7 @@ from dbentry.factory import make
 from dbentry.tests.base import DataTestCase
 
 
+# noinspection PyUnresolvedReferences
 class TestBaseModel(DataTestCase):
 
     model = _models.Artikel
@@ -25,8 +26,10 @@ class TestBaseModel(DataTestCase):
 
     def test_qs_exception(self):
         with self.assertRaises(TypeError):
+            # noinspection PyTypeChecker
             self.model.qs(self.model)
 
+    # noinspection SpellCheckingInspection
     def test_str(self):
         # Assert that __str__ just takes the value of the name_field if available
         obj = make(_models.Video, titel="lotsa testing", quelle="from the computer", medium_qty=0)
@@ -40,6 +43,7 @@ class TestBaseModel(DataTestCase):
         self.assertEqual(obj.__str__(), "lotsa testing from the computer")
 
 
+# noinspection PyUnresolvedReferences
 class TestBaseM2MModel(DataTestCase):
 
     model = _m2m.m2m_audio_musiker
@@ -84,19 +88,10 @@ class TestComputedNameModel(DataTestCase):
         self.assertFalse(obj._changed_flag)
         self.assertEqual(obj._name,  "Testinfo")
 
-    def test_get_search_fields(self):
-        # _name should be used in searches, that's the whole point of this endeavour
-        self.assertIn('_name', self.model.get_search_fields())
-        self.assertNotIn('_changed_flag', self.model.get_search_fields())
-
-        # _name should always be the first field in search_fields
-        with patch.object(self.model, 'search_fields', new=['field', '_name']):
-            self.assertEqual(self.model.get_search_fields()[0], '_name')
-
     def test_name_default(self):
         self.assertEqual(str(self.obj1), self.default)
 
-    def test_update_name_notexplodes_on_no_pk_and_forced(self):
+    def test_update_name_no_pk_and_forced(self):
         # Unsaved instances should be ignored, as update_name relies on filtering
         # queries with the instance's pk.
         obj = _models.Ausgabe(magazin=self.mag)
@@ -224,6 +219,8 @@ class TestComputedNameModel(DataTestCase):
                 "listing them in name_composing_fields."
             )
 
+
+# noinspection PyUnresolvedReferences
 class TestModelArtikel(DataTestCase):
 
     model = _models.Artikel
@@ -247,23 +244,8 @@ class TestModelArtikel(DataTestCase):
             ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
         )
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelAudio(DataTestCase):
 
     model = _models.Audio
@@ -275,18 +257,6 @@ class TestModelAudio(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
 
 
 @tag("cn")
@@ -442,10 +412,10 @@ class TestModelAusgabe(DataTestCase):
         )
         name_data = {
             'magazin__ausgaben_merkmal': ('num', ),
-            'beschreibung': ('Woops!', )
+            'beschreibung': ('Whoops!', )
         }
         self.assertEqual(
-            self.model._get_name(**name_data), 'Woops!',
+            self.model._get_name(**name_data), 'Whoops!',
             msg="get_name should ignore ausgaben_merkmal if the attribute "
             "it is referring to is not set."
         )
@@ -474,19 +444,8 @@ class TestModelAusgabe(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['magazin'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['_name', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeJahr(DataTestCase):
 
     model = _models.AusgabeJahr
@@ -500,6 +459,7 @@ class TestModelAusgabeJahr(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['jahr'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeLnum(DataTestCase):
 
     model = _models.AusgabeLnum
@@ -513,6 +473,7 @@ class TestModelAusgabeLnum(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['lnum'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeMonat(DataTestCase):
 
     model = _models.AusgabeMonat
@@ -525,13 +486,8 @@ class TestModelAusgabeMonat(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['monat'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['monat__monat', 'monat__abk'])
-        )
 
-
+# noinspection PyUnresolvedReferences
 class TestModelAusgabeNum(DataTestCase):
 
     model = _models.AusgabeNum
@@ -545,6 +501,7 @@ class TestModelAusgabeNum(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['num'])
 
 
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelAutor(DataTestCase):
 
@@ -579,19 +536,8 @@ class TestModelAutor(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['_name', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelBand(DataTestCase):
 
     model = _models.Band
@@ -604,23 +550,8 @@ class TestModelBand(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['band_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'bandalias__alias': 'Alias',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelBandAlias(DataTestCase):
 
     model = _models.BandAlias
@@ -654,6 +585,7 @@ class TestModelBestand(DataTestCase):
                 self.assertIsInstance(obj.bestand_object, expected_model)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelPlakat(DataTestCase):
 
     model = _models.Plakat
@@ -666,19 +598,8 @@ class TestModelPlakat(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelBildreihe(DataTestCase):
 
     model = _models.Bildreihe
@@ -686,10 +607,8 @@ class TestModelBildreihe(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['name'])
 
-
+# noinspection PyUnresolvedReferences
 class TestModelBrochure(DataTestCase):
 
     model = _models.Brochure
@@ -697,23 +616,8 @@ class TestModelBrochure(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelBuch(DataTestCase):
 
     model = _models.Buch
@@ -722,19 +626,8 @@ class TestModelBuch(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelSchriftenreihe(DataTestCase):
 
     model = _models.Schriftenreihe
@@ -742,10 +635,8 @@ class TestModelSchriftenreihe(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['name'])
 
-
+# noinspection PyUnresolvedReferences
 class TestModelBundesland(DataTestCase):
 
     model = _models.Bundesland
@@ -758,16 +649,8 @@ class TestModelBundesland(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['land', 'bland_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['bland_name', 'code'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'code': 'Bundesland-Code'})
-
-
+# noinspection PyUnresolvedReferences
 class TestModelDatei(DataTestCase):
 
     model = _models.Datei
@@ -780,19 +663,8 @@ class TestModelDatei(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelDokument(DataTestCase):
 
     model = _models.Dokument
@@ -800,19 +672,8 @@ class TestModelDokument(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelGeber(DataTestCase):
 
     model = _models.Geber
@@ -825,13 +686,8 @@ class TestModelGeber(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 class TestModelGenre(DataTestCase):
 
     model = _models.Genre
@@ -844,16 +700,8 @@ class TestModelGenre(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['genre'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['genre', 'genrealias__alias'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'genrealias__alias': 'Alias'})
-
-
+# noinspection PyUnresolvedReferences
 class TestModelGenreAlias(DataTestCase):
 
     model = _models.GenreAlias
@@ -863,6 +711,7 @@ class TestModelGenreAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelHerausgeber(DataTestCase):
 
     model = _models.Herausgeber
@@ -875,10 +724,8 @@ class TestModelHerausgeber(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['herausgeber'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['herausgeber'])
 
-
+# noinspection PyUnresolvedReferences
 class TestModelInstrument(DataTestCase):
 
     model = _models.Instrument
@@ -894,16 +741,8 @@ class TestModelInstrument(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['instrument', 'kuerzel'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'kuerzel': 'Kürzel'})
-
-
+# noinspection PyUnresolvedReferences
 class TestModelKalender(DataTestCase):
 
     model = _models.Kalender
@@ -911,23 +750,8 @@ class TestModelKalender(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelKatalog(DataTestCase):
 
     model = _models.Katalog
@@ -935,23 +759,8 @@ class TestModelKatalog(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'zusammenfassung': 'Zusammenfassung',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelLagerort(DataTestCase):
 
@@ -989,19 +798,8 @@ class TestModelLagerort(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['_name', 'ort', 'raum', 'regal', 'fach', 'ordner'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'fach': 'Fach', 'ordner': 'Ordner', 'regal': 'Regal', 'raum': 'Raum'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelLand(DataTestCase):
 
     model = _models.Land
@@ -1013,16 +811,6 @@ class TestModelLand(DataTestCase):
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['land_name'])
-
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['land_name', 'code'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(self.model.search_fields_suffixes, {'code': 'Land-Code'})
-
 
 class TestModelMagazin(DataTestCase):
 
@@ -1036,19 +824,8 @@ class TestModelMagazin(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['magazin_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['magazin_name', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelMemorabilien(DataTestCase):
 
     model = _models.Memorabilien
@@ -1056,19 +833,8 @@ class TestModelMemorabilien(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelMonat(DataTestCase):
 
     model = _models.Monat
@@ -1081,16 +847,8 @@ class TestModelMonat(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['ordinal'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['monat', 'abk', 'ordinal'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 class TestModelMusiker(DataTestCase):
 
     model = _models.Musiker
@@ -1104,27 +862,7 @@ class TestModelMusiker(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted([
-                'kuenstler_name', 'musikeralias__alias', 'person___name',
-                'beschreibung', 'bemerkungen'
-            ])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'musikeralias__alias': 'Alias',
-                'person___name': 'bürgerl. Name',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelMusikerAlias(DataTestCase):
 
     model = _models.MusikerAlias
@@ -1134,6 +872,7 @@ class TestModelMusikerAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelOrt(DataTestCase):
 
@@ -1158,13 +897,8 @@ class TestModelOrt(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['_name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelPerson(DataTestCase):
 
@@ -1188,18 +922,6 @@ class TestModelPerson(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['_name', 'beschreibung', 'bemerkungen'])
-        )
-
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
 
 class TestModelPlattenfirma(DataTestCase):
 
@@ -1213,13 +935,8 @@ class TestModelPlattenfirma(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 class TestModelProvenienz(DataTestCase):
 
     model = _models.Provenienz
@@ -1232,13 +949,8 @@ class TestModelProvenienz(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['geber__name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 class TestModelSchlagwort(DataTestCase):
 
     model = _models.Schlagwort
@@ -1251,17 +963,8 @@ class TestModelSchlagwort(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['schlagwort'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['schlagwort', 'schlagwortalias__alias'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes, {'schlagwortalias__alias': 'Alias'})
-
-
+# noinspection PyUnresolvedReferences
 class TestModelSchlagwortAlias(DataTestCase):
 
     model = _models.SchlagwortAlias
@@ -1271,6 +974,7 @@ class TestModelSchlagwortAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelSpielort(DataTestCase):
 
     model = _models.Spielort
@@ -1285,23 +989,8 @@ class TestModelSpielort(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name', 'ort'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'spielortalias__alias': 'Alias',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelSpielortAlias(DataTestCase):
 
     model = _models.SpielortAlias
@@ -1311,6 +1000,7 @@ class TestModelSpielortAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelTechnik(DataTestCase):
 
     model = _models.Technik
@@ -1318,19 +1008,8 @@ class TestModelTechnik(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelVeranstaltung(DataTestCase):
 
     model = _models.Veranstaltung
@@ -1350,24 +1029,8 @@ class TestModelVeranstaltung(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name', 'datum', 'spielort'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {
-                'datum': 'Datum',
-                'veranstaltungalias__alias': 'Alias',
-                'beschreibung': 'Beschreibung',
-                'bemerkungen': 'Bemerkungen'
-            }
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelVeranstaltungAlias(DataTestCase):
 
     model = _models.VeranstaltungAlias
@@ -1377,6 +1040,7 @@ class TestModelVeranstaltungAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
+# noinspection PyUnresolvedReferences
 class TestModelVeranstaltungsreihe(DataTestCase):
 
     model = _models.Veranstaltungsreihe
@@ -1384,13 +1048,8 @@ class TestModelVeranstaltungsreihe(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 class TestModelVerlag(DataTestCase):
 
     model = _models.Verlag
@@ -1403,13 +1062,8 @@ class TestModelVerlag(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(self.model.get_search_fields(), ['verlag_name'])
 
-    def test_search_fields_suffixes(self):
-        self.assertFalse(self.model.search_fields_suffixes)
-
-
+# noinspection PyUnresolvedReferences
 class TestModelVideo(DataTestCase):
 
     model = _models.Video
@@ -1417,19 +1071,8 @@ class TestModelVideo(DataTestCase):
     def test_meta_ordering(self):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
-    def test_get_search_fields(self):
-        self.assertEqual(
-            sorted(self.model.get_search_fields()),
-            sorted(['titel', 'beschreibung', 'bemerkungen'])
-        )
 
-    def test_search_fields_suffixes(self):
-        self.assertEqual(
-            self.model.search_fields_suffixes,
-            {'beschreibung': 'Beschreibung', 'bemerkungen': 'Bemerkungen'}
-        )
-
-
+# noinspection PyUnresolvedReferences
 class TestModelBaseBrochure(DataTestCase):
 
     model = _models.BaseBrochure
@@ -1449,6 +1092,7 @@ class TestModelBaseBrochure(DataTestCase):
                 self.assertIsInstance(resolved, child_model)
 
 
+# noinspection PyUnresolvedReferences
 class TestModelFoto(DataTestCase):
 
     model = _models.Foto

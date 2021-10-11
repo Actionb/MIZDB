@@ -1,4 +1,5 @@
 from itertools import chain
+from unittest.mock import patch
 
 from django import forms
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -33,10 +34,12 @@ class TestSearchFormFactory(MyTestCase):
     def test_formfield_for_dbfield_dal_m2m(self):
         # Assert that formfield_for_dbfield prepares an
         # autocomplete ready formfield for many to many relations.
+        # noinspection PyUnresolvedReferences
         dbfield = _models.Artikel._meta.get_field('genre')
         formfield = self.factory.formfield_for_dbfield(dbfield)
         widget = formfield.widget
         self.assertIsInstance(widget, autocomplete_widgets.MIZModelSelect2Multiple)
+        # noinspection PyUnresolvedReferences
         self.assertEqual(widget.model_name, _models.Genre._meta.model_name)
         msg = "Should not be allowed to create new records from inside a search form."
         self.assertFalse(widget.create_field, msg=msg)
@@ -71,7 +74,8 @@ class TestSearchFormFactory(MyTestCase):
     def test_takes_formfield_callback(self):
         # Assert that custom formfield_callback can be passed to the factory
         # and that it uses that to create formfields for dbfields.
-        callback = lambda dbfield, **kwargs: forms.DateField(**kwargs)
+        def callback(_dbfield, **kwargs):
+            return forms.DateField(**kwargs)
         form_class = self.factory(
             model=_models.Artikel,
             formfield_callback=callback,
@@ -171,7 +175,7 @@ class TestSearchForm(MyTestCase):
         self.factory = search_forms.SearchFormFactory()
 
     def test_get_filters_params_returns_empty_on_invalid(self):
-        # get_filters_params should shortcircuit if the form is invalid.
+        # get_filters_params should short-circuit if the form is invalid.
         form_class = self.factory(self.model)
         form = form_class()
         # Empty form without data => is_valid == False
@@ -297,3 +301,47 @@ class TestRangeFormField(MyTestCase):
         formfield = search_forms.RangeFormField(PartialDateFormField())
         expected = [PartialDate(2019, 5, 19), PartialDate(2019, 5, 20)]
         self.assertEqual(formfield.get_initial(initial, 'datum'), expected)
+
+    def test_init_formfield_widget_to_range_widget(self):
+        # Assert that init turns the formfield's widget into a RangeWidget.
+        with patch('django.forms.MultiValueField.__init__') as mocked_init:
+            search_forms.RangeFormField(formfield=forms.CharField())
+        self.assertTrue(mocked_init.called)
+        _args, kwargs = mocked_init.call_args
+        self.assertIn('widget', kwargs)
+        self.assertIsInstance(kwargs['widget'], search_forms.RangeWidget)
+        # Now with an explicitly passed in widget:
+        # NOTE: this is commented out because the functionality is in question.
+        # with patch('django.forms.MultiValueField.__init__') as mocked_init:
+        #     search_forms.RangeFormField(
+        #         formfield=forms.CharField(), widget=forms.DateInput()
+        #     )
+        # self.assertTrue(mocked_init.called)
+        # _args, kwargs = mocked_init.call_args
+        # self.assertIn('widget', kwargs)
+        # self.assertIsInstance(kwargs['widget'], search_forms.RangeWidget)
+        # self.assertTrue(all(isinstance(w, forms.DateInput) for w in kwargs['widget'].widgets))
+
+    def test_init_duplicates_formfield(self):
+        # Assert that init duplicates the given formfield instance for the
+        # MultiValueField constructor.
+        with patch('django.forms.MultiValueField.__init__') as mocked_init:
+            search_forms.RangeFormField(formfield=forms.CharField())
+        self.assertTrue(mocked_init.called)
+        _args, kwargs = mocked_init.call_args
+        self.assertIn('fields', kwargs)
+        self.assertEqual(len(kwargs['fields']), 2)
+        self.assertTrue(all(isinstance(f, forms.CharField) for f in kwargs['fields']))
+
+class TestRangeWidget(MyTestCase):
+
+    def test_init_duplicates_widget(self):
+        # Assert that init duplicates the given widget instance for the
+        # MultiWidget constructor.
+        with patch('django.forms.MultiWidget.__init__') as mocked_init:
+            search_forms.RangeWidget(widget=forms.TextInput())
+        self.assertTrue(mocked_init.called)
+        _args, kwargs = mocked_init.call_args
+        self.assertIn('widgets', kwargs)
+        self.assertEqual(len(kwargs['widgets']), 2)
+        self.assertTrue(all(isinstance(w, forms.TextInput) for w in kwargs['widgets']))

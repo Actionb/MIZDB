@@ -2,13 +2,13 @@ import re
 from unittest import skip
 from unittest.mock import patch, Mock
 
-from django.db import connections, transaction
 from django.contrib import admin, contenttypes
 from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User, Permission
 from django.core import checks, exceptions
-from django.test.utils import CaptureQueriesContext
+from django.db import connections, transaction
+from django.test.utils import CaptureQueriesContext  # noqa
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
@@ -22,8 +22,8 @@ from dbentry.tests.base import AdminTestCase, TestCase
 from dbentry.utils import get_model_fields
 
 
+# noinspection PyProtectedMember,PyUnresolvedReferences
 class AdminTestMethodsMixin(object):
-
     test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested
     crosslinks_object = None
@@ -37,8 +37,6 @@ class AdminTestMethodsMixin(object):
     exclude_expected = None
     # fields expected to be on the changeview form
     fields_expected = None
-    # the final search_fields expected
-    search_fields_expected = None
     # if True, check the load order of jquery, select2 and django's jquery_init
     add_page_uses_select2 = True
     changelist_uses_select2 = True
@@ -47,6 +45,7 @@ class AdminTestMethodsMixin(object):
     # 1. session, 2. auth, 3. result count, 4. full count, 5. result list
     num_queries_changelist = 5
 
+    # noinspection PyPep8Naming
     @classmethod
     def setUpTestData(cls):
         cls.visitor_user = User.objects.create_user(
@@ -67,7 +66,8 @@ class AdminTestMethodsMixin(object):
         return self.model_admin.add_crosslinks(
             object_id=obj.pk, labels=labels).get('crosslinks')
 
-    def _prepare_crosslink_data(self, data, obj=None):
+    @staticmethod
+    def _prepare_crosslink_data(data, obj=None):
         # Return a dict based off of 'data' similar in structure of those in
         # the crosslinks.
         if obj is not None and 'pk' not in data:
@@ -78,6 +78,7 @@ class AdminTestMethodsMixin(object):
             url = '/admin/dbentry/{model_name}/?{fld_name}={pk}'.format(**data)
         return {'url': url, 'label': data['label']}
 
+    # noinspection PyPep8Naming
     def assertInCrosslinks(self, expected, links):
         # Assert that the data given in 'expected' is found in iterable 'links'.
         # Add an url entry to that data if necessary.
@@ -89,6 +90,7 @@ class AdminTestMethodsMixin(object):
         self.assertIn(data, links)
         return data
 
+    # noinspection PyPep8Naming
     def assertAllCrosslinks(self, obj, expected, links=None, labels=None):
         # A crosslink will link to a changelist page of the related model with
         # the related field filtered to the related object at hand.
@@ -112,17 +114,16 @@ class AdminTestMethodsMixin(object):
             else:
                 links.remove(data)
         if links_missing:
-            sorting_key = lambda data: data['url']
-            fail_message = 'The following crosslinks were not found:\n'
-            fail_message += '\n'.join(str(l) for l in sorted(links_missing, key=sorting_key))
-            fail_message += '\nCrosslinks available:\n'
-            fail_message += '\n'.join(str(l) for l in sorted(_links, key=sorting_key))
+            # noinspection PyShadowingNames
+            def sorting_func(data):
+                return data['url']
+
             fail_message = (
                 'The following crosslinks were not found:\n{missing}\n'
                 'Crosslinks available:\n{links}'
             ).format(
-                missing='\n'.join(str(l) for l in sorted(links_missing, key=sorting_key)),
-                links='\n'.join(str(l) for l in sorted(_links, key=sorting_key))
+                missing='\n'.join(str(_link) for _link in sorted(links_missing, key=sorting_func)),
+                links='\n'.join(str(_link) for _link in sorted(_links, key=sorting_func))
             )
             self.fail(fail_message)
         if links:
@@ -200,12 +201,6 @@ class AdminTestMethodsMixin(object):
                 fkey_field, self.get_request())
             self.assertIsInstance(
                 formfield.widget, MIZModelSelect2, msg=fkey_field.name)
-
-    def test_get_search_fields(self):
-        if self.search_fields_expected is None:
-            return
-        self.assertEqual(
-            self.model_admin.get_search_fields(), self.search_fields_expected)
 
     @patch.object(admin.ModelAdmin, 'render_change_form')
     def test_changeform_media_context_collapse_after_jquery(self, mock):
@@ -311,8 +306,8 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(response.status_code, 200)
 
 
+# noinspection PyUnresolvedReferences
 class TestMIZModelAdmin(AdminTestCase):
-
     model_admin_class = _admin.DateiAdmin
     model = _models.Datei
     test_data_count = 1
@@ -393,7 +388,7 @@ class TestMIZModelAdmin(AdminTestCase):
         obj.nachname = 'Mantest'
         obj.save(update=False)
         fake_form = type(
-            'Dummy', (object, ), {'instance': obj, 'save_m2m': lambda x=None: None})
+            'Dummy', (object,), {'instance': obj, 'save_m2m': lambda x=None: None})
         self.model_admin.save_related(None, fake_form, [], None)
         self.assertEqual(fake_form.instance._name, 'Alice Mantest')
         self.assertEqual(
@@ -597,7 +592,6 @@ class TestMIZModelAdmin(AdminTestCase):
 
 
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.ArtikelAdmin
     model = _models.Artikel
     exclude_expected = [
@@ -608,7 +602,6 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'),
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     @classmethod
     def setUpTestData(cls):
@@ -652,8 +645,8 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.AusgabenAdmin
     model = _models.Ausgabe
     exclude_expected = ['audio', 'video']
@@ -661,7 +654,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
     # one more query for the chronologically_ordered() query for magazin count:
@@ -828,8 +820,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertTrue(
             self.model_admin.has_moveto_brochure_permission(request),
             msg=(
-                "Action 'moveto_brochure' should be available for users with both "
-                "'%s' and '%s' permissions" % (delete_codename, add_codename)
+                    "Action 'moveto_brochure' should be available for users with both "
+                    "'%s' and '%s' permissions" % (delete_codename, add_codename)
             )
         )
 
@@ -939,8 +931,8 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.MagazinAdmin
     model = _models.Magazin
     exclude_expected = ['genre', 'verlag', 'herausgeber', 'orte']
@@ -948,7 +940,6 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',
         'beschreibung', 'bemerkungen',
     ]
-    search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'ausgabe', 'fld_name': 'magazin', 'label': 'Ausgaben (1)'},
@@ -956,6 +947,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
     raw_data = [{'ausgabe__extra': 1}]
+
     @classmethod
     def setUpTestData(cls):
         ort1 = make(_models.Ort, stadt='Dortmund', land__code='DE')
@@ -992,8 +984,8 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
+# noinspection PyUnresolvedReferences
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.PersonAdmin
     model = _models.Person
     exclude_expected = ['orte']
@@ -1001,7 +993,6 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         'vorname', 'nachname', 'gnd_id', 'gnd_name', 'dnb_url',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     # one extra 'empty' object without relations for Ist_Autor/Ist_Musiker:
     test_data_count = 1
 
@@ -1028,9 +1019,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_musiker(self):
         obj1, obj2 = (
             self.queryset
-            .annotate(**self.model_admin.get_result_list_annotations())
-            .filter(id__in=[self.obj1.pk, self.obj2.pk])
-            .order_by('id')
+                .annotate(**self.model_admin.get_result_list_annotations())
+                .filter(id__in=[self.obj1.pk, self.obj2.pk])
+                .order_by('id')
         )
         self.assertTrue(self.model_admin.is_musiker(obj1))
         self.assertFalse(self.model_admin.is_musiker(obj2))
@@ -1038,9 +1029,9 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_is_autor(self):
         obj1, obj2 = (
             self.queryset
-            .annotate(**self.model_admin.get_result_list_annotations())
-            .filter(id__in=[self.obj1.pk, self.obj2.pk])
-            .order_by('id')
+                .annotate(**self.model_admin.get_result_list_annotations())
+                .filter(id__in=[self.obj1.pk, self.obj2.pk])
+                .order_by('id')
         )
         self.assertTrue(self.model_admin.is_autor(obj1))
         self.assertFalse(self.model_admin.is_autor(obj2))
@@ -1054,23 +1045,19 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
+# noinspection PyUnresolvedReferences
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.MusikerAdmin
     model = _models.Musiker
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
-    search_fields_expected = [
-        'kuenstler_name', 'musikeralias__alias', 'person___name',
-        'beschreibung', 'bemerkungen'
-    ]
 
     raw_data = [
         {},
         {
             'band__band_name': ['Testband1', 'Testband2'],
-            'genre__genre':['Testgenre1', 'Testgenre2']
+            'genre__genre': ['Testgenre1', 'Testgenre2']
         }
     ]
 
@@ -1108,12 +1095,11 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
+# noinspection PyUnresolvedReferences
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
     fields_expected = ['genre']
-    search_fields_expected = ['genre', 'genrealias__alias', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1167,12 +1153,11 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.assertInCrosslinks(data, crosslinks)
 
 
+# noinspection PyUnresolvedReferences
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
     fields_expected = ['schlagwort']
-    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1203,13 +1188,12 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
 
+# noinspection PyUnresolvedReferences
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.BandAdmin
     model = _models.Band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
-    search_fields_expected = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'bandalias__alias': ['Alias1', 'Alias2'],
@@ -1256,13 +1240,12 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
+# noinspection PyUnresolvedReferences
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.AutorAdmin
     model = _models.Autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
-    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     raw_data = [
         {'magazin__magazin_name': ['Testmagazin1', 'Testmagazin2']}
     ]
@@ -1281,11 +1264,9 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 
 class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.OrtAdmin
     model = _models.Ort
     fields_expected = ['stadt', 'land', 'bland']
-    search_fields_expected = ['_name']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1313,11 +1294,9 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 
 class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.LandAdmin
     model = _models.Land
     fields_expected = ['land_name', 'code']
-    search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1
     add_page_uses_select2 = False
     changelist_uses_select2 = False
@@ -1330,11 +1309,9 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 
 class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.BlandAdmin
     model = _models.Bundesland
     fields_expected = ['bland_name', 'code', 'land']
-    search_fields_expected = ['bland_name', 'code']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1343,11 +1320,9 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 
 class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.InstrumentAdmin
     model = _models.Instrument
     fields_expected = ['instrument', 'kuerzel']
-    search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
     add_page_uses_select2 = False
     changelist_uses_select2 = False
@@ -1357,8 +1332,8 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
+# noinspection PyUnresolvedReferences
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.AudioAdmin
     model = _models.Audio
     exclude_expected = [
@@ -1370,7 +1345,6 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'plattennummer', 'release_id', 'discogs_url', 'beschreibung',
         'bemerkungen', 'medium', 'medium_qty'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band__band_name': 'Testband',
@@ -1399,12 +1373,9 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
 
 
 class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.SpielortAdmin
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
-    search_fields_expected = [
-        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     changelist_uses_select2 = False
 
@@ -1424,14 +1395,12 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
+# noinspection PyUnresolvedReferences
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.Veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
-    search_fields_expected = [
-        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
     changelist_uses_select2 = False
 
@@ -1458,7 +1427,6 @@ class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VerlagAdmin
     model = _models.Verlag
     fields_expected = ['verlag_name', 'sitz']
-    search_fields_expected = ['verlag_name']
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'verlag', 'label': 'Bücher (1)'},
         {'model_name': 'magazin', 'fld_name': 'verlag', 'label': 'Magazine (1)'}
@@ -1477,7 +1445,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         'EAN', 'ISBN', 'is_buchband', 'beschreibung', 'bemerkungen',
         'schriftenreihe', 'buchband', 'sprache',
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Aufsätze (1)'},
@@ -1541,6 +1508,7 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
@@ -1572,6 +1540,7 @@ class TestBaseBrochureAdmin(AdminTestCase):
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
 
 
+# noinspection PyUnresolvedReferences
 class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure
@@ -1580,7 +1549,6 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'schlagwort']
-    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1595,6 +1563,7 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
@@ -1603,7 +1572,6 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         'art', 'ausgabe__magazin'
     ]
     exclude_expected = ['genre']
-    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -1628,6 +1596,7 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KalenderAdmin
     model = _models.Kalender
@@ -1636,7 +1605,6 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
-    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1651,6 +1619,7 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
@@ -1660,7 +1629,6 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1675,6 +1643,7 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DokumentAdmin
@@ -1684,7 +1653,6 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1699,6 +1667,7 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.TechnikAdmin
@@ -1708,7 +1677,6 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1723,6 +1691,7 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
@@ -1730,7 +1699,6 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'laufzeit', 'jahr', 'quelle', 'original', 'release_id', 'discogs_url',
         'beschreibung', 'bemerkungen', 'medium', 'medium_qty'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
     raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
@@ -1752,6 +1720,7 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
+# noinspection PyUnresolvedReferences
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.Bestand
@@ -1792,7 +1761,6 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
     changelist_uses_select2 = False
 
 
@@ -1800,7 +1768,6 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
-    search_fields_expected = ['herausgeber', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1810,8 +1777,8 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
+# noinspection PyUnresolvedReferences
 class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.PlakatAdmin
     model = _models.Plakat
     test_data_count = 1
@@ -1820,7 +1787,6 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'plakat_id', 'size', 'datum', 'reihe', 'copy_related',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
@@ -1861,7 +1827,7 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         request = self.get_request(user=self.noperms_user)
         self.assertNotIn(
             'copy_related', self.model_admin.get_fields(request, self.obj1),
-            msg= (
+            msg=(
                 "Field 'copy_related' should not be available for users that do "
                 "not have permissions to use it."
             )
@@ -1895,6 +1861,7 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(form.cleaned_data['id__in'], str(self.obj1.pk))
 
 
+# noinspection PyUnresolvedReferences
 class TestAuthAdminMixin(TestCase):
 
     @patch('dbentry.admin.super')
@@ -1912,15 +1879,15 @@ class TestAuthAdminMixin(TestCase):
                 self.assertIn(_models.AusgabeLnum.__name__, choice[1])
 
 
+# noinspection PyUnresolvedReferences
 class TestMIZChangelist(AdminTestCase):
-
     model = _models.Genre
     model_admin_class = _admin.GenreAdmin
     test_data_count = 1  # need at least one for the result list
     result_list_msg = (
-        "If no filters have been applied the result list should be empty unless "
-        "ALL_VAR ('%s') is in the request parameters or the model admin does "
-        "not provide a search form." % ALL_VAR
+            "If no filters have been applied the result list should be empty unless "
+            "ALL_VAR ('%s') is in the request parameters or the model admin does "
+            "not provide a search form." % ALL_VAR
     )
 
     @patch.object(MIZChangeList, 'get_queryset')
@@ -2030,7 +1997,6 @@ class TestMIZChangelist(AdminTestCase):
 
 
 class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
-
     model_admin_class = _admin.FotoAdmin
     model = _models.Foto
     test_data_count = 1
@@ -2039,7 +2005,6 @@ class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'foto_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
         'owner', 'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['titel', 'owner', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'

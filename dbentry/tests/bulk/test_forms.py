@@ -12,7 +12,6 @@ from dbentry.tests.mixins import TestDataMixin
 
 
 class TestBulkForm(FormTestCase):
-
     form_class = BulkForm
     dummy_attrs = {
         'some_fld': django_forms.CharField(required=False),
@@ -24,7 +23,7 @@ class TestBulkForm(FormTestCase):
         'split_fields': ['req_fld', 'some_bulkfield'],
         'field_order': ['some_fld', 'some_bulkfield', 'req_fld', 'another'],
     }
-    dummy_bases = (BulkForm, )
+    dummy_bases = (BulkForm,)
 
     def test_init_sets_fieldsets(self):
         # Assert that the form's fieldsets are set up properly during init.
@@ -82,8 +81,8 @@ class TestBulkForm(FormTestCase):
             form.is_valid()
 
 
+# noinspection PyUnresolvedReferences
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
-
     form_class = BulkFormAusgabe
     model = _models.Ausgabe
 
@@ -167,7 +166,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
             ({'num': '5', 'jahr': '2000'}, 2),
             ({'num': '5', 'jahr': ['2000', '2001']}, 2),
             ({'num': '5', 'jahrgang': '2'}, 2),
-            ( {'num': '5', 'jahrgang': '2', 'jahr': '2000'}, 2),
+            ({'num': '5', 'jahrgang': '2', 'jahr': '2000'}, 2),
             ({'num': '5', 'jahrgang': '1'}, 0),
         ]
         form = self.get_valid_form()
@@ -179,7 +178,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         # Assert that lookup_instance flags an instance with the right jahr
         # values but different jahrgang as a matching instance.
         form = self.get_valid_form()
-        instances = form.lookup_instance({'jahrgang': '2',  'num': '5', 'jahr': '2000'})
+        instances = form.lookup_instance({'jahrgang': '2', 'num': '5', 'jahr': '2000'})
         self.assertTrue(
             instances.exists(),
             msg="lookup_instance should match instances with matching values for"
@@ -190,7 +189,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         # Assert that lookup_instance does *not* flag an instance with the right
         # jahrgang but different values for years as a matching instance.
         form = self.get_valid_form()
-        instances = form.lookup_instance({'jahrgang': '2',  'num': '5', 'jahr': '2002'})
+        instances = form.lookup_instance({'jahrgang': '2', 'num': '5', 'jahr': '2002'})
         self.assertFalse(
             instances.exists(),
             msg="lookup_instance should not match instances with different years"
@@ -217,7 +216,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
         row_1 = row_template.copy()
         # The first row should add a dublette to self.obj1:
         row_1.update(
-            {'num': '1', 'ausgabe_lagerort': self.dublette,  'instance': self.obj1}
+            {'num': '1', 'ausgabe_lagerort': self.dublette, 'instance': self.obj1}
         )
         row_2 = row_template.copy()
         # Rows 2 through 4 should create new objects:
@@ -267,7 +266,7 @@ class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     def test_row_data_prop_homeless_fielddata_present(self):
         # Assert that a field that does not belong to either each_fields or
         # split_fields is not included in row_data.
-        form_class = type('DummyForm', (self.form_class, ), {'homeless': BulkField()})
+        form_class = type('DummyForm', (self.form_class,), {'homeless': BulkField()})
         data = self.valid_data.copy()
         data['homeless'] = '9,8,7,6,5,5'
         form = form_class(data=data)

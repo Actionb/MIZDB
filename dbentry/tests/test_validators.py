@@ -10,7 +10,7 @@ from dbentry.validators import (
 
 
 class TestStdNumValidators(MyTestCase):
-    # Assert that the validators reraise the correct django.ValidationError subclass.
+    # Assert that the validators re-raise the correct django.ValidationError subclass.
 
     @translation_override(language=None)
     def run_validators(self, validator, invalid):
@@ -61,7 +61,7 @@ class TestDiscogsURLValidator(MyTestCase):
         self.validator = DiscogsURLValidator()
 
     @translation_override(language=None)
-    def assertValidationFailed(self, value):
+    def assertValidationFailed(self, _value):
         with self.assertRaises(ValidationError) as cm:
             self.validator('notavalidurl')
         self.assertEqual(cm.exception.message, "Bitte nur Adressen von discogs.com eingeben.")

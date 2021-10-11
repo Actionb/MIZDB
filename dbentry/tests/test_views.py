@@ -18,6 +18,7 @@ class TestOptionalFormView(ViewTestCase):
         view = self.get_view(request=self.get_request(), form_class=self.form_class)
         self.assertIsInstance(view.get_form(), forms.Form)
 
+    # noinspection SpellCheckingInspection
     def test_get_form_no_formclass(self):
         # If no form_class is set (i.e. the form is optional), get_form() should return None
         view = self.get_view()
@@ -28,7 +29,7 @@ class TestOptionalFormView(ViewTestCase):
 
     @mock.patch.object(OptionalFormView, 'form_valid')
     @mock.patch.object(OptionalFormView, 'form_invalid')
-    def test_post_no_form_class(self, mocked_invalid, mocked_valid):
+    def test_post_no_form_class(self, _mocked_invalid, mocked_valid):
         # If view.form_class is None, post should treat the form as optional
         # and call form_valid().
         request = self.post_request()
@@ -39,7 +40,7 @@ class TestOptionalFormView(ViewTestCase):
 
     @mock.patch.object(OptionalFormView, 'form_valid')
     @mock.patch.object(OptionalFormView, 'form_invalid')
-    def test_post_form_valid(self, mocked_invalid, mocked_valid):
+    def test_post_form_valid(self, _mocked_invalid, mocked_valid):
         # Assert that post calls form_valid if a form_class is set and the form
         # is valid.
         # A form without any fields + any data = bound empty form => form valid.
@@ -50,7 +51,7 @@ class TestOptionalFormView(ViewTestCase):
 
     @mock.patch.object(OptionalFormView, 'form_valid')
     @mock.patch.object(OptionalFormView, 'form_invalid')
-    def test_post_form_invalid(self, mocked_invalid, mocked_valid):
+    def test_post_form_invalid(self, mocked_invalid, _mocked_valid):
         # Assert that post calls form_invalid if the form is not valid and
         # get_form() is not None.
         form_class = type('Form', (forms.Form, ), {'foo': forms.CharField()})
@@ -109,7 +110,6 @@ class TestSiteSearchView(ViewTestCase):
         results = view.get_result_list('Silva')
         self.assertTrue(results)
         self.assertEqual(len(results), 1)
-        self.assertIn(str(self.obj1.pk), results[0])
         self.assertIn('Musiker (1)', results[0])
 
     def test_get_result_list_noperms(self):
@@ -143,12 +143,12 @@ class TestSiteSearchView(ViewTestCase):
         results = context['results']
         self.assertTrue(results)
         self.assertEqual(len(results), 1)
-        self.assertIn(str(self.obj1.pk), results[0])
+        self.assertIn('?q=Silva', results[0])
         self.assertIn('Musiker (1)', results[0])
 
     @mock.patch.object(SiteSearchView, 'get_result_list')
     @mock.patch.object(SiteSearchView, 'render_to_response')
-    def test_get_no_q(self, mocked_render, mocked_get_result_list):
+    def test_get_no_q(self, _mocked_render, mocked_get_result_list):
         # get_result_list should not be called when no search term was provided.
         for data in ({}, {'q': ''}):
             with self.subTest(request_data=data):

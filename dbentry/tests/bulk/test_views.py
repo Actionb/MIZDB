@@ -9,7 +9,6 @@ from dbentry.tests.mixins import TestDataMixin, CreateFormViewMixin, LoggingTest
 
 
 class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, LoggingTestMixin):
-
     model = _models.Ausgabe
     path = reverse_lazy('bulk_ausgabe')
 
@@ -59,7 +58,6 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
 
 
 class TestBulkAusgabe(BulkAusgabeTestCase):
-
     view_class = BulkAusgabe
 
     def test_view_available(self):
@@ -91,7 +89,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertTrue('preview' in response.context)
 
     def test_post_save_and_continue(self):
-        # Assert that a redirect follows a succesful 'continue' post.
+        # Assert that a redirect follows a successful 'continue' post.
         data = self.valid_data.copy()
         data['_continue'] = True
         # The form's initial data is retrieved from the session.
@@ -104,7 +102,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         self.assertIn("admin/dbentry/ausgabe/?id__in=", response.url)
 
     def test_post_save_and_addanother_preview(self):
-        # Assert that after succesful 'add_another' post, the preview with
+        # Assert that after successful 'add_another' post, the preview with
         # updated data is displayed.
         data = self.valid_data.copy()
         data['_addanother'] = True
@@ -183,7 +181,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
         change_message = {}
         added = [{"added": change_message}]
         # Check that the creation of new_audio was logged:
-        self.assertLoggedAddition(new_audio,change_message=added)
+        self.assertLoggedAddition(new_audio, change_message=added)
         # Check that the creation of the Bestand for new_audio was logged:
         change_message['name'] = 'Bestand'
         change_message['object'] = str(new_audio.bestand_set.first())
@@ -230,11 +228,11 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
                 self.assertNotIn(
                     qs.first(), preexisting,
                     msg="Preexisting object found in the collection that"
-                    " should only contain explicitly new instances."
+                        " should only contain explicitly new instances."
                 )
 
         # Check that the created objects have the expected values.
-        expected_num = 2
+        expected_num = 2  # noqa
         change_message = {}
         added = [{"added": change_message}]
         for instance, expected_num in zip(created, [2, 3, 4]):
@@ -259,7 +257,7 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
                 # We have created two bestand objects for num == 4.
                 self.assertEqual(instance.bestand_set.count(), 2)
                 # Sort the bestand instances alphabetically -> Bestand LO, Dubletten LO.
-                b1,  b2 = instance.bestand_set.all().order_by('lagerort__ort')
+                b1, b2 = instance.bestand_set.all().order_by('lagerort__ort')
                 self.assertEqual(b1.lagerort, self.zraum)
                 self.assertEqual(b1.provenienz, self.prov)
                 self.assertEqual(b2.lagerort, self.dublette)
@@ -328,7 +326,6 @@ class TestBulkAusgabe(BulkAusgabeTestCase):
 
 
 class TestBulkAusgabeStory(BulkAusgabeTestCase):
-
     view_class = BulkAusgabe
 
     def test_story(self):

@@ -30,7 +30,6 @@ from dbentry.utils import get_obj_link  # parameters: obj, user, admin_site
 
 
 class TestConfirmationViewMixin(AdminTestCase):
-
     model = _models.Audio
     model_admin_class = AudioAdmin
 
@@ -54,7 +53,7 @@ class TestConfirmationViewMixin(AdminTestCase):
         # this base class has not implemented the perform_action method
         instance = self.get_instance()
         with self.assertRaises(NotImplementedError):
-            instance.perform_action()
+            instance.perform_action(form_cleaned_data={})
 
     def test_dispatch_action_not_allowed(self):
         # dispatch should redirect 'back' (here: return None) if the action is not allowed
@@ -62,9 +61,10 @@ class TestConfirmationViewMixin(AdminTestCase):
         instance._action_allowed = False
         self.assertIsNone(instance.dispatch(self.get_request()))
 
+    # noinspection SpellCheckingInspection
     @translation_override(language=None)
     @patch.object(MIZAdminMixin, 'get_context_data', return_value={})
-    def test_get_context_data(self, mocked_super_get_context_data):
+    def test_get_context_data(self, _mocked_super_get_context_data):
         instance = self.get_instance()
         instance.title = 'Mergeaudio'
         instance.breadcrumbs_title = 'Breads'
@@ -77,7 +77,7 @@ class TestConfirmationViewMixin(AdminTestCase):
 
     @translation_override(language=None)
     @patch.object(MIZAdminMixin, 'get_context_data', return_value={})
-    def test_get_context_data_object_name_singular(self, mocked_super_get_context_data):
+    def test_get_context_data_object_name_singular(self, _mocked_super_get_context_data):
         # Assert that the context_data 'objects_name' is the singular of the
         # verbose_name when the queryset contains exactly one object.
         instance = self.get_instance()
@@ -90,7 +90,7 @@ class TestConfirmationViewMixin(AdminTestCase):
 
     @translation_override(language=None)
     @patch.object(MIZAdminMixin, 'get_context_data', return_value={})
-    def test_get_context_data_object_name_plural(self, mocked_super_get_context_data):
+    def test_get_context_data_object_name_plural(self, _mocked_super_get_context_data):
         # Assert that the context_data 'objects_name' is the plural of the
         # verbose_name when the queryset contains no or more than one object.
         instance = self.get_instance()
@@ -104,7 +104,6 @@ class TestConfirmationViewMixin(AdminTestCase):
 
 
 class TestActionConfirmationView(ActionViewTestCase):
-
     view_class = ActionConfirmationView
     model = _models.Band
     model_admin_class = BandAdmin
@@ -113,9 +112,11 @@ class TestActionConfirmationView(ActionViewTestCase):
     def test_compile_affected_objects(self):
         request = self.get_request()
         view = self.get_view(request=request)
-        expected = [['Band: '+ get_obj_link(self.obj1, request.user, blank=True)]]
+        # noinspection PyUnresolvedReferences
+        expected = [('Band: ' + get_obj_link(self.obj1, request.user, blank=True), )]
         self.assertEqual(view.compile_affected_objects(), expected)
 
+        # noinspection PyUnresolvedReferences
         a = make(_models.Audio, band=self.obj1, genre__extra=2)
         view = self.get_view(
             request,
@@ -127,12 +128,12 @@ class TestActionConfirmationView(ActionViewTestCase):
         link_list = view.compile_affected_objects()
         # link_list should have a structure like this:
         # [
-        #       ['Audio Material: <link of obj1>', [<affected objects>]],
-        #       ['Audio Material: <link of obj2>', [<affected objects>]],
+        #       ('Audio Material: <link of obj1>', [<affected objects>]),
+        #       ('Audio Material: <link of obj2>', [<affected objects>]),
         #       ...
         # ]
         # In this case here, the list only has one object (first index==0).
-        expected = 'Audio Material: '+ get_obj_link(a, request.user, blank=True)
+        expected = 'Audio Material: ' + get_obj_link(a, request.user, blank=True)
         self.assertEqual(
             link_list[0][0], expected,
             msg="First item should be the link to the audio object."
@@ -148,7 +149,7 @@ class TestActionConfirmationView(ActionViewTestCase):
         genres = a.genre.all().order_by('genre')
         expected = 'Genre: ' + get_obj_link(genres[0], request.user, blank=True)
         self.assertEqual(link_list[0][1][2], expected)
-        expected = 'Genre: '+ get_obj_link(genres[1], request.user, blank=True)
+        expected = 'Genre: ' + get_obj_link(genres[1], request.user, blank=True)
         self.assertEqual(link_list[0][1][3], expected)
         # And the last item should be the release_id:
         self.assertEqual(link_list[0][1][4], 'Release ID (discogs): ---')
@@ -178,13 +179,12 @@ class TestActionConfirmationView(ActionViewTestCase):
 
 
 class TestWizardConfirmationView(ActionViewTestCase):
-
     view_class = WizardConfirmationView
     model = _models.Audio
     model_admin_class = AudioAdmin
 
     @patch.object(ConfirmationViewMixin, 'get_context_data', return_value={})
-    def test_get_context_data(self, m):
+    def test_get_context_data(self, _m):
         # get_context_data should add helptext for the current step
         view = self.get_view()
         view.steps = Mock(current='1')
@@ -205,7 +205,7 @@ class TestWizardConfirmationView(ActionViewTestCase):
 
     @patch.object(SessionWizardView, 'post', return_value='WizardForm!')
     @patch.object(FixedSessionWizardView, '__init__')
-    def test_post(self, x, y):
+    def test_post(self, _x, _y):
         # If there is no 'step' data in request.POST, post() should return the
         # rendered first form of the wizard.
         request = self.post_request()
@@ -226,7 +226,6 @@ class TestWizardConfirmationView(ActionViewTestCase):
 
 
 class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
-
     view_class = BulkEditJahrgang
     model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
@@ -263,6 +262,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
     def setUp(self):
         super(TestBulkEditJahrgang, self).setUp()
+        # noinspection PyUnresolvedReferences
         self.queryset = self.model.objects.exclude(pk=self.obj3.pk)
 
     def test_action_allowed(self):
@@ -292,6 +292,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # affected_fields for this view: ['jahrgang','ausgabejahr__jahr']
         request = self.get_request()
 
+        # noinspection PyUnresolvedReferences
         view = self.get_view(request, queryset=self.qs_obj1)
         result = view.compile_affected_objects()
         expected = ["Jahrgang: ---", "Jahr: 2000", "Jahr: 2001"]
@@ -304,6 +305,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         expected = ["Jahrgang: ---", "Jahr: 2001"]
         self.assertEqual(result[1][1], expected)
 
+        # noinspection PyUnresolvedReferences
         view = self.get_view(request, queryset=self.qs_obj3)
         result = view.compile_affected_objects()
         expected = ["Jahrgang: 20", "Jahr: 2001"]
@@ -311,6 +313,7 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
 
     def test_post_action_not_allowed(self):
         # If the action is not allowed, post should REDIRECT us back to the changelist
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'bulk_jg',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj3.pk]
@@ -338,17 +341,18 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
     def test_perform_action(self):
         request = self.get_request()
         view = self.get_view(request)
+        # noinspection PyUnresolvedReferences
         view.perform_action({'jahrgang': 31416, 'start': self.obj1.pk})
         new_jg = (self.queryset
-            .values_list('jahrgang', flat=True)
-            .exclude(jahrgang=None)
-            .order_by('jahrgang')
-            .distinct())
+                  .values_list('jahrgang', flat=True)
+                  .exclude(jahrgang=None)
+                  .order_by('jahrgang')
+                  .distinct())
         self.assertEqual(list(new_jg), [31416, 31417, 31418])
         for obj in self.queryset.all():
             self.assertLoggedChange(
                 obj,
-                change_message=[{"changed": {'fields':['Jahrgang']}}]
+                change_message=[{"changed": {'fields': ['Jahrgang']}}]
             )
 
     @tag('logging')
@@ -356,27 +360,32 @@ class TestBulkEditJahrgang(ActionViewTestCase, LoggingTestMixin):
         # obj4 has no years assigned, perform_action should assign it the
         # jahrgang value given by 'form_cleaned_data'.
         request = self.get_request()
+        # noinspection PyUnresolvedReferences
         view = self.get_view(request, queryset=self.qs_obj4)
+        # noinspection PyUnresolvedReferences
         form_cleaned_data = {'jahrgang': 31416, 'start': self.obj4.pk}
         view.perform_action(form_cleaned_data)
+        # noinspection PyUnresolvedReferences
         new_jg = list(self.qs_obj4.values_list('jahrgang', flat=True))
         self.assertEqual(new_jg, [31416])
+        # noinspection PyUnresolvedReferences
         self.assertLoggedChange(
             self.obj4,
-            change_message=[{"changed": {'fields':['Jahrgang']}}]
+            change_message=[{"changed": {'fields': ['Jahrgang']}}]
         )
 
     @tag('logging')
     def test_perform_action_jahrgang_zero(self):
         request = self.get_request()
         view = self.get_view(request)
+        # noinspection PyUnresolvedReferences
         view.perform_action({'jahrgang': 0, 'start': self.obj1.pk})
         new_jg = list(self.queryset.values_list('jahrgang', flat=True).distinct())
         self.assertEqual(new_jg, [None])
         for obj in self.queryset.all():
             self.assertLoggedChange(
                 obj,
-                change_message=[{"changed": {'fields':['Jahrgang']}}]
+                change_message=[{"changed": {'fields': ['Jahrgang']}}]
             )
 
     def test_permissions_required(self):
@@ -395,18 +404,20 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
     model_admin_class = AusgabenAdmin
     raw_data = [
         {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2000]},
-        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001], 'jahrgang':1},
+        {'magazin__magazin_name': 'Testmagazin', 'ausgabejahr__jahr': [2001], 'jahrgang': 1},
         {'magazin__magazin_name': 'Bad', 'ausgabejahr__jahr': [2001], 'jahrgang': 20},
         {'magazin__magazin_name': 'Testmagazin', 'jahrgang': 2}
     ]
 
     def test_action_allowed(self):
+        # noinspection PyUnresolvedReferences
         queryset = self.queryset.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view = self.get_view(queryset=queryset)
         self.assertTrue(view.action_allowed)
 
     def test_action_allowed_low_qs_count(self):
         request = self.post_request()
+        # noinspection PyUnresolvedReferences
         view = self.get_view(request=request, queryset=self.qs_obj1)
         self.assertFalse(view.action_allowed)
         expected_message = (
@@ -424,6 +435,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     def test_post_action_not_allowed(self):
         # If the action is not allowed, post should REDIRECT us back to the changelist
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj3.pk]
@@ -437,6 +449,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     def test_post_first_visit(self):
         # post should return the first form (form_class: MergeFormSelectPrimary) of the Wizard
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
@@ -453,12 +466,14 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     def test_post_merge_conflict(self):
         # post should return the form that handles merge conflicts
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
         }
         management_form = {'merge_view_wizarded-current_step': 0}
         request_data.update(management_form)
+        # noinspection PyUnresolvedReferences
         form_data = {'0-primary': self.obj1.pk, '0-expand_primary': True}
         request_data.update(form_data)
 
@@ -473,18 +488,21 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         # (through response_action) us back to the changelist
 
         # Step 0
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
         }
         management_form = {'merge_view_wizarded-current_step': 0}
         request_data.update(management_form)
+        # noinspection PyUnresolvedReferences
         form_data = {'0-primary': self.obj1.pk, '0-expand_primary': True}
         request_data.update(form_data)
 
-        response = self.client.post(self.changelist_path, data=request_data)
+        self.client.post(self.changelist_path, data=request_data)
 
         # Step 1
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
@@ -510,12 +528,14 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     def test_post_first_form_valid_and_no_merge_conflict(self):
         # post should return us back to the changelist
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk]
         }
         management_form = {'merge_view_wizarded-current_step': 0}
         request_data.update(management_form)
+        # noinspection PyUnresolvedReferences
         form_data = {'0-primary': self.obj1.pk, '0-expand_primary': True}
         request_data.update(form_data)
 
@@ -527,7 +547,9 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         # Check that the whole process does *NOT* change already present data
         # of the selected primary object.
         # spice up obj1 so we can verify that a merge has happened:
+        # noinspection PyUnresolvedReferences
         self.qs_obj1.update(beschreibung='I really should not be here.')
+        # noinspection PyUnresolvedReferences
         request_data = {
             'action': 'merge_records',
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, self.obj2.pk, self.obj4.pk]
@@ -536,6 +558,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         request_data.update(management_form)
         # Select obj2 (or obj4) here as primary as it already has a value for
         # jahrgang (our only 'source' of conflict):
+        # noinspection PyUnresolvedReferences
         form_data = {'0-primary': self.obj2.pk, '0-expand_primary': True}
         request_data.update(form_data)
 
@@ -547,13 +570,16 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
             msg="Redirect back to changelist expected."
         )
 
+        # noinspection PyUnresolvedReferences
         self.obj2.refresh_from_db()
+        # noinspection PyUnresolvedReferences
         self.assertEqual(self.obj2.jahrgang, 1)
+        # noinspection PyUnresolvedReferences
         self.assertEqual(self.obj2.beschreibung, 'I really should not be here.')
 
-    @patch('dbentry.actions.views.get_updateable_fields', return_value=[])
+    @patch('dbentry.actions.views.get_updatable_fields', return_value=[])
     @patch.object(SessionWizardView, 'process_step', return_value={})
-    def test_process_step(self, super_process_step, updateable_fields):
+    def test_process_step(self, super_process_step, updatable_fields):
         view = self.get_view()
         view.get_form_prefix = mockv('0')
         view.storage = Mock(current_step='')
@@ -569,12 +595,16 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
         # If the 'primary' has no fields that can be updated, the returned dict
         # should not contain 'updates'.
+        # noinspection PyUnresolvedReferences
         super_process_step.return_value = {'0-primary': self.obj1.pk}
+        # noinspection PyUnresolvedReferences
         form.cleaned_data = {'0-primary': self.obj1.pk, 'expand_primary': True}
+        # noinspection PyUnresolvedReferences
         self.assertEqual(view.process_step(form), {'0-primary': self.obj1.pk})
 
         # obj1 can be updated on the field 'jahrgang' with obj2's value
-        updateable_fields.return_value = ['jahrgang']
+        updatable_fields.return_value = ['jahrgang']
+        # noinspection PyUnresolvedReferences
         view.queryset = self.model.objects.filter(pk__in=[self.obj1.pk, self.obj2.pk])
         view.storage.current_step = ''
         processed_data = view.process_step(form)
@@ -584,6 +614,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(view.storage.current_step, last_step)
 
         # same as above, but with a conflict due to involving obj4 as well
+        # noinspection PyUnresolvedReferences
         view.queryset = self.model.objects.filter(
             pk__in=[self.obj1.pk, self.obj2.pk, self.obj4.pk])
         view.storage.current_step = ''
@@ -595,7 +626,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
     @translation_override(language=None)
     @patch.object(WizardConfirmationView, 'get_context_data', return_value={})
-    def test_get_context_data(self, super_get_context_data):
+    def test_get_context_data(self, _super_get_context_data):
         # Assert that 'title' is counting up with 'step'
         view = self.get_view()
         view.steps = Mock(current='0')
@@ -604,7 +635,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(view.get_context_data().get('title'), 'Merge objects: step 23')
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
-    def test_get_form_kwargs_select_primary(self, super_get_form_kwargs):
+    def test_get_form_kwargs_select_primary(self, _super_get_form_kwargs):
+        # noinspection PyUnresolvedReferences
         ids = [self.obj1.pk, self.obj2.pk, self.obj4.pk]
         view = self.get_view(queryset=self.model.objects.filter(pk__in=ids))
         # MergeFormSelectPrimary step
@@ -618,7 +650,8 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         )
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
-    def test_get_form_kwargs_conflicts(self, super_get_form_kwargs):
+    def test_get_form_kwargs_conflicts(self, _super_get_form_kwargs):
+        # noinspection PyUnresolvedReferences
         ids = [self.obj1.pk, self.obj2.pk, self.obj4.pk]
         view = self.get_view(queryset=self.model.objects.filter(pk__in=ids))
         # MergeConflictsFormSet step
@@ -664,6 +697,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         # Assert that merge_records is called with the correct arguments.
         # Also check that no 'updates' are passed to merge_records if
         # expand_primary is False.
+        # noinspection PyUnresolvedReferences
         step_data = {'primary': self.obj1.pk, 'expand_primary': False}
         mocked_step_data.return_value = step_data
 
@@ -673,6 +707,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         view.perform_action()
         self.assertTrue(mocked_merge_records.called)
         args, kwargs = mocked_merge_records.call_args
+        # noinspection PyUnresolvedReferences
         self.assertEqual(
             args[0], self.obj1,
             msg="First argument to merge_records should be the primary model instance."
@@ -693,7 +728,6 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
 
 
 class TestMergeViewWizardedArtikel(ActionViewTestCase):
-
     view_class = MergeViewWizarded
     model = _models.Artikel
     model_admin_class = ArtikelAdmin
@@ -708,7 +742,6 @@ class TestMergeViewWizardedArtikel(ActionViewTestCase):
 
 
 class TestMoveToBrochureBase(ActionViewTestCase):
-
     view_class = MoveToBrochureBase
     model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
@@ -724,19 +757,23 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
     def setUp(self):
         super().setUp()
+        # noinspection PyUnresolvedReferences
         self.form_cleaned_data = [
             {
                 'titel': 'Testausgabe', 'ausgabe_id': self.obj1.pk, 'accept': True,
             }
         ]
+        # noinspection PyUnresolvedReferences
         self.mag = self.obj1.magazin
 
     @translation_override(language=None)
     def test_action_allowed_has_artikels(self):
+        # noinspection PyUnresolvedReferences
         self.obj1.artikel_set.add(make(_models.Artikel, ausgabe=self.obj1))
         request = self.post_request()
         view = self.get_view(request=request, queryset=self.queryset)
         self.assertFalse(view.action_allowed)
+        # noinspection PyUnresolvedReferences
         expected_message = (
             "Aktion abgebrochen: Folgende Ausgaben besitzen Artikel, die nicht "
             "verschoben werden können: {}"
@@ -769,14 +806,19 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         initial = view.get_initial()
         self.assertEqual(len(initial), 1)
         self.assertIn('ausgabe_id', initial[0])
+        # noinspection PyUnresolvedReferences
         self.assertEqual(initial[0]['ausgabe_id'], self.obj1.pk)
         self.assertIn('titel', initial[0])
+        # noinspection PyUnresolvedReferences
         self.assertEqual(initial[0]['titel'], self.obj1.magazin.magazin_name)
         self.assertIn('zusammenfassung', initial[0])
+        # noinspection PyUnresolvedReferences
         self.assertEqual(initial[0]['zusammenfassung'], self.obj1.magazin.beschreibung)
         self.assertIn('beschreibung', initial[0])
+        # noinspection PyUnresolvedReferences
         self.assertEqual(initial[0]['beschreibung'], self.obj1.beschreibung)
         self.assertIn('bemerkungen', initial[0])
+        # noinspection PyUnresolvedReferences
         self.assertEqual(initial[0]['bemerkungen'], self.obj1.bemerkungen)
 
     def test_perform_action(self):
@@ -790,6 +832,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
         view.mag = self.mag
 
+        # noinspection PyUnresolvedReferences
         changed_bestand = self.obj1.bestand_set.first()
         self.assertEqual(_models.Brochure.objects.count(), 0)
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
@@ -805,6 +848,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertEqual(new_brochure.bestand_set.first(), changed_bestand)
         self.assertIsNone(changed_bestand.ausgabe_id)
         # Assert that the primary was deleted
+        # noinspection PyUnresolvedReferences
         self.assertFalse(self.model.objects.filter(pk=self.obj1.pk).exists())
 
     def test_perform_action_deletes_magazin(self):
@@ -838,6 +882,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
             "Hinweis: {verbose_name} wurde automatisch erstellt beim "
             "Verschieben von Ausgabe {str_ausgabe} (Magazin: {str_magazin})."
         )
+        # noinspection PyUnresolvedReferences
         expected = expected.format(
             verbose_name=_models.Brochure._meta.verbose_name,
             str_ausgabe=str(self.obj1), str_magazin=str(self.obj1.magazin)
@@ -874,13 +919,16 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         mocked_model_from_string.return_value = _models.Brochure
         options_form_cleaned_data = {'brochure_art': 'brochure'}
 
+        # noinspection PyUnresolvedReferences
         self.obj1.artikel_set.add(make(_models.Artikel, ausgabe_id=self.obj1.pk))
         request = self.get_request()
         view = self.get_view(request=request, queryset=self.queryset)
         view.mag = self.mag
 
         view.perform_action(self.form_cleaned_data, options_form_cleaned_data)
+        # noinspection PyUnresolvedReferences
         self.assertTrue(self.model.objects.filter(pk=self.obj1.pk).exists())
+        # noinspection PyUnresolvedReferences
         expected_message = (
             'Folgende Ausgaben konnten nicht gelöscht werden: '
             '<a href="/admin/dbentry/ausgabe/{pk}/change/" target="_blank">{name}</a> '
@@ -902,7 +950,9 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         mocked_is_protected.return_value = False
         options_form_cleaned_data = {'brochure_art': 'brochure', 'delete_magazin': True}
 
+        # noinspection PyUnresolvedReferences
         ausgabe_id = self.obj1.pk
+        # noinspection PyUnresolvedReferences
         magazin_id = self.obj1.magazin_id
         # Create an ausgabe that will force a ProtectedError:
         make(self.model, magazin_id=magazin_id)
@@ -916,6 +966,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
     def test_perform_action_not_accepted(self):
         # Assert that an ausgabe is not changed if the user unticks 'accept'.
         options_form_cleaned_data = {'brochure_art': 'brochure'}
+        # noinspection PyUnresolvedReferences
         ausgabe_id = self.obj1.pk
         self.form_cleaned_data[0]['accept'] = False
         view = self.get_view(request=self.get_request(), queryset=self.queryset)
@@ -954,13 +1005,17 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # Assert that can_delete_magazin returns True when the magazin can be
         # deleted after the action.
         view = self.get_view(self.get_request())
+        # noinspection PyUnresolvedReferences
         view._magazin_instance = self.obj1.magazin
         self.assertTrue(view.can_delete_magazin)
 
         # Add another ausgabe to magazin to forbid the deletion of it.
+        # noinspection PyUnresolvedReferences
         make(self.model, magazin=self.obj1.magazin)
+        # noinspection PyUnresolvedReferences
         view = self.get_view(
             self.get_request(), queryset=self.model.objects.filter(pk=self.obj1.pk))
+        # noinspection PyUnresolvedReferences
         view._magazin_instance = self.obj1.magazin
         self.assertFalse(view.can_delete_magazin)
 
@@ -986,6 +1041,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         }
 
         # User selects two ausgaben of different magazines and gets a message about it
+        # noinspection PyUnresolvedReferences
         changelist_post_data = {
             'action': ['moveto_brochure'],
             helpers.ACTION_CHECKBOX_NAME: [self.obj1.pk, other.pk]
@@ -1001,6 +1057,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         self.assertMessageSent(response.wsgi_request, expected_message)
 
         # User selects a single ausgabe and proceeds to the selection
+        # noinspection PyUnresolvedReferences
         changelist_post_data[helpers.ACTION_CHECKBOX_NAME] = [self.obj1.pk]
         response = self.client.post(path=self.changelist_path, data=changelist_post_data)
         self.assertEqual(response.status_code, 200)
@@ -1016,6 +1073,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # User selects another valid ausgabe and returns to the selection with
         # the two instances.
         obj2 = make(self.model, magazin=self.mag)
+        # noinspection PyUnresolvedReferences
         changelist_post_data[helpers.ACTION_CHECKBOX_NAME] = [self.obj1.pk, obj2.pk]
         response = self.client.post(path=self.changelist_path, data=changelist_post_data)
         self.assertEqual(response.status_code, 200)
@@ -1026,6 +1084,7 @@ class TestMoveToBrochureBase(ActionViewTestCase):
 
         # User selects the 'Katalog' category and confirms, without having
         # checked the delete_magazin checkbox.
+        # noinspection PyUnresolvedReferences
         post_data = {
             'action_confirmed': 'Ja, ich bin sicher',
             'brochure_art': 'katalog',
@@ -1066,8 +1125,8 @@ class TestMoveToBrochureBase(ActionViewTestCase):
         # User is redirected back to the changelist
         self.assertEqual(response.status_code, 302)
 
-class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
 
+class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
     view_class = ChangeBestand
     model = _models.Ausgabe
     model_admin_class = AusgabenAdmin
@@ -1089,7 +1148,8 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
             **kwargs
         }
 
-    def get_form_data(self, parent_obj, *bestand_objects):
+    @staticmethod
+    def get_form_data(parent_obj, *bestand_objects):
         prefix = 'bestand_set-%s' % parent_obj.pk
         management_form_data = {
             prefix + '-TOTAL_FORMS': len(bestand_objects),
@@ -1190,7 +1250,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         formset, inline = view.get_bestand_formset(request, self.obj1)
         # Check some attributes of the formset/inline.
         self.assertEqual(inline.model, _models.Bestand)
-        self.assertEqual(formset.instance,  self.obj1)
+        self.assertEqual(formset.instance, self.obj1)
         self.assertEqual(list(formset.queryset.all()), list(self.obj1.bestand_set.all()))
 
     def test_get_bestand_formset_form_data(self):

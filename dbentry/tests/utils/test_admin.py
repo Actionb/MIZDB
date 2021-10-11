@@ -15,8 +15,8 @@ from dbentry.tests.mixins import TestDataMixin
 from dbentry.utils import admin as admin_utils
 
 
+# noinspection PyUnresolvedReferences
 class TestAdminUtils(TestDataMixin, RequestTestCase):
-
     model = _models.Audio
 
     @classmethod
@@ -65,7 +65,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_link_list_blank(self):
         # Assert that all links contain target="_blank" when calling link_list
         # with blank=True.
-        sep="§"  # use an unusual separator so the links can be split 'securely'
+        sep = "§"  # use an unusual separator so the links can be split 'securely'
         links = admin_utils.link_list(self.get_request(), self.test_data, sep=sep, blank=True)
         for link in links.split(sep):
             with self.subTest(link=link):
@@ -81,7 +81,8 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_model_admin_for_model(self):
         self.assertIsInstance(admin_utils.get_model_admin_for_model('Artikel'), _admin.ArtikelAdmin)
         self.assertIsInstance(admin_utils.get_model_admin_for_model(_models.Artikel), _admin.ArtikelAdmin)
-        self.assertIsNone(admin_utils.get_model_admin_for_model('beepboop'))
+        with self.assertRaises(LookupError):
+            admin_utils.get_model_admin_for_model('beepboop')
 
     def test_has_admin_permission(self):
         request = self.get_request(user=self.noperms_user)
@@ -91,7 +92,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
             msg="Should return False for a user with no permissions."
         )
 
-        perms = Permission.objects.filter(codename__in=('add_artikel', ))
+        perms = Permission.objects.filter(codename__in=('add_artikel',))
         self.staff_user.user_permissions.set(perms)
         request = self.get_request(user=self.staff_user)
         model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
@@ -273,8 +274,8 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
                 fields=['band'],
                 related_obj=m2m_band,
             )
-            expected_message = [{'changed':
-                    {'fields': ['Band'], 'name': 'Band', 'object': 'Led Zeppelin'}}]
+            expected_message = [
+                {'changed': {'fields': ['Band'], 'name': 'Band', 'object': 'Led Zeppelin'}}]
             self.assertTrue(mocked_create_logentry.called)
             user_id, obj, action_flag, message = mocked_create_logentry.call_args[0]
             self.assertEqual(user_id, self.super_user.pk)

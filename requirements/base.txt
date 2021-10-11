@@ -18,8 +18,11 @@ python-stdnum
 # Base factory for the app's test data factories
 factory-boy
 
-# PostgreSQL Python
+# Postgres Python
 psycopg2
 
 # HTTP library handling the SRU requests to the DNB
 requests
+
+# Postgres Django SearchVectorField + Triggers
+django-tsvector-field
