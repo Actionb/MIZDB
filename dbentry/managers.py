@@ -1,14 +1,13 @@
 import calendar
 import datetime
 from collections import OrderedDict
-from typing import Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Union
 
 from django.core.exceptions import FieldDoesNotExist
 from django.core.validators import EMPTY_VALUES
 from django.db import transaction
 from django.db.models import Count, Max, Min, Model, QuerySet
 from django.db.models.constants import LOOKUP_SEP
-from nameparser import HumanName
 
 from dbentry.fts.query import TextSearchQuerySetMixin
 from dbentry.utils import leapdays
@@ -481,28 +480,3 @@ class AusgabeQuerySet(CNQuerySet):
         ).order_by(*ordering)
         clone.chronologically_ordered = True
         return clone
-
-
-class HumanNameQuerySet(MIZQuerySet):
-    """Extension of MIZQuerySet that enables searches for 'human names'."""
-
-    @staticmethod
-    def _parse_human_name(text: str) -> str:
-        """Run ``text`` through the HumanName constructor."""
-        try:
-            return str(HumanName(text))
-        except:
-            # TODO: find out which exceptions might be raised by HumanName()
-            return text
-
-    def search(self, search_term, search_type):
-        # Parse the search term through HumanName first to 'combine' the
-        # various ways one could write a human name.
-        # (f.ex. 'first name surname' or 'surname, first name')
-        search_term = self._parse_human_name(search_term)
-        return super().search(search_term, search_type)
-
-
-class PeopleQuerySet(HumanNameQuerySet, CNQuerySet):
-    """Queryset for models that handle people."""
-    pass
