@@ -8,8 +8,6 @@ from dbentry.fields import YearField
 from dbentry.managers import CNQuerySet, MIZQuerySet
 from dbentry.utils import get_fields_and_lookups, get_model_fields
 
-# TODO: remove mentions of MIZQuerySet.find()
-
 
 class BaseModel(models.Model):
     """
@@ -19,29 +17,15 @@ class BaseModel(models.Model):
     to the default permissions.
 
     Attributes:
-        - ``search_fields`` (list): field names to include in searches.
-          (autocomplete, ModelAdmin search bar, queries using find())
-        - ``search_fields_suffixes`` (dict): a dictionary of search_fields and
-          their suffixes that will be appended to search results when using
-          certain search strategies (queryset.find() or autocomplete views).
-          Through these suffixes it can be hinted at why exactly a user has
-          found a particular result for a given search term.
-        - ``primary_search_fields`` (list): search results that were found
-          through fields that are not in primary_search_fields will be flagged
-          as a 'weak hit' and thus be visually separated from the other results.
         - ``name_field`` (str): the name of the field that most accurately
-          represents the record. If set, only this field will a) be used
-          for __str__() and b) fetched from the database as search results for
-          queryset.find().
+          represents the record. If set, the field's value will determine the
+          output of __str__().
         - ``create_field`` (str): the name of the field for the dal
           autocomplete object creation.
         - ``exclude_from_str`` (list): list of field names to be excluded from
           the default __str__() implementation.
     """
 
-    search_fields: list = []
-    primary_search_fields: list = []
-    search_fields_suffixes: dict = {}
     name_field: str = ''
     create_field: str = ''  # TODO: must create_field allowed to be also be None?
     exclude_from_str: list = ['beschreibung', 'bemerkungen', '_fts']
@@ -97,16 +81,6 @@ class BaseModel(models.Model):
                 "Calling qs() from class level is prohibited. "
                 "Use {}.objects instead.".format(self.__name__)
             )
-
-    @classmethod
-    def get_search_fields(cls, foreign: bool = False, m2m: bool = False) -> List[str]:
-        """Return the model's field names that are used in searches."""
-        if cls.search_fields:
-            return list(cls.search_fields)
-        return [
-            field.name
-            for field in get_model_fields(cls, foreign=foreign, m2m=m2m)
-        ]
 
     class Meta:
         abstract = True
@@ -243,25 +217,6 @@ class ComputedNameModel(BaseModel):
         # update the name if necessary.
         if update:
             self.update_name(force_update=True)
-
-    @classmethod
-    def get_search_fields(cls, foreign: bool = False, m2m: bool = False) -> List[str]:
-        search_fields = super().get_search_fields(foreign, m2m)
-        # Make '_name' the first search field.
-        if '_name' not in search_fields:
-            search_fields.insert(0, '_name')
-        else:
-            i = search_fields.index('_name')
-            if i != 0:
-                search_fields.pop(i)
-                search_fields.insert(0, '_name')
-        # Remove '_changed_flag' if it is in search_fields.
-        # Searching for that field's value is nonsensical.
-        try:
-            search_fields.remove('_changed_flag')
-        except ValueError:
-            pass
-        return search_fields
 
     def update_name(self, force_update: bool = False) -> bool:
         """

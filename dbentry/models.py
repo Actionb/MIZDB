@@ -15,7 +15,7 @@ from dbentry.fields import (
 )
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
-from dbentry.managers import AusgabeQuerySet, HumanNameQuerySet, PeopleQuerySet
+from dbentry.managers import AusgabeQuerySet
 from dbentry.utils import concat_limit, get_model_fields, get_model_relations
 
 
@@ -43,8 +43,6 @@ class Person(ComputedNameModel):
     )
 
     name_composing_fields = ['vorname', 'nachname']
-    primary_search_fields = ['_name']
-    search_fields = ['_name', 'beschreibung', 'bemerkungen']
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Person'
@@ -99,11 +97,6 @@ class Musiker(BaseModel):
 
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
-    primary_search_fields = ['kuenstler_name']
-    search_fields = [
-        'kuenstler_name', 'musikeralias__alias', 'person___name',
-        'beschreibung', 'bemerkungen'
-    ]
     related_search_vectors = ['musikeralias___fts', 'person___fts']
 
     class Meta(BaseModel.Meta):
@@ -137,8 +130,6 @@ class Genre(BaseModel):
 
     create_field = 'genre'
     name_field = 'genre'
-    primary_search_fields = ['genre']
-    search_fields = ['genre', 'genrealias__alias']
     related_search_vectors = ['genrealias___fts']
 
     class Meta(BaseModel.Meta):
@@ -176,8 +167,6 @@ class Band(BaseModel):
 
     create_field = 'band_name'
     name_field = 'band_name'
-    primary_search_fields = ['band_name']
-    search_fields = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     related_search_vectors = ['bandalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -216,8 +205,6 @@ class Autor(ComputedNameModel):
     )
 
     name_composing_fields = ['person___name', 'kuerzel']
-    primary_search_fields = ['_name']
-    search_fields = ['_name', 'beschreibung', 'bemerkungen']
     related_search_vectors = ['person___fts']
 
     class Meta(ComputedNameModel.Meta):
@@ -310,8 +297,6 @@ class Ausgabe(ComputedNameModel):
         'magazin__ausgaben_merkmal', 'ausgabejahr__jahr', 'ausgabenum__num',
         'ausgabelnum__lnum', 'ausgabemonat__monat__abk'
     ]
-    primary_search_fields = ['_name']
-    search_fields = ['_name', 'beschreibung', 'bemerkungen']
 
     objects = AusgabeQuerySet.as_manager()
 
@@ -427,8 +412,6 @@ class AusgabeJahr(BaseModel):
 
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
-    search_fields = ['jahr']
-
     class Meta(BaseModel.Meta):
         verbose_name = 'Jahr'
         verbose_name_plural = 'Jahre'
@@ -440,8 +423,6 @@ class AusgabeNum(BaseModel):
     num = models.PositiveSmallIntegerField('Nummer')
 
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
-
-    search_fields = ['num']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Nummer'
@@ -455,8 +436,6 @@ class AusgabeLnum(BaseModel):
 
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
 
-    search_fields = ['lnum']
-
     class Meta(BaseModel.Meta):
         verbose_name = 'lfd. Nummer'
         verbose_name_plural = 'Laufende Nummer'
@@ -467,8 +446,6 @@ class AusgabeLnum(BaseModel):
 class AusgabeMonat(BaseModel):
     ausgabe = models.ForeignKey('Ausgabe', models.CASCADE)
     monat = models.ForeignKey('Monat', models.CASCADE)
-
-    search_fields = ['monat__monat', 'monat__abk']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Ausgabe-Monat'
@@ -492,8 +469,6 @@ class Monat(BaseModel):
             WeightedColumn('abk', 'A', SIMPLE)
         ]
     )
-
-    search_fields = ['monat', 'abk', 'ordinal']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Monat'
@@ -545,8 +520,6 @@ class Magazin(BaseModel):
 
     create_field = 'magazin_name'
     name_field = 'magazin_name'
-    primary_search_fields = ['magazin_name']
-    search_fields = ['magazin_name', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Magazin'
@@ -574,7 +547,6 @@ class Verlag(BaseModel):
 
     create_field = 'verlag_name'
     name_field = 'verlag_name'
-    search_fields = ['verlag_name']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Verlag'
@@ -600,7 +572,6 @@ class Ort(ComputedNameModel):
     name_composing_fields = [
         'stadt', 'land__land_name', 'bland__bland_name', 'land__code', 'bland__code'
     ]
-    search_fields = ['_name']
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Ort'
@@ -663,8 +634,6 @@ class Bundesland(BaseModel):
     )
 
     name_field = 'bland_name'
-    primary_search_fields = []  # type: ignore[var-annotated]
-    search_fields = ['bland_name', 'code']
 
     def __str__(self) -> str:
         return "{} {}".format(self.bland_name, self.code).strip()
@@ -688,7 +657,6 @@ class Land(BaseModel):
     )
 
     name_field = 'land_name'
-    search_fields = ['land_name', 'code']
 
     def __str__(self) -> str:
         return "{} {}".format(self.land_name, self.code).strip()
@@ -711,8 +679,6 @@ class Schlagwort(BaseModel):
 
     create_field = 'schlagwort'
     name_field = 'schlagwort'
-    primary_search_fields = []  # type: ignore[var-annotated]
-    search_fields = ['schlagwort', 'schlagwortalias__alias']
     related_search_vectors = ['schlagwortalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -768,8 +734,6 @@ class Artikel(BaseModel):
     )
 
     name_field = 'schlagzeile'
-    primary_search_fields = ['schlagzeile']
-    search_fields = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Artikel'
@@ -838,8 +802,6 @@ class Buch(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -861,7 +823,6 @@ class Herausgeber(BaseModel):
 
     name_field = 'herausgeber'
     create_field = 'herausgeber'
-    search_fields = ['herausgeber']
 
     class Meta(BaseModel.Meta):
         ordering = ['herausgeber']
@@ -881,8 +842,6 @@ class Instrument(BaseModel):
     )
 
     name_field = 'instrument'
-    primary_search_fields = ['instrument']
-    search_fields = ['instrument', 'kuerzel']
 
     class Meta(BaseModel.Meta):
         ordering = ['instrument', 'kuerzel']
@@ -950,8 +909,6 @@ class Audio(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -973,7 +930,6 @@ class AudioMedium(BaseModel):
 
     create_field = 'medium'
     name_field = 'medium'
-    search_fields = ['medium']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Audio-Medium'
@@ -1019,8 +975,6 @@ class Plakat(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1039,7 +993,6 @@ class Bildreihe(BaseModel):
 
     create_field = 'name'
     name_field = 'name'
-    search_fields = ['name']
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1058,7 +1011,6 @@ class Schriftenreihe(BaseModel):
 
     create_field = 'name'
     name_field = 'name'
-    search_fields = ['name']
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1089,8 +1041,6 @@ class Dokument(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1121,8 +1071,6 @@ class Memorabilien(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Memorabilia'
@@ -1146,8 +1094,6 @@ class Spielort(BaseModel):
     )
 
     name_field = 'name'
-    primary_search_fields = ['name']
-    search_fields = ['name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     related_search_vectors = ['spielortalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -1193,8 +1139,6 @@ class Technik(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
     
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
@@ -1228,9 +1172,6 @@ class Veranstaltung(BaseModel):
     )
 
     name_field = 'name'
-    primary_search_fields = ['name']
-    search_fields = [
-        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     related_search_vectors = ['veranstaltungalias___fts']
 
     class Meta(BaseModel.Meta):
@@ -1278,7 +1219,6 @@ class Veranstaltungsreihe(BaseModel):
 
     create_field = 'name'
     name_field = 'name'
-    search_fields = ['name']
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1335,8 +1275,6 @@ class Video(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Video Material'
@@ -1355,7 +1293,6 @@ class VideoMedium(BaseModel):
 
     create_field = 'medium'
     name_field = 'medium'
-    search_fields = ['medium']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Video-Medium'
@@ -1382,8 +1319,6 @@ class Provenienz(BaseModel):
 
     # TODO: FTS SearchVectorField
 
-    search_fields = ['geber__name']
-
     class Meta(BaseModel.Meta):
         ordering = ['geber', 'typ']
         verbose_name = 'Provenienz'
@@ -1403,7 +1338,6 @@ class Geber(BaseModel):
     )
 
     name_field = create_field = 'name'
-    search_fields = ['name']
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1425,7 +1359,6 @@ class Lagerort(ComputedNameModel):
     )
 
     name_composing_fields = ['ort', 'raum', 'regal', 'fach']
-    search_fields = ['ort', 'raum', 'regal', 'fach', 'ordner']
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Lagerort'
@@ -1561,8 +1494,6 @@ class Datei(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']
@@ -1583,7 +1514,6 @@ class Plattenfirma(BaseModel):
     )
 
     name_field = create_field = 'name'
-    search_fields = ['name']
 
     class Meta(BaseModel.Meta):
         ordering = ['name']
@@ -1649,9 +1579,6 @@ class Brochure(BaseBrochure):
     # TODO: add spielort ManyToManyField or merge all the BaseBrochure models?
     # (assuming a Brochure is specifically about a venue/s)
 
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
-
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Broschüre'
         verbose_name_plural = 'Broschüren'
@@ -1662,9 +1589,6 @@ class Kalender(BaseBrochure):
 
     spielort = models.ManyToManyField('Spielort')
     veranstaltung = models.ManyToManyField('Veranstaltung')
-
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Programmheft'
@@ -1686,9 +1610,6 @@ class Katalog(BaseBrochure):
     art = models.CharField(
         'Art d. Kataloges', max_length=40, choices=ART_CHOICES, default=ART_MERCH
     )
-
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseBrochure.Meta):
         verbose_name = 'Warenkatalog'
@@ -1738,8 +1659,6 @@ class Foto(BaseModel):
     )
 
     name_field = 'titel'
-    primary_search_fields = ['titel']
-    search_fields = ['titel', 'owner', 'beschreibung', 'bemerkungen']
 
     class Meta(BaseModel.Meta):
         ordering = ['titel']

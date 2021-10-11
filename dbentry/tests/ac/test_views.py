@@ -67,16 +67,11 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(create_option, [])
 
     def test_apply_q(self):
-        # Test the ordering of exact_match_qs, startswith_qs and then contains_qs
+        # Assert that exact matches come before partial ones.
         view = self.get_view(q='Boop')
         # obj1 is the only exact match
         # obj4 starts with q
         self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4])
-
-        # only obj4 should appear
-        view.q = 'Boopband'
-        self.assertEqual(
-            list(view.apply_q(self.queryset)), [self.obj4])
 
     def test_get_queryset_with_q(self):
         request = self.get_request()
@@ -446,7 +441,6 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Autor
-    # 'beschreibung' is a search_field and needs some data!
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
 

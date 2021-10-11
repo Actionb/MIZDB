@@ -73,19 +73,20 @@ class ACViewTestMethodMixin(object):
             self.assertEqual(qs_order, ["-pk"])
 
     def test_apply_q(self):
-        # Test that an object can be found through any of its search_fields
+        # Test that an object can be found by querying for the data that is was
+        # used in its creation.
+        if not self.raw_data:
+            return
         view = self.get_view()
-        search_fields = self.model.get_search_fields()
-        for search_field in search_fields:
-            with self.subTest(search_field=search_field):
-                q = self.qs_obj1.values_list(search_field, flat=True).first()
-                if q:
-                    view.q = str(q)
+        for data in self.raw_data:
+            for field, value in data.items():
+                with self.subTest(field=field, value=value):
+                    view.q = str(value)
                     result = view.apply_q(self.queryset)
                     if not result:
                         fail_msg = (
-                            "Could not find test object by querying for field {} "
-                            "with search term {}".format(search_field, str(q))
+                            f"Could not find test object by querying for field {field!r} "
+                            f"with search term {view.q!r}"
                         )
                         self.fail(fail_msg)
                     if isinstance(result, list):
@@ -95,15 +96,7 @@ class ACViewTestMethodMixin(object):
                             result = (o.pk for o in result)
                     else:
                         result = result.values_list('pk', flat=True)
-                    self.assertIn(
-                        self.obj1.pk, result,
-                        msg="search_field: {}, q: {}".format(search_field, str(q))
-                    )
-                else:
-                    self.warn(
-                        'Test {} poorly configured: no test data for search field: {}'.format(
-                            str(self), search_field)
-                    )
+                    self.assertIn(self.obj1.pk, result)
 
     def test_apply_q_alias(self):
         # Assert that an object can be found through its aliases.

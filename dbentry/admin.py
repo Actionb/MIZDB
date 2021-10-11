@@ -765,7 +765,6 @@ class GenreAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
-    search_fields = ['genre', 'genrealias__alias']
     ordering = ['genre']
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -960,7 +959,6 @@ class SchlagwortAdmin(MIZModelAdmin):
     index_category = 'Stammdaten'
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
-    search_fields = ['schlagwort', 'schlagwortalias__alias']
     ordering = ['schlagwort']
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
