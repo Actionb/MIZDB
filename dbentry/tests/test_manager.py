@@ -1,7 +1,7 @@
 import datetime
 import random
 from itertools import chain
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 
 from django.core.exceptions import FieldDoesNotExist, FieldError
 from django.test import tag
@@ -9,9 +9,7 @@ from django.test import tag
 import dbentry.models as _models
 from dbentry.factory import make
 from dbentry.managers import CNQuerySet, MIZQuerySet, build_date
-from dbentry.tests.base import DataTestCase, MyTestCase
-from dbentry.query import (
-    BaseSearchQuery, PrimaryFieldsSearchQuery, ValuesDictSearchQuery)
+from dbentry.tests.base import DataTestCase
 
 
 # noinspection PyUnresolvedReferences
@@ -30,42 +28,6 @@ class TestMIZQuerySet(DataTestCase):
         },
     ]
     fields = ['band_name', 'genre__genre', 'bandalias__alias']
-
-    # noinspection PyPep8Naming
-    @patch.object(
-        ValuesDictSearchQuery, 'search',
-        return_value=('ValuesDictSearchQuery', False)
-    )
-    @patch.object(
-        PrimaryFieldsSearchQuery, 'search',
-        return_value=('PrimaryFieldsSearchQuery', False)
-    )
-    @patch.object(
-        BaseSearchQuery, 'search',
-        return_value=('BaseSearchQuery', False)
-    )
-    def test_find_strategy_chosen(self, _MockBSQ, _MockPFSQ, _MockVDSQ):
-        # Assert that 'find' chooses the correct search strategy dependent on the
-        # model's properties.
-        model = Mock(name_field='', primary_search_fields=[], search_field_suffixes={})
-        model.get_search_fields.return_value = []
-        qs = Mock(model=model, find=MIZQuerySet.find)
-
-        self.assertEqual(qs.find(qs, 'x'), 'BaseSearchQuery')
-
-        model.primary_search_fields = ['Something']
-        self.assertEqual(qs.find(qs, 'x'), 'PrimaryFieldsSearchQuery')
-
-        model.name_field = 'Something again'
-        self.assertEqual(qs.find(qs, 'x'), 'ValuesDictSearchQuery')
-
-    def test_find(self):
-        self.assertIn((self.obj1.pk, str(self.obj1)), self.queryset.find('Testband'))
-        self.assertIn(
-            (self.obj2.pk, str(self.obj2) + ' (Alias)'),
-            self.queryset.find('Coffee')
-        )
-        self.assertFalse(self.queryset.find('Jazz'))
 
 
 class TestAusgabeChronologicalOrder(DataTestCase):
@@ -240,12 +202,14 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         )
         self.assertEqual(queryset.chronological_order().query.order_by, expected)
 
-    def test_find_keeps_order(self):
-        # Assert that filtering the queryset via MIZQuerySet.find(ordered=True)
-        # maintains the ordering established by chronological_order.
+        self.assertEqual(queryset.chronological_order().query.order_by, expected)
+
+    def test_search_keeps_order(self):
+        # Assert that filtering the queryset via search() maintains the ordering
+        # established by chronological_order.
         queryset = self.model.objects.filter(ausgabejahr__jahr=2000).chronological_order()
         found_ids = [
-            pk for pk, str_repr in queryset.find('2000', ordered=True)
+            obj.pk for obj in queryset.search('2000')
         ]
         self.assertEqual(
             list(queryset.values_list('pk', flat=True)), found_ids
@@ -765,54 +729,3 @@ class TestValuesDict(DataTestCase):
         with self.assertRaises(FieldError) as cm:
             self.queryset.values_dict('thisaintnofield', flatten=True)
         self.assertIn('Choices are', cm.exception.args[0])
-
-
-class TestHumanNameQuerySet(MyTestCase):
-
-    def test_find_person(self):
-        obj = make(_models.Person, vorname='Peter', nachname='Lustig')
-        for name in ('Peter Lustig', 'Lustig, Peter'):
-            with self.subTest():
-                results = _models.Person.objects.find(name)
-                msg = "Name looked up: %s" % name
-                self.assertIn((obj.pk, 'Peter Lustig'), results, msg=msg)
-
-    def test_find_autor(self):
-        obj = make(
-            _models.Autor,
-            person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
-        )
-        names = (
-            'Peter Lustig', 'Lustig, Peter', 'Peter (PL) Lustig',
-            'Peter Lustig (PL)', 'Lustig, Peter (PL)'
-        )
-        for name in names:
-            with self.subTest():
-                results = _models.Autor.objects.find(name)
-                msg = "Name looked up: %s" % name
-                self.assertIn((obj.pk, 'Peter Lustig (PL)'), results, msg=msg)
-
-
-class TestFindSpecialCases(DataTestCase):
-
-    model = _models.Band
-    # noinspection SpellCheckingInspection
-    raw_data = [{'band_name': 'Ümlautße'}]
-
-    def test_find_sharp_s(self):
-        # Assert that a 'ß' search term is handled properly.
-        # ('ß'.casefold() performed in BaseSearchQuery.clean_string() results in 'ss')
-        results = self.model.objects.find('ß')
-        self.assertTrue(
-            results, msg="Expected to find the instance with 'ß' in its name.")
-
-    def test_find_umlaute(self):
-        # SQLite performs case sensitive searches for strings containing chars
-        # outside the ASCII range (such as Umlaute ä, ö, ü).
-        for q in ('ü', 'Ü'):
-            with self.subTest(q=q):
-                results = self.model.objects.find(q)
-                self.assertTrue(
-                    results,
-                    msg="Expected to find matches regardless of case of Umlaut."
-                )

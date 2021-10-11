@@ -294,6 +294,10 @@ class PartialDate(datetime.date):
     @property
     def db_value(self) -> str:
         """Return a string of format 'YYYY-MM-DD' to store in the database."""
+        # FIXME: this plays poorly with full text search:
+        #   date: 2020-02-01
+        #   SearchVectorField: '-01' '-02' '2020'
+        #   => the '-' must be included to find anything
         format_kwargs = {'year': 0, 'month': 0, 'day': 0}
         for attr in ('year', 'month', 'day'):
             value = getattr(self, '__' + attr, False)

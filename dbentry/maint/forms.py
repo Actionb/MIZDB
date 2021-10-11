@@ -119,7 +119,8 @@ def get_dupe_fields_for_model(model: Type[Model]) -> Dict[str, list]:
         group_choices = []
         model_fields = utils.get_model_fields(
             related_model,
-            base=True, foreign=True, m2m=False
+            base=True, foreign=True, m2m=False,
+            exclude=['_fts']
         )
         for field in model_fields:
             if field.remote_field == rel:

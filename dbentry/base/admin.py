@@ -221,6 +221,8 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
 
         Returns a copy of the passed in search_fields list.
         """
+        # NOTE: since the introduction of postgres text search, search fields
+        #  are empty and thus this method here isn't useful anymore
         search_fields = list(search_fields)
         if self.has_search_form():
             # This ModelAdmin instance has a search form. Assume that the form
@@ -249,11 +251,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return search_fields
 
     def get_search_fields(self, request=None):
-        if self.search_fields:
-            search_fields = list(self.search_fields)
-        else:
-            search_fields = list(self.model.get_search_fields())
-        return self._add_pk_search_field(search_fields)
+        return self._add_pk_search_field(self.search_fields)
 
     def add_crosslinks(self, object_id: str, labels: Optional[dict] = None) -> Dict[str, list]:
         """
@@ -451,6 +449,11 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         # action's queryset.
         queryset = queryset.annotate(**self.get_result_list_annotations() or {})
         return super().response_action(request, queryset)
+
+    def get_search_results(self, request, queryset, search_term):
+        if not search_term:
+            return queryset, False
+        return queryset.search(search_term), False
 
 
 class BaseInlineMixin(object):

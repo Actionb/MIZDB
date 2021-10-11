@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'formtools',
     'test_without_migrations',
     'debug_toolbar',
+    'django.contrib.postgres'
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,7 @@ WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'dbentry.fts.db',
         'NAME': 'mizdb',
         'USER': 'mizdb_user',
         'PASSWORD': 'm!zdb_2017',

@@ -37,8 +37,6 @@ class AdminTestMethodsMixin(object):
     exclude_expected = None
     # fields expected to be on the changeview form
     fields_expected = None
-    # the final search_fields expected
-    search_fields_expected = None
     # if True, check the load order of jquery, select2 and django's jquery_init
     add_page_uses_select2 = True
     changelist_uses_select2 = True
@@ -203,12 +201,6 @@ class AdminTestMethodsMixin(object):
                 fkey_field, self.get_request())
             self.assertIsInstance(
                 formfield.widget, MIZModelSelect2, msg=fkey_field.name)
-
-    def test_get_search_fields(self):
-        if self.search_fields_expected is None:
-            return
-        self.assertEqual(
-            self.model_admin.get_search_fields(), self.search_fields_expected)
 
     @patch.object(admin.ModelAdmin, 'render_change_form')
     def test_changeform_media_context_collapse_after_jquery(self, mock):
@@ -610,7 +602,6 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         ('ausgabe__magazin', 'ausgabe'), 'schlagzeile', ('seite', 'seitenumfang'),
         'zusammenfassung', 'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     @classmethod
     def setUpTestData(cls):
@@ -663,7 +654,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin', ('status', 'sonderausgabe'), 'e_datum', 'jahrgang',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     crosslinks_expected = [
         {'model_name': 'artikel', 'fld_name': 'ausgabe', 'label': 'Artikel (1)'}]
     # one more query for the chronologically_ordered() query for magazin count:
@@ -950,7 +940,6 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         'magazin_name', 'ausgaben_merkmal', 'fanzine', 'issn',
         'beschreibung', 'bemerkungen',
     ]
-    search_fields_expected = ['magazin_name', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'ausgabe', 'fld_name': 'magazin', 'label': 'Ausgaben (1)'},
@@ -1004,7 +993,6 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         'vorname', 'nachname', 'gnd_id', 'gnd_name', 'dnb_url',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     # one extra 'empty' object without relations for Ist_Autor/Ist_Musiker:
     test_data_count = 1
 
@@ -1064,10 +1052,6 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     test_data_count = 1
     exclude_expected = ['genre', 'instrument', 'orte']
     fields_expected = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
-    search_fields_expected = [
-        'kuenstler_name', 'musikeralias__alias', 'person___name',
-        'beschreibung', 'bemerkungen'
-    ]
 
     raw_data = [
         {},
@@ -1116,7 +1100,6 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
     fields_expected = ['genre']
-    search_fields_expected = ['genre', 'genrealias__alias', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1175,7 +1158,6 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
     fields_expected = ['schlagwort']
-    search_fields_expected = ['schlagwort', 'schlagwortalias__alias', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1212,7 +1194,6 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Band
     exclude_expected = ['genre', 'musiker', 'orte']
     fields_expected = ['band_name', 'beschreibung', 'bemerkungen']
-    search_fields_expected = ['band_name', 'bandalias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'bandalias__alias': ['Alias1', 'Alias2'],
@@ -1265,7 +1246,6 @@ class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Autor
     exclude_expected = ['magazin']
     fields_expected = ['kuerzel', 'beschreibung', 'bemerkungen', 'person']
-    search_fields_expected = ['_name', 'beschreibung', 'bemerkungen']
     raw_data = [
         {'magazin__magazin_name': ['Testmagazin1', 'Testmagazin2']}
     ]
@@ -1287,7 +1267,6 @@ class TestOrtAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.OrtAdmin
     model = _models.Ort
     fields_expected = ['stadt', 'land', 'bland']
-    search_fields_expected = ['_name']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1318,7 +1297,6 @@ class TestLandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.LandAdmin
     model = _models.Land
     fields_expected = ['land_name', 'code']
-    search_fields_expected = ['land_name', 'code', 'pk__iexact']
     test_data_count = 1
     add_page_uses_select2 = False
     changelist_uses_select2 = False
@@ -1334,7 +1312,6 @@ class TestBlandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BlandAdmin
     model = _models.Bundesland
     fields_expected = ['bland_name', 'code', 'land']
-    search_fields_expected = ['bland_name', 'code']
     test_data_count = 1
 
     crosslinks_expected = [
@@ -1346,7 +1323,6 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.InstrumentAdmin
     model = _models.Instrument
     fields_expected = ['instrument', 'kuerzel']
-    search_fields_expected = ['instrument', 'kuerzel', 'pk__iexact']
     test_data_count = 1
     add_page_uses_select2 = False
     changelist_uses_select2 = False
@@ -1369,7 +1345,6 @@ class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
         'plattennummer', 'release_id', 'discogs_url', 'beschreibung',
         'bemerkungen', 'medium', 'medium_qty'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     raw_data = [
         {
             'band__band_name': 'Testband',
@@ -1401,8 +1376,6 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SpielortAdmin
     model = _models.Spielort
     fields_expected = ['name', 'beschreibung', 'bemerkungen', 'ort']
-    search_fields_expected = [
-        'name', 'spielortalias__alias', 'beschreibung', 'bemerkungen']
     test_data_count = 1
     changelist_uses_select2 = False
 
@@ -1428,8 +1401,6 @@ class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     model = _models.Veranstaltung
     exclude_expected = ['genre', 'person', 'band', 'schlagwort', 'musiker']
     fields_expected = ['name', 'datum', 'spielort', 'reihe', 'beschreibung', 'bemerkungen']
-    search_fields_expected = [
-        'name', 'datum', 'veranstaltungalias__alias', 'beschreibung', 'bemerkungen']
     raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
     changelist_uses_select2 = False
 
@@ -1456,7 +1427,6 @@ class TestVerlagAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VerlagAdmin
     model = _models.Verlag
     fields_expected = ['verlag_name', 'sitz']
-    search_fields_expected = ['verlag_name']
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'verlag', 'label': 'Bücher (1)'},
         {'model_name': 'magazin', 'fld_name': 'verlag', 'label': 'Magazine (1)'}
@@ -1475,7 +1445,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         'EAN', 'ISBN', 'is_buchband', 'beschreibung', 'bemerkungen',
         'schriftenreihe', 'buchband', 'sprache',
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
 
     crosslinks_expected = [
         {'model_name': 'buch', 'fld_name': 'buchband', 'label': 'Aufsätze (1)'},
@@ -1580,7 +1549,6 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'schlagwort']
-    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1604,7 +1572,6 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         'art', 'ausgabe__magazin'
     ]
     exclude_expected = ['genre']
-    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_get_fieldsets(self):
         # Assert that 'art' and 'zusammenfassung' are swapped correctly
@@ -1638,7 +1605,6 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
         'ausgabe__magazin'
     ]
     exclude_expected = ['genre', 'spielort', 'veranstaltung']
-    search_fields_expected = ['titel', 'zusammenfassung', 'beschreibung', 'bemerkungen']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1663,7 +1629,6 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1688,7 +1653,6 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1713,7 +1677,6 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
 
     def test_action_change_bestand(self):
         # Check that the user can navigate to the 'change_bestand' view.
@@ -1736,7 +1699,6 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'laufzeit', 'jahr', 'quelle', 'original', 'release_id', 'discogs_url',
         'beschreibung', 'bemerkungen', 'medium', 'medium_qty'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'band', 'genre', 'musiker', 'person', 'schlagwort', 'ort', 'spielort', 'veranstaltung']
     raw_data = [{'band__band_name': 'Led Zeppelin', 'musiker__kuenstler_name': 'Robert Plant'}]
@@ -1799,7 +1761,6 @@ class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band', 'musiker', 'ort', 'spielort',
         'veranstaltung'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen', 'pk__iexact']
     changelist_uses_select2 = False
 
 
@@ -1807,7 +1768,6 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.HerausgeberAdmin
     model = _models.Herausgeber
     fields_expected = ['herausgeber']
-    search_fields_expected = ['herausgeber', 'pk__iexact']
     add_page_uses_select2 = False
     changelist_uses_select2 = False
 
@@ -1827,7 +1787,6 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'plakat_id', 'size', 'datum', 'reihe', 'copy_related',
         'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['titel', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
@@ -2046,7 +2005,6 @@ class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'titel', 'foto_id', 'size', 'typ', 'farbe', 'datum', 'reihe',
         'owner', 'beschreibung', 'bemerkungen'
     ]
-    search_fields_expected = ['titel', 'owner', 'beschreibung', 'bemerkungen']
     exclude_expected = [
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'

@@ -1,17 +1,7 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
     <option name="RIGHT_MARGIN" value="100" />
-    <option name="FORMATTER_TAGS_ENABLED" value="true" />
     <option name="SOFT_MARGINS" value="80" />
-    <option name="DO_NOT_FORMAT">
-      <list>
-        <fileSet type="globPattern" pattern="dbentry/admin.py" />
-        <fileSet type="globPattern" pattern="dbentry/fixtures/*" />
-        <fileSet type="globPattern" pattern="dbentry/migrations/*" />
-        <fileSet type="globPattern" pattern="dbentry/static/*" />
-        <fileSet type="globPattern" pattern="dbentry/templates/*" />
-      </list>
-    </option>
     <Python>
       <option name="ALIGN_COLLECTIONS_AND_COMPREHENSIONS" value="false" />
       <option name="DICT_WRAPPING" value="5" />
