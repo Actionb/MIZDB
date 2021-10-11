@@ -153,7 +153,7 @@ class TestTextSearchQuerySetMixin(TestCase):
             )
             alias = models.ForeignKey(Alias, on_delete=models.CASCADE)
             objects = TestQuerySet.as_manager()
-            related_search_vectors = ['alias__fts']
+            related_search_vectors = [('alias__fts', 'simple_unaccent')]
 
         cls.model = TestModel
         cls.opts = TestModel._meta
@@ -205,9 +205,12 @@ class TestTextSearchQuerySetMixin(TestCase):
             self.assertEqual(self.queryset._get_related_search_vectors(), [])
 
     def test_get_related_search_vectors(self):
-        # Assert that get_related_search_vectors returns the search vectors
-        # declared by the queryset model.
-        self.assertEqual(self.queryset._get_related_search_vectors(), ['alias__fts'])
+        # Assert that get_related_search_vectors returns the search vectors and
+        # the config declared by the queryset model.
+        self.assertEqual(
+            self.queryset._get_related_search_vectors(),
+            [('alias__fts', 'simple_unaccent')]
+        )
 
     def test_search_filters(self):
         # Assert that the queryset returned by search() has the expected

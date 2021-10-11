@@ -97,7 +97,10 @@ class Musiker(BaseModel):
 
     create_field = 'kuenstler_name'
     name_field = 'kuenstler_name'
-    related_search_vectors = ['musikeralias___fts', 'person___fts']
+    related_search_vectors = [
+        ('musikeralias___fts', SIMPLE),
+        ('person___fts', SIMPLE)
+    ]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Musiker'
@@ -130,7 +133,7 @@ class Genre(BaseModel):
 
     create_field = 'genre'
     name_field = 'genre'
-    related_search_vectors = ['genrealias___fts']
+    related_search_vectors = [('genrealias___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Genre'
@@ -167,7 +170,7 @@ class Band(BaseModel):
 
     create_field = 'band_name'
     name_field = 'band_name'
-    related_search_vectors = ['bandalias___fts']
+    related_search_vectors = [('bandalias___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Band'
@@ -205,7 +208,7 @@ class Autor(ComputedNameModel):
     )
 
     name_composing_fields = ['person___name', 'kuerzel']
-    related_search_vectors = ['person___fts']
+    related_search_vectors = [('person___fts', SIMPLE)]
 
     class Meta(ComputedNameModel.Meta):
         verbose_name = 'Autor'
@@ -679,7 +682,7 @@ class Schlagwort(BaseModel):
 
     create_field = 'schlagwort'
     name_field = 'schlagwort'
-    related_search_vectors = ['schlagwortalias___fts']
+    related_search_vectors = [('schlagwortalias___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Schlagwort'
@@ -1094,7 +1097,7 @@ class Spielort(BaseModel):
     )
 
     name_field = 'name'
-    related_search_vectors = ['spielortalias___fts']
+    related_search_vectors = [('spielortalias___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -1172,7 +1175,7 @@ class Veranstaltung(BaseModel):
     )
 
     name_field = 'name'
-    related_search_vectors = ['veranstaltungalias___fts']
+    related_search_vectors = [('veranstaltungalias___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'

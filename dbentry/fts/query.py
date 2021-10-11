@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Tuple, Type
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
 from django.db.models import F, Max, Model, Q
@@ -62,10 +62,13 @@ class TextSearchQuerySetMixin(object):
             search_type = 'raw'
         return SearchQuery(search_term, config=config, search_type=search_type)
 
-    def _get_related_search_vectors(self) -> List[str]:
+    def _get_related_search_vectors(self) -> List[Tuple[str, str]]:
         """
-        Return a list of field paths to the search vector fields of related
-        models.
+        Return a list of tuples of (field path, config_name).
+
+        The field path points to the search vector field of a related model to
+        be included in a query, and the config_name refers to the search config
+        to use in the query on that related field.
         """
         return getattr(self.model, 'related_search_vectors', [])  # type: ignore[attr-defined]
 
@@ -101,12 +104,10 @@ class TextSearchQuerySetMixin(object):
                 else:
                     model_search_rank += rank
 
-        # For related vectors, use the top non-stemming config:
-        simple_config = self.simple_configs[0]
-        for field_path in self._get_related_search_vectors():
+        for field_path, config in self._get_related_search_vectors():
             # Include related search vector fields in the filter:
             query = self._get_search_query(
-                search_term, config=simple_config, search_type=search_type
+                search_term, config=config, search_type=search_type
             )
             filters |= Q(**{field_path: query})
             # The rank function will return NULL, if the related search
