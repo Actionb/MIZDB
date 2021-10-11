@@ -73,9 +73,6 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
         results = []
         # noinspection PyProtectedMember
         for model in sorted(models, key=lambda m: m._meta.object_name):
-            # FIXME: not every model handles search properly (f.ex. Bestand doesn't - and neither do the Brochure ones)
-            # if not hasattr(model, '_fts'):
-            #     continue
             model_results = model.objects.search(q)
             if not model_results:
                 continue
@@ -83,6 +80,6 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
             url = utils.get_changelist_url(model, self.request.user)
             if url:
-                url += "?id__in=" + ",".join(str(obj.pk) for obj in model_results)
+                url += f"?q={q!s}"
                 results.append(utils.create_hyperlink(url, label, target="_blank"))
         return results
