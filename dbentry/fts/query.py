@@ -7,6 +7,10 @@ from django.db.models.functions import Coalesce
 
 from dbentry.fts.fields import SearchVectorField
 
+# TODO: SearchVectorFields should be deferred in queries that don't use them
+SIMPLE = 'simple_unaccent'
+STEMMING = 'german_unaccent'
+
 
 def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
     """
@@ -29,7 +33,7 @@ class TextSearchQuerySetMixin(object):
           configs will include prefix matching (see  _get_search_query).
     """
 
-    simple_configs = ('simple_unaccent', 'simple')
+    simple_configs = (SIMPLE, 'simple')
 
     def _get_search_query(self, search_term: str, config: str, search_type: str) -> SearchQuery:
         """
