@@ -149,6 +149,31 @@ class TestFullTextSearch(DataTestCase):
                 self.assertIn(obj, results)
                 self.assertNotIn(control, results)
 
+    def test_search_person(self):
+        # Assert that a Person instance can be found using different ways of
+        # writing a human name.
+        obj = make(_models.Person, vorname='Peter', nachname='Lustig')
+        for name in ('Peter Lustig', 'Lustig, Peter'):
+            with self.subTest():
+                results = _models.Person.objects.search(name)
+                self.assertIn(obj, results, msg=f"Name looked up: {name}")
+
+    def test_search_autor(self):
+        # Assert that an Autor instance can be found using different ways of
+        # writing a the author's name(s).
+        obj = make(
+            _models.Autor,
+            person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
+        )
+        names = (
+            'Peter Lustig', 'Lustig, Peter', 'Peter (PL) Lustig',
+            'Peter Lustig (PL)', 'Lustig, Peter (PL)'
+        )
+        for name in names:
+            with self.subTest():
+                results = _models.Autor.objects.search(name)
+                self.assertIn(obj, results, msg=f"Name looked up: {name}")
+
 
 class TestTextSearchQuerySetMixin(TestCase):
 

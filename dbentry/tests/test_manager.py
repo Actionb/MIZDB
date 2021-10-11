@@ -9,7 +9,7 @@ from django.test import tag
 import dbentry.models as _models
 from dbentry.factory import make
 from dbentry.managers import CNQuerySet, MIZQuerySet, build_date
-from dbentry.tests.base import DataTestCase, MyTestCase
+from dbentry.tests.base import DataTestCase
 
 
 # noinspection PyUnresolvedReferences
@@ -729,27 +729,3 @@ class TestValuesDict(DataTestCase):
         with self.assertRaises(FieldError) as cm:
             self.queryset.values_dict('thisaintnofield', flatten=True)
         self.assertIn('Choices are', cm.exception.args[0])
-
-
-class TestHumanNameQuerySet(MyTestCase):
-
-    def test_search_person(self):
-        obj = make(_models.Person, vorname='Peter', nachname='Lustig')
-        for name in ('Peter Lustig', 'Lustig, Peter'):
-            with self.subTest():
-                results = _models.Person.objects.search(name)
-                self.assertIn(obj, results, msg=f"Name looked up: {name}")
-
-    def test_search_autor(self):
-        obj = make(
-            _models.Autor,
-            person__vorname='Peter', person__nachname='Lustig', kuerzel='PL'
-        )
-        names = (
-            'Peter Lustig', 'Lustig, Peter', 'Peter (PL) Lustig',
-            'Peter Lustig (PL)', 'Lustig, Peter (PL)'
-        )
-        for name in names:
-            with self.subTest():
-                results = _models.Autor.objects.search(name)
-                self.assertIn(obj, results, msg=f"Name looked up: {name}")
