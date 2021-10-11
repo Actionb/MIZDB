@@ -16,8 +16,9 @@ def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
     """
     Return the first SearchVectorField instance found for the given model.
     """
+    # exclude inherited search vector fields:
     # noinspection PyUnresolvedReferences,PyProtectedMember
-    for field in model._meta.get_fields():
+    for field in model._meta.get_fields(include_parents=False):
         if isinstance(field, SearchVectorField):
             return field
     return None
