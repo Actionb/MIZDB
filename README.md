@@ -49,9 +49,9 @@ Statische Dateien für die Webseite sammeln:
 
 ### 4. mod_wsgi installieren
 mod_wsgi lässt sich in der virtuellen Umgebung mit pip installieren.
-Alternativ kann auch direkt vom Quellcode von mod_wsgi installiert werden.
+Alternativ kann auch direkt vom Quellcode von installiert werden.
 
-### 4.1 mod_wsgi mit pip installieren
+### 4.1 mod_wsgi mit pip installieren (empfohlen)
 
 mod_wsgi installieren: `pip install mod_wsgi`  
 Jetzt muss apache mitgeteilt werden, wo das Modul liegt. Dazu erstellt man einen Loader, der den Pfad angibt:  
@@ -63,7 +63,7 @@ Umgebung deaktivieren `deactivate`und dann Root Rechte ablegen `exit`.
 Installationshinweise: https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html  
 Neueste Version auf: https://github.com/GrahamDumpleton/mod_wsgi/releases
 
-Virtuelle Umgebung zunächst deaktivieren: `deactivate`  
+Zunächst virtuelle Umgebung deaktivieren `deactivate` und Root Rechte ablegen `exit`.  
 Download (in einen beliebigen Ordner außerhalb vom archiv Ordner) und entpacken, hier beispielsweise mit Version 4.7.1:
 ```
 wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/4.7.1.tar.gz
