@@ -10,147 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-import os
+import os  # noqa
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Add production variables:
+try:
+    from MIZDB.settings_prod import *  # noqa
+except ImportError as e:
+    raise ImportError("Production settings file 'MIZDB.settings_prod.py' missing.") from e
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 's%ez44c0k3+&tarsus*7giz=1@ep)nu*i%+f)rdgp7tgvd!_24'  # noqa
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv', 'testserver']
-
-
-# Application definition
-
-INSTALLED_APPS = [
-    'dbentry.apps.DbentryConfig',
-    'dal',
-    'dal_select2',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'formtools',
-    'test_without_migrations',
-    'debug_toolbar',
-    'django.contrib.postgres'
-]
-
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-]
-
-ROOT_URLCONF = 'MIZDB.urls'
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.request',
-            ],
-        },
-    },
-]
-
-WSGI_APPLICATION = 'MIZDB.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'dbentry.fts.db',
-        'NAME': 'mizdb',
-        'USER': 'mizdb_user',
-        'PASSWORD': 'm!zdb_2017',
-        'HOST': 'localhost',
-        'PORT': '',
-    }
-}
-
-
-# Password validation
-# https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
-
-
-# Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
-
-LANGUAGE_CODE = 'de'
-
-TIME_ZONE = 'Europe/Berlin'
-
-USE_I18N = True
-
-USE_L10N = True
-
-USE_TZ = True
-
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale')
-]
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-
-STATIC_URL = '/static/'
-
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-MEDIA_URL = '/media/'
-
-# Override maximum number of post parameters to allow handling of user input during imports
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
-
-
-# Required for debug_toolbar:
-INTERNAL_IPS = ['127.0.0.1']
-
-
-# URL to the wiki.
-# That URL is displayed in the header on each admin page.
-# See: sites.MIZAdminSite.each_context
-WIKI_URL = 'http://archivserv/wiki/Hauptseite'
+# Override production variables if DJANGO_DEVELOPMENT env variable is set.
+# Credit to cs01: https://stackoverflow.com/a/34891731
+if os.environ.get('DJANGO_DEVELOPMENT') == 'true':
+    from MIZDB.settings_dev import *  # noqa
