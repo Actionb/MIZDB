@@ -39,15 +39,13 @@ Virtuelle Umgebung aktivieren und zum MIZDB Ordner navigieren:
 `source /srv/archiv/bin/activate && cd /srv/archiv/MIZDB`
 
 #### MIZDB Konfigurationsdatei erstellen:
-Mit dem folgenden Befehl wird ein privater Schlüssel generiert, der in der Konfigurationsdatei angegeben werden muss:  
-`python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'`  
 Konfigurationsdatei erstellen `nano MIZDB/settings_prod.py` und folgende Vorlage einfügen:
 ```
 # WARNING: DO NOT ADD TO VERSION CONTROL
 from MIZDB.settings_shared import *  # noqa
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''  # Hier den privaten Schlüssel eintragen 
+SECRET_KEY = ''  # Hier die generierte Zeichenfolge einfügen 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -74,8 +72,9 @@ DATABASES = {
 # See: sites.MIZAdminSite.each_context
 WIKI_URL = 'http://archivserv/wiki/Hauptseite'  # URL zur WIKI angeben
 ```
-Hier ist darauf zu achten, dass der private Schlüssel unter `SECRET_KEY` als String eingefügt, 
-und dass bei der Datenbank `DATABASE` der Benutzer und das Passwort aus Schritt 2 bei `USER` und `PASSWORD` angeben wird.
+Mit dem folgenden Befehl wird eine zufällige Zeichenfolge generiert, die unter `SECRET_KEY` als String angegeben werden muss:  
+```python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'```  
+Desweiteren ist darauf zu achten, dass bei der Datenbank `DATABASE` der Benutzer und das Passwort aus Schritt 2 bei `USER` und `PASSWORD` angeben wird.
 
 Erforderliche Python Module installieren:  
 `pip install -r requirements.txt`  
