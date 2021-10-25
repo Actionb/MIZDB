@@ -9,20 +9,16 @@ Danach Apache2, diverse Python3 & PostgreSQL Pakete, git Versionskontrolle insta
 `sudo apt install apache2 apache2-dev python3-dev python3-venv python3-pip postgresql-contrib libpq-dev git`
 
 
-### 2. Postges Datenbank einrichten
+### 2. Postgres Datenbank einrichten
 
-Postgres Terminal aufrufen `sudo -u postgres psql` und Datenbank und User erstellen:  
+Postgres Terminal aufrufen `sudo -u postgres psql` und User und Datenbank erstellen:  
 ```
-CREATE DATABASE mizdb;
 CREATE USER mizdb_user WITH ENCRYPTED PASSWORD 'dein_passwort';
+ALTER USER mizdb_user CREATEDB;  -- wird benötigt, um eine Testdatenbank für Tests erstellen zu können
+CREATE DATABASE mizdb OWNER mizdb_user;  -- Datenbank erstellen
+\q -- Terminal beenden
 ```
 Benutzername (hier: `mizdb_user`) und Passwort (hier: `dein_passwort`) werden später noch einmal benötigt.
-Benutzerrechte zuweisen und Terminal beenden:  
-```
-GRANT ALL PRIVILEGES ON DATABASE mizdb TO mizdb_user;
-ALTER USER mizdb_user CREATEDB;
-\q
-```
 
 
 ### 3. MIZDB Dateien herunterladen und einrichten
@@ -74,7 +70,7 @@ WIKI_URL = 'http://archivserv/wiki/Hauptseite'  # URL zur WIKI angeben
 ```
 Mit dem folgenden Befehl wird eine zufällige Zeichenfolge generiert, die unter `SECRET_KEY` als String angegeben werden muss:  
 ```python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'```  
-Desweiteren ist darauf zu achten, dass bei der Datenbank `DATABASE` der Benutzer und das Passwort aus Schritt 2 bei `USER` und `PASSWORD` angeben wird.
+Des weiteren ist darauf zu achten, dass bei der Datenbank `DATABASE` der Benutzer und das Passwort aus Schritt 2 bei `USER` und `PASSWORD` angeben wird.
 
 Erforderliche Python Module installieren:  
 `pip install -r requirements.txt`  
