@@ -27,3 +27,6 @@ requests_mock
 
 # Postgres Django SearchVectorField + Triggers
 django-tsvector-field
+
+# Config file parsing
+PyYAML

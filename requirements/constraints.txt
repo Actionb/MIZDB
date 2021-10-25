@@ -10,6 +10,7 @@ django-tsvector-field==0.9.5
 nameparser==1.0.6
 python-stdnum==1.17
 requests==2.26.0
+PyYAML==6.0
 
 # Test/development packages
 factory-boy==2.12.0

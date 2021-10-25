@@ -1,8 +1,38 @@
 """Settings shared by both production and development environments."""
 import os
+import yaml
+# TODO: update django doc refs version 1.11 -> 3.x/2.2
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = (
+    os.path.dirname(  # Base directory
+        os.path.dirname(  # MIZDB project directory
+            os.path.dirname(  # settings directory
+                os.path.abspath(__file__)
+            )
+        )
+    )
+)
+config = yaml.safe_load(open(os.path.join(BASE_DIR, 'config.yaml')))
+
+SECRET_KEY = config.get('SECRET_KEY', '')
+
+# NOTE: The ServerName declared in the VirtualHost
+#   /etc/apache2/sites-available/mizdb.conf must be included:
+ALLOWED_HOSTS = config.get('ALLOWED_HOSTS', [])
+
+# Database
+# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
+DATABASES = {
+    'default': {
+        'ENGINE': 'dbentry.fts.db',
+        'NAME': config.get('DATABASE_NAME', 'mizdb'),
+        'USER': config.get('DATABASE_USER', ''),
+        'PASSWORD': config.get('DATABASE_PASSWORD', ''),
+        'HOST': config.get('DATABASE_HOST', 'localhost'),
+        'PORT': config.get('DATABASE_PORT', ''),
+    }
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -101,3 +131,8 @@ MEDIA_URL = '/media/'
 
 # Override maximum number of post parameters to allow handling of user input during imports
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
+
+# URL to the wiki.
+# That URL is displayed in the header on each admin page.
+# See: sites.MIZAdminSite.each_context
+WIKI_URL = config.get('WIKI_URL', '')
