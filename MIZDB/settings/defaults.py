@@ -13,7 +13,8 @@ BASE_DIR = (
         )
     )
 )
-config = yaml.safe_load(open(os.path.join(BASE_DIR, 'config.yaml')))
+with open(os.path.join(BASE_DIR, 'config.yaml')) as f:
+    config = yaml.safe_load(f)
 
 SECRET_KEY = config.get('SECRET_KEY', '')
 
