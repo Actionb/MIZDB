@@ -1,5 +1,8 @@
 """Settings shared by both production and development environments."""
+import logging
 import os
+import sys
+
 import yaml
 # TODO: update django doc refs version 1.11 -> 3.x/2.2
 
@@ -137,3 +140,11 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 # That URL is displayed in the header on each admin page.
 # See: sites.MIZAdminSite.each_context
 WIKI_URL = config.get('WIKI_URL', '')
+
+if 'test' in sys.argv:
+    # Add a NullHandler to the root logger for test runs.
+    # This stops log messages to be printed to sys.stderr during tests
+    # if no other handlers are assigned.
+    # Note that django debug toolbar adds a handler to the root logger that
+    # handles all log records. The toolbar need not be enabled for this.
+    logging.getLogger().addHandler(logging.NullHandler())
