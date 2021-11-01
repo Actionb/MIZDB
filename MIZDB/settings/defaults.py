@@ -7,7 +7,7 @@ import yaml
 # TODO: update django doc refs version 1.11 -> 3.x/2.2
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = (
+BASE_DIR = (  # TODO: use pathlib.Path and .parent().parent()
     os.path.dirname(  # Base directory
         os.path.dirname(  # MIZDB project directory
             os.path.dirname(  # settings directory
