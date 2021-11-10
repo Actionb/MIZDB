@@ -12,7 +12,7 @@ from django.urls import reverse
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
 # Name of the key under which views.ACExtended will add additional data for
-# result items.
+# (grouped) result items.
 EXTRA_DATA_KEY = 'extra_data'
 
 
@@ -108,11 +108,33 @@ class MIZWidgetMixin(GenericURLWidgetMixin):
         return super()._get_reverse_kwargs(**_kwargs)
 
 
+class GroupedResultsMixin(object):
+    """
+    Widget mixin that uses a different autocomplete function to display grouped
+    results.
+    """
+
+    autocomplete_function = 'select2Grouped'
+
+    # noinspection PyUnresolvedReferences
+    @property
+    def media(self):
+        return super().media + Media(js=['admin/js/select2_grouped.js'])
+
+
 class MIZModelSelect2(MIZWidgetMixin, autocomplete.ModelSelect2):
     pass
 
 
 class MIZModelSelect2Multiple(MIZWidgetMixin, autocomplete.ModelSelect2Multiple):
+    pass
+
+
+class MIZModelSelect2Grouped(GroupedResultsMixin, MIZModelSelect2):
+    pass
+
+
+class MIZModelSelect2MultipleGrouped(GroupedResultsMixin, MIZModelSelect2Multiple):
     pass
 
 

@@ -1,15 +1,13 @@
-from unittest.mock import patch
-from functools import partial
+from unittest.mock import Mock, patch
 
-from django.forms import widgets
+from django.forms import widgets, Media
 from django.core.exceptions import ImproperlyConfigured
-from django.urls.exceptions import NoReverseMatch
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.widgets import (
     MIZWidgetMixin, RemoteModelWidgetWrapper, GenericURLWidgetMixin, MIZModelSelect2,
-    MIZModelSelect2Multiple, make_widget
+    MIZModelSelect2Multiple, GroupedResultsMixin, make_widget
 )
 from dbentry.forms import ArtikelForm
 from dbentry.tests.base import MyTestCase
@@ -281,3 +279,12 @@ class TestMakeWidget(MyTestCase):
         self.assertIsInstance(widget, MIZModelSelect2)
         widget = make_widget(model=_models.Genre, multiple=False, wrap=True)
         self.assertIsInstance(widget, RemoteModelWidgetWrapper)
+
+
+class TestSelect2GroupMixin(MyTestCase):
+
+    def test_adds_javascript(self):
+        # Assert that the necessary javascript file is included in the media.
+        mocked_super = Mock(return_value=Mock(media=Media()))
+        with patch('dbentry.ac.widgets.super', new=mocked_super):
+            self.assertIn('admin/js/select2_grouped.js', GroupedResultsMixin().media._js)
