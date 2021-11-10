@@ -11,6 +11,10 @@ from django.urls import reverse
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
+# Name of the key under which views.ACExtended will add additional data for
+# result items.
+EXTRA_DATA_KEY = 'extra_data'
+
 
 class GenericURLWidgetMixin(object):
     """

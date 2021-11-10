@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
@@ -12,6 +12,7 @@ from django.utils.translation import gettext
 
 from dbentry import models as _models
 from dbentry.ac.creator import Creator, MultipleObjectsReturned
+from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.managers import AusgabeQuerySet, MIZQuerySet
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
@@ -178,6 +179,68 @@ class ACBuchband(ACBase):
 
     model = _models.Buch
     queryset = _models.Buch.objects.filter(is_buchband=True)
+
+
+class ACExtended(ACBase):
+    """
+    Autocomplete view that adds additional data for every result.
+
+    Select2 will group the results returned in the JsonResponse into option
+    groups (optgroup). This (plus bootstrap grids) will allow useful
+    presentation of the data.
+    """
+
+    # noinspection PyMethodMayBeStatic
+    def get_extra_data(self, result: Model) -> dict:
+        """
+        Return the additional data to be displayed for the given result.
+
+        The data should be a dictionary in the form of
+            column header label: column data
+        """
+        return {}
+
+    def get_results(self, context: dict) -> List[dict]:
+        """Return data for the 'results' key of the response."""
+        return [
+            {
+                'id': self.get_result_value(result),
+                'text': self.get_result_label(result),
+                EXTRA_DATA_KEY: self.get_extra_data(result),
+                'selected_text': self.get_selected_result_label(result),
+            } for result in context['object_list']
+        ]
+
+    def render_to_response(self, context: dict) -> http.JsonResponse:
+        """
+        Return a JSON response in Select2 format.
+
+        If there are search results to display, nest the list of result items
+        under 'children' of the 'results' item so that Select2 creates an
+        optgroup for the results. See:
+        https://select2.org/data-sources/formats#grouped-data
+        """
+        q = self.request.GET.get('q', None)
+
+        create_option = self.get_create_option(context, q)
+        result_list = self.get_results(context)
+        if result_list:
+            # noinspection PyProtectedMember
+            results = [{
+                "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
+                "children": result_list + create_option
+            }]
+        else:
+            results = create_option
+
+        return http.JsonResponse(
+            {
+                'results': results,
+                'pagination': {
+                    'more': self.has_more(context)
+                }
+            }
+        )
 
 
 class ACAusgabe(ACBase):

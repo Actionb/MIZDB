@@ -1,14 +1,15 @@
 from collections import OrderedDict
 from unittest.mock import Mock, patch
 
-from django.db.models import QuerySet
-from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator)
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator,
+    ACExtended
+)
+from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
 from dbentry.managers import MIZQuerySet
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
@@ -678,3 +679,69 @@ class TestGNDPaginator(MyTestCase):
         with patch.object(Paginator, '_get_page'):
             with self.assertNotRaises(TypeError, msg=msg):
                 paginator.page(number=1)
+
+
+class TestACExtended(ViewTestCase):
+
+    view_class = ACExtended
+
+    def test_get_results_adds_extra_data(self):
+        # Assert that get_results adds an item with extra data.
+        view = self.get_view()
+        context = {'object_list': [Mock(pk=42)]}
+        with patch.object(view, 'get_extra_data', new=Mock(return_value={'foo': 'bar'})):
+            results = view.get_results(context)
+        self.assertEqual(len(results), 1)
+        result = results[0]
+        self.assertIn(EXTRA_DATA_KEY, result)
+        self.assertIn('foo', result[EXTRA_DATA_KEY])
+        self.assertEqual(result[EXTRA_DATA_KEY]['foo'], 'bar')
+
+    def test_render_to_response_grouped_data(self):
+        # Assert that render_to_response nests the result data.
+        view = self.get_view(request=self.get_request())
+        view.model = _models.Band
+        context = {
+            'object_list': [Mock(pk=42)],
+            'page_obj': None,  # disable paging
+        }
+        mocked_json_response = Mock()
+        with patch.object(view, 'get_extra_data', new=Mock(return_value={'foo': 'bar'})):
+            with patch('dbentry.ac.views.http.JsonResponse', new=mocked_json_response):
+                view.render_to_response(context)
+                args, _kwargs = mocked_json_response.call_args
+                response_data = args[0]
+                self.assertIn('results', response_data)
+                results = response_data['results']
+                # 'results' should be a JSON object with one item - the nested results:
+                self.assertIsInstance(results, list)
+                self.assertEqual(len(results), 1)
+                self.assertIsInstance(results[0], dict)
+                self.assertIn('children', results[0])
+                self.assertEqual(len(results[0]['children']), 1)
+                result = results[0]['children'][0]
+                self.assertIn(EXTRA_DATA_KEY, result)
+                self.assertIn('foo', result[EXTRA_DATA_KEY])
+                self.assertEqual(result[EXTRA_DATA_KEY]['foo'], 'bar')
+                # Check that the 'text' item of the grouped data has the expected value:
+                self.assertIn('text', results[0])
+                self.assertEqual(results[0]['text'], 'Band')
+
+    def test_render_to_response_no_results(self):
+        # Assert that render_to_response does not nest the result data if there
+        # are no search results.
+        view = self.get_view(request=self.get_request())
+        view.model = _models.Band
+        context = {
+            'object_list': [],
+            'page_obj': None,  # disable paging
+        }
+        mocked_json_response = Mock()
+        with patch('dbentry.ac.views.http.JsonResponse', new=mocked_json_response):
+            view.render_to_response(context)
+            args, _kwargs = mocked_json_response.call_args
+            response_data = args[0]
+            self.assertIn('results', response_data)
+            results = response_data['results']
+            # 'results' should be a just an empty list:
+            self.assertEqual(results, [])
