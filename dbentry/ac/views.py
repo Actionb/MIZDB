@@ -191,14 +191,14 @@ class ACExtended(ACBase):
     """
 
     # noinspection PyMethodMayBeStatic
-    def get_extra_data(self, result: Model) -> dict:
-        """
-        Return the additional data to be displayed for the given result.
+    def get_extra_data(self, result: Model) -> list:
+        """Return the additional data to be displayed for the given result."""
+        return []
 
-        The data should be a dictionary in the form of
-            column header label: column data
-        """
-        return {}
+    # noinspection PyMethodMayBeStatic
+    def get_group_headers(self) -> list:
+        """Return a list of labels for the additional columns/group headers."""
+        return []
 
     def get_results(self, context: dict) -> List[dict]:
         """Return data for the 'results' key of the response."""
@@ -228,7 +228,9 @@ class ACExtended(ACBase):
             # noinspection PyProtectedMember
             results = [{
                 "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
-                "children": result_list + create_option
+                "children": result_list + create_option,
+                "is_optgroup": True,
+                "optgroup_headers": self.get_group_headers(),
             }]
         else:
             results = create_option
