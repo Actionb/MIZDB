@@ -115,6 +115,16 @@ class TabularResultsMixin(object):
     """
 
     autocomplete_function = 'select2Tabular'
+    tabular_css_class = 'select2-tabular'
+
+    # noinspection PyUnresolvedReferences
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'class' in self.attrs and self.attrs['class']:
+            self.attrs['class'] += ' ' + self.css_class
+        else:
+            self.attrs['class'] = self.css_class
+        self.attrs['data-extra-data-key'] = EXTRA_DATA_KEY
 
     # noinspection PyUnresolvedReferences
     @property
