@@ -224,16 +224,21 @@ class ACTabular(ACBase):
 
         create_option = self.get_create_option(context, q)
         result_list = self.get_results(context)
-        if result_list:
+        if self.request.GET.get('tabular') and result_list:
+            headers = []
+            if context['page_obj'] and not context['page_obj'].has_previous():
+                # Only add optgroup headers for the first page of results.
+                headers = self.get_group_headers()
+
             # noinspection PyProtectedMember
             results = [{
                 "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
                 "children": result_list + create_option,
                 "is_optgroup": True,
-                "optgroup_headers": self.get_group_headers(),
+                "optgroup_headers": headers,
             }]
         else:
-            results = create_option
+            results = result_list + create_option
 
         return http.JsonResponse(
             {

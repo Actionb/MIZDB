@@ -706,11 +706,11 @@ class TestACTabular(ViewTestCase):
     def test_render_to_response_grouped_data(self):
         # Assert that render_to_response adds everything needed to create the
         # option groups.
-        view = self.get_view(request=self.get_request())
+        view = self.get_view(request=self.get_request(data={'tabular': True}))
         view.model = _models.Band
         context = {
             'object_list': [Mock(pk=42)],
-            'page_obj': None,  # disable paging
+            'page_obj': Mock(has_previous=Mock(return_value=False)),
         }
         with patch('dbentry.ac.views.http.JsonResponse') as mocked_json_response:
             view.render_to_response(context)
@@ -734,6 +734,25 @@ class TestACTabular(ViewTestCase):
             result = results[0]['children'][0]
             self.assertIn(EXTRA_DATA_KEY, result)
             self.assertEqual(['bar'], result[EXTRA_DATA_KEY])
+
+    def test_render_to_response_not_first_page(self):
+        # Assert that optgroup headers are only included for the first page.
+        view = self.get_view(request=self.get_request(data={'tabular': True}))
+        view.model = _models.Band
+        context = {
+            'object_list': [Mock(pk=42)],
+            'page_obj': Mock(has_previous=Mock(return_value=True)),
+        }
+        with patch('dbentry.ac.views.http.JsonResponse') as mocked_json_response:
+            view.render_to_response(context)
+            args, _kwargs = mocked_json_response.call_args
+            response_data = args[0]
+            self.assertIn('results', response_data)
+            results = response_data['results']
+            self.assertIsInstance(results, list)
+            self.assertEqual(len(results), 1)
+            self.assertIsInstance(results[0], dict)
+            self.assertEqual(results[0]['optgroup_headers'], [])
 
     def test_render_to_response_no_results(self):
         # Assert that render_to_response does not nest the result data if there
