@@ -11,7 +11,7 @@ from django.urls import reverse
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
-# Name of the key under which views.ACExtended will add additional data for
+# Name of the key under which views.ACTabular will add additional data for
 # (grouped) result items.
 EXTRA_DATA_KEY = 'extra_data'
 
@@ -108,18 +108,18 @@ class MIZWidgetMixin(GenericURLWidgetMixin):
         return super()._get_reverse_kwargs(**_kwargs)
 
 
-class GroupedResultsMixin(object):
+class TabularResultsMixin(object):
     """
-    Widget mixin that uses a different autocomplete function to display grouped
-    results.
+    Widget mixin that uses a different autocomplete function to display results
+    in a table.
     """
 
-    autocomplete_function = 'select2Grouped'
+    autocomplete_function = 'select2Tabular'
 
     # noinspection PyUnresolvedReferences
     @property
     def media(self):
-        return super().media + Media(js=['admin/js/select2_grouped.js'])
+        return super().media + Media(js=['admin/js/select2_tabular.js'])
 
 
 class MIZModelSelect2(MIZWidgetMixin, autocomplete.ModelSelect2):
@@ -130,11 +130,11 @@ class MIZModelSelect2Multiple(MIZWidgetMixin, autocomplete.ModelSelect2Multiple)
     pass
 
 
-class MIZModelSelect2Grouped(GroupedResultsMixin, MIZModelSelect2):
+class MIZModelSelect2Tabular(TabularResultsMixin, MIZModelSelect2):
     pass
 
 
-class MIZModelSelect2MultipleGrouped(GroupedResultsMixin, MIZModelSelect2Multiple):
+class MIZModelSelect2MultipleTabular(TabularResultsMixin, MIZModelSelect2Multiple):
     pass
 
 
@@ -254,6 +254,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
 
 def make_widget(
         url: str = 'accapture',
+        tabular=False,
         multiple: bool = False,
         wrap: bool = False,
         remote_field_name: str = 'id',
@@ -267,6 +268,7 @@ def make_widget(
 
     Args:
         url: name of the url to the autocomplete view employed by this widget
+        tabular (bool): if True, use a widget class that groups results
         multiple (bool): if True, a SelectMultiple variant will be used
         wrap (bool): if True, the widget will be wrapped with RemoteModelWidgetWrapper
         remote_field_name (str): wrapper arg: target of the relation field
@@ -292,9 +294,15 @@ def make_widget(
         widget_class = kwargs.pop('widget_class')
     else:
         if multiple:
-            widget_class = MIZModelSelect2Multiple
+            if tabular:
+                widget_class = MIZModelSelect2MultipleTabular
+            else:
+                widget_class = MIZModelSelect2Multiple
         else:
-            widget_class = MIZModelSelect2
+            if tabular:
+                widget_class = MIZModelSelect2Tabular
+            else:
+                widget_class = MIZModelSelect2
         if model_name:
             widget_opts['model_name'] = model_name
         else:

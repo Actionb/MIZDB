@@ -7,7 +7,7 @@ from django.utils.translation import override as translation_override
 import dbentry.models as _models
 from dbentry.ac.widgets import (
     MIZWidgetMixin, RemoteModelWidgetWrapper, GenericURLWidgetMixin, MIZModelSelect2,
-    MIZModelSelect2Multiple, GroupedResultsMixin, make_widget
+    MIZModelSelect2Multiple, TabularResultsMixin, make_widget
 )
 from dbentry.forms import ArtikelForm
 from dbentry.tests.base import MyTestCase
@@ -281,10 +281,10 @@ class TestMakeWidget(MyTestCase):
         self.assertIsInstance(widget, RemoteModelWidgetWrapper)
 
 
-class TestSelect2GroupMixin(MyTestCase):
+class TestTabularResultsMixin(MyTestCase):
 
     def test_adds_javascript(self):
         # Assert that the necessary javascript file is included in the media.
         mocked_super = Mock(return_value=Mock(media=Media()))
         with patch('dbentry.ac.widgets.super', new=mocked_super):
-            self.assertIn('admin/js/select2_grouped.js', GroupedResultsMixin().media._js)
+            self.assertIn('admin/js/select2_tabular.js', TabularResultsMixin().media._js)
