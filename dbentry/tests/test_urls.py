@@ -84,7 +84,12 @@ class TestURLs(URLTestCase):
             (
                 'accapture', '/musiker/kuenstler_name/', (),
                 {'model_name': 'musiker', 'create_field': 'kuenstler_name'},
-                autocomplete_views.ACBase
+                autocomplete_views.ACMusiker
+            ),
+            (
+                'accapture', '/band/band_name/', (),
+                {'model_name': 'band', 'create_field': 'band_name'},
+                autocomplete_views.ACBand
             ),
             (
                 'accapture', '/autor/', (),
