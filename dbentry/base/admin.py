@@ -470,6 +470,8 @@ class BaseInlineMixin(object):
           inline's default ones.
         - ``description`` (str): short description of this inline in relation
           to its parent ModelAdmin.
+        - ``tabular_autocomplete`` (list): list of field names for which
+          tabular autocomplete widgets should be used
     """
 
     verbose_model: Type[Model] = None  # type: ignore[assignment]
@@ -477,6 +479,7 @@ class BaseInlineMixin(object):
     classes: list = ['collapse']
     description: str = ''
     form: ModelForm = MIZAdminInlineFormBase
+    tabular_autocomplete: list = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -493,7 +496,10 @@ class BaseInlineMixin(object):
             **kwargs: Any
     ) -> forms.Field:
         if 'widget' not in kwargs:
-            kwargs['widget'] = make_widget(model=db_field.related_model)
+            kwargs['widget'] = make_widget(
+                model=db_field.related_model,
+                tabular=db_field.name in self.tabular_autocomplete
+            )
         # noinspection PyUnresolvedReferences
         return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
 
