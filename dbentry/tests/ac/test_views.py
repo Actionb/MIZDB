@@ -7,7 +7,7 @@ import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
     ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator,
-    ACExtended
+    ACTabular
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
@@ -681,9 +681,9 @@ class TestGNDPaginator(MyTestCase):
                 paginator.page(number=1)
 
 
-class TestACExtended(ViewTestCase):
+class TestACTabular(ViewTestCase):
 
-    class DummyView(ACExtended):
+    class DummyView(ACTabular):
 
         def get_group_headers(self):
             return ['foo']

@@ -181,9 +181,9 @@ class ACBuchband(ACBase):
     queryset = _models.Buch.objects.filter(is_buchband=True)
 
 
-class ACExtended(ACBase):
+class ACTabular(ACBase):
     """
-    Autocomplete view that adds additional data for every result.
+    Autocomplete view that presents the result data in tabular form.
 
     Select2 will group the results returned in the JsonResponse into option
     groups (optgroup). This (plus bootstrap grids) will allow useful
@@ -245,7 +245,7 @@ class ACExtended(ACBase):
         )
 
 
-class ACAusgabe(ACBase):
+class ACAusgabe(ACTabular):
     """
     Autocomplete view for the model ausgabe that applies chronological order to
     the results.
@@ -255,6 +255,43 @@ class ACAusgabe(ACBase):
 
     def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
         return queryset.chronological_order()
+
+    def get_queryset(self) -> MIZQuerySet:
+        queryset = super().get_queryset()
+        from dbentry.admin import AusgabenAdmin, miz_site
+        model_admin = AusgabenAdmin(self.model, miz_site)
+        return queryset.annotate(**model_admin.get_result_list_annotations())
+
+    def get_group_headers(self) -> list:
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [result.num_string, result.lnum_string, result.jahr_string]
+
+
+class ACBand(ACTabular):
+
+    model = _models.Band
+
+    def get_group_headers(self) -> list:
+        return ['Alias']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [", ".join(str(alias) for alias in result.bandalias_set.all()) or '-']
+
+
+class ACMusiker(ACTabular):
+
+    model = _models.Musiker
+
+    def get_group_headers(self) -> list:
+        return ['Alias']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [", ".join(str(alias) for alias in result.musikeralias_set.all()) or '-']
 
 
 class ACCreatable(ACBase):
