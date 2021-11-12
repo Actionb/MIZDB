@@ -160,12 +160,14 @@ class ACBase(autocomplete.Select2QuerySetView):
         """
         Return the value (usually the primary key) of a result model instance.
         """
+        if isinstance(result, (list, tuple)):
+            return result[0]
         return str(result.pk)  # type: ignore
 
     def get_result_label(self, result: Model) -> str:
         """Return the label of a result model instance."""
         if isinstance(result, (list, tuple)):
-            return result[1]
+            return str(result[1])
         return str(result)
 
 
@@ -334,16 +336,10 @@ class GNDPaginator(Paginator):
 
 
 class GND(ACBase):
-    """
-    Autocomplete view that queries the SRU API endpoint of the DNB.
-
-    Attributes:
-        sru_query_func: the callable that fetches the results from the endpoint
-    """
+    """Autocomplete view that queries the SRU API endpoint of the DNB."""
 
     paginate_by = 10  # DNB default number of records per request
     paginator_class = GNDPaginator
-    sru_query_func: Callable = searchgnd
 
     def get_query_string(self, q: Optional[str] = None) -> str:
         """Construct and return a SRU compliant query string."""
@@ -369,8 +365,8 @@ class GND(ACBase):
         page_number = int(page)
         start = (page_number - 1) * self.paginate_by + 1
 
-        results, self.total_count = self.sru_query_func(
-            self.get_query_string(self.q),
+        results, self.total_count = searchgnd(
+            query=self.get_query_string(self.q),
             startRecord=[str(start)],
             maximumRecords=[str(self.paginate_by)],
             **self.get_query_func_kwargs()

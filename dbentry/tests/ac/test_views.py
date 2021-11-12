@@ -551,13 +551,13 @@ class TestGND(ViewTestCase):
             with self.subTest(data=data):
                 self.assertFalse(view.get_query_string(q=data))
 
-    @patch.object(GND, 'sru_query_func')
+    @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset(self, mocked_query_func):
         mocked_query_func.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep')
         self.assertTrue(view.get_queryset())
 
-    @patch.object(GND, 'sru_query_func')
+    @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_page_number(self, mocked_query_func):
         # Assert that, for a given page number, get_queryset calls query func
         # with the correct startRecord index.
@@ -592,7 +592,7 @@ class TestGND(ViewTestCase):
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['21'])
 
-    @patch.object(GND, 'sru_query_func')
+    @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_paginate_by(self, mocked_query_func):
         # Assert that get_queryset factors in the paginate_by attribute when
         # calculating the startRecord value.
@@ -609,7 +609,7 @@ class TestGND(ViewTestCase):
         )
         self.assertEqual(kwargs['startRecord'], ['11'])
 
-    @patch.object(GND, 'sru_query_func')
+    @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_maximum_records(self, mocked_query_func):
         # Assert that get_queryset passes 'paginate_by' to the query func as
         # 'maximumRecords' kwarg.
@@ -641,7 +641,7 @@ class TestGND(ViewTestCase):
             view.get_result_label(('134485904', 'Plant, Robert'))
         )
 
-    @patch.object(GND, 'sru_query_func')
+    @patch('dbentry.ac.views.searchgnd')
     def test_get_query_func_kwargs(self, mocked_query_func):
         # Assert that the view's query func is called with the kwargs added
         # by get_query_func_kwargs.
