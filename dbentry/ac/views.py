@@ -299,6 +299,20 @@ class ACMusiker(ACTabular):
         return [", ".join(str(alias) for alias in result.musikeralias_set.all()) or '-']
 
 
+class ACLagerort(ACTabular):
+    # TODO: enable the use of this view (admin.BestandInLine) once it's clear
+    #   what fields Lagerort should have and how the default result label
+    #   (here: Lagerort._name) should look like
+
+    model = _models.Lagerort
+
+    def get_group_headers(self) -> list:
+        return ['Ort', 'Raum']
+
+    def get_extra_data(self, result: Model) -> list:
+        return [result.ort, result.raum]
+
+
 class ACCreatable(ACBase):
     """
     Add additional information to the create_option part of the response and

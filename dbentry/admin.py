@@ -44,6 +44,9 @@ class BestandInLine(BaseTabularInline):
     readonly_fields = ['signatur']
     verbose_name = _models.Bestand._meta.verbose_name
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
+    # TODO: enable tabular autocomplete for 'lagerort'
+    #  (see ac.views.ACLagerort and ac.urls for details)
+    # tabular_autocomplete = ['lagerort']
 
 
 @admin.register(_models.Audio, site=miz_site)
