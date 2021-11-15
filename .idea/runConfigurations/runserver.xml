@@ -5,6 +5,7 @@
     <option name="PARENT_ENVS" value="true" />
     <envs>
       <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="DJANGO_DEVELOPMENT" value="1" />
     </envs>
     <option name="SDK_HOME" value="$PROJECT_DIR$/../bin/python3" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
