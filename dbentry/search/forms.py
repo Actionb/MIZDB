@@ -249,6 +249,7 @@ class SearchFormFactory:
                 'multiple': db_field.many_to_many,
                 'wrap': False,
                 'can_add_related': False,
+                'tabular': kwargs.pop('tabular', False)
             }
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
@@ -271,7 +272,7 @@ class SearchFormFactory:
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
             widgets=None, localized_fields=None, labels=None, help_texts=None,
-            error_messages=None, field_classes=None, forwards=None,
+            error_messages=None, field_classes=None, forwards=None, tabular=None,
             range_lookup=django_lookups.Range
     ) -> Type[SearchForm]:
         """
@@ -296,6 +297,8 @@ class SearchFormFactory:
 
         Additional arguments.
             - ``forwards``: a mapping of formfield_name: dal forwards
+            - ``tabular``: a list of formfield_names to be used with a tabular
+              widget
             - ``range_lookup``: the lookup class whose lookup_name is used to
               recognize range lookups.
         """
@@ -334,6 +337,8 @@ class SearchFormFactory:
                 formfield_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
                 formfield_kwargs['forward'] = forwards[path]
+            if tabular and path in tabular:
+                formfield_kwargs['tabular'] = True
             # Use the path stripped of all lookups as the formfield's name.
             formfield_name = search_utils.strip_lookups_from_path(path, lookups)
             formfield = formfield_callback(db_field, **formfield_kwargs)

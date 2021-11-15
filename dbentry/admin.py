@@ -124,6 +124,7 @@ class AudioAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id',
             'land_pressung'
         ],
+        'tabular': ['musiker', 'band']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -423,7 +424,8 @@ class ArtikelAdmin(MIZModelAdmin):
             'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
             'seite__range'
         ],
-        'forwards': {'ausgabe': 'ausgabe__magazin'}
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
+        'tabular': ['ausgabe', 'musiker', 'band']
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -491,7 +493,8 @@ class BandAdmin(MIZModelAdmin):
 
     search_form_kwargs = {
         'fields': ['musiker', 'genre', 'orte__land', 'orte'],
-        'labels': {'musiker': 'Mitglied'}
+        'labels': {'musiker': 'Mitglied'},
+        'tabular': ['musiker']
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -575,6 +578,7 @@ class PlakatAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
         'labels': {'reihe': 'Bildreihe'},
+        'tabular': ['musiker', 'band']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -722,6 +726,7 @@ class BuchAdmin(MIZModelAdmin):
             'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
             'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
+        'tabular': ['musiker', 'band'],
         # 'autor' help_text refers to quick item creation which is not allowed
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
@@ -1044,7 +1049,8 @@ class VeranstaltungAdmin(MIZModelAdmin):
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'person', 'spielort',
             'reihe', 'datum__range'
-        ]
+        ],
+        'tabular': ['musiker', 'band'],
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -1148,6 +1154,7 @@ class VideoAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'medium', 'release_id'
         ],
+        'tabular': ['musiker', 'band'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1313,7 +1320,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
-        'labels': {'jahre__jahr__range': 'Jahr'}
+        'labels': {'jahre__jahr__range': 'Jahr'},
+        'tabular': ['ausgabe']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1378,7 +1386,8 @@ class BrochureAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
             'jahre__jahr__range'
         ],
-        'labels': {'jahre__jahr__range': 'Jahr'}
+        'labels': {'jahre__jahr__range': 'Jahr'},
+        'tabular': ['ausgabe']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1430,7 +1439,8 @@ class KalenderAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
             'jahre__jahr__range'
         ],
-        'labels': {'jahre__jahr__range': 'Jahr'}
+        'labels': {'jahre__jahr__range': 'Jahr'},
+        'tabular': ['ausgabe']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1484,7 +1494,8 @@ class FotoAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'reihe', 'datum__range'
         ],
-        'labels': {'reihe': 'Bildreihe'}
+        'labels': {'reihe': 'Bildreihe'},
+        'tabular': ['musiker', 'band'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 

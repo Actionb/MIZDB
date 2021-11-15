@@ -5,7 +5,9 @@ from .views import ACAusgabe, ACBand, ACBase, ACBuchband, ACCreatable, ACLageror
 autocomplete_patterns = [
     path('buch/', ACBuchband.as_view(), name='acbuchband'),
     path('ausgabe/', ACAusgabe.as_view(), name='acausgabe'),
+    path('band/', ACBand.as_view(), name='acband'),
     path('band/<str:create_field>/', ACBand.as_view(), name='acband'),
+    path('musiker/', ACMusiker.as_view(), name='acmusiker'),
     path('musiker/<str:create_field>/', ACMusiker.as_view(), name='acmusiker'),
     path('gnd/', GND.as_view(), name='gnd'),
     # TODO: enable the lagerort autocomplete URL (see views.ACLagerort for more details)
