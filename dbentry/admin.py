@@ -67,9 +67,11 @@ class AudioAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Audio.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Audio.spielort.through
         verbose_model = _models.Spielort
@@ -84,6 +86,8 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Plattenfirma
     class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.audio.through
+        # Note that the tabular autocomplete widget for 'ausgabe' is created
+        # by the AusgabeMagazinFieldForm of this inline class.
     class DateiInLine(BaseTabularInline):  # noqa
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
@@ -379,9 +383,11 @@ class ArtikelAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.ort.through
         verbose_model = _models.Ort
@@ -468,6 +474,7 @@ class BandAdmin(MIZModelAdmin):
         model = _models.Band.musiker.through
         verbose_name = 'Band-Mitglied'
         verbose_name_plural = 'Band-Mitglieder'
+        tabular_autocomplete = ['musiker']
     class AliasInLine(BaseAliasInline):  # noqa
         model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):  # noqa
@@ -530,9 +537,11 @@ class PlakatAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.ort.through
         verbose_model = _models.Ort
@@ -655,9 +664,11 @@ class BuchAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Buch.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Buch.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Buch.ort.through
         verbose_model = _models.Ort
@@ -855,6 +866,7 @@ class MusikerAdmin(MIZModelAdmin):
         model = _models.Band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
+        tabular_autocomplete = ['band']
     class AliasInLine(BaseAliasInline):  # noqa
         model = _models.MusikerAlias
     class InstrInLine(BaseTabularInline):  # noqa
@@ -1005,6 +1017,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.person.through
         verbose_model = _models.Person
@@ -1013,6 +1026,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class AliasInLine(BaseAliasInline):  # noqa
         model = _models.VeranstaltungAlias
     class URLInLine(BaseTabularInline):  # noqa
@@ -1080,9 +1094,11 @@ class VideoAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Video.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Video.ort.through
         verbose_model = _models.Ort
@@ -1094,6 +1110,8 @@ class VideoAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
     class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.video.through
+        # Note that the tabular autocomplete widget for 'ausgabe' is created
+        # by the AusgabeMagazinFieldForm of this inline class.
     class DateiInLine(BaseTabularInline):  # noqa
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
@@ -1233,9 +1251,11 @@ class DateiAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Datei.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Datei.ort.through
         verbose_model = _models.Ort
@@ -1427,9 +1447,11 @@ class FotoAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Foto.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Foto.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Foto.ort.through
         verbose_model = _models.Ort

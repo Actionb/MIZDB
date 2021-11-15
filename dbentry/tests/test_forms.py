@@ -17,7 +17,7 @@ from dbentry.forms import (
     AusgabeMagazinFieldForm, ArtikelForm, AutorForm, BuchForm, AudioForm,
     VideoForm, PersonForm
 )
-from dbentry.ac.widgets import RemoteModelWidgetWrapper
+from dbentry.ac.widgets import RemoteModelWidgetWrapper, TabularResultsMixin
 from dbentry.factory import make
 from dbentry.validators import DNBURLValidator
 
@@ -78,6 +78,7 @@ class TestArtikelForm(ModelFormTestCase):
         self.assertIsInstance(form.fields['bemerkungen'].widget, forms.Textarea)
         self.assertTrue('ausgabe' in form.fields)
         self.assertIsInstance(form.fields['ausgabe'].widget, autocomplete.ModelSelect2)
+        self.assertIsInstance(form.fields['ausgabe'].widget, TabularResultsMixin)
         self.assertTrue('ausgabe__magazin' in form.fields)
         self.assertIsInstance(form.fields['ausgabe__magazin'].widget, RemoteModelWidgetWrapper)
 

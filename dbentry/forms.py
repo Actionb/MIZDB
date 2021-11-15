@@ -37,17 +37,14 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
         required=False,
         label="Magazin",
         queryset=_models.Magazin.objects.all(),
-        widget=make_widget(
-            model=_models.Magazin, wrap=True, can_delete_related=False
-        )
+        widget=make_widget(wrap=True, can_delete_related=False, model=_models.Magazin)
     )
 
     class Meta:
         widgets = {
             'ausgabe': make_widget(
-                model_name='ausgabe',
-                forward=['ausgabe__magazin']
-            )
+                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True,
+            ),
         }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -67,7 +64,7 @@ class ArtikelForm(AusgabeMagazinFieldForm):
         fields = '__all__'
         widgets = {
             'ausgabe': make_widget(
-                model_name='ausgabe', forward=['ausgabe__magazin']
+                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True
             ),
             'schlagzeile': forms.Textarea(attrs={'rows': 2, 'cols': 90}),
         }
@@ -81,7 +78,7 @@ class BrochureForm(AusgabeMagazinFieldForm):
     class Meta:
         widgets = {
             'ausgabe': make_widget(
-                model_name='ausgabe', forward=['ausgabe__magazin']
+                model_name='ausgabe', forward=['ausgabe__magazin'], tabular=True
             ),
             'titel': forms.Textarea(attrs={'rows': 1, 'cols': 90})
         }
