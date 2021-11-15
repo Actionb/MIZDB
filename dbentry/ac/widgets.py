@@ -278,7 +278,8 @@ def make_widget(
 
     Args:
         url: name of the url to the autocomplete view employed by this widget
-        tabular (bool): if True, use a widget class that groups results
+        tabular (bool): if True, use the widget class that presents the results
+          in tabular form
         multiple (bool): if True, a SelectMultiple variant will be used
         wrap (bool): if True, the widget will be wrapped with RemoteModelWidgetWrapper
         remote_field_name (str): wrapper arg: target of the relation field
