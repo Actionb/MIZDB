@@ -331,14 +331,14 @@ class Ausgabe(ComputedNameModel):
 
         jahre = jahrgang = ''
         if 'jahrgang' in data:
-            jahrgang = data['jahrgang'][0]
+            jahrgang = str(data['jahrgang'][0])
         if 'ausgabejahr__jahr' in data:
             # Concatenate the years given.
-            # Use four digits for the first year,
-            # use only the last two digits for the rest.
+            # Use four digits for the first year. For other years, only use
+            # their last two digits.
             jahre = [  # type: ignore[assignment]
-                str(jahr)[2:] if i else str(jahr)
-                for i, jahr in enumerate(sorted(data['ausgabejahr__jahr']))
+                jahr[2:] if i else jahr
+                for i, jahr in enumerate(sorted(str(j) for j in data['ausgabejahr__jahr']))
             ]
             jahre = concat_limit(jahre, sep="/")
         if not jahre:
@@ -353,15 +353,13 @@ class Ausgabe(ComputedNameModel):
             e_datum = data['e_datum'][0]
         if 'ausgabenum__num' in data:
             nums = concat_limit(
-                sorted(data['ausgabenum__num']),
+                (n.zfill(2) for n in sorted(str(n) for n in data['ausgabenum__num'])),
                 sep="/",
-                z=2
             )
         if 'ausgabelnum__lnum' in data:
             lnums = concat_limit(
-                sorted(data['ausgabelnum__lnum']),
+                (n.zfill(2) for n in sorted(str(n) for n in data['ausgabelnum__lnum'])),
                 sep="/",
-                z=2
             )
         if 'ausgabemonat__monat__abk' in data:
             monat_ordering = [
