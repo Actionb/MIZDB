@@ -9,7 +9,6 @@ import dbentry.m2m as _m2m
 from dbentry.base.models import (
     AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
 )
-from dbentry.constants import LIST_DISPLAY_MAX_LEN
 from dbentry.fields import (
     EANField, ISBNField, ISSNField, PartialDate, PartialDateField, YearField
 )
@@ -321,7 +320,7 @@ class Ausgabe(ComputedNameModel):
         if 'beschreibung' in data:
             beschreibung = concat_limit(
                 data['beschreibung'][0].split(),
-                width=LIST_DISPLAY_MAX_LEN + 5,
+                width=30,
                 sep=" "
             )
         if 'sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung:
