@@ -21,8 +21,8 @@ document.addEventListener('dal-init-function', function () {
         }
 
         function result_template(item) {
-            var id = item.id;
-            var text = template(item.text,
+            let id = item.id;
+            let text = template(item.text,
                 $element.attr('data-html') !== undefined || $element.attr('data-result-html') !== undefined
             );
 
@@ -45,23 +45,24 @@ document.addEventListener('dal-init-function', function () {
             else {
                 var column_items = item[$element.data('extra-data-key')]
             }
-            var extras = '';
-            var textSpan = 10;  // Set the width of the text column to 10.
+            let extras = '';
             if (column_items !== undefined && column_items.length > 0) {
-                // Reserve 6 of the 12 bootstrap grid columns for ID (2) and text (4).
-                // TODO: what if only one extra column? then extra is wider than text
-                // TODO: more than 3 extra columns would leave each column too little space
                 textSpan = 4;
-                var colSpan = 6 / column_items.length;
-                for (key in column_items){
-                    extras += `<div class="col-${colSpan}">` + column_items[key] + '</div>'
+                // By default, allocate 50% of the width to the extra columns:
+                let colWidth = (Math.round(50 / column_items.length * 100) / 100).toString() + "%"
+                if (column_items.length == 1){
+                    // Just one extra column; allocate a flat 40%.
+                    // This leaves more space for the text column.
+                    colWidth = "40%"
                 }
-                // TODO: need to show full page (10 items) at once
+                for (key in column_items){
+                    extras += `<div class="select2-tabular-result__extra" style="width:${colWidth}">${column_items[key] || '-'}</div>`
+                }
             }
             return $(
-                '<div class="row">'+
-                '<div class="col-2">' + id + '</div>' +
-                `<div class="col-${textSpan}">` + text + '</div>' +
+                '<div class="select2-tabular-results">'+
+                '<div class="select2-tabular-result__id">' + id + '</div>' +
+                '<div class="select2-tabular-result__text">' + text + '</div>' +
                 extras +
                 '</div>'
             );
@@ -121,7 +122,6 @@ document.addEventListener('dal-init-function', function () {
             templateSelection: selected_template,
             ajax: ajax,
             tags: Boolean($element.attr('data-tags')),
-            // width: '100%',
         });
 
         $element.on('select2:selecting', function (e) {
