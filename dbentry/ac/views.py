@@ -284,7 +284,7 @@ class ACBand(ACTabular):
 
     # noinspection PyUnresolvedReferences
     def get_extra_data(self, result: Model) -> list:
-        return [", ".join(str(alias) for alias in result.bandalias_set.all()) or '-']
+        return [", ".join(str(alias) for alias in result.bandalias_set.all())]
 
 
 class ACMusiker(ACTabular):
@@ -296,7 +296,7 @@ class ACMusiker(ACTabular):
 
     # noinspection PyUnresolvedReferences
     def get_extra_data(self, result: Model) -> list:
-        return [", ".join(str(alias) for alias in result.musikeralias_set.all()) or '-']
+        return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
 
 
 class ACLagerort(ACTabular):
