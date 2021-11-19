@@ -1094,7 +1094,10 @@ class Spielort(BaseModel):
     )
 
     name_field = 'name'
-    related_search_vectors = [('spielortalias___fts', SIMPLE)]
+    related_search_vectors = [
+        ('spielortalias___fts', SIMPLE),
+        ('ort___fts', SIMPLE)
+    ]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -1172,7 +1175,11 @@ class Veranstaltung(BaseModel):
     )
 
     name_field = 'name'
-    related_search_vectors = [('veranstaltungalias___fts', SIMPLE)]
+    related_search_vectors = [
+        ('veranstaltungalias___fts', SIMPLE),
+        ('spielort___fts', SIMPLE),
+        ('spielort__ort___fts', SIMPLE)
+    ]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
