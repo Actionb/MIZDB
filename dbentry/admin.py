@@ -1053,6 +1053,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
+    tabular_autocomplete = ['spielort']
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'person', 'spielort',
