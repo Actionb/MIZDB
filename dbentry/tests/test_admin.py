@@ -15,7 +15,7 @@ from django.utils.translation import override as translation_override
 
 import dbentry.admin as _admin
 import dbentry.models as _models
-from dbentry.base.admin import BaseInlineMixin
+from dbentry.base.admin import AutocompleteMixin
 from dbentry.changelist import AusgabeChangeList, MIZChangeList
 from dbentry.constants import DUPLETTEN_ID, ZRAUM_ID
 from dbentry.factory import make, modelfactory_factory
@@ -2013,14 +2013,14 @@ class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-class TestBaseInlineMixin(TestCase):
+class TestTabularAutocompleteMixin(TestCase):
 
     def test_formfield_for_foreignkey_tabular(self):
         # Assert that formfield_for_foreignkey calls make_widget with the
         # correct tabular argument.
         with patch('dbentry.base.admin.super') as mocked_super:
             with patch('dbentry.base.admin.make_widget') as mocked_make:
-                inline = BaseInlineMixin()
+                inline = AutocompleteMixin()
                 inline.tabular_autocomplete = ['dummy']
                 dummy_field = Mock()
                 dummy_field.name = 'dummy'  # 'name' is an argument of Mock()

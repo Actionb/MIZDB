@@ -35,7 +35,33 @@ FieldsetList = List[Tuple[Optional[str], dict]]
 #        self.can_delete_related = not multiple and not cascade and can_delete_related
 
 
-class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
+class AutocompleteMixin(object):
+    """
+    A mixin for model admin and admin inlines that creates autocomplete widgets
+    for ForeignKey fields.
+
+    Attributes:
+        - ``tabular_autocomplete`` (list): list of field names for which
+          tabular autocomplete widgets should be used
+    """
+    tabular_autocomplete: list = []
+
+    def formfield_for_foreignkey(
+            self,
+            db_field: models.Field,
+            request: HttpRequest,
+            **kwargs: Any
+    ) -> forms.Field:
+        if 'widget' not in kwargs:
+            kwargs['widget'] = make_widget(
+                model=db_field.related_model,
+                tabular=db_field.name in self.tabular_autocomplete
+            )
+        # noinspection PyUnresolvedReferences
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
+
+
+class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin):
     """
     Base ModelAdmin for this app.
 
@@ -121,16 +147,6 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
                     )
                 )
         return errors
-
-    def formfield_for_foreignkey(
-            self,
-            db_field: models.Field,
-            request: HttpRequest,
-            **kwargs: Any
-    ) -> forms.Field:
-        if 'widget' not in kwargs:
-            kwargs['widget'] = make_widget(model=db_field.related_model)
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:
         return MIZChangeList
@@ -456,7 +472,7 @@ class MIZModelAdmin(MIZAdminSearchFormMixin, admin.ModelAdmin):
         return queryset.search(search_term), False
 
 
-class BaseInlineMixin(object):
+class BaseInlineMixin(AutocompleteMixin):
     """
     A mixin for inline classes.
 
@@ -470,8 +486,6 @@ class BaseInlineMixin(object):
           inline's default ones.
         - ``description`` (str): short description of this inline in relation
           to its parent ModelAdmin.
-        - ``tabular_autocomplete`` (list): list of field names for which
-          tabular autocomplete widgets should be used
     """
 
     verbose_model: Type[Model] = None  # type: ignore[assignment]
@@ -479,7 +493,6 @@ class BaseInlineMixin(object):
     classes: list = ['collapse']
     description: str = ''
     form: ModelForm = MIZAdminInlineFormBase
-    tabular_autocomplete: list = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -488,20 +501,6 @@ class BaseInlineMixin(object):
             verbose_opts = self.verbose_model._meta
             self.verbose_name = verbose_opts.verbose_name
             self.verbose_name_plural = verbose_opts.verbose_name_plural
-
-    def formfield_for_foreignkey(
-            self,
-            db_field: models.Field,
-            request: HttpRequest,
-            **kwargs: Any
-    ) -> forms.Field:
-        if 'widget' not in kwargs:
-            kwargs['widget'] = make_widget(
-                model=db_field.related_model,
-                tabular=db_field.name in self.tabular_autocomplete
-            )
-        # noinspection PyUnresolvedReferences
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
 
 
 class BaseTabularInline(BaseInlineMixin, admin.TabularInline):
