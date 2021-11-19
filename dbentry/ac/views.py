@@ -299,6 +299,17 @@ class ACMusiker(ACTabular):
         return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
 
 
+class ACVeranstaltung(ACTabular):
+
+    model = _models.Veranstaltung
+
+    def get_group_headers(self) -> list:
+        return ['Datum', 'Spielort']
+
+    def get_extra_data(self, result: _models.Veranstaltung) -> list:
+        return [str(result.datum), str(result.spielort)]
+
+
 class ACLagerort(ACTabular):
     # TODO: enable the use of this view (admin.BestandInLine) once it's clear
     #   what fields Lagerort should have and how the default result label

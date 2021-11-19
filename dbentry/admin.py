@@ -78,6 +78,7 @@ class AudioAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Audio.ort.through
         verbose_model = _models.Ort
@@ -124,7 +125,7 @@ class AudioAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id',
             'land_pressung'
         ],
-        'tabular': ['musiker', 'band']
+        'tabular': ['musiker', 'band', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -398,6 +399,7 @@ class ArtikelAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
 
     form = ArtikelForm
     index_category = 'Archivgut'
@@ -425,7 +427,7 @@ class ArtikelAdmin(MIZModelAdmin):
             'seite__range'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'},
-        'tabular': ['ausgabe', 'musiker', 'band']
+        'tabular': ['ausgabe', 'musiker', 'band', 'veranstaltung']
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -554,6 +556,7 @@ class PlakatAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
     form = PlakatForm
@@ -578,7 +581,7 @@ class PlakatAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
         'labels': {'reihe': 'Bildreihe'},
-        'tabular': ['musiker', 'band']
+        'tabular': ['musiker', 'band', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -682,6 +685,7 @@ class BuchAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Buch.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class HerausgeberInLine(BaseTabularInline):  # noqa
         model = _models.Buch.herausgeber.through
         verbose_model = _models.Herausgeber
@@ -726,7 +730,7 @@ class BuchAdmin(MIZModelAdmin):
             'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
             'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
-        'tabular': ['musiker', 'band'],
+        'tabular': ['musiker', 'band', 'veranstaltung'],
         # 'autor' help_text refers to quick item creation which is not allowed
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
@@ -1114,6 +1118,7 @@ class VideoAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.video.through
         # Note that the tabular autocomplete widget for 'ausgabe' is created
@@ -1154,7 +1159,7 @@ class VideoAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'medium', 'release_id'
         ],
-        'tabular': ['musiker', 'band'],
+        'tabular': ['musiker', 'band', 'veranstaltung'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1272,6 +1277,7 @@ class DateiAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Datei.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class QuelleInLine(BaseStackedInline):  # noqa
         model = _m2m.m2m_datei_quelle
         extra = 0
@@ -1320,6 +1326,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
+        # TODO: ausgabe needs forward: ausgabe__magazin
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
@@ -1386,6 +1393,7 @@ class BrochureAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
             'jahre__jahr__range'
         ],
+        # TODO: ausgabe needs forward: ausgabe__magazin
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
@@ -1428,6 +1436,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
@@ -1439,8 +1448,9 @@ class KalenderAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
             'jahre__jahr__range'
         ],
+        # TODO: ausgabe needs forward: ausgabe__magazin
         'labels': {'jahre__jahr__range': 'Jahr'},
-        'tabular': ['ausgabe']
+        'tabular': ['ausgabe', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1471,6 +1481,7 @@ class FotoAdmin(MIZModelAdmin):
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Foto.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
     form = FotoForm
@@ -1495,7 +1506,7 @@ class FotoAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'reihe', 'datum__range'
         ],
         'labels': {'reihe': 'Bildreihe'},
-        'tabular': ['musiker', 'band'],
+        'tabular': ['musiker', 'band', 'veranstaltung'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
