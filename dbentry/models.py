@@ -1187,18 +1187,7 @@ class Veranstaltung(BaseModel):
         ordering = ['name', 'datum', 'spielort']
 
     def __str__(self) -> str:
-        # FIXME: date should be in isoformat
-        #  veranstaltung instances present with a localized date - but the
-        #  database value is isoformat. This can be confusing for the user when
-        #  they query for the presented value, but can't find anything, because
-        #  internally the isoformat is used.
-        # PROBLEM: isoformat for PartialDates may look wrong:
-        # a PD with year 2020 and month 12 will have isoformat 2020-12-00
-        if isinstance(self.datum, PartialDate):
-            date = self.datum.localize()
-        else:
-            date = str(self.datum)
-        return "{} ({})".format(self.name, date)
+        return "{} ({})".format(self.name, str(self.datum))
 
 
 class VeranstaltungAlias(BaseAliasModel):

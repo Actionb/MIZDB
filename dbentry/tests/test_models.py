@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch, Mock
 
 from django.core import checks
@@ -1038,12 +1039,12 @@ class TestModelVeranstaltung(DataTestCase):
         obj = self.model(name='Testveranstaltung')
         # __str__ should handle a 'datum' instance attribute that is not
         # a PartialDate:
-        obj.datum = '02.05.2018'
-        self.assertEqual(str(obj), 'Testveranstaltung (02.05.2018)')
+        obj.datum = date(2018, 5, 2)
+        self.assertEqual(str(obj), 'Testveranstaltung (2018-05-02)')
 
         # And it should localize the date if it is a PartialDate
         obj.datum = _fields.PartialDate.from_string('2018-05-02')
-        self.assertEqual(str(obj), 'Testveranstaltung (02 Mai 2018)')
+        self.assertEqual(str(obj), 'Testveranstaltung (2018-05-02)')
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.
