@@ -75,6 +75,7 @@ class AudioAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Audio.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -125,7 +126,7 @@ class AudioAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id',
             'land_pressung'
         ],
-        'tabular': ['musiker', 'band', 'veranstaltung']
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -396,6 +397,7 @@ class ArtikelAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['spielort']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -427,7 +429,7 @@ class ArtikelAdmin(MIZModelAdmin):
             'seite__range'
         ],
         'forwards': {'ausgabe': 'ausgabe__magazin'},
-        'tabular': ['ausgabe', 'musiker', 'band', 'veranstaltung']
+        'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -553,6 +555,7 @@ class PlakatAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -581,7 +584,7 @@ class PlakatAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
         'labels': {'reihe': 'Bildreihe'},
-        'tabular': ['musiker', 'band', 'veranstaltung']
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -682,6 +685,7 @@ class BuchAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Buch.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Buch.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -730,7 +734,7 @@ class BuchAdmin(MIZModelAdmin):
             'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
             'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
-        'tabular': ['musiker', 'band', 'veranstaltung'],
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
         # 'autor' help_text refers to quick item creation which is not allowed
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
@@ -1115,6 +1119,7 @@ class VideoAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Video.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -1159,7 +1164,7 @@ class VideoAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'medium', 'release_id'
         ],
-        'tabular': ['musiker', 'band', 'veranstaltung'],
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1274,6 +1279,7 @@ class DateiAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Datei.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Datei.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -1433,6 +1439,7 @@ class KalenderAdmin(BaseBrochureAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -1450,7 +1457,7 @@ class KalenderAdmin(BaseBrochureAdmin):
         ],
         # TODO: ausgabe needs forward: ausgabe__magazin
         'labels': {'jahre__jahr__range': 'Jahr'},
-        'tabular': ['ausgabe', 'veranstaltung']
+        'tabular': ['ausgabe', 'spielort', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1478,6 +1485,7 @@ class FotoAdmin(MIZModelAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Foto.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Foto.veranstaltung.through
         verbose_model = _models.Veranstaltung
@@ -1506,7 +1514,7 @@ class FotoAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'reihe', 'datum__range'
         ],
         'labels': {'reihe': 'Bildreihe'},
-        'tabular': ['musiker', 'band', 'veranstaltung'],
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 

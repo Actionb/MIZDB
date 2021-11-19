@@ -9,6 +9,7 @@ autocomplete_patterns = [
     path('band/<str:create_field>/', views.ACBand.as_view(), name='acband'),
     path('musiker/', views.ACMusiker.as_view(), name='acmusiker'),
     path('musiker/<str:create_field>/', views.ACMusiker.as_view(), name='acmusiker'),
+    path('spielort/', views.ACSpielort.as_view(), name='acspielort'),
     path('veranstaltung/', views.ACVeranstaltung.as_view(), name='acveranstaltung'),
     path('gnd/', views.GND.as_view(), name='gnd'),
     # TODO: enable the lagerort autocomplete URL (see views.ACLagerort for more details)
