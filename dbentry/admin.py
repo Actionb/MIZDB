@@ -510,7 +510,7 @@ class BandAdmin(MIZModelAdmin):
     alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations  # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -813,7 +813,7 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.admin_order_field = 'anz_ausgaben'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Magazin) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display() # added by annotations  # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -890,7 +890,7 @@ class MusikerAdmin(MIZModelAdmin):
     genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -945,7 +945,7 @@ class PersonAdmin(MIZModelAdmin):
     is_autor.boolean = True  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Person) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
