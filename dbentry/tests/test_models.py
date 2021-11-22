@@ -1035,17 +1035,6 @@ class TestModelVeranstaltung(DataTestCase):
 
     model = _models.Veranstaltung
 
-    def test_str(self):
-        obj = self.model(name='Testveranstaltung')
-        # __str__ should handle a 'datum' instance attribute that is not
-        # a PartialDate:
-        obj.datum = date(2018, 5, 2)
-        self.assertEqual(str(obj), 'Testveranstaltung (2018-05-02)')
-
-        # And it should localize the date if it is a PartialDate
-        obj.datum = _fields.PartialDate.from_string('2018-05-02')
-        self.assertEqual(str(obj), 'Testveranstaltung (2018-05-02)')
-
     def test_meta_ordering(self):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['name', 'datum', 'spielort'])
