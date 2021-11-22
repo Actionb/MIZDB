@@ -44,6 +44,9 @@ class BestandInLine(BaseTabularInline):
     readonly_fields = ['signatur']
     verbose_name = _models.Bestand._meta.verbose_name
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
+    # TODO: enable tabular autocomplete for 'lagerort'
+    #  (see ac.views.ACLagerort and ac.urls for details)
+    # tabular_autocomplete = ['lagerort']
 
 
 @admin.register(_models.Audio, site=miz_site)
@@ -64,15 +67,19 @@ class AudioAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Audio.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Audio.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Audio.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Audio.ort.through
         verbose_model = _models.Ort
@@ -81,6 +88,8 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Plattenfirma
     class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.audio.through
+        # Note that the tabular autocomplete widget for 'ausgabe' is created
+        # by the AusgabeMagazinFieldForm of this inline class.
     class DateiInLine(BaseTabularInline):  # noqa
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
@@ -117,6 +126,7 @@ class AudioAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'plattenfirma', 'medium', 'release_id',
             'land_pressung'
         ],
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -376,18 +386,22 @@ class ArtikelAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['spielort']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Artikel.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
 
     form = ArtikelForm
     index_category = 'Archivgut'
@@ -414,7 +428,8 @@ class ArtikelAdmin(MIZModelAdmin):
             'schlagwort', 'genre', 'ort', 'spielort', 'veranstaltung', 'person',
             'seite__range'
         ],
-        'forwards': {'ausgabe': 'ausgabe__magazin'}
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
+        'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -465,6 +480,7 @@ class BandAdmin(MIZModelAdmin):
         model = _models.Band.musiker.through
         verbose_name = 'Band-Mitglied'
         verbose_name_plural = 'Band-Mitglieder'
+        tabular_autocomplete = ['musiker']
     class AliasInLine(BaseAliasInline):  # noqa
         model = _models.BandAlias
     class OrtInLine(BaseOrtInLine):  # noqa
@@ -481,7 +497,8 @@ class BandAdmin(MIZModelAdmin):
 
     search_form_kwargs = {
         'fields': ['musiker', 'genre', 'orte__land', 'orte'],
-        'labels': {'musiker': 'Mitglied'}
+        'labels': {'musiker': 'Mitglied'},
+        'tabular': ['musiker']
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -510,7 +527,7 @@ class BandAdmin(MIZModelAdmin):
     alias_string.admin_order_field = 'alias_list'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Band) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations  # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations  # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -527,18 +544,22 @@ class PlakatAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Plakat.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
     form = PlakatForm
@@ -563,6 +584,7 @@ class PlakatAdmin(MIZModelAdmin):
             'veranstaltung', 'person', 'reihe', 'datum__range', 'signatur__contains'
         ],
         'labels': {'reihe': 'Bildreihe'},
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -652,18 +674,22 @@ class BuchAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Buch.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Buch.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Buch.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Buch.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Buch.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class HerausgeberInLine(BaseTabularInline):  # noqa
         model = _models.Buch.herausgeber.through
         verbose_model = _models.Herausgeber
@@ -708,6 +734,7 @@ class BuchAdmin(MIZModelAdmin):
             'spielort', 'veranstaltung', 'person', 'herausgeber', 'verlag',
             'schriftenreihe', 'buchband', 'jahr', 'ISBN', 'EAN'
         ],
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
         # 'autor' help_text refers to quick item creation which is not allowed
         # in search forms - disable the help_text.
         'help_texts': {'autor': None}
@@ -813,7 +840,7 @@ class MagazinAdmin(MIZModelAdmin):
     anz_ausgaben.admin_order_field = 'anz_ausgaben'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Magazin) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display() # added by annotations  # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display() # added by annotations  # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -852,6 +879,7 @@ class MusikerAdmin(MIZModelAdmin):
         model = _models.Band.musiker.through
         verbose_name_plural = 'Ist Mitglied in'
         verbose_name = 'Band'
+        tabular_autocomplete = ['band']
     class AliasInLine(BaseAliasInline):  # noqa
         model = _models.MusikerAlias
     class InstrInLine(BaseTabularInline):  # noqa
@@ -890,7 +918,7 @@ class MusikerAdmin(MIZModelAdmin):
     genre_string.admin_order_field = 'genre_list'  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Musiker) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -945,7 +973,7 @@ class PersonAdmin(MIZModelAdmin):
     is_autor.boolean = True  # type: ignore[attr-defined]  # noqa
 
     def orte_string(self, obj: _models.Person) -> str:
-        return concat_limit(obj.orte_list) or self.get_empty_value_display()  # added by annotations # noqa
+        return concat_limit(obj.orte_list, sep="; ") or self.get_empty_value_display()  # added by annotations # noqa
     orte_string.short_description = 'Orte'  # type: ignore[attr-defined]  # noqa
     orte_string.admin_order_field = 'orte_list'  # type: ignore[attr-defined]  # noqa
 
@@ -1002,6 +1030,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class PersonInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.person.through
         verbose_model = _models.Person
@@ -1010,6 +1039,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Veranstaltung.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class AliasInLine(BaseAliasInline):  # noqa
         model = _models.VeranstaltungAlias
     class URLInLine(BaseTabularInline):  # noqa
@@ -1023,11 +1053,13 @@ class VeranstaltungAdmin(MIZModelAdmin):
     list_display = ['name', 'datum_localized', 'spielort', 'kuenstler_string']
     save_on_top = True
     ordering = ['name', 'spielort', 'datum']
+    tabular_autocomplete = ['spielort']
     search_form_kwargs = {
         'fields': [
             'musiker', 'band', 'schlagwort', 'genre', 'person', 'spielort',
             'reihe', 'datum__range'
-        ]
+        ],
+        'tabular': ['musiker', 'band'],
     }
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
@@ -1077,20 +1109,26 @@ class VideoAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Video.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Video.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Video.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Video.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class AusgabeInLine(BaseAusgabeInline):  # noqa
         model = _models.Ausgabe.video.through
+        # Note that the tabular autocomplete widget for 'ausgabe' is created
+        # by the AusgabeMagazinFieldForm of this inline class.
     class DateiInLine(BaseTabularInline):  # noqa
         model = _m2m.m2m_datei_quelle
         fields = ['datei']
@@ -1127,6 +1165,7 @@ class VideoAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'medium', 'release_id'
         ],
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1230,18 +1269,22 @@ class DateiAdmin(MIZModelAdmin):
             (None, {'fields': ['musiker']}),
             ("Instrumente", {'fields': ['instrument'], 'classes': ['collapse', 'collapsed']}),
         ]
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Datei.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Datei.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Datei.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Datei.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class QuelleInLine(BaseStackedInline):  # noqa
         model = _m2m.m2m_datei_quelle
         extra = 0
@@ -1290,7 +1333,9 @@ class BaseBrochureAdmin(MIZModelAdmin):
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
-        'labels': {'jahre__jahr__range': 'Jahr'}
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
+        'labels': {'jahre__jahr__range': 'Jahr'},
+        'tabular': ['ausgabe']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1355,7 +1400,9 @@ class BrochureAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
             'jahre__jahr__range'
         ],
-        'labels': {'jahre__jahr__range': 'Jahr'}
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
+        'labels': {'jahre__jahr__range': 'Jahr'},
+        'tabular': ['ausgabe']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1393,9 +1440,11 @@ class KalenderAdmin(BaseBrochureAdmin):
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Kalender.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
@@ -1407,7 +1456,9 @@ class KalenderAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
             'jahre__jahr__range'
         ],
-        'labels': {'jahre__jahr__range': 'Jahr'}
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
+        'labels': {'jahre__jahr__range': 'Jahr'},
+        'tabular': ['ausgabe', 'spielort', 'veranstaltung']
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
@@ -1424,18 +1475,22 @@ class FotoAdmin(MIZModelAdmin):
     class MusikerInLine(BaseTabularInline):  # noqa
         model = _models.Foto.musiker.through
         verbose_model = _models.Musiker
+        tabular_autocomplete = ['musiker']
     class BandInLine(BaseTabularInline):  # noqa
         model = _models.Foto.band.through
         verbose_model = _models.Band
+        tabular_autocomplete = ['band']
     class OrtInLine(BaseTabularInline):  # noqa
         model = _models.Foto.ort.through
         verbose_model = _models.Ort
     class SpielortInLine(BaseTabularInline):  # noqa
         model = _models.Foto.spielort.through
         verbose_model = _models.Spielort
+        tabular_autocomplete = ['veranstaltung']
     class VeranstaltungInLine(BaseTabularInline):  # noqa
         model = _models.Foto.veranstaltung.through
         verbose_model = _models.Veranstaltung
+        tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
     form = FotoForm
@@ -1459,7 +1514,8 @@ class FotoAdmin(MIZModelAdmin):
             'musiker', 'band', 'schlagwort', 'genre', 'ort', 'spielort',
             'veranstaltung', 'person', 'reihe', 'datum__range'
         ],
-        'labels': {'reihe': 'Bildreihe'}
+        'labels': {'reihe': 'Bildreihe'},
+        'tabular': ['musiker', 'band', 'spielort', 'veranstaltung'],
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 

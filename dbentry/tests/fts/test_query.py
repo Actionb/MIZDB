@@ -127,8 +127,8 @@ class TestFullTextSearch(DataTestCase):
         # addresses postgres default search configs tripping over string
         # numerics with hyphens.
         obj = make(_models.Ausgabe, ausgabejahr__jahr=2018, ausgabenum__num=3)
-        self.assertIn(obj, _models.Ausgabe.objects.search('2018-3'))
-        self.assertIn(obj, _models.Ausgabe.objects.search('2018 3'))
+        self.assertIn(obj, _models.Ausgabe.objects.search('2018-03'))
+        self.assertIn(obj, _models.Ausgabe.objects.search('2018 03'))
 
     def test_search_kalender(self):
         # Assert that a Kalender object can be found using values defined on

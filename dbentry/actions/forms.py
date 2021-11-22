@@ -169,17 +169,14 @@ class BrochureActionFormOptions(MIZAdminForm):
           Ausgabe instances belong to after moving.
     """
 
-    # noinspection PyProtectedMember,PyUnresolvedReferences,PyMethodParameters,PyMethodMayBeStatic
-    def brochure_choices():  # type: ignore[misc]
-        # FIXME: Why is this callable? Couldn't this just be a list?
-        return [
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    brochure_art = forms.ChoiceField(
+        label='Verschieben nach',
+        choices=[
             (_models.Brochure._meta.model_name, _models.Brochure._meta.verbose_name),
             (_models.Katalog._meta.model_name, _models.Katalog._meta.verbose_name),
             (_models.Kalender._meta.model_name, _models.Kalender._meta.verbose_name)
         ]
-
-    brochure_art = forms.ChoiceField(
-        label='Verschieben nach', choices=brochure_choices
     )
 
     delete_magazin = forms.BooleanField(

@@ -1,14 +1,15 @@
 from collections import OrderedDict
 from unittest.mock import Mock, patch
 
-from django.db.models import QuerySet
-from django.utils.encoding import force_text
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator)
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator,
+    ACTabular
+)
+from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
 from dbentry.managers import MIZQuerySet
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
@@ -678,3 +679,95 @@ class TestGNDPaginator(MyTestCase):
         with patch.object(Paginator, '_get_page'):
             with self.assertNotRaises(TypeError, msg=msg):
                 paginator.page(number=1)
+
+
+class TestACTabular(ViewTestCase):
+
+    class DummyView(ACTabular):
+
+        def get_group_headers(self):
+            return ['foo']
+
+        def get_extra_data(self, result):
+            return ['bar']
+
+    view_class = DummyView
+
+    def test_get_results_adds_extra_data(self):
+        # Assert that get_results adds an item with extra data.
+        view = self.get_view()
+        context = {'object_list': [Mock(pk=42)]}
+        results = view.get_results(context)
+        self.assertEqual(len(results), 1)
+        result = results[0]
+        self.assertIn(EXTRA_DATA_KEY, result)
+        self.assertEqual(['bar'], result[EXTRA_DATA_KEY])
+
+    def test_render_to_response_grouped_data(self):
+        # Assert that render_to_response adds everything needed to create the
+        # option groups.
+        view = self.get_view(request=self.get_request(data={'tabular': True}))
+        view.model = _models.Band
+        context = {
+            'object_list': [Mock(pk=42)],
+            'page_obj': Mock(has_previous=Mock(return_value=False)),
+        }
+        with patch('dbentry.ac.views.http.JsonResponse') as mocked_json_response:
+            view.render_to_response(context)
+            args, _kwargs = mocked_json_response.call_args
+            response_data = args[0]
+            self.assertIn('results', response_data)
+            results = response_data['results']
+            # 'results' should be a JSON object with the necessary items to
+            # create the optgroup:
+            self.assertIsInstance(results, list)
+            self.assertEqual(len(results), 1)
+            self.assertIsInstance(results[0], dict)
+            self.assertIn('text', results[0])
+            self.assertEqual(results[0]['text'], 'Band')
+            self.assertIn('is_optgroup', results[0])
+            self.assertEqual(results[0]['is_optgroup'], True)
+            self.assertIn('optgroup_headers', results[0])
+            self.assertEqual(results[0]['optgroup_headers'], ['foo'])
+            self.assertIn('children', results[0])
+            self.assertEqual(len(results[0]['children']), 1)
+            result = results[0]['children'][0]
+            self.assertIn(EXTRA_DATA_KEY, result)
+            self.assertEqual(['bar'], result[EXTRA_DATA_KEY])
+
+    def test_render_to_response_not_first_page(self):
+        # Assert that optgroup headers are only included for the first page.
+        view = self.get_view(request=self.get_request(data={'tabular': True}))
+        view.model = _models.Band
+        context = {
+            'object_list': [Mock(pk=42)],
+            'page_obj': Mock(has_previous=Mock(return_value=True)),
+        }
+        with patch('dbentry.ac.views.http.JsonResponse') as mocked_json_response:
+            view.render_to_response(context)
+            args, _kwargs = mocked_json_response.call_args
+            response_data = args[0]
+            self.assertIn('results', response_data)
+            results = response_data['results']
+            self.assertIsInstance(results, list)
+            self.assertEqual(len(results), 1)
+            self.assertIsInstance(results[0], dict)
+            self.assertEqual(results[0]['optgroup_headers'], [])
+
+    def test_render_to_response_no_results(self):
+        # Assert that render_to_response does not nest the result data if there
+        # are no search results.
+        view = self.get_view(request=self.get_request())
+        view.model = _models.Band
+        context = {
+            'object_list': [],
+            'page_obj': None,  # disable paging
+        }
+        with patch('dbentry.ac.views.http.JsonResponse') as mocked_json_response:
+            view.render_to_response(context)
+            args, _kwargs = mocked_json_response.call_args
+            response_data = args[0]
+            self.assertIn('results', response_data)
+            results = response_data['results']
+            # 'results' should be a just an empty list:
+            self.assertEqual(results, [])

@@ -9,22 +9,19 @@ Danach Apache2, diverse Python3 & PostgreSQL Pakete, git Versionskontrolle insta
 `sudo apt install apache2 apache2-dev python3-dev python3-venv python3-pip postgresql-contrib libpq-dev git`
 
 
-### 2. Postges Datenbank einrichten
+### 2. Postgres Datenbank einrichten
 
-Postgres Terminal aufrufen `sudo -u postgres psql` und Datenbank und User erstellen:  
+Postgres Terminal aufrufen `sudo -u postgres psql` und User und Datenbank erstellen:  
 ```
-CREATE DATABASE mizdb;
-CREATE USER mizdb_user WITH ENCRYPTED PASSWORD 'm!zdb_2017';
+CREATE USER mizdb_user WITH ENCRYPTED PASSWORD 'dein_passwort';
+ALTER USER mizdb_user CREATEDB;  -- wird benötigt, um eine Testdatenbank für Tests erstellen zu können
+CREATE DATABASE mizdb OWNER mizdb_user;  -- Datenbank erstellen
+\q -- Terminal beenden
 ```
-Benutzerrechte zuweisen und Terminal beenden:  
-```
-GRANT ALL PRIVILEGES ON DATABASE mizdb TO mizdb_user;
-ALTER USER mizdb_user CREATEDB;
-\q
-```
+Benutzername (hier: `mizdb_user`) und Passwort (hier: `dein_passwort`) werden später noch einmal benötigt.
 
 
-### 3. MIZDB Dateien herunterladen
+### 3. MIZDB Dateien herunterladen und einrichten
 
 Eine virtuelle Umgebung erstellen:  
 `sudo python3 -m venv /srv/archiv && cd /srv/archiv/`
@@ -37,10 +34,46 @@ MIZDB git Repository klonen:
 Virtuelle Umgebung aktivieren und zum MIZDB Ordner navigieren:  
 `source /srv/archiv/bin/activate && cd /srv/archiv/MIZDB`
 
+#### MIZDB Konfigurationsdatei erstellen:
+Konfigurationsdatei erstellen `nano MIZDB/settings_prod.py` und folgende Vorlage einfügen:
+```
+# WARNING: DO NOT ADD TO VERSION CONTROL
+from MIZDB.settings_shared import *  # noqa
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = ''  # Hier die generierte Zeichenfolge einfügen 
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
+# NOTE: The ServerName declared in the VirtualHost
+#   /etc/apache2/sites-available/mizdb.conf must be included:
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv']
+
+# Database
+# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
+DATABASES = {
+    'default': {
+        'ENGINE': 'dbentry.fts.db',
+        'NAME': 'mizdb',
+        'USER': 'mizdb_user',  # Benutzername des Datenbankbenutzers
+        'PASSWORD': 'dein_passwort',  # Passwort des Datenbankbenutzers
+        'HOST': 'localhost',
+        'PORT': '',
+    }
+}
+
+# URL to the wiki.
+# That URL is displayed in the header on each admin page.
+# See: sites.MIZAdminSite.each_context
+WIKI_URL = 'http://archivserv/wiki/Hauptseite'  # URL zur WIKI angeben
+```
+Mit dem folgenden Befehl wird eine zufällige Zeichenfolge generiert, die unter `SECRET_KEY` als String angegeben werden muss:  
+```python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'```  
+Des weiteren ist darauf zu achten, dass bei der Datenbank `DATABASE` der Benutzer und das Passwort aus Schritt 2 bei `USER` und `PASSWORD` angeben wird.
+
 Erforderliche Python Module installieren:  
 `pip install -r requirements.txt`  
-Unter Umständen muss die django debug toolbar installieren werden:  
-`pip install django-debug-toolbar==3.1.1`  
 Datenbank Migrationen anwenden:  
 `python manage.py migrate`  
 Statische Dateien für die Webseite sammeln:  
@@ -49,9 +82,9 @@ Statische Dateien für die Webseite sammeln:
 
 ### 4. mod_wsgi installieren
 mod_wsgi lässt sich in der virtuellen Umgebung mit pip installieren.
-Alternativ kann auch direkt vom Quellcode von mod_wsgi installiert werden.
+Alternativ kann auch direkt vom Quellcode von installiert werden.
 
-### 4.1 mod_wsgi mit pip installieren
+### 4.1 mod_wsgi mit pip installieren (empfohlen)
 
 mod_wsgi installieren: `pip install mod_wsgi`  
 Jetzt muss apache mitgeteilt werden, wo das Modul liegt. Dazu erstellt man einen Loader, der den Pfad angibt:  
@@ -63,7 +96,7 @@ Umgebung deaktivieren `deactivate`und dann Root Rechte ablegen `exit`.
 Installationshinweise: https://modwsgi.readthedocs.io/en/master/user-guides/quick-installation-guide.html  
 Neueste Version auf: https://github.com/GrahamDumpleton/mod_wsgi/releases
 
-Virtuelle Umgebung zunächst deaktivieren: `deactivate`  
+Zunächst virtuelle Umgebung deaktivieren `deactivate` und Root Rechte ablegen `exit`.  
 Download (in einen beliebigen Ordner außerhalb vom archiv Ordner) und entpacken, hier beispielsweise mit Version 4.7.1:
 ```
 wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/4.7.1.tar.gz

@@ -9,7 +9,6 @@ import dbentry.m2m as _m2m
 from dbentry.base.models import (
     AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
 )
-from dbentry.constants import LIST_DISPLAY_MAX_LEN
 from dbentry.fields import (
     EANField, ISBNField, ISSNField, PartialDate, PartialDateField, YearField
 )
@@ -321,7 +320,7 @@ class Ausgabe(ComputedNameModel):
         if 'beschreibung' in data:
             beschreibung = concat_limit(
                 data['beschreibung'][0].split(),
-                width=LIST_DISPLAY_MAX_LEN + 5,
+                width=30,
                 sep=" "
             )
         if 'sonderausgabe' in data and data['sonderausgabe'][0] and beschreibung:
@@ -331,14 +330,14 @@ class Ausgabe(ComputedNameModel):
 
         jahre = jahrgang = ''
         if 'jahrgang' in data:
-            jahrgang = data['jahrgang'][0]
+            jahrgang = str(data['jahrgang'][0])
         if 'ausgabejahr__jahr' in data:
             # Concatenate the years given.
-            # Use four digits for the first year,
-            # use only the last two digits for the rest.
+            # Use four digits for the first year. For other years, only use
+            # their last two digits.
             jahre = [  # type: ignore[assignment]
-                str(jahr)[2:] if i else str(jahr)
-                for i, jahr in enumerate(sorted(data['ausgabejahr__jahr']))
+                jahr[2:] if i else jahr
+                for i, jahr in enumerate(sorted(str(j) for j in data['ausgabejahr__jahr']))
             ]
             jahre = concat_limit(jahre, sep="/")
         if not jahre:
@@ -353,15 +352,13 @@ class Ausgabe(ComputedNameModel):
             e_datum = data['e_datum'][0]
         if 'ausgabenum__num' in data:
             nums = concat_limit(
-                sorted(data['ausgabenum__num']),
+                (n.zfill(2) for n in sorted(str(n) for n in data['ausgabenum__num'])),
                 sep="/",
-                z=2
             )
         if 'ausgabelnum__lnum' in data:
             lnums = concat_limit(
-                sorted(data['ausgabelnum__lnum']),
+                (n.zfill(2) for n in sorted(str(n) for n in data['ausgabelnum__lnum'])),
                 sep="/",
-                z=2
             )
         if 'ausgabemonat__monat__abk' in data:
             monat_ordering = [
@@ -1097,7 +1094,10 @@ class Spielort(BaseModel):
     )
 
     name_field = 'name'
-    related_search_vectors = [('spielortalias___fts', SIMPLE)]
+    related_search_vectors = [
+        ('spielortalias___fts', SIMPLE),
+        ('ort___fts', SIMPLE)
+    ]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Spielort'
@@ -1175,26 +1175,16 @@ class Veranstaltung(BaseModel):
     )
 
     name_field = 'name'
-    related_search_vectors = [('veranstaltungalias___fts', SIMPLE)]
+    related_search_vectors = [
+        ('veranstaltungalias___fts', SIMPLE),
+        ('spielort___fts', SIMPLE),
+        ('spielort__ort___fts', SIMPLE)
+    ]
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Veranstaltung'
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'datum', 'spielort']
-
-    def __str__(self) -> str:
-        # FIXME: date should be in isoformat
-        #  veranstaltung instances present with a localized date - but the
-        #  database value is isoformat. This can be confusing for the user when
-        #  they query for the presented value, but can't find anything, because
-        #  internally the isoformat is used.
-        # PROBLEM: isoformat for PartialDates may look wrong:
-        # a PD with year 2020 and month 12 will have isoformat 2020-12-00
-        if isinstance(self.datum, PartialDate):
-            date = self.datum.localize()
-        else:
-            date = str(self.datum)
-        return "{} ({})".format(self.name, date)
 
 
 class VeranstaltungAlias(BaseAliasModel):

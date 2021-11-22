@@ -14,8 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-# noinspection PyPackageRequirements
-import debug_toolbar
+import os
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -26,10 +25,21 @@ from dbentry.sites import miz_site
 urlpatterns = [
     path('admin/', miz_site.urls),
     path('admin/', include('dbentry.urls')),
-    path('__debug__/', include(debug_toolbar.urls))
+
 ]
 
 if settings.DEBUG:
     urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# TODO: why not include this under the above condition (debug==True)?
+if os.environ.get('DJANGO_DEVELOPMENT') in ('true', 'True', '1'):
+    # Add django debug toolbar URLs:
+    try:
+        # noinspection PyUnresolvedReferences
+        import debug_toolbar
+        urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
+    except ImportError as e:
+        # TODO: spit out warning
+        pass
 
 handler403 = 'dbentry.views.MIZ_permission_denied_view'

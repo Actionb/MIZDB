@@ -1,6 +1,6 @@
-from django.test import SimpleTestCase
+from django.test import TestCase
 
-from dbentry.actions.decorators import add_cls_attrs
+from dbentry.actions.actions import add_cls_attrs
 
 
 def dummy_func0():
@@ -13,7 +13,7 @@ dummy_func1.short_description = 'Beep'  # noqa
 dummy_func1.allowed_permissions = 'Boop'
 
 
-class TestAddClsAttrsDecorator(SimpleTestCase):
+class TestAddClsAttrsDecorator(TestCase):
 
     def test_deco_with_cls_attrs_and_no_func_attrs(self):
         dummy_view = type(

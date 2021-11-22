@@ -20,3 +20,4 @@ docs/
 *.e4p
 
 \.eric*
+/config.yaml
