@@ -148,6 +148,15 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                 )
         return errors
 
+    def render_delete_form(self, request, context):
+        """Check if a object to be deleted has related objects."""
+        # TODO: This only covers deletion from the change form.
+        #  deletions from the change list are done via the delete_selected action!
+        if self.add_crosslinks(context['object'].pk):
+            # Don't delete this object, it has relations.
+            context['active_relations'] = True
+        return super().render_delete_form(request, context)
+
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:
         return MIZChangeList
 
