@@ -1,15 +1,18 @@
 from unittest import mock
+from unittest.mock import patch
 from urllib.parse import urlparse
 
 from django.contrib.admin.views.main import ALL_VAR
 from django.core import checks
 from django.http.request import QueryDict
+from django.test import TestCase
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from dbentry import models as _models, admin as _admin
 from dbentry.factory import batch, make
 from dbentry.fields import PartialDate
+from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.search.forms import MIZAdminSearchForm
 from dbentry.tests.base import AdminTestCase
 
@@ -596,3 +599,41 @@ class TestSearchFormChangelist(AdminTestCase):
                         continue
                     with self.subTest():
                         self.assertIn(expected, result)
+
+
+class TestMIZAdminSearchFormMixin(TestCase):
+
+    class Dummy(MIZAdminSearchFormMixin):
+
+        class Inline(object):
+            tabular_autocomplete = ['some_field']
+
+        search_form_kwargs = {}
+        inlines = [Inline]
+
+        def has_search_form(self):
+            return True
+
+    def test_check_tabular_autocompletes_tabular_included(self):
+        # Asert that the check creates no Info messages if the inline tabular
+        # is included in the search form tabular fields.
+        search_form_kwargs = {'fields': ['some_field'], 'tabular': ['some_field']}
+        with patch.object(self.Dummy, 'search_form_kwargs', new=search_form_kwargs):
+            self.assertFalse(self.Dummy()._check_tabular_autocompletes())
+
+    def test_check_tabular_autocompletes_tabular_not_included(self):
+        # Asert that the check creates Info messages if the inline tabular is
+        # not included in the search form tabular fields.
+        search_form_kwargs = {'fields': ['some_field'], 'tabular': []}
+        with patch.object(self.Dummy, 'search_form_kwargs', new=search_form_kwargs):
+            messages = self.Dummy()._check_tabular_autocompletes()
+            self.assertEqual(len(messages), 1)
+            self.assertIsInstance(messages[0], checks.CheckMessage)
+            self.assertIn('some_field', messages[0].msg)
+
+    def test_check_tabular_autocompletes_not_in_fields(self):
+        # Asert that the check creates no messages if the inline tabular is
+        # not included in the search form fields.
+        search_form_kwargs = {'fields': []}
+        with patch.object(self.Dummy, 'search_form_kwargs', new=search_form_kwargs):
+            self.assertFalse(self.Dummy()._check_tabular_autocompletes())

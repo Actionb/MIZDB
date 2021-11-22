@@ -138,3 +138,35 @@ button[name="wizard_goto_step"]{
     -ms-user-select: all;
     user-select: all;
 }
+
+/*
+To properly display the additional data, increase the minimum width of select2
+elements that use optgroups/tables.
+*/
+.select2-tabular {
+    width: 600px;
+}
+
+/* Disable the horizontal scrollbar in grouped select2 dropdowns. */
+ul.select2-results__options {
+    overflow-x: hidden;
+}
+
+.select2-tabular-results {
+    display: flex;
+    flex-flow: row wrap;
+}
+
+.select2-tabular-result__extra {
+    box-sizing: border-box;
+    padding-left: 5px;
+}
+
+.select2-tabular-result__id {
+    width: 16.66%;
+}
+
+.select2-tabular-result__text {
+    width: 33.33%;
+    flex: 1.5 0 auto;
+}

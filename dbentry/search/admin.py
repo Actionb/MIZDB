@@ -254,6 +254,37 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
             kwargs['form'] = MIZAdminSearchForm
         return super().get_search_form_class(**kwargs)
 
+    def check(self, **kwargs: Any) -> List[checks.CheckMessage]:
+        errors = super().check(**kwargs)  # type: ignore[misc]
+        errors.extend(self._check_tabular_autocompletes(**kwargs))
+        return errors
+
+    def _check_tabular_autocompletes(self, **_kwargs: Any) -> List[checks.CheckMessage]:
+        """
+        Check that tabular autocomplete fields of inlines also have tabular
+        autocomplete widgets in the search form.
+        """
+        if not self.has_search_form():  # pragma: no cover
+            return []
+
+        search_form_tabulars = self.search_form_kwargs.get('tabular', [])
+        messages = []
+        # noinspection PyUnresolvedReferences
+        for inline_cls in self.inlines:  # type: ignore[attr-defined]
+            for field_name in getattr(inline_cls, 'tabular_autocomplete', []):
+                if field_name not in self.search_form_kwargs['fields']:
+                    continue
+                if field_name not in search_form_tabulars:
+                    messages.append(
+                        checks.Info(
+                            f"Inline tabular {field_name!r} of inline {inline_cls!r} has no "
+                            f"corresponding tabular on the changelist search form.",
+                            obj=self,
+                            hint=f"Add {field_name!r} to search_form_kwargs['tabular']",
+                        )
+                    )
+        return messages
+
 
 # noinspection PyUnresolvedReferences
 class ChangelistSearchFormMixin(object):

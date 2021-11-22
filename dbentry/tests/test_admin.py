@@ -1,24 +1,26 @@
 import re
 from unittest import skip
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 from django.contrib import admin, contenttypes
 from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission, User
 from django.core import checks, exceptions
 from django.db import connections, transaction
+from django.test import TestCase
 from django.test.utils import CaptureQueriesContext  # noqa
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
 import dbentry.admin as _admin
 import dbentry.models as _models
+from dbentry.base.admin import AutocompleteMixin
 from dbentry.changelist import AusgabeChangeList, MIZChangeList
-from dbentry.constants import ZRAUM_ID, DUPLETTEN_ID
+from dbentry.constants import DUPLETTEN_ID, ZRAUM_ID
 from dbentry.factory import make, modelfactory_factory
 from dbentry.sites import miz_site
-from dbentry.tests.base import AdminTestCase, TestCase
+from dbentry.tests.base import AdminTestCase
 from dbentry.utils import get_model_fields
 
 
@@ -959,7 +961,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE, Dortmund, DE')
+        self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE; Dortmund, DE')
 
     def test_anz_ausgaben(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
@@ -2009,3 +2011,30 @@ class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):
         'genre', 'schlagwort', 'person', 'band',
         'musiker', 'ort', 'spielort', 'veranstaltung'
     ]
+
+
+class TestTabularAutocompleteMixin(TestCase):
+
+    def test_formfield_for_foreignkey_tabular(self):
+        # Assert that formfield_for_foreignkey calls make_widget with the
+        # correct tabular argument.
+        with patch('dbentry.base.admin.super') as mocked_super:
+            with patch('dbentry.base.admin.make_widget') as mocked_make:
+                inline = AutocompleteMixin()
+                inline.tabular_autocomplete = ['dummy']
+                dummy_field = Mock()
+                dummy_field.name = 'dummy'  # 'name' is an argument of Mock()
+                dummy_field.related_model = 'dummy_model'
+                inline.formfield_for_foreignkey(db_field=dummy_field, request=None)
+
+                mocked_make.assert_called()
+                _args, kwargs = mocked_make.call_args
+                self.assertIn('tabular', kwargs)
+                self.assertTrue(kwargs['tabular'])
+
+                inline.tabular_autocomplete = []
+                inline.formfield_for_foreignkey(db_field=dummy_field, request=None)
+                mocked_make.assert_called()
+                _args, kwargs = mocked_make.call_args
+                self.assertIn('tabular', kwargs)
+                self.assertFalse(kwargs['tabular'])

@@ -1186,9 +1186,6 @@ class Veranstaltung(BaseModel):
         verbose_name_plural = 'Veranstaltungen'
         ordering = ['name', 'datum', 'spielort']
 
-    def __str__(self) -> str:
-        return "{} ({})".format(self.name, str(self.datum))
-
 
 class VeranstaltungAlias(BaseAliasModel):
     parent = models.ForeignKey('Veranstaltung', models.CASCADE)
