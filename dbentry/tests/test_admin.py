@@ -961,7 +961,7 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
 
     def test_orte_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
-        self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE, Dortmund, DE')
+        self.assertEqual(self.model_admin.orte_string(obj), 'Buxtehude, DE; Dortmund, DE')
 
     def test_anz_ausgaben(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
