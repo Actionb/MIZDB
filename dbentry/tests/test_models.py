@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch, Mock
 
 from django.core import checks
@@ -298,15 +299,22 @@ class TestModelAusgabe(DataTestCase):
     @translation_override(language=None)
     def test_get_name_jahr(self):
         # Check the results of get_name if 'jahr' is given.
-        name_data = {'ausgabejahr__jahr': ('2020', )}
+        base_data = {'ausgabejahr__jahr': ('2020', )}
         test_data = [
             ({'ausgabemonat__monat__abk': ('Dez', )}, "2020-Dez"),
+            ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "2020-Jan/Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabelnum__lnum': ('1', )}, "01 (2020)"),
             ({'ausgabelnum__lnum': ('21', )}, "21 (2020)"),
-            ({'ausgabenum__num': ('20', )}, '2020-20'),
+            ({'ausgabelnum__lnum': ('1', 2)}, "01/02 (2020)"),
+            ({'ausgabelnum__lnum': ('22', 21)}, "21/22 (2020)"),
+            ({'ausgabenum__num': ('2', )}, '2020-02'),
+            ({'ausgabenum__num': ('22', )}, '2020-22'),
+            ({'ausgabenum__num': ('1', 2)}, '2020-01/02'),
+            ({'ausgabenum__num': ('21', 20)}, "2020-20/21"),
         ]
         for update, expected in test_data:
-            name_data.update(update)
+            name_data = {**base_data, **update}
             with self.subTest(name_data=name_data):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
@@ -315,17 +323,22 @@ class TestModelAusgabe(DataTestCase):
     def test_get_name_jahr_multiple_values(self):
         # Check the results of get_name if multiple values for 'jahr'
         # (or other attributes) are given.
-        name_data = {'ausgabejahr__jahr': ('2021', '2020')}
+        base_data = {'ausgabejahr__jahr': ('2021', 2020)}
         test_data = [
-            (
-                {'ausgabemonat__monat__abk': ('Jan', 'Dez')},
-                "2020/21-Jan/Dez"
-            ),
-            ({'ausgabelnum__lnum': ('22', '21')}, "21/22 (2020/21)"),
-            ({'ausgabenum__num': ('21', '20')}, "2020/21-20/21"),
+            ({'ausgabemonat__monat__abk': ('Dez', )}, "2020/21-Dez"),
+            ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "2020/21-Jan/Dez"),
+            ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabelnum__lnum': ('1', )}, "01 (2020/21)"),
+            ({'ausgabelnum__lnum': ('21', )}, "21 (2020/21)"),
+            ({'ausgabelnum__lnum': ('1', 2)}, "01/02 (2020/21)"),
+            ({'ausgabelnum__lnum': ('22', 21)}, "21/22 (2020/21)"),
+            ({'ausgabenum__num': ('2', )}, '2020/21-02'),
+            ({'ausgabenum__num': ('22', )}, '2020/21-22'),
+            ({'ausgabenum__num': ('1', 2)}, '2020/21-01/02'),
+            ({'ausgabenum__num': ('21', 20)}, "2020/21-20/21"),
         ]
         for update, expected in test_data:
-            name_data.update(update)
+            name_data = {**base_data, **update}
             with self.subTest(name_data=name_data):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
@@ -333,18 +346,22 @@ class TestModelAusgabe(DataTestCase):
     @translation_override(language=None)
     def test_get_name_jahrgang(self):
         # Check the results of get_name if 'jahrgang' and no 'jahr' is given.
-        name_data = {'jahrgang': ('2', )}
+        base_data = {'jahrgang': ('2', )}
         test_data = [
             ({'ausgabemonat__monat__abk': ('Dez', )}, "Jg. 2-Dez"),
             ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "Jg. 2-Jan/Dez"),
             ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabelnum__lnum': ('1', )}, "01 (Jg. 2)"),
             ({'ausgabelnum__lnum': ('21', )}, "21 (Jg. 2)"),
-            ({'ausgabelnum__lnum': ('22', '21')}, "21/22 (Jg. 2)"),
-            ({'ausgabenum__num': ('20', )}, "Jg. 2-20"),
-            ({'ausgabenum__num': ('21', '20')}, "Jg. 2-20/21")
+            ({'ausgabelnum__lnum': ('1', 2)}, "01/02 (Jg. 2)"),
+            ({'ausgabelnum__lnum': ('22', 21)}, "21/22 (Jg. 2)"),
+            ({'ausgabenum__num': ('2', )}, 'Jg. 2-02'),
+            ({'ausgabenum__num': ('22', )}, 'Jg. 2-22'),
+            ({'ausgabenum__num': ('1', 2)}, 'Jg. 2-01/02'),
+            ({'ausgabenum__num': ('21', 20)}, "Jg. 2-20/21"),
         ]
         for update, expected in test_data:
-            name_data.update(update)
+            name_data = {**base_data, **update}
             with self.subTest(name_data=name_data):
                 name = self.model._get_name(**name_data)
                 self.assertEqual(name, expected)
@@ -354,12 +371,16 @@ class TestModelAusgabe(DataTestCase):
         # Check the results of get_name if no 'jahrgang' or 'jahr' is given.
         test_data = [
             ({'ausgabemonat__monat__abk': ('Dez', )}, "k.A.-Dez"),
-            ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
-            ({'ausgabelnum__lnum': ('21', )}, "21"),
-            ({'ausgabenum__num': ('20', )}, "k.A.-20"),
             ({'ausgabemonat__monat__abk': ('Jan', 'Dez')}, "k.A.-Jan/Dez"),
-            ({'ausgabelnum__lnum': ('22', '21')}, "21/22"),
-            ({'ausgabenum__num': ('21', '20')}, "k.A.-20/21")
+            ({'e_datum': ('02.05.2018', )}, '02.05.2018'),
+            ({'ausgabelnum__lnum': ('1', )}, "01"),
+            ({'ausgabelnum__lnum': ('21', )}, "21"),
+            ({'ausgabelnum__lnum': ('1', 2)}, "01/02"),
+            ({'ausgabelnum__lnum': ('22', 21)}, "21/22"),
+            ({'ausgabenum__num': ('2', )}, 'k.A.-02'),
+            ({'ausgabenum__num': ('22', )}, 'k.A.-22'),
+            ({'ausgabenum__num': ('1', 2)}, 'k.A.-01/02'),
+            ({'ausgabenum__num': ('21', 20)}, "k.A.-20/21"),
         ]
         for name_data, expected in test_data:
             with self.subTest(name_data=name_data):
@@ -1018,12 +1039,12 @@ class TestModelVeranstaltung(DataTestCase):
         obj = self.model(name='Testveranstaltung')
         # __str__ should handle a 'datum' instance attribute that is not
         # a PartialDate:
-        obj.datum = '02.05.2018'
-        self.assertEqual(str(obj), 'Testveranstaltung (02.05.2018)')
+        obj.datum = date(2018, 5, 2)
+        self.assertEqual(str(obj), 'Testveranstaltung (2018-05-02)')
 
         # And it should localize the date if it is a PartialDate
         obj.datum = _fields.PartialDate.from_string('2018-05-02')
-        self.assertEqual(str(obj), 'Testveranstaltung (02 Mai 2018)')
+        self.assertEqual(str(obj), 'Testveranstaltung (2018-05-02)')
 
     def test_meta_ordering(self):
         # Check the default ordering of this model.

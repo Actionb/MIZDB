@@ -13,8 +13,11 @@ from stdnum import ean, isbn, issn
 from dbentry.validators import EANValidator, ISBNValidator, ISSNValidator
 
 
-# FIXME: PartialDate: changelist queries (using the advanced search form formfields)
-#  require a year value.
+# FIXME:
+#  PartialDate + changelist search form + RangeFormField generally gives horrible
+#  UX: querying for records of a certain year requires inputting that year in both
+#  year fields. Probably because the formfield does not translate a single year
+#  value into a __year lookup (==> add a PartialDateRangeFormField?).
 
 
 class YearField(models.IntegerField):
@@ -245,10 +248,10 @@ class PartialDate(datetime.date):
         # Default values for the instance's attributes
         instance_attrs = {'year': None, 'month': None, 'day': None}
         # Default values for the datetime.date constructor
-        constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
+        constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}  # why year: 4?
         date_format = []
         iterator = zip(
-            ('day', 'month', 'year'), (day, month, year), ('%d', '%B', '%Y')
+            ('year', 'month', 'day'), (year, month, day), ('%Y', '%m', '%d')
         )
         for name, value, format_code in iterator:
             if value is None:
@@ -266,7 +269,7 @@ class PartialDate(datetime.date):
             # The default attrs year,month,day are not writable.
             setattr(date, '__' + k, v)
 
-        date.date_format = ' '.join(date_format)
+        date.date_format = '-'.join(date_format)
         return date
 
     @classmethod
@@ -294,10 +297,6 @@ class PartialDate(datetime.date):
     @property
     def db_value(self) -> str:
         """Return a string of format 'YYYY-MM-DD' to store in the database."""
-        # FIXME: this plays poorly with full text search:
-        #   date: 2020-02-01
-        #   SearchVectorField: '-01' '-02' '2020'
-        #   => the '-' must be included to find anything
         format_kwargs = {'year': 0, 'month': 0, 'day': 0}
         for attr in ('year', 'month', 'day'):
             value = getattr(self, '__' + attr, False)
@@ -306,19 +305,29 @@ class PartialDate(datetime.date):
         return self.db_value_template.format(**format_kwargs)
 
     def __str__(self):
-        return self.strftime(self.date_format)
+        if getattr(self, '__year', None):
+            if getattr(self, '__month', None):
+                # YYYY-MM or YYYY-MM-DD
+                return self.strftime(self.date_format)
+            else:
+                # We've got a value for year and possibly one for the day;
+                # just show the year.
+                return str(getattr(self, '__year'))
+        else:
+            # localized month followed by day (if given) -- or no data at all
+            return self.localize()
 
     def localize(self) -> str:
         """Return a localized date string."""
         if self.date_format:
-            # The date is not 'empty'; let django format the date.
-            # Note however, that python's format code for month full localized
-            # name is %B - whereas django uses %F.
-            # date_format also only checks for the format code letters, not the
-            # percent signs.
-            # noinspection PyUnresolvedReferences
-            return formats.date_format(
-                self, self.date_format.replace('%B', '%F')).replace('%', '')
+            # The date is not 'empty'; let django format the date into an
+            # alphanumeric, localized form ('01. Mai 2015' or 'Mai 2015').
+            # Note that in django, %F is the format code for month localized.
+            # Also, the percent signs need to be removed.
+            date_format = " ".join(
+                reversed(self.date_format.split('-'))  # date_format is in ISO 8601
+            ).replace('%d', '%d.').replace('%m', '%F').replace('%', '')
+            return formats.date_format(self, date_format)
         return ''
 
     def __iter__(self):
