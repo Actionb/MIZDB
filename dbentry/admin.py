@@ -1333,7 +1333,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
     search_form_kwargs = {
         'fields': ['ausgabe__magazin', 'ausgabe', 'genre', 'jahre__jahr__range'],
-        # TODO: ausgabe needs forward: ausgabe__magazin
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
@@ -1400,7 +1400,7 @@ class BrochureAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'schlagwort',
             'jahre__jahr__range'
         ],
-        # TODO: ausgabe needs forward: ausgabe__magazin
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe']
     }
@@ -1456,7 +1456,7 @@ class KalenderAdmin(BaseBrochureAdmin):
             'ausgabe__magazin', 'ausgabe', 'genre', 'spielort', 'veranstaltung',
             'jahre__jahr__range'
         ],
-        # TODO: ausgabe needs forward: ausgabe__magazin
+        'forwards': {'ausgabe': 'ausgabe__magazin'},
         'labels': {'jahre__jahr__range': 'Jahr'},
         'tabular': ['ausgabe', 'spielort', 'veranstaltung']
     }

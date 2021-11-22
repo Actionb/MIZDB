@@ -1564,6 +1564,13 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
+    def test_search_form_ausgabe_requires_magazin(self):
+        # Assert that on the search form the ausgabe field requires a magazin
+        # selection.
+        self.assertIn('forwards', self.model_admin.search_form_kwargs)
+        self.assertIn('ausgabe', self.model_admin.search_form_kwargs['forwards'])
+        self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
+
 
 # noinspection PyUnresolvedReferences
 class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1597,6 +1604,13 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
+    def test_search_form_ausgabe_requires_magazin(self):
+        # Assert that on the search form the ausgabe field requires a magazin
+        # selection.
+        self.assertIn('forwards', self.model_admin.search_form_kwargs)
+        self.assertIn('ausgabe', self.model_admin.search_form_kwargs['forwards'])
+        self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
+
 
 # noinspection PyUnresolvedReferences
 class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1619,6 +1633,13 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
             response = self.client.post(path=self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
+
+    def test_search_form_ausgabe_requires_magazin(self):
+        # Assert that on the search form the ausgabe field requires a magazin
+        # selection.
+        self.assertIn('forwards', self.model_admin.search_form_kwargs)
+        self.assertIn('ausgabe', self.model_admin.search_form_kwargs['forwards'])
+        self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
 # noinspection PyUnresolvedReferences
