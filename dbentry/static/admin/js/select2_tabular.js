@@ -11,7 +11,6 @@ document.addEventListener('dal-init-function', function () {
         // Templating helper
         function template(text, is_html) {
             if (is_html) {
-                // NOTE: will this apply when using highlighting <b> from ts_headline?
                 var $result = $('<span>');
                 $result.html(text);
                 return $result;
@@ -34,16 +33,20 @@ document.addEventListener('dal-init-function', function () {
                 // we are handling the return value for selected_template().
                 return text;
             }
+            let  column_items;
             if (item.is_optgroup){
+                // This is the optgroup for the results. Get the labels/headers
+                // for the columns.
                 if (!item.optgroup_headers.length){
                     // No headers for this optgroup: do not create an optgroup element.
                     return null;
                 }
                 id = 'ID';
-                var column_items = item.optgroup_headers;
+                column_items = item.optgroup_headers;
             }
             else {
-                var column_items = item[$element.data('extra-data-key')]
+                // Get the data for the extra columns.
+                column_items = item[$element.data('extra-data-key')]
             }
             let extras = '';
             if (column_items !== undefined && column_items.length > 0) {
@@ -52,7 +55,7 @@ document.addEventListener('dal-init-function', function () {
                 let colWidth = (Math.round(50 / column_items.length * 100) / 100).toString() + "%"
                 if (column_items.length == 1){
                     // Just one extra column; allocate a flat 40%.
-                    // This leaves more space for the text column.
+                    // This leaves more space for the main 'text' column.
                     colWidth = "40%"
                 }
                 for (key in column_items){
@@ -92,7 +95,7 @@ document.addEventListener('dal-init-function', function () {
                         page: params.page,
                         create: $element.attr('data-autocomplete-light-create') && !$element.attr('data-tags'),
                         forward: yl.getForwards($element),
-                        tabular: true,
+                        tabular: true,  // tell the view that grouped data (as per select2 format) is expected
                     };
 
                     return data;
