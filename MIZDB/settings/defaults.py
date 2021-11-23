@@ -16,7 +16,7 @@ BASE_DIR = (  # TODO: use pathlib.Path and .parent().parent()
         )
     )
 )
-with open(os.path.join(BASE_DIR, 'config.yaml')) as f:
+with open(os.path.join(BASE_DIR, 'config.yaml'), encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
 SECRET_KEY = config.get('SECRET_KEY', '')
