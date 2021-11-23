@@ -34,44 +34,15 @@ MIZDB git Repository klonen:
 Virtuelle Umgebung aktivieren und zum MIZDB Ordner navigieren:  
 `source /srv/archiv/bin/activate && cd /srv/archiv/MIZDB`
 
-#### MIZDB Konfigurationsdatei erstellen:
-Konfigurationsdatei erstellen `nano MIZDB/settings_prod.py` und folgende Vorlage einfügen:
-```
-# WARNING: DO NOT ADD TO VERSION CONTROL
-from MIZDB.settings_shared import *  # noqa
+#### MIZDB Konfigurationsdatei einrichten:
+Im Unterordner `MIZDB/settings` (also `/srv/archiv/MIZDB/MIZDB/settings`) befindet sich eine Vorlage der Konfigurationsdatei: `config_template.yaml`.
+Diese sollte kopiert und in `config.yaml` umbenannt werden:  
+`cp MIZDB/settings/config_template.yaml config.yaml`  
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''  # Hier die generierte Zeichenfolge einfügen 
+Danach müssen Angaben zu `SECRET_KEY`, `ALLOWED_HOSTS`, `DATABASE_USER`, `DATABASE_PASSWORD` gemacht werden - Erklärungen sind in der Datei selber zu finden.
+Wird bei `WIKI_URL` nichts eingetragen, werden auf den Seiten keine Links zur Wiki angeboten.
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-# NOTE: The ServerName declared in the VirtualHost
-#   /etc/apache2/sites-available/mizdb.conf must be included:
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'archivserv']
-
-# Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'dbentry.fts.db',
-        'NAME': 'mizdb',
-        'USER': 'mizdb_user',  # Benutzername des Datenbankbenutzers
-        'PASSWORD': 'dein_passwort',  # Passwort des Datenbankbenutzers
-        'HOST': 'localhost',
-        'PORT': '',
-    }
-}
-
-# URL to the wiki.
-# That URL is displayed in the header on each admin page.
-# See: sites.MIZAdminSite.each_context
-WIKI_URL = 'http://archivserv/wiki/Hauptseite'  # URL zur WIKI angeben
-```
-Mit dem folgenden Befehl wird eine zufällige Zeichenfolge generiert, die unter `SECRET_KEY` als String angegeben werden muss:  
-```python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'```  
-Des weiteren ist darauf zu achten, dass bei der Datenbank `DATABASE` der Benutzer und das Passwort aus Schritt 2 bei `USER` und `PASSWORD` angeben wird.
-
+#### Python Module installieren:
 Erforderliche Python Module installieren:  
 `pip install -r requirements.txt`  
 Datenbank Migrationen anwenden:  
