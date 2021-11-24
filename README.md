@@ -31,12 +31,12 @@ MIZDB git Repository klonen:
 
 `sudo` übernimmt die virtuelle Umgebung nicht: `sudo pip` würde das globale pip rufen und damit nicht in die virtuelle Umgebung installieren. Somit kann `sudo`nicht benutzt werden und es muss auf `root` gewechselt werden:  
 `su root`  
-Virtuelle Umgebung aktivieren und zum MIZDB Ordner navigieren:  
+Virtuelle Umgebung aktivieren und zum MIZDB Verzeichnis navigieren:  
 `source /srv/archiv/bin/activate && cd /srv/archiv/MIZDB`
 
 #### MIZDB Konfigurationsdatei einrichten:
-Im Unterordner `MIZDB/settings` (also `/srv/archiv/MIZDB/MIZDB/settings`) befindet sich eine Vorlage der Konfigurationsdatei: `config_template.yaml`.
-Diese sollte kopiert und in `config.yaml` umbenannt werden:  
+Im Unterverzeichnis `MIZDB/settings` (also `/srv/archiv/MIZDB/MIZDB/settings`) befindet sich eine Vorlage der Konfigurationsdatei: `config_template.yaml`.
+Diese sollte in das Grundverzeichnis kopiert und in `config.yaml` umbenannt werden:  
 `cp MIZDB/settings/config_template.yaml config.yaml`  
 
 Danach müssen Angaben zu `SECRET_KEY`, `ALLOWED_HOSTS`, `DATABASE_USER`, `DATABASE_PASSWORD` gemacht werden - Erklärungen sind in der Datei selber zu finden.
