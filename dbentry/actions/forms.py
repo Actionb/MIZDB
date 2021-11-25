@@ -1,6 +1,7 @@
 from typing import Any
 
 from django import forms
+from django.contrib.admin.helpers import Fieldset
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 
@@ -34,7 +35,7 @@ class BulkEditJahrgangForm(DynamicChoiceFormMixin, MIZAdminForm):
     )
 
 
-class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
+class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
     """
     A form that lets the user select the 'primary' object for a merger.
 
@@ -47,10 +48,10 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
 
     primary = forms.ChoiceField(
         choices=[],
-        label='Primären Datensatz auswählen',
-        widget=forms.RadioSelect(),
-        help_text="Bitten wählen Sie den Datensatz, dem die verwandten "
-                  "Objekte der anderen Datensätze angehängt werden sollen."
+        required=True,
+        widget=forms.HiddenInput(),
+        label="Bitten wählen Sie den Datensatz, dem die verwandten "
+              "Objekte der anderen Datensätze angehängt werden sollen"
     )
     expand_primary = forms.BooleanField(
         required=False,
@@ -61,6 +62,16 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, MIZAdminForm):
     )
 
     PRIMARY_FIELD_NAME = 'primary'
+    required_css_class = 'required'
+
+    class Media:
+        css = {'all': ('admin/css/changelists.css', )}
+
+    def expand_primary_fieldset(self):
+        """
+        Provide a Fieldset object of the expand_primary field for the template.
+        """
+        return Fieldset(self, fields=['expand_primary'])
 
 
 class MergeFormHandleConflicts(DynamicChoiceFormMixin, MIZAdminForm):

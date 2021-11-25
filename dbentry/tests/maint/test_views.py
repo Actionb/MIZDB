@@ -1,14 +1,10 @@
-import re
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from collections import OrderedDict
 
-from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.urls import reverse, resolve
 from django.utils.http import unquote
 
 from dbentry import models as _models
-from dbentry import utils
-from dbentry.actions.views import MergeViewWizarded
 from dbentry.factory import make
 from dbentry.maint.views import (
     DuplicateObjectsView, ModelSelectView, UnusedObjectsView, find_duplicates
@@ -93,46 +89,6 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         with self.assertRaises(TypeError):
             view.setup(request)
 
-    def test_post_redirects_to_self_after_merging(self):
-        # Assert that post redirects back to itself after a merge.
-        path = reverse('dupes', kwargs={'model_name': 'band'})
-        request = self.post_request(path, data={ACTION_CHECKBOX_NAME: ['1', '2']})
-        view = self.get_view(request, kwargs={'model_name': 'band'})
-        # Patch the as_view method of MergeViewWizarded to return None,
-        # thereby emulating a successful merge without conflicts.
-        mocked_as_view = Mock(return_value=Mock(return_value=None))
-        with patch.object(MergeViewWizarded, 'as_view', new=mocked_as_view):
-            response = view.post(request)
-            self.assertEqual(response.url, path)
-
-    # noinspection PyUnresolvedReferences
-    def test_post_calls_merge_view(self):
-        # Assert that a post request will call the merge view.
-        model_admin = utils.get_model_admin_for_model(self.model)
-        request = self.post_request(data={ACTION_CHECKBOX_NAME: ['1', '2']})
-        view = self.get_view(request, kwargs={'model_name': 'band'})
-
-        with patch.object(MergeViewWizarded, 'as_view') as mocked_as_view:
-            view.post(request)
-        self.assertEqual(mocked_as_view.call_count, 1)
-        kwargs = mocked_as_view.call_args[1]
-        self.assertIn('model_admin', kwargs)
-        self.assertEqual(kwargs['model_admin'].__class__, model_admin.__class__)
-        self.assertIn('queryset', kwargs)
-        self.assertEqual(
-            list(kwargs['queryset'].values_list('pk', flat=True)),
-            [self.obj1.pk, self.obj2.pk]
-        )
-
-    def test_post_does_not_call_merge_view_with_no_selects(self):
-        # Assert that a post request will NOT call the merge view when no items
-        # in a sub list are selected for a merge.
-        request = self.post_request(data={ACTION_CHECKBOX_NAME: []})
-        view = self.get_view(request, kwargs={'model_name': 'band'})
-        with patch.object(MergeViewWizarded, 'as_view') as mocked_as_view:
-            view.post(request)
-        self.assertEqual(mocked_as_view.call_count, 0)
-
     def test_build_duplicates_items(self):
         # Assert that build_duplicates_items returns the correct items.
         changeform_url = unquote(
@@ -210,23 +166,13 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
         # Investigate the link to the changelist:
         cl_link = items[0][1]
         self.assertIsInstance(cl_link, str)
-        match = re.match(r'<a (.*)>(\w+)</a>', cl_link)
-        self.assertTrue(
-            match, msg="Should be the link to the changelist of the duplicate objects.")
-        attrs, content = match.groups()
-        self.assertEqual(content, 'Änderungsliste')
-        attrs = dict(attr.replace('"', '').split("=", 1) for attr in attrs.split(" "))
-        self.assertIn("href", attrs)
-        self.assertEqual(
-            attrs['href'].count('?'), 1,
-            msg="Changelist url should be of format <changelist>?id__in=[ids]")
-        cl_url, query_params = attrs['href'].split('?')
-        self.assertEqual(reverse('admin:dbentry_band_changelist'), cl_url)
-        self.assertEqual("id__in=" + ",".join(str(o.pk) for o in self.test_data), query_params)
-        self.assertIn("target", attrs)
-        self.assertEqual(attrs['target'], '_blank')
-        self.assertIn("class", attrs)
-        self.assertEqual(attrs["class"], "button")
+        url = reverse('admin:dbentry_band_changelist')
+        query_params = "id__in=" + ",".join(str(o.pk) for o in self.test_data)
+        self.assertIn(f"{url}?{query_params}", cl_link)
+        self.assertIn('target="_blank"', cl_link)
+        self.assertIn('class="button"', cl_link)
+        self.assertIn('style="padding: 10px 15px;', cl_link)
+        self.assertIn('>Änderungsliste</a>', cl_link)
 
     def test_build_duplicates_headers(self):
         # Assert that the correct (field.verbose_name capitalized) headers are

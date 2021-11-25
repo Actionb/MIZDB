@@ -1,13 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load i18n l10n admin_urls %}
 
-{% comment %}{% endcomment %}
 {% block extrahead %}
 <!-- Extrahead -->
     {{ block.super }}
     {{ media }}
 {% endblock %}
-
 
 {% block bodyclass %}{{ block.super }} action-confirmation {% endblock %}
 
