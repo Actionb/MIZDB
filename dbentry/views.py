@@ -73,7 +73,7 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
         results = []
         # noinspection PyProtectedMember
         for model in sorted(models, key=lambda m: m._meta.object_name):
-            model_results = model.objects.search(q)
+            model_results = model.objects.search(q, ranked=False)
             if not model_results:
                 continue
             # noinspection PyProtectedMember

@@ -1,7 +1,7 @@
 from typing import Any, List, Optional, Tuple, Type
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.db.models import F, Max, Model, Q
+from django.db.models import BooleanField, ExpressionWrapper, F, Max, Model, Q
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 
@@ -72,9 +72,18 @@ class TextSearchQuerySetMixin(object):
         """
         return getattr(self.model, 'related_search_vectors', [])  # type: ignore[attr-defined]
 
-    def search(self, search_term: str, search_type: str = 'plain') -> Any:
-        """Do a full text search for ``search_term``."""
-        if not search_term:
+    def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> Any:
+        """
+        Do a full text search for search term ``q``.
+
+        If ``ranked`` is True (which is the default) or if the queryset is
+        unordered, order the results by how closely they matched the search
+        term: exact matches first, then matches that start with the search term,
+        then ordered by text search rank, and finally ordered either according
+        to the queryset ordering or - if the queryset wasn't ordered - by the
+        model's default ordering.
+        """
+        if not q:
             # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
 
@@ -82,7 +91,8 @@ class TextSearchQuerySetMixin(object):
         model_search_rank = related_search_rank = None
 
         # noinspection PyUnresolvedReferences
-        search_field = _get_search_vector_field(self.model)  # type: ignore[attr-defined]
+        model = self.model  # type: ignore[attr-defined]
+        search_field = _get_search_vector_field(model)
         if search_field:
             # TODO: django>3.1: add cover_density=True argument to SearchRank?
             #   -> maybe for normalizing queries
@@ -95,7 +105,7 @@ class TextSearchQuerySetMixin(object):
                     continue
                 configs_seen.add(column.language)
                 query = self._get_search_query(
-                    search_term, config=column.language, search_type=search_type
+                    q, config=column.language, search_type=search_type
                 )
                 filters |= Q(**{search_field.name: query})
                 rank = SearchRank(F(search_field.name), query)
@@ -107,7 +117,7 @@ class TextSearchQuerySetMixin(object):
         for field_path, config in self._get_related_search_vectors():
             # Include related search vector fields in the filter:
             query = self._get_search_query(
-                search_term, config=config, search_type=search_type
+                q, config=config, search_type=search_type
             )
             filters |= Q(**{field_path: query})
             # The rank function will return NULL, if the related search
@@ -124,7 +134,7 @@ class TextSearchQuerySetMixin(object):
         if not filters:
             # Neither of the loops ran: nothing to filter with.
             # noinspection PyUnresolvedReferences
-            return self.none()  # type ignore[attr-defined]
+            return self.none()  # type: ignore[attr-defined]
 
         # Only use the rank of the closest matching related row (highest rank).
         # This prevents introducing duplicate rows due to related ranks having
@@ -134,10 +144,22 @@ class TextSearchQuerySetMixin(object):
         else:
             search_rank = model_search_rank or Max(related_search_rank)
 
-        # noinspection PyProtectedMember
-        return (
-            self.annotate(rank=search_rank)  # type: ignore[attr-defined]
-                .filter(filters)
-                .order_by('-rank', *self.model._meta.ordering)  # type: ignore[attr-defined]
-                .distinct()
-        )
+        results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]  # noqa
+        # noinspection PyUnresolvedReferences
+        if ranked or not self.query.order_by:  # type: ignore[attr-defined]
+            # Apply ordering to the results.
+            # noinspection PyProtectedMember, PyUnresolvedReferences
+            ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore[attr-defined]  # noqa
+            if ranked and getattr(model, 'name_field', None):
+                name_field = model.name_field
+                exact = ExpressionWrapper(
+                    Q(**{name_field + '__iexact': q}),
+                    output_field=BooleanField()
+                )
+                startswith = ExpressionWrapper(
+                    Q(**{name_field + '__istartswith': q}),
+                    output_field=BooleanField()
+                )
+                ordering = [exact.desc(), startswith.desc()] + ordering
+            results = results.order_by(*ordering)
+        return results.distinct()

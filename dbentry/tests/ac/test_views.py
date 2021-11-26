@@ -67,12 +67,27 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         create_option = view.get_create_option(context={'page_obj': page_obj}, q='Beep')
         self.assertEqual(create_option, [])
 
-    def test_apply_q(self):
-        # Assert that exact matches come before partial ones.
+    def test_apply_q_ordering(self):
+        # Exact matches should come before startswith before all others.
+        # 'Ale Boop' would have the same rank as 'Boop', and the default
+        # (alphabetical) ordering would normally place it at the top.
+        other = make(self.model, band_name='A Boop')
+        q = 'Boop'
+        view = self.get_view(q=q)
+        results = view.apply_q(self.queryset)
+        self.assertEqual(
+            list(results[:3]), [self.obj1, self.obj4, other],
+            msg=f"Expected exact match (q={q}) to come first."
+        )
+
+    def test_apply_q_exact_no_name_field(self):
+        # If the model has no name_field, only apply the full text search
+        # without putting exact results at the top.
+        other = make(self.model, band_name='A Boop')
         view = self.get_view(q='Boop')
-        # obj1 is the only exact match
-        # obj4 starts with q
-        self.assertEqual(list(view.apply_q(self.queryset)), [self.obj1, self.obj4])
+        with patch.object(self.queryset.model, 'name_field', new=None):
+            results = view.apply_q(self.queryset)
+        self.assertEqual(list(results[:2]), [other, self.obj1])
 
     def test_get_queryset_with_q(self):
         request = self.get_request()
@@ -108,7 +123,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         # If the query for PK returns no results, results of a query using
         # search() should be returned.
         view.q = '0'
-        mocked_search = Mock()
+        mocked_search = Mock(return_value=Mock(count=Mock(return_value=0)))
         mocked_exists = Mock(return_value=False)
         mocked_queryset = Mock(
             # The calls will be qs.filter().exists().
@@ -116,6 +131,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             # mocked 'exists' - which itself must return False.
             filter=Mock(return_value=Mock(exists=mocked_exists)),
             search=mocked_search,
+            model=Mock(name_field=None),
             spec=MIZQuerySet,  # the mock must pass as a MIZQuerySet instance
         )
         view.apply_q(mocked_queryset)

@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
 
 from django import forms
 from django.contrib import admin
+from django.contrib.admin.views.main import ORDER_VAR
 from django.contrib.auth import get_permission_codename
 from django.core import checks, exceptions
 from django.db import models
@@ -469,7 +470,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     def get_search_results(self, request, queryset, search_term):
         if not search_term:
             return queryset, False
-        return queryset.search(search_term), False
+        # Do a full text search. Respect ordering specified on the changelist.
+        return queryset.search(search_term, ranked=ORDER_VAR not in request.GET), False
 
 
 class BaseInlineMixin(AutocompleteMixin):
