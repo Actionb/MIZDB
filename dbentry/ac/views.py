@@ -13,7 +13,7 @@ from django.utils.translation import gettext
 from dbentry import models as _models
 from dbentry.ac.creator import Creator, MultipleObjectsReturned
 from dbentry.ac.widgets import EXTRA_DATA_KEY
-from dbentry.managers import AusgabeQuerySet, MIZQuerySet
+from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string

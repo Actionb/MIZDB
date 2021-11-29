@@ -11,7 +11,7 @@ from dbentry.ac.views import (
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
-from dbentry.managers import MIZQuerySet
+from dbentry.query import MIZQuerySet
 from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 

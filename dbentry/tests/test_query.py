@@ -8,7 +8,7 @@ from django.test import tag
 
 import dbentry.models as _models
 from dbentry.factory import make
-from dbentry.managers import CNQuerySet, MIZQuerySet, build_date
+from dbentry.query import CNQuerySet, MIZQuerySet, build_date
 from dbentry.tests.base import DataTestCase
 
 
