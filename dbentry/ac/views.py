@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
@@ -9,6 +9,7 @@ from django.db.models import Model
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
+from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.creator import Creator, MultipleObjectsReturned
@@ -172,15 +173,6 @@ class ACBase(autocomplete.Select2QuerySetView):
         return str(result)
 
 
-class ACBuchband(ACBase):
-    """
-    Autocomplete view that queries buch instances that are defined as buchband.
-    """
-
-    model = _models.Buch
-    queryset = _models.Buch.objects.filter(is_buchband=True)
-
-
 class ACTabular(ACBase):
     """
     Autocomplete view that presents the result data in tabular form.
@@ -248,91 +240,6 @@ class ACTabular(ACBase):
                 }
             }
         )
-
-
-class ACAusgabe(ACTabular):
-    """
-    Autocomplete view for the model ausgabe that applies chronological order to
-    the results.
-    """
-
-    model = _models.Ausgabe
-
-    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
-        return queryset.chronological_order()
-
-    def get_queryset(self) -> MIZQuerySet:
-        queryset = super().get_queryset()
-        from dbentry.admin import AusgabenAdmin, miz_site
-        model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_result_list_annotations())
-
-    def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']
-
-    # noinspection PyUnresolvedReferences
-    def get_extra_data(self, result: Model) -> list:
-        return [result.num_string, result.lnum_string, result.jahr_string]
-
-
-class ACBand(ACTabular):
-
-    model = _models.Band
-
-    def get_group_headers(self) -> list:
-        return ['Alias']
-
-    # noinspection PyUnresolvedReferences
-    def get_extra_data(self, result: Model) -> list:
-        return [", ".join(str(alias) for alias in result.bandalias_set.all())]
-
-
-class ACMusiker(ACTabular):
-
-    model = _models.Musiker
-
-    def get_group_headers(self) -> list:
-        return ['Alias']
-
-    # noinspection PyUnresolvedReferences
-    def get_extra_data(self, result: Model) -> list:
-        return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
-
-
-class ACVeranstaltung(ACTabular):
-
-    model = _models.Veranstaltung
-
-    def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']
-
-    def get_extra_data(self, result: _models.Veranstaltung) -> list:
-        return [str(result.datum), str(result.spielort)]
-
-
-class ACSpielort(ACTabular):
-
-    model = _models.Spielort
-
-    def get_group_headers(self) -> list:
-        return ['Ort']
-
-    def get_extra_data(self, result: _models.Spielort) -> list:
-        return [str(result.ort)]
-
-
-class ACLagerort(ACTabular):
-    # TODO: enable the use of this view (admin.BestandInLine) once it's clear
-    #   what fields Lagerort should have and how the default result label
-    #   (here: Lagerort._name) should look like
-
-    model = _models.Lagerort
-
-    def get_group_headers(self) -> list:
-        return ['Ort', 'Raum']
-
-    def get_extra_data(self, result: Model) -> list:
-        return [result.ort, result.raum]
 
 
 class ACCreatable(ACBase):
@@ -443,6 +350,118 @@ class ACCreatable(ACBase):
             return http.JsonResponse({'id': 0, 'text': msg})
 
         return http.JsonResponse({'id': result.pk, 'text': str(result)})
+
+
+###############################################################################
+# Concrete autocomplete views.
+###############################################################################
+
+
+class ACAusgabe(ACTabular):
+    """
+    Autocomplete view for the model ausgabe that applies chronological order to
+    the results.
+    """
+
+    model = _models.Ausgabe
+
+    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
+        return queryset.chronological_order()
+
+    def get_queryset(self) -> MIZQuerySet:
+        queryset = super().get_queryset()
+        from dbentry.admin import AusgabenAdmin, miz_site
+        model_admin = AusgabenAdmin(self.model, miz_site)
+        return queryset.annotate(**model_admin.get_result_list_annotations())
+
+    def get_group_headers(self) -> list:
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [result.num_string, result.lnum_string, result.jahr_string]
+
+
+class ACBand(ACTabular):
+    model = _models.Band
+
+    def get_group_headers(self) -> list:
+        return ['Alias']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [", ".join(str(alias) for alias in result.bandalias_set.all())]
+
+
+class ACBuchband(ACBase):
+    """
+    Autocomplete view that queries buch instances that are defined as buchband.
+    """
+
+    model = _models.Buch
+    queryset = _models.Buch.objects.filter(is_buchband=True)
+
+
+class ACLagerort(ACTabular):
+    # TODO: enable the use of this view (admin.BestandInLine) once it's clear
+    #   what fields Lagerort should have and how the default result label
+    #   (here: Lagerort._name) should look like
+
+    model = _models.Lagerort
+
+    def get_group_headers(self) -> list:
+        return ['Ort', 'Raum']
+
+    def get_extra_data(self, result: Model) -> list:
+        # noinspection PyUnresolvedReferences
+        return [result.ort, result.raum]
+
+
+class ACMagazin(ACBase):
+    model = _models.Magazin
+
+    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
+        # Check if q is a valid ISSN; if it is, remove the dashes.
+        if issn.is_valid(self.q):  # type: ignore[has-type]
+            # noinspection PyAttributeOutsideInit
+            self.q = issn.compact(self.q)  # type: ignore[has-type]
+        return super().apply_q(queryset)
+
+
+class ACMusiker(ACTabular):
+    model = _models.Musiker
+
+    def get_group_headers(self) -> list:
+        return ['Alias']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
+
+
+class ACSpielort(ACTabular):
+    model = _models.Spielort
+
+    def get_group_headers(self) -> list:
+        return ['Ort']
+
+    def get_extra_data(self, result: _models.Spielort) -> list:
+        return [str(result.ort)]
+
+
+class ACVeranstaltung(ACTabular):
+    model = _models.Veranstaltung
+
+    def get_group_headers(self) -> list:
+        return ['Datum', 'Spielort']
+
+    def get_extra_data(self, result: _models.Veranstaltung) -> list:
+        return [str(result.datum), str(result.spielort)]
+
+
+###############################################################################
+# GND (german national library) autocomplete view & paginator.
+###############################################################################
 
 
 class GNDPaginator(Paginator):

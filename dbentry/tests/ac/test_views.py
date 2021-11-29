@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.utils.translation import override as translation_override
@@ -6,7 +7,7 @@ from django.utils.translation import override as translation_override
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreatable, GND, GNDPaginator, Paginator,
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, ACMagazin, GND, GNDPaginator, Paginator,
     ACTabular
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
@@ -67,7 +68,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         create_option = view.get_create_option(context={'page_obj': page_obj}, q='Beep')
         self.assertEqual(create_option, [])
 
-    def test_apply_q_ordering(self):
+    def test_apply_q_exact_ordering(self):
         # Exact matches should come before startswith before all others.
         # 'Ale Boop' would have the same rank as 'Boop', and the default
         # (alphabetical) ordering would normally place it at the top.
@@ -787,3 +788,64 @@ class TestACTabular(ViewTestCase):
             results = response_data['results']
             # 'results' should be a just an empty list:
             self.assertEqual(results, [])
+
+
+class TestACMagazin(ACViewTestCase):
+    model = _models.Magazin
+    view_class = ACMagazin
+
+    def test_apply_q_validates_and_compacts_q(self):
+        # Assert that 'q' has dashes removed (compact standard number) if it is
+        # found to be a valid ISSN.
+        view = self.get_view(request=self.get_request(), q='1234-5679')
+        view.apply_q(self.queryset)
+        self.assertEqual(view.q, '12345679')
+        # Invalid ISSN:
+        view = self.get_view(request=self.get_request(), q='1234-5670')
+        view.apply_q(self.queryset)
+        self.assertEqual(view.q, '1234-5670')
+
+    def test_q_issn(self):
+        # Assert that a Magazin instance can be found using its ISSN.
+        obj = make(_models.Magazin, magazin_name='Testmagazin', issn='12345679')
+        for issn in ('12345679', '1234-5679'):
+            with self.subTest(ISSN=issn):
+                view = self.get_view(request=self.get_request(), q=issn)
+                self.assertIn(obj, view.get_queryset())
+
+
+@skip("There are no autocompletes for Buch instances (yet?).")
+class TestACBuch(ACViewTestCase):
+    model = _models.Buch
+    view_class = ACBase
+
+    def test_apply_q_validates_and_compacts_q(self):
+        # Assert that 'q' is transformed into compact ISBN-13 if it is found to
+        # be a valid ISBN. ISBN-13 is equivalent to EAN.
+        for isbn in ('1-234-56789-X', '978-1-234-56789-7'):
+            with self.subTest(ISBN=isbn):
+                view = self.get_view(request=self.get_request(), q=isbn)
+                view.apply_q(self.queryset)
+                self.assertEqual(view.q, isbn.replace('-', ''))
+        # Invalid ISBN.
+        for isbn in ('1-234-56789-1', '978-1-234-56789-1'):
+            with self.subTest(ISBN=isbn):
+                view = self.get_view(request=self.get_request(), q=isbn)
+                view.apply_q(self.queryset)
+                self.assertEqual(view.q, isbn)
+
+    def test_q_isbn(self):
+        # Assert that a Buch instance can be found using its ISBN.
+        obj = make(_models.Buch, titel='Testbuch', issn='9781234567897')
+        for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
+            with self.subTest(ISBN=isbn):
+                view = self.get_view(request=self.get_request(), q=isbn)
+                self.assertIn(obj, view.get_queryset())
+
+    def test_q_ean(self):
+        # Assert that a Buch instance can be found using its EAN.
+        obj = make(_models.Buch, titel='Testbuch', ean='9781234567897')
+        for ean in ('9781234567897', '978-1-234-56789-7'):
+            with self.subTest(EAN=ean):
+                view = self.get_view(request=self.get_request(), q=ean)
+                self.assertIn(obj, view.get_queryset())
