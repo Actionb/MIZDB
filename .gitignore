@@ -5,8 +5,6 @@
 
 media/
 
-\.coveragerc
-
 \.coverage
 
 htmlcov/
