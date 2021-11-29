@@ -13,13 +13,6 @@ from stdnum import ean, isbn, issn
 from dbentry.validators import EANValidator, ISBNValidator, ISSNValidator
 
 
-# FIXME:
-#  PartialDate + changelist search form + RangeFormField generally gives horrible
-#  UX: querying for records of a certain year requires inputting that year in both
-#  year fields. Probably because the formfield does not translate a single year
-#  value into a __year lookup (==> add a PartialDateRangeFormField?).
-
-
 class YearField(models.IntegerField):
     """
     An IntegerField that validates against min and max values for year numbers.
@@ -237,7 +230,7 @@ class PartialDate(datetime.date):
 
     Additional attribute:
         date_format (str): format code (C89 standard) string of the date;
-          '%d', '%B' or '%Y', or a combination thereof separated by whitespace
+          '%d', '%m' or '%Y', or a combination thereof separated by dashes '-'
     """
 
     db_value_template = '{year!s:0>4}-{month!s:0>2}-{day!s:0>2}'
@@ -435,9 +428,14 @@ class PartialDateFormField(fields.MultiValueField):
 
 
 class PartialDateField(models.CharField):
-    """Model field that handles PartialDate instances."""
-    # TODO: since the value stored is in isoformat, couldn't this Field be a
-    #  DateField subclass?
+    """
+    Model field that handles PartialDate instances.
+
+    Dates are stored as text in ISO 8601 format ('YYYY-MM-DD'). Missing values
+    for year, month or day are replaced with zeroes (f.ex. '1969-00-09'). The
+    PartialDate constructor will pick up on those zeroes and display the
+    partial date accordingly.
+    """
 
     default_error_messages = models.DateField.default_error_messages
     help_text = "Teilweise Angaben sind erlaubt (z.B. Jahr & Monat aber ohne Tag)."

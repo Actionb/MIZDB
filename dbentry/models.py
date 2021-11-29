@@ -10,7 +10,7 @@ from dbentry.base.models import (
     AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
 )
 from dbentry.fields import (
-    EANField, ISBNField, ISSNField, PartialDate, PartialDateField, YearField
+    EANField, ISBNField, ISSNField, PartialDateField, YearField
 )
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING

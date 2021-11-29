@@ -11,6 +11,7 @@ from django.db.models.query import QuerySet
 
 from dbentry.ac.widgets import make_widget
 from dbentry.base.forms import MIZAdminFormMixin
+from dbentry.fields import PartialDate
 from dbentry.search import utils as search_utils
 
 
@@ -150,7 +151,11 @@ class SearchForm(forms.Form):
                     continue
                 elif not start_empty and end_empty:
                     # start but no end: exact lookup for start
-                    param_key = field_name
+                    if isinstance(start, PartialDate):
+                        # Just a single partial date: use contains lookup.
+                        param_key = f"{field_name}__contains"
+                    else:
+                        param_key = field_name
                     param_value = start
                 elif start_empty and not end_empty:
                     # no start but end: lte lookup for end
@@ -176,8 +181,7 @@ class SearchForm(forms.Form):
                 # django admin prepare_lookup_value() expects an '__in'
                 # lookup to consist of comma separated values.
                 param_value = ",".join(
-                    str(pk)
-                    for pk in value.values_list('pk', flat=True).order_by('pk')
+                    str(pk) for pk in value.values_list('pk', flat=True).order_by('pk')
                 )
 
             params[param_key] = param_value
@@ -188,9 +192,7 @@ class SearchForm(forms.Form):
         # Use case: the 'Plakat ID' is presented with a prefixed 'P'.
         # People will try to query for the id WITH that prefix.
         return "".join(
-            i
-            for i in self.cleaned_data.get('id__in', '')
-            if i.isnumeric() or i == ','
+            i for i in self.cleaned_data.get('id__in', '') if i.isnumeric() or i == ','
         )
 
 
