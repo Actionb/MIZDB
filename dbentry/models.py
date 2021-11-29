@@ -497,7 +497,7 @@ class Magazin(BaseModel):
         )
     )
     fanzine = models.BooleanField('Fanzine', default=False)
-    issn = ISSNField(
+    issn = ISSNField(  # TODO: rename to 'ISBN' (Buch also uses all capitalized ISBN/EAN)
         'ISSN', blank=True,
         help_text='EAN (Barcode Nummer) Angaben erlaubt. Die ISSN wird dann daraus ermittelt.'
     )
