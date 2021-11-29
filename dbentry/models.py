@@ -4,7 +4,6 @@ from typing import Optional
 from django.core.validators import MinValueValidator
 from django.db import models
 
-
 import dbentry.m2m as _m2m
 from dbentry.base.models import (
     AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
@@ -1142,7 +1141,7 @@ class Technik(BaseModel):
     )
 
     name_field = 'titel'
-    
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'

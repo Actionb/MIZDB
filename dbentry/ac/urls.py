@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from dbentry.ac import views
 
+# noinspection SpellCheckingInspection
 autocomplete_patterns = [
     path('buch/', views.ACBuchband.as_view(), name='acbuchband'),
     path('ausgabe/', views.ACAusgabe.as_view(), name='acausgabe'),

@@ -1,6 +1,4 @@
 # Do not delete this
-
-
 *.pyc
 
 media/
@@ -13,9 +11,6 @@ static/
 
 !dbentry/static
 
-docs/
-
-*.e4p
-
-\.eric*
 /config.yaml
+
+/.vscode
