@@ -615,6 +615,8 @@ class MoveToBrochureBase(ActionConfirmationView):
                         _models.BrochureYear.objects.create(
                             brochure=new_brochure, jahr=jahr
                         )
+                    log_deletion(self.request.user.pk, ausgabe_instance)
+                    str_ausgabe = str(ausgabe_instance)
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
@@ -628,7 +630,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                             "{verbose_name} wurde automatisch erstellt beim Verschieben"
                             " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
                                 verbose_name=brochure_class._meta.verbose_name,
-                                str_ausgabe=str(ausgabe_instance),
+                                str_ausgabe=str_ausgabe,
                                 str_magazin=str(self.magazin_instance)
                             )
                 )
@@ -640,10 +642,6 @@ class MoveToBrochureBase(ActionConfirmationView):
                         obj=bestand_instance,
                         fields=['ausgabe_id', 'brochure_id']
                     )
-                # Log the deletion of the Ausgabe instance:
-                # NOTE: the doc string of ModelAdmin.log_deletion mentions that
-                # the log should be created before deletion.
-                log_deletion(self.request.user.pk, ausgabe_instance)
         # Notify the user about Ausgabe instances that could not be deleted and
         # return to the changelist - without deleting the Magazin instance
         # (since it will also be protected).
