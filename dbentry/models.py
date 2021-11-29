@@ -4,17 +4,16 @@ from typing import Optional
 from django.core.validators import MinValueValidator
 from django.db import models
 
-
 import dbentry.m2m as _m2m
 from dbentry.base.models import (
     AbstractJahrModel, AbstractURLModel, BaseAliasModel, BaseModel, ComputedNameModel
 )
 from dbentry.fields import (
-    EANField, ISBNField, ISSNField, PartialDate, PartialDateField, YearField
+    EANField, ISBNField, ISSNField, PartialDateField, YearField
 )
 from dbentry.fts.fields import SearchVectorField, WeightedColumn
 from dbentry.fts.query import SIMPLE, STEMMING
-from dbentry.managers import AusgabeQuerySet
+from dbentry.query import AusgabeQuerySet
 from dbentry.utils import concat_limit, get_model_fields, get_model_relations
 
 
@@ -497,7 +496,7 @@ class Magazin(BaseModel):
         )
     )
     fanzine = models.BooleanField('Fanzine', default=False)
-    issn = ISSNField(
+    issn = ISSNField(  # TODO: rename to 'ISBN' (Buch also uses all capitalized ISBN/EAN)
         'ISSN', blank=True,
         help_text='EAN (Barcode Nummer) Angaben erlaubt. Die ISSN wird dann daraus ermittelt.'
     )
@@ -1142,7 +1141,7 @@ class Technik(BaseModel):
     )
 
     name_field = 'titel'
-    
+
     class Meta(BaseModel.Meta):
         verbose_name = 'Technik'
         verbose_name_plural = 'Technik'

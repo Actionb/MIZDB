@@ -119,6 +119,7 @@ class MergeViewWizarded(WizardConfirmationView):
     other instances, for any fields of 'primary' that do not have a value.
     """
 
+    template_name = 'admin/merge_records.html'
     short_description = gettext_lazy("Merge selected %(verbose_name_plural)s")
     allowed_permissions = ['merge']
     action_name = 'merge_records'
@@ -169,6 +170,20 @@ class MergeViewWizarded(WizardConfirmationView):
         context['title'] = gettext(
             'Merge objects: step {}'
         ).format(str(int(self.steps.current) + 1))
+        if self.steps.current == self.SELECT_PRIMARY_STEP:
+            # The template uses the django admin tag 'result_list' so that the
+            # results are displayed as on the changelist. The tag requires the
+            # changelist as an argument.
+            cl = self.model_admin.get_changelist_instance(self.request)
+            cl.result_list = self.queryset
+            cl.formset = None
+            # The sorting URL refers to the changelist, so don't allow sorting.
+            # Trying to sort would send the user back to the changelist.
+            cl.sortable_by = []
+            context['cl'] = cl
+            context['primary_label'] = context['form']['primary'].label_tag(
+                attrs={'style': 'width: 100%;'}
+            )
         return context
 
     # noinspection PyMethodParameters
@@ -331,7 +346,7 @@ class MergeViewWizarded(WizardConfirmationView):
 
     def get_form_kwargs(self, step: Optional[int] = None) -> dict:
         kwargs = super().get_form_kwargs(step)
-        if step is None:
+        if step is None:  # pragma: no cover
             step = self.steps.current
         # Note that WizardView.get_initkwargs turns the form_list into an
         # OrderedDict.
@@ -415,7 +430,7 @@ class MergeViewWizarded(WizardConfirmationView):
             # in the queryset, all changes were rolled back.
             # noinspection PyProtectedMember
             object_name = e.protected_objects.model._meta.verbose_name_plural
-            if not object_name:
+            if not object_name:  # pragma: no cover
                 object_name = 'Objekte'
             msg_template = (
                 "Folgende verwandte {object_name} verhinderten die "
@@ -600,6 +615,8 @@ class MoveToBrochureBase(ActionConfirmationView):
                         _models.BrochureYear.objects.create(
                             brochure=new_brochure, jahr=jahr
                         )
+                    log_deletion(self.request.user.pk, ausgabe_instance)
+                    str_ausgabe = str(ausgabe_instance)
                     ausgabe_instance.delete()
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
@@ -613,7 +630,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                             "{verbose_name} wurde automatisch erstellt beim Verschieben"
                             " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
                                 verbose_name=brochure_class._meta.verbose_name,
-                                str_ausgabe=str(ausgabe_instance),
+                                str_ausgabe=str_ausgabe,
                                 str_magazin=str(self.magazin_instance)
                             )
                 )
@@ -625,10 +642,6 @@ class MoveToBrochureBase(ActionConfirmationView):
                         obj=bestand_instance,
                         fields=['ausgabe_id', 'brochure_id']
                     )
-                # Log the deletion of the Ausgabe instance:
-                # NOTE: the doc string of ModelAdmin.log_deletion mentions that
-                # the log should be created before deletion.
-                log_deletion(self.request.user.pk, ausgabe_instance)
         # Notify the user about Ausgabe instances that could not be deleted and
         # return to the changelist - without deleting the Magazin instance
         # (since it will also be protected).

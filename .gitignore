@@ -1,11 +1,7 @@
 # Do not delete this
-
-
 *.pyc
 
 media/
-
-\.coveragerc
 
 \.coverage
 
@@ -15,9 +11,6 @@ static/
 
 !dbentry/static
 
-docs/
-
-*.e4p
-
-\.eric*
 /config.yaml
+
+/.vscode

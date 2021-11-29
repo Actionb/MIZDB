@@ -2,11 +2,14 @@ from django.urls import include, path
 
 from dbentry.ac import views
 
+# noinspection SpellCheckingInspection
 autocomplete_patterns = [
     path('buch/', views.ACBuchband.as_view(), name='acbuchband'),
     path('ausgabe/', views.ACAusgabe.as_view(), name='acausgabe'),
     path('band/', views.ACBand.as_view(), name='acband'),
     path('band/<str:create_field>/', views.ACBand.as_view(), name='acband'),
+    path('magazin/', views.ACMagazin.as_view(), name='acmagazin'),
+    path('magazin/<str:create_field>/', views.ACMagazin.as_view(), name='acmagazin'),
     path('musiker/', views.ACMusiker.as_view(), name='acmusiker'),
     path('musiker/<str:create_field>/', views.ACMusiker.as_view(), name='acmusiker'),
     path('spielort/', views.ACSpielort.as_view(), name='acspielort'),

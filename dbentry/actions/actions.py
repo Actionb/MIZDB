@@ -32,6 +32,7 @@ def add_cls_attrs(view_cls: Type[View]) -> Callable:
 
     return wrap
 
+
 @add_cls_attrs(BulkEditJahrgang)
 def bulk_jg(model_admin: Model, request: HttpRequest, queryset: QuerySet) -> Callable:
     return BulkEditJahrgang.as_view(

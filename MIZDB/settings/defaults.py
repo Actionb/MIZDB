@@ -7,7 +7,7 @@ import yaml
 # TODO: update django doc refs version 1.11 -> 3.x/2.2
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = (  # TODO: use pathlib.Path and .parent().parent()
+BASE_DIR = (
     os.path.dirname(  # Base directory
         os.path.dirname(  # MIZDB project directory
             os.path.dirname(  # settings directory
@@ -16,7 +16,8 @@ BASE_DIR = (  # TODO: use pathlib.Path and .parent().parent()
         )
     )
 )
-with open(os.path.join(BASE_DIR, 'config.yaml')) as f:
+
+with open(os.path.join(BASE_DIR, 'config.yaml'), encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
 SECRET_KEY = config.get('SECRET_KEY', '')

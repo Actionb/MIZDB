@@ -59,10 +59,31 @@ class TestFullTextSearch(DataTestCase):
                 self.assertEqual(results.count(), 1)
                 self.assertEqual(results.get(), self.obj1)
 
-    def test_ranking(self):
-        # Assert that the results are ranked as expected.
+    def test_ordering_ranked(self):
+        # Assert that the results are ordered as expected with
+        # ranked=True:
+        # exact matches -> startswith matches -> other
+        exact = make(self.model, band_name='Ärzte')
+        startsw = make(self.model, band_name='Ärztekammer')
+        another = make(
+            self.model, band_name='Toten Hosen',
+            beschreibung='Sie gehen gerne zum Arzt.'
+        )
+        self.assertEqual(
+            list(self.model.objects.search('Ärzte', ranked=True)),
+            [exact, startsw, self.obj1, another]
+        )
+        # Assert that search respects specified ordering:
+        self.assertIn(
+            '-beschreibung',
+            self.queryset.order_by('-beschreibung').search('Ärzte', ranked=True).query.order_by,
+        )
+
+    def test_ordering_not_ranked(self):
+        # Assert that the results are ordered as expected with
+        # ranked=False.
         #
-        # A simple (i.e. not stemmed) query on the field with the heighest
+        # A simple (i.e. not stemmed) query on the field with the highest
         # weight (field 'band_name') would match obj1. obj1 should therefore
         # have the highest ranking.
         # A stemmed query on 'band_name' would match this next object. Since
@@ -76,7 +97,7 @@ class TestFullTextSearch(DataTestCase):
             beschreibung='Sie gehen gerne zum Arzt.'
         )
         self.assertEqual(
-            list(self.queryset.search('Die Ärzte').order_by('-rank')),
+            list(self.queryset.search('Die Ärzte', ranked=False).order_by('-rank')),
             [self.obj1, other, another]
         )
 
@@ -88,8 +109,9 @@ class TestFullTextSearch(DataTestCase):
         self.assertTrue(results.get().rank)
 
     def test_ordering(self):
-        # Assert that the result querysets includes the model's default ordering.
-        results = self.queryset.search('Die Ärzte')
+        # Assert that the initially unordered result queryset includes the
+        # model's default ordering.
+        results = self.queryset.order_by().search('Die Ärzte', ranked=False)
         for ordering in self.model._meta.ordering:
             self.assertIn(
                 ordering, results.query.order_by,
@@ -145,7 +167,7 @@ class TestFullTextSearch(DataTestCase):
         control = make(_models.Kalender, titel='nope')
         for field, value in data.items():
             with self.subTest(field=field, value=value):
-                results = _models.Kalender.objects.search(search_term=value)
+                results = _models.Kalender.objects.search(q=value)
                 self.assertIn(obj, results)
                 self.assertNotIn(control, results)
 

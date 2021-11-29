@@ -26,7 +26,7 @@ from dbentry.sites import miz_site
 from dbentry.tests.actions.base import ActionViewTestCase
 from dbentry.tests.base import AdminTestCase, mockv
 from dbentry.tests.mixins import LoggingTestMixin
-from dbentry.utils import get_obj_link  # parameters: obj, user, admin_site
+from dbentry.utils import get_obj_link
 
 
 class TestConfirmationViewMixin(AdminTestCase):
@@ -458,7 +458,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         response = self.client.post(self.changelist_path, data=request_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            response.templates[0].name, 'admin/action_confirmation_wizard.html')
+            response.templates[0].name, 'admin/merge_records.html')
         self.assertIsInstance(
             response.context_data.get('form'), MergeFormSelectPrimary)
         self.assertIsInstance(
@@ -625,14 +625,16 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         self.assertEqual(view.storage.current_step, '')
 
     @translation_override(language=None)
-    @patch.object(WizardConfirmationView, 'get_context_data', return_value={})
-    def test_get_context_data(self, _super_get_context_data):
-        # Assert that 'title' is counting up with 'step'
+    @patch.object(WizardConfirmationView, 'get_context_data')
+    def test_get_context_data_primary_step(self, super_get_context_data):
+        # Assert that the context contains a 'cl' and 'primary_label' item.
         view = self.get_view()
         view.steps = Mock(current='0')
-        self.assertEqual(view.get_context_data().get('title'), 'Merge objects: step 1')
-        view.steps.current = '22'
-        self.assertEqual(view.get_context_data().get('title'), 'Merge objects: step 23')
+        super_get_context_data.return_value = {'form': MergeFormSelectPrimary()}
+        with patch.object(view.model_admin, 'get_changelist_instance'):
+            data = view.get_context_data()
+            self.assertIn('cl', data)
+            self.assertIn('primary_label', data)
 
     @patch.object(WizardView, 'get_form_kwargs', return_value={})
     def test_get_form_kwargs_select_primary(self, _super_get_form_kwargs):
