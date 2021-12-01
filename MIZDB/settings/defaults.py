@@ -55,7 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'formtools',
-    'django.contrib.postgres'
+    'django.contrib.postgres',
+    'django_admin_logs'
 ]
 
 MIDDLEWARE = [

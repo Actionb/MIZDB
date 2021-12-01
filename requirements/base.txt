@@ -2,7 +2,7 @@
 
 Django
 
-# HumanName utilities for autocomplete
+# HumanName parsing for autocomplete
 nameparser
 
 # autocomplete
@@ -23,10 +23,13 @@ psycopg2
 # HTTP library handling the SRU requests to the DNB
 requests
 # Package for testing of requests
-requests_mock
+requests-mock
 
 # Postgres Django SearchVectorField + Triggers
 django-tsvector-field
 
 # Config file parsing
 PyYAML
+
+# Django LogEntry ModelAdmin
+django-admin-logs

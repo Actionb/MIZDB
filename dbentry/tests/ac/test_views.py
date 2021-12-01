@@ -2,12 +2,14 @@ from collections import OrderedDict
 from unittest import skip
 from unittest.mock import Mock, patch
 
+from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreatable, ACMagazin, GND, GNDPaginator, Paginator,
+    ACBase, ACAusgabe, ACBuchband, ACCreatable, ACMagazin, ContentTypeAutocompleteView, GND,
+    GNDPaginator, Paginator,
     ACTabular
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
@@ -849,3 +851,21 @@ class TestACBuch(ACViewTestCase):
             with self.subTest(EAN=ean):
                 view = self.get_view(request=self.get_request(), q=ean)
                 self.assertIn(obj, view.get_queryset())
+
+
+class TestContentTypeAutocompleteView(ACViewTestCase):
+    model = ContentType
+    view_class = ContentTypeAutocompleteView
+
+    def test_get_queryset(self):
+        # Test that the queryset only returns models that have in the admin
+        # site register.
+        class DummySite:
+            _registry = {_models.Artikel: 'ModelAdmin_would_go_here'}
+
+        view = self.get_view()
+        view.admin_site = DummySite
+        self.assertEqual(
+            list(view.get_queryset()),
+            [ContentType.objects.get_for_model(_models.Artikel)]
+        )

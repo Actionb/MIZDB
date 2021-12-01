@@ -1,6 +1,9 @@
 from typing import Any, Dict, List, Optional, Type, Union
 
+# noinspection PyPackageRequirements
+from dal import autocomplete
 from django.contrib import admin
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -12,6 +15,7 @@ from django.db.models import (
 from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
+from django_admin_logs.admin import LogEntryAdmin
 
 import dbentry.actions.actions as _actions
 import dbentry.m2m as _m2m
@@ -26,6 +30,7 @@ from dbentry.forms import (
     ArtikelForm, AudioForm, AutorForm, BandForm, BrochureForm, BuchForm, FotoForm, MusikerForm,
     PersonForm, PlakatForm, VideoForm
 )
+from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
@@ -1600,3 +1605,35 @@ class MIZGroupAdmin(AuthAdminMixin, GroupAdmin):
 @admin.register(User, site=miz_site)
 class MIZUserAdmin(AuthAdminMixin, UserAdmin):
     pass
+
+
+@admin.register(LogEntry, site=miz_site)
+class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
+    fields = (
+        'action_time', 'user', 'content_type', 'object', 'object_id',
+        'action_flag', 'change_message_verbose', 'change_message_raw'
+    )
+    readonly_fields = ('object', 'change_message_verbose', 'change_message_raw')
+
+    list_display = (
+        'action_time', 'user', 'action_message', 'content_type', 'object_link',
+    )
+    list_filter = ()
+    search_form_kwargs = {
+        'fields': ('user', 'content_type', 'action_flag'),
+        'widgets': {
+            'user': autocomplete.ModelSelect2(url='autocomplete_user'),
+            'content_type': autocomplete.ModelSelect2(url='autocomplete_ct'),
+        }
+    }
+
+    def object(self, obj):
+        return self.object_link(obj)
+
+    def change_message_verbose(self, obj):
+        return obj.get_change_message()
+    change_message_verbose.short_description = 'Änderungsmeldung'  # type: ignore[attr-defined]
+
+    def change_message_raw(self, obj):
+        return obj.change_message
+    change_message_raw.short_description = 'Datenbank-Darstellung'  # type: ignore[attr-defined]

@@ -429,6 +429,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         return super().get_context_data(opts=_models.Ausgabe._meta)
 
 
+# TODO: remove BulkAusgabeHelp -- wiki has this covered
 class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):
     """
     A very basic view containing some text explaining the BulkAusgabe view.
