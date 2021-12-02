@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from django import forms
 from django.contrib import admin
@@ -7,7 +7,6 @@ from django.contrib.auth import get_permission_codename
 from django.core import checks, exceptions
 from django.db import models
 from django.db.models import Model, QuerySet
-from django.db.models.constants import LOOKUP_SEP
 from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
@@ -224,50 +223,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     def get_fieldsets(self, request: HttpRequest, obj: Optional[Model] = None) -> FieldsetList:
         fieldsets = super().get_fieldsets(request, obj)
         return self._add_bb_fieldset(fieldsets)
-
-    def _add_pk_search_field(self, search_fields: Sequence) -> list:
-        """
-        Add a search field for the primary key to search_fields if missing.
-
-        Unless the ModelAdmin instance has a search form (which is presumed to
-        take over the duty of filtering for primary keys), 'pk__iexact' is added
-        to the given list 'search_fields'.
-        If the primary key is a OneToOneRelation, 'pk__pk__iexact' is added
-        instead.
-
-        Returns a copy of the passed in search_fields list.
-        """
-        # NOTE: since the introduction of postgres text search, search fields
-        #  are empty and thus this method here isn't useful anymore
-        search_fields = list(search_fields)
-        if self.has_search_form():
-            # This ModelAdmin instance has a search form. Assume that the form
-            # contains a field to search for primary keys; no need to add
-            # another primary key search field.
-            return search_fields
-        # noinspection PyProtectedMember
-        pk_field = self.model._meta.pk
-        for search_field in search_fields:
-            if LOOKUP_SEP in search_field:
-                field, _ = search_field.split(LOOKUP_SEP, 1)
-            else:
-                field = search_field
-            if not field[0].isalpha() and field[0] != '_':
-                # Lookup alias prefixes for ModelAdmin.construct_search:
-                # '=', '^', '@' etc.
-                field = field[1:]
-            if field in ('pk', pk_field.name):
-                # Done here, search_fields already contains a custom
-                # primary key search field.
-                break
-        else:
-            search_fields.append(
-                'pk__pk__iexact' if pk_field.is_relation else 'pk__iexact'
-            )
-        return search_fields
-
-    def get_search_fields(self, request=None):
-        return self._add_pk_search_field(self.search_fields)
 
     def add_crosslinks(self, object_id: str, labels: Optional[dict] = None) -> Dict[str, list]:
         """
