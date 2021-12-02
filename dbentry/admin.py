@@ -340,6 +340,15 @@ class AusgabenAdmin(MIZModelAdmin):
         # noinspection PyUnresolvedReferences
         return request.user.has_perms(perms)
 
+    def _get_crosslink_relations(self):
+        return [
+            (_models.Artikel, 'ausgabe', 'Artikel'),
+            (_models.Brochure, 'ausgabe', 'Broschüren'),
+            (_models.Kalender, 'ausgabe', 'Programmhefte'),
+            (_models.Katalog, 'ausgabe', 'Warenkataloge'),
+        ]
+
+
 
 @admin.register(_models.Autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):
@@ -807,6 +816,19 @@ class GenreAdmin(MIZModelAdmin):
     def alias_string(self, obj: _models.Genre) -> str:
         return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
+
+    def _get_crosslink_relations(self):
+        return [
+            (_models.Musiker, 'genre', None), (_models.Band, 'genre', None),
+            (_models.Magazin, 'genre', None), (_models.Artikel, 'genre', None),
+            (_models.Buch, 'genre', None), (_models.Audio, 'genre', None),
+            (_models.Plakat, 'genre', None), (_models.Dokument, 'genre', None),
+            (_models.Memorabilien, 'genre', None), (_models.Technik, 'genre', None),
+            (_models.Veranstaltung, 'genre', None), (_models.Video, 'genre', None),
+            (_models.Datei, 'genre', None), (_models.Brochure, 'genre', None),
+            (_models.Kalender, 'genre', None), (_models.Katalog, 'genre', None),
+            (_models.Foto, 'genre', None)
+        ]
 
 
 @admin.register(_models.Magazin, site=miz_site)

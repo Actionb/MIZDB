@@ -198,7 +198,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         move them out of there to their own fieldset.
         """
         default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:
+        if not default_fieldset:  # pragma: no cover
             return fieldsets
         # default_fieldset['fields'] might be a direct reference to
         # self.get_fields(): make a copy to leave the original list untouched.
@@ -224,6 +224,19 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         fieldsets = super().get_fieldsets(request, obj)
         return self._add_bb_fieldset(fieldsets)
 
+    # noinspection PyMethodMayBeStatic
+    def _get_crosslink_relations(self) -> Optional[List[Tuple[Type[Model], str, Optional[str]]]]:
+        """
+        Hook to specify relations to follow with the crosslinks.
+
+        A list of 3-tuples must be returned. The tuples must consist of:
+          - model class: the related model to query for the related objects
+          - field name: the name of the field of the related model to query
+            against
+          - label (str) or None: the label for the link
+        """
+        return None
+
     def add_crosslinks(self, object_id: str, labels: Optional[dict] = None) -> Dict[str, list]:
         """
         Provide the template with data to create links to related objects.
@@ -232,48 +245,43 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         to the changelist containing the instance's related objects.
         """
         new_extra: dict = {'crosslinks': []}
-        if labels is None:
+        if labels is None:  # pragma: no cover
             labels = {}
 
-        inline_models = {i.model for i in self.inlines}
-        # Walk through all reverse relations and collect the model and
-        # model field to query against as well as the assigned name for the
-        # relation -- unless an inline is covering that reverse relation.
-        relations = []
-        for rel in get_model_relations(self.model, forward=False, reverse=True):
-            if rel.many_to_many:
-                inline_model = rel.through
-            else:
-                inline_model = rel.related_model
-            if inline_model in inline_models:
-                continue
+        relations = self._get_crosslink_relations()
+        if relations is None:
+            # Walk through all reverse relations and collect the model and
+            # model field to query against as well as the assigned name for the
+            # relation -- unless an inline is covering that reverse relation.
+            relations = []
+            inline_models = {i.model for i in self.inlines}
+            for rel in get_model_relations(self.model, forward=False, reverse=True):
+                if rel.many_to_many:
+                    inline_model = rel.through
+                else:
+                    inline_model = rel.related_model
+                if inline_model in inline_models:
+                    continue
 
-            query_model = rel.related_model
-            query_field = rel.remote_field.name
-            if rel.many_to_many and query_model == self.model:
-                # M2M relations are symmetric, but we wouldn't want to create
-                # a crosslink that leads back to *this* model's changelist
-                # (unless it's a self relation).
-                query_model = rel.model
-                query_field = rel.name
-            if rel.related_model == _models.BaseBrochure:
-                # Handle a special case of model inheritance.
-                # Add crosslinks to the children of BaseBrochure rather than
-                # to BaseBrochure itself as it does not have a changelist:
-                # reversing for an url would fail.
-                # FIXME: Ugly code! MIZModelAdmin shouldn't have to know BaseBrochure!
-                relations.extend(
-                    [
-                        (_models.Brochure, rel.remote_field.name, None),
-                        (_models.Kalender, rel.remote_field.name, None),
-                        (_models.Katalog, rel.remote_field.name, None)
-                    ]
-                )
-            else:
-                relations.append((query_model, query_field, rel.related_name))
+                query_model = rel.related_model
+                query_field = rel.remote_field.name
+                if rel.many_to_many and query_model == self.model:
+                    # M2M relations are symmetric, but we wouldn't want to create
+                    # a crosslink that leads back to *this* model's changelist
+                    # (unless it's a self relation).
+                    query_model = rel.model
+                    query_field = rel.name
+                # Use a 'prettier' related_name as the default for the label.
+                if rel.related_name:
+                    label = " ".join(
+                        capfirst(s) for s in rel.related_name.replace('_', ' ').split()
+                    )
+                else:
+                    label = None
+                relations.append((query_model, query_field, label))
 
         # Create the context data for the crosslinks.
-        for query_model, query_field, related_name in relations:
+        for query_model, query_field, label in relations:
             # noinspection PyProtectedMember
             opts = query_model._meta
             try:
@@ -291,27 +299,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             # Add the query string to the url:
             url += f"?{query_field}={object_id}"
 
-            # Prepare the label for the link with the following priorities:
-            #   - a passed in label
-            #   - an explicitly declared related_name
-            #       (unless the relation was automatically created,
-            #       the default for related_name is None)
-            #    - the verbose_name_plural of the related_model
+            # Prepare the label for the link.
             if opts.model_name in labels:
                 label = labels[opts.model_name]
-            elif related_name:
-                # Automatically created related_names won't look pretty!
-                label = " ".join(
-                    capfirst(s)
-                        for s in related_name.replace('_', ' ').split()
-                )
             else:
-                label = opts.verbose_name_plural
+                label = label or opts.verbose_name_plural
 
-            label = "{label} ({count})".format(
-                label=label, count=str(count)
-            )
-            new_extra['crosslinks'].append({'url': url, 'label': label})
+            new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
     # noinspection PyUnusedLocal
