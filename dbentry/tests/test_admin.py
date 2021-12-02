@@ -17,7 +17,6 @@ import dbentry.admin as _admin
 import dbentry.models as _models
 from dbentry.base.admin import AutocompleteMixin
 from dbentry.changelist import AusgabeChangeList, MIZChangeList
-from dbentry.constants import DUPLETTEN_ID, ZRAUM_ID
 from dbentry.factory import make, modelfactory_factory
 from dbentry.sites import miz_site
 from dbentry.tests.base import AdminTestCase
@@ -671,7 +670,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             ausgabelnum__lnum=[10, 11, 12],
             ausgabemonat__monat__monat=['Januar', 'Februar'],
             artikel__schlagzeile='Test', artikel__seite=1,
-            bestand__lagerort__pk=[ZRAUM_ID, DUPLETTEN_ID],
+            bestand__lagerort__ort=['Zeitschriftenraum', 'Dublettenlager'],
         )
 
         cls.test_data = [cls.obj1]

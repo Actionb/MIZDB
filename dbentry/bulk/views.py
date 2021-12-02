@@ -43,7 +43,17 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         Use data of the previously submitted form stored in the current session
         as this form's initial data.
         """
-        return self.request.session.get('old_form_data', {})
+        old_form_data = self.request.session.get('old_form_data', {})
+        if old_form_data:
+            return old_form_data
+        # noinspection PyUnresolvedReferences
+        try:
+            return {
+                'ausgabe_lagerort': _models.Lagerort.objects.get(ort='Zeitschriftenraum'),
+                'dublette': _models.Lagerort.objects.get(ort='Dublettenlager'),
+            }
+        except (_models.Lagerort.DoesNotExist, _models.Lagerort.MultipleObjectsReturned):
+            return {}
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
