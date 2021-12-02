@@ -26,14 +26,6 @@ from dbentry.utils.admin import construct_change_message
 FieldsetList = List[Tuple[Optional[str], dict]]
 
 
-# TODO: enable delete_related on inlines:
-# RelatedFieldWidgetWrapper disables can_delete_related for inlines because of
-# cascading:
-#        # XXX: The deletion UX can be confusing when dealing with cascading deletion.
-#        cascade = getattr(rel, 'on_delete', None) is CASCADE
-#        self.can_delete_related = not multiple and not cascade and can_delete_related
-
-
 class AutocompleteMixin(object):
     """
     A mixin for model admin and admin inlines that creates autocomplete widgets
@@ -178,12 +170,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         return request.user.has_perms(perms)
 
     def get_exclude(self, request: HttpRequest, obj: Optional[Model] = None) -> list:
-        """Exclude all concrete M2M fields as those are handled by inlines."""
+        # Unless the ModelAdmin specifies 'exclude', exclude M2M fields
+        # declared on this model. It is expected that those relations will be
+        # handled by inlines.
         self.exclude = super().get_exclude(request, obj)
         if self.exclude is None:
             self.exclude = []
-            # FIXME: isn't this for loop over-indented? Shouldn't this exclude
-            #  m2m fields even if 'exclude' was defined?
             for fld in self.opts.get_fields():
                 if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)

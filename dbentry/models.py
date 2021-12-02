@@ -1533,13 +1533,6 @@ class BaseBrochure(BaseModel):
 
     genre = models.ManyToManyField('Genre')
 
-    # TODO: add full text search SearchVectorField
-    #   Brochure, Kalender, Warenkatalog inherit from BaseBrochure via
-    #   multi-table inheritance. This means that fields declared in BaseBrochure
-    #   aren't present in the postgres tables of Brochure, etc.
-    #   This, in turn, means that these fields cannot immediately be used as
-    #   columns for SearchVectorField.
-
     _base_fts = SearchVectorField(
         columns=[
             WeightedColumn('titel', 'A', SIMPLE),

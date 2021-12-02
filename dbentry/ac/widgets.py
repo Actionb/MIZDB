@@ -354,13 +354,9 @@ def make_widget(
 
             if 'data-placeholder' not in attrs:
                 # forward with no data-placeholder-text
-                # the widget is created when django initializes, not when
-                # the view is called apparently that is too early
-                # for translations...
-                # TODO: maybe this is fixed in DAL 3.2.10 (#871)?
                 placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
 
-                # Try to find the verbose_name of the source formfield
+                # Try to find the verbose_name to of the source formfield
                 # of the forward.
                 # We do not have access to the form and so no access to the
                 # forwarded formfield's (forwarded.src) label.
@@ -368,7 +364,9 @@ def make_widget(
                 # likely to fail as src refers to the formfield's name
                 # and not the model field's name.
                 try:
-                    # verbose_name default is the field.name.replace('_',' ')
+                    # Reminder: a field's verbose_name defaults to:
+                    #   field.name.replace('_',' ')
+
                     # noinspection PyProtectedMember
                     forwarded_verbose = model._meta.get_field(
                         forwarded.dst or forwarded.src
