@@ -152,6 +152,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         """Check if a object to be deleted has related objects."""
         # TODO: This only covers deletion from the change form.
         #  deletions from the change list are done via the delete_selected action!
+        # WARNING: This does not prevent merging records?
         if self.add_crosslinks(context['object'].pk):
             # Don't delete this object, it has relations.
             context['active_relations'] = True
