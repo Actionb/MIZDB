@@ -1,3 +1,4 @@
+import re
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from django import forms
@@ -9,7 +10,6 @@ from django.forms import Form
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
-from dbentry.constants import discogs_release_id_pattern
 from dbentry.utils import snake_case_to_spaces
 from dbentry.validators import DiscogsURLValidator
 
@@ -442,8 +442,8 @@ class DiscogsFormMixin(object):
         if not (release_id or discogs_url):
             return self.cleaned_data
 
-        match = discogs_release_id_pattern.search(discogs_url)
-        if match and len(match.groups()) == 1:
+        match = re.match(r'.*release/(\d+)', discogs_url)
+        if match:
             # We have a valid url with a release_id in it.
             release_id_from_url = match.groups()[-1]
             if release_id and release_id_from_url != release_id:
@@ -455,6 +455,6 @@ class DiscogsFormMixin(object):
                 # Set release_id from the url.
                 release_id = str(match.groups()[-1])
                 self.cleaned_data['release_id'] = release_id
-        discogs_url = "http://www.discogs.com/release/" + release_id
+        discogs_url = "https://www.discogs.com/release/" + release_id
         self.cleaned_data['discogs_url'] = discogs_url
         return self.cleaned_data
