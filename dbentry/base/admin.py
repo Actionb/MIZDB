@@ -16,10 +16,9 @@ from django.utils.text import capfirst
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.actions.actions import merge_records
-from dbentry.base.forms import MIZAdminInlineFormBase  # type: ignore[attr-defined]
+from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
 from dbentry.base.models import ComputedNameModel
 from dbentry.changelist import MIZChangeList
-from dbentry.constants import ATTRS_TEXTAREA
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations

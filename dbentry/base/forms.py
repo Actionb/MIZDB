@@ -13,6 +13,9 @@ from django.utils.translation import gettext_lazy
 from dbentry.utils import snake_case_to_spaces
 from dbentry.validators import DiscogsURLValidator
 
+# Default attrs for the TextArea form widget
+ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
+
 
 class FieldGroup:
     """
