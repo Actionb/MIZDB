@@ -9,7 +9,8 @@ from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    Count, Exists, Field as ModelField, Func, ManyToManyField, Min, OuterRef, QuerySet, Subquery,
+    CharField, Count, Exists, Field as ModelField, Func, ManyToManyField, Min, OuterRef, QuerySet,
+    Subquery,
     Value
 )
 from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
@@ -235,7 +236,8 @@ class AusgabenAdmin(MIZModelAdmin):
             .annotate(
                 x=Func(
                     ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
-                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                    output_field=CharField()
                 )
             )
             .values('x')
@@ -243,15 +245,18 @@ class AusgabenAdmin(MIZModelAdmin):
         return {
             'jahr_string': Func(
                 ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
             'num_string': Func(
                 ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
             'lnum_string': Func(
                 ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
             'monat_string': Subquery(subquery),
             'anz_artikel': Count('artikel', distinct=True)
@@ -370,7 +375,7 @@ class AutorAdmin(MIZModelAdmin):
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'magazin_list': ArrayAgg(
-                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name')
+                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'),
         }
 
     def autor_name(self, obj: _models.Autor) -> str:
@@ -1402,7 +1407,8 @@ class BaseBrochureAdmin(MIZModelAdmin):
         return {
             'jahr_string': Func(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
         }
 

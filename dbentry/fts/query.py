@@ -1,8 +1,7 @@
 from typing import Any, List, Optional, Tuple, Type
 
 from django.contrib.postgres.search import SearchQuery, SearchRank
-from django.db.models import BooleanField, ExpressionWrapper, F, Max, Model, Q
-from django.db.models import Value
+from django.db.models import BooleanField, ExpressionWrapper, F, FloatField, Max, Model, Q, Value
 from django.db.models.functions import Coalesce
 
 from dbentry.fts.fields import SearchVectorField
@@ -125,7 +124,7 @@ class TextSearchQuerySetMixin(object):
             # related items on the related table (nothing to join).
             # NULL would break the summing up of the ranks (comparison with
             # NULL always returns NULL), so use zero instead.
-            rank = Coalesce(SearchRank(F(field_path), query), Value(0))
+            rank = Coalesce(SearchRank(F(field_path), query), Value(0), output_field=FloatField())
             if related_search_rank is None:
                 related_search_rank = rank
             else:
