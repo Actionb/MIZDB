@@ -7,7 +7,7 @@ from django.db.models import Model, QuerySet
 from django.db.models.options import Options
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
 from django.utils.text import capfirst
@@ -121,9 +121,9 @@ class ConfirmationViewMixin(MIZAdminMixin):
 
         # template variable to accurately address the objects of the queryset
         if self.queryset.count() == 1:
-            defaults['objects_name'] = force_text(self.opts.verbose_name)
+            defaults['objects_name'] = force_str(self.opts.verbose_name)
         else:
-            defaults['objects_name'] = force_text(self.opts.verbose_name_plural)
+            defaults['objects_name'] = force_str(self.opts.verbose_name_plural)
 
         # Add model_admin and form media.
         if 'media' in context:
@@ -220,7 +220,7 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
                 )
             else:
                 # get_obj_link couldn't create a link and has simply returned
-                # {model_name}: force_text(obj)
+                # {model_name}: force_str(obj)
                 return object_link
 
         objects = []

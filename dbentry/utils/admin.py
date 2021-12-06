@@ -10,7 +10,7 @@ from django.db.models import Model
 from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest
 from django.urls import NoReverseMatch, reverse
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import format_html
 from django.utils.safestring import SafeText
 from django.utils.text import capfirst
@@ -60,7 +60,7 @@ def get_obj_link(
     # noinspection PyProtectedMember,PyUnresolvedReferences
     opts = obj._meta
     no_edit_link = format_html(
-        '%s: %s' % (capfirst(opts.verbose_name), force_text(obj))
+        '%s: %s' % (capfirst(opts.verbose_name), force_str(obj))
     )
     try:
         admin_url = reverse(
