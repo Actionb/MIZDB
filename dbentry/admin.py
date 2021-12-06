@@ -1392,8 +1392,11 @@ class BaseBrochureAdmin(MIZModelAdmin):
             default_fieldset['fields'] = fields
         return fieldsets
 
-    def get_ordering(self, request: HttpRequest) -> List[str]:
-        return ['titel', 'jahr_min', 'zusammenfassung']
+    def get_queryset(self, request):
+        # Add the annotation necessary for the proper ordering:
+        return super().get_queryset(request).annotate(jahr_min=Min('jahre__jahr')).order_by(
+            'titel', 'jahr_min', 'zusammenfassung'
+        )
 
     def get_result_list_annotations(self) -> dict:
         return {
@@ -1401,7 +1404,6 @@ class BaseBrochureAdmin(MIZModelAdmin):
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
                 Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
             ),
-            'jahr_min': Min('jahre__jahr')
         }
 
     def jahr_string(self, obj: _models.BaseBrochure) -> str:

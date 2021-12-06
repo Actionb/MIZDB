@@ -8,6 +8,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission, User
 from django.core import checks, exceptions
 from django.db import connections, transaction
+from django.db.models import Min
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext  # noqa
 from django.urls import reverse
@@ -1437,7 +1438,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
@@ -1467,6 +1467,17 @@ class TestBaseBrochureAdmin(AdminTestCase):
     def test_jahr_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
+
+    def test_get_queryset_adds_jahr_min_annotation(self):
+        # Test that the 'jahr_min' annotation was added to the queryset.
+        queryset = self.model_admin.get_queryset(self.get_request())
+        try:
+            annotations = queryset.query._annotations
+        except AttributeError:
+            # django 3.1 exposes the annotations
+            annotations = queryset.query.annotations
+        self.assertIn('jahr_min', annotations)
+        self.assertEqual(annotations['jahr_min'], Min('jahre__jahr'))
 
 
 # noinspection PyUnresolvedReferences
