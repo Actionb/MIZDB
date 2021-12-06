@@ -237,8 +237,9 @@ class TestTextSearchQuerySetMixin(TestCase):
         search_query = self.queryset._get_search_query(
             "Ardal O'Hanlon ", config='simple_unaccent', search_type='plain'
         )
-        self.assertEqual(search_query.value, "'''Ardal''':* & '''O''':* & '''Hanlon''':*")
-        self.assertEqual(search_query.search_type, 'raw')
+        _config, value = search_query.get_source_expressions()
+        self.assertEqual(value.value, "'''Ardal''':* & '''O''':* & '''Hanlon''':*")
+        self.assertEqual(search_query.function, 'to_tsquery')
 
     # noinspection SpellCheckingInspection
     def test_get_search_query_config_not_simple(self):
@@ -248,8 +249,9 @@ class TestTextSearchQuerySetMixin(TestCase):
         search_query = self.queryset._get_search_query(
             "Ardal O'Hanlon ", config='german_unaccent', search_type='plain'
         )
-        self.assertEqual(search_query.value, "Ardal O'Hanlon ")
-        self.assertEqual(search_query.search_type, 'plain')
+        _config, value = search_query.get_source_expressions()
+        self.assertEqual(value.value, "Ardal O'Hanlon ")
+        self.assertEqual(search_query.function, 'plainto_tsquery')
 
     # noinspection SpellCheckingInspection
     def test_get_search_query_search_type_not_plain(self):
@@ -260,8 +262,9 @@ class TestTextSearchQuerySetMixin(TestCase):
                 search_query = self.queryset._get_search_query(
                     "Ardal O'Hanlon ", config='simple_unaccent', search_type=search_type
                 )
-                self.assertEqual(search_query.value, "Ardal O'Hanlon ")
-                self.assertEqual(search_query.search_type, search_type)
+                _config, value = search_query.get_source_expressions()
+                self.assertEqual(value.value, "Ardal O'Hanlon ")
+                self.assertIn(search_query.function, ('to_tsquery', 'phraseto_tsquery', 'websearch_to_tsquery'))
 
     def test_get_related_search_vectors_no_attr(self):
         # Assert that an empty list is returned, if the queryset model has no
@@ -296,25 +299,28 @@ class TestTextSearchQuerySetMixin(TestCase):
         col, query = simple.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
-        self.assertEqual(query.value, "'''Hovercraft''':*")
-        self.assertEqual(query.config, Value('simple_unaccent'))
-        self.assertEqual(query.search_type, 'raw')
+        config, value = query.get_source_expressions()
+        self.assertEqual(value.value, "'''Hovercraft''':*")
+        self.assertEqual(config.config.value, 'simple_unaccent')
+        self.assertEqual(query.function, 'to_tsquery')
 
         self.assertIsInstance(stemmed, SearchVectorExact)
         col, query = stemmed.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
-        self.assertEqual(query.value, "Hovercraft")
-        self.assertEqual(query.config, Value('german_unaccent'))
-        self.assertEqual(query.search_type, 'plain')
+        config, value = query.get_source_expressions()
+        self.assertEqual(value.value, "Hovercraft")
+        self.assertEqual(config.config.value, 'german_unaccent')
+        self.assertEqual(query.function, 'plainto_tsquery')
 
         self.assertIsInstance(related, SearchVectorExact)
         col, query = related.get_source_expressions()
         self.assertEqual(col.target, self.alias_opts.get_field('fts'))
         self.assertIsInstance(query, SearchQuery)
-        self.assertEqual(query.value, "'''Hovercraft''':*")
-        self.assertEqual(query.config, Value('simple_unaccent'))
-        self.assertEqual(query.search_type, 'raw')
+        config, value = query.get_source_expressions()
+        self.assertEqual(value.value, "'''Hovercraft''':*")
+        self.assertEqual(config.config.value, 'simple_unaccent')
+        self.assertEqual(query.function, 'to_tsquery')
 
     def test_search_rank_annotation(self):
         # Assert that the queryset returned by search() has the expected rank
@@ -338,19 +344,21 @@ class TestTextSearchQuerySetMixin(TestCase):
         col, query = simple.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
-        self.assertEqual(query.value, "'''Hovercraft''':*")
-        # query.config will be a Value expression
-        self.assertEqual(query.config, Value('simple_unaccent'))
-        self.assertEqual(query.search_type, 'raw')
+        config, value = query.get_source_expressions()
+        # Both config and value are Value expressions:
+        self.assertEqual(value.value, "'''Hovercraft''':*")
+        self.assertEqual(config.config.value, 'simple_unaccent')
+        self.assertEqual(query.function, 'to_tsquery')
 
         # 'stemmed' should be the search rank with the stemmed search query
         self.assertIsInstance(stemmed, SearchRank)
         col, query = stemmed.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
-        self.assertEqual(query.value, "Hovercraft")
-        self.assertEqual(query.config, Value('german_unaccent'))
-        self.assertEqual(query.search_type, 'plain')
+        config, value = query.get_source_expressions()
+        self.assertEqual(value.value, "Hovercraft")
+        self.assertEqual(config.config.value, 'german_unaccent')
+        self.assertEqual(query.function, 'plainto_tsquery')
 
         # related_rank should be a Max aggregate of the 'coalesced' related
         # ranks:
@@ -366,9 +374,10 @@ class TestTextSearchQuerySetMixin(TestCase):
         col, query = related.get_source_expressions()
         self.assertEqual(col.target, self.alias_opts.get_field('fts'))
         self.assertIsInstance(query, SearchQuery)
-        self.assertEqual(query.value, "'''Hovercraft''':*")
-        self.assertEqual(query.config, Value('simple_unaccent'))
-        self.assertEqual(query.search_type, 'raw')
+        config, value = query.get_source_expressions()
+        self.assertEqual(value.value, "'''Hovercraft''':*")
+        self.assertEqual(config.config.value, 'simple_unaccent')
+        self.assertEqual(query.function, 'to_tsquery')
 
     def test_search_rank_annotation_related_rank_only(self):
         # Assert that only the rank for the related vectors appears in the
