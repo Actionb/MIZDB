@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type, Union
 
 # noinspection PyPackageRequirements
@@ -9,10 +10,12 @@ from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    CharField, Count, Exists, Field as ModelField, Func, ManyToManyField, Min, OuterRef, QuerySet,
-    Subquery,
+    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField, Min,
+    OuterRef,
+    QuerySet, Subquery,
     Value
 )
+from django.db.models.functions import Coalesce
 from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
@@ -352,7 +355,6 @@ class AusgabenAdmin(MIZModelAdmin):
             (_models.Kalender, 'ausgabe', 'Programmhefte'),
             (_models.Katalog, 'ausgabe', 'Warenkataloge'),
         ]
-
 
 
 @admin.register(_models.Autor, site=miz_site)
@@ -1634,6 +1636,29 @@ class MIZGroupAdmin(AuthAdminMixin, GroupAdmin):
 
 @admin.register(User, site=miz_site)
 class MIZUserAdmin(AuthAdminMixin, UserAdmin):
+    list_display = (
+        'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'activity'
+    )
+
+    def get_queryset(self, request: HttpRequest):
+        queryset = super().get_queryset(request)
+        # Note that the order_by and values calls are required:
+        # see django docs expressions/#using-aggregates-within-a-subquery-expression
+        recent_logs = LogEntry.objects.filter(
+            user_id=OuterRef('id'),
+            action_time__date__gt=datetime.now() - timedelta(days=32)
+        ) .order_by().values('user_id')
+        subquery = Subquery(
+            recent_logs.annotate(c=Count('*')).values('c'), output_field=IntegerField()
+        )
+        return queryset.annotate(activity=Coalesce(subquery, Value(0)))
+
+    def activity(self, user: User) -> int:
+        """Return the total amount of the recent changes made by this user."""
+        # noinspection PyUnresolvedReferences
+        return user.activity or 0
+    activity.short_description = 'Aktivität letzte 30 Tage'  # type: ignore[attr-defined]
+    activity.admin_order_field = 'activity'  # type: ignore[attr-defined]
     pass
 
 
