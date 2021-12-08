@@ -1,14 +1,12 @@
 -r base.txt
-coverage==4.5.3
+coverage==6.2
 
-pylint==2.3.1
+pylint==2.12.2
 
-pylint-django==2.0.6
+pylint-django===2.4.4
 
-pipdeptree==0.13.2
+pipreqs==0.4.11
 
-pipreqs==0.4.9
-
-django-debug-toolbar==3.2.1
+django-debug-toolbar==3.2.2
 
 django-test-without-migrations==0.6
