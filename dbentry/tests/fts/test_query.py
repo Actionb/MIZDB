@@ -200,8 +200,7 @@ class TestFullTextSearch(DataTestCase):
 class TestTextSearchQuerySetMixin(TestCase):
 
     @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
+    def setUpClass(cls):
 
         class TestQuerySet(TextSearchQuerySetMixin, models.QuerySet):
             simple_configs = ('simple_unaccent', 'simple')
@@ -224,6 +223,8 @@ class TestTextSearchQuerySetMixin(TestCase):
         cls.model = TestModel
         cls.opts = TestModel._meta
         cls.alias_opts = Alias._meta
+
+        super().setUpClass()
 
     def setUp(self):
         super().setUp()
