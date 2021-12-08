@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('contenttypes', '__latest__'),
-        ('auth', '__latest__'),
+        ('contenttypes', '0002_remove_content_type_name'),
+        ('auth', '0011_update_proxy_permissions'),  # TODO: set to 0012 after everything has been updated to django 3.2+
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
