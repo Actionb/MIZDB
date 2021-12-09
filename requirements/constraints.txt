@@ -2,7 +2,7 @@ Django>=3.2,<4
 psycopg2==2.9.2
 
 # Django extensions/apps
-django-autocomplete-light==3.7.0.dev0
+django-autocomplete-light==3.8.2
 django-formtools==2.3
 django-tsvector-field==0.9.5
 django-admin-logs==1.0.2
