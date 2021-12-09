@@ -1,25 +1,15 @@
 """Settings shared by both production and development environments."""
 import logging
-import os
 import sys
+from pathlib import Path
 
 import yaml
-# TODO: update django doc refs version 1.11 -> 3.x/2.2
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = (
-    os.path.dirname(  # Base directory
-        os.path.dirname(  # MIZDB project directory
-            os.path.dirname(  # settings directory
-                os.path.abspath(__file__)
-            )
-        )
-    )
-)
-# TODO: Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# BASE_DIR/MIZDB project dir/settings dir/__file__
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-with open(os.path.join(BASE_DIR, 'config.yaml'), encoding='utf-8') as f:
+with open(BASE_DIR / 'config.yaml', encoding='utf-8') as f:
     config = yaml.safe_load(f)
 
 SECRET_KEY = config.get('SECRET_KEY', '')
@@ -29,7 +19,7 @@ SECRET_KEY = config.get('SECRET_KEY', '')
 ALLOWED_HOSTS = config.get('ALLOWED_HOSTS', [])
 
 # Database
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 DATABASES = {
     'default': {
         'ENGINE': 'dbentry.fts.db',
@@ -42,7 +32,7 @@ DATABASES = {
 }
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # Application definition
 
@@ -76,7 +66,7 @@ ROOT_URLCONF = 'MIZDB.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -93,7 +83,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'MIZDB.wsgi.application'
 
 # Password validation
-# https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -111,7 +101,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
 LANGUAGE_CODE = 'de'
 
 TIME_ZONE = 'Europe/Berlin'
@@ -122,20 +112,18 @@ USE_L10N = True
 
 USE_TZ = True
 
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale')
-]
+LOCALE_PATHS = [BASE_DIR / 'locale']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = BASE_DIR / 'static'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 MEDIA_URL = '/media/'
 
