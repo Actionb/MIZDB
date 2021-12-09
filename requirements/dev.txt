@@ -8,5 +8,3 @@ pylint-django===2.4.4
 pipreqs==0.4.11
 
 django-debug-toolbar==3.2.2
-
-django-test-without-migrations==0.6
