@@ -4,6 +4,7 @@
       <w>bürgerl</w>
       <w>compactified</w>
       <w>copylast</w>
+      <w>createdb</w>
       <w>decl</w>
       <w>deletelink</w>
       <w>dublettenlager</w>
@@ -14,6 +15,7 @@
       <w>isoformat</w>
       <w>itemtpl</w>
       <w>jahrgangswerte</w>
+      <w>libpq</w>
       <w>modelfac</w>
       <w>modelfactory</w>
       <w>movetobrochure</w>
@@ -26,6 +28,7 @@
       <w>searchform</w>
       <w>tabulars</w>
       <w>unaccent</w>
+      <w>undefine</w>
       <w>zeitschriftenraum</w>
       <w>zraum</w>
     </words>
