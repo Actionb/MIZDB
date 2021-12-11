@@ -1,18 +1,22 @@
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type, Union
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
 from django import http
-from django.contrib.auth import get_permission_codename
+from django.contrib.auth import get_permission_codename, get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Page, Paginator
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
+from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.creator import Creator, MultipleObjectsReturned
-from dbentry.managers import AusgabeQuerySet, MIZQuerySet
+from dbentry.ac.widgets import EXTRA_DATA_KEY
+from dbentry.query import AusgabeQuerySet, MIZQuerySet
+from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string
@@ -89,26 +93,19 @@ class ACBase(autocomplete.Select2QuerySetView):
         # noinspection PyProtectedMember,PyUnresolvedReferences
         return queryset.order_by(*self.model._meta.ordering)  # type: ignore
 
-    def apply_q(self, queryset: MIZQuerySet) -> Union[MIZQuerySet, list]:
+    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
         """
         Filter the given queryset with the view's search term ``q``.
 
         If ``q`` is a numeric value, try a primary key lookup. Otherwise use
-        either MIZQuerySet.find to find results or filter against
-        ``create_field``, if that is set.
-
-        Returns:
-            a list if querying via MIZQuerySet.find or a MIZQuerySet.
+        either MIZQuerySet.search to find results.
         """
         if self.q:
             # If the search term is a numeric value, try using it in a primary
             # key lookup, and if that returns results, return them.
             if self.q.isnumeric() and queryset.filter(pk=self.q).exists():
                 return queryset.filter(pk=self.q)
-            if isinstance(queryset, MIZQuerySet):
-                return queryset.find(self.q)
-            elif self.create_field:
-                return queryset.filter(**{self.create_field: self.q})
+            return queryset.search(self.q)
         return queryset
 
     def create_object(self, text: str) -> Model:
@@ -163,56 +160,88 @@ class ACBase(autocomplete.Select2QuerySetView):
         codename = get_permission_codename('add', opts)
         return user.has_perm("%s.%s" % (opts.app_label, codename))
 
-    def get_result_value(self, result: Union[Model, Sequence]) -> Optional[Union[str, int]]:
+    def get_result_value(self, result: Model) -> Optional[Union[str, int]]:
         """
-        Return the value (usually the primary key) of a result.
-
-        Args:
-            result: may be a model instance or a sequence, such as the list
-                returned by MIZQuerySet.find().
+        Return the value (usually the primary key) of a result model instance.
         """
         if isinstance(result, (list, tuple)):
-            if result[0] == 0:
-                # The list 'result' contains the IDs of the results.
-                # A '0' ID may be the 'weak hits' separator
-                # (query.PrimaryFieldsSearchQuery).
-                # Set it's id to None to make it not selectable.
-                return None
             return result[0]
         return str(result.pk)  # type: ignore
 
-    def get_result_label(self, result: Union[Model, Sequence]) -> str:
-        """
-        Return the label of a result.
-
-        Args:
-            result: may be a model instance or a sequence, such as the list
-                returned by MIZQuerySet.find().
-        """
+    def get_result_label(self, result: Model) -> str:
+        """Return the label of a result model instance."""
         if isinstance(result, (list, tuple)):
-            return result[1]
+            return str(result[1])
         return str(result)
 
 
-class ACBuchband(ACBase):
+class ACTabular(ACBase):
     """
-    Autocomplete view that queries buch instances that are defined as buchband.
-    """
+    Autocomplete view that presents the result data in tabular form.
 
-    model = _models.Buch
-    queryset = _models.Buch.objects.filter(is_buchband=True)
-
-
-class ACAusgabe(ACBase):
-    """
-    Autocomplete view for the model ausgabe that applies chronological order to
-    the results.
+    Select2 will group the results returned in the JsonResponse into option
+    groups (optgroup). This (plus bootstrap grids) will allow useful
+    presentation of the data.
     """
 
-    model = _models.Ausgabe
+    # noinspection PyMethodMayBeStatic
+    def get_extra_data(self, result: Model) -> list:
+        """Return the additional data to be displayed for the given result."""
+        return []
 
-    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
-        return queryset.chronological_order()
+    # noinspection PyMethodMayBeStatic
+    def get_group_headers(self) -> list:
+        """Return a list of labels for the additional columns/group headers."""
+        return []
+
+    def get_results(self, context: dict) -> List[dict]:
+        """Return data for the 'results' key of the response."""
+        return [
+            {
+                'id': self.get_result_value(result),
+                'text': self.get_result_label(result),
+                EXTRA_DATA_KEY: self.get_extra_data(result),
+                'selected_text': self.get_selected_result_label(result),
+            } for result in context['object_list']
+        ]
+
+    def render_to_response(self, context: dict) -> http.JsonResponse:
+        """
+        Return a JSON response in Select2 format.
+
+        If there are search results to display, nest the list of result items
+        under 'children' of the 'results' item so that Select2 creates an
+        optgroup for the results. See:
+        https://select2.org/data-sources/formats#grouped-data
+        """
+        q = self.request.GET.get('q', None)
+
+        create_option = self.get_create_option(context, q)
+        result_list = self.get_results(context)
+        if self.request.GET.get('tabular') and result_list:
+            headers = []
+            if context['page_obj'] and not context['page_obj'].has_previous():
+                # Only add optgroup headers for the first page of results.
+                headers = self.get_group_headers()
+
+            # noinspection PyProtectedMember
+            results = [{
+                "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
+                "children": result_list + create_option,
+                "is_optgroup": True,
+                "optgroup_headers": headers,
+            }]
+        else:
+            results = result_list + create_option
+
+        return http.JsonResponse(
+            {
+                'results': results,
+                'pagination': {
+                    'more': self.has_more(context)
+                }
+            }
+        )
 
 
 class ACCreatable(ACBase):
@@ -325,6 +354,135 @@ class ACCreatable(ACBase):
         return http.JsonResponse({'id': result.pk, 'text': str(result)})
 
 
+###############################################################################
+# Concrete autocomplete views.
+###############################################################################
+
+
+class ACAusgabe(ACTabular):
+    """
+    Autocomplete view for the model ausgabe that applies chronological order to
+    the results.
+    """
+
+    model = _models.Ausgabe
+
+    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
+        return queryset.chronological_order()
+
+    def get_queryset(self) -> MIZQuerySet:
+        queryset = super().get_queryset()
+        from dbentry.admin import AusgabenAdmin, miz_site
+        model_admin = AusgabenAdmin(self.model, miz_site)
+        return queryset.annotate(**model_admin.get_result_list_annotations())
+
+    def get_group_headers(self) -> list:
+        return ['Nummer', 'lfd.Nummer', 'Jahr']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [result.num_string, result.lnum_string, result.jahr_string]
+
+
+class ACBand(ACTabular):
+    model = _models.Band
+
+    def get_group_headers(self) -> list:
+        return ['Alias']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [", ".join(str(alias) for alias in result.bandalias_set.all())]
+
+
+class ACBuchband(ACBase):
+    """
+    Autocomplete view that queries buch instances that are defined as buchband.
+    """
+
+    model = _models.Buch
+    queryset = _models.Buch.objects.filter(is_buchband=True)
+
+
+class ACLagerort(ACTabular):
+    # TODO: enable the use of this view (admin.BestandInLine) once it's clear
+    #   what fields Lagerort should have and how the default result label
+    #   (here: Lagerort._name) should look like
+
+    model = _models.Lagerort
+
+    def get_group_headers(self) -> list:
+        return ['Ort', 'Raum']
+
+    def get_extra_data(self, result: Model) -> list:
+        # noinspection PyUnresolvedReferences
+        return [result.ort, result.raum]
+
+
+class ACMagazin(ACBase):
+    model = _models.Magazin
+
+    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
+        # Check if q is a valid ISSN; if it is, remove the dashes.
+        if issn.is_valid(self.q):  # type: ignore[has-type]
+            # noinspection PyAttributeOutsideInit
+            self.q = issn.compact(self.q)  # type: ignore[has-type]
+        return super().apply_q(queryset)
+
+
+class ACMusiker(ACTabular):
+    model = _models.Musiker
+
+    def get_group_headers(self) -> list:
+        return ['Alias']
+
+    # noinspection PyUnresolvedReferences
+    def get_extra_data(self, result: Model) -> list:
+        return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
+
+
+class ACSpielort(ACTabular):
+    model = _models.Spielort
+
+    def get_group_headers(self) -> list:
+        return ['Ort']
+
+    def get_extra_data(self, result: _models.Spielort) -> list:
+        return [str(result.ort)]
+
+
+class ACVeranstaltung(ACTabular):
+    model = _models.Veranstaltung
+
+    def get_group_headers(self) -> list:
+        return ['Datum', 'Spielort']
+
+    def get_extra_data(self, result: _models.Veranstaltung) -> list:
+        return [str(result.datum), str(result.spielort)]
+
+
+class UserAutocompleteView(autocomplete.Select2QuerySetView):
+    queryset = get_user_model().objects.order_by('username')
+    model_field_name = 'username'
+
+
+class ContentTypeAutocompleteView(autocomplete.Select2QuerySetView):
+    model = ContentType
+    model_field_name = 'model'
+    admin_site = miz_site
+
+    def get_queryset(self):
+        """Limit the queryset to models registered with miz_site."""
+        # noinspection PyProtectedMember
+        registered_models = [m._meta.model_name for m in self.admin_site._registry.keys()]
+        return super().get_queryset().filter(model__in=registered_models).order_by('model')
+
+
+###############################################################################
+# GND (german national library) autocomplete view & paginator.
+###############################################################################
+
+
 class GNDPaginator(Paginator):
     """
     Paginator for autocomplete views that query the German national library.
@@ -359,16 +517,10 @@ class GNDPaginator(Paginator):
 
 
 class GND(ACBase):
-    """
-    Autocomplete view that queries the SRU API endpoint of the DNB.
-
-    Attributes:
-        sru_query_func: the callable that fetches the results from the endpoint
-    """
+    """Autocomplete view that queries the SRU API endpoint of the DNB."""
 
     paginate_by = 10  # DNB default number of records per request
     paginator_class = GNDPaginator
-    sru_query_func: Callable = searchgnd
 
     def get_query_string(self, q: Optional[str] = None) -> str:
         """Construct and return a SRU compliant query string."""
@@ -394,8 +546,8 @@ class GND(ACBase):
         page_number = int(page)
         start = (page_number - 1) * self.paginate_by + 1
 
-        results, self.total_count = self.sru_query_func(
-            self.get_query_string(self.q),
+        results, self.total_count = searchgnd(
+            query=self.get_query_string(self.q),
             startRecord=[str(start)],
             maximumRecords=[str(self.paginate_by)],
             **self.get_query_func_kwargs()

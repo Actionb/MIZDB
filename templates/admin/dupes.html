@@ -45,33 +45,30 @@ form ul li {
 {% if items %}
 <h1>{{ items|length }} Duplikate gefunden!</h1>
 {% for dupe_item, cl_link in items %}
-    <form method="post">
-        {% csrf_token %}
-        <table class="form" style="width:100%">
-            <thead><tr>
-                <th style="width:5%;">Merge</th>
-                <th style="width:7%;">id</th>
-                <th style="width:13%;">link</th>
-                {% for header in headers %}
-                    <th style="width:{{ headers_width }}%;"> {{header}} </th>
-                {% endfor %}
-            </tr></thead>
-
-            {% for object, object_link, fields in dupe_item %}
-                <tr class="{% cycle 'row1' 'row2' %}">
-                    <td><input type="checkbox" name="{{ action_checkbox_name }}" value="{{object.pk}}" checked /></td>
-                    <td>{{object.pk}}</td>
-                    <td>{{object_link}}</td>
-                    {% for field in fields %}
-                        <td>{{field}}</td>
-                    {% endfor %}
-                </tr>
+    <div>
+    <table class="form" style="width:100%">
+        <thead><tr>
+            <th style="width:7%;">id</th>
+            <th style="width:13%;">link</th>
+            {% for header in headers %}
+                <th style="width:{{ headers_width }}%;"> {{header}} </th>
             {% endfor %}
-            {% resetcycle %}
-        </table>
-        <input type="hidden" name="action" value="{{action_name}}" />
-        <input type="submit" name="merge_sub" value="Zusammenfügen"> {{cl_link}}
-    </form>
+        </tr></thead>
+
+        {% for object, object_link, fields in dupe_item %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+                <td>{{object.pk}}</td>
+                <td>{{object_link}}</td>
+                {% for field in fields %}
+                    <td>{{field}}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        {% resetcycle %}
+    </table>
+    <br>
+    {{cl_link}}
+    </div>
     <br><hr><br>
 {% endfor %}
 {% else %}

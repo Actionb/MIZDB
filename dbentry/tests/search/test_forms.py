@@ -94,10 +94,15 @@ class TestSearchFormFactory(MyTestCase):
         form_class = self.factory(
             model=_models.Artikel,
             fields=['ausgabe'],
-            forwards={'ausgabe': 'magazin'}
+            forwards={'ausgabe': 'magazin'},
+            tabular=['ausgabe']
         )
         self.assertIn('ausgabe', form_class.base_fields)
         self.assertTrue(form_class.base_fields['ausgabe'].widget.forward)
+        self.assertIsInstance(
+            form_class.base_fields['ausgabe'].widget,
+            autocomplete_widgets.TabularResultsMixin
+        )
 
     def test_factory_range_lookup(self):
         # Assert that the factory recognizes range lookups in a field's path
@@ -332,6 +337,7 @@ class TestRangeFormField(MyTestCase):
         self.assertIn('fields', kwargs)
         self.assertEqual(len(kwargs['fields']), 2)
         self.assertTrue(all(isinstance(f, forms.CharField) for f in kwargs['fields']))
+
 
 class TestRangeWidget(MyTestCase):
 

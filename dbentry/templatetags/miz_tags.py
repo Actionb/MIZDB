@@ -46,7 +46,7 @@ def checkbox_label(admin_field: AdminField) -> str:
     """
     Provide label tag for a 'checkbox' AdminField in a django admin Fieldset.
 
-    By default AdminField treats checkbox fields differently:
+    By default AdminField treats checkbox fields differently than other fields:
         - the label for an AdminField is to the right of the checkbox input
           (due to css class "vCheckboxLabel")
         - the label does not have a suffix (usually ":")

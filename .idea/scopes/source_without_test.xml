@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="source_without_test" pattern="(file[MIZDB]:dbentry//*||file[MIZDB]:MIZDB//*)&amp;&amp;!file[MIZDB]:dbentry/static//*&amp;&amp;!file[MIZDB]:dbentry/migrations//*&amp;&amp;!file[MIZDB]:dbentry/fixtures//*&amp;&amp;!file[MIZDB]:dbentry/templates//*&amp;&amp;!file[MIZDB]:dbentry/tests//*" />
+</component>

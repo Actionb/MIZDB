@@ -1,21 +1,18 @@
 from unittest.mock import patch
-from functools import partial
 
-from django.forms import widgets
+# noinspection PyPackageRequirements
+from dal import autocomplete, forward
 from django.core.exceptions import ImproperlyConfigured
-from django.urls.exceptions import NoReverseMatch
+from django.forms import Media, widgets
 from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.widgets import (
-    MIZWidgetMixin, RemoteModelWidgetWrapper, GenericURLWidgetMixin, MIZModelSelect2,
-    MIZModelSelect2Multiple, make_widget
+    EXTRA_DATA_KEY, GenericURLWidgetMixin, MIZModelSelect2, MIZModelSelect2Multiple, MIZWidgetMixin,
+    RemoteModelWidgetWrapper, TabularResultsMixin, make_widget
 )
 from dbentry.forms import ArtikelForm
 from dbentry.tests.base import MyTestCase
-
-# noinspection PyPackageRequirements
-from dal import autocomplete, forward
 
 
 class TestRemoteModelWidgetWrapper(MyTestCase):
@@ -281,3 +278,38 @@ class TestMakeWidget(MyTestCase):
         self.assertIsInstance(widget, MIZModelSelect2)
         widget = make_widget(model=_models.Genre, multiple=False, wrap=True)
         self.assertIsInstance(widget, RemoteModelWidgetWrapper)
+
+
+class TestTabularResultsMixin(MyTestCase):
+
+    class DummyWidget(object):
+
+        def __init__(self, attrs=None):
+            self.attrs = attrs or {}
+
+        @property
+        def media(self):
+            return Media()
+
+    class TabularWidget(TabularResultsMixin, DummyWidget):
+        pass
+
+    def test_init_adds_class(self):
+        # Assert that init adds the necessary css class to the widget attrs.
+        widget = self.TabularWidget()
+        self.assertIn('class', widget.attrs)
+        self.assertEqual(widget.attrs['class'], 'select2-tabular')
+        widget = self.TabularWidget(attrs={'class': 'test-class'})
+        self.assertIn('class', widget.attrs)
+        self.assertEqual(widget.attrs['class'], 'test-class select2-tabular')
+
+    def test_init_adds_extra_data_key(self):
+        # Assert that init adds the extra data key to the widget attrs.
+        widget = self.TabularWidget()
+        self.assertIn('data-extra-data-key', widget.attrs)
+        self.assertEqual(widget.attrs['data-extra-data-key'], EXTRA_DATA_KEY)
+
+    def test_adds_javascript(self):
+        # Assert that the necessary javascript file is included in the media.
+        widget = self.TabularWidget()
+        self.assertIn('admin/js/select2_tabular.js', widget.media._js)

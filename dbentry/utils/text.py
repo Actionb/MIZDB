@@ -2,24 +2,14 @@ from typing import Iterable, Tuple, Union
 
 from nameparser import HumanName
 
-from dbentry.constants import M2M_LIST_MAX_LEN
 
-
-def concat_limit(
-        values: Iterable,
-        width: int = M2M_LIST_MAX_LEN,
-        sep: str = ", ", z: int = 0
-) -> str:
+def concat_limit(values: Iterable, width: int = 50, sep: str = ", ") -> str:
     """
     Join non-empty string values of iterable ``values`` separated by ``sep`` up
-    to a length of current string + ``width``, truncating the remainder.
+    to a length of ``width``, truncating the remainder.
 
     Passing width=0 disables the truncation.
     """
-    # FIXME: z-fill was dropped in ca7fdee952ed1965ed320a42ef7892db3affdde8  # noqa
-    # and I don't really know why. Without z-fill, sorting Ausgabe instances by
-    # their '_name' (i.e. alphabetically) will be poor:
-    # '2000-11' comes before '2000-2' (should be: '2000-02')
     results = ''
     for v in values:
         if not v:

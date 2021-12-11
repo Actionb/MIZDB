@@ -364,24 +364,24 @@ class TestPartialDate(MyTestCase):
 
     def test_new_with_int_kwargs(self):
         # Full date
-        self.assertAttrsSet(PartialDate(year=2019, month=5, day=20), 2019, 5, 20, '%d %B %Y')
+        self.assertAttrsSet(PartialDate(year=2019, month=5, day=20), 2019, 5, 20, '%Y-%m-%d')
         # year and month
-        self.assertAttrsSet(PartialDate(year=2019, month=5), 2019, 5, None, '%B %Y')
-        self.assertAttrsSet(PartialDate(year=2019, month=5, day=0), 2019, 5, None, '%B %Y')
+        self.assertAttrsSet(PartialDate(year=2019, month=5), 2019, 5, None, '%Y-%m')
+        self.assertAttrsSet(PartialDate(year=2019, month=5, day=0), 2019, 5, None, '%Y-%m')
         # year and day
-        self.assertAttrsSet(PartialDate(year=2019, day=20), 2019, None, 20, '%d %Y')
-        self.assertAttrsSet(PartialDate(year=2019, month=0, day=20), 2019, None, 20, '%d %Y')
+        self.assertAttrsSet(PartialDate(year=2019, day=20), 2019, None, 20, '%Y-%d')
+        self.assertAttrsSet(PartialDate(year=2019, month=0, day=20), 2019, None, 20, '%Y-%d')
         # month and day
-        self.assertAttrsSet(PartialDate(month=5, day=20), None, 5, 20, '%d %B')
-        self.assertAttrsSet(PartialDate(year=0, month=5, day=20), None, 5, 20, '%d %B')
+        self.assertAttrsSet(PartialDate(month=5, day=20), None, 5, 20, '%m-%d')
+        self.assertAttrsSet(PartialDate(year=0, month=5, day=20), None, 5, 20, '%m-%d')
         # year only
         self.assertAttrsSet(PartialDate(year=2019), 2019, None, None, '%Y')
         self.assertAttrsSet(PartialDate(year=2019, month=0), 2019, None, None, '%Y')
         self.assertAttrsSet(PartialDate(year=2019, month=0, day=0), 2019, None, None, '%Y')
         # month only
-        self.assertAttrsSet(PartialDate(month=5), None, 5, None, '%B')
-        self.assertAttrsSet(PartialDate(year=0, month=5), None, 5, None, '%B')
-        self.assertAttrsSet(PartialDate(year=0, month=5, day=0), None, 5, None, '%B')
+        self.assertAttrsSet(PartialDate(month=5), None, 5, None, '%m')
+        self.assertAttrsSet(PartialDate(year=0, month=5), None, 5, None, '%m')
+        self.assertAttrsSet(PartialDate(year=0, month=5, day=0), None, 5, None, '%m')
         # day only
         self.assertAttrsSet(PartialDate(day=20), None, None, 20, '%d')
         self.assertAttrsSet(PartialDate(month=0, day=20), None, None, 20, '%d')
@@ -395,22 +395,22 @@ class TestPartialDate(MyTestCase):
     def test_new_with_string_kwargs(self):
         # Full date
         self.assertAttrsSet(
-            PartialDate(year='2019', month='5', day='20'), 2019, 5, 20, '%d %B %Y')
+            PartialDate(year='2019', month='5', day='20'), 2019, 5, 20, '%Y-%m-%d')
         # year and month
         self.assertAttrsSet(
-            PartialDate(year='2019', month='05'), 2019, 5, None, '%B %Y')
+            PartialDate(year='2019', month='05'), 2019, 5, None, '%Y-%m')
         self.assertAttrsSet(
-            PartialDate(year='2019', month='05', day='0'), 2019, 5, None, '%B %Y')
+            PartialDate(year='2019', month='05', day='0'), 2019, 5, None, '%Y-%m')
         # year and day
         self.assertAttrsSet(
-            PartialDate(year='2019', day='20'), 2019, None, 20, '%d %Y')
+            PartialDate(year='2019', day='20'), 2019, None, 20, '%Y-%d')
         self.assertAttrsSet(
-            PartialDate(year='2019', month='0', day='20'), 2019, None, 20, '%d %Y')
+            PartialDate(year='2019', month='0', day='20'), 2019, None, 20, '%Y-%d')
         # month and day
         self.assertAttrsSet(
-            PartialDate(month='5', day='20'), None, 5, 20, '%d %B')
+            PartialDate(month='5', day='20'), None, 5, 20, '%m-%d')
         self.assertAttrsSet(
-            PartialDate(year='0000', month='5', day='20'), None, 5, 20, '%d %B')
+            PartialDate(year='0000', month='5', day='20'), None, 5, 20, '%m-%d')
         # year only
         self.assertAttrsSet(
             PartialDate(year='2019'), 2019, None, None, '%Y')
@@ -420,11 +420,11 @@ class TestPartialDate(MyTestCase):
             PartialDate(year='2019', month='00', day='0'), 2019, None, None, '%Y')
         # month only
         self.assertAttrsSet(
-            PartialDate(month='5'), None, 5, None, '%B')
+            PartialDate(month='5'), None, 5, None, '%m')
         self.assertAttrsSet(
-            PartialDate(year='0', month='05'), None, 5, None, '%B')
+            PartialDate(year='0', month='05'), None, 5, None, '%m')
         self.assertAttrsSet(
-            PartialDate(year='0000', month='05', day='00'), None, 5, None, '%B')
+            PartialDate(year='0000', month='05', day='00'), None, 5, None, '%m')
         # day only
         self.assertAttrsSet(
             PartialDate(day='20'), None, None, 20, '%d')
@@ -442,22 +442,22 @@ class TestPartialDate(MyTestCase):
 
     def test_new_with_string(self):
         # Full date
-        self.assertAttrsSet(PartialDate.from_string('2019-05-20'), 2019, 5, 20, '%d %B %Y')
+        self.assertAttrsSet(PartialDate.from_string('2019-05-20'), 2019, 5, 20, '%Y-%m-%d')
         # year and month
-        self.assertAttrsSet(PartialDate.from_string('2019-05'), 2019, 5, None, '%B %Y')
-        self.assertAttrsSet(PartialDate.from_string('2019-05-00'), 2019, 5, None, '%B %Y')
+        self.assertAttrsSet(PartialDate.from_string('2019-05'), 2019, 5, None, '%Y-%m')
+        self.assertAttrsSet(PartialDate.from_string('2019-05-00'), 2019, 5, None, '%Y-%m')
         # year and day
-        self.assertAttrsSet(PartialDate.from_string('2019-00-20'), 2019, None, 20, '%d %Y')
+        self.assertAttrsSet(PartialDate.from_string('2019-00-20'), 2019, None, 20, '%Y-%d')
         # month and day
-        self.assertAttrsSet(PartialDate.from_string('05-20'), None, 5, 20, '%d %B')
-        self.assertAttrsSet(PartialDate.from_string('0000-05-20'), None, 5, 20, '%d %B')
+        self.assertAttrsSet(PartialDate.from_string('05-20'), None, 5, 20, '%m-%d')
+        self.assertAttrsSet(PartialDate.from_string('0000-05-20'), None, 5, 20, '%m-%d')
         # year only
         self.assertAttrsSet(PartialDate.from_string('2019'), 2019, None, None, '%Y')
         self.assertAttrsSet(PartialDate.from_string('2019-00'), 2019, None, None, '%Y')
         self.assertAttrsSet(PartialDate.from_string('2019-00-00'), 2019, None, None, '%Y')
         # month only
-        self.assertAttrsSet(PartialDate.from_string('0000-05'), None, 5, None, '%B')
-        self.assertAttrsSet(PartialDate.from_string('0000-05-00'), None, 5, None, '%B')
+        self.assertAttrsSet(PartialDate.from_string('0000-05'), None, 5, None, '%m')
+        self.assertAttrsSet(PartialDate.from_string('0000-05-00'), None, 5, None, '%m')
         # day only
         self.assertAttrsSet(PartialDate.from_string('0000-00-20'), None, None, 20, '%d')
         self.assertAttrsSet(PartialDate.from_string('00-20'), None, None, 20, '%d')
@@ -469,9 +469,9 @@ class TestPartialDate(MyTestCase):
 
     def test_new_with_date(self):
         self.assertAttrsSet(
-            PartialDate.from_date(datetime.date(2019, 5, 20)), 2019, 5, 20, '%d %B %Y')
+            PartialDate.from_date(datetime.date(2019, 5, 20)), 2019, 5, 20, '%Y-%m-%d')
         self.assertAttrsSet(
-            PartialDate.from_date(datetime.datetime(2019, 5, 20)), 2019, 5, 20, '%d %B %Y')
+            PartialDate.from_date(datetime.datetime(2019, 5, 20)), 2019, 5, 20, '%Y-%m-%d')
 
     def test_new_validates_date(self):
         # Assert that PartialDate does not accept invalid dates (31st of February, etc.).
@@ -549,10 +549,10 @@ class TestPartialDate(MyTestCase):
 
     def test_str(self):
         test_data = [
-            ('2019-05-20', '20 May 2019'), ('2019-05-00', 'May 2019'),
-            ('2019-00-20', '20 2019'), ('2019-00-00', '2019'),
-            ('0000-05-20', '20 May'), ('0000-05-00', 'May'),
-            ('0000-00-20', '20'), ('0000-00-00', ''),
+            ('2019-05-20', '2019-05-20'), ('2019-05-00', '2019-05'),
+            ('2019-00-20', '2019'), ('2019-00-00', '2019'),
+            ('0000-05-20', '20. Mai'), ('0000-05-00', 'Mai'),
+            ('0000-00-20', '20.'), ('0000-00-00', ''),
         ]
         for data, expected in test_data:
             with self.subTest(data=data):
@@ -560,7 +560,7 @@ class TestPartialDate(MyTestCase):
                 self.assertEqual(str(pd), expected)
 
         with_date = PartialDate.from_date(datetime.date(2019, 5, 20))
-        self.assertEqual(str(with_date), '20 May 2019')
+        self.assertEqual(str(with_date), '2019-05-20')
 
 
 @tag("partial_date")

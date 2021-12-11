@@ -27,6 +27,8 @@ class MIZAdminSite(admin.AdminSite):
 
     # Do not display the “View on site” link in the header:
     site_url = None
+    # Disable the nav sidebar:
+    enable_nav_sidebar = False
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)

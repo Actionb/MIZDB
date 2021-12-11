@@ -13,10 +13,6 @@ from stdnum import ean, isbn, issn
 from dbentry.validators import EANValidator, ISBNValidator, ISSNValidator
 
 
-# FIXME: PartialDate: changelist queries (using the advanced search form formfields)
-#  require a year value.
-
-
 class YearField(models.IntegerField):
     """
     An IntegerField that validates against min and max values for year numbers.
@@ -234,7 +230,7 @@ class PartialDate(datetime.date):
 
     Additional attribute:
         date_format (str): format code (C89 standard) string of the date;
-          '%d', '%B' or '%Y', or a combination thereof separated by whitespace
+          '%d', '%m' or '%Y', or a combination thereof separated by dashes '-'
     """
 
     db_value_template = '{year!s:0>4}-{month!s:0>2}-{day!s:0>2}'
@@ -245,10 +241,10 @@ class PartialDate(datetime.date):
         # Default values for the instance's attributes
         instance_attrs = {'year': None, 'month': None, 'day': None}
         # Default values for the datetime.date constructor
-        constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}
+        constructor_kwargs = {'year': 4, 'month': 1, 'day': 1}  # why year: 4?
         date_format = []
         iterator = zip(
-            ('day', 'month', 'year'), (day, month, year), ('%d', '%B', '%Y')
+            ('year', 'month', 'day'), (year, month, day), ('%Y', '%m', '%d')
         )
         for name, value, format_code in iterator:
             if value is None:
@@ -266,7 +262,7 @@ class PartialDate(datetime.date):
             # The default attrs year,month,day are not writable.
             setattr(date, '__' + k, v)
 
-        date.date_format = ' '.join(date_format)
+        date.date_format = '-'.join(date_format)
         return date
 
     @classmethod
@@ -302,19 +298,29 @@ class PartialDate(datetime.date):
         return self.db_value_template.format(**format_kwargs)
 
     def __str__(self):
-        return self.strftime(self.date_format)
+        if getattr(self, '__year', None):
+            if getattr(self, '__month', None):
+                # YYYY-MM or YYYY-MM-DD
+                return self.strftime(self.date_format)
+            else:
+                # We've got a value for year and possibly one for the day;
+                # just show the year.
+                return str(getattr(self, '__year'))
+        else:
+            # localized month followed by day (if given) -- or no data at all
+            return self.localize()
 
     def localize(self) -> str:
         """Return a localized date string."""
         if self.date_format:
-            # The date is not 'empty'; let django format the date.
-            # Note however, that python's format code for month full localized
-            # name is %B - whereas django uses %F.
-            # date_format also only checks for the format code letters, not the
-            # percent signs.
-            # noinspection PyUnresolvedReferences
-            return formats.date_format(
-                self, self.date_format.replace('%B', '%F')).replace('%', '')
+            # The date is not 'empty'; let django format the date into an
+            # alphanumeric, localized form ('01. Mai 2015' or 'Mai 2015').
+            # Note that in django, %F is the format code for month localized.
+            # Also, the percent signs need to be removed.
+            date_format = " ".join(
+                reversed(self.date_format.split('-'))  # date_format is in ISO 8601
+            ).replace('%d', '%d.').replace('%m', '%F').replace('%', '')
+            return formats.date_format(self, date_format)
         return ''
 
     def __iter__(self):
@@ -422,7 +428,14 @@ class PartialDateFormField(fields.MultiValueField):
 
 
 class PartialDateField(models.CharField):
-    """Model field that handles PartialDate instances."""
+    """
+    Model field that handles PartialDate instances.
+
+    Dates are stored as text in ISO 8601 format ('YYYY-MM-DD'). Missing values
+    for year, month or day are replaced with zeroes (f.ex. '1969-00-09'). The
+    PartialDate constructor will pick up on those zeroes and display the
+    partial date accordingly.
+    """
 
     default_error_messages = models.DateField.default_error_messages
     help_text = "Teilweise Angaben sind erlaubt (z.B. Jahr & Monat aber ohne Tag)."

@@ -110,7 +110,6 @@ class TestSiteSearchView(ViewTestCase):
         results = view.get_result_list('Silva')
         self.assertTrue(results)
         self.assertEqual(len(results), 1)
-        self.assertIn(str(self.obj1.pk), results[0])
         self.assertIn('Musiker (1)', results[0])
 
     def test_get_result_list_noperms(self):
@@ -144,7 +143,7 @@ class TestSiteSearchView(ViewTestCase):
         results = context['results']
         self.assertTrue(results)
         self.assertEqual(len(results), 1)
-        self.assertIn(str(self.obj1.pk), results[0])
+        self.assertIn('?q=Silva', results[0])
         self.assertIn('Musiker (1)', results[0])
 
     @mock.patch.object(SiteSearchView, 'get_result_list')

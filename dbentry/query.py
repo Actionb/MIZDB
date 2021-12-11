@@ -1,517 +1,482 @@
-"""
-This module contains helper classes that facilitate querying a queryset for a
-search term in various degrees of accuracy (iexact, istartswith, icontains).
-"""
-from typing import Any, Dict, List, Optional, Sequence, Set, TYPE_CHECKING, Tuple, Union
+import calendar
+import datetime
+from collections import OrderedDict
+from typing import Any, Dict, Iterable, List, Optional, OrderedDict as OrderedDictType, Union
 
-from django.contrib.admin.utils import get_fields_from_path
 from django.core.exceptions import FieldDoesNotExist
-from django.db import models
-from django.db.models import Field, Model, QuerySet
-from django.utils.encoding import force_text
-from django.utils.translation import gettext_lazy
+from django.core.validators import EMPTY_VALUES
+from django.db import transaction
+from django.db.models import Count, Max, Min, Model, QuerySet
+from django.db.models.constants import LOOKUP_SEP
 
-if TYPE_CHECKING:
-    # Avoid circular imports.
-    from dbentry.managers import MIZQuerySet
-
-ResultList = List[Tuple[int, str]]
+from dbentry.fts.query import TextSearchQuerySetMixin
+from dbentry.utils import leapdays
 
 
-class BaseSearchQuery(object):
-    """
-    Helper object to facilitate a search on a number of fields with three
-    degrees of accuracy (iexact, istartswith, icontains).
+class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
 
-    Attributes:
-        - search_fields (list): the list of field names to include in the filter
-        - ids_found (set): the set of model instance id's found
-        - suffixes (dict): a dictionary of field names to suffixes. If a result
-          was found from querying a field defined in the suffixes dict, the
-          suffix will be appended to the label of that result.
-        - use_suffixes (bool): whether to append suffixes to result labels
-        - exact_match (bool): if True, the query with 'iexact' returned a result
-    """
-
-    def __init__(
+    def values_dict(
             self,
-            queryset: QuerySet,
-            search_fields: Union[Sequence, str, None] = None,
-            suffixes: Optional[Dict[str, str]] = None,
-            use_suffix: bool = True,
-            **kwargs: Any
-    ) -> None:
-        """Initialize the helper object."""
-        self._root_queryset: QuerySet = queryset
-        self.ids_found: Set[int] = set()
-        self.use_suffix: bool = use_suffix
-        self.exact_match: bool = False
-
-        search_fields = search_fields or queryset.model.get_search_fields()
-        if isinstance(search_fields, str):
-            self.search_fields = [search_fields]
-        else:
-            self.search_fields = list(search_fields)  # 'cast' into a list
-        if suffixes:
-            self.suffixes = suffixes
-        elif getattr(queryset.model, 'search_fields_suffixes', None):
-            self.suffixes = queryset.model.search_fields_suffixes
-        else:
-            self.suffixes = {}
-
-    def get_model_field(self, field_name: str) -> Optional[Field]:
-        """Resolve the given field_name into a model field instance."""
-        try:
-            return get_fields_from_path(self._root_queryset.model, field_name)[-1]
-        except FieldDoesNotExist:
-            return None
-
-    @staticmethod
-    def clean_string(s: str) -> str:
+            *fields: str,
+            include_empty: bool = False,
+            flatten: bool = False,
+            **expressions: Any
+    ) -> OrderedDictType[int, dict]:
         """
-        Remove whitespaces from string ``s`` and prepare it for case
-        insensitive comparison.
-        """
-        return str(s).strip().lower()
+        An extension of QuerySet.values() that merges results of the same record.
 
-    def clean_q(self, q: str, field_name: str) -> str:
-        """
-        Clean the search term ``q``. If field_name refers to a DateField, make
-        ``q`` date isoformat compliant.
-        """
-        q = self.clean_string(q)
-        if isinstance(self.get_model_field(field_name), models.DateField):
-            # Comparisons with DateFields require a string of format 'yyyy-mm-dd'.
-            if '.' in q:
-                return "-".join(
-                    date_bit.zfill(2)
-                    for date_bit in reversed(q.split('.'))
-                )
-        return q
+        For example for  a pizza with two toppings and two sizes;
 
-    def get_queryset(self, q: str = '') -> QuerySet:
-        return self._root_queryset.all()
-
-    def get_suffix(self, field: str, lookup: str = '') -> str:
-        """
-        Return the suffix to append to a search result for the given the field
-        name ``field`` and the lookup name ``lookup``.
-        """
-        if field + lookup in self.suffixes:
-            return self.suffixes[field + lookup]
-        elif field in self.suffixes:
-            return self.suffixes[field]
-        else:
-            return ""
-
-    def append_suffix(self, label: str, suffix: str) -> str:
-        """
-        Append the given suffix to the result's label.
-
-        These suffixes (usually just a verbose version of the field name) act
-        as hints on why a particular result was found.
-        """
-        if self.use_suffix and suffix:
-            return "%s (%s)" % (label, suffix)
-        return label
-
-    def create_result_list(
-            self,
-            search_results: Union[QuerySet, ResultList],
-            search_field: str,
-            lookup: str = ''
-    ) -> ResultList:
-        """
-        Create the result list and record each results' id.
-
-        Returns a list of two-tuples:
-            (instance pk, string representation of instance + suffix)
-        """
-        suffix = self.get_suffix(search_field, lookup)
-        results = []
-        for item in search_results:
-            result = self.create_result_item(item, suffix)
-            self.ids_found.add(result[0])
-            results.append(result)
-        return results
-
-    def create_result_item(self, result: Model, suffix: str) -> Tuple[int, str]:
-        """Append the suffix and return an object for the result list."""
-        pk, name = self.get_values_for_result(result)
-        return pk, self.append_suffix(name, suffix)
-
-    def get_values_for_result(self, result: Model) -> Tuple[int, str]:
-        """Return the id and a label from the given model instance result."""
-        return result.pk, force_text(result)
-
-    def _do_lookup(self, lookup: str, search_field: str, q: str) -> ResultList:
-        """
-        Perform a query on the given search_field name using ``lookup`` and
-        return the results as modified by create_result_list.
-        """
-        search_results = (
-            self.get_queryset()
-            .exclude(pk__in=self.ids_found)
-            .filter(**{search_field + lookup: q})
-        )
-        return self.create_result_list(search_results, search_field, lookup)
-
-    def exact_search(self, search_field: str, q: str) -> ResultList:
-        """
-        Perform the search using the 'iexact' lookup.
-
-        If the search returned results, set the ``exact_match`` flag.
-        """
-        exact = self._do_lookup('__iexact', search_field, q)
-        if not self.exact_match and bool(exact):
-            self.exact_match = True
-        return exact
-
-    def startsw_search(self, search_field: str, q: str) -> ResultList:
-        """Perform the search using the 'istartswith' lookup."""
-        return self._do_lookup('__istartswith', search_field, q)
-
-    def contains_search(self, search_field: str, q: str) -> ResultList:
-        """Perform the search using the 'icontains' lookup."""
-        return self._do_lookup('__icontains', search_field, q)
-
-    def search(self, q: str, ordered: bool = False) -> Tuple[Union[ResultList, QuerySet], bool]:
-        """
-        Start point of the search process. Prepare instance variables for a
-        new search and begin the search.
-
-        By default, the order of the results depends on the search strategy.
-        If ``ordered`` is True, results will be ordered according to the order
-        established in the queryset instead.
-
-        Returns a two-tuple:
-            - a list of the results (or the root queryset if no search term)
-            - a boolean indicating that an exact match was found
-        """
-        if not q:
-            return self._root_queryset, False
-
-        self.ids_found = set()
-        self.exact_match = False
-        result = self._search(q)
-        if result and ordered and self._root_queryset.ordered:
-            result = self.reorder_results(result)
-        return result, self.exact_match
-
-    def reorder_results(self, results: ResultList) -> ResultList:
-        """
-        Reorder the results according to the order established by the root
-        queryset.
-        """
-        ids = list(self._root_queryset.values_list('pk', flat=True))
-        return sorted(results, key=lambda result_item: ids.index(result_item[0]))
-
-    def _search(self, q: str) -> ResultList:
-        """
-        Implement the search strategy.
-
-        For each field in search_fields perform three lookups.
-        """
-        result = []
-        for search_field in self.search_fields:
-            cleaned_q = self.clean_q(q, search_field)
-            result.extend(
-                self.exact_search(search_field, cleaned_q)
-                + self.startsw_search(search_field, cleaned_q)
-                + self.contains_search(search_field, cleaned_q)
-            )
-        return result
+        values('pk', 'pizza__topping', 'pizza__size') will return:
+                [
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'Tiny'},\n
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'Tiny'},\n
+                    {'pk':1, 'pizza__topping': 'Onions', 'pizza__size': 'God'},\n
+                    {'pk':1, 'pizza__topping': 'Bacon', 'pizza__size': 'God'}\n
+                ]
 
 
-class PrimaryFieldsSearchQuery(BaseSearchQuery):
-    """
-    A search that visually separates 'strong' results from 'weak' results.
-
-    Using the two lists of queryable (as in: can be used in a query) field paths
-    ``primary_search_fields`` and ``secondary_search_fields``, the results can
-    be categorized into two groups.
-    A result is regarded as 'strong' if it was found by searching the values
-    of a primary search field or if it was a result of an *iexact* lookup on a
-    secondary search field.
-    Any results from istartswith/icontains lookups on secondary search fields
-    are categorized as 'weak' results.
-    Within the result list, these two categories are separated by an
-    artificially inserted result (the separator).
-
-    Attributes:
-        - weak_hits_sep (str): format template for the separator
-        - separator_item_id (int): the 'id' of the separator item; defaults to 0  # TODO: separator_item_id does not need to be an attribute if it can only ever be 0 or None  # noqa
-          as no model instance ever has an id of value 0
-        - separator_width (int): the desired length of the separator string
-          after formatting. If the separator is shorter than the specified
-          length, it is padded with hyphens.
-    """
-
-    weak_hits_sep = gettext_lazy('weak hits for "{q}"')
-    separator_item_id = 0
-    separator_width = 36  # Select2 result box is 36 digits wide
-
-    def __init__(
-            self,
-            queryset: QuerySet,
-            *args: Any,
-            use_separator: bool = True,
-            primary_search_fields: Optional[Sequence[str]] = None,
-            **kwargs: Any
-    ) -> None:
-        """
-        Instantiate the PrimaryFieldsSearchQuery helper.
-
-        Prepare the two pivotal lists ``primary_search_fields`` and
-        ``secondary_search_fields``. primary_search_fields is either passed in
-        as a keyword argument or derived from the model class attribute with
-        the same name. If neither provide a non-empty list, the 'search_fields'
-        list as established by super() is used (effectively making this helper
-        the same as BaseSearchQuery).
-        Any fields declared in 'search_fields' that are not in
-        'primary_search_fields' are added to 'secondary_search_fields'.
+        values_dict('pk', 'pizza__topping', 'pizza__size') will return:
+                {
+                    1 : {
+                        'pizza__topping' : ('Onions', 'Bacon' ),
+                        'pizza__size': ('Tiny', 'God')
+                    },
+                }
 
         Args:
-            queryset: the queryset to perform the search on
-            use_separator (bool): whether to insert the separator into the
-              result list
-            primary_search_fields: a list of queryable field paths
+            *fields (str): list of field names/paths that should be included
+            include_empty (bool): if True, include empty values
+              (here: as defined in django.core.validators.EMPTY_VALUES)
+            flatten (bool): if True, any values list that has a length of 1
+              will be replaced by just that one item. This does not apply to
+              values from reverse related fields, as an iterable always
+              expected here.
+            **expressions: additional expressions for values()
+
+        Returns:
+            an OrderedDict of primary key to item values (dicts)
         """
-        super().__init__(queryset, *args, **kwargs)
+        # noinspection PyProtectedMember
+        opts = self.model._meta
+        # pk_name is the variable that will refer to this query's primary key
+        # values.
+        pk_name = opts.pk.name
 
-        if primary_search_fields:
-            self.primary_search_fields = primary_search_fields
-        else:
-            self.primary_search_fields = getattr(
-                queryset.model, 'primary_search_fields', []
-            )
-        if not self.primary_search_fields:
-            self.primary_search_fields = self.search_fields
-        elif isinstance(self.primary_search_fields, str):
-            self.primary_search_fields = [self.primary_search_fields]
+        # Make sure the query includes the model's primary key values as we
+        # require it to build the result out of.
+        # If fields is empty, the query targets all the model's fields.
+        if fields:
+            if pk_name not in fields:
+                if 'pk' in fields:
+                    pk_name = 'pk'
+                else:
+                    # The query does not query for the primary key at all;
+                    # it must be added to fields.
+                    fields += (pk_name,)
 
-        self.secondary_search_fields = [
-            field
-            for field in self.search_fields
-            if field not in self.primary_search_fields
-        ]
-        self.use_separator = use_separator
+        # Do not flatten reverse relation values. An iterable is expected.
+        flatten_exclude = []
+        if flatten and fields:
+            for field_path in fields:
+                field_name = field_path
+                if LOOKUP_SEP in field_path:
+                    field_name = field_path.split(LOOKUP_SEP, 1)[0]
+                try:
+                    field = opts.get_field(field_name)
+                except FieldDoesNotExist:
+                    # Don't raise the exception here; let it be raised by
+                    # self.values(). An invalid field will cause the query to
+                    # fail anyway and django provides a much more detailed
+                    # error message.
+                    break
+                if not field.concrete:
+                    flatten_exclude.append(field_path)
 
-    def create_separator_item(self, q: str, separator_text: str = '') -> Tuple[int, str]:
-        """
-        Return a result item that acts as a visual separator between strong
-        and weak results.
-        """
-        separator_text = separator_text or force_text(self.weak_hits_sep)
-        separator_text = " " + separator_text.format(q=q).strip() + " "
-        return (
-            self.separator_item_id,
-            '{:-^{width}}'.format(separator_text, width=self.separator_width)
-        )
-
-    def exact_search(self, search_field: str, q: str) -> ResultList:
-        """
-        Perform the search using the 'iexact' lookup.
-
-        If the search returned results and was done using a primary search
-        field, set the exact_match flag.
-        """
-        exact = self._do_lookup('__iexact', search_field, q)
-        if (not self.exact_match
-                and search_field in self.primary_search_fields
-                and bool(exact)):
-            self.exact_match = True
-        return exact
-
-    def _search(self, q: str) -> ResultList:
-        """
-        Implement the search strategy.
-
-        First get the 'strong' results; perform the three lookups for each
-        field in primary_search_fields and the iexact lookup for each field in
-        secondary_search_fields.
-        Then get the 'weak' results from istartswith and icontains lookups on
-        fields in secondary_search_fields.
-        If use_separator is True and weak results were found, insert a
-        separator in between the two categories.
-        """
-        results = []
-        for search_field in self.primary_search_fields:
-            cleaned_q = self.clean_q(q, search_field)
-            results.extend(
-                self.exact_search(search_field, cleaned_q)
-                + self.startsw_search(search_field, cleaned_q)
-                + self.contains_search(search_field, cleaned_q)
-            )
-        for search_field in self.secondary_search_fields:
-            cleaned_q = self.clean_q(q, search_field)
-            results.extend(self.exact_search(search_field, cleaned_q))
-
-        weak_hits = []
-        for search_field in self.secondary_search_fields:
-            cleaned_q = self.clean_q(q, search_field)
-            weak_hits.extend(
-                self.startsw_search(search_field, cleaned_q)
-                + self.contains_search(search_field, cleaned_q)
-            )
-        if weak_hits:
-            if self.use_separator and len(results):
-                weak_hits.insert(0, self.create_separator_item(q))
-            results.extend(weak_hits)
-        return results
-
-    def reorder_results(self, results: ResultList) -> ResultList:
-        """
-        Reorder the results according to the order established by the root
-        queryset.
-        Strong and weak results will be ordered within their respective group
-        if a separator is used (strong results are only ordered with other
-        strong results, etc.).
-        """
-        # If there is no separator item, do not differentiate between strong
-        # and weak results.
-        result_ids = [result_item[0] for result_item in results]
-        if not self.use_separator or self.separator_item_id not in result_ids:
-            return super().reorder_results(results)
-
-        ids = list(self._root_queryset.values_list('pk', flat=True))
-        sep_index = result_ids.index(self.separator_item_id)
-        # Now split the results into strong and weak results and order
-        # both groups individually according to the order in the root queryset.
-        strong, weak = results[:sep_index], results[sep_index + 1:]
-
-        def comp_func(result_item):
-            return ids.index(result_item[0])
-
-        ordered_results = sorted(strong, key=comp_func)
-        # Put the separator item back in.
-        ordered_results.append(results[sep_index])
-        ordered_results.extend(sorted(weak, key=comp_func))
-        return ordered_results
-
-
-class NameFieldSearchQuery(PrimaryFieldsSearchQuery):
-    """
-    Use the values of the 'name_field' as string representations of the results.
-    """
-
-    def __init__(
-            self,
-            queryset: QuerySet,
-            *args: Any,
-            name_field: Optional[str] = None,
-            **kwargs: Any
-    ) -> None:
-        if name_field:
-            self.name_field = name_field
-        else:
-            self.name_field = getattr(queryset.model, 'name_field', None)
-        super().__init__(queryset, *args, **kwargs)
-        if not self.name_field:
-            # If no name_field could be found, take the first field of either
-            # primary or secondary_search_fields.
-            if self.primary_search_fields:
-                self.name_field = self.primary_search_fields[0]
+        result: OrderedDictType[int, dict] = OrderedDict()
+        for val_dict in self.values(*fields, **expressions):
+            pk = val_dict.pop(pk_name)
+            # For easier lookups of field_names, use dictionaries for the
+            # item's values mapping. If tuplfy == True, we turn the values
+            # mapping back into a tuple before adding it to the result.
+            item_dict: Union[dict, tuple]  # for mypy
+            if pk in result:
+                # Multiple rows returned due to joins over relations for this
+                # primary key.
+                item_dict = dict(result[pk])
             else:
-                self.name_field = self.secondary_search_fields[0]
-        # Limit the queryset to only include primary keys and the values of the
-        # name fields:
-        self._root_queryset = self._root_queryset.values_list(
-            'pk', self.name_field
-        )
-
-    def get_values_for_result(self, result: Tuple[int, str]) -> Tuple[int, str]:
-        """
-        Return the id and a label from the given result.
-
-        In the case of NameFieldSearchQuery, the results are two tuples instead
-        of model instances.
-        """
+                item_dict = {}
+            for field_path, value in val_dict.items():
+                if not include_empty and value in EMPTY_VALUES:
+                    continue
+                values: tuple  # for mypy
+                if field_path not in item_dict:
+                    values = ()
+                elif flatten and not isinstance(item_dict.get(field_path), tuple):
+                    # This value has previously been flattened!
+                    values = (item_dict[field_path],)
+                else:
+                    values = item_dict[field_path]
+                if values and value in values:
+                    continue
+                values += (value,)
+                if flatten and len(values) == 1 and field_path not in flatten_exclude:
+                    values = values[0]
+                item_dict[field_path] = values
+            result[pk] = item_dict
         return result
 
 
-class ValuesDictSearchQuery(NameFieldSearchQuery):
-    """Fetch all the relevant data first and then do a search in memory."""
+class CNQuerySet(MIZQuerySet):
 
-    def get_queryset(self, q: str = '') -> 'MIZQuerySet':
-        # To limit the length of values_dict, exclude any records that do not
-        # at least icontain one 'word' of ``q`` in any of the search_fields.
-        qobjects = models.Q()
-        for search_field in self.search_fields:
-            for i in q.split():
-                qobjects |= models.Q(
-                    (
-                        search_field + '__icontains',
-                        self.clean_q(i, search_field)
+    def bulk_create(self, objs: Iterable[Model], **kwargs: Any) -> List[Model]:
+        # Set the _changed_flag on the objects to be created
+        for obj in objs:
+            obj._changed_flag = True
+        return super().bulk_create(objs, **kwargs)
+
+    def defer(self, *fields: str) -> MIZQuerySet:
+        if '_name' not in fields:
+            self._update_names()
+        return super().defer(*fields)
+
+    def filter(self, *args: Any, **kwargs: Any) -> MIZQuerySet:
+        if any(k.startswith('_name') for k in kwargs):
+            self._update_names()
+        return super().filter(*args, **kwargs)
+
+    def only(self, *fields: str) -> MIZQuerySet:
+        if '_name' in fields:
+            self._update_names()
+        return super().only(*fields)
+
+    def update(self, **kwargs: Any) -> int:
+        # Assume that a name update will be required after this update.
+        # If _changed_flag is not already part of the update, add it.
+        if '_changed_flag' not in kwargs:
+            kwargs['_changed_flag'] = True
+        return super().update(**kwargs)
+    update.alters_data = True  # type: ignore[attr-defined]
+
+    def values(self, *fields: str, **expressions: Any) -> MIZQuerySet:
+        if '_name' in fields:
+            self._update_names()
+        return super().values(*fields, **expressions)
+
+    def values_list(self, *fields: str, **kwargs: Any) -> MIZQuerySet:
+        if '_name' in fields:
+            self._update_names()
+        return super().values_list(*fields, **kwargs)
+
+    def _update_names(self) -> None:
+        """Update the names of rows where _changed_flag is True."""
+        if self.query.can_filter() and self.filter(_changed_flag=True).exists():
+            values = self.filter(
+                _changed_flag=True
+            ).values_dict(
+                *self.model.name_composing_fields,
+                include_empty=False,
+                flatten=False
+            )
+            with transaction.atomic():
+                for pk, val_dict in values.items():
+                    # noinspection PyProtectedMember
+                    new_name = self.model._get_name(**val_dict)
+                    self.order_by().filter(pk=pk).update(
+                        _name=new_name, _changed_flag=False
                     )
-                )
-        return self._root_queryset.filter(qobjects)
+    _update_names.alters_data = True  # type: ignore[attr-defined]
 
-    def _do_lookup(self, lookup: str, search_field: str, q: str) -> ResultList:
+
+def build_date(
+        years: List[int],
+        month_ordinals: List[int],
+        day: int = 1
+) -> Optional[datetime.date]:
+    """
+    Helper function for AusgabeQuerySet.increment_jahrgang to build a
+    datetime.date instance out of lists of years and month ordinals.
+    """
+    # Filter out None values that may have been returned by a values_list call.
+    years = list(filter(None, years))
+    month_ordinals = list(filter(None, month_ordinals))
+
+    if not (years and month_ordinals):
+        # Either years or month_ordinals is an empty sequence.
+        return None
+    year = min(years)
+    month = min(month_ordinals)
+
+    if len(month_ordinals) > 1:
+        # If the ausgabe spans several months, use the last day of the first
+        # 'appropriate' month to chronologically order it after any ausgabe that
+        # appeared only in that first month.
+        # An ausgabe released at the end of a year that also includes the next
+        # year should use the last month of the previous year.
+        if len(years) > 1:
+            month = max(month_ordinals)
+        # Get the last day of the chosen month.
+        day = calendar.monthrange(year, month)[1]
+    return datetime.date(year=year, month=month, day=day)
+
+
+class AusgabeQuerySet(CNQuerySet):
+    chronologically_ordered = False
+
+    def _chain(self, **kwargs: Any) -> 'AusgabeQuerySet':
+        # QuerySet._chain() will update the clone's __dict__ with the kwargs
+        # we give it. (in django1.11: QuerySet._clone() did this job)
+        if 'chronologically_ordered' not in kwargs:
+            kwargs['chronologically_ordered'] = self.chronologically_ordered
+        return super()._chain(**kwargs)
+
+    def order_by(self, *field_names: str) -> 'AusgabeQuerySet':
+        # Any call to order_by is almost guaranteed to break the
+        # chronological ordering.
+        self.chronologically_ordered = False
+        return super().order_by(*field_names)
+
+    def update(self, **kwargs: Any) -> int:
+        if self.chronologically_ordered:
+            # FIXME: Trying to update a chronologically ordered queryset seems to fail.
+            # A FieldError is raised, complaining about a missing field. That
+            # field should exist as an annotation but just doesn't.
+            # Proper solution to this would be check the update kwargs for
+            # expressions that require ordering and handle those separately
+            # somehow - but considering that chronological_order's days are almost
+            # numbered, this is the quick and dirty way of fixing the problem:
+            return self.order_by().update(**kwargs)
+        return super().update(**kwargs)
+
+    def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> 'AusgabeQuerySet':
+        # Always apply the chronological ordering to the search results.
+        return super().search(q, ranked=False).chronological_order()
+
+    def increment_jahrgang(self, start_obj: Model, start_jg: int = 1) -> Dict[int, List[int]]:
         """
-        Perform the search for search term ``q`` on field ``search_field``
-        using lookup ``lookup`` within the data (self.values_dict) fetched.
+        Alter the 'jahrgang' values using ``start_obj`` as starting point.
+
+        Set the jahrgang (i.e. the volume) value for ``start_obj`` to ``start_jg``
+        and then alter the jahrgang values of the other ausgabe objects in this
+        queryset according to whether they temporally come before or after the
+        jahrgang of ``start_obj``.
+        The time/jahrgang difference of other objects to ``start_obj`` is
+        calculated using either (partial) dates, 'num' or simply the year values
+        of the other objects; depending on the available data and in that order.
+
+        Returns:
+            a dictionary that was used to update the jahrgang values;
+              it maps jahrgang to list of ids.
         """
-        search_results = []
+        start = start_obj or self.chronological_order().first()
+        start_date = start.e_datum
+        years = start.ausgabejahr_set.values_list('jahr', flat=True)
+        if start_date:
+            start_year = start_date.year
+        elif years:
+            start_year = min(years)
+        else:
+            start_year = None
 
-        def filter_func(search_term):
-            search_term = self.clean_q(search_term, search_field)
+        ids_seen = {start.pk}
+        update_dict = {start_jg: [start.pk]}
+        queryset = self.exclude(pk=start.pk)
 
-            def inner(s):
-                """The filter function for the filter iterator."""
-                s = self.clean_string(s)
-                if lookup == '__iexact':
-                    return search_term == s
-                elif lookup == '__istartswith':
-                    return s.startswith(search_term)
-                return search_term in s
+        # Increment jahrgang using a (partial) date.
+        if start_date is None:
+            month_ordinals = start.ausgabemonat_set.values_list(
+                'monat__ordinal', flat=True
+            )
+            start_date = build_date(years, month_ordinals)
 
-            return inner
-
-        # values_dict is a OrderedDict of dicts of lists!:
-        # OrderedDict({
-        #   pk_1: {field_a: [values,...], field_b: [values...], ...}
-        #   pk_2: {},
-        #   ...
-        # })
-        for pk, data_dict in self.values_dict.copy().items():
-            values_list = data_dict.get(search_field, None)
-            if not values_list:
-                continue
-            match = any(filter(filter_func(q), values_list))
-
-            if (not match
-                    and lookup != '__icontains'
-                    and search_field in self.primary_search_fields
-                    and len(q.split()) > 1):
-                # 'q' is more than one word; try an order-independent search.
-                # If a value in values_list contains a match for each word in
-                # 'q', accept the values_list as a match.
-                # 'beep boop' would be found by searching for 'boop beep'.
-                for value in values_list:
-                    for bit in q.split():
-                        if not any(filter_func(bit)(word) for word in value.split()):
-                            break
-                    else:
-                        # The inner loop ran without break;
-                        # all words of 'q' can be found in 'value'.
-                        match = True
-                        break
-
-            if match:
-                # Create the result list and remove this data_dict from
-                # values_dict for future lookups.
-                label = self.values_dict.pop(pk)[self.name_field][0]
-                search_results.extend(
-                    self.create_result_list(
-                        search_results=[(pk, label)],
-                        search_field=search_field,
-                        lookup=lookup
+        if start_date:
+            val_dicts = queryset.values_dict(
+                'e_datum', 'ausgabejahr__jahr', 'ausgabemonat__monat__ordinal',
+                include_empty=False, flatten=False
+            )
+            for pk, val_dict in val_dicts.items():
+                if 'e_datum' in val_dict:
+                    obj_date = val_dict.get('e_datum')[-1]
+                elif ('ausgabejahr__jahr' not in val_dict
+                      or 'ausgabemonat__monat__ordinal' not in val_dict):
+                    # Need both year and month to build a meaningful date.
+                    continue
+                else:
+                    obj_date = build_date(
+                        val_dict['ausgabejahr__jahr'],
+                        val_dict['ausgabemonat__monat__ordinal']
                     )
-                )
-        return search_results
+                if obj_date < start_date:
+                    # If the obj_date lies before start_date the obj_jg will
+                    # always be start_jg - 1 plus the year difference between
+                    # the two dates.
+                    # If obj_date is equal to start_date except for the year
+                    # (same day, same month, different year), then obj_date
+                    # marks the exact BEGINNING of the obj_jg, thus we need to
+                    # handle it inclusively (subtracting 1 from the day
+                    # difference, thereby requiring 366 days difference).
+                    days = (start_date - obj_date).days - leapdays(start_date, obj_date) - 1
+                    obj_jg = start_jg - 1 - int(days / 365)
+                else:
+                    days = (obj_date - start_date).days - leapdays(start_date, obj_date)
+                    obj_jg = start_jg + int(days / 365)
+                if obj_jg not in update_dict:
+                    update_dict[obj_jg] = []
+                update_dict[obj_jg].append(pk)
+                ids_seen.add(pk)
 
-    def search(self, q: str, *args: Any, **kwargs: Any) -> Tuple[Union[ResultList, QuerySet], bool]:
-        if q:
-            self.values_dict = self.get_queryset(q).values_dict(*self.search_fields)
-        return super().search(q, *args, **kwargs)
+        # Increment jahrgang using the ausgabe's num.
+        nums = start.ausgabenum_set.values_list('num', flat=True)
+        if nums and start_year:
+            queryset = queryset.exclude(pk__in=ids_seen)
+            start_num = min(nums)
+            val_dicts = queryset.values_dict(
+                'ausgabenum__num', 'ausgabejahr__jahr',
+                include_empty=False, flatten=False
+            )
+            for pk, val_dict in val_dicts.items():
+                if ('ausgabenum__num' not in val_dict
+                        or 'ausgabejahr__jahr' not in val_dict):
+                    continue
+
+                obj_year = min(val_dict['ausgabejahr__jahr'])
+                obj_num = min(val_dict['ausgabenum__num'])
+                if len(val_dict['ausgabejahr__jahr']) > 1:
+                    # The ausgabe spans two years, choose the highest num
+                    # number to order it at the end of the year.
+                    obj_num = max(val_dict['ausgabenum__num'])
+
+                if ((obj_num > start_num and obj_year == start_year)
+                        or (obj_num < start_num and obj_year == start_year + 1)):
+                    # The object was released either:
+                    #   - after the start object and within the same year
+                    #   - *numerically* before the start object but in the year
+                    #       following the start year (i.e. temporally after).
+                    # Either way it still belongs to the same volume as start.
+                    update_dict[start_jg].append(pk)
+                else:
+                    obj_jg = start_jg + obj_year - start_year
+                    if obj_num < start_num:
+                        # The object was released in the 'previous' jahrgang.
+                        obj_jg -= 1
+                    if obj_jg not in update_dict:
+                        update_dict[obj_jg] = []
+                    update_dict[obj_jg].append(pk)
+                ids_seen.add(pk)
+
+        # Increment by year.
+        if start_year:
+            queryset = queryset.exclude(pk__in=ids_seen)
+            val_dicts = queryset.values_dict(
+                'ausgabejahr__jahr', include_empty=False, flatten=False
+            )
+            for pk, val_dict in val_dicts.items():
+                if 'ausgabejahr__jahr' not in val_dict:
+                    continue
+                obj_jg = start_jg + min(val_dict['ausgabejahr__jahr']) - start_year
+                if obj_jg not in update_dict:
+                    update_dict[obj_jg] = []
+                update_dict[obj_jg].append(pk)
+                ids_seen.add(pk)
+
+        with transaction.atomic():
+            for jg, ids in update_dict.items():
+                self.filter(pk__in=ids).update(jahrgang=jg)
+
+        return update_dict
+
+    def chronological_order(self, *order_fields: str) -> 'AusgabeQuerySet':
+        """Return this queryset chronologically ordered."""
+        # TODO: check out nulls_first and nulls_last parameters of
+        # Expression.asc() and desc() (added in 1.11) to fix the nulls messing
+        # up the ordering.
+        if self.chronologically_ordered:
+            # Already ordered!
+            return self
+
+        # noinspection PyProtectedMember
+        opts = self.model._meta
+        # A chronological order is (mostly) consistent ONLY within
+        # the ausgabe_set of one particular magazin. If the queryset contains
+        # the ausgaben of more than one magazin, we may end up replacing one
+        # 'poor' ordering (the default one) with another poor, but more
+        # expensive chronological one. Return self with some form of ordering.
+        if self.only('magazin').distinct().values_list('magazin').count() != 1:
+            # This condition is also True if self is an empty queryset.
+            if order_fields:
+                return self.order_by(*order_fields)
+            if self.query.order_by:
+                return self
+            return self.order_by(*opts.ordering)
+
+        # FIXME: default_ordering orders by 'magazin' and not 'magazin_name'?
+        default_ordering = ('magazin', 'jahr', 'jahrgang', 'sonderausgabe')
+        ordering: List[str] = [*order_fields, *default_ordering]
+
+        pk_name = opts.pk.name
+        # Retrieve the first item in ordering that refers to the primary key,
+        # so we can later append it to the final ordering.
+        # It makes no sense to have the queryset be ordered primarily on the
+        # primary key.
+        try:
+            pk_order_item = next(
+                filter(
+                    lambda i: i in ('pk', '-pk', pk_name, '-' + pk_name),
+                    ordering
+                )
+            )
+            ordering.remove(pk_order_item)
+        except StopIteration:
+            # No primary key in ordering, use a default.
+            pk_order_item = '-%s' % pk_name
+
+        # Determine if jahr should come before jahrgang in ordering.
+        jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
+        # Remove empty values and unzip the 2-tuples into two lists.
+        jahr_values, jahrgang_values = (
+            list(filter(lambda x: x is not None, _list))
+            for _list in zip(*jj_values)
+        )
+        if len(jahrgang_values) > len(jahr_values):
+            # Prefer jahrgang over jahr.
+            jahr_index = ordering.index('jahr')
+            jahrgang_index = ordering.index('jahrgang')
+            ordering[jahr_index] = 'jahrgang'
+            ordering[jahrgang_index] = 'jahr'
+
+        # Find the best criteria to order with, which might be either:
+        # num, lnum, monat or e_datum
+        # Count the presence of the different criteria and sort them accordingly.
+        # NOTE: tests succeed with or without distinct = True
+        counted = self.aggregate(
+            e_datum__sum=Count('e_datum', distinct=True),
+            lnum__sum=Count('ausgabelnum', distinct=True),
+            monat__sum=Count('ausgabemonat', distinct=True),
+            num__sum=Count('ausgabenum', distinct=True),
+        )
+        default_criteria_ordering = [
+            'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
+
+        # Tuples are sorted lexicographically in ascending order. If any item
+        # of two tuples is the same, it goes on to the next item:
+        # sorted([(1, 'c'), (1, 'b'), (2, 'a')]) = [(1,'b'), (1, 'c'), (2, 'a')]
+        # In this case, we want to order the sums (tpl[1]) in descending, i.e.
+        # reverse, order (hence the minus operand) and if any sums are equal,
+        # the order of sum_names in the defaults decides.
+        criteria = sorted(
+            counted.items(),
+            key=lambda itemtpl: (
+                -itemtpl[1], default_criteria_ordering.index(itemtpl[0])
+            )
+        )
+        result_ordering = [sum_name.split('__')[0] for sum_name, _sum in criteria]
+        ordering.extend(result_ordering + [pk_order_item])
+
+        clone = self.annotate(
+            num=Max('ausgabenum__num'),
+            monat=Max('ausgabemonat__monat__ordinal'),
+            lnum=Max('ausgabelnum__lnum'),
+            jahr=Min('ausgabejahr__jahr')
+        ).order_by(*ordering)
+        clone.chronologically_ordered = True
+        return clone

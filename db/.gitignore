@@ -1,5 +1,0 @@
-# Work-around to git only being able to track files not directories
-# (in this case an empty directory that will hold the database file).
-# Ignore everything I will ever put in here but *this* file.
-*
-!.gitignore

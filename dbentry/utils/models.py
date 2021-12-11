@@ -90,10 +90,8 @@ def get_model_relations(
         reverse (reverse): if True, relations towards model are included
 
     ManyToManyRels are considered both as forward and reverse relations and
-    thus are included when either ``forward`` of ``reverse`` are True.
+    thus are always included.
     """
-    # TODO: short-circuit if both forward and reverse are False
-    #  (yes, that would not be very useful)
     intermediary_models = {
         f.remote_field.through if f.concrete else f.through
         for f in model._meta.get_fields()

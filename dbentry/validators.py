@@ -7,8 +7,6 @@ from django.utils.translation import gettext_lazy
 from stdnum import ean, isbn, issn
 from stdnum import exceptions as stdnum_exceptions
 
-from dbentry.constants import discogs_release_id_pattern
-
 
 class MsgValidationError(ValidationError):
     """Validation error with a preset message."""
@@ -70,9 +68,20 @@ def EANValidator(raw_ean: str) -> bool:
 
 
 class DiscogsURLValidator(RegexValidator):
-    regex = re.compile(discogs_release_id_pattern)
+    """Validator that checks that the given URL's host is discogs.com"""
+
+    regex = r'^([a-z][a-z0-9+\-.]*://)?(www.)?discogs.com'
     message = "Bitte nur Adressen von discogs.com eingeben."
     code = "discogs"
+
+
+class DiscogsMasterReleaseValidator(RegexValidator):
+    """Validator that checks that the value isn't a discogs master release."""
+
+    regex = r'/master/(\d+)'
+    message = "Bitte keine Adressen von Master-Releases eingeben."
+    code = "master_release"
+    inverse_match = True
 
 
 class DNBURLValidator(RegexValidator):

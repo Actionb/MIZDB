@@ -12,7 +12,6 @@ from django.urls import reverse
 from django.utils.safestring import SafeText
 
 from dbentry import utils
-from dbentry.actions.views import MergeViewWizarded
 from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
@@ -188,27 +187,9 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             context['headers'] = self.build_duplicates_headers(form)
             # Calculate the (percentile) width of the headers; 25% of the width
             # is already taken up by the three headers 'merge','id','link'.
-            context['headers_width'] = str(int(75 / len(context['headers'])))
+            context['headers_width'] = str(int(80 / len(context['headers'])))
             context['items'] = self.build_duplicates_items(form)
         return self.render_to_response(context)
-
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-        """Handle the request to merge duplicates."""
-        selected = request.POST.getlist(ACTION_CHECKBOX_NAME)
-        if selected:
-            # Items to be merged are selected, call the MergeViewWizarded view.
-            # noinspection PyUnresolvedReferences
-            response = MergeViewWizarded.as_view(
-                model_admin=utils.get_model_admin_for_model(self.model),
-                queryset=self.model.objects.filter(pk__in=selected)
-            )(request)
-            if response:
-                # MergeViewWizarded has returned a response:
-                # the merge conflict resolution page.
-                return response
-        # MergeViewWizarded returned None (successful merge)
-        # or there was nothing selected: redirect back here.
-        return redirect(request.get_full_path())
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
@@ -337,7 +318,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             )
             link = utils.create_hyperlink(
                 url=cl_url, content='Änderungsliste',
-                **{'target': '_blank', 'class': 'button'}
+                **{'target': '_blank', 'class': 'button', 'style': 'padding: 10px 15px;'}
             )
             items.append((group, link))
         return items

@@ -5,7 +5,7 @@ from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth.models import Permission
 from django.forms import modelform_factory
 from django.urls import NoReverseMatch
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from dbentry import models as _models, admin as _admin
 from dbentry.factory import make
@@ -34,24 +34,24 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
     def test_get_obj_link_noperms(self):
         # Users without change permission should not get an edit link
         link = admin_utils.get_obj_link(self.obj1, self.noperms_user)
-        self.assertEqual(link, "{}: {}".format(self.model._meta.verbose_name, force_text(self.obj1)))
+        self.assertEqual(link, "{}: {}".format(self.model._meta.verbose_name, force_str(self.obj1)))
 
     def test_get_obj_link_noreversematch(self):
         # If there is no reverse match, no link should be displayed
         # get_obj_link uses the site_name argument to get the app's namespace
         with self.assertNotRaises(NoReverseMatch):
             link = admin_utils.get_obj_link(self.obj1, self.super_user, site_name='BEEP BOOP')
-        self.assertEqual(link, "{}: {}".format(self.model._meta.verbose_name, force_text(self.obj1)))
+        self.assertEqual(link, "{}: {}".format(self.model._meta.verbose_name, force_str(self.obj1)))
 
     def test_get_obj_link(self):
         link = admin_utils.get_obj_link(self.obj1, self.super_user)
         url = '/admin/dbentry/audio/{}/change/'.format(self.obj1.pk)
-        expected = '<a href="{}">{}</a>'.format(url, force_text(self.obj1))
+        expected = '<a href="{}">{}</a>'.format(url, force_str(self.obj1))
         self.assertEqual(link, expected)
 
         link = admin_utils.get_obj_link(self.obj1, self.super_user, blank=True)
         url = '/admin/dbentry/audio/{}/change/'.format(self.obj1.pk)
-        expected = '<a href="{}" target="_blank">{}</a>'.format(url, force_text(self.obj1))
+        expected = '<a href="{}" target="_blank">{}</a>'.format(url, force_str(self.obj1))
         self.assertEqual(link, expected)
 
     def test_link_list(self):

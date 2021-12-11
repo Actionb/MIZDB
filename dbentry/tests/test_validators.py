@@ -3,7 +3,7 @@ from django.utils.translation import override as translation_override
 
 from dbentry.tests.base import MyTestCase
 from dbentry.validators import (
-    ISSNValidator, ISBNValidator, EANValidator,
+    DiscogsMasterReleaseValidator, ISSNValidator, ISBNValidator, EANValidator,
     InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength,
     DiscogsURLValidator, DNBURLValidator
 )
@@ -60,27 +60,78 @@ class TestDiscogsURLValidator(MyTestCase):
     def setUp(self):
         self.validator = DiscogsURLValidator()
 
-    @translation_override(language=None)
-    def assertValidationFailed(self, _value):
-        with self.assertRaises(ValidationError) as cm:
-            self.validator('notavalidurl')
-        self.assertEqual(cm.exception.message, "Bitte nur Adressen von discogs.com eingeben.")
-        self.assertEqual(cm.exception.code, 'discogs')
+    def test_valid_urls(self):
+        # Assert that these valid URLs pass.
+        urls = [
+            'https://www.discogs.com/release/4126',
+            'www.discogs.com/release/4126',
+            'discogs.com/release/4126',
+            'https://www.discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            'www.discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            'discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            # I believe discogs has since stopped using this URL format:
+            'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                with self.assertNotRaises(ValidationError):
+                    self.validator(url)
 
-    def test_invalid_url(self):
-        self.assertValidationFailed('notavalidurl')
+    def test_invalid_urls(self):
+        # Assert that URLs without discogs.com as host produce ValidationErrors.
+        invalid_urls = [
+            'https://www.google.com',
+            'www.google.com',
+            'google.com',
+            'invalid/discogs.com'
+        ]
+        for url in invalid_urls:
+            with self.subTest(url=url):
+                with self.assertRaises(ValidationError) as cm:
+                    self.validator(url)
+                self.assertEqual(cm.exception.message, "Bitte nur Adressen von discogs.com eingeben.")
+                self.assertEqual(cm.exception.code, 'discogs')
 
-    def test_not_a_discogs_url(self):
-        self.assertValidationFailed('www.google.com')
 
-    def test_discogs_url_with_slug(self):
-        with self.assertNotRaises(ValidationError):
-            self.validator('https://www.discogs.com/release/3512181')
+class TestDiscogsMasterReleaseValidator(MyTestCase):
 
-    def test_discogs_url_without_slug(self):
-        with self.assertNotRaises(ValidationError):
-            self.validator(
-                'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181')
+    def setUp(self):
+        self.validator = DiscogsMasterReleaseValidator()
+
+    def test_release_url(self):
+        # Assert that 'release' URLs pass.
+        urls = [
+            'https://www.discogs.com/release/4126',
+            'www.discogs.com/release/4126',
+            'discogs.com/release/4126',
+            'https://www.discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            'www.discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            'discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            # I believe discogs has since stopped using this URL format:
+            'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                with self.assertNotRaises(ValidationError):
+                    self.validator(url)
+
+    def test_master_url(self):
+        # Assert that an URL for a 'master release' (a meta release of sorts)
+        # is invalid.
+        urls = [
+            'https://www.discogs.com/master/4126',
+            'www.discogs.com/master/4126',
+            'discogs.com/master/4126',
+            'https://www.discogs.com/master/4126-Led-Zeppelin-Led-Zeppelin',
+            'www.discogs.com/master/4126-Led-Zeppelin-Led-Zeppelin',
+            'discogs.com/master/4126-Led-Zeppelin-Led-Zeppelin',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                with self.assertRaises(ValidationError) as cm:
+                    self.validator(url)
+                self.assertEqual(cm.exception.message, "Bitte keine Adressen von Master-Releases eingeben.")
+                self.assertEqual(cm.exception.code, 'master_release')
 
 
 class TestDNBURLValidator(MyTestCase):

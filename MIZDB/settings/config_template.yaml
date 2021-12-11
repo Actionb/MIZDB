@@ -1,0 +1,26 @@
+# Konfigurationsdatei für die MIZDB Datenbank App.
+
+# Der Secret Key ist eine zufällige Zeichenfolge, die für kryptografische
+# Signierung verwendet wird. Ein neuer Schlüssel kann mit diesem Befehl
+# generiert werden (auszuführen in der virtuellen Umgebung!):
+# python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'
+SECRET_KEY: ''
+
+# Der Hostname des Servers muss zur Liste hinzugefügt werden:
+# z.B.: ['localhost', '127.0.0.1', 'archivserv']
+ALLOWED_HOSTS: ['localhost', '127.0.0.1']
+
+# Benutzername und Passwort des erstellten Datenbankbenutzers, dem die
+# Datenbank gehört:
+DATABASE_USER: ''
+DATABASE_PASSWORD: ''
+
+# Adresse zur Wiki:
+WIKI_URL: ''
+
+
+# ---- Weitere, optionale Einstellungen ----
+
+DATABASE_NAME: 'mizdb'
+DATABASE_HOST: 'localhost'
+DATABASE_PORT: ''

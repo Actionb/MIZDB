@@ -11,6 +11,10 @@ from django.urls import reverse
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
+# Name of the key under which views.ACTabular will add additional data for
+# (grouped) result items.
+EXTRA_DATA_KEY = 'extra_data'
+
 
 class GenericURLWidgetMixin(object):
     """
@@ -104,11 +108,43 @@ class MIZWidgetMixin(GenericURLWidgetMixin):
         return super()._get_reverse_kwargs(**_kwargs)
 
 
+class TabularResultsMixin(object):
+    """
+    Widget mixin that uses a different autocomplete function to display results
+    in a table.
+    """
+
+    autocomplete_function = 'select2Tabular'
+    tabular_css_class = 'select2-tabular'
+
+    # noinspection PyUnresolvedReferences
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'class' in self.attrs and self.attrs['class']:
+            self.attrs['class'] += ' ' + self.tabular_css_class
+        else:
+            self.attrs['class'] = self.tabular_css_class
+        self.attrs['data-extra-data-key'] = EXTRA_DATA_KEY
+
+    # noinspection PyUnresolvedReferences
+    @property
+    def media(self):
+        return super().media + Media(js=['admin/js/select2_tabular.js'])
+
+
 class MIZModelSelect2(MIZWidgetMixin, autocomplete.ModelSelect2):
     pass
 
 
 class MIZModelSelect2Multiple(MIZWidgetMixin, autocomplete.ModelSelect2Multiple):
+    pass
+
+
+class MIZModelSelect2Tabular(TabularResultsMixin, MIZModelSelect2):
+    pass
+
+
+class MIZModelSelect2MultipleTabular(TabularResultsMixin, MIZModelSelect2Multiple):
     pass
 
 
@@ -228,6 +264,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
 
 def make_widget(
         url: str = 'accapture',
+        tabular=False,
         multiple: bool = False,
         wrap: bool = False,
         remote_field_name: str = 'id',
@@ -241,6 +278,8 @@ def make_widget(
 
     Args:
         url: name of the url to the autocomplete view employed by this widget
+        tabular (bool): if True, use the widget class that presents the results
+          in tabular form
         multiple (bool): if True, a SelectMultiple variant will be used
         wrap (bool): if True, the widget will be wrapped with RemoteModelWidgetWrapper
         remote_field_name (str): wrapper arg: target of the relation field
@@ -266,9 +305,15 @@ def make_widget(
         widget_class = kwargs.pop('widget_class')
     else:
         if multiple:
-            widget_class = MIZModelSelect2Multiple
+            if tabular:
+                widget_class = MIZModelSelect2MultipleTabular
+            else:
+                widget_class = MIZModelSelect2Multiple
         else:
-            widget_class = MIZModelSelect2
+            if tabular:
+                widget_class = MIZModelSelect2Tabular
+            else:
+                widget_class = MIZModelSelect2
         if model_name:
             widget_opts['model_name'] = model_name
         else:
@@ -309,13 +354,9 @@ def make_widget(
 
             if 'data-placeholder' not in attrs:
                 # forward with no data-placeholder-text
-                # the widget is created when django initializes, not when
-                # the view is called apparently that is too early
-                # for translations...
-                # TODO: maybe this is fixed in DAL 3.2.10 (#871)?
                 placeholder_template = "Bitte zuerst %(verbose_name)s auswählen."
 
-                # Try to find the verbose_name of the source formfield
+                # Try to find the verbose_name to of the source formfield
                 # of the forward.
                 # We do not have access to the form and so no access to the
                 # forwarded formfield's (forwarded.src) label.
@@ -323,7 +364,9 @@ def make_widget(
                 # likely to fail as src refers to the formfield's name
                 # and not the model field's name.
                 try:
-                    # verbose_name default is the field.name.replace('_',' ')
+                    # Reminder: a field's verbose_name defaults to:
+                    #   field.name.replace('_',' ')
+
                     # noinspection PyProtectedMember
                     forwarded_verbose = model._meta.get_field(
                         forwarded.dst or forwarded.src

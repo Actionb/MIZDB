@@ -11,6 +11,7 @@ from django.db.models.query import QuerySet
 
 from dbentry.ac.widgets import make_widget
 from dbentry.base.forms import MIZAdminFormMixin
+from dbentry.fields import PartialDate
 from dbentry.search import utils as search_utils
 
 
@@ -150,7 +151,11 @@ class SearchForm(forms.Form):
                     continue
                 elif not start_empty and end_empty:
                     # start but no end: exact lookup for start
-                    param_key = field_name
+                    if isinstance(start, PartialDate):
+                        # Just a single partial date: use contains lookup.
+                        param_key = f"{field_name}__contains"
+                    else:
+                        param_key = field_name
                     param_value = start
                 elif start_empty and not end_empty:
                     # no start but end: lte lookup for end
@@ -176,8 +181,7 @@ class SearchForm(forms.Form):
                 # django admin prepare_lookup_value() expects an '__in'
                 # lookup to consist of comma separated values.
                 param_value = ",".join(
-                    str(pk)
-                    for pk in value.values_list('pk', flat=True).order_by('pk')
+                    str(pk) for pk in value.values_list('pk', flat=True).order_by('pk')
                 )
 
             params[param_key] = param_value
@@ -188,9 +192,7 @@ class SearchForm(forms.Form):
         # Use case: the 'Plakat ID' is presented with a prefixed 'P'.
         # People will try to query for the id WITH that prefix.
         return "".join(
-            i
-            for i in self.cleaned_data.get('id__in', '')
-            if i.isnumeric() or i == ','
+            i for i in self.cleaned_data.get('id__in', '') if i.isnumeric() or i == ','
         )
 
 
@@ -249,6 +251,7 @@ class SearchFormFactory:
                 'multiple': db_field.many_to_many,
                 'wrap': False,
                 'can_add_related': False,
+                'tabular': kwargs.pop('tabular', False)
             }
             if kwargs.get('forward') is not None:
                 widget_opts['forward'] = kwargs.pop('forward')
@@ -271,7 +274,7 @@ class SearchFormFactory:
     def get_search_form(
             self, model, fields=None, form=None, formfield_callback=None,
             widgets=None, localized_fields=None, labels=None, help_texts=None,
-            error_messages=None, field_classes=None, forwards=None,
+            error_messages=None, field_classes=None, forwards=None, tabular=None,
             range_lookup=django_lookups.Range
     ) -> Type[SearchForm]:
         """
@@ -296,6 +299,8 @@ class SearchFormFactory:
 
         Additional arguments.
             - ``forwards``: a mapping of formfield_name: dal forwards
+            - ``tabular``: a list of formfield_names to be used with a tabular
+              widget
             - ``range_lookup``: the lookup class whose lookup_name is used to
               recognize range lookups.
         """
@@ -334,6 +339,8 @@ class SearchFormFactory:
                 formfield_kwargs['form_class'] = field_classes[path]
             if forwards and path in forwards:
                 formfield_kwargs['forward'] = forwards[path]
+            if tabular and path in tabular:
+                formfield_kwargs['tabular'] = True
             # Use the path stripped of all lookups as the formfield's name.
             formfield_name = search_utils.strip_lookups_from_path(path, lookups)
             formfield = formfield_callback(db_field, **formfield_kwargs)

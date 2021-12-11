@@ -9,7 +9,6 @@
         {% endfor %}
 </fieldset>
 
-{% if cl.search_fields %}
 <fieldset id="search-input">
 <label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search" /></label>
 <input type="text" size="40" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" autofocus />
@@ -25,6 +24,5 @@
         {% endif %}</a>)</span>
     {% endif %}
 </fieldset>
-{% endif %}
 </form></div>
 
