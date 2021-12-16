@@ -3,7 +3,6 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.eric6project" />
-      <excludeFolder url="file://$MODULE_DIR$/dbentry/utils/.mypy_cache" />
       <excludeFolder url="file://$MODULE_DIR$/.mypy_cache" />
       <excludeFolder url="file://$MODULE_DIR$/.tox" />
       <excludePattern pattern="*.e4p" />
