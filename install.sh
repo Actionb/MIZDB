@@ -52,6 +52,7 @@ fi
 
 # Create the database and the user:
 echo -n "Erzeuge Datenbank und Datenbankbenutzer..."
+sudo service postgresql start
 sudo -u postgres psql -qc "CREATE USER $db_user CREATEDB ENCRYPTED PASSWORD '$db_password';"
 sudo -u postgres createdb "$db_name" --owner="$db_user"
 echo "OK."
@@ -127,8 +128,8 @@ cat << EOF | sudo tee $site_config > /dev/null
 		# Name of the host. The name must be included in the ALLOWED_HOSTS django settings.
 		ServerName $host
 	
-		# http://localhost/admin/ will produce the admin dashboard.
-		# For localhost/foobar/admin/ use:
+		# http://$host/mizd/admin/ will produce the admin dashboard.
+		# For $host/foobar/admin/ use:
 		# 	WSGIScriptAlias /foobar \$PROJECT_ROOT/MIZDB/wsgi.py
  		WSGIScriptAlias /miz \$PROJECT_ROOT/MIZDB/wsgi.py
 
