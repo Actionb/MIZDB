@@ -16,6 +16,7 @@
       <w>itemtpl</w>
       <w>jahrgangswerte</w>
       <w>libpq</w>
+      <w>mizdb</w>
       <w>modelfac</w>
       <w>modelfactory</w>
       <w>movetobrochure</w>
@@ -23,6 +24,8 @@
       <w>normdatei</w>
       <w>objs</w>
       <w>optgroup</w>
+      <w>pgdg</w>
+      <w>postgre</w>
       <w>redef</w>
       <w>reraise</w>
       <w>searchform</w>
