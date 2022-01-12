@@ -51,6 +51,14 @@
                                     {% for field in line %}
                                         {% if field.is_readonly or not field.field.is_hidden %}
                                             <td{% if field.field.name %} class="field-{{ field.field.name }}"{% endif %}>
+                                                {% if inline_admin_form.errors and not field.errors %}
+                                                    {% comment %}
+                                                        Other fields of this form have errors;
+                                                        to vertically align this field with those erroneous fields, add an invisible errorlist
+                                                        (using the 'Hangul Filler' special character U+3164; basically an invisible character)
+                                                    {% endcomment %}
+                                                    <ul class="errorlist"><li>ㅤ</li></ul>
+                                                {% endif %}
                                                 {% if field.is_readonly %}<p>{{ field.contents }}</p>
                                                 {% else %}{{ field.field.errors.as_ul }}{{ field.field }}
                                                 {% endif %}
