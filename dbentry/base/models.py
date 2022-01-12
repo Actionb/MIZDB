@@ -27,7 +27,7 @@ class BaseModel(models.Model):
     """
 
     name_field: str = ''
-    create_field: str = ''  # TODO: must create_field allowed to be also be None?
+    create_field: str = ''
     exclude_from_str: list = ['beschreibung', 'bemerkungen', '_fts']
 
     objects = MIZQuerySet.as_manager()
