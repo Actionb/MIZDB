@@ -6,7 +6,6 @@ from django.db.models.functions import Coalesce
 
 from dbentry.fts.fields import SearchVectorField
 
-# TODO: SearchVectorFields should be deferred in queries that don't use them
 SIMPLE = 'simple_unaccent'
 STEMMING = 'german_unaccent'
 
@@ -93,9 +92,6 @@ class TextSearchQuerySetMixin(object):
         model = self.model  # type: ignore[attr-defined]
         search_field = _get_search_vector_field(model)
         if search_field:
-            # TODO: django>3.1: add cover_density=True argument to SearchRank?
-            #   -> maybe for normalizing queries
-            # TODO: django>3.1: add rank normalization: 0 <= rank <= 1
             # Add a query and a rank for every text search config defined on
             # the search vector field's columns:
             configs_seen = set()
@@ -107,7 +103,7 @@ class TextSearchQuerySetMixin(object):
                     q, config=column.language, search_type=search_type
                 )
                 filters |= Q(**{search_field.name: query})
-                rank = SearchRank(F(search_field.name), query)
+                rank = SearchRank(F(search_field.name), query, normalization=16)
                 if model_search_rank is None:
                     model_search_rank = rank
                 else:
@@ -124,7 +120,10 @@ class TextSearchQuerySetMixin(object):
             # related items on the related table (nothing to join).
             # NULL would break the summing up of the ranks (comparison with
             # NULL always returns NULL), so use zero instead.
-            rank = Coalesce(SearchRank(F(field_path), query), Value(0), output_field=FloatField())
+            rank = Coalesce(
+                SearchRank(F(field_path), query, normalization=16),
+                Value(0), output_field=FloatField()
+            )
             if related_search_rank is None:
                 related_search_rank = rank
             else:
