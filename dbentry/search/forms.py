@@ -85,9 +85,12 @@ class RangeFormField(forms.MultiValueField):
         else:
             return widget_data
 
-    def clean(self, value: list) -> list:
-        """Delegate cleaning to the clean method of each field."""
-        return [self.fields[0].clean(value[0]), self.fields[1].clean(value[1])]
+    def compress(self, data_list: list) -> list:
+        if data_list:
+            return data_list
+        else:
+            # Two values are expected, even for no data.
+            return [None, None]
 
 
 class SearchForm(forms.Form):
