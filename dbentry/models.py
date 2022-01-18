@@ -1,4 +1,5 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
+# TODO: use models.TextField instead of CharField where no max_length is necessary
 from typing import Optional
 
 from django.core.validators import MinValueValidator
