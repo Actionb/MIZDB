@@ -37,7 +37,7 @@ class RangeWidget(forms.MultiWidget):
         # Split value into two values (start, end).
         # forms.MultiValueField.clean calls widget.decompress to get a list of
         # values. But since RangeFormField.clean uses the clean methods of
-        # its 'subfields', and not the the clean method of MultiValueField,
+        # its 'subfields', and not the clean method of MultiValueField,
         # compress() is only called by widget.get_context (widget rendering)
         # when value isn't a list already.
         # In short: RangeWidget.decompress is never really used?
@@ -61,7 +61,8 @@ class RangeFormField(forms.MultiValueField):
             **kwargs: Any
     ) -> None:
         if not kwargs.get('widget'):
-            # TODO: what about passed in widgets? Should they be 'wrapped' with RangeWidget?
+            # Assume that the formfield's widget is a basic widget; wrap it
+            # with a RangeWidget widget, duplicating it for range lookups.
             kwargs['widget'] = RangeWidget(formfield.widget)
         self.empty_values = formfield.empty_values
         super().__init__(
@@ -75,7 +76,7 @@ class RangeFormField(forms.MultiValueField):
         # noinspection PyArgumentList
         widget_data = self.widget.value_from_datadict(data=initial, files=None, name=name)
         if isinstance(self.fields[0], forms.MultiValueField):
-            # The sub fields are MultiValueFields themselves,
+            # The subfields are MultiValueFields themselves,
             # let them figure out the correct values for the given data.
             return [
                 self.fields[0].compress(widget_data[0]),
@@ -280,9 +281,9 @@ class SearchFormFactory:
         """
         Create and return a search form class for a given model.
 
-        In regards to the creation of the formfields, this method works quite
-        the same way as the method that creates the formfields for a ModelForm:
-        django.forms.models.fields_for_model.
+        Regarding the creation of the formfields, this method works quite the
+        same way as the method that creates the formfields for a ModelForm:
+            django.forms.models.fields_for_model.
         Most arguments to get_search_form fulfill the same purposes as those
         to fields_for_model.
         One difference is that the collection 'fields' may contain field_paths
