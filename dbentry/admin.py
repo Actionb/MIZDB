@@ -22,6 +22,7 @@ from django.utils.safestring import SafeText
 from django_admin_logs.admin import LogEntryAdmin
 
 import dbentry.actions.actions as _actions
+import dbentry.forms as _forms
 import dbentry.m2m as _m2m
 import dbentry.models as _models
 from dbentry.ac.widgets import make_widget
@@ -30,10 +31,6 @@ from dbentry.base.admin import (
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
 from dbentry.changelist import AusgabeChangeList
-from dbentry.forms import (
-    ArtikelForm, AudioForm, AutorForm, BandForm, BrochureForm, BuchForm, FotoForm, MusikerForm,
-    PersonForm, PlakatForm, VideoForm
-)
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -105,7 +102,7 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Datei
 
     collapse_all = True
-    form = AudioForm
+    form = _forms.AudioForm
     index_category = 'Archivgut'
     save_on_top = True
     list_display = ['titel', 'jahr', 'medium', 'kuenstler_string']
@@ -366,7 +363,7 @@ class AutorAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.AutorURL
 
-    form = AutorForm
+    form = _forms.AutorForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, MagazinInLine]
     list_display = ['autor_name', 'person', 'kuerzel', 'magazin_string']
@@ -424,7 +421,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
-    form = ArtikelForm
+    form = _forms.ArtikelForm
     index_category = 'Archivgut'
     save_on_top = True
     list_select_related = ['ausgabe', 'ausgabe__magazin']
@@ -509,7 +506,7 @@ class BandAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BandURL
 
-    form = BandForm
+    form = _forms.BandForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
@@ -583,7 +580,7 @@ class PlakatAdmin(MIZModelAdmin):
         tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
-    form = PlakatForm
+    form = _forms.PlakatForm
     index_category = 'Archivgut'
     list_display = ['titel', 'plakat_id', 'size', 'datum_localized', 'veranstaltung_string']
     readonly_fields = ['plakat_id']
@@ -721,7 +718,7 @@ class BuchAdmin(MIZModelAdmin):
     collapse_all = True
     # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
     crosslink_labels = {'buch': 'Aufsätze'}
-    form = BuchForm
+    form = _forms.BuchForm
     index_category = 'Archivgut'
     save_on_top = True
     ordering = ['titel']
@@ -925,7 +922,7 @@ class MusikerAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.MusikerURL
 
-    form = MusikerForm
+    form = _forms.MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
@@ -969,7 +966,7 @@ class PersonAdmin(MIZModelAdmin):
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
-    form = PersonForm
+    form = _forms.PersonForm
 
     fieldsets = [
         (None, {
@@ -1168,7 +1165,7 @@ class VideoAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
-    form = VideoForm
+    form = _forms.VideoForm
     index_category = 'Archivgut'
     collapse_all = True
     save_on_top = True
@@ -1361,7 +1358,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
-    form = BrochureForm
+    form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
@@ -1530,7 +1527,7 @@ class FotoAdmin(MIZModelAdmin):
         tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
-    form = FotoForm
+    form = _forms.FotoForm
     index_category = 'Archivgut'
     list_display = ['titel', 'foto_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
     readonly_fields = ['foto_id']
@@ -1597,8 +1594,8 @@ class AuthAdminMixin(object):
     formfield choices to make the permissions more distinguishable from each
     other.
 
-    By default the choice's names contain the verbose_name of a model, which may
-    not be unique enough to be able to differentiate between different
+    By default, the choice's names contain the verbose_name of a model, which
+    may not be unique enough to be able to differentiate between different
     permissions.
     """
 

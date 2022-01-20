@@ -165,16 +165,6 @@ class TestMIZAdminForm(FormTestCase):
         for fs in form:
             self.assertIsInstance(fs, Fieldset)
 
-    def test_changed_data_prop_no_change(self):
-        kwargs = dict(data=dict(some_int='10'), initial=dict(some_int='10'))
-        form = self.get_dummy_form(**kwargs)
-        self.assertFalse(form.changed_data)
-
-    def test_changed_data_prop_change(self):
-        kwargs = dict(data=dict(some_int='11'), initial=dict(some_int='10'))
-        form = self.get_dummy_form(**kwargs)
-        self.assertTrue(form.changed_data)
-
 
 class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
     dummy_bases = (DynamicChoiceFormMixin, forms.Form)

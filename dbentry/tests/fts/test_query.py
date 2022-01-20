@@ -342,7 +342,7 @@ class TestTextSearchQuerySetMixin(TestCase):
 
         # 'simple' should be the search rank with the simple search query
         self.assertIsInstance(simple, SearchRank)
-        col, query = simple.get_source_expressions()
+        col, query, *_ = simple.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         config, value = query.get_source_expressions()
@@ -353,7 +353,7 @@ class TestTextSearchQuerySetMixin(TestCase):
 
         # 'stemmed' should be the search rank with the stemmed search query
         self.assertIsInstance(stemmed, SearchRank)
-        col, query = stemmed.get_source_expressions()
+        col, query, *_ = stemmed.get_source_expressions()
         self.assertEqual(col.target, self.opts.get_field('svf'))
         self.assertIsInstance(query, SearchQuery)
         config, value = query.get_source_expressions()
@@ -372,7 +372,7 @@ class TestTextSearchQuerySetMixin(TestCase):
         # 'related' should be the search rank with the simple search query for
         # the related vector field
         self.assertIsInstance(related, SearchRank)
-        col, query = related.get_source_expressions()
+        col, query, *_ = related.get_source_expressions()
         self.assertEqual(col.target, self.alias_opts.get_field('fts'))
         self.assertIsInstance(query, SearchQuery)
         config, value = query.get_source_expressions()
@@ -397,7 +397,7 @@ class TestTextSearchQuerySetMixin(TestCase):
             self.assertIsInstance(coalesce, Coalesce)
             search_rank, coalesce_value = coalesce.get_source_expressions()
             self.assertIsInstance(search_rank, SearchRank)
-            col, query = search_rank.get_source_expressions()
+            col, query, *_ = search_rank.get_source_expressions()
             self.assertEqual(col.target, self.alias_opts.get_field('fts'))
 
     def test_search_rank_annotation_model_rank_only(self):
@@ -412,7 +412,7 @@ class TestTextSearchQuerySetMixin(TestCase):
             # columns of the model's search vector field
             self.assertIsInstance(rank, CombinedExpression)
             for expr in rank.get_source_expressions():
-                col, query = expr.get_source_expressions()
+                col, query, *_ = expr.get_source_expressions()
                 self.assertEqual(col.target, self.opts.get_field('svf'))
 
     def test_search_no_columns_no_related_vectors(self):

@@ -256,7 +256,6 @@ class Migration(migrations.Migration):
                 "DROP TEXT SEARCH CONFIGURATION IF EXISTS english_unaccent CASCADE;"
             )
         ),
-        # TODO: need Umlaute rules: https://blog.dbi-services.com/dealing-with-german-umlaute-in-postgresqls-full-text-search/
         tsvector_field.IndexSearchVector('artikel', '_fts'),
         tsvector_field.IndexSearchVector('audio', '_fts'),
         tsvector_field.IndexSearchVector('audiomedium', '_fts'),

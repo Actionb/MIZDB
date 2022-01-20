@@ -83,15 +83,6 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             msg=f"Expected exact match (q={q}) to come first."
         )
 
-    def test_apply_q_exact_no_name_field(self):
-        # If the model has no name_field, only apply the full text search
-        # without putting exact results at the top.
-        other = make(self.model, band_name='A Boop')
-        view = self.get_view(q='Boop')
-        with patch.object(self.queryset.model, 'name_field', new=None):
-            results = view.apply_q(self.queryset)
-        self.assertEqual(list(results[:2]), [other, self.obj1])
-
     def test_get_queryset_with_q(self):
         request = self.get_request()
         view = self.get_view(request)

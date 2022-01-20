@@ -1,11 +1,13 @@
 # Installation (Debian)
-## Mittels Installationsscript
-MIZDB unter `~/archiv/MIZDB` installieren:
+## Installationsscript
+MIZDB unter `/srv/archiv/MIZDB` installieren:
 ```
-git clone https://github.com/Actionb/MIZDB ~/archiv/MIZDB && bash ~/archiv/MIZDB/install.sh
+sudo mkdir /srv/archiv && sudo chown $USER /srv/archiv
+sudo apt update && sudo apt install git
+git clone https://github.com/Actionb/MIZDB /srv/archiv/MIZDB
+cd /srv/archiv/MIZDB && python3 -m install
 ```
-Die virtuelle Umgebung wird standardmäßig in `~/.venv/archiv` installiert. Ein anderer Pfad
-kann als Argument an das Script übergeben werden: z.B. `bash install.sh ~/woanders`.
+Für eine Übersicht der verfügbaren Parameter `python3 -m install --help` ausführen.
 
 ## Manuelle Installation
 ###  1. Erforderliche Pakete installieren

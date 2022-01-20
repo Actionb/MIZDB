@@ -290,50 +290,6 @@ class MIZAdminFormMixin(object):
             media += fieldset.media
         return media
 
-    @cached_property
-    def changed_data(self: Form) -> list:
-        # TODO: consider dropping this; it overrides forms.Form.changed_data to
-        #  fix an issue when a formfield.show_hidden_initial is True - but we
-        #  don't have any fields that have show_hidden_initial==True.
-        data = []
-        for name, field in self.fields.items():
-            prefixed_name = self.add_prefix(name)
-            data_value = field.widget.value_from_datadict(
-                self.data, self.files, prefixed_name
-            )
-            if not field.show_hidden_initial:
-                # Use the BoundField's initial as this is the value passed
-                # to the widget.
-                # A form's BoundField can be accessed via Form.__getitem__
-                initial_value = self[name].initial  # type: ignore[index]
-                try:
-                    # forms.Field does not convert the initial_value to the
-                    # field's python type (like it does for the data_value)
-                    # for its has_changed check.
-                    # This results in IntegerField.has_changed('1',1);
-                    # returning False.
-                    initial_value = field.to_python(initial_value)
-                except ValidationError:
-                    # Always assume data has changed if validation fails.
-                    data.append(name)
-                    continue
-            else:
-                initial_prefixed_name = self.add_initial_prefix(name)
-                hidden_widget = field.hidden_widget()
-                try:
-                    initial_value = field.to_python(
-                        hidden_widget.value_from_datadict(
-                            self.data, self.files, initial_prefixed_name
-                        )
-                    )
-                except ValidationError:
-                    # Always assume data has changed if validation fails.
-                    data.append(name)
-                    continue
-            if field.has_changed(initial_value, data_value):
-                data.append(name)
-        return data
-
 
 class MIZAdminForm(MIZAdminFormMixin, Form):
     pass
