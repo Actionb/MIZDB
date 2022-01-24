@@ -3,6 +3,7 @@ from typing import Any
 # noinspection PyPackageRequirements
 from dal import autocomplete
 from django import forms
+from django.contrib.admin.widgets import AdminTextInputWidget
 from django.core.exceptions import ValidationError
 
 from dbentry import models as _models
@@ -12,7 +13,7 @@ from dbentry.utils.gnd import searchgnd
 from dbentry.validators import DNBURLValidator
 
 
-class GoogleBtnWidget(forms.widgets.TextInput):
+class GoogleBtnWidget(AdminTextInputWidget):
     """
     A TextInput widget with a button which opens a google search for the text
     in the TextInput widget.
@@ -72,6 +73,15 @@ class ArtikelForm(AusgabeMagazinFieldForm):
 
 class AutorForm(MinMaxRequiredFormMixin, forms.ModelForm):
     minmax_required = [{'min_fields': 1, 'fields': ['kuerzel', 'person']}]
+
+
+class BestandInlineForm(forms.ModelForm):
+    class Meta:
+        model = _models.Bestand
+        fields = '__all__'
+        widgets = {
+            'anmerkungen': forms.Textarea(attrs={'rows': 1, 'cols': 30})
+        }
 
 
 class BrochureForm(AusgabeMagazinFieldForm):

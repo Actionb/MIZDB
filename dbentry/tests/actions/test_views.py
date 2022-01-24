@@ -1292,7 +1292,7 @@ class TestChangeBestand(ActionViewTestCase, LoggingTestMixin):
         self.assertIn('media', response.context)
         from django.conf import settings
         self.assertIn(
-            'admin/js/inlines%s.js' % ('' if settings.DEBUG else '.min'),
+            'admin/js/inlines.js',
             response.context['media']._js
         )
 

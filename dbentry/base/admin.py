@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from django import forms
 from django.contrib import admin
@@ -7,7 +7,6 @@ from django.contrib.auth import get_permission_codename
 from django.core import checks, exceptions
 from django.db import models
 from django.db.models import Model, QuerySet
-from django.db.models.constants import LOOKUP_SEP
 from django.forms import BaseInlineFormSet, ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
@@ -16,24 +15,15 @@ from django.utils.text import capfirst
 from dbentry import models as _models
 from dbentry.ac.widgets import make_widget
 from dbentry.actions.actions import merge_records
-from dbentry.base.forms import MIZAdminInlineFormBase  # type: ignore[attr-defined]
+from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
 from dbentry.base.models import ComputedNameModel
 from dbentry.changelist import MIZChangeList
-from dbentry.constants import ATTRS_TEXTAREA
 from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
 
 FieldsetList = List[Tuple[Optional[str], dict]]
-
-
-# TODO: enable delete_related on inlines:
-# RelatedFieldWidgetWrapper disables can_delete_related for inlines because of
-# cascading:
-#        # XXX: The deletion UX can be confusing when dealing with cascading deletion.
-#        cascade = getattr(rel, 'on_delete', None) is CASCADE
-#        self.can_delete_related = not multiple and not cascade and can_delete_related
 
 
 class AutocompleteMixin(object):
@@ -180,12 +170,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         return request.user.has_perms(perms)
 
     def get_exclude(self, request: HttpRequest, obj: Optional[Model] = None) -> list:
-        """Exclude all concrete M2M fields as those are handled by inlines."""
+        # Unless the ModelAdmin specifies 'exclude', exclude M2M fields
+        # declared on this model. It is expected that those relations will be
+        # handled by inlines.
         self.exclude = super().get_exclude(request, obj)
         if self.exclude is None:
             self.exclude = []
-            # FIXME: isn't this for loop over-indented? Shouldn't this exclude
-            #  m2m fields even if 'exclude' was defined?
             for fld in self.opts.get_fields():
                 if fld.concrete and fld.many_to_many:
                     self.exclude.append(fld.name)
@@ -200,7 +190,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         move them out of there to their own fieldset.
         """
         default_fieldset = dict(fieldsets).get(None, None)
-        if not default_fieldset:
+        if not default_fieldset:  # pragma: no cover
             return fieldsets
         # default_fieldset['fields'] might be a direct reference to
         # self.get_fields(): make a copy to leave the original list untouched.
@@ -226,49 +216,18 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         fieldsets = super().get_fieldsets(request, obj)
         return self._add_bb_fieldset(fieldsets)
 
-    def _add_pk_search_field(self, search_fields: Sequence) -> list:
+    # noinspection PyMethodMayBeStatic
+    def _get_crosslink_relations(self) -> Optional[List[Tuple[Type[Model], str, Optional[str]]]]:
         """
-        Add a search field for the primary key to search_fields if missing.
+        Hook to specify relations to follow with the crosslinks.
 
-        Unless the ModelAdmin instance has a search form (which is presumed to
-        take over the duty of filtering for primary keys), 'pk__iexact' is added
-        to the given list 'search_fields'.
-        If the primary key is a OneToOneRelation, 'pk__pk__iexact' is added
-        instead.
-
-        Returns a copy of the passed in search_fields list.
+        A list of 3-tuples must be returned. The tuples must consist of:
+          - model class: the related model to query for the related objects
+          - field name: the name of the field of the related model to query
+            against
+          - label (str) or None: the label for the link
         """
-        # NOTE: since the introduction of postgres text search, search fields
-        #  are empty and thus this method here isn't useful anymore
-        search_fields = list(search_fields)
-        if self.has_search_form():
-            # This ModelAdmin instance has a search form. Assume that the form
-            # contains a field to search for primary keys; no need to add
-            # another primary key search field.
-            return search_fields
-        # noinspection PyProtectedMember
-        pk_field = self.model._meta.pk
-        for search_field in search_fields:
-            if LOOKUP_SEP in search_field:
-                field, _ = search_field.split(LOOKUP_SEP, 1)
-            else:
-                field = search_field
-            if not field[0].isalpha() and field[0] != '_':
-                # Lookup alias prefixes for ModelAdmin.construct_search:
-                # '=', '^', '@' etc.
-                field = field[1:]
-            if field in ('pk', pk_field.name):
-                # Done here, search_fields already contains a custom
-                # primary key search field.
-                break
-        else:
-            search_fields.append(
-                'pk__pk__iexact' if pk_field.is_relation else 'pk__iexact'
-            )
-        return search_fields
-
-    def get_search_fields(self, request=None):
-        return self._add_pk_search_field(self.search_fields)
+        return None
 
     def add_crosslinks(self, object_id: str, labels: Optional[dict] = None) -> Dict[str, list]:
         """
@@ -277,49 +236,47 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         Crosslinks are links on an instance's change form that send the user
         to the changelist containing the instance's related objects.
         """
+        if not object_id:
+            return {}
+
         new_extra: dict = {'crosslinks': []}
-        if labels is None:
+        if labels is None:  # pragma: no cover
             labels = {}
 
-        inline_models = {i.model for i in self.inlines}
-        # Walk through all reverse relations and collect the model and
-        # model field to query against as well as the assigned name for the
-        # relation -- unless an inline is covering that reverse relation.
-        relations = []
-        for rel in get_model_relations(self.model, forward=False, reverse=True):
-            if rel.many_to_many:
-                inline_model = rel.through
-            else:
-                inline_model = rel.related_model
-            if inline_model in inline_models:
-                continue
+        relations = self._get_crosslink_relations()
+        if relations is None:
+            # Walk through all reverse relations and collect the model and
+            # model field to query against as well as the assigned name for the
+            # relation -- unless an inline is covering that reverse relation.
+            relations = []
+            inline_models = {i.model for i in self.inlines}
+            for rel in get_model_relations(self.model, forward=False, reverse=True):
+                if rel.many_to_many:
+                    inline_model = rel.through
+                else:
+                    inline_model = rel.related_model
+                if inline_model in inline_models:
+                    continue
 
-            query_model = rel.related_model
-            query_field = rel.remote_field.name
-            if rel.many_to_many and query_model == self.model:
-                # M2M relations are symmetric, but we wouldn't want to create
-                # a crosslink that leads back to *this* model's changelist
-                # (unless it's a self relation).
-                query_model = rel.model
-                query_field = rel.name
-            if rel.related_model == _models.BaseBrochure:
-                # Handle a special case of model inheritance.
-                # Add crosslinks to the children of BaseBrochure rather than
-                # to BaseBrochure itself as it does not have a changelist:
-                # reversing for an url would fail.
-                # FIXME: Ugly code! MIZModelAdmin shouldn't have to know BaseBrochure!
-                relations.extend(
-                    [
-                        (_models.Brochure, rel.remote_field.name, None),
-                        (_models.Kalender, rel.remote_field.name, None),
-                        (_models.Katalog, rel.remote_field.name, None)
-                    ]
-                )
-            else:
-                relations.append((query_model, query_field, rel.related_name))
+                query_model = rel.related_model
+                query_field = rel.remote_field.name
+                if rel.many_to_many and query_model == self.model:
+                    # M2M relations are symmetric, but we wouldn't want to create
+                    # a crosslink that leads back to *this* model's changelist
+                    # (unless it's a self relation).
+                    query_model = rel.model
+                    query_field = rel.name
+                # Use a 'prettier' related_name as the default for the label.
+                if rel.related_name:
+                    label = " ".join(
+                        capfirst(s) for s in rel.related_name.replace('_', ' ').split()
+                    )
+                else:
+                    label = None
+                relations.append((query_model, query_field, label))
 
         # Create the context data for the crosslinks.
-        for query_model, query_field, related_name in relations:
+        for query_model, query_field, label in relations:
             # noinspection PyProtectedMember
             opts = query_model._meta
             try:
@@ -337,42 +294,22 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             # Add the query string to the url:
             url += f"?{query_field}={object_id}"
 
-            # Prepare the label for the link with the following priorities:
-            #   - a passed in label
-            #   - an explicitly declared related_name
-            #       (unless the relation was automatically created,
-            #       the default for related_name is None)
-            #    - the verbose_name_plural of the related_model
+            # Prepare the label for the link.
             if opts.model_name in labels:
                 label = labels[opts.model_name]
-            elif related_name:
-                # Automatically created related_names won't look pretty!
-                label = " ".join(
-                    capfirst(s)
-                        for s in related_name.replace('_', ' ').split()
-                )
             else:
-                label = opts.verbose_name_plural
+                label = label or opts.verbose_name_plural
 
-            label = "{label} ({count})".format(
-                label=label, count=str(count)
-            )
-            new_extra['crosslinks'].append({'url': url, 'label': label})
+            new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
-    # noinspection PyUnusedLocal
-    def add_extra_context(
-            self,
-            request: Optional[HttpRequest] = None,
-            extra_context: Optional[dict] = None,
-            object_id: Optional[str] = None
-    ) -> dict:
-        """Add crosslinks as extra context."""
-        new_extra = extra_context or {}
-        if object_id:
-            new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
-        new_extra['collapse_all'] = self.collapse_all
-        return new_extra
+    def add_extra_context(self, object_id: Optional[str] = None, **extra_context) -> dict:
+        """Add extra context specific to this ModelAdmin."""
+        extra_context.update({
+            'collapse_all': self.collapse_all,
+            **self.add_crosslinks(object_id, self.crosslink_labels),
+        })
+        return extra_context
 
     def add_view(
             self,
@@ -381,10 +318,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for adding a new object."""
-        new_extra = self.add_extra_context(
-            request=request, extra_context=extra_context
-        )
-        return super().add_view(request, form_url, new_extra)
+        return super().add_view(request, form_url, self.add_extra_context(**(extra_context or {})))
 
     def change_view(
             self,
@@ -394,10 +328,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for changing an object."""
-        new_extra = self.add_extra_context(
-            request=request, extra_context=extra_context,
-            object_id=object_id
-        )
+        new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
         return super().change_view(request, object_id, form_url, new_extra)
 
     def construct_change_message(

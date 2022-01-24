@@ -41,7 +41,7 @@ class BulkAusgabeTestCase(TestDataMixin, ViewTestCase, CreateFormViewMixin, Logg
         self.session.save()
         self.valid_data = {
             'magazin': self.mag.pk,
-            'jahrgang': '11',
+            'jahrgang': 11,
             'jahr': '2000,2001',
             'num': '1,2,3,4,4,5',
             'monat': '',
@@ -363,7 +363,7 @@ class TestBulkAusgabeStory(BulkAusgabeTestCase):
 
         # User changes data without refreshing the preview, complain about it:
         complain_data = self.valid_data.copy()
-        complain_data['jahrgang'] = '12'
+        complain_data['jahrgang'] = 12
         complain_response = self.client.post(self.path, data=complain_data)
         self.assertEqual(complain_response.status_code, 200)
         complain_request = complain_response.wsgi_request

@@ -1,4 +1,5 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
+# TODO: use models.TextField instead of CharField where no max_length is necessary
 from typing import Optional
 
 from django.core.validators import MinValueValidator
@@ -1396,6 +1397,7 @@ class Lagerort(ComputedNameModel):
 class Bestand(BaseModel):
     signatur = models.AutoField(primary_key=True)
     lagerort = models.ForeignKey('Lagerort', models.PROTECT)
+    anmerkungen = models.TextField(blank=True)
     provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
@@ -1532,13 +1534,6 @@ class BaseBrochure(BaseModel):
     )
 
     genre = models.ManyToManyField('Genre')
-
-    # TODO: add full text search SearchVectorField
-    #   Brochure, Kalender, Warenkatalog inherit from BaseBrochure via
-    #   multi-table inheritance. This means that fields declared in BaseBrochure
-    #   aren't present in the postgres tables of Brochure, etc.
-    #   This, in turn, means that these fields cannot immediately be used as
-    #   columns for SearchVectorField.
 
     _base_fts = SearchVectorField(
         columns=[

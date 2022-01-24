@@ -3,7 +3,8 @@ from typing import Any, List, Optional, Tuple, Type, Union
 # noinspection PyPackageRequirements
 from dal import autocomplete
 from django import http
-from django.contrib.auth import get_permission_codename
+from django.contrib.auth import get_permission_codename, get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Page, Paginator
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse
@@ -15,6 +16,7 @@ from dbentry import models as _models
 from dbentry.ac.creator import Creator, MultipleObjectsReturned
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
+from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string
@@ -457,6 +459,23 @@ class ACVeranstaltung(ACTabular):
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]
+
+
+class UserAutocompleteView(autocomplete.Select2QuerySetView):
+    queryset = get_user_model().objects.order_by('username')
+    model_field_name = 'username'
+
+
+class ContentTypeAutocompleteView(autocomplete.Select2QuerySetView):
+    model = ContentType
+    model_field_name = 'model'
+    admin_site = miz_site
+
+    def get_queryset(self):
+        """Limit the queryset to models registered with miz_site."""
+        # noinspection PyProtectedMember
+        registered_models = [m._meta.model_name for m in self.admin_site._registry.keys()]
+        return super().get_queryset().filter(model__in=registered_models).order_by('model')
 
 
 ###############################################################################

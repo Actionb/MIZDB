@@ -23,7 +23,7 @@ class UniqueFaker(factory.Sequence):
             self,
             faker: Union[str, factory.Faker],
             function: Optional[Callable] = None,
-            **kwargs: Any
+            **faker_kwargs: Any
     ) -> None:
         """
         Initialize the faker.
@@ -33,16 +33,17 @@ class UniqueFaker(factory.Sequence):
               faker provider to use
             function (callable): the factory sequence callable that returns the
               suffix that makes the value unique; defaults to lambda n: n
+            faker_kwargs: additional arguments for the Faker initialization
         """
         if function is None:
             def default_callable(n):
                 return n
 
             function = default_callable
-        super().__init__(function, **kwargs)
+        super().__init__(function)
         if isinstance(faker, str):
             # A provider name was passed in.
-            self.faker = factory.Faker(faker)
+            self.faker = factory.Faker(faker, **faker_kwargs)
         else:
             self.faker = faker
 
@@ -53,7 +54,11 @@ class UniqueFaker(factory.Sequence):
             extra: dict
     ) -> str:
         n = super().evaluate(instance, step, extra)
-        return self.faker.generate(extra) + str(n)
+        if 'locale' not in extra:
+            # faker.evaluate will attempt extra.pop('locale'), but, by default,
+            # Sequences do not use a locale and none is provided in extra.
+            extra['locale'] = None
+        return self.faker.evaluate(instance, step, extra) + str(n)
 
 
 class ISSNFaker(factory.Faker):
@@ -62,8 +67,8 @@ class ISSNFaker(factory.Faker):
     def __init__(self, provider: str = 'ean', **kwargs: Any) -> None:
         super().__init__(provider, **kwargs)
 
-    def generate(self, extra_kwargs: dict) -> str:
-        ean = super().generate(extra_kwargs)
+    def evaluate(self, instance, step, extra):
+        ean = super().evaluate(instance, step, extra)
         return ean[3:-3] + issn.calc_check_digit(ean[3:-3])
 
 
@@ -235,7 +240,7 @@ class RelatedFactory(RuntimeFactoryMixin, factory.RelatedFactory):
             self,
             instance: Model,
             step: builder.BuildStep,
-            context: builder.PostGenerationContext
+            context: declarations.PostGenerationContext
     ) -> List[Model]:
         """Return the related objects for model instance ``instance``."""
         factory_class = self.get_factory()
@@ -330,7 +335,7 @@ class M2MFactory(RelatedFactory):
             self,
             instance: Model,
             step: builder.BuildStep,
-            context: builder.PostGenerationContext
+            context: declarations.PostGenerationContext
     ) -> None:
         """Create the related objects and add references to the m2m table."""
         related_manager = getattr(instance, self.descriptor_name)

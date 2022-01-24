@@ -3,8 +3,7 @@ from .defaults import *
 DEBUG = True
 
 INSTALLED_APPS += [
-    'test_without_migrations',
-    'debug_toolbar'
+    'debug_toolbar',
 ]
 
 MIDDLEWARE += [

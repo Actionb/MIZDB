@@ -1,19 +1,28 @@
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Type, Union
 
+# noinspection PyPackageRequirements
+from dal import autocomplete
 from django.contrib import admin
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    Count, Exists, Field as ModelField, Func, ManyToManyField, Min, OuterRef, QuerySet, Subquery,
+    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField, Min,
+    OuterRef,
+    QuerySet, Subquery,
     Value
 )
+from django.db.models.functions import Coalesce
 from django.forms import BaseInlineFormSet, Field as FormField, ModelForm
 from django.http import HttpRequest
 from django.utils.safestring import SafeText
+from django_admin_logs.admin import LogEntryAdmin
 
 import dbentry.actions.actions as _actions
+import dbentry.forms as _forms
 import dbentry.m2m as _m2m
 import dbentry.models as _models
 from dbentry.ac.widgets import make_widget
@@ -22,10 +31,7 @@ from dbentry.base.admin import (
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
 from dbentry.changelist import AusgabeChangeList
-from dbentry.forms import (
-    ArtikelForm, AudioForm, AutorForm, BandForm, BrochureForm, BuchForm, FotoForm, MusikerForm,
-    PersonForm, PlakatForm, VideoForm
-)
+from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
@@ -38,9 +44,10 @@ from dbentry.utils.admin import get_obj_link, log_change
 # noinspection PyProtectedMember,PyUnresolvedReferences
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
+    form = _forms.BestandInlineForm
     # This allows inlines.js to copy the last selected bestand to a new row.
     classes = ['copylast']
-    fields = ['signatur', 'lagerort', 'provenienz']
+    fields = ['signatur', 'lagerort', 'provenienz', 'anmerkungen']
     readonly_fields = ['signatur']
     verbose_name = _models.Bestand._meta.verbose_name
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
@@ -96,7 +103,7 @@ class AudioAdmin(MIZModelAdmin):
         verbose_model = _models.Datei
 
     collapse_all = True
-    form = AudioForm
+    form = _forms.AudioForm
     index_category = 'Archivgut'
     save_on_top = True
     list_display = ['titel', 'jahr', 'medium', 'kuenstler_string']
@@ -230,7 +237,8 @@ class AusgabenAdmin(MIZModelAdmin):
             .annotate(
                 x=Func(
                     ArrayAgg('ausgabemonat__monat__abk', ordering='ausgabemonat__monat__ordinal'),
-                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                    Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                    output_field=CharField()
                 )
             )
             .values('x')
@@ -238,15 +246,18 @@ class AusgabenAdmin(MIZModelAdmin):
         return {
             'jahr_string': Func(
                 ArrayAgg('ausgabejahr__jahr', distinct=True, ordering='ausgabejahr__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
             'num_string': Func(
                 ArrayAgg('ausgabenum__num', distinct=True, ordering='ausgabenum__num'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
             'lnum_string': Func(
                 ArrayAgg('ausgabelnum__lnum', distinct=True, ordering='ausgabelnum__lnum'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
             'monat_string': Subquery(subquery),
             'anz_artikel': Count('artikel', distinct=True)
@@ -335,6 +346,14 @@ class AusgabenAdmin(MIZModelAdmin):
         # noinspection PyUnresolvedReferences
         return request.user.has_perms(perms)
 
+    def _get_crosslink_relations(self):
+        return [
+            (_models.Artikel, 'ausgabe', 'Artikel'),
+            (_models.Brochure, 'ausgabe', 'Broschüren'),
+            (_models.Kalender, 'ausgabe', 'Programmhefte'),
+            (_models.Katalog, 'ausgabe', 'Warenkataloge'),
+        ]
+
 
 @admin.register(_models.Autor, site=miz_site)
 class AutorAdmin(MIZModelAdmin):
@@ -345,7 +364,7 @@ class AutorAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.AutorURL
 
-    form = AutorForm
+    form = _forms.AutorForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, MagazinInLine]
     list_display = ['autor_name', 'person', 'kuerzel', 'magazin_string']
@@ -356,7 +375,7 @@ class AutorAdmin(MIZModelAdmin):
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'magazin_list': ArrayAgg(
-                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name')
+                'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'),
         }
 
     def autor_name(self, obj: _models.Autor) -> str:
@@ -403,7 +422,7 @@ class ArtikelAdmin(MIZModelAdmin):
         verbose_model = _models.Veranstaltung
         tabular_autocomplete = ['veranstaltung']
 
-    form = ArtikelForm
+    form = _forms.ArtikelForm
     index_category = 'Archivgut'
     save_on_top = True
     list_select_related = ['ausgabe', 'ausgabe__magazin']
@@ -488,7 +507,7 @@ class BandAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BandURL
 
-    form = BandForm
+    form = _forms.BandForm
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, AliasInLine, MusikerInLine, OrtInLine]
     list_display = ['band_name', 'genre_string', 'musiker_string', 'orte_string']
@@ -562,7 +581,7 @@ class PlakatAdmin(MIZModelAdmin):
         tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
-    form = PlakatForm
+    form = _forms.PlakatForm
     index_category = 'Archivgut'
     list_display = ['titel', 'plakat_id', 'size', 'datum_localized', 'veranstaltung_string']
     readonly_fields = ['plakat_id']
@@ -700,7 +719,7 @@ class BuchAdmin(MIZModelAdmin):
     collapse_all = True
     # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
     crosslink_labels = {'buch': 'Aufsätze'}
-    form = BuchForm
+    form = _forms.BuchForm
     index_category = 'Archivgut'
     save_on_top = True
     ordering = ['titel']
@@ -803,6 +822,19 @@ class GenreAdmin(MIZModelAdmin):
         return concat_limit(obj.alias_list) or self.get_empty_value_display() # added by annotations  # noqa
     alias_string.short_description = 'Aliase'  # type: ignore[attr-defined]  # noqa
 
+    def _get_crosslink_relations(self):
+        return [
+            (_models.Musiker, 'genre', None), (_models.Band, 'genre', None),
+            (_models.Magazin, 'genre', None), (_models.Artikel, 'genre', None),
+            (_models.Buch, 'genre', None), (_models.Audio, 'genre', None),
+            (_models.Plakat, 'genre', None), (_models.Dokument, 'genre', None),
+            (_models.Memorabilien, 'genre', None), (_models.Technik, 'genre', None),
+            (_models.Veranstaltung, 'genre', None), (_models.Video, 'genre', None),
+            (_models.Datei, 'genre', None), (_models.Brochure, 'genre', None),
+            (_models.Kalender, 'genre', None), (_models.Katalog, 'genre', None),
+            (_models.Foto, 'genre', None)
+        ]
+
 
 @admin.register(_models.Magazin, site=miz_site)
 class MagazinAdmin(MIZModelAdmin):
@@ -891,7 +923,7 @@ class MusikerAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.MusikerURL
 
-    form = MusikerForm
+    form = _forms.MusikerForm
     fields = ['kuenstler_name', 'person', 'beschreibung', 'bemerkungen']
     index_category = 'Stammdaten'
     inlines = [URLInLine, GenreInLine, AliasInLine, BandInLine, OrtInLine, InstrInLine]
@@ -935,7 +967,7 @@ class PersonAdmin(MIZModelAdmin):
     list_display = ('vorname', 'nachname', 'orte_string', 'is_musiker', 'is_autor')
     list_display_links = ['vorname', 'nachname']
     ordering = ['nachname', 'vorname']
-    form = PersonForm
+    form = _forms.PersonForm
 
     fieldsets = [
         (None, {
@@ -1134,7 +1166,7 @@ class VideoAdmin(MIZModelAdmin):
         fields = ['datei']
         verbose_model = _models.Datei
 
-    form = VideoForm
+    form = _forms.VideoForm
     index_category = 'Archivgut'
     collapse_all = True
     save_on_top = True
@@ -1327,7 +1359,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
     class URLInLine(BaseTabularInline):  # noqa
         model = _models.BrochureURL
 
-    form = BrochureForm
+    form = _forms.BrochureForm
     index_category = 'Archivgut'
     inlines = [URLInLine, JahrInLine, GenreInLine, BestandInLine]
     list_display = ['titel', 'zusammenfassung', 'jahr_string']
@@ -1365,16 +1397,19 @@ class BaseBrochureAdmin(MIZModelAdmin):
             default_fieldset['fields'] = fields
         return fieldsets
 
-    def get_ordering(self, request: HttpRequest) -> List[str]:
-        return ['titel', 'jahr_min', 'zusammenfassung']
+    def get_queryset(self, request):
+        # Add the annotation necessary for the proper ordering:
+        return super().get_queryset(request).annotate(jahr_min=Min('jahre__jahr')).order_by(
+            'titel', 'jahr_min', 'zusammenfassung'
+        )
 
     def get_result_list_annotations(self) -> dict:
         return {
             'jahr_string': Func(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
-                Value(', '), Value(self.get_empty_value_display()), function='array_to_string'
+                Value(', '), Value(self.get_empty_value_display()), function='array_to_string',
+                output_field=CharField()
             ),
-            'jahr_min': Min('jahre__jahr')
         }
 
     def jahr_string(self, obj: _models.BaseBrochure) -> str:
@@ -1493,7 +1528,7 @@ class FotoAdmin(MIZModelAdmin):
         tabular_autocomplete = ['veranstaltung']
 
     collapse_all = True
-    form = FotoForm
+    form = _forms.FotoForm
     index_category = 'Archivgut'
     list_display = ['titel', 'foto_id', 'size', 'typ', 'datum_localized', 'schlagwort_list']
     readonly_fields = ['foto_id']
@@ -1560,8 +1595,8 @@ class AuthAdminMixin(object):
     formfield choices to make the permissions more distinguishable from each
     other.
 
-    By default the choice's names contain the verbose_name of a model, which may
-    not be unique enough to be able to differentiate between different
+    By default, the choice's names contain the verbose_name of a model, which
+    may not be unique enough to be able to differentiate between different
     permissions.
     """
 
@@ -1599,4 +1634,59 @@ class MIZGroupAdmin(AuthAdminMixin, GroupAdmin):
 
 @admin.register(User, site=miz_site)
 class MIZUserAdmin(AuthAdminMixin, UserAdmin):
+    list_display = (
+        'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'activity'
+    )
+
+    def get_queryset(self, request: HttpRequest):
+        queryset = super().get_queryset(request)
+        # Note that the order_by and values calls are required:
+        # see django docs expressions/#using-aggregates-within-a-subquery-expression
+        recent_logs = LogEntry.objects.filter(
+            user_id=OuterRef('id'),
+            action_time__date__gt=datetime.now() - timedelta(days=32)
+        ) .order_by().values('user_id')
+        subquery = Subquery(
+            recent_logs.annotate(c=Count('*')).values('c'), output_field=IntegerField()
+        )
+        return queryset.annotate(activity=Coalesce(subquery, Value(0)))
+
+    def activity(self, user: User) -> int:
+        """Return the total amount of the recent changes made by this user."""
+        # noinspection PyUnresolvedReferences
+        return user.activity or 0
+    activity.short_description = 'Aktivität letzte 30 Tage'  # type: ignore[attr-defined]
+    activity.admin_order_field = 'activity'  # type: ignore[attr-defined]
     pass
+
+
+@admin.register(LogEntry, site=miz_site)
+class MIZLogEntryAdmin(MIZAdminSearchFormMixin, LogEntryAdmin):
+    fields = (
+        'action_time', 'user', 'content_type', 'object', 'object_id',
+        'action_flag', 'change_message_verbose', 'change_message_raw'
+    )
+    readonly_fields = ('object', 'change_message_verbose', 'change_message_raw')
+
+    list_display = (
+        'action_time', 'user', 'action_message', 'content_type', 'object_link',
+    )
+    list_filter = ()
+    search_form_kwargs = {
+        'fields': ('user', 'content_type', 'action_flag'),
+        'widgets': {
+            'user': autocomplete.ModelSelect2(url='autocomplete_user'),
+            'content_type': autocomplete.ModelSelect2(url='autocomplete_ct'),
+        }
+    }
+
+    def object(self, obj):
+        return self.object_link(obj)
+
+    def change_message_verbose(self, obj):
+        return obj.get_change_message()
+    change_message_verbose.short_description = 'Änderungsmeldung'  # type: ignore[attr-defined]
+
+    def change_message_raw(self, obj):
+        return obj.change_message
+    change_message_raw.short_description = 'Datenbank-Darstellung'  # type: ignore[attr-defined]

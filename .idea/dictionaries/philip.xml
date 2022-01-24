@@ -4,6 +4,8 @@
       <w>bürgerl</w>
       <w>compactified</w>
       <w>copylast</w>
+      <w>createdb</w>
+      <w>dbentry</w>
       <w>decl</w>
       <w>deletelink</w>
       <w>dublettenlager</w>
@@ -14,6 +16,8 @@
       <w>isoformat</w>
       <w>itemtpl</w>
       <w>jahrgangswerte</w>
+      <w>libpq</w>
+      <w>mizdb</w>
       <w>modelfac</w>
       <w>modelfactory</w>
       <w>movetobrochure</w>
@@ -21,11 +25,14 @@
       <w>normdatei</w>
       <w>objs</w>
       <w>optgroup</w>
+      <w>pgdg</w>
+      <w>postgre</w>
       <w>redef</w>
       <w>reraise</w>
       <w>searchform</w>
       <w>tabulars</w>
       <w>unaccent</w>
+      <w>undefine</w>
       <w>zeitschriftenraum</w>
       <w>zraum</w>
     </words>

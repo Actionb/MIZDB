@@ -43,7 +43,25 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         Use data of the previously submitted form stored in the current session
         as this form's initial data.
         """
-        return self.request.session.get('old_form_data', {})
+        old_form_data = self.request.session.get('old_form_data', {})
+        if old_form_data:
+            # Initial values need to be of the correct type for the formfield.
+            # jahrgang is an IntegerField and expects an integer initial value,
+            # but the old value for that field has been turned into a string by
+            # the JSONSerializer. Need to cast it back into an integer or
+            # has_changed() will always return true (initial string is always
+            # unequal to the integer from the form data).
+            if old_form_data.get('jahrgang'):
+                old_form_data['jahrgang'] = int(old_form_data['jahrgang'])
+            return old_form_data
+        # noinspection PyUnresolvedReferences
+        try:
+            return {
+                'ausgabe_lagerort': _models.Lagerort.objects.get(ort='Zeitschriftenraum'),
+                'dublette': _models.Lagerort.objects.get(ort='Dublettenlager'),
+            }
+        except (_models.Lagerort.DoesNotExist, _models.Lagerort.MultipleObjectsReturned):
+            return {}
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         """
@@ -427,12 +445,3 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         # Add ausgabe's meta for the template.
         # noinspection PyProtectedMember,PyUnresolvedReferences
         return super().get_context_data(opts=_models.Ausgabe._meta)
-
-
-class BulkAusgabeHelp(MIZAdminMixin, views.generic.TemplateView):
-    """
-    A very basic view containing some text explaining the BulkAusgabe view.
-    """
-
-    template_name = 'admin/help_bulk_ausgabe.html'
-    title = "Hilfe: Ausgaben Erstellung"

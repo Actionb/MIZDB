@@ -165,16 +165,6 @@ class TestMIZAdminForm(FormTestCase):
         for fs in form:
             self.assertIsInstance(fs, Fieldset)
 
-    def test_changed_data_prop_no_change(self):
-        kwargs = dict(data=dict(some_int='10'), initial=dict(some_int='10'))
-        form = self.get_dummy_form(**kwargs)
-        self.assertFalse(form.changed_data)
-
-    def test_changed_data_prop_change(self):
-        kwargs = dict(data=dict(some_int='11'), initial=dict(some_int='10'))
-        form = self.get_dummy_form(**kwargs)
-        self.assertTrue(form.changed_data)
-
 
 class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
     dummy_bases = (DynamicChoiceFormMixin, forms.Form)
@@ -312,11 +302,12 @@ class TestMinMaxRequiredFormMixin(FormTestCase):
 
 
 class TestDiscogsFormMixin(ModelFormTestCase):
-    form_class = type(
-        'TestForm',
-        (DiscogsFormMixin, forms.ModelForm),
-        {'url_field_name': 'discogs_url', 'release_id_field_name': 'release_id'}
-    )
+
+    class TestForm(DiscogsFormMixin, forms.ModelForm):
+        url_field_name = 'discogs_url'
+        release_id_field_name = 'release_id'
+
+    form_class = TestForm
     model = _models.Audio
     fields = ['release_id', 'discogs_url']
 
@@ -396,20 +387,26 @@ class TestDiscogsFormMixin(ModelFormTestCase):
         self.assertIn('discogs_url', form.cleaned_data)
         self.assertEqual(
             form.cleaned_data['discogs_url'],
-            'http://www.discogs.com/release/1234'
+            'https://www.discogs.com/release/1234'
         )
 
     def test_clean_strips_slug(self):
         # Assert that clean strips the url from any slugs
-        form = self.get_form(data={
-            'release_id': 3512181,
-            'discogs_url': 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181'
-        })
-        form.full_clean()
-        self.assertEqual(
-            form.cleaned_data['discogs_url'],
-            'http://www.discogs.com/release/3512181'
-        )
+        urls = [
+            'https://www.discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',
+            'www.discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',
+            'discogs.com/de/release/3512181-Manderley-Fliegt-Gedanken-Fliegt',
+            # I believe discogs has since stopped using this URL format:
+            'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                form = self.get_form(data={'release_id': 3512181, 'discogs_url': url})
+                form.full_clean()
+                self.assertEqual(
+                    form.cleaned_data['discogs_url'],
+                    'https://www.discogs.com/release/3512181'
+                )
 
     @translation_override(language=None)
     def test_invalid_urls_keep_old_error_message(self):
@@ -430,21 +427,31 @@ class TestDiscogsFormMixin(ModelFormTestCase):
         self.assertIn(
             "Bitte nur Adressen von discogs.com eingeben.", form.errors['discogs_url'])
 
-    def test_urls_with_slug_valid(self):
-        # Assert that discogs urls with a slug are not regarded as invalid.
-        form = self.get_form(data={
-            'titel': 'Beep',
-            'discogs_url': 'https://www.discogs.com/release/3512181'
-        })
-        self.assertNotIn('discogs_url', form.errors)
-
     def test_urls_without_slug_valid(self):
+        # Assert that discogs urls with a slug are not regarded as invalid.
+        urls = [
+            'https://www.discogs.com/release/4126',
+            'www.discogs.com/release/4126',
+            'discogs.com/release/4126',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                form = self.get_form(data={'titel': 'Beep', 'discogs_url': url})
+                self.assertNotIn('discogs_url', form.errors)
+
+    def test_urls_with_slug_valid(self):
         # Assert that discogs urls without a slug are not regarded as invalid.
-        form = self.get_form(data={
-            'titel': 'Beep',
-            'discogs_url': 'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181'
-        })
-        self.assertNotIn('discogs_url', form.errors)
+        urls = [
+            'https://www.discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            'www.discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            'discogs.com/release/4126-Led-Zeppelin-Led-Zeppelin',
+            # I believe discogs has since stopped using this URL format:
+            'https://www.discogs.com/Manderley--Fliegt-Gedanken-Fliegt-/release/3512181',
+        ]
+        for url in urls:
+            with self.subTest(url=url):
+                form = self.get_form(data={'titel': 'Beep', 'discogs_url': url})
+                self.assertNotIn('discogs_url', form.errors)
 
 
 class TestMIZAdminInlineFormBase(MyTestCase):

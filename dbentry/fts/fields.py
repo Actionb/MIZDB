@@ -2,7 +2,7 @@ from typing import Any, Dict, Iterator, List, Tuple
 
 import tsvector_field
 from django.core import checks
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 
 class WeightedColumn(tsvector_field.WeightedColumn):
@@ -25,7 +25,7 @@ class WeightedColumn(tsvector_field.WeightedColumn):
         """
         return (
             "dbentry.fts.fields.{}".format(self.__class__.__name__),
-            [force_text(self.name), force_text(self.weight), force_text(self.language)],
+            [force_str(self.name), force_str(self.weight), force_str(self.language)],
             {}
         )
 

@@ -8,6 +8,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission, User
 from django.core import checks, exceptions
 from django.db import connections, transaction
+from django.db.models import Min
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext  # noqa
 from django.urls import reverse
@@ -17,7 +18,6 @@ import dbentry.admin as _admin
 import dbentry.models as _models
 from dbentry.base.admin import AutocompleteMixin
 from dbentry.changelist import AusgabeChangeList, MIZChangeList
-from dbentry.constants import DUPLETTEN_ID, ZRAUM_ID
 from dbentry.factory import make, modelfactory_factory
 from dbentry.sites import miz_site
 from dbentry.tests.base import AdminTestCase
@@ -351,9 +351,15 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_add_extra_context(self):
-        # No object_id passed in: add_crosslinks should not be called.
-        extra = self.model_admin.add_extra_context()
-        self.assertFalse('crosslinks' in extra)
+        # Assert that add_extra_context adds additional items for the context.
+        for object_id in ('', self.obj1.pk):
+            with self.subTest(object_id=object_id):
+                extra = self.model_admin.add_extra_context(object_id=object_id)
+                self.assertIn('collapse_all', extra)
+                if object_id:
+                    self.assertIn('crosslinks', extra)
+                else:
+                    self.assertNotIn('crosslinks', extra)
 
     def test_add_view(self):
         response = self.client.get(self.add_path)
@@ -397,70 +403,6 @@ class TestMIZModelAdmin(AdminTestCase):
             list(_models.Person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
             ['Alice Mantest']
         )
-
-    def test_add_pk_search_field(self):
-        # Assert that a search field for the primary key is added to the search
-        # fields.
-        # For primary keys that are a relation (OneToOneRelation) this should be
-        # 'pk__pk__iexact' as 'iexact' is not a valid lookup for a OneToOneField.
-        test_data = [
-            ('NoRelation', self.model_admin, 'pk__iexact'),
-            (
-                'OneToOneRelation',
-                _admin.KatalogAdmin(_models.Katalog, self.admin_site),
-                'pk__pk__iexact'
-            )
-        ]
-        mocked_has_search_form = Mock(return_value=False)
-        for test_desc, model_admin, expected in test_data:
-            with patch.object(model_admin, 'has_search_form', new=mocked_has_search_form):
-                with self.subTest(desc=test_desc):
-                    search_fields = model_admin._add_pk_search_field([])
-                    self.assertTrue(search_fields, msg="Expected pk field to be added.")
-                    self.assertEqual(
-                        len(search_fields), 1,
-                        msg="Only one pk search field expected. Got: %s" % str(search_fields)
-                    )
-                    self.assertIn(expected, search_fields)
-
-    def test_add_pk_search_field_does_not_overwrite_existing(self):
-        # Assert that _add_pk_search_field does not overwrite or delete
-        # existing primary key search_fields.
-        pk_name = self.model._meta.pk.name
-        test_data = [
-            ('no prefix', ['pk']),
-            ('prefixed', ['=pk']),
-            ('lookup', ['pk__istartswith']),
-            ('lookup prefixed', ['=pk__istartswith']),
-            ('pk name', [pk_name]),
-            ('pk name prefixed', ['=%s' % pk_name]),
-            ('pk name lookup', ['%s__istartswith' % pk_name]),
-            ('pk name lookup prefixed', ['=%s__istartswith' % pk_name])
-        ]
-
-        for test_desc, initial_fields in test_data:
-            with self.subTest(desc=test_desc):
-                search_fields = self.model_admin._add_pk_search_field(initial_fields)
-                self.assertEqual(initial_fields, search_fields)
-
-    def test_add_pk_search_field_with_search_form(self):
-        # Assert that _add_pk_search_field only adds a pk search field if the
-        # model admin does NOT have a search form.
-        with patch.object(self.model_admin, 'has_search_form') as mocked_has_search_form:
-            mocked_has_search_form.return_value = False
-            search_fields = self.model_admin._add_pk_search_field([])
-            self.assertTrue(
-                search_fields,
-                msg="ModelAdmin instances without a search_form should add a"
-                    "primary key search field."
-            )
-            mocked_has_search_form.return_value = True
-            search_fields = self.model_admin._add_pk_search_field([])
-            self.assertFalse(
-                search_fields,
-                msg="ModelAdmin instances with a search_form should not add a "
-                    "primary key search field."
-            )
 
     def test_change_message_capitalized_fields(self):
         # Assert that the LogEntry/history change message uses the field labels.
@@ -671,7 +613,7 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             ausgabelnum__lnum=[10, 11, 12],
             ausgabemonat__monat__monat=['Januar', 'Februar'],
             artikel__schlagzeile='Test', artikel__seite=1,
-            bestand__lagerort__pk=[ZRAUM_ID, DUPLETTEN_ID],
+            bestand__lagerort__ort=['Zeitschriftenraum', 'Dublettenlager'],
         )
 
         cls.test_data = [cls.obj1]
@@ -717,6 +659,11 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.monat_string(obj), 'Jan, Feb')
 
+    def test_add_crosslinks_no_object_id(self):
+        # Assert that add_crosslinks returns an empty dictionary when no
+        # object_id was provided.
+        self.assertFalse(self.model_admin.add_crosslinks(object_id=None))
+
     def test_add_crosslinks_custom(self):
         obj = make(
             _models.Ausgabe,
@@ -740,14 +687,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
             'label': 'Beep boop (1)', 'pk': str(obj.pk)
         }
         self.assertInCrosslinks(expected, links)
-
-        with patch.object(_models.Ausgabe.artikel_set.rel, 'related_name', new='Boop beep'):
-            links = self.get_crosslinks(obj)
-            expected = {
-                'model_name': 'artikel', 'fld_name': 'ausgabe',
-                'label': 'Boop Beep (1)', 'pk': str(obj.pk)
-            }  # Note the capitalization of each starting letter!
-            self.assertInCrosslinks(expected, links)
 
         obj.artikel_set.all().delete()
         self.assertFalse(self.get_crosslinks(obj))
@@ -1510,7 +1449,6 @@ class TestBuchAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestBaseBrochureAdmin(AdminTestCase):
     model_admin_class = _admin.BaseBrochureAdmin
     model = _models.Brochure
@@ -1540,6 +1478,17 @@ class TestBaseBrochureAdmin(AdminTestCase):
     def test_jahr_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.jahr_string(obj), '2001, 2002')
+
+    def test_get_queryset_adds_jahr_min_annotation(self):
+        # Test that the 'jahr_min' annotation was added to the queryset.
+        queryset = self.model_admin.get_queryset(self.get_request())
+        try:
+            annotations = queryset.query._annotations
+        except AttributeError:
+            # django 3.1 exposes the annotations
+            annotations = queryset.query.annotations
+        self.assertIn('jahr_min', annotations)
+        self.assertEqual(annotations['jahr_min'], Min('jahre__jahr'))
 
 
 # noinspection PyUnresolvedReferences
@@ -1748,7 +1697,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.Bestand
     fields_expected = [
-        'lagerort', 'provenienz', 'audio', 'ausgabe', 'brochure', 'buch',
+        'lagerort', 'anmerkungen', 'provenienz', 'audio', 'ausgabe', 'brochure', 'buch',
         'dokument', 'foto', 'memorabilien', 'plakat', 'technik', 'video'
     ]
     num_queries_changelist = 0  # skip the test for the number of queries per changelist request

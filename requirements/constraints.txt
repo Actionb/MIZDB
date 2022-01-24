@@ -1,10 +1,11 @@
-Django==2.2.24
-psycopg2==2.8.5
+Django>=3.2,<4
+psycopg2==2.9.2
 
 # Django extensions/apps
-django-autocomplete-light==3.7.0.dev0
+django-autocomplete-light==3.8.2
 django-formtools==2.3
 django-tsvector-field==0.9.5
+django-admin-logs==1.0.2
 
 # Other python packages
 nameparser==1.0.6
@@ -13,5 +14,5 @@ requests==2.26.0
 PyYAML==6.0
 
 # Test/development packages
-factory-boy==2.12.0
+factory-boy==3.2.1
 requests_mock==1.9.3

@@ -1,3 +1,4 @@
+import re
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 from django import forms
@@ -9,9 +10,11 @@ from django.forms import Form
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
-from dbentry.constants import discogs_release_id_pattern
 from dbentry.utils import snake_case_to_spaces
 from dbentry.validators import DiscogsURLValidator
+
+# Default attrs for the TextArea form widget
+ATTRS_TEXTAREA = {'rows': 3, 'cols': 90}
 
 
 class FieldGroup:
@@ -287,50 +290,6 @@ class MIZAdminFormMixin(object):
             media += fieldset.media
         return media
 
-    @cached_property
-    def changed_data(self: Form) -> list:
-        # TODO: consider dropping this; it overrides forms.Form.changed_data to
-        #  fix an issue when a formfield.show_hidden_initial is True - but we
-        #  don't have any fields that have show_hidden_initial==True.
-        data = []
-        for name, field in self.fields.items():
-            prefixed_name = self.add_prefix(name)
-            data_value = field.widget.value_from_datadict(
-                self.data, self.files, prefixed_name
-            )
-            if not field.show_hidden_initial:
-                # Use the BoundField's initial as this is the value passed
-                # to the widget.
-                # A form's BoundField can be accessed via Form.__getitem__
-                initial_value = self[name].initial  # type: ignore[index]
-                try:
-                    # forms.Field does not convert the initial_value to the
-                    # field's python type (like it does for the data_value)
-                    # for its has_changed check.
-                    # This results in IntegerField.has_changed('1',1);
-                    # returning False.
-                    initial_value = field.to_python(initial_value)
-                except ValidationError:
-                    # Always assume data has changed if validation fails.
-                    data.append(name)
-                    continue
-            else:
-                initial_prefixed_name = self.add_initial_prefix(name)
-                hidden_widget = field.hidden_widget()
-                try:
-                    initial_value = field.to_python(
-                        hidden_widget.value_from_datadict(
-                            self.data, self.files, initial_prefixed_name
-                        )
-                    )
-                except ValidationError:
-                    # Always assume data has changed if validation fails.
-                    data.append(name)
-                    continue
-            if field.has_changed(initial_value, data_value):
-                data.append(name)
-        return data
-
 
 class MIZAdminForm(MIZAdminFormMixin, Form):
     pass
@@ -442,8 +401,8 @@ class DiscogsFormMixin(object):
         if not (release_id or discogs_url):
             return self.cleaned_data
 
-        match = discogs_release_id_pattern.search(discogs_url)
-        if match and len(match.groups()) == 1:
+        match = re.match(r'.*release/(\d+)', discogs_url)
+        if match:
             # We have a valid url with a release_id in it.
             release_id_from_url = match.groups()[-1]
             if release_id and release_id_from_url != release_id:
@@ -455,6 +414,6 @@ class DiscogsFormMixin(object):
                 # Set release_id from the url.
                 release_id = str(match.groups()[-1])
                 self.cleaned_data['release_id'] = release_id
-        discogs_url = "http://www.discogs.com/release/" + release_id
+        discogs_url = "https://www.discogs.com/release/" + release_id
         self.cleaned_data['discogs_url'] = discogs_url
         return self.cleaned_data

@@ -1,14 +1,10 @@
 from django.urls import include, path
 
-from dbentry.bulk.views import BulkAusgabe, BulkAusgabeHelp
+from dbentry.bulk.views import BulkAusgabe
 from dbentry.views import SiteSearchView
 
 admin_tools_urls = [
     path('bulk_ausgabe/', BulkAusgabe.as_view(), name='bulk_ausgabe'),
-]
-
-help_urls = [
-    path('bulk_ausgabe', BulkAusgabeHelp.as_view(), name='help_bulk_ausgabe'),
 ]
 
 urlpatterns = [
@@ -16,5 +12,4 @@ urlpatterns = [
     path('ac/', include('dbentry.ac.urls')),
     path('tools/', include(admin_tools_urls)),
     path('maint/', include('dbentry.maint.urls')),
-    path('help/', include(help_urls))
 ]

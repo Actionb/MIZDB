@@ -10,11 +10,6 @@
 
 {% block content %}
 
-<!-- Help -->
-{% block object-tools %}
-    <ul class="object-tools"><li><a href="{% url 'help_bulk_ausgabe' %}" target="_blank">Hilfe</a></li></ul>
-{% endblock object-tools %}
-
 <!-- Form -->
 <form method="post">
 {% csrf_token %}

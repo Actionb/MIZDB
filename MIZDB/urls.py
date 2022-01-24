@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
 import os
+import warnings
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -23,23 +24,22 @@ from django.urls import include, path
 from dbentry.sites import miz_site
 
 urlpatterns = [
-    path('admin/', miz_site.urls),
     path('admin/', include('dbentry.urls')),
+    path('admin/', miz_site.urls),
 
 ]
 
 if settings.DEBUG:
     urlpatterns += static(prefix=settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# TODO: why not include this under the above condition (debug==True)?
-if os.environ.get('DJANGO_DEVELOPMENT') in ('true', 'True', '1'):
+if os.environ.get('DJANGO_DEVELOPMENT'):
     # Add django debug toolbar URLs:
     try:
         # noinspection PyUnresolvedReferences
         import debug_toolbar
+    except ModuleNotFoundError as e:
+        warnings.warn(f"Could not import django debug toolbar when setting up URL configs: {e!s}")
+    else:
         urlpatterns.append(path('__debug__/', include(debug_toolbar.urls)))
-    except ImportError as e:
-        # TODO: spit out warning
-        pass
 
 handler403 = 'dbentry.views.MIZ_permission_denied_view'
