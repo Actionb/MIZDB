@@ -75,6 +75,15 @@ class AutorForm(MinMaxRequiredFormMixin, forms.ModelForm):
     minmax_required = [{'min_fields': 1, 'fields': ['kuerzel', 'person']}]
 
 
+class BestandInlineForm(forms.ModelForm):
+    class Meta:
+        model = _models.Bestand
+        fields = '__all__'
+        widgets = {
+            'anmerkungen': forms.Textarea(attrs={'rows': 1, 'cols': 30})
+        }
+
+
 class BrochureForm(AusgabeMagazinFieldForm):
     class Meta:
         widgets = {

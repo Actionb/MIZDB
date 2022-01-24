@@ -1697,7 +1697,7 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.Bestand
     fields_expected = [
-        'lagerort', 'provenienz', 'audio', 'ausgabe', 'brochure', 'buch',
+        'lagerort', 'anmerkungen', 'provenienz', 'audio', 'ausgabe', 'brochure', 'buch',
         'dokument', 'foto', 'memorabilien', 'plakat', 'technik', 'video'
     ]
     num_queries_changelist = 0  # skip the test for the number of queries per changelist request

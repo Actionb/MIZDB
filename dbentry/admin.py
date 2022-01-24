@@ -44,9 +44,10 @@ from dbentry.utils.admin import get_obj_link, log_change
 # noinspection PyProtectedMember,PyUnresolvedReferences
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
+    form = _forms.BestandInlineForm
     # This allows inlines.js to copy the last selected bestand to a new row.
     classes = ['copylast']
-    fields = ['signatur', 'lagerort', 'provenienz']
+    fields = ['signatur', 'lagerort', 'provenienz', 'anmerkungen']
     readonly_fields = ['signatur']
     verbose_name = _models.Bestand._meta.verbose_name
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural

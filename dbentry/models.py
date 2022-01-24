@@ -1397,6 +1397,7 @@ class Lagerort(ComputedNameModel):
 class Bestand(BaseModel):
     signatur = models.AutoField(primary_key=True)
     lagerort = models.ForeignKey('Lagerort', models.PROTECT)
+    anmerkungen = models.TextField(blank=True)
     provenienz = models.ForeignKey('Provenienz', models.SET_NULL, blank=True, null=True)
 
     audio = models.ForeignKey('Audio', models.CASCADE, blank=True, null=True)
