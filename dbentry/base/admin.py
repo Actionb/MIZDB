@@ -236,6 +236,9 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         Crosslinks are links on an instance's change form that send the user
         to the changelist containing the instance's related objects.
         """
+        if not object_id:
+            return {}
+
         new_extra: dict = {'crosslinks': []}
         if labels is None:  # pragma: no cover
             labels = {}
@@ -300,19 +303,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
-    # noinspection PyUnusedLocal
-    def add_extra_context(
-            self,
-            request: Optional[HttpRequest] = None,
-            extra_context: Optional[dict] = None,
-            object_id: Optional[str] = None
-    ) -> dict:
-        """Add crosslinks as extra context."""
-        new_extra = extra_context or {}
-        if object_id:
-            new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
-        new_extra['collapse_all'] = self.collapse_all
-        return new_extra
+    def add_extra_context(self, object_id: Optional[str] = None, **extra_context) -> dict:
+        """Add extra context specific to this ModelAdmin."""
+        extra_context.update({
+            'collapse_all': self.collapse_all,
+            **self.add_crosslinks(object_id, self.crosslink_labels),
+        })
+        return extra_context
 
     def add_view(
             self,
@@ -321,10 +318,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for adding a new object."""
-        new_extra = self.add_extra_context(
-            request=request, extra_context=extra_context
-        )
-        return super().add_view(request, form_url, new_extra)
+        return super().add_view(request, form_url, self.add_extra_context(**(extra_context or {})))
 
     def change_view(
             self,
@@ -334,10 +328,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for changing an object."""
-        new_extra = self.add_extra_context(
-            request=request, extra_context=extra_context,
-            object_id=object_id
-        )
+        new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
         return super().change_view(request, object_id, form_url, new_extra)
 
     def construct_change_message(

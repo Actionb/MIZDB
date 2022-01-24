@@ -351,9 +351,15 @@ class TestMIZModelAdmin(AdminTestCase):
         )
 
     def test_add_extra_context(self):
-        # No object_id passed in: add_crosslinks should not be called.
-        extra = self.model_admin.add_extra_context()
-        self.assertFalse('crosslinks' in extra)
+        # Assert that add_extra_context adds additional items for the context.
+        for object_id in ('', self.obj1.pk):
+            with self.subTest(object_id=object_id):
+                extra = self.model_admin.add_extra_context(object_id=object_id)
+                self.assertIn('collapse_all', extra)
+                if object_id:
+                    self.assertIn('crosslinks', extra)
+                else:
+                    self.assertNotIn('crosslinks', extra)
 
     def test_add_view(self):
         response = self.client.get(self.add_path)
@@ -652,6 +658,11 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     def test_monat_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_result_list_annotations()).get()
         self.assertEqual(self.model_admin.monat_string(obj), 'Jan, Feb')
+
+    def test_add_crosslinks_no_object_id(self):
+        # Assert that add_crosslinks returns an empty dictionary when no
+        # object_id was provided.
+        self.assertFalse(self.model_admin.add_crosslinks(object_id=None))
 
     def test_add_crosslinks_custom(self):
         obj = make(
