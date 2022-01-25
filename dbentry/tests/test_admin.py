@@ -236,7 +236,7 @@ class AdminTestMethodsMixin(object):
         jquery_base = 'admin/js/vendor/jquery/jquery{!s}.js'.format(
             '' if settings.DEBUG else '.min')
         jquery_init = 'admin/js/jquery.init.js'
-        collapse = 'admin/js/collapse%s.js' % ('' if settings.DEBUG else '.min')
+        collapse = 'admin/js/collapse.js'
 
         if collapse in media._js:
             self.assertIn(jquery_base, media._js)
