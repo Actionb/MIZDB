@@ -185,7 +185,7 @@ def get_required_fields(model: ModelClassOrInstance) -> List[Field]:
             # hence checking the less meaningful blank attribute
             continue
         if f.has_default():
-            # Field has a default value, whether or not that value is an
+            # Field has a default value, whether that value is an
             # 'EMPTY_VALUE' we do not care
             continue
         result.append(f)
@@ -247,7 +247,7 @@ def get_updatable_fields(instance: ModelClassOrInstance) -> List[str]:
                 # Special case, boolean values should be left alone?
                 continue
             elif fld.default == field_value:
-                # This field has it's default value/choice
+                # This field has its default value/choice
                 result.append(fld.attname)
     return result
 

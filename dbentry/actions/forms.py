@@ -42,8 +42,8 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
     Fields:
         - ``primary`` (ChoiceField): the object that other objects
           will be merged into.
-        - ``expand_primary`` (BooleanField): whether or not to expand the
-          primary object with data from the other objects.
+        - ``expand_primary`` (BooleanField): whether to expand the primary
+          object with data from the other objects.
     """
 
     primary = forms.ChoiceField(

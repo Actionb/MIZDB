@@ -75,7 +75,8 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
                     # it must be added to fields.
                     fields += (pk_name,)
 
-        # Do not flatten reverse relation values. An iterable is expected.
+        # Do not flatten reverse relation values.
+        # An iterable object is expected.
         flatten_exclude = []
         if flatten and fields:
             for field_path in fields:

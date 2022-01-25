@@ -185,7 +185,7 @@ class AdminSearchFormMixin(object):
         post_url = response.url
         parsed_url = urlparse(post_url)
         post_url_query = QueryDict(parsed_url.query, mutable=True)
-        # Create a QueryDict mapping search_form fields to
+        # Create a QueryDict mapping of: search_form fields to
         # lists of *all* their preserved values.
         preserved = QueryDict(preserved_filters['_changelist_filters'])
         for lookup, values_list in preserved.lists():

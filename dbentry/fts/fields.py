@@ -63,7 +63,7 @@ class SearchVectorField(tsvector_field.SearchVectorField):
         # default values - not against the defaults of SearchVectorField.
         # And since our defaults are the opposite of fields.Field's, that means
         # that Field.deconstruct will omit those parameters when we need
-        # to include them and it will include them when we should omit them.
+        # to include them, and it will include them when we should omit them.
         if self.blank is not True:
             kwargs['blank'] = False
         else:

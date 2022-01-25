@@ -62,7 +62,7 @@ class UniqueFaker(factory.Sequence):
 
 
 class ISSNFaker(factory.Faker):
-    """A faker that provides valid ISSN numbers."""
+    """A faker that provides valid ISSN."""
 
     def __init__(self, provider: str = 'ean', **kwargs: Any) -> None:
         super().__init__(provider, **kwargs)
@@ -598,7 +598,7 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         """
         if params and len(cls._meta.django_get_or_create) > 1:
             # This factory has been called with explicit parameters for some of
-            # its fields. Add these fields to the memo so we can distinguish
+            # its fields. Add these fields to the memo, so we can distinguish
             # passed in parameters from *generated* ones.
             cls.set_memo(tuple(params.keys()))
         # noinspection PyProtectedMember

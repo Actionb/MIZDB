@@ -304,7 +304,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
                 if item:
                     row[field_name] = item
 
-            # Check for duplicate rows and and assign the right lagerort to
+            # Check for duplicate rows and assign the right lagerort to
             # this instance.
             qs = self.lookup_instance(row)
             row['ausgabe_lagerort'] = self.cleaned_data['ausgabe_lagerort']

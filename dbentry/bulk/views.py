@@ -133,7 +133,7 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
         # Update the 'form' context, in case the variable was replaced
         # with the 'next' form (see '_addanother').
         context['form'] = form
-        # Provide the next form with initial so we can track data changes
+        # Provide the next form with initial, so we can track data changes
         # within the form.
         # noinspection PyUnresolvedReferences
         request.session['old_form_data'] = form.data

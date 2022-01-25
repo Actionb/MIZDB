@@ -134,7 +134,8 @@ class TextSearchQuerySetMixin(object):
             # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
 
-        # Only use the rank of the closest matching related row (highest rank).
+        # Only use the rank of the closest matching related row; this should
+        # be the row with the highest rank.
         # This prevents introducing duplicate rows due to related ranks having
         # different values for the same 'model object'.
         if model_search_rank and related_search_rank:

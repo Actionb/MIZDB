@@ -115,7 +115,7 @@ class MergeViewWizarded(WizardConfirmationView):
     The user selects one instance from the available instances to designate
     it as the 'primary'.
     All other instances will be merged into that one instance.
-    Optionally, the user can chose to expand the 'primary' with data from the
+    Optionally, the user can choose to expand the 'primary' with data from the
     other instances, for any fields of 'primary' that do not have a value.
     """
 

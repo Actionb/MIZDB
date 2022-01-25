@@ -96,7 +96,7 @@ class Creator(object):
 
         If the query returns exactly one instance, return that instance.
         If the query returned no results, return a new unsaved instance.
-        Otherwise raise a MultipleObjectsReturned exception.
+        Otherwise, raise a MultipleObjectsReturned exception.
         """
         try:
             return model.objects.get(**data)

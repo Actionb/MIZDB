@@ -22,9 +22,8 @@ def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
         try:
             fields = get_fields_from_path(obj, path)
             if len(fields) < 2:
-                # Needs at least two degrees of separation.
-                # Otherwise path will point to a set that is already
-                # directly related to obj.
+                # Needs at least two degrees of separation, or path will point
+                # to a set that is already directly related to obj.
                 continue
             target_model = fields[-1].related_model
             target_field = [

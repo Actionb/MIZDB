@@ -247,7 +247,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         if relations is None:
             # Walk through all reverse relations and collect the model and
             # model field to query against as well as the assigned name for the
-            # relation -- unless an inline is covering that reverse relation.
+            # relation -- unless an admin inline is covering that relation.
             relations = []
             inline_models = {i.model for i in self.inlines}
             for rel in get_model_relations(self.model, forward=False, reverse=True):

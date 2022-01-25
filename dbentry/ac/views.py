@@ -97,7 +97,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         """
         Filter the given queryset with the view's search term ``q``.
 
-        If ``q`` is a numeric value, try a primary key lookup. Otherwise use
+        If ``q`` is a numeric value, try a primary key lookup. Otherwise, use
         either MIZQuerySet.search to find results.
         """
         if self.q:
@@ -176,13 +176,14 @@ class ACBase(autocomplete.Select2QuerySetView):
 
 
 class ACTabular(ACBase):
+    # noinspection GrazieInspection
     """
-    Autocomplete view that presents the result data in tabular form.
+        Autocomplete view that presents the result data in tabular form.
 
-    Select2 will group the results returned in the JsonResponse into option
-    groups (optgroup). This (plus bootstrap grids) will allow useful
-    presentation of the data.
-    """
+        Select2 will group the results returned in the JsonResponse into option
+        groups (optgroup). This (plus bootstrap grids) will allow useful
+        presentation of the data.
+        """
 
     # noinspection PyMethodMayBeStatic
     def get_extra_data(self, result: Model) -> list:

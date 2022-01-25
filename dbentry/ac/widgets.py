@@ -28,9 +28,9 @@ class GenericURLWidgetMixin(object):
         4. widget is used and an ajax request is made to that URL
         5. view responds with the results for the widget to display
 
-    A down side is, that this requires having an URL for every different model
+    A downside is, that this requires having a URL for every different model
     that one would like to use ModelSelect2 on.
-    To avoid explicitly declaring an URL for every model, a generic URL with a
+    To avoid explicitly declaring a URL for every model, a generic URL with a
     captured model name can be used: ``path('<str:model_name>/', name='generic')``.
 
     By passing the model name to the widget, the widget can then reverse that
@@ -162,9 +162,9 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
     @property
     def media(self) -> Media:
         """Add RelatedObjectLookups.js to the widget media."""
-        # django's admin adds RelatedObjectLookups.js via ModelAdmin.media.
-        # In order to wrap a widget outside of a ModelAdmin view, the widget
-        # needs to add the necessary javascript files itself.
+        # RelatedObjectLookups.js is added by ModelAdmin.media. In order to
+        # wrap widgets for use in non-admin views, the wrapper needs to provide
+        # the necessary javascript files directly.
         from django.conf import settings
         extra = '' if settings.DEBUG else '.min'
         js = [

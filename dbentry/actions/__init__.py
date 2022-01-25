@@ -1,3 +1,4 @@
+# noinspection GrazieInspection
 """
 Custom admin actions for the dbentry app.
 

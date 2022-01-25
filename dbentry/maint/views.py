@@ -96,7 +96,7 @@ class ModelSelectView(views.generic.FormView):
 
     Attributes:
         - ``next_view`` (str): view name of the next view. reverse() must be
-          able to return an URL using this view name.
+          able to return a URL using this view name.
     """
 
     template_name = 'admin/basic_form.html'
@@ -157,7 +157,7 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
     """
     Main entry point for the duplicates search.
 
-    It let's the user choose a model to search for duplicates in and then
+    It lets the user choose a model to search for duplicates in and then
     redirects to the DuplicateObjectsView.
     """
 
@@ -166,15 +166,16 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
 
 
 class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
+    # noinspection GrazieInspection
     """
-    A FormView that finds, displays and, if so requested, merges duplicates.
+        A FormView that finds, displays and, if so requested, merges duplicates.
 
-    The view's form contains the model fields with which a search for duplicates
-    is done. Duplicates are model instances that have the same values in all of
-    the model fields selected in the form.
-    These duplicates are grouped together according to these equivalent values
-    and the possibility for merging each group is provided.
-    """
+        The view's form contains the model fields with which a search for duplicates
+        is done. Duplicates are model instances that have the same values in all of
+        the model fields selected in the form.
+        These duplicates are grouped together according to these equivalent values
+        and the possibility for merging each group is provided.
+        """
 
     template_name = 'admin/dupes.html'
     form_class = DuplicateFieldsSelectForm
@@ -235,7 +236,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         """
         Extract the table headers for the table that lists the duplicates from
         the selected display fields in 'form'.
-        The headers should be the human readable part of the choices.
+        The headers should be the human-readable part of the choices.
         """
         headers: List[str] = []
         for field_name in form.display_fields:
@@ -253,7 +254,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                         for group_name, group_choices in choices
                     )
                 )
-            # Acquire the human readable parts of the choices that have been
+            # Acquire the human-readable parts of the choices that have been
             # selected:
             headers.extend(
                 human_readable

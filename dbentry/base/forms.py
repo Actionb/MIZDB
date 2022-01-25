@@ -22,7 +22,7 @@ class FieldGroup:
     Helper object managing a group of fields for the MinMaxRequiredFormMixin.
 
     Created during the clean() method of a form instance, a FieldGroup can
-    assess whether or not its minimum/maximum requirements are fulfilled.
+    assess whether its minimum/maximum requirements are fulfilled.
     """
 
     def __init__(
