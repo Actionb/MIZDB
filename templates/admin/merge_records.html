@@ -40,7 +40,7 @@
                 {{ field.errors }}
                 {{ field }}  {# the field is hidden and only stores the id selected in the 'result list' #}
                 {{ primary_label }}
-                <div id="changelist">{% result_list cl %}</div>  {# div id required for css #}
+                <div id="changelist" style="display:block;">{% result_list cl %}</div>  {# div id required for css #}
                 <div class="help">{{ field.help_text }}</div>
                 </div>
             {% else %}
