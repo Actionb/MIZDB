@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 
 import dbentry.models as _models
-from dbentry.ac.creator import Creator, MultipleObjectsReturned, FailedObject
+from dbentry.ac.creator import Creator, FailedObject, MultipleObjectsReturned
 from dbentry.factory import make
 from dbentry.tests.base import DataTestCase, mockv
 
@@ -88,25 +88,6 @@ class TestCreator(DataTestCase):
         )
         creator.creator = mockv({'some': 'iterable'})
         self.assertEqual(creator.create('Bob Tester', preview=True), {'some': 'iterable'})
-
-    def test_get_model_instance(self):
-        # _get_model_instance should return a new unsaved model object if no matches are found
-        creator = Creator(model=_models.Person)
-        inst = creator._get_model_instance(_models.Person, nachname='Nobody')
-        self.assertIsInstance(inst, _models.Person)
-        self.assertIsNone(inst.pk)
-        self.assertEqual(inst.nachname, 'Nobody')
-
-        # _get_model_instance should return an existing model object if there is only one match
-        alice_data = dict(vorname='Alice', nachname='Testman')
-        inst = creator._get_model_instance(_models.Person, **alice_data)
-        self.assertEqual(inst, self.alice)
-
-        # _get_model_instance should raise a
-        # MultipleObjectsReturned if there is more than one match
-        bob_data = dict(vorname='Bob', nachname='Testman')
-        with self.assertRaises(MultipleObjectsReturned):
-            creator._get_model_instance(_models.Person, **bob_data)
 
     def test_create_person(self):
         # return value is an OrderedDict with keys ('Vorname','Nachname','instance')
@@ -215,11 +196,44 @@ class TestCreator(DataTestCase):
         self.assertEqual(created['instance'].person, created['Person']['instance'])
         self.assertEqual(created['instance'].kuerzel, 'BT')
 
-        # Assert that create_autor uses an existing Person object to find a
-        # matching autor object:
-        creator.create_person = mockv({'instance': self.alice})
-        creator._get_model_instance = mockv(self.alice_autor)
-        created = creator.create_autor('Not Important (NI)', False)
-        creator._get_model_instance.assert_called_with(
-            self.model, person=self.alice, kuerzel='NI')
-        self.assertEqual(created['instance'], self.alice_autor)
+    def test_create_autor_no_person_pk(self):
+        # Assert that create_autor does not filter on person.pk, but instead
+        # on person.vorname and person.nachname.
+
+        # BUG: The query to find matching Autor objects filtered on person.pk.
+        # But the pk would be None for new, unsaved Person instances, which
+        # means that query would also include Autor objects that have no
+        # related Person (autor.person is None).
+
+        p = make(_models.Person, vorname='Peter', nachname='Lustig')
+        # make() would invent a kuerzel, so need to be explicit:
+        a = make(_models.Autor, person=p, kuerzel='')
+        p.delete()
+        # a.person is now None, and any query for Autor with person.pk = None
+        # would include it.
+        creator = Creator(model=self.model)
+
+        # Different name for the Autor, but the person.pk is the same as the
+        # one from 'a'. Assert that create_autor doesn't return the wrong
+        # Autor.
+        created = creator.create_autor('Hermann Paschulke')
+        self.assertNotEqual(created['instance'], a)
+        self.assertNotEqual(created['instance'].person.nachname, 'Lustig')
+
+    def test_create_autor_no_person_pk_multiple(self):
+        # Same as above, but now there are multiple matching Autor objects for
+        # person.pk = None.
+        # Assert that we don't trigger a MultipleObjectsReturned exception.
+        p = make(_models.Person, vorname='Peter', nachname='Lustig')
+        # make() would invent a kuerzel, so need to be explicit:
+        a = make(_models.Autor, person=p, kuerzel='')
+        b = make(_models.Autor, person=p, kuerzel='')
+        p.delete()
+        creator = Creator(model=self.model)
+
+        with self.assertNotRaises(MultipleObjectsReturned):
+            created = creator.create_autor('Hermann Paschulke')
+        self.assertNotEqual(created['instance'], a)
+        self.assertNotEqual(created['instance'], b)
+        self.assertNotEqual(created['instance'].person.nachname, 'Lustig')
+
