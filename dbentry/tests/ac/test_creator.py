@@ -237,3 +237,11 @@ class TestCreator(DataTestCase):
         self.assertNotEqual(created['instance'], b)
         self.assertNotEqual(created['instance'].person.nachname, 'Lustig')
 
+    def test_create_autor_nachname_only(self):
+        # Assert that create_autor creates a Person with just a surname, if
+        # the text given consists of only one word.
+        creator = Creator(model=self.model)
+        created = creator.create_autor('Paschulke')
+        self.assertEqual(created['Person']['Nachname'], 'Paschulke')
+        self.assertEqual(created['instance'].person.nachname, 'Paschulke')
+

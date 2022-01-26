@@ -134,10 +134,13 @@ class Creator(object):
             MultipleObjectsReturned: when the query for that name returned
                 multiple matching existing records
         """
+        # Parse the name through the nameparser to find out the nickname, which
+        # will be used as kuerzel. Then pass the name without nickname to the
+        # Person constructor.
         name = HumanName(text)
         kuerzel = name.nickname
         name.nickname = ''
-        p = self.create_person(name, preview)
+        p = self.create_person(str(name), preview)
         person_instance = p.get('instance')
         # noinspection PyUnresolvedReferences
         try:
