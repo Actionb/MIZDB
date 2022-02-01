@@ -155,12 +155,11 @@ class TestDuplicateObjectsView(TestDataMixin, ViewTestCase):
                 self.assertEqual(
                     dupe_item[2][1], '', msg="Beschreibung does not match.")
                 # genres:
-                genre_pks = ", ".join(
-                    pk for pk in sorted([str(self.genre1.pk), str(self.genre2.pk)]))
+                genres = ", ".join(sorted([str(self.genre1), str(self.genre2)]))
                 self.assertEqual(
                     # Enforce an alphabetical order.
                     ", ".join(v for v in sorted(dupe_item[2][2].split(", "))),
-                    genre_pks,
+                    genres,
                     msg="Genres do not match."
                 )
         # Investigate the link to the changelist:

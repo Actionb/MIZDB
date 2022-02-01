@@ -4,6 +4,7 @@ from typing import Any, Dict, List, OrderedDict as OrderedDictType, Sequence, Tu
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Count, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
@@ -263,7 +264,6 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             )
         return headers
 
-    # noinspection PyUnresolvedReferences
     def build_duplicates_items(
             self, form: Form
     ) -> List[Tuple[List[Tuple[Any, SafeText, List[str]]], SafeText]]:
@@ -280,6 +280,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         display_fields = self.get_display_fields(form)
         # Look for duplicates using the selected fields.
         # A list of lists/group of 'Dupe' named tuples is returned.
+        # noinspection PyUnresolvedReferences
         duplicates = find_duplicates(self.model.objects, dupe_fields, display_fields)
         # Walk through each group of duplicates:
         for dupe_group in duplicates:
@@ -300,6 +301,23 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                         values = dupe.display_values[field_name]
                     else:
                         values = []
+
+                    # Try to get the string representation of the related
+                    # objects.
+                    try:
+                        # noinspection PyUnresolvedReferences,PyProtectedMember
+                        field = self.model._meta.get_field(field_name)
+                        if field.is_relation and values:
+                            values = [
+                                str(obj)
+                                for obj in field.related_model.objects.filter(pk__in=values)
+                            ]
+                    except (FieldDoesNotExist, ValueError):
+                        # Either the model has no field with that name or the
+                        # values could not be used in the filter; just use the
+                        # values as they are.
+                        pass
+
                     display_values.append(
                         ", ".join(str(v)[:100] for v in values)
                     )
