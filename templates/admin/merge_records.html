@@ -22,17 +22,7 @@
     {{ wizard.management_form }}
     {{ wizard.form.non_field_errors }}
 
-    {% if wizard.form.forms %}
-        {# Conflict resolution stage #}
-        {# TODO: use wizard.step numbers to determine stage? #}
-        {{ wizard.form.management_form }}
-        
-        {% for form in wizard.form.forms %}
-            {% for fieldset in form %}
-              {% include "admin/includes/fieldset.html" %}
-            {% endfor %}
-        {% endfor %}
-    {% else %}
+    {% if current_step == '0' %}
         {# Select primary merge instance #}
         {# Use the changelist to display a list of the instances #}
         <div id="changelist"><div class="changelist-form-container">
@@ -52,6 +42,15 @@
             {% endif %}
         {% endfor %}
         </div></div>
+    {% else %}
+        {# Conflict resolution stage #}
+        {{ wizard.form.management_form }}
+
+        {% for form in wizard.form.forms %}
+            {% for fieldset in form %}
+              {% include "admin/includes/fieldset.html" %}
+            {% endfor %}
+        {% endfor %}
     {% endif %}
 
     {% if non_reversible_warning %}

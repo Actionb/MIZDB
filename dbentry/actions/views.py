@@ -184,6 +184,7 @@ class MergeViewWizarded(WizardConfirmationView):
             context['primary_label'] = context['form']['primary'].label_tag(
                 attrs={'style': 'width: 100%;'}
             )
+            context['current_step'] = '0'
         return context
 
     # noinspection PyMethodParameters
