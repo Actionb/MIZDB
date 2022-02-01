@@ -41,16 +41,21 @@ from dbentry.utils.admin import get_obj_link, log_change
 # (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
 
 
-# noinspection PyUnresolvedReferences
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     form = _forms.BestandInlineForm
-    # This allows inlines.js to copy the last selected bestand to a new row.
-    classes = ['copylast']
     fields = ['signatur', 'lagerort', 'provenienz', 'anmerkungen']
     readonly_fields = ['signatur']
+
+    # 'copylast' class allows inlines.js to copy the last selected bestand to a
+    # new row.
+    classes = ['copylast']
+
+    # noinspection PyUnresolvedReferences
     verbose_name = _models.Bestand._meta.verbose_name
+    # noinspection PyUnresolvedReferences
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
+
     # TODO: enable tabular autocomplete for 'lagerort'
     #  (see ac.views.ACLagerort and ac.urls for details)
     # tabular_autocomplete = ['lagerort']
