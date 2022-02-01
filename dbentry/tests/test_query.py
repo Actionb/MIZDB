@@ -197,7 +197,7 @@ class TestAusgabeChronologicalOrder(DataTestCase):
             ]
         )
         expected = (
-            'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
+            'magazin__magazin_name', 'jahr', 'jahrgang', 'sonderausgabe',
             'e_datum', 'lnum', 'monat', 'num', '-id'
         )
         self.assertEqual(queryset.chronological_order().query.order_by, expected)
@@ -219,7 +219,7 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         # Assert that resetting ordering for _update_names does not break the
         # ordering of the underlying queryset.
         expected = (
-            'magazin', 'jahr', 'jahrgang', 'sonderausgabe',
+            'magazin__magazin_name', 'jahr', 'jahrgang', 'sonderausgabe',
             # Note that jahrgang objects have 'num' values, this means that
             # the 'num' criterion coming first.
             'num', 'e_datum', 'lnum', 'monat', '-id'

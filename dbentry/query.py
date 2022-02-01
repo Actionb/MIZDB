@@ -404,8 +404,7 @@ class AusgabeQuerySet(CNQuerySet):
                 return self
             return self.order_by(*opts.ordering)
 
-        # FIXME: default_ordering orders by 'magazin' and not 'magazin_name'?
-        default_ordering = ('magazin', 'jahr', 'jahrgang', 'sonderausgabe')
+        default_ordering = ('magazin__magazin_name', 'jahr', 'jahrgang', 'sonderausgabe')
         ordering: List[str] = [*order_fields, *default_ordering]
 
         pk_name = opts.pk.name
