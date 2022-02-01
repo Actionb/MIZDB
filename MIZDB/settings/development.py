@@ -1,5 +1,7 @@
 from .defaults import *
 
+import sys  # noqa
+
 DEBUG = True
 
 INSTALLED_APPS += [
@@ -14,3 +16,10 @@ MIDDLEWARE += [
 INTERNAL_IPS = ['127.0.0.1']
 
 WIKI_URL = 'http://127.0.0.1/wiki/Hauptseite'
+
+TESTING = 'test' in sys.argv
+
+if TESTING:
+    PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
