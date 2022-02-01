@@ -34,14 +34,16 @@
         {% endfor %}
     {% else %}
         {# Select primary merge instance #}
+        {# Use the changelist to display a list of the instances #}
+        <div id="changelist"><div class="changelist-form-container">
         {% for field in wizard.form %}
             {% if forloop.first %}
                 <div class="form-row aligned">
-                {{ field.errors }}
-                {{ field }}  {# the field is hidden and only stores the id selected in the 'result list' #}
-                {{ primary_label }}
-                <div id="changelist" style="display:block;">{% result_list cl %}</div>  {# div id required for css #}
-                <div class="help">{{ field.help_text }}</div>
+                    {{ field.errors }}
+                    {{ field }}  {# the field is hidden and only stores the id selected in the 'result list' #}
+                    {{ primary_label }}
+                    {% result_list cl %}
+                    <div class="help">{{ field.help_text }}</div>
                 </div>
             {% else %}
                 {% with fieldset=wizard.form.expand_primary_fieldset %}
@@ -49,10 +51,11 @@
                 {% endwith %}
             {% endif %}
         {% endfor %}
+        </div></div>
     {% endif %}
 
     {% if non_reversible_warning %}
-        <p> {{non_reversible_warning}}</p>
+        <p>{{non_reversible_warning}}</p>
     {% endif %}
     
     <div>
@@ -60,7 +63,7 @@
             <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk|unlocalize }}" />
         {% endfor %}
         <input type="hidden" name="action" value="{{action_name}}" />
-        <input type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="{% trans "Continue" %}" />
+        <input type="submit" name="action_confirmed_{{ wizard.steps.current }}" value="{% trans 'Continue' %}" />
         <a href="" class="button cancel-link">{% trans "No, take me back" %}</a>
     </div>
 </form>
