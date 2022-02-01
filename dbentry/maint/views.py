@@ -167,16 +167,15 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
 
 
 class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
-    # noinspection GrazieInspection
     """
-        A FormView that finds, displays and, if so requested, merges duplicates.
+    A FormView that finds, displays and, if so requested, merges duplicates.
 
-        The view's form contains the model fields with which a search for duplicates
-        is done. Duplicates are model instances that have the same values in all of
-        the model fields selected in the form.
-        These duplicates are grouped together according to these equivalent values
-        and the possibility for merging each group is provided.
-        """
+    The view's form contains the model fields with which a search for duplicates
+    is done. Duplicates are model instances that have the same values in the
+    model fields selected in the form.
+    These duplicates are grouped together according to these equivalent values
+    and the possibility for merging each group is provided.
+    """
 
     template_name = 'admin/dupes.html'
     form_class = DuplicateFieldsSelectForm

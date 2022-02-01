@@ -89,7 +89,7 @@ def get_model_relations(
         forward (bool): if True, relations originating from model are included
         reverse (reverse): if True, relations towards model are included
 
-    ManyToManyRels are considered both as forward and reverse relations and
+    ManyToManyRels are considered both as forward and as reverse, and
     thus are always included.
     """
     intermediary_models = {
