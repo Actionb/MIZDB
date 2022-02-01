@@ -160,4 +160,4 @@ class TextSearchQuerySetMixin(object):
                 )
                 ordering = [exact.desc(), startswith.desc()] + ordering
             results = results.order_by(*ordering)
-        return results.distinct()
+        return results
