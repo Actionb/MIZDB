@@ -443,5 +443,5 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
 
     def get_context_data(self, **kwargs: Any) -> dict:
         # Add ausgabe's meta for the template.
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         return super().get_context_data(opts=_models.Ausgabe._meta)

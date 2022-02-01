@@ -71,12 +71,10 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
             if issubclass(m, BaseModel) and not issubclass(m, BaseM2MModel)
         ]
         results = []
-        # noinspection PyProtectedMember
         for model in sorted(models, key=lambda m: m._meta.object_name):
             model_results = model.objects.search(q, ranked=False)
             if not model_results:
                 continue
-            # noinspection PyProtectedMember
             label = "%s (%s)" % (model._meta.verbose_name_plural, len(model_results))
             url = utils.get_changelist_url(model, self.request.user)
             if url:

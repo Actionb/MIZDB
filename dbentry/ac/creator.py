@@ -53,7 +53,7 @@ class Creator(object):
         """
         self.model = model
         self.raise_exceptions = raise_exceptions
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         self.creator = getattr(self, 'create_' + model._meta.model_name, None)
 
     def create(self, text: str, preview: bool = True) -> Union[Dict, OrderedDict]:

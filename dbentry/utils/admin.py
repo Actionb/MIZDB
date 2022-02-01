@@ -57,7 +57,7 @@ def get_obj_link(
         site_name (str): namespace of the site/app
         blank (bool): if True, the link will have a target="_blank" attribute
     """
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = obj._meta
     no_edit_link = format_html(
         '%s: %s' % (capfirst(opts.verbose_name), force_str(obj))
@@ -99,7 +99,7 @@ def get_changelist_url(
           to the changelist will include a query parameter to filter to records
           in that list.
     """
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = model._meta
     try:
         url = reverse(
@@ -187,7 +187,6 @@ def get_model_admin_for_model(
     sites = admin_sites or [miz_site]
     for site in sites:
         if site.is_registered(model):
-            # noinspection PyProtectedMember
             return site._registry.get(model)
     return None
 
@@ -220,7 +219,6 @@ def construct_change_message(
         change_message.append({'changed': {'fields': changed_fields}})
     # Handle relational changes:
     if formsets:
-        # noinspection PyProtectedMember
         parent_model = form._meta.model
         with translation_override(None):
             for formset in formsets:
@@ -250,7 +248,7 @@ def _get_relation_change_message(obj: Model, parent_model: Type[Model]) -> Dict:
     # Exempt from this are auto created models such as the through tables of m2m
     # relations. Use the textual representation provided by the model on the
     # other end of the m2m relation instead.
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = obj._meta
     if opts.auto_created:
         # An auto_created m2m through table only has two relation fields;
@@ -258,7 +256,6 @@ def _get_relation_change_message(obj: Model, parent_model: Type[Model]) -> Dict:
         # the one we are looking for here.
         for fld in opts.get_fields():
             if fld.is_relation and fld.related_model != parent_model:
-                # noinspection PyProtectedMember
                 return {
                     # Use the verbose_name of the model on the other end of the
                     # m2m relation as 'name'.
@@ -307,7 +304,7 @@ def log_addition(user_id: int, obj: Model, related_obj: Model = None) -> LogEntr
     """
     message: Dict[str, dict] = {"added": {}}
     if related_obj:
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         message['added'] = _get_relation_change_message(
             related_obj, obj._meta.model
         )
@@ -325,14 +322,14 @@ def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> L
     if isinstance(fields, str):
         fields = [fields]
     message: Dict[str, dict] = {'changed': {}}
-    # noinspection PyProtectedMember, PyUnresolvedReferences
+    # noinspection  PyUnresolvedReferences
     opts = obj._meta
     if related_obj:
         message['changed'] = _get_relation_change_message(
             related_obj, opts.model
         )
         # Use the fields map of the related model:
-        # noinspection PyProtectedMember, PyUnresolvedReferences
+        # noinspection  PyUnresolvedReferences
         opts = related_obj._meta
 
     # noinspection PyTypeChecker

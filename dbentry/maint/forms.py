@@ -92,7 +92,6 @@ class DuplicateFieldsSelectForm(MinMaxRequiredFormMixin, forms.Form):
             yield self[name]
 
 
-# noinspection PyProtectedMember
 def get_dupe_fields_for_model(model: Type[Model]) -> Dict[str, list]:
     """
     Prepare the choices for the three categories of DuplicateFieldsSelectForm.
@@ -185,7 +184,6 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
         """
         Prepare filters for the list of models returned by apps.get_models.
         """
-        # noinspection PyProtectedMember
         return [
             # Filter out m2m intermediary tables (manually or auto created)
             # and models inherited from other apps.
@@ -200,7 +198,6 @@ class ModelSelectForm(DynamicChoiceFormMixin, MIZAdminForm):
     def get_model_list(self) -> List[Tuple[str, str]]:
         """Return the choices for the ``model_select`` field."""
         filters = self.get_model_filters()
-        # noinspection PyProtectedMember
         choices = [
             (model._meta.model_name, model._meta.object_name)
             for model in utils.nfilter(filters, apps.get_models(self.app_label))

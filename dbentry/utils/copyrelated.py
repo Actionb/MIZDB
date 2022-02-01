@@ -16,7 +16,7 @@ def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
     Add the related_objects in ``paths`` to an equivalent relation of ``obj``.
     """
     change_message = []
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = obj._meta
     for path in paths:
         try:

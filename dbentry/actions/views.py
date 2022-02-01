@@ -210,7 +210,7 @@ class MergeViewWizarded(WizardConfirmationView):
         if (view.model == _models.Ausgabe
                 and view.queryset.values_list('magazin').distinct().count() > 1):
             # User is trying to merge ausgaben from different magazines.
-            # noinspection PyUnresolvedReferences,PyProtectedMember
+            # noinspection PyUnresolvedReferences
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
                 # Add a 'n' at the end because german grammar.
@@ -232,7 +232,7 @@ class MergeViewWizarded(WizardConfirmationView):
         if (view.model == _models.Artikel
                 and view.queryset.values('ausgabe').distinct().count() > 1):
             # User is trying to merge artikel from different ausgaben.
-            # noinspection PyProtectedMember,PyUnresolvedReferences
+            # noinspection PyUnresolvedReferences
             format_dict = {
                 'self_plural': view.opts.verbose_name_plural,
                 'other_plural': _models.Ausgabe._meta.verbose_name_plural
@@ -429,7 +429,6 @@ class MergeViewWizarded(WizardConfirmationView):
         except ProtectedError as e:
             # The merge could not be completed as there were protected objects
             # in the queryset, all changes were rolled back.
-            # noinspection PyProtectedMember
             object_name = e.protected_objects.model._meta.verbose_name_plural
             if not object_name:  # pragma: no cover
                 object_name = 'Objekte'
@@ -622,7 +621,7 @@ class MoveToBrochureBase(ActionConfirmationView):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                # noinspection PyProtectedMember,PyUnresolvedReferences
+                # noinspection PyUnresolvedReferences
                 create_logentry(
                     user_id=self.request.user.pk,
                     obj=new_brochure,

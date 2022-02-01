@@ -90,7 +90,7 @@ class ACBase(autocomplete.Select2QuerySetView):
             if isinstance(ordering, str):
                 ordering = (ordering,)
             return queryset.order_by(*ordering)
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         return queryset.order_by(*self.model._meta.ordering)  # type: ignore
 
     def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
@@ -155,7 +155,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         # At this point, dal calls get_queryset() to get the model options via
         # queryset.model._meta which is unnecessary for ACBase since it
         # declares the model class during dispatch().
-        # noinspection PyProtectedMember, PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         opts = self.model._meta  # type: ignore
         codename = get_permission_codename('add', opts)
         return user.has_perm("%s.%s" % (opts.app_label, codename))
@@ -225,7 +225,6 @@ class ACTabular(ACBase):
                 # Only add optgroup headers for the first page of results.
                 headers = self.get_group_headers()
 
-            # noinspection PyProtectedMember
             results = [{
                 "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
                 "children": result_list + create_option,
@@ -474,7 +473,6 @@ class ContentTypeAutocompleteView(autocomplete.Select2QuerySetView):
 
     def get_queryset(self):
         """Limit the queryset to models registered with miz_site."""
-        # noinspection PyProtectedMember
         registered_models = [m._meta.model_name for m in self.admin_site._registry.keys()]
         return super().get_queryset().filter(model__in=registered_models).order_by('model')
 

@@ -24,7 +24,7 @@ from dbentry.tests.base import AdminTestCase
 from dbentry.utils import get_model_fields
 
 
-# noinspection PyProtectedMember,PyUnresolvedReferences
+# noinspection PyUnresolvedReferences
 class AdminTestMethodsMixin(object):
     test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested

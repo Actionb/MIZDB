@@ -138,7 +138,7 @@ class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
         if not kwargs.get('model_name'):
             raise TypeError("Model not provided.")
         self.model = utils.get_model_from_string(kwargs['model_name'])
-        # noinspection PyUnresolvedReferences,PyProtectedMember
+        # noinspection PyUnresolvedReferences
         self.opts = self.model._meta
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -304,7 +304,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                     # Try to get the string representation of the related
                     # objects.
                     try:
-                        # noinspection PyUnresolvedReferences,PyProtectedMember
+                        # noinspection PyUnresolvedReferences
                         field = self.model._meta.get_field(field_name)
                         if field.is_relation and values:
                             values = [
@@ -456,7 +456,6 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
             under_limit = []
             for info in relations.values():
                 count = info['counts'].get(obj.pk, 0)
-                # noinspection PyProtectedMember
                 under_limit.append(
                     under_limit_template.format(
                         model_name=info['related_model']._meta.verbose_name,

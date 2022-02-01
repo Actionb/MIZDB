@@ -208,7 +208,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
         self.can_change_related = not multiple and can_change_related
         self.can_delete_related = not multiple and can_delete_related
         self.remote_model = remote_model
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         self.remote_field_name = remote_field_name or remote_model._meta.pk.attname
 
     def get_related_url(self, info: Tuple[str, str], action: str, *args: Any) -> str:
@@ -225,7 +225,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
         return reverse("admin:%s_%s_%s" % (*info, action), args=args)
 
     def get_context(self, name: str, value: Any, attrs: dict) -> dict:
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         rel_opts = self.remote_model._meta
         info = (rel_opts.app_label, rel_opts.model_name)
         self.widget.choices = self.choices
@@ -296,7 +296,6 @@ def make_widget(
     model = kwargs.pop('model', None)
     model_name = kwargs.pop('model_name', '')
     if model and not model_name:
-        # noinspection PyProtectedMember
         model_name = model._meta.model_name
     if model_name and not model:
         model = get_model_from_string(model_name)
@@ -367,7 +366,6 @@ def make_widget(
                     # Reminder: a field's verbose_name defaults to:
                     #   field.name.replace('_',' ')
 
-                    # noinspection PyProtectedMember
                     forwarded_verbose = model._meta.get_field(
                         forwarded.dst or forwarded.src
                     ).verbose_name.title()

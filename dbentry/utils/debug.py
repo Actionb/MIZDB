@@ -1,7 +1,6 @@
 import time
 
 from django.db import DEFAULT_DB_ALIAS, connections
-# noinspection PyProtectedMember
 from django.test.utils import CaptureQueriesContext
 
 

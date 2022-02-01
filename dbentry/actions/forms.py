@@ -180,7 +180,7 @@ class BrochureActionFormOptions(MIZAdminForm):
           Ausgabe instances belong to after moving.
     """
 
-    # noinspection PyUnresolvedReferences,PyProtectedMember
+    # noinspection PyUnresolvedReferences
     brochure_art = forms.ChoiceField(
         label='Verschieben nach',
         choices=[

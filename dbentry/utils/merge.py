@@ -12,7 +12,7 @@ from dbentry.utils.models import (
 )
 
 
-# noinspection PyProtectedMember, PyUnresolvedReferences
+# noinspection  PyUnresolvedReferences
 def merge_records(
         original: Model,
         queryset: QuerySet,

@@ -172,7 +172,6 @@ class AdminSearchFormMixin(object):
         # Get the '_changelist_filters' part of the querystring.
         preserved_filters = self.get_preserved_filters(request)  # type: ignore[attr-defined]
         preserved_filters = dict(parse_qsl(preserved_filters))
-        # noinspection PyProtectedMember
         response = super()._response_post_save(request, obj)  # type: ignore[misc]
         if (not isinstance(response, HttpResponseRedirect)
                 or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]

@@ -57,7 +57,6 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         Returns:
             an OrderedDict of primary key to item values (dicts)
         """
-        # noinspection PyProtectedMember
         opts = self.model._meta
         # pk_name is the variable that will refer to this query's primary key
         # values.
@@ -181,7 +180,6 @@ class CNQuerySet(MIZQuerySet):
             )
             with transaction.atomic():
                 for pk, val_dict in values.items():
-                    # noinspection PyProtectedMember
                     new_name = self.model._get_name(**val_dict)
                     self.order_by().filter(pk=pk).update(
                         _name=new_name, _changed_flag=False
@@ -395,7 +393,6 @@ class AusgabeQuerySet(CNQuerySet):
             # Already ordered!
             return self
 
-        # noinspection PyProtectedMember
         opts = self.model._meta
         # A chronological order is (mostly) consistent ONLY within
         # the ausgabe_set of one particular magazin. If the queryset contains

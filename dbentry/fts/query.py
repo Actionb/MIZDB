@@ -15,7 +15,7 @@ def _get_search_vector_field(model: Type[Model]) -> Optional[SearchVectorField]:
     Return the first SearchVectorField instance found for the given model.
     """
     # exclude inherited search vector fields:
-    # noinspection PyUnresolvedReferences,PyProtectedMember
+    # noinspection PyUnresolvedReferences
     for field in model._meta.get_fields(include_parents=False):
         if isinstance(field, SearchVectorField):
             return field
@@ -147,7 +147,7 @@ class TextSearchQuerySetMixin(object):
         # noinspection PyUnresolvedReferences
         if ranked or not self.query.order_by:  # type: ignore[attr-defined]
             # Apply ordering to the results.
-            # noinspection PyProtectedMember, PyUnresolvedReferences
+            # noinspection PyUnresolvedReferences
             ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore[attr-defined]  # noqa
             if ranked and getattr(model, 'name_field', None):
                 name_field = model.name_field
