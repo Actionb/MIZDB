@@ -255,6 +255,7 @@ class MinMaxRequiredFormMixin(object):
     def get_default_error_messages(self, format_kwargs: dict) -> dict:
         messages = {}
         for error_type in ('min', 'max'):
+            # noinspection PyUnresolvedReferences
             message = self.default_error_messages[error_type].format(
                 **format_kwargs
             )
