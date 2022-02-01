@@ -37,10 +37,6 @@ from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
 
 
-# TODO: add admindocs
-# (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
-
-
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     form = _forms.BestandInlineForm

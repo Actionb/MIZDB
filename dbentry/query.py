@@ -237,13 +237,10 @@ class AusgabeQuerySet(CNQuerySet):
 
     def update(self, **kwargs: Any) -> int:
         if self.chronologically_ordered:
-            # FIXME: Trying to update a chronologically ordered queryset seems to fail.
-            # A FieldError is raised, complaining about a missing field. That
-            # field should exist as an annotation but just doesn't.
-            # Proper solution to this would be check the update kwargs for
-            # expressions that require ordering and handle those separately
-            # somehow - but considering that chronological_order's days are almost
-            # numbered, this is the quick and dirty way of fixing the problem:
+            # Need to clear ordering for the update.
+            # The queryset's order depends on values from annotations - but
+            # update() clears all annotations: an update on an ordered
+            # queryset will fail.
             return self.order_by().update(**kwargs)
         return super().update(**kwargs)
 
