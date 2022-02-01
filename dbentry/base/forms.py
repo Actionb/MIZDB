@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
 from django.forms import Form
-from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
 from dbentry.utils import snake_case_to_spaces
