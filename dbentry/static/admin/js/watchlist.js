@@ -1,5 +1,26 @@
 
 django.jQuery(document).ready(function($){
+
+    /* Update the changelist link upon removal of a watchlist item. */
+    function updateLink(removed){
+        let container = removed.parents(".model-container")
+        let link = container.find(".cl-button");
+        let url = link.attr("href").split("=")[0];
+        let ids = "";
+        // Gather the IDs - except for the one of the removed item.
+        container.find(".watchlist-remove").each(function(){
+            if (this.dataset.id == removed.get(0).dataset.id){
+                return
+            }
+            if (ids == "") {
+                ids = this.dataset.id;
+            } else {
+                ids += "," + this.dataset.id;
+            }
+        })
+        link.attr("href", url + "=" + ids);
+    }
+
     /* change page checkbox */
     $(".watchlist-toggle").click(function(event){
         event.preventDefault();
@@ -23,6 +44,7 @@ django.jQuery(document).ready(function($){
                 'remove_only': true
             },
             success=function(data){
+                updateLink(element);
                 element.parents('tr').remove();
                 // TODO: what if this removes the last table row for a given model?
 /*                if (element.parents('tbody').children.length > 1){

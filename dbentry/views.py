@@ -241,7 +241,7 @@ class Watchlist(MIZAdminMixin, views.generic.TemplateView):
                 )
                 cl_link = utils.create_hyperlink(
                     url=cl_url, content='Änderungsliste',
-                    **{'target': '_blank', 'class': 'button'}
+                    **{'target': '_blank', 'class': 'button cl-button'}
                 )
                 # model_opts, headers, items, cl_link
                 context['watchlist'].append((model._meta, extra_headers, items, cl_link))

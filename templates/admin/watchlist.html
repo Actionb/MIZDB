@@ -9,36 +9,37 @@
 {% block content %}
 <div class="watchlist">
 {% for model_opts, extra_headers, items, cl_link in watchlist %}
-    <div>
-<table id="{{model_opts.model_name}}_list">
-<thead>
-<tr>{{ model_opts.verbose_name }}</tr>
-<tr>
-    <th scope="col"></th>
-    <th scope="col">Objekt</th>
-    {% for header in extra_headers %}
-        <th scope="col">{{header}}</th>
-    {% endfor %}
-    <th scope="col">Bestand</th>
-    <th scope="col">Hinzugefügt</th>
-</tr>
-</thead>
-<tbody>
-    {% for id, object_link, extra_data, bestand, added in items %}
-        <tr class="{% cycle 'row1' 'row2' %}">
-            <td><a class="inline-deletelink watchlist-remove" href="#" data-id="{{id}}" data-model-label="{{model_opts.label}}" title="Entfernen">Entfernen</a></td>
-            <td>{{object_link}}</td>
-            {% for extra in extra_data %}
-                <td>{{extra}}</td>
+    <div class="model-container">
+        <table id="{{model_opts.model_name}}_list">
+        <thead>
+        <tr>{{ model_opts.verbose_name }}</tr>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">Objekt</th>
+            {% for header in extra_headers %}
+                <th scope="col">{{header}}</th>
             {% endfor %}
-            <td>{{bestand}}</td>  {# TODO: not every model has a bestand #}
-            <td>{{added}}</td>
+            <th scope="col">Bestand</th>
+            <th scope="col">Hinzugefügt</th>
         </tr>
-    {% endfor %}
-</tbody>
-</table>
-    {{cl_link}}</div>
+        </thead>
+        <tbody>
+            {% for id, object_link, extra_data, bestand, added in items %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td><a class="inline-deletelink watchlist-remove" href="#" data-id="{{id}}" data-model-label="{{model_opts.label}}" title="Entfernen">Entfernen</a></td>
+                    <td>{{object_link}}</td>
+                    {% for extra in extra_data %}
+                        <td>{{extra}}</td>
+                    {% endfor %}
+                    <td>{{bestand}}</td>  {# TODO: not every model has a bestand #}
+                    <td>{{added}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        {{cl_link}}
+    </div>
     <br><hr><br>
-{% endfor %}
+    {% endfor %}
 </div>
 {% endblock content %}
