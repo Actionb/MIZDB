@@ -183,6 +183,7 @@ def get_watchlist(request):
     superuser_only=False
 )
 class Watchlist(MIZAdminMixin, views.generic.TemplateView):
+    title = 'Merkliste'
     template_name = 'admin/watchlist.html'
 
     def get_headers(self, model):
