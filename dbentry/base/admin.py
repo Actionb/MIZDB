@@ -303,7 +303,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
-    def add_extra_context(self, object_id: Optional[str] = None, **extra_context) -> dict:
+    def add_extra_context(
+            self,
+            request: HttpRequest,
+            object_id: Optional[str] = None,
+            **extra_context
+    ) -> dict:
         """Add extra context specific to this ModelAdmin."""
         if object_id:
             # The request is for the change page of an existing instance.
@@ -326,7 +331,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for adding a new object."""
-        return super().add_view(request, form_url, self.add_extra_context(**(extra_context or {})))
+        new_extra = self.add_extra_context(request, **(extra_context or {}))
+        return super().add_view(request, form_url, new_extra)
 
     def change_view(
             self,
@@ -336,7 +342,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for changing an object."""
-        new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
+        new_extra = self.add_extra_context(request, object_id=object_id, **(extra_context or {}))
         return super().change_view(request, object_id, form_url, new_extra)
 
     def construct_change_message(

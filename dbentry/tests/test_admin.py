@@ -354,7 +354,10 @@ class TestMIZModelAdmin(AdminTestCase):
         # Assert that add_extra_context adds additional items for the context.
         for object_id in ('', self.obj1.pk):
             with self.subTest(object_id=object_id):
-                extra = self.model_admin.add_extra_context(object_id=object_id)
+                extra = self.model_admin.add_extra_context(
+                    self.get_request(),
+                    object_id=object_id
+                )
                 self.assertIn('collapse_all', extra)
                 if object_id:
                     self.assertIn('crosslinks', extra)
