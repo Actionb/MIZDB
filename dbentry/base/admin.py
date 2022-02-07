@@ -160,7 +160,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     # noinspection PyMethodMayBeStatic
     def has_alter_bestand_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to change inventory quantities."""
-        # noinspection PyUnresolvedReferences,PyProtectedMember
+        # noinspection PyUnresolvedReferences
         opts = _models.Bestand._meta
         perms = [
             "%s.%s" % (opts.app_label, get_permission_codename(action, opts))
@@ -247,7 +247,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         if relations is None:
             # Walk through all reverse relations and collect the model and
             # model field to query against as well as the assigned name for the
-            # relation -- unless an inline is covering that reverse relation.
+            # relation -- unless an admin inline is covering that relation.
             relations = []
             inline_models = {i.model for i in self.inlines}
             for rel in get_model_relations(self.model, forward=False, reverse=True):
@@ -277,7 +277,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
         # Create the context data for the crosslinks.
         for query_model, query_field, label in relations:
-            # noinspection PyProtectedMember
             opts = query_model._meta
             try:
                 url = reverse(
@@ -430,7 +429,7 @@ class BaseInlineMixin(AutocompleteMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.verbose_model:
-            # noinspection PyUnresolvedReferences,PyProtectedMember
+            # noinspection PyUnresolvedReferences
             verbose_opts = self.verbose_model._meta
             self.verbose_name = verbose_opts.verbose_name
             self.verbose_name_plural = verbose_opts.verbose_name_plural

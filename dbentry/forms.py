@@ -15,7 +15,7 @@ from dbentry.validators import DNBURLValidator
 
 class GoogleBtnWidget(AdminTextInputWidget):
     """
-    A TextInput widget with a button which opens a google search for the text
+    A TextInput widget with a button which opens a Google search for the text
     in the TextInput widget.
     """
 
@@ -231,7 +231,7 @@ class PersonForm(forms.ModelForm):
         match = self.url_validator_class.regex.search(dnb_url)
         if match and len(match.groups()) == 1:
             # The URL is valid and has a gnd_id.
-            # The validator doesn't allow URLs without at least a one digit ID.
+            # The validator doesn't allow URLs without at least a one-digit ID.
             gnd_id_from_url = match.groups()[-1]
 
             if 'gnd_id' in self.changed_data and 'dnb_url' in self.changed_data:

@@ -106,7 +106,7 @@ class BulkForm(MIZAdminForm):
                 # This field's data exists and is meant to be split up into
                 # individual items, but the amount of items differs from
                 # the previously determined total_count.
-                # noinspection PyProtectedMember,PyUnresolvedReferences
+                # noinspection PyUnresolvedReferences
                 self.add_error(
                     field=fld_name,
                     error='Ungleiche Anzahl an {}.'.format(
@@ -304,7 +304,7 @@ class BulkFormAusgabe(MinMaxRequiredFormMixin, BulkForm):
                 if item:
                     row[field_name] = item
 
-            # Check for duplicate rows and and assign the right lagerort to
+            # Check for duplicate rows and assign the right lagerort to
             # this instance.
             qs = self.lookup_instance(row)
             row['ausgabe_lagerort'] = self.cleaned_data['ausgabe_lagerort']

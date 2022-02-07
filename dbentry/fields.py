@@ -59,7 +59,7 @@ class StdNumFormField(fields.CharField):
         super().__init__(*args, **kwargs)
 
     def to_python(self, value: str) -> str:
-        """Return the compactified python value."""
+        """Return the compacted python value."""
         value = super().to_python(value)
         return self.stdnum.compact(value)
 
@@ -80,8 +80,8 @@ class ISSNFormField(StdNumFormField):
     def to_python(self, value: str) -> str:
         value = super().to_python(value)
         if value not in self.empty_values and len(value) == 13:
-            # Compactified value is possibly a EAN-13 number.
-            # Retrieve the ISSN number.
+            # Compacted value is possibly an EAN-13 number.
+            # Retrieve the ISSN.
             value = value[3:-3]
             value += issn.calc_check_digit(value)
         return value

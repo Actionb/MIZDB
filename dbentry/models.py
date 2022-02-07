@@ -194,7 +194,7 @@ class Autor(ComputedNameModel):
     beschreibung = models.TextField(blank=True, help_text='Beschreibung bzgl. des Autors')
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
-    person = models.ForeignKey('Person', models.SET_NULL, null=True, blank=True)
+    person = models.ForeignKey('Person', models.CASCADE, null=True, blank=True)
 
     magazin = models.ManyToManyField('Magazin')
 
@@ -233,7 +233,7 @@ class Autor(ComputedNameModel):
         if 'person___name' in data:
             person_name = data['person___name'][0]
             # The person_name should not be a default value:
-            # noinspection PyUnresolvedReferences,PyProtectedMember
+            # noinspection PyUnresolvedReferences
             person_default = Person._name_default % {
                 'verbose_name': Person._meta.verbose_name
             }
@@ -1428,12 +1428,10 @@ class Bestand(BaseModel):
         for field in get_model_fields(self, base=False, foreign=True, m2m=False):
             # The archive object is referenced by the one FK relation (other
             # than Lagerort and Provenienz) that is not null.
-            # noinspection PyProtectedMember
             if field.related_model._meta.object_name in ('Lagerort', 'Provenienz'):
                 continue
             related_obj = getattr(self, field.name)
             if related_obj:
-                # noinspection PyProtectedMember
                 if related_obj._meta.object_name == 'BaseBrochure':
                     # Handle the multiple inheritance stuff:
                     related_obj = related_obj.resolve_child()

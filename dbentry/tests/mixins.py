@@ -123,7 +123,7 @@ class CreateFormViewMixin(CreateFormMixin, CreateViewMixin):
             return super(CreateFormViewMixin, self).get_form_class()
 
 
-# noinspection PyProtectedMember,PyUnresolvedReferences,PyPep8Naming
+# noinspection PyUnresolvedReferences,PyPep8Naming
 class LoggingTestMixin(object):
     """
     Provide TestCases with assertions that verify that a change to model

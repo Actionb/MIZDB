@@ -58,7 +58,7 @@ def get_model_fields(
         primary_key (bool): if True, the primary key field is included
     """
     result = []
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     for f in model._meta.get_fields():
         if not f.concrete or f.name in exclude:
             continue
@@ -75,7 +75,7 @@ def get_model_fields(
     return result
 
 
-# noinspection PyProtectedMember,PyUnresolvedReferences
+# noinspection PyUnresolvedReferences
 def get_model_relations(
         model: ModelClassOrInstance,
         forward: bool = True,
@@ -89,7 +89,7 @@ def get_model_relations(
         forward (bool): if True, relations originating from model are included
         reverse (reverse): if True, relations towards model are included
 
-    ManyToManyRels are considered both as forward and reverse relations and
+    ManyToManyRels are considered both as forward and as reverse, and
     thus are always included.
     """
     intermediary_models = {
@@ -151,7 +151,6 @@ def get_relation_info_to(
     # (used in utils.merge)
     if rel.many_to_many:
         related_model = rel.through
-        # noinspection PyProtectedMember
         related_opts = related_model._meta
         m2m_field = rel.field
         if m2m_field.model == model:
@@ -185,7 +184,7 @@ def get_required_fields(model: ModelClassOrInstance) -> List[Field]:
             # hence checking the less meaningful blank attribute
             continue
         if f.has_default():
-            # Field has a default value, whether or not that value is an
+            # Field has a default value, whether that value is an
             # 'EMPTY_VALUE' we do not care
             continue
         result.append(f)
@@ -213,7 +212,7 @@ def get_related_manager(instance: ModelClassOrInstance, rel: Relations):
     ``instance``.
     """
     # NOTE: get_related_manager is not used
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     model_class = instance._meta.model
     descriptor = get_related_descriptor(model_class, rel)
     if not rel.many_to_many and rel.field.model == model_class:
@@ -230,7 +229,7 @@ def get_updatable_fields(instance: ModelClassOrInstance) -> List[str]:
     """
     # (used by merge_records)
     result = []
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     fields = get_model_fields(
         instance._meta.model, m2m=False, primary_key=False
     )
@@ -247,7 +246,7 @@ def get_updatable_fields(instance: ModelClassOrInstance) -> List[str]:
                 # Special case, boolean values should be left alone?
                 continue
             elif fld.default == field_value:
-                # This field has it's default value/choice
+                # This field has its default value/choice
                 result.append(fld.attname)
     return result
 
@@ -280,7 +279,6 @@ def get_reverse_field_path(rel: Relations, field_name: str) -> str:
     elif rel.related_name:
         field_path = rel.related_name
     else:
-        # noinspection PyProtectedMember
         field_path = rel.related_model._meta.model_name
     return field_path + constants.LOOKUP_SEP + field_name
 
@@ -316,7 +314,6 @@ def get_relations_between_models(
     if isinstance(model2, str):
         model2 = get_model_from_string(model2)
 
-    # noinspection PyProtectedMember
     for f in model1._meta.get_fields():  # type: ignore
         if not f.is_relation:
             continue
@@ -337,7 +334,7 @@ def get_all_model_names() -> List[str]:
     # NOTE: get_all_model_names is not used
     from dbentry.base.models import BaseModel  # avoid circular imports
     mdls = apps.get_models('dbentry')
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
     return sorted(my_mdls, key=lambda m: m.lower())
 
@@ -364,7 +361,7 @@ def get_fields_and_lookups(
     # (used by the changelist search forms to figure out search fields)
     fields: List[Field] = []
     lookups: List[str] = []
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = model._meta
     prev_field = None
     for part in field_path.split(models.constants.LOOKUP_SEP):
@@ -424,7 +421,7 @@ def validate_all_model_data(
             m for m in apps.get_models('dbentry') if issubclass(m, BaseModel)
         ]
     for model in model_list:
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         opts = model._meta
         print("Validating %s... " % opts.model_name, end='')
         inv = validate_model_data(model)
@@ -467,7 +464,6 @@ def clean_permissions(stream: Optional[TextIO] = None) -> None:
                     p.name, p.content_type.app_label, p.content_type.model)
             )
             continue
-        # noinspection PyProtectedMember
         opts = model._meta
         if action not in opts.default_permissions:
             # Only update default permissions.

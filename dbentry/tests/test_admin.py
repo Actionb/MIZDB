@@ -24,7 +24,7 @@ from dbentry.tests.base import AdminTestCase
 from dbentry.utils import get_model_fields
 
 
-# noinspection PyProtectedMember,PyUnresolvedReferences
+# noinspection PyUnresolvedReferences
 class AdminTestMethodsMixin(object):
     test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested
@@ -236,7 +236,7 @@ class AdminTestMethodsMixin(object):
         jquery_base = 'admin/js/vendor/jquery/jquery{!s}.js'.format(
             '' if settings.DEBUG else '.min')
         jquery_init = 'admin/js/jquery.init.js'
-        collapse = 'admin/js/collapse%s.js' % ('' if settings.DEBUG else '.min')
+        collapse = 'admin/js/collapse.js'
 
         if collapse in media._js:
             self.assertIn(jquery_base, media._js)

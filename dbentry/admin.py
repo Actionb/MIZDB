@@ -37,20 +37,21 @@ from dbentry.utils import concat_limit, copy_related_set
 from dbentry.utils.admin import get_obj_link, log_change
 
 
-# TODO: add admindocs
-# (https://docs.djangoproject.com/en/2.2/ref/contrib/admin/admindocs/)
-
-
-# noinspection PyProtectedMember,PyUnresolvedReferences
 class BestandInLine(BaseTabularInline):
     model = _models.Bestand
     form = _forms.BestandInlineForm
-    # This allows inlines.js to copy the last selected bestand to a new row.
-    classes = ['copylast']
     fields = ['signatur', 'lagerort', 'provenienz', 'anmerkungen']
     readonly_fields = ['signatur']
+
+    # 'copylast' class allows inlines.js to copy the last selected bestand to a
+    # new row.
+    classes = ['copylast']
+
+    # noinspection PyUnresolvedReferences
     verbose_name = _models.Bestand._meta.verbose_name
+    # noinspection PyUnresolvedReferences
     verbose_name_plural = _models.Bestand._meta.verbose_name_plural
+
     # TODO: enable tabular autocomplete for 'lagerort'
     #  (see ac.views.ACLagerort and ac.urls for details)
     # tabular_autocomplete = ['lagerort']
@@ -216,7 +217,6 @@ class AusgabenAdmin(MIZModelAdmin):
         return AusgabeChangeList
 
     def ausgabe_name(self, obj: _models.Ausgabe) -> str:
-        # noinspection PyProtectedMember
         return obj._name
     ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
     ausgabe_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
@@ -340,7 +340,7 @@ class AusgabenAdmin(MIZModelAdmin):
         """
         from django.contrib.auth import get_permission_codename
         perms = []
-        # noinspection PyUnresolvedReferences,PyProtectedMember
+        # noinspection PyUnresolvedReferences
         for name, opts in [('delete', _models.Ausgabe._meta), ('add', _models.BaseBrochure._meta)]:
             perms.append("%s.%s" % (opts.app_label, get_permission_codename(name, opts)))
         # noinspection PyUnresolvedReferences
@@ -379,7 +379,6 @@ class AutorAdmin(MIZModelAdmin):
         }
 
     def autor_name(self, obj: _models.Autor) -> str:
-        # noinspection PyProtectedMember
         return obj._name
     autor_name.short_description = 'Autor'  # type: ignore[attr-defined]  # noqa
     autor_name.admin_order_field = '_name'  # type: ignore[attr-defined]  # noqa
@@ -462,7 +461,6 @@ class ArtikelAdmin(MIZModelAdmin):
         }
 
     def ausgabe_name(self, obj: _models.Artikel) -> str:
-        # noinspection PyProtectedMember
         return obj.ausgabe._name
     ausgabe_name.short_description = 'Ausgabe'  # type: ignore[attr-defined]  # noqa
     ausgabe_name.admin_order_field = 'ausgabe___name'  # type: ignore[attr-defined]  # noqa
@@ -1266,7 +1264,7 @@ class BestandAdmin(MIZModelAdmin):
 
     def bestand_class(self, obj: _models.Bestand) -> str:
         if obj.bestand_object:
-            # noinspection PyProtectedMember,PyUnresolvedReferences
+            # noinspection PyUnresolvedReferences
             return obj.bestand_object._meta.verbose_name
         return ''
     bestand_class.short_description = 'Art'  # type: ignore[attr-defined]  # noqa

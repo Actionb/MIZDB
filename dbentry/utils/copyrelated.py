@@ -16,15 +16,14 @@ def copy_related_set(request: HttpRequest, obj: Model, *paths: str) -> None:
     Add the related_objects in ``paths`` to an equivalent relation of ``obj``.
     """
     change_message = []
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = obj._meta
     for path in paths:
         try:
             fields = get_fields_from_path(obj, path)
             if len(fields) < 2:
-                # Needs at least two degrees of separation.
-                # Otherwise path will point to a set that is already
-                # directly related to obj.
+                # Needs at least two degrees of separation, or path will point
+                # to a set that is already directly related to obj.
                 continue
             target_model = fields[-1].related_model
             target_field = [

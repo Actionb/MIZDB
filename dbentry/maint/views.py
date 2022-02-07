@@ -4,6 +4,7 @@ from typing import Any, Dict, List, OrderedDict as OrderedDictType, Sequence, Tu
 
 from django import views
 from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Count, ManyToManyRel, ManyToOneRel, Model, OneToOneRel, Q, QuerySet
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
@@ -96,7 +97,7 @@ class ModelSelectView(views.generic.FormView):
 
     Attributes:
         - ``next_view`` (str): view name of the next view. reverse() must be
-          able to return an URL using this view name.
+          able to return a URL using this view name.
     """
 
     template_name = 'admin/basic_form.html'
@@ -137,7 +138,7 @@ class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
         if not kwargs.get('model_name'):
             raise TypeError("Model not provided.")
         self.model = utils.get_model_from_string(kwargs['model_name'])
-        # noinspection PyUnresolvedReferences,PyProtectedMember
+        # noinspection PyUnresolvedReferences
         self.opts = self.model._meta
 
     def get_context_data(self, **kwargs: Any) -> dict:
@@ -157,7 +158,7 @@ class DuplicateModelSelectView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectVie
     """
     Main entry point for the duplicates search.
 
-    It let's the user choose a model to search for duplicates in and then
+    It lets the user choose a model to search for duplicates in and then
     redirects to the DuplicateObjectsView.
     """
 
@@ -170,8 +171,8 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
     A FormView that finds, displays and, if so requested, merges duplicates.
 
     The view's form contains the model fields with which a search for duplicates
-    is done. Duplicates are model instances that have the same values in all of
-    the model fields selected in the form.
+    is done. Duplicates are model instances that have the same values in the
+    model fields selected in the form.
     These duplicates are grouped together according to these equivalent values
     and the possibility for merging each group is provided.
     """
@@ -235,7 +236,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         """
         Extract the table headers for the table that lists the duplicates from
         the selected display fields in 'form'.
-        The headers should be the human readable part of the choices.
+        The headers should be the human-readable part of the choices.
         """
         headers: List[str] = []
         for field_name in form.display_fields:
@@ -253,7 +254,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                         for group_name, group_choices in choices
                     )
                 )
-            # Acquire the human readable parts of the choices that have been
+            # Acquire the human-readable parts of the choices that have been
             # selected:
             headers.extend(
                 human_readable
@@ -262,7 +263,6 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
             )
         return headers
 
-    # noinspection PyUnresolvedReferences
     def build_duplicates_items(
             self, form: Form
     ) -> List[Tuple[List[Tuple[Any, SafeText, List[str]]], SafeText]]:
@@ -279,6 +279,7 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
         display_fields = self.get_display_fields(form)
         # Look for duplicates using the selected fields.
         # A list of lists/group of 'Dupe' named tuples is returned.
+        # noinspection PyUnresolvedReferences
         duplicates = find_duplicates(self.model.objects, dupe_fields, display_fields)
         # Walk through each group of duplicates:
         for dupe_group in duplicates:
@@ -299,6 +300,23 @@ class DuplicateObjectsView(ModelSelectNextViewMixin, views.generic.FormView):
                         values = dupe.display_values[field_name]
                     else:
                         values = []
+
+                    # Try to get the string representation of the related
+                    # objects.
+                    try:
+                        # noinspection PyUnresolvedReferences
+                        field = self.model._meta.get_field(field_name)
+                        if field.is_relation and values:
+                            values = [
+                                str(obj)
+                                for obj in field.related_model.objects.filter(pk__in=values)
+                            ]
+                    except (FieldDoesNotExist, ValueError):
+                        # Either the model has no field with that name or the
+                        # values could not be used in the filter; just use the
+                        # values as they are.
+                        pass
+
                     display_values.append(
                         ", ".join(str(v)[:100] for v in values)
                     )
@@ -438,7 +456,6 @@ class UnusedObjectsView(MIZAdminMixin, SuperUserOnlyMixin, ModelSelectView):
             under_limit = []
             for info in relations.values():
                 count = info['counts'].get(obj.pk, 0)
-                # noinspection PyProtectedMember
                 under_limit.append(
                     under_limit_template.format(
                         model_name=info['related_model']._meta.verbose_name,

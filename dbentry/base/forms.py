@@ -7,7 +7,6 @@ from django.core.exceptions import ValidationError
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
 from django.forms import Form
-from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
 from dbentry.utils import snake_case_to_spaces
@@ -22,7 +21,7 @@ class FieldGroup:
     Helper object managing a group of fields for the MinMaxRequiredFormMixin.
 
     Created during the clean() method of a form instance, a FieldGroup can
-    assess whether or not its minimum/maximum requirements are fulfilled.
+    assess whether its minimum/maximum requirements are fulfilled.
     """
 
     def __init__(
@@ -256,6 +255,7 @@ class MinMaxRequiredFormMixin(object):
     def get_default_error_messages(self, format_kwargs: dict) -> dict:
         messages = {}
         for error_type in ('min', 'max'):
+            # noinspection PyUnresolvedReferences
             message = self.default_error_messages[error_type].format(
                 **format_kwargs
             )

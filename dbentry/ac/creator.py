@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Any, Dict, Type, Union
+from typing import Dict, Type, Union
 
 from django.db.models import Model
 from nameparser import HumanName
@@ -53,7 +53,7 @@ class Creator(object):
         """
         self.model = model
         self.raise_exceptions = raise_exceptions
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         self.creator = getattr(self, 'create_' + model._meta.model_name, None)
 
     def create(self, text: str, preview: bool = True) -> Union[Dict, OrderedDict]:
@@ -88,65 +88,71 @@ class Creator(object):
             # text attribute (which FailedObject emulates).
             return {'instance': FailedObject(str(e))}
 
-    # noinspection PyUnresolvedReferences
-    @staticmethod
-    def _get_model_instance(model: Type[Model], **data: Any) -> Model:
-        """
-        Query for existing model instances with kwargs ``data``.
-
-        If the query returns exactly one instance, return that instance.
-        If the query returned no results, return a new unsaved instance.
-        Otherwise raise a MultipleObjectsReturned exception.
-        """
-        try:
-            return model.objects.get(**data)
-        except model.DoesNotExist:
-            return model(**data)
-        except model.MultipleObjectsReturned:
-            raise MultipleObjectsReturned
-
     def create_person(self, text: Union[str, HumanName], preview: bool = True) -> OrderedDict:
         """
-        Get or create a Person instance from ``text``.
+        Get or create a Person instance from the name ``text``.
 
         If ``preview`` is True, do not save the instance even if it is new.
 
         Returns:
             OrderedDict that includes the created instance and additional
                 information for the 'create_option' of a dal widget
+
+        Raises:
+            MultipleObjectsReturned: when the query for that name returned
+                multiple matching existing records
         """
         # parse_name will join first and middle names
         vorname, nachname = parse_name(text)
-        person_instance = self._get_model_instance(
-            _models.Person, vorname=vorname, nachname=nachname
-        )
-        if not preview and person_instance.pk is None:
-            person_instance.save()
+        # noinspection PyUnresolvedReferences
+        try:
+            p = _models.Person.objects.get(vorname=vorname, nachname=nachname)
+        except _models.Person.DoesNotExist:
+            p = _models.Person(vorname=vorname, nachname=nachname)
+        except _models.Person.MultipleObjectsReturned:
+            raise MultipleObjectsReturned
+        if not preview and p.pk is None:
+            p.save()
         return OrderedDict(
             [
                 ('Vorname', vorname), ('Nachname', nachname),
-                ('instance', person_instance)
+                ('instance', p)
             ]
         )
 
     def create_autor(self, text: str, preview: bool = True):
         """
-        Get or create an autor instance from ``text``.
+        Get or create an autor instance from name ``text``.
 
         If ``preview`` is True, do not save the instance even if it is new.
 
         Returns:
             OrderedDict that includes the created instance and additional
                 information for the 'create_option' of a dal widget
+
+        Raises:
+            MultipleObjectsReturned: when the query for that name returned
+                multiple matching existing records
         """
+        # Parse the name through the nameparser to find out the nickname, which
+        # will be used as kuerzel. Then pass the name without nickname to the
+        # Person constructor.
         name = HumanName(text)
         kuerzel = name.nickname
         name.nickname = ''
-        p = self.create_person(name, preview)
+        p = self.create_person(str(name), preview)
         person_instance = p.get('instance')
-        autor_instance = self._get_model_instance(
-            _models.Autor, person=person_instance, kuerzel=kuerzel
-        )
+        # noinspection PyUnresolvedReferences
+        try:
+            autor_instance = _models.Autor.objects.get(
+                kuerzel=kuerzel,
+                person__vorname=person_instance.vorname,
+                person__nachname=person_instance.nachname
+            )
+        except _models.Autor.DoesNotExist:
+            autor_instance = _models.Autor(kuerzel=kuerzel, person=person_instance)
+        except _models.Autor.MultipleObjectsReturned:
+            raise MultipleObjectsReturned
         if not preview and autor_instance.pk is None:
             # noinspection PyUnresolvedReferences
             if autor_instance.person.pk is None:

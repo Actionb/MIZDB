@@ -172,7 +172,6 @@ class AdminSearchFormMixin(object):
         # Get the '_changelist_filters' part of the querystring.
         preserved_filters = self.get_preserved_filters(request)  # type: ignore[attr-defined]
         preserved_filters = dict(parse_qsl(preserved_filters))
-        # noinspection PyProtectedMember
         response = super()._response_post_save(request, obj)  # type: ignore[misc]
         if (not isinstance(response, HttpResponseRedirect)
                 or not self.has_view_or_change_permission(request)  # type: ignore[attr-defined]
@@ -185,7 +184,7 @@ class AdminSearchFormMixin(object):
         post_url = response.url
         parsed_url = urlparse(post_url)
         post_url_query = QueryDict(parsed_url.query, mutable=True)
-        # Create a QueryDict mapping search_form fields to
+        # Create a QueryDict mapping of: search_form fields to
         # lists of *all* their preserved values.
         preserved = QueryDict(preserved_filters['_changelist_filters'])
         for lookup, values_list in preserved.lists():

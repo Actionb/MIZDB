@@ -88,7 +88,7 @@ class m2m_datei_quelle(BaseM2MModel):
                     return fld.name
         return ''
 
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     def __str__(self):
         art = self.get_quelle_art()
         if art:
