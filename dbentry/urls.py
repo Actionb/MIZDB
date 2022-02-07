@@ -4,7 +4,7 @@ from dbentry.bulk.views import BulkAusgabe
 from dbentry.views import SiteSearchView, watchlist_toggle, Watchlist
 
 admin_tools_urls = [
-    path('bulk_ausgabe/', BulkAusgabe.as_view(), name='bulk_ausgabe'),
+    path('bulk_ausgabe', BulkAusgabe.as_view(), name='bulk_ausgabe'),
 ]
 
 urlpatterns = [
@@ -12,6 +12,6 @@ urlpatterns = [
     path('ac/', include('dbentry.ac.urls')),
     path('tools/', include(admin_tools_urls)),
     path('maint/', include('dbentry.maint.urls')),
-    path('watchlist_toggle/', watchlist_toggle, name='watchlist_toggle'),
+    path('watchlist_toggle', watchlist_toggle, name='watchlist_toggle'),
     path('watchlist', Watchlist.as_view(), name='watchlist'),
 ]
