@@ -62,7 +62,7 @@ class UniqueFaker(factory.Sequence):
 
 
 class ISSNFaker(factory.Faker):
-    """A faker that provides valid ISSN numbers."""
+    """A faker that provides valid ISSN."""
 
     def __init__(self, provider: str = 'ean', **kwargs: Any) -> None:
         super().__init__(provider, **kwargs)
@@ -182,7 +182,6 @@ class SelfFactory(SubFactory):
         if self.required and not extra:
             # Find the attribute name that refers to this factory declaration:
             self_name = ''
-            # noinspection PyProtectedMember
             for k, v in self.factory._meta.pre_declarations.as_dict().items():
                 if v == self:
                     self_name = k
@@ -340,7 +339,6 @@ class M2MFactory(RelatedFactory):
         """Create the related objects and add references to the m2m table."""
         related_manager = getattr(instance, self.descriptor_name)
         # Get the right field names from the intermediary m2m table.
-        # noinspection PyProtectedMember
         source_field = related_manager.through._meta.get_field(
             related_manager.source_field_name
         )
@@ -418,7 +416,6 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
 
     def add_m2m_factories(self) -> None:
         """Add M2MFactories for every many-to-many relation of this model."""
-        # noinspection PyProtectedMember
         opts = self.model._meta
         for rel in get_model_relations(self.model):
             if not rel.many_to_many:
@@ -579,7 +576,6 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         step = factory.builder.StepBuilder(
             cls._meta, kwargs, factory.enums.CREATE_STRATEGY
         )
-        # noinspection PyProtectedMember
         cls._meta._initialize_counter()
         created = step.build()
         for name in set_to_required:
@@ -598,10 +594,9 @@ class MIZModelFactory(factory.django.DjangoModelFactory):
         """
         if params and len(cls._meta.django_get_or_create) > 1:
             # This factory has been called with explicit parameters for some of
-            # its fields. Add these fields to the memo so we can distinguish
+            # its fields. Add these fields to the memo, so we can distinguish
             # passed in parameters from *generated* ones.
             cls.set_memo(tuple(params.keys()))
-        # noinspection PyProtectedMember
         return super()._generate(strategy, params)
 
     @classmethod
@@ -656,7 +651,7 @@ _cache: Dict[str, Type[MIZModelFactory]] = {}
 
 def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFactory]:
     """Create a factory class for the given model."""
-    # noinspection PyProtectedMember,PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     model_name = model._meta.model_name
     # Check the cache for a factory for that model_name.
     if model_name in _cache:

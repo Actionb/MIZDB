@@ -19,7 +19,6 @@ class Command(BaseCommand):
             help='Force the update of all model instances.'
         )
 
-    # noinspection PyProtectedMember
     def handle(self, *args, **options):
         models = [
             model

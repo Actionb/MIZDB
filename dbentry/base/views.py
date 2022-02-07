@@ -85,7 +85,7 @@ class FixedSessionWizardView(SessionWizardView):
             Where 'step', 'data' and 'files' are get_form's arguments.
 
         If we wanted to keep changes to the request payload made in
-        get_form_kwargs, we need to to call super with explicit data (and files)
+        get_form_kwargs, we need to call super with explicit data (and files)
         kwargs derived from get_form_kwargs.
         """
         if step is None:

@@ -57,7 +57,6 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
         Returns:
             an OrderedDict of primary key to item values (dicts)
         """
-        # noinspection PyProtectedMember
         opts = self.model._meta
         # pk_name is the variable that will refer to this query's primary key
         # values.
@@ -75,7 +74,8 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
                     # it must be added to fields.
                     fields += (pk_name,)
 
-        # Do not flatten reverse relation values. An iterable is expected.
+        # Do not flatten reverse relation values.
+        # An iterable object is expected.
         flatten_exclude = []
         if flatten and fields:
             for field_path in fields:
@@ -180,7 +180,6 @@ class CNQuerySet(MIZQuerySet):
             )
             with transaction.atomic():
                 for pk, val_dict in values.items():
-                    # noinspection PyProtectedMember
                     new_name = self.model._get_name(**val_dict)
                     self.order_by().filter(pk=pk).update(
                         _name=new_name, _changed_flag=False
@@ -238,13 +237,10 @@ class AusgabeQuerySet(CNQuerySet):
 
     def update(self, **kwargs: Any) -> int:
         if self.chronologically_ordered:
-            # FIXME: Trying to update a chronologically ordered queryset seems to fail.
-            # A FieldError is raised, complaining about a missing field. That
-            # field should exist as an annotation but just doesn't.
-            # Proper solution to this would be check the update kwargs for
-            # expressions that require ordering and handle those separately
-            # somehow - but considering that chronological_order's days are almost
-            # numbered, this is the quick and dirty way of fixing the problem:
+            # Need to clear ordering for the update.
+            # The queryset's order depends on values from annotations - but
+            # update() clears all annotations: an update on an ordered
+            # queryset will fail.
             return self.order_by().update(**kwargs)
         return super().update(**kwargs)
 
@@ -394,7 +390,6 @@ class AusgabeQuerySet(CNQuerySet):
             # Already ordered!
             return self
 
-        # noinspection PyProtectedMember
         opts = self.model._meta
         # A chronological order is (mostly) consistent ONLY within
         # the ausgabe_set of one particular magazin. If the queryset contains
@@ -409,8 +404,7 @@ class AusgabeQuerySet(CNQuerySet):
                 return self
             return self.order_by(*opts.ordering)
 
-        # FIXME: default_ordering orders by 'magazin' and not 'magazin_name'?
-        default_ordering = ('magazin', 'jahr', 'jahrgang', 'sonderausgabe')
+        default_ordering = ('magazin__magazin_name', 'jahr', 'jahrgang', 'sonderausgabe')
         ordering: List[str] = [*order_fields, *default_ordering]
 
         pk_name = opts.pk.name

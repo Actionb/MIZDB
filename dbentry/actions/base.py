@@ -204,7 +204,6 @@ class ActionConfirmationView(ConfirmationViewMixin, views.generic.FormView):
         of the objects, present those values as a nested list.
         """
 
-        # noinspection PyProtectedMember
         def linkify(model_instance):
             object_link = get_obj_link(
                 model_instance, self.request.user,

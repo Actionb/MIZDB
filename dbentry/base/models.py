@@ -37,8 +37,9 @@ class BaseModel(models.Model):
         Return a string representation of this instance.
 
         If 'name_field' is set, that field's value will be returned.
-        Otherwise the result will be a concatenation of values of all non-empty,
-        non-relation fields that are not excluded through 'exclude_from_str'.
+        Otherwise, the result will be a concatenation of values of all
+        non-empty, non-relation fields that are not excluded through
+        'exclude_from_str'.
         """
         # noinspection PyUnresolvedReferences
         opts = self._meta

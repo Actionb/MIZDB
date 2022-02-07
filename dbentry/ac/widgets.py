@@ -28,9 +28,9 @@ class GenericURLWidgetMixin(object):
         4. widget is used and an ajax request is made to that URL
         5. view responds with the results for the widget to display
 
-    A down side is, that this requires having an URL for every different model
+    A downside is, that this requires having a URL for every different model
     that one would like to use ModelSelect2 on.
-    To avoid explicitly declaring an URL for every model, a generic URL with a
+    To avoid explicitly declaring a URL for every model, a generic URL with a
     captured model name can be used: ``path('<str:model_name>/', name='generic')``.
 
     By passing the model name to the widget, the widget can then reverse that
@@ -162,9 +162,9 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
     @property
     def media(self) -> Media:
         """Add RelatedObjectLookups.js to the widget media."""
-        # django's admin adds RelatedObjectLookups.js via ModelAdmin.media.
-        # In order to wrap a widget outside of a ModelAdmin view, the widget
-        # needs to add the necessary javascript files itself.
+        # RelatedObjectLookups.js is added by ModelAdmin.media. In order to
+        # wrap widgets for use in non-admin views, the wrapper needs to provide
+        # the necessary javascript files directly.
         from django.conf import settings
         extra = '' if settings.DEBUG else '.min'
         js = [
@@ -208,7 +208,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
         self.can_change_related = not multiple and can_change_related
         self.can_delete_related = not multiple and can_delete_related
         self.remote_model = remote_model
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         self.remote_field_name = remote_field_name or remote_model._meta.pk.attname
 
     def get_related_url(self, info: Tuple[str, str], action: str, *args: Any) -> str:
@@ -225,7 +225,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
         return reverse("admin:%s_%s_%s" % (*info, action), args=args)
 
     def get_context(self, name: str, value: Any, attrs: dict) -> dict:
-        # noinspection PyProtectedMember,PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         rel_opts = self.remote_model._meta
         info = (rel_opts.app_label, rel_opts.model_name)
         self.widget.choices = self.choices
@@ -296,7 +296,6 @@ def make_widget(
     model = kwargs.pop('model', None)
     model_name = kwargs.pop('model_name', '')
     if model and not model_name:
-        # noinspection PyProtectedMember
         model_name = model._meta.model_name
     if model_name and not model:
         model = get_model_from_string(model_name)
@@ -367,7 +366,6 @@ def make_widget(
                     # Reminder: a field's verbose_name defaults to:
                     #   field.name.replace('_',' ')
 
-                    # noinspection PyProtectedMember
                     forwarded_verbose = model._meta.get_field(
                         forwarded.dst or forwarded.src
                     ).verbose_name.title()

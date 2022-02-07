@@ -10,7 +10,7 @@ def leapdays(start: datetime.date, end: datetime.date) -> int:
     inaccurate:
     If the start and end year are the same, the result is always 0
     due to the end argument being regarded as exclusive.
-    If the either year is a leap year, the number of leap days depends on the
+    If either year is a leap year, the number of leap days depends on the
     exact dates.
     """
     # (used in AusgabeQuerySet.increment_jahrgang)

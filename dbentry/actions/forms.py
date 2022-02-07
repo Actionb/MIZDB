@@ -42,8 +42,8 @@ class MergeFormSelectPrimary(DynamicChoiceFormMixin, forms.Form):
     Fields:
         - ``primary`` (ChoiceField): the object that other objects
           will be merged into.
-        - ``expand_primary`` (BooleanField): whether or not to expand the
-          primary object with data from the other objects.
+        - ``expand_primary`` (BooleanField): whether to expand the primary
+          object with data from the other objects.
     """
 
     primary = forms.ChoiceField(
@@ -180,7 +180,7 @@ class BrochureActionFormOptions(MIZAdminForm):
           Ausgabe instances belong to after moving.
     """
 
-    # noinspection PyUnresolvedReferences,PyProtectedMember
+    # noinspection PyUnresolvedReferences
     brochure_art = forms.ChoiceField(
         label='Verschieben nach',
         choices=[

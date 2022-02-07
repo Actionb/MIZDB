@@ -313,7 +313,6 @@ class SearchFormFactory:
         if not callable(formfield_callback):
             raise TypeError('formfield_callback must be a function or callable')
 
-        # noinspection PyProtectedMember
         opts = model._meta
         # Create the formfields.
         attrs = OrderedDict()

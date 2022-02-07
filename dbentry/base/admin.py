@@ -161,7 +161,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     # noinspection PyMethodMayBeStatic
     def has_alter_bestand_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to change inventory quantities."""
-        # noinspection PyUnresolvedReferences,PyProtectedMember
+        # noinspection PyUnresolvedReferences
         opts = _models.Bestand._meta
         perms = [
             "%s.%s" % (opts.app_label, get_permission_codename(action, opts))
@@ -237,6 +237,9 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         Crosslinks are links on an instance's change form that send the user
         to the changelist containing the instance's related objects.
         """
+        if not object_id:
+            return {}
+
         new_extra: dict = {'crosslinks': []}
         if labels is None:  # pragma: no cover
             labels = {}
@@ -245,7 +248,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         if relations is None:
             # Walk through all reverse relations and collect the model and
             # model field to query against as well as the assigned name for the
-            # relation -- unless an inline is covering that reverse relation.
+            # relation -- unless an admin inline is covering that relation.
             relations = []
             inline_models = {i.model for i in self.inlines}
             for rel in get_model_relations(self.model, forward=False, reverse=True):
@@ -275,7 +278,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
         # Create the context data for the crosslinks.
         for query_model, query_field, label in relations:
-            # noinspection PyProtectedMember
             opts = query_model._meta
             try:
                 url = reverse(
@@ -301,27 +303,21 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
-    def add_extra_context(
-            self,
-            request: Optional[HttpRequest] = None,
-            extra_context: Optional[dict] = None,
-            object_id: Optional[str] = None
-    ) -> dict:
-        """Add crosslinks as extra context."""
-        # TODO: docstring inaccurate: it also adds collapse_all
-        new_extra = extra_context or {}
+    def add_extra_context(self, object_id: Optional[str] = None, **extra_context) -> dict:
+        """Add extra context specific to this ModelAdmin."""
         if object_id:
             # The request is for the change page of an existing instance.
-            # Add crosslinks and check if the instance is on the watchlist:
-            new_extra.update(self.add_crosslinks(object_id, self.crosslink_labels))
-
+            # Add an indicator whether this instance is on the watchlist:
             watchlist = get_watchlist(request)
             if self.opts.label in watchlist:
                 ids = [pk for pk, time_added in watchlist[self.opts.label]]
-                new_extra['on_watchlist'] = int(object_id) in ids
-
-        new_extra['collapse_all'] = self.collapse_all
-        return new_extra
+                extra_context['on_watchlist'] = int(object_id) in ids
+                
+        extra_context.update({
+            'collapse_all': self.collapse_all,
+            **self.add_crosslinks(object_id, self.crosslink_labels),
+        })
+        return extra_context
 
     def add_view(
             self,
@@ -330,10 +326,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for adding a new object."""
-        new_extra = self.add_extra_context(
-            request=request, extra_context=extra_context
-        )
-        return super().add_view(request, form_url, new_extra)
+        return super().add_view(request, form_url, self.add_extra_context(**(extra_context or {})))
 
     def change_view(
             self,
@@ -343,10 +336,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for changing an object."""
-        new_extra = self.add_extra_context(
-            request=request, extra_context=extra_context,
-            object_id=object_id
-        )
+        new_extra = self.add_extra_context(object_id=object_id, **(extra_context or {}))
         return super().change_view(request, object_id, form_url, new_extra)
 
     def construct_change_message(
@@ -456,7 +446,7 @@ class BaseInlineMixin(AutocompleteMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.verbose_model:
-            # noinspection PyUnresolvedReferences,PyProtectedMember
+            # noinspection PyUnresolvedReferences
             verbose_opts = self.verbose_model._meta
             self.verbose_name = verbose_opts.verbose_name
             self.verbose_name_plural = verbose_opts.verbose_name_plural
