@@ -3,7 +3,7 @@ django.jQuery(document).ready(function($){
     /* change page checkbox */
     $(".watchlist-toggle").click(function(event){
         event.preventDefault();
-        var element = this;
+        let element = this;
         $.get(
             url='/admin/watchlist_toggle',
             data={'id': this.dataset.id, 'model_label': this.dataset.modelLabel},
@@ -14,7 +14,7 @@ django.jQuery(document).ready(function($){
 
     /* watchlist overview checkbox */
     $(".watchlist-remove").click(function(event){
-        var element = $(this);
+        let element = $(this);
         $.get(
             url='/admin/watchlist_toggle',
             data={
