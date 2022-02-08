@@ -122,13 +122,12 @@ button[name="wizard_goto_step"]{
     display: block;
     float: left;
     padding: 3px 12px;
-    background: #999;
-        background-color: rgb(153, 153, 153);
+    background: var(--object-tools-bg);
     font-weight: 400;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #fff;
+    color: var(--object-tools-fg);
     border-radius: 15px;
 }
 
@@ -137,6 +136,10 @@ button[name="wizard_goto_step"]{
     -moz-user-select: all;
     -ms-user-select: all;
     user-select: all;
+}
+
+.object-tools span:hover {
+    background-color: var(--object-tools-hover-bg);
 }
 
 /*
