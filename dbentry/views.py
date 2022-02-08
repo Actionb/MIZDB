@@ -162,19 +162,20 @@ def watchlist_toggle(request, *args, **kwargs):
 
 def get_watchlist(request):
     """Return the watchlist for the given request."""
-    if request.user.is_authenticated:
-        watchlist = {}
-        for watchlist_item in models.Watchlist.objects.filter(user=request.user):
-            model_label = watchlist_item.content_type.model_class()._meta.label
-            if model_label not in watchlist:
-                watchlist[model_label] = []
-            watchlist[model_label].append((
-                watchlist_item.object_id, watchlist_item.added
-            ))
-        return watchlist
-    # TODO: session items won't be ordered by time_added / 'added'
-    #   <-- wouldn't they? the items are appended
-    return request.session.get('watchlist', {})
+    if not request.user.is_authenticated:
+        # TODO: session items won't be ordered by time_added / 'added'
+        #   <-- wouldn't they? the items are appended
+        return request.session.get('watchlist', {})
+
+    watchlist = {}
+    for watchlist_item in models.Watchlist.objects.filter(user=request.user):
+        model_label = watchlist_item.content_type.model_class()._meta.label
+        if model_label not in watchlist:
+            watchlist[model_label] = []
+        watchlist[model_label].append((
+            watchlist_item.object_id, watchlist_item.added
+        ))
+    return watchlist
 
 
 @register_tool(
