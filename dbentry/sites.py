@@ -161,6 +161,7 @@ class MIZAdminSite(admin.AdminSite):
         """
         extra_context = extra_context or {}
         extra_context['admintools'] = self.build_admintools_context(request)
+        extra_context['title'] = 'Index'
         response = super().index(request, extra_context)
         # Replace the original app_list with the one containing the grouping.
         new_app_list = self.add_categories(response.context_data['app_list'])
