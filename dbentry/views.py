@@ -140,19 +140,20 @@ def watchlist_toggle(request, *args, **kwargs):
             )
             on_watchlist = True
     else:
-        if 'watchlist' not in request.session:
+        if 'watchlist' not in request.session:  # pragma: no cover
             request.session['watchlist'] = {}
         watchlist = request.session['watchlist']
+        pks = list(map(itemgetter(0), watchlist.get(model_label, [])))
 
-        if remove_only or (model_label in watchlist and pk in watchlist[model_label]):
+        if remove_only or model_label in watchlist and pk in pks:
             try:
-                watchlist[model_label].remove(pk)
+                watchlist[model_label].pop(pks.index(pk))
             except (KeyError, ValueError):
                 # remove_only is True, and the item wasn't on the watchlist
                 pass
             on_watchlist = False
         else:
-            if model_label not in watchlist:
+            if model_label not in watchlist:  # pragma: no cover
                 watchlist[model_label] = [(pk, now())]
             else:
                 watchlist[model_label].append((pk, now()))
@@ -162,7 +163,7 @@ def watchlist_toggle(request, *args, **kwargs):
     return JsonResponse({'on_watchlist': on_watchlist})
 
 
-def get_watchlist(request):
+def get_watchlist(request):  # TODO: rename to get_watchlist_items?
     """Return the watchlist for the given request."""
     if not request.user.is_authenticated:
         # TODO: session items won't be ordered by time_added / 'added'
@@ -171,8 +172,11 @@ def get_watchlist(request):
 
     watchlist = {}
     for watchlist_item in models.Watchlist.objects.filter(user=request.user):
-        model_label = watchlist_item.content_type.model_class()._meta.label
-        if model_label not in watchlist:
+        # Use all lower case for the model label to make the string consistent
+        # with labels sent to watchlist_toggle by AJAX requests that use all
+        # lower case.
+        model_label = watchlist_item.content_type.model_class()._meta.label.lower()
+        if model_label not in watchlist:  # pragma: no cover
             watchlist[model_label] = []
         watchlist[model_label].append((
             watchlist_item.object_id, watchlist_item.added

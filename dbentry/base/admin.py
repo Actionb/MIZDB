@@ -317,7 +317,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             if self.opts.label in watchlist:
                 ids = [pk for pk, time_added in watchlist[self.opts.label]]
                 extra_context['on_watchlist'] = int(object_id) in ids
-                
+
         extra_context.update({
             'collapse_all': self.collapse_all,
             **self.add_crosslinks(object_id, self.crosslink_labels),
