@@ -1,4 +1,5 @@
 import datetime
+from operator import itemgetter
 from typing import Any, List, Tuple, Type
 
 from django import forms, views
@@ -6,6 +7,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden, JsonResponse
+from django.shortcuts import redirect
 from django.template import loader
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.response import TemplateResponse
@@ -176,6 +178,24 @@ def get_watchlist(request):
             watchlist_item.object_id, watchlist_item.added
         ))
     return watchlist
+
+
+def get_watchlist_cl(request):
+    # TODO: docstring
+    model_label = request.GET['model_label']
+    try:
+        model = apps.get_model(model_label)
+    except LookupError:
+        # TODO: send admin message with level ERROR
+        # TODO: redirect back to watchlist?
+        redirect('index')
+
+    cl_url = utils.get_changelist_url(model, request.user)
+    try:
+        pks = ','.join(str(pk) for pk in map(itemgetter(0), get_watchlist(request)[model_label]))
+        return redirect(f"{cl_url}?id__in={pks}")
+    except KeyError:
+        return redirect(cl_url)
 
 
 @register_tool(
