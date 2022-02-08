@@ -33,6 +33,31 @@ django.jQuery(document).ready(function($){
         );
     });
 
+    /* watchlist overview changelist button */
+    $(".cl-button").click(function(event){
+       let container = $(this).parents(".model-container");
+       let url = $(this).attr("href").split("=")[0];
+       let ids = "";
+       // Gather the IDs - except for the one of the removed item.
+       container.find(".watchlist-remove").each(function(){
+           if (ids == "") {
+               ids = this.dataset.id;
+           } else {
+               ids += "," + this.dataset.id;
+           }
+       })
+       $(this).attr("href", url + "=" + ids)
+    });
+
+    $(".cl-button").on("mouseup", function(event){
+        // There is no 'click' event for middle mouse clicks.
+        // Handle middle mouse button (2) releases like left clicks:
+        if (event.which == 2){
+            event.preventDefault();
+            $(this).click();
+        }
+    });
+
     /* watchlist overview checkbox */
     $(".watchlist-remove").click(function(event){
         let element = $(this);
@@ -44,7 +69,7 @@ django.jQuery(document).ready(function($){
                 'remove_only': true
             },
             success=function(data){
-                updateLink(element);
+                // updateLink(element);
                 element.parents('tr').remove();
                 // TODO: what if this removes the last table row for a given model?
 /*                if (element.parents('tbody').children.length > 1){
