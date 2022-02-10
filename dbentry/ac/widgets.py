@@ -126,9 +126,9 @@ class TabularResultsMixin(object):
             self.attrs['class'] = self.tabular_css_class
         self.attrs['data-extra-data-key'] = EXTRA_DATA_KEY
 
-    # noinspection PyUnresolvedReferences
     @property
     def media(self):
+        # noinspection PyUnresolvedReferences
         return super().media + Media(js=['admin/js/select2_tabular.js'])
 
 
