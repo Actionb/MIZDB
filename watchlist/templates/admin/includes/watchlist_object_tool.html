@@ -1,0 +1,19 @@
+{# Checkbox and its label that add an object to the session watchlist via an AJAX request. #} {# TODO: improve comment #}
+<span class="watchlist">
+    <!--suppress HtmlUnknownAttribute -->
+    {# TODO: input should not be in tab order #}
+    <input
+            type="checkbox"
+            class="watchlist watchlist-toggle"
+            id="watchlist-cb"
+            data-id="{{ object_id }}"
+            data-model-label="{{ opts.label }}"
+            {% if on_watchlist %} checked {% endif %}
+            style="margin-top: 0px;"
+    >
+    <label
+            for="watchlist-cb"
+            class="watchlist"
+            style="color: var(--object-tools-fg); font-size: 11px;"
+    >Merkliste</label>
+</span>

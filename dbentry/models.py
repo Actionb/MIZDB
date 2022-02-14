@@ -1680,19 +1680,3 @@ class Foto(BaseModel):
         ordering = ['titel']
         verbose_name = 'Foto'
         verbose_name_plural = 'Fotos'
-
-
-class Watchlist(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.IntegerField()
-    object_repr = models.CharField(max_length=200)
-    added = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.object_repr
-
-    class Meta:
-        ordering = ['user', 'content_type', 'added']
-        verbose_name = 'Merkliste'
-        verbose_name_plural = 'Merklisten'

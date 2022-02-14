@@ -185,8 +185,3 @@ look in line with those of the other items*/
     color: #fff;
     font-size: 11px;
 }
-
-/* Add pointer cursor to the watchlist elements */
-.object-tools .watchlist{
-    cursor: pointer;
-}

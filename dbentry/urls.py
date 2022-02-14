@@ -1,7 +1,7 @@
 from django.urls import include, path
 
 from dbentry.bulk.views import BulkAusgabe
-from dbentry.views import SiteSearchView, watchlist_toggle, Watchlist
+from dbentry.views import SiteSearchView
 
 admin_tools_urls = [
     path('bulk_ausgabe', BulkAusgabe.as_view(), name='bulk_ausgabe'),
@@ -12,6 +12,5 @@ urlpatterns = [
     path('ac/', include('dbentry.ac.urls')),
     path('tools/', include(admin_tools_urls)),
     path('maint/', include('dbentry.maint.urls')),
-    path('watchlist_toggle', watchlist_toggle, name='watchlist_toggle'),
-    path('watchlist', Watchlist.as_view(), name='watchlist'),
+    path('', include('watchlist.urls'))
 ]

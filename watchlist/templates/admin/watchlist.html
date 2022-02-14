@@ -1,5 +1,5 @@
 {% extends 'admin/base_site.html' %}
-{% load static %}
+{% load static %} {# TODO: need to load static? #}
 
 {% block extrahead %}
     {{block.super}}
@@ -19,25 +19,23 @@
             {% for header in extra_headers %}
                 <th scope="col">{{header}}</th>
             {% endfor %}
-            <th scope="col">Bestand</th>
             <th scope="col">Hinzugefügt</th>
         </tr>
         </thead>
         <tbody>
-            {% for id, object_link, extra_data, bestand, added in items %}
+            {% for id, object_link, extra_data, added in items %}
                 <tr class="{% cycle 'row1' 'row2' %}">
                     <td><a class="inline-deletelink watchlist-remove" href="#" data-id="{{id}}" data-model-label="{{model_opts.label}}" title="Entfernen">Entfernen</a></td>
                     <td>{{object_link}}</td>
                     {% for extra in extra_data %}
                         <td>{{extra}}</td>
                     {% endfor %}
-                    <td>{{bestand}}</td>  {# TODO: not every model has a bestand #}
                     <td>{{added}}</td>
                 </tr>
             {% endfor %}
         </tbody>
         </table>
-        {{cl_link}}
+        <a href="{% url 'watchlist_changelist' app_label=model_opts.app_label model_name=model_opts.model_name %}" target="_blank">Änderungsliste</a>
     </div>
     <br><hr><br>
     {% endfor %}

@@ -1,0 +1,7 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {# Add the watchlist checkbox element #}
+  <li>{% include "admin/includes/watchlist_object_tool.html" %}<li>
+  {{ block.super }}
+{% endblock %}

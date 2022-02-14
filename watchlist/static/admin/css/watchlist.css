@@ -1,0 +1,4 @@
+/* Add pointer cursor to the watchlist elements */
+.object-tools .watchlist{
+    cursor: pointer;
+}

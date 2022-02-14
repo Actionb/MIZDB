@@ -22,7 +22,6 @@ from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
-from dbentry.views import get_watchlist
 
 FieldsetList = List[Tuple[Optional[str], dict]]
 
@@ -305,19 +304,11 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
     def add_extra_context(
             self,
-            request: HttpRequest,
+            request: HttpRequest,  # TODO: remove request parameter... AGAIN
             object_id: Optional[str] = None,
             **extra_context
     ) -> dict:
         """Add extra context specific to this ModelAdmin."""
-        if object_id:
-            # The request is for the change page of an existing instance.
-            # Add an indicator whether this instance is on the watchlist:
-            watchlist = get_watchlist(request)
-            if self.opts.label in watchlist:
-                ids = [pk for pk, time_added in watchlist[self.opts.label]]
-                extra_context['on_watchlist'] = int(object_id) in ids
-
         extra_context.update({
             'collapse_all': self.collapse_all,
             **self.add_crosslinks(object_id, self.crosslink_labels),
@@ -417,14 +408,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             return queryset, False
         # Do a full text search. Respect ordering specified on the changelist.
         return queryset.search(search_term, ranked=ORDER_VAR not in request.GET), False
-
-    @property
-    def media(self):
-        media = super().media
-        # Inject the javascript for the watchlist object tools element.
-        # TODO: not every model admin will need this
-        media._js_lists[-1].append('admin/js/watchlist.js')
-        return media
 
 
 class BaseInlineMixin(AutocompleteMixin):
