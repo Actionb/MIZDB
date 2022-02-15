@@ -476,8 +476,10 @@ class PartialDateField(models.CharField):
         return self.to_python(value).db_value
 
     # noinspection PyMethodMayBeStatic
-    def from_db_value(self, value: str, *_args: Any, **_kwargs: Any) -> PartialDate:
+    def from_db_value(self, value: Optional[str], *_args, **_kwargs) -> Optional[PartialDate]:
         """Create a PartialDate object from a database value (db -> object)."""
+        if value is None:
+            return value
         return PartialDate.from_string(value)
 
     def formfield(self, **kwargs: Any) -> fields.Field:
