@@ -28,7 +28,7 @@ class MIZAdminMixin(object):
         # (used by admin/base_site.html)
         if self.title:
             context['title'] = self.title
-        if self.site_title:  # TODO: remove this, site_title is already added by each_context
+        if self.site_title:
             context['site_title'] = self.site_title
         if self.breadcrumbs_title:
             context['breadcrumbs_title'] = self.breadcrumbs_title
