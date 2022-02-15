@@ -166,7 +166,6 @@ def link_list(
         sep (str): the string used to separate the links from each other
         blank (bool): if True, the links will have a target="_blank" attribute
     """
-    # TODO: argument 'request' could just be user
     links = []
     for obj in obj_list:
         # noinspection PyUnresolvedReferences

@@ -759,7 +759,7 @@ class Buch(BaseModel):
     # TODO: übersetzer feld
     titel = models.CharField(max_length=200)
     titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
-    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)  # TODO: Semantik: Seitenanzahl?  # noqa
+    seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)
     jahr = YearField('Jahr', null=True, blank=True)
     jahr_orig = YearField('Jahr (Original)', null=True, blank=True)
     auflage = models.CharField(max_length=200, blank=True)

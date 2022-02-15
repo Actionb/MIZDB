@@ -715,7 +715,6 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Verlag
 
     collapse_all = True
-    # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
     crosslink_labels = {'buch': 'Aufsätze'}
     form = _forms.BuchForm
     index_category = 'Archivgut'
