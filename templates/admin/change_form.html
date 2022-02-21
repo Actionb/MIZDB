@@ -19,8 +19,6 @@
 {% if change %}
   <ul class="object-tools">
     {% block object-tools-items %}
-      {# Add the watchlist checkbox element #}
-      {% include "admin/includes/watchlist_object_tool.html" %}
       {# Add an element that display the object's ID #}
       <li><span>id:<span class="id-container">{{ object_id }}</span></span></li>
       {% change_form_object_tools %}

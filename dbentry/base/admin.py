@@ -22,6 +22,7 @@ from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
+from watchlist.admin import WatchlistAdminMixin
 
 FieldsetList = List[Tuple[Optional[str], dict]]
 
@@ -52,7 +53,7 @@ class AutocompleteMixin(object):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
 
 
-class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin):
+class MIZModelAdmin(WatchlistAdminMixin, AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin):
     """
     Base ModelAdmin for this app.
 

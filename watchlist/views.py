@@ -143,7 +143,7 @@ def watchlist_changelist(request, app_label, model_name):
 
 class WatchlistView(views.generic.TemplateView):
 
-    template_name = 'admin/watchlist.html'
+    template_name = 'admin/watchlist/watchlist.html'
 
     def get_item_extra(self, obj: Model) -> list[tuple[str, str]]:
         """

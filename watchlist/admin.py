@@ -1,8 +1,22 @@
+from django import forms
+from django.conf import settings
+
 from watchlist.views import get_watchlist
 
 
 class WatchlistAdminMixin(object):
-    # TODO: include this in MIZAdmin - the checkbox won't be accurate without it
+
+    change_form_template = 'admin/watchlist/change_form.html'
+
+    @property
+    def media(self):
+        media = super().media
+        extra = '' if settings.DEBUG else '.min'
+        js = ['vendor/jquery/jquery%s.js' % extra, 'jquery.init.js', 'watchlist.js']
+        return media + forms.Media(
+            js=['admin/js/%s' % url for url in js],
+            css={'all': ['admin/css/watchlist.css']}
+        )
 
     def on_watchlist(self, request, object_id):
         watchlist = get_watchlist(request)
