@@ -4,7 +4,7 @@ from dbentry.bulk.views import BulkAusgabe
 from dbentry.views import SiteSearchView
 
 admin_tools_urls = [
-    path('bulk_ausgabe/', BulkAusgabe.as_view(), name='bulk_ausgabe'),
+    path('bulk_ausgabe', BulkAusgabe.as_view(), name='bulk_ausgabe'),
 ]
 
 urlpatterns = [
