@@ -703,7 +703,7 @@ class TestMergeViewWizardedAusgabe(ActionViewTestCase):
         step_data = {'primary': self.obj1.pk, 'expand_primary': False}
         mocked_step_data.return_value = step_data
 
-        view = self.get_view(queryset=self.queryset)
+        view = self.get_view(request=self.get_request(), queryset=self.queryset)
         # Set the property's private attribute:
         view._updates = {'some_update': 'that_should not be used'}
         view.perform_action()

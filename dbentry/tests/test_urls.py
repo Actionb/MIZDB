@@ -68,7 +68,7 @@ class TestURLs(URLTestCase):
         self.urlconf = dbentry_urls
 
         expected = [
-            ('bulk_ausgabe', '/tools/bulk_ausgabe/', bulk_views.BulkAusgabe),
+            ('bulk_ausgabe', '/tools/bulk_ausgabe', bulk_views.BulkAusgabe),
         ]
         for view_name, url, view_class in expected:
             with self.subTest(view_name=view_name, url=url):

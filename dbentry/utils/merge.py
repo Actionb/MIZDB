@@ -18,7 +18,7 @@ def merge_records(
         queryset: QuerySet,
         update_data: Optional[Dict] = None,
         expand_original: bool = True,
-        request: HttpRequest = None
+        user_id: int = 0
 ) -> Tuple[Model, Optional[Dict]]:
     """
     Merge all model instances in ``queryset`` into model instance ``original``.
@@ -34,19 +34,13 @@ def merge_records(
         queryset (QuerySet): the queryset containing the other records
         update_data (dict): data to update (via queryset.update) original with
         expand_original (bool): whether to update the original with update_data
-        request (HttpRequest): the request that prompted the merger; needed to
+        user_id (int): the id of the user who prompted the merger; needed to
             log the changes in django's admin log/history
 
     Returns:
         the updated original instance and a dictionary detailing the
             updates performed on that instance.
     """
-    user_id = 0
-    if request:
-        # TODO: REFACTOR: considering that request is only used to get at the
-        #   user_id, it might be better to just pass in the user_id
-        user_id = request.user.pk
-
     queryset = queryset.exclude(pk=original.pk)
     model = original._meta.model
     original_qs = model.objects.filter(pk=original.pk)

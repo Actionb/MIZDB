@@ -414,9 +414,7 @@ class MergeViewWizarded(WizardConfirmationView):
                         update_data[fld_name] = value
         original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
         primary = self.opts.model.objects.get(pk=original_pk)
-        merge_records(
-            primary, self.queryset, update_data, expand, request=self.request
-        )
+        merge_records(primary, self.queryset, update_data, expand, user_id=self.request.user.pk)
 
     def done(self, *args: Any, **kwargs: Any) -> None:
         """
