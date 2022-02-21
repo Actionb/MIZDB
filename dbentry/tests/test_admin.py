@@ -350,20 +350,6 @@ class TestMIZModelAdmin(AdminTestCase):
                 request=self.get_request(user=self.super_user))
         )
 
-    def test_add_extra_context(self):
-        # Assert that add_extra_context adds additional items for the context.
-        for object_id in ('', self.obj1.pk):
-            with self.subTest(object_id=object_id):
-                extra = self.model_admin.add_extra_context(
-                    self.get_request(),
-                    object_id=object_id
-                )
-                self.assertIn('collapse_all', extra)
-                if object_id:
-                    self.assertIn('crosslinks', extra)
-                else:
-                    self.assertNotIn('crosslinks', extra)
-
     def test_add_view(self):
         response = self.client.get(self.add_path)
         self.assertTrue('collapse_all' in response.context)
@@ -1018,10 +1004,6 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         {'model_name': 'veranstaltung', 'fld_name': 'musiker', 'label': 'Veranstaltungen (1)'},
         {'model_name': 'video', 'fld_name': 'musiker', 'label': 'Video Materialien (1)'},
     ]
-
-    def test_add_extra_context(self):
-        extra = self.model_admin.add_extra_context(object_id=self.obj1.pk)
-        self.assertTrue('crosslinks' in extra)
 
     def test_band_string(self):
         obj = self.obj2.qs().annotate(**self.model_admin.get_result_list_annotations()).get()

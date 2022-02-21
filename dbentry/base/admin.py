@@ -302,19 +302,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             new_extra['crosslinks'].append({'url': url, 'label': f"{label} ({count!s})"})
         return new_extra
 
-    def add_extra_context(
-            self,
-            request: HttpRequest,  # TODO: remove request parameter... AGAIN
-            object_id: Optional[str] = None,
-            **extra_context
-    ) -> dict:
-        """Add extra context specific to this ModelAdmin."""
-        extra_context.update({
-            'collapse_all': self.collapse_all,
-            **self.add_crosslinks(object_id, self.crosslink_labels),
-        })
-        return extra_context
-
     def add_view(
             self,
             request: HttpRequest,
@@ -322,8 +309,10 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for adding a new object."""
-        new_extra = self.add_extra_context(request, **(extra_context or {}))
-        return super().add_view(request, form_url, new_extra)
+        if extra_context is None:
+            extra_context = {}
+        extra_context['collapse_all'] = self.collapse_all
+        return super().add_view(request, form_url, extra_context)
 
     def change_view(
             self,
@@ -333,8 +322,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             extra_context: dict = None
     ) -> HttpResponse:
         """View for changing an object."""
-        new_extra = self.add_extra_context(request, object_id=object_id, **(extra_context or {}))
-        return super().change_view(request, object_id, form_url, new_extra)
+        if extra_context is None:
+            extra_context = {}
+        extra_context.update({
+            'collapse_all': self.collapse_all,
+            **self.add_crosslinks(object_id, self.crosslink_labels),
+        })
+        return super().change_view(request, object_id, form_url, extra_context)
 
     def construct_change_message(
             self,
