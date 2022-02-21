@@ -37,6 +37,7 @@ class TestMIZAdminSite(RequestTestCase):
         self.assertEqual(tools.pop('bulk_ausgabe'), 'Ausgaben Erstellung')
         self.assertIn('site_search', tools)
         self.assertEqual(tools.pop('site_search'), 'Datenbank durchsuchen')
+        self.assertEqual(tools.pop('watchlist'), 'Merkliste')
         self.assertFalse(tools)
 
     @skip("Permission checks disabled again: commit 0190e654")
