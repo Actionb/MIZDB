@@ -16,14 +16,20 @@ from watchlist.models import Watchlist
 
 def watchlist_toggle(request, *args, **kwargs):
     """
-    Add or remove an object from the watchlist.
+    Add an object to the watchlist, or remove an object if it already exists on
+    the watchlist.
 
-    Clicking on the 'Watchlist' checkbox element in the object tools section of
-    a change form prompts an AJAX request to this view.
+    For authenticated users, watchlist items are stored as the Watchlist model
+    objects. For unauthenticated users, the items are stored in the session in
+    the form of (primary_key, time_added) tuples.
+
+    The request can specify to only remove (and never add) items by adding
+    'remove_only=True' to the request data.
+
+    This function is called via AJAX request when clicking on the watchlist
+    checkbox element on the change form, or when removing items from the
+    watchlist overview.
     """
-    # TODO: mention remove_only in the docstring
-    # TODO: mention using either model for authenticated and session for anonymous
-    # TODO: mention that the session watchlist is (pk, time_added)
     pk = int(request.GET['id'])
     model_label = request.GET['model_label']
 
