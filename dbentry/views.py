@@ -93,7 +93,7 @@ class SiteSearchView(MIZAdminMixin, views.generic.TemplateView):
 
 
 @register_tool(
-    url_name='watchlist',
+    url_name='miz_watchlist',
     index_label='Merkliste',
     superuser_only=False
 )
