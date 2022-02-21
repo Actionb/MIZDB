@@ -207,15 +207,13 @@ class WatchlistView(views.generic.TemplateView):
         context = super().get_context_data(**kwargs)
         context['watchlist'] = self.get_watchlist_context(self.request)
         extra = '' if settings.DEBUG else '.min'
-        # TODO: add watchlist.js and watchlist.css to this app's static
         js = [
             'vendor/jquery/jquery%s.js' % extra,
             'jquery.init.js',
             'watchlist.js'
         ]
-        # TODO: add watchlist.css
         context['media'] = forms.Media(
             js=['admin/js/%s' % url for url in js],
-            css={'all': ['admin/css/widgets.css']}
+            css={'all': ['admin/css/widgets.css', 'admin/css/watchlist.css']}
         )
         return context
