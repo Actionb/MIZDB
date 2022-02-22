@@ -130,7 +130,9 @@ class MIZAdminSite(admin.AdminSite):
         # Divide the models into their categories.
         for m in model_list:
             model_admin = utils.get_model_admin_for_model(m['object_name'], self)
-            # TODO: get_model_admin_for_model may return None here
+            if model_admin is None:  # pragma: no cover
+                continue
+            # noinspection PyUnresolvedReferences
             model_category = model_admin.get_index_category()
             if model_category not in categories:
                 categories['Sonstige'] = [m]

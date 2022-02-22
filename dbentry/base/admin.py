@@ -142,7 +142,8 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         return MIZChangeList
 
     def get_index_category(self) -> str:
-        """Return the index category of this ModelAdmin.
+        """
+        Return the index category of this ModelAdmin.
 
         Called by MIZAdminSite to create 'fake' apps for grouping purposes.
         """
