@@ -1310,7 +1310,7 @@ class Provenienz(BaseModel):
 
     geber = models.ForeignKey('Geber', models.PROTECT)
 
-    # TODO: FTS SearchVectorField
+    related_search_vectors = [('geber___fts', SIMPLE)]
 
     class Meta(BaseModel.Meta):
         ordering = ['geber', 'typ']
@@ -1324,11 +1324,7 @@ class Provenienz(BaseModel):
 class Geber(BaseModel):
     name = models.CharField(max_length=200)
 
-    _fts = SearchVectorField(
-        columns=[
-            WeightedColumn('name', 'A', SIMPLE),
-        ]
-    )
+    _fts = SearchVectorField(columns=[WeightedColumn('name', 'A', SIMPLE)])
 
     name_field = create_field = 'name'
 
@@ -1410,6 +1406,8 @@ class Bestand(BaseModel):
     plakat = models.ForeignKey('Plakat', models.CASCADE, blank=True, null=True)
     technik = models.ForeignKey('Technik', models.CASCADE, blank=True, null=True)
     video = models.ForeignKey('Video', models.CASCADE, blank=True, null=True)
+
+    _fts = SearchVectorField(columns=[WeightedColumn('anmerkungen', 'A', STEMMING)])
 
     class Meta(BaseModel.Meta):
         verbose_name = 'Bestand'
