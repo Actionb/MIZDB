@@ -106,12 +106,10 @@ class RuntimeFactoryMixin(object):
                 # (see factory.utils.import_object). An AttributeError will
                 # then be raised, if a factory with that name has not (yet)
                 # been declared in that module.
-                # noinspection PyUnresolvedReferences
                 self._factory = super().get_factory()  # type: ignore[misc]
             except AttributeError:
                 # The factory does not exist yet.
                 if self.related_model is None:
-                    # noinspection PyUnresolvedReferences
                     raise AttributeError(
                         'Cannot create missing factory for {}: '
                         'no related model class provided. '.format(
@@ -679,15 +677,17 @@ class AutorFactory(MIZModelFactory):
 
     person = SubFactory('dbentry.factory.PersonFactory', required=True)
 
-    # noinspection PyUnresolvedReferences,PyMethodParameters
+    # noinspection PyMethodParameters
     @factory.lazy_attribute
     def kuerzel(obj):
         """Prepare a 2 character token based on the Person's name."""
         if obj.person is None:
             return 'XY'
-        if obj.person.vorname:
-            return obj.person.vorname[0] + obj.person.nachname[0]
-        return obj.person.nachname[:2].upper()
+        # noinspection PyUnresolvedReferences
+        vorname, nachname = obj.person.vorname, obj.person.nachname
+        if vorname:
+            return vorname[0] + nachname[0]
+        return nachname[:2].upper()
 
 
 class BandFactory(MIZModelFactory):

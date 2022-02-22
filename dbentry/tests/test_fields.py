@@ -38,7 +38,6 @@ class TestYearField(MyTestCase):
 
 # Reminder: the field's cleaning methods will re-raise any ValidationError subtypes as a new
 # ValidationError, meaning we cannot test for the correct subtype here.
-# noinspection PyUnresolvedReferences
 class StdNumFieldTestsMixin(object):
 
     # the data necessary to create a partial prototype of a model instance:
@@ -197,7 +196,6 @@ class StdNumFieldTestsMixin(object):
                 self.assertFalse(model_form.has_changed(), msg=msg)
 
 
-# noinspection PyUnresolvedReferences
 class TestStdNumField(MyTestCase):
 
     def test_formfield_widget(self):
@@ -216,7 +214,6 @@ class TestStdNumField(MyTestCase):
                 self.assertTrue(isinstance(formfield_widget, StdNumWidget))
 
 
-# noinspection PyUnresolvedReferences
 class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.Buch
     model_field = _models.Buch._meta.get_field('ISBN')
@@ -333,7 +330,6 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
         self.assertEqual(formfield.max_length, 17)
 
 
-# noinspection PyUnresolvedReferences
 class TestEANField(StdNumFieldTestsMixin, MyTestCase):
     model = _models.Buch
     model_field = _models.Buch._meta.get_field('EAN')

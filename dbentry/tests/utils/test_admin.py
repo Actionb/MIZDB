@@ -15,7 +15,6 @@ from dbentry.tests.mixins import TestDataMixin
 from dbentry.utils import admin as admin_utils
 
 
-# noinspection PyUnresolvedReferences
 class TestAdminUtils(TestDataMixin, RequestTestCase):
     model = _models.Audio
 

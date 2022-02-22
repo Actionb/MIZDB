@@ -90,7 +90,6 @@ class ACBase(autocomplete.Select2QuerySetView):
             if isinstance(ordering, str):
                 ordering = (ordering,)
             return queryset.order_by(*ordering)
-        # noinspection PyUnresolvedReferences
         return queryset.order_by(*self.model._meta.ordering)  # type: ignore
 
     def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
@@ -116,7 +115,6 @@ class ACBase(autocomplete.Select2QuerySetView):
         log table.
         """
         text = text.strip()
-        # noinspection PyUnresolvedReferences
         obj = self.model.objects.create(**{self.create_field: text})  # type: ignore
         if obj and self.request:
             log_addition(self.request.user.pk, obj)
@@ -125,7 +123,6 @@ class ACBase(autocomplete.Select2QuerySetView):
     def get_queryset(self) -> MIZQuerySet:
         """Return the ordered and filtered queryset for this view."""
         if self.queryset is None:
-            # noinspection PyUnresolvedReferences
             queryset = self.model.objects.all()  # type: ignore
         else:
             queryset = self.queryset
@@ -138,7 +135,6 @@ class ACBase(autocomplete.Select2QuerySetView):
                     forward_filter[k] = v
             if not forward_filter:
                 # All forwarded items were empty; return an empty queryset.
-                # noinspection PyUnresolvedReferences
                 return self.model.objects.none()  # type: ignore
             queryset = queryset.filter(**forward_filter)
 
@@ -155,7 +151,6 @@ class ACBase(autocomplete.Select2QuerySetView):
         # At this point, dal calls get_queryset() to get the model options via
         # queryset.model._meta which is unnecessary for ACBase since it
         # declares the model class during dispatch().
-        # noinspection PyUnresolvedReferences
         opts = self.model._meta  # type: ignore
         codename = get_permission_codename('add', opts)
         return user.has_perm("%s.%s" % (opts.app_label, codename))
@@ -378,8 +373,8 @@ class ACAusgabe(ACTabular):
     def get_group_headers(self) -> list:
         return ['Nummer', 'lfd.Nummer', 'Jahr']
 
-    # noinspection PyUnresolvedReferences
     def get_extra_data(self, result: Model) -> list:
+        # noinspection PyUnresolvedReferences
         return [result.num_string, result.lnum_string, result.jahr_string]
 
 
@@ -389,8 +384,8 @@ class ACBand(ACTabular):
     def get_group_headers(self) -> list:
         return ['Alias']
 
-    # noinspection PyUnresolvedReferences
     def get_extra_data(self, result: Model) -> list:
+        # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.bandalias_set.all())]
 
 
@@ -434,8 +429,8 @@ class ACMusiker(ACTabular):
     def get_group_headers(self) -> list:
         return ['Alias']
 
-    # noinspection PyUnresolvedReferences
     def get_extra_data(self, result: Model) -> list:
+        # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
 
 

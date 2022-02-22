@@ -27,7 +27,6 @@ class TestItemHandler(TestCase):
                 self.assertIsInstance(handler.regex, regex_type)
 
 
-# noinspection PyUnresolvedReferences
 class TestMethodsMixin:
 
     def test_is_valid_valid_input(self):

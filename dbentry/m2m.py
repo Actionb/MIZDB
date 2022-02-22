@@ -37,7 +37,7 @@ class m2m_video_musiker(BaseM2MModel):
         verbose_name_plural = 'Video-Musiker'
 
 
-# noinspection PyUnresolvedReferences,PyPep8Naming
+# noinspection PyPep8Naming
 class m2m_datei_musiker(BaseM2MModel):
     datei = models.ForeignKey('Datei', models.CASCADE)
     musiker = models.ForeignKey('Musiker', models.CASCADE)
@@ -52,7 +52,9 @@ class m2m_datei_musiker(BaseM2MModel):
         verbose_name_plural = 'Musiker'
 
     def __str__(self) -> str:
+        # noinspection PyUnresolvedReferences
         if self.instrument.exists():
+            # noinspection PyUnresolvedReferences
             instr = ",".join([str(i.kuerzel) for i in self.instrument.all()])
             return "{} ({})".format(str(getattr(self, 'musiker')), instr)
         return str(getattr(self, 'musiker'))
@@ -88,7 +90,6 @@ class m2m_datei_quelle(BaseM2MModel):
                     return fld.name
         return ''
 
-    # noinspection PyUnresolvedReferences
     def __str__(self):
         art = self.get_quelle_art()
         if art:

@@ -81,7 +81,6 @@ class TestBulkForm(FormTestCase):
             form.is_valid()
 
 
-# noinspection PyUnresolvedReferences
 class TestBulkFormAusgabe(TestDataMixin, FormTestCase):
     form_class = BulkFormAusgabe
     model = _models.Ausgabe

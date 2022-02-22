@@ -12,7 +12,6 @@ from dbentry.query import CNQuerySet, MIZQuerySet, build_date
 from dbentry.tests.base import DataTestCase
 
 
-# noinspection PyUnresolvedReferences
 class TestMIZQuerySet(DataTestCase):
 
     model = _models.Band
@@ -250,7 +249,6 @@ class TestAusgabeChronologicalOrder(DataTestCase):
             self.queryset.chronological_order().update(beschreibung='abc')
 
 
-# noinspection PyUnresolvedReferences
 class TestAusgabeIncrementJahrgang(DataTestCase):
 
     model = _models.Ausgabe
@@ -580,7 +578,6 @@ class TestCNQuerySet(DataTestCase):
             list(self.queryset.only('_name').filter(_name='Testinfo').values_list('_name'))
 
 
-# noinspection PyUnresolvedReferences
 class TestBuchQuerySet(DataTestCase):
 
     model = _models.Buch
@@ -607,7 +604,6 @@ class TestBuchQuerySet(DataTestCase):
         self.assertIn(self.obj2, self.queryset.filter(EAN=ean_13))
 
 
-# noinspection PyUnresolvedReferences
 class TestValuesDict(DataTestCase):
 
     model = _models.Band

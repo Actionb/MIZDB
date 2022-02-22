@@ -12,7 +12,6 @@ from dbentry.search import utils as search_utils
 from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
 
 
-# noinspection PyUnresolvedReferences
 class AdminSearchFormMixin(object):
     """
     A mixin for ModelAdmin classes that adds more search options to its
@@ -267,7 +266,6 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
 
         search_form_tabulars = self.search_form_kwargs.get('tabular', [])
         messages = []
-        # noinspection PyUnresolvedReferences
         for inline_cls in self.inlines:  # type: ignore[attr-defined]
             for field_name in getattr(inline_cls, 'tabular_autocomplete', []):
                 if field_name not in self.search_form_kwargs['fields']:
@@ -284,7 +282,6 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
         return messages
 
 
-# noinspection PyUnresolvedReferences
 class ChangelistSearchFormMixin(object):
     """Mixin for changelist classes to incorporate the new search form."""
 

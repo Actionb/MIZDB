@@ -6,7 +6,6 @@ from dbentry.factory import make
 from dbentry.tests.base import DataTestCase, mockv
 
 
-# noinspection PyUnresolvedReferences
 class TestCreator(DataTestCase):
     model = _models.Autor
 

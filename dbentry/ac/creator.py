@@ -104,12 +104,11 @@ class Creator(object):
         """
         # parse_name will join first and middle names
         vorname, nachname = parse_name(text)
-        # noinspection PyUnresolvedReferences
         try:
             p = _models.Person.objects.get(vorname=vorname, nachname=nachname)
-        except _models.Person.DoesNotExist:
+        except _models.Person.DoesNotExist:  # noqa
             p = _models.Person(vorname=vorname, nachname=nachname)
-        except _models.Person.MultipleObjectsReturned:
+        except _models.Person.MultipleObjectsReturned:  # noqa
             raise MultipleObjectsReturned
         if not preview and p.pk is None:
             p.save()
@@ -142,21 +141,18 @@ class Creator(object):
         name.nickname = ''
         p = self.create_person(str(name), preview)
         person_instance = p.get('instance')
-        # noinspection PyUnresolvedReferences
         try:
             autor_instance = _models.Autor.objects.get(
                 kuerzel=kuerzel,
                 person__vorname=person_instance.vorname,
                 person__nachname=person_instance.nachname
             )
-        except _models.Autor.DoesNotExist:
+        except _models.Autor.DoesNotExist:  # noqa
             autor_instance = _models.Autor(kuerzel=kuerzel, person=person_instance)
-        except _models.Autor.MultipleObjectsReturned:
+        except _models.Autor.MultipleObjectsReturned:  # noqa
             raise MultipleObjectsReturned
         if not preview and autor_instance.pk is None:
-            # noinspection PyUnresolvedReferences
             if autor_instance.person.pk is None:
-                # noinspection PyUnresolvedReferences
                 autor_instance.person.save()
             autor_instance.save()
         return OrderedDict(

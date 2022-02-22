@@ -1636,7 +1636,6 @@ class AuthAdminMixin(object):
         Get a form field for a ManyToManyField. If it's the formfield for
         Permissions, adjust the choices to include the models' class names.
         """
-        # noinspection PyUnresolvedReferences
         formfield = super().formfield_for_manytomany(  # type: ignore[misc]
             db_field, request=request, **kwargs
         )

@@ -24,7 +24,6 @@ from dbentry.tests.base import AdminTestCase
 from dbentry.utils import get_model_fields
 
 
-# noinspection PyUnresolvedReferences
 class AdminTestMethodsMixin(object):
     test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested
@@ -308,7 +307,6 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(response.status_code, 200)
 
 
-# noinspection PyUnresolvedReferences
 class TestMIZModelAdmin(AdminTestCase):
     model_admin_class = _admin.DateiAdmin
     model = _models.Datei
@@ -589,7 +587,6 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-# noinspection PyUnresolvedReferences
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AusgabenAdmin
     model = _models.Ausgabe
@@ -872,7 +869,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MagazinAdmin
     model = _models.Magazin
@@ -925,7 +921,6 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-# noinspection PyUnresolvedReferences
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.PersonAdmin
     model = _models.Person
@@ -986,7 +981,6 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
-# noinspection PyUnresolvedReferences
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MusikerAdmin
     model = _models.Musiker
@@ -1036,7 +1030,6 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
-# noinspection PyUnresolvedReferences
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
@@ -1094,7 +1087,6 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.assertInCrosslinks(data, crosslinks)
 
 
-# noinspection PyUnresolvedReferences
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
@@ -1129,7 +1121,6 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
 
-# noinspection PyUnresolvedReferences
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BandAdmin
     model = _models.Band
@@ -1181,7 +1172,6 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
-# noinspection PyUnresolvedReferences
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AutorAdmin
     model = _models.Autor
@@ -1273,7 +1263,6 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-# noinspection PyUnresolvedReferences
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AudioAdmin
     model = _models.Audio
@@ -1336,7 +1325,6 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-# noinspection PyUnresolvedReferences
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.Veranstaltung
@@ -1491,7 +1479,6 @@ class TestBaseBrochureAdmin(AdminTestCase):
         self.assertEqual(annotations['jahr_min'], Min('jahre__jahr'))
 
 
-# noinspection PyUnresolvedReferences
 class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure
@@ -1521,7 +1508,6 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
-# noinspection PyUnresolvedReferences
 class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
@@ -1561,7 +1547,6 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
-# noinspection PyUnresolvedReferences
 class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KalenderAdmin
     model = _models.Kalender
@@ -1591,7 +1576,6 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
-# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
@@ -1615,7 +1599,6 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DokumentAdmin
@@ -1639,7 +1622,6 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.TechnikAdmin
@@ -1663,7 +1645,6 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
@@ -1793,7 +1774,6 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-# noinspection PyUnresolvedReferences
 class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.PlakatAdmin
     model = _models.Plakat
@@ -1877,7 +1857,6 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(form.cleaned_data['id__in'], str(self.obj1.pk))
 
 
-# noinspection PyUnresolvedReferences
 class TestAuthAdminMixin(TestCase):
 
     @patch('dbentry.admin.super')
@@ -1895,7 +1874,6 @@ class TestAuthAdminMixin(TestCase):
                 self.assertIn(_models.AusgabeLnum.__name__, choice[1])
 
 
-# noinspection PyUnresolvedReferences
 class TestMIZChangelist(AdminTestCase):
     model = _models.Genre
     model_admin_class = _admin.GenreAdmin

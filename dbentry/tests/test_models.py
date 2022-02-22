@@ -14,7 +14,6 @@ from dbentry.factory import make
 from dbentry.tests.base import DataTestCase
 
 
-# noinspection PyUnresolvedReferences
 class TestBaseModel(DataTestCase):
 
     model = _models.Artikel
@@ -44,7 +43,6 @@ class TestBaseModel(DataTestCase):
         self.assertEqual(obj.__str__(), "lotsa testing from the computer")
 
 
-# noinspection PyUnresolvedReferences
 class TestBaseM2MModel(DataTestCase):
 
     model = _m2m.m2m_audio_musiker
@@ -221,7 +219,6 @@ class TestComputedNameModel(DataTestCase):
             )
 
 
-# noinspection PyUnresolvedReferences
 class TestModelArtikel(DataTestCase):
 
     model = _models.Artikel
@@ -246,7 +243,6 @@ class TestModelArtikel(DataTestCase):
         )
 
 
-# noinspection PyUnresolvedReferences
 class TestModelAudio(DataTestCase):
 
     model = _models.Audio
@@ -466,7 +462,6 @@ class TestModelAusgabe(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['magazin'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelAusgabeJahr(DataTestCase):
 
     model = _models.AusgabeJahr
@@ -480,7 +475,6 @@ class TestModelAusgabeJahr(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['jahr'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelAusgabeLnum(DataTestCase):
 
     model = _models.AusgabeLnum
@@ -494,7 +488,6 @@ class TestModelAusgabeLnum(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['lnum'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelAusgabeMonat(DataTestCase):
 
     model = _models.AusgabeMonat
@@ -508,7 +501,6 @@ class TestModelAusgabeMonat(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['monat'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelAusgabeNum(DataTestCase):
 
     model = _models.AusgabeNum
@@ -522,7 +514,6 @@ class TestModelAusgabeNum(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['num'])
 
 
-# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelAutor(DataTestCase):
 
@@ -558,7 +549,6 @@ class TestModelAutor(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBand(DataTestCase):
 
     model = _models.Band
@@ -572,7 +562,6 @@ class TestModelBand(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['band_name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBandAlias(DataTestCase):
 
     model = _models.BandAlias
@@ -606,7 +595,6 @@ class TestModelBestand(DataTestCase):
                 self.assertIsInstance(obj.bestand_object, expected_model)
 
 
-# noinspection PyUnresolvedReferences
 class TestModelPlakat(DataTestCase):
 
     model = _models.Plakat
@@ -620,7 +608,6 @@ class TestModelPlakat(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBildreihe(DataTestCase):
 
     model = _models.Bildreihe
@@ -629,7 +616,6 @@ class TestModelBildreihe(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBrochure(DataTestCase):
 
     model = _models.Brochure
@@ -638,7 +624,6 @@ class TestModelBrochure(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBuch(DataTestCase):
 
     model = _models.Buch
@@ -648,7 +633,6 @@ class TestModelBuch(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelSchriftenreihe(DataTestCase):
 
     model = _models.Schriftenreihe
@@ -657,7 +641,6 @@ class TestModelSchriftenreihe(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBundesland(DataTestCase):
 
     model = _models.Bundesland
@@ -671,7 +654,6 @@ class TestModelBundesland(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['land', 'bland_name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelDatei(DataTestCase):
 
     model = _models.Datei
@@ -685,7 +667,6 @@ class TestModelDatei(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelDokument(DataTestCase):
 
     model = _models.Dokument
@@ -694,7 +675,6 @@ class TestModelDokument(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelGeber(DataTestCase):
 
     model = _models.Geber
@@ -708,7 +688,6 @@ class TestModelGeber(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelGenre(DataTestCase):
 
     model = _models.Genre
@@ -722,7 +701,6 @@ class TestModelGenre(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['genre'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelGenreAlias(DataTestCase):
 
     model = _models.GenreAlias
@@ -732,7 +710,6 @@ class TestModelGenreAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelHerausgeber(DataTestCase):
 
     model = _models.Herausgeber
@@ -746,7 +723,6 @@ class TestModelHerausgeber(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['herausgeber'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelInstrument(DataTestCase):
 
     model = _models.Instrument
@@ -763,7 +739,6 @@ class TestModelInstrument(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelKalender(DataTestCase):
 
     model = _models.Kalender
@@ -772,7 +747,6 @@ class TestModelKalender(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelKatalog(DataTestCase):
 
     model = _models.Katalog
@@ -781,7 +755,6 @@ class TestModelKatalog(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelLagerort(DataTestCase):
 
@@ -820,7 +793,6 @@ class TestModelLagerort(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['_name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelLand(DataTestCase):
 
     model = _models.Land
@@ -846,7 +818,6 @@ class TestModelMagazin(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['magazin_name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelMemorabilien(DataTestCase):
 
     model = _models.Memorabilien
@@ -855,7 +826,6 @@ class TestModelMemorabilien(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelMonat(DataTestCase):
 
     model = _models.Monat
@@ -869,7 +839,6 @@ class TestModelMonat(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['ordinal'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelMusiker(DataTestCase):
 
     model = _models.Musiker
@@ -883,7 +852,6 @@ class TestModelMusiker(DataTestCase):
         # Check the default ordering of this model.
         self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
 
-# noinspection PyUnresolvedReferences
 class TestModelMusikerAlias(DataTestCase):
 
     model = _models.MusikerAlias
@@ -893,7 +861,6 @@ class TestModelMusikerAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
-# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelOrt(DataTestCase):
 
@@ -919,7 +886,6 @@ class TestModelOrt(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
 
 
-# noinspection PyUnresolvedReferences
 @tag("cn")
 class TestModelPerson(DataTestCase):
 
@@ -957,7 +923,6 @@ class TestModelPlattenfirma(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelProvenienz(DataTestCase):
 
     model = _models.Provenienz
@@ -971,7 +936,6 @@ class TestModelProvenienz(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelSchlagwort(DataTestCase):
 
     model = _models.Schlagwort
@@ -985,7 +949,6 @@ class TestModelSchlagwort(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['schlagwort'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelSchlagwortAlias(DataTestCase):
 
     model = _models.SchlagwortAlias
@@ -995,7 +958,6 @@ class TestModelSchlagwortAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelSpielort(DataTestCase):
 
     model = _models.Spielort
@@ -1011,7 +973,6 @@ class TestModelSpielort(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name', 'ort'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelSpielortAlias(DataTestCase):
 
     model = _models.SpielortAlias
@@ -1021,7 +982,6 @@ class TestModelSpielortAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelTechnik(DataTestCase):
 
     model = _models.Technik
@@ -1030,7 +990,6 @@ class TestModelTechnik(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelVeranstaltung(DataTestCase):
 
     model = _models.Veranstaltung
@@ -1040,7 +999,6 @@ class TestModelVeranstaltung(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name', 'datum', 'spielort'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelVeranstaltungAlias(DataTestCase):
 
     model = _models.VeranstaltungAlias
@@ -1050,7 +1008,6 @@ class TestModelVeranstaltungAlias(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['alias'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelVeranstaltungsreihe(DataTestCase):
 
     model = _models.Veranstaltungsreihe
@@ -1059,7 +1016,6 @@ class TestModelVeranstaltungsreihe(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['name'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelVerlag(DataTestCase):
 
     model = _models.Verlag
@@ -1073,7 +1029,6 @@ class TestModelVerlag(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelVideo(DataTestCase):
 
     model = _models.Video
@@ -1082,7 +1037,6 @@ class TestModelVideo(DataTestCase):
         self.assertEqual(self.model._meta.ordering, ['titel'])
 
 
-# noinspection PyUnresolvedReferences
 class TestModelBaseBrochure(DataTestCase):
 
     model = _models.BaseBrochure
@@ -1102,7 +1056,6 @@ class TestModelBaseBrochure(DataTestCase):
                 self.assertIsInstance(resolved, child_model)
 
 
-# noinspection PyUnresolvedReferences
 class TestModelFoto(DataTestCase):
 
     model = _models.Foto

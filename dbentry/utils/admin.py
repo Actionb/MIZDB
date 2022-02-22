@@ -321,14 +321,14 @@ def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> L
     if isinstance(fields, str):
         fields = [fields]
     message: Dict[str, dict] = {'changed': {}}
-    # noinspection  PyUnresolvedReferences
+    # noinspection PyUnresolvedReferences
     opts = obj._meta
     if related_obj:
         message['changed'] = _get_relation_change_message(
             related_obj, opts.model
         )
         # Use the fields map of the related model:
-        # noinspection  PyUnresolvedReferences
+        # noinspection PyUnresolvedReferences
         opts = related_obj._meta
 
     # noinspection PyTypeChecker

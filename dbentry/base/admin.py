@@ -48,7 +48,6 @@ class AutocompleteMixin(object):
                 model=db_field.related_model,
                 tabular=db_field.name in self.tabular_autocomplete
             )
-        # noinspection PyUnresolvedReferences
         return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
 
 

@@ -75,7 +75,6 @@ def get_model_fields(
     return result
 
 
-# noinspection PyUnresolvedReferences
 def get_model_relations(
         model: ModelClassOrInstance,
         forward: bool = True,
@@ -92,6 +91,7 @@ def get_model_relations(
     ManyToManyRels are considered both as forward and as reverse, and
     thus are always included.
     """
+    # noinspection PyUnresolvedReferences
     intermediary_models = {
         f.remote_field.through if f.concrete else f.through
         for f in model._meta.get_fields()
@@ -99,6 +99,7 @@ def get_model_relations(
     }
 
     result = []
+    # noinspection PyUnresolvedReferences
     for f in model._meta.get_fields():
         if not f.is_relation:
             continue
