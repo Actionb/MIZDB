@@ -3,7 +3,6 @@ from typing import Dict, Optional, Tuple
 from django.db import models, transaction
 from django.db.models import Model, QuerySet
 from django.db.utils import IntegrityError
-from django.http import HttpRequest
 
 from dbentry.utils.admin import log_addition, log_change, log_deletion
 from dbentry.utils.models import (
