@@ -64,11 +64,11 @@ class BestandChangeList(ChangeList):
         # items 'bestand_class' and 'bestand_link'.
         self.model_admin.cache_bestand_data(
             request,
-            self.result_list.select_related(*[f.name for f in bestand_fields]),
+            self.result_list.select_related(*[f.name for f in bestand_fields]),  # type: ignore[has-type]  # noqa
             bestand_fields
         )
         # Overwrite the result_list.
-        self.result_list = self.result_list.select_related(
+        self.result_list = self.result_list.select_related(  # type: ignore[has-type]
             *self.list_select_related,
             *[f.name for f in bestand_fields]
         )

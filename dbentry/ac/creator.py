@@ -140,7 +140,7 @@ class Creator(object):
         kuerzel = name.nickname
         name.nickname = ''
         p = self.create_person(str(name), preview)
-        person_instance = p.get('instance')
+        person_instance = p['instance']
         try:
             autor_instance = _models.Autor.objects.get(
                 kuerzel=kuerzel,

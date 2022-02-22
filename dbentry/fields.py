@@ -131,7 +131,7 @@ class StdNumField(models.CharField):
             if isinstance(widget, type):
                 widget_class = widget
             else:
-                widget_kwargs['attrs'] = getattr(widget, 'attrs', None)
+                widget_kwargs['attrs'] = getattr(widget, 'attrs', None)  # type: ignore[assignment]
                 widget_class = widget.__class__
             if not issubclass(widget_class, StdNumWidget):
                 widget_class = StdNumWidget
