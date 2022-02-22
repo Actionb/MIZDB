@@ -131,7 +131,6 @@ class ModelSelectView(views.generic.FormView):
 class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
     """A mixin that sets up the view following a ModelSelectView."""
 
-    # noinspection PyAttributeOutsideInit
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         # noinspection PyUnresolvedReferences
         super().setup(request, *args, **kwargs)

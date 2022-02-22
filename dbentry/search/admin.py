@@ -54,7 +54,6 @@ class AdminSearchFormMixin(object):
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
         form_class = self.get_search_form_class()
-        # noinspection PyAttributeOutsideInit
         self.search_form = form_class(**form_kwargs)
         return self.search_form
 

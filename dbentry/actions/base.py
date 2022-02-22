@@ -80,7 +80,6 @@ class ConfirmationViewMixin(MIZAdminMixin):
                 continue
             yield check
 
-    # noinspection PyAttributeOutsideInit
     @property
     def action_allowed(self) -> bool:
         """

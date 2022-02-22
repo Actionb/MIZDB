@@ -254,7 +254,6 @@ class ACCreatable(ACBase):
     @property
     def creator(self):
         if not hasattr(self, '_creator'):
-            # noinspection PyAttributeOutsideInit
             self._creator = Creator(self.model, raise_exceptions=False)
         return self._creator
 
@@ -425,7 +424,6 @@ class ACMagazin(ACBase):
     def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
         # Check if q is a valid ISSN; if it is, remove the dashes.
         if issn.is_valid(self.q):  # type: ignore[has-type]
-            # noinspection PyAttributeOutsideInit
             self.q = issn.compact(self.q)  # type: ignore[has-type]
         return super().apply_q(queryset)
 

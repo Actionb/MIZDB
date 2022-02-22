@@ -245,7 +245,6 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
         return True
 
-    # noinspection PyAttributeOutsideInit
     @property
     def updates(self) -> dict:
         """
@@ -482,7 +481,6 @@ class MoveToBrochureBase(ActionConfirmationView):
             )
         return initial
 
-    # noinspection PyAttributeOutsideInit
     @property
     def magazin_instance(self) -> Magazin:
         """Return the magazin instance common to all queryset objects."""
@@ -496,7 +494,6 @@ class MoveToBrochureBase(ActionConfirmationView):
                 self._magazin_instance = None
         return self._magazin_instance
 
-    # noinspection PyAttributeOutsideInit
     @property
     def can_delete_magazin(self) -> bool:
         """

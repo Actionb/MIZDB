@@ -28,7 +28,6 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
         # Add annotations required for this model admin's 'list_display' items.
         annotations = self.model_admin.get_result_list_annotations()
         if annotations:
-            # noinspection PyAttributeOutsideInit
             self.result_list = self.result_list.annotate(**annotations)  # type: ignore[has-type]
 
     def get_show_all_url(self) -> str:
