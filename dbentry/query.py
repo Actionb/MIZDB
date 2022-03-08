@@ -384,18 +384,19 @@ class AusgabeQuerySet(CNQuerySet):
     def chronological_order(self, *order_fields: str) -> 'AusgabeQuerySet':
         """Return this queryset chronologically ordered."""
         # TODO: check out nulls_first and nulls_last parameters of
-        # Expression.asc() and desc() (added in 1.11) to fix the nulls messing
-        # up the ordering.
+        #   Expression.asc() and desc() (added in 1.11) to fix the nulls
+        #   messing up the ordering.
         if self.chronologically_ordered:
             # Already ordered!
             return self
 
         opts = self.model._meta
-        # A chronological order is (mostly) consistent ONLY within
-        # the ausgabe_set of one particular magazin. If the queryset contains
-        # the ausgaben of more than one magazin, we may end up replacing one
-        # 'poor' ordering (the default one) with another poor, but more
-        # expensive chronological one. Return self with some form of ordering.
+        # A chronological order is (mostly) consistent ONLY within the
+        # ausgabe_set of one particular magazin. If the queryset contains the
+        # ausgaben of more than one magazin, we may end up replacing one 'poor'
+        # ordering (the default one) with another poor, but more expensive
+        # chronological one. In that case, return self with some form of
+        # ordering instead.
         if self.only('magazin').distinct().values_list('magazin').count() != 1:
             # This condition is also True if self is an empty queryset.
             if order_fields:
@@ -427,10 +428,7 @@ class AusgabeQuerySet(CNQuerySet):
         # Determine if jahr should come before jahrgang in ordering.
         jj_values = list(self.values_list('ausgabejahr', 'jahrgang'))
         # Remove empty values and unzip the 2-tuples into two lists.
-        jahr_values, jahrgang_values = (
-            list(filter(lambda x: x is not None, _list))
-            for _list in zip(*jj_values)
-        )
+        jahr_values, jahrgang_values = (list(filter(None, _list)) for _list in zip(*jj_values))
         if len(jahrgang_values) > len(jahr_values):
             # Prefer jahrgang over jahr.
             jahr_index = ordering.index('jahr')
@@ -451,17 +449,14 @@ class AusgabeQuerySet(CNQuerySet):
         default_criteria_ordering = [
             'e_datum__sum', 'lnum__sum', 'monat__sum', 'num__sum']
 
-        # Tuples are sorted lexicographically in ascending order. If any item
-        # of two tuples is the same, it goes on to the next item:
-        # sorted([(1, 'c'), (1, 'b'), (2, 'a')]) = [(1,'b'), (1, 'c'), (2, 'a')]
-        # In this case, we want to order the sums (tpl[1]) in descending, i.e.
-        # reverse, order (hence the minus operand) and if any sums are equal,
-        # the order of sum_names in the defaults decides.
+        # Tuples are sorted lexicographically in ascending order:
+        # sorted([(1, 'c'), (1, 'b'), (2, 'a')]) = [(1, 'b'), (1, 'c'), (2, 'a')]
+        # Here, we want to order the sums (tpl[1]) in descending/reverse order
+        # (hence the minus operand), and if any sums are equal, the order of
+        # sum_names in the defaults decides.
         criteria = sorted(
             counted.items(),
-            key=lambda itemtpl: (
-                -itemtpl[1], default_criteria_ordering.index(itemtpl[0])
-            )
+            key=lambda itemtpl: (-itemtpl[1], default_criteria_ordering.index(itemtpl[0]))
         )
         result_ordering = [sum_name.split('__')[0] for sum_name, _sum in criteria]
         ordering.extend(result_ordering + [pk_order_item])

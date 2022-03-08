@@ -199,7 +199,7 @@ class TestAdminUtils(TestDataMixin, RequestTestCase):
         self.assertEqual(added_msg['added'], {'name': 'Audio-Musiker', 'object': 'Robert Plant'}),
         self.assertEqual(
             changed_msg['changed'],
-            {'name': 'Bestand', 'object': 'Aufm Tisch!', 'fields': ['lagerort']}  # TODO: probably should be 'Lagerort'
+            {'name': 'Bestand', 'object': 'Aufm Tisch!', 'fields': ['lagerort']}
         )
         self.assertEqual(deleted_msg['deleted'], {'name': 'Band', 'object': 'Led Zeppelin'})
 

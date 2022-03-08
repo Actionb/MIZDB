@@ -286,12 +286,12 @@ class ChangelistSearchFormMixin(object):
     """Mixin for changelist classes to incorporate the new search form."""
 
     def __init__(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
-        # Preserve the contents of request.GET.
-        # The changelist attribute 'param' is insufficient as it destroys
-        # the multiple values of a MultiValueDict by calling items() instead
-        # of lists(): self.params = dict(request.GET.items())
-        # django's changelist does not inherit the base View class that sets
-        # self.request during setup().
+        # Preserve the contents of request.GET for the search form data.
+        # The changelist attribute 'params' is inadequate as form data as it
+        # destroys the multiple values of a MultiValueDict by calling items()
+        # instead of lists(): self.params = dict(request.GET.items())
+        # django's changelist does not inherit from the base View class that
+        # sets self.request during setup().
         self.request = request
         super().__init__(request, *args, **kwargs)  # type: ignore[call-arg]
 

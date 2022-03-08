@@ -1,5 +1,4 @@
 # TODO: Semantik buch.buchband: Einzelbänder/Aufsätze: Teile eines Buchbandes
-# TODO: use models.TextField instead of CharField where no max_length is necessary
 from typing import Optional
 
 from django.core.validators import MinValueValidator
@@ -554,7 +553,6 @@ class Verlag(BaseModel):
         ordering = ['verlag_name', 'sitz']
 
 
-# TODO: clean up the data of models: ort/land/bland
 class Ort(ComputedNameModel):
     stadt = models.CharField(max_length=200, blank=True)
 
@@ -702,7 +700,7 @@ class Artikel(BaseModel):
     FF = 'ff'
     SU_CHOICES = [(F, 'f'), (FF, 'ff')]
 
-    schlagzeile = models.CharField(max_length=200)
+    schlagzeile = models.CharField(max_length=200)  # TODO: use TextField?
     seite = models.PositiveSmallIntegerField()
     seitenumfang = models.CharField(
         max_length=3, blank=True, choices=SU_CHOICES, default='',
@@ -757,6 +755,7 @@ class Artikel(BaseModel):
 
 class Buch(BaseModel):
     # TODO: übersetzer feld
+    # TODO: use TextField instead of CharField for titel, titel_orig
     titel = models.CharField(max_length=200)
     titel_orig = models.CharField('Titel (Original)', max_length=200, blank=True)
     seitenumfang = models.PositiveSmallIntegerField(blank=True, null=True)
@@ -797,7 +796,6 @@ class Buch(BaseModel):
             WeightedColumn('titel', 'A', SIMPLE),
             WeightedColumn('beschreibung', 'C', STEMMING),
             WeightedColumn('bemerkungen', 'D', SIMPLE)
-            # TODO: add columns for ISBN and EAN (autocomplete: looking up an object via its ISBN)
         ]
     )
 
@@ -1150,7 +1148,7 @@ class Technik(BaseModel):
 
 
 class Veranstaltung(BaseModel):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)  # TODO: use TextField
     datum = PartialDateField(blank=False)
 
     spielort = models.ForeignKey('Spielort', models.PROTECT)
@@ -1220,7 +1218,7 @@ class Veranstaltungsreihe(BaseModel):
 
 
 class Video(BaseModel):
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     laufzeit = models.DurationField(
         blank=True, null=True,
         help_text='Format: hh:mm:ss. Beispiel Laufzeit von 144 Minuten: 0:144:0.'
@@ -1448,7 +1446,7 @@ class Datei(BaseModel):
         (MEDIA_TEXT, 'Text'), (MEDIA_SONSTIGE, 'Sonstige')
     ]
 
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     media_typ = models.CharField(
         'Media Typ', max_length=200, choices=MEDIA_TYP_CHOICES,
         default=MEDIA_AUDIO
@@ -1457,7 +1455,7 @@ class Datei(BaseModel):
         'Datei', blank=True, null=True, editable=False,
         help_text="Datei auf Datenbank-Server hoch- bzw herunterladen."
     )
-    datei_pfad = models.CharField(
+    datei_pfad = models.CharField(  # TODO: use TextField
         'Datei-Pfad', max_length=200, blank=True,
         help_text="Pfad (inklusive Datei-Namen und Endung) zur Datei im gemeinsamen Ordner."
     )
@@ -1495,7 +1493,7 @@ class Datei(BaseModel):
 
 
 class Plattenfirma(BaseModel):
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)  # TODO: use TextField
 
     _fts = SearchVectorField(
         columns=[
@@ -1520,7 +1518,7 @@ class BrochureURL(AbstractURLModel):
 
 
 class BaseBrochure(BaseModel):
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     zusammenfassung = models.TextField(blank=True)
     bemerkungen = models.TextField(blank=True, help_text='Kommentare für Archiv-Mitarbeiter')
 
@@ -1638,7 +1636,7 @@ class Foto(BaseModel):
         (ART_REPRINT, 'Neuabzug (reprint)'), (ART_POLAROID, 'Polaroid')
     ]
 
-    titel = models.CharField(max_length=200)
+    titel = models.CharField(max_length=200)  # TODO: use TextField
     size = models.CharField('Größe', max_length=200, blank=True)
     datum = PartialDateField('Zeitangabe')
     typ = models.CharField(
