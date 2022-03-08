@@ -470,69 +470,6 @@ class TestMIZModelAdmin(AdminTestCase):
                 )
             )
 
-    def test_check_search_fields_lookups(self):
-        # Assert that _check_search_fields_lookups finds invalid search fields
-        # and/or lookups correctly.
-        with patch.object(self.model_admin, 'get_search_fields'):
-            self.model_admin.get_search_fields.return_value = ['titel__iexact']
-            self.assertFalse(self.model_admin._check_search_fields_lookups())
-            # Check for invalid field:
-            self.model_admin.get_search_fields.return_value = ['thisisnofield']
-            errors = self.model_admin._check_search_fields_lookups()
-            self.assertTrue(errors)
-            self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(
-                errors[0].msg,
-                "Invalid search field '{0}': {1} has no field named '{0}'".format(
-                    'thisisnofield', self.model._meta.object_name)
-            )
-            # Check for invalid lookups:
-            self.model_admin.get_search_fields.return_value = ['genre__genre__year']
-            errors = self.model_admin._check_search_fields_lookups()
-            self.assertTrue(errors)
-            self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(
-                errors[0].msg,
-                "Invalid search field '%s': Invalid lookup: %s for %s." % (
-                    'genre__genre__year', 'year', 'CharField')
-            )
-
-    def test_check_search_fields_lookups_lookup_shortcuts(self):
-        # Assert that _check_search_fields_lookups handles lookup shortcuts
-        # such as '=', '^', '@' (for django's ModelAdmin.construct_search).
-        # Check each valid prefix twice: once with a valid field and once with
-        # an invalid one. If only the invalid fields fail the check, the problem
-        # can't be the prefix.
-        msg_template = "Invalid search field '{0}': {1} has no field named '{0}'"
-        with patch.object(self.model_admin, 'get_search_fields'):
-            for prefix in ('=', '^', '@'):
-                for invalid, field in enumerate(('titel', 'thisisnofield')):
-                    self.model_admin.get_search_fields.return_value = [prefix + field]
-                    with self.subTest(prefix=prefix, field=field):
-                        if invalid:
-                            errors = self.model_admin._check_search_fields_lookups()
-                            self.assertTrue(errors)
-                            self.assertEqual(len(errors), 1)
-                            self.assertIsInstance(errors[0], checks.Error)
-                            expected_msg = msg_template.format(field, self.model._meta.object_name)
-                            self.assertEqual(errors[0].msg, expected_msg)
-                        else:
-                            self.assertFalse(self.model_admin._check_search_fields_lookups())
-            # Any other prefix should receive no special treatment:
-            for field in ('_thisisnofield', '&nofieldeither'):
-                with self.subTest(field=field):
-                    self.model_admin.get_search_fields.return_value = [field]
-                    errors = self.model_admin._check_search_fields_lookups()
-                    self.assertTrue(errors)
-                    self.assertEqual(len(errors), 1)
-                    self.assertIsInstance(errors[0], checks.Error)
-                    # The 'prefix' should be included in the error message.
-                    expected_msg = msg_template.format(field, self.model._meta.object_name)
-                    self.assertEqual(errors[0].msg, expected_msg)
-
-
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.ArtikelAdmin
     model = _models.Artikel

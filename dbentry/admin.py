@@ -810,6 +810,10 @@ class GenreAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
     ordering = ['genre']
+    # Need to define search_fields to have the template render the default
+    # search bar. Note that the fields declared here do not matter, as the
+    # search will be a postgres text search on the model's SearchVectorField.
+    search_fields = ['__ANY__']
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1018,6 +1022,10 @@ class SchlagwortAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
     ordering = ['schlagwort']
+    # Need to define search_fields to have the template render the default
+    # search bar. Note that the fields declared here do not matter, as the
+    # search will be a postgres text search on the model's SearchVectorField.
+    search_fields = ['__ANY__']
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
