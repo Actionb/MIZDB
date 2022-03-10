@@ -63,7 +63,7 @@ class TestNotImplementedError(AssertionError):
     pass
 
 
-class MyTestCase(TestCase):
+class MIZTestCase(TestCase):
     warnings = 'always'
 
     @staticmethod
@@ -116,7 +116,7 @@ class MyTestCase(TestCase):
             )
 
 
-class DataTestCase(TestDataMixin, MyTestCase):
+class DataTestCase(TestDataMixin, MIZTestCase):
 
     def assertQuerysetEqual(self, queryset, values, transform=repr, ordered=False, msg=None):
         # django's assertQuerysetEqual does not transform 'values' if it would be required
@@ -125,7 +125,7 @@ class DataTestCase(TestDataMixin, MyTestCase):
         return super().assertQuerysetEqual(queryset, values, transform, ordered, msg)
 
 
-class UserTestCase(MyTestCase):
+class UserTestCase(MIZTestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -221,7 +221,7 @@ class AdminTestCase(TestDataMixin, RequestTestCase):
 ##############################################################################################################
 # TEST_FORMS TEST CASES
 ##############################################################################################################
-class FormTestCase(MyTestCase, CreateFormMixin):
+class FormTestCase(MIZTestCase, CreateFormMixin):
 
     def assertFormValid(self, form, msg=None):
         if not form.is_valid():

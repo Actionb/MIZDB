@@ -4,11 +4,11 @@ from django.contrib.admin.utils import get_fields_from_path
 
 import dbentry.models as _models
 from dbentry.maint.forms import get_dupe_fields_for_model
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 from dbentry.tests.mixins import CreateFormMixin
 
 
-class TestDuplicatesFieldsForm(CreateFormMixin, MyTestCase):
+class TestDuplicatesFieldsForm(CreateFormMixin, MIZTestCase):
 
     def test_get_dupefields_reverse_choices_are_grouped(self):
         # Assert that the reverse dupe fields are grouped by their related model.

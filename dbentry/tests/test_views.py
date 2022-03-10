@@ -5,7 +5,7 @@ from django.contrib.admin import AdminSite
 
 from dbentry import models as _models
 from dbentry.base.views import MIZAdminMixin, OptionalFormView, FixedSessionWizardView
-from dbentry.tests.base import MyTestCase, ViewTestCase
+from dbentry.tests.base import MIZTestCase, ViewTestCase
 from dbentry.views import MIZ_permission_denied_view, SiteSearchView
 
 
@@ -93,7 +93,7 @@ class TestOptionalFormView(ViewTestCase):
         self.assertTrue(mocked_invalid.called)
 
 
-class TestPermissionDeniedView(MyTestCase):
+class TestPermissionDeniedView(MIZTestCase):
 
     def test_MIZ_permission_denied_view_missing_template(self):
         response = MIZ_permission_denied_view(None, None, template_name='beepboop')

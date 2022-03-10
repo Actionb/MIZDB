@@ -9,10 +9,10 @@ from dbentry.ac import widgets as autocomplete_widgets
 from dbentry.factory import make
 from dbentry.fields import PartialDate, PartialDateFormField
 from dbentry.search import forms as search_forms
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestSearchFormFactory(MyTestCase):
+class TestSearchFormFactory(MIZTestCase):
 
     def setUp(self):
         super().setUp()
@@ -171,7 +171,7 @@ class TestSearchFormFactory(MyTestCase):
         self.assertEqual(form_class.lookups['id'], ['in'])
 
 
-class TestSearchForm(MyTestCase):
+class TestSearchForm(MIZTestCase):
 
     model = _models.Artikel
 
@@ -294,7 +294,7 @@ class TestSearchForm(MyTestCase):
         self.assertEqual(form.clean_id__in(), '1,2')
 
 
-class TestRangeFormField(MyTestCase):
+class TestRangeFormField(MIZTestCase):
 
     def test_get_initial(self):
         # Assert that get_initial recognizes that its subfields are
@@ -339,7 +339,7 @@ class TestRangeFormField(MyTestCase):
         self.assertTrue(all(isinstance(f, forms.CharField) for f in kwargs['fields']))
 
 
-class TestRangeWidget(MyTestCase):
+class TestRangeWidget(MIZTestCase):
 
     def test_init_duplicates_widget(self):
         # Assert that init duplicates the given widget instance for the

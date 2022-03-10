@@ -2,10 +2,10 @@ from django.core import exceptions
 
 from dbentry import models as _models
 from dbentry.search import utils
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestUtils(MyTestCase):
+class TestUtils(MIZTestCase):
 
     def test_get_dbfield_from_path(self):
         func = utils.get_dbfield_from_path

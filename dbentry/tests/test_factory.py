@@ -10,11 +10,11 @@ from dbentry.factory import (
     factory, RuntimeFactoryMixin, UniqueFaker, modelfactory_factory, make,
     SelfFactory, M2MFactory, MIZDjangoOptions, AutorFactory, MagazinFactory
 )
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 from dbentry.utils import get_model_relations, get_model_fields
 
 
-class TestRuntimeFactoryMixin(MyTestCase):
+class TestRuntimeFactoryMixin(MIZTestCase):
 
     local_factory_module = 'dbentry.factory'  # the module modelfactory_factory lives in
     base_factory_module = 'factory.base'
@@ -45,7 +45,7 @@ class TestRuntimeFactoryMixin(MyTestCase):
             fac.factory  # noqa
 
 
-class TestUniqueFaker(MyTestCase):
+class TestUniqueFaker(MIZTestCase):
 
     def test_init(self):
         # UniqueFaker.function should default to a function 'default_callable'
@@ -63,7 +63,7 @@ class TestUniqueFaker(MyTestCase):
         self.assertEqual(faker.faker.provider, 'month')
 
 
-class TestSelfFactory(MyTestCase):
+class TestSelfFactory(MIZTestCase):
 
     def test_evaluate(self):
         buch_factory = modelfactory_factory(_models.Buch)
@@ -94,7 +94,7 @@ class TestSelfFactory(MyTestCase):
         buch_factory.buchband.required = False
 
 
-class TestRelatedFactory(MyTestCase):
+class TestRelatedFactory(MIZTestCase):
 
     def test_rf_string_direct(self):
         g = make(_models.Genre, genre='TestGenre0', genrealias__alias='Alias1')
@@ -130,7 +130,7 @@ class TestRelatedFactory(MyTestCase):
         self.assertEqual(g.genrealias_set.count(), 3)
 
 
-class TestM2MFactory(MyTestCase):
+class TestM2MFactory(MIZTestCase):
 
     def test_m2m_string_direct(self):
         m = make(_models.Musiker, genre__genre='TestGenre1')
@@ -174,7 +174,7 @@ class TestM2MFactory(MyTestCase):
         self.assertEqual(m.genre.count(), 4)
 
 
-class TestMIZDjangoOptions(MyTestCase):
+class TestMIZDjangoOptions(MIZTestCase):
 
     def test_get_decl_for_model_field(self):
         # Assert that the dynamically added 'base' fields have the correct types.
@@ -460,7 +460,7 @@ class TestMIZDjangoOptions(MyTestCase):
         self.assertIn('veranstaltung', declarations)
 
 
-class ModelFactoryTestCase(MyTestCase):
+class ModelFactoryTestCase(MIZTestCase):
 
     factory_class = None
 
@@ -658,7 +658,7 @@ class TestMonatFactory(ModelFactoryTestCase):
         self.assertEqual(self.factory_class(monat=expected.monat), expected)
 
 
-class TestMIZModelFactory(MyTestCase):
+class TestMIZModelFactory(MIZTestCase):
 
     @classmethod
     def setUpTestData(cls):

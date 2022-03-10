@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from .base import FormTestCase, ModelFormTestCase, MyTestCase
+from .base import FormTestCase, ModelFormTestCase, MIZTestCase
 from .mixins import TestDataMixin
 
 from django import forms
@@ -450,7 +450,7 @@ class TestDiscogsFormMixin(ModelFormTestCase):
                 self.assertNotIn('discogs_url', form.errors)
 
 
-class TestMIZAdminInlineFormBase(MyTestCase):
+class TestMIZAdminInlineFormBase(MIZTestCase):
     form = MIZAdminInlineFormBase
     model = _models.Video.musiker.through
     fields = ['video', 'musiker']
@@ -518,11 +518,11 @@ class DiscogsMixinAttributesTestMixin(object):
                     getattr(self.form_class, field), msg=msg_template % (field, self.form_class))
 
 
-class TestAudioForm(DiscogsMixinAttributesTestMixin, MyTestCase):
+class TestAudioForm(DiscogsMixinAttributesTestMixin, MIZTestCase):
     form_class = AudioForm
 
 
-class TestVideoForm(DiscogsMixinAttributesTestMixin, MyTestCase):
+class TestVideoForm(DiscogsMixinAttributesTestMixin, MIZTestCase):
     form_class = VideoForm
 
 

@@ -12,10 +12,10 @@ from dbentry.ac.widgets import (
     RemoteModelWidgetWrapper, TabularResultsMixin, make_widget
 )
 from dbentry.forms import ArtikelForm
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestRemoteModelWidgetWrapper(MyTestCase):
+class TestRemoteModelWidgetWrapper(MIZTestCase):
 
     def setUp(self):
         super().setUp()
@@ -112,7 +112,7 @@ class DummyMixinSuper(object):
         self._url = url
 
 
-class TestWidgetCaptureMixin(MyTestCase):
+class TestWidgetCaptureMixin(MIZTestCase):
 
     dummy_class = type('Dummy', (GenericURLWidgetMixin, DummyMixinSuper), {})
 
@@ -166,7 +166,7 @@ class TestWidgetCaptureMixin(MyTestCase):
         self.assertEqual(reverse_kwargs['default'], 'default')
 
 
-class TestMIZWidgetMixin(MyTestCase):
+class TestMIZWidgetMixin(MIZTestCase):
 
     dummy_class = type('Dummy', (MIZWidgetMixin, DummyMixinSuper), {})
 
@@ -195,7 +195,7 @@ class TestMIZWidgetMixin(MyTestCase):
         self.assertEqual(reverse_kwargs['default'], 'default')
 
 
-class TestMakeWidget(MyTestCase):
+class TestMakeWidget(MIZTestCase):
 
     def test_takes_widget_class(self):
         widget = make_widget(widget_class=widgets.TextInput)
@@ -280,7 +280,7 @@ class TestMakeWidget(MyTestCase):
         self.assertIsInstance(widget, RemoteModelWidgetWrapper)
 
 
-class TestTabularResultsMixin(MyTestCase):
+class TestTabularResultsMixin(MIZTestCase):
 
     class DummyWidget(object):
 

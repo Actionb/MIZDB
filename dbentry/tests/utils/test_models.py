@@ -7,10 +7,10 @@ from django.core import exceptions
 
 from dbentry import utils, models as _models
 from dbentry.factory import make
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestModelUtils(MyTestCase):
+class TestModelUtils(MIZTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
         expected = (
@@ -163,7 +163,7 @@ class TestModelUtils(MyTestCase):
             utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')
 
 
-class TestCleanPerms(MyTestCase):
+class TestCleanPerms(MIZTestCase):
 
     def setUp(self):
         super().setUp()

@@ -1,8 +1,8 @@
 from dbentry import utils
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestTextUtils(MyTestCase):
+class TestTextUtils(MIZTestCase):
 
     def test_concat_limit(self):
         t = ['2020', '2021', '2024']

@@ -1,10 +1,10 @@
 import datetime
 
 from dbentry import utils
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestDateUtils(MyTestCase):
+class TestDateUtils(MIZTestCase):
 
     def test_leapdays(self):
         test_data = [

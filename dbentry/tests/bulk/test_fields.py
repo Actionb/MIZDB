@@ -2,10 +2,10 @@ from django.utils.translation import override as translation_override
 from django.core.exceptions import ValidationError
 
 from dbentry.bulk.fields import BulkField, BulkJahrField
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
-class TestBulkField(MyTestCase):
+class TestBulkField(MIZTestCase):
 
     def test_validate_numerical(self):
         # Assert that simple numerical values are valid.
@@ -94,7 +94,7 @@ class TestBulkField(MyTestCase):
                 )
 
 
-class TestBulkJahrField(MyTestCase):
+class TestBulkJahrField(MIZTestCase):
 
     @translation_override(language=None)
     def test_four_digits_year_validator(self):

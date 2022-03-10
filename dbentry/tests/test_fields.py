@@ -15,10 +15,10 @@ from dbentry.fields import (
     StdNumWidget, YearField,
     PartialDate, PartialDateField, PartialDateWidget, PartialDateFormField
 )
-from dbentry.tests.base import MyTestCase, DataTestCase
+from dbentry.tests.base import MIZTestCase, DataTestCase
 
 
-class TestYearField(MyTestCase):
+class TestYearField(MIZTestCase):
 
     def test_formfield(self):
         # Assert that formfield() passes the MaxValue and the MinValue
@@ -196,7 +196,7 @@ class StdNumFieldTestsMixin(object):
                 self.assertFalse(model_form.has_changed(), msg=msg)
 
 
-class TestStdNumField(MyTestCase):
+class TestStdNumField(MIZTestCase):
 
     def test_formfield_widget(self):
         # Assert that the widget of the formfield is always an instance of StdNumWidget.
@@ -214,7 +214,7 @@ class TestStdNumField(MyTestCase):
                 self.assertTrue(isinstance(formfield_widget, StdNumWidget))
 
 
-class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
+class TestISBNField(StdNumFieldTestsMixin, MIZTestCase):
     model = _models.Buch
     model_field = _models.Buch._meta.get_field('ISBN')
     prototype_data = {'titel': 'Testbuch'}
@@ -309,7 +309,7 @@ class TestISBNField(StdNumFieldTestsMixin, MyTestCase):
         self.assertTrue(qs.exists(), msg=msg)
 
 
-class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
+class TestISSNField(StdNumFieldTestsMixin, MIZTestCase):
     model = _models.Magazin
     model_field = _models.Magazin._meta.get_field('issn')
     prototype_data = {'magazin_name': 'Testmagazin'}
@@ -330,7 +330,7 @@ class TestISSNField(StdNumFieldTestsMixin, MyTestCase):
         self.assertEqual(formfield.max_length, 17)
 
 
-class TestEANField(StdNumFieldTestsMixin, MyTestCase):
+class TestEANField(StdNumFieldTestsMixin, MIZTestCase):
     model = _models.Buch
     model_field = _models.Buch._meta.get_field('EAN')
     prototype_data = {'titel': 'Testbuch'}
@@ -345,7 +345,7 @@ class TestEANField(StdNumFieldTestsMixin, MyTestCase):
 
 
 @tag("partial_date")
-class TestPartialDate(MyTestCase):
+class TestPartialDate(MIZTestCase):
 
     def assertAttrsSet(self, partial_date, year, month, day, date_format, msg=None):
         """
@@ -560,7 +560,7 @@ class TestPartialDate(MyTestCase):
 
 
 @tag("partial_date")
-class TestPartialDateField(MyTestCase):
+class TestPartialDateField(MIZTestCase):
 
     def test_to_python_only_accepts_integers(self):
         # Assert that a ValidationError is raised when day/month/year are not integer.
@@ -695,7 +695,7 @@ class TestPartialDateFieldQueries(DataTestCase):
 
 
 @tag("partial_date")
-class TestPartialDateFormField(MyTestCase):
+class TestPartialDateFormField(MIZTestCase):
 
     def test_widgets(self):
         # Assert that the formfield's widget is a MultiWidget.
@@ -815,7 +815,7 @@ class TestPartialDateFormField(MyTestCase):
 
 
 @tag("partial_date")
-class TestPartialDateWidget(MyTestCase):
+class TestPartialDateWidget(MIZTestCase):
 
     def test_subwidgets_are_number_inputs(self):
         for subwidget in PartialDateWidget().widgets:

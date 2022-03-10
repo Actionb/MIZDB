@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import override as translation_override
 
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 from dbentry.validators import (
     DiscogsMasterReleaseValidator, ISSNValidator, ISBNValidator, EANValidator,
     InvalidChecksum, InvalidComponent, InvalidFormat, InvalidLength,
@@ -9,7 +9,7 @@ from dbentry.validators import (
 )
 
 
-class TestStdNumValidators(MyTestCase):
+class TestStdNumValidators(MIZTestCase):
     # Assert that the validators re-raise the correct django.ValidationError subclass.
 
     @translation_override(language=None)
@@ -55,7 +55,7 @@ class TestStdNumValidators(MyTestCase):
         self.run_validators(EANValidator, invalid)
 
 
-class TestDiscogsURLValidator(MyTestCase):
+class TestDiscogsURLValidator(MIZTestCase):
 
     def setUp(self):
         self.validator = DiscogsURLValidator()
@@ -93,7 +93,7 @@ class TestDiscogsURLValidator(MyTestCase):
                 self.assertEqual(cm.exception.code, 'discogs')
 
 
-class TestDiscogsMasterReleaseValidator(MyTestCase):
+class TestDiscogsMasterReleaseValidator(MIZTestCase):
 
     def setUp(self):
         self.validator = DiscogsMasterReleaseValidator()
@@ -134,7 +134,7 @@ class TestDiscogsMasterReleaseValidator(MyTestCase):
                 self.assertEqual(cm.exception.code, 'master_release')
 
 
-class TestDNBURLValidator(MyTestCase):
+class TestDNBURLValidator(MIZTestCase):
 
     def setUp(self):
         self.validator = DNBURLValidator()

@@ -15,7 +15,7 @@ from dbentry.ac.views import (
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
 from dbentry.query import MIZQuerySet
-from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
+from dbentry.tests.base import mockv, ViewTestCase, MIZTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
@@ -671,7 +671,7 @@ class TestGND(ViewTestCase):
             self.assertEqual(kwargs['new_kwarg'], 'never seen before')
 
 
-class TestGNDPaginator(MyTestCase):
+class TestGNDPaginator(MIZTestCase):
 
     def test_count_equals_total_count_kwarg(self):
         # Assert that paginator.count returns the 'total_count' that was passed

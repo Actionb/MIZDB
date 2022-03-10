@@ -6,12 +6,12 @@ from dbentry.ac import urls as autocomplete_urls, views as autocomplete_views
 from dbentry.bulk import views as bulk_views
 from dbentry.maint import urls as maint_urls, views as maint_views
 from dbentry.sites import miz_site
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 from MIZDB import urls as mizdb_urls
 
 
-class URLTestCase(MyTestCase):
+class URLTestCase(MIZTestCase):
 
     urlconf = None
     current_app = None

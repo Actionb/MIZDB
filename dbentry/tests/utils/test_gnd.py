@@ -2,11 +2,11 @@ import requests_mock
 from requests.exceptions import HTTPError
 
 from dbentry.utils import gnd
-from dbentry.tests.base import MyTestCase
+from dbentry.tests.base import MIZTestCase
 
 
 @requests_mock.Mocker()
-class TestGND(MyTestCase):
+class TestGND(MIZTestCase):
 
     # Sample xml in RDFxml format:
     rdf_xml = """
