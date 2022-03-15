@@ -192,6 +192,7 @@ def get_model_admin_for_model(
 
 def has_admin_permission(request: HttpRequest, model_admin: ModelAdmin) -> bool:
     """Return True if the request user has any module or model permissions."""
+    # TODO: remove: this isn't used anymore
     # (used by help views)
     # Check if the user has any permissions to the module/app.
     if not model_admin.has_module_permission(request):

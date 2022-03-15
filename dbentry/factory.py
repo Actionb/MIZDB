@@ -1,4 +1,5 @@
 # WARNING: unique together options are not really supported. Use with caution.
+# TODO: move factory to tests module?
 import itertools
 import sys
 from typing import Any, Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Type, Union
