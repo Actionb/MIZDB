@@ -285,7 +285,7 @@ def create_logentry(
         action_flag (int): the integer flag/representation of the action
         message (str or list): the change message to add to the LogEntry
     """
-    return LogEntry.objects.log_action(
+    return LogEntry.objects.log_action(  # pragma: no cover
         user_id=user_id,
         content_type_id=get_content_type_for_model(obj).pk,
         object_id=obj.pk,
@@ -319,7 +319,7 @@ def log_change(user_id: int, obj: Model, fields, related_obj: Model = None) -> L
     been changed. (This is, basically, like logging changes on admin inline
     formsets)
     """
-    if isinstance(fields, str):
+    if isinstance(fields, str):  # pragma: no cover
         fields = [fields]
     message: Dict[str, dict] = {'changed': {}}
     # noinspection PyUnresolvedReferences
