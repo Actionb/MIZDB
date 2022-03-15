@@ -11,7 +11,7 @@ class MergingTestCase(LoggingTestMixin, TestDataMixin, RequestTestCase):
     def setUp(self):
         super().setUp()
         # Need to clear the cache between test methods, or LogEntry queries
-        # will made with wrong ContentType ids.
+        # will be made with wrong ContentType ids.
         ContentType.objects.clear_cache()
 
 

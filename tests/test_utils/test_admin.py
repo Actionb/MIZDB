@@ -1,18 +1,17 @@
 import re
 from unittest.mock import patch, Mock
 
+from django.contrib.admin import AdminSite, ModelAdmin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.forms import modelform_factory
 from django.urls import NoReverseMatch
-from django.utils.encoding import force_str
 
-from dbentry import models as _models, admin as _admin
 from dbentry.factory import make
-from dbentry.sites import miz_site
-from tests.case import RequestTestCase
-from dbentry.tests.mixins import TestDataMixin
+from tests.case import RequestTestCase, add_urls
+from tests.test_utils import models as _models
 from dbentry.utils import admin as admin_utils
 
 
@@ -102,20 +101,26 @@ class TestAdminUtils(RequestTestCase):
 
     def test_get_changelist_link(self):
         """Assert that the expected link is returned by get_changelist_link."""
-        self.assertEqual(
-            admin_utils.get_changelist_link(_models.Artikel, self.super_user),
-            '<a href="/admin/dbentry/artikel/">Liste</a>'
-        )
+        site = AdminSite()
+        site.register(_models.Artikel, ModelAdmin)
+        with add_urls(site.urls, 'admin/'):
+            self.assertEqual(
+                admin_utils.get_changelist_link(_models.Artikel, self.super_user),
+                '<a href="/admin/test_utils/artikel/">Liste</a>'
+            )
 
     def test_get_changelist_link_blank(self):
         """
         Assert that the expected link, with target="_blank", is returned by
         get_changelist_link.
         """
-        self.assertEqual(
-            admin_utils.get_changelist_link(_models.Artikel, self.super_user, blank=True),
-            '<a href="/admin/dbentry/artikel/" target="_blank">Liste</a>'
-        )
+        site = AdminSite()
+        site.register(_models.Artikel, ModelAdmin)
+        with add_urls(site.urls, 'admin/'):
+            self.assertEqual(
+                admin_utils.get_changelist_link(_models.Artikel, self.super_user, blank=True),
+                '<a href="/admin/test_utils/artikel/" target="_blank">Liste</a>'
+            )
 
     ################################################################################################
     # test get_changelist_url
@@ -125,7 +130,7 @@ class TestAdminUtils(RequestTestCase):
         """
         Check the output of get_changelist_url for various obj_list arguments.
         """
-        obj2 = make(self.model)
+        obj2 = _models.Audio.objects.create(titel='Any')
         for obj_list in (None, [self.obj1], [self.obj1, obj2]):
             expected = '/admin/dbentry/audio/'
             if obj_list:
@@ -156,8 +161,9 @@ class TestAdminUtils(RequestTestCase):
         Assert that either change or view permissions are needed for
         get_changelist_url to produce a URL.
         """
-        change = Permission.objects.get(codename='change_audio')
-        view = Permission.objects.get(codename='view_audio')
+        ct = ContentType.objects.get_for_model(self.model)
+        change = Permission.objects.get(codename='change_audio', content_type=ct)
+        view = Permission.objects.get(codename='view_audio', content_type=ct)
         perms = [[], [change], [view], [change, view]]
         for permissions in perms:
             with self.subTest(permissions=permissions):
@@ -171,61 +177,66 @@ class TestAdminUtils(RequestTestCase):
                 else:
                     self.assertEqual(url, '/admin/dbentry/audio/')
 
-    # TODO: @work: start here
-    def test_get_model_admin_for_model(self):
-        self.assertIsInstance(admin_utils.get_model_admin_for_model('Artikel'), _admin.ArtikelAdmin)
-        self.assertIsInstance(admin_utils.get_model_admin_for_model(_models.Artikel), _admin.ArtikelAdmin)
-        with self.assertRaises(LookupError):
-            admin_utils.get_model_admin_for_model('beepboop')
+    ################################################################################################
+    # test construct_change_message and _get_relation_change_message
+    ################################################################################################
 
-    def test_has_admin_permission(self):
-        request = self.get_request(user=self.noperms_user)
-        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
-        self.assertFalse(
-            admin_utils.has_admin_permission(request, model_admin),
-            msg="Should return False for a user with no permissions."
-        )
+    def test_construct_change_message(self):
+        m2m_musiker = self.obj1.musiker.through.objects.create(
+            musiker=self.musiker, audio=self.obj1)
+        m2m_band = self.obj1.band.through.objects.create(
+            band=self.band, audio=self.obj1)
 
-        perms = Permission.objects.filter(codename__in=('add_artikel',))
-        self.staff_user.user_permissions.set(perms)
-        request = self.get_request(user=self.staff_user)
-        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
-        self.assertTrue(
-            admin_utils.has_admin_permission(request, model_admin),
-            msg=(
-                "Should return True for a user with at least some permissions "
-                "for that model admin."
-            )
-        )
+        form = modelform_factory(self.model, fields=['titel', 'tracks'])()
+        form.changed_data = ['tracks']
+        formsets = [
+            Mock(new_objects=[m2m_musiker], changed_objects=[], deleted_objects=[]),
+            Mock(changed_objects=[(self.bestand, ['lagerort'])], new_objects=[], deleted_objects=[]),
+            Mock(deleted_objects=[m2m_band], new_objects=[], changed_objects=[])
+        ]
 
-        request = self.get_request(user=self.staff_user)
-        model_admin = _admin.PlakatAdmin(_models.Plakat, miz_site)
-        self.assertFalse(
-            admin_utils.has_admin_permission(request, model_admin),
-            msg="Should return False for non-superusers on a superuser only model admin."
+        msgs = admin_utils.construct_change_message(form, formsets, add=False)
+        self.assertEqual(len(msgs), 4, msg="Expected four change messages.")
+        form_msg, added_msg, changed_msg, deleted_msg = msgs
+        self.assertEqual(
+            form_msg['changed']['fields'], ['Anz. Tracks'],
+            msg="Expected the label of the changed formfield to appear in 'fields'."
         )
+        self.assertEqual(
+            added_msg['added'],
+            {'name': 'Audio-Musiker', 'object': 'Robert Plant'}
+        )
+        self.assertEqual(
+            changed_msg['changed'],
+            {'name': 'Bestand', 'object': 'Aufm Tisch!', 'fields': ['lagerort']}
+        )
+        self.assertEqual(deleted_msg['deleted'], {'name': 'Band', 'object': 'Led Zeppelin'})
 
-        request = self.get_request(user=self.super_user)
-        model_admin = _admin.PlakatAdmin(_models.Plakat, miz_site)
-        self.assertTrue(
-            admin_utils.has_admin_permission(request, model_admin),
-            msg="Should return True for superuser on a superuser-only model admin."
-        )
+    def test_construct_change_message_added(self):
+        """
+        If the supplied form has no changed_data, construct_change_message
+        should return a simple 'added' change message.
+        """
+        msg = admin_utils.construct_change_message(Mock(changed_data=None), formsets=[], add=True)
+        self.assertEqual(msg, [{'added': {}}])
 
     def test_get_relation_change_message_auto_created(self):
-        # Assert that _get_relation_change_message uses the Band model
-        # instead of the auto created m2m through table for the change message.
-        m2m = self.obj1.band.through.objects.create(
-            band=self.band, audio=self.obj1)
+        """
+        Assert that for relation changes via auto created m2m tables,
+        _get_relation_change_message uses verbose name and object representation
+        of the object at the other end of the m2m relation.
+        """
+        m2m = self.obj1.band.through.objects.create(band=self.band, audio=self.obj1)
         msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
         self.assertEqual(msg_dict['name'], 'Band')
         self.assertEqual(msg_dict['object'], 'Led Zeppelin')
 
     def test_get_relation_change_message(self):
-        # Assert that _get_relation_change_message uses the m2m through table
-        # for the change message if that table is not auto created.
-        m2m = self.obj1.musiker.through.objects.create(
-            musiker=self.musiker, audio=self.obj1)
+        """
+        Assert that _get_relation_change_message uses the m2m through table
+        for the change message if that table is not auto created.
+        """
+        m2m = self.obj1.musiker.through.objects.create(musiker=self.musiker, audio=self.obj1)
         msg_dict = admin_utils._get_relation_change_message(m2m, parent_model=self.model)
         self.assertEqual(msg_dict['name'], 'Audio-Musiker')
         self.assertEqual(msg_dict['object'], 'Robert Plant')
@@ -235,38 +246,9 @@ class TestAdminUtils(RequestTestCase):
                 'Mocked!'
             )
 
-    def test_construct_change_message(self):
-        form = modelform_factory(self.model, fields=['titel', 'tracks'])()
-        form.changed_data = ['tracks']
-
-        m2m_musiker = self.obj1.musiker.through.objects.create(
-            musiker=self.musiker, audio=self.obj1)
-        m2m_band = self.obj1.band.through.objects.create(
-            band=self.band, audio=self.obj1)
-
-        formsets = [
-            Mock(new_objects=[m2m_musiker], changed_objects=[], deleted_objects=[]),
-            Mock(changed_objects=[(self.bestand, ['lagerort'])], new_objects=[], deleted_objects=[]),
-            Mock(deleted_objects=[m2m_band], new_objects=[], changed_objects=[])
-        ]
-
-        msgs = admin_utils.construct_change_message(form, formsets, add=False)
-        self.assertEqual(len(msgs), 4)
-        form_msg, added_msg, changed_msg, deleted_msg = msgs
-        self.assertEqual(
-            form_msg['changed']['fields'], ['Anz. Tracks'],
-            msg="Expected the label of the changed formfield to appear in 'fields'."
-        )
-        self.assertEqual(added_msg['added'], {'name': 'Audio-Musiker', 'object': 'Robert Plant'}),
-        self.assertEqual(
-            changed_msg['changed'],
-            {'name': 'Bestand', 'object': 'Aufm Tisch!', 'fields': ['lagerort']}
-        )
-        self.assertEqual(deleted_msg['deleted'], {'name': 'Band', 'object': 'Led Zeppelin'})
-
-    def test_construct_change_message_added(self):
-        msg = admin_utils.construct_change_message(Mock(changed_data=None), formsets=[], add=True)
-        self.assertEqual(msg, [{'added': {}}])
+    ################################################################################################
+    # test AdminLog helper functions
+    ################################################################################################
 
     def test_log_addition(self):
         with patch('dbentry.utils.admin.create_logentry') as mocked_create_logentry:
@@ -354,3 +336,38 @@ class TestAdminUtils(RequestTestCase):
             self.assertIsInstance(obj, self.model)
             self.assertEqual(obj, self.obj1)
             self.assertEqual(action_flag, DELETION)
+
+    ################################################################################################
+    # test get_model_admin_for_model
+    ################################################################################################
+
+    def test_get_model_admin_for_model(self):
+        """
+        Assert that get_model_admin_for_model returns the expected ModelAdmin
+        class.
+        """
+        site = AdminSite()
+        model_admin_class = type('Dummy', (ModelAdmin,), {})
+        # model_admin = ModelAdmin(self.model, site)
+        site.register(self.model, model_admin_class)
+        for arg in ('Artikel', _models.Artikel):  # TODO: set correct model
+            with self.subTest(argument=arg):
+                self.assertIsInstance(
+                    admin_utils.get_model_admin_for_model(arg, site),
+                    model_admin_class
+                )
+
+    def test_get_model_admin_for_model_not_registered(self):
+        """
+        get_model_admin_for_model should return None, if no ModelAdmin class
+        is registered with the given model.
+        """
+        self.assertIsNone(admin_utils.get_model_admin_for_model('Artikel'), AdminSite())
+
+    def test_get_model_admin_for_model_raises_lookup_error(self):
+        """
+        For unknown models, get_model_admin_for_model should raise a LookupError
+        (through get_model_from_string).
+        """
+        with self.assertRaises(LookupError):
+            admin_utils.get_model_admin_for_model('beepboop')
