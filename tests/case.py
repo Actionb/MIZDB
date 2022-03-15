@@ -45,9 +45,9 @@ def add_urls(url_patterns, route=''):
     """Inject the given URL patterns into the root URLconf."""
     try:
         # noinspection PyUnresolvedReferences
-        urls = import_module(settings.ROOT_URLCONF).urlpatterns
+        urls = import_module(settings.ROOT_URLCONF).urlpatterns[:]
     except AttributeError as e:
-        raise AttributeError(e.args[0], "Cannot override ROOT_URLCONF twice!")
+        raise AttributeError(e.args[0], "No 'urlpatterns' in ROOT_URLCONF.")
     urls.insert(0, path(route, url_patterns))
     with override_urls(urls):
         yield
