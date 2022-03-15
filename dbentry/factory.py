@@ -657,11 +657,18 @@ def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFact
         return _cache[label]
     # Check this module and the factory's base module for a factory
     # matching the default factory name.
+    # Note that a factory's name may not be unique across multiple apps; need
+    # to verify that any factory matching the name is a factory for the
+    # requested model.
     factory_name = model_name.capitalize() + 'Factory'
     if hasattr(sys.modules[__name__], factory_name):
-        return getattr(sys.modules[__name__], factory_name)
+        modelfac = getattr(sys.modules[__name__], factory_name)
+        if modelfac._meta.model == model:
+            return modelfac
     if hasattr(sys.modules['factory.base'], factory_name):
-        return getattr(sys.modules['factory.base'], factory_name)
+        modelfac = getattr(sys.modules['factory.base'], factory_name)
+        if modelfac._meta.model == model:
+            return modelfac
     # Create a new factory class:
     if 'Meta' not in kwargs:
         kwargs['Meta'] = type('Options', (MIZDjangoOptions,), {'model': model})
