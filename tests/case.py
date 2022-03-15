@@ -8,10 +8,10 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.conf import settings
-from django.conf.urls import url, include
+from django.conf.urls import include
 from django.db.models.query import QuerySet
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.http import unquote
 
 from dbentry.tests.mixins import CreateFormMixin, CreateViewMixin, TestDataMixin
@@ -29,8 +29,11 @@ def mockv(value, **kwargs):  # TODO: remove: be explicit in tests
 
 
 @contextlib.contextmanager
-def override_urls(url_patterns):  # TODO: remove: not used
-    """Replace the root URLconf with the given list of URL patterns."""
+def override_urls(url_patterns):
+    """
+    Replace the url patterns of the root URLconf with the given list of URL
+    patterns.
+    """
     class Dummy:
         urlpatterns = url_patterns
     with override_settings(ROOT_URLCONF=Dummy):
@@ -38,13 +41,14 @@ def override_urls(url_patterns):  # TODO: remove: not used
 
 
 @contextlib.contextmanager
-def add_urls(url_patterns, regex=''):  # TODO: remove: not used
+def add_urls(url_patterns, route=''):
+    """Inject the given URL patterns into the root URLconf."""
     try:
         # noinspection PyUnresolvedReferences
         urls = import_module(settings.ROOT_URLCONF).urlpatterns
     except AttributeError as e:
         raise AttributeError(e.args[0], "Cannot override ROOT_URLCONF twice!")
-    urls.insert(0, url(regex, include(url_patterns)))
+    urls.insert(0, path(route, url_patterns))
     with override_urls(urls):
         yield
 
