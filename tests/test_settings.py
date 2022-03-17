@@ -10,7 +10,7 @@ with open(BASE_DIR / 'config.yaml', encoding='utf-8') as f:
 SECRET_KEY = 'abcdefghi'
 
 ALWAYS_INSTALLED_APPS = [
-    'dbentry',
+    # 'dbentry',
     'dal',
     'dal_select2',
     'django.contrib.admin',
@@ -75,6 +75,6 @@ DATABASES = {
 
 DEBUG = True
 
-ROOT_URLCONF = 'MIZDB.urls'  # TODO: or test urls?
+ROOT_URLCONF = 'tests.urls'  # TODO: or test urls?
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
