@@ -30,8 +30,14 @@ class Artikel(models.Model):
     ausgabe = models.ForeignKey('tests.Ausgabe', on_delete=models.PROTECT)
 
 
+class VeranstaltungsReihe(models.Model):
+    pass
+
+
 class Veranstaltung(models.Model):
     name = models.CharField(max_length=100)
+    reihe = models.ForeignKey(
+        'tests.VeranstaltungsReihe', on_delete=models.SET_NULL, blank=True, null=True)
 
     musiker = models.ManyToManyField('tests.Musiker')
     band = models.ManyToManyField('tests.Band')
