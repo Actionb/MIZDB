@@ -8,13 +8,12 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.conf import settings
-from django.conf.urls import include
 from django.db.models.query import QuerySet
 from django.test import TestCase, override_settings
 from django.urls import path, reverse
 from django.utils.http import unquote
 
-from dbentry.tests.mixins import CreateFormMixin, CreateViewMixin, TestDataMixin
+from dbentry.tests.mixins import CreateFormMixin, CreateViewMixin
 from dbentry.sites import miz_site
 
 # Display all warnings:
@@ -109,7 +108,25 @@ class MIZTestCase(TestCase):
             )
 
 
-class DataTestCase(TestDataMixin, MIZTestCase):
+class DataTestCase(MIZTestCase):
+    model = None
+    queryset = None
+    test_data = None
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        if cls.test_data is None:
+            cls.test_data = []
+
+    def setUp(self):
+        super().setUp()
+        # Refresh each test_data instance and prepare an instance-only queryset
+        # for each instance.
+        for c, obj in enumerate(self.test_data, 1):
+            obj.refresh_from_db()  # TODO: is this even necessary?
+            setattr(self, 'qs_obj' + str(c), self.model.objects.filter(pk=obj.pk))
+        self.queryset = self.model.objects.all()
 
     def assertQuerysetEqual(self, queryset, values, transform=repr, ordered=False, msg=None):
         # TODO: remove: not used
@@ -120,6 +137,9 @@ class DataTestCase(TestDataMixin, MIZTestCase):
 
 
 class UserTestCase(MIZTestCase):
+    super_user = None
+    staff_user = None
+    noperms_user = None
 
     @classmethod
     def setUpTestData(cls):
@@ -130,7 +150,6 @@ class UserTestCase(MIZTestCase):
             username='staff', password='Stuff', is_staff=True)
         cls.noperms_user = User.objects.create_user(
             username='noperms', password='Boop')
-        # noinspection PyUnresolvedReferences
         cls.users = [cls.super_user, cls.staff_user, cls.noperms_user]
 
     def setUp(self):
@@ -181,7 +200,7 @@ class ViewTestCase(RequestTestCase, CreateViewMixin):
     pass
 
 
-class AdminTestCase(TestDataMixin, RequestTestCase):
+class AdminTestCase(DataTestCase, RequestTestCase):
     admin_site = miz_site  # TODO: use AdminSite()? less sensitive/more agnostic/decoupled
     model_admin_class = None
 
@@ -230,7 +249,7 @@ class FormTestCase(MIZTestCase, CreateFormMixin):
             self.fail(self._formatMessage(msg, 'Form valid when expected to be invalid'))
 
 
-class ModelFormTestCase(TestDataMixin, FormTestCase):
+class ModelFormTestCase(DataTestCase, FormTestCase):
     fields = None
 
     def get_form(self, **kwargs):
