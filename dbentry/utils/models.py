@@ -181,8 +181,8 @@ def get_required_fields(model: ModelClassOrInstance) -> List[Field]:
         if f.null:
             continue
         if f.blank and isinstance(f, (models.CharField, models.TextField)):
-            # String-based fields should not have null = True,
-            # hence checking the less meaningful blank attribute
+            # Check blank attribute, as string-based fields should not have
+            # null=True.
             continue
         if f.has_default():
             # Field has a default value, whether that value is an
