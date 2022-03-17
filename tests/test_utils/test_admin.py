@@ -13,7 +13,7 @@ from django.urls import NoReverseMatch
 from dbentry.factory import make
 from dbentry.utils import admin as admin_utils
 from tests.case import RequestTestCase, add_urls
-from tests.test_utils.models import Audio, Band, Bestand, Lagerort, Musiker
+from tests.models import Audio, Band, Bestand, Lagerort, Musiker
 
 
 class TestAdminUtils(RequestTestCase):

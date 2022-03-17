@@ -23,24 +23,24 @@ class Magazin(models.Model):
 
 
 class Ausgabe(models.Model):
-    magazin = models.ForeignKey('test_utils.Magazin', on_delete=models.PROTECT)
+    magazin = models.ForeignKey('tests.Magazin', on_delete=models.PROTECT)
 
 
 class Artikel(models.Model):
-    ausgabe = models.ForeignKey('test_utils.Ausgabe', on_delete=models.PROTECT)
+    ausgabe = models.ForeignKey('tests.Ausgabe', on_delete=models.PROTECT)
 
 
 class Veranstaltung(models.Model):
     name = models.CharField(max_length=100)
 
-    musiker = models.ManyToManyField('test_utils.Musiker')
-    band = models.ManyToManyField('test_utils.Band')
+    musiker = models.ManyToManyField('tests.Musiker')
+    band = models.ManyToManyField('tests.Band')
 
 
 # Some tests require an M2M table that isn't auto created.
 class MusikerAudioM2M(models.Model):
-    musiker = models.ForeignKey('test_utils.Musiker', on_delete=models.CASCADE)
-    audio = models.ForeignKey('test_utils.Audio', on_delete=models.CASCADE)
+    musiker = models.ForeignKey('tests.Musiker', on_delete=models.CASCADE)
+    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Audio-Musiker'
@@ -55,10 +55,10 @@ class Audio(models.Model):
     tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
     beschreibung = models.TextField(blank=True)
 
-    musiker = models.ManyToManyField('test_utils.Musiker', through=MusikerAudioM2M)
-    band = models.ManyToManyField('test_utils.Band')
+    musiker = models.ManyToManyField('tests.Musiker', through=MusikerAudioM2M)
+    band = models.ManyToManyField('tests.Band')
 
-    veranstaltung = models.ManyToManyField('test_utils.Veranstaltung')
+    veranstaltung = models.ManyToManyField('tests.Veranstaltung')
 
     class Meta:
         verbose_name = 'Audio'
@@ -72,9 +72,9 @@ class Lagerort(models.Model):
 
 
 class Bestand(models.Model):
-    lagerort = models.ForeignKey('test_utils.Lagerort', models.PROTECT)
+    lagerort = models.ForeignKey('tests.Lagerort', models.PROTECT)
 
-    audio = models.ForeignKey('test_utils.Audio', on_delete=models.CASCADE)
+    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.lagerort)
