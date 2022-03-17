@@ -13,7 +13,6 @@ from django.test import TestCase, override_settings
 from django.urls import path, reverse
 from django.utils.http import unquote
 
-from dbentry.tests.mixins import CreateFormMixin, CreateViewMixin
 from dbentry.sites import miz_site
 
 # Display all warnings:
@@ -57,6 +56,7 @@ class TestNotImplementedError(AssertionError):  # TODO: remove: not used
 
 
 class MIZTestCase(TestCase):
+
     warnings = 'always'  # FIXME: what does this do? Does it override the warning filter ("default")?
 
     @staticmethod
@@ -109,6 +109,7 @@ class MIZTestCase(TestCase):
 
 
 class DataTestCase(MIZTestCase):
+
     model = None
     queryset = None
     test_data = None
@@ -137,6 +138,7 @@ class DataTestCase(MIZTestCase):
 
 
 class UserTestCase(MIZTestCase):
+
     super_user = None
     staff_user = None
     noperms_user = None
@@ -145,11 +147,11 @@ class UserTestCase(MIZTestCase):
     def setUpTestData(cls):
         super().setUpTestData()
         cls.super_user = User.objects.create_superuser(
-            username='superuser', email='testtest@test.test', password='test1234')
+            username='superuser', email='testtest@test.test', password='foobar')
         cls.staff_user = User.objects.create_user(
-            username='staff', password='Stuff', is_staff=True)
+            username='staff', password='foo', is_staff=True)
         cls.noperms_user = User.objects.create_user(
-            username='noperms', password='Boop')
+            username='noperms', password='bar')
         cls.users = [cls.super_user, cls.staff_user, cls.noperms_user]
 
     def setUp(self):
@@ -196,8 +198,34 @@ class RequestTestCase(UserTestCase):
             self.fail(self._formatMessage(msg, error_msg))
 
 
-class ViewTestCase(RequestTestCase, CreateViewMixin):
-    pass
+class ViewTestCase(RequestTestCase):
+
+    view_class = None
+
+    def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
+        """Instantiate and set up the view without calling dispatch()."""
+        # TODO: rework the arguments?
+        #  Make initkwargs a keyword argument and then just use *args, **kwargs?
+        view = self.view_class(**initkwargs)
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+        view.setup(request, *args, **kwargs)
+        return view
+
+    def get_dummy_view_class(self, bases=None, attrs=None):
+        # TODO: is it necessary to keep this (and get_dummy_view)?
+        if bases is None:
+            bases = getattr(self, 'view_bases', ())
+        if attrs is None:
+            attrs = attrs or getattr(self, 'view_attrs', {})
+        if not isinstance(bases, (list, tuple)):
+            bases = (bases,)
+        return type("DummyView", bases, attrs)
+
+    def get_dummy_view(self, bases=None, attrs=None, **initkwargs):
+        return self.get_dummy_view_class(bases, attrs)(**initkwargs)
 
 
 class AdminTestCase(DataTestCase, RequestTestCase):
@@ -234,10 +262,43 @@ class AdminTestCase(DataTestCase, RequestTestCase):
         return self.model_admin.get_queryset(request)
 
 
-##############################################################################################################
-# TEST_FORMS TEST CASES
-##############################################################################################################
-class FormTestCase(MIZTestCase, CreateFormMixin):
+class FormTestCase(MIZTestCase):
+
+    form_class = None
+    dummy_bases = None
+    dummy_attrs = None
+    valid_data = None
+
+    def get_form_class(self):
+        return self.form_class
+
+    def get_form(self, **kwargs):
+        form_class = self.get_form_class()
+        return form_class(**kwargs)
+
+    def get_valid_form(self):
+        form = self.get_form(data=self.valid_data.copy())
+        if self.valid_data and not form.is_valid():
+            error_msg = 'self.valid_data did not contain valid data! form errors: {}'.format(
+                [(k, v) for k, v in form.errors.items()])
+            raise Exception(error_msg)
+        return form
+
+    def get_dummy_form_class(self, bases=None, attrs=None):
+        if bases is None:
+            bases = self.dummy_bases or (object,)
+        if attrs and self.dummy_attrs:
+            class_attrs = {**self.dummy_attrs, **attrs}
+        elif attrs:
+            class_attrs = attrs.copy()
+        elif self.dummy_attrs:
+            class_attrs = self.dummy_attrs.copy()
+        else:
+            class_attrs = {}
+        return type('DummyForm', bases, class_attrs)
+
+    def get_dummy_form(self, bases=None, attrs=None, **form_initkwargs):
+        return self.get_dummy_form_class(bases, attrs)(**form_initkwargs)
 
     def assertFormValid(self, form, msg=None):
         if not form.is_valid():
