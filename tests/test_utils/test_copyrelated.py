@@ -1,54 +1,62 @@
 from unittest.mock import patch
 
-from dbentry import models as _models, admin as _admin
 from django.db.utils import IntegrityError
-from dbentry.factory import make
-from dbentry.tests.base import AdminTestCase
+
 from dbentry.utils import copyrelated as utils
+from tests.case import DataTestCase, RequestTestCase
+from tests.factory import make
+from tests.models import Audio, Band, Veranstaltung
 
 
-class TestCopyRelated(AdminTestCase):
-
-    model = _models.Plakat
-    model_admin_class = _admin.PlakatAdmin
-    test_data_count = 1
+class TestCopyRelated(DataTestCase, RequestTestCase):
+    model = Audio
 
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
+        cls.obj1 = make(cls.model)
 
-        cls.band1 = make(_models.Band, band_name='Band1')
-        cls.band2 = make(_models.Band, band_name='Band2')
+        b1 = cls.band1 = make(Band, band_name='Band1')
+        b2 = cls.band2 = make(Band, band_name='Band2')
 
-        cls.v1 = make(_models.Veranstaltung, band=[cls.band1])
-        cls.v2 = make(_models.Veranstaltung, band=[cls.band2])
-        cls.v3 = make(_models.Veranstaltung)
+        v1 = make(Veranstaltung, band=[b1])
+        v2 = make(Veranstaltung, band=[b2])
+        v3 = make(Veranstaltung)
 
-        cls.obj1.veranstaltung.add(cls.v1, cls.v2, cls.v3)
+        # noinspection PyUnresolvedReferences
+        cls.obj1.veranstaltung.add(v1, v2, v3)
 
     def test_copies_related_bands(self):
+        """copy_related_set should copy the related Band instances."""
         utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
+        # noinspection PyUnresolvedReferences
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 2)
         self.assertIn(self.band1, bands)
         self.assertIn(self.band2, bands)
 
     def test_no_duplicates(self):
-        # Assert that copy_related_set does not create duplicate related records.
-        # The models actually do not allow that so we can test for an IntegrityError.
+        """Assert that copy_related_set does not create duplicate related records."""
+        # noinspection PyUnresolvedReferences
         self.obj1.band.add(self.band1)
+        # Attempting to create duplicates on the M2M would raise an
+        # IntegrityError.
         with self.assertNotRaises(IntegrityError):
             utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
+        # noinspection PyUnresolvedReferences
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 2)
         self.assertIn(self.band1, bands)
         self.assertIn(self.band2, bands)
 
     def test_preserves_own_bands(self):
-        other_band = make(_models.Band)
+        """Assert that related objects are not dropped by the copying process."""
+        other_band = make(Band)
+        # noinspection PyUnresolvedReferences
         self.obj1.band.add(other_band)
 
         utils.copy_related_set(self.get_request(), self.obj1, 'veranstaltung__band')
+        # noinspection PyUnresolvedReferences
         bands = self.obj1.band.all()
         self.assertEqual(bands.count(), 3)
         self.assertIn(other_band, bands)
@@ -56,20 +64,25 @@ class TestCopyRelated(AdminTestCase):
         self.assertIn(self.band2, bands)
 
     def test_invalid_path(self):
-        # No transactions should happen for invalid paths.
+        """copy_related_set should not act on invalid field paths."""
         request = self.get_request()
         with self.assertNumQueries(0):
             utils.copy_related_set(request, self.obj1, 'NOT__A__VALID__PATH')
 
     def test_direct_relations(self):
-        # No transactions should happen for paths that represent a direct relation.
+        """
+        copy_related_set should not act on field paths of direct relations;
+        i.e. if the target model is related to the parent model.
+        """
         request = self.get_request()
         with self.assertNumQueries(0):
             utils.copy_related_set(request, self.obj1, 'veranstaltung')
 
     def test_not_related(self):
-        # If the 'target' model of the path and the 'source' model do not have a relation
-        # on their own, no action should be taken.
+        """
+        copy_related_set should not act, if the source model has no relation to
+        the target model defined by the path.
+        """
         request = self.get_request()
         with self.assertNumQueries(0):
             utils.copy_related_set(request, self.obj1, 'veranstaltung__reihe')
@@ -83,6 +96,7 @@ class TestCopyRelated(AdminTestCase):
         with self.assertNotRaises(ValueError):
             utils.copy_related_set(request, self.obj1, 'veranstaltung__band')
         # Check that copying went through:
+        # noinspection PyUnresolvedReferences
         self.assertEqual(self.obj1.band.count(), 2)
         # Check that the message was sent:
         message_text = (
