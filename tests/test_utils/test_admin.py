@@ -45,7 +45,7 @@ class TestAdminUtils(RequestTestCase):
         with add_urls(site.urls, 'admin/'):
             self.assertEqual(
                 admin_utils.get_obj_link(self.obj1, self.super_user),
-                f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/">{self.obj1}</a>'
+                f'<a href="/admin/tests/audio/{self.obj1.pk}/change/">{self.obj1}</a>'
             )
 
     def test_get_obj_link_blank(self):
@@ -58,7 +58,7 @@ class TestAdminUtils(RequestTestCase):
         with add_urls(site.urls, 'admin/'):
             self.assertEqual(
                 admin_utils.get_obj_link(self.obj1, self.super_user, blank=True),
-                f'<a href="/admin/test_utils/audio/{self.obj1.pk}/change/" '
+                f'<a href="/admin/tests/audio/{self.obj1.pk}/change/" '
                 f'target="_blank">{self.obj1}</a>'
             )
 
@@ -100,7 +100,7 @@ class TestAdminUtils(RequestTestCase):
         for i, (url, label) in enumerate(re.findall(r'<a href="(.*?)">(.*?)</a>', links)):
             with self.subTest(url=url, label=label):
                 self.assertEqual(
-                    url, '/admin/test_utils/audio/{}/change/'.format(self.test_data[i].pk)
+                    url, '/admin/tests/audio/{}/change/'.format(self.test_data[i].pk)
                 )
                 self.assertEqual(label, str(self.test_data[i]))
 
@@ -131,7 +131,7 @@ class TestAdminUtils(RequestTestCase):
         with add_urls(site.urls, 'admin/'):
             self.assertEqual(
                 admin_utils.get_changelist_link(self.model, self.super_user),
-                '<a href="/admin/test_utils/audio/">Liste</a>'
+                '<a href="/admin/tests/audio/">Liste</a>'
             )
 
     def test_get_changelist_link_blank(self):
@@ -144,7 +144,7 @@ class TestAdminUtils(RequestTestCase):
         with add_urls(site.urls, 'admin/'):
             self.assertEqual(
                 admin_utils.get_changelist_link(self.model, self.super_user, blank=True),
-                '<a href="/admin/test_utils/audio/" target="_blank">Liste</a>'
+                '<a href="/admin/tests/audio/" target="_blank">Liste</a>'
             )
 
     ################################################################################################
@@ -161,7 +161,7 @@ class TestAdminUtils(RequestTestCase):
         site.register(self.model, ModelAdmin)
         with add_urls(site.urls, 'admin/'):
             for obj_list in (None, [self.obj1], [self.obj1, obj2]):
-                expected = '/admin/test_utils/audio/'
+                expected = '/admin/tests/audio/'
                 if obj_list:
                     expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
                 with self.subTest(obj_list=obj_list):
@@ -214,7 +214,7 @@ class TestAdminUtils(RequestTestCase):
                     if not permissions:
                         self.assertFalse(url)
                     else:
-                        self.assertEqual(url, '/admin/test_utils/audio/')
+                        self.assertEqual(url, '/admin/tests/audio/')
 
     ################################################################################################
     # test construct_change_message and _get_relation_change_message
@@ -399,7 +399,7 @@ class TestAdminUtils(RequestTestCase):
         model_admin_class = type('Dummy', (ModelAdmin,), {})
         # model_admin = ModelAdmin(self.model, site)
         site.register(self.model, model_admin_class)
-        for arg in ('test_utils.Audio', self.model):
+        for arg in ('tests.Audio', self.model):
             with self.subTest(argument=arg):
                 self.assertIsInstance(
                     admin_utils.get_model_admin_for_model(arg, site),
@@ -411,7 +411,7 @@ class TestAdminUtils(RequestTestCase):
         get_model_admin_for_model should return None, if no ModelAdmin class
         is registered with the given model.
         """
-        self.assertIsNone(admin_utils.get_model_admin_for_model('test_utils.Audio'), AdminSite())
+        self.assertIsNone(admin_utils.get_model_admin_for_model('tests.Audio'), AdminSite())
 
     def test_get_model_admin_for_model_raises_lookup_error(self):
         """
