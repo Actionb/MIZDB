@@ -10,9 +10,9 @@ from django.db import models
 from django.forms import modelform_factory
 from django.urls import NoReverseMatch
 
-from dbentry.factory import make
 from dbentry.utils import admin as admin_utils
 from tests.case import RequestTestCase, add_urls
+from tests.factory import make
 from tests.models import Audio, Band, Bestand, Lagerort, Musiker
 
 
