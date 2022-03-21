@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import yaml
@@ -79,3 +80,14 @@ DEBUG = True
 ROOT_URLCONF = 'tests.urls'  # TODO: or test urls?
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.MD5PasswordHasher',
+]
+
+# Add a NullHandler to the root logger for test runs.
+# This will stop log messages to be printed to sys.stderr during tests
+# if no other handlers are assigned.
+# Note that django debug toolbar adds a handler to the root logger that
+# handles all log records. The toolbar need not be enabled for this.
+logging.getLogger().addHandler(logging.NullHandler())
