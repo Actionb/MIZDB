@@ -26,6 +26,7 @@ ALWAYS_INSTALLED_APPS = [
 
 TEST_APPS = [
     "tests",
+    "tests.test_utils"
 ]
 
 INSTALLED_APPS = ALWAYS_INSTALLED_APPS + TEST_APPS

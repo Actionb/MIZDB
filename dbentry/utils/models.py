@@ -436,7 +436,7 @@ def validate_all_model_data(
 
 def clean_contenttypes(stream: Optional[TextIO] = None) -> None:
     """Delete ContentType objects that do not refer to a model class."""
-    if stream is None:
+    if stream is None:  # pragma: no cover
         stream = sys.stdout
     for ct in ContentType.objects.all():
         model = ct.model_class()
@@ -453,7 +453,7 @@ def clean_permissions(stream: Optional[TextIO] = None) -> None:
     can end up with two Permissions for the same action (e.g. 'add') on the
     same model but with different codenames.
     """
-    if stream is None:
+    if stream is None:  # pragma: no cover
         stream = sys.stdout
     for p in Permission.objects.all():
         action, _model_name = p.codename.split('_', 1)

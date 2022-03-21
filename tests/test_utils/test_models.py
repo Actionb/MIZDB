@@ -1,248 +1,390 @@
 from functools import partial
 from io import StringIO
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from django.contrib import auth, contenttypes
+from django.contrib import auth
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core import exceptions
+from django.db import models
 
-from dbentry import utils, models as _models
-from dbentry.factory import make
-from dbentry.tests.base import MIZTestCase
+from dbentry import utils
+from tests.case import MIZTestCase
+from tests.test_utils.models import M2MSource, M2MTarget, Protected, Protector
 
 
 class TestModelUtils(MIZTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
+        # noinspection PyUnresolvedReferences
         expected = (
-            _models.Ausgabe._meta.get_field('magazin'),
-            _models.Magazin._meta.get_field('ausgabe')
+            Protected._meta.get_field('protector'),
+            Protector._meta.get_field('protected')
         )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.Ausgabe, _models.Magazin)), expected)
+            (utils.get_relations_between_models(Protected, Protector)), expected
+        )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.Magazin, _models.Ausgabe)), expected)
+            (utils.get_relations_between_models(Protector, Protected)), expected
+        )
         self.assertEqual(
-            (utils.get_relations_between_models('Ausgabe', 'magazin')), expected)
+            (utils.get_relations_between_models('test_utils.Protected', 'test_utils.Protector')),
+            expected
+        )
         self.assertEqual(
-            (utils.get_relations_between_models('Magazin', 'Ausgabe')), expected)
+            (utils.get_relations_between_models('test_utils.Protector', 'test_utils.Protected')),
+            expected
+        )
 
-    # noinspection PyTypeChecker
     def test_get_relations_between_models_many_to_many(self):
+        # noinspection PyUnresolvedReferences
         expected = (
-            _models.Artikel._meta.get_field('genre'),
-            _models.Genre._meta.get_field('artikel')
+            M2MSource._meta.get_field('targets'),
+            M2MTarget._meta.get_field('sources')
         )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.Artikel, _models.Genre)), expected)
+            (utils.get_relations_between_models(M2MSource, M2MTarget)), expected
+        )
         self.assertEqual(
-            (utils.get_relations_between_models(_models.Genre, _models.Artikel)), expected)
-        self.assertEqual((utils.get_relations_between_models('Artikel', 'Genre')), expected)
-        self.assertEqual((utils.get_relations_between_models('Genre', 'Artikel')), expected)
+            (utils.get_relations_between_models(M2MTarget, M2MSource)), expected
+        )
+        self.assertEqual(
+            (utils.get_relations_between_models('test_utils.M2MSource', 'test_utils.M2MTarget')),
+            expected
+        )
+        self.assertEqual(
+            (utils.get_relations_between_models('test_utils.M2MTarget', 'test_utils.M2MSource')),
+            expected
+        )
 
     def test_is_protected(self):
-        art = make(_models.Artikel)
-        self.assertIsNotNone(utils.is_protected([art.ausgabe]))
-        self.assertIsNone(utils.is_protected([art]))
+        protector = Protector()
+        protector.save()
+        protected = Protected(protector=protector)
+        protected.save()
+        # is_protected will just return None if the object isn't protected
+        self.assertIsNotNone(utils.is_protected([protector]))
+        self.assertIsNone(utils.is_protected([protected]))
 
     def test_get_model_from_string(self):
-        self.assertEqual(_models.Ausgabe, utils.get_model_from_string('Ausgabe'))
-        self.assertEqual(_models.Ausgabe, utils.get_model_from_string('dbentry.ausgabe'))
+        self.assertEqual(
+            Protected,
+            utils.get_model_from_string('Protected', app_label='test_utils')
+        )
+        self.assertEqual(Protected, utils.get_model_from_string('test_utils.protected'))
         with self.assertRaises(LookupError):
             utils.get_model_from_string('beep boop')
         with self.assertRaises(LookupError):
-            utils.get_model_from_string('Ausgabe', app_label='beep boop')
+            utils.get_model_from_string('Protected', app_label='beep boop')
+
+    def test_get_reverse_field_path(self):
+        # The relation has no 'related_query_name' or 'related_name';
+        # get_reverse_field_path should use the model_name of the related model
+        # noinspection PyUnresolvedReferences
+        rel = Protector._meta.get_field('protected')
+        self.assertEqual(utils.get_reverse_field_path(rel, 'name'), 'protected__name')
+        # noinspection PyUnresolvedReferences
+        rel = M2MTarget._meta.get_field('sources')
+        self.assertEqual(utils.get_reverse_field_path(rel, 'name'), 'sources__name')
+        rel.related_query_name = 'foobar'
+        self.assertEqual(utils.get_reverse_field_path(rel, 'name'), 'foobar__name')
+
+    def test_get_fields_and_lookups(self):
+        fields, lookups = utils.get_fields_and_lookups(Protected, 'protector__date__year__gte')
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(
+            fields,
+            [Protected._meta.get_field('protector'), Protector._meta.get_field('date')]
+        )
+        self.assertEqual(lookups, ['year', 'gte'])
+
+    def test_get_fields_and_lookups_invalid_lookup(self):
+        """
+        Assert that get_fields_and_lookups raises FieldError on encountering an
+        invalid lookup.
+        """
+        with self.assertRaises(exceptions.FieldError):
+            utils.get_fields_and_lookups(Protected, 'protector__date__hour')
+
+    def test_get_fields_and_lookups_field_does_not_exist(self):
+        """
+        Assert that get_fields_and_lookups raises FieldDoesNotExist if the first
+        field is not a model field of the given model.
+        """
+        with self.assertRaises(exceptions.FieldDoesNotExist):
+            utils.get_fields_and_lookups(Protected, 'nofield__icontains')
+
+    def test_clean_contenttypes(self):
+        """
+        clean_contenttypes should delete CT objects with invalid models.
+        """
+        exists = ContentType.objects.get_for_model(Protected)
+        not_exists = ContentType.objects.create(app_label='test_utils', model='NotExists')
+        content_types = Mock(return_value=[exists, not_exists])
+        stream = StringIO()
+        with patch.object(ContentType.objects, 'all', new=content_types):
+            utils.clean_contenttypes(stream)
+        self.assertIn('Deleting NotExists', stream.getvalue())
+        self.assertFalse(ContentType.objects.filter(model='NotExists').exists())
+        self.assertTrue(ContentType.objects.filter(pk=exists.pk).exists())
+
+
+####################################################################################################
+# get_model_relations tests
+####################################################################################################
+
+class OneToOneModel(models.Model):
+    pass
+
+
+class ForwardRelatedModel(models.Model):
+    pass
+
+
+class ReverseRelatedModel(models.Model):
+    reverse = models.ForeignKey('test_utils.AllRelations', on_delete=models.CASCADE)
+
+
+class M2MTargetOne(models.Model):
+    pass
+
+
+class M2MTargetTwo(models.Model):
+    pass
+
+
+class M2MTable(models.Model):
+    source = models.ForeignKey('test_utils.AllRelations', on_delete=models.CASCADE)
+    target = models.ForeignKey('test_utils.M2MTargetTwo', on_delete=models.CASCADE)
+
+
+class AllRelations(models.Model):
+    one_to_one = models.OneToOneField('test_utils.OneToOneModel', on_delete=models.CASCADE)
+    forward_related = models.ForeignKey('test_utils.ForwardRelatedModel', on_delete=models.CASCADE)
+    many_auto = models.ManyToManyField('test_utils.M2MTargetOne')
+    many_intermediary = models.ManyToManyField('test_utils.M2MTargetTwo', through='test_utils.M2MTable')  # noqa
+
+
+class TestGetModelRelations(MIZTestCase):
 
     def test_get_model_relations(self):
-        buch = _models.Buch
-        # model buch has the four kinds of relations:
-        # FK from bestand to buch
-        # FK from buch to verlag
-        # ManyToMany auto created band <-> buch
-        # ManyToMany intermediary Musiker <-> buch
-        rev_fk = _models.Bestand._meta.get_field('buch').remote_field
-        fk = buch._meta.get_field('schriftenreihe').remote_field
-        m2m_inter = buch.musiker.rel
-        m2m_auto = buch.band.rel
+        # noinspection PyUnresolvedReferences
+        o2o = AllRelations._meta.get_field('one_to_one').remote_field
+        # noinspection PyUnresolvedReferences
+        fk = AllRelations._meta.get_field('forward_related').remote_field
+        # noinspection PyUnresolvedReferences
+        rev_fk = ReverseRelatedModel._meta.get_field('reverse').remote_field
+        # noinspection PyUnresolvedReferences
+        m2m_inter = AllRelations._meta.get_field('many_intermediary').remote_field
+        # noinspection PyUnresolvedReferences
+        m2m_auto = AllRelations._meta.get_field('many_auto').remote_field
 
-        rels = utils.get_model_relations(buch)
-        self.assertIn(rev_fk, rels)
+        rels = utils.get_model_relations(AllRelations)
+        self.assertIn(o2o, rels)
         self.assertIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-
-        rels = utils.get_model_relations(buch, reverse=False)
-        self.assertNotIn(rev_fk, rels)
-        self.assertIn(fk, rels)
-        self.assertIn(m2m_inter, rels)
-        self.assertIn(m2m_auto, rels)
-
-        rels = utils.get_model_relations(buch, forward=False)
         self.assertIn(rev_fk, rels)
-        self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
 
-        rels = utils.get_model_relations(buch, forward=False, reverse=False)
+        rels = utils.get_model_relations(AllRelations, reverse=False)
+        self.assertIn(o2o, rels)
+        self.assertIn(fk, rels)
         self.assertNotIn(rev_fk, rels)
-        self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
+
+        rels = utils.get_model_relations(AllRelations, forward=False)
+        self.assertNotIn(o2o, rels)
+        self.assertNotIn(fk, rels)
+        self.assertIn(rev_fk, rels)
+        self.assertIn(m2m_inter, rels)
+        self.assertIn(m2m_auto, rels)
+
+        rels = utils.get_model_relations(AllRelations, forward=False, reverse=False)
+        self.assertNotIn(o2o, rels)
+        self.assertNotIn(fk, rels)
+        self.assertNotIn(rev_fk, rels)
+        self.assertIn(m2m_inter, rels)
+        self.assertIn(m2m_auto, rels)
+
+
+####################################################################################################
+# get_required_fields test
+####################################################################################################
+
+class NoRequiredFields(models.Model):
+    # For string-based fields, get_required_fields will check for blank=True.
+    # For other fields, it will check for null=True.
+    not_required_one = models.IntegerField(blank=False, null=True)
+    not_required_two = models.CharField(max_length=100, blank=True)
+
+
+class OneRequiredField(models.Model):
+    required = models.CharField(max_length=100)
+
+
+class MixedRequired(models.Model):
+    required = models.CharField(max_length=100)
+    not_required = models.CharField(max_length=100, blank=True)
+
+
+class NotRequiredRelated(models.Model):
+    pass
+
+
+class RequiredRelatedTarget(models.Model):
+    pass
+
+
+class RequiredRelatedField(models.Model):
+    required = models.ForeignKey('test_utils.RequiredRelatedTarget', on_delete=models.CASCADE)
+    not_required = models.ForeignKey('test_utils.NotRequiredRelated', on_delete=models.CASCADE, null=True)  # noqa
+
+
+class RequiredWithDefault(models.Model):
+    required = models.CharField(max_length=100)
+    required_with_default = models.CharField(max_length=100, default='has default')
+
+
+class MultipleRequiredFields(models.Model):
+    not_required = models.CharField(max_length=100, blank=True)
+    required_one = models.CharField(max_length=100)
+    required_two = models.CharField(max_length=100)
+    required_three = models.CharField(max_length=100)
+
+
+class TestGetRequiredFields(MIZTestCase):
 
     def test_get_required_fields(self):
         def required_field_names(model):
             return [f.name for f in utils.get_required_fields(model)]
 
-        self.assertEqual(required_field_names(_models.Person), ['nachname'])
-        self.assertEqual(required_field_names(_models.Musiker), ['kuenstler_name'])
-        self.assertEqual(required_field_names(_models.Genre), ['genre'])
-        self.assertEqual(required_field_names(_models.Band), ['band_name'])
-        self.assertEqual(required_field_names(_models.Autor), [])
-        self.assertEqual(required_field_names(_models.Ausgabe), ['magazin'])
-        self.assertEqual(required_field_names(_models.Magazin), ['magazin_name'])
-        self.assertEqual(required_field_names(_models.Ort), ['land'])
+        self.assertEqual(required_field_names(NoRequiredFields), [])
+        self.assertEqual(required_field_names(OneRequiredField), ['required'])
+        self.assertEqual(required_field_names(MixedRequired), ['required'])
+        self.assertEqual(required_field_names(RequiredRelatedField), ['required'])
+        self.assertEqual(required_field_names(RequiredWithDefault), ['required'])
         self.assertEqual(
-            required_field_names(_models.Artikel), ['schlagzeile', 'seite', 'ausgabe'])
-        # _models.Provenienz.typ field is required but has a default:
-        self.assertEqual(required_field_names(_models.Provenienz), ['geber'])
-        self.assertEqual(required_field_names(_models.Bestand), ['lagerort'])
+            required_field_names(MultipleRequiredFields),
+            ['required_one', 'required_two', 'required_three']
+        )
+
+
+####################################################################################################
+# get_updatable_fields test
+####################################################################################################
+
+class UpdatableFieldsModel(models.Model):
+    empty_one = models.IntegerField(null=True)
+    empty_two = models.CharField(max_length=100, blank=True)
+    not_empty = models.CharField(max_length=100)
+    has_default = models.CharField(max_length=100, default='Sausages')
+    _private_field = models.CharField(max_length=100, blank=True)
+    nullable_boolean_field = models.BooleanField(null=True)
+    boolean_field_default = models.BooleanField(default=False)
+
+
+class TestGetUpdatableFields(MIZTestCase):
 
     def test_get_updatable_fields(self):
-        obj = make(_models.Artikel)
+        obj = UpdatableFieldsModel(not_empty='Eggs & Spam', has_default='Sausages')
         self.assertEqual(
             utils.get_updatable_fields(obj),
-            ['seitenumfang', 'zusammenfassung', 'beschreibung', 'bemerkungen']
+            ['empty_one', 'empty_two', 'has_default', 'nullable_boolean_field']
         )
+        obj.empty_one = 1
+        self.assertNotIn('empty_one', utils.get_updatable_fields(obj))
+        obj.has_default = 'Bacon'
+        self.assertNotIn('has_default', utils.get_updatable_fields(obj))
 
-        obj.seitenumfang = 'f'
-        obj.beschreibung = 'Beep'
-        self.assertEqual(utils.get_updatable_fields(obj), ['zusammenfassung', 'bemerkungen'])
-        obj.zusammenfassung = 'Boop'
-        self.assertEqual(utils.get_updatable_fields(obj), ['bemerkungen'])
 
-        obj = make(_models.Ausgabe)
-        self.assertEqual(
-            utils.get_updatable_fields(obj),
-            ['status', 'e_datum', 'jahrgang', 'beschreibung', 'bemerkungen']
-        )
-        obj.status = 2
-        self.assertNotIn('status', utils.get_updatable_fields(obj))
+####################################################################################################
+# clean_permissions tests
+####################################################################################################
 
-    def test_get_reverse_field_path(self):
-        # no related_query_name or related_name
-        rel = _models.Ausgabe._meta.get_field('artikel')
-        self.assertEqual(utils.get_reverse_field_path(rel, 'seite'), 'artikel__seite')
 
-        # related_name
-        rel = _models.Buch._meta.get_field('buchband').remote_field
-        self.assertEqual(utils.get_reverse_field_path(rel, 'titel'), 'buch_set__titel')
-
-    def test_get_fields_and_lookups(self):
-        path = 'ausgabe__e_datum__year__gte'
-        fields, lookups = utils.get_fields_and_lookups(_models.Artikel, path)
-        expected_fields = [
-            _models.Artikel._meta.get_field('ausgabe'),
-            _models.Ausgabe._meta.get_field('e_datum')
-        ]
-        expected_lookups = ['year', 'gte']
-        self.assertEqual(fields, expected_fields)
-        self.assertEqual(lookups, expected_lookups)
-
-    def test_get_fields_and_lookups_invalid_lookup(self):
-        # Assert that get_fields_and_lookups raises FieldError on
-        # encountering an invalid lookup.
-        with self.assertRaises(exceptions.FieldError):
-            utils.get_fields_and_lookups(_models.Artikel, 'schlagzeile__year')
-        with self.assertRaises(exceptions.FieldError):
-            # Kalender's primary key is a OneToOne to BaseBrochure.
-            utils.get_fields_and_lookups(_models.Kalender, 'pk__iexact')
-
-    def test_get_fields_and_lookups_fielddoesnotexist(self):
-        # Assert that get_fields_and_lookups raises FieldDoesNotExist
-        # if the first field is not a model field of the given model.
-        with self.assertRaises(exceptions.FieldDoesNotExist):
-            utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')
+class Spam(models.Model):
+    class Meta:
+        default_permissions = ('add', 'change', 'delete', 'view', 'eat')
 
 
 class TestCleanPerms(MIZTestCase):
 
     def setUp(self):
         super().setUp()
-        self.patcher = partial(patch.object, auth.models.Permission.objects, 'all')
-
-    @patch('sys.stdout')
-    def test_stream_argument(self, mocked_stdout):
-        # Assert that clean_permissions uses the stream kwarg or defaults
-        # to sys.stdout.
-        p = auth.models.Permission.objects.first()
-        p.codename += 'beep'  # make the codename invalid to prompt a message
-        p.save()
-        utils.clean_permissions(stream=None)
-        self.assertTrue(mocked_stdout.write.called)
-        p.codename += 'beep'
-        p.save()
-        stream = StringIO()
-        utils.clean_permissions(stream=stream)
-        self.assertTrue(stream.getvalue())
+        self.patcher = partial(patch.object, Permission.objects, 'all')
+        self.ct = ContentType.objects.get_for_model(Spam)
 
     def test_unknown_model(self):
-        # Assert that a message is written to the stream if clean_permissions
-        # encounters a content type with an unknown model.
-        ct = contenttypes.models.ContentType.objects.first()
-        ct.model = 'Not.AModel'
-        ct.save()
-        p = auth.models.Permission.objects.first()
-        p.content_type = ct
-        p.save()
+        """
+        Assert that a message is written to the stream if clean_permissions
+        encounters a content type with an unknown model.
+        """
+        ct = ContentType.objects.create(model='Viking', app_label='test_utils')
+        p = Permission.objects.create(name='Can add spam', content_type=ct, codename='add_spam')
         expected_message = (
-            "ContentType of %s references unknown model: %s.%s\n"
-            "Try running clean_contenttypes.\n" % (
-                p.name, p.content_type.app_label, p.content_type.model)
+            f"ContentType of {p.name} references unknown model: "
+            f"{p.content_type.app_label}.{p.content_type.model}\n"
+            "Try running clean_contenttypes.\n"
         )
         stream = StringIO()
         with self.patcher(new=Mock(return_value=[p])):
             utils.clean_permissions(stream)
-            self.assertEqual(stream.getvalue(), expected_message)
+        self.assertEqual(stream.getvalue(), expected_message)
 
     def test_only_default_perms(self):
-        # Assert that clean_permissions only checks the default permissions.
-        p = auth.models.Permission.objects.first()
-        p.codename = 'beep_boop'
-        p.save()
+        """
+        Assert that clean_permissions only works on model default permissions.
+        """
+        p1 = Permission.objects.get(codename='eat_spam')
+        # Change the codename so that clean_permissions has something to clean:
+        p1.codename = 'eat_lovelyspam'
+        p1.save()
+        # Add a permission that isn't a default permission of 'Spam':
+        p2 = Permission.objects.create(
+            name='Can reject spam', codename='reject_spam', content_type=self.ct
+        )
         stream = StringIO()
-        # 'p' with permission 'beep' should just be skipped:
-        with self.patcher(new=Mock(return_value=[p])):
+        with self.patcher(new=Mock(return_value=[p1, p2])):
             utils.clean_permissions(stream)
-            self.assertFalse(stream.getvalue())
+        self.assertTrue(stream.getvalue())
+        p1.refresh_from_db()
+        self.assertEqual(p1.codename, 'eat_spam', msg="p1.codename should have been reset")
+        p2.refresh_from_db()
+        self.assertEqual(p2.codename, 'reject_spam', msg="p2.codename should have not been altered")
 
     def test_no_update_needed(self):
-        # Assert that clean_permissions only updates a permission's codename if
-        # that codename differs from the one returned by
-        # auth.get_permission_codename.
-        p = auth.models.Permission.objects.get(codename='add_ausgabe')
-        p.codename = 'add_actuallyincorrect'
+        """
+        Assert that clean_permissions only updates a permission's codename if
+        that codename differs from the one returned by get_permission_codename.
+        """
+        p = Permission.objects.get(codename='eat_spam')
+        p.codename = 'eat_lovelyspam'
         p.save()
         stream = StringIO()
-        mocked_get_codename = Mock(return_value='add_actuallyincorrect')
+        mocked_get_codename = Mock(return_value='eat_lovelyspam')
         with patch.object(auth, 'get_permission_codename', new=mocked_get_codename):
             with self.patcher(new=Mock(return_value=[p])):
                 utils.clean_permissions(stream)
-                self.assertFalse(stream.getvalue())
+        self.assertFalse(stream.getvalue())
+        p.refresh_from_db()
+        self.assertEqual(p.codename, 'eat_lovelyspam')
 
     def test_duplicate_permissions(self):
-        # Assert that clean_permissions deletes redundant permissions.
-        p = auth.models.Permission.objects.get(codename='add_ausgabe')
-        # Dupe the perm just with a different codename;
-        # clean_permissions will correct the codename and make the new perm a
-        # true duplicate.
-        new = auth.models.Permission.objects.create(
-            name=p.name, codename='add_beep', content_type=p.content_type)
+        """Assert that clean_permissions deletes redundant permissions."""
+        p = Permission.objects.get(codename='eat_spam')
+        # Create a copy of the perm with a different codename.
+        # clean_permissions will correct the codename, thus making the new perm
+        # an exact duplicate of 'p'.
+        new = Permission.objects.create(
+            name=p.name, codename='eat_lovelyspam', content_type=p.content_type
+        )
         expected_message = (
-            "Permission with codename '%s' already exists. "
-            "Deleting permission with outdated codename: '%s'\n" % (
-                'add_ausgabe', 'add_beep')
+            "Permission with codename 'eat_spam' already exists. "
+            "Deleting permission with outdated codename: 'eat_lovelyspam'\n"
         )
         stream = StringIO()
         with self.patcher(new=Mock(return_value=[new])):
             utils.clean_permissions(stream)
-            self.assertEqual(stream.getvalue(), expected_message)
-            self.assertFalse(new.pk)
+        self.assertEqual(stream.getvalue(), expected_message)
+        self.assertFalse(new.pk)
