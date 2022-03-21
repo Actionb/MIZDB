@@ -17,6 +17,7 @@ INTERNAL_IPS = ['127.0.0.1']
 
 WIKI_URL = 'http://127.0.0.1/wiki/Hauptseite'
 
+# TODO: move this to tests.test_settings - or remove once tests rework is done
 TESTING = 'test' in sys.argv
 
 if TESTING:

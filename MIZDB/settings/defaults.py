@@ -135,6 +135,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
 # See: sites.MIZAdminSite.each_context
 WIKI_URL = config.get('WIKI_URL', '')
 
+# TODO: move this to tests.test_settings - or remove once tests rework is done
 if 'test' in sys.argv:
     # Add a NullHandler to the root logger for test runs.
     # This stops log messages to be printed to sys.stderr during tests
