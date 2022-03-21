@@ -51,6 +51,7 @@ class MusikerAudioM2M(models.Model):
     class Meta:
         verbose_name = 'Audio-Musiker'
         verbose_name_plural = 'Audio-Musiker'
+        unique_together = ('musiker', 'audio')
 
     def __str__(self):
         return str(self.musiker)  # imitate dbentry.base.BaseM2MModel.__str__
@@ -80,7 +81,7 @@ class Lagerort(models.Model):
 class Bestand(models.Model):
     lagerort = models.ForeignKey('tests.Lagerort', models.PROTECT)
 
-    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE)
+    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE, related_name='bestand')
 
     def __str__(self):
         return str(self.lagerort)

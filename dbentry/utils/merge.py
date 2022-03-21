@@ -96,7 +96,7 @@ def merge_records(
                     # parameters passed to values().
                     unique_together = list(unique_together)
                     unique_together.remove(related_field.name)
-                    if not unique_together:
+                    if not unique_together:  # pragma: no cover
                         continue
                 # noinspection PyUnresolvedReferences
                 for values in (
