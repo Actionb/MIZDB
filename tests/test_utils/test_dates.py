@@ -1,7 +1,7 @@
 import datetime
 
 from dbentry import utils
-from dbentry.tests.base import MIZTestCase
+from tests.case import MIZTestCase
 
 
 class TestDateUtils(MIZTestCase):
