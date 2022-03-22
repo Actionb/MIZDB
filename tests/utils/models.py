@@ -6,7 +6,7 @@ class M2MTarget(models.Model):
 
 
 class M2MSource(models.Model):
-    targets = models.ManyToManyField('test_utils.M2MTarget', related_name='sources')
+    targets = models.ManyToManyField('utils.M2MTarget', related_name='sources')
 
 
 class Protector(models.Model):
@@ -14,4 +14,4 @@ class Protector(models.Model):
 
 
 class Protected(models.Model):
-    protector = models.ForeignKey('test_utils.Protector', on_delete=models.PROTECT)
+    protector = models.ForeignKey('utils.Protector', on_delete=models.PROTECT)
