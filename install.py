@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 from subprocess import run
 
-
 MIN_POSTGRES_VERSION = 13
 
 # noinspection SpellCheckingInspection
@@ -86,7 +85,6 @@ USE VHost {venv_directory} {project_directory}
 UndefMacro VHost
 """
 
-
 parser = argparse.ArgumentParser(description="MIZDB installieren.")
 parser.add_argument('-V', '--venv', dest='venv_directory',
                     help="Pfad zur virtuellen Umgebung")
@@ -101,7 +99,6 @@ parser.add_argument('--db-user', default='mizdb', dest='db_user',
 
 
 class InstallationAborted(Exception):
-
     default_message = "Installation abgebrochen."
 
     def __init__(self, msg: str = '') -> None:
@@ -135,8 +132,9 @@ def confirm(prompt):
 def password_prompt():
     while True:
         try:
-            db_password = shlex.quote(getpass.getpass(
-                "Geben Sie das Passwort für den neuen Datenbankbenutzer ein: "))
+            db_password = shlex.quote(
+                getpass.getpass("Geben Sie das Passwort für den neuen Datenbankbenutzer ein: ")
+            )
             if db_password == shlex.quote(getpass.getpass("Geben Sie es noch einmal ein: ")):
                 return db_password
             else:
@@ -147,6 +145,7 @@ def password_prompt():
 
 
 def install_system_packages():
+    """Install required system packages (apache2, postgresql, etc.)."""
     print("Installiere notwendige Pakete...")
     _run('sudo apt update')
     _run(
@@ -157,9 +156,11 @@ def install_system_packages():
 
 
 def check_postgres_server(port):
-    # Check that the postgres server on the given port has the correct version.
-    #
-    # Return a boolean indicating whether database migrations can be applied.
+    """
+    Check that the postgres server on the given port has the correct version.
+
+    Return a boolean indicating whether database migrations can be applied.
+    """
     print("Prüfe PostgreSQL...", end="", flush=True)
     cmd = _run(
         f'sudo -u postgres psql --port={port!s} -c "SHOW server_version;"',
@@ -225,6 +226,7 @@ def create_database(port, db_name, db_user, db_password):
 
 
 def create_venv(venv_directory):
+    """Create a virtual environment to install into and update pip."""
     if os.path.exists(venv_directory) and not confirm(
             f"{venv_directory} existiert bereits. Überschreiben? [J/n] "):
         return
@@ -235,6 +237,7 @@ def create_venv(venv_directory):
 
 
 def install_python_packages(venv_directory, project_directory):
+    """Install python requirements."""
     print("Installiere Python Pakete...", end="", flush=True)
     _run(f"{venv_directory}/bin/pip install -qr {project_directory}/requirements.txt")
     print("OK.")
@@ -301,7 +304,6 @@ def install_mod_wsgi(venv_directory, project_directory, host):
     _run("sudo -k service apache2 restart")
 
 
-# noinspection SpellCheckingInspection
 def install(venv_directory, port, host, db_name, db_user):
     project_directory = str(Path.cwd())
     if venv_directory:
@@ -340,7 +342,8 @@ def install(venv_directory, port, host, db_name, db_user):
 
     print("\n###################################################################\n")
     config_created = create_config(
-        venv_directory, project_directory, port, host, db_name, db_user, db_password)
+        venv_directory, project_directory, port, host, db_name, db_user, db_password
+    )
     manage = f"{venv_directory}/bin/python3 {project_directory}/manage.py"
     if config_created:
         if can_migrate:
