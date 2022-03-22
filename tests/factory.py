@@ -73,7 +73,8 @@ class ISSNFaker(factory.Faker):
 
 class RuntimeFactoryMixin(object):
     """
-    A mixin that can create a missing related factory during runtime.
+    A mixin for a SubFactory or a RelatedFactory that can create a missing
+    related factory on the fly.
 
     Accepts the additional keyword argument ``related_model`` which is the
     model class for the factory class that would be created if it was found

@@ -21,9 +21,15 @@ class Band(models.Model):
 class Magazin(models.Model):
     magazin_name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return f"{self.magazin_name} ({self.pk})"
+
 
 class Ausgabe(models.Model):
-    magazin = models.ForeignKey('tests.Magazin', on_delete=models.PROTECT)
+    name = models.CharField(max_length=100)
+    magazin = models.ForeignKey(
+        'tests.Magazin', on_delete=models.PROTECT, related_name='ausgaben', null=True
+    )
 
 
 class Artikel(models.Model):
@@ -88,3 +94,13 @@ class Bestand(models.Model):
 
     class Meta:
         verbose_name = 'Bestand'
+
+
+class Ancestor(models.Model):
+    name = models.CharField(max_length=100, blank=True)
+    ancestor = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, blank=True, null=True, related_name='children'
+    )
+
+    def __str__(self):
+        return self.name
