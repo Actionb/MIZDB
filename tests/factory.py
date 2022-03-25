@@ -512,6 +512,8 @@ class MIZDjangoOptions(factory.django.DjangoOptions):
             factory.builder.parse_declarations(self.declarations))
 
 
+# TODO: might be okay to cut MIZModelFactory; factory boy handles get_or_create
+#  queries better now. (also: full_relations isn't used)
 class MIZModelFactory(factory.django.DjangoModelFactory):
     """
     Factory for the models of the dbentry app.
@@ -664,6 +666,9 @@ def modelfactory_factory(model: Type[Model], **kwargs: Any) -> Type[MIZModelFact
         modelfac = getattr(sys.modules[__name__], factory_name)
         if modelfac._meta.model == model:
             return modelfac
+    # TODO: is it safe to use sys.modules to check for contents of a external
+    #  module, or should an import be attempted instead?
+    #  -- ALSO: why even bother checking factory.base?
     if hasattr(sys.modules['factory.base'], factory_name):
         modelfac = getattr(sys.modules['factory.base'], factory_name)
         if modelfac._meta.model == model:

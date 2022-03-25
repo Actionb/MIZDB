@@ -43,7 +43,8 @@ class VeranstaltungsReihe(models.Model):
 class Veranstaltung(models.Model):
     name = models.CharField(max_length=100)
     reihe = models.ForeignKey(
-        'tests.VeranstaltungsReihe', on_delete=models.SET_NULL, blank=True, null=True)
+        'tests.VeranstaltungsReihe', on_delete=models.SET_NULL, blank=True, null=True
+    )
 
     musiker = models.ManyToManyField('tests.Musiker')
     band = models.ManyToManyField('tests.Band')
@@ -87,7 +88,7 @@ class Lagerort(models.Model):
 class Bestand(models.Model):
     lagerort = models.ForeignKey('tests.Lagerort', models.PROTECT)
 
-    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE, related_name='bestand')
+    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE, related_name='bestände')
 
     def __str__(self):
         return str(self.lagerort)
