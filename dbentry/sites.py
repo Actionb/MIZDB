@@ -109,26 +109,18 @@ class MIZAdminSite(admin.AdminSite):
 
     def add_categories(self, app_list: List[dict]) -> List[dict]:
         """Regroup the models in app_list by introducing categories."""
-        # Find the index of the dbentry app:
-        index = None
-        try:
-            # @formatter:off
-            index = next(
-                i
-                for i, d in enumerate(app_list)
-                if d['app_label'] == 'dbentry'
-            )
-            # @formatter:on
-        except StopIteration:
-            pass
-        if index is None:
+        # Get the dict containing data for the dbentry app.
+        # (dict keys: app_url, name, has_module_perms, models, app_label)
+        dbentry_dict = None
+        for i, app_dict in enumerate(app_list):
+            if app_dict['app_label'] == 'dbentry':
+                dbentry_dict = app_list.pop(i)
+                break
+        if dbentry_dict is None:
             # No app with label 'dbentry' found.
             # Return an empty app_list.
             return []
 
-        # Get the dict containing data for the dbentry app with keys:
-        # {app_url, name, has_module_perms, models, app_label}
-        dbentry_dict = app_list.pop(index)
         model_list = dbentry_dict.pop('models')
         categories: OrderedDictType[str, list] = OrderedDict()
         categories['Archivgut'] = []
@@ -138,7 +130,9 @@ class MIZAdminSite(admin.AdminSite):
         # Divide the models into their categories.
         for m in model_list:
             model_admin = utils.get_model_admin_for_model(m['object_name'], self)
-            # TODO: get_model_admin_for_model may return None here
+            if model_admin is None:  # pragma: no cover
+                continue
+            # noinspection PyUnresolvedReferences
             model_category = model_admin.get_index_category()
             if model_category not in categories:
                 categories['Sonstige'] = [m]

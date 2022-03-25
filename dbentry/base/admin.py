@@ -48,7 +48,6 @@ class AutocompleteMixin(object):
                 model=db_field.related_model,
                 tabular=db_field.name in self.tabular_autocomplete
             )
-        # noinspection PyUnresolvedReferences
         return super().formfield_for_foreignkey(db_field, request, **kwargs)  # type: ignore[misc]
 
 
@@ -91,7 +90,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     def check(self, **kwargs: Any) -> list:
         errors = super().check(**kwargs)
         errors.extend(self._check_fieldset_fields(**kwargs))
-        errors.extend(self._check_search_fields_lookups(**kwargs))
         return errors
 
     def _check_fieldset_fields(self, **_kwargs: Any) -> List[checks.CheckMessage]:
@@ -120,30 +118,12 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     )
         return errors
 
-    def _check_search_fields_lookups(self, **_kwargs: Any) -> List[checks.CheckMessage]:
-        """Check that all search fields and their lookups are valid."""
-        errors = []
-        msg_template = "Invalid search field '%s': %s"
-        for search_field in self.get_search_fields(request=None):
-            if search_field[0] in ('=', '^', '@'):
-                # Lookup shortcut prefixes for ModelAdmin.construct_search.
-                search_field = search_field[1:]
-            try:
-                get_fields_and_lookups(self.model, search_field)
-            except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
-                errors.append(
-                    checks.Error(
-                        msg_template % (search_field, e.args[0]),
-                        obj=self.__class__
-                    )
-                )
-        return errors
-
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:
         return MIZChangeList
 
     def get_index_category(self) -> str:
-        """Return the index category of this ModelAdmin.
+        """
+        Return the index category of this ModelAdmin.
 
         Called by MIZAdminSite to create 'fake' apps for grouping purposes.
         """

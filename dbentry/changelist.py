@@ -3,6 +3,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from dbentry.search.admin import ChangelistSearchFormMixin
+from dbentry.utils import get_model_fields
 
 
 class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
@@ -27,7 +28,6 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
         # Add annotations required for this model admin's 'list_display' items.
         annotations = self.model_admin.get_result_list_annotations()
         if annotations:
-            # noinspection PyAttributeOutsideInit
             self.result_list = self.result_list.annotate(**annotations)  # type: ignore[has-type]
 
     def get_show_all_url(self) -> str:
@@ -48,3 +48,27 @@ class AusgabeChangeList(MIZChangeList):
             return super().get_queryset(request)
         else:
             return super().get_queryset(request).chronological_order()
+
+
+class BestandChangeList(ChangeList):
+
+    def get_results(self, request: HttpRequest) -> None:
+        super().get_results(request)
+        # Include the related archive objects referenced by the Bestand objects
+        # (i.e. Ausgabe, Audio, etc.) in the result queryset.
+        bestand_fields = [
+            f for f in get_model_fields(self.model, base=False, foreign=True, m2m=False)
+            if f.related_model._meta.model_name not in ('lagerort', 'provenienz')
+        ]
+        # Let the model admin cache the data it needs for the list display
+        # items 'bestand_class' and 'bestand_link'.
+        self.model_admin.cache_bestand_data(
+            request,
+            self.result_list.select_related(*[f.name for f in bestand_fields]),  # type: ignore[has-type]  # noqa
+            bestand_fields
+        )
+        # Overwrite the result_list.
+        self.result_list = self.result_list.select_related(  # type: ignore[has-type]
+            *self.list_select_related,
+            *[f.name for f in bestand_fields]
+        )

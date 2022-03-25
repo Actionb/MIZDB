@@ -291,7 +291,6 @@ class TestFuncs(unittest.TestCase):
             self.assertCMDCalled("sudo -k service apache2 restart", run.call_args_list)
 
 
-# noinspection PyUnresolvedReferences
 class TestInstall(unittest.TestCase):
 
     def setUp(self):
@@ -342,7 +341,6 @@ class TestInstall(unittest.TestCase):
             **kwargs
         }
 
-    # noinspection PyUnresolvedReferences
     def test_install(self):
         patches = {
             '_run': mock.DEFAULT,
@@ -361,7 +359,6 @@ class TestInstall(unittest.TestCase):
             self.create_config.assert_called()
             self.install_mod_wsgi.assert_called()
 
-    # noinspection PyUnresolvedReferences
     def test_install_venv_directory(self):
         # venv_directory should point at a subdirectory of the project directory,
         # if venv_directory parameter was not supplied.

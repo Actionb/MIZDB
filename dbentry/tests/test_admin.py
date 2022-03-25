@@ -9,7 +9,7 @@ from django.contrib.auth.models import Permission, User
 from django.core import checks, exceptions
 from django.db import connections, transaction
 from django.db.models import Min
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.test.utils import CaptureQueriesContext  # noqa
 from django.urls import reverse
 from django.utils.translation import override as translation_override
@@ -24,7 +24,6 @@ from dbentry.tests.base import AdminTestCase
 from dbentry.utils import get_model_fields
 
 
-# noinspection PyUnresolvedReferences
 class AdminTestMethodsMixin(object):
     test_data_count = 1
     # the model instance with which the add_crosslinks method is to be tested
@@ -308,7 +307,6 @@ class AdminTestMethodsMixin(object):
         self.assertEqual(response.status_code, 200)
 
 
-# noinspection PyUnresolvedReferences
 class TestMIZModelAdmin(AdminTestCase):
     model_admin_class = _admin.DateiAdmin
     model = _models.Datei
@@ -472,69 +470,6 @@ class TestMIZModelAdmin(AdminTestCase):
                 )
             )
 
-    def test_check_search_fields_lookups(self):
-        # Assert that _check_search_fields_lookups finds invalid search fields
-        # and/or lookups correctly.
-        with patch.object(self.model_admin, 'get_search_fields'):
-            self.model_admin.get_search_fields.return_value = ['titel__iexact']
-            self.assertFalse(self.model_admin._check_search_fields_lookups())
-            # Check for invalid field:
-            self.model_admin.get_search_fields.return_value = ['thisisnofield']
-            errors = self.model_admin._check_search_fields_lookups()
-            self.assertTrue(errors)
-            self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(
-                errors[0].msg,
-                "Invalid search field '{0}': {1} has no field named '{0}'".format(
-                    'thisisnofield', self.model._meta.object_name)
-            )
-            # Check for invalid lookups:
-            self.model_admin.get_search_fields.return_value = ['genre__genre__year']
-            errors = self.model_admin._check_search_fields_lookups()
-            self.assertTrue(errors)
-            self.assertEqual(len(errors), 1)
-            self.assertIsInstance(errors[0], checks.Error)
-            self.assertEqual(
-                errors[0].msg,
-                "Invalid search field '%s': Invalid lookup: %s for %s." % (
-                    'genre__genre__year', 'year', 'CharField')
-            )
-
-    def test_check_search_fields_lookups_lookup_shortcuts(self):
-        # Assert that _check_search_fields_lookups handles lookup shortcuts
-        # such as '=', '^', '@' (for django's ModelAdmin.construct_search).
-        # Check each valid prefix twice: once with a valid field and once with
-        # an invalid one. If only the invalid fields fail the check, the problem
-        # can't be the prefix.
-        msg_template = "Invalid search field '{0}': {1} has no field named '{0}'"
-        with patch.object(self.model_admin, 'get_search_fields'):
-            for prefix in ('=', '^', '@'):
-                for invalid, field in enumerate(('titel', 'thisisnofield')):
-                    self.model_admin.get_search_fields.return_value = [prefix + field]
-                    with self.subTest(prefix=prefix, field=field):
-                        if invalid:
-                            errors = self.model_admin._check_search_fields_lookups()
-                            self.assertTrue(errors)
-                            self.assertEqual(len(errors), 1)
-                            self.assertIsInstance(errors[0], checks.Error)
-                            expected_msg = msg_template.format(field, self.model._meta.object_name)
-                            self.assertEqual(errors[0].msg, expected_msg)
-                        else:
-                            self.assertFalse(self.model_admin._check_search_fields_lookups())
-            # Any other prefix should receive no special treatment:
-            for field in ('_thisisnofield', '&nofieldeither'):
-                with self.subTest(field=field):
-                    self.model_admin.get_search_fields.return_value = [field]
-                    errors = self.model_admin._check_search_fields_lookups()
-                    self.assertTrue(errors)
-                    self.assertEqual(len(errors), 1)
-                    self.assertIsInstance(errors[0], checks.Error)
-                    # The 'prefix' should be included in the error message.
-                    expected_msg = msg_template.format(field, self.model._meta.object_name)
-                    self.assertEqual(errors[0].msg, expected_msg)
-
-
 class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.ArtikelAdmin
     model = _models.Artikel
@@ -589,7 +524,6 @@ class TestArtikelAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-# noinspection PyUnresolvedReferences
 class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AusgabenAdmin
     model = _models.Ausgabe
@@ -872,7 +806,6 @@ class TestAusgabenAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MagazinAdmin
     model = _models.Magazin
@@ -925,7 +858,6 @@ class TestMagazinAdmin(AdminTestMethodsMixin, AdminTestCase):
         )
 
 
-# noinspection PyUnresolvedReferences
 class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.PersonAdmin
     model = _models.Person
@@ -986,7 +918,6 @@ class TestPersonAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
-# noinspection PyUnresolvedReferences
 class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MusikerAdmin
     model = _models.Musiker
@@ -1036,7 +967,6 @@ class TestMusikerAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
-# noinspection PyUnresolvedReferences
 class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.GenreAdmin
     model = _models.Genre
@@ -1094,7 +1024,6 @@ class TestGenreAdmin(AdminTestMethodsMixin, AdminTestCase):
                 self.assertInCrosslinks(data, crosslinks)
 
 
-# noinspection PyUnresolvedReferences
 class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.SchlagwortAdmin
     model = _models.Schlagwort
@@ -1129,7 +1058,6 @@ class TestSchlagwortAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.alias_string(obj), 'Alias1, Alias2')
 
 
-# noinspection PyUnresolvedReferences
 class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BandAdmin
     model = _models.Band
@@ -1181,7 +1109,6 @@ class TestBandAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.orte_string(obj), 'Dortmund, XYZ')
 
 
-# noinspection PyUnresolvedReferences
 class TestAutorAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AutorAdmin
     model = _models.Autor
@@ -1273,7 +1200,6 @@ class TestInstrumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-# noinspection PyUnresolvedReferences
 class TestAudioAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.AudioAdmin
     model = _models.Audio
@@ -1336,7 +1262,6 @@ class TestSpielortAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-# noinspection PyUnresolvedReferences
 class TestVeranstaltungAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VeranstaltungAdmin
     model = _models.Veranstaltung
@@ -1491,7 +1416,6 @@ class TestBaseBrochureAdmin(AdminTestCase):
         self.assertEqual(annotations['jahr_min'], Min('jahre__jahr'))
 
 
-# noinspection PyUnresolvedReferences
 class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BrochureAdmin
     model = _models.Brochure
@@ -1521,7 +1445,6 @@ class TestBrochureAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
-# noinspection PyUnresolvedReferences
 class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KatalogAdmin
     model = _models.Katalog
@@ -1561,7 +1484,6 @@ class TestKatalogAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
-# noinspection PyUnresolvedReferences
 class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.KalenderAdmin
     model = _models.Kalender
@@ -1591,7 +1513,6 @@ class TestKalenderAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(self.model_admin.search_form_kwargs['forwards']['ausgabe'], 'ausgabe__magazin')
 
 
-# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.MemoAdmin
@@ -1615,7 +1536,6 @@ class TestMemoAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.DokumentAdmin
@@ -1639,7 +1559,6 @@ class TestDokumentAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 @skip("Unfinished model/ModelAdmin")
 class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.TechnikAdmin
@@ -1663,7 +1582,6 @@ class TestTechnikAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.VideoAdmin
     model = _models.Video
@@ -1692,7 +1610,6 @@ class TestVideoAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(response.templates[0].name, 'admin/change_bestand.html')
 
 
-# noinspection PyUnresolvedReferences
 class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.BestandAdmin
     model = _models.Bestand
@@ -1702,26 +1619,71 @@ class TestBestandAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
     num_queries_changelist = 0  # skip the test for the number of queries per changelist request
 
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.audio_object = make(_models.Audio, titel="Hovercrafts Full of Eels")
+        cls.bestand_object = make(_models.Bestand, audio=cls.audio_object)
+
+    def test_cache_bestand_data(self):
+        """
+        The method cache_bestand_data should build a cache containing
+        'bestand_class' and 'bestand_link' items for each object in the
+        changelist result list.
+        """
+        self.model_admin.cache_bestand_data(
+            self.get_request(), self.queryset, bestand_fields=[self.model._meta.get_field('audio')])
+        self.assertTrue(getattr(self.model_admin, '_cache', None))
+        cache = self.model_admin._cache
+        self.assertIn(self.bestand_object.pk, cache)
+        self.assertIn('bestand_class', cache[self.bestand_object.pk])
+        self.assertEqual('Audio Material', cache[self.bestand_object.pk]['bestand_class'])
+        self.assertIn('bestand_link', cache[self.bestand_object.pk])
+        self.assertTrue(cache[self.bestand_object.pk]['bestand_link'].startswith('<a'))
+
+    def test_changelist_cache(self):
+        """A request for the changelist should fill the bestand data cache."""
+        self.assertFalse(getattr(self.model_admin, '_cache', None))
+        self.model_admin.get_changelist_instance(self.get_request(path=self.changelist_path))
+        self.assertTrue(getattr(self.model_admin, '_cache', None))
+
     def test_bestand_class(self):
-        # Assert that list_display method bestand_class returns the verbose_name
-        # of the model that is referenced by the particular Bestand instance.
-        obj = make(self.model)
-        self.assertFalse(self.model_admin.bestand_class(obj))
-        obj = make(self.model, audio=make(_models.Audio))
-        self.assertEqual(self.model_admin.bestand_class(obj), _models.Audio._meta.verbose_name)
+        """
+        Assert that list_display method bestand_class returns the verbose_name
+        of the model that is referenced by the particular Bestand instance.
+        """
+        unrelated_object = make(self.model)
+        self.model_admin.cache_bestand_data(
+            self.get_request(), self.queryset, bestand_fields=[self.model._meta.get_field('audio')])
+
+        self.assertEqual('Audio Material', self.model_admin.bestand_class(self.bestand_object))
+        # This object has no relations; the 'bestand_class' should be an empty
+        # string.
+        self.assertFalse(self.model_admin.bestand_class(unrelated_object))
+        # The cache won't have an entry for this new object; expect an empty
+        # string.
+        new_object = make(self.model)
+        self.assertFalse(self.model_admin.bestand_class(new_object))
 
     def test_bestand_link(self):
-        # Assert that list_display method bestand_link returns a hyperlink to
-        # the instance that is referenced by the particular Bestand instance.
-        obj = make(self.model)
-        self.assertFalse(self.model_admin.bestand_link(obj))
-        obj = make(self.model, audio=make(_models.Audio))
-        # Need to set a request attribute on the model_admin instance:
-        self.model_admin.request = self.get_request()
-        link = self.model_admin.bestand_link(obj)
+        """
+        Assert that list_display method bestand_link returns a hyperlink to
+        the instance that is referenced by the particular Bestand instance.
+        """
+        unrelated_object = make(self.model)
+        self.model_admin.cache_bestand_data(
+            self.get_request(), self.queryset, bestand_fields=[self.model._meta.get_field('audio')])
+
+        link = self.model_admin.bestand_link(self.bestand_object)
         self.assertTrue(link.startswith('<a'))
         self.assertIn('target="_blank"', link)
-        self.assertIn(str(obj.audio.pk), link)
+        self.assertIn(str(self.bestand_object.audio.pk), link)
+        # This object has no relations; the link should be an empty string.
+        self.assertFalse(self.model_admin.bestand_class(unrelated_object))
+        # The cache won't have an entry for this new object; expect an empty
+        # string.
+        new_object = make(self.model)
+        self.assertFalse(self.model_admin.bestand_class(new_object))
 
 
 class TestDateiAdmin(AdminTestMethodsMixin, AdminTestCase):
@@ -1749,7 +1711,6 @@ class TestHerausgeberAdmin(AdminTestMethodsMixin, AdminTestCase):
     ]
 
 
-# noinspection PyUnresolvedReferences
 class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
     model_admin_class = _admin.PlakatAdmin
     model = _models.Plakat
@@ -1833,7 +1794,6 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertEqual(form.cleaned_data['id__in'], str(self.obj1.pk))
 
 
-# noinspection PyUnresolvedReferences
 class TestAuthAdminMixin(TestCase):
 
     @patch('dbentry.admin.super')
@@ -1851,7 +1811,6 @@ class TestAuthAdminMixin(TestCase):
                 self.assertIn(_models.AusgabeLnum.__name__, choice[1])
 
 
-# noinspection PyUnresolvedReferences
 class TestMIZChangelist(AdminTestCase):
     model = _models.Genre
     model_admin_class = _admin.GenreAdmin
@@ -1966,6 +1925,33 @@ class TestMIZChangelist(AdminTestCase):
         mocked_get_annotations.return_value = {'c': Count('artikel')}
         changelist.get_results(request)
         self.assertIn('c', changelist.result_list.query.annotations)
+
+
+class TestBestandChangeList(AdminTestCase):
+
+    model_admin_class = _admin.BestandAdmin
+    model = _models.Bestand
+
+    def test_get_results_select_related(self):
+        """The result_list queryset should select the related archive objects."""
+        request = RequestFactory().get('/')
+        request.user = self.super_user
+        changelist = self.model_admin.get_changelist_instance(request)
+        changelist.get_results(request)
+        select_related = list(changelist.result_list.query.select_related)
+        for path in ('audio', 'ausgabe', 'brochure', 'buch', 'dokument', 'foto',
+                     'memorabilien', 'plakat', 'technik', 'video',
+                     'lagerort', 'provenienz__geber'):
+            # Note that a path like provenienz__geber will be represented by a
+            # nested dict in query.select_related: {'provenienz': {'geber': {}}}
+            related = path.split('__', 1)[0]
+            with self.subTest(relation_path=path):
+                self.assertIn(related, select_related)
+                select_related.remove(related)
+        self.assertFalse(
+            select_related,
+            msg="Queryset unexpectedly selected additional related-object data."
+        )
 
 
 class TestFotoAdmin(AdminTestMethodsMixin, AdminTestCase):

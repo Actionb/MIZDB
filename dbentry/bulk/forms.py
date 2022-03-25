@@ -88,7 +88,6 @@ class BulkForm(MIZAdminForm):
             return cleaned_data
 
         self.total_count = 0
-        # noinspection PyAttributeOutsideInit
         self.split_data: Dict[str, list] = {}
         for fld_name, fld in self.fields.items():
             if not isinstance(fld, BaseSplitField):
@@ -129,7 +128,6 @@ class BulkForm(MIZAdminForm):
                     # item_counts in the iteration have to match this field's
                     # item_count (or be zero) or we cannot define the exact
                     # number of objects to create.
-                    # noinspection PyAttributeOutsideInit
                     self.total_count = item_count
         return cleaned_data
 

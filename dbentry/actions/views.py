@@ -30,13 +30,14 @@ from dbentry.utils.admin import (
 )
 
 
-# noinspection PyUnresolvedReferences
 def check_same_magazin(view: FormView, **_kwargs: Any) -> bool:
     """
     Check that all objects in the view's queryset are related to the same
     Magazin instance.
     """
+    # noinspection PyUnresolvedReferences
     if view.queryset.values('magazin_id').distinct().count() != 1:
+        # noinspection PyUnresolvedReferences
         view.model_admin.message_user(
             request=view.request, level=messages.ERROR,
             message='Aktion abgebrochen: Die ausgewählten %s gehören zu '
@@ -245,7 +246,6 @@ class MergeViewWizarded(WizardConfirmationView):
             return False
         return True
 
-    # noinspection PyAttributeOutsideInit
     @property
     def updates(self) -> dict:
         """
@@ -280,12 +280,11 @@ class MergeViewWizarded(WizardConfirmationView):
         """
         # Get the 'primary' object chosen by the user and
         # exclude it from the queryset we are working with.
-        # noinspection PyUnresolvedReferences
         try:
             original_pk = data[self.get_form_prefix() + '-primary']
             # noinspection PyUnresolvedReferences
             primary = self.model.objects.get(pk=original_pk)
-        except (KeyError, self.model.DoesNotExist):
+        except (KeyError, self.model.DoesNotExist):  # noqa
             return False, None
         qs = self.queryset.exclude(pk=primary.pk)
 
@@ -389,7 +388,6 @@ class MergeViewWizarded(WizardConfirmationView):
         elif step == self.SELECT_PRIMARY_STEP:
             # MergeFormSelectPrimary form:
             # choices for the selection of primary are objects in the queryset
-            # noinspection PyUnresolvedReferences
             kwargs['choices'] = {
                 prefix + '-' + form_class.PRIMARY_FIELD_NAME: self.queryset
             }
@@ -414,9 +412,7 @@ class MergeViewWizarded(WizardConfirmationView):
                         update_data[fld_name] = value
         original_pk = self.get_cleaned_data_for_step('0').get('primary', 0)
         primary = self.opts.model.objects.get(pk=original_pk)
-        merge_records(
-            primary, self.queryset, update_data, expand, request=self.request
-        )
+        merge_records(primary, self.queryset, update_data, expand, user_id=self.request.user.pk)
 
     def done(self, *args: Any, **kwargs: Any) -> None:
         """
@@ -484,7 +480,6 @@ class MoveToBrochureBase(ActionConfirmationView):
             )
         return initial
 
-    # noinspection PyAttributeOutsideInit
     @property
     def magazin_instance(self) -> Magazin:
         """Return the magazin instance common to all queryset objects."""
@@ -498,7 +493,6 @@ class MoveToBrochureBase(ActionConfirmationView):
                 self._magazin_instance = None
         return self._magazin_instance
 
-    # noinspection PyAttributeOutsideInit
     @property
     def can_delete_magazin(self) -> bool:
         """
@@ -583,12 +577,11 @@ class MoveToBrochureBase(ActionConfirmationView):
                 continue
 
             # Verify that the ausgabe exists and can be deleted
-            # noinspection PyUnresolvedReferences
             try:
                 ausgabe_instance = _models.Ausgabe.objects.get(
                     pk=data['ausgabe_id']
                 )
-            except (_models.Ausgabe.DoesNotExist, _models.Ausgabe.MultipleObjectsReturned):
+            except (_models.Ausgabe.DoesNotExist, _models.Ausgabe.MultipleObjectsReturned):  # noqa
                 continue
             if is_protected([ausgabe_instance]):
                 protected_ausg.append(ausgabe_instance)
@@ -621,7 +614,6 @@ class MoveToBrochureBase(ActionConfirmationView):
             except ProtectedError:
                 protected_ausg.append(ausgabe_instance)
             else:
-                # noinspection PyUnresolvedReferences
                 create_logentry(
                     user_id=self.request.user.pk,
                     obj=new_brochure,
@@ -629,7 +621,7 @@ class MoveToBrochureBase(ActionConfirmationView):
                     message="Hinweis: "
                             "{verbose_name} wurde automatisch erstellt beim Verschieben"
                             " von Ausgabe {str_ausgabe} (Magazin: {str_magazin}).".format(
-                                verbose_name=brochure_class._meta.verbose_name,
+                                verbose_name=brochure_class._meta.verbose_name,  # noqa
                                 str_ausgabe=str_ausgabe,
                                 str_magazin=str(self.magazin_instance)
                             )

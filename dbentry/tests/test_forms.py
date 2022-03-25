@@ -31,7 +31,6 @@ class TestAusgabeMagazinFieldForm(ModelFormTestCase):
     fields = ['ausgabe']
     test_data_count = 1
 
-    # noinspection PyUnresolvedReferences
     def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance': self.obj1}
@@ -53,7 +52,6 @@ class TestArtikelForm(ModelFormTestCase):
     fields = ['ausgabe', 'schlagzeile', 'zusammenfassung', 'beschreibung', 'bemerkungen']
     test_data_count = 1
 
-    # noinspection PyUnresolvedReferences
     def test_init_initial_magazin(self):
         # test if initial for ausgabe.magazin is set properly during init
         kwargs = {'instance': self.obj1}
@@ -183,7 +181,6 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         self.assertEqual(form.fields['cf'].choices, expected)
         self.assertEqual(form.fields['cf2'].choices, expected)
 
-    # noinspection PyUnresolvedReferences
     def test_set_choices_manager(self):
         # choices is a BaseManager
         choices = {forms.ALL_FIELDS: _models.Genre.objects}
@@ -195,7 +192,6 @@ class TestDynamicChoiceForm(TestDataMixin, FormTestCase):
         self.assertEqual(form.fields['cf'].choices, expected)
         self.assertEqual(form.fields['cf2'].choices, expected)
 
-    # noinspection PyUnresolvedReferences
     def test_set_choices_queryset(self):
         # choices is a QuerySet
         choices = {forms.ALL_FIELDS: _models.Genre.objects.all()}
@@ -513,7 +509,6 @@ class TestMIZAdminInlineFormBase(MyTestCase):
 
 class DiscogsMixinAttributesTestMixin(object):
 
-    # noinspection PyUnresolvedReferences
     def test_discogs_mixin_attributes_set(self):
         # Assert that url_field_name and release_id_field_name are set.
         msg_template = "'%s' attribute not set on %s"

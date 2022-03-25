@@ -17,7 +17,6 @@ from dbentry.search.forms import MIZAdminSearchForm
 from dbentry.tests.base import AdminTestCase
 
 
-# noinspection PyUnresolvedReferences
 class TestAdminMixin(AdminTestCase):
 
     model = _models.Plakat
@@ -380,7 +379,6 @@ class TestAdminMixin(AdminTestCase):
                 )
 
 
-# noinspection PyUnresolvedReferences
 class TestSearchFormChangelist(AdminTestCase):
 
     model = _models.Plakat

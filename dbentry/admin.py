@@ -10,7 +10,8 @@ from django.contrib.auth.models import Group, Permission, User
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db import transaction
 from django.db.models import (
-    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField, Min,
+    CharField, Count, Exists, Field as ModelField, Func, IntegerField, ManyToManyField,
+    Min,
     OuterRef,
     QuerySet, Subquery,
     Value
@@ -30,7 +31,7 @@ from dbentry.base.admin import (
     BaseAliasInline, BaseAusgabeInline, BaseGenreInline, BaseOrtInLine, BaseSchlagwortInline,
     BaseStackedInline, BaseTabularInline, MIZModelAdmin
 )
-from dbentry.changelist import AusgabeChangeList
+from dbentry.changelist import AusgabeChangeList, BestandChangeList
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.sites import miz_site
 from dbentry.utils import concat_limit, copy_related_set
@@ -715,7 +716,6 @@ class BuchAdmin(MIZModelAdmin):
         verbose_model = _models.Verlag
 
     collapse_all = True
-    # TODO: Semantik: Einzelbänder/Aufsätze: Teile eines Buchbandes
     crosslink_labels = {'buch': 'Aufsätze'}
     form = _forms.BuchForm
     index_category = 'Archivgut'
@@ -810,6 +810,10 @@ class GenreAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
     list_display = ['genre', 'alias_string']
     ordering = ['genre']
+    # Need to define search_fields to have the template render the default
+    # search bar. Note that the fields declared here do not matter, as the
+    # search will be a postgres text search on the model's SearchVectorField.
+    search_fields = ['__ANY__']
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1018,6 +1022,10 @@ class SchlagwortAdmin(MIZModelAdmin):
     inlines = [AliasInLine]
     list_display = ['schlagwort', 'alias_string']
     ordering = ['schlagwort']
+    # Need to define search_fields to have the template render the default
+    # search bar. Note that the fields declared here do not matter, as the
+    # search will be a postgres text search on the model's SearchVectorField.
+    search_fields = ['__ANY__']
 
     def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
         return {
@@ -1252,32 +1260,63 @@ class BestandAdmin(MIZModelAdmin):
         'memorabilien', 'plakat', 'technik', 'video'
     ]
     list_display = ['signatur', 'bestand_class', 'bestand_link', 'lagerort', 'provenienz']
-    search_form_kwargs = {'fields': ['lagerort', 'signatur']}
+    list_select_related = ['lagerort', 'provenienz__geber']
+    search_form_kwargs = {'fields': ['lagerort', 'provenienz', 'signatur']}
     superuser_only = True
-    # FIXME: the search form is missing a text search element ('q')
-    # FIXME: the search form is missing a 'show all'
 
-    def get_queryset(self, request: HttpRequest, **kwargs: Any) -> QuerySet:
-        # noinspection PyAttributeOutsideInit
-        self.request = request  # save the request for bestand_link()
-        return super().get_queryset(request)
+    def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[BestandChangeList]:
+        return BestandChangeList
+
+    def cache_bestand_data(self, request: HttpRequest, result_list: QuerySet, bestand_fields: list):
+        """
+        Use the changelist's result_list queryset to cache the data needed for
+        the list display items 'bestand_class' and 'bestand_link'.
+
+        Args:
+            request (HttpRequest): the request for the changelist page
+            result_list (QuerySet): result_list queryset for the results page
+            bestand_fields (list): list of the ForeignKey fields of the Bestand
+              model that reference models of archive objects (i.e. Ausgabe,
+              Audio, etc.)
+        """
+        field_names = [f.name for f in bestand_fields]
+
+        self._cache = {}
+        for obj in result_list.select_related(*field_names):
+            relation_field = None
+            for field in bestand_fields:
+                if getattr(obj, field.name) is not None:
+                    relation_field = field
+                    break
+            if not relation_field:
+                continue
+            # noinspection PyUnresolvedReferences
+            self._cache[obj.pk] = {
+                'bestand_class': relation_field.related_model._meta.verbose_name,
+                'bestand_link': get_obj_link(
+                    getattr(obj, relation_field.name), request.user, blank=True
+                )
+            }
 
     def bestand_class(self, obj: _models.Bestand) -> str:
-        if obj.bestand_object:
-            # noinspection PyUnresolvedReferences
-            return obj.bestand_object._meta.verbose_name
-        return ''
+        try:
+            return self._cache[obj.pk]['bestand_class']
+        except KeyError:
+            return ''
     bestand_class.short_description = 'Art'  # type: ignore[attr-defined]  # noqa
 
     def bestand_link(self, obj: _models.Bestand) -> Union[SafeText, str]:
-        if obj.bestand_object:
-            # noinspection PyUnresolvedReferences
-            return get_obj_link(obj.bestand_object, self.request.user, blank=True)
-        return ''
+        try:
+            return self._cache[obj.pk]['bestand_link']
+        except KeyError:
+            return ''
     bestand_link.short_description = 'Link'  # type: ignore[attr-defined]  # noqa
 
     def _check_search_form_fields(self, **kwargs: Any) -> list:
         # Ignore the search form fields check for BestandAdmin.
+        # The check warns when a relation is missing from the search form, but
+        # BestandAdmin deliberately excludes most of the relations from the
+        # search form.
         return []
 
 
@@ -1605,7 +1644,6 @@ class AuthAdminMixin(object):
         Get a form field for a ManyToManyField. If it's the formfield for
         Permissions, adjust the choices to include the models' class names.
         """
-        # noinspection PyUnresolvedReferences
         formfield = super().formfield_for_manytomany(  # type: ignore[misc]
             db_field, request=request, **kwargs
         )

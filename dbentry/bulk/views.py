@@ -25,14 +25,14 @@ from dbentry.utils.admin import (
 
 @register_tool(url_name='bulk_ausgabe', index_label='Ausgaben Erstellung')
 class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView):
-    """A FormView that creates multiple ausgabe instances from a single form."""
+    """A FormView that creates multiple Ausgabe instances from a single form."""
 
     template_name = 'admin/bulk.html'
     form_class = BulkFormAusgabe
     title = "Ausgaben Erstellung"
     permission_required = ['dbentry.add_ausgabe']
     # 'preview_fields' determines what formfields may show up in the preview as
-    # columns and sets their order.
+    # columns, and sets their order.
     preview_fields = [
         'magazin', 'jahrgang', 'jahr', 'num', 'monat', 'lnum', 'audio',
         'audio_lagerort', 'ausgabe_lagerort', 'provenienz'
@@ -54,13 +54,12 @@ class BulkAusgabe(MIZAdminMixin, PermissionRequiredMixin, views.generic.FormView
             if old_form_data.get('jahrgang'):
                 old_form_data['jahrgang'] = int(old_form_data['jahrgang'])
             return old_form_data
-        # noinspection PyUnresolvedReferences
         try:
             return {
                 'ausgabe_lagerort': _models.Lagerort.objects.get(ort='Zeitschriftenraum'),
                 'dublette': _models.Lagerort.objects.get(ort='Dublettenlager'),
             }
-        except (_models.Lagerort.DoesNotExist, _models.Lagerort.MultipleObjectsReturned):
+        except (_models.Lagerort.DoesNotExist, _models.Lagerort.MultipleObjectsReturned):  # noqa
             return {}
 
     def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:

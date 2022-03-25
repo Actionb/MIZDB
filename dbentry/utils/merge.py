@@ -3,7 +3,6 @@ from typing import Dict, Optional, Tuple
 from django.db import models, transaction
 from django.db.models import Model, QuerySet
 from django.db.utils import IntegrityError
-from django.http import HttpRequest
 
 from dbentry.utils.admin import log_addition, log_change, log_deletion
 from dbentry.utils.models import (
@@ -12,13 +11,12 @@ from dbentry.utils.models import (
 )
 
 
-# noinspection  PyUnresolvedReferences
 def merge_records(
         original: Model,
         queryset: QuerySet,
         update_data: Optional[Dict] = None,
         expand_original: bool = True,
-        request: HttpRequest = None
+        user_id: int = 0
 ) -> Tuple[Model, Optional[Dict]]:
     """
     Merge all model instances in ``queryset`` into model instance ``original``.
@@ -34,20 +32,15 @@ def merge_records(
         queryset (QuerySet): the queryset containing the other records
         update_data (dict): data to update (via queryset.update) original with
         expand_original (bool): whether to update the original with update_data
-        request (HttpRequest): the request that prompted the merger; needed to
+        user_id (int): the id of the user who prompted the merger; needed to
             log the changes in django's admin log/history
 
     Returns:
         the updated original instance and a dictionary detailing the
             updates performed on that instance.
     """
-    user_id = 0
-    if request:
-        # TODO: REFACTOR: considering that request is only used to get at the
-        #   user_id, it might be better to just pass in the user_id
-        user_id = request.user.pk
-
     queryset = queryset.exclude(pk=original.pk)
+    # noinspection PyUnresolvedReferences
     model = original._meta.model
     original_qs = model.objects.filter(pk=original.pk)
     updatable_fields = get_updatable_fields(original)
@@ -75,6 +68,7 @@ def merge_records(
             related_model, related_field = get_relation_info_to(model, rel)
             # Get all the related objects that are going to be updated to be
             # related to original:
+            # noinspection PyUnresolvedReferences
             merger_related = related_model.objects.filter(
                 **{related_field.name + '__in': queryset}
             )
@@ -84,6 +78,7 @@ def merge_records(
 
             # Exclude all related objects that the original has already to
             # avoid IntegrityErrors due to UNIQUE CONSTRAINT violations.
+            # noinspection PyUnresolvedReferences
             for unique_together in related_model._meta.unique_together:
                 if related_field.name in unique_together:
                     # The ForeignKey field that led us from original's model
@@ -103,6 +98,7 @@ def merge_records(
                     unique_together.remove(related_field.name)
                     if not unique_together:
                         continue
+                # noinspection PyUnresolvedReferences
                 for values in (
                         related_model.objects
                         .filter(**{related_field.name: original})
@@ -125,6 +121,7 @@ def merge_records(
                 # qs_to_be_updated and do the update individually.
                 updated_ids = []
                 for pk in qs_to_be_updated.values_list('pk', flat=True):
+                    # noinspection PyUnresolvedReferences
                     loop_qs = related_model.objects.filter(pk=pk)
                     try:
                         with transaction.atomic():
@@ -139,6 +136,7 @@ def merge_records(
 
             # Log the changes:
             for pk in updated_ids:
+                # noinspection PyUnresolvedReferences
                 obj = related_model.objects.get(pk=pk)
                 if user_id:
                     # Log the addition of a new related object for original.

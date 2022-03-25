@@ -10,7 +10,6 @@ from dbentry.factory import make
 from dbentry.tests.base import MyTestCase
 
 
-# noinspection PyUnresolvedReferences
 class TestModelUtils(MyTestCase):
 
     def test_get_relations_between_models_many_to_one(self):
@@ -164,7 +163,6 @@ class TestModelUtils(MyTestCase):
             utils.get_fields_and_lookups(_models.Artikel, 'foo__icontains')
 
 
-# noinspection PyUnresolvedReferences
 class TestCleanPerms(MyTestCase):
 
     def setUp(self):

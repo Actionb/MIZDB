@@ -117,18 +117,19 @@ class TabularResultsMixin(object):
     autocomplete_function = 'select2Tabular'
     tabular_css_class = 'select2-tabular'
 
-    # noinspection PyUnresolvedReferences
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'class' in self.attrs and self.attrs['class']:
-            self.attrs['class'] += ' ' + self.tabular_css_class
+        # noinspection PyUnresolvedReferences
+        attrs = self.attrs
+        if 'class' in attrs and attrs['class']:
+            attrs['class'] += ' ' + self.tabular_css_class
         else:
-            self.attrs['class'] = self.tabular_css_class
-        self.attrs['data-extra-data-key'] = EXTRA_DATA_KEY
+            attrs['class'] = self.tabular_css_class
+        attrs['data-extra-data-key'] = EXTRA_DATA_KEY
 
-    # noinspection PyUnresolvedReferences
     @property
     def media(self):
+        # noinspection PyUnresolvedReferences
         return super().media + Media(js=['admin/js/select2_tabular.js'])
 
 

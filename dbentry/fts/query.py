@@ -82,13 +82,11 @@ class TextSearchQuerySetMixin(object):
         model's default ordering.
         """
         if not q:
-            # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
 
         filters = Q()
         model_search_rank = related_search_rank = None
 
-        # noinspection PyUnresolvedReferences
         model = self.model  # type: ignore[attr-defined]
         search_field = _get_search_vector_field(model)
         if search_field:
@@ -131,7 +129,6 @@ class TextSearchQuerySetMixin(object):
 
         if not filters:
             # Neither of the loops ran: nothing to filter with.
-            # noinspection PyUnresolvedReferences
             return self.none()  # type: ignore[attr-defined]
 
         # Only use the rank of the closest matching related row; this should
@@ -143,11 +140,9 @@ class TextSearchQuerySetMixin(object):
         else:
             search_rank = model_search_rank or Max(related_search_rank)
 
-        results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]  # noqa
-        # noinspection PyUnresolvedReferences
+        results = self.annotate(rank=search_rank).filter(filters)  # type: ignore[attr-defined]
         if ranked or not self.query.order_by:  # type: ignore[attr-defined]
             # Apply ordering to the results.
-            # noinspection PyUnresolvedReferences
             ordering = ['-rank', *(self.query.order_by or model._meta.ordering)]  # type: ignore[attr-defined]  # noqa
             if ranked and getattr(model, 'name_field', None):
                 name_field = model.name_field

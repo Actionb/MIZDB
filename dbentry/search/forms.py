@@ -1,4 +1,3 @@
-# TODO: have 'and'/'or' checkboxes for SelectMultiple
 from collections import OrderedDict
 from typing import Any, List, Optional, Tuple, Type, Union
 
@@ -178,10 +177,8 @@ class SearchForm(forms.Form):
                   and not value.exists()):
                 # Don't want empty values as filter parameters!
                 continue
-            elif (
-                    'in' in self.lookups.get(field_name, [])
-                    and isinstance(value, QuerySet)
-            ):
+            elif ('in' in self.lookups.get(field_name, [])
+                  and isinstance(value, QuerySet)):
                 # django admin prepare_lookup_value() expects an '__in'
                 # lookup to consist of comma separated values.
                 param_value = ",".join(

@@ -12,7 +12,6 @@ from dbentry.search import utils as search_utils
 from dbentry.search.forms import MIZAdminSearchForm, SearchForm, searchform_factory
 
 
-# noinspection PyUnresolvedReferences
 class AdminSearchFormMixin(object):
     """
     A mixin for ModelAdmin classes that adds more search options to its
@@ -54,7 +53,6 @@ class AdminSearchFormMixin(object):
     def get_search_form(self, **form_kwargs: Any) -> SearchForm:
         """Instantiate the search form with the given 'form_kwargs'."""
         form_class = self.get_search_form_class()
-        # noinspection PyAttributeOutsideInit
         self.search_form = form_class(**form_kwargs)
         return self.search_form
 
@@ -268,7 +266,6 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
 
         search_form_tabulars = self.search_form_kwargs.get('tabular', [])
         messages = []
-        # noinspection PyUnresolvedReferences
         for inline_cls in self.inlines:  # type: ignore[attr-defined]
             for field_name in getattr(inline_cls, 'tabular_autocomplete', []):
                 if field_name not in self.search_form_kwargs['fields']:
@@ -285,17 +282,16 @@ class MIZAdminSearchFormMixin(AdminSearchFormMixin):
         return messages
 
 
-# noinspection PyUnresolvedReferences
 class ChangelistSearchFormMixin(object):
     """Mixin for changelist classes to incorporate the new search form."""
 
     def __init__(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
-        # Preserve the contents of request.GET.
-        # The changelist attribute 'param' is insufficient as it destroys
-        # the multiple values of a MultiValueDict by calling items() instead
-        # of lists(): self.params = dict(request.GET.items())
-        # django's changelist does not inherit the base View class that sets
-        # self.request during setup().
+        # Preserve the contents of request.GET for the search form data.
+        # The changelist attribute 'params' is inadequate as form data as it
+        # destroys the multiple values of a MultiValueDict by calling items()
+        # instead of lists(): self.params = dict(request.GET.items())
+        # django's changelist does not inherit from the base View class that
+        # sets self.request during setup().
         self.request = request
         super().__init__(request, *args, **kwargs)  # type: ignore[call-arg]
 

@@ -64,8 +64,10 @@ class TestMergingVideo(MergingTestCase):
         # Assert that merge expands the original's values with
         # expand_original=True.
         new_original, update_data = utils.merge_records(
-            original=self.original, queryset=self.queryset, expand_original=True,
-            request=self.get_request()
+            original=self.original,
+            queryset=self.queryset,
+            expand_original=True,
+            user_id=self.super_user.pk
         )
         self.assertEqual(new_original, self.obj1)
         self.assertEqual(new_original.titel, 'Original')
@@ -79,7 +81,10 @@ class TestMergingVideo(MergingTestCase):
         # Assert that merge does not expand the original's values with
         # expand_original=False.
         new_original, update_data = utils.merge_records(
-            self.original, self.queryset, expand_original=False, request=self.get_request()
+            self.original,
+            self.queryset,
+            expand_original=False,
+            user_id=self.super_user.pk
         )
         self.assertEqual(new_original, self.obj1)
         self.assertEqual(new_original.titel, 'Original')
@@ -89,7 +94,10 @@ class TestMergingVideo(MergingTestCase):
         # Assert that merge adds all the related objects of the other objects
         # to original.
         _new_original, _update_data = utils.merge_records(
-            self.original, self.queryset, expand_original=False, request=self.get_request()
+            self.original,
+            self.queryset,
+            expand_original=False,
+            user_id=self.super_user.pk
         )
         change_message = {"name": "", "object": ""}
         added = [{"added": change_message}]
@@ -127,7 +135,10 @@ class TestMergingVideo(MergingTestCase):
     def test_rest_deleted(self):
         # Assert that merge deletes the other objects.
         utils.merge_records(
-            self.original, self.queryset, expand_original=True, request=self.get_request()
+            self.original,
+            self.queryset,
+            expand_original=True,
+            user_id=self.super_user.pk
         )
         self.assertNotIn(self.obj2, self.model.objects.all())
         self.assertNotIn(self.obj3, self.model.objects.all())
@@ -143,7 +154,10 @@ class TestMergingProtected(MergingTestCase):
         obj1 = make(self.model, magazin=mag, artikel__extra=1)
         obj2 = make(self.model, magazin=mag, artikel__extra=1)
         merged, update_data = utils.merge_records(
-            obj1, self.model.objects.all(), expand_original=False, request=self.get_request()
+            obj1,
+            self.model.objects.all(),
+            expand_original=False,
+            user_id=self.super_user.pk
         )
         self.assertEqual(merged, obj1)
         self.assertEqual(merged.artikel_set.count(), 2)

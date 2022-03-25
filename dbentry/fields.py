@@ -131,7 +131,7 @@ class StdNumField(models.CharField):
             if isinstance(widget, type):
                 widget_class = widget
             else:
-                widget_kwargs['attrs'] = getattr(widget, 'attrs', None)
+                widget_kwargs['attrs'] = getattr(widget, 'attrs', None)  # type: ignore[assignment]
                 widget_class = widget.__class__
             if not issubclass(widget_class, StdNumWidget):
                 widget_class = StdNumWidget
@@ -476,8 +476,10 @@ class PartialDateField(models.CharField):
         return self.to_python(value).db_value
 
     # noinspection PyMethodMayBeStatic
-    def from_db_value(self, value: str, *_args: Any, **_kwargs: Any) -> PartialDate:
+    def from_db_value(self, value: Optional[str], *_args, **_kwargs) -> Optional[PartialDate]:
         """Create a PartialDate object from a database value (db -> object)."""
+        if value is None:
+            return value
         return PartialDate.from_string(value)
 
     def formfield(self, **kwargs: Any) -> fields.Field:

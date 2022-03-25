@@ -17,6 +17,7 @@ from dbentry.base.views import MIZAdminMixin, SuperUserOnlyMixin
 from dbentry.maint.forms import (
     DuplicateFieldsSelectForm, ModelSelectForm, UnusedObjectsForm
 )
+from dbentry.query import MIZQuerySet
 from dbentry.sites import register_tool
 
 Relations = Union[ManyToManyRel, ManyToOneRel, OneToOneRel]
@@ -27,7 +28,7 @@ Dupe = namedtuple(
 
 
 def find_duplicates(
-        queryset: QuerySet,
+        queryset: MIZQuerySet,
         dupe_fields: Sequence[str],
         display_fields: Sequence[str]
 ) -> List[List[Dupe]]:
@@ -43,8 +44,6 @@ def find_duplicates(
         - duplicate_values: the values that are shared
         - display_values: the values fetched to be displayed
     """
-
-    # noinspection PyUnresolvedReferences
     queried: OrderedDictType[int, Dict[str, Any]] = queryset.values_dict(
         *dupe_fields, *display_fields
     )
@@ -131,7 +130,6 @@ class ModelSelectView(views.generic.FormView):
 class ModelSelectNextViewMixin(MIZAdminMixin, SuperUserOnlyMixin):
     """A mixin that sets up the view following a ModelSelectView."""
 
-    # noinspection PyAttributeOutsideInit
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         # noinspection PyUnresolvedReferences
         super().setup(request, *args, **kwargs)

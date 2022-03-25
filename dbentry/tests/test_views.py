@@ -1,11 +1,42 @@
 from unittest import mock
 
-from django import forms
+from django import forms, views
+from django.contrib.admin import AdminSite
 
 from dbentry import models as _models
-from dbentry.base.views import OptionalFormView, FixedSessionWizardView
+from dbentry.base.views import MIZAdminMixin, OptionalFormView, FixedSessionWizardView
 from dbentry.tests.base import MyTestCase, ViewTestCase
 from dbentry.views import MIZ_permission_denied_view, SiteSearchView
+
+
+class TestMIZAdminMixin(ViewTestCase):
+
+    class view_class(MIZAdminMixin, views.generic.TemplateView):
+        title = 'DummyView'
+        site_title = 'Testing'
+        breadcrumbs_title = 'tests'
+        template_name = 'test_template.html'
+        admin_site = AdminSite()
+
+    def test_title_in_context_data(self):
+        context = self.get_view(self.get_request()).get_context_data()
+        self.assertIn('title', context)
+        self.assertEqual('DummyView', context['title'])
+
+    def test_site_title_in_context_data(self):
+        context = self.get_view(self.get_request()).get_context_data()
+        self.assertIn('site_title', context)
+        self.assertEqual('Testing', context['site_title'])
+
+    def test_breadcrumbs_title_in_context_data(self):
+        context = self.get_view(self.get_request()).get_context_data()
+        self.assertIn('breadcrumbs_title', context)
+        self.assertEqual('tests', context['breadcrumbs_title'])
+
+    def test_is_popup_in_context_data(self):
+        context = self.get_view(self.get_request(data={'_popup': True})).get_context_data()
+        self.assertIn('is_popup', context)
+        self.assertTrue(context['is_popup'])
 
 
 class TestOptionalFormView(ViewTestCase):
