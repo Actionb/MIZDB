@@ -12,7 +12,7 @@ from django.http import HttpRequest, HttpResponse
 from django.urls import NoReverseMatch, reverse
 from django.utils.text import capfirst
 
-from dbentry import models as _models
+from dbentry import models as _models  # TODO: move concrete dbentry classes out of 'base'?
 from dbentry.ac.widgets import make_widget
 from dbentry.actions.actions import merge_records
 from dbentry.base.forms import ATTRS_TEXTAREA, MIZAdminInlineFormBase
@@ -22,7 +22,7 @@ from dbentry.forms import AusgabeMagazinFieldForm
 from dbentry.search.admin import MIZAdminSearchFormMixin
 from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
-
+# TODO: rename 'crosslinks' to 'changelist_links'
 FieldsetList = List[Tuple[Optional[str], dict]]
 
 
@@ -140,6 +140,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     # noinspection PyMethodMayBeStatic
     def has_alter_bestand_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to change inventory quantities."""
+        # TODO: this method isn't used anywhere
         # noinspection PyUnresolvedReferences
         opts = _models.Bestand._meta
         perms = [
