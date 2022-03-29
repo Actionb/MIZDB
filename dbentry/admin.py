@@ -1616,10 +1616,14 @@ class FotoAdmin(MIZModelAdmin):
     schlagwort_list.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
 
+@admin.register(_models.Plattenfirma, site=miz_site)
+class PlattenfirmaAdmin(MIZModelAdmin):
+    search_fields = ['__ANY__']
+
+
 @admin.register(
-    _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
-    _models.Provenienz, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
-    _models.VideoMedium, _models.AudioMedium,
+    _models.Monat, _models.Lagerort, _models.Geber, _models.Provenienz, _models.Schriftenreihe,
+    _models.Bildreihe, _models.Veranstaltungsreihe, _models.VideoMedium, _models.AudioMedium,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
