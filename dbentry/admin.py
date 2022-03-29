@@ -1627,6 +1627,7 @@ class PlattenfirmaAdmin(MIZModelAdmin):
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
+    search_fields = ['__ANY__']
     superuser_only = True
 
 
