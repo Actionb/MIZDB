@@ -218,11 +218,12 @@ class PersonForm(forms.ModelForm):
 
     def clean(self) -> dict:
         """Validate and clean gnd_id and dnb_url."""
-        if ('dnb_url' in self._errors
-                or 'gnd_id' in self._errors):
+        if 'dnb_url' in self._errors or 'gnd_id' in self._errors:  # pragma: no cover
             return self.cleaned_data
+
         gnd_id = self.cleaned_data.get('gnd_id', '')
         dnb_url = self.cleaned_data.get('dnb_url', '')
+
         if not (gnd_id or dnb_url):
             return self.cleaned_data
 
