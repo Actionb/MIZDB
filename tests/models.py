@@ -18,6 +18,7 @@ class Band(models.Model):
 
     class Meta:
         verbose_name = 'Band'
+        ordering = ['band_name']
 
 
 class Magazin(models.Model):
