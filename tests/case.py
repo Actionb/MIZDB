@@ -262,7 +262,7 @@ class AdminTestCase(DataTestCase, RequestTestCase):
         return self.model_admin.get_queryset(request)
 
 
-class FormTestCase(MIZTestCase):
+class FormTestCase(MIZTestCase):  # TODO: remove; use explicit dummy forms
 
     form_class = None
     dummy_bases = None
