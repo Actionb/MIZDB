@@ -12,7 +12,7 @@ with open(BASE_DIR / 'config.yaml', encoding='utf-8') as f:
 SECRET_KEY = 'abcdefghi'
 
 ALWAYS_INSTALLED_APPS = [
-    # 'dbentry',
+    'dbentry',
     'dal',
     'dal_select2',
     'django.contrib.admin',
