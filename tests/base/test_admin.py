@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from dbentry.base.admin import AutocompleteMixin
 
+# TODO: don't forget to re-check this test module!!
 
 class TestAutocompleteMixin(TestCase):
 
