@@ -313,6 +313,9 @@ class FormTestCase(MIZTestCase):  # TODO: remove; use explicit dummy forms
 class ModelFormTestCase(DataTestCase, FormTestCase):
     fields = None
 
+    # TODO: get_form_class should call forms.modelform_factory, and get_form
+    #  should call get_form_class
+
     def get_form(self, **kwargs):
         return forms.modelform_factory(
             self.model, form=self.form_class, fields=self.fields)(**kwargs)
