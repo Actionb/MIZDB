@@ -100,9 +100,9 @@ class MinMaxRequiredFormMixin(object):
     """
     A mixin that allows setting groups of fields to be required.
 
-    By default, error messages are formatted with the number
-    of fields minimally (format kwarg: ``min``) or maximally (``max``) required
-    and a comma separated list of those fields (``fields``).
+    By default, error messages are formatted with the number of fields minimally
+    (format kwarg: ``min``) or maximally (``max``) required and a comma
+    separated list of those fields (``fields``).
 
     Attributes:
         - ``minmax_required``: an iterable of dicts, essentially the keyword
@@ -136,8 +136,8 @@ class MinMaxRequiredFormMixin(object):
                     for error_type, msg in error_messages.items()
                 }
 
-        If none of the three fields has data and the user is a viking
-        the form will display the min error:
+        If none of the three fields has data and the user is a viking the form
+        will display the min error:
             "Must have at least 1 of Spam, Bacon, Egg, you vile Viking!"
         If all three fields have data, the default max error will be shown
         (as minmax_required does not define a custom error for that group):
@@ -261,7 +261,7 @@ class MinMaxRequiredFormMixin(object):
 
 
 class MIZAdminFormMixin(object):
-    """A mixin that adds django admin media and fieldsets."""
+    """A form mixin that adds django admin media and fieldsets."""
 
     class Media:
         css = {

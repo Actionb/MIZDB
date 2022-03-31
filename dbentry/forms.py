@@ -27,11 +27,10 @@ class GoogleBtnWidget(AdminTextInputWidget):
 
 class AusgabeMagazinFieldForm(forms.ModelForm):
     """
-    An abstract model form that adds a 'ausgabe__magazin' field which is used
-    to limit (forward) the choices available to the widget of a field 'ausgabe'.
+    A model form that adds a choice field for a Magazin instance, to limit the
+    available choices of Ausgabe instances for the field 'ausgabe' (forwarding).
 
     Also adds the Ausgabe's magazin to the form's initial data (if applicable).
-    Usable by any ModelForm that uses a relation to ausgabe.
     """
 
     ausgabe__magazin = forms.ModelChoiceField(
@@ -54,8 +53,7 @@ class AusgabeMagazinFieldForm(forms.ModelForm):
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
             if kwargs['instance'].ausgabe:
-                kwargs['initial']['ausgabe__magazin'] = (
-                    kwargs['instance'].ausgabe.magazin)
+                kwargs['initial']['ausgabe__magazin'] = kwargs['instance'].ausgabe.magazin
         super().__init__(*args, **kwargs)
 
 
