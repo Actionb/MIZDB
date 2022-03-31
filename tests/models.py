@@ -1,5 +1,7 @@
 from django.db import models
 
+# TODO: when the test rework is done, re-check for unused models
+
 
 class Musiker(models.Model):
     kuenstler_name = models.CharField(max_length=100)
@@ -33,6 +35,8 @@ class Ausgabe(models.Model):
 
 
 class Artikel(models.Model):
+    schlagzeile = models.CharField(max_length=100)
+
     ausgabe = models.ForeignKey('tests.Ausgabe', on_delete=models.PROTECT)
 
 
@@ -105,3 +109,13 @@ class Ancestor(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Person(models.Model):
+    vorname = models.CharField(max_length=100, blank=True)
+    nachname = models.CharField(max_length=100)
+
+
+class Autor(models.Model):
+    kuerzel = models.CharField('Kürzel', max_length=100)
+    person = models.ForeignKey('tests.Person', on_delete=models.CASCADE, null=True, blank=True)
