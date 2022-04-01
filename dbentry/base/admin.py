@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from django import forms
+from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.views.main import ORDER_VAR
 from django.contrib.auth import get_permission_codename
@@ -24,6 +25,7 @@ from dbentry.utils import get_fields_and_lookups, get_model_relations
 from dbentry.utils.admin import construct_change_message
 # TODO: rename 'crosslinks' to 'changelist_links'
 FieldsetList = List[Tuple[Optional[str], dict]]
+BESTAND_MODEL_NAME = 'dbentry.Bestand'
 
 
 class AutocompleteMixin(object):
@@ -110,6 +112,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                         get_fields_and_lookups(self.model, field)
                 except (exceptions.FieldDoesNotExist, exceptions.FieldError) as e:
                     errors.append(
+                        # TODO: use f-strings
                         checks.Error(
                             "fieldset '%s' contains invalid item: '%s'. %s" % (
                                 fieldset_name, field, e.args[0]),
@@ -142,8 +145,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     def has_alter_bestand_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to change inventory quantities."""
         # This method is called by ModelAdmin._filter_actions_by_permissions.
-        # noinspection PyUnresolvedReferences
-        opts = _models.Bestand._meta
+        opts = apps.get_model(BESTAND_MODEL_NAME)._meta
         perms = [
             "%s.%s" % (opts.app_label, get_permission_codename(action, opts))
             for action in ('add', 'change', 'delete')
@@ -171,6 +173,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         If any of these two fields are part of the default fieldset,
         move them out of there to their own fieldset.
         """
+        # TODO: this needs a test method
         default_fieldset = dict(fieldsets).get(None, None)
         if not default_fieldset:  # pragma: no cover
             return fieldsets
