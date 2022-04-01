@@ -239,7 +239,7 @@ class AdminTestCase(DataTestCase, RequestTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-
+        # FIXME: these paths are for the dbentry app - not the tests app
         if not cls.changelist_path:
             cls.changelist_path = reverse(
                 'admin:dbentry_{}_changelist'.format(cls.model._meta.model_name))

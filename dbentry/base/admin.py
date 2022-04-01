@@ -131,6 +131,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
 
     def has_merge_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to merge records."""
+        # This method is called by ModelAdmin._filter_actions_by_permissions.
         codename = get_permission_codename('merge', self.opts)
         # noinspection PyUnresolvedReferences
         return request.user.has_perm(
@@ -140,7 +141,7 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
     # noinspection PyMethodMayBeStatic
     def has_alter_bestand_permission(self, request: HttpRequest) -> bool:
         """Check that the user has permission to change inventory quantities."""
-        # TODO: this method isn't used anywhere
+        # This method is called by ModelAdmin._filter_actions_by_permissions.
         # noinspection PyUnresolvedReferences
         opts = _models.Bestand._meta
         perms = [
