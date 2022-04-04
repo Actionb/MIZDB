@@ -1,6 +1,7 @@
 from django.db import models
 
 # TODO: when the test rework is done, re-check for unused models
+from dbentry.base.models import ComputedNameModel
 
 
 class Musiker(models.Model):
@@ -112,9 +113,22 @@ class Ancestor(models.Model):
         return self.name
 
 
-class Person(models.Model):
+class Person(ComputedNameModel):
     vorname = models.CharField(max_length=100, blank=True)
     nachname = models.CharField(max_length=100)
+
+    name_composing_fields = ['vorname', 'nachname']
+
+    @classmethod
+    def _get_name(cls, **data):
+        vorname = nachname = ''
+        if 'vorname' in data:
+            vorname = data['vorname'][0]
+        if 'nachname' in data:
+            nachname = data['nachname'][0]
+        if vorname or nachname:
+            return f"{vorname} {nachname}".strip()
+        return "No data for Person."
 
 
 class Autor(models.Model):
