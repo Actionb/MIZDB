@@ -121,14 +121,14 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     )
         return errors
 
-    def get_queryset(self, request):
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         annotations = self.get_changelist_annotations()
         if annotations:
             return qs.annotate(**annotations)
         return qs
 
-    def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:
+    def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:  # pragma: no cover  # noqa
         return MIZChangeList
 
     def get_index_category(self) -> str:
@@ -180,7 +180,6 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
         If any of these two fields are part of the default fieldset,
         move them out of there to their own fieldset.
         """
-        # TODO: this needs a test method
         default_fieldset = dict(fieldsets).get(None, None)
         if not default_fieldset:  # pragma: no cover
             return fieldsets
