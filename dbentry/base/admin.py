@@ -118,6 +118,13 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
                     )
         return errors
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        annotations = self.get_changelist_annotations()
+        if annotations:
+            return qs.annotate(**annotations)
+        return qs
+
     def get_changelist(self, request: HttpRequest, **kwargs: Any) -> Type[MIZChangeList]:
         return MIZChangeList
 
@@ -351,31 +358,9 @@ class MIZModelAdmin(AutocompleteMixin, MIZAdminSearchFormMixin, admin.ModelAdmin
             # Update the instance's _name now. save_model was called earlier.
             form.instance.update_name(force_update=True)
 
-    def get_result_list_annotations(self) -> dict:
-        """
-        Return annotations that are expected by list_display items.
-
-        These annotations will be added to the 'result_list' queryset in
-        changelist.get_results() *after* the counts for the paginator and the
-        full count have been queried. This way these annotations aren't
-        included in the count queries, which would slow them down.
-
-        Don't use this to add annotations that are required for the query to
-        return the correct results/count.
-        """
+    def get_changelist_annotations(self) -> dict:
+        """Return annotations necessary for the changelist queryset."""
         return {}
-
-    def response_action(self, request: HttpRequest, queryset: QuerySet):
-        # Actions are called with the queryset returned by the changelist's
-        # get_queryset() method. Any additional annotations provided by
-        # get_result_list_annotations will not be included as these are added
-        # by changelist.get_results().
-        # If an annotation is part of the queryset ordering, but the annotation
-        # was not added to the queryset, an iteration over the queryset will
-        # fail. To avoid this from occurring, add the annotations to the
-        # action's queryset.
-        queryset = queryset.annotate(**self.get_result_list_annotations() or {})
-        return super().response_action(request, queryset)
 
     def get_search_results(self, request, queryset, search_term):
         if not search_term:

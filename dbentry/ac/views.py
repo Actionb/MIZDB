@@ -368,7 +368,7 @@ class ACAusgabe(ACTabular):
         queryset = super().get_queryset()
         from dbentry.admin import AusgabenAdmin, miz_site
         model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_result_list_annotations())
+        return queryset.annotate(**model_admin.get_changelist_annotations())
 
     def get_group_headers(self) -> list:
         return ['Nummer', 'lfd.Nummer', 'Jahr']
