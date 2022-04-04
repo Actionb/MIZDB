@@ -23,27 +23,24 @@ class TestMerging(MergingTestCase):
     def setUpTestData(cls):
         cls.band_original = Band.objects.create(band_name='Originalband')
         cls.musiker_original = Musiker.objects.create(kuenstler_name='Originalkünstler')
-        cls.bestand_original = make(Bestand)
         cls.obj1 = cls.original = Audio.objects.create(titel='Original')
+        cls.bestand_original = make(Bestand, audio=cls.original)
         cls.original.band.add(cls.band_original)
         cls.original.musiker.add(cls.musiker_original)
-        cls.original.bestand.add(cls.bestand_original)
 
         cls.band_merger1 = Band.objects.create(band_name='Mergerband One')
         cls.musiker_merger1 = Musiker.objects.create(kuenstler_name='Musikermerger One')
-        cls.bestand_merger1 = make(Bestand)
         cls.obj2 = Audio.objects.create(titel='Merger1')
+        cls.bestand_merger1 = make(Bestand, audio=cls.obj2)
         cls.obj2.band.add(cls.band_merger1)
         cls.obj2.musiker.add(cls.musiker_merger1)
-        cls.obj2.bestand.add(cls.bestand_merger1)
 
         cls.band_merger2 = Band.objects.create(band_name='Mergerband Two')
         cls.musiker_merger2 = Musiker.objects.create(kuenstler_name='Musikermerger Two')
-        cls.bestand_merger2 = make(Bestand)
         cls.obj3 = Audio.objects.create(titel='Merger2', beschreibung="Hello!")
+        cls.bestand_merger2 = make(Bestand, audio=cls.obj3)
         cls.obj3.band.add(cls.band_merger2)
         cls.obj3.musiker.add(cls.musiker_merger2)
-        cls.obj3.bestand.add(cls.bestand_merger2)
         # Add a 'duplicate' related object to test handling of UNIQUE CONSTRAINTS
         # violations.
         cls.obj3.musiker.add(cls.musiker_merger1)
@@ -100,14 +97,14 @@ class TestMerging(MergingTestCase):
         added = [{"added": change_message}]
 
         change_message["name"] = "Bestand"
-        self.assertIn(self.bestand_original, self.obj1.bestand.all())
-        self.assertIn(self.bestand_merger1, self.obj1.bestand.all())
+        self.assertIn(self.bestand_original, self.obj1.bestand_set.all())
+        self.assertIn(self.bestand_merger1, self.obj1.bestand_set.all())
         change_message["object"] = str(self.bestand_merger1)
         self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertIn(self.bestand_merger2, self.obj1.bestand.all())
+        self.assertIn(self.bestand_merger2, self.obj1.bestand_set.all())
         change_message["object"] = str(self.bestand_merger2)
         self.assertLoggedAddition(self.original, change_message=str(added).replace("'", '"'))
-        self.assertEqual(self.obj1.bestand.all().count(), 3)
+        self.assertEqual(self.obj1.bestand_set.all().count(), 3)
 
         change_message['name'] = 'Audio-Musiker'
         self.assertIn(self.musiker_original, self.obj1.musiker.all())

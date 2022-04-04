@@ -454,10 +454,10 @@ class TestMIZDjangoOptions(MIZTestCase):
         m2m_rel = Audio._meta.get_field('band').remote_field
         with mock.patch('tests.factory.get_model_relations', Mock(return_value=[m2o_rel, m2m_rel])):
             opts.add_related_factories()
-        self.assertTrue(hasattr(opts.factory, 'bestände'))
-        related_fac = getattr(opts.factory, 'bestände')
+        self.assertTrue(hasattr(opts.factory, 'bestand'))
+        related_fac = getattr(opts.factory, 'bestand')
         self.assertEqual(related_fac.name, 'audio')
-        self.assertEqual(related_fac.accessor_name, 'bestände')
+        self.assertEqual(related_fac.accessor_name, 'bestand_set')
         self.assertEqual(related_fac.related_model, Bestand)
         # Check that the M2M relation was ignored:
         self.assertFalse(hasattr(opts.factory, 'band'))

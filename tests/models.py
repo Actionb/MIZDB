@@ -94,7 +94,7 @@ class Lagerort(models.Model):
 class Bestand(models.Model):
     lagerort = models.ForeignKey('tests.Lagerort', models.PROTECT)
 
-    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE, related_name='bestände')
+    audio = models.ForeignKey('tests.Audio', on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return str(self.lagerort)
