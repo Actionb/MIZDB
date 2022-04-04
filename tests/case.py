@@ -181,9 +181,11 @@ class RequestTestCase(UserTestCase):
         return func(path or self.get_path(), data, **kwargs)
 
     def post_request(self, path=None, data=None, user=None, **kwargs):
+        # TODO: this should return RequestFactory().post()
         return self.get_response('POST', path, data, user, **kwargs).wsgi_request
 
     def get_request(self, path=None, data=None, user=None, **kwargs):
+        # TODO: this should return RequestFactory().get()
         return self.get_response('GET', path, data, user, **kwargs).wsgi_request
 
     def assertMessageSent(self, request, expected_message, msg=None):
