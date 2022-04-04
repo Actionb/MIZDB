@@ -25,10 +25,6 @@ class MIZChangeList(ChangelistSearchFormMixin, ChangeList):
                 self.queryset = self.queryset.none()  # type: ignore[has-type]
         # Let ChangeList.get_results set some other attributes:
         super().get_results(request)
-        # Add annotations required for this model admin's 'list_display' items.
-        annotations = self.model_admin.get_result_list_annotations()
-        if annotations:
-            self.result_list = self.result_list.annotate(**annotations)  # type: ignore[has-type]
 
     def get_show_all_url(self) -> str:
         """Return the url for an unfiltered changelist showing all objects."""
