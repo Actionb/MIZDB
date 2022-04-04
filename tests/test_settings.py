@@ -92,3 +92,5 @@ PASSWORD_HASHERS = [
 # Note that django debug toolbar adds a handler to the root logger that
 # handles all log records. The toolbar need not be enabled for this.
 logging.getLogger().addHandler(logging.NullHandler())
+
+STATIC_URL = '/static/'
