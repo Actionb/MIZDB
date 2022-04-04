@@ -26,9 +26,9 @@
 <!-- END ADMIN SEARCH FORM --->
 {% endblock %}
 
-{% block filters %}
-    {{ block.super }}
+{% block result_list %}
     {% reset_ordering cl %}
+    {{ block.super }}
 {% endblock %}
 
 {% block pagination %}

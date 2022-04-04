@@ -139,7 +139,7 @@ class AudioAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
                 'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
@@ -227,7 +227,7 @@ class AusgabenAdmin(MIZModelAdmin):
     magazin_name.short_description = 'Magazin'  # type: ignore[attr-defined]  # noqa
     magazin_name.admin_order_field = 'magazin__magazin_name'  # type: ignore[attr-defined]  # noqa
 
-    def get_result_list_annotations(self) -> dict:
+    def get_changelist_annotations(self) -> dict:
         # Can't use ArrayAgg directly to get a list of distinct monat__abk
         # values as we are ordering by monat__ordinal: using distinct AND
         # ordering requires that the ordering expressions are present in the
@@ -373,7 +373,7 @@ class AutorAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['magazin', 'person']}
     ordering = ['_name']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'magazin_list': ArrayAgg(
                 'magazin__magazin_name', distinct=True, ordering='magazin__magazin_name'),
@@ -451,7 +451,7 @@ class ArtikelAdmin(MIZModelAdmin):
         'tabular': ['ausgabe', 'musiker', 'band', 'spielort', 'veranstaltung']
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'schlagwort_list': ArrayAgg(
                 'schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort'),
@@ -519,7 +519,7 @@ class BandAdmin(MIZModelAdmin):
         'tabular': ['musiker']
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
             'musiker_list': ArrayAgg(
@@ -606,7 +606,7 @@ class PlakatAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'veranstaltung_list':
                 ArrayAgg('veranstaltung__name', distinct=True, ordering='veranstaltung__name')
@@ -758,7 +758,7 @@ class BuchAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'autor_list': ArrayAgg('autor___name', distinct=True, ordering='autor___name'),
             'schlagwort_list': ArrayAgg(
@@ -815,7 +815,7 @@ class GenreAdmin(MIZModelAdmin):
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'alias_list': ArrayAgg('genrealias__alias', ordering='genrealias__alias')
         }
@@ -862,7 +862,7 @@ class MagazinAdmin(MIZModelAdmin):
         'fields': ['verlag', 'herausgeber', 'orte', 'genre', 'issn', 'fanzine'],
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'orte_list': ArrayAgg('orte___name', distinct=True, ordering='orte___name'),
             'anz_ausgaben': Count('ausgabe', distinct=True)
@@ -934,7 +934,7 @@ class MusikerAdmin(MIZModelAdmin):
     search_form_kwargs = {'fields': ['person', 'genre', 'instrument', 'orte__land', 'orte']}
     ordering = ['kuenstler_name']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'band_list': ArrayAgg('band__band_name', distinct=True, ordering='band__band_name'),
             'genre_list': ArrayAgg('genre__genre', distinct=True, ordering='genre__genre'),
@@ -986,7 +986,7 @@ class PersonAdmin(MIZModelAdmin):
         'forwards': {'orte__bland': 'orte__land'}
     }
 
-    def get_result_list_annotations(self) -> dict:
+    def get_changelist_annotations(self) -> dict:
         return {
             'is_musiker': Exists(
                 _models.Musiker.objects.only('id').filter(person_id=OuterRef('id'))),
@@ -1027,7 +1027,7 @@ class SchlagwortAdmin(MIZModelAdmin):
     # search will be a postgres text search on the model's SearchVectorField.
     search_fields = ['__ANY__']
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'alias_list': ArrayAgg('schlagwortalias__alias', ordering='schlagwortalias__alias')
         }
@@ -1100,7 +1100,7 @@ class VeranstaltungAdmin(MIZModelAdmin):
         'tabular': ['musiker', 'band'],
     }
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
                 'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
@@ -1207,7 +1207,7 @@ class VideoAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'musiker_list': ArrayAgg(
                 'musiker__kuenstler_name', distinct=True, ordering='musiker__kuenstler_name'),
@@ -1440,7 +1440,7 @@ class BaseBrochureAdmin(MIZModelAdmin):
             'titel', 'jahr_min', 'zusammenfassung'
         )
 
-    def get_result_list_annotations(self) -> dict:
+    def get_changelist_annotations(self) -> dict:
         return {
             'jahr_string': Func(
                 ArrayAgg('jahre__jahr', distinct=True, ordering='jahre__jahr'),
@@ -1591,7 +1591,7 @@ class FotoAdmin(MIZModelAdmin):
     }
     actions = [_actions.merge_records, _actions.change_bestand]
 
-    def get_result_list_annotations(self) -> Dict[str, ArrayAgg]:
+    def get_changelist_annotations(self) -> Dict[str, ArrayAgg]:
         return {
             'schlagwort_list':
                 ArrayAgg('schlagwort__schlagwort', distinct=True, ordering='schlagwort__schlagwort')
@@ -1616,13 +1616,18 @@ class FotoAdmin(MIZModelAdmin):
     schlagwort_list.admin_order_field = 'schlagwort_list'  # type: ignore[attr-defined]  # noqa
 
 
+@admin.register(_models.Plattenfirma, site=miz_site)
+class PlattenfirmaAdmin(MIZModelAdmin):
+    search_fields = ['__ANY__']
+
+
 @admin.register(
-    _models.Monat, _models.Lagerort, _models.Geber, _models.Plattenfirma,
-    _models.Provenienz, _models.Schriftenreihe, _models.Bildreihe, _models.Veranstaltungsreihe,
-    _models.VideoMedium, _models.AudioMedium,
+    _models.Monat, _models.Lagerort, _models.Geber, _models.Provenienz, _models.Schriftenreihe,
+    _models.Bildreihe, _models.Veranstaltungsreihe, _models.VideoMedium, _models.AudioMedium,
     site=miz_site
 )
 class HiddenFromIndex(MIZModelAdmin):
+    search_fields = ['__ANY__']
     superuser_only = True
 
 
