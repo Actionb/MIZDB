@@ -213,9 +213,12 @@ class ComputedNameModel(BaseModel):
         return errors
 
     def save(self, update: bool = True, *args: Any, **kwargs: Any) -> None:
+        """
+        Save the current instance.
+
+        If 'update' is true, force an update of the name field.
+        """
         super().save(*args, **kwargs)
-        # Parameters that make up the name may have changed;
-        # update the name if necessary.
         if update:
             self.update_name(force_update=True)
 
