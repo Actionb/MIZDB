@@ -11,7 +11,7 @@ from django.forms import modelform_factory
 from django.urls import NoReverseMatch
 
 from dbentry.utils import admin as admin_utils
-from tests.case import RequestTestCase, add_urls
+from tests.case import RequestTestCase, add_urls, override_urls
 from tests.factory import make
 from tests.models import Audio, Band, Bestand, Lagerort, Musiker
 
@@ -81,9 +81,9 @@ class TestAdminUtils(RequestTestCase):
         No link should be displayed, if there is no reverse match for the given
         admin site name and model instance/model options.
         """
-        # The test model 'Audio' is not registered with any admin sites.
-        with self.assertNotRaises(NoReverseMatch):
-            link = admin_utils.get_obj_link(self.obj1, self.super_user)
+        with override_urls(url_patterns=[]):  # remove all URL confs
+            with self.assertNotRaises(NoReverseMatch):
+                link = admin_utils.get_obj_link(self.obj1, self.super_user)
         # noinspection PyUnresolvedReferences
         self.assertEqual(link, f"{self.model._meta.verbose_name}: {self.obj1}")
 
@@ -166,7 +166,11 @@ class TestAdminUtils(RequestTestCase):
                     expected += "?id__in=" + ",".join([str(obj.pk) for obj in obj_list])
                 with self.subTest(obj_list=obj_list):
                     self.assertEqual(
-                        admin_utils.get_changelist_url(self.model, self.super_user, obj_list=obj_list),  # noqa
+                        admin_utils.get_changelist_url(
+                            self.model,
+                            self.super_user,
+                            obj_list=obj_list
+                        ),
                         expected
                     )
 
@@ -234,7 +238,11 @@ class TestAdminUtils(RequestTestCase):
         form.changed_data = ['tracks']
         formsets = [
             Mock(new_objects=[m2m_musiker], changed_objects=[], deleted_objects=[]),
-            Mock(changed_objects=[(self.bestand, ['lagerort'])], new_objects=[], deleted_objects=[]),  # noqa
+            Mock(
+                changed_objects=[(self.bestand, ['lagerort'])],
+                new_objects=[],
+                deleted_objects=[]
+            ),
             Mock(deleted_objects=[m2m_band], new_objects=[], changed_objects=[])
         ]
 
