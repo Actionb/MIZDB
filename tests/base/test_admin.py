@@ -1,21 +1,27 @@
+from unittest import mock
 from unittest.mock import patch
 
+from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core import checks
-from django.db import models
-from django.test import TestCase, RequestFactory
+from django.db.models import Count
+from django.test import RequestFactory, TestCase
 
 from dbentry.base.admin import AutocompleteMixin, MIZModelAdmin
-
 # TODO: don't forget to re-check this test module!!
-from tests.case import AdminTestCase
-from tests.models import Audio, Bestand, Veranstaltung
+from tests.case import AdminTestCase, test_site
+from tests.factory import make
+from tests.models import Audio, Bestand, Person, Veranstaltung
+
+
+@admin.register(Audio, site=test_site)
+class TestAdmin(MIZModelAdmin):
+    pass
 
 
 class TestAutocompleteMixin(TestCase):
-
     class DummyModelField:
         name = 'dummy'
         related_model = 'anything'
@@ -71,10 +77,13 @@ class TestAutocompleteMixin(TestCase):
 
 
 class MIZModelAdminTest(AdminTestCase):
-    class TestAdmin(MIZModelAdmin):
-        pass
     model_admin_class = TestAdmin
     model = Audio
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(cls.model)
+        super().setUpTestData()
 
     def test_check_fieldset_fields(self):
         """Assert that _check_fieldset_fields finds invalid field declarations."""
@@ -83,7 +92,7 @@ class MIZModelAdminTest(AdminTestCase):
             # 'fields' item:
             self.model_admin.fieldsets = None
             self.assertFalse(self.model_admin._check_fieldset_fields())
-            self.model_admin.fieldsets = [('name', {'nofields': 'item'})]
+            self.model_admin.fieldsets = [('name', {'no_fields': 'item'})]
             self.assertFalse(self.model_admin._check_fieldset_fields())
 
             # 'titel' is a valid field:
@@ -92,15 +101,15 @@ class MIZModelAdminTest(AdminTestCase):
 
             # Now use a field that doesn't exist:
             self.model_admin.fieldsets = [
-                (None, {'fields': ['titel', 'thisisnofield']})]
+                (None, {'fields': ['titel', 'this_is_no_field']})]
             errors = self.model_admin._check_fieldset_fields()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
             self.assertEqual(
                 errors[0].msg,
-                "fieldset 'None' contains invalid item: 'thisisnofield'. "
-                "Audio has no field named 'thisisnofield'"
+                "fieldset 'None' contains invalid item: 'this_is_no_field'. "
+                "Audio has no field named 'this_is_no_field'"
             )
 
             # And an invalid lookup:
@@ -121,16 +130,30 @@ class MIZModelAdminTest(AdminTestCase):
                 (None, {'fields': [('titel', 'tracks')]})]
             self.assertFalse(self.model_admin._check_fieldset_fields())
             self.model_admin.fieldsets = [
-                ('Beep', {'fields': [('titel', 'thisisnofield')]})]
+                ('Beep', {'fields': [('titel', 'this_is_no_field')]})]
             errors = self.model_admin._check_fieldset_fields()
             self.assertTrue(errors)
             self.assertEqual(len(errors), 1)
             self.assertIsInstance(errors[0], checks.Error)
             self.assertEqual(
                 errors[0].msg,
-                "fieldset 'Beep' contains invalid item: '('titel', 'thisisnofield')'. "
-                "Audio has no field named 'thisisnofield'"
+                "fieldset 'Beep' contains invalid item: '('titel', 'this_is_no_field')'. "
+                "Audio has no field named 'this_is_no_field'"
             )
+
+    def test_get_queryset(self):
+        """Assert that annotations are added to the model admin queryset."""
+        request = self.get_request()
+        with mock.patch.object(self.model_admin, 'get_changelist_annotations') as m:
+            m.return_value = {}
+            self.assertFalse(self.model_admin.get_queryset(request).query.annotations)
+            m.return_value = {'c': Count('pk')}
+            self.assertIn('c', self.model_admin.get_queryset(request).query.annotations)
+
+    def test_get_index_category(self):
+        self.assertEqual(self.model_admin.get_index_category(), 'Sonstige')  # default value
+        self.model_admin.index_category = 'Hovercrafts'
+        self.assertEqual(self.model_admin.get_index_category(), 'Hovercrafts')
 
     def test_has_merge_permission(self):
         ct = ContentType.objects.get_for_model(self.model)
@@ -190,9 +213,15 @@ class MIZModelAdminTest(AdminTestCase):
         self.assertIn('audio', excluded)
 
     # TODO: @work: start here
+    def test_add_bb_fieldset(self):
+        self.fail("WRITE ME")
+
+    def test_add_crosslinks(self):
+        self.fail("WRITE ME")
+
     def test_add_extra_context(self):
-        # Assert that add_extra_context adds additional items for the context.
-        for object_id in ('', self.obj1.pk):
+        """Assert that add_extra_context adds additional items for the context."""
+        for object_id in ('', self.obj.pk):
             with self.subTest(object_id=object_id):
                 extra = self.model_admin.add_extra_context(object_id=object_id)
                 self.assertIn('collapse_all', extra)
@@ -202,63 +231,60 @@ class MIZModelAdminTest(AdminTestCase):
                     self.assertNotIn('crosslinks', extra)
 
     def test_add_view(self):
+        """add_view context should include 'collapse_all' but not 'crosslinks'."""
         response = self.client.get(self.add_path)
-        self.assertTrue('collapse_all' in response.context)
-        self.assertFalse(
-            'crosslinks' in response.context,
-            msg='no crosslinks allowed in add views'
-        )
+        self.assertIn('collapse_all', response.context)
+        self.assertNotIn('crosslinks', response.context, msg='no crosslinks allowed in add views')
 
     def test_change_view(self):
-        response = self.client.get(self.change_path.format(pk=self.obj1.pk))
-        self.assertTrue('collapse_all' in response.context)
-        self.assertTrue('crosslinks' in response.context)
-
-    def test_get_changeform_initial_data_no_initial(self):
-        request = self.get_request()
-        self.assertEqual(
-            self.model_admin.get_changeform_initial_data(request), {})
+        """add_view context should include 'collapse_all' and 'crosslinks'."""
+        response = self.client.get(self.change_path.format(pk=self.obj.pk))
+        self.assertIn('collapse_all', response.context)
+        self.assertIn('crosslinks', response.context)
 
     def test_save_model(self):
-        # save_model should not update the _name of a ComputedNameModel object.
-        obj = make(_models.Person, vorname='Alice', nachname='Testman')
+        """save_model should not update the _name of a ComputedNameModel object."""
+        obj = make(Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
         self.model_admin.save_model(None, obj, None, None)
-        obj_queryset = _models.Person.objects.filter(pk=obj.pk)
         self.assertEqual(
-            list(obj_queryset.values_list('_name', flat=True)),
+            list(Person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
             ['Alice Testman']
         )
 
     def test_save_related(self):
-        # save_related should for an update of the _name of a ComputedNameModel
-        # object.
-        obj = make(_models.Person, vorname='Alice', nachname='Testman')
+        """
+        save_related should force an update of the _name of a ComputedNameModel
+        object.
+        """
+        obj = make(Person, vorname='Alice', nachname='Testman')
         obj.nachname = 'Mantest'
+        # noinspection PyArgumentList
         obj.save(update=False)
-        fake_form = type(
-            'Dummy', (object,), {'instance': obj, 'save_m2m': lambda x=None: None})
-        self.model_admin.save_related(None, fake_form, [], None)
-        self.assertEqual(fake_form.instance._name, 'Alice Mantest')
+        form = mock.Mock(instance=obj)
+        with mock.patch('dbentry.base.admin.super'):
+            self.model_admin.save_related(None, form, [], None)
+
+        self.assertEqual(form.instance._name, 'Alice Mantest')
         self.assertEqual(
-            list(_models.Person.objects.filter(
-                pk=obj.pk).values_list('_name', flat=True)),
+            list(Person.objects.filter(pk=obj.pk).values_list('_name', flat=True)),
             ['Alice Mantest']
         )
 
     def test_change_message_capitalized_fields(self):
-        # Assert that the LogEntry/history change message uses the field labels.
-        model_admin = _admin.ArtikelAdmin(_models.Artikel, miz_site)
-        obj = make(_models.Artikel)
-        form_class = model_admin.get_form(
-            self.get_request(), obj=obj, change=True)
-        form = form_class(data={}, instance=obj)
-        change_message = model_admin.construct_change_message(
-            request=None, form=form, formsets=None)[0]
+        """Assert that the LogEntry/history change message uses the field labels."""
+        form_class = self.model_admin.get_form(self.get_request(), obj=self.obj, change=True)
+        form = form_class(data={'titel': 'A different title', 'tracks': '10'}, instance=self.obj)
+        change_messages = self.model_admin.construct_change_message(
+            request=None, form=form, formsets=None
+        )
 
-        self.assertIn('changed', change_message)
-        self.assertIn('fields', change_message['changed'])
-        changed_fields = change_message['changed']['fields']
-        for field in ('Ausgabe', 'Magazin'):
+        self.assertIn('changed', change_messages[0])
+        self.assertIn('fields', change_messages[0]['changed'])
+        changed_fields = change_messages[0]['changed']['fields']
+        for field in ('Titel', 'Anz. Tracks'):
             with self.subTest(field=field):
                 self.assertIn(field, changed_fields)
+
+    def test_get_search_results(self):
+        self.fail("WRITE ME")
