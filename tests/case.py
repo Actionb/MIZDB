@@ -5,6 +5,7 @@ from importlib import import_module
 from unittest.mock import Mock
 
 from django import forms
+from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.conf import settings
@@ -20,6 +21,8 @@ if not sys.warnoptions:
     import os
     warnings.simplefilter("default")  # Change the filter in this process
     os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
+
+test_site = AdminSite(name='admin')
 
 
 def mockv(value, **kwargs):  # TODO: remove: be explicit in tests
@@ -229,7 +232,7 @@ class ViewTestCase(RequestTestCase):
 
 
 class AdminTestCase(DataTestCase, RequestTestCase):
-    admin_site = miz_site  # TODO: use AdminSite()? less sensitive/more agnostic/decoupled
+    admin_site = test_site
     model_admin_class = None
 
     changelist_path = ''
@@ -239,15 +242,14 @@ class AdminTestCase(DataTestCase, RequestTestCase):
     @classmethod
     def setUpTestData(cls):
         super().setUpTestData()
-        # FIXME: these paths are for the dbentry app - not the tests app
+        opts = cls.model._meta
+        url_name = f"{cls.admin_site.name}:{opts.app_label}_{opts.model_name}"
         if not cls.changelist_path:
-            cls.changelist_path = reverse(
-                'admin:dbentry_{}_changelist'.format(cls.model._meta.model_name))
+            cls.changelist_path = reverse(url_name + '_changelist')
         if not cls.change_path:
-            cls.change_path = unquote(reverse(
-                'admin:dbentry_{}_change'.format(cls.model._meta.model_name), args=['{pk}']))
+            cls.change_path = unquote(reverse(url_name + '_change', args=['{pk}']))
         if not cls.add_path:
-            cls.add_path = reverse('admin:dbentry_{}_add'.format(cls.model._meta.model_name))
+            cls.add_path = reverse(url_name + '_add')
 
     def setUp(self):
         super().setUp()
