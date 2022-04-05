@@ -39,7 +39,7 @@ WIKI_URL: 'http://{host}/wiki/Hauptseite'
 """
 
 # noinspection SpellCheckingInspection
-site_config = """
+site_config = r"""
 <Macro VHost \$VENV_ROOT \$PROJECT_ROOT>
     <VirtualHost *:80>
         # Name of the host. The name must be included in the ALLOWED_HOSTS django settings.
