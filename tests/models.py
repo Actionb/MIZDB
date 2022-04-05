@@ -10,6 +10,9 @@ class Musiker(models.Model):
     def __str__(self):
         return self.kuenstler_name
 
+    class Meta:
+        verbose_name = verbose_name_plural = 'Musiker'
+
 
 class Band(models.Model):
     band_name = models.CharField(max_length=100)
@@ -19,7 +22,14 @@ class Band(models.Model):
 
     class Meta:
         verbose_name = 'Band'
+        verbose_name_plural = 'Bands'
         ordering = ['band_name']
+
+
+class BandAlias(models.Model):
+    alias = models.CharField(max_length=100)
+
+    band = models.ForeignKey('tests.Band', on_delete=models.CASCADE)
 
 
 class Magazin(models.Model):
@@ -55,6 +65,10 @@ class Veranstaltung(models.Model):
     musiker = models.ManyToManyField('tests.Musiker')
     band = models.ManyToManyField('tests.Band')
 
+    class Meta:
+        verbose_name = 'Veranstaltung'
+        verbose_name_plural = 'Veranstaltungen'
+
 
 # Some tests require an M2M table that isn't auto created.
 class MusikerAudioM2M(models.Model):
@@ -73,7 +87,9 @@ class MusikerAudioM2M(models.Model):
 class Audio(models.Model):
     titel = models.CharField(max_length=100)
     tracks = models.PositiveIntegerField('Anz. Tracks', blank=True, null=True)
+
     beschreibung = models.TextField(blank=True)
+    bemerkungen = models.TextField(blank=True)
 
     musiker = models.ManyToManyField('tests.Musiker', through=MusikerAudioM2M)
     band = models.ManyToManyField('tests.Band')
