@@ -5,19 +5,55 @@ from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.aggregates import ArrayAgg
 from django.core import checks
 from django.db.models import Count
 from django.test import RequestFactory, TestCase
 
 from dbentry.base.admin import AutocompleteMixin, MIZModelAdmin
-# TODO: don't forget to re-check this test module!!
+from dbentry.changelist import MIZChangeList
 from tests.case import AdminTestCase, test_site
 from tests.factory import make
-from tests.models import Audio, Bestand, Person, Veranstaltung
+from tests.models import (
+    Audio, Band, Bestand, Musiker, MusikerAudioM2M, Person,
+    Veranstaltung
+)
 
 
 @admin.register(Audio, site=test_site)
-class TestAdmin(MIZModelAdmin):
+class AudioAdmin(MIZModelAdmin):
+    class MusikerInline(admin.TabularInline):
+        model = MusikerAudioM2M
+
+    inlines = [MusikerInline]
+
+
+@admin.register(Musiker, site=test_site)
+class MusikerAdmin(MIZModelAdmin):
+    pass
+
+
+@admin.register(Band, site=test_site)
+class BandAdmin(MIZModelAdmin):
+    list_display = ['band_name', 'alias_string']
+    actions = None  # don't include action checkbox in the list_display
+
+    def get_changelist_annotations(self):
+        return {
+            'alias_list': ArrayAgg(
+                'bandalias__alias', distinct=True, ordering='bandalias__alias'
+            ),
+        }
+
+    def alias_string(self, obj) -> str:
+        return ", ".join(obj.alias_list) or self.get_empty_value_display()
+
+    alias_string.short_description = 'Aliase'
+    alias_string.admin_order_field = 'alias_list'
+
+
+@admin.register(Veranstaltung, site=test_site)
+class VeranstaltungAdmin(MIZModelAdmin):
     pass
 
 
@@ -77,12 +113,15 @@ class TestAutocompleteMixin(TestCase):
 
 
 class MIZModelAdminTest(AdminTestCase):
-    model_admin_class = TestAdmin
+    model_admin_class = AudioAdmin
     model = Audio
 
     @classmethod
     def setUpTestData(cls):
-        cls.obj = make(cls.model)
+        cls.obj = make(
+            cls.model, musiker__extra=1,
+            band__extra=1, veranstaltung__extra=1
+        )
         super().setUpTestData()
 
     def test_check_fieldset_fields(self):
@@ -150,6 +189,10 @@ class MIZModelAdminTest(AdminTestCase):
             m.return_value = {'c': Count('pk')}
             self.assertIn('c', self.model_admin.get_queryset(request).query.annotations)
 
+    def test_get_changelist(self):
+        """MIZModelAdmin should use MIZChangelist."""
+        self.assertEqual(self.model_admin.get_changelist(self.get_request), MIZChangeList)
+
     def test_get_index_category(self):
         self.assertEqual(self.model_admin.get_index_category(), 'Sonstige')  # default value
         self.model_admin.index_category = 'Hovercrafts'
@@ -212,12 +255,93 @@ class MIZModelAdminTest(AdminTestCase):
         self.assertNotIn('band', excluded)
         self.assertIn('audio', excluded)
 
-    # TODO: @work: start here
+    def test_fieldset_includes_one_additional_fieldset(self):
+        """
+        get_fieldset should add an extra fieldset for the fields 'beschreibung'
+        and 'bemerkungen'.
+        """
+        request = self.get_request(user=self.super_user)
+        self.assertEqual(len(self.model_admin.get_fieldsets(request, self.obj)), 2)
+
     def test_add_bb_fieldset(self):
-        self.fail("WRITE ME")
+        """
+        The fields 'beschreibung' and 'bemerkungen' should be moved from the
+        default fieldset ('None') to their own fieldset, if present in the
+        default fieldset's fields.
+        """
+        bb_fieldset = (
+            'Beschreibung & Bemerkungen',
+            {'fields': ['beschreibung', 'bemerkungen'], 'classes': ['collapse', 'collapsed']}
+        )
+
+        # Both fields are included:
+        fieldsets = self.model_admin._add_bb_fieldset(
+            [(None, {'fields': ['titel', 'beschreibung', 'bemerkungen']})]
+        )
+        self.assertEqual(len(fieldsets), 2)
+        self.assertIn((None, {'fields': ['titel']}), fieldsets)
+        self.assertIn(bb_fieldset, fieldsets)
+
+        # The two fields aren't included in the default fieldset:
+        fieldsets = self.model_admin._add_bb_fieldset([(None, {'fields': ['titel']})])
+        self.assertEqual(len(fieldsets), 1)
 
     def test_add_crosslinks(self):
-        self.fail("WRITE ME")
+        crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
+        self.assertIn(
+            {
+                'url': f'/admin/tests/veranstaltung/?audio={self.obj.pk}',
+                'label': 'Veranstaltungen (1)'
+            },
+            crosslinks
+        )
+        self.assertIn(
+            {
+                'url': f'/admin/tests/band/?audio={self.obj.pk}',
+                'label': 'Bands (1)'
+            },
+            crosslinks
+        )
+
+    def test_add_crosslinks_ignores_relations_with_inlines(self):
+        """No crosslinks should be created for relations handled by inlines."""
+        # AudioAdmin has an inline for the relation to Musiker.
+        crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
+        _urls, labels = zip(*(d.values() for d in crosslinks))
+        self.assertNotIn('Musiker (1)', labels)
+
+    def test_add_crosslinks_m2m_relation_link(self):
+        """
+        The links should follow M2M relations to the *other* model of the
+        relation - not back to *this* model.
+        """
+        # The link for Veranstaltung should point to the Veranstaltung
+        # changelist - not the Audio changelist.
+        crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
+        urls, _labels = zip(*(d.values() for d in crosslinks))
+        self.assertIn(f'/admin/tests/veranstaltung/?audio={self.obj.pk}', urls)
+
+    def test_add_crosslinks_prefer_labels_arg(self):
+        """Passed in labels should be used over the model's verbose name."""
+        crosslinks = self.model_admin.add_crosslinks(
+            self.obj.pk, labels={'band': 'Hovercrafts'}
+        )['crosslinks']
+        self.assertIn(
+            {
+                'url': f'/admin/tests/band/?audio={self.obj.pk}',
+                'label': 'Hovercrafts (1)'
+            },
+            crosslinks
+        )
+
+    def test_add_crosslinks_uses_related_name(self):
+        """If the relation has a related_name, it should be used as the label."""
+        # noinspection PyUnresolvedReferences
+        rel = Audio._meta.get_field('band').remote_field
+        with mock.patch.object(rel, 'related_name', new='hovercrafts_full_of_eels'):
+            crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
+            _urls, labels = zip(*(d.values() for d in crosslinks))
+            self.assertIn('Hovercrafts Full Of Eels (1)', labels)
 
     def test_add_extra_context(self):
         """Assert that add_extra_context adds additional items for the context."""
@@ -241,6 +365,22 @@ class MIZModelAdminTest(AdminTestCase):
         response = self.client.get(self.change_path.format(pk=self.obj.pk))
         self.assertIn('collapse_all', response.context)
         self.assertIn('crosslinks', response.context)
+
+    def test_has_module_permission_superuser_only(self):
+        """
+        Only superusers should have module permission, if the superuser_only
+        flag is set.
+        """
+        # noinspection PyUnresolvedReferences
+        perm = Permission.objects.get(
+            codename=get_permission_codename('change', self.model._meta),
+            content_type=ContentType.objects.get_for_model(self.model)
+        )
+        self.staff_user.user_permissions.add(perm)
+        request = self.get_request(user=self.staff_user)
+        self.assertTrue(self.model_admin.has_module_permission(request))
+        with mock.patch.object(self.model_admin, 'superuser_only', True):
+            self.assertFalse(self.model_admin.has_module_permission(request))
 
     def test_save_model(self):
         """save_model should not update the _name of a ComputedNameModel object."""
@@ -287,4 +427,65 @@ class MIZModelAdminTest(AdminTestCase):
                 self.assertIn(field, changed_fields)
 
     def test_get_search_results(self):
-        self.fail("WRITE ME")
+        """
+        If a search term is given, get_search_results should do call the full
+        text search method of the queryset.
+        """
+        request = self.get_request()
+        qs = self.model.objects.all()
+        with mock.patch.object(qs, 'search', create=True) as search_mock:
+            self.model_admin.get_search_results(request, qs, search_term='')
+            search_mock.assert_not_called()
+            self.model_admin.get_search_results(request, qs, search_term='q')
+            search_mock.assert_called()
+
+
+class ChangelistAnnotationsTest(AdminTestCase):
+    model_admin_class = BandAdmin
+    model = Band
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(
+            Band, band_name='Black Rebel Motorcycle Club',
+            bandalias__alias=['BRMC', 'B.R.M.C.']
+        )
+        super().setUpTestData()
+
+    def test_result_list_has_annotations(self):
+        """Assert that the result list has the expected annotations."""
+        response = self.get_response(self.changelist_path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('alias_list', response.context['cl'].result_list.query.annotations)
+
+    def test_result_list_annotated_values(self):
+        """
+        Assert that the result list has the expected values for the annotated
+        field.
+        """
+        response = self.get_response(self.changelist_path)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            ["B.R.M.C.", "BRMC"],
+            response.context['cl'].result_list[0].alias_list
+        )
+
+    def test_changelist_context_values(self):
+        """
+        Assert that the changelist template context contains the expected HTML
+        for the annotated field and its values.
+        """
+        response = self.get_response(self.changelist_path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '<td class="field-alias_string">B.R.M.C., BRMC</td>',
+            response.context['results'][0]
+        )
+
+    def test_ordering_by_annotation(self):
+        """Assert that the annotated field can be ordered against."""
+        # See commit f6bfe55e.
+        index = self.model_admin.list_display.index('alias_string')
+        response = self.get_response(self.changelist_path, data={'o': str(index)})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('alias_list', response.context['cl'].result_list.query.order_by)
