@@ -95,8 +95,9 @@ class TestAdminUtils(RequestTestCase):
         """Assert that the expected links are returned by link_list."""
         site = AdminSite()
         site.register(self.model, ModelAdmin)
+        request = self.get_request(user=self.super_user)
         with add_urls(site.urls, 'admin/'):
-            links = admin_utils.link_list(self.get_request(), obj_list=[self.obj1, self.obj2])
+            links = admin_utils.link_list(request, obj_list=[self.obj1, self.obj2])
         for i, (url, label) in enumerate(re.findall(r'<a href="(.*?)">(.*?)</a>', links)):
             with self.subTest(url=url, label=label):
                 self.assertEqual(
@@ -112,9 +113,10 @@ class TestAdminUtils(RequestTestCase):
         sep = "§"  # use an unusual separator so the links can be split easily
         site = AdminSite()
         site.register(self.model, ModelAdmin)
+        request = self.get_request(user=self.super_user)
         with add_urls(site.urls, 'admin/'):
             links = admin_utils.link_list(
-                self.get_request(), obj_list=[self.obj1, self.obj2], sep=sep, blank=True
+                request, obj_list=[self.obj1, self.obj2], sep=sep, blank=True
             )
         for link in links.split(sep):
             with self.subTest(link=link):

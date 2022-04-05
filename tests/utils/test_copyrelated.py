@@ -89,10 +89,15 @@ class TestCopyRelated(DataTestCase, RequestTestCase):
 
     @patch('dbentry.utils.copyrelated.create_logentry')
     def test_logentry_error(self, mocked_logentry):
-        # The user should be messaged about an error during the LogEntry
-        # creation, but the copy process must finish undisturbed.
+        """
+        The user should be messaged about an error during the LogEntry creation,
+        but the copy process must finish undisturbed.
+        """
         mocked_logentry.side_effect = ValueError("This is a test exception.")
-        request = self.get_request()
+        # Need to touch the messages middleware - so run through all the hoops
+        # by making a full request, instead of just creating a mock request
+        # object via RequestFactory().
+        request = self.get_response('/').wsgi_request
         with self.assertNotRaises(ValueError):
             utils.copy_related_set(request, self.obj1, 'veranstaltung__band')
         # Check that copying went through:

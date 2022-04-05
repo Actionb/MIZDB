@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.conf import settings
 from django.db.models.query import QuerySet
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, RequestFactory
 from django.urls import path, reverse
 from django.utils.http import unquote
 
@@ -165,28 +165,28 @@ class UserTestCase(MIZTestCase):
 
 class RequestTestCase(UserTestCase):
     # TODO: use RequestFactory (instead of client) for get_request/post_request.
-    path = ''
+    rf = RequestFactory()
 
-    def get_path(self):
-        return self.path
-
-    def get_response(self, method, path, data=None, user=None, **kwargs):
+    def get_response(self, path, data=None, user=None, **kwargs):
         self.client.force_login(user or self.super_user)
-        if method == 'GET':
-            func = self.client.get
-        elif method == 'POST':
-            func = self.client.post
-        else:
-            raise ValueError("Unknown request method: %s" % method)
-        return func(path or self.get_path(), data, **kwargs)
+        return self.client.get(path, data, **kwargs)
 
-    def post_request(self, path=None, data=None, user=None, **kwargs):
+    def post_response(self, path, data=None, user=None, **kwargs):
+        self.client.force_login(user or self.super_user)
+        return self.client.post(path, data, **kwargs)
+
+    def post_request(self, path='', data=None, user=None, **kwargs):
         # TODO: this should return RequestFactory().post()
-        return self.get_response('POST', path, data, user, **kwargs).wsgi_request
+        request = self.rf.post(path, data, **kwargs)
+        if user:
+            request.user = user
+        return request
 
-    def get_request(self, path=None, data=None, user=None, **kwargs):
-        # TODO: this should return RequestFactory().get()
-        return self.get_response('GET', path, data, user, **kwargs).wsgi_request
+    def get_request(self, path='', data=None, user=None, **kwargs):
+        request = self.rf.get(path, data, **kwargs)
+        if user:
+            request.user = user
+        return request
 
     def assertMessageSent(self, request, expected_message, msg=None):
         messages = [str(msg) for msg in get_messages(request)]
