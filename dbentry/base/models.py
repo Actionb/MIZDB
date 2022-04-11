@@ -118,7 +118,7 @@ class BaseM2MModel(BaseModel):
             if not fk_field.null
         ]
         if len(data) < 2:
-            # Cannot build a meaningful representation.
+            # Cannot build a more meaningful representation than the default.
             return super().__str__()
         else:
             template = "{}" + " ({})" * (len(data) - 1)
