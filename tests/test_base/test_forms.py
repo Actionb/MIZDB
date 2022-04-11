@@ -11,7 +11,7 @@ from dbentry.base.forms import (
 )
 from tests.case import MIZTestCase
 from tests.factory import make
-from tests.models import Audio, Band, Musiker, MusikerAudioM2M
+from tests.test_base.models import Audio, Band, Musiker, MusikerAudioM2M
 
 
 class FieldGroupTest(MIZTestCase):

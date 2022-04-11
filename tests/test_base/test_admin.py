@@ -211,10 +211,8 @@ class MIZModelAdminTest(AdminTestCase):
         ct = ContentType.objects.get_for_model(self.model)
         # noinspection PyUnresolvedReferences
         codename = get_permission_codename('merge', self.model._meta)
-        perm = Permission.objects.create(
-            name='Can merge Audio Material', content_type=ct, codename=codename
-        )
-        self.staff_user.user_permissions.add(perm)
+        merge_perm = Permission.objects.get(content_type=ct, codename=codename)
+        self.staff_user.user_permissions.add(merge_perm)
 
         request = RequestFactory().get('/')
         request.user = self.noperms_user
