@@ -1,7 +1,6 @@
 from django.urls import path
 
-from tests.case import test_site
+# TODO: delete this urls.py? Tests should define their own URLs.
 
 urlpatterns = [
-    path('admin/', test_site.urls)
 ]

@@ -2,22 +2,26 @@ from unittest import mock
 from unittest.mock import patch
 
 from django.contrib import admin
+from django.contrib.admin import AdminSite
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.core import checks
 from django.db.models import Count
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
+from django.urls import path
 
 from dbentry.base.admin import AutocompleteMixin, MIZModelAdmin
 from dbentry.changelist import MIZChangeList
-from tests.case import AdminTestCase, test_site
+from tests.case import AdminTestCase
 from tests.factory import make
 from tests.models import (
     Audio, Band, Bestand, Musiker, MusikerAudioM2M, Person,
     Veranstaltung
 )
+
+test_site = AdminSite(name='admin')
 
 
 @admin.register(Audio, site=test_site)
@@ -55,6 +59,9 @@ class BandAdmin(MIZModelAdmin):
 @admin.register(Veranstaltung, site=test_site)
 class VeranstaltungAdmin(MIZModelAdmin):
     pass
+
+
+urlpatterns = [path('admin/', test_site.urls)]
 
 
 class TestAutocompleteMixin(TestCase):
@@ -112,7 +119,9 @@ class TestAutocompleteMixin(TestCase):
                 make_mock.assert_not_called()
 
 
+@override_settings(ROOT_URLCONF='tests.base.test_admin')
 class MIZModelAdminTest(AdminTestCase):
+    admin_site = test_site
     model_admin_class = AudioAdmin
     model = Audio
 
@@ -432,6 +441,7 @@ class MIZModelAdminTest(AdminTestCase):
         text search method of the queryset.
         """
         request = self.get_request()
+        # noinspection PyUnresolvedReferences
         qs = self.model.objects.all()
         with mock.patch.object(qs, 'search', create=True) as search_mock:
             self.model_admin.get_search_results(request, qs, search_term='')
@@ -440,7 +450,9 @@ class MIZModelAdminTest(AdminTestCase):
             search_mock.assert_called()
 
 
+@override_settings(ROOT_URLCONF='tests.base.test_admin')
 class ChangelistAnnotationsTest(AdminTestCase):
+    admin_site = test_site
     model_admin_class = BandAdmin
     model = Band
 

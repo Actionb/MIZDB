@@ -5,7 +5,6 @@ from importlib import import_module
 from unittest.mock import Mock
 
 from django import forms
-from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.conf import settings
@@ -14,15 +13,11 @@ from django.test import TestCase, override_settings, RequestFactory
 from django.urls import path, reverse
 from django.utils.http import unquote
 
-from dbentry.sites import miz_site
-
 # Display all warnings:
 if not sys.warnoptions:
     import os
     warnings.simplefilter("default")  # Change the filter in this process
     os.environ["PYTHONWARNINGS"] = "default"  # Also affect subprocesses
-
-test_site = AdminSite(name='admin')
 
 
 def mockv(value, **kwargs):  # TODO: remove: be explicit in tests
@@ -234,7 +229,7 @@ class ViewTestCase(RequestTestCase):
 
 
 class AdminTestCase(DataTestCase, RequestTestCase):
-    admin_site = test_site
+    admin_site = None
     model_admin_class = None
 
     changelist_path = ''
