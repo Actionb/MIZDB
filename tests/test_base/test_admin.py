@@ -16,7 +16,7 @@ from dbentry.base.admin import AutocompleteMixin, MIZModelAdmin
 from dbentry.changelist import MIZChangeList
 from tests.case import AdminTestCase
 from tests.factory import make
-from tests.models import (
+from tests.test_base.models import (
     Audio, Band, Bestand, Musiker, MusikerAudioM2M, Person,
     Veranstaltung
 )
@@ -119,7 +119,7 @@ class TestAutocompleteMixin(TestCase):
                 make_mock.assert_not_called()
 
 
-@override_settings(ROOT_URLCONF='tests.base.test_admin')
+@override_settings(ROOT_URLCONF='tests.test_base.test_admin')
 class MIZModelAdminTest(AdminTestCase):
     admin_site = test_site
     model_admin_class = AudioAdmin
@@ -235,7 +235,7 @@ class MIZModelAdminTest(AdminTestCase):
         self.staff_user.user_permissions.add(*perms)
 
         request = RequestFactory().get('/')
-        with patch('dbentry.base.admin.BESTAND_MODEL_NAME', 'tests.Bestand'):
+        with patch('dbentry.base.admin.BESTAND_MODEL_NAME', 'test_base.Bestand'):
             request.user = self.noperms_user
             self.assertFalse(self.model_admin.has_alter_bestand_permission(request))
             request.user = self.staff_user
@@ -299,14 +299,14 @@ class MIZModelAdminTest(AdminTestCase):
         crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
         self.assertIn(
             {
-                'url': f'/admin/tests/veranstaltung/?audio={self.obj.pk}',
+                'url': f'/admin/test_base/veranstaltung/?audio={self.obj.pk}',
                 'label': 'Veranstaltungen (1)'
             },
             crosslinks
         )
         self.assertIn(
             {
-                'url': f'/admin/tests/band/?audio={self.obj.pk}',
+                'url': f'/admin/test_base/band/?audio={self.obj.pk}',
                 'label': 'Bands (1)'
             },
             crosslinks
@@ -328,7 +328,7 @@ class MIZModelAdminTest(AdminTestCase):
         # changelist - not the Audio changelist.
         crosslinks = self.model_admin.add_crosslinks(self.obj.pk)['crosslinks']
         urls, _labels = zip(*(d.values() for d in crosslinks))
-        self.assertIn(f'/admin/tests/veranstaltung/?audio={self.obj.pk}', urls)
+        self.assertIn(f'/admin/test_base/veranstaltung/?audio={self.obj.pk}', urls)
 
     def test_add_crosslinks_prefer_labels_arg(self):
         """Passed in labels should be used over the model's verbose name."""
@@ -337,7 +337,7 @@ class MIZModelAdminTest(AdminTestCase):
         )['crosslinks']
         self.assertIn(
             {
-                'url': f'/admin/tests/band/?audio={self.obj.pk}',
+                'url': f'/admin/test_base/band/?audio={self.obj.pk}',
                 'label': 'Hovercrafts (1)'
             },
             crosslinks
@@ -450,7 +450,7 @@ class MIZModelAdminTest(AdminTestCase):
             search_mock.assert_called()
 
 
-@override_settings(ROOT_URLCONF='tests.base.test_admin')
+@override_settings(ROOT_URLCONF='tests.test_base.test_admin')
 class ChangelistAnnotationsTest(AdminTestCase):
     admin_site = test_site
     model_admin_class = BandAdmin
