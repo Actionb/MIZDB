@@ -52,6 +52,12 @@ class BaseModel(models.Model):
                 m2m=False,
                 exclude=self.exclude_from_str
             )
+            # TODO: replace the above with the below to remove the get_model_fields call:
+            # model_fields = [
+            #     f for f in opts.get_fields()
+            #     if f.concrete
+            #     and not (f.primary_key or f.is_relation or f.name in self.exclude_from_str)
+            # ]
             result = " ".join(
                 [
                     str(fld.value_from_object(self))
