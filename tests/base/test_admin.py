@@ -489,3 +489,10 @@ class ChangelistAnnotationsTest(AdminTestCase):
         response = self.get_response(self.changelist_path, data={'o': str(index)})
         self.assertEqual(response.status_code, 200)
         self.assertIn('alias_list', response.context['cl'].result_list.query.order_by)
+
+    def test_pagination(self):
+        """Assert that the paginated queryset is as expected (content & count)."""
+        make(self.model, bandalias__extra=1)
+        response = self.get_response(self.changelist_path)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['cl'].paginator.count, 2)
