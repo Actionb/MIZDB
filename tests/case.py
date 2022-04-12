@@ -159,28 +159,26 @@ class UserTestCase(MIZTestCase):
 
 
 class RequestTestCase(UserTestCase):
-    # TODO: use RequestFactory (instead of client) for get_request/post_request.
     rf = RequestFactory()
 
     def get_response(self, path, data=None, user=None, **kwargs):
-        self.client.force_login(user or self.super_user)
+        if user:
+            self.client.force_login(user)
         return self.client.get(path, data, **kwargs)
 
     def post_response(self, path, data=None, user=None, **kwargs):
-        self.client.force_login(user or self.super_user)
+        if user:
+            self.client.force_login(user)
         return self.client.post(path, data, **kwargs)
 
     def post_request(self, path='', data=None, user=None, **kwargs):
-        # TODO: this should return RequestFactory().post()
         request = self.rf.post(path, data, **kwargs)
-        if user:
-            request.user = user
+        request.user = user or self.super_user
         return request
 
     def get_request(self, path='', data=None, user=None, **kwargs):
         request = self.rf.get(path, data, **kwargs)
-        if user:
-            request.user = user
+        request.user = user or self.super_user
         return request
 
     def assertMessageSent(self, request, expected_message, msg=None):
@@ -202,15 +200,14 @@ class ViewTestCase(RequestTestCase):
 
     view_class = None
 
-    def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
-        """Instantiate and set up the view without calling dispatch()."""
-        # TODO: rework the arguments?
-        #  Make initkwargs a keyword argument and then just use *args, **kwargs?
-        view = self.view_class(**initkwargs)
-        if args is None:
-            args = []
-        if kwargs is None:
-            kwargs = {}
+    def get_view(self, request=None, *args, initkwargs=None, **kwargs):
+        """
+        Instantiate and set up the view without calling dispatch().
+
+        initkwargs are the keyword arguments for the view_class constructor.
+        args and kwargs are passed to view.setup().
+        """
+        view = self.view_class(**(initkwargs or {}))
         view.setup(request, *args, **kwargs)
         return view
 
