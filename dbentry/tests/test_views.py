@@ -6,7 +6,7 @@ from django.contrib.admin import AdminSite
 from dbentry import models as _models
 from dbentry.base.views import MIZAdminMixin, OptionalFormView, FixedSessionWizardView
 from dbentry.tests.base import MIZTestCase, ViewTestCase
-from dbentry.views import MIZ_permission_denied_view, SiteSearchView
+from dbentry.views import MIZSiteSearch, MIZ_permission_denied_view, SiteSearchView
 
 
 class TestMIZAdminMixin(ViewTestCase):
@@ -129,7 +129,7 @@ class TestFixedSessionWizardView(ViewTestCase):
 
 class TestSiteSearchView(ViewTestCase):
 
-    view_class = SiteSearchView
+    view_class = MIZSiteSearch
 
     @classmethod
     def setUpTestData(cls):
