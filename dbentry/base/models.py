@@ -75,19 +75,12 @@ class BaseModel(models.Model):
             TypeError: when qs() was called from class level. The method
                 requires a model instance.
         """
-        try:
-            # Use 'model.objects' instead of 'self.objects' as managers
-            # are not accessible via instances.
-            # noinspection PyUnresolvedReferences
-            return self._meta.model.objects.filter(pk=self.pk)
-        except TypeError:
-            # qs() was called from class level; i.e. 'self' is a model class.
-            # 'self.pk' thus refers to the property of that class which is not
-            # the right type.
+        if isinstance(self, type):
             raise TypeError(
-                "Calling qs() from class level is prohibited. "
-                "Use {}.objects instead.".format(self.__name__)
+                f"Calling qs() from class level is prohibited. Use {self.__name__}.objects instead."
             )
+        # noinspection PyUnresolvedReferences
+        return self._meta.model.objects.filter(pk=self.pk)
 
     class Meta:
         abstract = True
