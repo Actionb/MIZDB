@@ -44,9 +44,9 @@ class TestArtikelForm(ModelFormTestCase):
 
     def test_init_initial_magazin(self):
         """Assert that init sets the initial value for ausgabe__magazin."""
-        # Yes: is the same test method as in TestAusgabeMagazinFieldForm.
+        # Yes: this is the same test method as in TestAusgabeMagazinFieldForm.
         # Setting the value for Magazin is very important to the function of
-        # the ArtikelForm.
+        # the ArtikelForm - so test this specifically for that form.
         magazin = make(_models.Magazin)
         ausgabe = make(_models.Ausgabe, magazin=magazin)
         artikel = make(_models.Artikel, ausgabe=ausgabe)
