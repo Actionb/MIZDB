@@ -63,6 +63,8 @@ class FixedSessionWizardView(SessionWizardView):
 
     def get_context_data(self, **kwargs: Any) -> dict:
         # SessionWizardView expects 'form' as required positional argument.
+        # TODO: this isn't the case anymore, SessionWizardView plays nice with
+        #  form as a kwarg.
         return super().get_context_data(kwargs.pop('form', None), **kwargs)
 
     def get_form(
@@ -88,6 +90,9 @@ class FixedSessionWizardView(SessionWizardView):
         get_form_kwargs, we need to call super with explicit data (and files)
         kwargs derived from get_form_kwargs.
         """
+        # TODO: it doesn't look like any views using this view class use
+        #  get_form_kwargs to override data/files - so this 'fix' here might
+        #  not be needed.
         if step is None:
             step = self.steps.current
         kwargs = self.get_form_kwargs(step)
