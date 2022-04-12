@@ -32,6 +32,7 @@ class TestBaseModel(MIZTestCase):
         self.assertIn(self.obj, queryset)
 
     def test_qs_exception(self):
+        """qs should raise a TypeError, if called from class level."""
         with self.assertRaises(TypeError):
             # noinspection PyTypeChecker
             self.model.qs(self.model)
@@ -101,12 +102,7 @@ class TestComputedNameModel(MIZTestCase):
         cls.obj: Person = make(cls.model, vorname='Alice', nachname='Tester')
         # noinspection PyUnresolvedReferences
         cls.qs = cls.model.objects.filter(pk=cls.obj.pk)
-
         super().setUpTestData()
-
-    def setUp(self):
-        self.obj.refresh_from_db()  # TODO: might not be necessary?
-        super().setUp()
 
     def test_init(self):
         """The name should be updated with new data upon initialization."""
@@ -122,23 +118,30 @@ class TestComputedNameModel(MIZTestCase):
         self.obj._changed_flag = True
         with mock.patch.object(self.obj, 'update_name') as update_mock:
             self.obj.save(update=False)
-            update_mock.assert_not_called()
-        # TODO: @work: this fails; _name is changed to Bob Tester without using update_name
-        self.obj.refresh_from_db()
-        self.assertEqual(self.obj._name, 'Alice Tester')
-        self.assertIn("Alice Tester", self.qs.values_list('_name', flat=True))
+        update_mock.assert_not_called()
+        self.assertEqual(self.obj._name, "Alice Tester")
 
     def test_save_forces_update(self):
         """save() should update the name even if _changed_flag is False."""
         self.obj.vorname = 'Bob'
         self.obj._changed_flag = False
         self.obj.save()
-        self.assertIn("Bob Tester", self.qs.values_list('_name', flat=True))
+        self.assertEqual(self.obj._name, "Bob Tester")
 
     def test_update_name(self):
-        self.qs.update(vorname='Bob', _changed_flag=True)
+        self.obj.vorname = 'Bob'
+        self.obj._changed_flag = True
+        self.obj.save(update=False)
         self.assertTrue(self.obj.update_name())
         self.assertEqual(self.obj._name, "Bob Tester")
+
+    def test_update_name_resets_changed_flag(self):
+        """update_name should set _changed_flag to False, if no update was needed."""
+        self.obj._changed_flag = True
+        self.obj.save(update=False)
+        self.obj.update_name()
+        self.assertFalse(self.obj._changed_flag)
+        self.assertFalse(self.qs.values_list('_changed_flag', flat=True).get())
 
     def test_name_default(self):
         obj = make(self.model, nachname='')

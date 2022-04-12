@@ -24,6 +24,9 @@ class Person(ComputedNameModel):
             return f"{vorname} {nachname}".strip()
         return "No data for Person."
 
+    class Meta:
+        verbose_name = 'Person'
+
 
 class Musiker(models.Model):
     kuenstler_name = models.CharField(max_length=100)
