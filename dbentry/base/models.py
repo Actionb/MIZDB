@@ -287,7 +287,7 @@ class ComputedNameModel(BaseModel):
         The keyword arguments are the fields of ``name_composing_fields``
         and their respective values.
         """
-        raise NotImplementedError('Subclasses must implement this method.')
+        raise NotImplementedError('Subclasses must implement this method.')  # pragma: no cover
 
     def __str__(self) -> str:
         # noinspection PyUnresolvedReferences

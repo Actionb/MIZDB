@@ -128,6 +128,7 @@ class MIZQuerySet(TextSearchQuerySetMixin, QuerySet):
 
 
 class CNQuerySet(MIZQuerySet):
+    # TODO: shouldn't get() update the name just like filter?
 
     def bulk_create(self, objs: Iterable[Model], **kwargs: Any) -> List[Model]:
         # Set the _changed_flag on the objects to be created
