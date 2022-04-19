@@ -29,7 +29,7 @@ TEST_APPS = [
     "tests",
     "tests.test_autocomplete",
     "tests.test_base",
-    "tests.utils",
+    "tests.test_utils",
 ]
 
 INSTALLED_APPS = ALWAYS_INSTALLED_APPS + TEST_APPS

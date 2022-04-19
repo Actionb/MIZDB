@@ -10,7 +10,22 @@ from django.db import models
 
 from dbentry import utils
 from tests.case import MIZTestCase
-from tests.utils.models import M2MSource, M2MTarget, Protected, Protector
+
+
+class M2MTarget(models.Model):
+    pass
+
+
+class M2MSource(models.Model):
+    targets = models.ManyToManyField('test_utils.M2MTarget', related_name='sources')
+
+
+class Protector(models.Model):
+    date = models.DateField(blank=True, null=True)
+
+
+class Protected(models.Model):
+    protector = models.ForeignKey('test_utils.Protector', on_delete=models.PROTECT)
 
 
 class TestModelUtils(MIZTestCase):
@@ -28,11 +43,11 @@ class TestModelUtils(MIZTestCase):
             (utils.get_relations_between_models(Protector, Protected)), expected
         )
         self.assertEqual(
-            (utils.get_relations_between_models('utils.Protected', 'utils.Protector')),
+            (utils.get_relations_between_models('test_utils.Protected', 'test_utils.Protector')),
             expected
         )
         self.assertEqual(
-            (utils.get_relations_between_models('utils.Protector', 'utils.Protected')),
+            (utils.get_relations_between_models('test_utils.Protector', 'test_utils.Protected')),
             expected
         )
 
@@ -49,11 +64,11 @@ class TestModelUtils(MIZTestCase):
             (utils.get_relations_between_models(M2MTarget, M2MSource)), expected
         )
         self.assertEqual(
-            (utils.get_relations_between_models('utils.M2MSource', 'utils.M2MTarget')),
+            (utils.get_relations_between_models('test_utils.M2MSource', 'test_utils.M2MTarget')),
             expected
         )
         self.assertEqual(
-            (utils.get_relations_between_models('utils.M2MTarget', 'utils.M2MSource')),
+            (utils.get_relations_between_models('test_utils.M2MTarget', 'test_utils.M2MSource')),
             expected
         )
 
@@ -69,9 +84,9 @@ class TestModelUtils(MIZTestCase):
     def test_get_model_from_string(self):
         self.assertEqual(
             Protected,
-            utils.get_model_from_string('Protected', app_label='utils')
+            utils.get_model_from_string('Protected', app_label='test_utils')
         )
-        self.assertEqual(Protected, utils.get_model_from_string('utils.protected'))
+        self.assertEqual(Protected, utils.get_model_from_string('test_utils.protected'))
         with self.assertRaises(LookupError):
             utils.get_model_from_string('beep boop')
         with self.assertRaises(LookupError):
@@ -142,7 +157,7 @@ class ForwardRelatedModel(models.Model):
 
 
 class ReverseRelatedModel(models.Model):
-    reverse = models.ForeignKey('utils.AllRelations', on_delete=models.CASCADE)
+    reverse = models.ForeignKey('test_utils.AllRelations', on_delete=models.CASCADE)
 
 
 class M2MTargetOne(models.Model):
@@ -154,15 +169,15 @@ class M2MTargetTwo(models.Model):
 
 
 class M2MTable(models.Model):
-    source = models.ForeignKey('utils.AllRelations', on_delete=models.CASCADE)
-    target = models.ForeignKey('utils.M2MTargetTwo', on_delete=models.CASCADE)
+    source = models.ForeignKey('test_utils.AllRelations', on_delete=models.CASCADE)
+    target = models.ForeignKey('test_utils.M2MTargetTwo', on_delete=models.CASCADE)
 
 
 class AllRelations(models.Model):
-    one_to_one = models.OneToOneField('utils.OneToOneModel', on_delete=models.CASCADE)
-    forward_related = models.ForeignKey('utils.ForwardRelatedModel', on_delete=models.CASCADE)
-    many_auto = models.ManyToManyField('utils.M2MTargetOne')
-    many_intermediary = models.ManyToManyField('utils.M2MTargetTwo', through='utils.M2MTable')  # noqa
+    one_to_one = models.OneToOneField('test_utils.OneToOneModel', on_delete=models.CASCADE)
+    forward_related = models.ForeignKey('test_utils.ForwardRelatedModel', on_delete=models.CASCADE)
+    many_auto = models.ManyToManyField('test_utils.M2MTargetOne')
+    many_intermediary = models.ManyToManyField('test_utils.M2MTargetTwo', through='test_utils.M2MTable')  # noqa
 
 
 class TestGetModelRelations(MIZTestCase):
@@ -237,8 +252,8 @@ class RequiredRelatedTarget(models.Model):
 
 
 class RequiredRelatedField(models.Model):
-    required = models.ForeignKey('utils.RequiredRelatedTarget', on_delete=models.CASCADE)
-    not_required = models.ForeignKey('utils.NotRequiredRelated', on_delete=models.CASCADE, null=True)  # noqa
+    required = models.ForeignKey('test_utils.RequiredRelatedTarget', on_delete=models.CASCADE)
+    not_required = models.ForeignKey('test_utils.NotRequiredRelated', on_delete=models.CASCADE, null=True)  # noqa
 
 
 class RequiredWithDefault(models.Model):
@@ -313,7 +328,6 @@ class TestCleanPerms(MIZTestCase):
     def setUp(self):
         super().setUp()
         self.patcher = partial(patch.object, Permission.objects, 'all')
-        self.ct = ContentType.objects.get_for_model(Spam)
 
     def test_unknown_model(self):
         """
@@ -341,8 +355,9 @@ class TestCleanPerms(MIZTestCase):
         p1.codename = 'eat_lovelyspam'
         p1.save()
         # Add a permission that isn't a default permission of 'Spam':
+        ct = ContentType.objects.get_for_model(Spam)
         p2 = Permission.objects.create(
-            name='Can reject spam', codename='reject_spam', content_type=self.ct
+            name='Can reject spam', codename='reject_spam', content_type=ct
         )
         stream = StringIO()
         with self.patcher(new=Mock(return_value=[p1, p2])):
