@@ -1,5 +1,6 @@
 from django.utils.translation import override as translation_override
 
+from dbentry import m2m as _m2m
 from dbentry import models as _models
 from dbentry.fts.query import SIMPLE, STEMMING
 from tests.case import MIZTestCase
@@ -1498,3 +1499,41 @@ class TestModelFoto(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+
+class TestM2mAudioMusiker(MIZTestCase):
+    model = _m2m.m2m_audio_musiker
+
+    def test_str(self):
+        obj = make(
+            self.model, musiker__kuenstler_name='Natalia Lafourcade',
+            audio__titel='Natalia Lafourcade: NPR Music Tiny Desk Concert'
+        )
+        self.assertEqual(obj.__str__(), 'Natalia Lafourcade')
+
+
+class TestM2mVideoMusiker(MIZTestCase):
+    model = _m2m.m2m_video_musiker
+
+    def test_str(self):
+        obj = make(
+            self.model, musiker__kuenstler_name='Natalia Lafourcade',
+            video__titel='Natalia Lafourcade: NPR Music Tiny Desk Concert'
+        )
+        self.assertEqual(obj.__str__(), 'Natalia Lafourcade')
+
+
+class TestM2mDateiMusiker(MIZTestCase):
+    model = _m2m.m2m_datei_musiker
+
+    def test_str(self):
+        obj = make(
+            self.model, musiker__kuenstler_name='Natalia Lafourcade',
+            datei__titel='Natalia Lafourcade: NPR Music Tiny Desk Concert'
+        )
+        self.assertEqual(obj.__str__(), 'Natalia Lafourcade')
+        guitar = make(_models.Instrument, instrument="Guitar", kuerzel="g")
+        tambourine = make(_models.Instrument, instrument="Tambourine", kuerzel="tb")
+        # noinspection PyUnresolvedReferences
+        obj.instrument.add(guitar, tambourine)
+        self.assertEqual(obj.__str__(), 'Natalia Lafourcade (g,tb)')
