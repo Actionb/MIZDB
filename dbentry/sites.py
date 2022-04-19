@@ -132,6 +132,8 @@ class MIZAdminSite(admin.AdminSite):
             model_admin = utils.get_model_admin_for_model(m['object_name'], self)
             if model_admin is None:  # pragma: no cover
                 continue
+            # FIXME: Add a issubclass check: only MIZModelAdmins have the
+            #  get_index_category method
             # noinspection PyUnresolvedReferences
             model_category = model_admin.get_index_category()
             if model_category not in categories:
