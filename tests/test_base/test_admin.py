@@ -61,7 +61,8 @@ class VeranstaltungAdmin(MIZModelAdmin):
     pass
 
 
-urlpatterns = [path('admin/', test_site.urls)]
+class URLConf:
+    urlpatterns = [path('admin/', test_site.urls)]
 
 
 class TestAutocompleteMixin(TestCase):
@@ -119,7 +120,7 @@ class TestAutocompleteMixin(TestCase):
                 make_mock.assert_not_called()
 
 
-@override_settings(ROOT_URLCONF='tests.test_base.test_admin')
+@override_settings(ROOT_URLCONF=URLConf)
 class MIZModelAdminTest(AdminTestCase):
     admin_site = test_site
     model_admin_class = AudioAdmin
@@ -448,7 +449,7 @@ class MIZModelAdminTest(AdminTestCase):
             search_mock.assert_called()
 
 
-@override_settings(ROOT_URLCONF='tests.test_base.test_admin')
+@override_settings(ROOT_URLCONF=URLConf)
 class ChangelistAnnotationsTest(AdminTestCase):
     admin_site = test_site
     model_admin_class = BandAdmin
