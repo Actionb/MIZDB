@@ -12,64 +12,32 @@ def get_search_field_columns(field):
     return {c.name: c.__dict__.copy() for c in field.columns}
 
 
-class TestModelArtikel(MIZTestCase):
-    model = _models.Artikel
-    test_data_count = 1
+class TestModelPerson(MIZTestCase):
+    model = _models.Person
 
-    def test_str(self):
-        obj = make(self.model, schlagzeile="The importance of testing stuff")
-        self.assertEqual(obj.__str__(), "The importance of testing stuff")
-        obj.schlagzeile = ''
-        self.assertEqual(obj.__str__(), 'Keine Schlagzeile gegeben!')
-        obj.zusammenfassung = 'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
-        self.assertEqual(
-            obj.__str__(),
-            'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
-        )
-
-    def test_meta_ordering(self):
-        """Assert that the ordering includes magazin_name and Ausgabe._name"""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(
-            self.model._meta.ordering,
-            ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
-        )
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
+    @translation_override(language=None)
+    def test_get_name(self):
         test_data = [
-            ('schlagzeile', ('schlagzeile', 'A', SIMPLE)),
-            ('zusammenfassung', ('zusammenfassung', 'B', STEMMING)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+            ({'vorname': ('',)}, 'No data for Person.'),
+            ({'nachname': ('',)}, 'No data for Person.'),
+            ({'vorname': ('',), 'nachname': ('',)}, 'No data for Person.'),
+            ({'vorname': ('',), 'nachname': ('Test',)}, 'Test'),
+            ({'vorname': ('Beep',), 'nachname': ('Boop',)}, 'Beep Boop')
         ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelAudio(MIZTestCase):
-    model = _models.Audio
-
-    def test_str(self):
-        obj = make(self.model, titel='Testaudio', tracks=2, beschreibung='Good soup.')
-        self.assertEqual(obj.__str__(), 'Testaudio')
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
 
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
         # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
+        self.assertEqual(self.model._meta.ordering, ['_name'])
 
-    def test_search_field_columns(self):
+    def test_full_text_search(self):
         """Check the columns of this model's SearchVectorField."""
         test_data = [
-            ('titel', ('titel', 'A', SIMPLE)),
+            ('_name', ('_name', 'A', SIMPLE)),
             ('beschreibung', ('beschreibung', 'C', STEMMING)),
             ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
         ]
@@ -82,6 +50,203 @@ class TestModelAudio(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+
+class TestModelMusiker(MIZTestCase):
+    model = _models.Musiker
+
+    def test_str(self):
+        obj = self.model(
+            kuenstler_name='Alice Tester', beschreibung='Beep', bemerkungen='Boop'
+        )
+        self.assertEqual(str(obj), 'Alice Tester')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
+
+    def test_full_text_search(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('kuenstler_name', ('kuenstler_name', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelMusikerAlias(MIZTestCase):
+    model = _models.MusikerAlias
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('alias', columns)
+        self.assertEqual(columns['alias']['name'], 'alias')
+        self.assertEqual(columns['alias']['weight'], 'B')
+        self.assertEqual(columns['alias']['language'], SIMPLE)
+
+
+class TestModelGenre(MIZTestCase):
+    model = _models.Genre
+
+    def test_str(self):
+        obj = self.model(genre='Testgenre')
+        self.assertEqual(str(obj), 'Testgenre')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['genre'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('genre', columns)
+        self.assertEqual(columns['genre']['name'], 'genre')
+        self.assertEqual(columns['genre']['weight'], 'A')
+        self.assertEqual(columns['genre']['language'], SIMPLE)
+
+
+class TestModelGenreAlias(MIZTestCase):
+    model = _models.GenreAlias
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('alias', columns)
+        self.assertEqual(columns['alias']['name'], 'alias')
+        self.assertEqual(columns['alias']['weight'], 'B')
+        self.assertEqual(columns['alias']['language'], SIMPLE)
+
+
+class TestModelBand(MIZTestCase):
+    model = _models.Band
+
+    def test_str(self):
+        obj = make(self.model, band_name='Testband', beschreibung='Beep', bemerkungen='Boop')
+        self.assertEqual(str(obj), 'Testband')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['band_name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('band_name', ('band_name', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+    def test_related_search_vectors(self):
+        """Check the configs for related search vectors."""
+        self.assertIn(('bandalias___fts', SIMPLE), self.model.related_search_vectors)
+
+
+class TestModelBandAlias(MIZTestCase):
+    model = _models.BandAlias
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['alias'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('alias', columns)
+        self.assertEqual(columns['alias']['name'], 'alias')
+        self.assertEqual(columns['alias']['weight'], 'B')
+        self.assertEqual(columns['alias']['language'], SIMPLE)
+
+
+class TestModelAutor(MIZTestCase):
+    model = _models.Autor
+
+    @translation_override(language=None)
+    def test_get_name(self):
+        test_data = [
+            ({'person___name': ('Alice Tester',)}, 'Alice Tester'),
+            ({'kuerzel': ('TK',)}, 'TK'),
+            ({'person___name': ('Alice Tester',), 'kuerzel': ('TK',)}, 'Alice Tester (TK)'),
+            ({}, 'No data for Autor.'),
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+    @translation_override(language=None)
+    def test_get_name_ignores_default_person(self):
+        """get_name should ignore default values for person."""
+        test_data = [
+            ({'person___name': ('No data for Person.',), 'kuerzel': ('TK',)}, 'TK'),
+            ({'person___name': ('unbekannt',), 'kuerzel': ('TK',)}, 'TK')
+        ]
+        for name_data, expected in test_data:
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['_name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('_name', ('_name', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+    def test_related_search_vectors(self):
+        """Check the configs for related search vectors."""
+        self.assertIn(('person___fts', SIMPLE), self.model.related_search_vectors)
 
 
 class TestModelAusgabe(MIZTestCase):
@@ -352,509 +517,99 @@ class TestModelAusgabeNum(MIZTestCase):
         self.assertEqual(self.model._meta.ordering, ['num'])
 
 
-class TestModelAutor(MIZTestCase):
-    model = _models.Autor
+class TestModelMonat(MIZTestCase):
+    model = _models.Monat
+
+    def test_str(self):
+        obj = self.model(monat='Dezember', abk='Dez')
+        self.assertEqual(str(obj), 'Dezember')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['ordinal'])
+
+    def test_full_text_search(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('monat', ('monat', 'A', SIMPLE)),
+            ('abk', ('abk', 'A', SIMPLE)),
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelMagazin(MIZTestCase):
+    model = _models.Magazin
+
+    def test_str(self):
+        obj = self.model(magazin_name='Testmagazin')
+        self.assertEqual(str(obj), 'Testmagazin')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['magazin_name'])
+
+    def test_full_text_search(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('magazin_name', ('magazin_name', 'A', SIMPLE)),
+            ('issn', ('issn', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelVerlag(MIZTestCase):
+    model = _models.Verlag
+
+    def test_str(self):
+        obj = self.model(verlag_name='Testverlag')
+        self.assertEqual(str(obj), 'Testverlag')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('verlag_name', columns)
+        self.assertEqual(columns['verlag_name']['name'], 'verlag_name')
+        self.assertEqual(columns['verlag_name']['weight'], 'A')
+        self.assertEqual(columns['verlag_name']['language'], SIMPLE)
+
+
+class TestModelOrt(MIZTestCase):
+    model = _models.Ort
 
     @translation_override(language=None)
     def test_get_name(self):
+        name_data = {'land__land_name': ('Deutschland',)}
         test_data = [
-            ({'person___name': ('Alice Tester',)}, 'Alice Tester'),
-            ({'kuerzel': ('TK',)}, 'TK'),
-            ({'person___name': ('Alice Tester',), 'kuerzel': ('TK',)}, 'Alice Tester (TK)'),
-            ({}, 'No data for Autor.'),
-        ]
-        for name_data, expected in test_data:
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
-
-    @translation_override(language=None)
-    def test_get_name_ignores_default_person(self):
-        """get_name should ignore default values for person."""
-        test_data = [
-            ({'person___name': ('No data for Person.',), 'kuerzel': ('TK',)}, 'TK'),
-            ({'person___name': ('unbekannt',), 'kuerzel': ('TK',)}, 'TK')
-        ]
-        for name_data, expected in test_data:
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['_name'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('_name', ('_name', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-    def test_related_search_vectors(self):
-        """Check the configs for related search vectors."""
-        self.assertIn(('person___fts', SIMPLE), self.model.related_search_vectors)
-
-
-class TestModelBand(MIZTestCase):
-    model = _models.Band
-
-    def test_str(self):
-        obj = make(self.model, band_name='Testband', beschreibung='Beep', bemerkungen='Boop')
-        self.assertEqual(str(obj), 'Testband')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['band_name'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('band_name', ('band_name', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-    def test_related_search_vectors(self):
-        """Check the configs for related search vectors."""
-        self.assertIn(('bandalias___fts', SIMPLE), self.model.related_search_vectors)
-
-
-class TestModelBandAlias(MIZTestCase):
-    model = _models.BandAlias
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['alias'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('alias', columns)
-        self.assertEqual(columns['alias']['name'], 'alias')
-        self.assertEqual(columns['alias']['weight'], 'B')
-        self.assertEqual(columns['alias']['language'], SIMPLE)
-
-
-class TestModelBestand(MIZTestCase):
-    model = _models.Bestand
-
-    def test_str(self):
-        obj = make(self.model)
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(obj.__str__(), obj.lagerort.__str__())
-
-    def test_bestand_object(self):
-        """
-        Assert that the property 'bestand_object' returns the model instance
-        that the Bestand instance is meant to keep track of.
-        """
-        test_data = [
-            ('ausgabe', _models.Ausgabe),
-            ('audio', _models.Audio),
-            ('brochure', _models.Katalog)
-        ]
-        lagerort = make(_models.Lagerort)
-        for field_name, expected_model in test_data:
-            with self.subTest(field_name=field_name):
-                obj = _models.Bestand.objects.create(
-                    **{'lagerort': lagerort, field_name: make(expected_model)}
-                )
-                # refresh to clear Bestand.brochure cache so that it doesn't
-                # return the Katalog instance directly.
-                obj.refresh_from_db()
-                self.assertIsInstance(obj.bestand_object, expected_model)
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('anmerkungen', columns)
-        self.assertEqual(columns['anmerkungen']['name'], 'anmerkungen')
-        self.assertEqual(columns['anmerkungen']['weight'], 'A')
-        self.assertEqual(columns['anmerkungen']['language'], STEMMING)
-
-
-class TestModelPlakat(MIZTestCase):
-    model = _models.Plakat
-
-    def test_str(self):
-        obj = make(self.model, titel='Testbild', size='DIN-A3')
-        self.assertEqual(str(obj), 'Testbild')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_full_text_search(self):
-        test_data = [
-            ('titel', ('titel', 'A', SIMPLE)),
-            ('signatur', ('signatur', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelBildreihe(MIZTestCase):
-    model = _models.Bildreihe
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['name'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('name', columns)
-        self.assertEqual(columns['name']['name'], 'name')
-        self.assertEqual(columns['name']['weight'], 'A')
-        self.assertEqual(columns['name']['language'], SIMPLE)
-
-
-class TestModelBrochure(MIZTestCase):
-    model = _models.Brochure
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('beschreibung', columns)
-        self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
-        self.assertEqual(columns['beschreibung']['weight'], 'C')
-        self.assertEqual(columns['beschreibung']['language'], STEMMING)
-
-    def test_related_search_vectors(self):
-        """Check the configs for related search vectors."""
-        self.assertIn(('basebrochure_ptr___base_fts', SIMPLE), self.model.related_search_vectors)
-        self.assertIn(('basebrochure_ptr___base_fts', STEMMING), self.model.related_search_vectors)
-
-
-class TestModelBuch(MIZTestCase):
-    model = _models.Buch
-
-    def test_str(self):
-        obj = make(self.model, titel="Testing With Django", seitenumfang=22, jahr=2022)
-        self.assertEqual(obj.__str__(), "Testing With Django")
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_full_text_search(self):
-        test_data = [
-            ('titel', ('titel', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelSchriftenreihe(MIZTestCase):
-    model = _models.Schriftenreihe
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['name'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('name', columns)
-        self.assertEqual(columns['name']['name'], 'name')
-        self.assertEqual(columns['name']['weight'], 'A')
-        self.assertEqual(columns['name']['language'], SIMPLE)
-
-
-class TestModelDatei(MIZTestCase):
-    model = _models.Datei
-
-    def test_str(self):
-        obj = self.model(titel='Testdatei')
-        self.assertEqual(str(obj), 'Testdatei')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_full_text_search(self):
-        test_data = [
-            ('titel', ('titel', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelDokument(MIZTestCase):
-    model = _models.Dokument
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_full_text_search(self):
-        test_data = [
-            ('titel', ('titel', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelGeber(MIZTestCase):
-    model = _models.Geber
-
-    def test_str(self):
-        obj = self.model(name='Testgeber')
-        self.assertEqual(str(obj), 'Testgeber')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['name'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('name', columns)
-        self.assertEqual(columns['name']['name'], 'name')
-        self.assertEqual(columns['name']['weight'], 'A')
-        self.assertEqual(columns['name']['language'], SIMPLE)
-
-
-class TestModelGenre(MIZTestCase):
-    model = _models.Genre
-
-    def test_str(self):
-        obj = self.model(genre='Testgenre')
-        self.assertEqual(str(obj), 'Testgenre')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['genre'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('genre', columns)
-        self.assertEqual(columns['genre']['name'], 'genre')
-        self.assertEqual(columns['genre']['weight'], 'A')
-        self.assertEqual(columns['genre']['language'], SIMPLE)
-
-
-class TestModelGenreAlias(MIZTestCase):
-    model = _models.GenreAlias
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['alias'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('alias', columns)
-        self.assertEqual(columns['alias']['name'], 'alias')
-        self.assertEqual(columns['alias']['weight'], 'B')
-        self.assertEqual(columns['alias']['language'], SIMPLE)
-
-
-class TestModelHerausgeber(MIZTestCase):
-    model = _models.Herausgeber
-
-    def test_str(self):
-        obj = self.model(herausgeber='Testherausgeber')
-        self.assertEqual(str(obj), 'Testherausgeber')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['herausgeber'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('herausgeber', columns)
-        self.assertEqual(columns['herausgeber']['name'], 'herausgeber')
-        self.assertEqual(columns['herausgeber']['weight'], 'A')
-        self.assertEqual(columns['herausgeber']['language'], SIMPLE)
-
-
-class TestModelInstrument(MIZTestCase):
-    model = _models.Instrument
-
-    def test_str(self):
-        obj = self.model(instrument='Posaune', kuerzel='pos')
-        self.assertEqual(str(obj), 'Posaune (pos)')
-
-        obj = self.model(instrument='Posaune', kuerzel='')
-        self.assertEqual(str(obj), 'Posaune')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
-
-    def test_full_text_search(self):
-        test_data = [
-            ('instrument', ('instrument', 'A', SIMPLE)),
-            ('kuerzel', ('kuerzel', 'A', SIMPLE)),
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelKalender(MIZTestCase):
-    model = _models.Kalender
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('beschreibung', columns)
-        self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
-        self.assertEqual(columns['beschreibung']['weight'], 'C')
-        self.assertEqual(columns['beschreibung']['language'], STEMMING)
-
-    def test_related_search_vectors(self):
-        """Check the configs for related search vectors."""
-        self.assertIn(('basebrochure_ptr___base_fts', SIMPLE), self.model.related_search_vectors)
-        self.assertIn(('basebrochure_ptr___base_fts', STEMMING), self.model.related_search_vectors)
-
-
-class TestModelKatalog(MIZTestCase):
-    model = _models.Katalog
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('beschreibung', columns)
-        self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
-        self.assertEqual(columns['beschreibung']['weight'], 'C')
-        self.assertEqual(columns['beschreibung']['language'], STEMMING)
-
-    def test_related_search_vectors(self):
-        """Check the configs for related search vectors."""
-        self.assertIn(('basebrochure_ptr___base_fts', SIMPLE), self.model.related_search_vectors)
-        self.assertIn(('basebrochure_ptr___base_fts', STEMMING), self.model.related_search_vectors)
-
-
-class TestModelLagerort(MIZTestCase):
-    model = _models.Lagerort
-
-    @translation_override(language=None)
-    def test_get_name(self):
-        name_data = {'ort': ('Testort',)}
-        test_data = [
-            ({}, 'Testort'),
-            ({'regal': ('Testregal',)}, 'Testregal (Testort)'),
-            ({'fach': ('12',)}, "Testregal-12 (Testort)")
-        ]
-        for update, expected in test_data:
-            name_data.update(update)
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
-
-    @translation_override(language=None)
-    def test_get_name_with_raum(self):
-        name_data = {'ort': ('Testort',), 'raum': ('Testraum',)}
-        test_data = [
-            ({}, 'Testraum (Testort)'),
-            ({'regal': ('Testregal',)}, 'Testraum-Testregal (Testort)'),
-            ({'fach': ('12',)}, "Testraum-Testregal-12 (Testort)")
+            ({}, 'Deutschland'),
+            ({'land__code': ('DE',), 'bland__bland_name': ('Hessen',)}, 'Hessen, DE'),
+            ({'stadt': ('Kassel',)}, 'Kassel, DE'),
+            ({'bland__code': ('HE',)}, 'Kassel, DE-HE')
         ]
         for update, expected in test_data:
             name_data.update(update)
@@ -865,7 +620,7 @@ class TestModelLagerort(MIZTestCase):
     def test_meta_ordering(self):
         """Check the default ordering of this model."""
         # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['_name'])
+        self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
 
     def test_search_field_columns(self):
         """Check the columns of this model's SearchVectorField."""
@@ -935,254 +690,6 @@ class TestModelLand(MIZTestCase):
                 self.assertEqual(column['language'], expected[2])
 
 
-class TestModelMagazin(MIZTestCase):
-    model = _models.Magazin
-
-    def test_str(self):
-        obj = self.model(magazin_name='Testmagazin')
-        self.assertEqual(str(obj), 'Testmagazin')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['magazin_name'])
-
-    def test_full_text_search(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('magazin_name', ('magazin_name', 'A', SIMPLE)),
-            ('issn', ('issn', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelMemorabilien(MIZTestCase):
-    model = _models.Memorabilien
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['titel'])
-
-    def test_full_text_search(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('titel', ('titel', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelMonat(MIZTestCase):
-    model = _models.Monat
-
-    def test_str(self):
-        obj = self.model(monat='Dezember', abk='Dez')
-        self.assertEqual(str(obj), 'Dezember')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['ordinal'])
-
-    def test_full_text_search(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('monat', ('monat', 'A', SIMPLE)),
-            ('abk', ('abk', 'A', SIMPLE)),
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelMusiker(MIZTestCase):
-    model = _models.Musiker
-
-    def test_str(self):
-        obj = self.model(
-            kuenstler_name='Alice Tester', beschreibung='Beep', bemerkungen='Boop'
-        )
-        self.assertEqual(str(obj), 'Alice Tester')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['kuenstler_name'])
-
-    def test_full_text_search(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('kuenstler_name', ('kuenstler_name', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelMusikerAlias(MIZTestCase):
-    model = _models.MusikerAlias
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['alias'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('alias', columns)
-        self.assertEqual(columns['alias']['name'], 'alias')
-        self.assertEqual(columns['alias']['weight'], 'B')
-        self.assertEqual(columns['alias']['language'], SIMPLE)
-
-
-class TestModelOrt(MIZTestCase):
-    model = _models.Ort
-
-    @translation_override(language=None)
-    def test_get_name(self):
-        name_data = {'land__land_name': ('Deutschland',)}
-        test_data = [
-            ({}, 'Deutschland'),
-            ({'land__code': ('DE',), 'bland__bland_name': ('Hessen',)}, 'Hessen, DE'),
-            ({'stadt': ('Kassel',)}, 'Kassel, DE'),
-            ({'bland__code': ('HE',)}, 'Kassel, DE-HE')
-        ]
-        for update, expected in test_data:
-            name_data.update(update)
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['land', 'bland', 'stadt'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('_name', columns)
-        self.assertEqual(columns['_name']['name'], '_name')
-        self.assertEqual(columns['_name']['weight'], 'A')
-        self.assertEqual(columns['_name']['language'], SIMPLE)
-
-
-class TestModelPerson(MIZTestCase):
-    model = _models.Person
-
-    @translation_override(language=None)
-    def test_get_name(self):
-        test_data = [
-            ({'vorname': ('',)}, 'No data for Person.'),
-            ({'nachname': ('',)}, 'No data for Person.'),
-            ({'vorname': ('',), 'nachname': ('',)}, 'No data for Person.'),
-            ({'vorname': ('',), 'nachname': ('Test',)}, 'Test'),
-            ({'vorname': ('Beep',), 'nachname': ('Boop',)}, 'Beep Boop')
-        ]
-        for name_data, expected in test_data:
-            with self.subTest(name_data=name_data):
-                name = self.model._get_name(**name_data)
-                self.assertEqual(name, expected)
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['_name'])
-
-    def test_full_text_search(self):
-        """Check the columns of this model's SearchVectorField."""
-        test_data = [
-            ('_name', ('_name', 'A', SIMPLE)),
-            ('beschreibung', ('beschreibung', 'C', STEMMING)),
-            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
-        ]
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        for column_name, expected in test_data:
-            with self.subTest(column=column_name):
-                self.assertIn(column_name, columns)
-                column = columns[column_name]
-                self.assertEqual(column['name'], expected[0])
-                self.assertEqual(column['weight'], expected[1])
-                self.assertEqual(column['language'], expected[2])
-
-
-class TestModelPlattenfirma(MIZTestCase):
-    model = _models.Plattenfirma
-
-    def test_str(self):
-        obj = self.model(name='Testfirma')
-        self.assertEqual(str(obj), 'Testfirma')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['name'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('name', columns)
-        self.assertEqual(columns['name']['name'], 'name')
-        self.assertEqual(columns['name']['weight'], 'A')
-        self.assertEqual(columns['name']['language'], SIMPLE)
-
-
-class TestModelProvenienz(MIZTestCase):
-    model = _models.Provenienz
-
-    def test_str(self):
-        obj = make(self.model, geber__name='TestGeber', typ='Fund')
-        self.assertEqual(str(obj), 'TestGeber (Fund)')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
-
-    def test_related_search_vectors(self):
-        """Check the configs for related search vectors."""
-        self.assertIn(('geber___fts', SIMPLE), self.model.related_search_vectors)
-
-
 class TestModelSchlagwort(MIZTestCase):
     model = _models.Schlagwort
 
@@ -1225,6 +732,277 @@ class TestModelSchlagwortAlias(MIZTestCase):
         self.assertEqual(columns['alias']['name'], 'alias')
         self.assertEqual(columns['alias']['weight'], 'A')
         self.assertEqual(columns['alias']['language'], SIMPLE)
+
+
+class TestModelArtikel(MIZTestCase):
+    model = _models.Artikel
+    test_data_count = 1
+
+    def test_str(self):
+        obj = make(self.model, schlagzeile="The importance of testing stuff")
+        self.assertEqual(obj.__str__(), "The importance of testing stuff")
+        obj.schlagzeile = ''
+        self.assertEqual(obj.__str__(), 'Keine Schlagzeile gegeben!')
+        obj.zusammenfassung = 'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+        self.assertEqual(
+            obj.__str__(),
+            'Dies ist eine Testzusammenfassung, die nicht besonders lang ist.'
+        )
+
+    def test_meta_ordering(self):
+        """Assert that the ordering includes magazin_name and Ausgabe._name"""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(
+            self.model._meta.ordering,
+            ['ausgabe__magazin__magazin_name', 'ausgabe___name', 'seite', 'schlagzeile']
+        )
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('schlagzeile', ('schlagzeile', 'A', SIMPLE)),
+            ('zusammenfassung', ('zusammenfassung', 'B', STEMMING)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelBuch(MIZTestCase):
+    model = _models.Buch
+
+    def test_str(self):
+        obj = make(self.model, titel="Testing With Django", seitenumfang=22, jahr=2022)
+        self.assertEqual(obj.__str__(), "Testing With Django")
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_full_text_search(self):
+        test_data = [
+            ('titel', ('titel', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelHerausgeber(MIZTestCase):
+    model = _models.Herausgeber
+
+    def test_str(self):
+        obj = self.model(herausgeber='Testherausgeber')
+        self.assertEqual(str(obj), 'Testherausgeber')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['herausgeber'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('herausgeber', columns)
+        self.assertEqual(columns['herausgeber']['name'], 'herausgeber')
+        self.assertEqual(columns['herausgeber']['weight'], 'A')
+        self.assertEqual(columns['herausgeber']['language'], SIMPLE)
+
+
+class TestModelInstrument(MIZTestCase):
+    model = _models.Instrument
+
+    def test_str(self):
+        obj = self.model(instrument='Posaune', kuerzel='pos')
+        self.assertEqual(str(obj), 'Posaune (pos)')
+
+        obj = self.model(instrument='Posaune', kuerzel='')
+        self.assertEqual(str(obj), 'Posaune')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['instrument', 'kuerzel'])
+
+    def test_full_text_search(self):
+        test_data = [
+            ('instrument', ('instrument', 'A', SIMPLE)),
+            ('kuerzel', ('kuerzel', 'A', SIMPLE)),
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelAudio(MIZTestCase):
+    model = _models.Audio
+
+    def test_str(self):
+        obj = make(self.model, titel='Testaudio', tracks=2, beschreibung='Good soup.')
+        self.assertEqual(obj.__str__(), 'Testaudio')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('titel', ('titel', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelPlakat(MIZTestCase):
+    model = _models.Plakat
+
+    def test_str(self):
+        obj = make(self.model, titel='Testbild', size='DIN-A3')
+        self.assertEqual(str(obj), 'Testbild')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_full_text_search(self):
+        test_data = [
+            ('titel', ('titel', 'A', SIMPLE)),
+            ('signatur', ('signatur', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelBildreihe(MIZTestCase):
+    model = _models.Bildreihe
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('name', columns)
+        self.assertEqual(columns['name']['name'], 'name')
+        self.assertEqual(columns['name']['weight'], 'A')
+        self.assertEqual(columns['name']['language'], SIMPLE)
+
+
+class TestModelSchriftenreihe(MIZTestCase):
+    model = _models.Schriftenreihe
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('name', columns)
+        self.assertEqual(columns['name']['name'], 'name')
+        self.assertEqual(columns['name']['weight'], 'A')
+        self.assertEqual(columns['name']['language'], SIMPLE)
+
+
+class TestModelDokument(MIZTestCase):
+    model = _models.Dokument
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_full_text_search(self):
+        test_data = [
+            ('titel', ('titel', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelMemorabilien(MIZTestCase):
+    model = _models.Memorabilien
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_full_text_search(self):
+        """Check the columns of this model's SearchVectorField."""
+        test_data = [
+            ('titel', ('titel', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
 
 
 class TestModelSpielort(MIZTestCase):
@@ -1378,28 +1156,6 @@ class TestModelVeranstaltungsreihe(MIZTestCase):
         self.assertEqual(columns['name']['language'], SIMPLE)
 
 
-class TestModelVerlag(MIZTestCase):
-    model = _models.Verlag
-
-    def test_str(self):
-        obj = self.model(verlag_name='Testverlag')
-        self.assertEqual(str(obj), 'Testverlag')
-
-    def test_meta_ordering(self):
-        """Check the default ordering of this model."""
-        # noinspection PyUnresolvedReferences
-        self.assertEqual(self.model._meta.ordering, ['verlag_name', 'sitz'])
-
-    def test_search_field_columns(self):
-        """Check the columns of this model's SearchVectorField."""
-        # noinspection PyUnresolvedReferences
-        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
-        self.assertIn('verlag_name', columns)
-        self.assertEqual(columns['verlag_name']['name'], 'verlag_name')
-        self.assertEqual(columns['verlag_name']['weight'], 'A')
-        self.assertEqual(columns['verlag_name']['language'], SIMPLE)
-
-
 class TestModelVideo(MIZTestCase):
     model = _models.Video
 
@@ -1424,6 +1180,181 @@ class TestModelVideo(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+
+class TestModelProvenienz(MIZTestCase):
+    model = _models.Provenienz
+
+    def test_str(self):
+        obj = make(self.model, geber__name='TestGeber', typ='Fund')
+        self.assertEqual(str(obj), 'TestGeber (Fund)')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['geber', 'typ'])
+
+    def test_related_search_vectors(self):
+        """Check the configs for related search vectors."""
+        self.assertIn(('geber___fts', SIMPLE), self.model.related_search_vectors)
+
+
+class TestModelGeber(MIZTestCase):
+    model = _models.Geber
+
+    def test_str(self):
+        obj = self.model(name='Testgeber')
+        self.assertEqual(str(obj), 'Testgeber')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('name', columns)
+        self.assertEqual(columns['name']['name'], 'name')
+        self.assertEqual(columns['name']['weight'], 'A')
+        self.assertEqual(columns['name']['language'], SIMPLE)
+
+
+class TestModelLagerort(MIZTestCase):
+    model = _models.Lagerort
+
+    @translation_override(language=None)
+    def test_get_name(self):
+        name_data = {'ort': ('Testort',)}
+        test_data = [
+            ({}, 'Testort'),
+            ({'regal': ('Testregal',)}, 'Testregal (Testort)'),
+            ({'fach': ('12',)}, "Testregal-12 (Testort)")
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+    @translation_override(language=None)
+    def test_get_name_with_raum(self):
+        name_data = {'ort': ('Testort',), 'raum': ('Testraum',)}
+        test_data = [
+            ({}, 'Testraum (Testort)'),
+            ({'regal': ('Testregal',)}, 'Testraum-Testregal (Testort)'),
+            ({'fach': ('12',)}, "Testraum-Testregal-12 (Testort)")
+        ]
+        for update, expected in test_data:
+            name_data.update(update)
+            with self.subTest(name_data=name_data):
+                name = self.model._get_name(**name_data)
+                self.assertEqual(name, expected)
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['_name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('_name', columns)
+        self.assertEqual(columns['_name']['name'], '_name')
+        self.assertEqual(columns['_name']['weight'], 'A')
+        self.assertEqual(columns['_name']['language'], SIMPLE)
+
+
+class TestModelBestand(MIZTestCase):
+    model = _models.Bestand
+
+    def test_str(self):
+        obj = make(self.model)
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(obj.__str__(), obj.lagerort.__str__())
+
+    def test_bestand_object(self):
+        """
+        Assert that the property 'bestand_object' returns the model instance
+        that the Bestand instance is meant to keep track of.
+        """
+        test_data = [
+            ('ausgabe', _models.Ausgabe),
+            ('audio', _models.Audio),
+            ('brochure', _models.Katalog)
+        ]
+        lagerort = make(_models.Lagerort)
+        for field_name, expected_model in test_data:
+            with self.subTest(field_name=field_name):
+                obj = _models.Bestand.objects.create(
+                    **{'lagerort': lagerort, field_name: make(expected_model)}
+                )
+                # refresh to clear Bestand.brochure cache so that it doesn't
+                # return the Katalog instance directly.
+                obj.refresh_from_db()
+                self.assertIsInstance(obj.bestand_object, expected_model)
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('anmerkungen', columns)
+        self.assertEqual(columns['anmerkungen']['name'], 'anmerkungen')
+        self.assertEqual(columns['anmerkungen']['weight'], 'A')
+        self.assertEqual(columns['anmerkungen']['language'], STEMMING)
+
+
+class TestModelDatei(MIZTestCase):
+    model = _models.Datei
+
+    def test_str(self):
+        obj = self.model(titel='Testdatei')
+        self.assertEqual(str(obj), 'Testdatei')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_full_text_search(self):
+        test_data = [
+            ('titel', ('titel', 'A', SIMPLE)),
+            ('beschreibung', ('beschreibung', 'C', STEMMING)),
+            ('bemerkungen', ('bemerkungen', 'D', SIMPLE))
+        ]
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        for column_name, expected in test_data:
+            with self.subTest(column=column_name):
+                self.assertIn(column_name, columns)
+                column = columns[column_name]
+                self.assertEqual(column['name'], expected[0])
+                self.assertEqual(column['weight'], expected[1])
+                self.assertEqual(column['language'], expected[2])
+
+
+class TestModelPlattenfirma(MIZTestCase):
+    model = _models.Plattenfirma
+
+    def test_str(self):
+        obj = self.model(name='Testfirma')
+        self.assertEqual(str(obj), 'Testfirma')
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['name'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('name', columns)
+        self.assertEqual(columns['name']['name'], 'name')
+        self.assertEqual(columns['name']['weight'], 'A')
+        self.assertEqual(columns['name']['language'], SIMPLE)
 
 
 class TestModelBaseBrochure(MIZTestCase):
@@ -1469,6 +1400,75 @@ class TestModelBaseBrochure(MIZTestCase):
                 self.assertEqual(column['name'], expected[0])
                 self.assertEqual(column['weight'], expected[1])
                 self.assertEqual(column['language'], expected[2])
+
+
+class TestModelBrochure(MIZTestCase):
+    model = _models.Brochure
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('beschreibung', columns)
+        self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
+        self.assertEqual(columns['beschreibung']['weight'], 'C')
+        self.assertEqual(columns['beschreibung']['language'], STEMMING)
+
+    def test_related_search_vectors(self):
+        """Check the configs for related search vectors."""
+        self.assertIn(('basebrochure_ptr___base_fts', SIMPLE), self.model.related_search_vectors)
+        self.assertIn(('basebrochure_ptr___base_fts', STEMMING), self.model.related_search_vectors)
+
+
+class TestModelKalender(MIZTestCase):
+    model = _models.Kalender
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('beschreibung', columns)
+        self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
+        self.assertEqual(columns['beschreibung']['weight'], 'C')
+        self.assertEqual(columns['beschreibung']['language'], STEMMING)
+
+    def test_related_search_vectors(self):
+        """Check the configs for related search vectors."""
+        self.assertIn(('basebrochure_ptr___base_fts', SIMPLE), self.model.related_search_vectors)
+        self.assertIn(('basebrochure_ptr___base_fts', STEMMING), self.model.related_search_vectors)
+
+
+class TestModelKatalog(MIZTestCase):
+    model = _models.Katalog
+
+    def test_meta_ordering(self):
+        """Check the default ordering of this model."""
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.model._meta.ordering, ['titel'])
+
+    def test_search_field_columns(self):
+        """Check the columns of this model's SearchVectorField."""
+        # noinspection PyUnresolvedReferences
+        columns = get_search_field_columns(self.model._meta.get_field('_fts'))
+        self.assertIn('beschreibung', columns)
+        self.assertEqual(columns['beschreibung']['name'], 'beschreibung')
+        self.assertEqual(columns['beschreibung']['weight'], 'C')
+        self.assertEqual(columns['beschreibung']['language'], STEMMING)
+
+    def test_related_search_vectors(self):
+        """Check the configs for related search vectors."""
+        self.assertIn(('basebrochure_ptr___base_fts', SIMPLE), self.model.related_search_vectors)
+        self.assertIn(('basebrochure_ptr___base_fts', STEMMING), self.model.related_search_vectors)
 
 
 class TestModelFoto(MIZTestCase):
