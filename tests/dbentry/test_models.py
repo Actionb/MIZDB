@@ -7,6 +7,7 @@ from tests.factory import make
 
 
 def get_search_field_columns(field):
+    """Return the columns of the given SearchVectorField."""
     return {c.name: c.__dict__.copy() for c in field.columns}
 
 
