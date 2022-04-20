@@ -287,7 +287,6 @@ class AusgabenAdmin(MIZModelAdmin):
     def monat_string(self, obj: _models.Ausgabe) -> str:
         return obj.monat_string  # added by annotations  # noqa
     monat_string.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
-    monat_string.admin_order_field = 'monat_string'  # type: ignore[attr-defined]  # noqa
 
     def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
         """Update the ``status`` of the Ausgabe instances in ``queryset``."""
