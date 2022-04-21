@@ -439,7 +439,6 @@ class AusgabeQuerySet(CNQuerySet):
         # Find the best criteria to order with, which might be either:
         # num, lnum, monat or e_datum
         # Count the presence of the different criteria and sort them accordingly.
-        # NOTE: tests succeed with or without distinct = True
         counted = self.aggregate(
             e_datum__sum=Count('e_datum', distinct=True),
             lnum__sum=Count('ausgabelnum', distinct=True),
