@@ -291,7 +291,10 @@ class AusgabenAdmin(MIZModelAdmin):
     def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
         """Update the ``status`` of the Ausgabe instances in ``queryset``."""
         with transaction.atomic():
-            queryset.update(status=status, _changed_flag=False)
+            # Remove ordering, as queryset ordering may depend on annotations
+            # which would be removed before the update.
+            # See: https://code.djangoproject.com/ticket/28897
+            queryset.order_by().update(status=status, _changed_flag=False)
         try:
             with transaction.atomic():
                 for obj in queryset:
