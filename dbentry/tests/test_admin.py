@@ -1745,27 +1745,15 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertIn(self.band, self.obj1.band.all())
         self.assertIn(self.musiker, self.obj1.musiker.all())
 
-    def test_get_fields_add(self):
-        # Assert that the 'copy_related' field is included in the add form.
-        # (this test is mainly for covering a coverage branch)
-        request = self.get_request(user=self.super_user)
-        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
-        request = self.get_request(user=self.noperms_user)
-        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
-
     def test_get_fields_no_perms(self):
         # Assert that the 'copy_related' field is removed from the change form
         # for users that lack change permission.
-        request = self.get_request(user=self.super_user)
-        self.assertIn('copy_related', self.model_admin.get_fields(request, self.obj1))
-        request = self.get_request(user=self.noperms_user)
-        self.assertNotIn(
-            'copy_related', self.model_admin.get_fields(request, self.obj1),
-            msg=(
-                "Field 'copy_related' should not be available for users that do "
-                "not have permissions to use it."
-            )
-        )
+        for obj in (None, self.obj1):  # None for add form, obj for change form
+            with self.subTest(is_change_form=bool(obj)):
+                request = self.get_request(user=self.super_user)
+                self.assertIn('copy_related', self.model_admin.get_fields(request, obj))
+                request = self.get_request(user=self.noperms_user)
+                self.assertNotIn('copy_related', self.model_admin.get_fields(request, obj))
 
     def test_veranstaltung_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_changelist_annotations()).get()
