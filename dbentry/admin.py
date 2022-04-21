@@ -287,12 +287,14 @@ class AusgabenAdmin(MIZModelAdmin):
     def monat_string(self, obj: _models.Ausgabe) -> str:
         return obj.monat_string  # added by annotations  # noqa
     monat_string.short_description = 'Monate'  # type: ignore[attr-defined]  # noqa
-    monat_string.admin_order_field = 'monat_string'  # type: ignore[attr-defined]  # noqa
 
     def _change_status(self, request: HttpRequest, queryset: QuerySet, status: str) -> None:
         """Update the ``status`` of the Ausgabe instances in ``queryset``."""
         with transaction.atomic():
-            queryset.update(status=status, _changed_flag=False)
+            # Remove ordering, as queryset ordering may depend on annotations
+            # which would be removed before the update.
+            # See: https://code.djangoproject.com/ticket/28897
+            queryset.order_by().update(status=status, _changed_flag=False)
         try:
             with transaction.atomic():
                 for obj in queryset:
@@ -624,29 +626,11 @@ class PlakatAdmin(MIZModelAdmin):
 
     def get_fields(self, request: HttpRequest, obj: _models.Plakat = None) -> List[str]:
         """
-        Remove the 'copy_related' formfield if the user does not have change
+        Remove the 'copy_related' formfield, if the user does not have change
         permissions on the object.
         """
         fields = super().get_fields(request, obj)
-        if obj is None:
-            return fields
-        # Remove the 'copy_related' field from the change form if the user
-        # only has view permissions and thus can't use copy_related.
-        if not (obj and hasattr(request, 'user') and 'copy_related' in fields):
-            # Either this is an 'add' form or 'copy_related' isn't even
-            # included in the fields.
-            #
-            # request.user is set by AuthenticationMiddleware to either an
-            # auth.User instance or an AnonymousUser instance. Only mocked
-            # request objects would bypass the middleware, which could allow
-            # a request object to *not* have a user attribute.
-            # NOTE: Honestly, I'm not sure why I am checking for the attribute
-            # here (I'm assuming it's for tests), but I'm just going to leave
-            # it in.
-            return fields
-        has_change_perms = self.has_change_permission(request, obj)
-        if not (obj.pk and has_change_perms) and 'copy_related' in fields:
-            # Return a copy without 'copy_related':
+        if not self.has_change_permission(request, obj):
             return [f for f in fields if f != 'copy_related']
         return fields
 

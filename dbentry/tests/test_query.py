@@ -35,6 +35,10 @@ class TestAusgabeChronologicalOrder(DataTestCase):
 
     @classmethod
     def setUpTestData(cls):
+        # TODO: @test-rework: specifying pks without updating the factory
+        #  sequences accordingly will break creating model instances when not
+        #  specifying (unused) pks:
+        # ( FEHLER:  doppelter Schlüsselwert verletzt Unique-Constraint »dbentry_ausgabe_pkey«)
         possible_pks = list(range(1, 1001))
 
         def get_random_pk():
@@ -202,6 +206,33 @@ class TestAusgabeChronologicalOrder(DataTestCase):
         self.assertEqual(queryset.chronological_order().query.order_by, expected)
 
         self.assertEqual(queryset.chronological_order().query.order_by, expected)
+
+    def test_chronological_order_criteria_distinct(self):
+        """Check that duplicates created through table joins are not counted."""
+        # TODO: @test-rework: should not need to delete everything just so we
+        #  can add a few more other instances. (see TODO in setUpTestData)
+        self.model.objects.all().delete()
+        # Four Ausgabe instances use 'lnum', thus it should be the leading
+        # criteria.
+        a = make(self.model, magazin=self.mag, ausgabelnum__lnum=1)
+        b = make(self.model, magazin=self.mag, ausgabelnum__lnum=2)
+        c = make(self.model, magazin=self.mag, ausgabelnum__lnum=3)
+        d = make(self.model, magazin=self.mag, ausgabelnum__lnum=4)
+        e = make(
+            self.model, magazin=self.mag,
+            # The joins would lead to both monat and num criteria being present
+            # nine times, thus winning out over lnum - unless we aggregate with
+            # distinct.
+            ausgabemonat__monat__ordinal=[1, 2, 3], ausgabenum__num=[1, 2, 3]
+        )
+        queryset = (
+            self.model.objects
+            .filter(pk__in=[a.pk, b.pk, c.pk, d.pk, e.pk])
+            .chronological_order()
+        )
+        ordering = queryset.query.order_by
+        self.assertLess(ordering.index('lnum'), ordering.index('monat'))
+        self.assertLess(ordering.index('lnum'), ordering.index('num'))
 
     def test_search_keeps_order(self):
         # Assert that filtering the queryset via search() maintains the ordering

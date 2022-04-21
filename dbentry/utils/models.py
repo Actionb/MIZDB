@@ -170,59 +170,6 @@ def get_relation_info_to(
     return related_model, related_field
 
 
-def get_required_fields(model: ModelClassOrInstance) -> List[Field]:
-    """
-    Return a list of fields of that model that require an explicit value.
-    (i.e. not null, no default value, etc.)
-    """
-    # NOTE: get_required_fields is not used
-    result = []
-    for f in get_model_fields(model, m2m=False):
-        if f.null:
-            continue
-        if f.blank and isinstance(f, (models.CharField, models.TextField)):
-            # Check blank attribute, as string-based fields should not have
-            # null=True.
-            continue
-        if f.has_default():
-            # Field has a default value, whether that value is an
-            # 'EMPTY_VALUE' we do not care
-            continue
-        result.append(f)
-    return result
-
-
-def get_related_descriptor(model: ModelClassOrInstance, rel: Relations):
-    """Return the ``model``'s related descriptor of relation ``rel``."""
-    # NOTE: get_related_descriptor is only used by get_related_manager which
-    #   itself is not used
-    if rel.many_to_many:
-        if rel.field.model == model:
-            # model contains the ManyToManyField declaring the relation
-            attr = rel.field.name
-        else:
-            attr = rel.get_accessor_name()
-        return getattr(model, attr)
-    else:
-        return getattr(rel.model, rel.get_accessor_name())
-
-
-def get_related_manager(instance: ModelClassOrInstance, rel: Relations):
-    """
-    Return the related manager that governs relation ``rel`` for model object
-    ``instance``.
-    """
-    # NOTE: get_related_manager is not used
-    # noinspection PyUnresolvedReferences
-    model_class = instance._meta.model
-    descriptor = get_related_descriptor(model_class, rel)
-    if not rel.many_to_many and rel.field.model == model_class:
-        # If rel is a forward ManyToOneRel, we must call the
-        # related_manager_cls with the related object.
-        return descriptor.related_manager_cls(getattr(instance, rel.field.name))
-    return descriptor.related_manager_cls(instance)
-
-
 def get_updatable_fields(instance: ModelClassOrInstance) -> List[str]:
     """
     Return the names of the fields that, for the given instance, are empty or
@@ -284,62 +231,6 @@ def get_reverse_field_path(rel: Relations, field_name: str) -> str:
     return field_path + constants.LOOKUP_SEP + field_name
 
 
-def get_full_fields_list(model: ModelClassOrInstance) -> Set[str]:
-    """
-    Collect the names of all fields and relations available on the given model.
-    """
-    # NOTE: get_full_fields_list is not used
-    result = set()
-    for field in get_model_fields(model):
-        result.add(field.name)
-    # Call get_model_relations with forward=False,
-    # as forward relations were already added by get_model_fields.
-    for rel in get_model_relations(model, forward=False):
-        if rel.many_to_many and rel.field.model == model:
-            result.add(rel.field.name)
-        else:
-            result.add(rel.name)
-    return result
-
-
-def get_relations_between_models(
-        model1: Union[ModelClassOrInstance, str],
-        model2: Union[ModelClassOrInstance, str]
-) -> Optional[Tuple[RelationalFields, Relations]]:
-    """
-    Return the field and the relation that connects ``model1`` and ``model2``.
-    """
-    # NOTE: get_relations_between_models is not used
-    if isinstance(model1, str):
-        model1 = get_model_from_string(model1)
-    if isinstance(model2, str):
-        model2 = get_model_from_string(model2)
-
-    for f in model1._meta.get_fields():  # type: ignore
-        if not f.is_relation:
-            continue
-        if ((f.model == model1 and f.related_model == model2) or (
-                f.model == model2 and f.related_model == model1)):
-            if f.concrete:
-                return f, f.remote_field
-            else:
-                return f.remote_field, f
-    return None  # mypy wills it
-
-
-def get_all_model_names() -> List[str]:
-    """
-    Return all the names of models in the apps registry that are subclasses
-    of dbentry.base.models.BaseModel.
-    """
-    # NOTE: get_all_model_names is not used
-    from dbentry.base.models import BaseModel  # avoid circular imports
-    mdls = apps.get_models('dbentry')
-    # noinspection PyUnresolvedReferences
-    my_mdls = [m._meta.model_name for m in mdls if issubclass(m, BaseModel)]
-    return sorted(my_mdls, key=lambda m: m.lower())
-
-
 def get_fields_and_lookups(
         model: ModelClassOrInstance,
         field_path: str
@@ -390,48 +281,6 @@ def get_fields_and_lookups(
                 # Update opts to follow the relation.
                 opts = field.get_path_info()[-1].to_opts
     return fields, lookups
-
-
-def validate_model_data(model: Type[Model]) -> List[Tuple[Model, exceptions.ValidationError]]:
-    """Validate the data of a given model."""
-    # NOTE: validate_model_data is only used in validate_all_model_data which
-    #   itself is not used
-    invalid = []
-    # noinspection PyUnresolvedReferences
-    instances = list(model.objects.all())
-    for instance in instances:
-        try:
-            instance.full_clean()
-        except exceptions.ValidationError as e:
-            invalid.append((instance, e))
-    return invalid
-
-
-def validate_all_model_data(
-        *model_list: Type[Model]
-) -> Dict[str, List[Tuple[Model, exceptions.ValidationError]]]:
-    """
-    Validate the data of given models or of all models that inherit from
-    superclass dbentry.base.models.BaseModel.
-    """
-    # NOTE: validate_all_model_data is not used
-    invalid = {}
-    if not model_list:
-        from dbentry.base.models import BaseModel  # avoid circular imports
-        model_list = [  # type: ignore
-            m for m in apps.get_models('dbentry') if issubclass(m, BaseModel)
-        ]
-    for model in model_list:
-        # noinspection PyUnresolvedReferences
-        opts = model._meta
-        print("Validating %s... " % opts.model_name, end='')
-        inv = validate_model_data(model)
-        if inv:
-            print('Invalid data found.')
-            invalid[opts.model_name] = inv
-        else:
-            print('All data valid.')
-    return invalid
 
 
 def clean_contenttypes(stream: Optional[TextIO] = None) -> None:

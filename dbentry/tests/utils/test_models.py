@@ -12,33 +12,6 @@ from dbentry.tests.base import MIZTestCase
 
 class TestModelUtils(MIZTestCase):
 
-    def test_get_relations_between_models_many_to_one(self):
-        expected = (
-            _models.Ausgabe._meta.get_field('magazin'),
-            _models.Magazin._meta.get_field('ausgabe')
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models(_models.Ausgabe, _models.Magazin)), expected)
-        self.assertEqual(
-            (utils.get_relations_between_models(_models.Magazin, _models.Ausgabe)), expected)
-        self.assertEqual(
-            (utils.get_relations_between_models('Ausgabe', 'magazin')), expected)
-        self.assertEqual(
-            (utils.get_relations_between_models('Magazin', 'Ausgabe')), expected)
-
-    # noinspection PyTypeChecker
-    def test_get_relations_between_models_many_to_many(self):
-        expected = (
-            _models.Artikel._meta.get_field('genre'),
-            _models.Genre._meta.get_field('artikel')
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models(_models.Artikel, _models.Genre)), expected)
-        self.assertEqual(
-            (utils.get_relations_between_models(_models.Genre, _models.Artikel)), expected)
-        self.assertEqual((utils.get_relations_between_models('Artikel', 'Genre')), expected)
-        self.assertEqual((utils.get_relations_between_models('Genre', 'Artikel')), expected)
-
     def test_is_protected(self):
         art = make(_models.Artikel)
         self.assertIsNotNone(utils.is_protected([art.ausgabe]))
@@ -87,24 +60,6 @@ class TestModelUtils(MIZTestCase):
         self.assertNotIn(fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
-
-    def test_get_required_fields(self):
-        def required_field_names(model):
-            return [f.name for f in utils.get_required_fields(model)]
-
-        self.assertEqual(required_field_names(_models.Person), ['nachname'])
-        self.assertEqual(required_field_names(_models.Musiker), ['kuenstler_name'])
-        self.assertEqual(required_field_names(_models.Genre), ['genre'])
-        self.assertEqual(required_field_names(_models.Band), ['band_name'])
-        self.assertEqual(required_field_names(_models.Autor), [])
-        self.assertEqual(required_field_names(_models.Ausgabe), ['magazin'])
-        self.assertEqual(required_field_names(_models.Magazin), ['magazin_name'])
-        self.assertEqual(required_field_names(_models.Ort), ['land'])
-        self.assertEqual(
-            required_field_names(_models.Artikel), ['schlagzeile', 'seite', 'ausgabe'])
-        # _models.Provenienz.typ field is required but has a default:
-        self.assertEqual(required_field_names(_models.Provenienz), ['geber'])
-        self.assertEqual(required_field_names(_models.Bestand), ['lagerort'])
 
     def test_get_updatable_fields(self):
         obj = make(_models.Artikel)
