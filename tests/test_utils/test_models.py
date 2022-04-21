@@ -30,48 +30,6 @@ class Protected(models.Model):
 
 class TestModelUtils(MIZTestCase):
 
-    def test_get_relations_between_models_many_to_one(self):
-        # noinspection PyUnresolvedReferences
-        expected = (
-            Protected._meta.get_field('protector'),
-            Protector._meta.get_field('protected')
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models(Protected, Protector)), expected
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models(Protector, Protected)), expected
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models('test_utils.Protected', 'test_utils.Protector')),
-            expected
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models('test_utils.Protector', 'test_utils.Protected')),
-            expected
-        )
-
-    def test_get_relations_between_models_many_to_many(self):
-        # noinspection PyUnresolvedReferences
-        expected = (
-            M2MSource._meta.get_field('targets'),
-            M2MTarget._meta.get_field('sources')
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models(M2MSource, M2MTarget)), expected
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models(M2MTarget, M2MSource)), expected
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models('test_utils.M2MSource', 'test_utils.M2MTarget')),
-            expected
-        )
-        self.assertEqual(
-            (utils.get_relations_between_models('test_utils.M2MTarget', 'test_utils.M2MSource')),
-            expected
-        )
-
     def test_is_protected(self):
         protector = Protector()
         protector.save()
@@ -221,68 +179,6 @@ class TestGetModelRelations(MIZTestCase):
         self.assertNotIn(rev_fk, rels)
         self.assertIn(m2m_inter, rels)
         self.assertIn(m2m_auto, rels)
-
-
-####################################################################################################
-# get_required_fields test
-####################################################################################################
-
-class NoRequiredFields(models.Model):
-    # For string-based fields, get_required_fields will check for blank=True.
-    # For other fields, it will check for null=True.
-    not_required_one = models.IntegerField(blank=False, null=True)
-    not_required_two = models.CharField(max_length=100, blank=True)
-
-
-class OneRequiredField(models.Model):
-    required = models.CharField(max_length=100)
-
-
-class MixedRequired(models.Model):
-    required = models.CharField(max_length=100)
-    not_required = models.CharField(max_length=100, blank=True)
-
-
-class NotRequiredRelated(models.Model):
-    pass
-
-
-class RequiredRelatedTarget(models.Model):
-    pass
-
-
-class RequiredRelatedField(models.Model):
-    required = models.ForeignKey('test_utils.RequiredRelatedTarget', on_delete=models.CASCADE)
-    not_required = models.ForeignKey('test_utils.NotRequiredRelated', on_delete=models.CASCADE, null=True)  # noqa
-
-
-class RequiredWithDefault(models.Model):
-    required = models.CharField(max_length=100)
-    required_with_default = models.CharField(max_length=100, default='has default')
-
-
-class MultipleRequiredFields(models.Model):
-    not_required = models.CharField(max_length=100, blank=True)
-    required_one = models.CharField(max_length=100)
-    required_two = models.CharField(max_length=100)
-    required_three = models.CharField(max_length=100)
-
-
-class TestGetRequiredFields(MIZTestCase):
-
-    def test_get_required_fields(self):
-        def required_field_names(model):
-            return [f.name for f in utils.get_required_fields(model)]
-
-        self.assertEqual(required_field_names(NoRequiredFields), [])
-        self.assertEqual(required_field_names(OneRequiredField), ['required'])
-        self.assertEqual(required_field_names(MixedRequired), ['required'])
-        self.assertEqual(required_field_names(RequiredRelatedField), ['required'])
-        self.assertEqual(required_field_names(RequiredWithDefault), ['required'])
-        self.assertEqual(
-            required_field_names(MultipleRequiredFields),
-            ['required_one', 'required_two', 'required_three']
-        )
 
 
 ####################################################################################################
