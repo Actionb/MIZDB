@@ -1,9 +1,12 @@
+import json
 from collections import OrderedDict
 from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import MultipleObjectsReturned
 from django.utils.translation import override as translation_override
+from django.test import RequestFactory
 
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
@@ -337,68 +340,78 @@ class TestACCreatable(ACViewTestCase):
         expected['text'] = 'Kürzel: AT'
         self.assertEqual(create_info[3], expected)
 
-    def test_create_object(self):
-        make(
-            self.model,
-            person__vorname='Alice', person__nachname='Testman',
-            kuerzel='AT'
-        )
+    @patch('dbentry.ac.views.ACCreatable.get_model_instance')
+    def test_create_object(self, get_instance_mock):
+        """
+        Assert that create_object calls get_model_instance with a stripped down
+        text.
+        """
         view = self.get_view()
+        with patch.object(view, 'has_create_field', new=Mock(return_value=False)):
+            view.create_object('   Alice Tester   ')
+            get_instance_mock.assert_called_with('Alice Tester', preview=False)
 
-        # a new record
-        obj1 = view.create_object('Alice Testman (AT)')
-        self.assertEqual(obj1.person.vorname, 'Alice')
-        self.assertEqual(obj1.person.nachname, 'Testman')
-        self.assertEqual(obj1.kuerzel, 'AT')
-        self.assertIsNotNone(obj1.pk)
-        self.assertIsNotNone(obj1.person.pk)
-
-        # if the view has a create field, the create field should be used instead
-        view.create_field = 'kuerzel'
-        created = view.create_object('BT')
-        self.assertEqual(created.kuerzel, 'BT')
-        self.assertIsNone(created.person)
-
-        # fetch an existing record
-        mocked_creator = Mock(create=Mock(return_value={'instance': obj1}))
-        view.create_field = None
-        created = view.create_object(str(obj1), creator=mocked_creator)
-        self.assertEqual(created.person.vorname, 'Alice')
-        self.assertEqual(created.person.nachname, 'Testman')
-        self.assertEqual(created.kuerzel, 'AT')
-        self.assertEqual(created, obj1)
-        self.assertEqual(created.person, obj1.person)
+    @patch('dbentry.ac.views.ACCreatable.get_model_instance')
+    @patch('dbentry.ac.views.ACBase.create_object')
+    def test_create_object_checks_create_field(self, super_mock, get_instance_mock):
+        """
+        Assert that create_object delegates the object creation to super, if
+        method has_create_field returns True.
+        """
+        view = self.get_view()
+        with patch.object(view, 'has_create_field', new=Mock(return_value=True)):
+            view.create_object('Alice Testman (AT)')
+            super_mock.assert_called()
+            get_instance_mock.assert_not_called()
 
     def test_post(self):
-        # Assert that post raises an AttributeError exception if self.creator
-        # is unset and self.create_field is unset.
-        expected_error_msg = 'Missing creator object or "create_field"'
-        request = self.post_request(data={'text': 'Alice'})
-        view = self.get_view()
-        _default_creator = view.creator
+        """Check the content of the response to a successful request."""
+        obj = make(
+            self.model, kuerzel='AT',
+            person__vorname='Alice', person__nachname='Testman'
+        )
+        request = RequestFactory().post('/', data={'text': 'Alice (AT) Testman'})
+        request.user = self.super_user
+        view = self.get_view(request)
+        with patch.object(view, 'get_model_instance') as get_instance_mock:
+            get_instance_mock.return_value = obj
+            response = view.post(request)
+            self.assertEqual({'id': obj.pk, 'text': str(obj)}, json.loads(response.content))
 
-        # both creator and create_field are None
-        view._creator = None
-        view.create_field = None
-        with self.assertRaises(AttributeError) as cm:
-            view.post(request)
-        self.assertEqual(cm.exception.args[0], expected_error_msg)
+    def test_post_no_add_permission(self):
+        """
+        post should return a HttpResponseForbidden if the user does not have
+        'add' permissions.
+        """
+        self.fail("Write me!")
 
-        # create_field is None
-        view._creator = _default_creator
-        with self.assertNotRaises(AttributeError):
-            view.post(request)
+    def test_post_text_is_none(self):
+        """
+        post should return a HttpResponseBadRequest if the request data does
+        not contain the item 'text'.
+        """
+        self.fail("Write me!")
 
-        # creator is None
-        view._creator = None
-        view.create_field = 'kuerzel'
-        with self.assertNotRaises(AttributeError):
-            view.post(request)
-
-        # both are set
-        view._creator = _default_creator
-        with self.assertNotRaises(AttributeError):
-            view.post(request)
+    def test_post_not_raises_multiple_objects_returned(self):
+        """
+        Assert that post catches a MultipleObjectsReturned exception raised by
+        the get_model_instance method, and that it returns an appropriate
+        response.
+        """
+        # TODO: replace with just self.post_request once merged into test-rework
+        request = RequestFactory().post('/', data={'text': '(AT)'})
+        request.user = self.super_user
+        view = self.get_view(request)
+        with patch.object(view, 'get_model_instance') as get_instance_mock:
+            # noinspection PyUnresolvedReferences
+            get_instance_mock.side_effect = self.model.MultipleObjectsReturned
+            with self.assertNotRaises(MultipleObjectsReturned):
+                response = view.post(request)
+            expected = {
+                'id': 0,
+                'text': 'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen" Knopf.'
+            },
+            self.assertEqual(expected, json.loads(response.content))
 
 
 class TestACAusgabe(ACViewTestCase):
