@@ -47,6 +47,17 @@ class TestCreateFunctions(MyTestCase):
         obj2 = create_autor('Alice (AT) Tester')
         self.assertEqual(obj2.pk, obj.pk)
 
+    def test_create_autor_nickname_only(self):
+        """
+        No Person instance should be created, if the name only contains a
+        nickname.
+        """
+        with patch('dbentry.ac.views.create_person') as create_person_mock:
+            obj = create_autor('(AT)')
+            self.assertEqual(obj.kuerzel, 'AT')
+            self.assertIsNone(obj.person)
+            create_person_mock.assert_not_called()
+
     def test_create_autor_kuerzel_max_length(self):
         """
         Assert that the kuerzel is shortened, so that its length doesn't exceed

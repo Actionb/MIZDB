@@ -42,11 +42,19 @@ def create_autor(text: str) -> _models.Autor:
     name = HumanName(text)
     kuerzel = name.nickname[:8]
     name.nickname = ''
-    p = create_person(str(name))
+    name = str(name)
+
+    p = None
+    if name:
+        # Do not create 'nameless' Person instances.
+        # (the database would allow this)
+        p = create_person(name)
+
     try:
-        return _models.Autor.objects.get(
-            kuerzel=kuerzel, person__vorname=p.vorname, person__nachname=p.nachname
-        )
+        kwargs = {'kuerzel': kuerzel}
+        if p:
+            kwargs.update(person__vorname=p.vorname, person__nachname=p.nachname)
+        return _models.Autor.objects.get(**kwargs)
     except _models.Autor.DoesNotExist:  # noqa
         return _models.Autor(kuerzel=kuerzel, person=p)
 
