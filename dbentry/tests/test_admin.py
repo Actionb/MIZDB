@@ -3,6 +3,7 @@ from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib import admin, contenttypes
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
 from django.contrib.admin.views.main import ALL_VAR
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission, User
@@ -1744,27 +1745,15 @@ class TestPlakatAdmin(AdminTestMethodsMixin, AdminTestCase):
         self.assertIn(self.band, self.obj1.band.all())
         self.assertIn(self.musiker, self.obj1.musiker.all())
 
-    def test_get_fields_add(self):
-        # Assert that the 'copy_related' field is included in the add form.
-        # (this test is mainly for covering a coverage branch)
-        request = self.get_request(user=self.super_user)
-        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
-        request = self.get_request(user=self.noperms_user)
-        self.assertIn('copy_related', self.model_admin.get_fields(request, obj=None))
-
     def test_get_fields_no_perms(self):
         # Assert that the 'copy_related' field is removed from the change form
         # for users that lack change permission.
-        request = self.get_request(user=self.super_user)
-        self.assertIn('copy_related', self.model_admin.get_fields(request, self.obj1))
-        request = self.get_request(user=self.noperms_user)
-        self.assertNotIn(
-            'copy_related', self.model_admin.get_fields(request, self.obj1),
-            msg=(
-                "Field 'copy_related' should not be available for users that do "
-                "not have permissions to use it."
-            )
-        )
+        for obj in (None, self.obj1):  # None for add form, obj for change form
+            with self.subTest(is_change_form=bool(obj)):
+                request = self.get_request(user=self.super_user)
+                self.assertIn('copy_related', self.model_admin.get_fields(request, obj))
+                request = self.get_request(user=self.noperms_user)
+                self.assertNotIn('copy_related', self.model_admin.get_fields(request, obj))
 
     def test_veranstaltung_string(self):
         obj = self.obj1.qs().annotate(**self.model_admin.get_changelist_annotations()).get()
@@ -1999,3 +1988,53 @@ class TestTabularAutocompleteMixin(TestCase):
                 _args, kwargs = mocked_make.call_args
                 self.assertIn('tabular', kwargs)
                 self.assertFalse(kwargs['tabular'])
+
+
+class TestChangelistAnnotations(AdminTestCase):
+    model = _models.Ausgabe
+    model_admin_class = _admin.AusgabenAdmin
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj = make(
+            cls.model, status=_models.Ausgabe.UNBEARBEITET,
+            ausgabejahr__jahr=2022, ausgabenum__num=2
+        )
+        super().setUpTestData()
+
+    def test_action_update(self):
+        """
+        Assert that actions that do an update on a queryset ordered against an
+        annotation go through without error.
+        """
+        # queryset.update removes all annotations - which will cause a
+        # FieldError when it's time to apply ordering that depends on an
+        # annotated field.
+        # See: https://code.djangoproject.com/ticket/28897
+        request_data = {
+            # 'index' specifies which action form (form to select an action from)
+            # was used in case there are multiple such action forms
+            # (i.e. at the top and the bottom)
+            'index': '0',
+            ACTION_CHECKBOX_NAME: str(self.obj.pk),
+            'action': 'change_status_inbearbeitung',
+        }
+        # Order against one of the annotated fields:
+        query_string = f"?o={self.model_admin.list_display.index('num_string') + 1}"
+        self.client.post(self.changelist_path + query_string, data=request_data)
+        self.obj.refresh_from_db()
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(self.obj.status, _models.Ausgabe.INBEARBEITUNG)
+
+    def test_can_order_result_list(self):
+        """Assert that the result list can be ordered against the annotated fields."""
+        other = make(self.model, ausgabejahr__jahr=2022, ausgabenum__num=1)
+        query_string = (
+            # Need to apply some filters or the result list will be empty.
+            "?ausgabejahr__jahr_0=2022&"
+            f"o={self.model_admin.list_display.index('num_string') + 1}"
+        )
+        response = self.client.get(self.changelist_path + query_string)
+        result_list = response.context_data['cl'].result_list
+        self.assertIn('num_string', result_list.query.order_by)
+        self.assertQuerysetEqual([other, self.obj], result_list)

@@ -22,7 +22,7 @@ def searchgnd(
     """
     Query the GND of the DNB and return a list of matching (id, label) pairs.
 
-    Using the SRU (Search/Retrieve via URL) API, query the authority file of the
+    Using the Search/Retrieve via URL (SRU) API, query the authority file of the
     German national library and extract the GND id and a text representation of
     the records found. Parameter ``identifier`` is the name (tag) of the XML
     element that contains the id number.
@@ -30,14 +30,14 @@ def searchgnd(
     suitable as a text representation of the record (i.e. names or titles).
     Per record, the value of the first such element will be used. If the record
     doesn't have any elements with names declared in ``labels``, the id value
-    be used as a label instead.
+    will be used as a label instead.
 
     Args:
         query (str): SRU format compliant query string
             See: https://www.dnb.de/DE/Professionell/Metadatendienste/Datenbezug/SRU/sru_node.html
         start (str): request parameter for pagination: result index of the first
             record of the page
-        url (str): address of the API endpoint for the authority file.
+        url (str): address of the API endpoint for the authority file
         version (str): SRU version number (request parameter)
         operation (str): server command (request parameter)
         schema (str): data format of the response text (request parameter)
