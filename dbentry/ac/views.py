@@ -371,9 +371,6 @@ class ACCreatable(ACBase):
         if not self.has_add_permission(request):
             return http.HttpResponseForbidden()
 
-        if not self.creator and not self.create_field:
-            raise AttributeError('Missing creator object or "create_field"')
-
         text = request.POST.get('text', None)
 
         if text is None:
