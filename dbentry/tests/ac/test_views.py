@@ -10,7 +10,7 @@ from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
     ACBase, ACAusgabe, ACBuchband, ACCreatable, ACMagazin, ContentTypeAutocompleteView, GND,
     GNDPaginator, Paginator,
-    ACTabular
+    ACTabular, create_autor, create_person
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
@@ -19,6 +19,45 @@ from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
+class TestCreateFunctions(MyTestCase):
+
+    def test_create_person(self):
+        obj = create_person('Alice Bobby Tester')
+        self.assertIsInstance(obj, _models.Person)
+        self.assertIsNone(obj.pk, msg="Expected an unsaved new instance.")
+        self.assertEqual(obj.vorname, 'Alice Bobby')
+        self.assertEqual(obj.nachname, 'Tester')
+        obj.save()
+        obj.refresh_from_db()
+        # Should return the saved instance now:
+        obj2 = create_person('Alice Bobby Tester')
+        self.assertEqual(obj2.pk, obj.pk)
+
+    def test_create_autor(self):
+        obj = create_autor('Alice (AT) Tester')
+        self.assertIsInstance(obj, _models.Autor)
+        self.assertIsNone(obj.pk, msg="Expected an unsaved new instance.")
+        self.assertEqual(obj.kuerzel, 'AT')
+        self.assertEqual(obj.person.vorname, 'Alice')
+        self.assertEqual(obj.person.nachname, 'Tester')
+        obj.person.save()
+        obj.save()
+        obj.refresh_from_db()
+        # Should return the saved instance now:
+        obj2 = create_autor('Alice (AT) Tester')
+        self.assertEqual(obj2.pk, obj.pk)
+
+    def test_create_autor_kuerzel_max_length(self):
+        """
+        Assert that the kuerzel is shortened, so that its length doesn't exceed
+        the model field max_length.
+        """
+        obj = create_autor('Alice (Supercalifragilisticexpialidocious) Tester')
+        # noinspection SpellCheckingInspection
+        self.assertEqual(obj.kuerzel, 'Supercal')
+
+
+# TODO: remove PyUnresolvedReferences
 # noinspection SpellCheckingInspection,PyUnresolvedReferences
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 

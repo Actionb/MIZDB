@@ -10,6 +10,7 @@ from django.db.models import Model
 from django.http import HttpRequest, HttpResponse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
+from nameparser import HumanName
 from stdnum import issn
 
 from dbentry import models as _models
@@ -20,6 +21,34 @@ from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string
+from dbentry.utils.text import parse_name
+
+
+def create_person(text: str) -> _models.Person:
+    """Get an existing or build a new (unsaved) Person instance from name ``text``."""
+    # parse_name will join first and middle names:
+    vorname, nachname = parse_name(text)
+    try:
+        return _models.Person.objects.get(vorname=vorname, nachname=nachname)
+    except _models.Person.DoesNotExist:  # noqa
+        return _models.Person(vorname=vorname, nachname=nachname)
+
+
+def create_autor(text: str) -> _models.Autor:
+    """Get an existing or build a new (unsaved) Autor instance from name ``text``."""
+    # Parse the name through the nameparser to find out the nickname, which
+    # will be used as kuerzel. Then pass the name without nickname to the
+    # Person constructor.
+    name = HumanName(text)
+    kuerzel = name.nickname[:8]
+    name.nickname = ''
+    p = create_person(str(name))
+    try:
+        return _models.Autor.objects.get(
+            kuerzel=kuerzel, person__vorname=p.vorname, person__nachname=p.nachname
+        )
+    except _models.Autor.DoesNotExist:  # noqa
+        return _models.Autor(kuerzel=kuerzel, person=p)
 
 
 class ACBase(autocomplete.Select2QuerySetView):
