@@ -252,14 +252,19 @@ class ACCreatable(ACBase):
             self._creator = Creator(self.model, raise_exceptions=False)
         return self._creator
 
-    def creatable(self, text: str, creator: Optional[Creator] = None) -> bool:
+    def get_model_instance(self, text: str) -> Model:
+        """
+        Build and return an unsaved model instance from text, or return an
+        existing instance matching the text.
+        """
+        raise NotImplementedError()
+
+    def creatable(self, text: str) -> bool:
         """
         Return True if a new(!) model instance would be created from ``text``.
         """
-        creator = creator or self.creator
-        created = creator.create(text, preview=True)
-        pk = getattr(created.get('instance', None), 'pk', None)
-        if created and pk is None:
+        created = self.get_model_instance(text)
+        if created and created.pk is None:
             return True
         return False
 

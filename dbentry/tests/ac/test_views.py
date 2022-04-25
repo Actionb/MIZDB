@@ -439,6 +439,21 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     has_alias = False
     raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
+    def test_get_model_instance(self):
+        self.fail("Write me!")
+
+    def test_creatable(self):
+        """
+        Assert that creatable returns True if:
+          - a new object can be created from the given parameters
+          - no objects already present in the database fit the given parameters
+        """
+        request = self.get_request()
+        view = self.get_view(request)
+        self.assertTrue(view.creatable('Alice Testman'))
+        make(self.model, vorname='Alice', nachname='Testman')
+        self.assertFalse(view.creatable('Alice Testman'))
+
     @translation_override(language=None)
     def test_get_create_option(self):
         """
@@ -477,6 +492,25 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     view_class = ACCreatable
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
+
+    def test_get_model_instance(self):
+        self.fail("Write me!")
+
+    def test_creatable(self):
+        """
+        Assert that creatable returns True if:
+          - a new object can be created from the given parameters
+          - no objects already present in the database fit the given parameters
+        """
+        request = self.get_request()
+        view = self.get_view(request)
+        self.assertTrue(view.creatable('Alice Testman (AT)'))
+        make(
+            self.model,
+            person__vorname='Alice', person__nachname='Testman',
+            kuerzel='AT'
+        )
+        self.assertFalse(view.creatable('Alice Testman (AT)'))
 
     @translation_override(language=None)
     def test_get_create_option(self):
