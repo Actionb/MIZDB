@@ -5,6 +5,7 @@ from dal import autocomplete
 from django import http
 from django.contrib.auth import get_permission_codename, get_user_model
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import MultipleObjectsReturned
 from django.core.paginator import Page, Paginator
 from django.db.models import Model
 from django.http import HttpRequest, HttpResponse
@@ -14,7 +15,7 @@ from nameparser import HumanName
 from stdnum import issn
 
 from dbentry import models as _models
-from dbentry.ac.creator import Creator, MultipleObjectsReturned
+from dbentry.ac.creator import Creator
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site
@@ -276,6 +277,8 @@ class ACTabular(ACBase):
         )
 
 
+# TODO: rename so it's clear that this view class presents more info for object
+#  creation
 class ACCreatable(ACBase):
     """
     Add additional information to the create_option part of the response and
@@ -333,6 +336,9 @@ class ACCreatable(ACBase):
         """
         Build template context to display a more informative create option.
         """
+        raise NotImplementedError("Subclasses must implement this method.")
+        # TODO: make this abstract, let subclasses implement this by returning
+        #  the info directly
 
         def flatten_dict(_dict):
             result = []

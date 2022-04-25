@@ -29,5 +29,6 @@ urlpatterns = [
     ),
     # ACCreatable has a more involved object creation process and
     # gets the create_field directly from the model.
+    # TODO: remove this generic path - ACCreatable is now an abstract view class
     path('<str:model_name>/', views.ACCreatable.as_view(), name='accapture'),
 ]

@@ -236,6 +236,7 @@ class TestACCreatable(ACViewTestCase):
 
     def test_creator_property(self):
         # Assert that the create property returns a ac.creator.Creator instance.
+        # TODO: remove
         request = self.get_request()
         view = self.get_view(request)
         self.assertIsInstance(view.creator, Creator)
@@ -246,6 +247,7 @@ class TestACCreatable(ACViewTestCase):
         # Assert that creatable returns True if:
         # - a new object can be created from the given parameters
         # - no objects already present in the database fit the given parameters
+        # TODO: keep - functionality should remain the same
         request = self.get_request()
         view = self.get_view(request)
         self.assertTrue(view.creatable('Alice Testman (AT)'))
@@ -271,6 +273,8 @@ class TestACCreatable(ACViewTestCase):
 
     @translation_override(language=None)
     def test_get_creation_info(self):
+        # TODO: move to test cases of views that implement this method
+        # TODO: check return values, but remove references to creator stuff
         default = {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'}
         sub = OrderedDict([
             ('Person', OrderedDict([
@@ -498,7 +502,7 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Person
-    view_class = ACCreatable
+    view_class = ACCreatable  # TODO: set correct view_class ('ACPerson')
     has_alias = False
     raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
@@ -542,6 +546,7 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
         Assert that get_create_option appends the expected 'create_info' dict
         to the default create option list.
         """
+        # TODO: make this a test for get_creation_info
         request = self.get_request()
         view = self.get_view(request)
 
@@ -571,7 +576,7 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Autor
-    view_class = ACCreatable
+    view_class = ACCreatable  # TODO: set correct view_class (ACAutor)
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
 
@@ -628,6 +633,7 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
         Assert that get_create_option appends the expected 'create_info' dict
         to the default create option list.
         """
+        # TODO: make this a test for get_creation_info
         request = self.get_request()
         view = self.get_view(request)
 
