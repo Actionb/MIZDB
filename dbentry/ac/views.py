@@ -289,12 +289,13 @@ class ACCreatable(ACBase):
             self._creator = Creator(self.model, raise_exceptions=False)
         return self._creator
 
-    def get_model_instance(self, text: str) -> Model:
+    def get_model_instance(self, text: str, preview: bool = False) -> Model:
         """
-        Build and return an unsaved model instance from text, or return an
-        existing instance matching the text.
+        Get or create a model instance from ``text``.
+
+        If ``preview`` is True, do not save the instance even if it is new.
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Subclasses must implement this method.")
 
     def creatable(self, text: str) -> bool:
         """
@@ -363,8 +364,7 @@ class ACCreatable(ACBase):
         text = text.strip()
         if self.has_create_field():
             return super().create_object(text)
-        creator = creator or self.creator
-        return creator.create(text, preview=False).get('instance')
+        return self.get_model_instance(text, preview=False)
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         """Create an object given a text after checking permissions."""

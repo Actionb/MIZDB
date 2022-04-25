@@ -503,7 +503,26 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
     def test_get_model_instance(self):
-        self.fail("Write me!")
+        view = self.get_view()
+        obj = view.get_model_instance('Alice Testman', preview=False)
+        self.assertEqual(obj.vorname, 'Alice')
+        self.assertEqual(obj.nachname, 'Testman')
+        self.assertIsNotNone(obj.pk)
+
+    def test_get_model_instance_preview(self):
+        """If preview is True, the returned instance should be unsaved."""
+        view = self.get_view()
+        obj = view.get_model_instance('Alice Testman', preview=True)
+        self.assertEqual(obj.vorname, 'Alice')
+        self.assertEqual(obj.nachname, 'Testman')
+        self.assertIsNone(obj.pk)
+
+    def test_get_model_instance_existing(self):
+        """If there already exists a matching instance, it should be returned."""
+        exists = make(self.model, person__vorname='Alice', person__nachname='Testman')
+        view = self.get_view()
+        # Set preview=True to make it clear we are returning a saved instance:
+        self.assertEqual(view.create_object('Alice Testman', preview=True), exists)
 
     def test_creatable(self):
         """
@@ -557,7 +576,35 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     has_alias = False
 
     def test_get_model_instance(self):
-        self.fail("Write me!")
+        view = self.get_view()
+        obj = view.get_model_instance('Alice Testman (AT)', preview=False)
+        self.assertEqual(obj.person.vorname, 'Alice')
+        self.assertEqual(obj.person.nachname, 'Testman')
+        self.assertEqual(obj.kuerzel, 'AT')
+        self.assertIsNotNone(obj.pk)
+        self.assertIsNotNone(obj.person.pk)
+
+    def test_get_model_instance_preview(self):
+        """If preview is True, the returned instance should be unsaved."""
+        view = self.get_view()
+        obj = view.get_model_instance('Alice Testman (AT)', preview=True)
+        self.assertEqual(obj.person.vorname, 'Alice')
+        self.assertEqual(obj.person.nachname, 'Testman')
+        self.assertEqual(obj.kuerzel, 'AT')
+        self.assertIsNone(obj.pk)
+        self.assertIsNone(obj.person.pk)
+
+    def test_get_model_instance_existing(self):
+        """If there already exists a matching instance, it should be returned."""
+        exists = make(
+            self.model,
+            person__vorname='Alice', person__nachname='Testman',
+            kuerzel='AT'
+        )
+
+        view = self.get_view()
+        # Set preview=True to make it clear we are returning a saved instance:
+        self.assertEqual(view.create_object('Alice Testman (AT)', preview=True), exists)
 
     def test_creatable(self):
         """
