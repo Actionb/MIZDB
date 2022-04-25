@@ -283,9 +283,7 @@ class ACCreatable(ACBase):
         going to be created.
         """
         create_option = super().build_create_option(q)
-        create_info = self.get_creation_info(q)
-        if create_info:
-            create_option.extend(create_info)
+        create_option.extend(self.get_creation_info(q))
         return create_option
 
     def get_creation_info(self, text: str, creator: Optional[Creator] = None) -> list:

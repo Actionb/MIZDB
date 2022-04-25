@@ -203,29 +203,18 @@ class TestACCreatable(ACViewTestCase):
         )
         self.assertFalse(view.creatable('Alice Testman (AT)'))
 
-    @translation_override(language=None)
-    def test_get_create_option(self):
-        # Assert that get_create_option appends a non-empty 'create_info' dict
-        # to the default create option list.
-        # IF q is creatable:
-        request = self.get_request()
-        view = self.get_view(request)
-        self.assertTrue(hasattr(view, 'get_creation_info'))
-
-        view.get_creation_info = mockv([{'id': None, 'create_id': True, 'text': 'Test123'}])
-        create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
-        self.assertEqual(
-            len(create_option), 2, msg=", ".join(str(d) for d in create_option))
-        self.assertIn('Test123', [d['text'] for d in create_option])
-
-        # get_creation_info cannot return an empty list, but get_create_option
-        # checks for it so...
-        view.get_creation_info = mockv([])
-        create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
-        self.assertEqual(len(create_option), 1)
-
-        view.creatable = mockv(False)
-        self.assertFalse(view.get_create_option(context={}, q='Nope'))
+    @patch('dbentry.ac.views.ACBase.build_create_option')
+    def test_build_create_option(self, super_mock):
+        """
+        Assert that the create_option item list is extended by the create_info
+        from get_creation_info.
+        """
+        super_mock.return_value = ['Super']
+        view = self.get_view(self.get_request())
+        with patch.object(view, 'get_creation_info') as creation_info_mock:
+            creation_info_mock.return_value = ['Testing', 'Stuff']
+            create_option = view.build_create_option('q')
+            self.assertEqual(create_option, ['Super', 'Testing', 'Stuff'])
 
     @translation_override(language=None)
     def test_get_creation_info(self):
@@ -446,14 +435,85 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Person
+    view_class = ACCreatable
     has_alias = False
     raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
+
+    @translation_override(language=None)
+    def test_get_create_option(self):
+        """
+        Assert that get_create_option appends the expected 'create_info' dict
+        to the default create option list.
+        """
+        request = self.get_request()
+        view = self.get_view(request)
+
+        create_option = view.get_create_option(context={}, q='Alice Testman')
+        self.assertEqual(
+            create_option[0],
+            {'id': 'Alice Testman', 'text': 'Create "Alice Testman"', 'create_id': True},
+            msg="The first item should be the 'create' button."
+        )
+        self.assertEqual(
+            create_option[1],
+            {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
+            msg="The second item should be some descriptive text."
+        )
+        self.assertEqual(
+            create_option[2],
+            {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
+            msg="The third item should be the data for 'vorname'."
+        )
+        self.assertEqual(
+            create_option[3],
+            {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
+            msg="The fourth item should be the data for 'nachname'."
+        )
+        self.assertEqual(len(create_option), 4)
 
 
 class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Autor
+    view_class = ACCreatable
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
+
+    @translation_override(language=None)
+    def test_get_create_option(self):
+        """
+        Assert that get_create_option appends the expected 'create_info' dict
+        to the default create option list.
+        """
+        request = self.get_request()
+        view = self.get_view(request)
+
+        create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
+        self.assertEqual(
+            create_option[0],
+            {'id': 'Alice Testman (AT)', 'text': 'Create "Alice Testman (AT)"', 'create_id': True},
+            msg="The first item should be the 'create' button."
+        )
+        self.assertEqual(
+            create_option[1],
+            {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
+            msg="The second item should be some descriptive text."
+        )
+        self.assertEqual(
+            create_option[2],
+            {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
+            msg="The third item should be the data for 'vorname'."
+        )
+        self.assertEqual(
+            create_option[3],
+            {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
+            msg="The fourth item should be the data for 'nachname'."
+        )
+        self.assertEqual(
+            create_option[4],
+            {'id': None, 'text': 'Kürzel: AT', 'create_id': True},
+            msg="The fifth item should be the data for 'kuerzel'."
+        )
+        self.assertEqual(len(create_option), 5)
 
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
