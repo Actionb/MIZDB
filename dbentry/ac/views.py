@@ -304,7 +304,7 @@ class ACCreatable(ACBase):
         """
         Return True if a new(!) model instance would be created from ``text``.
         """
-        created = self.get_model_instance(text)
+        created = self.get_model_instance(text, preview=True)
         if created and created.pk is None:
             return True
         return False
