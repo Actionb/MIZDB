@@ -296,9 +296,12 @@ class ACCreatable(ACBase):
         """
         Get or create a model instance from ``text``.
 
-        If ``preview`` is True, do not save the instance even if it is new.
+        If ``preview`` is True, do not save newly created instances.
+
+        Any MultipleObjectsReturned exceptions raised here will be caught and
+        handled in the post() method.
         """
-        raise NotImplementedError("Subclasses must implement this method.")
+        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
     def creatable(self, text: str) -> bool:
         """
