@@ -292,7 +292,7 @@ class ACCreatable(ACBase):
             self._creator = Creator(self.model, raise_exceptions=False)
         return self._creator
 
-    def get_model_instance(self, text: str, preview: bool = False) -> Model:
+    def get_model_instance(self, text: str, preview: bool = True) -> Model:
         """
         Get or create a model instance from ``text``.
 
