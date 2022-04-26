@@ -146,6 +146,7 @@ class ACViewTestMethodMixin(object):
     @tag('logging')
     def test_create_object_with_log_entry(self):
         # request set on view, log entry should be created
+        # FIXME: this didn't catch that ACCreatable did not create log entries
         request = self.get_request()
         view = self.get_view(request)
         if view.has_create_field():
