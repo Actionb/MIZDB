@@ -332,41 +332,12 @@ class ACCreatable(ACBase):
         going to be created.
         """
         create_option = super().build_create_option(q)
-        create_option.extend(self.get_creation_info(q))
+        create_option.extend(self.get_additional_info(q))
         return create_option
 
-    def get_creation_info(self, text: str, creator: Optional[Creator] = None) -> list:
-        """
-        Build template context to display a more informative create option.
-        """
-        raise NotImplementedError("Subclasses must implement this method.")
-        # TODO: make this abstract, let subclasses implement this by returning
-        #  the info directly
-
-        def flatten_dict(_dict):
-            result = []
-            for key, value in _dict.items():
-                if not value or key == 'instance':
-                    continue
-                if isinstance(value, dict):
-                    result.extend(flatten_dict(value))
-                else:
-                    result.append((key, value))
-            return result
-
-        creator = creator or self.creator
-        create_info = []
-        default = {
-            'id': None,  # 'id': None will make the option not selectable.
-            'create_id': True, 'text': '...mit folgenden Daten:'
-        }
-
-        create_info.append(default.copy())
-        # Iterate over all nested dicts in create_info returned by the creator.
-        for k, v in flatten_dict(creator.create(text, preview=True)):
-            default['text'] = str(k) + ': ' + str(v)
-            create_info.append(default.copy())
-        return create_info
+    def get_additional_info(self, text: str) -> list:
+        """Provide additional information for the create option."""
+        raise NotImplementedError("Subclasses must implement this method.")  # pragma: no cover
 
     def create_object(self, text: str, creator: Optional[Creator] = None) -> Model:
         """Create a model instance from ``text`` and save it to the database."""
