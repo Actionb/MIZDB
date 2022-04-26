@@ -93,7 +93,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def display_create_option(self, context: dict, q: str) -> bool:
         """
-        Return a boolean whether the create option should be displayed or not.
+        Return a boolean whether the create option should be displayed.
         """
         if self.has_create_field() and q:
             page_obj = context.get('page_obj', None)
@@ -311,7 +311,7 @@ class ACCreatable(ACBase):
 
     def display_create_option(self, context: dict, q: str) -> bool:
         """
-        Return a boolean whether the create option should be displayed or not.
+        Return a boolean whether the create option should be displayed.
         """
         if q:
             page_obj = context.get('page_obj', None)

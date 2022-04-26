@@ -243,20 +243,47 @@ class TestACCreatable(ACViewTestCase):
         view._creator = None
         self.assertIsNone(view._creator)
 
-    def test_creatable(self):
-        # Assert that creatable returns True if:
-        # - a new object can be created from the given parameters
-        # - no objects already present in the database fit the given parameters
-        # TODO: keep - functionality should remain the same
-        request = self.get_request()
-        view = self.get_view(request)
-        self.assertTrue(view.creatable('Alice Testman (AT)'))
-        make(
-            self.model,
-            person__vorname='Alice', person__nachname='Testman',
-            kuerzel='AT'
-        )
-        self.assertFalse(view.creatable('Alice Testman (AT)'))
+    @patch('dbentry.ac.views.ACCreatable.get_model_instance')
+    def test_creatable(self, get_instance_mock):
+        """
+        Assert that creatable returns True, if a new and unsaved object would
+        be created from the text.
+        """
+        view = self.get_view()
+        obj = self.model(kuerzel='AT')
+        get_instance_mock.return_value = obj
+        self.assertTrue(view.creatable('(AT)'))
+        obj.save()
+        self.assertFalse(view.creatable('(AT)'))
+
+    @patch('dbentry.ac.views.ACCreatable.creatable')
+    @patch('dbentry.ac.views.ACCreatable.has_more')
+    def test_display_create_option(self, has_more_mock, creatable_mock):
+        """
+        display_create_option should return True, if certain requirements are
+        met.
+        """
+        # the display option should be displayed when:
+        #   - there is a search term (q) and
+        #   - we are on the last page of the results (or if there is no pagination)
+        #   - a *new* object could be created
+        creatable_mock.return_value = True
+        has_more_mock.return_value = False
+        context = {'page_obj': object()}
+        view = self.get_view()
+        self.assertTrue(view.display_create_option(context=context, q='q'))
+
+        # No new object would be created:
+        creatable_mock.return_value = False
+        self.assertFalse(view.display_create_option(context=context, q='q'))
+        # Not on the last page of the result list:
+        creatable_mock.return_value = True
+        has_more_mock.return_value = True
+        self.assertFalse(view.display_create_option(context=context, q='q'))
+        # No search term:
+        has_more_mock.return_value = False
+        self.assertFalse(view.display_create_option(context=context, q=''))
+
 
     @patch('dbentry.ac.views.ACBase.build_create_option')
     def test_build_create_option(self, super_mock):
