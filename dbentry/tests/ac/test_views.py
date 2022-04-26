@@ -3,6 +3,7 @@ from collections import OrderedDict
 from unittest import skip
 from unittest.mock import Mock, patch
 
+from django import http
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import MultipleObjectsReturned
 from django.utils.translation import override as translation_override
@@ -395,33 +396,59 @@ class TestACCreatable(ACViewTestCase):
             super_mock.assert_called()
             get_instance_mock.assert_not_called()
 
-    def test_post(self):
+    @patch('dbentry.ac.views.ACCreatable.create_object')
+    def test_post(self, create_object_mock):
         """Check the content of the response to a successful request."""
         obj = make(
             self.model, kuerzel='AT',
             person__vorname='Alice', person__nachname='Testman'
         )
+        create_object_mock.return_value = obj
+        view = self.get_view()
+        # TODO: replace with just self.post_request once merged into test-rework
         request = RequestFactory().post('/', data={'text': 'Alice (AT) Testman'})
         request.user = self.super_user
-        view = self.get_view(request)
-        with patch.object(view, 'get_model_instance') as get_instance_mock:
-            get_instance_mock.return_value = obj
-            response = view.post(request)
-            self.assertEqual({'id': obj.pk, 'text': str(obj)}, json.loads(response.content))
+        response = view.post(request)
+        self.assertEqual({'id': obj.pk, 'text': str(obj)}, json.loads(response.content))
 
-    def test_post_no_add_permission(self):
+    @patch('dbentry.ac.views.ACCreatable.create_object')
+    def test_post_no_add_permission(self, create_object_mock):
         """
         post should return a HttpResponseForbidden if the user does not have
         'add' permissions.
         """
-        self.fail("Write me!")
+        obj = make(self.model, kuerzel='AT')
+        create_object_mock.return_value = obj
+        view = self.get_view()
+        # TODO: replace with just self.post_request once merged into test-rework
+        request = RequestFactory().post('/')
+        request.user = self.noperms_user
+        response = view.post(request)
+        self.assertIsInstance(response, http.HttpResponseForbidden)
 
-    def test_post_text_is_none(self):
+        request.user = self.super_user
+        response = view.post(request)
+        self.assertNotIsInstance(response, http.HttpResponseForbidden)
+
+    @patch('dbentry.ac.views.ACCreatable.create_object')
+    def test_post_text_is_none(self, create_object_mock):
         """
         post should return a HttpResponseBadRequest if the request data does
         not contain the item 'text'.
         """
-        self.fail("Write me!")
+        obj = make(self.model, kuerzel='AT')
+        create_object_mock.return_value = obj
+        view = self.get_view()
+        # TODO: replace with just self.post_request once merged into test-rework
+        request = RequestFactory().post('/', data={'foo': 'bar'})
+        request.user = self.super_user
+        response = view.post(request)
+        self.assertIsInstance(response, http.HttpResponseBadRequest)
+
+        request = RequestFactory().post('/', data={'text': 'bar'})
+        request.user = self.super_user
+        response = view.post(request)
+        self.assertNotIsInstance(response, http.HttpResponseBadRequest)
 
     def test_post_not_raises_multiple_objects_returned(self):
         """
@@ -441,7 +468,7 @@ class TestACCreatable(ACViewTestCase):
             expected = {
                 'id': 0,
                 'text': 'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen" Knopf.'
-            },
+            }
             self.assertEqual(expected, json.loads(response.content))
 
 
