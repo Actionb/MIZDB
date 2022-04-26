@@ -12,7 +12,9 @@ from django.test import RequestFactory
 import dbentry.models as _models
 from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
-    ACBase, ACAusgabe, ACBuchband, ACCreatable, ACMagazin, ContentTypeAutocompleteView, GND,
+    ACAutor, ACBase, ACAusgabe, ACBuchband, ACCreatable, ACMagazin, ACPerson,
+    ContentTypeAutocompleteView,
+    GND,
     GNDPaginator, Paginator,
     ACTabular, create_autor, create_person
 )
@@ -299,79 +301,6 @@ class TestACCreatable(ACViewTestCase):
             create_option = view.build_create_option('q')
             self.assertEqual(create_option, ['Super', 'Testing', 'Stuff'])
 
-    @translation_override(language=None)
-    def test_get_creation_info(self):
-        # TODO: move to test cases of views that implement this method
-        # TODO: check return values, but remove references to creator stuff
-        default = {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'}
-        sub = OrderedDict([
-            ('Person', OrderedDict([
-                ('Vorname', 'Alice'), ('Nachname', 'Testman'), ('None', None),
-                ('instance', 'Nope')
-            ])),
-            ('Kürzel', 'AT'),
-            ('None', None),
-            ('instance', 'Nope'),
-        ])
-
-        view = self.get_view()
-        mocked_creator = Mock(create=Mock(return_value=sub))
-        create_info = view.get_creation_info(
-            'Alice Testman (AT)', creator=mocked_creator)
-        # Next line also asserts that the empty 'None' dictionary items were
-        # removed:
-        self.assertEqual(len(create_info), 4)
-        self.assertEqual(create_info[0], default)
-        expected = default.copy()
-        expected['text'] = 'Vorname: Alice'
-        self.assertEqual(create_info[1], expected)
-        expected = default.copy()
-        expected['text'] = 'Nachname: Testman'
-        self.assertEqual(create_info[2], expected)
-        expected = default.copy()
-        expected['text'] = 'Kürzel: AT'
-        self.assertEqual(create_info[3], expected)
-
-        # Test the correct handling of nested dicts
-        sub = OrderedDict([
-            ('text1', 'Beginning of nest'),
-            ('nested1', OrderedDict([
-                ('text2', 'Middle of nest'),
-                ('nested2', OrderedDict([
-                    ('text3', 'End of nest')
-                ]))
-            ]))
-        ])
-        mocked_creator.create = Mock(return_value=sub)
-        create_info = view.get_creation_info(
-            'Alice Testman (AT)', creator=mocked_creator)
-        self.assertEqual(create_info[0], default)
-        expected = default.copy()
-        expected['text'] = 'text1: Beginning of nest'
-        self.assertEqual(create_info[1], expected)
-        expected = default.copy()
-        expected['text'] = 'text2: Middle of nest'
-        self.assertEqual(create_info[2], expected)
-        expected = default.copy()
-        expected['text'] = 'text3: End of nest'
-        self.assertEqual(create_info[3], expected)
-
-        create_info = view.get_creation_info('Alice Testman (AT)')
-
-        # Next line also  asserts that the empty 'None' dictionary items were
-        # removed:
-        self.assertEqual(len(create_info), 4)
-        self.assertEqual(create_info[0], default)
-        expected = default.copy()
-        expected['text'] = 'Vorname: Alice'
-        self.assertEqual(create_info[1], expected)
-        expected = default.copy()
-        expected['text'] = 'Nachname: Testman'
-        self.assertEqual(create_info[2], expected)
-        expected = default.copy()
-        expected['text'] = 'Kürzel: AT'
-        self.assertEqual(create_info[3], expected)
-
     @patch('dbentry.ac.views.ACCreatable.get_model_instance')
     def test_create_object(self, get_instance_mock):
         """
@@ -554,9 +483,9 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
     test_data_count = 1
 
 
-class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
+class TestACPerson(ACViewTestCase):
     model = _models.Person
-    view_class = ACCreatable  # TODO: set correct view_class ('ACPerson')
+    view_class = ACPerson
     has_alias = False
     raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
@@ -577,10 +506,16 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
 
     def test_get_model_instance_existing(self):
         """If there already exists a matching instance, it should be returned."""
-        exists = make(self.model, person__vorname='Alice', person__nachname='Testman')
+        exists = make(self.model, vorname='Alice', nachname='Testman')
         view = self.get_view()
         # Set preview=True to make it clear we are returning a saved instance:
-        self.assertEqual(view.create_object('Alice Testman', preview=True), exists)
+        self.assertEqual(view.get_model_instance('Alice Testman', preview=True), exists)
+
+    def test_get_model_instance_adds_log_entry(self):
+        """Assert that a log entry is created for each created object."""
+        view = self.get_view()
+        obj = view.get_model_instance('Alice Testman', preview=False)
+        self.assertLoggedAddition(obj)
 
     def test_creatable(self):
         """
@@ -594,43 +529,32 @@ class TestACPerson(ACViewTestMethodMixin, ACViewTestCase):
         make(self.model, vorname='Alice', nachname='Testman')
         self.assertFalse(view.creatable('Alice Testman'))
 
-    @translation_override(language=None)
-    def test_get_create_option(self):
-        """
-        Assert that get_create_option appends the expected 'create_info' dict
-        to the default create option list.
-        """
-        # TODO: make this a test for get_creation_info
+    def test_get_additional_info(self):
         request = self.get_request()
         view = self.get_view(request)
 
-        create_option = view.get_create_option(context={}, q='Alice Testman')
+        info = view.get_additional_info(text='Alice Testman')
         self.assertEqual(
-            create_option[0],
-            {'id': 'Alice Testman', 'text': 'Create "Alice Testman"', 'create_id': True},
-            msg="The first item should be the 'create' button."
-        )
-        self.assertEqual(
-            create_option[1],
+            info[0],
             {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
-            msg="The second item should be some descriptive text."
+            msg="The first item should be some descriptive text."
         )
         self.assertEqual(
-            create_option[2],
+            info[1],
             {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
-            msg="The third item should be the data for 'vorname'."
+            msg="The second item should be the data for 'vorname'."
         )
         self.assertEqual(
-            create_option[3],
+            info[2],
             {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
-            msg="The fourth item should be the data for 'nachname'."
+            msg="The third item should be the data for 'nachname'."
         )
-        self.assertEqual(len(create_option), 4)
+        self.assertEqual(len(info), 3)
 
 
-class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
+class TestACAutor(ACViewTestCase):
     model = _models.Autor
-    view_class = ACCreatable  # TODO: set correct view_class (ACAutor)
+    view_class = ACAutor
     raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
     has_alias = False
 
@@ -663,7 +587,14 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
 
         view = self.get_view()
         # Set preview=True to make it clear we are returning a saved instance:
-        self.assertEqual(view.create_object('Alice Testman (AT)', preview=True), exists)
+        self.assertEqual(view.get_model_instance('Alice Testman (AT)', preview=True), exists)
+
+    def test_get_model_instance_adds_log_entry(self):
+        """Assert that a log entry is created for each created object."""
+        view = self.get_view()
+        obj = view.get_model_instance('Alice Testman (AT)', preview=False)
+        self.assertLoggedAddition(obj)
+        self.assertLoggedAddition(obj.person)
 
     def test_creatable(self):
         """
@@ -681,43 +612,32 @@ class TestACAutor(ACViewTestMethodMixin, ACViewTestCase):
         )
         self.assertFalse(view.creatable('Alice Testman (AT)'))
 
-    @translation_override(language=None)
-    def test_get_create_option(self):
-        """
-        Assert that get_create_option appends the expected 'create_info' dict
-        to the default create option list.
-        """
-        # TODO: make this a test for get_creation_info
+    def test_get_additional_info(self):
         request = self.get_request()
         view = self.get_view(request)
 
-        create_option = view.get_create_option(context={}, q='Alice Testman (AT)')
+        info = view.get_additional_info(text='Alice Testman (AT)')
         self.assertEqual(
-            create_option[0],
-            {'id': 'Alice Testman (AT)', 'text': 'Create "Alice Testman (AT)"', 'create_id': True},
-            msg="The first item should be the 'create' button."
-        )
-        self.assertEqual(
-            create_option[1],
+            info[0],
             {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
-            msg="The second item should be some descriptive text."
+            msg="The first item should be some descriptive text."
         )
         self.assertEqual(
-            create_option[2],
+            info[1],
             {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
-            msg="The third item should be the data for 'vorname'."
+            msg="The second item should be the data for 'vorname'."
         )
         self.assertEqual(
-            create_option[3],
+            info[2],
             {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
-            msg="The fourth item should be the data for 'nachname'."
+            msg="The third item should be the data for 'nachname'."
         )
         self.assertEqual(
-            create_option[4],
+            info[3],
             {'id': None, 'text': 'Kürzel: AT', 'create_id': True},
-            msg="The fifth item should be the data for 'kuerzel'."
+            msg="The fourth item should be the data for 'kuerzel'."
         )
-        self.assertEqual(len(create_option), 5)
+        self.assertEqual(len(info), 4)
 
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):

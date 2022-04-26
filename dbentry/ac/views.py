@@ -395,6 +395,31 @@ class ACAusgabe(ACTabular):
         return [result.num_string, result.lnum_string, result.jahr_string]
 
 
+class ACAutor(ACCreatable):
+    model = _models.Autor
+
+    def get_model_instance(self, text: str, preview: bool = False) -> _models.Autor:
+        obj = create_autor(text)
+        if not preview:
+            # Save the instance (and its related Person instance), if it is
+            # unsaved.
+            if obj.person.pk is None:
+                obj.person.save()
+            if obj.pk is None:
+                obj.save()
+        return obj
+
+    def get_additional_info(self, text: str) -> list:
+        obj = self.get_model_instance(text, preview=True)
+        return [
+            # 'id': None will make the option unavailable for selection.
+            {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
+            {'id': None, 'create_id': True, 'text': f'Vorname: {obj.person.vorname}'},
+            {'id': None, 'create_id': True, 'text': f'Nachname: {obj.person.nachname}'},
+            {'id': None, 'create_id': True, 'text': f'Kürzel: {obj.kuerzel}'},
+        ]
+
+
 class ACBand(ACTabular):
     model = _models.Band
 
@@ -449,6 +474,25 @@ class ACMusiker(ACTabular):
     def get_extra_data(self, result: Model) -> list:
         # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
+
+
+class ACPerson(ACCreatable):
+    model = _models.Person
+
+    def get_model_instance(self, text: str, preview: bool = False) -> _models.Person:
+        obj = create_person(text)
+        if not preview and obj.pk is None:
+            obj.save()
+        return obj
+
+    def get_additional_info(self, text: str) -> list:
+        obj = self.get_model_instance(text, preview=True)
+        return [
+            # 'id': None will make the option unavailable for selection.
+            {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
+            {'id': None, 'create_id': True, 'text': f'Vorname: {obj.vorname}'},
+            {'id': None, 'create_id': True, 'text': f'Nachname: {obj.nachname}'},
+        ]
 
 
 class ACSpielort(ACTabular):
