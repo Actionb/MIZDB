@@ -1,11 +1,8 @@
 import json
-from collections import OrderedDict
 from unittest import skip
 from unittest.mock import Mock, patch
 
-from django import http
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import MultipleObjectsReturned
 from django.urls import reverse_lazy
 from django.utils.translation import override as translation_override
 from django.test import RequestFactory
@@ -20,8 +17,7 @@ from dbentry.ac.views import (
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
-from dbentry.query import MIZQuerySet
-from dbentry.tests.base import mockv, ViewTestCase, MyTestCase
+from dbentry.tests.base import ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
