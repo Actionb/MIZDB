@@ -104,27 +104,91 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         v.create_field = ''
         self.assertFalse(v.has_create_field())
 
-    def test_get_create_option_no_create_field(self):
-        # No create option should be displayed if there is no create_field
-        request = self.get_request()
-        view = self.get_view(request)
-        view.create_field = ''
-        create_option = view.get_create_option(context={}, q='')
-        self.assertEqual(create_option, [])
-
     def test_get_create_option_no_perms(self):
-        # No create option should be displayed if the user has no add permissions
+        """
+        No create option should be displayed, if the user does not have 'add'
+        permission.
+        """
         request = self.get_request(user=self.noperms_user)
-        create_option = self.get_view(request).get_create_option(context={}, q='Beep')
-        self.assertEqual(create_option, [])
-
-    def test_get_create_option_more_pages(self):
-        # No create option should be displayed if there is more than one page to show
-        request = self.get_request()
         view = self.get_view(request)
-        paginator, page_obj, queryset, is_paginated = view.paginate_queryset(self.queryset, 1)
-        create_option = view.get_create_option(context={'page_obj': page_obj}, q='Beep')
-        self.assertEqual(create_option, [])
+        self.assertFalse(view.get_create_option(context={'object_list': []}, q='Beep'))
+
+    @patch('dbentry.ac.views.ACBase.has_create_field')
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option(self, has_more_mock, has_create_field_mock):
+        """
+        A create option should be displayed when:
+            - a create_field is set and
+            - q is not None and not an empty string and
+            - we're on the last page of the results (if there is pagination)
+        """
+        view = self.get_view()
+        has_more_mock.return_value = False
+        has_create_field_mock.return_value = True
+        q = 'foo'
+        context = {'page_obj': object(), 'object_list': []}
+
+        self.assertTrue(view.display_create_option(context, q))
+
+    @patch('dbentry.ac.views.ACBase.has_create_field')
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_no_create_field(self, has_more_mock, has_create_field_mock):
+        """No create option should be shown, if there is no create field set."""
+        view = self.get_view()
+        has_more_mock.return_value = False
+        context = {'page_obj': object(), 'object_list': []}
+
+        has_create_field_mock.return_value = False
+        self.assertFalse(view.display_create_option(context, 'foo'))
+
+    @patch('dbentry.ac.views.ACBase.has_create_field')
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_no_q(self, has_more_mock, has_create_field_mock):
+        """No create option should be shown, if q is None or empty."""
+        view = self.get_view()
+        has_more_mock.return_value = False
+        has_create_field_mock.return_value = False
+        context = {'page_obj': object(), 'object_list': []}
+
+        for q in (None, '      '):
+            with self.subTest(q=q):
+                self.assertFalse(view.display_create_option(context, q))
+
+    @patch('dbentry.ac.views.ACBase.has_create_field')
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_no_pagination(self, has_more_mock, has_create_field_mock):
+        """No create option should be shown, if there is no pagination."""
+        view = self.get_view()
+        has_more_mock.return_value = False
+        has_create_field_mock.return_value = False
+        context = {'object_list': []}  # page_obj is missing
+
+        self.assertFalse(view.display_create_option(context, 'foo'))
+
+    @patch('dbentry.ac.views.ACBase.has_create_field')
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_more_results(self, has_more_mock, has_create_field_mock):
+        """No create option should be shown, if there are more pages of results."""
+        view = self.get_view()
+        has_create_field_mock.return_value = False
+        context = {'page_obj': object(), 'object_list': []}
+
+        has_more_mock.return_value = True
+        self.assertFalse(view.display_create_option(context, 'foo'))
+
+    @patch('dbentry.ac.views.ACBase.has_more')
+    def test_display_create_option_exact_match(self, has_more_mock):
+        """
+        No create option should be displayed, if there is an exact match for
+        the search term.
+        """
+        has_more_mock.return_value = False
+        context = {
+            'page_obj': object(),
+            'object_list': self.model.objects.filter(pk=self.obj1.pk)
+        }
+        view = self.get_view()
+        self.assertFalse(view.display_create_option(context, 'Boop'))
 
     def test_apply_q_exact_ordering(self):
         # Exact matches should come before startswith before all others.

@@ -125,7 +125,7 @@ class ACViewTestMethodMixin(object):
     def test_get_create_option(self):
         request = self.get_request()
         view = self.get_view(request)
-        create_option = view.get_create_option(context={}, q='Beep')
+        create_option = view.get_create_option(context={'object_list': []}, q='Beep')
         if view.has_create_field():
             self.assertEqual(len(create_option), 1)
             self.assertEqual(create_option[0].get('id'), 'Beep')

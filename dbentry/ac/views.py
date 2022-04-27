@@ -92,10 +92,15 @@ class ACBase(autocomplete.Select2QuerySetView):
         return False
 
     def display_create_option(self, context: dict, q: str) -> bool:
-        """
-        Return a boolean whether the create option should be displayed.
-        """
-        if self.has_create_field() and q:
+        """Return a boolean whether the create option should be displayed."""
+        # Note that q can be None (whereas self.q cannot).
+        if self.has_create_field() and q is not None and q.strip():
+            # Don't offer to create a new option if a case-insensitive
+            # identical one already exists.
+            existing_options = (self.get_result_label(result).lower()
+                                for result in context['object_list'])
+            if q.lower() in existing_options:
+                return False
             page_obj = context.get('page_obj', None)
             if page_obj is None or not self.has_more(context):
                 return True
