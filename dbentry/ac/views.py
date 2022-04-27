@@ -15,7 +15,6 @@ from nameparser import HumanName
 from stdnum import issn
 
 from dbentry import models as _models
-from dbentry.ac.creator import Creator
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site

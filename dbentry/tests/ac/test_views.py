@@ -10,7 +10,6 @@ from django.utils.translation import override as translation_override
 from django.test import RequestFactory
 
 import dbentry.models as _models
-from dbentry.ac.creator import Creator
 from dbentry.ac.views import (
     ACAutor, ACBase, ACAusgabe, ACBuchband, ACMagazin, ACPerson,
     ContentTypeAutocompleteView,
