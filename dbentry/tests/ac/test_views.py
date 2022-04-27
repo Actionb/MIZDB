@@ -106,6 +106,22 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view(request)
         self.assertFalse(view.get_create_option(context={'object_list': []}, q='Beep'))
 
+    @patch('dbentry.ac.views.ACBase.display_create_option')
+    def test_get_create_option_strips_q(self, display_mock):
+        """
+        Assert that get_create_option transforms the search term into a string
+        and strips it before passing it on.
+        """
+        # TODO: replace with just self.get_request once merged into test-rework
+        request = RequestFactory().get('/')
+        request.user = self.super_user
+        view = self.get_view(request)
+        display_mock.return_value = False
+        for q in (None, '    '):
+            with self.subTest(q=q):
+                view.get_create_option(context={}, q=q)
+                display_mock.assert_called_with({}, '')
+
     @patch('dbentry.ac.views.ACBase.has_more')
     def test_display_create_option(self, has_more_mock):
         """
@@ -142,7 +158,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         has_more_mock.return_value = False
         context = {'page_obj': object(), 'object_list': []}
 
-        for q in (None, '    '):
+        for q in (None, ''):
             with self.subTest(q=q):
                 self.assertFalse(view.display_create_option(context, q))
 

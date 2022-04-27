@@ -87,7 +87,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def display_create_option(self, context: dict, q: str) -> bool:
         """Return a boolean whether the create option should be displayed."""
-        if self.create_field and q is not None and q.strip():
+        if self.create_field and q:
             # Don't offer to create a new option if a case-insensitive
             # identical one already exists.
             existing_options = (self.get_result_label(result).lower()
@@ -109,8 +109,15 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def get_create_option(self, context: dict, q: str) -> list:
         """Form the correct create_option to append to results."""
-        if (self.display_create_option(context, q)
-                and self.has_add_permission(self.request)):
+        # Note that q can be None:
+        #   in Select2ViewMixin.render_to_response:
+        #       ... q = self.request.GET.get('q', None)
+        #       create_option = self.get_create_option(context, q) ...
+        if q is None:
+            q = ''
+        else:
+            q = q.strip()
+        if self.display_create_option(context, q) and self.has_add_permission(self.request):
             return self.build_create_option(q)
         return []
 
@@ -135,12 +142,15 @@ class ACBase(autocomplete.Select2QuerySetView):
         If ``q`` is a numeric value, try a primary key lookup. Otherwise, use
         either MIZQuerySet.search to find results.
         """
-        if self.q:
+        # TODO: have this be the override to dal.BaseQuerySetView.get_search_results
+        #  then restore get_queryset to default?
+        q = self.q.strip()
+        if q:
             # If the search term is a numeric value, try using it in a primary
             # key lookup, and if that returns results, return them.
-            if self.q.isnumeric() and queryset.filter(pk=self.q).exists():
-                return queryset.filter(pk=self.q)
-            return queryset.search(self.q)
+            if q.isnumeric() and queryset.filter(pk=q).exists():
+                return queryset.filter(pk=q)
+            return queryset.search(q)
         return queryset
 
     def create_object(self, text: str) -> Model:
@@ -150,9 +160,10 @@ class ACBase(autocomplete.Select2QuerySetView):
         If an object was created, add an addition LogEntry to the django admin
         log table.
         """
-        text = text.strip()
-        obj = self.model.objects.create(**{self.create_field: text})  # type: ignore
-        if obj and self.request:
+        # TODO: why not use get_or_create?
+        obj = self.model.objects.create(**{self.create_field: text.strip()})  # type: ignore
+        if obj and self.request:  # FIXME: self.request cannot be None
+            # FIXME: how can obj be None from queryset.create??
             log_addition(self.request.user.pk, obj)
         return obj
 
