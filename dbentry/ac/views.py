@@ -524,10 +524,9 @@ class GND(ACBase):
     paginate_by = 10  # DNB default number of records per request
     paginator_class = GNDPaginator
 
-    def get_query_string(self, q: Optional[str] = None) -> str:
+    @staticmethod
+    def get_query_string(q: str) -> str:
         """Construct and return a SRU compliant query string."""
-        if q is None:
-            q = self.q
         if not q:
             return ""
         query = " and ".join("PER=%s" % w for w in q.split())

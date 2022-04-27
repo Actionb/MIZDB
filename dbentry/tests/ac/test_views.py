@@ -599,9 +599,6 @@ class TestGND(ViewTestCase):
         view = self.get_view()
         query = view.get_query_string(q="Robert Plant")
         self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
-        view = self.get_view(q="Robert Plant")
-        query = view.get_query_string(q=None)
-        self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
 
     def test_get_query_string_returns_empty(self):
         # Assert that for empty input parameters, an empty string is returned.
