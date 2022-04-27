@@ -91,7 +91,7 @@ class MIZWidgetMixin(GenericURLWidgetMixin):
     reversal of the generic url name ``accapture`` which requires reverse
     kwargs ``model_name`` and (sometimes) ``create_field``.
     """
-
+    # TODO: rename 'accapture' to something more generic  -- also make it a constant
     generic_url_name = 'accapture'
 
     def __init__(self, *args, create_field: str = '', **kwargs):
