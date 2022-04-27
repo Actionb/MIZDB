@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from django import http
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import MultipleObjectsReturned
+from django.urls import reverse_lazy
 from django.utils.translation import override as translation_override
 from django.test import RequestFactory
 
@@ -92,8 +93,9 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietzsche')
         cls.obj3 = make(cls.model, band_name='notfound', bandalias__alias='Descartes')
         cls.obj4 = make(cls.model, band_name='Boopband', bandalias__alias='Kant')
+        cls.zero = make(cls.model, band_name='0')
 
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4]
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.zero]
 
         super(TestACBase, cls).setUpTestData()
 
@@ -196,29 +198,10 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view()
         self.assertFalse(view.display_create_option(context, 'Boop'))
 
-    def test_apply_q_exact_ordering(self):
-        # Exact matches should come before startswith before all others.
-        # 'Ale Boop' would have the same rank as 'Boop', and the default
-        # (alphabetical) ordering would normally place it at the top.
-        other = make(self.model, band_name='A Boop')
-        q = 'Boop'
-        view = self.get_view(q=q)
-        results = view.apply_q(self.queryset)
-        self.assertEqual(
-            list(results[:3]), [self.obj1, self.obj4, other],
-            msg=f"Expected exact match (q={q}) to come first."
-        )
-
-    def test_get_queryset_with_q(self):
-        request = self.get_request()
-        view = self.get_view(request)
-        view.q = 'notfound'
-        self.assertEqual(list(view.get_queryset()), [self.obj3])
-
     def test_get_queryset_forwarded(self):
+        view = self.get_view(self.get_request())
+
         # fake forwarded attribute
-        request = self.get_request()
-        view = self.get_view(request)
         view.forwarded = {'genre': self.genre.pk}
         self.assertEqual(list(view.get_queryset()), [self.obj1])
         other_musiker = make(_models.Musiker)
@@ -234,31 +217,45 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.forwarded = {'ignore_me_too': ''}
         self.assertFalse(view.get_queryset().exists())
 
-    def test_get_queryset_pk(self):
-        # Assert that the queryset is filtered against primary keys if q is a
-        # numeric string.
+    def test_apply_q_calls_search(self):
+        """
+        Assert that apply_q calls queryset.search, if q is not empty and not
+        empty.
+        """
+        queryset = self.model.objects.all()
         view = self.get_view(self.get_request())
+        with patch.object(queryset, 'search') as search_mock:
+            # The primary key doesn't exist: a normal search should be done.
+            view.q = 'foo'
+            view.apply_q(queryset)
+            search_mock.assert_called_with('foo')
+
+    def test_apply_q_no_q(self):
+        """If q is an empty string, do not perform any queries."""
+        queryset = self.model.objects.all()
+        view = self.get_view(self.get_request())
+        for q in ('', '   '):
+            with self.subTest(q=q):
+                view.q = q
+                with self.assertNumQueries(0):
+                    view.apply_q(queryset)
+
+    def test_apply_q_pk(self):
+        """
+        Assert that the queryset is filtered against primary keys, if q is a
+        numeric string and a record with such a primary key exists.
+        """
+        queryset = self.model.objects.all()
+        view = self.get_view(self.get_request())
+
         view.q = str(self.obj1.pk)
-        self.assertIn(self.obj1, view.apply_q(self.queryset))
-        # If the query for PK returns no results, results of a query using
-        # search() should be returned.
-        view.q = '0'
-        mocked_search = Mock(return_value=Mock(count=Mock(return_value=0)))
-        mocked_exists = Mock(return_value=False)
-        mocked_queryset = Mock(
-            # The calls will be qs.filter().exists().
-            # That means that qs.filter() should return an object with a
-            # mocked 'exists' - which itself must return False.
-            filter=Mock(return_value=Mock(exists=mocked_exists)),
-            search=mocked_search,
-            model=Mock(name_field=None),
-            spec=MIZQuerySet,  # the mock must pass as a MIZQuerySet instance
-        )
-        view.apply_q(mocked_queryset)
-        self.assertTrue(mocked_search.called)
-        # Check that qs.filter was still called:
-        self.assertTrue(mocked_queryset.filter.called)
-        self.assertTrue(mocked_exists.called)
+        self.assertIn(self.obj1, view.apply_q(queryset))
+
+        with patch.object(queryset, 'search') as search_mock:
+            # The primary key doesn't exist: a normal search should be done.
+            view.q = '0'
+            view.apply_q(queryset)
+            search_mock.assert_called_with('0')
 
     def test_setup_sets_model(self):
         # setup should set the model attribute from the url caught kwarg
@@ -318,6 +315,11 @@ class TestACBaseIntegration(ACViewTestCase):  # TODO: rename? Not much integrati
     @staticmethod
     def get_result_ids(response):
         return [d['id'] for d in json.loads(response.content)['results']]
+
+    def test_results(self):
+        """Assert that the expected result is found."""
+        response = self.client.get(self.path, data={'q': 'Foo Fighters'})
+        self.assertEqual([str(self.startsw.pk)], self.get_result_ids(response))
 
     def test_result_ordering(self):
         """Exact matches should come before startswith before all others."""
