@@ -302,6 +302,43 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(view.get_result_label(instance), 'All this testing')
 
 
+class TestACBaseIntegration(ACViewTestCase):  # TODO: rename? Not much integration testing here
+    model = _models.Band
+    view_class = ACBase
+    path = reverse_lazy('acband')
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.contains = make(cls.model, band_name='Bar Foo')
+        cls.startsw = make(cls.model, band_name='Foo Fighters')
+        cls.exact = make(cls.model, band_name='Foo')
+        cls.zero = make(cls.model, band_name='0')
+        super().setUpTestData()
+
+    @staticmethod
+    def get_result_ids(response):
+        return [d['id'] for d in json.loads(response.content)['results']]
+
+    def test_result_ordering(self):
+        """Exact matches should come before startswith before all others."""
+        response = self.client.get(self.path, data={'q': 'foo'})
+        self.assertEqual(
+            [str(self.exact.pk), str(self.startsw.pk), str(self.contains.pk)],
+            self.get_result_ids(response)
+        )
+
+    def test_search_term_is_numeric(self):
+        """For numeric search terms, a lookup for primary keys should be attempted."""
+        response = self.client.get('/admin/ac/band/', data={'q': self.exact.pk})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(str(self.exact.pk), self.get_result_ids(response))
+
+        # The primary key doesn't exist: a normal search should be done.
+        response = self.client.get('/admin/ac/band/', data={'q': '0'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(str(self.zero.pk), self.get_result_ids(response))
+
+
 class TestACAusgabe(ACViewTestCase):
 
     model = _models.Ausgabe
