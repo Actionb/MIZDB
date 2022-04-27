@@ -171,6 +171,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def get_queryset(self) -> MIZQuerySet:
         """Return the ordered and filtered queryset for this view."""
+        # TODO: IMPORTANT: where does dal handle the forwards?
         if self.queryset is None:
             queryset = self.model.objects.all()  # type: ignore
         else:

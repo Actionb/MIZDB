@@ -18,6 +18,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
     def get_path(self):
         # Needed for the RequestTestCase
         if self.path != 'accapture':
+            # FIXME: super().get_path() returns self.path - not necessarily a reversed URL
             return super().get_path()
         reverse_kwargs = {'model_name': self.model._meta.model_name}
         if self.model.create_field:
