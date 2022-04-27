@@ -400,29 +400,43 @@ class ACAusgabe(ACTabular):
         return [result.num_string, result.lnum_string, result.jahr_string]
 
 
-class ACAutor(ACCreatable):
+class ACAutor(ACBase):
     model = _models.Autor
+    create_field = '__any__'
 
-    def get_model_instance(self, text: str, preview: bool = False) -> _models.Autor:
-        obj = create_autor(text)
-        if not preview:
-            # Save the instance (and its related Person instance), if it is
-            # unsaved.
-            if obj.person.pk is None:
-                obj.person.save()
-            if obj.pk is None:
-                obj.save()
+    def create_object(self, text: str) -> _models.Autor:
+        """
+        Create an object given a text.
+
+        If an object was created, add an addition LogEntry to the django admin
+        log table.
+        """
+        obj = create_autor(text.strip())
+        # Save the instance or its related Person instance, if either are
+        # unsaved.
+        if obj.person.pk is None:
+            obj.person.save()
+            log_addition(self.request.user.pk, obj.person)
+        if obj.pk is None:
+            obj.save()
+            log_addition(self.request.user.pk, obj)
         return obj
 
-    def get_additional_info(self, text: str) -> list:
-        obj = self.get_model_instance(text, preview=True)
-        return [
+    def build_create_option(self, q: str) -> list:
+        """
+        Add additional information to the create option on how the object is
+        going to be created.
+        """
+        create_option = super().build_create_option(q)
+        obj = create_autor(q)
+        create_option.extend([
             # 'id': None will make the option unavailable for selection.
             {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
             {'id': None, 'create_id': True, 'text': f'Vorname: {obj.person.vorname}'},
             {'id': None, 'create_id': True, 'text': f'Nachname: {obj.person.nachname}'},
             {'id': None, 'create_id': True, 'text': f'Kürzel: {obj.kuerzel}'},
-        ]
+        ])
+        return create_option
 
 
 class ACBand(ACTabular):
@@ -481,23 +495,37 @@ class ACMusiker(ACTabular):
         return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
 
 
-class ACPerson(ACCreatable):
+class ACPerson(ACBase):
     model = _models.Person
+    create_field = '__any__'
 
-    def get_model_instance(self, text: str, preview: bool = False) -> _models.Person:
-        obj = create_person(text)
-        if not preview and obj.pk is None:
+    def create_object(self, text: str) -> _models.Person:
+        """
+        Create an object given a text.
+
+        If an object was created, add an addition LogEntry to the django admin
+        log table.
+        """
+        obj = create_person(text.strip())
+        if obj.pk is None:
             obj.save()
+            log_addition(self.request.user.pk, obj)
         return obj
 
-    def get_additional_info(self, text: str) -> list:
-        obj = self.get_model_instance(text, preview=True)
-        return [
+    def build_create_option(self, q: str) -> list:
+        """
+        Add additional information to the create option on how the object is
+        going to be created.
+        """
+        create_option = super().build_create_option(q)
+        obj = create_person(q)
+        create_option.extend([
             # 'id': None will make the option unavailable for selection.
             {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
             {'id': None, 'create_id': True, 'text': f'Vorname: {obj.vorname}'},
             {'id': None, 'create_id': True, 'text': f'Nachname: {obj.nachname}'},
-        ]
+        ])
+        return create_option
 
 
 class ACSpielort(ACTabular):

@@ -550,158 +550,121 @@ class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
 class TestACPerson(ACViewTestCase):
     model = _models.Person
     view_class = ACPerson
-    has_alias = False
-    raw_data = [{'beschreibung': 'Klingt komisch ist aber so', 'bemerkungen': 'Abschalten!'}]
 
-    def test_get_model_instance(self):
-        view = self.get_view()
-        obj = view.get_model_instance('Alice Testman', preview=False)
-        self.assertEqual(obj.vorname, 'Alice')
-        self.assertEqual(obj.nachname, 'Testman')
-        self.assertIsNotNone(obj.pk)
-
-    def test_get_model_instance_preview(self):
-        """If preview is True, the returned instance should be unsaved."""
-        view = self.get_view()
-        obj = view.get_model_instance('Alice Testman', preview=True)
-        self.assertEqual(obj.vorname, 'Alice')
-        self.assertEqual(obj.nachname, 'Testman')
-        self.assertIsNone(obj.pk)
-
-    def test_get_model_instance_existing(self):
-        """If there already exists a matching instance, it should be returned."""
-        exists = make(self.model, vorname='Alice', nachname='Testman')
-        view = self.get_view()
-        # Set preview=True to make it clear we are returning a saved instance:
-        self.assertEqual(view.get_model_instance('Alice Testman', preview=True), exists)
-
-    def test_get_model_instance_adds_log_entry(self):
-        """Assert that a log entry is created for each created object."""
-        view = self.get_view()
-        obj = view.get_model_instance('Alice Testman', preview=False)
-        self.assertLoggedAddition(obj)
-
-    def test_creatable(self):
+    @patch('dbentry.ac.views.log_addition')
+    def test_create_object_new_adds_log_entry(self, log_addition_mock):
         """
-        Assert that creatable returns True if:
-          - a new object can be created from the given parameters
-          - no objects already present in the database fit the given parameters
+        Assert that a log entry would be created, if the created object is new.
         """
-        request = self.get_request()
-        view = self.get_view(request)
-        self.assertTrue(view.creatable('Alice Testman'))
+        view = self.get_view(self.get_request())
+        view.create_object('Alice Testman')
+        log_addition_mock.assert_called()
+
+    @patch('dbentry.ac.views.log_addition')
+    def test_create_object_existing_no_log_entry(self, log_addition_mock):
+        """
+        Assert that no log entry would be created, if the object already
+        existed.
+        """
         make(self.model, vorname='Alice', nachname='Testman')
-        self.assertFalse(view.creatable('Alice Testman'))
+        view = self.get_view(self.get_request())
+        view.create_object('Alice Testman')
+        log_addition_mock.assert_not_called()
 
-    def test_get_additional_info(self):
+    @translation_override(language=None)
+    def test_build_create_option(self):
         request = self.get_request()
         view = self.get_view(request)
 
-        info = view.get_additional_info(text='Alice Testman')
+        create_option = view.build_create_option(q='Alice Testman')
         self.assertEqual(
-            info[0],
+            create_option[0],
+            {'id': 'Alice Testman', 'text': 'Create "Alice Testman"', 'create_id': True},
+            msg="The first item should be the 'create' button."
+        )
+        self.assertEqual(
+            create_option[1],
             {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
-            msg="The first item should be some descriptive text."
+            msg="The second item should be some descriptive text."
         )
         self.assertEqual(
-            info[1],
+            create_option[2],
             {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
-            msg="The second item should be the data for 'vorname'."
+            msg="The third item should be the data for 'vorname'."
         )
         self.assertEqual(
-            info[2],
+            create_option[3],
             {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
-            msg="The third item should be the data for 'nachname'."
+            msg="The fourth item should be the data for 'nachname'."
         )
-        self.assertEqual(len(info), 3)
+        self.assertEqual(len(create_option), 4)
 
 
 class TestACAutor(ACViewTestCase):
     model = _models.Autor
     view_class = ACAutor
-    raw_data = [{'beschreibung': 'ABC', 'bemerkungen': 'DEF'}]
-    has_alias = False
 
-    def test_get_model_instance(self):
-        view = self.get_view()
-        obj = view.get_model_instance('Alice Testman (AT)', preview=False)
-        self.assertEqual(obj.person.vorname, 'Alice')
-        self.assertEqual(obj.person.nachname, 'Testman')
-        self.assertEqual(obj.kuerzel, 'AT')
-        self.assertIsNotNone(obj.pk)
-        self.assertIsNotNone(obj.person.pk)
-
-    def test_get_model_instance_preview(self):
-        """If preview is True, the returned instance should be unsaved."""
-        view = self.get_view()
-        obj = view.get_model_instance('Alice Testman (AT)', preview=True)
-        self.assertEqual(obj.person.vorname, 'Alice')
-        self.assertEqual(obj.person.nachname, 'Testman')
-        self.assertEqual(obj.kuerzel, 'AT')
-        self.assertIsNone(obj.pk)
-        self.assertIsNone(obj.person.pk)
-
-    def test_get_model_instance_existing(self):
-        """If there already exists a matching instance, it should be returned."""
-        exists = make(
-            self.model,
-            person__vorname='Alice', person__nachname='Testman',
-            kuerzel='AT'
-        )
-
-        view = self.get_view()
-        # Set preview=True to make it clear we are returning a saved instance:
-        self.assertEqual(view.get_model_instance('Alice Testman (AT)', preview=True), exists)
-
-    def test_get_model_instance_adds_log_entry(self):
-        """Assert that a log entry is created for each created object."""
-        view = self.get_view()
-        obj = view.get_model_instance('Alice Testman (AT)', preview=False)
-        self.assertLoggedAddition(obj)
-        self.assertLoggedAddition(obj.person)
-
-    def test_creatable(self):
+    @patch('dbentry.ac.views.log_addition')
+    def test_create_object_new_adds_log_entry(self, log_addition_mock):
         """
-        Assert that creatable returns True if:
-          - a new object can be created from the given parameters
-          - no objects already present in the database fit the given parameters
+        Assert that a log entry for the Person and Autor instance would be
+        created, if a new object is created.
         """
         request = self.get_request()
         view = self.get_view(request)
-        self.assertTrue(view.creatable('Alice Testman (AT)'))
+        obj = view.create_object('Alice Testman (AT)')
+        self.assertEqual(len(log_addition_mock.call_args_list), 2)
+        person_call, autor_call = log_addition_mock.call_args_list
+        self.assertEqual(person_call.args, (request.user.pk, obj.person))
+        self.assertEqual(autor_call.args, (request.user.pk, obj))
+
+    @patch('dbentry.ac.views.log_addition')
+    def test_create_object_existing_no_log_entry(self, log_addition_mock):
+        """
+        Assert that no log entry would be created, if the object already
+        existed.
+        """
         make(
             self.model,
             person__vorname='Alice', person__nachname='Testman',
             kuerzel='AT'
         )
-        self.assertFalse(view.creatable('Alice Testman (AT)'))
+        view = self.get_view(self.get_request())
+        view.create_object('Alice Testman (AT)')
+        log_addition_mock.assert_not_called()
 
-    def test_get_additional_info(self):
+    @translation_override(language=None)
+    def test_build_create_option(self):
         request = self.get_request()
         view = self.get_view(request)
 
-        info = view.get_additional_info(text='Alice Testman (AT)')
+        create_option = view.build_create_option(q='Alice Testman (AT)')
         self.assertEqual(
-            info[0],
+            create_option[0],
+            {'id': 'Alice Testman (AT)', 'text': 'Create "Alice Testman (AT)"', 'create_id': True},
+            msg="The first item should be the 'create' button."
+        )
+        self.assertEqual(
+            create_option[1],
             {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
-            msg="The first item should be some descriptive text."
+            msg="The second item should be some descriptive text."
         )
         self.assertEqual(
-            info[1],
+            create_option[2],
             {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
-            msg="The second item should be the data for 'vorname'."
+            msg="The third item should be the data for 'vorname'."
         )
         self.assertEqual(
-            info[2],
+            create_option[3],
             {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
-            msg="The third item should be the data for 'nachname'."
+            msg="The fourth item should be the data for 'nachname'."
         )
         self.assertEqual(
-            info[3],
+            create_option[4],
             {'id': None, 'text': 'Kürzel: AT', 'create_id': True},
-            msg="The fourth item should be the data for 'kuerzel'."
+            msg="The fifth item should be the data for 'kuerzel'."
         )
-        self.assertEqual(len(info), 4)
+        self.assertEqual(len(create_option), 5)
 
 
 class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
