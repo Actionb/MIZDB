@@ -191,9 +191,9 @@ class ACBase(autocomplete.Select2QuerySetView):
         user = request.user
         if not user.is_authenticated:
             return False
-        # At this point, dal calls get_queryset() to get the model options via
-        # queryset.model._meta which is unnecessary for ACBase since it
-        # declares the model class during dispatch().
+        # dal would call get_queryset() here to get the model options via
+        # queryset.model._meta. Since ACBase sets the model class attribute
+        # during setup, we can skip calling get_queryset:
         opts = self.model._meta  # type: ignore
         codename = get_permission_codename('add', opts)
         return user.has_perm("%s.%s" % (opts.app_label, codename))
