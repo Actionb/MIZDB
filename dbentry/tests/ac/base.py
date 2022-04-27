@@ -126,7 +126,7 @@ class ACViewTestMethodMixin(object):
         request = self.get_request()
         view = self.get_view(request)
         create_option = view.get_create_option(context={'object_list': []}, q='Beep')
-        if view.has_create_field():
+        if view.create_field:
             self.assertEqual(len(create_option), 1)
             self.assertEqual(create_option[0].get('id'), 'Beep')
             self.assertEqual(create_option[0].get('text'), 'Create "Beep"')
@@ -138,7 +138,7 @@ class ACViewTestMethodMixin(object):
     def test_create_object_no_log_entry(self):
         # no request set on view, no log entry should be created
         view = self.get_view()
-        if view.has_create_field():
+        if view.create_field:
             obj = view.create_object('Beep')
             with self.assertRaises(AssertionError):
                 self.assertLoggedAddition(obj)
@@ -149,7 +149,7 @@ class ACViewTestMethodMixin(object):
         # FIXME: this didn't catch that ACCreatable did not create log entries
         request = self.get_request()
         view = self.get_view(request)
-        if view.has_create_field():
+        if view.create_field:
             obj = view.create_object('Boop')
             self.assertLoggedAddition(obj)
 
@@ -157,6 +157,6 @@ class ACViewTestMethodMixin(object):
         # Assert that the input is stripped for object creation:
         request = self.get_request()
         view = self.get_view(request)
-        if view.has_create_field():
+        if view.create_field:
             obj = view.create_object('   Boop\n')
             self.assertEqual(getattr(obj, view.create_field), 'Boop')

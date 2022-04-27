@@ -85,15 +85,9 @@ class ACBase(autocomplete.Select2QuerySetView):
         if self.create_field is None:
             self.create_field = kwargs.pop('create_field', None)
 
-    def has_create_field(self) -> bool:
-        if self.create_field:
-            return True
-        return False
-
     def display_create_option(self, context: dict, q: str) -> bool:
         """Return a boolean whether the create option should be displayed."""
-        # Note that q can be None (whereas self.q cannot).
-        if self.has_create_field() and q is not None and q.strip():
+        if self.create_field and q is not None and q.strip():
             # Don't offer to create a new option if a case-insensitive
             # identical one already exists.
             existing_options = (self.get_result_label(result).lower()
