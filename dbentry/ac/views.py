@@ -5,10 +5,9 @@ from dal import autocomplete
 from django import http
 from django.contrib.auth import get_permission_codename, get_user_model
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import MultipleObjectsReturned
 from django.core.paginator import Page, Paginator
 from django.db.models import Model
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
 from nameparser import HumanName
@@ -90,8 +89,10 @@ class ACBase(autocomplete.Select2QuerySetView):
         if self.create_field and q:
             # Don't offer to create a new option if a case-insensitive
             # identical one already exists.
-            existing_options = (self.get_result_label(result).lower()
-                                for result in context['object_list'])
+            existing_options = (
+                self.get_result_label(result).lower()
+                for result in context['object_list']
+            )
             if q.lower() in existing_options:
                 return False
             page_obj = context.get('page_obj', None)
@@ -128,6 +129,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         Use the model's default ordering if the view's get_ordering method does
         not return anything to order with.
         """
+        # TODO: move this into get_ordering and then restore get_queryset to default?
         ordering = self.get_ordering()
         if ordering:
             if isinstance(ordering, str):
@@ -220,12 +222,12 @@ class ACBase(autocomplete.Select2QuerySetView):
 class ACTabular(ACBase):
     # noinspection GrazieInspection
     """
-        Autocomplete view that presents the result data in tabular form.
+    Autocomplete view that presents the result data in tabular form.
 
-        Select2 will group the results returned in the JsonResponse into option
-        groups (optgroup). This (plus bootstrap grids) will allow useful
-        presentation of the data.
-        """
+    Select2 will group the results returned in the JsonResponse into option
+    groups (optgroup). This (plus bootstrap grids) will allow useful
+    presentation of the data.
+    """
 
     # noinspection PyMethodMayBeStatic
     def get_extra_data(self, result: Model) -> list:
@@ -277,12 +279,7 @@ class ACTabular(ACBase):
             results = result_list + create_option
 
         return http.JsonResponse(
-            {
-                'results': results,
-                'pagination': {
-                    'more': self.has_more(context)
-                }
-            }
+            {'results': results, 'pagination': {'more': self.has_more(context)}}
         )
 
 
@@ -345,13 +342,15 @@ class ACAutor(ACBase):
         """
         create_option = super().build_create_option(q)
         obj = create_autor(q)
-        create_option.extend([
-            # 'id': None will make the option unavailable for selection.
-            {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
-            {'id': None, 'create_id': True, 'text': f'Vorname: {obj.person.vorname}'},
-            {'id': None, 'create_id': True, 'text': f'Nachname: {obj.person.nachname}'},
-            {'id': None, 'create_id': True, 'text': f'Kürzel: {obj.kuerzel}'},
-        ])
+        create_option.extend(
+            [
+                # 'id': None will make the option unavailable for selection.
+                {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
+                {'id': None, 'create_id': True, 'text': f'Vorname: {obj.person.vorname}'},
+                {'id': None, 'create_id': True, 'text': f'Nachname: {obj.person.nachname}'},
+                {'id': None, 'create_id': True, 'text': f'Kürzel: {obj.kuerzel}'},
+            ]
+        )
         return create_option
 
 
@@ -435,12 +434,14 @@ class ACPerson(ACBase):
         """
         create_option = super().build_create_option(q)
         obj = create_person(q)
-        create_option.extend([
-            # 'id': None will make the option unavailable for selection.
-            {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
-            {'id': None, 'create_id': True, 'text': f'Vorname: {obj.vorname}'},
-            {'id': None, 'create_id': True, 'text': f'Nachname: {obj.nachname}'},
-        ])
+        create_option.extend(
+            [
+                # 'id': None will make the option unavailable for selection.
+                {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
+                {'id': None, 'create_id': True, 'text': f'Vorname: {obj.vorname}'},
+                {'id': None, 'create_id': True, 'text': f'Nachname: {obj.nachname}'},
+            ]
+        )
         return create_option
 
 
