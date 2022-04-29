@@ -59,18 +59,8 @@ def create_autor(text: str) -> _models.Autor:
 
 
 class ACBase(autocomplete.Select2QuerySetView):
-    """
-    Base view for the autocomplete views of the dbentry app.
-
-    This class extends Select2QuerySetView in the following ways:
-        - set instance attributes ``model`` and ``create_field`` from the
-          request payload/keyword arguments
-        - split up the process of providing a create option into several
-          methods (``get_create_option``)
-        - ``get_queryset`` includes forwarded values, and the method calls
-          other methods to perform ordering and search term filtering
-        - ``get_result_value`` and ``get_result_label`` can handle lists/tuples
-    """
+    """Base view for the autocomplete views of the dbentry app."""
+    
     model: Optional[Type[Model]]
     create_field: Optional[str]
 
@@ -87,7 +77,7 @@ class ACBase(autocomplete.Select2QuerySetView):
     def display_create_option(self, context: dict, q: str) -> bool:
         """Return a boolean whether the create option should be displayed."""
         if self.create_field and q:
-            # Don't offer to create a new option if a case-insensitive
+            # Don't offer to create a new option, if a case-insensitive
             # identical one already exists.
             existing_options = (
                 self.get_result_label(result).lower()
