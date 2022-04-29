@@ -116,7 +116,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         else:
             q = q.strip()
 
-        if self.display_create_option(context, q) and self.has_add_permission(self.request):
+        if self.has_add_permission(self.request) and self.display_create_option(context, q):
             return self.build_create_option(q)
         return []
 

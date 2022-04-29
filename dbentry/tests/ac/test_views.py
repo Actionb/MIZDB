@@ -836,6 +836,16 @@ class TestACTabular(ViewTestCase):
 
     view_class = DummyView
 
+    def get_view(self, *args, **kwargs):
+        view = super().get_view(*args, **kwargs)
+        # We don't use ACViewTestCase here (don't need TestDataMixin).
+        # Set some stuff that ACViewTestCase normally sets:
+        if not hasattr(view, 'forwarded'):
+            view.forwarded = None
+        if not hasattr(view, 'q'):
+            view.q = ''
+        return view
+
     def test_get_results_adds_extra_data(self):
         # Assert that get_results adds an item with extra data.
         view = self.get_view()
