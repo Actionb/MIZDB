@@ -169,19 +169,6 @@ class ACBase(autocomplete.Select2QuerySetView):
 
         return queryset
 
-    def has_add_permission(self, request: HttpRequest) -> bool:
-        """Return True if the user has the permission to add a model."""
-        # noinspection PyUnresolvedReferences
-        user = request.user
-        if not user.is_authenticated:
-            return False
-        # dal would call get_queryset() here to get the model options via
-        # queryset.model._meta. Since ACBase sets the model class attribute
-        # during setup, we can skip calling get_queryset:
-        opts = self.model._meta  # type: ignore
-        codename = get_permission_codename('add', opts)
-        return user.has_perm("%s.%s" % (opts.app_label, codename))
-
     def get_result_value(self, result: Model) -> Optional[Union[str, int]]:
         """
         Return the value (usually the primary key) of a result model instance.
