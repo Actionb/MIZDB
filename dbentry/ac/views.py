@@ -251,14 +251,11 @@ class ACAusgabe(ACTabular):
 
     model = _models.Ausgabe
 
-    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
-        return queryset.chronological_order()
-
     def get_queryset(self) -> MIZQuerySet:
         queryset = super().get_queryset()
         from dbentry.admin import AusgabenAdmin, miz_site
         model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_changelist_annotations())
+        return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
 
     def get_group_headers(self) -> list:
         return ['Nummer', 'lfd.Nummer', 'Jahr']

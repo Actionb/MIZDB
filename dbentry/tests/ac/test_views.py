@@ -462,6 +462,11 @@ class TestACAusgabe(ACViewTestCase):
         view = self.get_view(q=self.obj_datum.__str__())
         self.assertIn(self.obj_datum, view.get_queryset())
 
+    def test_get_queryset_chronological_order(self):
+        """Assert that the queryset is chronologically ordered."""
+        view = self.get_view()
+        self.assertTrue(view.get_queryset().chronologically_ordered)
+
 
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Provenienz
