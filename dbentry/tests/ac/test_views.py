@@ -3,6 +3,7 @@ from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import BooleanField, ExpressionWrapper, Q
 from django.urls import reverse_lazy
 from django.utils.translation import override as translation_override
 from django.test import RequestFactory
@@ -71,7 +72,7 @@ class TestCreateFunctions(MyTestCase):
 
 
 # TODO: remove PyUnresolvedReferences
-# noinspection SpellCheckingInspection,PyUnresolvedReferences
+# noinspection SpellCheckingInspection
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     view_class = ACBase
@@ -213,30 +214,28 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.forwarded = {'ignore_me_too': ''}
         self.assertFalse(view.get_queryset().exists())
 
-    def test_apply_q_calls_search(self):
+    def test_get_search_results_calls_search(self):
         """
-        Assert that apply_q calls queryset.search, if q is not empty and not
-        empty.
+        Assert that get_search_results calls queryset.search, if q is not empty
+        and not empty.
         """
         queryset = self.model.objects.all()
         view = self.get_view(self.get_request())
         with patch.object(queryset, 'search') as search_mock:
             # The primary key doesn't exist: a normal search should be done.
-            view.q = 'foo'
-            view.apply_q(queryset)
+            view.get_search_results(queryset, 'foo')
             search_mock.assert_called_with('foo')
 
-    def test_apply_q_no_q(self):
+    def test_get_search_results_no_q(self):
         """If q is an empty string, do not perform any queries."""
         queryset = self.model.objects.all()
         view = self.get_view(self.get_request())
         for q in ('', '   '):
             with self.subTest(q=q):
-                view.q = q
                 with self.assertNumQueries(0):
-                    view.apply_q(queryset)
+                    view.get_search_results(queryset, q)
 
-    def test_apply_q_pk(self):
+    def test_get_search_results_pk(self):
         """
         Assert that the queryset is filtered against primary keys, if q is a
         numeric string and a record with such a primary key exists.
@@ -244,14 +243,44 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         queryset = self.model.objects.all()
         view = self.get_view(self.get_request())
 
-        view.q = str(self.obj1.pk)
-        self.assertIn(self.obj1, view.apply_q(queryset))
+        self.assertIn(self.obj1, view.get_search_results(queryset, str(self.obj1.pk)))
 
+        # The primary key doesn't exist: a normal search should be done.
         with patch.object(queryset, 'search') as search_mock:
-            # The primary key doesn't exist: a normal search should be done.
-            view.q = '0'
-            view.apply_q(queryset)
+            view.get_search_results(queryset, '0')
             search_mock.assert_called_with('0')
+
+    def test_get_queryset_no_q(self):
+        """If q is an empty string, do not perform any queries."""
+        view = self.get_view(self.get_request())
+        for q in ('', '   '):
+            with self.subTest(q=q):
+                view.q = q
+                with self.assertNumQueries(0):
+                    view.get_queryset()
+
+    def test_get_queryset_ordering(self):
+        """Assert that the result queryset has the 'text search ordering'."""
+        # The expected ordering would be:
+        #   - name_field__iexact
+        #   - name_field__istartswith
+        #   - search rank
+        #   - name_field
+        name_field = self.model.name_field
+        view = self.get_view(self.get_request())
+        q = view.q = 'foo'
+        ordering = view.get_queryset().query.order_by
+        exact = ExpressionWrapper(
+            Q(**{name_field + '__iexact': q}), output_field=BooleanField()
+        )
+        startswith = ExpressionWrapper(
+            Q(**{name_field + '__istartswith': q}), output_field=BooleanField()
+        )
+        self.assertEqual(ordering[0], exact.desc())
+        self.assertEqual(ordering[1], startswith.desc())
+        self.assertEqual(ordering[2], '-rank')
+        self.assertEqual(ordering[3], name_field)
+        self.assertEqual(len(ordering), 4)
 
     def test_setup_sets_model(self):
         # setup should set the model attribute from the url caught kwarg
@@ -336,6 +365,18 @@ class TestACBaseIntegration(ACViewTestCase):  # TODO: rename? Not much integrati
         self.assertEqual(response.status_code, 200)
         self.assertIn(str(self.zero.pk), self.get_result_ids(response))
 
+    def test_create_option(self):
+        """
+        A create option should be appended to the results, if there is no
+        exact match.
+        """
+        response = self.client.get('/admin/ac/band/band_name/', data={'q': 'Fighters'})
+        results = json.loads(response.content)['results']
+        self.assertEqual(
+            results[-1],
+            {'id': 'Fighters', 'text': 'Erstelle "Fighters"', 'create_id': True},
+        )
+
 
 class TestACAusgabe(ACViewTestCase):
 
@@ -367,50 +408,59 @@ class TestACAusgabe(ACViewTestCase):
 
         super().setUpTestData()
 
-    def test_apply_q_num(self):
+    def test_search_num(self):
+        """Assert that an object can be found via its num."""
         view = self.get_view(q=self.obj_num.__str__())
-        self.assertIn(self.obj_num, view.apply_q(self.queryset))
+        self.assertIn(self.obj_num, view.get_queryset())
 
-        # search for 10/11
+        # search for 10/11:
+        # noinspection PyUnresolvedReferences
         self.obj_num.ausgabenum_set.create(num=11)
         self.obj_num.refresh_from_db()
         view = self.get_view(q=self.obj_num.__str__())
-        self.assertIn(self.obj_num, view.apply_q(self.queryset))
+        self.assertIn(self.obj_num, view.get_queryset())
 
-    def test_apply_q_lnum(self):
+    def test_search_lnum(self):
+        """Assert that an object can be found via its lnum."""
         view = self.get_view(q=self.obj_lnum.__str__())
-        self.assertIn(self.obj_lnum, view.apply_q(self.queryset), msg="q:%s,qs:%s" % (view.q, view.apply_q(self.queryset)))
+        self.assertIn(self.obj_lnum, view.get_queryset())
 
-        # search for 10/11
+        # search for 10/11:
+        # noinspection PyUnresolvedReferences
         self.obj_lnum.ausgabelnum_set.create(lnum=11)
         self.obj_lnum.refresh_from_db()
         view = self.get_view(q=self.obj_lnum.__str__())
-        self.assertIn(self.obj_lnum, view.apply_q(self.queryset))
+        self.assertIn(self.obj_lnum, view.get_queryset())
 
-    def test_apply_q_monat(self):
+    def test_search_monat(self):
+        """Assert that an object can be found via its monat."""
         view = self.get_view(q=self.obj_monat.__str__())
-        self.assertIn(self.obj_monat, view.apply_q(self.queryset))
+        self.assertIn(self.obj_monat, view.get_queryset())
 
-        # search for Jan/Feb
+        # search for Jan/Feb:
+        # noinspection PyUnresolvedReferences
         self.obj_monat.ausgabemonat_set.create(monat=make(_models.Monat, monat='Februar'))
         self.obj_monat.refresh_from_db()
         view = self.get_view(q=self.obj_monat.__str__())
-        self.assertIn(self.obj_monat, view.apply_q(self.queryset))
+        self.assertIn(self.obj_monat, view.get_queryset())
 
-    def test_apply_q_sonderausgabe(self):
+    def test_search_sonderausgabe(self):
+        """
+        Assert that an object can be found via its beschreibung, if it is a
+        'sonderausgabe'.
+        """
         view = self.get_view(q=self.obj_sonder.__str__())
-        self.assertIn(self.obj_sonder, view.apply_q(self.queryset))
+        self.assertIn(self.obj_sonder, view.get_queryset())
 
-        view = self.get_view(q=self.obj_sonder.__str__(), forwarded={'magazin': self.mag.pk})
-        self.assertIn(self.obj_sonder, view.apply_q(self.queryset))
-
-    def test_apply_q_jahrgang(self):
+    def test_search_jahrgang(self):
+        """Assert that an object can be found via its jahrgang."""
         view = self.get_view(q=self.obj_jahrg.__str__())
-        self.assertIn(self.obj_jahrg, view.apply_q(self.queryset))
+        self.assertIn(self.obj_jahrg, view.get_queryset())
 
-    def test_apply_q_datum(self):
+    def test_search_datum(self):
+        """Assert that an object can be found via its datum."""
         view = self.get_view(q=self.obj_datum.__str__())
-        self.assertIn(self.obj_datum, view.apply_q(self.queryset))
+        self.assertIn(self.obj_datum, view.get_queryset())
 
 
 class TestACProv(ACViewTestMethodMixin, ACViewTestCase):
@@ -599,8 +649,11 @@ class TestACBuchband(ACViewTestCase):
 
         super().setUpTestData()
 
-    def test_gets_queryset_only_returns_buchband(self):
-        # Assert that apply_q can only return buch instances that are a buchband
+    def test_gets_queryset_filters_out_non_buchband(self):
+        """
+        Assert that get_queryset does not return Buch instances that are not
+        flagged as 'buchband'.
+        """
         view = self.get_view(q='Buch')
         result = view.get_queryset()
         self.assertEqual(len(result), 1)
@@ -867,19 +920,23 @@ class TestACMagazin(ACViewTestCase):
     model = _models.Magazin
     view_class = ACMagazin
 
-    def test_apply_q_validates_and_compacts_q(self):
-        # Assert that 'q' has dashes removed (compact standard number) if it is
-        # found to be a valid ISSN.
-        view = self.get_view(request=self.get_request(), q='1234-5679')
-        view.apply_q(self.queryset)
-        self.assertEqual(view.q, '12345679')
-        # Invalid ISSN:
-        view = self.get_view(request=self.get_request(), q='1234-5670')
-        view.apply_q(self.queryset)
-        self.assertEqual(view.q, '1234-5670')
+    def test_get_search_results_validates_and_compacts_search_term(self):
+        """
+        Assert that the search term has dashes removed (compact standard number),
+        if it is a valid ISSN.
+        """
+        view = self.get_view(self.get_request())
+        # Valid ISSN:
+        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+            view.get_search_results(self.queryset, '1234-5679')
+            super_mock.assert_called_with(self.queryset, '12345679')
+        # Invalid ISSN, search term should be left as-is:
+        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+            view.get_search_results(self.queryset, '1234-5670')
+            super_mock.assert_called_with(self.queryset, '1234-5670')
 
-    def test_q_issn(self):
-        # Assert that a Magazin instance can be found using its ISSN.
+    def test_search_term_issn(self):
+        """Assert that a Magazin instance can be found using its ISSN."""
         obj = make(_models.Magazin, magazin_name='Testmagazin', issn='12345679')
         for issn in ('12345679', '1234-5679'):
             with self.subTest(ISSN=issn):
@@ -892,23 +949,27 @@ class TestACBuch(ACViewTestCase):
     model = _models.Buch
     view_class = ACBase
 
-    def test_apply_q_validates_and_compacts_q(self):
-        # Assert that 'q' is transformed into compact ISBN-13 if it is found to
-        # be a valid ISBN. ISBN-13 is equivalent to EAN.
+    def test_get_search_results_validates_and_compacts_search_term(self):
+        """
+        Assert that the search term is transformed into compact ISBN-13, if it
+        is found to be a valid ISBN. ISBN-13 is equivalent to EAN.
+        """
+        view = self.get_view(self.get_request())
         for isbn in ('1-234-56789-X', '978-1-234-56789-7'):
             with self.subTest(ISBN=isbn):
-                view = self.get_view(request=self.get_request(), q=isbn)
-                view.apply_q(self.queryset)
-                self.assertEqual(view.q, isbn.replace('-', ''))
-        # Invalid ISBN.
+                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+                    view.get_search_results(self.queryset, isbn)
+                    super_mock.assert_called_with(self.queryset, isbn.replace('-', ''))
+
+        # Invalid ISBN - leave search term as-is:
         for isbn in ('1-234-56789-1', '978-1-234-56789-1'):
             with self.subTest(ISBN=isbn):
-                view = self.get_view(request=self.get_request(), q=isbn)
-                view.apply_q(self.queryset)
-                self.assertEqual(view.q, isbn)
+                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+                    view.get_search_results(self.queryset, isbn)
+                    super_mock.assert_called_with(self.queryset, isbn)
 
     def test_q_isbn(self):
-        # Assert that a Buch instance can be found using its ISBN.
+        """Assert that a Buch instance can be found using its ISBN."""
         obj = make(_models.Buch, titel='Testbuch', issn='9781234567897')
         for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
             with self.subTest(ISBN=isbn):
@@ -916,7 +977,7 @@ class TestACBuch(ACViewTestCase):
                 self.assertIn(obj, view.get_queryset())
 
     def test_q_ean(self):
-        # Assert that a Buch instance can be found using its EAN.
+        """Assert that a Buch instance can be found using its EAN."""
         obj = make(_models.Buch, titel='Testbuch', ean='9781234567897')
         for ean in ('9781234567897', '978-1-234-56789-7'):
             with self.subTest(EAN=ean):

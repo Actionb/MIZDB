@@ -137,22 +137,17 @@ class ACBase(autocomplete.Select2QuerySetView):
             return queryset.order_by(*ordering)
         return queryset.order_by(*self.model._meta.ordering)  # type: ignore
 
-    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
-        """
-        Filter the given queryset with the view's search term ``q``.
-
-        If ``q`` is a numeric value, try a primary key lookup. Otherwise, use
-        either MIZQuerySet.search to find results.
-        """
-        # TODO: have this be the override to dal.BaseQuerySetView.get_search_results
-        #  then restore get_queryset to default?
-        q = self.q.strip()
-        if q:
+    def get_search_results(self, queryset: MIZQuerySet, search_term: str) -> MIZQuerySet:
+        """Filter the results based on the query."""
+        search_term = search_term.strip()
+        if search_term:
             # If the search term is a numeric value, try using it in a primary
             # key lookup, and if that returns results, return them.
-            if q.isnumeric() and queryset.filter(pk=q).exists():
-                return queryset.filter(pk=q)
-            return queryset.search(q)
+            if search_term.isnumeric() and queryset.filter(pk=search_term).exists():
+                return queryset.filter(pk=search_term)
+            # FIXME: what if queryset isn't a MIZQueryset and doesn't have a
+            #  search method?
+            return queryset.search(search_term)
         return queryset
 
     def create_object(self, text: str) -> Model:
@@ -171,11 +166,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def get_queryset(self) -> MIZQuerySet:
         """Return the ordered and filtered queryset for this view."""
-        # TODO: IMPORTANT: where does dal handle the forwards?
-        if self.queryset is None:
-            queryset = self.model.objects.all()  # type: ignore
-        else:
-            queryset = self.queryset
+        queryset = super().get_queryset()
 
         if self.forwarded:
             forward_filter = {}
@@ -188,8 +179,6 @@ class ACBase(autocomplete.Select2QuerySetView):
                 return self.model.objects.none()  # type: ignore
             queryset = queryset.filter(**forward_filter)
 
-        queryset = self.do_ordering(queryset)
-        queryset = self.apply_q(queryset)
         return queryset
 
     def has_add_permission(self, request: HttpRequest) -> bool:
@@ -393,11 +382,11 @@ class ACLagerort(ACTabular):
 class ACMagazin(ACBase):
     model = _models.Magazin
 
-    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
-        # Check if q is a valid ISSN; if it is, remove the dashes.
-        if issn.is_valid(self.q):  # type: ignore[has-type]
-            self.q = issn.compact(self.q)  # type: ignore[has-type]
-        return super().apply_q(queryset)
+    def get_search_results(self, queryset: MIZQuerySet, search_term: str) -> MIZQuerySet:
+        # Check if q is a valid ISSN; if it is, compact-ify it.
+        if issn.is_valid(search_term):  # type: ignore[has-type]
+            search_term = issn.compact(search_term)  # type: ignore[has-type]
+        return super().get_search_results(queryset, search_term)
 
 
 class ACMusiker(ACTabular):

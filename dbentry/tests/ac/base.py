@@ -73,21 +73,23 @@ class ACViewTestMethodMixin(object):
             qs_order = list(view.do_ordering(self.queryset).query.order_by)
             self.assertEqual(qs_order, ["-pk"])
 
-    def test_apply_q(self):
-        # Test that an object can be found by querying for the data that is was
-        # used in its creation.
+    def test_get_search_results(self):
+        """
+        Test that an object can be found by querying for the data that was used
+        in its creation.
+        """
         if not self.raw_data:
             return
         view = self.get_view()
         for data in self.raw_data:
             for field, value in data.items():
                 with self.subTest(field=field, value=value):
-                    view.q = str(value)
-                    result = view.apply_q(self.queryset)
+                    q = str(value)
+                    result = view.get_search_results(self.queryset, q)
                     if not result:
                         fail_msg = (
                             f"Could not find test object by querying for field {field!r} "
-                            f"with search term {view.q!r}"
+                            f"with search term {q!r}"
                         )
                         self.fail(fail_msg)
                     if isinstance(result, list):
@@ -99,8 +101,8 @@ class ACViewTestMethodMixin(object):
                         result = result.values_list('pk', flat=True)
                     self.assertIn(self.obj1.pk, result)
 
-    def test_apply_q_alias(self):
-        # Assert that an object can be found through its aliases.
+    def test_get_search_results_alias(self):
+        """Assert that an object can be found through its aliases."""
         if not self.has_alias:
             return
         if not self.alias_accessor_name:
@@ -114,11 +116,11 @@ class ACViewTestMethodMixin(object):
             self.warn('Test aborted: queryset of aliases is empty.')
             return
         view = self.get_view()
-        view.q = str(alias)
-        result = [obj.pk for obj in view.apply_q(self.queryset)]
+        q = str(alias)
+        result = [obj.pk for obj in view.get_search_results(self.queryset, q)]
         self.assertTrue(
             result,
-            msg='View returned no results when querying for alias: ' + view.q
+            msg=f"View returned no results when querying for alias: {q}"
         )
         self.assertIn(self.obj1.pk, result)
 
