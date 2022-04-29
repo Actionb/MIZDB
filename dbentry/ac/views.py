@@ -174,20 +174,6 @@ class ACBase(autocomplete.Select2QuerySetView):
 
         return queryset
 
-    def get_result_value(self, result: Model) -> Optional[Union[str, int]]:
-        """
-        Return the value (usually the primary key) of a result model instance.
-        """
-        if isinstance(result, (list, tuple)):
-            return result[0]
-        return str(result.pk)  # type: ignore
-
-    def get_result_label(self, result: Model) -> str:
-        """Return the label of a result model instance."""
-        if isinstance(result, (list, tuple)):
-            return str(result[1])
-        return str(result)
-
 
 class ACTabular(ACBase):
     # noinspection GrazieInspection
