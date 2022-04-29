@@ -195,24 +195,26 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view()
         self.assertFalse(view.display_create_option(context, 'Boop'))
 
-    def test_get_queryset_forwarded(self):
+    def test_apply_forwarded(self):
         view = self.get_view(self.get_request())
-
-        # fake forwarded attribute
         view.forwarded = {'genre': self.genre.pk}
-        self.assertEqual(list(view.get_queryset()), [self.obj1])
+        self.assertQuerysetEqual(view.apply_forwarded(self.queryset), [self.obj1])
         other_musiker = make(_models.Musiker)
         view.forwarded['musiker'] = other_musiker.pk
-        self.assertFalse(view.get_queryset().exists())
+        self.assertFalse(view.apply_forwarded(self.queryset).exists())
         other_musiker.band_set.add(self.obj1)
-        self.assertTrue(view.get_queryset().exists())
+        self.assertTrue(view.apply_forwarded(self.queryset).exists())
 
-        # get_queryset should filter out useless empty forward values and return
-        # an empty qs instead.
-        view.forwarded = {'': 'ignore_me'}
-        self.assertFalse(view.get_queryset().exists())
+    def test_apply_forwarded_no_values(self):
+        """
+        Assert that if none of the forwards provide (useful) values to filter
+        with, an empty queryset is always returned.
+        """
+        view = self.get_view(self.get_request())
         view.forwarded = {'ignore_me_too': ''}
-        self.assertFalse(view.get_queryset().exists())
+        self.assertFalse(view.apply_forwarded(self.queryset).exists())
+        view.forwarded = {'': 'ignore_me'}
+        self.assertFalse(view.apply_forwarded(self.queryset).exists())
 
     def test_get_search_results_calls_search(self):
         """
@@ -322,6 +324,29 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view = self.get_view()
         instance = make(_models.Genre, genre='All this testing')
         self.assertEqual(view.get_result_label(instance), 'All this testing')
+
+    def test_forwards_applied_before_pk_search(self):
+        """
+        Filters based on forwarded values must be applied before
+        get_search_results attempts a primary key lookup for numeric search
+        terms.
+
+        If an instance with a primary key matching the search term exists,
+        get_search_results will just return a queryset containing that instance,
+        and no full text search with that search term will be performed.
+        If that instance then doesn't match the forward filters, and if those
+        filters are applied after get_search_results, the result list would be
+        empty even though a full text search would have returned results.
+        """
+        view = self.get_view(self.get_request())
+        self.obj1.band_name = str(self.obj2.pk)
+        self.obj1.save()
+        view.q = str(self.obj2.pk)
+        # If forward filters are applied last, then get_search_results will
+        # return a queryset containing just obj2 - but obj2 doesn't have the
+        # required genre: the result queryset would be empty.
+        view.forwarded = {'genre': self.genre.pk}
+        self.assertQuerysetEqual(view.get_queryset(), [self.obj1])
 
 
 class TestACBaseIntegration(ACViewTestCase):  # TODO: rename? Not much integration testing here

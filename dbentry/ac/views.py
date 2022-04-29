@@ -117,6 +117,7 @@ class ACBase(autocomplete.Select2QuerySetView):
 
     def get_search_results(self, queryset: MIZQuerySet, search_term: str) -> MIZQuerySet:
         """Filter the results based on the query."""
+        queryset = self.apply_forwarded(queryset)
         search_term = search_term.strip()
         if search_term:
             # If the search term is a numeric value, try using it in a primary
@@ -127,6 +128,20 @@ class ACBase(autocomplete.Select2QuerySetView):
             #  search method?
             return queryset.search(search_term)
         return queryset
+
+    def apply_forwarded(self, queryset):
+        """Apply filters based on the forwarded values."""
+        if not self.forwarded:
+            return queryset
+        forward_filter = {}
+        for k, v in self.forwarded.items():
+            # Remove 'empty' forward items.
+            if k and v:
+                forward_filter[k] = v
+        if not forward_filter:
+            # All forwarded items were empty; return an empty queryset.
+            return self.model.objects.none()  # type: ignore
+        return queryset.filter(**forward_filter)
 
     def create_object(self, text: str) -> Model:
         """
