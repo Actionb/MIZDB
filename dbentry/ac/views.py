@@ -101,7 +101,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         return False
 
     def build_create_option(self, q: str) -> list:
-        """Form the create option item to append to the result list."""
+        """Construct the create option item to be appended to the results."""
         return [{
             'id': q,
             'text': gettext('Create "%(new_value)s"') % {'new_value': q},
@@ -109,15 +109,13 @@ class ACBase(autocomplete.Select2QuerySetView):
         }]
 
     def get_create_option(self, context: dict, q: str) -> list:
-        """Form the correct create_option to append to results."""
-        # Note that q can be None:
-        #   in Select2ViewMixin.render_to_response:
-        #       ... q = self.request.GET.get('q', None)
-        #       create_option = self.get_create_option(context, q) ...
+        """Return the create option item to be appended to the results."""
+        # Note that q can be None (see: Select2ViewMixin.render_to_response).
         if q is None:
             q = ''
         else:
             q = q.strip()
+
         if self.display_create_option(context, q) and self.has_add_permission(self.request):
             return self.build_create_option(q)
         return []
