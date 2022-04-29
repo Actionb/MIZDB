@@ -58,20 +58,16 @@ class ACViewTestMethodMixin(object):
     has_alias = True
     alias_accessor_name = ''
 
-    def test_do_ordering(self):
-        # Assert that the ordering of the queryset returned by the view matches
-        # the ordering of get_ordering() OR the model.
+    def test_get_ordering(self):
+        """
+        Assert that get_ordering returns either the value of the ordering
+        attribute or the default ordering of the model.
+        """
         view = self.get_view()
-        qs_order = list(view.do_ordering(self.queryset).query.order_by)
-        self.assertEqual(qs_order, self.model._meta.ordering)
-        # Test that do_ordering can deal with get_ordering returning a simple
-        # string value instead of a list:
-        with patch.object(view, 'get_ordering', new=Mock(return_value="-pk")):
-            qs_order = list(view.do_ordering(self.queryset).query.order_by)
-            self.assertEqual(qs_order, ["-pk"])
-        with patch.object(view, 'get_ordering', new=Mock(return_value=["-pk"])):
-            qs_order = list(view.do_ordering(self.queryset).query.order_by)
-            self.assertEqual(qs_order, ["-pk"])
+        if view.ordering:
+            self.assertEqual(view.get_ordering(), view.ordering)
+        else:
+            self.assertEqual(view.get_ordering(), self.model._meta.ordering)
 
     def test_get_search_results(self):
         """

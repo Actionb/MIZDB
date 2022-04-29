@@ -122,20 +122,10 @@ class ACBase(autocomplete.Select2QuerySetView):
             return self.build_create_option(q)
         return []
 
-    def do_ordering(self, queryset: MIZQuerySet) -> MIZQuerySet:
-        """
-        Apply ordering to the queryset and return it.
-
-        Use the model's default ordering if the view's get_ordering method does
-        not return anything to order with.
-        """
-        # TODO: move this into get_ordering and then restore get_queryset to default?
-        ordering = self.get_ordering()
-        if ordering:
-            if isinstance(ordering, str):
-                ordering = (ordering,)
-            return queryset.order_by(*ordering)
-        return queryset.order_by(*self.model._meta.ordering)  # type: ignore
+    def get_ordering(self) -> list:
+        """Return the field or fields to use for ordering the queryset."""
+        # noinspection PyUnresolvedReferences
+        return super().get_ordering() or self.model._meta.ordering
 
     def get_search_results(self, queryset: MIZQuerySet, search_term: str) -> MIZQuerySet:
         """Filter the results based on the query."""
