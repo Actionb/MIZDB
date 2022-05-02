@@ -1,9 +1,9 @@
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
 from django import http
-from django.contrib.auth import get_permission_codename, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Page, Paginator
 from django.db.models import Model
@@ -15,7 +15,7 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.widgets import EXTRA_DATA_KEY
-from dbentry.query import AusgabeQuerySet, MIZQuerySet
+from dbentry.query import MIZQuerySet
 from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
