@@ -6,6 +6,7 @@ from django import http
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Page, Paginator
+from django.db import transaction
 from django.db.models import Model
 from django.http import HttpRequest
 from django.utils.functional import cached_property
@@ -23,39 +24,19 @@ from dbentry.utils.models import get_model_from_string
 from dbentry.utils.text import parse_name
 
 
-def create_person(text: str) -> _models.Person:
-    """Get an existing or build a new (unsaved) Person instance from name ``text``."""
-    # parse_name will join first and middle names:
-    vorname, nachname = parse_name(text)
-    try:
-        return _models.Person.objects.get(vorname=vorname, nachname=nachname)
-    except _models.Person.DoesNotExist:  # noqa
-        return _models.Person(vorname=vorname, nachname=nachname)
-
-
-def create_autor(text: str) -> _models.Autor:
-    """Get an existing or build a new (unsaved) Autor instance from name ``text``."""
+def parse_autor_name(name: str) -> (str, str, str):
+    """
+    Parse name through name parsers to split it up into first name, last name
+    and nickname.
+    """
     # Parse the name through the nameparser to find out the nickname, which
-    # will be used as kuerzel. Then pass the name without nickname to the
-    # Person constructor.
-    name = HumanName(text)
+    # will be used as kuerzel. Then parse the rest of the name to get the first
+    # and last name.
+    name = HumanName(name)
     kuerzel = name.nickname[:8]
     name.nickname = ''
-    name = str(name)
-
-    p = None
-    if name:
-        # Do not create 'nameless' Person instances.
-        # (the database would allow this)
-        p = create_person(name)
-
-    try:
-        kwargs = {'kuerzel': kuerzel}
-        if p:
-            kwargs.update(person__vorname=p.vorname, person__nachname=p.nachname)
-        return _models.Autor.objects.get(**kwargs)
-    except _models.Autor.DoesNotExist:  # noqa
-        return _models.Autor(kuerzel=kuerzel, person=p)
+    vorname, nachname = parse_name(str(name))
+    return vorname, nachname, kuerzel
 
 
 class ACBase(autocomplete.Select2QuerySetView):
@@ -281,15 +262,12 @@ class ACAutor(ACBase):
         If an object was created, add an addition LogEntry to the django admin
         log table.
         """
-        obj = create_autor(text.strip())
-        # Save the instance or its related Person instance, if either are
-        # unsaved.
-        if obj.person.pk is None:
-            obj.person.save()
-            log_addition(self.request.user.pk, obj.person)
-        if obj.pk is None:
-            obj.save()
-            log_addition(self.request.user.pk, obj)
+        vorname, nachname, kuerzel = parse_autor_name(text)
+        with transaction.atomic():
+            person = _models.Person.objects.create(vorname=vorname, nachname=nachname)
+            obj = self.model.objects.create(kuerzel=kuerzel, person=person)
+        log_addition(self.request.user.pk, person)
+        log_addition(self.request.user.pk, obj)
         return obj
 
     def build_create_option(self, q: str) -> list:
@@ -298,14 +276,14 @@ class ACAutor(ACBase):
         going to be created.
         """
         create_option = super().build_create_option(q)
-        obj = create_autor(q)
+        vorname, nachname, kuerzel = parse_autor_name(q)
         create_option.extend(
             [
                 # 'id': None will make the option unavailable for selection.
                 {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
-                {'id': None, 'create_id': True, 'text': f'Vorname: {obj.person.vorname}'},
-                {'id': None, 'create_id': True, 'text': f'Nachname: {obj.person.nachname}'},
-                {'id': None, 'create_id': True, 'text': f'Kürzel: {obj.kuerzel}'},
+                {'id': None, 'create_id': True, 'text': f'Vorname: {vorname}'},
+                {'id': None, 'create_id': True, 'text': f'Nachname: {nachname}'},
+                {'id': None, 'create_id': True, 'text': f'Kürzel: {kuerzel}'},
             ]
         )
         return create_option
@@ -375,13 +353,12 @@ class ACPerson(ACBase):
         """
         Create an object given a text.
 
-        If an object was created, add an addition LogEntry to the django admin
-        log table.
+        Add an addition LogEntry to the django admin log table for the created
+        object.
         """
-        obj = create_person(text.strip())
-        if obj.pk is None:
-            obj.save()
-            log_addition(self.request.user.pk, obj)
+        vorname, nachname = parse_name(text)
+        obj = self.model.objects.create(vorname=vorname, nachname=nachname)
+        log_addition(self.request.user.pk, obj)
         return obj
 
     def build_create_option(self, q: str) -> list:
@@ -390,13 +367,13 @@ class ACPerson(ACBase):
         going to be created.
         """
         create_option = super().build_create_option(q)
-        obj = create_person(q)
+        vorname, nachname = parse_name(q)
         create_option.extend(
             [
                 # 'id': None will make the option unavailable for selection.
                 {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
-                {'id': None, 'create_id': True, 'text': f'Vorname: {obj.vorname}'},
-                {'id': None, 'create_id': True, 'text': f'Nachname: {obj.nachname}'},
+                {'id': None, 'create_id': True, 'text': f'Vorname: {vorname}'},
+                {'id': None, 'create_id': True, 'text': f'Nachname: {nachname}'},
             ]
         )
         return create_option

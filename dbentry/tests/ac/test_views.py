@@ -10,11 +10,9 @@ from django.test import RequestFactory
 
 import dbentry.models as _models
 from dbentry.ac.views import (
-    ACAutor, ACBase, ACAusgabe, ACBuchband, ACMagazin, ACPerson,
+    ACAutor, ACBase, ACAusgabe, ACBuchband, ACMagazin, ACPerson, ACTabular,
     ContentTypeAutocompleteView,
-    GND,
-    GNDPaginator, Paginator,
-    ACTabular, create_autor, create_person
+    GND, GNDPaginator, Paginator, parse_autor_name
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.factory import make
@@ -22,53 +20,29 @@ from dbentry.tests.base import ViewTestCase, MyTestCase
 from dbentry.tests.ac.base import ACViewTestMethodMixin, ACViewTestCase
 
 
-class TestCreateFunctions(MyTestCase):
+class TestAutorNameParser(MyTestCase):
 
-    def test_create_person(self):
-        obj = create_person('Alice Bobby Tester')
-        self.assertIsInstance(obj, _models.Person)
-        self.assertIsNone(obj.pk, msg="Expected an unsaved new instance.")
-        self.assertEqual(obj.vorname, 'Alice Bobby')
-        self.assertEqual(obj.nachname, 'Tester')
-        obj.save()
-        obj.refresh_from_db()
-        # Should return the saved instance now:
-        obj2 = create_person('Alice Bobby Tester')
-        self.assertEqual(obj2.pk, obj.pk)
+    def test(self):
+        names = [
+            ('Alice Testman', ('Alice', 'Testman', '')),
+            ('Testman, Alice', ('Alice', 'Testman', '')),
+            ('Alice "AT" Testman', ('Alice', 'Testman', 'AT')),
+            ('Alice Testman (AT)', ('Alice', 'Testman', 'AT')),
+            ('Testman, Alice (AT)', ('Alice', 'Testman', 'AT')),
+            ('(AT)', ('', '', 'AT'))
+        ]
+        for name, expected in names:
+            with self.subTest(name=name):
+                self.assertEqual(parse_autor_name(name), expected)
 
-    def test_create_autor(self):
-        obj = create_autor('Alice (AT) Tester')
-        self.assertIsInstance(obj, _models.Autor)
-        self.assertIsNone(obj.pk, msg="Expected an unsaved new instance.")
-        self.assertEqual(obj.kuerzel, 'AT')
-        self.assertEqual(obj.person.vorname, 'Alice')
-        self.assertEqual(obj.person.nachname, 'Tester')
-        obj.person.save()
-        obj.save()
-        obj.refresh_from_db()
-        # Should return the saved instance now:
-        obj2 = create_autor('Alice (AT) Tester')
-        self.assertEqual(obj2.pk, obj.pk)
-
-    def test_create_autor_nickname_only(self):
-        """
-        No Person instance should be created, if the name only contains a
-        nickname.
-        """
-        with patch('dbentry.ac.views.create_person') as create_person_mock:
-            obj = create_autor('(AT)')
-            self.assertEqual(obj.kuerzel, 'AT')
-            self.assertIsNone(obj.person)
-            create_person_mock.assert_not_called()
-
-    def test_create_autor_kuerzel_max_length(self):
+    def test_kuerzel_max_length(self):
         """
         Assert that the kuerzel is shortened, so that its length doesn't exceed
         the model field max_length.
         """
-        obj = create_autor('Alice (Supercalifragilisticexpialidocious) Tester')
+        _v, _n, kuerzel = parse_autor_name('Alice (Supercalifragilisticexpialidocious) Tester')
         # noinspection SpellCheckingInspection
-        self.assertEqual(obj.kuerzel, 'Supercal')
+        self.assertEqual(kuerzel, 'Supercal')
 
 
 # TODO: remove PyUnresolvedReferences
@@ -263,6 +237,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         with patch.object(queryset, 'search') as search_mock:
             view.get_search_results(queryset, '0')
             search_mock.assert_called_with('0')
+
     def test_get_queryset_no_q(self):
         """If q is an empty string, do not perform any queries."""
         view = self.get_view(self.get_request())
@@ -523,44 +498,35 @@ class TestACPerson(ACViewTestCase):
         view.create_object('Alice Testman')
         log_addition_mock.assert_called()
 
-    @patch('dbentry.ac.views.log_addition')
-    def test_create_object_existing_no_log_entry(self, log_addition_mock):
-        """
-        Assert that no log entry would be created, if the object already
-        existed.
-        """
-        make(self.model, vorname='Alice', nachname='Testman')
-        view = self.get_view(self.get_request())
-        view.create_object('Alice Testman')
-        log_addition_mock.assert_not_called()
-
     @translation_override(language=None)
     def test_build_create_option(self):
         request = self.get_request()
         view = self.get_view(request)
 
-        create_option = view.build_create_option(q='Alice Testman')
-        self.assertEqual(
-            create_option[0],
-            {'id': 'Alice Testman', 'text': 'Create "Alice Testman"', 'create_id': True},
-            msg="The first item should be the 'create' button."
-        )
-        self.assertEqual(
-            create_option[1],
-            {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
-            msg="The second item should be some descriptive text."
-        )
-        self.assertEqual(
-            create_option[2],
-            {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
-            msg="The third item should be the data for 'vorname'."
-        )
-        self.assertEqual(
-            create_option[3],
-            {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
-            msg="The fourth item should be the data for 'nachname'."
-        )
-        self.assertEqual(len(create_option), 4)
+        for name in ('Alice Testman', 'Testman, Alice'):
+            with self.subTest(name=name):
+                create_option = view.build_create_option(q=name)
+                self.assertEqual(
+                    create_option[0],
+                    {'id': name, 'text': f'Create "{name}"', 'create_id': True},
+                    msg="The first item should be the 'create' button."
+                )
+                self.assertEqual(
+                    create_option[1],
+                    {'id': None, 'text': '...mit folgenden Daten:', 'create_id': True},
+                    msg="The second item should be some descriptive text."
+                )
+                self.assertEqual(
+                    create_option[2],
+                    {'id': None, 'text': 'Vorname: Alice', 'create_id': True},
+                    msg="The third item should be the data for 'vorname'."
+                )
+                self.assertEqual(
+                    create_option[3],
+                    {'id': None, 'text': 'Nachname: Testman', 'create_id': True},
+                    msg="The fourth item should be the data for 'nachname'."
+                )
+                self.assertEqual(len(create_option), 4)
 
 
 class TestACAutor(ACViewTestCase):
@@ -580,21 +546,6 @@ class TestACAutor(ACViewTestCase):
         person_call, autor_call = log_addition_mock.call_args_list
         self.assertEqual(person_call.args, (request.user.pk, obj.person))
         self.assertEqual(autor_call.args, (request.user.pk, obj))
-
-    @patch('dbentry.ac.views.log_addition')
-    def test_create_object_existing_no_log_entry(self, log_addition_mock):
-        """
-        Assert that no log entry would be created, if the object already
-        existed.
-        """
-        make(
-            self.model,
-            person__vorname='Alice', person__nachname='Testman',
-            kuerzel='AT'
-        )
-        view = self.get_view(self.get_request())
-        view.create_object('Alice Testman (AT)')
-        log_addition_mock.assert_not_called()
 
     @translation_override(language=None)
     def test_build_create_option(self):
