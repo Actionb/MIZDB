@@ -3,7 +3,7 @@ from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import BooleanField, ExpressionWrapper, Q
+from django.db.models import BooleanField, ExpressionWrapper, Q, QuerySet
 from django.urls import reverse_lazy
 from django.utils.translation import override as translation_override
 from django.test import RequestFactory
@@ -218,8 +218,8 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     def test_get_search_results_calls_search(self):
         """
-        Assert that get_search_results calls queryset.search, if q is not empty
-        and not empty.
+        Assert that get_search_results calls queryset.search, if the search
+        term is not empty and the queryset is a MIZQuerySet.
         """
         queryset = self.model.objects.all()
         view = self.get_view(self.get_request())
@@ -227,6 +227,17 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             # The primary key doesn't exist: a normal search should be done.
             view.get_search_results(queryset, 'foo')
             search_mock.assert_called_with('foo')
+
+    def test_get_search_results_no_mizqueryset(self):
+        """
+        Assert that get_search_results calls the parent's get_search_results,
+        if the queryset is not a MIZQuerySet.
+        """
+        queryset = QuerySet(self.model)
+        view = self.get_view(self.get_request())
+        with patch('dal_select2.views.Select2QuerySetView.get_search_results') as super_mock:
+            view.get_search_results(queryset, 'foo')
+            super_mock.assert_called()
 
     def test_get_search_results_no_q(self):
         """If q is an empty string, do not perform any queries."""
@@ -251,7 +262,6 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         with patch.object(queryset, 'search') as search_mock:
             view.get_search_results(queryset, '0')
             search_mock.assert_called_with('0')
-
     def test_get_queryset_no_q(self):
         """If q is an empty string, do not perform any queries."""
         view = self.get_view(self.get_request())

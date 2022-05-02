@@ -60,7 +60,7 @@ def create_autor(text: str) -> _models.Autor:
 
 class ACBase(autocomplete.Select2QuerySetView):
     """Base view for the autocomplete views of the dbentry app."""
-    
+
     model: Optional[Type[Model]]
     create_field: Optional[str]
 
@@ -124,8 +124,8 @@ class ACBase(autocomplete.Select2QuerySetView):
             # key lookup, and if that returns results, return them.
             if search_term.isnumeric() and queryset.filter(pk=search_term).exists():
                 return queryset.filter(pk=search_term)
-            # FIXME: what if queryset isn't a MIZQueryset and doesn't have a
-            #  search method?
+            if not isinstance(queryset, MIZQuerySet):
+                return super().get_search_results(queryset, search_term)
             return queryset.search(search_term)
         return queryset
 
