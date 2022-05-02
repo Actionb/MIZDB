@@ -134,18 +134,8 @@ class ACViewTestMethodMixin(object):
             self.assertEqual(len(create_option), 0)
 
     @tag('logging')
-    def test_create_object_no_log_entry(self):
-        # no request set on view, no log entry should be created
-        view = self.get_view()
-        if view.create_field:
-            obj = view.create_object('Beep')
-            with self.assertRaises(AssertionError):
-                self.assertLoggedAddition(obj)
-
-    @tag('logging')
     def test_create_object_with_log_entry(self):
         # request set on view, log entry should be created
-        # FIXME: this didn't catch that ACCreatable did not create log entries
         request = self.get_request()
         view = self.get_view(request)
         if view.create_field:
