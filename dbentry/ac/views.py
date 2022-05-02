@@ -150,7 +150,9 @@ class ACBase(autocomplete.Select2QuerySetView):
         If an object was created, add an addition LogEntry to the django admin
         log table.
         """
-        # TODO: why not use get_or_create?
+        # Don't use get_or_create here as we need to allow creating 'duplicates'
+        # of already existing instances on some models: f.ex. two bands with
+        # the same name.
         obj = self.model.objects.create(**{self.create_field: text.strip()})  # type: ignore
         if obj and self.request:  # FIXME: self.request cannot be None
             # FIXME: how can obj be None from queryset.create??
