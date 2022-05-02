@@ -64,6 +64,9 @@ class ACBase(autocomplete.Select2QuerySetView):
     model: Optional[Type[Model]]
     create_field: Optional[str]
 
+    # Do not show the create option, if the results contain an exact match.
+    prevent_duplicates = False
+
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         """Set model and create_field instance attributes."""
         super().setup(request, *args, **kwargs)
@@ -77,14 +80,15 @@ class ACBase(autocomplete.Select2QuerySetView):
     def display_create_option(self, context: dict, q: str) -> bool:
         """Return a boolean whether the create option should be displayed."""
         if self.create_field and q:
-            # Don't offer to create a new option, if a case-insensitive
-            # identical one already exists.
-            existing_options = (
-                self.get_result_label(result).lower()
-                for result in context['object_list']
-            )
-            if q.lower() in existing_options:
-                return False
+            if self.prevent_duplicates:
+                # Don't offer to create a new option, if a case-insensitive
+                # identical one already exists.
+                existing_options = (
+                    self.get_result_label(result).lower()
+                    for result in context['object_list']
+                )
+                if q.lower() in existing_options:
+                    return False
             page_obj = context.get('page_obj', None)
             if page_obj is None or not self.has_more(context):
                 return True

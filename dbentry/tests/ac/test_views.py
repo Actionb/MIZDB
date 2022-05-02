@@ -185,7 +185,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
     def test_display_create_option_exact_match(self, has_more_mock):
         """
         No create option should be displayed, if there is an exact match for
-        the search term.
+        the search term and prevent_duplicates is set to True.
         """
         has_more_mock.return_value = False
         context = {
@@ -193,6 +193,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             'object_list': self.model.objects.filter(pk=self.obj1.pk)
         }
         view = self.get_view()
+        view.prevent_duplicates = True
         self.assertFalse(view.display_create_option(context, 'Boop'))
 
     def test_apply_forwarded(self):
