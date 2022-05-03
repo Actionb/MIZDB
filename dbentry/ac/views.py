@@ -42,7 +42,7 @@ def parse_autor_name(name: str) -> tuple[str, str, str]:
 class ACBase(autocomplete.Select2QuerySetView):
     """Base view for the autocomplete views of the dbentry app."""
 
-    model: Optional[Type[Model]]
+    model: Type[Model]
     create_field: Optional[str]
 
     # Do not show the create option, if the results contain an exact match.
@@ -52,9 +52,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         """Set model and create_field instance attributes."""
         super().setup(request, *args, **kwargs)
         if not self.model:
-            model_name = kwargs.pop('model_name', '')
-            if model_name:
-                self.model = get_model_from_string(model_name)
+            self.model = get_model_from_string(kwargs.pop('model_name'))
         if self.create_field is None:
             self.create_field = kwargs.pop('create_field', None)
 

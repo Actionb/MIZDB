@@ -278,25 +278,10 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.setup(self.get_request(), model_name='ausgabe')
         self.assertEqual(view.model, _models.Ausgabe)
 
-    def test_setup_fails_gracefully_with_no_model(self):
-        # Assert that setup fails gracefully if no model class was set and a
-        # model_name kwarg was missing or was 'empty'.
-        request = self.get_request()
-        view = self.view_class()
-        view.model = None
-        with self.assertNotRaises(Exception):
-            view.setup(request)
-        view.model = None
-        for model_name in (None, ''):
-            with self.subTest(model_name=model_name):
-                with self.assertNotRaises(Exception):
-                    view.setup(request, model_name=model_name)
-                view.model = None
-
     def test_setup_sets_create_field(self):
-        # Assert that setupp can set the create field attribute from its kwargs.
+        """Assert that setup can set the 'create' field attribute from the kwargs."""
         request = self.get_request()
-        view = self.view_class()
+        view = self.view_class(model=self.model)
         view.create_field = None
         view.setup(request, create_field='this aint no field')
         self.assertEqual(view.create_field, 'this aint no field')
@@ -860,16 +845,7 @@ class TestACTabular(ACViewTestCase):
             return ['bar']
 
     view_class = DummyView
-
-    def get_view(self, *args, **kwargs):
-        view = super().get_view(*args, **kwargs)
-        # We don't use ACViewTestCase here (don't need TestDataMixin).
-        # Set some stuff that ACViewTestCase normally sets:
-        if not hasattr(view, 'forwarded'):
-            view.forwarded = None
-        if not hasattr(view, 'q'):
-            view.q = ''
-        return view
+    model = _models.Band
 
     def test_get_results_adds_extra_data(self):
         # Assert that get_results adds an item with extra data.
@@ -961,14 +937,15 @@ class TestACMagazin(ACViewTestCase):
         if it is a valid ISSN.
         """
         view = self.get_view(self.get_request())
+        queryset = self.model.objects.all()
         # Valid ISSN:
         with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-            view.get_search_results(self.queryset, '1234-5679')
-            super_mock.assert_called_with(self.queryset, '12345679')
+            view.get_search_results(queryset, '1234-5679')
+            super_mock.assert_called_with(queryset, '12345679')
         # Invalid ISSN, search term should be left as-is:
         with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-            view.get_search_results(self.queryset, '1234-5670')
-            super_mock.assert_called_with(self.queryset, '1234-5670')
+            view.get_search_results(queryset, '1234-5670')
+            super_mock.assert_called_with(queryset, '1234-5670')
 
     def test_search_term_issn(self):
         """Assert that a Magazin instance can be found using its ISSN."""

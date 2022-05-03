@@ -32,18 +32,12 @@ class ACViewTestCase(ViewTestCase):
     def get_view(
             self, request=None, args=None, kwargs=None, model=None,
             create_field=None, forwarded=None, q=''):
-        # dbentry.ac.views behave slightly different in their as_view() method
-        view = super(ACViewTestCase, self).get_view(request, args, kwargs)
-        # The request data will set some of the values - then overwrite/extend
-        # them with the passed in arguments.
-        if model:
-            view.model = model
-        elif view.model is None:
-            view.model = self.model
-        if create_field:
-            view.create_field = create_field
-        elif view.create_field is None:
-            view.create_field = self.get_create_field(view.model)
+        _model = model or getattr(self.view_class, 'model', None) or self.model
+        init_kwargs = {
+            'model': _model,
+            'create_field': create_field or self.get_create_field(_model)
+        }
+        view = super().get_view(request, args, kwargs, **init_kwargs)
         if not getattr(view, 'forwarded', None):
             view.forwarded = forwarded or {}
         if not getattr(view, 'q', None):
