@@ -26,12 +26,12 @@ from dbentry.utils.text import parse_name
 
 def parse_autor_name(name: str) -> (str, str, str):
     """
-    Parse name through name parsers to split it up into first name, last name
-    and nickname.
+    Parse ``name`` through name parsers to split it up into first name,
+    last name and nickname.
     """
     # Parse the name through the nameparser to find out the nickname, which
-    # will be used as kuerzel. Then parse the rest of the name to get the first
-    # and last name.
+    # will be used as 'kuerzel' for the Autor instance.
+    # Then parse the rest of the name to get the first and last name.
     name = HumanName(name)
     kuerzel = name.nickname[:8]
     name.nickname = ''
@@ -144,21 +144,18 @@ class ACBase(autocomplete.Select2QuerySetView):
 
 
 class ACTabular(ACBase):
-    # noinspection GrazieInspection
     """
     Autocomplete view that presents the result data in tabular form.
 
-    Select2 will group the results returned in the JsonResponse into option
+    Select2 will group the results returned by the JsonResponse into option
     groups (optgroup). This (plus bootstrap grids) will allow useful
     presentation of the data.
     """
 
-    # noinspection PyMethodMayBeStatic
     def get_extra_data(self, result: Model) -> list:
         """Return the additional data to be displayed for the given result."""
         return []
 
-    # noinspection PyMethodMayBeStatic
     def get_group_headers(self) -> list:
         """Return a list of labels for the additional columns/group headers."""
         return []
