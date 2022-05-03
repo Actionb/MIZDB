@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Page, Paginator
 from django.db import transaction
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
@@ -16,7 +16,7 @@ from stdnum import issn
 
 from dbentry import models as _models
 from dbentry.ac.widgets import EXTRA_DATA_KEY
-from dbentry.query import MIZQuerySet
+from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
@@ -46,7 +46,7 @@ class ACBase(autocomplete.Select2QuerySetView):
     create_field: Optional[str]
 
     # Do not show the create option, if the results contain an exact match.
-    prevent_duplicates = False
+    prevent_duplicates: bool = False
 
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         """Set model and create_field instance attributes."""
@@ -98,7 +98,7 @@ class ACBase(autocomplete.Select2QuerySetView):
         # noinspection PyUnresolvedReferences
         return super().get_ordering() or self.model._meta.ordering
 
-    def get_search_results(self, queryset: MIZQuerySet, search_term: str) -> MIZQuerySet:
+    def get_search_results(self, queryset: QuerySet, search_term: str) -> QuerySet:
         """Filter the results based on the query."""
         queryset = self.apply_forwarded(queryset)
         search_term = search_term.strip()
@@ -112,8 +112,8 @@ class ACBase(autocomplete.Select2QuerySetView):
             return queryset.search(search_term)
         return queryset
 
-    def apply_forwarded(self, queryset):
-        """Apply filters based on the forwarded values."""
+    def apply_forwarded(self, queryset: QuerySet) -> QuerySet:
+        """Apply filters based on the forwarded values to the given queryset."""
         if not self.forwarded:
             return queryset
         forward_filter = {}
@@ -123,7 +123,8 @@ class ACBase(autocomplete.Select2QuerySetView):
                 forward_filter[k] = v
         if not forward_filter:
             # All forwarded items were empty; return an empty queryset.
-            return self.model.objects.none()  # type: ignore
+            # noinspection PyUnresolvedReferences
+            return self.model.objects.none()
         return queryset.filter(**forward_filter)
 
     def create_object(self, text: str) -> Model:
@@ -136,7 +137,8 @@ class ACBase(autocomplete.Select2QuerySetView):
         # Don't use get_or_create here as we need to allow creating 'duplicates'
         # of already existing instances on some models: f.ex. two bands with
         # the same name.
-        obj = self.model.objects.create(**{self.create_field: text.strip()})  # type: ignore
+        # noinspection PyUnresolvedReferences
+        obj = self.model.objects.create(**{self.create_field: text.strip()})
         log_addition(self.request.user.pk, obj)
         return obj
 
@@ -188,8 +190,9 @@ class ACTabular(ACBase):
                 # Only add optgroup headers for the first page of results.
                 headers = self.get_group_headers()
 
+            # noinspection PyUnresolvedReferences
             results = [{
-                "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
+                "text": self.model._meta.verbose_name,
                 "children": result_list + create_option,
                 "is_optgroup": True,
                 "optgroup_headers": headers,
@@ -215,7 +218,7 @@ class ACAusgabe(ACTabular):
 
     model = _models.Ausgabe
 
-    def get_queryset(self) -> MIZQuerySet:
+    def get_queryset(self) -> AusgabeQuerySet:
         queryset = super().get_queryset()
         from dbentry.admin import AusgabenAdmin, miz_site
         model_admin = AusgabenAdmin(self.model, miz_site)
@@ -224,7 +227,7 @@ class ACAusgabe(ACTabular):
     def get_group_headers(self) -> list:
         return ['Nummer', 'lfd.Nummer', 'Jahr']
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
         return [result.num_string, result.lnum_string, result.jahr_string]
 
@@ -273,7 +276,7 @@ class ACBand(ACTabular):
     def get_group_headers(self) -> list:
         return ['Alias']
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.bandalias_set.all())]
 
@@ -297,7 +300,7 @@ class ACLagerort(ACTabular):
     def get_group_headers(self) -> list:
         return ['Ort', 'Raum']
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Lagerort) -> list:
         # noinspection PyUnresolvedReferences
         return [result.ort, result.raum]
 
@@ -305,10 +308,10 @@ class ACLagerort(ACTabular):
 class ACMagazin(ACBase):
     model = _models.Magazin
 
-    def get_search_results(self, queryset: MIZQuerySet, search_term: str) -> MIZQuerySet:
+    def get_search_results(self, queryset: QuerySet, search_term: str) -> QuerySet:
         # Check if q is a valid ISSN; if it is, compact-ify it.
-        if issn.is_valid(search_term):  # type: ignore[has-type]
-            search_term = issn.compact(search_term)  # type: ignore[has-type]
+        if issn.is_valid(search_term):
+            search_term = issn.compact(search_term)
         return super().get_search_results(queryset, search_term)
 
 
@@ -318,7 +321,7 @@ class ACMusiker(ACTabular):
     def get_group_headers(self) -> list:
         return ['Alias']
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
 
@@ -387,7 +390,7 @@ class ContentTypeAutocompleteView(autocomplete.Select2QuerySetView):
     model_field_name = 'model'
     admin_site = miz_site
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         """Limit the queryset to models registered with miz_site."""
         registered_models = [m._meta.model_name for m in self.admin_site._registry.keys()]
         return super().get_queryset().filter(model__in=registered_models).order_by('model')
