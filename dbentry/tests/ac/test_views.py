@@ -38,37 +38,35 @@ class TestAutorNameParser(MyTestCase):
     def test_kuerzel_max_length(self):
         """
         Assert that the kuerzel is shortened, so that its length doesn't exceed
-        the model field max_length.
+        the model field max_length of 8.
         """
         _v, _n, kuerzel = parse_autor_name('Alice (Supercalifragilisticexpialidocious) Tester')
         # noinspection SpellCheckingInspection
         self.assertEqual(kuerzel, 'Supercal')
 
 
-# TODO: remove PyUnresolvedReferences
-# noinspection SpellCheckingInspection
 class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
 
     view_class = ACBase
     model = _models.Band
     create_field = 'band_name'
     alias_accessor_name = 'bandalias_set'
+    path = reverse_lazy('acband')
 
+    # noinspection SpellCheckingInspection
     @classmethod
     def setUpTestData(cls):
         cls.genre = make(_models.Genre, genre='Testgenre')
-        cls.obj1 = make(
-            cls.model, band_name='Boop', genre=cls.genre,
-            musiker__extra=1, bandalias__alias='Voltaire'
+        cls.obj1 = cls.contains = make(
+            cls.model, band_name='Bar Foo', genre=cls.genre, bandalias__alias='Fubars'
         )
-        cls.obj2 = make(cls.model, band_name='Aleboop', bandalias__alias='Nietzsche')
-        cls.obj3 = make(cls.model, band_name='notfound', bandalias__alias='Descartes')
-        cls.obj4 = make(cls.model, band_name='Boopband', bandalias__alias='Kant')
+        cls.obj2 = cls.startsw = make(cls.model, band_name='Foo Fighters')
+        cls.exact = make(cls.model, band_name='Foo')
         cls.zero = make(cls.model, band_name='0')
 
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3, cls.obj4, cls.zero]
+        cls.test_data = [cls.contains, cls.startsw, cls.exact, cls.zero]
 
-        super(TestACBase, cls).setUpTestData()
+        super().setUpTestData()
 
     def test_get_create_option_no_perms(self):
         """
@@ -168,24 +166,27 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         }
         view = self.get_view()
         view.prevent_duplicates = True
-        self.assertFalse(view.display_create_option(context, 'Boop'))
+        self.assertFalse(view.display_create_option(context, 'Bar Foo'))
 
     def test_apply_forwarded(self):
-        view = self.get_view(self.get_request())
+        """Assert that the queryset is filtered according to the forwarded values."""
+        view = self.get_view()
         view.forwarded = {'genre': self.genre.pk}
         self.assertQuerysetEqual(view.apply_forwarded(self.queryset), [self.obj1])
+
         other_musiker = make(_models.Musiker)
         view.forwarded['musiker'] = other_musiker.pk
         self.assertFalse(view.apply_forwarded(self.queryset).exists())
+        # noinspection PyUnresolvedReferences
         other_musiker.band_set.add(self.obj1)
         self.assertTrue(view.apply_forwarded(self.queryset).exists())
 
     def test_apply_forwarded_no_values(self):
         """
         Assert that if none of the forwards provide (useful) values to filter
-        with, an empty queryset is always returned.
+        with, an empty queryset is returned.
         """
-        view = self.get_view(self.get_request())
+        view = self.get_view()
         view.forwarded = {'ignore_me_too': ''}
         self.assertFalse(view.apply_forwarded(self.queryset).exists())
         view.forwarded = {'': 'ignore_me'}
@@ -197,19 +198,19 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         term is not empty and the queryset is a MIZQuerySet.
         """
         queryset = self.model.objects.all()
-        view = self.get_view(self.get_request())
+        view = self.get_view()
         with patch.object(queryset, 'search') as search_mock:
             # The primary key doesn't exist: a normal search should be done.
             view.get_search_results(queryset, 'foo')
             search_mock.assert_called_with('foo')
 
-    def test_get_search_results_no_mizqueryset(self):
+    def test_get_search_results_queryset_is_not_miz(self):
         """
         Assert that get_search_results calls the parent's get_search_results,
         if the queryset is not a MIZQuerySet.
         """
         queryset = QuerySet(self.model)
-        view = self.get_view(self.get_request())
+        view = self.get_view()
         with patch('dal_select2.views.Select2QuerySetView.get_search_results') as super_mock:
             view.get_search_results(queryset, 'foo')
             super_mock.assert_called()
@@ -229,7 +230,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         numeric string and a record with such a primary key exists.
         """
         queryset = self.model.objects.all()
-        view = self.get_view(self.get_request())
+        view = self.get_view()
 
         self.assertIn(self.obj1, view.get_search_results(queryset, str(self.obj1.pk)))
 
@@ -238,9 +239,9 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
             view.get_search_results(queryset, '0')
             search_mock.assert_called_with('0')
 
-    def test_get_queryset_no_q(self):
-        """If q is an empty string, do not perform any queries."""
-        view = self.get_view(self.get_request())
+    def test_get_queryset_empty_search_term(self):
+        """If the search term is an empty string, do not perform any queries."""
+        view = self.get_view()
         for q in ('', '   '):
             with self.subTest(q=q):
                 view.q = q
@@ -255,7 +256,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         #   - search rank
         #   - name_field
         name_field = self.model.name_field
-        view = self.get_view(self.get_request())
+        view = self.get_view()
         q = view.q = 'foo'
         ordering = view.get_queryset().query.order_by
         exact = ExpressionWrapper(
@@ -271,30 +272,21 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(len(ordering), 4)
 
     def test_setup_sets_model(self):
-        # setup should set the model attribute from the url caught kwarg
-        # 'model_name' if the view instance does not have one.
+        """
+        Assert that setup sets the 'model' attribute from the kwargs.
+        """
         view = self.view_class()
         view.model = None
         view.setup(self.get_request(), model_name='ausgabe')
         self.assertEqual(view.model, _models.Ausgabe)
 
     def test_setup_sets_create_field(self):
-        """Assert that setup can set the 'create' field attribute from the kwargs."""
+        """Assert that setup sets the 'create_field' attribute from the kwargs."""
         request = self.get_request()
         view = self.view_class(model=self.model)
         view.create_field = None
-        view.setup(request, create_field='this aint no field')
-        self.assertEqual(view.create_field, 'this aint no field')
-
-    def test_get_result_value(self):
-        view = self.get_view()
-        instance = make(_models.Genre)
-        self.assertEqual(view.get_result_value(instance), str(instance.pk))
-
-    def test_get_result_label(self):
-        view = self.get_view()
-        instance = make(_models.Genre, genre='All this testing')
-        self.assertEqual(view.get_result_label(instance), 'All this testing')
+        view.setup(request, create_field="this ain't no field")
+        self.assertEqual(view.create_field, "this ain't no field")
 
     def test_forwards_applied_before_pk_search(self):
         """
@@ -307,9 +299,9 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         and no full text search with that search term will be performed.
         If that instance then doesn't match the forward filters, and if those
         filters are applied after get_search_results, the result list would be
-        empty even though a full text search would have returned results.
+        empty even though a full text search should have returned results.
         """
-        view = self.get_view(self.get_request())
+        view = self.get_view()
         self.obj1.band_name = str(self.obj2.pk)
         self.obj1.save()
         view.q = str(self.obj2.pk)
@@ -319,19 +311,9 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         view.forwarded = {'genre': self.genre.pk}
         self.assertQuerysetEqual(view.get_queryset(), [self.obj1])
 
-
-class TestACBaseIntegration(ACViewTestCase):  # TODO: rename? Not much integration testing here
-    model = _models.Band
-    view_class = ACBase
-    path = reverse_lazy('acband')
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.contains = make(cls.model, band_name='Bar Foo')
-        cls.startsw = make(cls.model, band_name='Foo Fighters')
-        cls.exact = make(cls.model, band_name='Foo')
-        cls.zero = make(cls.model, band_name='0')
-        super().setUpTestData()
+    ############################################################################
+    # Integration (-ish) tests:
+    ############################################################################
 
     @staticmethod
     def get_result_ids(response):
@@ -405,7 +387,7 @@ class TestACAusgabe(ACViewTestCase):
         super().setUpTestData()
 
     def test_search_num(self):
-        """Assert that an object can be found via its num."""
+        """Assert that an object can be found via its num value(s)."""
         view = self.get_view(q=self.obj_num.__str__())
         self.assertIn(self.obj_num, view.get_queryset())
 
@@ -417,7 +399,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(self.obj_num, view.get_queryset())
 
     def test_search_lnum(self):
-        """Assert that an object can be found via its lnum."""
+        """Assert that an object can be found via its lnum value(s)."""
         view = self.get_view(q=self.obj_lnum.__str__())
         self.assertIn(self.obj_lnum, view.get_queryset())
 
@@ -429,7 +411,7 @@ class TestACAusgabe(ACViewTestCase):
         self.assertIn(self.obj_lnum, view.get_queryset())
 
     def test_search_monat(self):
-        """Assert that an object can be found via its monat."""
+        """Assert that an object can be found via its monat value(s)."""
         view = self.get_view(q=self.obj_monat.__str__())
         self.assertIn(self.obj_monat, view.get_queryset())
 
@@ -442,19 +424,19 @@ class TestACAusgabe(ACViewTestCase):
 
     def test_search_sonderausgabe(self):
         """
-        Assert that an object can be found via its beschreibung, if it is a
-        'sonderausgabe'.
+        Assert that an object can be found via its beschreibung, if it is
+        flagged as a 'sonderausgabe'.
         """
         view = self.get_view(q=self.obj_sonder.__str__())
         self.assertIn(self.obj_sonder, view.get_queryset())
 
     def test_search_jahrgang(self):
-        """Assert that an object can be found via its jahrgang."""
+        """Assert that an object can be found via its jahrgang value."""
         view = self.get_view(q=self.obj_jahrg.__str__())
         self.assertIn(self.obj_jahrg, view.get_queryset())
 
     def test_search_datum(self):
-        """Assert that an object can be found via its datum."""
+        """Assert that an object can be found via its datum value."""
         view = self.get_view(q=self.obj_datum.__str__())
         self.assertIn(self.obj_datum, view.get_queryset())
 
@@ -476,15 +458,14 @@ class TestACPerson(ACViewTestCase):
 
     @patch('dbentry.ac.views.log_addition')
     def test_create_object_new_adds_log_entry(self, log_addition_mock):
-        """
-        Assert that a log entry would be created, if the created object is new.
-        """
+        """Assert that a log entry is added for the created object."""
         view = self.get_view(self.get_request())
         view.create_object('Alice Testman')
         log_addition_mock.assert_called()
 
     @translation_override(language=None)
     def test_build_create_option(self):
+        """Assert that the create option contains the expected items."""
         request = self.get_request()
         view = self.get_view(request)
 
@@ -520,10 +501,7 @@ class TestACAutor(ACViewTestCase):
 
     @patch('dbentry.ac.views.log_addition')
     def test_create_object_new_adds_log_entry(self, log_addition_mock):
-        """
-        Assert that a log entry for the Person and Autor instance would be
-        created, if a new object is created.
-        """
+        """Assert that log entries are added for the created objects."""
         request = self.get_request()
         view = self.get_view(request)
         obj = view.create_object('Alice Testman (AT)')
@@ -534,6 +512,7 @@ class TestACAutor(ACViewTestCase):
 
     @translation_override(language=None)
     def test_build_create_option(self):
+        """Assert that the create option contains the expected items."""
         request = self.get_request()
         view = self.get_view(request)
 
@@ -582,7 +561,7 @@ class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
 
 class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
     model = _models.Land
-    raw_data = [{'land_name': 'Dschland', 'code': 'DE'}]
+    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
     has_alias = False
 
 
@@ -636,7 +615,7 @@ class TestACBuchband(ACViewTestCase):
         self.assertEqual(len(result), 1)
         self.assertIn(self.obj1, result)
 
-        self.obj1.qs().update(is_buchband=False)
+        self.model.objects.filter(pk=self.obj1.pk).update(is_buchband=False)
         self.assertFalse(view.get_queryset())
 
 
@@ -817,17 +796,22 @@ class TestGND(ViewTestCase):
 class TestGNDPaginator(MyTestCase):
 
     def test_count_equals_total_count_kwarg(self):
-        # Assert that paginator.count returns the 'total_count' that was passed
-        # to the constructor.
+        """
+        Assert that paginator.count returns the 'total_count' that was passed
+        to the constructor.
+        """
         paginator = GNDPaginator(object_list=[], per_page=1, total_count=69)
         self.assertEqual(paginator.count, 69)
 
     def test_page_does_not_slice_object_list(self):
-        # Assert that GNDPaginator.page does not slice the object_list in its
-        # call to Paginator._get_page.
+        """
+        Assert that GNDPaginator.page does not slice the object_list in its
+        call to Paginator._get_page.
+        """
         # Mock object isn't subscriptable; trying to slice it would raise a TypeError.
         paginator = GNDPaginator(
-            object_list=Mock(), per_page=1, total_count=1, allow_empty_first_page=True)
+            object_list=Mock(), per_page=1, total_count=1, allow_empty_first_page=True
+        )
         msg = "GNDPaginator.page tried to slice the object list."
         with patch.object(Paginator, '_get_page'):
             with self.assertNotRaises(TypeError, msg=msg):
@@ -848,7 +832,7 @@ class TestACTabular(ACViewTestCase):
     model = _models.Band
 
     def test_get_results_adds_extra_data(self):
-        # Assert that get_results adds an item with extra data.
+        """Assert that get_results adds an item with extra data."""
         view = self.get_view()
         context = {'object_list': [Mock(pk=42)]}
         results = view.get_results(context)
@@ -858,8 +842,7 @@ class TestACTabular(ACViewTestCase):
         self.assertEqual(['bar'], result[EXTRA_DATA_KEY])
 
     def test_render_to_response_grouped_data(self):
-        # Assert that render_to_response adds everything needed to create the
-        # option groups.
+        """Assert that render_to_response adds the items for the option groups."""
         view = self.get_view(request=self.get_request(data={'tabular': True}))
         view.model = _models.Band
         context = {
@@ -890,7 +873,7 @@ class TestACTabular(ACViewTestCase):
             self.assertEqual(['bar'], result[EXTRA_DATA_KEY])
 
     def test_render_to_response_not_first_page(self):
-        # Assert that optgroup headers are only included for the first page.
+        """Assert that optgroup headers are only included for the first page."""
         view = self.get_view(request=self.get_request(data={'tabular': True}))
         view.model = _models.Band
         context = {
@@ -909,8 +892,10 @@ class TestACTabular(ACViewTestCase):
             self.assertEqual(results[0]['optgroup_headers'], [])
 
     def test_render_to_response_no_results(self):
-        # Assert that render_to_response does not nest the result data if there
-        # are no search results.
+        """
+        Assert that render_to_response does not nest the result data, if there
+        are no search results.
+        """
         view = self.get_view(request=self.get_request())
         view.model = _models.Band
         context = {

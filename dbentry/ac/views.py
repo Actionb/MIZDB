@@ -154,11 +154,11 @@ class ACTabular(ACBase):
 
     def get_extra_data(self, result: Model) -> list:
         """Return the additional data to be displayed for the given result."""
-        return []
+        return []  # pragma: no cover
 
     def get_group_headers(self) -> list:
         """Return a list of labels for the additional columns/group headers."""
-        return []
+        return []  # pragma: no cover
 
     def get_results(self, context: dict) -> List[dict]:
         """Return data for the 'results' key of the response."""
@@ -226,11 +226,11 @@ class ACAusgabe(ACTabular):
         return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
 
     def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']
+        return ['Nummer', 'lfd.Nummer', 'Jahr']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]
+        return [result.num_string, result.lnum_string, result.jahr_string]  # pragma: no cover
 
 
 class ACAutor(ACBase):
@@ -275,7 +275,7 @@ class ACBand(ACTabular):
     model = _models.Band
 
     def get_group_headers(self) -> list:
-        return ['Alias']
+        return ['Alias']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
@@ -299,11 +299,11 @@ class ACLagerort(ACTabular):
     model = _models.Lagerort
 
     def get_group_headers(self) -> list:
-        return ['Ort', 'Raum']
+        return ['Ort', 'Raum']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Lagerort) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.ort, result.raum]
+        return [result.ort, result.raum]  # pragma: no cover
 
 
 class ACMagazin(ACBase):
@@ -320,7 +320,7 @@ class ACMusiker(ACTabular):
     model = _models.Musiker
 
     def get_group_headers(self) -> list:
-        return ['Alias']
+        return ['Alias']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
@@ -365,7 +365,7 @@ class ACSpielort(ACTabular):
     model = _models.Spielort
 
     def get_group_headers(self) -> list:
-        return ['Ort']
+        return ['Ort']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Spielort) -> list:
         return [str(result.ort)]
@@ -375,7 +375,7 @@ class ACVeranstaltung(ACTabular):
     model = _models.Veranstaltung
 
     def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']
+        return ['Datum', 'Spielort']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]
