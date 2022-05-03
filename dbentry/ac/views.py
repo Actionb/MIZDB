@@ -24,18 +24,18 @@ from dbentry.utils.models import get_model_from_string
 from dbentry.utils.text import parse_name
 
 
-def parse_autor_name(name: str) -> (str, str, str):
+def parse_autor_name(name: str) -> tuple[str, str, str]:
     """
     Parse ``name`` through name parsers to split it up into first name,
     last name and nickname.
     """
-    # Parse the name through the nameparser to find out the nickname, which
-    # will be used as 'kuerzel' for the Autor instance.
+    # Parse the name through the HumanName nameparser to find out the nickname,
+    # which will be used as 'kuerzel' for the Autor instance.
     # Then parse the rest of the name to get the first and last name.
-    name = HumanName(name)
-    kuerzel = name.nickname[:8]
-    name.nickname = ''
-    vorname, nachname = parse_name(str(name))
+    parsed_name = HumanName(name)
+    kuerzel = parsed_name.nickname[:8]
+    parsed_name.nickname = ''
+    vorname, nachname = parse_name(str(parsed_name))
     return vorname, nachname, kuerzel
 
 
