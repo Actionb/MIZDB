@@ -168,7 +168,8 @@ class ACTabular(ACBase):
                 'text': self.get_result_label(result),
                 EXTRA_DATA_KEY: self.get_extra_data(result),
                 'selected_text': self.get_selected_result_label(result),
-            } for result in context['object_list']
+            }
+            for result in context['object_list']
         ]
 
     def render_to_response(self, context: dict) -> http.JsonResponse:
