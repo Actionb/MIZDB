@@ -672,31 +672,52 @@ class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 class TestGND(ViewTestCase):
 
     view_class = GND
-    path = 'gnd'
+    path = reverse_lazy('gnd')
+
+    @patch('dbentry.ac.views.searchgnd')
+    def test(self, query_mock):
+        """Assert that the response contains the expected results."""
+        query_mock.return_value = ([('134485904', 'Plant, Robert')], 1)
+        response = self.client.get(self.path, data={'q': 'Robert Plant'})
+        results = json.loads(response.content)['results']
+        self.assertEqual(len(results), 1)
+        expected = [{
+            'id': '134485904',
+            'text': 'Plant, Robert (134485904)',
+            'selected_text': 'Plant, Robert (134485904)'
+        }]
+        self.assertEqual(expected, results)
 
     def test_get_query_string(self):
-        # Assert that from a given query term, a SRU query string is returned.
+        """Assert that get_query_string returns the expected SRU query string."""
         view = self.get_view()
+        query = view.get_query_string(q="Robert")
+        self.assertEqual(query, "PER=Robert and BBG=Tp*")
         query = view.get_query_string(q="Robert Plant")
         self.assertEqual(query, "PER=Robert and PER=Plant and BBG=Tp*")
 
-    def test_get_query_string_returns_empty(self):
-        # Assert that for empty input parameters, an empty string is returned.
-        view = self.get_view(q="")
-        for data in [None, 0, False, ""]:
-            with self.subTest(data=data):
-                self.assertFalse(view.get_query_string(q=data))
+    def test_get_query_string_empty(self):
+        """
+        Assert that get_query_string returns an empty string, if the input
+        parameter is an empty string.
+        """
+        view = self.get_view()
+        self.assertFalse(view.get_query_string(q=""))
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset(self, mocked_query_func):
-        mocked_query_func.return_value = ([('id', 'label')], 1)
-        view = self.get_view(request=self.get_request(), q='Beep')
-        self.assertTrue(view.get_queryset())
+        """Assert that get_queryset returns the query results."""
+        results = [('id', 'label')]
+        mocked_query_func.return_value = (results, 1)
+        view = self.get_view(request=self.get_request(), q='q')
+        self.assertEqual(view.get_queryset(), results)
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_page_number(self, mocked_query_func):
-        # Assert that, for a given page number, get_queryset calls query func
-        # with the correct startRecord index.
+        """
+        Assert that for a given page number, get_queryset calls the query func
+        with the correct startRecord index.
+        """
         mocked_query_func.return_value = ([('id', 'label')], 1)
         # noinspection PyPep8Naming
         startRecord_msg = "Expected query func to be called with a 'startRecord' kwarg."
@@ -705,33 +726,38 @@ class TestGND(ViewTestCase):
             'page_kwarg': 'page',
             'paginate_by': 10,
         }
-        # Should call with 1 if view kwargs or request data do not provide a
+
+        # Should call with 1, if view kwargs or request data do not provide a
         # 'page' (page_kwarg) parameter:
         request = self.get_request()
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_query_func.call_args
+        _args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['1'])
+
         # Should call with request.GET.page_kwarg:
         request = self.get_request(data={'page': '2'})
         view = self.get_view(request=request, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_query_func.call_args
+        _args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['11'])
+
         # Should call with view.kwargs.page_kwarg:
         request = self.get_request()
         view = self.get_view(request=request, kwargs={'page': 3}, **view_initkwargs)
         view.get_queryset()
-        args, kwargs = mocked_query_func.call_args
+        _args, kwargs = mocked_query_func.call_args
         self.assertIn('startRecord', kwargs, msg=startRecord_msg)
         self.assertEqual(kwargs['startRecord'], ['21'])
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_paginate_by(self, mocked_query_func):
-        # Assert that get_queryset factors in the paginate_by attribute when
-        # calculating the startRecord value.
+        """
+        Assert that get_queryset factors in the paginate_by attribute when
+        calculating the startRecord value.
+        """
         # Set paginate_by to 5; the startRecord index for the third page
         # would then be 11 (first page: 1-5, second page: 6-10).
         mocked_query_func.return_value = ([('id', 'label')], 1)
@@ -747,13 +773,15 @@ class TestGND(ViewTestCase):
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_queryset_maximum_records(self, mocked_query_func):
-        # Assert that get_queryset passes 'paginate_by' to the query func as
-        # 'maximumRecords' kwarg.
+        """
+        Assert that get_queryset passes 'paginate_by' to the query func as
+        'maximumRecords' kwarg.
+        """
         # (This sets the number of records retrieved per request)
         mocked_query_func.return_value = ([('id', 'label')], 1)
         view = self.get_view(request=self.get_request(), q='Beep', paginate_by=9)
         view.get_queryset()
-        args, kwargs = mocked_query_func.call_args
+        _args, kwargs = mocked_query_func.call_args
         self.assertIn(
             'maximumRecords', kwargs,
             msg="Expected query func to be called with a 'maximumRecords' kwarg."
@@ -761,17 +789,21 @@ class TestGND(ViewTestCase):
         self.assertEqual(kwargs['maximumRecords'], ['9'])
 
     def test_get_paginator_adds_total_count(self):
-        # Assert that get_paginator adds 'total_count' to the
-        # super().get_paginator kwargs.
+        """
+        Assert that get_paginator adds 'total_count' to the
+        super().get_paginator kwargs.
+        """
         view = self.get_view(total_count=420)
-        with patch.object(ACBase, 'get_paginator') as mocked_super:
+        with patch('dal_select2.views.Select2QuerySetView.get_paginator') as super_mock:
             view.get_paginator()
-            mocked_super.assert_called_with(total_count=420)
+            super_mock.assert_called_with(total_count=420)
 
     def test_get_result_label(self):
-        # Assert that for a given result, the label displayed is of the format:
-        # 'gnd_name (gnd_id)'
-        view = self.get_view(request=self.get_request(), q='any')
+        """
+        Assert that for a given result, the label displayed is of the format:
+        'gnd_name (gnd_id)'
+        """
+        view = self.get_view()
         self.assertEqual(
             'Plant, Robert (134485904)',
             view.get_result_label(('134485904', 'Plant, Robert'))
@@ -779,13 +811,14 @@ class TestGND(ViewTestCase):
 
     @patch('dbentry.ac.views.searchgnd')
     def test_get_query_func_kwargs(self, mocked_query_func):
-        # Assert that the view's query func is called with the kwargs added
-        # by get_query_func_kwargs.
-        view = self.get_view(request=self.get_request(), q='Beep')
-        mocked_get_kwargs = Mock(
-            return_value={'version': '-1', 'new_kwarg': 'never seen before'}
-        )
+        """
+        Assert that the view's query func is called with the kwargs added by
+        get_query_func_kwargs.
+        """
         mocked_query_func.return_value = ([], 0)
+        view = self.get_view(request=self.get_request(), q='Beep')
+        mocked_get_kwargs = Mock(return_value={'version': '-1', 'new_kwarg': 'never seen before'})
+
         with patch.object(view, 'get_query_func_kwargs', new=mocked_get_kwargs):
             view.get_queryset()
             mocked_query_func.assert_called()

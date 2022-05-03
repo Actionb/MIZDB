@@ -433,7 +433,7 @@ class GNDPaginator(Paginator):
         return self.total_count
 
 
-class GND(ACBase):
+class GND(autocomplete.Select2QuerySetView):
     """Autocomplete view that queries the SRU API endpoint of the DNB."""
 
     paginate_by = 10  # DNB default number of records per request
@@ -448,11 +448,15 @@ class GND(ACBase):
         query += " and BBG=Tp*"
         return query
 
-    def get_result_label(self, result: Tuple[str, str]) -> str:  # type: ignore[override]
-        """Return the label of a result."""
-        return "%s (%s)" % (result[1], result[0])
+    def get_result_value(self, result: Tuple[str, str]) -> str:
+        """Return the value/id of a result."""
+        return result[0]
 
-    def get_queryset(self) -> List[Tuple[str, str]]:  # type: ignore[override]
+    def get_result_label(self, result: Tuple[str, str]) -> str:
+        """Return the label of a result."""
+        return f"{result[1]} ({result[0]})"
+
+    def get_queryset(self) -> List[Tuple[str, str]]:
         """Get a list of records from the SRU API."""
         # Calculate the 'startRecord' parameter for the request.
         # The absolute record position of the first record of a page is given by
