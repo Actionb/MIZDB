@@ -991,7 +991,7 @@ class TestContentTypeAutocompleteView(ACViewTestCase):
     def test_get_queryset(self):
         # Test that the queryset only returns models that have in the admin
         # site register.
-        # FIXME: this test failed because multiple 'artikel' (lower case)
+        # FIXME: flaky test: this test failed because multiple 'artikel' (lower case)
         #  content types were found in view.get_queryset
         class DummySite:
             _registry = {_models.Artikel: 'ModelAdmin_would_go_here'}
