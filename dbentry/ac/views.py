@@ -142,23 +142,6 @@ class ACBase(autocomplete.Select2QuerySetView):
         log_addition(self.request.user.pk, obj)
         return obj
 
-    def get_queryset(self) -> MIZQuerySet:
-        """Return the ordered and filtered queryset for this view."""
-        queryset = super().get_queryset()
-
-        if self.forwarded:
-            forward_filter = {}
-            for k, v in self.forwarded.items():
-                # Remove 'empty' forward items.
-                if k and v:
-                    forward_filter[k] = v
-            if not forward_filter:
-                # All forwarded items were empty; return an empty queryset.
-                return self.model.objects.none()  # type: ignore
-            queryset = queryset.filter(**forward_filter)
-
-        return queryset
-
 
 class ACTabular(ACBase):
     # noinspection GrazieInspection
