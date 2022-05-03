@@ -10,7 +10,7 @@ from dbentry.tests.mixins import TestDataMixin, LoggingTestMixin
 
 
 @tag("dal")
-class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
+class ACViewTestCase(ViewTestCase):
     path = 'accapture'
     model = None
     create_field = None
@@ -52,7 +52,7 @@ class ACViewTestCase(TestDataMixin, ViewTestCase, LoggingTestMixin):
 
 
 @tag("dal")
-class ACViewTestMethodMixin(object):
+class ACViewTestMethodMixin(TestDataMixin, LoggingTestMixin):
     view_class = ACBase
     test_data_count = 0
     has_alias = True

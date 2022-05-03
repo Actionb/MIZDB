@@ -849,7 +849,7 @@ class TestGNDPaginator(MyTestCase):
                 paginator.page(number=1)
 
 
-class TestACTabular(ViewTestCase):
+class TestACTabular(ACViewTestCase):
 
     class DummyView(ACTabular):
 
