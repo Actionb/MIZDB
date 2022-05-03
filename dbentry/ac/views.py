@@ -25,18 +25,11 @@ from dbentry.utils.text import parse_name
 
 
 def parse_autor_name(name: str) -> tuple[str, str, str]:
-    """
-    Parse ``name`` through name parsers to split it up into first name,
-    last name and nickname.
-    """
-    # Parse the name through the HumanName nameparser to find out the nickname,
-    # which will be used as 'kuerzel' for the Autor instance.
-    # Then parse the rest of the name to get the first and last name.
-    parsed_name = HumanName(name)
-    kuerzel = parsed_name.nickname[:8]
-    parsed_name.nickname = ''
-    vorname, nachname = parse_name(str(parsed_name))
-    return vorname, nachname, kuerzel
+    """Split up ``name`` into first name(s), last name and nickname."""
+    hn = HumanName(name)
+    # The nickname will be used as the 'kuerzel' for the Autor instance.
+    # Shorten the nickname to respect the max_length of the 'kuerzel' field:
+    return " ".join([hn.first, hn.middle]).strip(), hn.last, hn.nickname[:8]
 
 
 class ACBase(autocomplete.Select2QuerySetView):

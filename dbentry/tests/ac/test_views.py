@@ -26,9 +26,11 @@ class TestAutorNameParser(MyTestCase):
         names = [
             ('Alice Testman', ('Alice', 'Testman', '')),
             ('Testman, Alice', ('Alice', 'Testman', '')),
+            ('Alice Bob Testman', ('Alice Bob', 'Testman', '')),
             ('Alice "AT" Testman', ('Alice', 'Testman', 'AT')),
             ('Alice Testman (AT)', ('Alice', 'Testman', 'AT')),
             ('Testman, Alice (AT)', ('Alice', 'Testman', 'AT')),
+            ('Testman (AT)', ('', 'Testman', 'AT')),
             ('(AT)', ('', '', 'AT'))
         ]
         for name, expected in names:
