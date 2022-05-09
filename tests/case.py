@@ -200,15 +200,15 @@ class ViewTestCase(RequestTestCase):
 
     view_class = None
 
-    def get_view(self, request=None, *args, initkwargs=None, **kwargs):
+    def get_view(self, request=None, args=None, kwargs=None, **initkwargs):
         """
         Instantiate and set up the view without calling dispatch().
 
         initkwargs are the keyword arguments for the view_class constructor.
         args and kwargs are passed to view.setup().
         """
-        view = self.view_class(**(initkwargs or {}))
-        view.setup(request, *args, **kwargs)
+        view = self.view_class(**initkwargs)
+        view.setup(request, *(args or ()), **(kwargs or {}))
         return view
 
     def get_dummy_view_class(self, bases=None, attrs=None):
