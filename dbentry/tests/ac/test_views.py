@@ -345,6 +345,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(str(self.zero.pk), self.get_result_ids(response))
 
+    @translation_override(language=None)
     def test_create_option(self):
         """
         A create option should be appended to the results, if there is no
@@ -354,7 +355,7 @@ class TestACBase(ACViewTestMethodMixin, ACViewTestCase):
         results = json.loads(response.content)['results']
         self.assertEqual(
             results[-1],
-            {'id': 'Fighters', 'text': 'Erstelle "Fighters"', 'create_id': True},
+            {'id': 'Fighters', 'text': 'Create "Fighters"', 'create_id': True},
         )
 
 
