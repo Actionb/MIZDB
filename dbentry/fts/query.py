@@ -68,6 +68,7 @@ class TextSearchQuerySetMixin(object):
         be included in a query, and the config_name refers to the search config
         to use in the query on that related field.
         """
+        # TODO: why is this a method and not a function (like _get_search_vector_field is)?
         return getattr(self.model, 'related_search_vectors', [])  # type: ignore[attr-defined]
 
     def search(self, q: str, search_type: str = 'plain', ranked: bool = True) -> Any:
