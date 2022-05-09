@@ -1,6 +1,7 @@
 from django.urls import include, path
 
 from dbentry.ac import views
+from dbentry.ac.widgets import GENERIC_URL_NAME
 
 # noinspection SpellCheckingInspection
 autocomplete_patterns = [
@@ -25,6 +26,6 @@ autocomplete_patterns = [
 
 urlpatterns = [
     path('', include(autocomplete_patterns)),
-    path('<str:model_name>/<str:create_field>/', views.ACBase.as_view(), name='accapture'),
-    path('<str:model_name>/', views.ACBase.as_view(), name='accapture')
+    path('<str:model_name>/<str:create_field>/', views.ACBase.as_view(), name=GENERIC_URL_NAME),
+    path('<str:model_name>/', views.ACBase.as_view(), name=GENERIC_URL_NAME)
 ]

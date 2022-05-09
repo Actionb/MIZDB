@@ -1,18 +1,17 @@
-from django.urls import reverse, resolve
+from django.urls import resolve, reverse
 from django.urls.exceptions import NoReverseMatch, Resolver404
 
+from MIZDB import urls as mizdb_urls
 from dbentry import urls as dbentry_urls
 from dbentry.ac import urls as autocomplete_urls, views as autocomplete_views
+from dbentry.ac.widgets import GENERIC_URL_NAME
 from dbentry.bulk import views as bulk_views
 from dbentry.maint import urls as maint_urls, views as maint_views
 from dbentry.sites import miz_site
 from dbentry.tests.base import MyTestCase
 
-from MIZDB import urls as mizdb_urls
-
 
 class URLTestCase(MyTestCase):
-
     urlconf = None
     current_app = None
 
@@ -28,7 +27,8 @@ class URLTestCase(MyTestCase):
 
         try:
             _reversed = reverse(
-                view_name, args=args, kwargs=kwargs, urlconf=urlconf, current_app=current_app)
+                view_name, args=args, kwargs=kwargs, urlconf=urlconf, current_app=current_app
+            )
         except NoReverseMatch as e:
             raise AssertionError(e.args[0])
         if expected is not None:
@@ -83,7 +83,7 @@ class TestURLs(URLTestCase):
             ('acautor', '/autor/', {}, autocomplete_views.ACAutor),
             ('acausgabe', '/ausgabe/', {}, autocomplete_views.ACAusgabe),
             ('acband', '/band/', {}, autocomplete_views.ACBand),
-            ('acband', '/band/band_name/', {'create_field': 'band_name'}, autocomplete_views.ACBand),
+            ('acband', '/band/band_name/', {'create_field': 'band_name'}, autocomplete_views.ACBand),  # noqa
             ('acbuchband', '/buch/', {}, autocomplete_views.ACBuchband),
             ('acmagazin', '/magazin/', {}, autocomplete_views.ACMagazin),
             ('acmagazin', '/magazin/magazin_name/', {'create_field': 'magazin_name'}, autocomplete_views.ACMagazin),  # noqa
@@ -94,7 +94,7 @@ class TestURLs(URLTestCase):
             ('acveranstaltung', '/veranstaltung/', {}, autocomplete_views.ACVeranstaltung),
             ('gnd', '/gnd/', {}, autocomplete_views.GND),
             ('autocomplete_user', '/auth_user/', {}, autocomplete_views.UserAutocompleteView),
-            ('autocomplete_ct', '/content_type/', {}, autocomplete_views.ContentTypeAutocompleteView),
+            ('autocomplete_ct', '/content_type/', {}, autocomplete_views.ContentTypeAutocompleteView),  # noqa
         ]
         for view_name, url, kwargs, view_class in test_data:
             with self.subTest(view_name=view_name, url=url):
@@ -135,8 +135,8 @@ class TestURLs(URLTestCase):
             ),
         ]
         for url, kwargs, view_class in test_data:
-            with self.subTest(view_name='accapture', url=url):
-                self.assertReverses('accapture', url, **kwargs)
+            with self.subTest(view_name=GENERIC_URL_NAME, url=url):
+                self.assertReverses(GENERIC_URL_NAME, url, **kwargs)
                 self.assertResolves(url, view_class)
 
     def test_maint_urls(self):

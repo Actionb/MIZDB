@@ -1,23 +1,22 @@
-from unittest.mock import patch, Mock
-
 from django.test import tag
 from django.urls import reverse
 from django.utils.translation import override as translation_override
 
 from dbentry.ac.views import ACBase
+from dbentry.ac.widgets import GENERIC_URL_NAME
 from dbentry.tests.base import ViewTestCase
-from dbentry.tests.mixins import TestDataMixin, LoggingTestMixin
+from dbentry.tests.mixins import LoggingTestMixin, TestDataMixin
 
 
 @tag("dal")
 class ACViewTestCase(ViewTestCase):
-    path = 'accapture'
+    path = GENERIC_URL_NAME
     model = None
     create_field = None
 
     def get_path(self):
         # Needed for the RequestTestCase
-        if self.path != 'accapture':
+        if self.path != GENERIC_URL_NAME:
             # FIXME: super().get_path() returns self.path - not necessarily a reversed URL
             return super().get_path()
         reverse_kwargs = {'model_name': self.model._meta.model_name}
@@ -29,9 +28,8 @@ class ACViewTestCase(ViewTestCase):
     def get_create_field(model):
         return getattr(model, 'create_field', None)
 
-    def get_view(
-            self, request=None, args=None, kwargs=None, model=None,
-            create_field=None, forwarded=None, q=''):
+    def get_view(self, request=None, args=None, kwargs=None, model=None,
+                 create_field=None, forwarded=None, q=''):
         _model = model or getattr(self.view_class, 'model', None) or self.model
         init_kwargs = {
             'model': _model,
