@@ -11,6 +11,9 @@ from django.urls import reverse
 
 from dbentry.utils import get_model_from_string, snake_case_to_spaces
 
+# Generic URL name for the MIZWidgetMixin.
+GENERIC_URL_NAME = 'acgeneric'
+
 # Name of the key under which views.ACTabular will add additional data for
 # (grouped) result items.
 EXTRA_DATA_KEY = 'extra_data'
@@ -88,11 +91,11 @@ class GenericURLWidgetMixin(object):
 class MIZWidgetMixin(GenericURLWidgetMixin):
     """
     A mixin for the ModelSelect2 widgets that enables the widget to handle
-    reversal of the generic url name ``accapture`` which requires reverse
-    kwargs ``model_name`` and (sometimes) ``create_field``.
+    reversal of the generic url name which requires reverse kwargs
+    ``model_name`` and (sometimes) ``create_field``.
     """
 
-    generic_url_name = 'accapture'
+    generic_url_name = GENERIC_URL_NAME
 
     def __init__(self, *args, create_field: str = '', **kwargs):
         self.create_field = create_field
@@ -264,7 +267,7 @@ class RemoteModelWidgetWrapper(RelatedFieldWidgetWrapper):
 
 
 def make_widget(
-        url: str = 'accapture',
+        url: str = GENERIC_URL_NAME,
         tabular=False,
         multiple: bool = False,
         wrap: bool = False,

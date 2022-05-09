@@ -8,7 +8,8 @@ from django.utils.translation import override as translation_override
 
 import dbentry.models as _models
 from dbentry.ac.widgets import (
-    EXTRA_DATA_KEY, GenericURLWidgetMixin, MIZModelSelect2, MIZModelSelect2Multiple, MIZWidgetMixin,
+    EXTRA_DATA_KEY, GENERIC_URL_NAME, GenericURLWidgetMixin, MIZModelSelect2,
+    MIZModelSelect2Multiple, MIZWidgetMixin,
     RemoteModelWidgetWrapper, TabularResultsMixin, make_widget
 )
 from dbentry.forms import ArtikelForm
@@ -142,10 +143,10 @@ class TestWidgetCaptureMixin(MIZTestCase):
         self.assertFalse(mocked_reverse.called)
 
         # reversing of the generic url starts here
-        obj._url = obj.generic_url_name = 'accapture'
+        obj._url = obj.generic_url_name = GENERIC_URL_NAME
         obj._get_url()
         reverse_args, reverse_kwargs = mocked_reverse.call_args
-        self.assertEqual(reverse_args, ('accapture', ))
+        self.assertEqual(reverse_args, (GENERIC_URL_NAME,))
         self.assertIn('kwargs', reverse_kwargs)
         self.assertIn('model_name', reverse_kwargs['kwargs'])
         self.assertEqual(reverse_kwargs['kwargs']['model_name'], 'genre')
@@ -203,9 +204,11 @@ class TestMakeWidget(MIZTestCase):
 
     def test_select_multiple(self):
         self.assertIsInstance(
-            make_widget(model=_models.Genre, multiple=False), MIZModelSelect2)
+            make_widget(model=_models.Genre, multiple=False), MIZModelSelect2
+        )
         self.assertIsInstance(
-            make_widget(model=_models.Genre, multiple=True), MIZModelSelect2Multiple)
+            make_widget(model=_models.Genre, multiple=True), MIZModelSelect2Multiple
+        )
 
     def test_exception_on_no_model(self):
         with self.assertRaises(ImproperlyConfigured) as cm:
@@ -234,10 +237,12 @@ class TestMakeWidget(MIZTestCase):
         widget = make_widget(model=_models.Ausgabe, forward='magazin')
         self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(
-            widget.attrs['data-placeholder'], "Bitte zuerst Magazin auswählen.")
+            widget.attrs['data-placeholder'], "Bitte zuerst Magazin auswählen."
+        )
 
         widget = make_widget(
-            model=_models.Genre, forward='magazin', attrs={'data-placeholder': 'Go home!'})
+            model=_models.Genre, forward='magazin', attrs={'data-placeholder': 'Go home!'}
+        )
         self.assertEqual(widget.forward[0].src, 'magazin')
         self.assertEqual(widget.attrs['data-placeholder'], 'Go home!')
 
@@ -251,7 +256,8 @@ class TestMakeWidget(MIZTestCase):
         forwarded = forward.Field(src='beep_boop', dst=None)
         widget = make_widget(model=_models.Ausgabe, forward=forwarded)
         self.assertEqual(
-            widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.')
+            widget.attrs['data-placeholder'], 'Bitte zuerst Beep Boop auswählen.'
+        )
 
     def test_forwarded_empty_values(self):
         # Assert that 'empty' values can be handled.
@@ -267,6 +273,7 @@ class TestMakeWidget(MIZTestCase):
             # noinspection PyMissingConstructor
             def __init__(self, *_args, **kwargs):
                 self.untouched = kwargs.get('attrs', {}).pop('untouched', None)
+
         widget = make_widget(
             model=_models.Ausgabe, widget_class=DummyWidget,
             forward='magazin', attrs={'data-placeholder': 'Go home!', 'untouched': 1}

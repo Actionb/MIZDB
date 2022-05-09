@@ -1,70 +1,73 @@
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Optional, Tuple, Type
 
 # noinspection PyPackageRequirements
 from dal import autocomplete
 from django import http
-from django.contrib.auth import get_permission_codename, get_user_model
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Page, Paginator
-from django.db.models import Model
-from django.http import HttpRequest, HttpResponse
+from django.db import transaction
+from django.db.models import Model, QuerySet
+from django.http import HttpRequest
 from django.utils.functional import cached_property
 from django.utils.translation import gettext
+from nameparser import HumanName
 from stdnum import issn
 
 from dbentry import models as _models
-from dbentry.ac.creator import Creator, MultipleObjectsReturned
 from dbentry.ac.widgets import EXTRA_DATA_KEY
 from dbentry.query import AusgabeQuerySet, MIZQuerySet
 from dbentry.sites import miz_site
 from dbentry.utils.admin import log_addition
 from dbentry.utils.gnd import searchgnd
 from dbentry.utils.models import get_model_from_string
+from dbentry.utils.text import parse_name
+
+
+def parse_autor_name(name: str) -> tuple[str, str, str]:
+    """Split up ``name`` into first name(s), last name and nickname."""
+    hn = HumanName(name)
+    # The nickname will be used as the 'kuerzel' for the Autor instance.
+    # Shorten the nickname to respect the max_length of the 'kuerzel' field:
+    return " ".join([hn.first, hn.middle]).strip(), hn.last, hn.nickname[:8]
 
 
 class ACBase(autocomplete.Select2QuerySetView):
-    """
-    Base view for the autocomplete views of the dbentry app.
+    """Base view for the autocomplete views of the dbentry app."""
 
-    This class extends Select2QuerySetView in the following ways:
-        - set instance attributes ``model`` and ``create_field`` from the
-          request payload/keyword arguments
-        - split up the process of providing a create option into several
-          methods (``get_create_option``)
-        - ``get_queryset`` includes forwarded values, and the method calls
-          other methods to perform ordering and search term filtering
-        - ``get_result_value`` and ``get_result_label`` can handle lists/tuples
-    """
-    model: Optional[Type[Model]]
+    model: Type[Model]
     create_field: Optional[str]
+
+    # Do not show the create option, if the results contain an exact match.
+    prevent_duplicates: bool = False
 
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
         """Set model and create_field instance attributes."""
         super().setup(request, *args, **kwargs)
         if not self.model:
-            model_name = kwargs.pop('model_name', '')
-            if model_name:
-                self.model = get_model_from_string(model_name)
+            self.model = get_model_from_string(kwargs.pop('model_name'))
         if self.create_field is None:
             self.create_field = kwargs.pop('create_field', None)
 
-    def has_create_field(self) -> bool:
-        if self.create_field:
-            return True
-        return False
-
     def display_create_option(self, context: dict, q: str) -> bool:
-        """
-        Return a boolean whether the create option should be displayed or not.
-        """
-        if self.has_create_field() and q:
+        """Return a boolean whether the create option should be displayed."""
+        if self.create_field and q:
+            if self.prevent_duplicates:
+                # Don't offer to create a new option, if a case-insensitive
+                # identical one already exists.
+                existing_options = (
+                    self.get_result_label(result).lower()
+                    for result in context['object_list']
+                )
+                if q.lower() in existing_options:
+                    return False
             page_obj = context.get('page_obj', None)
             if page_obj is None or not self.has_more(context):
                 return True
         return False
 
     def build_create_option(self, q: str) -> list:
-        """Form the create option item to append to the result list."""
+        """Construct the create option item to be appended to the results."""
         return [{
             'id': q,
             'text': gettext('Create "%(new_value)s"') % {'new_value': q},
@@ -72,123 +75,83 @@ class ACBase(autocomplete.Select2QuerySetView):
         }]
 
     def get_create_option(self, context: dict, q: str) -> list:
-        """Form the correct create_option to append to results."""
-        if (self.display_create_option(context, q)
-                and self.has_add_permission(self.request)):
+        """Return the create option item to be appended to the results."""
+        # Note that q can be None (see: Select2ViewMixin.render_to_response).
+        if q is None:
+            q = ''
+        else:
+            q = q.strip()
+
+        if self.has_add_permission(self.request) and self.display_create_option(context, q):
             return self.build_create_option(q)
         return []
 
-    def do_ordering(self, queryset: MIZQuerySet) -> MIZQuerySet:
-        """
-        Apply ordering to the queryset and return it.
+    def get_ordering(self) -> list:
+        """Return the field or fields to use for ordering the queryset."""
+        # noinspection PyUnresolvedReferences
+        return super().get_ordering() or self.model._meta.ordering
 
-        Use the model's default ordering if the view's get_ordering method does
-        not return anything to order with.
-        """
-        ordering = self.get_ordering()
-        if ordering:
-            if isinstance(ordering, str):
-                ordering = (ordering,)
-            return queryset.order_by(*ordering)
-        return queryset.order_by(*self.model._meta.ordering)  # type: ignore
-
-    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
-        """
-        Filter the given queryset with the view's search term ``q``.
-
-        If ``q`` is a numeric value, try a primary key lookup. Otherwise, use
-        either MIZQuerySet.search to find results.
-        """
-        if self.q:
+    def get_search_results(self, queryset: QuerySet, search_term: str) -> QuerySet:
+        """Filter the results based on the query."""
+        queryset = self.apply_forwarded(queryset)
+        search_term = search_term.strip()
+        if search_term:
             # If the search term is a numeric value, try using it in a primary
             # key lookup, and if that returns results, return them.
-            if self.q.isnumeric() and queryset.filter(pk=self.q).exists():
-                return queryset.filter(pk=self.q)
-            return queryset.search(self.q)
+            if search_term.isnumeric() and queryset.filter(pk=search_term).exists():
+                return queryset.filter(pk=search_term)
+            if not isinstance(queryset, MIZQuerySet):
+                return super().get_search_results(queryset, search_term)
+            return queryset.search(search_term)
         return queryset
+
+    def apply_forwarded(self, queryset: QuerySet) -> QuerySet:
+        """Apply filters based on the forwarded values to the given queryset."""
+        if not self.forwarded:
+            return queryset
+        forward_filter = {}
+        for k, v in self.forwarded.items():
+            # Remove 'empty' forward items.
+            if k and v:
+                forward_filter[k] = v
+        if not forward_filter:
+            # All forwarded items were empty; return an empty queryset.
+            # noinspection PyUnresolvedReferences
+            return self.model.objects.none()
+        return queryset.filter(**forward_filter)
 
     def create_object(self, text: str) -> Model:
         """
         Create an object given a text.
 
-        If an object was created, add an addition LogEntry to the django admin
-        log table.
+        Add an addition LogEntry to the django admin log table for the created
+        object.
         """
-        text = text.strip()
-        obj = self.model.objects.create(**{self.create_field: text})  # type: ignore
-        if obj and self.request:
-            log_addition(self.request.user.pk, obj)
-        return obj
-
-    def get_queryset(self) -> MIZQuerySet:
-        """Return the ordered and filtered queryset for this view."""
-        if self.queryset is None:
-            queryset = self.model.objects.all()  # type: ignore
-        else:
-            queryset = self.queryset
-
-        if self.forwarded:
-            forward_filter = {}
-            for k, v in self.forwarded.items():
-                # Remove 'empty' forward items.
-                if k and v:
-                    forward_filter[k] = v
-            if not forward_filter:
-                # All forwarded items were empty; return an empty queryset.
-                return self.model.objects.none()  # type: ignore
-            queryset = queryset.filter(**forward_filter)
-
-        queryset = self.do_ordering(queryset)
-        queryset = self.apply_q(queryset)
-        return queryset
-
-    def has_add_permission(self, request: HttpRequest) -> bool:
-        """Return True if the user has the permission to add a model."""
+        # Don't use get_or_create here as we need to allow creating 'duplicates'
+        # of already existing instances on some models: f.ex. two bands with
+        # the same name.
         # noinspection PyUnresolvedReferences
-        user = request.user
-        if not user.is_authenticated:
-            return False
-        # At this point, dal calls get_queryset() to get the model options via
-        # queryset.model._meta which is unnecessary for ACBase since it
-        # declares the model class during dispatch().
-        opts = self.model._meta  # type: ignore
-        codename = get_permission_codename('add', opts)
-        return user.has_perm("%s.%s" % (opts.app_label, codename))
-
-    def get_result_value(self, result: Model) -> Optional[Union[str, int]]:
-        """
-        Return the value (usually the primary key) of a result model instance.
-        """
-        if isinstance(result, (list, tuple)):
-            return result[0]
-        return str(result.pk)  # type: ignore
-
-    def get_result_label(self, result: Model) -> str:
-        """Return the label of a result model instance."""
-        if isinstance(result, (list, tuple)):
-            return str(result[1])
-        return str(result)
+        obj = self.model.objects.create(**{self.create_field: text.strip()})
+        log_addition(self.request.user.pk, obj)
+        return obj
 
 
 class ACTabular(ACBase):
-    # noinspection GrazieInspection
     """
-        Autocomplete view that presents the result data in tabular form.
+    Autocomplete view that presents the result data in tabular form.
 
-        Select2 will group the results returned in the JsonResponse into option
-        groups (optgroup). This (plus bootstrap grids) will allow useful
-        presentation of the data.
-        """
+    Select2 will group the results returned by the JsonResponse into option
+    groups (optgroup). This (plus bootstrap grids) will allow useful
+    presentation of the data.
+    """
 
-    # noinspection PyMethodMayBeStatic
     def get_extra_data(self, result: Model) -> list:
         """Return the additional data to be displayed for the given result."""
-        return []
+        return []  # pragma: no cover
 
-    # noinspection PyMethodMayBeStatic
     def get_group_headers(self) -> list:
         """Return a list of labels for the additional columns/group headers."""
-        return []
+        return []  # pragma: no cover
 
     def get_results(self, context: dict) -> List[dict]:
         """Return data for the 'results' key of the response."""
@@ -198,7 +161,8 @@ class ACTabular(ACBase):
                 'text': self.get_result_label(result),
                 EXTRA_DATA_KEY: self.get_extra_data(result),
                 'selected_text': self.get_selected_result_label(result),
-            } for result in context['object_list']
+            }
+            for result in context['object_list']
         ]
 
     def render_to_response(self, context: dict) -> http.JsonResponse:
@@ -220,8 +184,9 @@ class ACTabular(ACBase):
                 # Only add optgroup headers for the first page of results.
                 headers = self.get_group_headers()
 
+            # noinspection PyUnresolvedReferences
             results = [{
-                "text": self.model._meta.verbose_name,  # type: ignore[union-attr]
+                "text": self.model._meta.verbose_name,
                 "children": result_list + create_option,
                 "is_optgroup": True,
                 "optgroup_headers": headers,
@@ -230,122 +195,8 @@ class ACTabular(ACBase):
             results = result_list + create_option
 
         return http.JsonResponse(
-            {
-                'results': results,
-                'pagination': {
-                    'more': self.has_more(context)
-                }
-            }
+            {'results': results, 'pagination': {'more': self.has_more(context)}}
         )
-
-
-class ACCreatable(ACBase):
-    """
-    Add additional information to the create_option part of the response and
-    enable a more involved model instance creation process by utilizing a
-    Creator helper object.
-    """
-
-    @property
-    def creator(self):
-        if not hasattr(self, '_creator'):
-            self._creator = Creator(self.model, raise_exceptions=False)
-        return self._creator
-
-    def creatable(self, text: str, creator: Optional[Creator] = None) -> bool:
-        """
-        Return True if a new(!) model instance would be created from ``text``.
-        """
-        creator = creator or self.creator
-        created = creator.create(text, preview=True)
-        pk = getattr(created.get('instance', None), 'pk', None)
-        if created and pk is None:
-            return True
-        return False
-
-    def display_create_option(self, context: dict, q: str) -> bool:
-        """
-        Return a boolean whether the create option should be displayed or not.
-        """
-        if q:
-            page_obj = context.get('page_obj', None)
-            if page_obj is None or not self.has_more(context):
-                # See if we can create a new object from q.
-                # If pre-existing objects can be found using q, the create
-                # option should not be enabled.
-                if self.creatable(q):
-                    return True
-        return False
-
-    def build_create_option(self, q: str) -> list:
-        """
-        Add additional information to the create option on how the object is
-        going to be created.
-        """
-        create_option = super().build_create_option(q)
-        create_info = self.get_creation_info(q)
-        if create_info:
-            create_option.extend(create_info)
-        return create_option
-
-    def get_creation_info(self, text: str, creator: Optional[Creator] = None) -> list:
-        """
-        Build template context to display a more informative create option.
-        """
-
-        def flatten_dict(_dict):
-            result = []
-            for key, value in _dict.items():
-                if not value or key == 'instance':
-                    continue
-                if isinstance(value, dict):
-                    result.extend(flatten_dict(value))
-                else:
-                    result.append((key, value))
-            return result
-
-        creator = creator or self.creator
-        create_info = []
-        default = {
-            'id': None,  # 'id': None will make the option not selectable.
-            'create_id': True, 'text': '...mit folgenden Daten:'
-        }
-
-        create_info.append(default.copy())
-        # Iterate over all nested dicts in create_info returned by the creator.
-        for k, v in flatten_dict(creator.create(text, preview=True)):
-            default['text'] = str(k) + ': ' + str(v)
-            create_info.append(default.copy())
-        return create_info
-
-    def create_object(self, text: str, creator: Optional[Creator] = None) -> Model:
-        """Create a model instance from ``text`` and save it to the database."""
-        text = text.strip()
-        if self.has_create_field():
-            return super().create_object(text)
-        creator = creator or self.creator
-        return creator.create(text, preview=False).get('instance')
-
-    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
-        """Create an object given a text after checking permissions."""
-        if not self.has_add_permission(request):
-            return http.HttpResponseForbidden()
-
-        if not self.creator and not self.create_field:
-            raise AttributeError('Missing creator object or "create_field"')
-
-        text = request.POST.get('text', None)
-
-        if text is None:
-            return http.HttpResponseBadRequest()
-
-        try:
-            result = self.create_object(text)
-        except MultipleObjectsReturned:
-            msg = 'Erstellung fehlgeschlagen. Bitte benutze den "Hinzufügen" Knopf.'
-            return http.JsonResponse({'id': 0, 'text': msg})
-
-        return http.JsonResponse({'id': result.pk, 'text': str(result)})
 
 
 ###############################################################################
@@ -361,30 +212,65 @@ class ACAusgabe(ACTabular):
 
     model = _models.Ausgabe
 
-    def do_ordering(self, queryset: AusgabeQuerySet) -> AusgabeQuerySet:
-        return queryset.chronological_order()
-
-    def get_queryset(self) -> MIZQuerySet:
+    def get_queryset(self) -> AusgabeQuerySet:
         queryset = super().get_queryset()
         from dbentry.admin import AusgabenAdmin, miz_site
         model_admin = AusgabenAdmin(self.model, miz_site)
-        return queryset.annotate(**model_admin.get_changelist_annotations())
+        return queryset.annotate(**model_admin.get_changelist_annotations()).chronological_order()
 
     def get_group_headers(self) -> list:
-        return ['Nummer', 'lfd.Nummer', 'Jahr']
+        return ['Nummer', 'lfd.Nummer', 'Jahr']  # pragma: no cover
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Ausgabe) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.num_string, result.lnum_string, result.jahr_string]
+        return [result.num_string, result.lnum_string, result.jahr_string]  # pragma: no cover
+
+
+class ACAutor(ACBase):
+    model = _models.Autor
+    create_field = '__any__'
+
+    def create_object(self, text: str) -> _models.Autor:
+        """
+        Create an object given a text.
+
+        If an object was created, add an addition LogEntry to the django admin
+        log table.
+        """
+        vorname, nachname, kuerzel = parse_autor_name(text)
+        with transaction.atomic():
+            person = _models.Person.objects.create(vorname=vorname, nachname=nachname)
+            obj = self.model.objects.create(kuerzel=kuerzel, person=person)
+        log_addition(self.request.user.pk, person)
+        log_addition(self.request.user.pk, obj)
+        return obj
+
+    def build_create_option(self, q: str) -> list:
+        """
+        Add additional information to the create option on how the object is
+        going to be created.
+        """
+        create_option = super().build_create_option(q)
+        vorname, nachname, kuerzel = parse_autor_name(q)
+        create_option.extend(
+            [
+                # 'id': None will make the option unavailable for selection.
+                {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
+                {'id': None, 'create_id': True, 'text': f'Vorname: {vorname}'},
+                {'id': None, 'create_id': True, 'text': f'Nachname: {nachname}'},
+                {'id': None, 'create_id': True, 'text': f'Kürzel: {kuerzel}'},
+            ]
+        )
+        return create_option
 
 
 class ACBand(ACTabular):
     model = _models.Band
 
     def get_group_headers(self) -> list:
-        return ['Alias']
+        return ['Alias']  # pragma: no cover
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.bandalias_set.all())]
 
@@ -406,39 +292,73 @@ class ACLagerort(ACTabular):
     model = _models.Lagerort
 
     def get_group_headers(self) -> list:
-        return ['Ort', 'Raum']
+        return ['Ort', 'Raum']  # pragma: no cover
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Lagerort) -> list:
         # noinspection PyUnresolvedReferences
-        return [result.ort, result.raum]
+        return [result.ort, result.raum]  # pragma: no cover
 
 
 class ACMagazin(ACBase):
     model = _models.Magazin
 
-    def apply_q(self, queryset: MIZQuerySet) -> MIZQuerySet:
-        # Check if q is a valid ISSN; if it is, remove the dashes.
-        if issn.is_valid(self.q):  # type: ignore[has-type]
-            self.q = issn.compact(self.q)  # type: ignore[has-type]
-        return super().apply_q(queryset)
+    def get_search_results(self, queryset: QuerySet, search_term: str) -> QuerySet:
+        # Check if q is a valid ISSN; if it is, compact-ify it.
+        if issn.is_valid(search_term):
+            search_term = issn.compact(search_term)
+        return super().get_search_results(queryset, search_term)
 
 
 class ACMusiker(ACTabular):
     model = _models.Musiker
 
     def get_group_headers(self) -> list:
-        return ['Alias']
+        return ['Alias']  # pragma: no cover
 
-    def get_extra_data(self, result: Model) -> list:
+    def get_extra_data(self, result: _models.Musiker) -> list:
         # noinspection PyUnresolvedReferences
         return [", ".join(str(alias) for alias in result.musikeralias_set.all())]
+
+
+class ACPerson(ACBase):
+    model = _models.Person
+    create_field = '__any__'
+
+    def create_object(self, text: str) -> _models.Person:
+        """
+        Create an object given a text.
+
+        Add an addition LogEntry to the django admin log table for the created
+        object.
+        """
+        vorname, nachname = parse_name(text)
+        obj = self.model.objects.create(vorname=vorname, nachname=nachname)
+        log_addition(self.request.user.pk, obj)
+        return obj
+
+    def build_create_option(self, q: str) -> list:
+        """
+        Add additional information to the create option on how the object is
+        going to be created.
+        """
+        create_option = super().build_create_option(q)
+        vorname, nachname = parse_name(q)
+        create_option.extend(
+            [
+                # 'id': None will make the option unavailable for selection.
+                {'id': None, 'create_id': True, 'text': '...mit folgenden Daten:'},
+                {'id': None, 'create_id': True, 'text': f'Vorname: {vorname}'},
+                {'id': None, 'create_id': True, 'text': f'Nachname: {nachname}'},
+            ]
+        )
+        return create_option
 
 
 class ACSpielort(ACTabular):
     model = _models.Spielort
 
     def get_group_headers(self) -> list:
-        return ['Ort']
+        return ['Ort']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Spielort) -> list:
         return [str(result.ort)]
@@ -448,7 +368,7 @@ class ACVeranstaltung(ACTabular):
     model = _models.Veranstaltung
 
     def get_group_headers(self) -> list:
-        return ['Datum', 'Spielort']
+        return ['Datum', 'Spielort']  # pragma: no cover
 
     def get_extra_data(self, result: _models.Veranstaltung) -> list:
         return [str(result.datum), str(result.spielort)]
@@ -464,7 +384,7 @@ class ContentTypeAutocompleteView(autocomplete.Select2QuerySetView):
     model_field_name = 'model'
     admin_site = miz_site
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet:
         """Limit the queryset to models registered with miz_site."""
         registered_models = [m._meta.model_name for m in self.admin_site._registry.keys()]
         return super().get_queryset().filter(model__in=registered_models).order_by('model')
@@ -508,27 +428,30 @@ class GNDPaginator(Paginator):
         return self.total_count
 
 
-class GND(ACBase):
+class GND(autocomplete.Select2QuerySetView):
     """Autocomplete view that queries the SRU API endpoint of the DNB."""
 
     paginate_by = 10  # DNB default number of records per request
     paginator_class = GNDPaginator
 
-    def get_query_string(self, q: Optional[str] = None) -> str:
+    @staticmethod
+    def get_query_string(q: str) -> str:
         """Construct and return a SRU compliant query string."""
-        if q is None:
-            q = self.q
         if not q:
             return ""
         query = " and ".join("PER=%s" % w for w in q.split())
         query += " and BBG=Tp*"
         return query
 
-    def get_result_label(self, result: Tuple[str, str]) -> str:  # type: ignore[override]
-        """Return the label of a result."""
-        return "%s (%s)" % (result[1], result[0])
+    def get_result_value(self, result: Tuple[str, str]) -> str:
+        """Return the value/id of a result."""
+        return result[0]
 
-    def get_queryset(self) -> List[Tuple[str, str]]:  # type: ignore[override]
+    def get_result_label(self, result: Tuple[str, str]) -> str:
+        """Return the label of a result."""
+        return f"{result[1]} ({result[0]})"
+
+    def get_queryset(self) -> List[Tuple[str, str]]:
         """Get a list of records from the SRU API."""
         # Calculate the 'startRecord' parameter for the request.
         # The absolute record position of the first record of a page is given by
