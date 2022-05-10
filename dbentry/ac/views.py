@@ -268,7 +268,7 @@ class ACBand(ACTabular):
     model = _models.Band
 
     def get_group_headers(self) -> list:
-        return ['Alias']  # pragma: no cover
+        return ['Alias']
 
     def get_extra_data(self, result: _models.Band) -> list:
         # noinspection PyUnresolvedReferences

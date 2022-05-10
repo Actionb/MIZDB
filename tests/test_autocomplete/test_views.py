@@ -15,7 +15,7 @@ from dbentry.ac.views import (
 )
 from dbentry.ac.widgets import EXTRA_DATA_KEY, GENERIC_URL_NAME
 
-from tests.case import MIZTestCase, ViewTestCase
+from tests.case import MIZTestCase, RequestTestCase, ViewTestCase
 from tests.factory import make
 from tests.mixins import LoggingTestMixin
 from tests.test_autocomplete.models import Band, Musiker, Genre
@@ -467,70 +467,50 @@ class TestACBase(ACViewTestCase):
             (exact.desc(), startswith.desc(), '-rank', name_field)
         )
 
-    def test_setup_sets_model(self):
-        """Assert that setup sets the 'model' attribute from the kwargs."""
-        view = self.view_class()
-        view.model = None
-        view.setup(self.get_request(), model_name='ausgabe')
-        self.assertEqual(view.model, _models.Ausgabe)
 
-    def test_setup_sets_create_field(self):
-        """Assert that setup sets the 'create_field' attribute from the kwargs."""
-        request = self.get_request()
-        view = self.view_class(model=self.model)
-        view.create_field = None
-        view.setup(request, create_field="this ain't no field")
-        self.assertEqual(view.create_field, "this ain't no field")
+class TestACBand(RequestTestCase):
+    """Integration tests for ACBand that also cover ACTabular and ACBase."""
 
-    def test_forwards_applied_before_pk_search(self):
-        """
-        Filters based on forwarded values must be applied before
-        get_search_results attempts a primary key lookup for numeric search
-        terms.
+    model = _models.Band
+    path = reverse_lazy('acband')
 
-        If an instance with a primary key matching the search term exists,
-        get_search_results will just return a queryset containing that instance,
-        and no full text search with that search term will be performed.
-        If that instance then doesn't match the forward filters, and if those
-        filters are applied after get_search_results, the result list would be
-        empty even though a full text search should have returned results.
-        """
-        view = self.get_view()
-        self.obj1.band_name = str(self.obj2.pk)
-        self.obj1.save()
-        view.q = str(self.obj2.pk)
-        # If forward filters are applied last, then get_search_results will
-        # return a queryset containing just obj2 - but obj2 doesn't have the
-        # required genre: the result queryset would be empty.
-        view.forwarded = {'genre': self.genre.pk}
-        self.assertQuerysetEqual(view.get_queryset(), [self.obj1])
+    @classmethod
+    def setUpTestData(cls):
+        cls.genre = make(_models.Genre, genre='Testgenre')
+        # noinspection PyUnresolvedReferences
+        cls.contains = make(cls.model, band_name='Bar Foo', genre=cls.genre)
+        cls.startsw = make(cls.model, band_name='Foo Fighters')
+        cls.exact = make(cls.model, band_name='Foo')
+        cls.alias = make(cls.model, band_name='Bars', bandalias__alias='Fee Fighters')
+        cls.zero = make(cls.model, band_name='0')
 
-    ############################################################################
-    # Integration (-ish) tests:
-    ############################################################################
-
-    # FIXME: these last tests do not test ACBase, but ACBand (via self.path)
+        super().setUpTestData()
 
     @staticmethod
     def get_result_ids(response):
         return [d['id'] for d in json.loads(response.content)['results']]
 
-    @skip("")
     def test_results(self):
         """Assert that the expected result is found."""
         response = self.client.get(self.path, data={'q': 'Foo Fighters'})
+        self.assertEqual(response.status_code, 200)
         self.assertEqual([str(self.startsw.pk)], self.get_result_ids(response))
 
-    @skip("")
     def test_result_ordering(self):
         """Exact matches should come before startswith before all others."""
         response = self.client.get(self.path, data={'q': 'foo'})
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [str(self.exact.pk), str(self.startsw.pk), str(self.contains.pk)],
             self.get_result_ids(response)
         )
 
-    @skip("")
+    def test_search_term_is_alias(self):
+        """An object should be findable via its alias."""
+        response = self.client.get(self.path, data={'q': 'Fee Fighters'})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(str(self.alias.pk), self.get_result_ids(response))
+
     def test_search_term_is_numeric(self):
         """For numeric search terms, a lookup for primary keys should be attempted."""
         response = self.client.get(self.path, data={'q': self.exact.pk})
@@ -542,20 +522,58 @@ class TestACBase(ACViewTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(str(self.zero.pk), self.get_result_ids(response))
 
-    @skip("")
     @translation_override(language=None)
     def test_create_option(self):
-        """
-        A create option should be appended to the results, if there is no
-        exact match.
-        """
-        path = reverse(self.path, kwargs={'create_field': 'band_name'})
+        """A create option should be appended to the results."""
+        path = reverse('acband', kwargs={'create_field': 'band_name'})
         response = self.client.get(path, data={'q': 'Fighters'})
+        self.assertEqual(response.status_code, 200)
         results = json.loads(response.content)['results']
         self.assertEqual(
             results[-1],
             {'id': 'Fighters', 'text': 'Create "Fighters"', 'create_id': True},
         )
+
+    def test_tabular_results(self):
+        """Assert that the results contain extra data for the tabular display."""
+        path = reverse('acband', kwargs={'create_field': 'band_name'})
+        response = self.client.get(path, data={'q': 'Fee Fighters', 'tabular': True})
+        self.assertEqual(response.status_code, 200)
+        results = json.loads(response.content)['results'][0]
+
+        self.assertIn('text', results.keys())
+        self.assertEqual(results['text'], 'Band')
+        self.assertIn('is_optgroup', results.keys())
+        self.assertEqual(results['is_optgroup'], True)
+        self.assertIn('optgroup_headers', results.keys())
+        self.assertEqual(results['optgroup_headers'], ['Alias'])
+        self.assertIn('children', results.keys())
+        self.assertEqual(len(results['children']), 2)
+        result, _create_option = results['children']
+        self.assertEqual(result['id'], str(self.alias.pk))
+        self.assertEqual(result['text'], str(self.alias))
+        self.assertEqual(result[EXTRA_DATA_KEY], ['Fee Fighters'])
+        self.assertEqual(result['selected_text'], str(self.alias))
+
+    def test_filter_with_forwarded_values(self):
+        """Assert that the results can be filtered with forwarded values."""
+        response = self.get_response(
+            # Provide valid JSON for the 'forward' item:
+            self.path, data={'text': 'foo', 'forward': f'{{"genre": "{self.genre.pk}"}}'}
+        )
+        self.assertEqual(response.status_code, 200, msg=response.content)
+        self.assertEqual([str(self.contains.pk)], self.get_result_ids(response))
+
+    def test_create_object(self):
+        """Check the object created with a POST request."""
+        path = reverse('acband', kwargs={'create_field': 'band_name'})
+        response = self.post_response(path, data={'text': 'Foo Bars'})
+        self.assertEqual(response.status_code, 200)
+        created = json.loads(response.content)
+        self.assertTrue(created['id'])
+        self.assertEqual(created['text'], 'Foo Bars')
+        self.assertTrue(self.model.objects.filter(band_name='Foo Bars').exists())
+        self.assertEqual(self.model.objects.get(band_name='Foo Bars').pk, created['id'])
 
 
 class TestACAusgabe(ACViewTestCase):
