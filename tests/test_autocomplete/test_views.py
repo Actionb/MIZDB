@@ -1,5 +1,4 @@
 import json
-from unittest import skip
 from unittest.mock import Mock, patch
 
 from django.contrib.contenttypes.models import ContentType
@@ -901,29 +900,8 @@ class TestACBuchband(ACViewTestCase):
         self.model.objects.filter(pk=self.obj1.pk).update(is_buchband=False)
         self.assertFalse(view.get_queryset())
 
-    @skip("Searching for ISBN not implemented.")
-    def test_q_isbn(self):
-        """Assert that a Buch instance can be found using its ISBN."""
-        self.obj1.ISBN = '9781234567897'
-        self.obj1.save()
 
-        for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
-            with self.subTest(ISBN=isbn):
-                view = self.get_view(request=self.get_request(), q=isbn)
-                self.assertIn(self.obj1, view.get_queryset())
-
-    @skip("Searching for EAN not implemented.")
-    def test_q_ean(self):
-        """Assert that a Buch instance can be found using its EAN."""
-        self.obj1.EAN = '9781234567897'
-        self.obj1.save()
-
-        for ean in ('9781234567897', '978-1-234-56789-7'):
-            with self.subTest(EAN=ean):
-                view = self.get_view(request=self.get_request(), q=ean)
-                self.assertIn(self.obj1, view.get_queryset())
-
-
+# TODO: work start here
 class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
 
     model = _models.Genre
