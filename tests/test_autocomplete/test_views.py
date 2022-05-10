@@ -862,6 +862,137 @@ class TestACAutor(ACViewTestCase):
             msg="The fifth item should be the data for 'kuerzel'."
         )
         self.assertEqual(len(create_option), 5)
+
+
+@skip("There are no autocompletes for Buch instances (yet?).")
+class TestACBuch(ACViewTestCase):
+    model = _models.Buch
+    view_class = ACBase
+
+    def test_get_search_results_validates_and_compacts_search_term(self):
+        """
+        Assert that the search term is transformed into compact ISBN-13, if it
+        is found to be a valid ISBN. ISBN-13 is equivalent to EAN.
+        """
+        view = self.get_view(self.get_request())
+        for isbn in ('1-234-56789-X', '978-1-234-56789-7'):
+            with self.subTest(ISBN=isbn):
+                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+                    view.get_search_results(self.queryset, isbn)
+                    super_mock.assert_called_with(self.queryset, isbn.replace('-', ''))
+
+        # Invalid ISBN - leave search term as-is:
+        for isbn in ('1-234-56789-1', '978-1-234-56789-1'):
+            with self.subTest(ISBN=isbn):
+                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+                    view.get_search_results(self.queryset, isbn)
+                    super_mock.assert_called_with(self.queryset, isbn)
+
+    def test_q_isbn(self):
+        """Assert that a Buch instance can be found using its ISBN."""
+        obj = make(_models.Buch, titel='Testbuch', issn='9781234567897')
+        for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
+            with self.subTest(ISBN=isbn):
+                view = self.get_view(request=self.get_request(), q=isbn)
+                self.assertIn(obj, view.get_queryset())
+
+    def test_q_ean(self):
+        """Assert that a Buch instance can be found using its EAN."""
+        obj = make(_models.Buch, titel='Testbuch', ean='9781234567897')
+        for ean in ('9781234567897', '978-1-234-56789-7'):
+            with self.subTest(EAN=ean):
+                view = self.get_view(request=self.get_request(), q=ean)
+                self.assertIn(obj, view.get_queryset())
+
+
+class TestACBuchband(ACViewTestCase):
+    model = _models.Buch
+    view_class = ACBuchband
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
+        cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
+        cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
+
+        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
+
+        super().setUpTestData()
+
+    def test_gets_queryset_filters_out_non_buchband(self):
+        """
+        Assert that get_queryset does not return Buch instances that are not
+        flagged as 'buchband'.
+        """
+        view = self.get_view(q='Buch')
+        result = view.get_queryset()
+        self.assertEqual(len(result), 1)
+        self.assertIn(self.obj1, result)
+
+        self.model.objects.filter(pk=self.obj1.pk).update(is_buchband=False)
+        self.assertFalse(view.get_queryset())
+
+
+class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
+
+    model = _models.Genre
+    alias_accessor_name = 'genrealias_set'
+    raw_data = [{'genrealias__alias': 'Beep'}]
+
+
+class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
+    model = _models.Instrument
+    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
+    has_alias = False
+
+
+class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
+    model = _models.Land
+    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
+    has_alias = False
+
+
+class TestACMagazin(ACViewTestCase):
+    model = _models.Magazin
+    view_class = ACMagazin
+
+    def test_get_search_results_validates_and_compacts_search_term(self):
+        """
+        Assert that the search term has dashes removed (compact standard number),
+        if it is a valid ISSN.
+        """
+        view = self.get_view(self.get_request())
+        queryset = self.model.objects.all()
+        # Valid ISSN:
+        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+            view.get_search_results(queryset, '1234-5679')
+            super_mock.assert_called_with(queryset, '12345679')
+        # Invalid ISSN, search term should be left as-is:
+        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
+            view.get_search_results(queryset, '1234-5670')
+            super_mock.assert_called_with(queryset, '1234-5670')
+
+    def test_search_term_issn(self):
+        """Assert that a Magazin instance can be found using its ISSN."""
+        obj = make(_models.Magazin, magazin_name='Testmagazin', issn='12345679')
+        for issn in ('12345679', '1234-5679'):
+            with self.subTest(ISSN=issn):
+                view = self.get_view(request=self.get_request(), q=issn)
+                self.assertIn(obj, view.get_queryset())
+
+
+class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
+    model = _models.Musiker
+    alias_accessor_name = 'musikeralias_set'
+    raw_data = [
+        {
+            'musikeralias__alias': 'John',
+            'person__vorname': 'Peter',
+            'person__nachname': 'Lustig',
+            'beschreibung': 'Description',
+            'bemerkungen': 'Stuff'
+        }
+    ]
         
 
 class TestACPerson(ACViewTestCase):
@@ -916,30 +1047,11 @@ class TestACPerson(ACViewTestCase):
                 self.assertEqual(len(create_option), 4)
 
 
-class TestACMusiker(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Musiker
-    alias_accessor_name = 'musikeralias_set'
-    raw_data = [
-        {
-            'musikeralias__alias': 'John',
-            'person__vorname': 'Peter',
-            'person__nachname': 'Lustig',
-            'beschreibung': 'Description',
-            'bemerkungen': 'Stuff'
-        }
-    ]
+class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
 
-
-class TestACLand(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Land
-    raw_data = [{'land_name': 'Deutschland', 'code': 'DE'}]
-    has_alias = False
-
-
-class TestACInstrument(ACViewTestMethodMixin, ACViewTestCase):
-    model = _models.Instrument
-    raw_data = [{'instrument': 'Piano', 'kuerzel': 'pi'}]
-    has_alias = False
+    model = _models.Schlagwort
+    alias_accessor_name = 'schlagwortalias_set'
+    raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]
 
 
 class TestACSpielort(ACViewTestMethodMixin, ACViewTestCase):
@@ -960,48 +1072,6 @@ class TestACVeranstaltung(ACViewTestMethodMixin, ACViewTestCase):
         'beschreibung': "If it beeps like a boop, it's probably a test.",
         'bemerkungen': 'Stuff and Things.'
     }]
-
-
-class TestACBuchband(ACViewTestCase):
-    model = _models.Buch
-    view_class = ACBuchband
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.obj1 = make(cls.model, titel='Buchband', is_buchband=True)
-        cls.obj2 = make(cls.model, titel='Buch mit Buchband', buchband=cls.obj1)
-        cls.obj3 = make(cls.model, titel='Buch ohne Buchband')
-
-        cls.test_data = [cls.obj1, cls.obj2, cls.obj3]
-
-        super().setUpTestData()
-
-    def test_gets_queryset_filters_out_non_buchband(self):
-        """
-        Assert that get_queryset does not return Buch instances that are not
-        flagged as 'buchband'.
-        """
-        view = self.get_view(q='Buch')
-        result = view.get_queryset()
-        self.assertEqual(len(result), 1)
-        self.assertIn(self.obj1, result)
-
-        self.model.objects.filter(pk=self.obj1.pk).update(is_buchband=False)
-        self.assertFalse(view.get_queryset())
-
-
-class TestACGenre(ACViewTestMethodMixin, ACViewTestCase):
-
-    model = _models.Genre
-    alias_accessor_name = 'genrealias_set'
-    raw_data = [{'genrealias__alias': 'Beep'}]
-
-
-class TestACSchlagwort(ACViewTestMethodMixin, ACViewTestCase):
-
-    model = _models.Schlagwort
-    alias_accessor_name = 'schlagwortalias_set'
-    raw_data = [{'schlagwortalias__alias': 'AliasSchlagwort'}]
 
 
 class TestGND(ViewTestCase):
@@ -1187,76 +1257,6 @@ class TestGNDPaginator(MIZTestCase):
         with patch.object(Paginator, '_get_page'):
             with self.assertNotRaises(TypeError, msg=msg):
                 paginator.page(number=1)
-
-
-class TestACMagazin(ACViewTestCase):
-    model = _models.Magazin
-    view_class = ACMagazin
-
-    def test_get_search_results_validates_and_compacts_search_term(self):
-        """
-        Assert that the search term has dashes removed (compact standard number),
-        if it is a valid ISSN.
-        """
-        view = self.get_view(self.get_request())
-        queryset = self.model.objects.all()
-        # Valid ISSN:
-        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-            view.get_search_results(queryset, '1234-5679')
-            super_mock.assert_called_with(queryset, '12345679')
-        # Invalid ISSN, search term should be left as-is:
-        with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-            view.get_search_results(queryset, '1234-5670')
-            super_mock.assert_called_with(queryset, '1234-5670')
-
-    def test_search_term_issn(self):
-        """Assert that a Magazin instance can be found using its ISSN."""
-        obj = make(_models.Magazin, magazin_name='Testmagazin', issn='12345679')
-        for issn in ('12345679', '1234-5679'):
-            with self.subTest(ISSN=issn):
-                view = self.get_view(request=self.get_request(), q=issn)
-                self.assertIn(obj, view.get_queryset())
-
-
-@skip("There are no autocompletes for Buch instances (yet?).")
-class TestACBuch(ACViewTestCase):
-    model = _models.Buch
-    view_class = ACBase
-
-    def test_get_search_results_validates_and_compacts_search_term(self):
-        """
-        Assert that the search term is transformed into compact ISBN-13, if it
-        is found to be a valid ISBN. ISBN-13 is equivalent to EAN.
-        """
-        view = self.get_view(self.get_request())
-        for isbn in ('1-234-56789-X', '978-1-234-56789-7'):
-            with self.subTest(ISBN=isbn):
-                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-                    view.get_search_results(self.queryset, isbn)
-                    super_mock.assert_called_with(self.queryset, isbn.replace('-', ''))
-
-        # Invalid ISBN - leave search term as-is:
-        for isbn in ('1-234-56789-1', '978-1-234-56789-1'):
-            with self.subTest(ISBN=isbn):
-                with patch('dbentry.ac.views.ACBase.get_search_results') as super_mock:
-                    view.get_search_results(self.queryset, isbn)
-                    super_mock.assert_called_with(self.queryset, isbn)
-
-    def test_q_isbn(self):
-        """Assert that a Buch instance can be found using its ISBN."""
-        obj = make(_models.Buch, titel='Testbuch', issn='9781234567897')
-        for isbn in ('123456789X', '1-234-56789-X', '9781234567897', '978-1-234-56789-7'):
-            with self.subTest(ISBN=isbn):
-                view = self.get_view(request=self.get_request(), q=isbn)
-                self.assertIn(obj, view.get_queryset())
-
-    def test_q_ean(self):
-        """Assert that a Buch instance can be found using its EAN."""
-        obj = make(_models.Buch, titel='Testbuch', ean='9781234567897')
-        for ean in ('9781234567897', '978-1-234-56789-7'):
-            with self.subTest(EAN=ean):
-                view = self.get_view(request=self.get_request(), q=ean)
-                self.assertIn(obj, view.get_queryset())
 
 
 class TestContentTypeAutocompleteView(ACViewTestCase):
