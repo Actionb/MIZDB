@@ -28,6 +28,7 @@ class Band(models.Model):
     objects = MIZQuerySet.as_manager()
 
     class Meta:
+        verbose_name = 'Band'
         ordering = ('band_name', )
 
     def __str__(self):
