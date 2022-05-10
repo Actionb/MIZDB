@@ -22,19 +22,8 @@ from tests.test_autocomplete.models import Band, Musiker, Genre
 
 
 class ACViewTestCase(ViewTestCase):
-    path = GENERIC_URL_NAME
-    model = None
-    create_field = None
 
-    def get_path(self):
-        # Needed for the RequestTestCase
-        if self.path != GENERIC_URL_NAME:
-            # FIXME: super().get_path() returns self.path - not necessarily a reversed URL
-            return super().get_path()
-        reverse_kwargs = {'model_name': self.model._meta.model_name}
-        if self.model.create_field:
-            reverse_kwargs['create_field'] = self.model.create_field
-        return reverse(self.path, kwargs=reverse_kwargs)
+    model = None
 
     def get_view(self, request=None, args=None, kwargs=None, model=None,
                  create_field=None, forwarded=None, q='', **initkwargs):
